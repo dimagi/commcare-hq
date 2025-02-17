@@ -108,6 +108,7 @@ hqDefine("app_manager/js/details/screen", function () {
             return caseTileTemplate && featureFlag;
         });
         self.showCaseListOptimizations = (
+            self.columnKey === 'short' &&
             hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_OPTIMIZATIONS') &&
             initialPageData.get('show_case_list_optimization_options')
         );
