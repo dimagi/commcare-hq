@@ -465,6 +465,11 @@ def get_auth_decorator_map(
         allow_creds_in_data=True,
         allow_api_key_as_password=False,
 ):
+    # Due to the high risk of our login flows, leaving a safety net here to guard against
+    # non-domain endpoints accepting API keys as passwords. We have no current use for this combination,
+    # but this check can be removed if we create new global endpoints that should support api keys as passwords
+    assert not (require_domain is False and allow_api_key_as_password), \
+        'only domain endpoints support API key authentication'
     # get a mapped set of decorators for different auth types with the specified parameters
     oauth_scopes = oauth_scopes or ['access_apis']
     decorator_function_kwargs = {
