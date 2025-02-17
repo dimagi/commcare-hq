@@ -32,3 +32,8 @@ Table of contents
     :maxdepth: 1
 
     user-api-overview
+    mobile-worker
+    user-domain-list
+    user-group
+    webuser
+    sso
