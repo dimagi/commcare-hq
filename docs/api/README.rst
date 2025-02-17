@@ -48,5 +48,7 @@ Table of contents
     :caption: SMS APIs
     :maxdepth: 1
 
-    sms
+    messaging-events
+    sms-user-registration
+    send-install-info-sms
 
