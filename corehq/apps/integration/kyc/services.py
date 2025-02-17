@@ -9,22 +9,10 @@ from django.utils.text import camel_case_to_spaces
 import jsonschema
 
 from corehq.apps.hqcase.utils import update_case
-from corehq.apps.integration.kyc.models import KycConfig, UserDataStore
+from corehq.apps.integration.kyc.models import UserDataStore
 
 
 class UserCaseNotFound(Exception):
-    pass
-
-
-def verify_all(domain):
-    kyc_config = KycConfig.objects.get(domain=domain)
-    user_objs = kyc_config.get_user_objects()
-    return verify_users(user_objs, kyc_config)
-
-
-def verify_selected_ids(domain, selected_ids):
-    # kyc_config = KycConfig.objects.get(domain=domain)
-    # ...
     pass
 
 

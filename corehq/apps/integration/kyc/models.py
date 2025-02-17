@@ -107,3 +107,17 @@ class KycConfig(models.Model):
             if not case_ids:
                 return []
             return CommCareCase.objects.get_cases(case_ids, self.domain)
+
+    def get_user_objects_by_ids(self, obj_ids):
+        """
+        Returns all CommCareUser or CommCareCase instances based on the
+        user data store and user IDs.
+        """
+        if self.user_data_store in (
+            UserDataStore.CUSTOM_USER_DATA,
+            UserDataStore.USER_CASE,
+        ):
+            return [CommCareUser.get_by_user_id(id_) for id_ in obj_ids]
+        elif self.user_data_store == UserDataStore.OTHER_CASE_TYPE:
+            assert self.other_case_type
+            return CommCareCase.objects.get_cases(obj_ids, self.domain)

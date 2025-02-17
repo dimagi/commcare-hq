@@ -87,12 +87,39 @@ class TestGetUserObjectsUsers(TestCase):
             'custom_field': 'custom_value',
         }
 
+    def test_custom_user_data_by_ids(self):
+        config = KycConfig(
+            domain=DOMAIN,
+            user_data_store=UserDataStore.CUSTOM_USER_DATA,
+        )
+        selected_ids = [self.commcare_user.user_id]
+        commcare_users = config.get_user_objects_by_ids(selected_ids)
+        assert len(commcare_users) == 1
+        user_data = commcare_users[0].get_user_data(DOMAIN).to_dict()
+        assert user_data == {
+            'commcare_profile': '',
+            'custom_field': 'custom_value',
+        }
+
     def test_user_case(self):
         config = KycConfig(
             domain=DOMAIN,
             user_data_store=UserDataStore.USER_CASE,
         )
         commcare_users = config.get_user_objects()
+        assert len(commcare_users) == 1
+        user_case = commcare_users[0].get_usercase()
+        assert user_case.case_json == {
+            'user_case_property': 'user_case_value',
+        }
+
+    def test_user_case_by_ids(self):
+        config = KycConfig(
+            domain=DOMAIN,
+            user_data_store=UserDataStore.USER_CASE,
+        )
+        selected_ids = [self.commcare_user.user_id]
+        commcare_users = config.get_user_objects_by_ids(selected_ids)
         assert len(commcare_users) == 1
         user_case = commcare_users[0].get_usercase()
         assert user_case.case_json == {
@@ -119,6 +146,19 @@ class TestGetUserObjectsCases(TestCase):
             other_case_type='other_case_type',
         )
         commcare_cases = config.get_user_objects()
+        assert len(commcare_cases) == 1
+        assert commcare_cases[0].case_json == {
+            'other_case_property': 'other_case_value',
+        }
+
+    def test_other_case_type_by_ids(self):
+        config = KycConfig(
+            domain=DOMAIN,
+            user_data_store=UserDataStore.OTHER_CASE_TYPE,
+            other_case_type='other_case_type',
+        )
+        selected_ids = [self.other_case.case_id]
+        commcare_cases = config.get_user_objects_by_ids(selected_ids)
         assert len(commcare_cases) == 1
         assert commcare_cases[0].case_json == {
             'other_case_property': 'other_case_value',

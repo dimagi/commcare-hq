@@ -11,8 +11,7 @@ from corehq.apps.integration.kyc.forms import KycConfigureForm
 from corehq.apps.integration.kyc.models import KycConfig
 from corehq.apps.integration.kyc.services import (
     get_user_data_for_api,
-    verify_all,
-    verify_selected_ids,
+    verify_users,
 )
 from corehq.apps.integration.kyc.tables import KycVerifyTable
 from corehq.apps.users.models import CommCareUser
@@ -111,11 +110,13 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
 
     @hq_hx_action('post')
     def verify_rows(self, request, *args, **kwargs):
+        kyc_config = KycConfig.objects.get(domain=self.request.domain)
         if request.POST.get('verify_all'):
-            results = verify_all(request.domain)
+            user_objs = kyc_config.get_user_objects()
         else:
             selected_ids = request.POST.getlist('selected_ids')
-            results = verify_selected_ids(request.domain, selected_ids)
+            user_objs = kyc_config.get_user_objects_by_ids(selected_ids)
+        results = verify_users(user_objs, kyc_config)
         verify_success = bool(results)
         success_count = sum(1 for result in results if result)
         fail_count = sum(1 for result in results if not result)
