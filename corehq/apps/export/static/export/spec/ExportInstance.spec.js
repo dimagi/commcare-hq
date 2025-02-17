@@ -182,10 +182,8 @@ hqDefine("export/spec/ExportInstance.spec", [
 
             beforeEach(function () {
                 instance = new viewModels.ExportInstance(basicFormExport);
-                recordSaveAnalyticsSpy = sinon.spy();
+                recordSaveAnalyticsSpy = sinon.stub(instance, 'recordSaveAnalytics'),
                 server = sinon.fakeServer.create();
-
-                sinon.stub(instance, 'recordSaveAnalytics', recordSaveAnalyticsSpy);
             });
 
             afterEach(function () {
