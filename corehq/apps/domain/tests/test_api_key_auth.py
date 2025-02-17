@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.test import RequestFactory, TestCase
 
 from corehq.apps.domain.auth import HQApiKeyAuthentication
-from corehq.apps.domain.decorators import api_auth, api_auth_allow_key_as_password
+from corehq.apps.domain.decorators import api_auth, api_auth_allow_key_as_password_LIMITED_USE
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import HQApiKey, WebUser
 
@@ -98,7 +98,7 @@ class ApiAuthNoDigestTests(TestCase):
 
     def call_api(self, request, allow_creds_in_data=False):
 
-        @api_auth_allow_key_as_password()
+        @api_auth_allow_key_as_password_LIMITED_USE()
         def api_view(request, domain):
             return HttpResponse()
 
