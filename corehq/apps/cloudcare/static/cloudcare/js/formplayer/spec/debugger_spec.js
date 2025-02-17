@@ -1,4 +1,4 @@
-import sinon from "sinon/pkg/sinon";
+import sinon from "sinon";
 import Debugger from "cloudcare/js/debugger/debugger";
 
 describe('Debugger', function () {
