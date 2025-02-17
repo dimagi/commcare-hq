@@ -273,6 +273,7 @@ HQ_APPS = (
     'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
     'corehq.apps.enterprise',
+    'corehq.apps.experiments',
     'corehq.apps.formplayer_api',
     'corehq.apps.hqadmin.app_config.HqAdminModule',
     'corehq.apps.hqcase',
