@@ -26,7 +26,6 @@ Table of contents
     ota-api-restore
 
 
-
 .. toctree::
     :caption: User APIs
     :maxdepth: 1
@@ -37,3 +36,17 @@ Table of contents
     user-group
     webuser
     sso
+
+
+.. toctree::
+    :caption: Form Submission APIs
+    :maxdepth: 1
+
+    form-submission
+
+.. toctree::
+    :caption: SMS APIs
+    :maxdepth: 1
+
+    sms
+
