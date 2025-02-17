@@ -5,7 +5,6 @@ from django.test import TestCase
 import pytz
 
 from corehq.motech.models import ConnectionSettings
-from corehq.util.test_utils import flag_enabled
 
 from ..const import State
 from ..models import FormRepeater
@@ -43,12 +42,16 @@ class RepeaterTestCase(TestCase):
             self.assertEqual(display.url, self.url)
             self.assertEqual(display.state, '<span class="label label-success">Success</span>')
 
-    @flag_enabled('PROCESS_REPEATERS')
     def test_record_display_process_repeaters(self):
         jan_1 = datetime.strptime('2025-01-01 00:00:00', self.date_format)
         self.repeater.next_attempt_at = jan_1
         with make_repeat_record(self.repeater, State.Pending) as record:
-            display = RepeatRecordDisplay(record, pytz.UTC, date_format=self.date_format)
+            display = RepeatRecordDisplay(
+                record,
+                pytz.UTC,
+                date_format=self.date_format,
+                process_repeaters_enabled=True,
+            )
             self.assertEqual(display.next_check, '2025-01-01 00:00:00')
 
 
