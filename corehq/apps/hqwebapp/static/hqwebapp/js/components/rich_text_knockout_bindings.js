@@ -75,12 +75,30 @@ const converterOptions = {
     inlineStyles: true,
 };
 
+const orderedListTypes = ["1", "a", "i"];
+function updateListType(element, level) {
+    element.childNodes.forEach(function (child) {
+        if (child.tagName && child.tagName.toLowerCase() === 'ol') {
+            child.type = orderedListTypes[level % orderedListTypes.length];
+            updateListType(child, level + 1);
+        } else {
+            updateListType(child, level);
+        }
+    });
+}
+
+const parser = new DOMParser();
+
 function deltaToHtml(delta) {
     // nice for adding more test data
     // console.log(JSON.stringify(delta, null, 4));
     const converter = new QuillDeltaToHtmlConverter(delta.ops, converterOptions);
     const body = converter.convert();
-    const html = `<html><body>${body}</body></html>`;
+
+    const xmlDoc = parser.parseFromString(body, "text/html");
+    updateListType(xmlDoc, 0);
+    const html = `<html><body>${xmlDoc.querySelector("body").innerHTML}</body></html>`;
+    console.log(html);
     return html;
 }
 
@@ -144,4 +162,5 @@ ko.bindingHandlers.richEditor = {
 
 export {
     deltaToHtml,
+    updateListType,
 };
