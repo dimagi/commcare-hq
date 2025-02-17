@@ -6,9 +6,10 @@
 {% js_entry "hqwebapp/js/htmx_and_alpine" %}
 
 {% block content %}
+  {% breadcrumbs current_page section current_page.parents %}
   <div class="d-flex align-items-center m-3">
     <h1 class="fs-3 pe-3 py-3 m-0">
-      {% trans "Case Data Cleaning Test View" %}
+      {{ current_page.page_name }}
     </h1>
   </div>
   <div
