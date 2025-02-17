@@ -1,11 +1,9 @@
-
 hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'ace-builds/src-min-noconflict/ace',
     'ace-builds/src-min-noconflict/mode-json',
     'ace-builds/src-min-noconflict/mode-xml',
-    'repeaters/js/repeat_record_report_selects',
     'reports/js/bootstrap3/base',
     'reports/js/bootstrap3/tabular',
     'commcarehq',
@@ -14,17 +12,27 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
     initialPageData,
     ace,
 ) {
-    const selectAll = document.getElementById('select-all'),
-        selectPending = document.getElementById('select-pending'),
-        selectCancelled = document.getElementById('select-cancelled'),
+    const requeueButton = document.getElementById('requeue-button'),
+        cancelButton = document.getElementById('cancel-button'),
+        selectAllCheckbox = document.getElementById('select-all-checkbox'),
+        selectedPageInfo = document.getElementById('selected-page-info'),
+        selectedTableInfo = document.getElementById('selected-table-info'),
         $popUp = $('#are-you-sure'),
         $confirmButton = $('#confirm-button');
+
+    var superuserResendButton = null;
+    if (initialPageData.get('is_superuser')) {
+        superuserResendButton = document.getElementById('resend-button')
+    }
+
+    var selectedEntireTable = false;
 
     $(function () {
         $('#report-content').on('click', '.toggle-next-attempt', function (e) {
             $(this).nextAll('.record-attempt').toggle();
             e.preventDefault();
         });
+
         $('#report-content').on('click', '.view-attempts-btn', function () {
             const recordId = $(this).data().recordId;
 
@@ -110,41 +118,17 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
             }
         });
 
-        $('#report-content').on('click', '.resend-record-payload', function () {
-            const $btn = $(this),
-                recordId = $btn.data().recordId;
-            $btn.disableButton();
-
-            postResend($btn, {'record_id': recordId});
-        });
-
-        $('#resend-all-button').on('click', function () {
+        $('#resend-button').on('click', function () {
             setAction('resend');
             performAction('resend');
         });
 
-        $('#report-content').on('click', '.cancel-record-payload', function () {
-            const $btn = $(this),
-                recordId = $btn.data().recordId;
-            $btn.disableButton();
-
-            postOther($btn, {'record_id': recordId}, 'cancel');
-        });
-
-        $('#cancel-all-button').on('click', function () {
+        $('#cancel-button').on('click', function () {
             setAction('cancel');
             performAction('cancel');
         });
 
-        $('#report-content').on('click', '.requeue-record-payload', function () {
-            const $btn = $(this),
-                recordId = $btn.data().recordId;
-            $btn.disableButton();
-
-            postOther($btn, {'record_id': recordId}, 'requeue');
-        });
-
-        $('#requeue-all-button').on('click', function () {
+        $('#requeue-button').on('click', function () {
             setAction('requeue');
             performAction('requeue');
         });
@@ -156,27 +140,59 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
 
             $popUp.modal('hide');
             if (action === 'resend') {
-                $btn = $('#resend-all-button');
+                $btn = $('#resend-button');
                 $btn.disableButton();
                 postResend($btn, requestBody);
             } else if (action === 'cancel') {
-                $btn = $('#cancel-all-button');
+                $btn = $('#cancel-button');
                 $btn.disableButton();
                 postOther($btn, requestBody, action);
             } else if (action === 'requeue') {
-                $btn = $('#requeue-all-button');
+                $btn = $('#requeue-button');
                 $btn.disableButton();
                 postOther($btn, requestBody, action);
             }
         });
 
+        $('#report-content').on('click', '.record-checkbox', function () {
+            updateActionButtons()
+        });
+
+        $('#report-content').on('click', '#select-all-checkbox', function () {
+            if (selectAllCheckbox.checked) {
+                toggleItems(true);
+                selectedPageInfo.classList.remove('hide');
+            } else {
+                toggleItems(false);
+                selectedPageInfo.classList.add('hide');
+                // just in case
+                selectedTableInfo.classList.add('hide');
+                selectedEntireTable = false;
+            }
+            updateActionButtons()
+        });
+
+        $("#select-table-button").click( function() {
+            selectedEntireTable = true;
+            selectedPageInfo.classList.add('hide');
+            selectedTableInfo.classList.remove('hide');
+            updateActionButtons()
+        });
+
+        $("#clear-table-selection").click( function () {
+            selectedEntireTable = false;
+            selectAllCheckbox.checked = false;
+            selectedTableInfo.classList.add('hide');
+            toggleItems(false);
+            updateActionButtons()
+        });
+
         function performAction(action) {
-            const bulkSelection = bulkSelectionChecked();
             const checkedRecords = getCheckedRecords();
-            if (bulkSelection || checkedRecords.length > 0) {
-                if (bulkSelection) { setFlag(bulkSelection); }
-                // only applies to checked items, not bulk selections
-                // leaving as is to preserve behavior
+            if (selectedEntireTable) {
+                hideAllWarnings();
+                $popUp.modal('show');
+            } else if (checkedRecords.length > 0) {
                 if (isActionPossibleForCheckedItems(action, checkedRecords)) {
                     hideAllWarnings();
                     $popUp.modal('show');
@@ -188,18 +204,8 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
             }
         }
 
-        function bulkSelectionChecked() {
-            if (selectAll.checked) {
-                return 'select_all';
-            } else if (selectPending.checked) {
-                return 'select_pending';
-            } else if (selectCancelled.checked) {
-                return 'select_cancelled';
-            }
-        }
-
         function getCheckedRecords() {
-            return $.find('input[type=checkbox][name=xform_ids]:checked');
+            return $.find('input[type=checkbox][name=record_ids]:checked');
         }
 
         function isActionPossibleForCheckedItems(action, items) {
@@ -216,8 +222,7 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
         }
 
         function getRequestBody() {
-            const bulkSelectors = [selectAll, selectPending, selectCancelled];
-            if (bulkSelectors.some(selector => selector.checked)) {
+            if (selectedEntireTable) {
                 return getBulkSelectionProperties();
             } else {
                 return getRecordIds();
@@ -228,7 +233,7 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
             return {
                 payload_id: initialPageData.get('payload_id'),
                 repeater_id: initialPageData.get('repeater_id'),
-                flag: getFlag(),
+                state: initialPageData.get('state'),
             };
         }
 
@@ -238,6 +243,50 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
                 record => record.getAttribute('data-id'),
             ).join(' ');
             return {record_id: recordIds};
+        }
+
+        function updateActionButtons() {
+            const checkedRecords = getCheckedRecords();
+            if (checkedRecords.length == 0) {
+                if (superuserResendButton) {
+                    superuserResendButton.disabled = true;
+                }
+                requeueButton.disabled = true;
+                cancelButton.disabled = true;
+                return;
+            }
+
+            var containsQueuedRecords = false;
+            checkedRecords.some(record => {
+                if (record.getAttribute('is_queued') == true) {
+                    containsQueuedRecords = true;
+                    return true;
+                }
+                return false;
+            });
+
+            if (containsQueuedRecords) {
+                if (superuserResendButton) {
+                    superuserResendButton.disabled = true;
+                }
+                requeueButton.disabled = true;
+                cancelButton.disabled = false;
+            } else {
+                if (superuserResendButton) {
+                    superuserResendButton.disabled = false;
+                }
+                requeueButton.disabled = false;
+                cancelButton.disabled = true;
+            }
+        }
+
+        function toggleItems(checked) {
+            const items = document.getElementsByName('record_ids');
+            for (const item of items) {
+                if (item.type === 'checkbox') {
+                    item.checked = checked;
+                }
+            }
         }
 
         function postResend(btn, data) {
@@ -287,14 +336,6 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
 
         function getAction() {
             return $confirmButton.attr('data-action');
-        }
-
-        function setFlag(flag) {
-            $confirmButton.attr('data-flag', flag);
-        }
-
-        function getFlag() {
-            return $confirmButton.attr('data-flag');
         }
 
         function showWarning(reason) {
