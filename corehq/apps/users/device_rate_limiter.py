@@ -64,14 +64,12 @@ class DeviceRateLimiter:
             )
             return False
 
-        if toggles.DEVICE_RATE_LIMITER.enabled(domain):
-            metrics_counter('commcare.devices_per_user.rate_limited', tags={'domain': domain, 'user_id': user_id})
-            return True
-        else:
-            metrics_counter(
-                'commcare.devices_per_user.rate_limited.test', tags={'domain': domain, 'user_id': user_id}
-            )
-            return False
+        is_enabled = toggles.DEVICE_RATE_LIMITER.enabled(domain)
+        metrics_counter(
+            'commcare.devices_per_user.rate_limited',
+            tags={'domain': domain, 'user_id': user_id, 'enabled': str(is_enabled)},
+        )
+        return is_enabled
 
     def _get_redis_key(self, domain, user_id):
         """

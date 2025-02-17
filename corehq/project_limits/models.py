@@ -116,4 +116,4 @@ class SystemLimit(models.Model):
             domain_filter |= models.Q(domain=domain)
         filters = models.Q(key=key) & domain_filter
         limit = SystemLimit.objects.filter(filters).order_by("-domain").values_list("limit", flat=True).first()
-        return limit or None
+        return None if limit is None else limit  # limit could be 0
