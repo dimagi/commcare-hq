@@ -1,6 +1,6 @@
-===
+============
 CommCare APIs
-===
+============
 
 CommCare APIs provide access to various system functionalities, including data retrieval, case and form submissions, and user management. This page describes different APIs available for integration.
 
