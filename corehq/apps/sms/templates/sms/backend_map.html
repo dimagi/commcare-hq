@@ -1,14 +1,14 @@
-{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% js_entry_b3 "sms/js/backend_map" %}
+{% js_entry "sms/js/backend_map" %}
 
 {% block page_content %}
   {% initial_page_data 'form.backend_map' form.backend_map.value %}
   <div id="backend-map-form">
-    {% crispy form %}
+    {% crispy form %}  {# todo B5: crispy #}
   </div>
 
   <script type="text/html" id="ko-template-backend-map">
@@ -28,14 +28,14 @@
                    placeholder="{% trans 'Prefix' %}"
                    data-bind="value: prefix" /></td>
         <td>
-          <select data-bind="value: backend_id" class="form-control">
+          <select data-bind="value: backend_id" class="form-select">
             {% for backend in backends %}
               <option value="{{ backend.pk }}">{{ backend.name }}</option>
             {% endfor %}
           </select>
         </td>
         <td><button type="button"
-                    class="btn btn-danger"
+                    class="btn btn-outline-danger"
                     data-bind="click: $parent.removeMapping">
           <i class="fa fa-remove"></i> {% trans "Remove" %}</button></td>
       </tr>
