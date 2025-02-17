@@ -37,6 +37,8 @@ class RepeatRecordDisplay:
 
     @property
     def next_check(self):
+        if self.record.repeater.is_paused:
+            return _('Paused')
         if self.process_repeaters_enabled:
             next_check_ = self.record.repeater.next_attempt_at
         else:

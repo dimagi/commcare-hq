@@ -54,6 +54,12 @@ class RepeaterTestCase(TestCase):
             )
             self.assertEqual(display.next_check, '2025-01-01 00:00:00')
 
+    def test_record_display_repeater_paused(self):
+        self.repeater.is_paused = True
+        with make_repeat_record(self.repeater, State.Pending) as record:
+            display = RepeatRecordDisplay(record, pytz.UTC, date_format=self.date_format)
+            self.assertEqual(display.next_check, 'Paused')
+
 
 class ResponseDuck:
     status_code = 200
