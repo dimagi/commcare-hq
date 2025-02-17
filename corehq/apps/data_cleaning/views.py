@@ -1,3 +1,7 @@
+import uuid
+from memoized import memoized
+
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy
 
@@ -18,11 +22,38 @@ from corehq.apps.settings.views import BaseProjectDataView
 class CleanCasesMainView(BaseProjectDataView):
     page_title = gettext_lazy("Clean Case Data")
     urlname = "data_cleaning_cases"
+    template_name = "data_cleaning/select_case_type.html"
+
+    @property
+    def page_context(self):
+        return {
+            "session_id": uuid.uuid4(),
+        }
+
+
+@method_decorator([
+    use_bootstrap5,
+    toggles.DATA_CLEANING_CASES.required_decorator(),
+], name='dispatch')
+class CleanCasesSessionView(BaseProjectDataView):
+    urlname = "data_cleaning_cases_session"
     template_name = "data_cleaning/cases.html"
 
     @property
-    def section_url(self):
-        return ""
+    def session_id(self):
+        return self.kwargs['session_id']
+
+    @property
+    @memoized
+    def page_url(self):
+        if self.urlname:
+            return reverse(self.urlname, args=(self.domain, self.session_id,))
+
+    @property
+    def page_context(self):
+        return {
+            "session_id": self.session_id,
+        }
 
 
 @method_decorator([
@@ -32,6 +63,10 @@ class CleanCasesMainView(BaseProjectDataView):
 class CleanCasesTableView(LoginAndDomainMixin, DomainViewMixin, SelectablePaginatedTableView):
     urlname = "data_cleaning_cases_table"
     table_class = CleanCaseTable
+
+    @property
+    def session_id(self):
+        return self.kwargs['session_id']
 
     def get_queryset(self):
         return CaseSearchES().domain(self.domain)

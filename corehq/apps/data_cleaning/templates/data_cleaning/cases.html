@@ -13,7 +13,7 @@
   </div>
   <div
     class="mx-3"
-    hx-get="{% url "data_cleaning_cases_table" domain %}{% querystring %}"
+    hx-get="{% url "data_cleaning_cases_table" domain session_id %}{% querystring %}"
     hx-trigger="load"
   >
     <div class="htmx-indicator">
