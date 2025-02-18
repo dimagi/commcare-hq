@@ -12,9 +12,9 @@
       International text messages sent from this gateway may not be delivered in all countries.
     {% endblocktrans %}
   </div>
-  <div class="row" style="margin-top: 50px;">  {# todo B5: inline-style #}
+  <div class="row mt-3">
     <div class="col-md-12">
-      {% crispy initiate_new_form %}  {# todo B5: crispy #}
+      {% crispy initiate_new_form %}
     </div>
   </div>
 {% endblock %}
@@ -28,16 +28,16 @@
     <td class="col-md-4" data-bind="text: supported_countries"></td>
     <td class="col-md-2">
       <a data-bind="attr: {href: '#' + deleteModalId }"
-         class="btn btn-outline-danger"
+         class="btn btn-outline-danger text-nowrap"
          data-bs-toggle="modal"><i class="fa fa-times"></i> {% trans 'Delete' %}</a>
       <div class="modal fade" data-bind="attr: {id: deleteModalId}">
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
-              <button type="button" class="btn-close" data-bs-dismiss="modal"><span aria-hidden="true">&times;</span></button>  {# todo B5: css-close #}
               <h4 class="modal-title">
                 {% blocktrans %}Delete the SMS Gateway '<span data-bind="text: name"></span>'{% endblocktrans %}
               </h4>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
             </div>
             <div class="modal-body">
               <h2><strong>{% trans "READ THIS IMPORTANT NOTICE CAREFULLY BEFORE CONTINUING" %}</strong></h2>

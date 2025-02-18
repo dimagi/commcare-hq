@@ -1382,6 +1382,7 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
     page_title = gettext_noop("SMS Connectivity")
 
     @method_decorator(require_superuser)
+    @method_decorator(use_bootstrap5)
     def dispatch(self, request, *args, **kwargs):
         if not has_privilege(request, privileges.GLOBAL_SMS_GATEWAY):
             return HttpResponseRedirect(
