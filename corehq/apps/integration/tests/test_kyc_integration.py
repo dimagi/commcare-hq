@@ -3,7 +3,7 @@ from django.test import TestCase
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.integration.kyc.models import KycConfig, UserDataStore
-from corehq.apps.integration.kyc.services import get_user_data_for_api, UserCaseNotFound
+from corehq.apps.integration.kyc.services import get_user_data_for_api, UserCaseNotFound, invoke_verify_customer_api
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.tests.utils import create_case
 from corehq.motech.models import ConnectionSettings
@@ -123,3 +123,52 @@ class TestKycGetUserDataAPI(TestCase):
         result = get_user_data_for_api(self.user, self.config)
 
         self.assertEqual(result, {})
+
+
+class TestKycInvokeCustomerVerificationAPI(TestCase):
+    domain = 'test-kyc-integration'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
+        cls.connection_settings = ConnectionSettings.objects.create(
+            domain=cls.domain,
+            name='test',
+            url='https://example.com'
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.connection_settings.delete()
+        cls.domain_obj.delete()
+        super().tearDownClass()
+
+    def setUp(self):
+        super().setUp()
+        self.user = CommCareUser.create(self.domain, 'test-kyc', '123', None, None, first_name='abc')
+        self.config = KycConfig.objects.create(
+            domain=self.domain,
+            user_data_store=UserDataStore.CUSTOM_USER_DATA,
+            api_field_to_user_data_map=self._sample_api_field_to_user_data_map(),
+            connection_settings=self.connection_settings
+        )
+
+    def tearDown(self):
+        self.user.delete(self.domain, None)
+        self.config.delete()
+        super().tearDown()
+
+    def _sample_user_data_for_api(self):
+        return {
+            'first_name': 'abc',
+            'nationality': 'German'
+        }
+
+    def test_success(self):
+        result = invoke_verify_customer_api(self._sample_user_data_for_api(), self.config)
+        self.assertEqual(result, {'first_name': 'abc', 'nationality': 'Indian'})
+
+    def test_http_error(self):
+        result = invoke_verify_customer_api(self._sample_user_data_for_api(), self.config)
+        self.assertEqual(result, {'first_name': 'abc'})
