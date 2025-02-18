@@ -3,7 +3,7 @@ hqDefine('users/js/invite_web_user',[
     'knockout',
     'hqwebapp/js/initial_page_data',
     'users/js/custom_data_fields',
-    'hqwebapp/js/bootstrap3/validators.ko',
+    'hqwebapp/js/bootstrap5/validators.ko',
     'locations/js/widgets',
     'commcarehq',
 ], function (
