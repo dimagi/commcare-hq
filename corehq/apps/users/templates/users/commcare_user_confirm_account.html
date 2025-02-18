@@ -3,7 +3,7 @@
 {% load field_tags %}
 {% load hq_shared_tags %}
 
-{% js_entry_b3 'users/js/accept_invite' %}
+{% js_entry 'users/js/accept_invite' %}
 
 {% block title %}{% blocktrans %}Confirm your account to join the {{ domain_name }} project{% endblocktrans %}{% endblock title %}
 {% block tabs %}{% endblock %}
@@ -11,7 +11,7 @@
 {% block login-content %}
   <div class="container-fluid">
     <div class="row">
-      <div class="col-xs-12">
+      <div class="col-sm-12">
         <div class="reg-form-container sign-in-container">
           <div class="form-bubble form-bubble-lg">
             {% if request.user.is_authenticated %}
