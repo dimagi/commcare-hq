@@ -2639,12 +2639,11 @@ COMMCARE_CONNECT = StaticToggle(
     tag=TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
     description='More details to come',
-
 )
 
 FCM_NOTIFICATION = StaticToggle(
     'fcm_notification',
-    'Allows access to FCM Push Notifications',
+    'FCM Push Notifications - no longer functional',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description='Push Notification option will be available in content for '

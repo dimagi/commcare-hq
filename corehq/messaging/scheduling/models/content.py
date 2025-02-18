@@ -9,6 +9,7 @@ from django.utils.translation import gettext as _
 
 import jsonfield as old_jsonfield
 
+from dimagi.utils.logging import notify_error
 from dimagi.utils.modules import to_function
 
 from corehq import toggles
@@ -25,14 +26,12 @@ from corehq.apps.sms.models import (
     PhoneNumber,
 )
 from corehq.apps.smsforms.tasks import send_first_message
-from corehq.apps.users.models import CommCareUser
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.util import random_url_id
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.fcm.exceptions import FCMTokenValidationException
-from corehq.messaging.fcm.utils import FCMUtil
 from corehq.messaging.scheduling.exceptions import EmailValidationException
 from corehq.messaging.scheduling.models.abstract import Content, SurveyContent
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
@@ -482,69 +481,13 @@ class FCMNotificationContent(Content):
         return data
 
     def send(self, recipient, logged_event, phone_entry=None):
-        domain_obj = Domain.get_by_name(logged_event.domain)
-
         logged_subevent = logged_event.create_subevent_from_contact_and_content(
             recipient,
             self,
             case_id=self.case.case_id if self.case else None,
         )
-        subject = message = data = None
-
-        if not settings.FCM_CREDS:
-            logged_subevent.error(MessagingEvent.ERROR_FCM_NOT_AVAILABLE)
-            return
-
-        if not toggles.FCM_NOTIFICATION.enabled(logged_event.domain):
-            logged_subevent.error(MessagingEvent.ERROR_FCM_DOMAIN_NOT_ENABLED)
-            return
-
-        if not isinstance(recipient, CommCareUser):
-            logged_subevent.error(MessagingEvent.ERROR_FCM_UNSUPPORTED_RECIPIENT)
-            return
-
-        if self.message_type == self.MESSAGE_TYPE_NOTIFICATION:
-            if not (self.subject or self.message):
-                logged_subevent.error(MessagingEvent.ERROR_NO_MESSAGE)
-                return
-
-            recipient_language_code = recipient.get_language_code()
-            subject = self.get_translation_from_message_dict(
-                domain_obj,
-                self.subject,
-                recipient_language_code
-            )
-
-            message = self.get_translation_from_message_dict(
-                domain_obj,
-                self.message,
-                recipient_language_code
-            )
-
-            try:
-                subject, message = self.render_subject_and_message(subject, message, recipient)
-            except Exception:
-                logged_subevent.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE)
-                return
-        else:
-            if not self.action:
-                logged_subevent.error(MessagingEvent.ERROR_FCM_NO_ACTION)
-                return
-            data = self.build_fcm_data_field(recipient)
-
-        try:
-            devices_fcm_tokens = self.get_recipient_devices_fcm_tokens(recipient)
-        except FCMTokenValidationException as e:
-            logged_subevent.error(e.error_type, additional_error_text=e.additional_text)
-            return
-
-        result = FCMUtil().send_to_multiple_devices(registration_tokens=devices_fcm_tokens, title=subject,
-                                                    body=message, data=data)
-        if result.failure_count == len(devices_fcm_tokens):
-            logged_subevent.error(MessagingEvent.ERROR_FCM_NOTIFICATION_FAILURE)
-            return
-
-        logged_subevent.completed()
+        logged_subevent.error("FCM pre-release feature has been removed. Please contact support.")
+        notify_error("FCM pre-release feature has been removed and is not expected to be in use.")
 
     def get_recipient_devices_fcm_tokens(self, recipient):
         devices_fcm_tokens = recipient.get_devices_fcm_tokens()
