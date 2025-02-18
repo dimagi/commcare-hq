@@ -11,7 +11,7 @@ hqDefine("users/js/web_users",[
     "users/js/web_users_list",
     'hqwebapp/js/components/pagination',
     'hqwebapp/js/components/search_box',
-    'hqwebapp/js/bootstrap3/knockout_bindings.ko', // for modals
+    'hqwebapp/js/bootstrap5/knockout_bindings.ko', // for modals
     'commcarehq',
 ], function ($, ko, _, moment, assertProperties, initialPageData, webUsersList) {
 
@@ -190,12 +190,12 @@ hqDefine("users/js/web_users",[
                 $.post(postUrl, data, function () {
                     $el.closest("tr").remove();
                     $button.removeClass('disabled').prop('disabled', false);
-                    $('#modal-deletion').modal('hide');
+                    $('#modal-deletion').modal('hide');  /* todo B5: js-modal */
                 });
             });
             $('#modal-deletion').find(".modal-title").html(title);
             $('#modal-deletion').find(".modal-body").html($("<p/>").append(body));
-            $('#modal-deletion').modal('show');
+            $('#modal-deletion').modal('show');  /* todo B5: js-modal */
         }
 
         $('.delete-request').on('click', function (e) {
@@ -208,7 +208,7 @@ hqDefine("users/js/web_users",[
             e.preventDefault();
         });
 
-        $('.undeliverable-label').tooltip({
+        $('.undeliverable-label').tooltip({  /* todo B5: js-tooltip */
             placement: 'right',
             html: true,
             title: _.template(gettext(
