@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/bootstrap3/base_navigation.html' %}
+{% extends 'hqwebapp/bootstrap5/base_navigation.html' %}
 {% load i18n %}
 
 {% block title %}{% trans "Request Sent" %}{% endblock title %}
@@ -6,7 +6,7 @@
 {% block content %}
   {% blocktrans %}
     <div class="container">
-      <div class="page-header">
+      <div class="page-header">  {# todo B5: css-page-header #}
         <h1>Request Access</h1>
       </div>
 
