@@ -175,6 +175,7 @@ class BaseMessagingSectionView(BaseDomainView):
             ).plan.name
         return False
 
+    @use_bootstrap5
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @method_decorator(require_permission(HqPermissions.edit_messaging))
     def dispatch(self, request, *args, **kwargs):
