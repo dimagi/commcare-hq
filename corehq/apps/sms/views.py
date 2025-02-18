@@ -991,6 +991,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
     page_title = gettext_noop("SMS Connectivity")
     strict_domain_fetching = True
 
+    @method_decorator(use_bootstrap5)
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         return super(DomainSmsGatewayListView, self).dispatch(request, *args, **kwargs)
