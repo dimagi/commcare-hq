@@ -1,10 +1,10 @@
-{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
 
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% js_entry_b3 'users/js/edit_commcare_user' %}
+{% js_entry 'users/js/edit_commcare_user' %}
 
 {% block page_content %}
   {% initial_page_data "couch_user_id" couch_user.user_id %}
@@ -36,37 +36,37 @@
       {% endblocktrans %}
     </p>
   {% endif %}
-  <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs" style="margin-bottom: 10px;">
-    <li><a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a></li>
-    <li><a href="#groups" data-toggle="tab">{% trans "Groups" %}</a></li>
+  <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs" style="margin-bottom: 10px;">  {# todo B5: css-nav, inline-style #}
+    <li><a href="#basic-info" data-bs-toggle="tab">{% trans "Basic" %}</a></li>
+    <li><a href="#groups" data-bs-toggle="tab">{% trans "Groups" %}</a></li>
     {% if commtrack_enabled or uses_locations %}
-      <li><a href="#commtrack-data" data-toggle="tab">{% trans "Locations" %}</a></li>
+      <li><a href="#commtrack-data" data-bs-toggle="tab">{% trans "Locations" %}</a></li>
     {% endif %}
     {% if not request.is_view_only %}
-      <li><a href="#user-password" data-toggle="tab">{% trans "Security" %}</a></li>
+      <li><a href="#user-password" data-bs-toggle="tab">{% trans "Security" %}</a></li>
     {% endif %}
     {% if not is_currently_logged_in_user and not request.is_view_only %}
-      <li><a href="#user-permanent" data-toggle="tab">{% trans "Actions" %}</a></li>
+      <li><a href="#user-permanent" data-bs-toggle="tab">{% trans "Actions" %}</a></li>
     {% endif %}
-    <li><a href="#user-metadata" data-toggle="tab">{% trans "User Metadata" %}</a></li>
+    <li><a href="#user-metadata" data-bs-toggle="tab">{% trans "User Metadata" %}</a></li>
   </ul>
   <div class="tab-content" id="settings">
     <div class="tab-pane" id="basic-info">
-      <div class="panel-body">
+      <div class="card-body">
         {% include 'users/partials/basic_info_form.html' with user_type="mobile"%}
       </div>
     </div>
 
     <div class="tab-pane" id="groups">
-      <div class="panel-body">
+      <div class="card-body">
         {% include 'users/partials/commcare_user_groups.html' %}
       </div>
     </div>
     {% if commtrack %}
       <div class="tab-pane" id="commtrack-data">
-        <div class="panel-body">
+        <div class="card-body">
           {% if couch_user.user_location_id %}
-            <a class="btn btn-default" href="{% url "edit_location" domain couch_user.user_location_id %}">
+            <a class="btn btn-outline-primary" href="{% url "edit_location" domain couch_user.user_location_id %}">
               <i class="fa-solid fa-up-right-from-square"></i> {% trans "User Location" %}
             </a>
           {% endif %}
@@ -76,7 +76,7 @@
             <div class="list-group">
               {% for location in support_info.locations %}
                 <a href="{% url "edit_location" domain location.location_id %}" class="list-group-item">
-                  {{ location.get_path_display }} <span class="badge">{{ location.location_type.name }}</span>
+                  {{ location.get_path_display }} <span class="badge rounded-pill">{{ location.location_type.name }}</span>
                 </a>
               {% endfor %}
             </div>
@@ -85,21 +85,21 @@
       </div>
     {% endif %}
     <div class="tab-pane" id="user-password">
-      <div class="panel-body">
+      <div class="card-body">
         {% if not request.is_view_only %}
           <form id="reset-password-form" class="form-horizontal" action="{% url "change_password" domain couch_user.user_id %}" method="POST">
-            {% crispy reset_password_form %}
+            {% crispy reset_password_form %}  {# todo B5: crispy #}
           </form>
         {% endif %}
       </div>
     </div>
     {% if not is_currently_logged_in_user and not request.is_view_only %}
       <div class="tab-pane" id="user-permanent">
-        <div class="panel-body">
+        <div class="card-body">
           <div class="form form-horizontal">
 
             {% if request|request_has_privilege:"LOADTEST_USERS" %}
-              {% crispy form_user_update.action_form %}
+              {% crispy form_user_update.action_form %}  {# todo B5: crispy #}
             {% endif %}
 
             <fieldset>
@@ -129,7 +129,7 @@
               <div class="alert alert-danger">
                 <p><i class="fa-solid fa-triangle-exclamation"></i> {% trans 'The following action is permanent!' %}</p>
                 <p>
-                  <a class="btn btn-danger" href="#delete_user_{{ couch_user.user_id }}" data-toggle="modal">
+                  <a class="btn btn-outline-danger" href="#delete_user_{{ couch_user.user_id }}" data-bs-toggle="modal">
                     <i class="fa-regular fa-trash-can"></i> {% trans "Delete Mobile Worker" %}
                   </a>
                 </p>
@@ -157,7 +157,7 @@
                     method="post">
                 <input type="hidden" name="demo_mode" value="{{ couch_user.is_demo_user|yesno:"no,yes" }}" />
                 {% csrf_token %}
-                <button type="submit" class="btn btn-default">
+                <button type="submit" class="btn btn-outline-primary">
                   {% if couch_user.is_demo_user %}
                     <i class="icon-trash"></i>
                     {% trans 'Turn Off Demo Mode for this Mobile Worker' %}
@@ -173,7 +173,7 @@
                       action="{% url "reset_demo_user_restore" domain couch_user.user_id %}"
                       method="post">
                   {% csrf_token %}
-                  <button type="submit" class="btn btn-default">
+                  <button type="submit" class="btn btn-outline-primary">
                     <i class="icon-refresh"></i>
                     {% trans 'Refresh Demo Mode data' %}
                   </button>
@@ -190,7 +190,7 @@
       </div>
     {% endif %}
     <div class="tab-pane" id="user-metadata">
-      <div class="panel-body">
+      <div class="card-body">
         <table class="table">
           <tbody>
             <tr>
@@ -240,7 +240,7 @@
                   <tbody>
                     {% for device in couch_user.devices|dictsortreversed:"last_used" %}
                       <tr>
-                        <td style="font-family: monospace">{{ device.device_id }}</td>
+                        <td style="font-family: monospace">{{ device.device_id }}</td>  {# todo B5: inline-style #}
                         <td>{{ device.last_used|to_user_time:request }}</td>
                       </tr>
                     {% endfor %}
@@ -256,19 +256,19 @@
 {% endblock %}
 
 {% block modals %} {{ block.super }}
-  {% include 'users/partials/bootstrap3/basic_info_modals.html' with user_type='mobile' %}
+  {% include 'users/partials/bootstrap5/basic_info_modals.html' with user_type='mobile' %}
   {% if not is_currently_logged_in_user %}
     <div id="delete_user_{{ couch_user.user_id }}" class="modal fade">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>  {# todo B5: css-close #}
             <h4 class="modal-title">{% blocktrans with couch_user.human_friendly_name as friendly_name %}Delete Mobile Worker {{ friendly_name }}?{% endblocktrans %}
               <small>{% trans "Permanent Action" %}</small>
             </h4>
           </div>
           <form class="form-horizontal"
-                style="margin: 0; padding: 0"
+                style="margin: 0; padding: 0"  {# todo B5: inline-style #}
                 action="{% url "delete_commcare_user" domain couch_user.user_id %}"
                 method="post"
                 data-bind="submit: submit">
@@ -311,8 +311,8 @@
               <input class="form-control" data-bind="value: signOff, valueUpdate: 'textchange'" />
             </div>
             <div class="modal-footer">
-              <a href="#" data-dismiss="modal" class="btn btn-default">{% trans 'Cancel' %}</a>
-              <button type="submit" class="btn btn-danger" data-bind="
+              <a href="#" data-bs-dismiss="modal" class="btn btn-outline-primary">{% trans 'Cancel' %}</a>
+              <button type="submit" class="btn btn-outline-danger" data-bind="
                              css: {disabled: disabled()},
                              attr: {disabled: disabled()}
                          ">
