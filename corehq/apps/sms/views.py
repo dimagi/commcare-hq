@@ -367,6 +367,7 @@ class TestSMSMessageView(BaseDomainView):
     def section_url(self):
         return reverse('sms_default', args=(self.domain,))
 
+    @method_decorator(use_bootstrap5)
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))
     def dispatch(self, request, *args, **kwargs):
