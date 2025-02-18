@@ -29,7 +29,7 @@ hqDefine("users/js/mobile_workers",[
     'users/js/custom_data_fields',
     'hqwebapp/js/components/pagination',
     'hqwebapp/js/components/search_box',
-    'hqwebapp/js/bootstrap3/validators.ko', // email address validation
+    'hqwebapp/js/bootstrap5/validators.ko', // email address validation
     'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min',
     'commcarehq',
 ], function (
@@ -112,7 +112,7 @@ hqDefine("users/js/mobile_workers",[
                 method: 'POST',
                 url: initialPageData.reverse(urlName, self.user_id()),
                 success: function (data) {
-                    $modal.modal('hide');
+                    $modal.modal('hide');  /* todo B5: js-modal */
                     if (data.success) {
                         self.action_error('');
                     } else {
@@ -120,7 +120,7 @@ hqDefine("users/js/mobile_workers",[
                     }
                 },
                 error: function () {
-                    $modal.modal('hide');
+                    $modal.modal('hide');  /* todo B5: js-modal */
                     self.action_error(gettext("Issue communicating with server. Try again."));
                 },
             });
@@ -135,7 +135,7 @@ hqDefine("users/js/mobile_workers",[
                 url: initialPageData.reverse(urlName, self.user_id()),
                 success: function (data) {
                     $modal.find(".btn").enableButton();
-                    $modal.modal('hide');
+                    $modal.modal('hide');  /* todo B5: js-modal */
                     if (data.success) {
                         self.action_error('');
                     } else {
@@ -145,7 +145,7 @@ hqDefine("users/js/mobile_workers",[
                 },
                 error: function () {
                     $modal.find(".btn").enableButton();
-                    $modal.modal('hide');
+                    $modal.modal('hide');  /* todo B5: js-modal */
                     self.action_error(gettext("Issue communicating with server. Try again."));
                 },
             });
@@ -160,7 +160,7 @@ hqDefine("users/js/mobile_workers",[
                 method: 'POST',
                 url: initialPageData.reverse(urlName, self.user_id()),
                 success: function (data) {
-                    $modal.modal('hide');
+                    $modal.modal('hide');  /* todo B5: js-modal */
                     if (data.success) {
                         self.action_error('');
                     } else {
@@ -169,7 +169,7 @@ hqDefine("users/js/mobile_workers",[
 
                 },
                 error: function () {
-                    $modal.modal('hide');
+                    $modal.modal('hide');  /* todo B5: js-modal */
                     $modal.find(".btn").removeSpinnerFromButton();
                     self.action_error(gettext("Issue communicating with server. Try again."));
                 },
@@ -542,7 +542,7 @@ hqDefine("users/js/mobile_workers",[
             }
 
             if (options.show_deactivate_after_date) {
-                $('#id_deactivate_after_date').datetimepicker({
+                $('#id_deactivate_after_date').datetimepicker({  /* todo B5: js-datetimepicker */
                     format: 'MM-y',
                 });
             }
@@ -594,7 +594,7 @@ hqDefine("users/js/mobile_workers",[
         });
 
         self.submitNewUser = function () {
-            $("#new-user-modal").modal('hide');
+            $("#new-user-modal").modal('hide');  /* todo B5: js-modal */
             var newUser = userModel(ko.mapping.toJS(self.stagedUser));
             self.newUsers.push(newUser);
             newUser.creation_status(STATUS.PENDING);
