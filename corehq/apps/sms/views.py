@@ -771,6 +771,7 @@ def get_contact_name_for_chat(contact, domain_obj):
     return contact_name
 
 
+@use_bootstrap5
 @require_permission(HqPermissions.edit_messaging)
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def chat(request, domain, contact_id, vn_id=None):
