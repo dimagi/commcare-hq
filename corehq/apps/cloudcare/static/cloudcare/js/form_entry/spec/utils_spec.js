@@ -65,5 +65,6 @@ describe('Formplayer utils', function () {
         assert.equal(Levenshtein.get("mark", "mar"), 1);
         assert.equal(Levenshtein.get("maron", "maroon"), 1);
         assert.equal(Levenshtein.get("moon", "maroon"), 2);
+        assert.equal(Levenshtein.get("will", "wilt"), 1);
     });
 });
