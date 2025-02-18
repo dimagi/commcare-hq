@@ -652,6 +652,7 @@ class ListRolesView(BaseRoleAccessView):
     urlname = 'roles_and_permissions'
 
     @method_decorator(require_can_view_roles)
+    @method_decorator(use_bootstrap5)
     def dispatch(self, request, *args, **kwargs):
         return super(ListRolesView, self).dispatch(request, *args, **kwargs)
 

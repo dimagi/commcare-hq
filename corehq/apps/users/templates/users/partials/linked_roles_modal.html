@@ -4,20 +4,19 @@
     <div class="modal-dialog">
         <div class="modal-content">
         <div class="modal-header">
-            <button type="button"
-                    class="btn-close" data-bs-dismiss="modal">  {# todo B5: css-close #}
-            <span aria-hidden="true">&times;</span>
-            </button>
             <h3 class="modal-title">
                 <i class="fa fa-link"></i>
-                Unlock Linked Roles?
+                {% trans "Unlock Linked Roles?" %}
             </h3>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans "Close" %}"></button>
         </div>
         <div class="modal-body">
+          {% blocktrans %}
             <p>Linked Roles are roles that are controlled by a separate project space linked to this project space.
                 Click <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management">here</a> to learn more.</p>
             <p>Changes made to Linked Roles may be overwritten by the next updates from the linked project space,
                 and may also affect solutions on this project space.</p>
+          {% endblocktrans %}
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-outline-danger" id="confirm-unlock" data-bs-dismiss="modal" data-bind="click: $root.toggleLinkedRoles">{% trans "Unlock" %}</button>
