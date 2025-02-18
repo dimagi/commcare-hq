@@ -2004,6 +2004,7 @@ class WhatsAppTemplatesView(BaseMessagingSectionView):
     urlname = 'whatsapp_templates_view'
     template_name = "sms/whatsapp_templates.html"
 
+    @method_decorator(use_bootstrap5)
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         return super(WhatsAppTemplatesView, self).dispatch(request, *args, **kwargs)
