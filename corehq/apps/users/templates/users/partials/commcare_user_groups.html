@@ -28,11 +28,11 @@
           <legend>
             {% trans "Group Memberships" %}
           </legend>
-          <div class="form-group">
-            <label class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label">
+          <div class="form-group">  {# todo B5: css-form-group #}
+            <label class="col-sm-12 col-md-4 col-lg-4 col-xl-2 form-label">
               {% trans "Group Membership" %}
             </label>
-            <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6 controls-text">
+            <div class="col-sm-12 col-md-8 col-lg-8 col-xl-6 controls-text">
               <ul>
                 {% for group in group_names %}
                   <li>{{ group }}</li>
@@ -42,7 +42,7 @@
           </div>
         </div>
       {% else %}
-        {% crispy group_form %}
+        {% crispy group_form %}  {# todo B5: crispy #}
       {% endif %}
     {% endif %}
   </form>
