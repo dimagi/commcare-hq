@@ -628,6 +628,7 @@ class ChatOverSMSView(BaseMessagingSectionView):
     template_name = 'sms/chat_contacts.html'
     page_title = _("Chat over SMS")
 
+    @use_bootstrap5
     @use_datatables
     def dispatch(self, *args, **kwargs):
         return super(ChatOverSMSView, self).dispatch(*args, **kwargs)

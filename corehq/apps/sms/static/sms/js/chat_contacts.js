@@ -3,7 +3,8 @@ hqDefine('sms/js/chat_contacts', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'datatables.bootstrap',
+    'datatables.net',
+    'datatables.net-bs5',
     'commcarehq',
 ], function (
     $,
