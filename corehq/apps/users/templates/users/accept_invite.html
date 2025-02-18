@@ -3,7 +3,7 @@
 {% load field_tags %}
 {% load hq_shared_tags %}
 
-{% js_entry_b3 'users/js/accept_invite' %}
+{% js_entry 'users/js/accept_invite' %}
 
 {% block title %}{% trans "Invitation to join the " %}{{ invite_to }} {{ invite_type }}{% endblock title %}
 
@@ -12,7 +12,7 @@
 {% block login-content %}
   <div class="container-fluid">
     <div class="row">
-      <div class="col-xs-12">
+      <div class="col-sm-12">
         <div class="reg-form-container sign-in-container">
           {% if request.user.is_authenticated %}
             <div class="form-bubble form-bubble-lg">
@@ -63,13 +63,13 @@
                 </p>
                 <p>
                   {% trans 'Please' %}
-                  <a href="?switch=true" class="btn btn-default">{% trans 'switch accounts' %}</a>
+                  <a href="?switch=true" class="btn btn-outline-primary">{% trans 'switch accounts' %}</a>
                   {% trans 'or' %}
-                  <a href="?create=true" class="btn btn-default">{% trans "create a web account" %}</a>
+                  <a href="?create=true" class="btn btn-outline-primary">{% trans "create a web account" %}</a>
                 </p>
               {% endif %}
             </div>
-            <div class="well sign-up-bubble form-bubble-purple">
+            <div class="card sign-up-bubble form-bubble-purple">  {# todo B5: css-well #}
               <h2 class="text-center break-all-words">
                 {% blocktrans with formatted_username as username %}
                   Not {{ username }}?
@@ -106,8 +106,8 @@
               {% endif %}
               <form name="form" method="post" action="">
                 {% if is_sso %}
-                  <div class="form-group">
-                    <label class="control-label">{% trans "Username" %}</label>
+                  <div class="form-group">  {# todo B5: css-form-group #}
+                    <label class="form-label">{% trans "Username" %}</label>
                     <p class="lead">
                       {{ invited_user }}
                     </p>
@@ -116,7 +116,7 @@
                 {% include 'users/partials/register_user_form_fields.html' %}
               </form>
             </div>
-            <div class="well sign-up-bubble form-bubble-purple">
+            <div class="card sign-up-bubble form-bubble-purple">  {# todo B5: css-well #}
               <h2 class="text-center">{% trans 'Already have an account?' %}</h2>
               <p class="text-center">
                 <a href="{% url "login" %}?next={{ request.path }}" class="btn btn-purple btn-lg">
