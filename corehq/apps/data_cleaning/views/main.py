@@ -1,4 +1,3 @@
-import uuid
 from memoized import memoized
 
 from django.urls import reverse
@@ -21,8 +20,9 @@ class CleanCasesMainView(BaseProjectDataView):
 
     @property
     def page_context(self):
+        from corehq.apps.data_cleaning.views.forms import SetupCaseSessionFormView
         return {
-            "session_id": uuid.uuid4(),
+            "setup_case_session_form_url": reverse(SetupCaseSessionFormView.urlname, args=(self.domain,)),
         }
 
 

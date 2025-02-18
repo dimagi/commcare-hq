@@ -6,10 +6,18 @@
 {% js_entry "data_cleaning/js/clean_cases_main" %}
 
 {% block page_content %}
-  <p>
-    Placeholder for selecting case type.
-  </p>
-  <p>
-    <a class="btn btn-primary" href="{% url "data_cleaning_cases_session" domain session_id %}">Next</a>
-  </p>
+  <div class="card">
+    <div class="card-body">
+      <h3 class="card-title">
+        {% trans "Start a Cleaning Session" %}
+      </h3>
+      <div
+        class="mt-3"
+        hx-get="{{ setup_case_session_form_url }}"
+        hx-trigger="load"
+      >
+        {% include "data_cleaning/partials/loading_indicator.html" %}
+      </div>
+    </div>
+  </div>
 {% endblock %}
