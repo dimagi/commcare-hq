@@ -1,9 +1,9 @@
-{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% js_entry_b3 'users/js/invite_web_user' %}
+{% js_entry 'users/js/invite_web_user' %}
 
 {% block page_content %}
   {% initial_page_data 'custom_fields_slugs' custom_fields_slugs %}
@@ -14,6 +14,6 @@
 
   <div id="invite-web-user-form"
        class="ko-template">
-    {% crispy registration_form %}
+    {% crispy registration_form %}  {# todo B5: crispy #}
   </div>
 {% endblock %}
