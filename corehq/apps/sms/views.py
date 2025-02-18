@@ -1245,6 +1245,7 @@ class AddGatewayViewMixin(object):
         raise NotImplementedError()
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class AddDomainGatewayView(AddGatewayViewMixin, BaseMessagingSectionView):
     urlname = 'add_domain_gateway'
     template_name = 'sms/add_gateway.html'

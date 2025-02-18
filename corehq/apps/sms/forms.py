@@ -949,8 +949,9 @@ class BackendForm(Form):
         if not self.is_global_backend:
             fields.extend([
                 crispy.Field(
-                    twbscrispy.PrependedText(
-                        'give_other_domains_access', '', data_bind="checked: share_backend"
+                    crispy.Div(
+                        'give_other_domains_access',
+                        data_bind="checked: share_backend"
                     )
                 ),
                 crispy.Div(
