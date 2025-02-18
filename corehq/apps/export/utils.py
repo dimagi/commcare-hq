@@ -1,4 +1,3 @@
-import importlib
 from django.http import Http404
 
 from couchdbkit import ResourceNotFound
@@ -71,13 +70,13 @@ def get_default_export_settings_if_available(domain):
 
 
 def get_transform_function(func_name):
-    module = importlib.import_module('corehq.apps.export.transforms')
+    import corehq.apps.export.transforms as module
     return getattr(module, func_name)
 
 
 def get_deid_transform_function(func_name):
     if func_name == DEID_TRANSFORM_FUNCTIONS[DEID_DATE_TRANSFORM]:
-        module = importlib.import_module('couchexport.deid')
+        import couchexport.deid as module
         return getattr(module, func_name)
     elif func_name == DEID_TRANSFORM_FUNCTIONS[DEID_ID_TRANSFORM]:
         from corehq.apps.export.models import DeIdMapping
