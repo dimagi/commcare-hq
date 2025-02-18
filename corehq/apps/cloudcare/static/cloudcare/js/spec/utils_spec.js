@@ -1,4 +1,4 @@
-import sinon from "sinon/pkg/sinon";
+import sinon from "sinon";
 import constants from "cloudcare/js/formplayer/constants";
 import utils from "cloudcare/js/utils";
 

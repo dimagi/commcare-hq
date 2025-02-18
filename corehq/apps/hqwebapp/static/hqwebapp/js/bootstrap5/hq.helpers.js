@@ -138,11 +138,15 @@ hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
             // Ignore HTTP methods that do not require CSRF protection
             if (!/^(GET|HEAD|OPTIONS|TRACE)$/.test(settings.type)) {
                 if (!this.crossDomain) {
-                    var $csrfToken = $("#csrfTokenContainer").val();
-                    xhr.setRequestHeader("X-CSRFToken", $csrfToken);
+                    var csrfToken = $("#csrfTokenContainer").val();
+                    if (csrfToken) {
+                        xhr.setRequestHeader("X-CSRFToken", csrfToken);
+                    }
                 }
                 var xsrfToken = $.cookie('XSRF-TOKEN');
-                xhr.setRequestHeader('X-XSRF-TOKEN', xsrfToken);
+                if (xsrfToken) {
+                    xhr.setRequestHeader('X-XSRF-TOKEN', xsrfToken);
+                }
             }
             xhr.withCredentials = true;
         },
