@@ -29,36 +29,36 @@ class KycVerifyTable(BaseHtmxTable):
         accessor='id',
         attrs={
             'th__input': {'name': 'select_all'},
-        }
+        },
     )
     first_name = columns.Column(
-        verbose_name=_("First Name"),
+        verbose_name=_('First Name'),
     )
     last_name = columns.Column(
-        verbose_name=_("Last Name"),
+        verbose_name=_('Last Name'),
     )
     phone_number = columns.Column(
-        verbose_name=_("Phone Number"),
+        verbose_name=_('Phone Number'),
     )
     email = columns.Column(
-        verbose_name=_("Email Address"),
+        verbose_name=_('Email Address'),
     )
     national_id_number = columns.Column(
-        verbose_name=_("National ID Number"),
+        verbose_name=_('National ID Number'),
     )
     street_address = columns.Column(
-        verbose_name=_("Street Address"),
+        verbose_name=_('Street Address'),
     )
     city = columns.Column(
-        verbose_name=_("City"),
+        verbose_name=_('City'),
     )
     post_code = columns.Column(
-        verbose_name=_("Post Code"),
+        verbose_name=_('Post Code'),
     )
     country = columns.Column(
-        verbose_name=_("Country"),
+        verbose_name=_('Country'),
     )
     verify_btn = columns.TemplateColumn(
         template_name='kyc/partials/kyc_verify_button.html',
-        verbose_name=_("Verify"),
+        verbose_name=_('Verify'),
     )
