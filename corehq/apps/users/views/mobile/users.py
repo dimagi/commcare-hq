@@ -440,6 +440,7 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
         }
 
     @method_decorator(domain_admin_required)
+    @method_decorator(use_bootstrap5)
     def dispatch(self, request, *args, **kwargs):
         if self.account.date_confirmed_extra_charges is not None:
             return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[self.domain]))
@@ -574,6 +575,7 @@ class BaseManageCommCareUserView(BaseUserSettingsView):
         }]
 
 
+@method_decorator([use_bootstrap5], name='dispatch')
 class ConfirmTurnOffDemoModeView(BaseManageCommCareUserView):
     template_name = 'users/confirm_turn_off_demo_mode.html'
     urlname = 'confirm_turn_off_demo_mode'
@@ -1470,6 +1472,7 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
     urlname = "commcare_user_confirm_account"
     strict_domain_fetching = True
 
+    @use_bootstrap5
     @toggles.any_toggle_enabled(toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS, toggles.TWO_STAGE_USER_PROVISIONING)
     def dispatch(self, request, *args, **kwargs):
         return super(CommCareUserConfirmAccountView, self).dispatch(request, *args, **kwargs)

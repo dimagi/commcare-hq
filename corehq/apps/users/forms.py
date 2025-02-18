@@ -1378,7 +1378,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
             ),
             hqcrispy.FormActions(
                 crispy.HTML(
-                    '<a href="%(user_list_url)s" class="btn btn-default">%(text)s</a>' % {
+                    '<a href="%(user_list_url)s" class="btn btn-outline-primary mx-2">%(text)s</a>' % {
                         'user_list_url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
                         'text': _("Back to Mobile Workers List")
                     }
