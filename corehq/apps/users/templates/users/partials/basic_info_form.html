@@ -9,19 +9,19 @@
   <input type="hidden" name="form_type" value="update-user" />
   <fieldset>
     <legend>{{ edit_user_form_title }}</legend>
-    <div class="form-group">
-      <label class="control-label col-sm-3 col-md-2">{% trans 'Username' %}</label>
-      <div class="col-sm-9 col-md-8 col-lg-6">
+    <div class="form-group">  {# todo B5: css-form-group #}
+      <label class="form-label col-md-3 col-lg-2">{% trans 'Username' %}</label>
+      <div class="col-md-9 col-lg-8 col-xl-6">
         <p class="form-control-static">{{ couch_user.html_username }}</p>
       </div>
     </div>
-    {% crispy form_user_update.user_form %}
+    {% crispy form_user_update.user_form %}  {# todo B5: crispy #}
     {% if data_fields_form.fields or data_fields_form.data %}
-      {% crispy data_fields_form %}
+      {% crispy data_fields_form %}  {# todo B5: crispy #}
     {% endif %}
     {% if not request.is_view_only %}
       <div class="form-actions">
-        <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
+        <div class="offset-md-3 offset-lg-2 col-md-9 col-lg-8 col-xl-6">
           <button type="submit" class="btn btn-primary disable-on-submit" disabled>{% trans 'Update Information' %}</button>
         </div>
       </div>
@@ -41,10 +41,10 @@
       {% else %}
         <legend>{% trans 'Location Settings' %}</legend>
       {% endif %}
-      {% crispy update_form %}
+      {% crispy update_form %}  {# todo B5: crispy #}
     </fieldset>
     <div class="form-actions">
-      <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
+      <div class="offset-md-3 offset-lg-2 col-md-9 col-lg-8 col-xl-6">
         <button type="submit" class="btn btn-primary disable-on-submit">{% trans 'Update CommCare Supply Settings' %}</button>
       </div>
     </div>
