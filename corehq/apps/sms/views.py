@@ -2056,6 +2056,7 @@ class ConnectMessagingUserView(BaseMessagingSectionView):
     template_name = 'sms/connect_messaging_user.html'
     page_title = _("Connect Messaging Users")
 
+    @use_bootstrap5
     @method_decorator(toggles.COMMCARE_CONNECT.required_decorator())
     @method_decorator(domain_admin_required)
     def dispatch(self, *args, **kwargs):
