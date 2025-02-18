@@ -18,7 +18,7 @@ First thing is to install the coverage.py library::
 Now you can run your tests through the coverage.py program::
 
 
-        $ coverage run manage.py test commtrack
+        $ coverage run `which pytest` commtrack
 
 
 This will create a binary `commcare-hq/.coverage` file (that is already

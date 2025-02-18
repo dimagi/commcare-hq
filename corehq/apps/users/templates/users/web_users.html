@@ -12,6 +12,7 @@
   {% registerurl "delete_request" domain %}
   {% registerurl "paginate_web_users" domain %}
   {% registerurl "reinvite_web_user" domain %}
+  {% registerurl "edit_invitation" domain '---' %}
 
   <p class="lead">
     {% blocktrans with hq_name=commcare_hq_names.COMMCARE_HQ_NAME cc_name=commcare_hq_names.COMMCARE_NAME %}
@@ -270,10 +271,16 @@
               <td>
                 {% if not request.is_view_only %}
                 <div data-bind="visible: !actionMessage()">
+                  <a data-bind="attr: {href: inviteEditUrl}" style="text-decoration:none;">
+                    <button type="button" class="btn btn-default" data-bind="disable: actionInProgress">
+                      <i class="fa-regular fa-edit"></i>
+                      {% trans "Edit" %}
+                    </button>
+                  </a>
                   <button type="button" class="resend-invite btn btn-default"
                           data-bind="click: resend, disable: actionInProgress">
                     <i class="fa-regular fa-envelope"></i>
-                    {% trans "Resend Invitation" %}
+                    {% trans "Resend" %}
                   </button>
                   <button type="button" class="btn btn-danger delete-invitation"
                           data-bind="click: $root.confirmRemoveInvitation, disable: actionInProgress">

@@ -1,0 +1,21 @@
+<div class="row mt-4">
+  {% for report in reports %}
+    <div class="col-md-6 col-lg-6 col-xl-3">
+      <div
+        id="{{ report.slug }}"
+        class="card text-center report-panel mb-3"
+        data-slug="{{ report.slug }}"
+      >
+        {% if report.is_active %}
+          <div class="fs-5">{{ report.description }}</div>
+        {% else %}
+          <div class="fs-2">
+            {% blocktrans %}
+              Not Active
+            {% endblocktrans %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  {% endfor %}
+</div>

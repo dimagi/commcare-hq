@@ -1933,7 +1933,7 @@ class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedVi
         }
         return data
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         tableau_viz = TableauVisualization.objects.get(
             pk=item_id,
             domain=self.domain,

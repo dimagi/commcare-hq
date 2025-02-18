@@ -23,8 +23,10 @@ from memoized import memoized
 import codecs
 
 from corehq.apps.accounting.decorators import always_allow_project_access
+from corehq.apps.analytics.tasks import record_event
 from corehq.apps.enterprise.decorators import require_enterprise_admin
 from corehq.apps.enterprise.exceptions import TooMuchRequestedDataError
+from corehq.apps.enterprise.metric_events import ENTERPRISE_REPORT_REQUEST
 from corehq.apps.enterprise.mixins import ManageMobileWorkersMixin
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.enterprise.tasks import clear_enterprise_permissions_cache_for_all_users
@@ -60,7 +62,6 @@ from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_can_edit_or_view_web_users
 
 from corehq.const import USER_DATE_FORMAT
-from corehq import toggles
 
 
 @use_tempusdominus
@@ -85,14 +86,26 @@ def platform_overview(request, domain):
 
     context.update({
         'max_date_range_days': EnterpriseFormReport.MAX_DATE_RANGE_DAYS,
-        'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user) for slug in (
-            EnterpriseReport.DOMAINS,
-            EnterpriseReport.WEB_USERS,
-            EnterpriseReport.MOBILE_USERS,
-            EnterpriseReport.FORM_SUBMISSIONS,
-            EnterpriseReport.ODATA_FEEDS,
-            EnterpriseReport.SMS,
-        )],
+        'groups': [
+            {'name': _('Projects Overview'),
+             'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
+                        for slug in (EnterpriseReport.DOMAINS,
+                                     EnterpriseReport.FORM_SUBMISSIONS,
+                                     EnterpriseReport.SMS,)]},
+            {'name': _('User Management'),
+             'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
+                        for slug in (EnterpriseReport.WEB_USERS,
+                                     EnterpriseReport.MOBILE_USERS,
+                                     EnterpriseReport.COMMCARE_VERSION_COMPLIANCE,
+                                     EnterpriseReport.APP_VERSION_COMPLIANCE,)]},
+            {'name': _('Data Management & Export'),
+             'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
+                        for slug in (EnterpriseReport.ODATA_FEEDS,
+                                     EnterpriseReport.DATA_EXPORTS,
+                                     EnterpriseReport.DATA_FORWARDING,
+                                     EnterpriseReport.CASE_MANAGEMENT,)]},
+        ],
+        'uses_date_range': [EnterpriseReport.FORM_SUBMISSIONS, EnterpriseReport.SMS],
         'metric_type': 'Platform Overview',
     })
 
@@ -104,7 +117,6 @@ def platform_overview(request, domain):
 @always_allow_project_access
 @require_enterprise_admin
 @login_and_domain_required
-@toggles.ENTERPRISE_DASHBOARD_IMPROVEMENTS.required_decorator()
 def security_center(request, domain):
     if not has_privilege(request, privileges.PROJECT_ACCESS):
         return HttpResponseRedirect(reverse(EnterpriseBillingStatementsView.urlname, args=(domain,)))
@@ -121,8 +133,15 @@ def security_center(request, domain):
     )
 
     context.update({
-        'reports': [],
+        'groups': [
+            {'name': '',
+             'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
+                        for slug in (EnterpriseReport.API_KEYS,
+                                     EnterpriseReport.TWO_FACTOR_AUTH)]},
+        ],
         'metric_type': 'Security Center',
+        'max_date_range_days': EnterpriseFormReport.MAX_DATE_RANGE_DAYS,
+        'uses_date_range': [],
     })
 
     return render(request, "enterprise/project_dashboard.html", context)
@@ -196,6 +215,11 @@ def enterprise_dashboard_email(request, domain, slug):
         'title': report.title,
         'email': request.couch_user.username,
     })
+
+    record_event(ENTERPRISE_REPORT_REQUEST, request.couch_user, {
+        'report_type': slug
+    })
+
     return JsonResponse({'message': message})
 
 

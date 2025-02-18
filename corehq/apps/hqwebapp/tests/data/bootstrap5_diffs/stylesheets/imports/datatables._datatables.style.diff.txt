@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,102 +1,54 @@
+@@ -1,102 +1,76 @@
 -.dataTables_info,
 -.dataTables_length {
 -  display: inline-block;
@@ -50,13 +50,22 @@
 +    color: $white;
 +    white-space: nowrap;
 +
++    &.sorting_asc,
++    &.sorting_desc {
++      background-color: $blue-600;
++    }
++
 +    &:nth-child(odd) {
 +      background-color: $blue-700;
++      &.sorting_asc,
++      &.sorting_desc {
++        background-color: $blue-500;
++      }
 +    }
 +
 +    &.dtfc-fixed-left,
 +    &.dtfc-fixed-right {
-+      background-color: $blue !important;
++      background-color: $purple !important;
 +    }
 +
 +    &.sorting_asc::before,
@@ -78,8 +87,12 @@
 +    &.odd td.dtfc-fixed-left,
 +    &.odd td.dtfc-fixed-right {
 +      background-color: lighten($gray-200, 5%);
++    }
++
++    &.even td.dtfc-fixed-left {
++      background-color: $gray-100;
      }
--  }
+   }
 -  &.headerSortAsc {
 -    .dt-sort-icon:before {
 -      content: "\e155";
@@ -107,21 +120,27 @@
 -      .pagination {
 -        margin: 0;
 -      }
-+    &.even td.dtfc-fixed-left {
-+      background-color: $gray-100;
++  tbody tr td[class^="sorting_"] {
++    background-color: $gray-200;
++    &:nth-child(odd) {
++      background-color: lighten($gray-200, 5%);
      }
    }
  }
  
 -.dataTable td.text-xs {
 -  font-size: .8em;
++
++.table-hq-report tfoot tr td {
++  background-color: $blue-800;
++  color: $white;
+ }
+ 
+-.dataTable td.text-sm {
+-  font-size: .9em;
 +.dtfc-right-top-blocker:last-child {
 +  display: none !important;
  }
--
--.dataTable td.text-sm {
--  font-size: .9em;
--}
 -
 -.dataTable td.text-lg {
 -  font-size: 1.1em;

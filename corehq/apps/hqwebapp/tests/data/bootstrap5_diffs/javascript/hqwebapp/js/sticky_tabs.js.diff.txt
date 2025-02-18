@@ -10,8 +10,8 @@
 -    "bootstrap",    // needed for $.tab
 +    "es6!hqwebapp/js/bootstrap5_loader",    // needed for $.tab
  ], function (
--    $
-+    $, bootstrap
+-    $,
++    $, bootstrap,
  ) {
      var getHash = function () {
          if (window.location.hash) {
@@ -31,7 +31,7 @@
 +            tabController;
 +
 +        // make sure we don't treat all anchor tags as a sticky tab
-+        if ($tabFromUrl && $tabFromUrl.parents('.sticky-tabs').length === 0) return;
++        if ($tabFromUrl && $tabFromUrl.parents('.sticky-tabs').length === 0) {return;}
  
          if ($tabFromUrl && $tabFromUrl.length) {
 -            $tabFromUrl.tab('show');

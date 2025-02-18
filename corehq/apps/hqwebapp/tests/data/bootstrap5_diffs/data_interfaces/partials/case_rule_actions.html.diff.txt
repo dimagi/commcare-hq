@@ -1,0 +1,101 @@
+--- 
++++ 
+@@ -16,14 +16,14 @@
+     </div>
+   {% endif %}
+   <div data-bind="template: {name: getKoTemplateId, foreach: actions, afterRender: disableActionField}"></div>
+-  <div class="form-group">
+-    <div class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label">
++  <div class="form-group">  {# todo B5: css-form-group #}
++    <div class="col-sm-12 col-md-4 col-lg-4 col-xl-2 form-label">
+       <div class="btn-group">
+-        <button class="btn btn-default" type="button" data-toggle="dropdown">
++        <button class="btn btn-outline-primary" type="button" data-bs-toggle="dropdown">  {# todo B5: css-dropdown #}
+           <i class="fa fa-plus"></i>
+           {% trans "Add Action" %}
+         </button>
+-        <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
++        <button class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">  {# todo B5: css-dropdown #}
+           <span class="caret"></span>
+         </button>
+         <ul class="dropdown-menu">
+@@ -42,19 +42,19 @@
+ {# Template for the button that removes an action #}
+ 
+ <script type="text/html" id="remove-action">
+-  <div class="col-xs-1">
+-    <button type="button" class="btn btn-danger" data-bind="click: $parent.removeAction"><i class="fa-solid fa-xmark"></i></button>
++  <div class="col-sm-1">
++    <button type="button" class="btn btn-outline-danger" data-bind="click: $parent.removeAction"><i class="fa-solid fa-xmark"></i></button>
+   </div>
+ </script>
+ 
+-{# Template for close case action #}
++{# Template for btn-close case action #}  {# todo B5: css-close #}
+ {# An instance of this template is bound to an instance of the js object CloseCaseDefinition #}
+ 
+ <script type="text/html" id="close-case-action">
+-  <div class="form-group">
++  <div class="form-group">  {# todo B5: css-form-group #}
+     <div data-bind="template: {name: 'remove-action'}"></div>
+-    <label class="control-label col-xs-2">{% trans "Close the case" %}</label>
+-    <span class="help-block col-xs-8">
++    <label class="form-label col-sm-2">{% trans "Close the case" %}</label>
++    <span class="help-block col-sm-8">
+             <i class="fa fa-exclamation-circle"></i>
+             {% trans "All cases matching the above criteria will be closed" %}
+         </span>
+@@ -65,22 +65,22 @@
+ {# An instance of this template is bound to an instance of the js object UpdatePropertyDefinition #}
+ 
+ <script type="text/html" id="update-case-property-action">
+-  <div class="form-group">
++  <div class="form-group">  {# todo B5: css-form-group #}
+     <div data-bind="template: {name: 'remove-action'}"></div>
+-    <label class="control-label col-xs-2">{% trans "Set case property" %}</label>
+-    <div class="controls col-xs-2">
++    <label class="form-label col-sm-2">{% trans "Set case property" %}</label>
++    <div class="controls col-sm-2">
+       <case-property-input params="
+         valueObservable: name,
+         caseTypeObservable: $root.caseType,
+       "></case-property-input>
+     </div>
+-    <div class="controls col-xs-2">
+-      <select class="select form-control" data-bind="value: value_type" required>
++    <div class="controls col-sm-2">
++      <select class="select form-select" data-bind="value: value_type" required>
+         <option value="{{ form.constants.VALUE_TYPE_EXACT }}">{% trans 'to the exact value' %}</option>
+         <option value="{{ form.constants.VALUE_TYPE_CASE_PROPERTY }}">{% trans 'to the value from other case property' %}</option>
+       </select>
+     </div>
+-    <div class="controls col-xs-2">
++    <div class="controls col-sm-2">
+       <input type="text" class="textinput form-control" data-bind="value: value, visible: value_type() === '{{ form.constants.VALUE_TYPE_EXACT }}'" required />
+       <!-- ko if: value_type() === '{{ form.constants.VALUE_TYPE_CASE_PROPERTY }}' -->
+         <case-property-input params="
+@@ -96,18 +96,18 @@
+ {# An instance of this template is bound to an instance of the js object CustomActionDefinition #}
+ 
+ <script type="text/html" id="custom-action">
+-  <div class="form-group">
++  <div class="form-group">  {# todo B5: css-form-group #}
+     <div data-bind="template: {name: 'remove-action'}"></div>
+-    <label class="control-label col-xs-2">{% trans "Custom action ID" %}</label>
+-    <div class="controls col-xs-4">
+-      <select class="select form-control" data-bind="value: name">
++    <label class="form-label col-sm-2">{% trans "Custom action ID" %}</label>
++    <div class="controls col-sm-4">
++      <select class="select form-select" data-bind="value: name">
+         {% for custom_action in form.custom_actions %}
+           <option value="{{ custom_action }}">{{ custom_action }}</option>
+         {% endfor %}
+       </select>
+     </div>
+-    <label class="col-xs-1 control-label">
+-      <span class="label label-primary">{% trans "Requires System Admin" %}</span>
++    <label class="col-sm-1 form-label">
++      <span class="badge text-bg-primary">{% trans "Requires System Admin" %}</span>
+     </label>
+   </div>
+ </script>

@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine("groups/js/group_members", [
     "jquery",
     "underscore",
@@ -17,7 +17,7 @@ hqDefine("groups/js/group_members", [
     bootstrap,
     initialPageData,
     alertUser,
-    uiMapList
+    uiMapList,
 ) {
     $(function () {
         var customDataEditor = uiMapList.new(initialPageData.get("group_id"), gettext("Edit Group Information"));

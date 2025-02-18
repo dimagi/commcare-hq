@@ -2,7 +2,7 @@ hqDefine("reports/js/datepicker", [
     'jquery',
     'jquery-ui/ui/widgets/datepicker',
 ], function (
-    $
+    $,
 ) {
     function shiftDates(days) {
         var start, end;

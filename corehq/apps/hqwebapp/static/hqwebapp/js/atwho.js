@@ -6,7 +6,7 @@ hqDefine('hqwebapp/js/atwho', [
 ],
 function (
     ko,
-    _
+    _,
 ) {
     var _init = function ($input, options, afterInsert, replaceValue) {
         $input.atwho(options).on("inserted.atwho", function () {

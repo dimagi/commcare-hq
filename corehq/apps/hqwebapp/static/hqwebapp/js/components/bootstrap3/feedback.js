@@ -1,4 +1,4 @@
-'use strict';
+
 /**
  *  Knockout Feedback Component
  *
@@ -24,7 +24,7 @@ hqDefine('hqwebapp/js/components/bootstrap3/feedback', [
     $,
     _,
     initialPageData,
-    koComponents
+    koComponents,
 ) {
     const component = {
         viewModel: function (params) {

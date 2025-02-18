@@ -1,13 +1,26 @@
-hqDefine('userreports/js/configure_report', function () {
-    var initialPageData = hqImport('hqwebapp/js/initial_page_data'),
-        multiselectUtils = hqImport('hqwebapp/js/multiselect_utils'),
-        reportBuilder = hqImport('userreports/js/report_config').reportBuilder;
-
+hqDefine('userreports/js/configure_report', [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/multiselect_utils',
+    'userreports/js/report_config',
+    'userreports/js/constants',
+    'app_manager/js/forms/case_knockout_bindings',
+    'hqwebapp/js/bootstrap3/knockout_bindings.ko',      // sortable and sortableList
+    'hqwebapp/js/components/inline_edit',
+    'hqwebapp/js/components/select_toggle',
+    'commcarehq',
+], function (
+    $,
+    initialPageData,
+    multiselectUtils,
+    reportBuilder,
+    constants,
+) {
     $(function () {
         var existingReport = initialPageData.get('existing_report'),
             reportDescription = initialPageData.get('report_description');
 
-        var reportConfig = new reportBuilder.ReportConfig({
+        var reportConfig = new reportBuilder.reportBuilder.ReportConfig({
             "columnOptions": initialPageData.get('column_options'),
             "initialColumns": initialPageData.get('initial_columns'),
             "app": initialPageData.get('application'),
@@ -27,6 +40,8 @@ hqDefine('userreports/js/configure_report', function () {
             "initialChartType": initialPageData.get('initial_chart_type'),
             "mapboxAccessToken": initialPageData.get('MAPBOX_ACCESS_TOKEN'),
             "dateRangeOptions": initialPageData.get('date_range_options'),
+            "formatOptions": constants.FORMAT_OPTIONS,
+            "defaultFilterFormatOptions": constants.DEFAULT_FILTER_FORMAT_OPTIONS,
             // In previewMode, report can't be saved.
             "previewMode": (
                 !initialPageData.get('has_report_builder_access') ||

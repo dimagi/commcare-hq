@@ -2,7 +2,6 @@ hqDefine("reports/js/bootstrap3/case_details", [
     'jquery',
     'knockout',
     'underscore',
-    'clipboard/dist/clipboard',
     'hqwebapp/js/initial_page_data',
     'analytix/js/google',
     'analytix/js/kissmetrix',
@@ -19,13 +18,12 @@ hqDefine("reports/js/bootstrap3/case_details", [
     $,
     ko,
     _,
-    Clipboard,
     initialPageData,
     googleAnalytics,
     kissmetrics,
     casePropertyModal,
     dataCorrections,
-    singleForm
+    singleForm,
 ) {
     var xformDataModel = function (data) {
         var self = {};

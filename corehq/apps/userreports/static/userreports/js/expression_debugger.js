@@ -1,11 +1,23 @@
-/* globals ace */
-hqDefine('userreports/js/expression_debugger', function () {
+hqDefine('userreports/js/expression_debugger', [
+    "jquery",
+    "underscore",
+    "hqwebapp/js/base_ace",
+    "hqwebapp/js/initial_page_data",
+    "userreports/js/expression_evaluator",
+    "hqwebapp/js/bootstrap3/widgets",
+    "hqwebapp/js/components/select_toggle",
+    "commcarehq",
+], function (
+    $,
+    _,
+    baseAce,
+    initialPageData,
+    expressionModel,
+) {
     $(function () {
-        var expressionModel = hqImport('userreports/js/expression_evaluator').expressionModel;
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data");
         var submitUrl = initialPageData.reverse("expression_evaluator");
-        var expressionEditor = ace.edit($('#expression ~pre')[0]);
-        var docEditor = ace.edit($('#raw_document ~pre')[0]);
+        var expressionEditor = baseAce.initJsonWidget($("#expression"));
+        var docEditor = baseAce.initJsonWidget($("#raw_document"));
         docEditor.getSession().setValue("{}");
         var sampleExpression = {
             "type": "property_name",
@@ -21,7 +33,7 @@ hqDefine('userreports/js/expression_debugger', function () {
             ucrExpressionId: initialPageData.get('ucr_expression_id'),
         };
         $('#expression-debugger').koApplyBindings(
-            expressionModel(expressionEditor, docEditor, submitUrl, initialData)
+            expressionModel.expressionModel(expressionEditor, docEditor, submitUrl, initialData),
         );
     });
 });

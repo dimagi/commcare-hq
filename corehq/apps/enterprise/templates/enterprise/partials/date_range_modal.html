@@ -1,26 +1,44 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<div class="modal" role="dialog" tabindex="-1" id="enterpriseFormsDaterange">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">{% trans 'Customize Mobile Form Submissions Date Range' %}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr 'Close' %}"></button>
-            </div>
-            <div class="modal-body">
-                <select-toggle name="range_type" data-apply-bindings="false" params="value: presetType, options: presetOptions"></select-toggle>
-                <div class="row">
-                    <div class="col-xs-6 pt-1">
-                        <input type="text" name="date_range" class="form-control" id="id_date_range" data-bind="visible: displayCustom">
-                        <div id="clarifyingText" class="form-control-plaintext" data-bind="html: clarifyingText, visible: !displayCustom()"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-primary" data-bind="click: onCancel" data-bs-dismiss="modal">{% trans 'Cancel' %}</button>
-                <button type="button" class="btn btn-primary" data-bind="click: onApply" data-bs-dismiss="modal">{% trans 'Apply' %}</button>
-            </div>
+<div class="modal fade" role="dialog" tabindex="-1" id="enterpriseFormsDaterange">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{% trans 'Customize Mobile Form Submissions Date Range' %}</h5>
+        <button
+          type="button" class="btn-close" aria-label="{% trans_html_attr 'Close' %}"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <select-toggle
+          name="range_type"
+          data-apply-bindings="false"
+          params="value: presetType, options: presetOptions"
+        ></select-toggle>
+        <div class="row">
+          <div class="col-xs-6 pt-1">
+            <input type="text" name="date_range" class="form-control" id="id_date_range" data-bind="visible: displayCustom">
+            <div
+              class="form-control-plaintext" id="clarifyingText"
+              data-bind="html: clarifyingText, visible: !displayCustom()"
+            ></div>
+          </div>
         </div>
+      </div>
+      <div class="modal-footer">
+        <button
+          class="btn btn-outline-primary" type="button"
+          data-bind="click: onCancel"
+          data-bs-dismiss="modal"
+        >{% trans 'Cancel' %}</button>
+        <button
+          class="btn btn-primary" type="button"
+          data-bind="click: onApply"
+          data-bs-dismiss="modal"
+        >{% trans 'Apply' %}</button>
+      </div>
     </div>
+  </div>
 </div>

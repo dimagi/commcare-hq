@@ -1,6 +1,4 @@
 $(function () {
-    'use strict';
-
     let ExampleFormModel = function () {
         let self = {};
         self.fullName = ko.observable();

@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/apps/controller", [
     'jquery',
     'backbone',
@@ -16,7 +15,7 @@ hqDefine("cloudcare/js/formplayer/apps/controller", [
     settingsViews,
     AppsAPI,
     views,
-    UsersModels
+    UsersModels,
 ) {
     return {
         listApps: function () {
@@ -58,15 +57,15 @@ hqDefine("cloudcare/js/formplayer/apps/controller", [
                 ]);
             } else {
                 settings.push(
-                    new Backbone.Model({ slug: slugs.BREAK_LOCKS })
+                    new Backbone.Model({ slug: slugs.BREAK_LOCKS }),
                 );
             }
             settings.push(
-                new Backbone.Model({ slug: slugs.CLEAR_USER_DATA })
+                new Backbone.Model({ slug: slugs.CLEAR_USER_DATA }),
             );
             if (Toggles.toggleEnabled('HIDE_SYNC_BUTTON')) {
                 settings.push(
-                    new Backbone.Model({ slug: slugs.SYNC })
+                    new Backbone.Model({ slug: slugs.SYNC }),
                 );
             }
             collection = new Backbone.Collection(settings);

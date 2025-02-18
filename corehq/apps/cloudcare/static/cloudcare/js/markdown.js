@@ -1,4 +1,3 @@
-'use strict';
 hqDefine('cloudcare/js/markdown', [
     'jquery',
     'DOMPurify/dist/purify.min',
@@ -12,7 +11,7 @@ hqDefine('cloudcare/js/markdown', [
     markdowner,
     initialPageData,
     HMACCallout,
-    toggles
+    toggles,
 ) {
 
     function updateTarget(tokens, idx, target) {
@@ -65,7 +64,7 @@ hqDefine('cloudcare/js/markdown', [
                     let url = initialPageData.reverse("dialer_view");
                     anchor.attrs[hIndex][1] = url + "?callout_number=" + callout;
                 },
-                "dialer"
+                "dialer",
             ));
         }
 
@@ -79,7 +78,7 @@ hqDefine('cloudcare/js/markdown', [
                     let url = initialPageData.reverse("gaen_otp_view");
                     anchor.attrs[hIndex][1] = url + params;
                 },
-                "gaen_otp"
+                "gaen_otp",
             ));
             addDelegatedClickDispatch('gaen_otp',
                 function (element) {
@@ -94,7 +93,7 @@ hqDefine('cloudcare/js/markdown', [
                 },
                 function () {
                 },
-                "hmac_callout"
+                "hmac_callout",
             ));
             addDelegatedClickDispatch('hmac_callout',
                 function (element) {

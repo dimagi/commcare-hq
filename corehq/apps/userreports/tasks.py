@@ -39,6 +39,7 @@ from corehq.apps.userreports.exceptions import (
 )
 from corehq.apps.userreports.models import (
     AsyncIndicator,
+    DataSourceActionLog,
     id_is_static,
 )
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
@@ -112,14 +113,22 @@ def rebuild_indicators(
         if not id_is_static(indicator_config_id):
             # Save the start time now in case anything goes wrong. This way we'll be
             # able to see if the rebuild started a long time ago without finishing.
+            config.meta.build.awaiting = False
             config.meta.build.initiated = datetime.utcnow()
             config.meta.build.finished = False
             config.meta.build.rebuilt_asynchronously = False
             config.save()
 
         skip_log = bool(limit > 0)  # don't store log for temporary report builder UCRs
-        adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log, diffs=diffs)
-        _iteratively_build_table(config, limit=limit)
+        rows_count_before_rebuild = _get_rows_count_from_existing_table(adapter)
+        try:
+            adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log, diffs=diffs)
+            _iteratively_build_table(config, limit=limit)
+        except Exception:
+            _report_ucr_rebuild_metrics(config, source, 'rebuild_datasource', adapter,
+                                        rows_count_before_rebuild, error=True)
+            raise
+        _report_ucr_rebuild_metrics(config, source, 'rebuild_datasource', adapter, rows_count_before_rebuild)
 
 
 @serial_task(
@@ -133,13 +142,75 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, source=N
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=True):
         adapter = get_indicator_adapter(config)
         if not id_is_static(indicator_config_id):
+            config.meta.build.awaiting = False
             config.meta.build.initiated_in_place = datetime.utcnow()
             config.meta.build.finished_in_place = False
             config.meta.build.rebuilt_asynchronously = False
             config.save()
 
-        adapter.build_table(initiated_by=initiated_by, source=source)
-        _iteratively_build_table(config, in_place=True)
+        rows_count_before_rebuild = _get_rows_count_from_existing_table(adapter)
+        try:
+            adapter.build_table(initiated_by=initiated_by, source=source)
+            _iteratively_build_table(config, in_place=True)
+        except Exception:
+            _report_ucr_rebuild_metrics(config, source, 'rebuild_datasource_in_place', adapter,
+                                        rows_count_before_rebuild, error=True)
+            raise
+        _report_ucr_rebuild_metrics(config, source, 'rebuild_datasource_in_place', adapter,
+                                    rows_count_before_rebuild)
+
+
+def _get_rows_count_from_existing_table(adapter):
+    table = adapter.get_existing_table_from_db()
+    if table is not None:
+        return adapter.session_helper.Session.query(table).count()
+
+
+def _report_ucr_rebuild_metrics(config, source, action, adapter, rows_count_before_rebuild, error=False):
+    if source not in ('edit_data_source_rebuild', 'edit_data_source_build_in_place'):
+        return
+    try:
+        _report_metric_number_of_days_since_first_build(config, action)
+        if error:
+            _report_metric_rebuild_error(config, action)
+        else:
+            _report_metric_increase_in_rows_count(config, action, adapter, rows_count_before_rebuild)
+    except Exception:
+        pass
+
+
+def _report_metric_number_of_days_since_first_build(config, action):
+    try:
+        earliest_entry = DataSourceActionLog.objects.filter(
+            domain=config.domain,
+            indicator_config_id=config.get_id,
+            action__in=[DataSourceActionLog.BUILD, DataSourceActionLog.REBUILD]
+        ).earliest('date_created')
+    except DataSourceActionLog.DoesNotExist:
+        pass
+    else:
+        no_of_days = (datetime.utcnow() - earliest_entry.date_created).days
+        metrics_gauge(f'commcare.ucr.{action}.days_since_first_build', no_of_days, tags={'domain': config.domain})
+
+
+def _report_metric_rebuild_error(config, action):
+    from corehq.apps.userreports.views import number_of_records_to_be_processed
+    expected_rows_to_process = number_of_records_to_be_processed(config)
+    metrics_gauge(
+        f'commcare.ucr.{action}.failed.expected_rows_to_process',
+        expected_rows_to_process,
+        tags={'domain': config.domain}
+    )
+
+
+def _report_metric_increase_in_rows_count(config, action, adapter, rows_count_before_rebuild):
+    if rows_count_before_rebuild is None:
+        return
+    # Row count can only be obtained for synchronous rebuilds.
+    if not config.asynchronous:
+        rows_count_after_rebuild = adapter.get_query_object().count()
+        if rows_count_after_rebuild > rows_count_before_rebuild:
+            metrics_counter(f'commcare.ucr.{action}.increase_in_rows', tags={'domain': config.domain})
 
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
@@ -148,6 +219,9 @@ def resume_building_indicators(indicator_config_id, initiated_by=None):
     success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
     failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=True):
+        if not id_is_static(indicator_config_id):
+            config.meta.build.awaiting = False
+            config.save()
         resume_helper = DataSourceResumeHelper(config)
         adapter = get_indicator_adapter(config)
         adapter.log_table_build(

@@ -1,23 +1,18 @@
-/* globals COMMCAREHQ_MODULES, standardHQReport */
 /*
-    Ugly half-measure, because reports and UCR traditionally depend on a global standardHQReport
-    variable that's defined in several different places. The UCR version of standardHQReport now
-    lives in userreports/js/configurable_report.js, while the non-UCR version lives in this file
-    and several custom reports still define standardHQReport as a global var.
-
-    To add to the jankiness of this file, it currently lives in a half-requirejs, half-non-requirejs state.
-
-    This file also controls some basic event handling for report pages, such as the "Apply" button.
+    This file also controls basic logic and event handling for report pages.
 */
 hqDefine("reports/js/bootstrap5/standard_hq_report", [
     'jquery',
     'underscore',
+    'bootstrap5',
     'hqwebapp/js/initial_page_data',
-    'bootstrap',
+    'reports/js/bootstrap5/hq_report',
 ], function (
     $,
     _,
-    initialPageData
+    bootstrap,
+    initialPageData,
+    hqReportModule,
 ) {
     var standardReport = undefined,
         asyncReport = undefined;
@@ -28,32 +23,23 @@ hqDefine("reports/js/bootstrap5/standard_hq_report", [
         }
 
         if (typeof standardHQReport !== 'undefined') {
-            // Custom reports, notably ewsghana
+            // Custom reports
             standardReport = standardHQReport;
         } else {
-            var ucr = "userreports/js/configurable_report";
-            // This check doesn't work in a requirejs environment. Part of migrating UCR is going to be updating this.
-            if (typeof COMMCAREHQ_MODULES[ucr] !== 'undefined') {
-                // UCRs
-                standardReport = hqImport(ucr).getStandardHQReport();
-            } else {
-                hqRequire(["reports/js/bootstrap5/hq_report"], function (hqReportModule) {
-                    // Standard reports
-                    var reportOptions = _.extend({}, initialPageData.get('js_options'), {
-                        emailSuccessMessage: gettext('Report successfully emailed'),
-                        emailErrorMessage: gettext('An error occurred emailing your report. Please try again.'),
-                    });
-                    if (initialPageData.get('startdate')) {
-                        reportOptions.datespan = {
-                            startdate: initialPageData.get('startdate'),
-                            enddate: initialPageData.get('enddate'),
-                        };
-                    }
-                    var standardHQReport = hqReportModule.hqReport(reportOptions);
-                    standardHQReport.init();
-                    standardReport = standardHQReport;
-                });
+            // Standard reports
+            var reportOptions = _.extend({}, initialPageData.get('js_options'), {
+                emailSuccessMessage: gettext('Report successfully emailed'),
+                emailErrorMessage: gettext('An error occurred emailing your report. Please try again.'),
+            });
+            if (initialPageData.get('startdate')) {
+                reportOptions.datespan = {
+                    startdate: initialPageData.get('startdate'),
+                    enddate: initialPageData.get('enddate'),
+                };
             }
+            var standardHQReport = hqReportModule.hqReport(reportOptions);
+            standardHQReport.init();
+            standardReport = standardHQReport;
         }
         return standardReport;
     };
@@ -65,39 +51,43 @@ hqDefine("reports/js/bootstrap5/standard_hq_report", [
 
         var reportOptions = initialPageData.get('js_options') || {};
         if (reportOptions.slug && reportOptions.async) {
-            var asyncHQReport = hqImport("reports/js/bootstrap5/reports.async")({
-                standardReport: getStandard(),
+            let promise = $.Deferred();
+            require(["reports/js/bootstrap5/async"], function (asyncHQReportModule) {
+                var asyncHQReport = asyncHQReportModule({
+                    standardReport: getStandard(),
+                });
+                asyncHQReport.init();
+                asyncReport = asyncHQReport;
+                promise.resolve(asyncReport);
             });
-            asyncHQReport.init();
-            asyncReport = asyncHQReport;
+            return promise;
         }
 
         return asyncReport;
     };
 
+    // Initialize reports
+    standardReport = getStandard();
+    asyncReport = getAsync();
+
     $(function () {
-        // Initialize reports. This must be done inside of a document ready handler
-        // so that if this is UCR, userreports/js/configurable_report.js will
-        // have been loaded and getStandard will execute the proper branch
-        standardReport = getStandard(),
-        asyncReport = getAsync();
 
-        $('#apply-btn').on('click', function () {
-            $('.hq-generic-report').trigger('apply-click');
+        $('[data-hq-toggle]').click(function () {
+            $($(this).data('hqToggle')).toggleClass('active');
         });
 
-        $('[data-toggle="offcanvas"]').click(function () {
-            $('.row-offcanvas').toggleClass('active');
-        });
-
-        $('.report-description-popover').popover({  /* todo B5: plugin:popover */
-            placement: 'right',
-            trigger: 'hover',
+        const reportsWithDescriptions = document.getElementsByClassName('report-description-popover');
+        Array.from(reportsWithDescriptions).forEach((elem) => {
+            new bootstrap.Popover(elem, {
+                title: elem.dataset.title,
+                content: elem.dataset.content,
+                placement: 'right',
+                trigger: 'hover',
+            });
         });
     });
 
     return {
-        getAsyncHQReport: getAsync,
         getStandardHQReport: getStandard,
     };
 });

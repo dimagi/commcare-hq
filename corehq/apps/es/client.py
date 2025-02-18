@@ -399,7 +399,8 @@ class ElasticManageAdapter(BaseAdapter):
 
     def reindex(
             self, source, dest, wait_for_completion=False,
-            refresh=False, batch_size=1000, requests_per_second=None, copy_doc_ids=True, query=None,
+            refresh=False, batch_size=1000, requests_per_second=None,
+            copy_doc_ids=True, query=None, purge_ids=False
     ):
         """
         Starts the reindex process in elastic search cluster
@@ -416,6 +417,7 @@ class ElasticManageAdapter(BaseAdapter):
                            and can be reduced if you encounter scroll timeouts.
         :param query: ``dict`` optional parameter to include a term query to filter which documents are included in
                       the reindex
+        :param purge_ids: ``bool`` if True, will remove the _id field from the documents
         :returns: None if wait_for_completion is True else would return task_id of reindex task
         """
 
@@ -435,27 +437,35 @@ class ElasticManageAdapter(BaseAdapter):
             "conflicts": "proceed"
         }
 
-    # Should be removed after ES 5-6 migration
-        if copy_doc_ids and source == const.HQ_USERS_INDEX_NAME:
-            # Remove password from form index
+        if copy_doc_ids or purge_ids:
             reindex_body["script"] = {
                 "lang": "painless",
-                "source": """
-                ctx._source.remove('password');
-                if (!ctx._source.containsKey('doc_id')) {
-                    ctx._source['doc_id'] = ctx._id;
-                }
-                """
+                "source": ""
             }
-        elif copy_doc_ids:
-            reindex_body["script"] = {
-                "lang": "painless",
-                "source": """
-                if (!ctx._source.containsKey('doc_id')) {
-                    ctx._source['doc_id'] = ctx._id;
-                }
-                """
-            }
+            script_parts = []
+
+            if purge_ids:
+                script_parts.append("""
+                    if (ctx._source.containsKey('_id')) {
+                        ctx._source.remove('_id');
+                    }
+                """)
+
+            if source == const.HQ_USERS_INDEX_NAME:
+                # Remove password field from users index
+                script_parts.append("""
+                    ctx._source.remove('password');
+                """)
+
+            if copy_doc_ids:
+                # Add doc_id field to the documents
+                script_parts.append("""
+                    if (!ctx._source.containsKey('doc_id')) {
+                        ctx._source['doc_id'] = ctx._id;
+                    }
+                """)
+
+            reindex_body["script"]["source"] = " ".join(script_parts)
 
         reindex_kwargs = {
             "wait_for_completion": wait_for_completion,
@@ -1117,6 +1127,10 @@ class ElasticMultiplexAdapter(BaseAdapter):
     @property
     def mapping(self):
         return self.primary.mapping
+
+    @property
+    def parent_index_cname(self):
+        return self.primary.parent_index_cname
 
     def export_adapter(self):
         adapter = copy.copy(self)

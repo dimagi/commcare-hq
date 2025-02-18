@@ -35,7 +35,7 @@ hqDefine('data_interfaces/js/case_property_input', [
     ko,
     _,
     initialPageData,
-    privileges
+    privileges,
 ) {
     var component = {
         viewModel: function (params) {

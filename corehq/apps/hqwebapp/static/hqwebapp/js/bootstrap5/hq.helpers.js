@@ -10,7 +10,7 @@ hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
     ko,
     _,
     googleAnalytics,
-    bootstrap
+    bootstrap,
 ) {
     // disable-on-submit is a class for form submit buttons so they're automatically disabled when the form is submitted
     $(document).on('submit', 'form', function (ev) {
@@ -84,6 +84,9 @@ hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
     };
 
     $.fn.changeButtonState = function (state) {
+        if (!$(this).data('reset-text')) {
+            $(this).data('reset-text', $(this).text());
+        }
         $(this).text($(this).data(state + '-text'));
         return this;
     };
@@ -135,11 +138,15 @@ hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
             // Ignore HTTP methods that do not require CSRF protection
             if (!/^(GET|HEAD|OPTIONS|TRACE)$/.test(settings.type)) {
                 if (!this.crossDomain) {
-                    var $csrfToken = $("#csrfTokenContainer").val();
-                    xhr.setRequestHeader("X-CSRFToken", $csrfToken);
+                    var csrfToken = $("#csrfTokenContainer").val();
+                    if (csrfToken) {
+                        xhr.setRequestHeader("X-CSRFToken", csrfToken);
+                    }
                 }
                 var xsrfToken = $.cookie('XSRF-TOKEN');
-                xhr.setRequestHeader('X-XSRF-TOKEN', xsrfToken);
+                if (xsrfToken) {
+                    xhr.setRequestHeader('X-XSRF-TOKEN', xsrfToken);
+                }
             }
             xhr.withCredentials = true;
         },

@@ -1,9 +1,16 @@
-/* eslint-env mocha */
+import $ from "jquery";
+import _ from "underscore";
+import sinon from "sinon";
+
+import initialPageData from "hqwebapp/js/initial_page_data";
+import releasesModels from "app_manager/js/releases/releases";
+
+import "commcarehq";
 
 describe('App Releases', function () {
     function getSavedApps(num, extraProps, releasesMain) {
         extraProps = extraProps || {};
-        var savedAppModel = hqImport('app_manager/js/releases/releases').savedAppModel,
+        var savedAppModel = releasesModels.savedAppModel,
             savedApps = [];
         for (var version = 0; version <= num; version ++) {
             savedApps.push(savedAppModel(
@@ -40,15 +47,14 @@ describe('App Releases', function () {
             ajaxStub;
 
         beforeEach(function () {
-            var releasesMainModel = hqImport('app_manager/js/releases/releases').releasesMainModel,
-                registerUrl = hqImport("hqwebapp/js/initial_page_data").registerUrl;
-            registerUrl("odk_install", "/a/test-domain/apps/odk/---/install/");
-            registerUrl("odk_media_install", "/a/test-domain/apps/odk/---/media_install/");
-            registerUrl("download_ccz", "/a/text-domain/apps/download/---/CommCare.ccz");
-            registerUrl("download_multimedia_zip", "/a/test-domain/apps/download/---/multimedia/commcare.zip");
-            registerUrl("app_form_summary_diff", "/a/test-domain/apps/compare/---..---");
+            initialPageData.registerUrl("current_app_version", "/a/test-domain/apps/---/current_version/");
+            initialPageData.registerUrl("odk_install", "/a/test-domain/apps/odk/---/install/");
+            initialPageData.registerUrl("odk_media_install", "/a/test-domain/apps/odk/---/media_install/");
+            initialPageData.registerUrl("download_ccz", "/a/text-domain/apps/download/---/CommCare.ccz");
+            initialPageData.registerUrl("download_multimedia_zip", "/a/test-domain/apps/download/---/multimedia/commcare.zip");
+            initialPageData.registerUrl("app_form_summary_diff", "/a/test-domain/apps/compare/---..---");
             ajaxStub = sinon.stub($, 'ajax');
-            releases = releasesMainModel(options);
+            releases = releasesModels.releasesMainModel(options);
             releases.savedApps(getSavedApps(5, {}, releases));
         });
 
@@ -94,12 +100,11 @@ describe('App Releases', function () {
     });
 
     describe('app_code', function () {
-        var releasesMainModel = hqImport('app_manager/js/releases/releases').releasesMainModel;
-        var savedAppModel = hqImport('app_manager/js/releases/releases').savedAppModel;
+        var savedAppModel = releasesModels.savedAppModel;
         var savedApp,
             releases;
         beforeEach(function () {
-            releases = releasesMainModel(options);
+            releases = releasesModels.releasesMainModel(options);
 
             this.server = sinon.fakeServer.create();
             this.server.respondWith(

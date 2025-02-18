@@ -1,13 +1,21 @@
 import jsonfield
 import uuid
+from contextlib import contextmanager
 from memoized import memoized
 from django.conf import settings
 from django.db import models, transaction
+from django.http import Http404
 
 from corehq import toggles
+from corehq.apps.app_manager.dbaccessors import (
+    get_app,
+    get_latest_released_app,
+)
+from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.data_interfaces.utils import property_references_parent
+from corehq.apps.formplayer_api.smsforms.api import TouchformsError
 from corehq.apps.reminders.util import get_one_way_number_for_recipient, get_two_way_number_for_recipient
-from corehq.apps.sms.api import MessageMetadata, send_sms, send_sms_to_verified_number
+from corehq.apps.sms.api import MessageMetadata, send_sms, send_message_to_verified_number
 from corehq.apps.sms.forms import (
     LANGUAGE_FALLBACK_NONE,
     LANGUAGE_FALLBACK_SCHEDULE,
@@ -20,6 +28,13 @@ from corehq.apps.sms.models import (
     WORKFLOW_KEYWORD,
     WORKFLOW_BROADCAST,
 )
+from corehq.apps.sms.util import (
+    get_formplayer_exception,
+    touchforms_error_is_config_error,
+)
+from corehq.apps.smsforms.app import start_session
+from corehq.apps.smsforms.models import SQLXFormsSession
+from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions, form_requires_input
 from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.exceptions import (
@@ -34,6 +49,11 @@ from corehq.messaging.templating import (
     CaseMessagingTemplateParam,
 )
 from django.utils.functional import cached_property
+
+
+@contextmanager
+def no_op_context_manager():
+    yield
 
 
 class Schedule(models.Model):
@@ -163,12 +183,14 @@ class Schedule(models.Model):
     @property
     @memoized
     def memoized_language_set(self):
-        from corehq.messaging.scheduling.models import SMSContent, EmailContent, SMSCallbackContent
+        from corehq.messaging.scheduling.models import (
+            ConnectMessageContent, SMSContent, EmailContent, SMSCallbackContent
+        )
 
         result = set()
         for event in self.memoized_events:
             content = event.memoized_content
-            if isinstance(content, (SMSContent, SMSCallbackContent)):
+            if isinstance(content, (SMSContent, SMSCallbackContent, ConnectMessageContent)):
                 result |= set(content.message)
             elif isinstance(content, EmailContent):
                 result |= set(content.subject)
@@ -246,6 +268,10 @@ class ContentForeignKeyMixin(models.Model):
     sms_callback_content = models.ForeignKey('scheduling.SMSCallbackContent', null=True, on_delete=models.CASCADE)
     fcm_notification_content = models.ForeignKey('scheduling.FCMNotificationContent', null=True,
                                                  on_delete=models.CASCADE)
+    connect_message_content = models.ForeignKey('scheduling.ConnectMessageContent', null=True,
+                                                on_delete=models.CASCADE)
+    connect_survey_content = models.ForeignKey('scheduling.ConnectMessageSurveyContent', null=True,
+                                               on_delete=models.CASCADE)
 
     class Meta(object):
         abstract = True
@@ -266,6 +292,10 @@ class ContentForeignKeyMixin(models.Model):
             return self.sms_callback_content
         elif self.fcm_notification_content:
             return self.fcm_notification_content
+        elif self.connect_message_content:
+            return self.connect_message_content
+        elif self.connect_survey_content:
+            return self.connect_survey_content
 
         raise NoAvailableContent()
 
@@ -280,8 +310,9 @@ class ContentForeignKeyMixin(models.Model):
 
     @content.setter
     def content(self, value):
-        from corehq.messaging.scheduling.models import (SMSContent, EmailContent,
-            SMSSurveyContent, IVRSurveyContent, CustomContent, SMSCallbackContent, FCMNotificationContent)
+        from corehq.messaging.scheduling.models import (SMSContent, EmailContent, SMSSurveyContent,
+            IVRSurveyContent, CustomContent, SMSCallbackContent, FCMNotificationContent,
+            ConnectMessageContent, ConnectMessageSurveyContent)
 
         self.sms_content = None
         self.email_content = None
@@ -289,6 +320,8 @@ class ContentForeignKeyMixin(models.Model):
         self.ivr_survey_content = None
         self.custom_content = None
         self.sms_callback_content = None
+        self.connect_message_content = None
+        self.connect_survey_content = None
 
         if isinstance(value, SMSContent):
             self.sms_content = value
@@ -304,6 +337,10 @@ class ContentForeignKeyMixin(models.Model):
             self.sms_callback_content = value
         elif isinstance(value, FCMNotificationContent):
             self.fcm_notification_content = value
+        elif isinstance(value, ConnectMessageContent):
+            self.connect_message_content = value
+        elif isinstance(value, ConnectMessageSurveyContent):
+            self.connect_survey_content = value
         else:
             raise UnknownContentType()
 
@@ -329,7 +366,7 @@ class Event(ContentForeignKeyMixin):
 
 
 class Content(models.Model):
-    # If this this content is being invoked in the context of a case,
+    # If this content is being invoked in the context of a case,
     # for example when a case triggers an alert, this is the case.
     case = None
 
@@ -511,11 +548,97 @@ class Content(models.Model):
         metadata = self.get_sms_message_metadata(logged_subevent)
 
         if isinstance(phone_entry_or_number, PhoneNumber):
-            send_sms_to_verified_number(phone_entry_or_number, message, metadata=metadata,
+            send_message_to_verified_number(phone_entry_or_number, message, metadata=metadata,
                 logged_subevent=logged_subevent)
         else:
             send_sms(domain, recipient, phone_entry_or_number, message, metadata=metadata,
                 logged_subevent=logged_subevent)
+
+
+class SurveyContent(Content):
+    app_id = models.CharField(max_length=126, null=True)
+    form_unique_id = models.CharField(max_length=126)
+
+    # See corehq.apps.smsforms.models.SQLXFormsSession for an
+    # explanation of these properties
+    expire_after = models.IntegerField()
+    reminder_intervals = models.JSONField(default=list)
+    submit_partially_completed_forms = models.BooleanField(default=False)
+    include_case_updates_in_partial_submissions = models.BooleanField(default=False)
+
+    class Meta:
+        abstract = True
+
+    def get_critical_section(self, recipient):
+        if self.critical_section_already_acquired:
+            return no_op_context_manager()
+
+        return critical_section_for_smsforms_sessions(recipient.get_id)
+
+    @memoized
+    def get_memoized_app_module_form(self, domain):
+        try:
+            if toggles.SMS_USE_LATEST_DEV_APP.enabled(domain, toggles.NAMESPACE_DOMAIN):
+                app = get_app(domain, self.app_id)
+            else:
+                app = get_latest_released_app(domain, self.app_id)
+            form = app.get_form(self.form_unique_id)
+            module = form.get_module()
+        except (Http404, FormNotFoundException):
+            return None, None, None, None
+
+        return app, module, form, form_requires_input(form)
+    def start_smsforms_session(self, domain, recipient, case_id, phone_entry_or_number, logged_subevent, workflow,
+            app, form):
+        # Close all currently open sessions
+        SQLXFormsSession.close_all_open_sms_sessions(domain, recipient.get_id)
+
+        # Start the new session
+        try:
+            session, responses = start_session(
+                SQLXFormsSession.create_session_object(
+                    domain,
+                    recipient,
+                    (phone_entry_or_number.phone_number
+                     if isinstance(phone_entry_or_number, PhoneNumber)
+                     else phone_entry_or_number),
+                    app,
+                    form,
+                    expire_after=self.expire_after,
+                    reminder_intervals=self.reminder_intervals,
+                    submit_partially_completed_forms=self.submit_partially_completed_forms,
+                    include_case_updates_in_partial_submissions=self.include_case_updates_in_partial_submissions
+                ),
+                domain,
+                recipient,
+                app,
+                form,
+                case_id,
+                yield_responses=True
+            )
+        except TouchformsError as e:
+            logged_subevent.error(
+                MessagingEvent.ERROR_TOUCHFORMS_ERROR,
+                additional_error_text=get_formplayer_exception(domain, e)
+            )
+
+            if touchforms_error_is_config_error(domain, e):
+                # Don't reraise the exception because this means there are configuration
+                # issues with the form that need to be fixed. The error is logged in the
+                # above lines.
+                return None, None
+
+            # Reraise the exception so that the framework retries it again later
+            raise
+        except Exception:
+            logged_subevent.error(MessagingEvent.ERROR_TOUCHFORMS_ERROR)
+            # Reraise the exception so that the framework retries it again later
+            raise
+
+        session.workflow = workflow
+        session.save()
+
+        return session, responses
 
 
 class Broadcast(models.Model):

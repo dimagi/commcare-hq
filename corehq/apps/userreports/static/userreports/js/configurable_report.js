@@ -1,11 +1,26 @@
-hqDefine("userreports/js/configurable_report", function () {
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data");
-
-    if (typeof define === 'function' && define.amd || (window.USE_REQUIREJS || window.USE_WEBPACK)) {
-        throw new Error("This part of UCR is not yet migrated to a Javascript Bundler (preferably Webpack). " +
-            "Update the UCR logic in reports/js/standard_hq_report before removing this error.");
-    }
-
+hqDefine("userreports/js/configurable_report", [
+    'jquery',
+    'underscore',
+    'analytix/js/kissmetrix',
+    'hqwebapp/js/bootstrap3/main',
+    'hqwebapp/js/initial_page_data',
+    'reports/js/bootstrap3/hq_report',
+    'reports/js/bootstrap3/report_config_models',
+    'reports/js/util',
+    'userreports/js/report_analytix',
+    'userreports/js/base',
+    'commcarehq',
+], function (
+    $,
+    _,
+    kissmetrics,
+    hqMain,
+    initialPageData,
+    hqReport,
+    reportConfigModels,
+    util,
+    analytics,
+) {
     var getStandardHQReport = function (isFirstLoad) {
         if (!initialPageData.get("standardHQReport")) {
             return undefined;
@@ -18,20 +33,20 @@ hqDefine("userreports/js/configurable_report", function () {
                 builderType = initialPageData.get("builder_report_type"),
                 reportType = initialPageData.get("type");
             $applyFiltersButton.click(function () {
-                var label = hqImport('hqwebapp/js/bootstrap3/main').capitalize(builderType) + '-' + hqImport('hqwebapp/js/bootstrap3/main').capitalize(reportType);
-                hqImport('userreports/js/report_analytix').track.event("View Report Builder Report", label);
+                var label = hqMain.capitalize(builderType) + '-' + hqMain.capitalize(reportType);
+                analytics.track.event("View Report Builder Report", label);
             });
-            hqImport('userreports/js/report_analytix').track.event("Loaded Report Builder Report");
+            analytics.track.event("Loaded Report Builder Report");
             $editReportButton.click(function () {
-                hqImport('analytix/js/kissmetrix').track.event("RBv2 - Click Edit Report");
+                kissmetrics.track.event("RBv2 - Click Edit Report");
             });
         }
 
         _.each(initialPageData.get("report_builder_events"), function (e) {
-            hqImport('userreports/js/report_analytix').track.event.apply(this, e);
+            analytics.track.event.apply(this, e);
         });
 
-        var urlSerialize = hqImport('reports/js/reports.util').urlSerialize;
+        var urlSerialize = util.urlSerialize;
         var reportOptions = {
             domain: initialPageData.get('domain'),
             urlRoot: initialPageData.get('url_root'),
@@ -57,7 +72,7 @@ hqDefine("userreports/js/configurable_report", function () {
                 enddate: initialPageData.get('enddate'),
             };
         }
-        var standardHQReport = hqImport("reports/js/bootstrap3/hq_report").hqReport(reportOptions);
+        var standardHQReport = hqReport.hqReport(reportOptions);
         standardHQReport.init();
         return standardHQReport;
     };
@@ -82,13 +97,12 @@ hqDefine("userreports/js/configurable_report", function () {
             defaultConfig.datespan_slug = null;
         }
 
-        var reportConfigModels = hqImport("reports/js/bootstrap3/report_config_models"),
-            reportConfigsView = reportConfigModels.reportConfigsViewModel({
-                filterForm: $("#paramSelectorForm"),
-                items: initialPageData.get("report_configs"),
-                defaultItem: defaultConfig,
-                saveUrl: initialPageData.reverse("add_report_config"),
-            });
+        var reportConfigsView = reportConfigModels.reportConfigsViewModel({
+            filterForm: $("#paramSelectorForm"),
+            items: initialPageData.get("report_configs"),
+            defaultItem: defaultConfig,
+            saveUrl: initialPageData.reverse("add_report_config"),
+        });
         $("#savedReports").koApplyBindings(reportConfigsView);
         reportConfigsView.setUserConfigurableConfigBeingViewed(reportConfigModels.reportConfig(defaultConfig));
 
@@ -99,9 +113,9 @@ hqDefine("userreports/js/configurable_report", function () {
         });
 
         if (initialPageData.get("created_by_builder")) {
-            hqImport('userreports/js/report_analytix').track.event(
+            analytics.track.event(
                 initialPageData.get("builder_report_type"),
-                'Load a report that was built in report builder'
+                'Load a report that was built in report builder',
             );
         }
     });

@@ -1,22 +1,7 @@
 {% extends "mocha/base.html" %}
 {% load hq_shared_tags %}
 
-{% block dependencies %}
-  <script src="{% static 'hqwebapp/js/bootstrap3/main.js' %}"></script>
-  <script src="{% static 'hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list.js' %}"></script>
-  <script src="{% static 'app_manager/js/forms/form_workflow.js' %}"></script>
-  <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
-  <script src="{% static 'app_manager/js/releases/releases.js' %}"></script>
-  <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
-  <script src="{% static 'app_manager/js/releases/app_diff.js' %}"></script>
-{% endblock %}
-
-{% block mocha_tests %}
-  <script src="{% static 'app_manager/spec/form_workflow_spec.js' %}"></script>
-  <script src="{% static 'app_manager/spec/download_async_modal_spec.js' %}"></script>
-  <script src="{% static 'app_manager/spec/releases_spec.js' %}"></script>
-  <script src="{% static 'app_manager/spec/app_diff_spec.js' %}"></script>
-{% endblock %}
+{% js_entry_b3 "app_manager/spec/main" %}
 
 {% block fixtures %}
   {% include 'app_manager/partials/download_async_modal.html' with element_id='download-zip-modal-test' %}

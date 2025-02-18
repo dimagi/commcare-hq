@@ -354,6 +354,22 @@ class XFormInstanceManagerTest(TestCase):
         self.assertEqual(1, len(forms))
         self.assertEqual(form_ids[0], forms[0].form_id)
 
+    def test_hard_delete_forms_returns_forms_found(self):
+        for i in range(3):
+            create_form_for_test(DOMAIN, form_id=str(i))
+
+        deleted_form_ids = set(XFormInstance.objects.hard_delete_forms(DOMAIN, ['0', '1', '2'], return_ids=True))
+
+        self.assertEqual(deleted_form_ids, {'0', '1', '2'})
+
+    def test_hard_delete_forms_does_not_include_missing_form_ids(self):
+        create_form_for_test(DOMAIN, form_id='1')
+        create_form_for_test(DOMAIN, form_id='3')
+
+        deleted_form_ids = set(XFormInstance.objects.hard_delete_forms(DOMAIN, ['1', '2', '3'], return_ids=True))
+
+        self.assertEqual(deleted_form_ids, {'1', '3'})
+
     def assert_form_xml_attachment(self, form):
         attachments = XFormInstance.objects.get_attachments(form.form_id)
         self.assertEqual([a.name for a in attachments], ["form.xml"])

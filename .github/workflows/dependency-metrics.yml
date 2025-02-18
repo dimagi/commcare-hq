@@ -11,8 +11,8 @@ jobs:
       DATADOG_APP_KEY: ${{ secrets.DATADOG_APP_KEY }}
       DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.9'
       - name: install libxml

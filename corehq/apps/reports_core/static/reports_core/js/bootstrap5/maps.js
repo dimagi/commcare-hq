@@ -1,5 +1,23 @@
-/*globals hqDefine */
-hqDefine('reports_core/js/bootstrap5/maps', function () {
+hqDefine('reports_core/js/bootstrap5/maps', [
+    'jquery',
+    'underscore',
+    'reports/js/bootstrap5/maps_utils',
+    'leaflet',
+], function (
+    $,
+    _,
+    mapsUtils,
+    L,
+) {
+    // Reset images needed for map markers, which don't play well with webpack.
+    // See https://github.com/Leaflet/Leaflet/issues/4968#issuecomment-483402699
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+        iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+        iconUrl: require('leaflet/dist/images/marker-icon.png'),
+        shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+    });
+
     var module = {},
         privates = {};
 
@@ -37,16 +55,16 @@ hqDefine('reports_core/js/bootstrap5/maps', function () {
             privates.layerControl = L.control.layers(baseMaps);
             privates.layerControl.addTo(privates.map);
 
-            new (hqImport("reports/js/bootstrap5/maps_utils").ZoomToFitControl)().addTo(privates.map);
+            new (mapsUtils.ZoomToFitControl)().addTo(privates.map);
             // Add MapBox wordmark and correct attributes to map
             // See https://docs.mapbox.com/help/how-mapbox-works/attribution/
-            new (hqImport("reports/js/bootstrap5/maps_utils").MapBoxWordMark)().addTo(privates.map);
+            new (mapsUtils.MapBoxWordMark)().addTo(privates.map);
             // scale is now placed on the bottom right because it is easier to layout with the attributes than with the wordmark
             L.control.attribution({position: 'bottomright'}).addAttribution('&copy; <a href="http://www.mapbox.com/about/maps/">MapBox</a> | &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>').addTo(privates.map);
             L.control.scale({position: 'bottomright'}).addTo(privates.map);
 
             L.control.zoom({
-                position: 'bottomright'
+                position: 'bottomright',
             }).addTo(privates.map);
             $('#zoomtofit').css('display', 'block');
         } else {
@@ -91,7 +109,7 @@ hqDefine('reports_core/js/bootstrap5/maps', function () {
             privates.layerControl.addOverlay(overlay, config.layer_name);
             overlay.addTo(privates.map);
             privates.map.activeOverlay = overlay;
-            hqImport("reports/js/bootstrap5/maps_utils").zoomToAll(privates.map);
+            mapsUtils.zoomToAll(privates.map);
         }
     };
 

@@ -22,6 +22,7 @@ from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.programs.models import Program
+from corehq.apps.reports.models import TableauUser
 from corehq.toggles import WEB_USER_INVITE_ADDITIONAL_FIELDS
 from corehq.apps.users.forms import SelectUserLocationForm, BaseTableauUserForm
 from corehq.apps.users.models import CouchUser
@@ -74,7 +75,6 @@ class RegisterWebUserForm(forms.Form):
             """)))
     atypical_user = forms.BooleanField(required=False, widget=forms.HiddenInput())
     is_mobile = forms.BooleanField(required=False, widget=forms.HiddenInput())
-    is_self_signup = forms.BooleanField(required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
         self.is_sso = kwargs.pop('is_sso', False)
@@ -217,7 +217,6 @@ class RegisterWebUserForm(forms.Form):
                                   "disable: disableNextStepTwo"
                     )
                 ),
-                hqcrispy.InlineField('is_self_signup'),
                 css_class="form-bubble form-step step-2",
                 style="display: none;"
             ),
@@ -494,8 +493,9 @@ class AdminInvitesUserForm(SelectUserLocationForm):
 
     def __init__(self, data=None, is_add_user=None,
                  role_choices=(), should_show_location=False, can_edit_tableau_config=False,
-                 custom_data=None, *, domain, **kwargs):
+                 custom_data=None, invitation=None, *, domain, **kwargs):
         self.custom_data = custom_data
+        self.invite = invitation
         if data and self.custom_data:
             data = data.copy()
             custom_data_post_dict = self.custom_data.form.data
@@ -519,9 +519,11 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                 programs = Program.by_domain(domain_obj.name)
                 choices = [('', '')] + list((prog.get_id, prog.name) for prog in programs)
                 self.fields['program'].choices = choices
+                if self.invite:
+                    self.fields['program'].initial = self.invite.program
 
         if self.can_edit_tableau_config:
-            self._initialize_tableau_fields(data, domain)
+            self._initialize_tableau_fields(data, domain, self.invite)
 
         self.helper = FormHelper()
         self.helper.form_method = 'POST'
@@ -529,9 +531,18 @@ class AdminInvitesUserForm(SelectUserLocationForm):
 
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+
+        save_button_text = _("Send Invite")
+        header_text = _("Information for new Web User")
+        add_user_text = _("Add User")
+        if self.invite:
+            self.fields['email'].widget.attrs["readonly"] = True
+            save_button_text = _("Update Invite")
+            header_text = _("Update invitation for new Web User")
+
         fields = [
             crispy.Fieldset(
-                gettext("Information for new Web User"),
+                gettext(header_text),
                 crispy.Field(
                     "email",
                     autocomplete="off",
@@ -575,8 +586,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    (gettext("Add User") if is_add_user
-                     else gettext("Send Invite")),
+                    (gettext(add_user_text) if is_add_user else gettext(save_button_text)),
                     type="submit",
                     css_class="btn-primary",
                     data_bind="enable: isSubmitEnabled",
@@ -594,7 +604,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
         email = self.cleaned_data['email'].strip()
 
         from corehq.apps.registration.validation import AdminInvitesUserFormValidator
-        error = AdminInvitesUserFormValidator.validate_email(self.domain, email)
+        error = AdminInvitesUserFormValidator.validate_email(self.domain, email, bool(self.invite))
         if error:
             raise forms.ValidationError(error)
         return email
@@ -632,9 +642,22 @@ class AdminInvitesUserForm(SelectUserLocationForm):
             raise forms.ValidationError(error)
         return cleaned_data
 
-    def _initialize_tableau_fields(self, data, domain):
-        self.tableau_form = BaseTableauUserForm(data, domain=domain)
+    def _initialize_tableau_fields(self, data, domain, invitation=None):
+        readonly = not self.request.couch_user.has_permission(domain, 'edit_user_tableau_config')
+        self.tableau_form = BaseTableauUserForm(data, domain=domain, readonly=readonly)
         self.fields['tableau_group_indices'] = self.tableau_form.fields["groups"]
         self.fields['tableau_group_indices'].label = _('Tableau Groups')
         self.fields['tableau_role'] = self.tableau_form.fields['role']
         self.fields['tableau_role'].label = _('Tableau Role')
+        if invitation:
+            if invitation.tableau_group_ids:
+                initial_groups_indicies = []
+                for group_index in invitation.tableau_group_ids:
+                    for i, group in enumerate(self.tableau_form.allowed_tableau_groups):
+                        if group_index == group.id:
+                            initial_groups_indicies.append(i)
+                self.fields['tableau_group_indices'].initial = initial_groups_indicies
+            try:
+                self.fields['tableau_role'].initial = TableauUser.Roles(invitation.tableau_role)
+            except ValueError:
+                pass

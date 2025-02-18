@@ -114,12 +114,12 @@ class TestRequestNewDomain(TestCase):
 
     @mock.patch('corehq.apps.registration.utils._setup_subscription', _noop)
     @mock.patch('corehq.apps.registration.utils.notify_exception', _noop)
-    def test_using_self_signup_creates_self_signup_workflow(self):
+    @mock.patch('django.conf.settings.IS_SAAS_ENVIRONMENT', True)
+    def test_saas_environment_creates_self_signup_workflow(self):
         request_new_domain(
             self.request,
             self.domain_test,
             is_new_user=True,
-            is_self_signup=True
         )
         workflow = SelfSignupWorkflow.get_in_progress_for_domain(self.domain_test)
         self.assertIsInstance(workflow, SelfSignupWorkflow)

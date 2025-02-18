@@ -1,26 +1,55 @@
 {% load i18n %}
 
-<div class="col-md-6 col-lg-6 col-xl-3">
-    <div class="card text-center report-panel mb-3" data-slug="{{ report.slug }}" id="{{ report.slug }}">
-        <div class="card-header">
-        <div class="fs-4">{{ report.title }}</div>
-        {% if report.title == "Mobile Form Submissions" %}
-            <button id="form_submission_dateRangeDisplay" type="button" data-bind="text: presetText" data-bs-toggle="modal" data-bs-target="#enterpriseFormsDaterange" data-sender="form_submission" class="btn btn-link fs-6">&nbsp;</button>
-        {% elif report.title == "SMS Usage" %}
-            <button id="sms_dateRangeDisplay" type="button" data-bind="text: presetText" data-bs-toggle="modal" data-bs-target="#enterpriseFormsDaterange" data-sender="sms" class="btn btn-link fs-6">&nbsp;</button>
-        {% else %}
-            <div class="form-control-plaintext fs-6">{{ report.subtitle|default:"&nbsp;" }}</div>
+<div
+  class="card text-center js-report-panel h-100"
+  id="{{ report.slug }}"
+  data-slug="{{ report.slug }}"
+>
+  <div class="card-header">
+    <h4 class="fs-5 pt-2">{{ report.title }}</h4>
+  </div>
+  <div class="card-body pb-1">
+    <div class="row justify-content-center">
+      <div class="col-auto align-items-center position-relative">
+        <div class="js-total fs-1">
+          <i class="fa fa-spin fa-spinner"></i>
+        </div>
+        {% if report.total_description %}
+          <div class="help-total position-absolute start-100 top-25 d-none">
+            <span
+              class="hq-help-template"
+              data-content="{{ report.total_description }}"
+              data-placement="right"
+            >
+            </span>
+          </div>
         {% endif %}
-        </div>
-        <div class="card-body">
-        <h1 class="card-text total">
-            <i class="fa fa-spin fa-spinner"></i>
-        </h1>
-        <br>
-        <button class="btn btn-primary btn-lg">
-            <i class="fa fa-envelope"></i>
-            {% trans "Email Report" %}
-        </button>
-        </div>
+      </div>
     </div>
+  </div>
+  <div class="card-footer bg-transparent border-0 pt-0">
+    <div class="pb-2">
+      {% if report.slug in uses_date_range %}
+        <button
+          class="btn btn-link fs-6"
+          id="{{ report.slug }}_dateRangeDisplay"
+          type="button"
+          data-bind="text: presetText"
+          data-bs-toggle="modal"
+          data-bs-target="#enterpriseFormsDaterange"
+          data-sender="{{ report.slug }}"
+        >
+          &nbsp;
+        </button>
+      {% else %}
+        <div class="form-control-plaintext fs-6">&nbsp;</div>
+      {% endif %}
+    </div>
+    <div class="mb-4">
+      <button class="btn btn-outline-primary btn-lg js-email-report">
+        <i class="fa fa-envelope"></i>
+        {% trans "Email Report" %}
+      </button>
+    </div>
+  </div>
 </div>

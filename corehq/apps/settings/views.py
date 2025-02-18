@@ -793,7 +793,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             'template': 'new-user-api-key-template',
         }
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         deleted_key = self.base_query.get(id=item_id)
         deleted_key.delete()
         return {

@@ -129,11 +129,12 @@ class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
 
 
 class EditBasicProjectInfoView(BaseEditProjectInfoView):
-    template_name = 'domain/admin/bootstrap3/info_basic.html'
+    template_name = 'domain/admin/info_basic.html'
     urlname = 'domain_basic_info'
     page_title = gettext_lazy("Basic")
 
     @method_decorator(domain_admin_required)
+    @use_bootstrap5
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -220,12 +221,13 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
 
 
 class EditMyProjectSettingsView(BaseProjectSettingsView):
-    template_name = 'domain/admin/bootstrap3/my_project_settings.html'
+    template_name = 'domain/admin/my_project_settings.html'
     urlname = 'my_project_settings'
     page_title = gettext_lazy("My Timezone")
 
     @method_decorator(always_allow_project_access)
     @method_decorator(login_and_domain_required)
+    @use_bootstrap5
     def dispatch(self, *args, **kwargs):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
 
@@ -279,11 +281,12 @@ def logo(request, domain):
 
 
 class EditPrivacySecurityView(BaseAdminProjectSettingsView):
-    template_name = "domain/admin/bootstrap3/project_privacy.html"
+    template_name = "domain/admin/project_privacy.html"
     urlname = "privacy_info"
     page_title = gettext_lazy("Privacy and Security")
 
     @method_decorator(domain_admin_required)
+    @use_bootstrap5
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -415,9 +418,10 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
 class FeaturePreviewsView(BaseAdminProjectSettingsView):
     urlname = 'feature_previews'
     page_title = gettext_lazy("Feature Previews")
-    template_name = 'domain/admin/bootstrap3/feature_previews.html'
+    template_name = 'domain/admin/feature_previews.html'
 
     @method_decorator(domain_admin_required)
+    @use_bootstrap5
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -504,10 +508,11 @@ class CustomPasswordResetView(PasswordResetConfirmView):
 
 
 @method_decorator(domain_admin_required, name='dispatch')
+@method_decorator(use_bootstrap5, name='dispatch')
 class RecoveryMeasuresHistory(BaseAdminProjectSettingsView):
     urlname = 'recovery_measures_history'
     page_title = gettext_lazy("Recovery Measures History")
-    template_name = 'domain/admin/bootstrap3/recovery_measures_history.html'
+    template_name = 'domain/admin/recovery_measures_history.html'
 
     @property
     def page_context(self):
@@ -535,6 +540,7 @@ class ManageDomainMobileWorkersView(ManageMobileWorkersMixin, BaseAdminProjectSe
 
 @method_decorator([requires_privilege_raise404(privileges.CUSTOM_DOMAIN_ALERTS),
                    require_can_manage_domain_alerts], name='dispatch')
+@method_decorator(use_bootstrap5, name='dispatch')
 class BaseDomainAlertsView(BaseProjectSettingsView):
     @staticmethod
     def _convert_user_time_to_server_time(timestamp, timezone):
@@ -549,7 +555,7 @@ class BaseDomainAlertsView(BaseProjectSettingsView):
 
 
 class ManageDomainAlertsView(BaseDomainAlertsView):
-    template_name = 'domain/admin/bootstrap3/manage_alerts.html'
+    template_name = 'domain/admin/manage_alerts.html'
     urlname = 'domain_manage_alerts'
     page_title = gettext_lazy("Manage Project Alerts")
 
@@ -617,7 +623,7 @@ class ManageDomainAlertsView(BaseDomainAlertsView):
 
 
 class EditDomainAlertView(BaseDomainAlertsView):
-    template_name = 'domain/admin/bootstrap3/edit_alert.html'
+    template_name = 'domain/admin/edit_alert.html'
     urlname = 'domain_edit_alert'
     page_title = gettext_lazy("Edit Project Alert")
 

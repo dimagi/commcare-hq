@@ -1,17 +1,9 @@
-{% extends "reports_core/bootstrap3/base_template_new.html" %}
+{% extends "userreports/base.html" %}
 {% load compress %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% block js %}{{ block.super }}
-  {% compress js %}
-    <script src="{% static 'reports/js/reports.util.js' %}"></script>
-    <script src="{% static 'reports/js/bootstrap3/hq_report.js' %}"></script>
-    <script src="{% static 'reports/js/bootstrap3/standard_hq_report.js' %}"></script>
-    <script src="{% static 'reports/js/bootstrap3/report_config_models.js' %}"></script>
-    <script src="{% static 'userreports/js/configurable_report.js' %}"></script>
-  {% endcompress %}
-{% endblock %}
+{% js_entry_b3 "userreports/js/configurable_report" %}
 
 {% block report_alerts %}
   {{ block.super }}

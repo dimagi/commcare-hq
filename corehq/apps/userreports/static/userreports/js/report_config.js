@@ -1,14 +1,38 @@
-hqDefine('userreports/js/report_config', function () {
+hqDefine('userreports/js/report_config', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'analytix/js/kissmetrix',
+    'hqwebapp/js/bootstrap3/main',
+    'reports_core/js/charts',
+    'reports_core/js/bootstrap3/maps',
+    'userreports/js/builder_view_models',
+    'userreports/js/constants',
+    'userreports/js/report_analytix',
+    'userreports/js/utils',
+    'hqwebapp/js/select2_knockout_bindings.ko',
+], function (
+    $,
+    ko,
+    _,
+    kissmetrics,
+    hqMain,
+    charts,
+    maps,
+    builderViewModels,
+    constants,
+    analytics,
+    utils,
+) {
     return {
         reportBuilder: function () {
             var self = this;
 
-            var propertyList = hqImport('userreports/js/builder_view_models').propertyList;
-            var propertyListItem = hqImport('userreports/js/builder_view_models').propertyListItem;
-            var constants = hqImport('userreports/js/constants');
+            var propertyList = builderViewModels.propertyList;
+            var propertyListItem = builderViewModels.propertyListItem;
 
             var _kmqTrackClick = function (action) {
-                hqImport('analytix/js/kissmetrix').track.event("RBv2 - " + action);
+                kissmetrics.track.event("RBv2 - " + action);
             };
 
             var columnProperty = function (getDefaultDisplayText, getPropertyObject, reorderColumns, hasDisplayText) {
@@ -37,7 +61,7 @@ hqDefine('userreports/js/report_config', function () {
                         self.getDefaultDisplayText.bind(self),
                         self.getPropertyObject.bind(self),
                         self.reorderColumns.bind(self),
-                        self.hasDisplayCol
+                        self.hasDisplayCol,
                     );
                 };
                 self.buttonHandler = function () {
@@ -118,6 +142,10 @@ hqDefine('userreports/js/report_config', function () {
                 self.reportPreviewUrl = config["reportPreviewUrl"];  // Fetch the preview data asynchronously.
                 self.previewDatasourceId = config["previewDatasourceId"];
 
+                // Dropdown options for User Filters
+                self.formatOptions = config["formatOptions"];
+                self.defaultFilterFormatOptions = config["defaultFilterFormatOptions"];
+
                 self.reportTypeListLabel = (
                     (config['sourceType'] === "case") ? "Case List" :
                         (config['sourceType'] === "form") ? "Form List" : "List");
@@ -158,7 +186,7 @@ hqDefine('userreports/js/report_config', function () {
                         self.previewChart(false);
                     } else {
                         if (self.previewChart()) {
-                            hqImport('userreports/js/report_analytix').track.event('Change Chart Type', hqImport('hqwebapp/js/bootstrap3/main').capitalize(newValue));
+                            analytics.track.event('Change Chart Type', hqMain.capitalize(newValue));
                         }
                         self.previewChart(true);
                         self.refreshPreview();
@@ -176,12 +204,12 @@ hqDefine('userreports/js/report_config', function () {
                 };
                 self.addChart = function () {
                     self.selectedChart('bar');
-                    hqImport('userreports/js/report_analytix').track.event('Add Chart');
+                    analytics.track.event('Add Chart');
                     _kmqTrackClick('Add Chart');
                 };
                 self.removeChart = function () {
                     self.selectedChart('none');
-                    hqImport('userreports/js/report_analytix').track.event('Remove Chart');
+                    analytics.track.event('Remove Chart');
                 };
 
                 self.previewChart = ko.observable(false);
@@ -203,34 +231,32 @@ hqDefine('userreports/js/report_config', function () {
                  * @private
                  */
                 var _getSelectableProperties = function (dataSourceIndicators) {
-                    var utils = hqImport('userreports/js/utils');
                     if (self._optionsContainQuestions(dataSourceIndicators)) {
                         return _.compact(_.map(
-                            dataSourceIndicators, utils.convertDataSourcePropertyToQuestionsSelectFormat
+                            dataSourceIndicators, utils.convertDataSourcePropertyToQuestionsSelectFormat,
                         ));
                     } else {
                         return _.compact(_.map(
-                            dataSourceIndicators, utils.convertDataSourcePropertyToSelect2Format
+                            dataSourceIndicators, utils.convertDataSourcePropertyToSelect2Format,
                         ));
                     }
                 };
 
                 var _getSelectableReportColumnOptions = function (reportColumnOptions, dataSourceIndicators) {
-                    var utils = hqImport('userreports/js/utils');
                     if (self._optionsContainQuestions(dataSourceIndicators)) {
                         return _.compact(_.map(
-                            reportColumnOptions, utils.convertReportColumnOptionToQuestionsSelectFormat
+                            reportColumnOptions, utils.convertReportColumnOptionToQuestionsSelectFormat,
                         ));
                     } else {
                         return _.compact(_.map(
-                            reportColumnOptions, utils.convertReportColumnOptionToSelect2Format
+                            reportColumnOptions, utils.convertReportColumnOptionToSelect2Format,
                         ));
                     }
                 };
 
                 var _gaTrackConfigChange = function (analyticsAction, optReportType) {
-                    var analyticsLabel = hqImport('hqwebapp/js/bootstrap3/main').capitalize(self._sourceType) + "-" + hqImport('hqwebapp/js/bootstrap3/main').capitalize(optReportType || self.reportType());
-                    hqImport('userreports/js/report_analytix').track.event(analyticsAction, analyticsLabel);
+                    var analyticsLabel = hqMain.capitalize(self._sourceType) + "-" + hqMain.capitalize(optReportType || self.reportType());
+                    analytics.track.event(analyticsAction, analyticsLabel);
                 };
 
                 /**
@@ -275,7 +301,7 @@ hqDefine('userreports/js/report_config', function () {
                     },
                     afterRenderCallback: function (elem, col) {
                         col.inputBoundCalculation.subscribe(function (val) {
-                            hqImport('userreports/js/report_analytix').track.event('Change Format', val);
+                            analytics.track.event('Change Format', val);
                         });
                     },
                 });
@@ -370,7 +396,7 @@ hqDefine('userreports/js/report_config', function () {
                                     'source_type': self._sourceType,
                                     'source_id': self._sourceId,
                                     'registry_slug': self._registrySlug,
-                                }
+                                },
                             )),
                             dataType: 'json',
                             success: function (data) {
@@ -415,15 +441,13 @@ hqDefine('userreports/js/report_config', function () {
                     if (self.reportType() === "map" && mapSpec) {
                         self.displayMapPreview(true);
                         mapSpec.mapboxAccessToken = self._mapboxAccessToken;
-                        var render = hqImport('reports_core/js/bootstrap3/maps').render;
-                        render(mapSpec, aaData, $("#map-preview-container"));
+                        maps.render(mapSpec, aaData, $("#map-preview-container"));
                     } else {
                         self.displayMapPreview(false);
                     }
                 };
 
                 self._renderChartPreview = function (chartSpecs, aaData) {
-                    var charts = hqImport('reports_core/js/charts');
                     if (chartSpecs !== null && chartSpecs.length > 0) {
                         if (aaData.length > 25) {
                             self.tooManyChartCategoriesWarning(true);
@@ -483,7 +507,7 @@ hqDefine('userreports/js/report_config', function () {
                                 c.pre_value || c.pre_operator ||
                                 c.format === "Is Empty" || c.format === "Exists"
                             );
-                        }
+                        },
                     );
                     return {
                         "existing_report": self.existingReportId,
@@ -499,7 +523,7 @@ hqDefine('userreports/js/report_config', function () {
                     };
                 };
 
-                var button = hqImport("hqwebapp/js/bootstrap3/main").SaveButton;
+                var button = hqMain.SaveButton;
                 self.saveButton = button.init({
                     unsavedMessage: "You have unsaved settings.",
                     save: function () {
@@ -538,7 +562,7 @@ hqDefine('userreports/js/report_config', function () {
                             type: "POST",
                             data: JSON.stringify(Object.assign(
                                 self.serialize(),
-                                {'delete_temp_data_source': true, 'preview_data_source_id': self.previewDatasourceId}
+                                {'delete_temp_data_source': true, 'preview_data_source_id': self.previewDatasourceId},
                             )),
                             success: function (data) {
                                 // Redirect to the newly-saved report

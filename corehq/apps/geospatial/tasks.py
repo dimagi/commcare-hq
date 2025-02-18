@@ -5,13 +5,13 @@ from dimagi.utils.logging import notify_exception
 from corehq.apps.celery import task
 from corehq.apps.geospatial.const import (
     ES_INDEX_TASK_HELPER_BASE_KEY,
+    ES_REASSIGNMENT_UPDATE_OWNERS_BASE_KEY,
     DEFAULT_QUERY_LIMIT,
 )
 from corehq.apps.geospatial.es import case_query_for_missing_geopoint_val
 from corehq.apps.geospatial.utils import (
     get_celery_task_tracker,
     get_flag_assigned_cases_config,
-    CeleryTaskTracker,
     update_cases_owner,
     get_geo_case_property,
 )
@@ -21,12 +21,21 @@ from settings import MAX_GEOSPATIAL_INDEX_DOC_LIMIT
 
 
 @task(queue="background_queue", ignore_result=True)
-def geo_cases_reassignment_update_owners(domain, case_owner_updates_dict, task_key):
+def geo_cases_reassignment_update_owners(domain, case_owner_updates_dict):
+    celery_task_tracker = get_celery_task_tracker(domain, ES_REASSIGNMENT_UPDATE_OWNERS_BASE_KEY)
     try:
         flag_assigned_cases = get_flag_assigned_cases_config(domain)
-        update_cases_owner(domain, case_owner_updates_dict, flag_assigned_cases)
+        update_cases_owner(domain, case_owner_updates_dict, flag_assigned_cases, celery_task_tracker)
+    except Exception as e:
+        notify_exception(
+            None,
+            'Something went wrong while reassigning cases to mobile workers.',
+            details={
+                'error': str(e),
+                'domain': domain
+            }
+        )
     finally:
-        celery_task_tracker = CeleryTaskTracker(task_key)
         celery_task_tracker.mark_completed()
 
 

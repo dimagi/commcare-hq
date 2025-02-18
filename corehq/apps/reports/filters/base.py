@@ -6,6 +6,8 @@ import pytz
 from memoized import memoized
 
 from corehq.apps.hqwebapp.crispy import CSS_FIELD_CLASS, CSS_LABEL_CLASS
+from corehq.apps.hqwebapp.utils.bootstrap.paths import get_bootstrap5_path
+from corehq.apps.reports.util import DatatablesServerSideParams
 
 
 class BaseReportFilter(object):
@@ -24,8 +26,9 @@ class BaseReportFilter(object):
     is_cacheable = False
     help_style_bubble = False
 
-    def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None,
-                 css_label=None, css_field=None):
+    def __init__(self, request, domain=None, timezone=pytz.utc,
+                 parent_report=None, css_label=None, css_field=None,
+                 use_bootstrap5=False):
         self.domain = domain
         if self.slug is None:
             raise NotImplementedError("slug is required")
@@ -39,6 +42,8 @@ class BaseReportFilter(object):
         self.css_label = css_label or (CSS_LABEL_CLASS + ' control-label')
         self.css_field = css_field or CSS_FIELD_CLASS
         self.context = {}
+        if use_bootstrap5:
+            self.template = get_bootstrap5_path(self.template)
 
     @property
     def is_disabled(self):
@@ -77,7 +82,7 @@ class BaseReportFilter(object):
 
     @classmethod
     def get_value(cls, request, domain):
-        return request.GET.get(cls.slug)
+        return DatatablesServerSideParams.get_value_from_request(request, cls.slug)
 
 
 class CheckboxFilter(BaseReportFilter):
@@ -87,11 +92,15 @@ class CheckboxFilter(BaseReportFilter):
 
     @property
     def filter_context(self):
-        return {'checked': self.request.GET.get(self.slug, False)}
+        return {
+            'checked': DatatablesServerSideParams.get_value_from_request(
+                self.request, self.slug, False
+            ),
+        }
 
     @classmethod
     def get_value(cls, request, domain):
-        val = request.GET.get(cls.slug, False)
+        val = DatatablesServerSideParams.get_value_from_request(request, cls.slug)
         if not val:
             return False
         else:
@@ -166,11 +175,11 @@ class BaseMultipleOptionFilter(BaseSingleOptionFilter):
         Displays a multiselect field.
     """
     template = "reports/filters/bootstrap3/multi_option.html"
-    default_options = [] # specify a list
+    default_options = []  # specify a list
 
     @classmethod
     def get_value(cls, request, domain):
-        return request.GET.getlist(cls.slug)
+        return DatatablesServerSideParams.get_value_from_request(request, cls.slug, as_list=True)
 
     @property
     @memoized
@@ -294,7 +303,7 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
             'val': val,
             'text': text,
             'next': next,
-            }
+        }
 
     @property
     def shared_pagination_GET_params(self):
@@ -303,7 +312,7 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
     @classmethod
     def _get_label_value(cls, request, label):
         slug = str(label[2])
-        val = request.GET.get('%s_%s' % (cls.slug, slug))
+        val = DatatablesServerSideParams.get_value_from_request(request, f'{cls.slug}_{slug}')
         return {
             'slug': slug,
             'value': val,
@@ -313,23 +322,6 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
     def get_value(cls, request, domain):
         instance = cls(request, domain)
         return instance.GET_values, instance
-
-
-class BaseTagsFilter(BaseReportFilter):
-    template = "reports/filters/bootstrap3/base_tags_filter.html"
-    tags = []
-
-    @property
-    def selected(self):
-        return self.get_value(self.request, self.domain) or ''
-
-    @property
-    def filter_context(self):
-        return {
-            'tags': self.tags,
-            'selected': self.selected,
-            'placeholder': self.placeholder,
-        }
 
 
 class BaseSimpleFilter(BaseReportFilter):
@@ -345,7 +337,9 @@ class BaseSimpleFilter(BaseReportFilter):
     @property
     def filter_context(self):
         return {
-            'default': self.request.GET.get(self.slug, ""),
+            'default': DatatablesServerSideParams.get_value_from_request(
+                self.request, self.slug, default_value=""
+            ),
             'help_title': self.help_title,
             'help_content': self.help_content,
             'help_inline': self.help_inline

@@ -1,9 +1,10 @@
-{% extends "hqadmin/hqadmin_base_report.html" %}
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 
-{% block reportcontent %}
-  <h1>{% block title %}{{ verb|title }} {% trans "User Account" %}{% endblock %}</h1>
+{% block title %}{{ current_page.page_name }}{% endblock %}
+
+{% block page_content %}
   <p>{% blocktrans %}You are about to {{ verb }} the user account for "{{ username }}".{% endblocktrans %}</p>
   <p>This will prevent them from using CommCare HQ at all and will be enforced immediately.</p>
   {% crispy form %}

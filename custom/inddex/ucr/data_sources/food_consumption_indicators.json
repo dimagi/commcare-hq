@@ -11,6 +11,7 @@
     ],
     "server_environment": [
         "production",
+        "staging",
         "localdev",
         "monolith"
     ],

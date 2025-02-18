@@ -1,19 +1,20 @@
 --- 
 +++ 
-@@ -1,12 +1,14 @@
+@@ -1,13 +1,15 @@
  // side effects: defines knockout bindings that are used in hqwebapp/partials/pagination.html
 -hqDefine("hqwebapp/js/bootstrap3/crud_paginated_list", [
 +hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
      "jquery",
      "knockout",
      "underscore",
+-    "hqwebapp/js/bootstrap3/knockout_bindings.ko",  // fadeVisible
 +    "es6!hqwebapp/js/bootstrap5_loader",
++    'hqwebapp/js/bootstrap5/knockout_bindings.ko',  // fadeVisible
  ], function (
      $,
      ko,
--    _
-+    _,
-+    bootstrap
+     _,
++    bootstrap,
  ) {
      var CRUDPaginatedListModel = function (
          total,

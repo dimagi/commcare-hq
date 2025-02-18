@@ -338,7 +338,7 @@ class OwnerTests(LocationHierarchyTestCase):
         self.send_mail_mock = self.send_mail_patcher.start()
         self.import_patcher = patch('corehq.motech.openmrs.tasks.import_patients_of_owner')
         self.import_mock = self.import_patcher.start()
-        self.decrypt_patcher = patch('corehq.motech.openmrs.tasks.b64_aes_decrypt')
+        self.decrypt_patcher = patch('corehq.motech.openmrs.models.b64_aes_decrypt')
         self.decrypt_patcher.start()
 
     def tearDown(self):
