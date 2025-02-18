@@ -22,3 +22,9 @@ class TestSystemLimitMethods(TestCase):
         SystemLimit.objects.create(key="general_limit", limit=20, domain="specific")
         self.assertEqual(SystemLimit.for_key("general_limit"), 10)
         self.assertEqual(SystemLimit.for_key("general_limit", domain="specific"), 20)
+
+    def test_cache_is_cleared(self):
+        SystemLimit.objects.create(key="general_limit", limit=10)
+        self.assertEqual(SystemLimit.for_key("general_limit"), 10)
+        SystemLimit.objects.update_or_create(defaults={"limit": 11}, key="general_limit")
+        self.assertEqual(SystemLimit.for_key("general_limit"), 11)

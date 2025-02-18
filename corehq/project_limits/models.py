@@ -102,7 +102,7 @@ class SystemLimit(models.Model):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        SystemLimit.for_key.clear(self.key, self.domain)
+        self.for_key.clear(self.__class__, self.key, self.domain)
 
     @classmethod
     @quickcache(['key', 'domain'], timeout=7 * 24 * 60 * 60)
