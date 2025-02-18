@@ -1,9 +1,9 @@
-{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% js_entry_b3 'users/js/web_users' %}
+{% js_entry 'users/js/web_users' %}
 
 {% block page_content %}
   {% initial_page_data "invitations" invitations %}
@@ -33,7 +33,7 @@
       </a>
 
       {% if not request.is_view_only %}
-      <a id="bulk_upload" class="btn btn-default" href="{% url "upload_web_users" domain %}">
+      <a id="bulk_upload" class="btn btn-outline-primary" href="{% url "upload_web_users" domain %}">
         <i class="fa-solid fa-cloud-arrow-up"></i> {% trans "Upload Web Users" %}
       </a>
       {% endif %}
@@ -41,13 +41,13 @@
   </p>
 
   {% if requests and not request.is_view_only %}
-    <div class="panel panel-info">
-      <div class="panel-heading">
-        <h3 class="panel-title">
+    <div class="card text-bg-info">  {# todo B5: css-panel #}
+      <div class="card-header">
+        <h3 class="card-title">
           {% trans 'Pending Access Requests' %}
         </h3>
       </div>
-      <div class="panel-body">
+      <div class="card-body">
         <table class="table table-striped table-responsive">
           <thead>
             <tr>
@@ -68,11 +68,11 @@
               <td>
                 <div>
                   <a href="{% url "invite_web_user" domain %}?request_id={{ req.id }}"
-                     class="approve-request btn btn-default">
+                     class="approve-request btn btn-outline-primary">
                     <i class="fa-regular fa-square-check"></i>
                     {% trans "Approve Request" %}
                   </a>
-                  <a href="#" class="btn btn-danger delete-request"
+                  <a href="#" class="btn btn-outline-danger delete-request"
                      data-id={{ req.id }}>
                     <i class="fa-regular fa-trash-can"></i>
                     {% trans "Delete Request" %}
@@ -87,13 +87,13 @@
     </div>
   {% endif %}
 
-  <div class="panel panel-default ko-template" id="web-users-panel">
-    <div class="panel-heading">
+  <div class="card  ko-template" id="web-users-panel">  {# todo B5: css-panel #}
+    <div class="card-header">
       <div class="row">
-        <div class="col-sm-6">
-          <h3 class="panel-title" style="padding-top: 7px;">{% trans 'Current Users' %}</h3>
+        <div class="col-md-6">
+          <h3 class="card-title" style="padding-top: 7px;">{% trans 'Current Users' %}</h3>  {# todo B5: inline-style #}
         </div>
-        <div class="col-sm-6">
+        <div class="col-md-6">
           <search-box data-apply-bindings="false"
                       params="value: query,
                               action: function() { goToPage(1); },
@@ -101,7 +101,7 @@
         </div>
       </div>
     </div>
-    <div class="panel-body">
+    <div class="card-body">
       <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
       <div data-bind="visible: showLoadingSpinner">
         <i class="fa fa-spin fa-spinner"></i>
@@ -115,7 +115,7 @@
       </div>
       <table class="table table-striped table-responsive"
              data-bind="visible: showUsers"
-             style="margin-bottom: 0;">
+             style="margin-bottom: 0;">  {# todo B5: inline-style #}
         <thead>
           <tr>
             <th>{% trans "Email Address" %}</th>
@@ -131,7 +131,7 @@
           <tr>
             <td>
               <a data-bind="attr: {href: editUrl}, text: email"></a>
-                <span class="label label-warning"
+                <span class="badge text-bg-warning"
                       data-bind="if: isUntrustedIdentityProvider">
                   <i class="fa fa-warning"></i>
                   {% trans "SSO Identity Provider is not trusted." %}
@@ -148,9 +148,9 @@
               <td>
                 <div data-bind="visible: removeUrl">
                   <button type="button"
-                          class="btn btn-danger"
-                          data-toggle="modal"
-                          data-bind="attr: {'data-target': '#remove_membership_' + id}">
+                          class="btn btn-outline-danger"
+                          data-bs-toggle="modal"
+                          data-bind="attr: {'data-bs-target': '#remove_membership_' + id}">
                     <i class="fa-regular fa-trash-can"></i> {% trans "Remove Membership" %}
                   </button>
                 </div>
@@ -161,7 +161,7 @@
                           data-bind="attr: {action: removeUrl}">
                       {% csrf_token %}
                       <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal">
+                        <button type="button" class="btn-close" data-bs-dismiss="modal">  {# todo B5: css-close #}
                           <span aria-hidden="true">&times;</span>
                           <span class="sr-only">{% trans "Close" %}</span>
                         </button>
@@ -172,7 +172,7 @@
                       </div>
                       <div class="modal-body">
                         <p class="lead">{% trans "Are you sure you want to remove this users's membership?" %}</p>
-                        <ul class="dl-horizontal">
+                        <ul class="dl-horizontal">  {# todo B5: css-dl-horizontal #}
                           <dt>{% trans "Email Address" %}</dt>
                           <dd data-bind="text: email"></dd>
                           <dt>{% trans "Name" %}</dt>
@@ -185,11 +185,11 @@
                       </div>
                       <div class="modal-footer">
                         <button type="button"
-                                class="btn btn-default"
-                                data-dismiss="modal">
+                                class="btn btn-outline-primary"
+                                data-bs-dismiss="modal">
                           {% trans "Cancel" %}
                         </button>
-                        <button type="submit" class="btn btn-danger">
+                        <button type="submit" class="btn btn-outline-danger">
                           <i class="fa-regular fa-trash-can"></i>
                           {% trans "Remove Membership" %}
                         </button>
@@ -216,14 +216,14 @@
   </div><!-- end .panel -->
 
   {% if invitations %}
-    <div class="panel panel-info ko-template" id="invitations-panel">
-      <div class="panel-heading">
+    <div class="card text-bg-info ko-template" id="invitations-panel">  {# todo B5: css-panel #}
+      <div class="card-header">
         <div class="row">
-          <div class="col-sm-4">
-            <h3 class="panel-title" style="padding-top: 7px;">{% trans 'Pending Invitations' %}</h3>
+          <div class="col-md-4">
+            <h3 class="card-title" style="padding-top: 7px;">{% trans 'Pending Invitations' %}</h3>  {# todo B5: inline-style #}
           </div>
-          <div class="col-sm-2">
-            <select class="form-control" data-bind="
+          <div class="col-md-2">
+            <select class="form-select" data-bind="
                            options: allStatuses,
                            value: statusFilter,
                            event: { change: function () { goToPage(1) } },
@@ -231,7 +231,7 @@
                            ">
             </select>
           </div>
-          <div class="col-sm-6">
+          <div class="col-md-6">
             <search-box data-apply-bindings="false"
                         params="value: query,
                                 action: function() { goToPage(1); },
@@ -240,7 +240,7 @@
           </div>
         </div>
       </div>
-      <div class="panel-body">
+      <div class="card-body">
         <table class="table table-striped table-responsive">
           <thead>
             <tr>
@@ -257,13 +257,13 @@
             <tr data-bind="visible: visible">
               <td>
                 <!-- ko text: email --><!-- /ko -->
-                <span class="label label-danger undeliverable-label" data-bind="visible: email_marked_as_bounced">{% trans "Undeliverable" %}</span>
+                <span class="badge text-bg-danger undeliverable-label" data-bind="visible: email_marked_as_bounced">{% trans "Undeliverable" %}</span>
               </td>
               <td data-bind="text: role_label"></td>
               <td>
                 <!-- ko text: invitedOnText --><!-- /ko -->
-                <span class="label label-default" data-bind="visible: !isExpired(), text: daysRemainingText()"></span>
-                <span class="label label-danger" data-bind="visible: isExpired()">{% trans "Expired" %}</span>
+                <span class="badge text-bg-secondary" data-bind="visible: !isExpired(), text: daysRemainingText()"></span>
+                <span class="badge text-bg-danger" data-bind="visible: isExpired()">{% trans "Expired" %}</span>
               </td>
               <td>
                 <!-- ko text: email_status --><!-- /ko -->
@@ -271,18 +271,18 @@
               <td>
                 {% if not request.is_view_only %}
                 <div data-bind="visible: !actionMessage()">
-                  <a data-bind="attr: {href: inviteEditUrl}" style="text-decoration:none;">
-                    <button type="button" class="btn btn-default" data-bind="disable: actionInProgress">
+                  <a data-bind="attr: {href: inviteEditUrl}" style="text-decoration:none;">  {# todo B5: inline-style #}
+                    <button type="button" class="btn btn-outline-primary" data-bind="disable: actionInProgress">
                       <i class="fa-regular fa-edit"></i>
                       {% trans "Edit" %}
                     </button>
                   </a>
-                  <button type="button" class="resend-invite btn btn-default"
+                  <button type="button" class="resend-invite btn btn-outline-primary"
                           data-bind="click: resend, disable: actionInProgress">
                     <i class="fa-regular fa-envelope"></i>
                     {% trans "Resend" %}
                   </button>
-                  <button type="button" class="btn btn-danger delete-invitation"
+                  <button type="button" class="btn btn-outline-danger delete-invitation"
                           data-bind="click: $root.confirmRemoveInvitation, disable: actionInProgress">
                     <i class="fa-regular fa-trash-can"></i>
                     {% trans "Delete Invitation" %}
@@ -305,7 +305,7 @@
         <div class="modal-dialog">
           <div class="modal-content" data-bind="with: invitationToRemove">
             <div class="modal-header">
-              <button type="button" class="close">
+              <button type="button" class="btn-close">  {# todo B5: css-close #}
                 <span aria-hidden="true">&times;</span>
                 <span class="sr-only">{% trans "Close" %}</span>
               </button>
@@ -315,8 +315,8 @@
                 {% trans "Are you sure you want to delete this invitation?" %}
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-              <button type="button" class="btn btn-danger" data-bind="click: $root.removeInvitation">{% trans "Delete" %}</button>
+              <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+              <button type="button" class="btn btn-outline-danger" data-bind="click: $root.removeInvitation">{% trans "Delete" %}</button>
             </div>
           </div>
         </div>
@@ -325,13 +325,13 @@
   {% endif %}
 
   {% if user.is_superuser %}
-    <div class="panel panel-default">
-      <div class="panel-heading"
+    <div class="card ">  {# todo B5: css-panel #}
+      <div class="card-header"
            role="tab"
            id="adminEmailsHeading">
-        <h4 class="panel-title">
+        <h4 class="card-title">
           <a class="collapsed"
-             data-toggle="collapse"
+             data-bs-toggle="collapse"
              href="#adminEmails"
              aria-expanded="false"
              aria-controls="adminEmails">
@@ -343,7 +343,7 @@
            class="panel-collapse collapse"
            role="tabpanel"
            aria-labelledby="adminEmailsHeading">
-        <div class="panel-body">
+        <div class="card-body">
           {% for user in admins %}
             {% if user.first_name or user.last_name %}
               "{{ user.first_name }} {{ user.last_name }}"
@@ -366,7 +366,7 @@
         <div class="modal-content">
           <div class="modal-header">
             <button type="button"
-                    class="close">
+                    class="btn-close">  {# todo B5: css-close #}
               <span aria-hidden="true">&times;</span>
               <span class="sr-only">{% trans "Close" %}</span>
             </button>
@@ -374,8 +374,8 @@
           </div>
           <div class="modal-body"></div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-            <button type="button" class="btn btn-danger" id="confirm-delete">{% trans "Delete" %}</button>
+            <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+            <button type="button" class="btn btn-outline-danger" id="confirm-delete">{% trans "Delete" %}</button>
           </div>
         </div>
       </div>
