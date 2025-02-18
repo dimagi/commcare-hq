@@ -167,6 +167,17 @@ class TestGetUserDataForAPI(TestCase):
         result = get_user_data_for_api(self.user, self.config)
         self.assertEqual(result, {'first_name': 'abc', 'nationality': 'Indian'})
 
+    def test_unsafe_custom_user_data_store(self):
+        self.config.api_field_to_user_data_map = [
+            {
+                "fieldName": "first_name",
+                "mapsTo": "password",
+                "source": "standard"
+            }
+        ]
+        result = get_user_data_for_api(self.user, self.config)
+        self.assertEqual(result, {})
+
     def test_custom_user_data_store_with_no_data(self):
         result = get_user_data_for_api(self.user, self.config)
         self.assertEqual(result, {'first_name': 'abc'})
