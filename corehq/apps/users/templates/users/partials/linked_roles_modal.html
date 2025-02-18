@@ -5,7 +5,7 @@
         <div class="modal-content">
         <div class="modal-header">
             <button type="button"
-                    class="close" data-dismiss="modal">
+                    class="btn-close" data-bs-dismiss="modal">  {# todo B5: css-close #}
             <span aria-hidden="true">&times;</span>
             </button>
             <h3 class="modal-title">
@@ -20,7 +20,7 @@
                 and may also affect solutions on this project space.</p>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-danger" id="confirm-unlock" data-dismiss="modal" data-bind="click: $root.toggleLinkedRoles">{% trans "Unlock" %}</button>
+            <button type="button" class="btn btn-outline-danger" id="confirm-unlock" data-bs-dismiss="modal" data-bind="click: $root.toggleLinkedRoles">{% trans "Unlock" %}</button>
         </div>
         </div>
     </div>
