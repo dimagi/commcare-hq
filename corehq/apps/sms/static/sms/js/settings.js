@@ -4,7 +4,7 @@ hqDefine("sms/js/settings", [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/select2_handler',
     'hqwebapp/js/components/select_toggle',
-    'bootstrap-timepicker/js/bootstrap-timepicker',
+    'bootstrap-timepicker/js/bootstrap-timepicker',     // TODO: replace with tempus dominus
     'hqwebapp/js/bootstrap5/widgets', //multi-emails
     'commcarehq',
 ], function (

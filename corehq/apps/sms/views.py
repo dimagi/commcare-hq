@@ -64,9 +64,9 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqadmin.views.users import BaseAdminSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import (
+    use_bootstrap5,
     use_datatables,
     use_jquery_ui,
-    use_timepicker,
 )
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
@@ -1964,7 +1964,7 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
         return self.get(request, *args, **kwargs)
 
     @method_decorator(domain_admin_required)
-    @use_timepicker
+    @use_bootstrap5
     def dispatch(self, request, *args, **kwargs):
         return super(SMSSettingsView, self).dispatch(request, *args, **kwargs)
 

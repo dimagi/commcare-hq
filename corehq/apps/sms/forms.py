@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 from django.forms.fields import (
     BooleanField,
     CharField,
-    ChoiceField,
+    ChoiceField,    # TODO: these don't use .form-select
     IntegerField,
 )
 from django.forms.forms import Form
@@ -562,7 +562,7 @@ class SettingsForm(Form):
                     css_class='col-sm-8'
                 ),
             ),
-            hqcrispy.B3MultiField(
+            hqcrispy.B3MultiField(          # TODO: B3MultiField probably isn't good anymore (here or above)
                 _("Chat Template"),
                 crispy.Div(
                     InlineField(
@@ -612,7 +612,7 @@ class SettingsForm(Form):
         self.is_previewer = is_previewer
         super(SettingsForm, self).__init__(data, *args, **kwargs)
 
-        self.helper = HQFormHelper()
+        self.helper = HQFormHelper()    # TODO: this isn't laying form out horizontally
 
         self.helper.layout = crispy.Layout(
             *self.sections

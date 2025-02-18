@@ -7,7 +7,8 @@
 
 {% block stylesheets %}
   <style>
-    .form-horizontal .form-group {
+    /* TODO: remove? */
+    /*.form-horizontal .form-group {
       margin-left: 0;
       margin-right: 0;
     }
@@ -16,13 +17,13 @@
     }
     .controls-multiple .row div {
       padding-left: 0px;
-    }
+    }*/
   </style>
 {% endblock %}
 
 {% block page_content %}
   <div id="sms-settings-form">
-    {% crispy form %}  {# todo B5: crispy #}
+    {% crispy form %}
   </div>
 
   {% include "sms/partials/day_time_windows.html" with context=form.restricted_sms_times_widget_context only %}
