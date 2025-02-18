@@ -19,6 +19,7 @@ class CSQLFixtureExpressionForm(forms.ModelForm):
         self.fields['name'].widget.attrs = {
             'placeholder': "name",
             'class': "form-control",
+            'maxlength': "64",
         }
         self.fields['csql'].widget.attrs = {
             'placeholder': "@status = 'open'",
