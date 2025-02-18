@@ -1,9 +1,9 @@
-{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% js_entry_b3 'accounting/js/widgets' %}
+{% js_entry 'accounting/js/widgets' %}
 
 {% block page_content %}
   <div class="alert alert-info">
@@ -18,6 +18,6 @@
     </p>
   </div>
   <div id="billing-info">
-    {% crispy billing_info_form %}
+    {% crispy billing_info_form %}  {# todo B5: crispy #}
   </div>
 {% endblock %}
