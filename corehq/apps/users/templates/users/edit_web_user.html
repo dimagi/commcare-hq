@@ -1,10 +1,10 @@
-{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
 
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% js_entry_b3 'users/js/edit_web_user' %}
+{% js_entry 'users/js/edit_web_user' %}
 
 {% block page_content %}
   {% initial_page_data 'can_edit_original_profile' can_edit_original_profile %}
@@ -34,7 +34,7 @@
       <form class="form form" name="trust_identity_provider" method="post">
         {% csrf_token %}
         <input type="hidden" name="form_type" value="trust-identity-provider" />
-        <p style="margin-top: 10px;">
+        <p style="margin-top: 10px;">  {# todo B5: inline-style #}
           <button type="submit"
                   class="btn btn-confirm">
             {% trans "Trust Identity Provider" %}
@@ -46,7 +46,7 @@
   <div class="form form-horizontal">
     <fieldset>
       <legend>{% blocktrans with couch_user.human_friendly_name as friendly_name %}Information for {{ friendly_name }}{% endblocktrans %}</legend>
-      <dl class="dl-horizontal hq-dl-userinfo">
+      <dl class="dl-horizontal hq-dl-userinfo">  {# todo B5: css-dl-horizontal #}
         <dt>{% trans 'Username' %}</dt>
         <dd>{{ couch_user.html_username }}</dd>
         {% for field in form_uneditable.visible_fields %}
@@ -74,13 +74,13 @@
       <input type="hidden" name="form_type" value="update-user" />
       <fieldset>
         <legend>{% blocktrans with couch_user.human_friendly_name as friendly_name %}Change {{ friendly_name }}'s Role{% endblocktrans %}</legend>
-        {% crispy form_user_update.user_form %}
+        {% crispy form_user_update.user_form %}  {# todo B5: crispy #}
 
         {% if form_user_update.custom_data.form.fields or form_user_update.custom_data.form.data %}
-          {% crispy form_user_update.custom_data.form %}
+          {% crispy form_user_update.custom_data.form %}  {# todo B5: crispy #}
         {% endif %}
         <div class="form-actions">
-          <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
+          <div class="offset-md-3 offset-lg-2 col-md-9 col-lg-8 col-xl-6">
             <button type="submit" class="btn btn-primary">{% trans 'Update Information' %}</button>
           </div>
         </div>
@@ -95,12 +95,12 @@
       <input type="hidden" name="form_type" value="commtrack" />
       <fieldset>
         <legend>{% trans 'Location Settings' %}</legend>
-        {% crispy update_form %}
+        {% crispy update_form %}  {# todo B5: crispy #}
       </fieldset>
       {% if not request.is_view_only %}
         {% include 'users/partials/location_edit_warnings.html' with request_username=request.couch_user.username user_type="Web User" couch_username=couch_user.username %}
         <div class="form-actions">
-          <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
+          <div class="offset-md-3 offset-lg-2 col-md-9 col-lg-8 col-xl-6">
             <button type="submit" class="btn btn-primary">{% trans 'Update Location Settings' %}</button>
           </div>
         </div>
@@ -112,7 +112,7 @@
       <div class="list-group">
         {% for location in support_info.locations %}
           <a href="{% url "edit_location" domain location.location_id %}" class="list-group-item">
-            {{ location.get_path_display }} <span class="badge">{{ location.location_type.name }}</span>
+            {{ location.get_path_display }} <span class="badge rounded-pill">{{ location.location_type.name }}</span>
           </a>
         {% endfor %}
       </div>
@@ -125,11 +125,11 @@
       {% csrf_token %}
       <input type="hidden" name="form_type" value="tableau" />
       <fieldset>
-        {% crispy tableau_form %}
+        {% crispy tableau_form %}  {# todo B5: crispy #}
       </fieldset>
       {% if not request.is_view_only and edit_user_tableau_config%}
         <div class="form-actions">
-          <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
+          <div class="offset-md-3 offset-lg-2 col-md-9 col-lg-8 col-xl-6">
             <button type="submit" class="btn btn-primary">{% trans 'Update Tableau Configuration' %}</button>
           </div>
         </div>
