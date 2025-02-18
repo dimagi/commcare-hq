@@ -578,6 +578,7 @@ class GlobalBackendMap(BaseAdminSectionView):
         }
         return BackendMapForm(initial=initial, backends=self.backends)
 
+    @method_decorator(use_bootstrap5)
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
         return super(GlobalBackendMap, self).dispatch(request, *args, **kwargs)
