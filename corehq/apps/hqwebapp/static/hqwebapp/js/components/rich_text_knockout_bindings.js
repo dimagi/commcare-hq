@@ -31,6 +31,7 @@ function imageHandler() {
         let formData = new FormData();
 
         formData.append("upload", file, file.name);
+        const spinner = $('<div class="spinner"></div>').appendTo('body');
         fetch(uploadUrl, {
             method: "POST",
             body: formData,
@@ -42,11 +43,10 @@ function imageHandler() {
                 if (!response.ok) {
                     if (response.status === 400) {
                         return response.json().then(function (errorJson) {
-                            throw Error(errorJson.error.message);
+                            throw Error(gettext('Failed to upload image: ') + errorJson.error.message);
                         });
                     }
-
-                    throw Error("Error uploading image");
+                    throw Error(gettext('Failed to upload image. Please try again.'));
                 }
                 return response.json();
             })
@@ -65,7 +65,10 @@ function imageHandler() {
                 );
             })
             .catch(function (error) {
-                alert(error);
+                alert(error.message || gettext('Failed to upload image. Please try again.'));
+            })
+            .finally(function () {
+                spinner.remove();
             });
     };
     input.click();
