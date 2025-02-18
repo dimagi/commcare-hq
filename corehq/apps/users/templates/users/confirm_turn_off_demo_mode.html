@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -15,11 +15,11 @@
         id="toggle-demo-mode"
         action="{% url "toggle_demo_mode" domain commcare_user.user_id %}"
         method="post">
-    <a class="btn btn-default" href="{% url "edit_commcare_user" domain commcare_user.user_id %}">{% trans 'No, go back' %}</a>
+    <a class="btn btn-outline-primary" href="{% url "edit_commcare_user" domain commcare_user.user_id %}">{% trans 'No, go back' %}</a>
     <input type="hidden" name="demo_mode" value="no" />
     <input type="hidden" name="confirm_turn_off" value="yes" />
     {% csrf_token %}
-    <button type="submit" class="btn btn-danger">
+    <button type="submit" class="btn btn-outline-danger">
       {% trans 'Yes, continue' %}
     </button>
   </form>
