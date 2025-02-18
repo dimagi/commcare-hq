@@ -1267,10 +1267,10 @@ class SubscribeSMSForm(Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _('Subscribe settings'),
-                twbscrispy.PrependedText('stock_out_facilities', ''),
-                twbscrispy.PrependedText('stock_out_commodities', ''),
-                twbscrispy.PrependedText('stock_out_rates', ''),
-                twbscrispy.PrependedText('non_report', '')
+                'stock_out_facilities',
+                'stock_out_commodities',
+                'stock_out_rates',
+                'non_report',
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(

@@ -1603,6 +1603,7 @@ class EditGlobalGatewayView(AddGlobalGatewayView):
         return reverse(self.urlname, kwargs=self.kwargs)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class SubscribeSMSView(BaseMessagingSectionView):
     template_name = "sms/subscribe_sms.html"
     urlname = 'subscribe_sms'
