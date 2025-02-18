@@ -17,7 +17,7 @@ from corehq.apps.settings.views import BaseProjectDataView
 class CleanCasesMainView(BaseProjectDataView):
     page_title = gettext_lazy("Clean Case Data")
     urlname = "data_cleaning_cases"
-    template_name = "data_cleaning/select_case_type.html"
+    template_name = "data_cleaning/clean_cases_main.html"
 
     @property
     def page_context(self):
@@ -33,7 +33,7 @@ class CleanCasesMainView(BaseProjectDataView):
 class CleanCasesSessionView(BaseProjectDataView):
     page_title = gettext_lazy("Clean Case Type")
     urlname = "data_cleaning_cases_session"
-    template_name = "data_cleaning/cases.html"
+    template_name = "data_cleaning/clean_cases_session.html"
 
     @property
     def session_id(self):
