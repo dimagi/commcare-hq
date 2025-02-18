@@ -103,13 +103,15 @@ const parser = new DOMParser();
 function deltaToHtml(delta) {
     // nice for adding more test data
     // console.log(JSON.stringify(delta, null, 4));
+    if (!delta) {
+        return
+    }
     const converter = new QuillDeltaToHtmlConverter(delta.ops, converterOptions);
     const body = converter.convert();
 
     const xmlDoc = parser.parseFromString(body, "text/html");
     updateListType(xmlDoc, 0);
     const html = `<html><body>${xmlDoc.querySelector("body").innerHTML}</body></html>`;
-    console.log(html);
     return html;
 }
 

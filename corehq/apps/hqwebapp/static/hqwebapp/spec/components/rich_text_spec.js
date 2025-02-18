@@ -28,6 +28,14 @@ describe('Rich Text Editor', function () {
             assert.equal('<ol type="1"><li>item<ol type="a"><li>item</li></ol></li></ol>', updatedHtml);
         });
 
+        it("handle invalid html", function () {
+            const html = "<ol><li>item<sdqsd><li>item</li></sdq></li></ol>";
+            const xmlDoc = parser.parseFromString(html, "text/html");
+            updateListType(xmlDoc, 0);
+            const updatedHtml = xmlDoc.querySelector("body").innerHTML;
+            assert.equal('<ol type="1"><li>item<sdqsd></sdqsd></li><li>item</li></ol>', updatedHtml);
+        });
+
     });
 
     describe('deltaToHtml', function () {
@@ -189,7 +197,6 @@ describe('Rich Text Editor', function () {
                     ],
                 };
             const html = deltaToHtml(delta);
-            console.log(html);
             assert.equal("<html><body><p>left</p><p style=\"text-align:right\">right</p>" +
                 "<p style=\"text-align:center\">center</p><p style=\"text-align:justify\">justified</p>" +
                 "</body></html>", html);
@@ -220,7 +227,6 @@ describe('Rich Text Editor', function () {
                     ],
                 };
             const html = deltaToHtml(delta);
-            console.log(html);
             assert.equal("<html><body><p><span style=\"font-family:Arial\">Arial</span><br>" +
                 "<span style=\"font-family:Times New Roman\">Times New Roman</span></p></body></html>", html);
         });
@@ -250,7 +256,6 @@ describe('Rich Text Editor', function () {
                     ],
                 };
             const html = deltaToHtml(delta);
-            console.log(html);
             assert.equal("<html><body><p><span style=\"color:#e60000\">color</span><br>" +
                 "<span style=\"background-color:#e60000\">background</span></p></body></html>", html);
         });
@@ -271,8 +276,59 @@ describe('Rich Text Editor', function () {
                     ],
                 };
             const html = deltaToHtml(delta);
-            console.log(html);
             assert.equal("<html><body><p><a href=\"https://dimagi.com\">link</a></p></body></html>", html);
+        });
+
+        it('should handle missing ops', function () {
+            const delta = {};
+            const html = deltaToHtml(delta);
+            assert.equal("<html><body></body></html>", html);
+        });
+
+        it('should handle ops without insert', function () {
+            const delta = {
+                "ops": [
+                    {
+                        "attributes": {
+                            "color": "#e60000",
+                        },
+                    },
+                ],
+            };
+            const html = deltaToHtml(delta);
+            assert.equal("<html><body></body></html>", html);
+        });
+
+        it('should handle invalid color codes', function () {
+            const delta = {
+                "ops": [
+                    {
+                        "attributes": {
+                            "color": "invalid-color",
+                        },
+                        "insert": "text",
+                    },
+                    {"insert": "\n"},
+                ],
+            };
+            const html = deltaToHtml(delta);
+            assert.equal("<html><body><p>text</p></body></html>", html);
+        });
+
+        it('should sanitize malicious links', function () {
+            const delta = {
+                "ops": [
+                    {
+                        "attributes": {
+                            "link": "javascript:alert('xss')",
+                        },
+                        "insert": "malicious link",
+                    },
+                    {"insert": "\n"},
+                ],
+            };
+            const html = deltaToHtml(delta);
+            assert.equal('<html><body><p><a href="unsafe:javascript:alert(\'xss\')">malicious link</a></p></body></html>', html);
         });
     });
 });
