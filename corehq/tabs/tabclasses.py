@@ -654,10 +654,7 @@ class ProjectDataTab(UITab):
         if self._can_view_geospatial:
             items += self._get_geospatial_views()
         if self._can_view_kyc_integration:
-            items.append([_('KYC Verification'), [{
-                'title': KycConfigurationView.page_title,
-                'url': reverse(KycConfigurationView.urlname, args=[self.domain]),
-            }]])
+            items += self._get_kyc_verification_views()
         return items
 
     @cached_property
@@ -1023,6 +1020,23 @@ class ProjectDataTab(UITab):
         for section in management_sections:
             geospatial_items[0][1].append(section)
         return geospatial_items
+
+    def _get_kyc_verification_views(self):
+        from corehq.apps.integration.kyc.views import KycVerificationReportView
+        items = [[
+            _("Know Your Customer (KYC) Verification"),
+            [
+                {
+                    "title": KycConfigurationView.page_title,
+                    "url": reverse(KycConfigurationView.urlname, args=[self.domain]),
+                },
+                {
+                    'title': KycVerificationReportView.page_title,
+                    'url': reverse(KycVerificationReportView.urlname, args=[self.domain]),
+                },
+            ]
+        ]]
+        return items
 
     @cached_property
     def _can_view_kyc_integration(self):
