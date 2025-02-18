@@ -685,6 +685,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     page_title = gettext_noop("Mobile Workers")
 
     @method_decorator(require_can_edit_or_view_commcare_users)
+    @method_decorator(use_bootstrap5)
     def dispatch(self, *args, **kwargs):
         return super(MobileWorkerListView, self).dispatch(*args, **kwargs)
 
