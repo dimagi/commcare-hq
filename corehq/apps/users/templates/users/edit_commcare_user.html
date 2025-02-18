@@ -36,19 +36,43 @@
       {% endblocktrans %}
     </p>
   {% endif %}
-  <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs" style="margin-bottom: 10px;">  {# todo B5: css-nav, inline-style #}
-    <li><a href="#basic-info" data-bs-toggle="tab">{% trans "Basic" %}</a></li>
-    <li><a href="#groups" data-bs-toggle="tab">{% trans "Groups" %}</a></li>
+  <ul class="nav nav-tabs sticky-tabs mb-3" id="user-settings-tabs">
+    <li class="nav-item">
+      <a class="nav-link" href="#basic-info" data-bs-toggle="tab">
+        {% trans "Basic" %}
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="#groups" data-bs-toggle="tab" class="nav-link">
+        {% trans "Groups" %}
+      </a>
+    </li>
     {% if commtrack_enabled or uses_locations %}
-      <li><a href="#commtrack-data" data-bs-toggle="tab">{% trans "Locations" %}</a></li>
+      <li class="nav-item">
+        <a class="nav-link" href="#commtrack-data" data-bs-toggle="tab">
+          {% trans "Locations" %}
+        </a>
+      </li>
     {% endif %}
     {% if not request.is_view_only %}
-      <li><a href="#user-password" data-bs-toggle="tab">{% trans "Security" %}</a></li>
+      <li class="nav-item">
+        <a class="nav-link" href="#user-password" data-bs-toggle="tab">
+          {% trans "Security" %}
+        </a>
+      </li>
     {% endif %}
     {% if not is_currently_logged_in_user and not request.is_view_only %}
-      <li><a href="#user-permanent" data-bs-toggle="tab">{% trans "Actions" %}</a></li>
+      <li class="nav-item">
+        <a class="nav-link" href="#user-permanent" data-bs-toggle="tab">
+          {% trans "Actions" %}
+        </a>
+      </li>
     {% endif %}
-    <li><a href="#user-metadata" data-bs-toggle="tab">{% trans "User Metadata" %}</a></li>
+    <li class="nav-item">
+      <a class="nav-link" href="#user-metadata" data-bs-toggle="tab">
+        {% trans "User Metadata" %}
+      </a>
+    </li>
   </ul>
   <div class="tab-content" id="settings">
     <div class="tab-pane" id="basic-info">
@@ -88,7 +112,7 @@
       <div class="card-body">
         {% if not request.is_view_only %}
           <form id="reset-password-form" class="form-horizontal" action="{% url "change_password" domain couch_user.user_id %}" method="POST">
-            {% crispy reset_password_form %}  {# todo B5: crispy #}
+            {% crispy reset_password_form %}
           </form>
         {% endif %}
       </div>
@@ -240,7 +264,7 @@
                   <tbody>
                     {% for device in couch_user.devices|dictsortreversed:"last_used" %}
                       <tr>
-                        <td style="font-family: monospace">{{ device.device_id }}</td>  {# todo B5: inline-style #}
+                        <td class="font-monospace">{{ device.device_id }}</td>
                         <td>{{ device.last_used|to_user_time:request }}</td>
                       </tr>
                     {% endfor %}
@@ -262,10 +286,10 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>  {# todo B5: css-close #}
             <h4 class="modal-title">{% blocktrans with couch_user.human_friendly_name as friendly_name %}Delete Mobile Worker {{ friendly_name }}?{% endblocktrans %}
               <small>{% trans "Permanent Action" %}</small>
             </h4>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans "Close" %}"></button>
           </div>
           <form class="form-horizontal"
                 style="margin: 0; padding: 0"  {# todo B5: inline-style #}
