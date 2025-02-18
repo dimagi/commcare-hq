@@ -20,4 +20,19 @@
       </div>
     </div>
   </div>
+
+  <div class="card mt-4">
+    <div class="card-body">
+      <h5 class="card-title">
+        {% trans "Recent Tasks" %}
+      </h5>
+      <div
+        class="mt-3"
+        hx-get="{{ tasks_table_url }}"
+        hx-trigger="load"
+      >
+        {% include "data_cleaning/partials/loading_indicator.html" %}
+      </div>
+    </div>
+  </div>
 {% endblock %}
