@@ -6,17 +6,19 @@
 {% js_entry "hqwebapp/js/htmx_and_alpine" %}
 
 {% block content %}
-  <div class="container p-5">
-    <h1 class="py-3 m-0">
-      {% trans "Case Data Cleaning Test View" %}
+  {% breadcrumbs current_page section current_page.parents %}
+  <div class="d-flex align-items-center m-3">
+    <h1 class="fs-3 pe-3 py-3 m-0">
+      {{ current_page.page_name }}
     </h1>
-    <div
-      hx-trigger="load"
-      hx-get="{% url "data_cleaning_cases_table" domain %}{% querystring %}"
-    >
-      <div class="htmx-indicator">
-        <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading..." %}
-      </div>
+  </div>
+  <div
+    class="mx-3"
+    hx-get="{% url "data_cleaning_cases_table" domain session_id %}{% querystring %}"
+    hx-trigger="load"
+  >
+    <div class="htmx-indicator">
+      <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading..." %}
     </div>
   </div>
 {% endblock %}

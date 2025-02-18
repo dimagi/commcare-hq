@@ -462,6 +462,7 @@ class ProjectDataTab(UITab):
         '/a/{domain}/data_dictionary/',
         '/a/{domain}/importer/',
         '/a/{domain}/case/',
+        '/a/{domain}/clean/',
         '/a/{domain}/microplanning/',
         '/a/{domain}/kyc/'
     )
@@ -969,7 +970,21 @@ class ProjectDataTab(UITab):
             }
             edit_section[0][1].append(deduplication_list_view)
 
+        if self._can_view_case_data_cleaning:
+            from corehq.apps.data_cleaning.views import (
+                CleanCasesMainView,
+            )
+            clean_cases_view = {
+                'title': _(CleanCasesMainView.page_title),
+                'url': reverse(CleanCasesMainView.urlname, args=[self.domain]),
+            }
+            edit_section[0][1].append(clean_cases_view)
+
         return edit_section
+
+    @property
+    def _can_view_case_data_cleaning(self):
+        return toggles.DATA_CLEANING_CASES.enabled_for_request(self._request)
 
     def _get_explore_data_views(self):
         explore_data_views = []
