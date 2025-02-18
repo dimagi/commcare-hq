@@ -230,7 +230,7 @@ class DomainResource(ODataEnterpriseReportResource):
     REPORT_SLUG = EnterpriseReport.DOMAINS
 
     def dehydrate(self, bundle):
-        bundle.data['domain'] = bundle.obj[6]
+        bundle.data['domain'] = bundle.obj[9]
         bundle.data['created_on'] = self.convert_datetime(bundle.obj[0])
         bundle.data['num_apps'] = bundle.obj[1]
         bundle.data['num_mobile_users'] = bundle.obj[2]
