@@ -5,7 +5,7 @@ hqDefine('users/js/roles',[
     'underscore',
     'knockout',
     'hqwebapp/js/toggles',
-    'hqwebapp/js/bootstrap3/alert_user',
+    'hqwebapp/js/bootstrap5/alert_user',
     'hqwebapp/js/privileges',
 ], function ($, _, ko, toggles, alertUser, privileges) {
     let selectPermissionModel = function (id, permissionModel, text) {
