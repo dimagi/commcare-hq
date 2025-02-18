@@ -1,0 +1,7 @@
+{% if record.kyc_is_verified is True %}
+  <span class="badge bg-success">Pass</span>
+{% elif record.kyc_is_verified is False %}
+  <span class="badge bg-danger">Fail</span>
+{% else %}
+  <span class="badge bg-secondary">Not Checked</span>
+{% endif %}

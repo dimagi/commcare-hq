@@ -58,6 +58,13 @@ class KycVerifyTable(BaseHtmxTable):
     country = columns.Column(
         verbose_name=_('Country'),
     )
+    kyc_is_verified = columns.TemplateColumn(
+        template_name='kyc/partials/kyc_verify_status.html',
+        verbose_name=_('KYC Status'),
+    )
+    kyc_last_verified_at = columns.DateTimeColumn(
+        verbose_name=_('Last Verified'),
+    )
     verify_btn = columns.TemplateColumn(
         template_name='kyc/partials/kyc_verify_button.html',
         verbose_name=_('Verify'),

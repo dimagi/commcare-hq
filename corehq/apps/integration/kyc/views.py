@@ -118,6 +118,8 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
             'city',
             'post_code',
             'country',
+            'kyc_is_verified',
+            'kyc_last_verified_at',
         ]
         for field in user_fields:
             if field not in user_data:
