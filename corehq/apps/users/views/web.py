@@ -16,7 +16,7 @@ from django.utils.html import format_html
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 
-from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, waf_allow
 from corehq.apps.registration.models import AsyncSignupRequest
 from corehq.apps.sso.models import IdentityProvider
 from dimagi.utils.couch import CriticalSection
@@ -287,6 +287,7 @@ def delete_invitation(request, domain):
     return JsonResponse({'status': 'ok'})
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(always_allow_project_access, name='dispatch')
 class DomainRequestView(BasePageView):
     urlname = "domain_request"
