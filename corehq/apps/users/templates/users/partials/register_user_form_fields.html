@@ -11,9 +11,9 @@
     {% if field.is_hidden %}
       {{ field }}
     {% else %}
-      <div class="form-group has-feedback{% if field.errors %} has-error{% endif %}">
+      <div class="form-group has-feedback{% if field.errors %} has-error{% endif %}">  {# todo B5: css-form-group, css-has-error #}
         {% if field.label %}
-          <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
+          <label class="form-label" for="{{ field.id }}">{{ field.label }}</label>
         {% endif %}
         <div id="div_id_{{ field.name }}">
           {{ field }}
