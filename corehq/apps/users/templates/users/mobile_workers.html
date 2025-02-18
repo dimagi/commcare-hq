@@ -1,10 +1,10 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load compress %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% js_entry_b3 'users/js/mobile_workers' %}
+{% js_entry 'users/js/mobile_workers' %}
 
 {% block page_content %}
   {% initial_page_data 'can_access_all_locations' can_access_all_locations %}
@@ -29,7 +29,7 @@
 
   <div>
     <div class="row">
-      <div class="col-sm-12">
+      <div class="col-md-12">
         <p class="lead">
           {% blocktrans %}
             Mobile Workers can log into applications in this project space and submit data.
@@ -43,13 +43,13 @@
             <a href="https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers" target="_blank">Help Site</a>.
           {% endblocktrans %}
         </p>
-        <div class="btn-toolbar" style="margin-bottom: 20px;">
+        <div class="btn-toolbar" style="margin-bottom: 20px;">  {# todo B5: inline-style #}
           {% if not request.is_view_only %}
             <button type="button"
                     class="btn btn-primary ko-template"
                     id="new-user-modal-trigger"
-                    data-toggle="modal"
-                    data-target="#new-user-modal"
+                    data-bs-toggle="modal"
+                    data-bs-target="#new-user-modal"
                     data-bind="click: initializeUser">
               <i class="fa fa-plus"></i> {% trans "Create Mobile Worker" %}
             </button>
@@ -61,22 +61,22 @@
 
           {% if not request.is_view_only %}
             {% if can_bulk_edit_users %}
-              <a id="bulk_upload" class="btn btn-default" href="{% url "upload_commcare_users" domain %}">
+              <a id="bulk_upload" class="btn btn-outline-primary" href="{% url "upload_commcare_users" domain %}">
                 <i class="fa-solid fa-cloud-arrow-up"></i> {% trans "Bulk Upload" %}
               </a>
             {% endif %}
             {% if request|toggle_enabled:"CLEAR_MOBILE_WORKER_DATA" %}
-              <a id="clear-data" class="btn btn-danger" href="{% url "clear_commcare_users" domain %}">
+              <a id="clear-data" class="btn btn-outline-danger" href="{% url "clear_commcare_users" domain %}">
                 <i class="fa fa-eraser"></i>
                 {% trans "Bulk Clear Data" %}
               </a>
             {% endif %}
             {% if request|request_has_privilege:"FILTERED_BULK_USER_DOWNLOAD" %}
-              <a class="btn btn-danger" href="{% url "delete_commcare_users" domain %}">
+              <a class="btn btn-outline-danger" href="{% url "delete_commcare_users" domain %}">
                 <i class="fa-regular fa-trash-can"></i>
                 {% trans "Bulk Delete Mobile Workers" %}
               </a>
-              <a class="btn btn-default" href="{% url "commcare_users_lookup" domain %}">
+              <a class="btn btn-outline-primary" href="{% url "commcare_users_lookup" domain %}">
                 <i class="fa fa-search"></i>
                 {% trans "Bulk Lookup of Mobile Workers" %}
               </a>
@@ -92,7 +92,7 @@
             <form novalidate data-bind="submit: submitNewUser">
               <div class="modal-content">
                 <div class="modal-header">
-                  <button type="button" class="close" data-dismiss="modal">
+                  <button type="button" class="btn-close" data-bs-dismiss="modal">  {# todo B5: css-close #}
                     <span aria-hidden="true">&times;</span>
                     <span class="sr-only">{% trans 'Close' %}</span>
                   </button>
@@ -100,14 +100,14 @@
                 </div>
                 <div class="modal-body" data-bind="if: stagedUser">
                   <div class="form-horizontal" data-bind="with: stagedUser">
-                    {% crispy new_mobile_worker_form %}
+                    {% crispy new_mobile_worker_form %}  {# todo B5: crispy #}
                     {% if custom_fields_form.fields %}
-                      {% crispy custom_fields_form %}
+                      {% crispy custom_fields_form %}  {# todo B5: crispy #}
                     {% endif %}
                   </div>
                 </div>
                 <div class="modal-footer">
-                  <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
+                  <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans 'Cancel' %}</button>
                   <button type="submit" data-bind="enable: allowSubmit" class="btn btn-primary">
                     {% trans "Create" %}
                   </button>
@@ -119,7 +119,7 @@
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal">
+                <button type="button" class="btn-close" data-bs-dismiss="modal">  {# todo B5: css-close #}
                   <span aria-hidden="true">&times;</span>
                   <span class="sr-only">{% trans 'Close' %}</span>
                 </button>
@@ -158,8 +158,8 @@
               </div>
               <div class="modal-footer">
                 <button type="button"
-                        class="btn btn-default"
-                        data-dismiss="modal">
+                        class="btn btn-outline-primary"
+                        data-bs-dismiss="modal">
                   {% trans 'Cancel' %}
                 </button>
                 <a href="{% url 'domain_select_plan' domain %}"
@@ -173,20 +173,20 @@
       </div>
     {% endif %}
 
-    <div class="panel panel-info ko-template" id="new-users-list" data-bind="visible: newUsers().length">
-      <div class="panel-heading">
-        <h3 class="panel-title">
+    <div class="card text-bg-info ko-template" id="new-users-list" data-bind="visible: newUsers().length">  {# todo B5: css-panel #}
+      <div class="card-header">
+        <h3 class="card-title">
           {% trans 'New Mobile Workers' %}
         </h3>
       </div>
-      <div class="panel-body">
+      <div class="card-body">
         <table class="table table-striped">
           <thead>
           <tr>
-            <th class="col-xs-3">{% trans "Username" %}</th>
-            <th class="col-xs-3">{% trans "First Name" %}</th>
-            <th class="col-xs-3">{% trans "Last Name" %}</th>
-            <th class="col-xs-3">{% trans "Status" %}</th>
+            <th class="col-sm-3">{% trans "Username" %}</th>
+            <th class="col-sm-3">{% trans "First Name" %}</th>
+            <th class="col-sm-3">{% trans "Last Name" %}</th>
+            <th class="col-sm-3">{% trans "Status" %}</th>
           </tr>
           </thead>
           <tbody data-bind="foreach: newUsers">
@@ -226,24 +226,24 @@
     </div>
   </div>
   <div id="users-list" class="ko-template">
-    <div class="panel panel-default">
-      <div class="panel-heading">
-        <h3 class="panel-title">{% trans 'Mobile Workers' %}</h3>
+    <div class="card ">  {# todo B5: css-panel #}
+      <div class="card-header">
+        <h3 class="card-title">{% trans 'Mobile Workers' %}</h3>
       </div>
-      <div class="panel-body">
+      <div class="card-body">
         <div class="row">
-          <div class="col-sm-6">
+          <div class="col-md-6">
             <search-box data-apply-bindings="false"
                         params="value: query,
                                             action: function() { goToPage(1); },
                                             placeholder: '{% trans_html_attr "Search Workers..." %}'"></search-box>
           </div>
-          <div class="col-sm-6">
-            <button type="button" class="btn btn-default pull-right"
+          <div class="col-md-6">
+            <button type="button" class="btn btn-outline-primary float-end"
                     data-bind="visible: !deactivatedOnly(), click: function() { deactivatedOnly(true); }">
               {% trans 'Show Deactivated Mobile Workers' %}
             </button>
-            <button type="button" class="btn btn-default pull-right"
+            <button type="button" class="btn btn-outline-primary float-end"
                     data-bind="visible: deactivatedOnly(), click: function() { deactivatedOnly(false); }">
               {% trans 'Show Active Mobile Workers' %}
             </button>
@@ -275,17 +275,17 @@
             {% endblocktrans %}
           {% endif %}
         </div>
-        <table class="table table-striped table-responsive" style="margin-bottom: 0;" data-bind="visible: showTable">
+        <table class="table table-striped table-responsive" style="margin-bottom: 0;" data-bind="visible: showTable">  {# todo B5: inline-style #}
           <thead>
           <tr>
-            <th class="col-xs-3">{% trans "Username" %}</th>
-            <th class="col-xs-3">{% trans "First Name" %}</th>
-            <th class="col-xs-2">{% trans "Last Name" %}</th>
-            <th class="col-xs-2">{% trans 'Date Registered' %}</th>
+            <th class="col-sm-3">{% trans "Username" %}</th>
+            <th class="col-sm-3">{% trans "First Name" %}</th>
+            <th class="col-sm-2">{% trans "Last Name" %}</th>
+            <th class="col-sm-2">{% trans 'Date Registered' %}</th>
             {% if two_stage_user_confirmation %}
-            <th class="col-xs-2" data-bind="visible: deactivatedOnly()">{% trans 'Status' %}</th>
+            <th class="col-sm-2" data-bind="visible: deactivatedOnly()">{% trans 'Status' %}</th>
             {% endif %}
-            {% if not request.is_view_only %}<th class="col-xs-2">{% trans 'Action' %}</th>{% endif %}
+            {% if not request.is_view_only %}<th class="col-sm-2">{% trans 'Action' %}</th>{% endif %}
           </tr>
           </thead>
           <tbody data-bind="foreach: users">
@@ -310,8 +310,8 @@
                 to minimize the chance of any regressions.
                 {% endcomment %}
                 <div data-bind="visible: !is_active() && is_account_confirmed()">
-                  <button type="button" class="btn btn-default" data-toggle="modal"
-                          data-bind="attr: {'data-target': '#activate_' + user_id()}">
+                  <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
+                          data-bind="attr: {'data-bs-target': '#activate_' + user_id()}">
                     {% trans "Reactivate" %}
                   </button>
                   <p data-bind="visible: action_error">
@@ -321,13 +321,13 @@
                 </div>
                 <div data-bind="visible: !is_active() && !is_account_confirmed()">
                   {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
-                  <button type="button" class="btn btn-default" data-toggle="modal"
-                          data-bind="attr: {'data-target': '#confirm_' + user_id()}">
+                  <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
+                          data-bind="attr: {'data-bs-target': '#confirm_' + user_id()}">
                     {% trans "Send Confirmation Email" %}
                   </button>
                   {% else %}
-                  <button type="button" class="btn btn-default" data-toggle="modal"
-                          data-bind="attr: {'data-target': '#confirm_' + user_id()}">
+                  <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
+                          data-bind="attr: {'data-bs-target': '#confirm_' + user_id()}">
                     {% trans "Send Confirmation SMS" %}
                   </button>
                   {% endif %}
@@ -338,8 +338,8 @@
                 </div>
                 {% else %}
                 <div data-bind="visible: !is_active()">
-                  <button type="button" class="btn btn-default" data-toggle="modal"
-                          data-bind="attr: {'data-target': '#activate_' + user_id()}">
+                  <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
+                          data-bind="attr: {'data-bs-target': '#activate_' + user_id()}">
                     {% trans "Reactivate" %}
                   </button>
                   <p data-bind="visible: action_error">
@@ -349,8 +349,8 @@
                 </div>
                 {% endif %}
                 <div data-bind="visible: is_active()">
-                  <button type="button" class="btn btn-default" data-toggle="modal"
-                          data-bind="attr: {'data-target': '#deactivate_' + user_id()}">
+                  <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
+                          data-bind="attr: {'data-bs-target': '#deactivate_' + user_id()}">
                     {% trans "Deactivate" %}
                   </button>
                   <p data-bind="visible: action_error">
@@ -362,7 +362,7 @@
                   <div class="modal-dialog">
                     <div class="modal-content">
                       <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal">
+                        <button type="button" class="btn-close" data-bs-dismiss="modal">  {# todo B5: css-close #}
                           <span aria-hidden="true">&times;</span>
                           <span class="sr-only">{% trans "Close" %}</span>
                         </button>
@@ -389,7 +389,7 @@
                         </p>
                       </div>
                       <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">
+                        <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
                           {% trans "Cancel" %}
                         </button>
                         <button type="button" class="btn btn-primary"
@@ -404,7 +404,7 @@
                   <div class="modal-dialog">
                     <div class="modal-content">
                       <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal">
+                        <button type="button" class="btn-close" data-bs-dismiss="modal">  {# todo B5: css-close #}
                           <span aria-hidden="true">&times;</span>
                           <span class="sr-only">{% trans "Close" %}</span>
                         </button>
@@ -431,10 +431,10 @@
                         </p>
                       </div>
                       <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">
+                        <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
                           {% trans "Cancel" %}
                         </button>
-                        <button type="button" class="btn btn-danger"
+                        <button type="button" class="btn btn-outline-danger"
                                 data-bind="click: function(user) { user.is_active(false); }">
                           {% trans 'Deactivate' %}
                         </button>
@@ -447,7 +447,7 @@
                   <div class="modal-dialog">
                     <div class="modal-content">
                       <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal">
+                        <button type="button" class="btn-close" data-bs-dismiss="modal">  {# todo B5: css-close #}
                           <span aria-hidden="true">&times;</span>
                           <span class="sr-only">{% trans "Close" %}</span>
                         </button>
@@ -486,7 +486,7 @@
                         </p>
                       </div>
                       <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">
+                        <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
                           {% trans "Cancel" %}
                         </button>
                         {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
@@ -519,7 +519,7 @@
             <strong>There was an issue contacting the server.</strong>
             Please check your internet connection.
             If this issue continues, please
-            <a href="#modalReportIssue" data-toggle="modal">report an issue</a>.
+            <a href="#modalReportIssue" data-bs-toggle="modal">report an issue</a>.
           {% endblocktrans %}
         </div>
         <pagination data-apply-bindings="false"
