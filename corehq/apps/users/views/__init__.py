@@ -66,6 +66,7 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.es import UserES
 from corehq.apps.hqwebapp.crispy import make_form_readonly
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.locations.permissions import (
     location_safe,
     user_can_access_other_user,
@@ -551,6 +552,7 @@ class BaseRoleAccessView(BaseUserSettingsView):
 
 @method_decorator(always_allow_project_access, name='dispatch')
 @method_decorator(require_can_edit_or_view_web_users, name='dispatch')
+@method_decorator(use_bootstrap5, name='dispatch')
 @location_safe
 class ListWebUsersView(BaseRoleAccessView):
     template_name = 'users/web_users.html'

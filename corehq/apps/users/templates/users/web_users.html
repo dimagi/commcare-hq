@@ -41,11 +41,11 @@
   </p>
 
   {% if requests and not request.is_view_only %}
-    <div class="card text-bg-info">  {# todo B5: css-panel #}
+    <div class="card mb-3">
       <div class="card-header">
-        <h3 class="card-title">
+        <h4 class="card-title">
           {% trans 'Pending Access Requests' %}
-        </h3>
+        </h4>
       </div>
       <div class="card-body">
         <table class="table table-striped table-responsive">
@@ -87,11 +87,11 @@
     </div>
   {% endif %}
 
-  <div class="card  ko-template" id="web-users-panel">  {# todo B5: css-panel #}
+  <div class="card ko-template mb-3" id="web-users-panel">
     <div class="card-header">
       <div class="row">
         <div class="col-md-6">
-          <h3 class="card-title" style="padding-top: 7px;">{% trans 'Current Users' %}</h3>  {# todo B5: inline-style #}
+          <h4 class="card-title" style="padding-top: 7px;">{% trans 'Current Users' %}</h4>
         </div>
         <div class="col-md-6">
           <search-box data-apply-bindings="false"
@@ -161,14 +161,11 @@
                           data-bind="attr: {action: removeUrl}">
                       {% csrf_token %}
                       <div class="modal-header">
-                        <button type="button" class="btn-close" data-bs-dismiss="modal">  {# todo B5: css-close #}
-                          <span aria-hidden="true">&times;</span>
-                          <span class="sr-only">{% trans "Close" %}</span>
-                        </button>
                         <h4 class="modal-title">
                           {% trans "Remove User Membership" %}:
                           <span data-bind="text: name"></span>
                         </h4>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans "Close" %}"></button>
                       </div>
                       <div class="modal-body">
                         <p class="lead">{% trans "Are you sure you want to remove this users's membership?" %}</p>
@@ -216,11 +213,11 @@
   </div><!-- end .panel -->
 
   {% if invitations %}
-    <div class="card text-bg-info ko-template" id="invitations-panel">  {# todo B5: css-panel #}
+    <div class="card ko-template mb-3" id="invitations-panel">
       <div class="card-header">
         <div class="row">
           <div class="col-md-4">
-            <h3 class="card-title" style="padding-top: 7px;">{% trans 'Pending Invitations' %}</h3>  {# todo B5: inline-style #}
+            <h4 class="card-title" style="padding-top: 7px;">{% trans 'Pending Invitations' %}</h4>
           </div>
           <div class="col-md-2">
             <select class="form-select" data-bind="
@@ -305,11 +302,8 @@
         <div class="modal-dialog">
           <div class="modal-content" data-bind="with: invitationToRemove">
             <div class="modal-header">
-              <button type="button" class="btn-close">  {# todo B5: css-close #}
-                <span aria-hidden="true">&times;</span>
-                <span class="sr-only">{% trans "Close" %}</span>
-              </button>
               <h4 class="modal-title">{% trans "Delete Invitation" %}</h4>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans "Close" %}"></button>
             </div>
             <div class="modal-body">
                 {% trans "Are you sure you want to delete this invitation?" %}
@@ -325,7 +319,7 @@
   {% endif %}
 
   {% if user.is_superuser %}
-    <div class="card ">  {# todo B5: css-panel #}
+    <div class="card">
       <div class="card-header"
            role="tab"
            id="adminEmailsHeading">
@@ -365,12 +359,8 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <button type="button"
-                    class="btn-close">  {# todo B5: css-close #}
-              <span aria-hidden="true">&times;</span>
-              <span class="sr-only">{% trans "Close" %}</span>
-            </button>
             <h4 class="modal-title"></h4>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans "Close" %}"></button>
           </div>
           <div class="modal-body"></div>
           <div class="modal-footer">
