@@ -7,37 +7,37 @@
       <fieldset>
         <legend>{% blocktrans %}Registered Phone Numbers{% endblocktrans %}</legend>
         {% for phone in phonenumbers %}
-          <div class="form-group">
-            <label class="control-label col-sm-3 col-md-2">+{{ phone.number }}<br />
+          <div class="form-group">  {# todo B5: css-form-group #}
+            <label class="form-label col-md-3 col-lg-2">+{{ phone.number }}<br />
               {% if user_type == "mobile" %}
 
                 {% if phone.status == "verified" %}
-                  <span class="label label-success">{% trans 'VERIFIED' %}</span>
+                  <span class="badge text-bg-success">{% trans 'VERIFIED' %}</span>
                 {% endif %}
 
                 {% if phone.status == "pending" %}
-                  <span class="label label-default">{% trans 'VERIFICATION PENDING' %}</span>
+                  <span class="badge text-bg-secondary">{% trans 'VERIFICATION PENDING' %}</span>
                 {% endif %}
 
                 {% if phone.status == "duplicate" %}
                   {% if phone.dup_url %}<a href="{{ phone.dup_url }}">{% endif %}
-                <span class="label label-warning">{% trans 'ALREADY IN USE' %}</span>
+                <span class="badge text-bg-warning">{% trans 'ALREADY IN USE' %}</span>
                 {% if phone.dup_url %}</a>{% endif %}
                 {% endif %}
 
                 {% if phone.status == "invalid" %}
-                  <span class="label label-default">{% trans 'INVALID FORMAT' %}</span>
+                  <span class="badge text-bg-secondary">{% trans 'INVALID FORMAT' %}</span>
                 {% endif %}
 
               {% endif %}
             </label>
             {% if not request.is_view_only %}
-              <div class="col-sm-9 col-md-8 col-lg-6">
+              <div class="col-md-9 col-lg-8 col-xl-6">
                 {% if user_type == "mobile" and can_use_inbound_sms %}
                   {% if phone.status == "unverified" %}
                     <form method="post"
                           action="{% url "verify_phone_number" domain couch_user.couch_id %}?phone_number={{phone.number|urlencode}}"
-                          style="display: inline;">
+                          style="display: inline;">  {# todo B5: inline-style #}
                       {% csrf_token %}
                       <button type="submit"
                               data-html="true"
@@ -57,15 +57,15 @@
                   {% if phone.status == "pending" %}
                     <button data-title="Re-send the verification SMS to this phone"
                             class="btn btn-primary verify-button"
-                            data-toggle="modal"
+                            data-bs-toggle="modal"
                             href="#reverify_{{phone.number|urlencode}}">
                       <i class="fa fa-signal"></i> {% trans 'Verify (retry)' %}
                     </button>
                   {% endif %}
                 {% endif %}
 
-                <a class="btn btn-danger"
-                   data-toggle="modal"
+                <a class="btn btn-outline-danger"
+                   data-bs-toggle="modal"
                    href="#delete_phonenumber_{{ forloop.counter }}">
                   <i class="fa fa-remove"></i> {% trans 'Delete' %}
                 </a>
@@ -79,7 +79,7 @@
                     {% csrf_token %}
                     <input type="hidden" name="form_type" value="make-phone-number-default"/>
                     <input type="hidden" name="phone_number" value="{{ phone.number }}"/>
-                    <button type="submit" class="btn btn-default">
+                    <button type="submit" class="btn btn-outline-primary">
                       {% blocktrans %}Mark as primary{% endblocktrans %}
                     </button>
                   </form>
@@ -100,14 +100,14 @@
     <input type="hidden" name="form_type" value="add-phonenumber" />
     <fieldset>
       <legend>{% trans 'Add a Phone Number' %}</legend>
-      <div class="form-group">
-        <label class="control-label col-sm-3 col-md-2" for="id_add_phone_number">{% trans 'Phone Number' %}</label>
-        <div class="col-sm-9 col-md-8 col-lg-6">
+      <div class="form-group">  {# todo B5: css-form-group #}
+        <label class="form-label col-md-3 col-lg-2" for="id_add_phone_number">{% trans 'Phone Number' %}</label>
+        <div class="col-md-9 col-lg-8 col-xl-6">
           <div class="input-group">
-            <span class="input-group-addon">+</span>
+            <span class="input-group-addon">+</span>  {# todo B5: css-input-group-addon #}
             <input id="id_add_phone_number" class="form-control" type="tel" pattern="\d+" name="phone_number" value="" maxlength="50" />
           </div>
-          <p id="phone_number_paste_error" class="help-block" style="display: none;">
+          <p id="phone_number_paste_error" class="help-block" style="display: none;">  {# todo B5: inline-style #}
             <strong>
               {% trans "Phone numbers can only contain digits and we were unable to convert yours automatically." %}
             </strong>
@@ -119,7 +119,7 @@
       </div>
     </fieldset>
     <div class="form-actions">
-      <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
+      <div class="offset-md-3 offset-lg-2 col-md-9 col-lg-8 col-xl-6">
         <button type="submit" class="btn btn-primary disable-on-submit">{% trans 'Add Number' %}</button>
       </div>
     </div>
