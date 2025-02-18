@@ -8,7 +8,7 @@ import Snow from "quill/themes/snow";
 import Bold from "quill/formats/bold";
 import Italic from "quill/formats/italic";
 import Header from "quill/formats/header";
-import {QuillDeltaToHtmlConverter} from 'quill-delta-to-html';
+import {QuillDeltaToHtmlConverter} from 'quill-delta-to-html-upate';
 
 import initialPageData from "hqwebapp/js/initial_page_data";
 
