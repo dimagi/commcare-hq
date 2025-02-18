@@ -143,20 +143,20 @@ def get_user_data_for_api(source, config):
     }
     source_data = _get_source_data(source, config)
     user_data_for_api = {}
-    for mapping in config.api_field_to_user_data_map:
-        if mapping['mapsTo'] in source_data:
+    for api_field, user_data_property in config.api_field_to_user_data_map.items():
+        if user_data_property in source_data:
             # Fetch value from usercase / custom user data by default
-            value = source_data[mapping['mapsTo']]
+            value = source_data[user_data_property]
         elif (
             isinstance(source, CommCareUser)
-            and mapping['mapsTo'] in safe_commcare_user_properties
+            and user_data_property in safe_commcare_user_properties
         ):
             # Fall back to CommCareUser
-            value = getattr(source, mapping['mapsTo'])
+            value = getattr(source, user_data_property)
         else:
             # Conservative approach to skip the API field if data is not available for the user
             continue
-        user_data_for_api[mapping['fieldName']] = value
+        user_data_for_api[api_field] = value
     return user_data_for_api
 
 
