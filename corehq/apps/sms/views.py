@@ -187,6 +187,7 @@ class BaseMessagingSectionView(BaseDomainView):
         return reverse("sms_default", args=[self.domain])
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class ComposeMessageView(BaseMessagingSectionView):
     template_name = 'sms/compose.html'
     urlname = 'sms_compose_message'
