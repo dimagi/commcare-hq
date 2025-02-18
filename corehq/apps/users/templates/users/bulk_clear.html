@@ -1,10 +1,10 @@
-{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
 
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% js_entry_b3 'hqwebapp/js/bulk_upload_file' %}
+{% js_entry 'hqwebapp/js/bulk_upload_file' %}
 
 {% block page_content %}
   {% blocktrans %}
@@ -28,5 +28,5 @@
     </p>
   {% endblocktrans %}
 
-  {% crispy bulk_upload_form %}
+  {% crispy bulk_upload_form %}  {# todo B5: crispy #}
 {% endblock page_content %}
