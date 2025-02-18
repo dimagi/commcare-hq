@@ -1119,6 +1119,7 @@ class BaseManageWebUserView(BaseUserSettingsView):
 
 
 @location_safe
+@method_decorator(use_bootstrap5, name='dispatch')
 class InviteWebUserView(BaseManageWebUserView):
     template_name = "users/invite_web_user.html"
     urlname = 'invite_web_user'
