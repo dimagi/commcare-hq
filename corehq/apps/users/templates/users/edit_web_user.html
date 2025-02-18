@@ -34,7 +34,7 @@
       <form class="form form" name="trust_identity_provider" method="post">
         {% csrf_token %}
         <input type="hidden" name="form_type" value="trust-identity-provider" />
-        <p style="margin-top: 10px;">  {# todo B5: inline-style #}
+        <p>
           <button type="submit"
                   class="btn btn-confirm">
             {% trans "Trust Identity Provider" %}

@@ -394,6 +394,7 @@ class BaseEditUserView(BaseUserSettingsView):
 
 
 @location_safe
+@method_decorator(use_bootstrap5, name='dispatch')
 class EditWebUserView(BaseEditUserView):
     template_name = "users/edit_web_user.html"
     urlname = "user_account"
