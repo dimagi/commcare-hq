@@ -8,4 +8,4 @@ sphinx-rtd-theme
 
 pyOpenSSL # CI builds fail without OpenSSL
 
-urllib3<=1.26.19  # fix doc tests AssertionError: Current app already created
+urllib3<=1.26.20  # fix doc tests AssertionError: Current app already created
