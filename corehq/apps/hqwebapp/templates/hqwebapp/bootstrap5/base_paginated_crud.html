@@ -136,7 +136,7 @@
       <div class="row mt-3"
            data-bind="visible: isPaginationActive">
         <div class="col-lg-4">
-          <select class="form-control" id="pagination-limit" data-bind="event: {change: updateListLimit}">
+          <select class="form-select" id="pagination-limit" data-bind="event: {change: updateListLimit}">
             {% for limit in pagination.limit_options %}
               <option value="{{ limit }}">
                 {{ limit }} {{ pagination.text.limit }}
