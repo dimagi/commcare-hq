@@ -14,9 +14,9 @@
     </thead>
     <tbody data-bind="foreach: {{ context.ko_array_name }}">
       <tr>
-        <td>
+        <td class="col-sm-4">
           <div>
-            <select class="form-select" data-bind="value: day" style="width: auto">  {# todo B5: inline-style #}
+            <select class="form-select" data-bind="value: day" xstyle="width: auto">  {# todo B5: inline-style #}
               <option value="-1">{% trans "Any Day" %}</option>
               <option value="0">{% trans "Monday" %}</option>
               <option value="1">{% trans "Tuesday" %}</option>
@@ -29,7 +29,7 @@
           </div>
 
         </td>
-        <td>
+        <td class="col-sm-6">
           <div class="row">
             <div class="controls col-md-3">
               <select class="form-select" data-bind="value: time_input_relationship">
@@ -47,8 +47,8 @@
             </div>
           </div>
         </td>
-        <td><button type="button"
-                    class="btn btn-outline-danger"
+        <td class="col-sm-2"><button type="button"
+                    class="btn btn-outline-danger text-nowrap"
                     data-bind="click: {{ context.remove_window_method }}">
           <i class="fa fa-remove"></i> {% trans "Remove" %}</button></td>
       </tr>

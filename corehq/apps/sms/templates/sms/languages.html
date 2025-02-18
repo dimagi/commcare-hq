@@ -11,6 +11,7 @@
 {% block stylesheets %}{{ block.super }}
   <link rel="stylesheet" href="{% static 'jquery-ui-built-themes/redmond/jquery-ui.min.css' %}"/>
   <style>
+    /* TODO: remove? */
     .sortable-handle {
       cursor: move;
     }
@@ -27,14 +28,22 @@
 
   <div class="tab-pane">
     <div class="tabbable">
-      <ul class="nav nav-tabs sticky-tabs">  {# todo B5: css-nav #}
-        <li><a href="#supported-languages" data-bs-toggle="tab">{% trans "Language List" %}</a></li>
-        <li><a href="#translations-tab" data-bs-toggle="tab">{% trans "Messaging Translations" %}</a></li>
+      <ul class="nav nav-tabs sticky-tabs mb-3">
+        <li class="nav-item">
+          <a href="#supported-languages" data-bs-toggle="tab" class="nav-link">
+            {% trans "Language List" %}
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#translations-tab" data-bs-toggle="tab" class="nav-link">
+            {% trans "Messaging Translations" %}
+          </a>
+        </li>
       </ul>
     </div>
     <div class="tab-content">
       <div id="supported-languages" class="tab-pane">
-        {% include "app_manager/partials/settings/supported_languages.html" %}
+        {% include "app_manager/partials/settings/supported_languages.html" %}{# TODO #}
       </div>
       <div id="translations-tab" class="tab-pane">
         <div>

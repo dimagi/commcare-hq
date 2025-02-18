@@ -1660,6 +1660,7 @@ class SMSLanguagesView(BaseMessagingSectionView):
     template_name = "sms/languages.html"
     page_title = gettext_noop("Languages")
 
+    @use_bootstrap5
     @use_jquery_ui
     @method_decorator(domain_admin_required)
     def dispatch(self, *args, **kwargs):
