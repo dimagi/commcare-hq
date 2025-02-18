@@ -9,6 +9,10 @@ from corehq.apps.data_cleaning.views.main import (
 )
 from corehq.apps.data_cleaning.views.tables import (
     CleanCasesTableView,
+    CaseCleaningTasksTableView,
+)
+from corehq.apps.data_cleaning.views.forms import (
+    SetupCaseSessionFormView,
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.case_search import case_search_adapter
@@ -22,6 +26,14 @@ class CleanCasesViewAccessTest(TestCase):
     domain_name = 'clean-data-view-test'
     other_domain_name = 'no-access-view-test'
     password = 'Passw0rd!'
+    fake_session_id = uuid.uuid4()
+    all_views = [
+        (CleanCasesMainView, (domain_name,)),
+        (SetupCaseSessionFormView, (domain_name,)),
+        (CaseCleaningTasksTableView, (domain_name,)),
+        (CleanCasesSessionView, (domain_name, fake_session_id,)),
+        (CleanCasesTableView, (domain_name, fake_session_id,)),
+    ]
 
     @classmethod
     def make_user(cls, email, domain_obj):
@@ -50,10 +62,6 @@ class CleanCasesViewAccessTest(TestCase):
             cls.other_domain_obj,
         )
         cls.client = Client()
-        cls.fake_session_id = uuid.uuid4()
-        cls.main_view_url = reverse(CleanCasesMainView.urlname, args=[cls.domain_name])
-        cls.session_view_url = reverse(CleanCasesSessionView.urlname, args=[cls.domain_name, cls.fake_session_id])
-        cls.table_view_url = reverse(CleanCasesTableView.urlname, args=[cls.domain_name, cls.fake_session_id])
 
     @classmethod
     def tearDownClass(cls):
@@ -64,21 +72,25 @@ class CleanCasesViewAccessTest(TestCase):
         super().tearDownClass()
 
     def test_has_no_access_without_login(self):
-        response_main = self.client.get(self.main_view_url)
-        response_session = self.client.get(self.session_view_url)
-        response_table = self.client.get(self.table_view_url)
-        self.assertEqual(response_main.status_code, 404)
-        self.assertEqual(response_session.status_code, 404)
-        self.assertEqual(response_table.status_code, 404)
+        for view_class, args in self.all_views:
+            url = reverse(view_class.urlname, args=args)
+            response = self.client.get(url)
+            self.assertEqual(
+                response.status_code,
+                404,
+                msg=f"{view_class.__name__} should NOT be accessible"
+            )
 
     def test_has_no_access_without_flag(self):
         self.client.login(username=self.user_in_domain.username, password=self.password)
-        response_main = self.client.get(self.main_view_url)
-        response_session = self.client.get(self.session_view_url)
-        response_table = self.client.get(self.table_view_url)
-        self.assertEqual(response_main.status_code, 404)
-        self.assertEqual(response_session.status_code, 404)
-        self.assertEqual(response_table.status_code, 404)
+        for view_class, args in self.all_views:
+            url = reverse(view_class.urlname, args=args)
+            response = self.client.get(url)
+            self.assertEqual(
+                response.status_code,
+                404,
+                msg=f"{view_class.__name__} should NOT be accessible"
+            )
 
     @flag_enabled('DATA_CLEANING_CASES')
     def test_has_access_with_flag(self):
@@ -87,19 +99,23 @@ class CleanCasesViewAccessTest(TestCase):
         and user permissions/roles once specifics are decided.
         """
         self.client.login(username=self.user_in_domain.username, password=self.password)
-        response_main = self.client.get(self.main_view_url)
-        response_session = self.client.get(self.session_view_url)
-        response_table = self.client.get(self.table_view_url)
-        self.assertEqual(response_main.status_code, 200)
-        self.assertEqual(response_session.status_code, 200)
-        self.assertEqual(response_table.status_code, 200)
+        for view_class, args in self.all_views:
+            url = reverse(view_class.urlname, args=args)
+            response = self.client.get(url)
+            self.assertEqual(
+                response.status_code,
+                200,
+                msg=f"{view_class.__name__} should be accessible"
+            )
 
     @flag_enabled('DATA_CLEANING_CASES')
     def test_has_no_access_with_other_domain(self):
         self.client.login(username=self.user_outside_of_domain.username, password=self.password)
-        response_main = self.client.get(self.main_view_url)
-        response_session = self.client.get(self.session_view_url)
-        response_table = self.client.get(self.table_view_url)
-        self.assertEqual(response_main.status_code, 404)
-        self.assertEqual(response_session.status_code, 404)
-        self.assertEqual(response_table.status_code, 404)
+        for view_class, args in self.all_views:
+            url = reverse(view_class.urlname, args=args)
+            response = self.client.get(url)
+            self.assertEqual(
+                response.status_code,
+                404,
+                msg=f"{view_class.__name__} should NOT be accessible"
+            )
