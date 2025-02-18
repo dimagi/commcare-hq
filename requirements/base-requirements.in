@@ -87,7 +87,7 @@ pyphonetics
 python-magic
 pytz
 pyjwt
-PyYAML
+PyYAML>=6.0.2
 hl7apy
 pyzxcvbn
 qrcode

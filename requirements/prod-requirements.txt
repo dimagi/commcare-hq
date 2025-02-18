@@ -520,7 +520,7 @@ pytz==2024.1
     #   -r base-requirements.in
     #   celery
     #   flower
-pyyaml==6.0
+pyyaml==6.0.2
     # via -r base-requirements.in
 pyzxcvbn==0.8.0
     # via -r base-requirements.in
