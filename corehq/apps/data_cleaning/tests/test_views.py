@@ -3,9 +3,11 @@ import uuid
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from corehq.apps.data_cleaning.views import (
+from corehq.apps.data_cleaning.views.main import (
     CleanCasesMainView,
     CleanCasesSessionView,
+)
+from corehq.apps.data_cleaning.views.tables import (
     CleanCasesTableView,
 )
 from corehq.apps.domain.shortcuts import create_domain
