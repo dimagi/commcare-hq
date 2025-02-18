@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/bootstrap3/base_page.html' %}
+{% extends 'hqwebapp/bootstrap5/base_page.html' %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 
@@ -13,5 +13,5 @@
       If you need access, fill out the form below to send a request to the project's admins.
     </p>
   {% endblocktrans %}
-  {% crispy request_form %}
+  {% crispy request_form %}  {# todo B5: crispy #}
 {% endblock %}
