@@ -30,6 +30,7 @@ from corehq.apps.analytics.tasks import (
 )
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqwebapp.utils.bootstrap import set_bootstrap_version5
 from corehq.apps.hqwebapp.views import BasePageView, logout
 from corehq.apps.locations.permissions import location_restricted_response, location_safe
 from corehq.apps.registration.forms import AcceptedWebUserInvitationForm
@@ -77,6 +78,7 @@ class UserInvitationView(object):
                                           "another invitation."))
             return HttpResponseRedirect(reverse("login"))
 
+        set_bootstrap_version5()    # TODO: this doesn't work?
         self.validate_invitation(invitation)
 
         if invitation.is_expired:
