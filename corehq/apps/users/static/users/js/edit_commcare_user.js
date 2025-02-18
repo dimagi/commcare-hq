@@ -4,15 +4,15 @@ hqDefine('users/js/edit_commcare_user', [
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/bootstrap3/alert_user',
+    'hqwebapp/js/bootstrap5/alert_user',
     'analytix/js/google',
     'hqwebapp/js/multiselect_utils',
     'users/js/custom_data_fields',
     'locations/js/widgets',
     'jquery-textchange/jquery.textchange',
-    'hqwebapp/js/bootstrap3/knockout_bindings.ko',
-    'hqwebapp/js/bootstrap3/widgets',
-    'registration/js/bootstrap3/password',
+    'hqwebapp/js/bootstrap5/knockout_bindings.ko',
+    'hqwebapp/js/bootstrap5/widgets',
+    'registration/js/bootstrap5/password',
     'select2/dist/js/select2.full.min',
     'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min',
     'commcarehq',
@@ -27,7 +27,7 @@ hqDefine('users/js/edit_commcare_user', [
 ) {
     var couchUserId = initialPageData.get('couch_user_id');
 
-    $('.verify-button').tooltip();
+    $('.verify-button').tooltip();  /* todo B5: js-tooltip */
     $('#id_language').select2({
         placeholder: gettext('Select a language...'),
     });
@@ -138,7 +138,7 @@ hqDefine('users/js/edit_commcare_user', [
     // Enable deactivate after calendar widget
     let showDeactivateAfterDate = initialPageData.get('show_deactivate_after_date');
     if (showDeactivateAfterDate) {
-        $('#id_deactivate_after_date').datetimepicker({
+        $('#id_deactivate_after_date').datetimepicker({  /* todo B5: js-datetimepicker */
             format: 'MM-y',
         }).on('dp.change', function () {
             $userInformationForm.trigger('change');
