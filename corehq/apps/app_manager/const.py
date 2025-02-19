@@ -103,3 +103,12 @@ MOBILE_UCR_V1_FIXTURE_PATTERN = r'<.*src="jr://fixture/commcare:reports.*>'
 MOBILE_UCR_V1_REFERENCES_PATTERN = r"<.*instance\('reports'\)/reports/.*>"
 MOBILE_UCR_V1_ALL_REFERENCES = f"{MOBILE_UCR_V1_FIXTURE_PATTERN}|{MOBILE_UCR_V1_REFERENCES_PATTERN}"
 MOBILE_UCR_V1_CASE_LIST_REFERENCES_PATTERN = r"instance\('commcare:reports'\)/reports/report\[@id='.*'\]/rows/row"
+
+FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS = [
+    'address',
+    'date',
+    'markdown',
+    'phone',
+    'plain',
+    'enum'
+]
