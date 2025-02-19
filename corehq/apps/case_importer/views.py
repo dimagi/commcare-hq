@@ -21,6 +21,8 @@ from corehq.apps.case_importer.const import (
     ALL_CASE_TYPE_IMPORT,
     MAX_CASE_IMPORTER_COLUMNS,
     MAX_CASE_IMPORTER_ROWS,
+    MOMO_REQUIRED_PAYMENT_FIELDS,
+    MOMO_PAYMENT_CASE_TYPE,
 )
 from corehq.apps.case_importer.exceptions import (
     CustomImporterError,
@@ -53,7 +55,7 @@ from corehq.apps.reports.analytics.esaccessors import (
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
+from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR, MOBILE_WORKER_VERIFICATION
 from corehq.util.view_utils import absolute_reverse
 from corehq.util.workbook_reading import (
     SpreadsheetFileExtError,
@@ -377,6 +379,16 @@ def excel_fields(request, domain):
 
     case_field_specs = [field_spec.to_json() for field_spec in field_specs]
 
+    if MOBILE_WORKER_VERIFICATION.enabled(domain) and case_type == MOMO_PAYMENT_CASE_TYPE:
+        missing_fields = _check_payment_fields_exist(columns)
+        if any(missing_fields):
+            return render_error(
+                request,
+                domain,
+                _('The Excel file is missing one or more required fields for the "{}" case type: {}'.format(
+                    MOMO_PAYMENT_CASE_TYPE, ', '.join(missing_fields)
+                ))
+            )
     context = {
         'case_type': case_type,
         'search_column': search_column,
@@ -517,3 +529,10 @@ def _bulk_case_upload_api(request, domain):
     status_url = absolute_reverse('case_importer_upload_status', args=(domain, upload_id))
 
     return json_response({"code": 200, "message": "success", "status_url": status_url})
+
+
+def _check_payment_fields_exist(columns):
+    return [
+        field_name for field_name in MOMO_REQUIRED_PAYMENT_FIELDS
+        if field_name not in columns
+    ]
