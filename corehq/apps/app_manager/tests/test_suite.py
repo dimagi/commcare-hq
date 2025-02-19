@@ -343,6 +343,9 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
             './detail[@id="m0_case_short"]/field[1]'
         )
 
+        # No optimizations added on detail as well
+        self.assertIn('<detail id="m0_case_short">', str(suite))
+
     @flag_enabled('CASE_LIST_OPTIMIZATIONS')
     def test_case_list_optimizations_without_necessary_build_version(self):
         factory = AppFactory(build_version='2.55.0')
@@ -381,6 +384,9 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
             suite,
             './detail[@id="m0_case_short"]/field[1]'
         )
+
+        # No optimizations added on detail as well
+        self.assertIn('<detail id="m0_case_short">', str(suite))
 
     @flag_enabled('CASE_LIST_OPTIMIZATIONS')
     def test_case_list_optimizations(self):
@@ -478,3 +484,6 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
             suite,
             './detail[@id="m0_case_short"]/field[3]'
         )
+
+        # Optimizations added on detail as well
+        self.assertIn('<detail id="m0_case_short" cache_enabled="true" lazy_loading="true">', str(suite))
