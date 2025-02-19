@@ -2,9 +2,8 @@ from django.test import TestCase
 from freezegun import freeze_time
 
 from corehq.apps.cloudcare.const import DEVICE_ID as CLOUDCARE_DEVICE_ID
-from corehq.apps.users.device_rate_limiter import DEVICE_LIMIT_PER_USER_KEY, device_rate_limiter
+from corehq.apps.users.device_rate_limiter import DEVICE_LIMIT_PER_USER_KEY, REDIS_KEY_PREFIX, device_rate_limiter
 from corehq.project_limits.models import SystemLimit
-from corehq.tests.pytest_plugins.reusedb import clear_redis
 from corehq.util.test_utils import flag_disabled, flag_enabled
 
 
@@ -15,7 +14,10 @@ class TestDeviceRateLimiter(TestCase):
 
     def setUp(self):
         SystemLimit.objects.create(key=DEVICE_LIMIT_PER_USER_KEY, limit=1)
-        self.addCleanup(clear_redis)
+
+    def tearDown(self):
+        for key in device_rate_limiter.client.scan_iter(f"{REDIS_KEY_PREFIX}*"):
+            device_rate_limiter.client.delete(key.decode('utf-8'))
 
     @flag_enabled("DEVICE_RATE_LIMITER")
     def test_allowed_if_no_devices_have_been_used_yet(self):

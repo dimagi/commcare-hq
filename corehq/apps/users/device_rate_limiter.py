@@ -16,6 +16,7 @@ DEVICE_SET_CACHE_TIMEOUT = 2 * 60  # 2 minutes
 
 DEVICE_LIMIT_PER_USER_KEY = "device_limit_per_user"
 DEVICE_LIMIT_PER_USER_DEFAULT = 50
+REDIS_KEY_PREFIX = "device-limiter"
 
 
 class DeviceRateLimiter:
@@ -78,7 +79,7 @@ class DeviceRateLimiter:
         """
         time = datetime.now(timezone.utc)
         formatted_time = time.strftime('%Y-%m-%d_%H:%M')
-        key = f"device-limiter_{domain}_{user_id}_{formatted_time}"
+        key = f"{REDIS_KEY_PREFIX}_{domain}_{user_id}_{formatted_time}"
         return key
 
     def _track_usage(self, redis_key, device_id, is_key_new=False):
