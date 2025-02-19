@@ -5,7 +5,7 @@ hqDefine("data_interfaces/js/archive_forms", [
 ], function (
     $,
     ko,
-    googleAnalytics
+    googleAnalytics,
 ) {
     var managementSelector = '#data-interfaces-archive-forms',
         allFormsButtonSelector = managementSelector + ' input[name="select_all"]',

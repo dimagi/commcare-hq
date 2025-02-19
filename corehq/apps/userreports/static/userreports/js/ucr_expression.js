@@ -12,7 +12,7 @@ hqDefine("userreports/js/ucr_expression", [
     _,
     initialPageData,
     baseAce,
-    alertUser
+    alertUser,
 ) {
     let EditModel = function (data) {
         const mapping = {
@@ -70,7 +70,7 @@ hqDefine("userreports/js/ucr_expression", [
 
     $(function () {
         let viewModel = EditModel(
-            initialPageData.get("expression")
+            initialPageData.get("expression"),
         );
         $("#edit-expression").koApplyBindings(viewModel);
         viewModel.editor = baseAce.initObservableJsonWidget($('.observablejsonwidget')[0]);

@@ -177,7 +177,7 @@ def claim_service_request(requests, service_request, case_id, attempt=0):
     """
     Uses `ETag`_ to prevent a race condition.
 
-    .. _ETag: https://www.hl7.org/fhir/http.html#concurrency
+    .. _ETag: https://hl7.org/fhir/R4/http.html#concurrency
     """
     endpoint = f"ServiceRequest/{service_request['id']}"
     response = requests.get(endpoint, raise_for_status=True)

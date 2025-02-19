@@ -1,12 +1,17 @@
-<div id="ko-model-autocomplete">
-  <select class="form-select"
-          data-bind="autocompleteSelect2: dishes, value: value">
+<div id="js-ko-model-autocomplete">
+  <select
+    class="form-select"
+    data-bind="
+      autocompleteSelect2: dishes,
+      value: value
+    "
+  >
   </select>
 </div>
 
 <script>
   $(function () {
-    $("#ko-model-autocomplete").koApplyBindings(function () {
+    $("#js-ko-model-autocomplete").koApplyBindings(function () {
       return {
         dishes: [
             'Gorgonzola salad with star anise dressing',

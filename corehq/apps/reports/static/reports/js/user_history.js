@@ -1,7 +1,7 @@
 hqDefine("reports/js/user_history", [
     'jquery',
 ], function (
-    $
+    $,
 ) {
     $(function () {
         if (document.location.href.match(/reports\/user_management\/user_history/)) {

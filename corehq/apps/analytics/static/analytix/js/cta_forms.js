@@ -1,18 +1,19 @@
-"use strict";
+
 hqDefine('analytix/js/cta_forms', [
     'jquery',
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/assert_properties',
-    'hqwebapp/js/bootstrap3/validators.ko',        // needed for validation of startDate and endDate
     'intl-tel-input/build/js/intlTelInput.min',
+    'hqwebapp/js/bootstrap3/validators.ko',        // needed for validation of startDate and endDate
 ], function (
     $,
     ko,
     _,
     initialPageData,
-    assertProperties
+    assertProperties,
+    intlTelInput,
 ) {
     let hubspotCtaForm = function (config) {
         let self = {};
@@ -126,9 +127,10 @@ hqDefine('analytix/js/cta_forms', [
             return !!self.errorMessage();
         });
 
-        config.phoneNumberSelector.intlTelInput({
+        var phoneNumberWidget = intlTelInput(config.phoneNumberSelector.get(0), {
+            containerClass: "w-100",
             separateDialCode: true,
-            utilsScript: initialPageData.get('number_utils_script'),
+            loadUtils: () => import("intl-tel-input/utils"),
             initialCountry: "auto",
             geoIpLookup: function (success) {
                 $.get("https://ipinfo.io", function () {}, "jsonp").always(function (resp) {
@@ -142,7 +144,7 @@ hqDefine('analytix/js/cta_forms', [
         });
 
         self.getFullPhoneNumber = function () {
-            return config.phoneNumberSelector.intlTelInput("getNumber");
+            return phoneNumberWidget.getNumber();
         };
 
         self.submitForm = function () {

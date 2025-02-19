@@ -1,13 +1,23 @@
-<div id="pagination-example">
-  <ul class="list-group" data-bind="foreach: items">
-    <li class="list-group-item" data-bind="text: $data"></li>
+<div id="js-pagination-example">
+  <ul
+    class="list-group"
+    data-bind="foreach: items"
+  >
+    <li
+      class="list-group-item"
+      data-bind="text: $data"
+    ></li>
   </ul>
-  <pagination data-apply-bindings="false"
-              params="goToPage: goToPage,
-                      slug: 'style-guide',
-                      perPage: perPage,
-                      onLoad: onPaginationLoad,
-                      totalItems: totalItems"></pagination>
+  <pagination
+    data-apply-bindings="false"
+    params="
+      goToPage: goToPage,
+      slug: 'style-guide',
+      perPage: perPage,
+      onLoad: onPaginationLoad,
+      totalItems: totalItems
+    "
+  ></pagination>
 </div>
 
 <script>
@@ -34,6 +44,6 @@
       return self;
     };
 
-    $("#pagination-example").koApplyBindings(paginationExample());
+    $("#js-pagination-example").koApplyBindings(paginationExample());
   });
 </script>

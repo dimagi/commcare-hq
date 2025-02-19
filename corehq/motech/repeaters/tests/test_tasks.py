@@ -181,6 +181,25 @@ class TestProcessRepeatRecord(TestCase):
         self.assertEqual(self.mock_fire.call_count, 1)
         self.assertEqual(self.mock_postpone_by.call_count, 0)
 
+    def test_payload_error_metrics(self):
+        with (
+            patch('corehq.motech.repeaters.tasks.metrics_histogram') as mock_metrics,
+            patch('corehq.motech.repeaters.tasks.logging') as mock_logging,
+        ):
+            repeater = FormRepeater.objects.create(
+                domain=self.domain,
+                connection_settings=self.conn_settings,
+            )
+            repeat_record = RepeatRecord(
+                domain=self.domain,
+                payload_id='does-not-exist',
+                registered_at=datetime.utcnow(),
+                repeater_id=repeater.repeater_id,
+            )
+            _process_repeat_record(repeat_record)
+            mock_logging.exception.assert_not_called()
+            mock_metrics.assert_called_once()
+
     def test_paused_and_deleted_repeater_does_not_fire_or_postpone(self):
         paused_and_deleted_repeater = Repeater.objects.create(
             domain=self.domain,
@@ -314,16 +333,26 @@ class TestUpdateRepeater(SimpleTestCase):
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_called_once()
 
+    @patch('corehq.motech.repeaters.tasks.process_repeater')
     @patch('corehq.motech.repeaters.tasks.RepeaterLock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
-    def test_update_repeater_sets_backoff_on_failure(self, mock_get_repeater, __):
+    def test_update_repeater_backs_off_on_failure(
+        self,
+        mock_get_repeater,
+        mock_get_repeater_lock,
+        mock_process_repeater,
+    ):
         repeat_record_states = [State.Fail, State.Empty, None]
         mock_repeater = MagicMock()
         mock_get_repeater.return_value = mock_repeater
-        update_repeater(repeat_record_states, 1, 'token', False)
+        mock_lock = MagicMock()
+        mock_get_repeater_lock.return_value = mock_lock
+        update_repeater(repeat_record_states, 1, 'token', True)
 
         mock_repeater.set_backoff.assert_called_once()
         mock_repeater.reset_backoff.assert_not_called()
+        mock_process_repeater.assert_not_called()
+        mock_lock.release.assert_called_once()
 
     @patch('corehq.motech.repeaters.tasks.RepeaterLock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')

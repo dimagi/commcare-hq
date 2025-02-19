@@ -1,6 +1,7 @@
 hqDefine("reports/js/bootstrap5/async", [
     'jquery',
     'underscore',
+    'bootstrap5',
     'hqwebapp/js/bootstrap5/alert_user',
     'reports/js/charts/main',
     'reports/js/filters/bootstrap5/main',
@@ -8,17 +9,18 @@ hqDefine("reports/js/bootstrap5/async", [
 ], function (
     $,
     _,
+    bootstrap,
     alertUser,
     chartsMain,
     filtersMain,
-    reportsUtil
+    reportsUtil,
 ) {
     return function (o) {
-        'use strict';
         var self = {};
         self.reportContent = $('#report-content');
         self.filterForm = o.filterForm || $('#paramSelectorForm');
-        self.loadingIssueModal = $('#loadingReportIssueModal');
+        self.loadingIssueModalElem = $('#loadingReportIssueModal');
+        self.loadingIssueModal = new bootstrap.Modal(self.loadingIssueModalElem.get(0));
         self.issueAttempts = 0;
         self.hqLoading = null;
         self.standardReport = o.standardReport;
@@ -53,7 +55,7 @@ hqDefine("reports/js/bootstrap5/async", [
             } catch (e) {
                 console.log(e);
             }
-            $('#reportFiltersAccordion').removeClass('hide');
+            $('#reportFiltersAccordion').removeClass('d-none');
             self.standardReport.resetFilterState();
         };
 
@@ -149,9 +151,9 @@ hqDefine("reports/js/bootstrap5/async", [
                 processFilters = processFilters + "&filterSet=" + setFilters;
             }
             if (setFilters) {
-                $(self.standardReport.exportReportButton).removeClass('hide');
-                $(self.standardReport.emailReportButton).removeClass('hide');
-                $(self.standardReport.printReportButton).removeClass('hide');
+                $(self.standardReport.exportReportButton).removeClass('d-none');
+                $(self.standardReport.emailReportButton).removeClass('d-none');
+                $(self.standardReport.printReportButton).removeClass('d-none');
             }
 
             self.reportRequest = $.ajax({
@@ -164,8 +166,8 @@ hqDefine("reports/js/bootstrap5/async", [
                         loadFilters(data);
                     }
                     self.issueAttempts = 0;
-                    if ($('loadingIssueModal').hasClass('show')) {
-                        self.loadingIssueModal.modal('hide');  /* todo B5: plugin:modal */
+                    if (self.loadingIssueModalElem.hasClass('show')) {
+                        self.loadingIssueModal.hide();
                     }
                     self.hqLoading = $(self.loaderClass);
                     self.reportContent.html(data.report);
@@ -175,17 +177,17 @@ hqDefine("reports/js/bootstrap5/async", [
                         $(popover).remove();
                     });
                     self.reportContent.append(self.hqLoading);
-                    self.hqLoading.removeClass('hide');
+                    self.hqLoading.removeClass('d-none');
 
                     // Assorted UI cleanup/initialization
-                    $('.hq-report-time-notice').removeClass('hide');
+                    $('.hq-report-time-notice').removeClass('d-none');
 
                     $('.loading-backdrop').fadeOut();
                     self.hqLoading.fadeOut();
 
                     if (!initialLoad || !self.standardReport.needsFilters) {
                         self.standardReport.filterSubmitButton
-                            .button('reset');  /* todo B5: plugin:button */
+                            .changeButtonState('reset');
                         setTimeout(function () {
                             // Bootstrap clears all btn styles except btn on reset
                             // This gets around it by waiting 10ms.
@@ -197,7 +199,7 @@ hqDefine("reports/js/bootstrap5/async", [
                         }, 10);
                     } else {
                         self.standardReport.filterSubmitButton
-                            .button('reset')  /* todo B5: plugin:button */
+                            .changeButtonState('reset')
                             .addClass('btn-primary')
                             .removeClass('disabled')
                             .prop('disabled', false);
@@ -213,13 +215,13 @@ hqDefine("reports/js/bootstrap5/async", [
                         } else {
                             humanReadable = self.humanReadableErrors[data.status];
                         }
-                        self.loadingIssueModal.find('.report-error-status').html('<strong>' + data.status + '</strong> ' +
+                        self.loadingIssueModalElem.find('.report-error-status').html('<strong>' + data.status + '</strong> ' +
                             ((humanReadable) ? humanReadable : ""));
                         if (self.issueAttempts > 0) {
-                            self.loadingIssueModal.find('.btn-primary').button('fail');  /* todo B5: plugin:button */
+                            self.loadingIssueModalElem.find('.btn-primary').changeButtonState('fail');
                         }
                         self.issueAttempts += 1;
-                        self.loadingIssueModal.modal('show');  /* todo B5: plugin:modal */
+                        self.loadingIssueModal.show();
                     } else {
                         self.hqLoading = $(self.loaderClass);
                         self.hqLoading.find('h4').text(gettext("Loading Stopped"));
@@ -227,7 +229,7 @@ hqDefine("reports/js/bootstrap5/async", [
                     }
                 },
                 beforeSend: function () {
-                    self.standardReport.filterSubmitButton.button('loading');  /* todo B5: plugin:button */
+                    self.standardReport.filterSubmitButton.changeButtonState('loading');
                     $('.loading-backdrop').fadeIn();
                     if (self.hqLoading) {
                         self.hqLoading.attr('style', 'position: absolute; top: 30px; left: 40%;');
@@ -239,7 +241,7 @@ hqDefine("reports/js/bootstrap5/async", [
         };
 
         $(document).on('click', '.try-again', function () {
-            self.loadingIssueModal.find('.btn-primary').button('loading');  /* todo B5: plugin:button */
+            self.loadingIssueModalElem.find('.btn-primary').changeButtonState('loading');
             if (self.isCaseListRelated(window.location.pathname)) {
                 self.getQueryId(window.location.search.substr(1), true, true, window.location.pathname);
             } else {
@@ -247,9 +249,9 @@ hqDefine("reports/js/bootstrap5/async", [
             }
         });
 
-        self.loadingIssueModal.on('hide hide.bs.modal', function () {
+        self.loadingIssueModalElem.on('hide hide.bs.modal', function () {
             self.hqLoading = $(self.loaderClass);
-            self.hqLoading.find('.js-loading-spinner').addClass('hide');
+            self.hqLoading.find('.js-loading-spinner').addClass('d-none');
             self.hqLoading.find('h4').text(gettext('We were unsuccessful loading the report:'))
                 .attr('style', 'margin-bottom: 10px;');
         });

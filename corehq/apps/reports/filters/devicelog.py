@@ -7,6 +7,7 @@ from corehq.apps.reports.filters.base import (
     BaseMultipleOptionFilter,
     BaseReportFilter,
 )
+from corehq.apps.reports.util import DatatablesServerSideParams
 from corehq.util.queries import fast_distinct_in_domain
 from corehq.util.quickcache import quickcache
 
@@ -23,8 +24,12 @@ class DeviceLogTagFilter(BaseReportFilter):
 
     @property
     def filter_context(self):
-        errors_only = bool(self.request.GET.get(self.errors_only_slug, False))
-        selected_tags = self.request.GET.getlist(self.slug)
+        errors_only = bool(DatatablesServerSideParams.get_value_from_request(
+            self.request, self.errors_only_slug, False
+        ))
+        selected_tags = DatatablesServerSideParams.get_value_from_request(
+            self.request, self.slug, as_list=True
+        )
         show_all = bool(not selected_tags)
         values = self._all_values()
         tags = [{
@@ -60,7 +65,7 @@ class BaseDeviceLogFilter(BaseMultipleOptionFilter):
     @classmethod
     def get_selected(cls, request):
         return [cls.param_to_value(param)
-                for param in request.GET.getlist(cls.slug)]
+                for param in DatatablesServerSideParams.get_value_from_request(request, cls.slug, as_list=True)]
 
     @classmethod
     def param_to_value(cls, param):

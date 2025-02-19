@@ -80,6 +80,8 @@ cffi==1.14.3
     #   cryptography
     #   csiphash
     #   pynacl
+chardet==5.2.0
+    # via reportlab
 charset-normalizer==3.1.0
     # via requests
 click==8.0.3
@@ -326,7 +328,7 @@ googleapis-common-protos==1.59.0
     # via
     #   google-api-core
     #   grpcio-status
-greenlet==2.0.2
+greenlet==3.1.1
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
@@ -610,7 +612,7 @@ pytz==2024.1
     #   -r base-requirements.in
     #   babel
     #   celery
-pyyaml==6.0
+pyyaml==6.0.2
     # via
     #   -r base-requirements.in
     #   git-build-branch
@@ -635,7 +637,7 @@ redis==4.5.4
     #   django-websocket-redis
 regex==2023.12.25
     # via parsimonious
-reportlab==3.6.13
+reportlab==4.3.0
     # via -r base-requirements.in
 requests==2.32.3
     # via

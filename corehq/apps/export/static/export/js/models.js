@@ -27,7 +27,7 @@ hqDefine('export/js/models', [
     googleAnalytics,
     kissmetricsAnalytics,
     constants,
-    utils
+    utils,
 ) {
     /**
      * readablePath
@@ -299,7 +299,7 @@ hqDefine('export/js/models', [
                         response.progress.current !== response.progress.total) {
                     window.setTimeout(
                         self.checkBuildSchemaProgress.bind(self, response.download_id, successHandler, errorHandler),
-                        2000
+                        2000,
                     );
                 }
             },
@@ -352,7 +352,7 @@ hqDefine('export/js/models', [
     ExportInstance.prototype.getSharingHelpText = gettext(
         '<strong>Private</strong>: Only you can edit and export.'
         + '<br/> <strong>Export Only</strong>: You can edit and export, other users can only export.'
-        + '<br/> <strong>Edit and Export</strong>: All users can edit and export.'
+        + '<br/> <strong>Edit and Export</strong>: All users can edit and export.',
     );
 
     /**

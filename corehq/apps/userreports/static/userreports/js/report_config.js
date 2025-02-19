@@ -22,7 +22,7 @@ hqDefine('userreports/js/report_config', [
     builderViewModels,
     constants,
     analytics,
-    utils
+    utils,
 ) {
     return {
         reportBuilder: function () {
@@ -61,7 +61,7 @@ hqDefine('userreports/js/report_config', [
                         self.getDefaultDisplayText.bind(self),
                         self.getPropertyObject.bind(self),
                         self.reorderColumns.bind(self),
-                        self.hasDisplayCol
+                        self.hasDisplayCol,
                     );
                 };
                 self.buttonHandler = function () {
@@ -233,11 +233,11 @@ hqDefine('userreports/js/report_config', [
                 var _getSelectableProperties = function (dataSourceIndicators) {
                     if (self._optionsContainQuestions(dataSourceIndicators)) {
                         return _.compact(_.map(
-                            dataSourceIndicators, utils.convertDataSourcePropertyToQuestionsSelectFormat
+                            dataSourceIndicators, utils.convertDataSourcePropertyToQuestionsSelectFormat,
                         ));
                     } else {
                         return _.compact(_.map(
-                            dataSourceIndicators, utils.convertDataSourcePropertyToSelect2Format
+                            dataSourceIndicators, utils.convertDataSourcePropertyToSelect2Format,
                         ));
                     }
                 };
@@ -245,11 +245,11 @@ hqDefine('userreports/js/report_config', [
                 var _getSelectableReportColumnOptions = function (reportColumnOptions, dataSourceIndicators) {
                     if (self._optionsContainQuestions(dataSourceIndicators)) {
                         return _.compact(_.map(
-                            reportColumnOptions, utils.convertReportColumnOptionToQuestionsSelectFormat
+                            reportColumnOptions, utils.convertReportColumnOptionToQuestionsSelectFormat,
                         ));
                     } else {
                         return _.compact(_.map(
-                            reportColumnOptions, utils.convertReportColumnOptionToSelect2Format
+                            reportColumnOptions, utils.convertReportColumnOptionToSelect2Format,
                         ));
                     }
                 };
@@ -396,7 +396,7 @@ hqDefine('userreports/js/report_config', [
                                     'source_type': self._sourceType,
                                     'source_id': self._sourceId,
                                     'registry_slug': self._registrySlug,
-                                }
+                                },
                             )),
                             dataType: 'json',
                             success: function (data) {
@@ -507,7 +507,7 @@ hqDefine('userreports/js/report_config', [
                                 c.pre_value || c.pre_operator ||
                                 c.format === "Is Empty" || c.format === "Exists"
                             );
-                        }
+                        },
                     );
                     return {
                         "existing_report": self.existingReportId,
@@ -562,7 +562,7 @@ hqDefine('userreports/js/report_config', [
                             type: "POST",
                             data: JSON.stringify(Object.assign(
                                 self.serialize(),
-                                {'delete_temp_data_source': true, 'preview_data_source_id': self.previewDatasourceId}
+                                {'delete_temp_data_source': true, 'preview_data_source_id': self.previewDatasourceId},
                             )),
                             success: function (data) {
                                 // Redirect to the newly-saved report

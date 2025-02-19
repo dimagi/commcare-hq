@@ -129,7 +129,7 @@ hqDefine("data_interfaces/js/bootstrap5/case_management",[
             var bulkReassignUrl = window.location.href.replace("data/edit", "data/edit/bulk");
             $.postGo(
                 bulkReassignUrl,
-                paramsObject
+                paramsObject,
             );
         };
 

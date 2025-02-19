@@ -4,7 +4,7 @@ hqDefine("telerivet/js/telerivet_setup", [
     'commcarehq',
 ], function (
     ko,
-    initialPageData
+    initialPageData,
 ) {
     var telerivetSetupModel = function () {
         var self = {};

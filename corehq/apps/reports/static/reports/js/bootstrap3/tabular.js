@@ -20,7 +20,7 @@ hqDefine("reports/js/bootstrap3/tabular", [
     _,
     initialPageData,
     datatablesConfig,
-    standardHQReportModule
+    standardHQReportModule,
 ) {
     function renderPage(slug, tableOptions) {
         if (tableOptions && tableOptions.datatables) {

@@ -110,7 +110,7 @@ some of the imported values before overwriting existing values on the
 case. It is wise to confirm with the delivery team how to treat case
 properties that can be edited.
 
-.. _Patient search parameters: https://www.hl7.org/fhir/patient.html#search
+.. _Patient search parameters: https://hl7.org/fhir/R4/patient.html#search
 
 
 Configuring related resources

@@ -5,12 +5,14 @@ hqDefine("reports/js/bootstrap3/standard_hq_report", [
     'jquery',
     'underscore',
     'hqwebapp/js/initial_page_data',
+    'reports/js/util',
     'reports/js/bootstrap3/hq_report',
 ], function (
     $,
     _,
     initialPageData,
-    hqReportModule
+    util,
+    hqReportModule,
 ) {
     var standardReport = undefined,
         asyncReport = undefined;
@@ -20,25 +22,29 @@ hqDefine("reports/js/bootstrap3/standard_hq_report", [
             return standardReport;
         }
 
-        if (typeof standardHQReport !== 'undefined') {
-            // Custom reports, notably ewsghana
-            standardReport = standardHQReport;
-        } else {
-            // Standard reports
-            var reportOptions = _.extend({}, initialPageData.get('js_options'), {
-                emailSuccessMessage: gettext('Report successfully emailed'),
-                emailErrorMessage: gettext('An error occurred emailing your report. Please try again.'),
-            });
-            if (initialPageData.get('startdate')) {
-                reportOptions.datespan = {
-                    startdate: initialPageData.get('startdate'),
-                    enddate: initialPageData.get('enddate'),
-                };
-            }
-            var standardHQReport = hqReportModule.hqReport(reportOptions);
-            standardHQReport.init();
-            standardReport = standardHQReport;
+        var reportOptions = _.extend({}, initialPageData.get('js_options'), {
+            emailSuccessMessage: gettext('Report successfully emailed'),
+            emailErrorMessage: gettext('An error occurred emailing your report. Please try again.'),
+        });
+
+        if (initialPageData.get('override_report_render_url')) {
+            reportOptions.getReportRenderUrl = function (renderType) {
+                var params = util.urlSerialize($('#paramSelectorForm'), ['format']);
+                return window.location.pathname + "?format=" + renderType + "&" + params;
+            };
         }
+
+        if (initialPageData.get('startdate')) {
+            reportOptions.datespan = {
+                startdate: initialPageData.get('startdate'),
+                enddate: initialPageData.get('enddate'),
+            };
+        }
+
+        var standardHQReport = hqReportModule.hqReport(reportOptions);
+        standardHQReport.init();
+        standardReport = standardHQReport;
+
         return standardReport;
     };
 

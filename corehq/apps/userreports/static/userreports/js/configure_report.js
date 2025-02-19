@@ -14,7 +14,7 @@ hqDefine('userreports/js/configure_report', [
     initialPageData,
     multiselectUtils,
     reportBuilder,
-    constants
+    constants,
 ) {
     $(function () {
         var existingReport = initialPageData.get('existing_report'),

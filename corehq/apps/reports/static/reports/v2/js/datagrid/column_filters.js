@@ -5,10 +5,8 @@ hqDefine('reports/v2/js/datagrid/column_filters', [
 ], function (
     $,
     _,
-    ko
+    ko,
 ) {
-    'use strict';
-
     var columnFilterChoice = function (data) {
         /**
          * Matches the ChoiceMeta title / name specified by the column filter
