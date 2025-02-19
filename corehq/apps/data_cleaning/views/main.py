@@ -1,4 +1,3 @@
-import uuid
 from memoized import memoized
 
 from django.urls import reverse
@@ -6,12 +5,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy, gettext as _
 
 from corehq import toggles
-from corehq.apps.data_cleaning.tables import CleanCaseTable
-from corehq.apps.domain.decorators import LoginAndDomainMixin
-from corehq.apps.domain.views import DomainViewMixin
-from corehq.apps.es import CaseSearchES
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
-from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.settings.views import BaseProjectDataView
 
 
@@ -22,12 +16,15 @@ from corehq.apps.settings.views import BaseProjectDataView
 class CleanCasesMainView(BaseProjectDataView):
     page_title = gettext_lazy("Clean Case Data")
     urlname = "data_cleaning_cases"
-    template_name = "data_cleaning/select_case_type.html"
+    template_name = "data_cleaning/clean_cases_main.html"
 
     @property
     def page_context(self):
+        from corehq.apps.data_cleaning.views.forms import SetupCaseSessionFormView
+        from corehq.apps.data_cleaning.views.tables import CaseCleaningTasksTableView
         return {
-            "session_id": uuid.uuid4(),
+            "setup_case_session_form_url": reverse(SetupCaseSessionFormView.urlname, args=(self.domain,)),
+            "tasks_table_url": reverse(CaseCleaningTasksTableView.urlname, args=(self.domain, )),
         }
 
 
@@ -38,7 +35,7 @@ class CleanCasesMainView(BaseProjectDataView):
 class CleanCasesSessionView(BaseProjectDataView):
     page_title = gettext_lazy("Clean Case Type")
     urlname = "data_cleaning_cases_session"
-    template_name = "data_cleaning/cases.html"
+    template_name = "data_cleaning/clean_cases_session.html"
 
     @property
     def session_id(self):
@@ -71,19 +68,3 @@ class CleanCasesSessionView(BaseProjectDataView):
         return {
             "session_id": self.session_id,
         }
-
-
-@method_decorator([
-    use_bootstrap5,
-    toggles.DATA_CLEANING_CASES.required_decorator(),
-], name='dispatch')
-class CleanCasesTableView(LoginAndDomainMixin, DomainViewMixin, SelectablePaginatedTableView):
-    urlname = "data_cleaning_cases_table"
-    table_class = CleanCaseTable
-
-    @property
-    def session_id(self):
-        return self.kwargs['session_id']
-
-    def get_queryset(self):
-        return CaseSearchES().domain(self.domain)

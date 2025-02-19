@@ -971,7 +971,7 @@ class ProjectDataTab(UITab):
             edit_section[0][1].append(deduplication_list_view)
 
         if self._can_view_case_data_cleaning:
-            from corehq.apps.data_cleaning.views import (
+            from corehq.apps.data_cleaning.views.main import (
                 CleanCasesMainView,
             )
             clean_cases_view = {
