@@ -103,23 +103,38 @@ class SystemLimit(models.Model):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        self.for_key.clear(self.__class__, self.key, self.domain)
+        self._get_global_limit.clear(self.__class__, self.key)
+        self._get_domain_specific_limit.clear(self.__class__, self.key, self.domain)
 
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
-        self.for_key.clear(self.__class__, self.key, self.domain)
+        self._get_global_limit.clear(self.__class__, self.key)
+        self._get_domain_specific_limit.clear(self.__class__, self.key, self.domain)
+
+    @classmethod
+    def for_key(cls, key, domain=''):
+        """
+        Return the value associated with the given key, prioritizing the domain specific entry over the general one
+        """
+        domain_limit = cls._get_domain_specific_limit(key, domain) if domain else None
+        if domain_limit is not None:
+            return domain_limit
+        return cls._get_global_limit(key)
+
+    @classmethod
+    @quickcache(['key'], timeout=7 * 24 * 60 * 60, skip_arg=lambda *args, **kwargs: settings.UNIT_TESTING)
+    def _get_global_limit(cls, key):
+        try:
+            return SystemLimit.objects.get(key=key, domain='').limit
+        except SystemLimit.DoesNotExist:
+            return None
 
     @classmethod
     @quickcache(
         ['key', 'domain'], timeout=7 * 24 * 60 * 60, skip_arg=lambda *args, **kwargs: settings.UNIT_TESTING
     )
-    def for_key(cls, key, domain=''):
-        """
-        Return the value associated with the given key, prioritizing the domain specific entry over the general one
-        The timeout is long because this is a small table that is effectively storing key/value pairs in redis
-        """
-        domain_filter = models.Q(domain="")
-        if domain:
-            domain_filter |= models.Q(domain=domain)
-        filters = models.Q(key=key) & domain_filter
-        return SystemLimit.objects.filter(filters).order_by("-domain").values_list("limit", flat=True).first()
+    def _get_domain_specific_limit(cls, key, domain):
+        try:
+            return SystemLimit.objects.get(key=key, domain=domain).limit
+        except SystemLimit.DoesNotExist:
+            return None
