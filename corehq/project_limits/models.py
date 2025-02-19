@@ -103,13 +103,17 @@ class SystemLimit(models.Model):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        self._get_global_limit.clear(self.__class__, self.key)
-        self._get_domain_specific_limit.clear(self.__class__, self.key, self.domain)
+        if self.domain:
+            self._get_domain_specific_limit.clear(self.__class__, self.key, self.domain)
+        else:
+            self._get_global_limit.clear(self.__class__, self.key)
 
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
-        self._get_global_limit.clear(self.__class__, self.key)
-        self._get_domain_specific_limit.clear(self.__class__, self.key, self.domain)
+        if self.domain:
+            self._get_domain_specific_limit.clear(self.__class__, self.key, self.domain)
+        else:
+            self._get_global_limit.clear(self.__class__, self.key)
 
     @classmethod
     def for_key(cls, key, domain=''):
