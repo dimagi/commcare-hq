@@ -1,5 +1,6 @@
 import architect
 from django.db import models
+from django.conf import settings
 from field_audit import audit_fields
 
 from corehq.util.quickcache import quickcache
@@ -104,8 +105,14 @@ class SystemLimit(models.Model):
         super().save(*args, **kwargs)
         self.for_key.clear(self.__class__, self.key, self.domain)
 
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        self.for_key.clear(self.__class__, self.key, self.domain)
+
     @classmethod
-    @quickcache(['key', 'domain'], timeout=7 * 24 * 60 * 60)
+    @quickcache(
+        ['key', 'domain'], timeout=7 * 24 * 60 * 60, skip_arg=lambda *args, **kwargs: settings.UNIT_TESTING
+    )
     def for_key(cls, key, domain=''):
         """
         Return the value associated with the given key, prioritizing the domain specific entry over the general one
