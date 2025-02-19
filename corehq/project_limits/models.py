@@ -1,6 +1,9 @@
 import architect
 from django.db import models
+from django.conf import settings
 from field_audit import audit_fields
+
+from corehq.util.quickcache import quickcache
 
 AVG = 'AVG'
 MAX = 'MAX'
@@ -97,3 +100,26 @@ class SystemLimit(models.Model):
     def __str__(self):
         domain = f"[{self.domain}] " if self.domain else ""
         return f"{domain}{self.key}: {self.limit}"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.for_key.clear(self.__class__, self.key, self.domain)
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        self.for_key.clear(self.__class__, self.key, self.domain)
+
+    @classmethod
+    @quickcache(
+        ['key', 'domain'], timeout=7 * 24 * 60 * 60, skip_arg=lambda *args, **kwargs: settings.UNIT_TESTING
+    )
+    def for_key(cls, key, domain=''):
+        """
+        Return the value associated with the given key, prioritizing the domain specific entry over the general one
+        The timeout is long because this is a small table that is effectively storing key/value pairs in redis
+        """
+        domain_filter = models.Q(domain="")
+        if domain:
+            domain_filter |= models.Q(domain=domain)
+        filters = models.Q(key=key) & domain_filter
+        return SystemLimit.objects.filter(filters).order_by("-domain").values_list("limit", flat=True).first()
