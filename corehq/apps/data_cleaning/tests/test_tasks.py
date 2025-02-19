@@ -11,6 +11,7 @@ from corehq.apps.data_cleaning.models import (
 from corehq.apps.data_cleaning.tasks import commit_data_cleaning
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.util.test_utils import flag_enabled
 
@@ -71,4 +72,5 @@ class CommitCasesTest(TestCase):
 
         commit_data_cleaning(self.session.session_id)
 
-        self.assertEqual(self.case.get_case_property('speed'), 'slow')
+        case = CommCareCase.objects.get_case(self.case.case_id, self.domain.name)
+        self.assertEqual(case.get_case_property('speed'), 'SLOW')
