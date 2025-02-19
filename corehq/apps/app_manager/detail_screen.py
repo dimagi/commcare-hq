@@ -112,7 +112,7 @@ class FormattedDetailColumn(object):
         self.entries_helper = entries_helper
 
     def has_sort_node_for_nodeset_column(self):
-        return self.parent_tab_nodeset and self.detail.sort_nodeset_columns_for_detail()
+        return self.parent_tab_nodeset and self.detail.sort_nodeset_columns_for_long_detail()
 
     @property
     def locale_id(self):
