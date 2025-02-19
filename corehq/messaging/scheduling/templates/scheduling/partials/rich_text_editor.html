@@ -1,0 +1,59 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+<button id="myButton">show modal</button>
+<div id="ql-toolbar">
+  <select title="header" class="ql-header">
+    <option selected="">Paragraph</option>
+    <option value="1"></option>
+    <option value="2"></option>
+    <option value="3"></option>
+  </select>
+  <select title="font" class="ql-font">
+    <option value="Arial"></option>
+    <option value="Courier New"></option>
+    <option value="Georgia"></option>
+    <option value="Lucida Sans Unicode"></option>
+    <option value="Tahoma"></option>
+    <option value="Times New Roman"></option>
+    <option value="Verdana"></option>
+  </select>
+  <select title="font size" class="ql-size">
+    <option value="small">Small</option>
+    <option selected>Default</option>
+    <option value="large">Big</option>
+    <option value="huge">Huge</option>
+  </select>
+  <button title="bold" class="ql-bold"></button>
+  <button title="italic" class="ql-italic"></button>
+  <button title="underline" class="ql-underline"></button>
+  <button title="strike through" class="ql-strike"></button>
+  <select title="text color" class="ql-color"></select>
+  <select title="background color" class="ql-background"></select>
+  <button title="link" class="ql-link"></button>
+  <button title="image" class="ql-image"></button>
+  <button title="ordered list" class="ql-list" value="ordered"></button>
+  <button title="unordered list" class="ql-list" value="bullet"></button>
+  <button title="indent" class="ql-indent" value="-1"></button>
+  <button title="unindent" class="ql-indent" value="+1"></button>
+  <select title="align text" class="ql-align"></select>
+  <button title="clear formatting" class="ql-clean"></button>
+</div>
+<div data-bind="richEditor: {{ editableText }}"></div>
+<!-- Link Dialog -->
+<div class="modal fade" id="rich-text-link-dialog" tabindex="-1" aria-labelledby="rich-text-link-dialog-title" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rich-text-link-dialog-title">{% trans "Insert Link" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="url" class="form-control" id="rich-text-link-url" placeholder="https://" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="rich-text-link-insert">{% trans "Insert" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
