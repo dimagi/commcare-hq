@@ -133,6 +133,8 @@ class OpenmrsImporter(Document):
 
     @property
     def plaintext_password(self):
+        if self.password == '':
+            return ''
         ciphertext = self.password.split('$', 2)[2]
         return b64_aes_cbc_decrypt(ciphertext)
 

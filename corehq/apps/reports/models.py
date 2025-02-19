@@ -208,6 +208,8 @@ class TableauConnectedApp(models.Model):
 
     @property
     def plaintext_secret_value(self):
+        if self.encrypted_secret_value == '':
+            return ''
         ciphertext = self.encrypted_secret_value.split('$', 2)[2]
         return b64_aes_cbc_decrypt(ciphertext)
 

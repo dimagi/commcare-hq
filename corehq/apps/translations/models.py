@@ -170,6 +170,8 @@ class TransifexOrganization(models.Model):
 
     @property
     def plaintext_api_token(self):
+        if self.api_token == '':
+            return ''
         ciphertext = self.api_token.split('$', 2)[2]
         return b64_aes_cbc_decrypt(ciphertext)
 
