@@ -105,53 +105,18 @@ class TestKycVerificationTableView(BaseTestKycView):
         )
         cls.addClassCleanup(conn_settings.delete)
 
-        cls.kyc_mapping = [
-            {
-                'fieldName': 'first_name',
-                'mapsTo': 'first_name',
-                'source': 'standard',
-            },
-            {
-                'fieldName': 'last_name',
-                'mapsTo': 'last_name',
-                'source': 'standard'
-            },
-            {
-                'fieldName': 'email',
-                'mapsTo': 'email',
-                'source': 'standard'
-            },
-            {
-                'fieldName': 'phone_number',
-                'mapsTo': 'phone_number',
-                'source': 'custom',
-            },
-            {
-                'fieldName': 'national_id_number',
-                'mapsTo': 'national_id_number',
-                'source': 'custom',
-            },
-            {
-                'fieldName': 'street_address',
-                'mapsTo': 'street_address',
-                'source': 'custom',
-            },
-            {
-                'fieldName': 'city',
-                'mapsTo': 'city',
-                'source': 'custom',
-            },
-            {
-                'fieldName': 'post_code',
-                'mapsTo': 'post_code',
-                'source': 'custom',
-            },
-            {
-                'fieldName': 'country',
-                'mapsTo': 'country',
-                'source': 'custom',
-            },
-        ]
+        cls.kyc_mapping = {
+            # API field: User data
+            'first_name': 'first_name',
+            'last_name': 'last_name',
+            'email': 'email',
+            'phone_number': 'phone_number',
+            'national_id_number': 'national_id_number',
+            'street_address': 'street_address',
+            'city': 'city',
+            'post_code': 'post_code',
+            'country': 'country',
+        }
         cls.kyc_config = KycConfig.objects.create(
             domain=cls.domain,
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
@@ -244,6 +209,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'has_invalid_data': True,
                     'first_name': 'Jane',
                     'last_name': 'Doe',
+                    'phone_number': None,
                     'email': '',
                 })
             else:
@@ -265,23 +231,11 @@ class TestKycVerificationTableView(BaseTestKycView):
     def test_response_data_cases(self):
         self.kyc_config.user_data_store = UserDataStore.OTHER_CASE_TYPE
         self.kyc_config.other_case_type = 'other-case'
-        self.kyc_config.api_field_to_user_data_map[0:3] = [
-            {
-                'fieldName': 'first_name',
-                'mapsTo': 'first_name',
-                'source': 'custom'
-            },
-            {
-                'fieldName': 'last_name',
-                'mapsTo': 'last_name',
-                'source': 'custom'
-            },
-            {
-                'fieldName': 'email',
-                'mapsTo': 'email',
-                'source': 'custom'
-            }
-        ]
+        self.kyc_config.api_field_to_user_data_map.update({
+            'first_name': 'first_name',
+            'last_name': 'last_name',
+            'email': 'email',
+        })
         self.kyc_config.save()
 
         response = self._make_request()

@@ -34,7 +34,7 @@ class KycConfig(models.Model):
     domain = models.CharField(max_length=126, db_index=True)
     user_data_store = models.CharField(max_length=25, choices=UserDataStore.CHOICES)
     other_case_type = models.CharField(max_length=126, null=True)
-    api_field_to_user_data_map = jsonfield.JSONField(default=list)
+    api_field_to_user_data_map = jsonfield.JSONField(default=dict)
     provider = models.CharField(
         max_length=25,
         choices=KycProviders.choices,

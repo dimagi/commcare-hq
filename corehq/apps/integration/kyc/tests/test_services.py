@@ -135,7 +135,11 @@ class TestGetUserDataForAPI(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.user = CommCareUser.create(self.domain, 'test-kyc', '123', None, None, first_name='abc')
+        self.user = CommCareUser.create(
+            self.domain, 'test-kyc', '123',
+            None, None,
+            first_name='abc',
+        )
         self.config = KycConfig.objects.create(
             domain=self.domain,
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
@@ -149,23 +153,24 @@ class TestGetUserDataForAPI(TestCase):
         super().tearDown()
 
     def _sample_api_field_to_user_data_map(self):
-        return [
-            {
-                "fieldName": "first_name",
-                "mapsTo": "first_name",
-                "source": "standard"
-            },
-            {
-                "fieldName": "nationality",
-                "mapsTo": "nationality",
-                "source": "custom"
-            }
-        ]
+        return {
+            # API Field : User data
+            "first_name": "first_name",
+            "nationality": "nationality",
+        }
 
     def test_custom_user_data_store(self):
         self.user.get_user_data(self.domain).update({'nationality': 'Indian'})
         result = get_user_data_for_api(self.user, self.config)
         self.assertEqual(result, {'first_name': 'abc', 'nationality': 'Indian'})
+
+    def test_unsafe_custom_user_data_store(self):
+        self.config.api_field_to_user_data_map = {
+            # API field : Custom user data / CommCareUser property
+            "first_name": "password",
+        }
+        result = get_user_data_for_api(self.user, self.config)
+        self.assertEqual(result, {})
 
     def test_custom_user_data_store_with_no_data(self):
         result = get_user_data_for_api(self.user, self.config)
@@ -196,7 +201,6 @@ class TestGetUserDataForAPI(TestCase):
     def test_custom_case_data_store(self):
         self.config.user_data_store = UserDataStore.OTHER_CASE_TYPE
         self.config.other_case_type = 'other-case'
-        self.config.api_field_to_user_data_map[0]['source'] = 'custom'
         self.config.save()
         case = create_case(
             self.domain,
@@ -221,7 +225,7 @@ class TestGetUserDataForAPI(TestCase):
 
     def test_incorrect_mapping_standard_field(self):
         api_field_to_user_data_map = self._sample_api_field_to_user_data_map()
-        api_field_to_user_data_map[0]['mapsTo'] = 'wrong-standard_field'
+        api_field_to_user_data_map['first_name'] = 'wrong-standard_field'
         self.config.api_field_to_user_data_map = api_field_to_user_data_map
         self.config.save()
 

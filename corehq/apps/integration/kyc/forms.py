@@ -45,7 +45,7 @@ class KycConfigureForm(forms.ModelForm):
     api_field_to_user_data_map = JsonField(
         label=_('API Field to User Data Map'),
         required=True,
-        expected_type=list,
+        expected_type=dict,
     )
     connection_settings = forms.ModelChoiceField(
         label=_('Connection Settings'),

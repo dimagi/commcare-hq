@@ -10,6 +10,7 @@ import jsonschema
 
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.integration.kyc.models import UserDataStore
+from corehq.apps.users.models import CommCareUser
 
 
 class UserCaseNotFound(Exception):
@@ -129,17 +130,33 @@ def get_user_data_for_api(source, config):
         Returns a dictionary of user data for the API.
         ``source`` is a CommCareUser or a CommCareCase.
     """
+    # CommCareUser properties that could map to API fields
+    safe_commcare_user_properties = {
+        'first_name',
+        'last_name',
+        'full_name',
+        'name',
+        'email',
+        'username',  # For CommCareUsers this is an email address
+        'phone_number',
+        'default_phone_number',
+    }
     source_data = _get_source_data(source, config)
     user_data_for_api = {}
-    for mapping in config.api_field_to_user_data_map:
-        try:
-            if mapping['source'] == 'standard':
-                user_data_for_api[mapping['fieldName']] = getattr(source, mapping['mapsTo'])
-            else:
-                user_data_for_api[mapping['fieldName']] = source_data[mapping['mapsTo']]
-        except (AttributeError, KeyError):
+    for api_field, user_data_property in config.api_field_to_user_data_map.items():
+        if user_data_property in source_data:
+            # Fetch value from usercase / custom user data by default
+            value = source_data[user_data_property]
+        elif (
+            isinstance(source, CommCareUser)
+            and user_data_property in safe_commcare_user_properties
+        ):
+            # Fall back to CommCareUser
+            value = getattr(source, user_data_property)
+        else:
             # Conservative approach to skip the API field if data is not available for the user
             continue
+        user_data_for_api[api_field] = value
     return user_data_for_api
 
 
