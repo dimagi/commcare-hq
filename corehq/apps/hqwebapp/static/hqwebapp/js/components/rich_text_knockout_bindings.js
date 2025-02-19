@@ -9,6 +9,7 @@ import Bold from "quill/formats/bold";
 import Italic from "quill/formats/italic";
 import Header from "quill/formats/header";
 import {QuillDeltaToHtmlConverter} from 'quill-delta-to-html-upate';
+import {Modal} from 'es6!hqwebapp/js/bootstrap5_loader';
 
 import initialPageData from "hqwebapp/js/initial_page_data";
 
@@ -74,13 +75,39 @@ function imageHandler() {
     input.click();
 }
 
-function linkHandler(value) {
+async function linkHandler(value) {
+    const self = this;
     if (value) {
-        let href = prompt('Enter the URL').trim();
-        if (!href.match(/^\w+:/)) {
-            href = "http://" + href;
-        }
-        this.quill.format('link', href);
+        const modal = Modal.getOrCreateInstance(document.getElementById('rich-text-link-dialog'));
+        const input = document.getElementById('rich-text-link-url');
+        const insertButton = document.getElementById('rich-text-link-insert');
+
+        // await new Promise(function (resolve, reject) {
+            const handleInsert = () => {
+                let href = input.value.trim();
+                if (!href) {
+                    // reject();
+                }
+
+                if (!href.match(/^(https?|ftp|mailto):/)) {
+                    href = "https://" + href;
+                }
+
+                self.quill.format('link', href);
+                modal.hide();
+
+                // Clean up
+                input.value = '';
+                insertButton.removeEventListener('click', handleInsert);
+                console.log("resolve");
+                // resolve();
+            };
+
+            insertButton.addEventListener('click', handleInsert);
+            console.log("show");
+            modal.show();
+        // });
+        console.log("return");
     }
 }
 
@@ -107,7 +134,7 @@ function deltaToHtml(delta) {
     // nice for adding more test data
     // console.log(JSON.stringify(delta, null, 4));
     if (!delta) {
-        return
+        return;
     }
     const converter = new QuillDeltaToHtmlConverter(delta.ops, converterOptions);
     const body = converter.convert();
@@ -120,6 +147,14 @@ function deltaToHtml(delta) {
 
 ko.bindingHandlers.richEditor = {
     init: function (element, valueAccessor) {
+        const button = document.getElementById('myButton');   // replace 'myButton' with your button's id
+
+        button.addEventListener('click', function () {
+            const modal = Modal.getOrCreateInstance(document.getElementById('rich-text-link-dialog'));
+            modal.show();
+            // your event handling logic here
+            console.log('Button clicked!');
+        });
         const fontFamilyArr = [
             "Arial",
             "Courier New",
