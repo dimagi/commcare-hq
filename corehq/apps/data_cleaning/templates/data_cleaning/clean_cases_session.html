@@ -11,6 +11,9 @@
     <h1 class="fs-3 pe-3 py-3 m-0">
       {{ current_page.page_name }}
     </h1>
+    <div>
+      {% include "data_cleaning/partials/button_bar.html" %}
+    </div>
   </div>
   <div
     class="mx-3"
@@ -21,6 +24,7 @@
       <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading..." %}
     </div>
   </div>
+  {% include "data_cleaning/partials/offcanvas.html" %}
 {% endblock %}
 
 {% block modals %}

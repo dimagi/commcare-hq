@@ -11,7 +11,7 @@ from corehq.apps.data_cleaning.views.tables import (
     CleanCasesTableView,
     CaseCleaningTasksTableView,
 )
-from corehq.apps.data_cleaning.views.forms import (
+from corehq.apps.data_cleaning.views.setup import (
     SetupCaseSessionFormView,
 )
 from corehq.apps.domain.shortcuts import create_domain
