@@ -200,7 +200,7 @@ class TableauVisualization(models.Model):
 class TableauConnectedApp(models.Model):
     app_client_id = models.CharField(max_length=64)
     secret_id = models.CharField(max_length=64)
-    encrypted_secret_value = models.CharField(max_length=64)
+    encrypted_secret_value = models.CharField(max_length=128)
     server = models.OneToOneField(TableauServer, on_delete=models.CASCADE)
 
     def __str__(self):
