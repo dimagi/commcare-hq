@@ -5,7 +5,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 
 from corehq import toggles
-from corehq.apps.data_cleaning.forms import SelectCaseTypeForm
+from corehq.apps.data_cleaning.forms.setup import SelectCaseTypeForm
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
