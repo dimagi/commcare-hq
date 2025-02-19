@@ -938,6 +938,7 @@ class Detail(OrderedXmlObject, IdNode):
     ROOT_NAME = 'detail'
 
     lazy_loading = BooleanField('@lazy_loading')
+    cache_enabled = BooleanField('@cache_enabled', required=False)
 
     ORDER = ('title', 'lookup', 'no_items_text', 'details', 'fields')
 
