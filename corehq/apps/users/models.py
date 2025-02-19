@@ -3376,6 +3376,7 @@ class ConnectIDUserLink(models.Model):
     domain = models.TextField()
     messaging_consent = models.BooleanField(default=False)
     channel_id = models.CharField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         unique_together = ('domain', 'commcare_user')
