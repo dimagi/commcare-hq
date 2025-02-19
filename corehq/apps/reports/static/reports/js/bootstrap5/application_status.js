@@ -1,8 +1,8 @@
-'use strict';
+
 hqDefine("reports/js/bootstrap5/application_status", [
     "jquery",
 ], function (
-    $
+    $,
 ) {
     $(function () {
         $('#report-content').on('click', '.toggle-all-locations', function (e) {

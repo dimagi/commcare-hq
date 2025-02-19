@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,105 +1,100 @@
+@@ -1,105 +1,106 @@
 -hqDefine("reports/js/bootstrap3/tabular", [
 -    'jquery',
 -    'underscore',
@@ -24,7 +24,7 @@
 -    _,
 -    initialPageData,
 -    datatablesConfig,
--    standardHQReportModule
+-    standardHQReportModule,
 -) {
 -    function renderPage(slug, tableOptions) {
 -        if (tableOptions && tableOptions.datatables) {
@@ -74,6 +74,8 @@
 -            reportTables.render();
 +import $ from 'jquery';
 +import _ from 'underscore';
++import {Popover} from 'bootstrap5';
++
 +import initialPageData from 'hqwebapp/js/initial_page_data';
 +import datatablesConfig from 'reports/js/bootstrap5/datatables_config';
 +import standardHQReportModule from 'reports/js/bootstrap5/standard_hq_report';
@@ -99,18 +101,11 @@
 +                defaultRows: tableConfig.default_rows,
 +                startAtRowNum: tableConfig.start_at_row,
 +                showAllRowsOption: tableConfig.show_all_rows,
-+                loadingTemplateSelector: '#js-template-loading-report',
 +                autoWidth: tableConfig.headers.auto_width,
 +            };
 +        if (!tableConfig.sortable) {
 +            options.defaultSort = false;
          }
--
--        $('.header-popover').popover({
--            trigger: 'hover',
--            placement: 'bottom',
--            container: 'body',
--        });
 +        if (tableConfig.headers.render_aoColumns) {
 +            options.aoColumns = tableConfig.headers.render_aoColumns;
 +        }
@@ -127,7 +122,7 @@
 +            });
 +        }
 +        if (tableConfig.bad_request_error_text) {
-+            options.badRequestErrorText = "<span class='label label-important'>" + gettext("Sorry!") + "</span>" + tableConfig.bad_request_error_text;
++            options.badRequestErrorText = "<span class='badge text-bg-danger'>" + gettext("Sorry!") + "</span>" + tableConfig.bad_request_error_text;
 +        }
 +        if (tableConfig.left_col.is_fixed) {
 +            _.extend(options, {
@@ -142,7 +137,35 @@
 +            standardHQReport.handleTabularReportCookies(reportTables);
 +        }
 +        reportTables.render();
++    }
+ 
+-        $('.header-popover').popover({
++    const tableHeadersWithInfo = document.getElementsByClassName('header-popover');
++    Array.from(tableHeadersWithInfo).forEach((elem) => {
++        new Popover(elem, {
++            title: elem.dataset.title,
++            content: elem.dataset.content,
+             trigger: 'hover',
+             placement: 'bottom',
+             container: 'body',
+         });
++    });
++}
++
++// Handle async reports
++$(document).on('ajaxSuccess', function (e, xhr, ajaxOptions, data) {
++    if (!data || !data.slug) {
++        // This file is imported by inddex/main, which then gets this event handler, which it doesn't need,
++        // and which errors sometimes (presumably because there are ajax requests happening that aren't the
++        // same as what this handler expects). Checking for data.slug is pretty innocuous and fixes the issue.
++        return;
      }
++    var jsOptions = initialPageData.get("js_options");
++    if (jsOptions && ajaxOptions.url.indexOf(jsOptions.asyncUrl) === -1) {
++        return;
++    }
++    renderPage(data.slug, data.report_table_js_options);
++});
  
 -    // Handle async reports
 -    $(document).on('ajaxSuccess', function (e, xhr, ajaxOptions, data) {
@@ -157,12 +180,13 @@
 -            return;
 -        }
 -        renderPage(data.slug, data.report_table_js_options);
-+    $('.header-popover').popover({  /* todo B5: plugin:popover */
-+        trigger: 'hover',
-+        placement: 'bottom',
-+        container: 'body',
-     });
-+}
+-    });
++// Handle sync reports
++$(function () {
++    if (initialPageData.get("report_table_js_options")) {
++        renderPage(initialPageData.get("js_options").slug, initialPageData.get("report_table_js_options"));
++    }
++});
  
 -    // Handle sync reports
 -    $(function () {
@@ -170,31 +194,11 @@
 -            renderPage(initialPageData.get("js_options").slug, initialPageData.get("report_table_js_options"));
 -        }
 -    });
-+// Handle async reports
-+$(document).on('ajaxSuccess', function (e, xhr, ajaxOptions, data) {
-+    if (!data || !data.slug) {
-+        // This file is imported by inddex/main, which then gets this event handler, which it doesn't need,
-+        // and which errors sometimes (presumably because there are ajax requests happening that aren't the
-+        // same as what this handler expects). Checking for data.slug is pretty innocuous and fixes the issue.
-+        return;
-+    }
-+    var jsOptions = initialPageData.get("js_options");
-+    if (jsOptions && ajaxOptions.url.indexOf(jsOptions.asyncUrl) === -1) {
-+        return;
-+    }
-+    renderPage(data.slug, data.report_table_js_options);
-+});
- 
+-
 -    return {
 -        renderPage: renderPage,
 -    };
-+// Handle sync reports
-+$(function () {
-+    if (initialPageData.get("report_table_js_options")) {
-+        renderPage(initialPageData.get("js_options").slug, initialPageData.get("report_table_js_options"));
-+    }
- });
-+
+-});
 +export default {
 +    renderPage: renderPage,
 +};

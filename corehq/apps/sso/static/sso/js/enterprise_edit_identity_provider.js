@@ -1,4 +1,4 @@
-'use strict';
+
 
 hqDefine('sso/js/enterprise_edit_identity_provider', [
     'jquery',
@@ -14,7 +14,7 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
     _,
     emailUtils,
     initialPageData,
-    models
+    models,
 ) {
     $(function () {
         let ssoExemptUserManager = models.linkedObjectListModel({

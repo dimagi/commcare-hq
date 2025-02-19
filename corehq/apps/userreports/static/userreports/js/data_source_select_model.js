@@ -5,7 +5,7 @@ hqDefine("userreports/js/data_source_select_model", [
 ], function (
     ko,
     _,
-    initialPageData
+    initialPageData,
 ) {
     var self = {
         application: ko.observable(""),
@@ -27,7 +27,7 @@ hqDefine("userreports/js/data_source_select_model", [
         return _.union(
             self.sourcesMap[self.application()]?.[self.sourceType()],
             self.sourcesMap[self.registrySlug()]?.[self.sourceType()],
-        )
+        );
     });
 
     return self;

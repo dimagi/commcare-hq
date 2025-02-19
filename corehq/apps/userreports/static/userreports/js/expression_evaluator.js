@@ -3,7 +3,7 @@ hqDefine('userreports/js/expression_evaluator', [
     'knockout',
 ], function (
     $,
-    ko
+    ko,
 ) {
     var expressionModel = function (expressionEditor, docEditor, submitUrl, initialData) {
         var self = {};

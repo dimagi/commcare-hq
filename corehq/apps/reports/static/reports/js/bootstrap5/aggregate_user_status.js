@@ -3,23 +3,24 @@ hqDefine("reports/js/bootstrap5/aggregate_user_status", [
     "d3/d3.min",
     "nvd3/nv.d3.min",
     "hqwebapp/js/bootstrap5/main",
+    'nvd3/src/nv.d3.css',
 ], function (
     $,
     d3,
     nv,
-    hqMain
+    hqMain,
 ) {
     function aggregateTooltip(key, x, y, e) {
         return '<p><strong>' + key + '</strong></p>' +
            '<p>' + Math.round(e.value) + '% since ' + x + '</p>';
     }
     function addHorizontalScrollBar(div, width) {
-            $('#' + div).css({
-                'overflow-x': 'scroll'
-            });
-            $('#' + div + ' svg').css({
-                'width': width + 'px'
-            });
+        $('#' + div).css({
+            'overflow-x': 'scroll',
+        });
+        $('#' + div + ' svg').css({
+            'width': width + 'px',
+        });
     }
     function setupCharts(data, div, customTooltip) {
         nv.addGraph(function () {

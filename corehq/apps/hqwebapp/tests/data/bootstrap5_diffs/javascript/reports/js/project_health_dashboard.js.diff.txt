@@ -6,7 +6,7 @@
      'jquery',
      'underscore',
      'd3/d3.min',
-@@ -119,7 +119,7 @@
+@@ -120,7 +120,7 @@
      // User Information PopOver, when clicked on username
      function setupPopovers() {
          // ajax popover: http://stackoverflow.com/a/14560039/8207

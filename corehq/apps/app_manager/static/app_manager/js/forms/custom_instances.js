@@ -1,7 +1,8 @@
-"use strict";
-hqDefine('app_manager/js/forms/custom_instances', function () {
-    'use strict';
-
+hqDefine("app_manager/js/forms/custom_instances", [
+    "knockout",
+], function (
+    ko,
+) {
     var customInstance = function (instanceId, instancePath) {
         var self = {};
         self.instanceId = ko.observable(instanceId || '');

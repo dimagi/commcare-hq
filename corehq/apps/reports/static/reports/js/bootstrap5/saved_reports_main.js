@@ -12,7 +12,7 @@ hqDefine("reports/js/bootstrap5/saved_reports_main", [
     ko,
     initialPageData,
     reportConfigModels,
-    scheduledReports
+    scheduledReports,
 ) {
     $(function () {
 

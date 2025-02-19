@@ -12,7 +12,7 @@ hqDefine('users/js/filtered_download', [
     $,
     ko,
     _,
-    initialPageData
+    initialPageData,
 ) {
     function FiltersModel(options) {
         var self = {};

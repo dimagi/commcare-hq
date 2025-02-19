@@ -5,7 +5,7 @@ hqDefine("reports/js/bootstrap5/submission_error_report", [
     'commcarehq',
 ], function (
     $,
-    initialPageData
+    initialPageData,
 ) {
     $(function () {
         $('#report-content').on('click', '.reprocess-error', function () {

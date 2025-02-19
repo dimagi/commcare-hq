@@ -1229,6 +1229,15 @@ SAAS_PROTOTYPE = StaticToggle(
     description='Use this for rapid prototypes developed by the SaaS product team.',
 )
 
+DATA_CLEANING_CASES = StaticToggle(
+    'saas_data_cleaning_cases',
+    'Access Data Cleaning for Cases',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER],
+    description='Use this to allow specific users to access the case '
+                'data cleaning tool (in development)',
+)
+
 ECD_MIGRATED_DOMAINS = StaticToggle(
     'ecd_migrated_domains',
     'Explore Case Data for domains that have undergone migration',
@@ -2266,14 +2275,6 @@ BLOCKED_DOMAIN_EMAIL_SENDERS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-ENTERPRISE_USER_MANAGEMENT = StaticToggle(
-    'enterprise_user_management',
-    'USH: UI for managing all web users in an enterprise',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_USER],
-    help_link="https://confluence.dimagi.com/display/saas/USH%3A+UI+for+managing+all+web+users+in+an+enterprise",
-)
-
 CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
     'clean_old_formplayer_syncs',
     'Delete old formplayer syncs during submission processing',
@@ -2638,12 +2639,11 @@ COMMCARE_CONNECT = StaticToggle(
     tag=TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
     description='More details to come',
-
 )
 
 FCM_NOTIFICATION = StaticToggle(
     'fcm_notification',
-    'Allows access to FCM Push Notifications',
+    'FCM Push Notifications - no longer functional',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description='Push Notification option will be available in content for '
@@ -2991,5 +2991,21 @@ INCLUDE_ALL_LOCATIONS = StaticToggle(
     label='USH: When sending conditional alerts that target locations expand them to users that are assigned to '
           'the location no matter if it is their primary location or not.',
     tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+INCREASE_DEVICE_LIMIT_PER_USER = StaticToggle(
+    slug='increase_device_per_user_limit',
+    label='In the event that the DEVICE_LIMIT_PER_USER in settings becomes too restrictive, this flag can be used '
+          'to increase the limit without completely removing it. See INCREASED_DEVICE_LIMIT_PER_USER in settings '
+          'to see the exact value.',
+    tag=TAG_SAAS_CONDITIONAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+KYC_VERIFICATION = StaticToggle(
+    slug='kyc_verification',
+    label='Enable KYC verification',
+    tag=TAG_SOLUTIONS,
     namespaces=[NAMESPACE_DOMAIN],
 )

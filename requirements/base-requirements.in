@@ -47,7 +47,6 @@ elasticsearch5>=5.0.0,<6.0.0
 elasticsearch6>=6.0.0,<7.0.0
 ethiopian-date-converter
 eulxml
-firebase-admin  # India Division - used for FCM Push Notifications
 gevent
 greenlet
 gunicorn
@@ -87,13 +86,13 @@ pyphonetics
 python-magic
 pytz
 pyjwt
-PyYAML
+PyYAML>=6.0.2
 hl7apy
 pyzxcvbn
 qrcode
 quickcache
 redis
-reportlab
+reportlab==4.3.0
 requests_oauthlib
 requests_toolbelt
 requests

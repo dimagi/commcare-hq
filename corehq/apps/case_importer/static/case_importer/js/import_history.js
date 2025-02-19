@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine('case_importer/js/import_history', [
     'jquery',
     'knockout',
@@ -13,7 +13,7 @@ hqDefine('case_importer/js/import_history', [
     ko,
     _,
     assertProperties,
-    initialPageData
+    initialPageData,
 ) {
     var uploadModel = function (options) {
         var self = _.extend({}, _.omit(options, 'comment', 'task_status'));

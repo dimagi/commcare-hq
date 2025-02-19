@@ -5,7 +5,7 @@ hqDefine('userreports/js/report_analytix', [
 ], function (
     $,
     googleAnalytics,
-    kissmetricsAnalytics
+    kissmetricsAnalytics,
 ) {
     var trackReportBuilder = googleAnalytics.trackCategory("Report Builder v2");
     $(function () {

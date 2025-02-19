@@ -365,7 +365,7 @@ class GetPaginatedCases(CaseListMixin):
         # override super class corehq.apps.reports.generic.GenericReportView init method to
         # avoid failures for missing expected properties for a report and keep only necessary properties
         self.request = request
-        self.request_params = json_request(self.request.GET)
+        self._request_params = json_request(self.request.GET)
         self.domain = domain
 
     def _base_query(self):
@@ -399,6 +399,12 @@ class GetPaginatedCases(CaseListMixin):
         case_data = []
         for case_obj in cases:
             lat, lon = get_lat_lon_from_dict(case_obj.case_json, location_prop_name)
+
+            # There might be a few moments where GPS data is saved for a case but the ES index hasn't
+            # updated yet, and so will still show as missing data in the ES query. For these instances,
+            #  we can simply filter them out here.
+            if show_cases_with_missing_gps_data_only and (lat or lon):
+                continue
             case_data.append(
                 {
                     'id': case_obj.case_id,

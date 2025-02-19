@@ -400,14 +400,31 @@ def send_report_download_email(title, recipient, link, subject=None, domain=None
     )
 
 
-class DatatablesParams(object):
-    def __init__(self, count, start, desc, echo, search=None):
+class DatatablesPagination:
+    """This generates the pagination object for HQ reports.
+    Most reports only care about `count` and `start`
+    The legacy variables (desc, echo, search) should be removed after the Bootstrap 5 migration.
+    - `desc` should be replaced by `DatatablesServerSideParams(...).order`
+    - `echo` should be replaced by `DatatablesServerSideParams(...).draw`
+    - `search` should be replaced by `DatatablesServerSideParams(...).search`
+    """
+
+    def __init__(self, count, start, desc=False, echo=None, search=None, use_bootstrap5=False):
+        """
+        :param count: int - the limit/length of a page
+        :param start: int - the page num (zero indexed), aka skip (or start)
+        legacy variables from Datatables 1.9 or earlier (to be removed)
+        :param desc: boolean (True if sSortDir_0 == 'desc')
+        :param echo: the id of the request made by Datatables aka 'draw' in > 1.10
+        :param search: string, the value of sSearch
+        """
         self.count = count
         self.start = start
         self.end = start + count
-        self.desc = desc
-        self.echo = echo
-        self.search = search
+        self._desc = desc
+        self._echo = echo
+        self._search = search
+        self.use_bootstrap5 = use_bootstrap5
 
     def __repr__(self):
         return json.dumps({
@@ -416,8 +433,38 @@ class DatatablesParams(object):
             'echo': self.echo,
         }, indent=2)
 
+    @property
+    def echo(self):
+        if self.use_bootstrap5:
+            warnings.warn(
+                "Please use datatables_params.draw instead",
+                DeprecationWarning,
+            )
+        return self._echo
+
+    @property
+    def desc(self):
+        if self.use_bootstrap5:
+            warnings.warn(
+                "Please use datatables_params.order instead",
+                DeprecationWarning,
+            )
+        return self._desc
+
+    @property
+    def search(self):
+        if self.use_bootstrap5:
+            warnings.warn(
+                "Please use datatables_params.search instead",
+                DeprecationWarning,
+            )
+        return self._search
+
     @classmethod
     def from_request_dict(cls, query):
+        """Only use this method to populate the legacy values
+        Datatables 1.9 or earlier, where use_bootstrap5 = False
+        """
         count = int(query.get("iDisplayLength", "10"))
         start = int(query.get("iDisplayStart", "0"))
 
@@ -425,7 +472,128 @@ class DatatablesParams(object):
         echo = query.get("sEcho", "0")
         search = query.get("sSearch", "")
 
-        return DatatablesParams(count, start, desc, echo, search)
+        return cls(count, start, desc, echo, search, use_bootstrap5=False)
+
+    @classmethod
+    def from_datatables_params(cls, datatables_params):
+        """Use this for bootstrap5 reports,
+        Datatables 1.10 or greater
+        :param datatables_params: DatatablesServerSideParams instance
+        """
+        return cls(datatables_params.length, datatables_params.start, use_bootstrap5=True)
+
+
+class DatatablesServerSideParams:
+    """These are the datatables parameters which accept queries
+    using datatables 1.10 or greater using serverSide = True.
+    """
+    def __init__(self, draw, start, length, columns, order, search, data):
+        """See docs here for reference: https://datatables.net/manual/server-side
+        :param draw: int
+        :param start: int
+        :param length: int
+        :param columns: list of dicts with format
+            {
+                'data': int(index),
+                'name': str(),
+                'searchable': boolean,
+                'orderable': boolean,
+                'search': {'value': str(), 'regex': boolean},
+            }
+        :param order: list of dicts with format
+            {
+                'column': int(index),
+                'dir': str('asc' or 'desc'),
+            }
+        :param search: dict with format {'value': str(), 'regex': boolean}
+        :param data: QueryDict from `request.GET` or `request.POST`
+        """
+        self.columns = columns
+        self.order = order
+        self.draw = draw
+        self.start = start
+        self.length = length
+        self.search = search
+        self.data = data
+
+    @classmethod
+    def from_request(cls, request):
+        """This populates the params with either a GET or POST request
+        :param request: a standard request object
+        :return instance of DatatablesServerSideParams:
+        """
+        data = cls.get_request_data(request)
+        draw = int(data.get('draw', 0))
+        start = int(data.get('start', 0))
+        length = int(data.get('length', 10))
+        columns = cls._get_columns(data)
+        order = cls._get_order(data)
+        search = {
+            'value': data.get('search[value]', ''),
+            'regex': bool(data.get('search[regex]') == 'true'),
+        }
+        return cls(draw, start, length, columns, order, search, data)
+
+    @staticmethod
+    def _get_columns(request_data):
+        columns = []
+        ind = 0
+        while True:
+            try:
+                columns.append({
+                    'data': int(request_data.get(f'columns[{ind}][data]')),
+                    'name': request_data.get(f'columns[{ind}][name]', ''),
+                    'searchable': bool(request_data.get(f'columns[{ind}][searchable]') == 'true'),
+                    'orderable': bool(request_data.get(f'columns[{ind}][orderable]') == 'true'),
+                    'search': {
+                        'value': request_data.get(f'columns[{ind}][search][value]', ''),
+                        'regex': bool(request_data.get(f'columns[{ind}][search][regex]') == 'true'),
+                    }
+                })
+                ind += 1
+            except (ValueError, TypeError):
+                break
+        return columns
+
+    @staticmethod
+    def _get_order(request_data):
+        order = []
+        ind = 0
+        while True:
+            try:
+                order.append({
+                    'column': int(request_data.get(f'order[{ind}][column]')),
+                    'dir': request_data.get(f'order[{ind}][dir]'),
+                })
+                ind += 1
+            except (ValueError, TypeError):
+                break
+        return order
+
+    @classmethod
+    def get_request_data(cls, request):
+        return request.POST if request.method == 'POST' else request.GET
+
+    def get_value(self, param, default_value=None, as_list=False):
+        return self.get_value_from_data(self.data, param,
+                                        default_value=default_value, as_list=as_list)
+
+    @staticmethod
+    def get_value_from_data(data, param, default_value=None, as_list=False):
+        if param in data:
+            return data.getlist(param) if as_list else data.get(param)
+        # for bootstrap 5 reports using Datatables > 1.10
+        for hq_param in [f"hq[{param}][]", f"hq[{param}]"]:
+            if hq_param in data:
+                return data.getlist(hq_param) if as_list else data.get(hq_param)
+        if default_value is None and as_list:
+            return []
+        return default_value
+
+    @classmethod
+    def get_value_from_request(cls, request, param, default_value=None, as_list=False):
+        return cls.get_value_from_data(cls.get_request_data(request), param,
+                                       default_value=default_value, as_list=as_list)
 
 
 # --- Tableau API util methods ---
@@ -486,6 +654,8 @@ def _notify_tableau_exception(e, domain):
 
 def get_tableau_groups_by_ids(interested_group_ids: List, domain: str,
                             session: TableauAPISession = None) -> List[TableauGroupTuple]:
+    if not interested_group_ids:
+        return []
     group_json = get_tableau_group_json(domain, session)
     filtered_group_json = [group for group in group_json if group['id'] in interested_group_ids]
     return _group_json_to_tuples(filtered_group_json)
@@ -503,6 +673,8 @@ def get_tableau_group_ids_by_names(group_names: List, domain: str,
     '''
     Returns a list of all Tableau group ids on the site derived from tableau group names passed in.
     '''
+    if not group_names:
+        return []
     group_json = get_tableau_group_json(domain, session)
     filtered_group_json = [group for group in group_json if group['name'] in group_names]
     return [tup.id for tup in _group_json_to_tuples(filtered_group_json)]

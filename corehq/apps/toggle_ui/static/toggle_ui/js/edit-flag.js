@@ -11,7 +11,7 @@ hqDefine('toggle_ui/js/edit-flag', [
     ko,
     _,
     initialPageData,
-    hqMain
+    hqMain,
 ) {
     var PAD_CHAR = '&nbsp;';
     function toggleViewModel() {

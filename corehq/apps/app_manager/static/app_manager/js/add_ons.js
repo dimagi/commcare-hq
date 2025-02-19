@@ -1,8 +1,16 @@
-"use strict";
-hqDefine("app_manager/js/add_ons", function () {
-    var sectionChanger = hqImport("app_manager/js/section_changer"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data");
-
+hqDefine("app_manager/js/add_ons", [
+    'jquery',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/bootstrap3/main',
+    'app_manager/js/section_changer',
+], function (
+    $,
+    _,
+    initialPageData,
+    hqMain,
+    sectionChanger,
+) {
     function EditAddOns(addOns, layout, saveUrl) {
         var self = this;
 
@@ -12,7 +20,7 @@ hqDefine("app_manager/js/add_ons", function () {
                 collapse: sectionChanger.shouldCollapse("add-ons", s.slug, s.collapse),
             });
         });
-        self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
+        self.saveButton = hqMain.initSaveButton({
             unsavedMessage: gettext("You have unsaved changes."),
             save: function () {
                 // Send server map of slug => enabled
@@ -39,7 +47,7 @@ hqDefine("app_manager/js/add_ons", function () {
             $addOns.koApplyBindings(new EditAddOns(
                 initialPageData.get("add_ons"),
                 initialPageData.get("add_ons_layout"),
-                initialPageData.reverse("edit_add_ons")
+                initialPageData.reverse("edit_add_ons"),
             ));
             sectionChanger.attachToForm($addOns.find("form"));
         }

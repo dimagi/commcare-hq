@@ -32,7 +32,13 @@
 
  *  When the user shows or hides a section, that preference is stored in localStorage.
  */
-hqDefine("app_manager/js/section_changer", function () {
+hqDefine("app_manager/js/section_changer", [
+    'jquery',
+    'underscore',
+], function (
+    $,
+    _,
+) {
     // Determine key for localStorage
     // page is something like "module-view"
     // section is something like "logic"

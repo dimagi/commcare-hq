@@ -2,7 +2,7 @@
 hqDefine("hqwebapp/spec/urllib_spec", [
     'hqwebapp/js/initial_page_data',
 ], function (
-    urllib
+    urllib,
 ) {
     describe('urllib', function () {
         describe('getUrlParameterFromString', function () {
@@ -26,7 +26,7 @@ hqDefine("hqwebapp/spec/urllib_spec", [
             it('should allow & in the value', function () {
                 assert.equal(
                     urllib.getUrlParameterFromString('drink', '?drink=gin%20%26%20tonic&food=eggplant%20parm'),
-                    'gin & tonic'
+                    'gin & tonic',
                 );
             });
         });

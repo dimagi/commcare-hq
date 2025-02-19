@@ -10,7 +10,7 @@ hqDefine("userreports/js/data_source_select", [
     kissmetrics,
     hqMain,
     dataModel,
-    analytics
+    analytics,
 ) {
     $(function () {
         $("#report-builder-form").koApplyBindings(dataModel);

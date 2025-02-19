@@ -5,10 +5,8 @@ hqDefine('reports/v2/js/datagrid/report_filters', [
 ], function (
     $,
     _,
-    ko
+    ko,
 ) {
-    'use strict';
-
     var reportFilter = function (data) {
         var self = {};
 

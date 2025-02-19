@@ -642,6 +642,18 @@ msgid "You have unchanged user properties settings"
 msgstr "Tiene configuraciones de propiedades sin cambio"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#, fuzzy
+#| msgid "Optional Instance Properties"
+msgid "Save Questions to Case Properties"
+msgstr "Propiedades de Ejemplo Opcional"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+#, fuzzy
+#| msgid "User Properties"
+msgid "Save Questions to User Properties"
+msgstr "Propiedades del Usuario"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "Property uses unrecognized prefix <strong>"
 msgstr "La propiedad utiliza un prefijo<strong> no reconocido"
 
@@ -760,37 +772,6 @@ msgstr "Tiene cambios sin guardar en la lista de caso de su módulo"
 #: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
 msgid "This code is used in multiple places."
 msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Crunching app diff..."
-msgstr "Calculando aplicación diff..."
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Error generating the application diff. Please report an issue."
-msgstr ""
-"Ocurrió un error al generar la aplicación diff. Por favor reporte un "
-"problema."
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Form Changes"
-msgstr "Cambios en el Formulario"
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Case Changes"
-msgstr "Cambios del Caso"
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Save Questions"
-msgstr "Guardar Preguntas"
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Load Questions"
-msgstr "Cargar Preguntas"
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-#: corehq/apps/app_manager/static/app_manager/js/summary/utils.js
-msgid "[unknown]"
-msgstr "[desconocido]"
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/app_view_release_manager.js
 msgid "Releases"
@@ -1006,6 +987,10 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "Latest saved"
 msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/utils.js
+msgid "[unknown]"
+msgstr "[desconocido]"
 
 #: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
 msgid "Warning: unrecognized language"
@@ -4503,6 +4488,14 @@ msgstr "Falló"
 #: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js
 msgid "Failed to re-process"
 msgstr "Reproceso fallido"
+
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
+msgid "_MENU_ per page"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
+msgid "All Rows"
+msgstr ""
 
 #: corehq/apps/reports/static/reports/js/filters/bootstrap3/main.js
 #: corehq/apps/reports/static/reports/js/filters/bootstrap5/main.js

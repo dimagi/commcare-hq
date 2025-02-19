@@ -58,7 +58,7 @@ class FormProcessingResult(object):
 
 
 @tracer.wrap(name='submission.process_form_xml')
-def process_xform_xml(domain, instance_xml, attachments=None, auth_context=None):
+def process_xform_xml(domain, instance_xml, attachments=None, auth_context=None, instance_json=None):
     """
     Create a new xform to ready to be saved to a database in a thread-safe manner
 
@@ -72,12 +72,14 @@ def process_xform_xml(domain, instance_xml, attachments=None, auth_context=None)
     attachments = attachments or {}
 
     try:
-        return _create_new_xform(domain, instance_xml, attachments=attachments, auth_context=auth_context)
+        return _create_new_xform(
+            domain, instance_xml, attachments=attachments, auth_context=auth_context, instance_json=instance_json
+        )
     except (MissingXMLNSError, XMLSyntaxError) as e:
         return _get_submission_error(domain, instance_xml, e, auth_context)
 
 
-def _create_new_xform(domain, instance_xml, attachments=None, auth_context=None):
+def _create_new_xform(domain, instance_xml, attachments=None, auth_context=None, instance_json=None):
     """
     create but do not save an XFormInstance from an xform payload (xml_string)
     optionally set the doc _id to a predefined value (_id)
@@ -96,13 +98,14 @@ def _create_new_xform(domain, instance_xml, attachments=None, auth_context=None)
     interface = FormProcessorInterface(domain)
 
     assert attachments is not None
-    form_data = convert_xform_to_json(instance_xml)
-    if not form_data.get('@xmlns'):
+    if instance_json is None:
+        instance_json = convert_xform_to_json(instance_xml)
+    if not instance_json.get('@xmlns'):
         raise MissingXMLNSError("Form is missing a required field: XMLNS")
 
-    adjust_datetimes(form_data)
+    adjust_datetimes(instance_json)
 
-    xform = interface.new_xform(form_data)
+    xform = interface.new_xform(instance_json)
     xform.domain = domain
     xform.auth_context = auth_context
 
