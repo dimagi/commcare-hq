@@ -293,6 +293,8 @@ def _process_excel_mapping(domain, spreadsheet, search_column):
 def _create_bulk_configs(domain, request, case_upload):
     all_configs = []
     worksheet_titles = _get_workbook_sheet_names(case_upload)
+    mobile_worker_verification_ff_enabled = MOBILE_WORKER_VERIFICATION.enabled(domain)
+    errors = []
     for index, title in enumerate(worksheet_titles):
         with case_upload.get_spreadsheet(index) as spreadsheet:
             _, excel_fields, _ = _process_excel_mapping(
@@ -301,6 +303,16 @@ def _create_bulk_configs(domain, request, case_upload):
                 request.POST['search_field']
             )
             excel_fields = list(set(excel_fields) - set(RESERVED_FIELDS))
+            if mobile_worker_verification_ff_enabled and title == MOMO_PAYMENT_CASE_TYPE:
+                missing_fields = _check_payment_fields_exist(excel_fields)
+                if missing_fields:
+                    errors.append(_(
+                        'Sheet with case type "{}" is missing one or more required '
+                        'fields: {}'.format(
+                            title, ', '.join(missing_fields)
+                        )
+                    ))
+                    break
             config = importer_util.ImporterConfig.from_dict({
                 'couch_user_id': request.couch_user._id,
                 'excel_fields': excel_fields,
@@ -312,7 +324,7 @@ def _create_bulk_configs(domain, request, case_upload):
                 'create_new_cases': request.POST['create_new_cases'] == 'True',
             })
             all_configs.append(config)
-    return all_configs
+    return all_configs, errors
 
 
 @require_POST
@@ -433,7 +445,9 @@ def excel_commit(request, domain):
     case_type = request.POST['case_type']
     all_configs = []
     if case_type == ALL_CASE_TYPE_IMPORT:
-        all_configs = _create_bulk_configs(domain, request, case_upload)
+        all_configs, errors = _create_bulk_configs(domain, request, case_upload)
+        if any(errors):
+            return render_error(request, domain, ', '.join(errors))
     else:
         config = importer_util.ImporterConfig.from_request(request)
         all_configs = [config]
@@ -495,7 +509,9 @@ def _bulk_case_upload_api(request, domain):
 
     all_configs = []
     if context['is_bulk_import']:
-        all_configs = _create_bulk_configs(domain, request, case_upload)
+        all_configs, errors = _create_bulk_configs(domain, request, case_upload)
+        if any(errors):
+            raise ImporterError(', '.join(errors))
     else:
         with case_upload.get_spreadsheet() as spreadsheet:
             _, excel_fields, _ = _process_excel_mapping(domain, spreadsheet, search_column)
