@@ -1,10 +1,9 @@
 from django.db import models
 
-from corehq.motech.const import PASSWORD_PLACEHOLDER, ALGO_AES, ALGO_AES_CBC
+from corehq.motech.const import PASSWORD_PLACEHOLDER, ALGO_AES_CBC
 from corehq.motech.utils import (
     b64_aes_cbc_decrypt,
     b64_aes_cbc_encrypt,
-    b64_aes_decrypt,
 )
 
 
@@ -31,9 +30,6 @@ class EmailSettings(models.Model):
         if self.password.startswith(f'${ALGO_AES_CBC}$'):
             ciphertext = self.password.split('$', 2)[2]
             return b64_aes_cbc_decrypt(ciphertext)
-        if self.password.startswith(f'${ALGO_AES}$'):  # This will be deleted after migration to cbc is done
-            ciphertext = self.password.split('$', 2)[2]
-            return b64_aes_decrypt(ciphertext)
         return self.password
 
     @plaintext_password.setter
