@@ -1,4 +1,4 @@
-from django.db import migrations
+from django.db import migrations, models
 from django.db.migrations import RunPython
 
 from corehq.motech.const import ALGO_AES, ALGO_AES_CBC
@@ -51,6 +51,11 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.AlterField(
+            model_name='tableauconnectedapp',
+            name='encrypted_secret_value',
+            field=models.CharField(max_length=128),
+        ),
         RunPython(migrate_tableau_connected_app_secret_value,
                   reverse_code=revert_tableau_connected_app_secret_value),
     ]
