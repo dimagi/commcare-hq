@@ -20,7 +20,7 @@ class CleanCasesMainView(BaseProjectDataView):
 
     @property
     def page_context(self):
-        from corehq.apps.data_cleaning.views.forms import SetupCaseSessionFormView
+        from corehq.apps.data_cleaning.views.setup import SetupCaseSessionFormView
         from corehq.apps.data_cleaning.views.tables import CaseCleaningTasksTableView
         return {
             "setup_case_session_form_url": reverse(SetupCaseSessionFormView.urlname, args=(self.domain,)),
