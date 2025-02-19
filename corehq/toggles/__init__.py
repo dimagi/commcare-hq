@@ -2979,11 +2979,16 @@ SMART_LINKS_FOR_WEB_USERS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-MODULE_BADGES = StaticToggle(
+CSQL_FIXTURE = StaticToggle(
     slug='module_badges',
-    label='USH: Show case counts from CSQL queries as badges on modules',
+    label='USH: CSQL Fixture (FKA Module Badges)',
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+    description=(
+        'Configure fixture containing indicators specified as CSQL expressions, where each '
+        'indicator is a count of cases matching the expression.'
+    ),
+    help_link='https://dimagi.atlassian.net/wiki/spaces/USH/pages/2884206593/CSQL+Fixtures',
 )
 
 INCLUDE_ALL_LOCATIONS = StaticToggle(

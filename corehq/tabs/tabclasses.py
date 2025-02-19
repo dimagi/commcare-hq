@@ -627,7 +627,7 @@ class ProjectDataTab(UITab):
             items.extend(FixtureInterfaceDispatcher.navigation_sections(
                 request=self._request, domain=self.domain))
 
-        if (toggles.MODULE_BADGES.enabled(self.domain) and self.couch_user.can_edit_data()):
+        if (toggles.CSQL_FIXTURE.enabled(self.domain) and self.couch_user.can_edit_data()):
             items.append([_('CSQL Fixtures'), [{
                 'title': _(CSQLFixtureExpressionView.page_title),
                 'url': reverse(CSQLFixtureExpressionView.urlname, args=[self.domain]),
