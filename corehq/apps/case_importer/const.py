@@ -21,6 +21,14 @@ MOMO_REQUIRED_PAYMENT_FIELDS = [
     'user_or_case_id',
 ]
 
+# Fields that must be absent or blank when importing cases with "payments" case type
+MOMO_NO_EDIT_PAYMENT_FIELDS = [
+    'payment_verified',
+    'payment_submitted',
+    'payment_timestamp',
+    'payment_status',
+]
+
 MOMO_PAYMENT_CASE_TYPE = 'payment'
 
 
