@@ -105,7 +105,7 @@ class DetailContributor(SectionContributor):
                 if detail.custom_xml:
                     elements.append(self._get_custom_xml_detail(module, detail, detail_type))
                 else:
-                    if detail.sort_nodeset_columns_for_detail():
+                    if detail.sort_nodeset_columns_for_long_detail():
                         # list of DetailColumnInfo named tuples
                         detail_column_infos = get_detail_column_infos_for_tabs_with_sorting(detail)
                     else:
