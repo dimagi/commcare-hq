@@ -5,6 +5,8 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.translation import gettext_lazy
 
+from corehq.apps.data_cleaning.exceptions import UnsupportedActionException
+
 
 class BulkEditSessionType:
     CASE = 'case'
@@ -257,3 +259,28 @@ class BulkEditChange(models.Model):
 
     class Meta:
         ordering = ["created_on"]
+
+    def edited_value(self, case):
+        simple_transformations = {
+            EditActionType.REPLACE: lambda x: self.replace_string,
+            EditActionType.FIND_REPLACE: lambda x: x.replace(self.find_string, self.replace_string),
+            EditActionType.STRIP: str.strip,
+            EditActionType.TITLE_CASE: str.title,
+            EditActionType.UPPER_CASE: str.upper,
+            EditActionType.LOWER_CASE: str.lower,
+            EditActionType.MAKE_EMPTY: lambda x: "",
+            EditActionType.MAKE_NULL: lambda x: None,
+        }
+
+        if self.action_type in simple_transformations:
+            old_value = case.get_case_property(self.property)
+            return simple_transformations[self.action_type](old_value)
+
+        if self.action_type == EditActionType.COPY_REPLACE:
+            old_value = case.get_case_property(self.copy_from_property)
+            return old_value.replace(self.find_string, self.replace_string)
+
+        if self.action_type == EditActionType.RESET:
+            raise UnsupportedActionException(f"{EditActionType.RESET} is not applied by calling edited_value")
+
+        raise UnsupportedActionException(f"edited_value did not recognize action_type {self.action_type}")
