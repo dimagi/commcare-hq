@@ -99,21 +99,6 @@ forms show up as coming from their source form.
 Features
 ========
 
-Template apps
--------------
-
-HQ currently has two versions of "template apps."
-
-Onboarding apps
-~~~~~~~~~~~~~~~
-
-The first set of template apps are simple apps in different sectors that
-we've experimented with adding to a user's project when they first sign
-up for an account. These template apps are stored as json in the code
-base, in the
-`template_apps <https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/app_manager/static/app_manager/template_apps>`__
-directory. They are imported using the view ``app_from_template``.
-
 COVID app library
 ~~~~~~~~~~~~~~~~~
 

@@ -507,17 +507,6 @@ def _copy_app_helper(request, from_app_id, to_domain, to_app_name):
     return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
 
-@require_can_edit_apps
-def app_from_template(request, domain, slug):
-    send_hubspot_form(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
-    track_workflow(request.couch_user.username, "User created an application from a template")
-    clear_app_cache(request, domain)
-
-    build = load_app_from_slug(domain, request.user.username, slug)
-    cloudcare_state = '{{"appId":"{}"}}'.format(build._id)
-    return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + '#' + cloudcare_state)
-
-
 def load_app_from_slug(domain, username, slug):
     # Import app itself
     template = load_app_template(slug)
