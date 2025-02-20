@@ -1,10 +1,13 @@
 import os
+import unittest
+from xml.etree.ElementTree import Element
 
 from django.template.loader import render_to_string
 from django.test.testcases import SimpleTestCase
 
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.util import generate_xmlns
+from corehq.apps.app_manager.xform import XForm
 from corehq.util.test_utils import TestFileMixin
 
 QUESTIONS = [
@@ -318,3 +321,130 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
             "type": "Select",
             "value": "/data/lookup-table"
         })
+
+
+class TestGetQuestionsExtended(unittest.TestCase):
+    """
+    Extended tests for the modified XForm.get_questions() method.
+    These tests cover new functionality related to translations, fixtures,
+    triggers, groups, and single-question retrieval.
+    """
+    # Added by GitHub Copilot using o1
+
+    def _build_xml_root(self):
+        """
+        Helper method to build a sample XML structure for testing.
+        Each child node includes attributes that simulate question data.
+        """
+        root = Element('root')
+
+        # Simple text question
+        question1 = Element('question')
+        question1.set('type', 'text')
+        question1.set('value', '/data/question1')
+        question1.set('label', 'What is your name?')
+        question1.set('label_en', 'What is your name?')
+        question1.set('label_es', '¿Cuál es su nombre?')
+        root.append(question1)
+
+        # Trigger question
+        trigger_q = Element('question')
+        trigger_q.set('type', 'trigger')
+        trigger_q.set('value', '/data/trigger_q')
+        trigger_q.set('label', 'Trigger question')
+        root.append(trigger_q)
+
+        # Group question
+        group_q = Element('question')
+        group_q.set('type', 'group')
+        group_q.set('value', '/data/group_q')
+        group_q.set('label', 'Group heading')
+        root.append(group_q)
+
+        # Question referencing a fixture
+        fixture_q = Element('question')
+        fixture_q.set('type', 'text')
+        fixture_q.set('value', '/data/fixture_q')
+        fixture_q.set('label', 'Select a product')
+        fixture_q.set('fixture', 'product_fixture')
+        root.append(fixture_q)
+
+        return root
+
+    def test_get_questions_default_behavior(self):
+        """
+        Test that get_questions() returns all text-type questions by default
+        and excludes triggers/groups unless specifically included.
+        """
+        xml_root = self._build_xml_root()
+        xform = XForm(xml_root)
+        questions = xform.get_questions()
+
+        self.assertEqual(len(questions), 2)  # Only text-type questions by default
+        self.assertEqual(questions[0]['label'], 'What is your name?')
+        self.assertEqual(questions[0]['value'], '/data/question1')
+
+    def test_get_questions_include_triggers(self):
+        """
+        Test that setting include_triggers=True includes trigger-type questions.
+        """
+        xml_root = self._build_xml_root()
+        xform = XForm(xml_root)
+        questions = xform.get_questions(include_triggers=True)
+
+        # We expect to see the text questions + 1 trigger
+        self.assertEqual(len(questions), 3)
+        trigger_question = [q for q in questions if q['type'] == 'trigger']
+        self.assertEqual(len(trigger_question), 1)
+
+    def test_get_questions_include_groups(self):
+        """
+        Test that setting include_groups=True includes group-type questions.
+        """
+        xml_root = self._build_xml_root()
+        xform = XForm(xml_root)
+        questions = xform.get_questions(include_groups=True)
+
+        # We expect to see the text questions + 1 group
+        self.assertEqual(len(questions), 3)
+        group_question = [q for q in questions if q['type'] == 'group']
+        self.assertEqual(len(group_question), 1)
+
+    def test_get_questions_with_translations(self):
+        """
+        Test that translations are returned when include_translations=True.
+        """
+        xml_root = self._build_xml_root()
+        xform = XForm(xml_root)
+        questions = xform.get_questions(include_translations=True, langs=['en', 'es'])
+
+        # The first question should contain translations in English and Spanish
+        self.assertIn('translations', questions[0])
+        self.assertIn('en', questions[0]['translations'])
+        self.assertIn('es', questions[0]['translations'])
+
+    def test_get_questions_with_fixtures(self):
+        """
+        Test that fixture references are returned when include_fixtures=True.
+        """
+        xml_root = self._build_xml_root()
+        xform = XForm(xml_root)
+        questions = xform.get_questions(include_fixtures=True)
+
+        # Find the question that has a fixture
+        fixture_question = [q for q in questions if q['value'] == '/data/fixture_q']
+        self.assertEqual(len(fixture_question), 1)
+        self.assertIn('fixtures', fixture_question[0])
+        self.assertEqual(fixture_question[0]['fixtures'], ['product_fixture'])
+
+    def test_get_questions_only_first(self):
+        """
+        Test that only the first question is returned when only_first=True.
+        """
+        xml_root = self._build_xml_root()
+        xform = XForm(xml_root)
+        first_question = xform.get_questions(only_first=True)
+
+        # Expect a single question (dict), not a list
+        self.assertIsInstance(first_question, dict)
+        self.assertEqual(first_question['value'], '/data/question1')
