@@ -318,3 +318,181 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
             "type": "Select",
             "value": "/data/lookup-table"
         })
+
+
+class GetFormQuestionsGpt4oTest(SimpleTestCase, TestFileMixin):
+    # Tests extended by by GitHub Copilot using GPT 4o
+    domain = 'test-domain'
+
+    file_path = ('data',)
+    root = os.path.dirname(__file__)
+
+    maxDiff = None
+
+    def setUp(self):
+        self.app = Application.new_app(self.domain, "Test")
+        self.app.add_module(Module.new_module("Module", 'en'))
+        module = self.app.get_module(0)
+        module.case_type = 'test'
+
+        form = self.app.new_form(
+            module.id,
+            name="Form",
+            lang='en',
+            attachment=self.get_xml('case_in_form').decode('utf-8')
+        )
+
+        form_with_repeats = self.app.new_form(
+            module.id,
+            name="Form with repeats",
+            lang='en',
+            attachment=self.get_xml('form_with_repeats').decode('utf-8')
+        )
+
+        self.form_unique_id = form.unique_id
+        self.form_with_repeats_unique_id = form_with_repeats.unique_id
+
+    def test_get_questions(self):
+        form = self.app.get_form(self.form_unique_id)
+        questions = form.wrapped_xform().get_questions(['en', 'es'], include_translations=True)
+
+        non_label_questions = [
+            q for q in QUESTIONS if q['tag'] not in ('label', 'trigger')]
+
+        self.assertEqual(questions, non_label_questions)
+
+    def test_get_questions_with_triggers(self):
+        form = self.app.get_form(self.form_unique_id)
+        questions = form.wrapped_xform().get_questions(
+            ['en', 'es'], include_triggers=True, include_translations=True)
+
+        self.assertEqual(questions, QUESTIONS)
+
+    def test_get_questions_with_repeats(self):
+        """
+        This test ensures that questions that start with the repeat group id
+        do not get marked as repeats. For example:
+
+            /data/repeat_name <-- repeat group path
+            /data/repeat_name_count <-- question path
+
+        Before /data/repeat_name_count would be tagged as a repeat incorrectly.
+        See http://manage.dimagi.com/default.asp?234108 for context
+        """
+        form = self.app.get_form(self.form_with_repeats_unique_id)
+        questions = form.wrapped_xform().get_questions(
+            ['en'],
+            include_groups=True,
+        )
+
+        repeat_name_count = list(filter(
+            lambda question: question['value'] == '/data/repeat_name_count',
+            questions,
+        ))[0]
+        self.assertIsNone(repeat_name_count['repeat'])
+
+        repeat_question = list(filter(
+            lambda question: question['value'] == '/data/repeat_name/question5',
+            questions,
+        ))[0]
+        self.assertEqual(repeat_question['repeat'], '/data/repeat_name')
+
+    def test_blank_form(self):
+        blank_form = render_to_string("app_manager/blank_form.xml", context={
+            'xmlns': generate_xmlns(),
+        })
+        form = self.app.new_form(self.app.get_module(0).id, 'blank', 'en')
+        form.source = blank_form
+
+        questions = form.get_questions(['en'])
+        self.assertEqual([], questions)
+
+    def test_save_to_case_in_groups(self):
+        """Ensure that save to case questions have the correct group and repeat context
+        when there are no other questions in that group
+
+        """
+        save_to_case_with_groups = self.app.new_form(
+            self.app.get_module(0).id,
+            name="Save to case in groups",
+            lang='en',
+            attachment=self.get_xml('save_to_case_in_groups').decode('utf-8')
+        )
+        questions = save_to_case_with_groups.get_questions(['en'], include_groups=True, include_triggers=True)
+        group_question = [q for q in questions if q['value'] == '/data/a_group/save_to_case_in_group/case'][0]
+        repeat_question = [q for q in questions if q['value'] == '/data/a_repeat/save_to_case_in_repeat/case'][0]
+
+        self.assertEqual(group_question['group'], '/data/a_group')
+        self.assertIsNone(group_question['repeat'])
+
+        self.assertEqual(repeat_question['repeat'], '/data/a_repeat')
+        self.assertEqual(repeat_question['group'], '/data/a_repeat')
+
+    def test_fixture_references(self):
+        form_with_fixtures = self.app.new_form(
+            self.app.get_module(0).id,
+            name="Form with Fixtures",
+            lang='en',
+            attachment=self.get_xml('form_with_fixtures').decode('utf-8')
+        )
+        questions = form_with_fixtures.get_questions(['en'], include_fixtures=True)
+        self.assertEqual(questions[0], {
+            "comment": None,
+            "constraint": None,
+            "data_source": {
+                "instance_id": "country",
+                "instance_ref": "jr://fixture/item-list:country",
+                "nodeset": "instance('country')/country_list/country",
+                "label_ref": "name",
+                "value_ref": "id",
+            },
+            "group": None,
+            "hashtagValue": "#form/lookup-table",
+            "is_group": False,
+            "label": "I'm a lookup table!",
+            "label_ref": "lookup-table-label",
+            "options": [],
+            "relevant": None,
+            "repeat": None,
+            "required": False,
+            "setvalue": None,
+            "tag": "select1",
+            "type": "Select",
+            "value": "/data/lookup-table"
+        })
+
+    def test_extended_hidden_questions(self):
+        form = self.app.get_form(self.form_unique_id)
+        questions = form.wrapped_xform().get_questions(['en'], include_translations=True)
+
+        hidden_questions = [
+            q for q in questions if q['tag'] == 'hidden']
+
+        self.assertGreater(len(hidden_questions), 0)
+        for question in hidden_questions:
+            self.assertIsNotNone(question['value'])
+            self.assertIsNotNone(question['hashtagValue'])
+
+    def test_save_to_case_meta_data(self):
+        form = self.app.get_form(self.form_unique_id)
+        questions = form.wrapped_xform().get_questions(['en'], include_translations=True)
+
+        save_to_case_meta_data = [
+            q for q in questions if '/case/' in q['value']]
+
+        self.assertGreater(len(save_to_case_meta_data), 0)
+        for question in save_to_case_meta_data:
+            self.assertIn('/case/', question['value'])
+            self.assertIsNotNone(question['label'])
+            self.assertIsNotNone(question['hashtagValue'])
+
+    def test_constraint_messages(self):
+        form = self.app.get_form(self.form_unique_id)
+        questions = form.wrapped_xform().get_questions(['en'], include_translations=True)
+
+        constraint_msgs = [
+            q for q in questions if 'constraintMsg_ref' in q]
+
+        self.assertGreater(len(constraint_msgs), 0)
+        for question in constraint_msgs:
+            self.assertIsNotNone(question['constraintMsg_ref'])
