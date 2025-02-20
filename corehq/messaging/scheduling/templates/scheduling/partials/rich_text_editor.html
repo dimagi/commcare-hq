@@ -39,6 +39,54 @@
   <button title="clear formatting" class="ql-clean"></button>
 </div>
 <div data-bind="richEditor: {{ editableText }}"></div>
+
+<!-- Image Dialog -->
+<div
+  class="modal fade"
+  id="rich-text-image-dialog"
+  tabindex="-1"
+  aria-labelledby="rich-text-image-dialog-title"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h5 class="modal-title" id="rich-text-image-dialog-title">
+          {% trans "Insert Image" %}
+        </h5>
+      </div>
+      <div class="modal-body">
+        <input
+          type="file"
+          class="form-control"
+          id="rich-text-image"
+          accept="image/jpeg, image/png"
+        />
+        <div id="rich-text-image-upload-in-progress" class="d-none">
+          {% trans "Uploading" %} ...
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-primary"
+          id="rich-text-image-upload"
+        >
+          {% trans "Insert" %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Link Dialog -->
 <div
   class="modal fade"

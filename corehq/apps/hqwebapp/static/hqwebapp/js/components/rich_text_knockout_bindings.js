@@ -23,16 +23,23 @@ Quill.register({
 
 function imageHandler() {
     const self = this;
-    const input = document.createElement("input");
-    input.accept = "image/png, image/jpeg";
-    input.type = "file";
-    input.onchange = function (onChangeEvent) {
-        const file = onChangeEvent.target.files[0];
+    const $modal = $('#rich-text-image-dialog');
+    const imageInput = document.getElementById('rich-text-image');
+    const uploadButton = document.getElementById('rich-text-image-upload');
+    const uploadProgress = document.getElementById('rich-text-image-upload-in-progress');
+
+    const handleImage = () => {
+        const file = imageInput.files[0];
+        if (!file) {
+            alert(gettext('No File selected'));
+            return;
+        }
+        uploadProgress.classList.remove("d-none");
+
         const uploadUrl = initialPageData.reverse("upload_messaging_image");
         let formData = new FormData();
 
         formData.append("upload", file, file.name);
-        const spinner = $('<div class="spinner"></div>').appendTo('body');
         fetch(uploadUrl, {
             method: "POST",
             body: formData,
@@ -69,10 +76,17 @@ function imageHandler() {
                 alert(error.message || gettext('Failed to upload image. Please try again.'));
             })
             .finally(function () {
-                spinner.remove();
+                uploadProgress.classList.add("d-none");
             });
+
+
+        imageInput.value = '';
+        uploadButton.removeEventListener('click', handleImage);
+        $modal.modal('hide');
     };
-    input.click();
+
+    uploadButton.addEventListener('click', handleImage);
+    $modal.modal();
 }
 
 async function linkHandler(value) {
