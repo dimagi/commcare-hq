@@ -2,7 +2,12 @@ from unittest import TestCase
 
 from testil import eq
 
-from ..test_utils import disable_quickcache, generate_cases
+from ..test_utils import (
+    disable_quickcache,
+    flag_disabled,
+    flag_enabled,
+    generate_cases,
+)
 
 
 def test_disable_quickcache():
@@ -81,3 +86,23 @@ def check_case(Test):
         test = getattr(test_case, name, None)
         assert test is not None, (name, dir(test_case))
         eq(test(), str(arg))
+
+
+@flag_enabled("ASYNC_RESTORE")  # random flag chosen for testing
+class TestFlagEnabled(TestCase):
+
+    def test_flag_is_enabled(self):
+        from corehq.toggles import ASYNC_RESTORE
+        assert ASYNC_RESTORE.enabled(...)
+        assert ASYNC_RESTORE.enabled_for_request(...)
+
+    @flag_disabled("ASYNC_RESTORE")
+    def test_flag_disabled_in_class_where_it_is_enabled(self):
+        from corehq.toggles import ASYNC_RESTORE
+        assert not ASYNC_RESTORE.enabled(...)
+        assert not ASYNC_RESTORE.enabled_for_request(...)
+
+        # context manager should be effective
+        with flag_enabled("ASYNC_RESTORE"):
+            assert ASYNC_RESTORE.enabled(...)
+            assert ASYNC_RESTORE.enabled_for_request(...)
