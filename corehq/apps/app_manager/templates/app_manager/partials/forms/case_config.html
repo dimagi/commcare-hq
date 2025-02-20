@@ -135,7 +135,7 @@
                              value: actionType,
                              event: {
                                change: function() {
-                                 hqImport('analytix/js/google').track.event('Case Management', 'Form Level', 'Case Action');
+                                 $root.trackGoogleEvent('Case Management', 'Form Level', 'Case Action');
                                }
                              }"></select>
         </div>
