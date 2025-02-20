@@ -723,6 +723,7 @@ class OffboardingUserList(UserAdministration):
 
         return self.get(request, *args, **kwargs)
 
+
 @require_superuser
 def email_status(request):
     template = "hqadmin/email_status.html"
