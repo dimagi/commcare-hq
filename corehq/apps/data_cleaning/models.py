@@ -172,6 +172,9 @@ class BulkEditColumnFilter(models.Model):
     )
     value = models.TextField(null=True, blank=True)
 
+    class Meta:
+        ordering = ["index"]
+
 
 class PinnedFilterType:
     CASE_OWNERS = 'case_owners'
@@ -196,6 +199,9 @@ class BulkEditPinnedFilter(models.Model):
         blank=True,
     )
 
+    class Meta:
+        ordering = ["index"]
+
 
 class BulkEditColumn(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="columns", on_delete=models.CASCADE)
@@ -208,6 +214,9 @@ class BulkEditColumn(models.Model):
         choices=DataType.CHOICES,
     )
     is_system = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["index"]
 
 
 class BulkEditRecord(models.Model):
