@@ -22,7 +22,7 @@ class BulkEditChangeTest(TestCase):
                 'nearest_ocean': 'atlantic',
                 'town': 'Isabel Segunda',
                 'favorite_beach': 'Playa Bastimento',
-                'art': '  :)     ',
+                'art': '\n  :)   \n  \t',
                 'second_favorite_beach': 'no idea',
             },
         )
