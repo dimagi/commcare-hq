@@ -2617,6 +2617,9 @@ class AdminTab(UITab):
                 {'title': _('Manage deleted domains'),
                  'url': reverse('tombstone_management'),
                  'icon': 'fa fa-minus-circle'},
+                {'title': _('Check email status'),
+                 'url': reverse('email_status'),
+                 'icon': 'fa fa-envelope-circle-check'},
             ]
             admin_operations = [
                 {'title': _('CommCare Builds'),
