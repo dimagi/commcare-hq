@@ -687,12 +687,16 @@ hqDefine("app_manager/js/details/screen", function () {
                 hasAutocomplete: true,
             });
         };
+
+        self.hasGraphing = hqImport('app_manager/js/app_manager').checkCommcareVersion("2.17");
         self.addGraph = function () {
             self.addItem({
                 hasAutocomplete: false,
                 format: 'graph',
             });
         };
+
+        self.hasXpathExpressions = hqImport("hqwebapp/js/initial_page_data").get("add_ons").calc_xpaths;
         self.addXpathExpression = function () {
             self.addItem({
                 hasAutocomplete: false,
