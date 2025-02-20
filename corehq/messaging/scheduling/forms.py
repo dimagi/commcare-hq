@@ -496,7 +496,7 @@ class ContentForm(Form):
             except AttributeError:
                 plaintext_message[lang] = strip_tags(content)
 
-            # bleach.clean throws out html, head and body tags not matter what. To keep them we need to clean them
+            # bleach.clean throws out html, head, and body tags no matter what. To keep them we need to clean them
             # separately and then put them back together.
             bleached_head = ""
             if soup.head:
