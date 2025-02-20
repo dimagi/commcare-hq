@@ -33,6 +33,9 @@ class BulkEditSession(models.Model):
     result = models.JSONField(null=True, blank=True)
     completed_on = models.DateTimeField(null=True, blank=True)
 
+    class Meta:
+        ordering = ["-created_on"]
+
 
 class DataType:
     TEXT = 'text'
