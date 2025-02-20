@@ -117,6 +117,15 @@ const converterOptions = {
 };
 
 const orderedListTypes = ["1", "a", "i"];
+
+/**
+ * Update the type of nested ordered lists recursively based on the given level.
+ *
+ * @param {HTMLElement} element - The HTML element containing the list.
+ * @param {number} level - The current level of nesting for the list elements.
+ *
+ * @return {void}
+ */
 function updateListType(element, level) {
     element.childNodes.forEach(function (child) {
         if (child.tagName && child.tagName.toLowerCase() === 'ol') {
@@ -130,11 +139,18 @@ function updateListType(element, level) {
 
 const parser = new DOMParser();
 
+/**
+ * Convert quill delta to html
+ *
+ * @param {object} delta - Delta representation of the text to be converted to HTML.
+ * @returns {string} - HTML page converted from the given Delta object, including html
+ * and body tags
+ */
 function deltaToHtml(delta) {
     // nice for adding more test data
     // console.log(JSON.stringify(delta, null, 4));
     if (!delta) {
-        return;
+        return "";
     }
     const converter = new QuillDeltaToHtmlConverter(delta.ops, converterOptions);
     const body = converter.convert();
