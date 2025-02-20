@@ -9,7 +9,7 @@ import Bold from "quill/formats/bold";
 import Italic from "quill/formats/italic";
 import Header from "quill/formats/header";
 import {QuillDeltaToHtmlConverter} from 'quill-delta-to-html-upate';
-import {Modal} from 'es6!hqwebapp/js/bootstrap5_loader';
+import $ from "jquery";
 
 import initialPageData from "hqwebapp/js/initial_page_data";
 
@@ -77,37 +77,45 @@ function imageHandler() {
 
 async function linkHandler(value) {
     const self = this;
+    const linkTextInput = document.getElementById('rich-text-link-text');
+    const selection = self.quill.getSelection();
+    if (selection.length === 0) {
+        linkTextInput.classList.remove("d-none");
+    } else {
+        linkTextInput.classList.add("d-none");
+    }
     if (value) {
-        const modal = Modal.getOrCreateInstance(document.getElementById('rich-text-link-dialog'));
-        const input = document.getElementById('rich-text-link-url');
+        const $modal = $('#rich-text-link-dialog');
+        const linkUrlInput = document.getElementById('rich-text-link-url');
         const insertButton = document.getElementById('rich-text-link-insert');
 
-        // await new Promise(function (resolve, reject) {
-            const handleInsert = () => {
-                let href = input.value.trim();
-                if (!href) {
-                    // reject();
-                }
+        const handleInsert = () => {
+            let href = linkUrlInput.value.trim();
+            if (!href) {
+                return;
+            }
 
-                if (!href.match(/^(https?|ftp|mailto):/)) {
-                    href = "https://" + href;
-                }
-
+            if (!href.match(/^(https?|ftp|mailto):/)) {
+                href = "https://" + href;
+            }
+            if (selection.length === 0) {
+                const text = linkTextInput.value;
+                self.quill.insertText(selection.index, text);
+                self.quill.setSelection({index: selection.index, length: text.length});
                 self.quill.format('link', href);
-                modal.hide();
+                self.quill.setSelection({index: selection.index + text.length, length: 0});
+            } else {
+                self.quill.format('link', href);
+            }
 
-                // Clean up
-                input.value = '';
-                insertButton.removeEventListener('click', handleInsert);
-                console.log("resolve");
-                // resolve();
-            };
+            linkTextInput.value = '';
+            linkUrlInput.value = '';
+            insertButton.removeEventListener('click', handleInsert);
+            $modal.modal('hide');
+        };
 
-            insertButton.addEventListener('click', handleInsert);
-            console.log("show");
-            modal.show();
-        // });
-        console.log("return");
+        insertButton.addEventListener('click', handleInsert);
+        $modal.modal();
     }
 }
 
@@ -163,14 +171,6 @@ function deltaToHtml(delta) {
 
 ko.bindingHandlers.richEditor = {
     init: function (element, valueAccessor) {
-        const button = document.getElementById('myButton');   // replace 'myButton' with your button's id
-
-        button.addEventListener('click', function () {
-            const modal = Modal.getOrCreateInstance(document.getElementById('rich-text-link-dialog'));
-            modal.show();
-            // your event handling logic here
-            console.log('Button clicked!');
-        });
         const fontFamilyArr = [
             "Arial",
             "Courier New",
