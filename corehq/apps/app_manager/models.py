@@ -70,6 +70,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
     get_usercase_properties,
 )
 from corehq.apps.app_manager.commcare_settings import check_condition
+from corehq.apps.app_manager.const import FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
@@ -1860,6 +1861,7 @@ class DetailColumn(IndexedSchema):
     field = StringProperty()
     useXpathExpression = BooleanProperty(default=False)
     format = StringProperty(exclude_if_none=True)
+    optimization = StringProperty(exclude_if_none=True)
 
     # Only applies to custom case list tile. grid_x and grid_y are zero-based values
     # representing the starting row and column.
@@ -1920,11 +1922,17 @@ class DetailColumn(IndexedSchema):
             for item in to_ret.enum:
                 for lang, path in item.value.items():
                     item.value[lang] = interpolate_media_path(path)
+
+        if to_ret.optimization and not to_ret.supports_optimizations:
+            to_ret.optimization = None
         return to_ret
 
     @property
     def invisible(self):
         return self.format == 'invisible'
+
+    def supports_optimizations(self):
+        return self.format in FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS
 
 
 class SortElement(IndexedSchema):
@@ -2060,7 +2068,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
         for column in self.columns:
             column.rename_lang(old_lang, new_lang)
 
-    def sort_nodeset_columns_for_detail(self):
+    def sort_nodeset_columns_for_long_detail(self):
         return (
             self.display == "long"
             and any(tab for tab in self.get_tabs() if tab.has_nodeset)
@@ -2576,6 +2584,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     search_config = SchemaProperty(CaseSearch)
     display_style = StringProperty(default='list')
     lazy_load_case_list_fields = BooleanProperty(default=False)
+    show_case_list_optimization_options = BooleanProperty(default=False)
 
     @classmethod
     def new_module(cls, name, lang):
