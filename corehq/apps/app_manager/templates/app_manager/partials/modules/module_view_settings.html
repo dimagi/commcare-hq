@@ -267,6 +267,22 @@
               </div>
             {% endif %}
 
+            {% if request|toggle_enabled:'CASE_LIST_OPTIMIZATIONS' and not module.is_surveys %}
+              <div class="form-group">
+                <label class="control-label {% css_label_class %}">
+                  {% trans "Show Case List Optimizations" %}
+                  <span class="hq-help-template"
+                        data-title="{% trans "Case List Optimizations" %}"
+                        data-content="{% blocktrans %}Set caching and lazy loading for case list columns for better performance. Reload page to reveal/hide columns on case list once saved. {% endblocktrans %}"
+                  ></span>
+                </label>
+                <div id="show_case_list_optimization_options" class="{% css_field_class %} commcare-feature" data-since-version="2.56">
+                  <input id="show_case_list_optimization_options-input" type="checkbox" data-bind="checked: show_case_list_optimization_options" />
+                  <input type="hidden" name="show_case_list_optimization_options" data-bind="value: show_case_list_optimization_options"/>
+                </div>
+              </div>
+            {% endif %}
+
             {% if request|toggle_enabled:'USH_EMPTY_CASE_LIST_TEXT' %}
             <div class="form-group">
               <label for="no_items_text" class="{% css_label_class %} control-label">
