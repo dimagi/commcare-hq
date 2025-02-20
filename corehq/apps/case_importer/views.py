@@ -397,7 +397,7 @@ def excel_fields(request, domain):
             return render_error(
                 request,
                 domain,
-                _('The Excel file is missing one or more required fields for the "{}" case type: {}'.format(
+                _('The Excel file is missing the following required fields for the "{}" case type: {}'.format(
                     MOMO_PAYMENT_CASE_TYPE, ', '.join(missing_fields)
                 ))
             )
