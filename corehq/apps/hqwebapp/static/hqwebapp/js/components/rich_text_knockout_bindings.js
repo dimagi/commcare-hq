@@ -77,12 +77,13 @@ function imageHandler() {
 
 async function linkHandler(value) {
     const self = this;
+    const linkTextInputGroup = document.getElementById('rich-text-link-text-group');
     const linkTextInput = document.getElementById('rich-text-link-text');
     const selection = self.quill.getSelection();
     if (selection.length === 0) {
-        linkTextInput.classList.remove("d-none");
+        linkTextInputGroup.classList.remove("d-none");
     } else {
-        linkTextInput.classList.add("d-none");
+        linkTextInputGroup.classList.add("d-none");
     }
     if (value) {
         const $modal = $('#rich-text-link-dialog');
