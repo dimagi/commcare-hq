@@ -13,9 +13,6 @@
   <p class="timeout-message" data-bind="visible: showSecondTimeout">
     <i class="fa fa-check"></i> {% trans "Created new user..." %}
   </p>
-  <p class="timeout-message" data-bind="visible: showFirstTimeout">
-    <i class="fa fa-check"></i> {% trans "Created sample applications..." %}
-  </p>
   <p class="timeout-message" data-bind="visible: showThirdTimeout">
     <i class="fa fa-check"></i> {% trans "Updated reports..." %}
   </p>
@@ -25,7 +22,8 @@
   <hr data-bind="visible: showFirstTimeout" />
   <p>
     {% blocktrans %}
-      Thank you for choosing <strong>CommCare</strong>. <i class="fa fa-heart"></i>
+      Thank you for choosing <strong>CommCare</strong>.
+      <i class="fa fa-heart"></i>
     {% endblocktrans %}
   </p>
 </div>
