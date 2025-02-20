@@ -1,7 +1,7 @@
 {% if record.kyc_is_verified is True %}
-  <span class="badge bg-success">Pass</span>
+  <span class="badge bg-success">{% trans "Pass" %}</span>
 {% elif record.kyc_is_verified is False %}
-  <span class="badge bg-danger">Fail</span>
+  <span class="badge bg-danger">{% trans "Fail" }</span>
 {% else %}
-  <span class="badge bg-secondary">Not Checked</span>
+  <span class="badge bg-secondary">{% trans "Not Checked" %}</span>
 {% endif %}
