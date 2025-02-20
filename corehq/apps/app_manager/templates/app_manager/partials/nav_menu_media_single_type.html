@@ -46,7 +46,7 @@
                         enable: enabled,
                         click: function () {
                             setCustomPath();
-                            hqImport('analytix/js/google').track.event('App Builder', 'Click Show Path for a Form or Module', '{{ type }}');
+                            $root.trackGoogleEvent('App Builder', 'Click Show Path for a Form or Module', '{{ type }}');
                         }">
         <i class="fa fa-cog"></i>
         {% trans 'Set Path' %}
