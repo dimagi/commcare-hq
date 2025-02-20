@@ -1,7 +1,9 @@
 import uuid
 
+from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.utils.translation import gettext as _
 from django.views.generic import TemplateView
 
 from corehq import toggles
@@ -33,19 +35,14 @@ class SetupCaseSessionFormView(HqHtmxActionMixin, LoginAndDomainMixin, DomainVie
     def validate_session(self, request, *args, **kwargs):
         form = SelectCaseTypeForm(self.domain, request.POST)
         if form.is_valid():
-            return self.render_session_redirect(form.cleaned_data['case_type'], request)
+            return self.render_session_redirect()
         return self.get(request, form=form, *args, **kwargs)
 
-    def render_session_redirect(self, case_type, request):
+    def render_session_redirect(self):
         from corehq.apps.data_cleaning.views.main import CleanCasesSessionView
         fake_session_id = uuid.uuid4()
-        return self.render_htmx_partial_response(
-            request,
-            "data_cleaning/partials/start_session.html",
-            {
-                "case_type": case_type,
-                "session_view_url": reverse(
-                    CleanCasesSessionView.urlname, args=(self.domain, fake_session_id, )
-                ),
-            }
+        response = HttpResponse(_("Starting Data Cleaning Session..."))
+        response['HX-Redirect'] = reverse(
+            CleanCasesSessionView.urlname, args=(self.domain, fake_session_id, )
         )
+        return response
