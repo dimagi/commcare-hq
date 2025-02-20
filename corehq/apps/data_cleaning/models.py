@@ -257,7 +257,6 @@ class BulkEditChange(models.Model):
     find_string = models.TextField(null=True, blank=True)
     replace_string = models.TextField(null=True, blank=True)
     use_regex = models.BooleanField(default=False)
-    replace_all_string = models.TextField(null=True, blank=True)
     copy_from_prop_id = models.CharField(max_length=255)
 
     class Meta:
