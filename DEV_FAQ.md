@@ -53,9 +53,6 @@ Check out the `generate_fake_sms_data` command.
 
 If you have an application on commcarehq.org, follow [these instructions](https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955454/Copy+or+Delete+an+Application) to copy it to your local environment.
 
-There are also [three template apps](https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/app_manager/static/app_manager/template_apps) checked into the codebase.
-You can run [load_app_from_slug](https://github.com/dimagi/commcare-hq/blob/6021df8639dc0053c8dbdbb8690993be708776c5/corehq/apps/app_manager/views/apps.py#L510) in a django shell to import one of these apps. Note that you may wish to only run the first few lins of `load_app_from_slug` if you don't care about your app having multimedia.
-
 ### Cases
 
 The easiest way to add cases locally is generally to use your local case importer. [Docs](https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946828/Importing+Cases+Using+Excel)

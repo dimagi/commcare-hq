@@ -29,11 +29,9 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     TestXmlMixin,
     add_build,
-    delete_all_multimedia,
     patch_default_builds, get_simple_form, patch_validate_xform,
 )
 from corehq.apps.app_manager.util import add_odk_profile_after_build
-from corehq.apps.app_manager.views.apps import load_app_from_slug
 from corehq.apps.app_manager.views.utils import update_linked_app
 from corehq.apps.cleanup.models import DeletedCouchDoc
 from corehq.apps.domain.shortcuts import create_domain
@@ -287,18 +285,6 @@ class AppManagerTest(TestCase, TestXmlMixin):
         copy.save()
         self._check_has_build_files(copy, self.min_paths)
         self._check_legacy_odk_files(copy)
-
-    @patch('urllib3.PoolManager.request')
-    def testBuildTemplateApps(self, request_mock):
-        self.addCleanup(delete_all_multimedia)
-        image_path = os.path.join('corehq', 'apps', 'hqwebapp', 'static', 'hqwebapp', 'images',
-                                  'commcare-hq-logo.png')
-        with open(image_path, 'rb') as f:
-            request_mock.return_value = MockRequest(status=200, data=f.read())
-
-            # Tests that these apps successfully build
-            for slug in ['agriculture', 'health', 'wash']:
-                self.assertIsNotNone(load_app_from_slug(self.domain, 'username', slug))
 
     def testGetLatestBuild(self):
         factory = AppFactory(build_version='2.40.0')

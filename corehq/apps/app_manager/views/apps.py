@@ -1,6 +1,5 @@
 import copy
 import json
-import os
 from collections import defaultdict
 
 from django.contrib import messages
@@ -15,7 +14,6 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_POST
 
-import urllib3
 from django_prbac.utils import has_privilege
 
 from dimagi.utils.logging import notify_exception
@@ -50,7 +48,7 @@ from corehq.apps.app_manager.decorators import (
 from corehq.apps.app_manager.exceptions import (
     AppLinkError,
     IncompatibleFormTypeException,
-    RearrangeError, AppValidationError,
+    RearrangeError,
 )
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager.models import (
@@ -60,10 +58,9 @@ from corehq.apps.app_manager.models import (
     ExchangeApplication,
     Module,
     ModuleNotFoundException,
-    app_template_dir,
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
-from corehq.apps.app_manager.models import load_app_template, LinkedApplication
+from corehq.apps.app_manager.models import LinkedApplication
 from corehq.apps.app_manager.tasks import update_linked_app_and_notify_task
 from corehq.apps.app_manager.util import (
     app_doc_types,
@@ -84,7 +81,6 @@ from corehq.apps.app_manager.views.utils import (
     validate_langs,
 )
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig
-from corehq.apps.cloudcare.views import FormplayerMain
 from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
@@ -92,7 +88,6 @@ from corehq.apps.domain.decorators import (
     track_domain_request,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX, CommCareMultimedia
 from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -505,51 +500,6 @@ def _copy_app_helper(request, from_app_id, to_domain, to_app_name):
         app_copy = app_copy.convert_to_application()
         app_copy.save()
     return back_to_main(request, app_copy.domain, app_id=app_copy._id)
-
-
-def load_app_from_slug(domain, username, slug):
-    # Import app itself
-    template = load_app_template(slug)
-    app = import_app_util(template, domain, {
-        'created_from_template': '%s' % slug,
-    })
-
-    # Fetch multimedia, which is hosted elsewhere
-    multimedia_filename = os.path.join(app_template_dir(slug), 'multimedia.json')
-    if (os.path.exists(multimedia_filename)):
-        with open(multimedia_filename) as f:
-            path_url_map = json.load(f)
-            http = urllib3.PoolManager()
-            for path, url in path_url_map.items():
-                try:
-                    req = http.request('GET', url)
-                except Exception:
-                    # If anything goes wrong, just bail. It's not a big deal if a template app is missing a file.
-                    continue
-                if req.status == 200:
-                    data = req.data
-                    media_class = CommCareMultimedia.get_class_by_data(data)
-                    if media_class:
-                        multimedia = media_class.get_by_data(data)
-                        multimedia.attach_data(data,
-                                               original_filename=os.path.basename(path),
-                                               username=username)
-                        multimedia.add_domain(domain, owner=True)
-                        app.create_mapping(multimedia, MULTIMEDIA_PREFIX + path)
-    return _build_sample_app(app)
-
-
-def _build_sample_app(app):
-    comment = _("A sample CommCare application for you to explore")
-    try:
-        copy = app.make_build(comment=comment)
-    except AppValidationError as e:
-        notify_exception(None, 'Validation errors building sample app', details=e.errors)
-        return
-
-    copy.is_released = True
-    copy.save(increment_version=False)
-    return copy
 
 
 @require_can_edit_apps
