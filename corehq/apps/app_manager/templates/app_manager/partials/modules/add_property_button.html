@@ -16,11 +16,15 @@
       <li data-bind="click: addGraph"><a>{% trans "Graph" %}</a></li>
       <!-- /ko -->
       <!-- ko ifnot: hasGraphing -->
-      <li class="disabled"><a>{% trans "Graph <small>(upgrade to 2.17 or greater)</small>" %}</a></li>
+      <li class="disabled">
+        <a>{% trans "Graph <small>(upgrade to 2.17 or greater)</small>" %}</a>
+      </li>
       <!-- /ko -->
 
       <!-- ko if: hasXpathExpressions -->
-      <li data-bind="click: addXpathExpression"><a>{% trans "Calculated Property" %}</a></li>
+      <li data-bind="click: addXpathExpression">
+        <a>{% trans "Calculated Property" %}</a>
+      </li>
       <!-- /ko -->
     </ul>
   {% else %}
@@ -30,7 +34,9 @@
     </button>
     <ul class="dropdown-menu">
       <li data-bind="click: addProperty"><a>{% trans "Property" %}</a></li>
-      <li data-bind="click: addXpathExpression"><a>{% trans "Calculated Property" %}</a></li>
+      <li data-bind="click: addXpathExpression">
+        <a>{% trans "Calculated Property" %}</a>
+      </li>
     </ul>
     <!-- /ko -->
   {% endif %}
