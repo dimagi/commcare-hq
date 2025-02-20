@@ -62,10 +62,8 @@ class BulkEditChangeTest(TestCase):
             property='nearest_ocean',
             action_type=EditActionType.COPY_REPLACE,
             copy_from_property='favorite_beach',
-            find_string='Bastimento',
-            replace_string='Yallis',
         )
-        self.assertEqual(change.edited_value(self.case), 'Playa Yallis')
+        self.assertEqual(change.edited_value(self.case), 'Playa Bastimento')
 
     def test_title_case(self):
         change = BulkEditChange(
