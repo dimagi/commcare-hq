@@ -59,6 +59,7 @@ hqDefine("app_manager/js/details/screen", function () {
         self.containsSearchConfiguration = options.containsSearchConfiguration;
         self.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
         self.allowsTabs = options.allowsTabs;
+        self.allowsCustomXML = hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML');
 
         let baseCaseTileTemplateOptions = [[null, gettext("Don't Use Case Tiles")]];
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE_CUSTOM')) {
@@ -334,8 +335,7 @@ hqDefine("app_manager/js/details/screen", function () {
             });
         };
         self.allowsEmptyColumns = options.allowsEmptyColumns;
-        self.persistentCaseTileFromModule = (
-            ko.observable(detail.persistent_case_tile_from_module || ""));
+        self.persistentCaseTileFromModule = ko.observable(detail.persistent_case_tile_from_module || "");
         self.fireChange = function () {
             self.fire('change');
         };
