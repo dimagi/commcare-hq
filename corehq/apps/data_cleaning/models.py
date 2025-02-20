@@ -156,7 +156,7 @@ class FilterMatchType:
 class BulkEditColumnFilter(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="column_filters", on_delete=models.CASCADE)
     index = models.IntegerField(default=0)
-    property = models.CharField(max_length=255)  # case property or form question_id
+    prop_id = models.CharField(max_length=255)  # case property or form question_id
     data_type = models.CharField(
         max_length=15,
         default=DataType.TEXT,
@@ -197,7 +197,7 @@ class BulkEditPinnedFilter(models.Model):
 class BulkEditColumn(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="columns", on_delete=models.CASCADE)
     index = models.IntegerField(default=0)
-    property = models.CharField(max_length=255)  # case property or form question_id
+    prop_id = models.CharField(max_length=255)  # case property or form question_id
     label = models.CharField(max_length=255)
     data_type = models.CharField(
         max_length=15,
@@ -246,7 +246,7 @@ class BulkEditChange(models.Model):
     change_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     created_on = models.DateTimeField(auto_now_add=True, db_index=True)
     records = models.ManyToManyField(BulkEditRecord, related_name="changes")
-    property = models.CharField(max_length=255)  # case property or form question_id
+    prop_id = models.CharField(max_length=255)  # case property or form question_id
     action_type = models.CharField(
         max_length=12,
         choices=EditActionType.CHOICES,
@@ -255,7 +255,7 @@ class BulkEditChange(models.Model):
     replace_string = models.TextField(null=True, blank=True)
     use_regex = models.BooleanField(default=False)
     replace_all_string = models.TextField(null=True, blank=True)
-    copy_from_property = models.CharField(max_length=255)
+    copy_from_prop_id = models.CharField(max_length=255)
 
     class Meta:
         ordering = ["created_on"]
@@ -273,11 +273,11 @@ class BulkEditChange(models.Model):
         }
 
         if self.action_type in simple_transformations:
-            old_value = case.get_case_property(self.property)
+            old_value = case.get_case_property(self.prop_id)
             return simple_transformations[self.action_type](old_value)
 
         if self.action_type == EditActionType.COPY_REPLACE:
-            return case.get_case_property(self.copy_from_property)
+            return case.get_case_property(self.copy_from_prop_id)
 
         if self.action_type == EditActionType.RESET:
             raise UnsupportedActionException(f"{EditActionType.RESET} is not applied by calling edited_value")
