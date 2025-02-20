@@ -551,7 +551,7 @@ class RepeaterLock:
 metrics_gauge_task(
     'commcare.repeaters.overdue',
     RepeatRecord.objects.count_overdue,
-    run_every=crontab(),  # every minute
+    run_every=crontab(minute='*/5'),  # every five minutes
     multiprocess_mode=MPM_MAX
 )
 
