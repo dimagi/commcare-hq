@@ -101,7 +101,7 @@ def verify_user(user_obj, config):
 
 def save_result(user_obj, config, is_verified):
     update = {
-        'kyc_provider': config.provider.value,  # TODO: Or config.provider.label?
+        'kyc_provider': config.provider,
         'kyc_last_verified_at': datetime.utcnow(),  # TODO: UTC or project timezone?
         'kyc_is_verified': is_verified,
     }
