@@ -1,5 +1,7 @@
+import datetime
+
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_POST
 
@@ -49,3 +51,28 @@ def example_paginated_data(request):
         "total": len(data),
         "rows": rows,
     })
+
+
+def generate_ics(request):
+    now = datetime.datetime.now()
+    dtstart = now.strftime('%Y%m%dT%H%M%S')
+    dtend = (now + datetime.timedelta(hours=1)).strftime('%Y%m%dT%H%M%S')
+
+    ics_content = f"""
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Your Organisation//Example Project//EN
+BEGIN:VEVENT
+UID:1
+DTSTART:{dtstart}
+DTEND:{dtend}
+SUMMARY: Event for Today
+LOCATION:
+END:VEVENT
+END:VCALENDAR
+"""
+
+    response = HttpResponse(ics_content, content_type='text/calendar')
+    response['Content-Disposition'] = 'attachment; filename=event.ics'
+
+    return response
