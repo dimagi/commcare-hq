@@ -40,27 +40,53 @@
 </div>
 <div data-bind="richEditor: {{ editableText }}"></div>
 <!-- Link Dialog -->
-<div class="modal fade" id="rich-text-link-dialog" tabindex="-1" aria-labelledby="rich-text-link-dialog-title" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h5 class="modal-title" id="rich-text-link-dialog-title">{% trans "Insert Link" %}</h5>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="rich-text-link-text">Text:</label>
-                    <input type="url" class="form-control" id="rich-text-link-text" />
-                </div>
-
-                <div class="form-group">
-                    <label for="rich-text-link-url">URL:</label>
-                    <input type="url" class="form-control" id="rich-text-link-url" placeholder="https://" />
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" id="rich-text-link-insert">{% trans "Insert" %}</button>
-            </div>
+<div
+  class="modal fade"
+  id="rich-text-link-dialog"
+  tabindex="-1"
+  aria-labelledby="rich-text-link-dialog-title"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h5 class="modal-title" id="rich-text-link-dialog-title">
+          {% trans "Insert Link" %}
+        </h5>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="rich-text-link-text">Text:</label>
+          <input type="url" class="form-control" id="rich-text-link-text" />
         </div>
+
+        <div class="form-group">
+          <label for="rich-text-link-url">URL:</label>
+          <input
+            type="url"
+            class="form-control"
+            id="rich-text-link-url"
+            placeholder="https://"
+          />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-primary"
+          id="rich-text-link-insert"
+        >
+          {% trans "Insert" %}
+        </button>
+      </div>
     </div>
+  </div>
 </div>
