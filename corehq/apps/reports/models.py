@@ -21,7 +21,6 @@ from corehq.apps.reports.const import TABLEAU_ROLES
 from corehq.apps.users.models import CommCareUser
 from corehq.motech.const import ALGO_AES_CBC
 from corehq.motech.utils import (
-    b64_aes_decrypt,
     b64_aes_cbc_encrypt,
     b64_aes_cbc_decrypt
 )
@@ -209,11 +208,10 @@ class TableauConnectedApp(models.Model):
 
     @property
     def plaintext_secret_value(self):
-        # Conditonal check  be deleted after migration to cbc is done
-        if self.encrypted_secret_value.startswith(f'${ALGO_AES_CBC}$'):
-            ciphertext = self.encrypted_secret_value.split('$', 2)[2]
-            return b64_aes_cbc_decrypt(ciphertext)
-        return b64_aes_decrypt(self.encrypted_secret_value)  # This will be deleted after migration to cbc is done
+        if self.encrypted_secret_value == '':
+            return ''
+        ciphertext = self.encrypted_secret_value.split('$', 2)[2]
+        return b64_aes_cbc_decrypt(ciphertext)
 
     @plaintext_secret_value.setter
     def plaintext_secret_value(self, plaintext):
