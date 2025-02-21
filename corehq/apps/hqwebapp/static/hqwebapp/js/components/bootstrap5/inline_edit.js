@@ -1,4 +1,3 @@
-
 /*
  * Component for an inline editing widget: a piece of text that, when clicked on, turns into an input (textarea or
  * text input). The input is accompanied by a save button capable of saving the new value to the server via ajax.
@@ -27,16 +26,20 @@ hqDefine('hqwebapp/js/components/bootstrap5/inline_edit', [
     'underscore',
     'DOMPurify/dist/purify.min',
     'hqwebapp/js/components.ko',
+    'hqwebapp/js/bootstrap5/main',
 ], function (
     $,
     ko,
     _,
     DOMPurify,
     koComponents,
+    hqMain,
 ) {
     const component = {
         viewModel: function (params) {
             var self = this;
+
+            //hqMain.eventize(this);
 
             // Attributes passed on to the input
             self.name = params.name || '';

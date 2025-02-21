@@ -1,4 +1,3 @@
-
 /*
  * Component for an inline editing widget: a piece of text that, when clicked on, turns into an input (textarea or
  * text input). The input is accompanied by a save button capable of saving the new value to the server via ajax.
@@ -27,16 +26,20 @@ hqDefine('hqwebapp/js/components/bootstrap3/inline_edit', [
     'underscore',
     'DOMPurify/dist/purify.min',
     'hqwebapp/js/components.ko',
+    'hqwebapp/js/bootstrap3/main',
 ], function (
     $,
     ko,
     _,
     DOMPurify,
     koComponents,
+    hqMain,
 ) {
     const component = {
         viewModel: function (params) {
             var self = this;
+
+            //hqMain.eventize(this);        // this doesn't work because main.js is included after this file...extract eventize from main?
 
             // Attributes passed on to the input
             self.name = params.name || '';
@@ -72,7 +75,6 @@ hqDefine('hqwebapp/js/components/bootstrap3/inline_edit', [
             self.saveValueName = params.saveValueName || 'value';
             self.hasError = ko.observable(false);
             self.isSaving = ko.observable(false);
-            self.postSave = params.postSave;
 
             // On edit, set editing mode, which controls visibility of inner components
             self.edit = function () {
@@ -118,9 +120,7 @@ hqDefine('hqwebapp/js/components/bootstrap3/inline_edit', [
                             self.isSaving(false);
                             self.hasError(false);
                             self.serverValue = self.readOnlyValue;
-                            if (self.postSave) {
-                                self.postSave(data);
-                            }
+                            self.fire('inline-edit-save', data);
                             $(window).off("beforeunload", self.beforeUnload);
                         },
                         error: function (response) {
