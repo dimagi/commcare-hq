@@ -28,7 +28,7 @@ function imageHandler() {
     const uploadButton = document.getElementById('rich-text-image-upload');
     const uploadProgress = document.getElementById('rich-text-image-upload-in-progress');
 
-    const handleImage = () => {
+    const handleImage = async function () {
         const file = imageInput.files[0];
         if (!file) {
             alert(gettext('No File selected'));
@@ -40,7 +40,7 @@ function imageHandler() {
         let formData = new FormData();
 
         formData.append("upload", file, file.name);
-        fetch(uploadUrl, {
+        await fetch(uploadUrl, {
             method: "POST",
             body: formData,
             headers: {
@@ -104,7 +104,7 @@ async function linkHandler(value) {
         const linkUrlInput = document.getElementById('rich-text-link-url');
         const insertButton = document.getElementById('rich-text-link-insert');
 
-        const handleInsert = () => {
+        const handleInsert = function () {
             let href = linkUrlInput.value.trim();
             if (!href) {
                 return;
