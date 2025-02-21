@@ -45,6 +45,11 @@ class CleanCasesTableView(BaseDataCleaningTableView):
     def session_id(self):
         return self.kwargs['session_id']
 
+    def get_table_kwargs(self):
+        return {
+            'extra_columns': self.table_class.get_columns_from_session(self.session),
+        }
+
     def get_queryset(self):
         return CaseSearchES().domain(self.domain).case_type(self.case_type)
 

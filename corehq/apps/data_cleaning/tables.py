@@ -12,20 +12,18 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
     class Meta(BaseHtmxTable.Meta):
         pass
 
-    name = columns.Column(
-        verbose_name=gettext_lazy("Case Name"),
-    )
-    case_type = columns.Column(
-        accessor="@case_type",
-        verbose_name=gettext_lazy("Case Type"),
-    )
-    status = columns.Column(
-        accessor="@status",
-        verbose_name=gettext_lazy("Status"),
-    )
-    opened_on = columns.Column(
-        verbose_name=gettext_lazy("Opened On"),
-    )
+    @classmethod
+    def get_columns_from_session(cls, session):
+        visible_columns = []
+        for col in session.columns.all():
+            slug = col.prop_id.replace('@', '')
+            visible_columns.append((
+                slug, columns.Column(
+                    verbose_name=col.label,
+                    accessor=col.prop_id,
+                )
+            ))
+        return visible_columns
 
 
 class CaseCleaningTasksTable(BaseHtmxTable, tables.Table):
