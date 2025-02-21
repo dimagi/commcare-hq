@@ -87,7 +87,7 @@ hqDefine('analytix/js/cta_forms', [
         });
 
         self.isFormReadyToSubmit = ko.computed(function () {
-            return self.areMainFieldsValid() && self.isLanguageFieldValid() && self.isDiscoverySourceValid();
+            return self.areMainFieldsValid() && self.isLanguageFieldValid();
         });
 
         self.isSubmitDisabled = ko.computed(function () {
