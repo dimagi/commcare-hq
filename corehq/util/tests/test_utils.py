@@ -106,3 +106,9 @@ class TestFlagEnabled(TestCase):
         with flag_enabled("ASYNC_RESTORE"):
             assert ASYNC_RESTORE.enabled(...)
             assert ASYNC_RESTORE.enabled_for_request(...)
+            
+    @flag_enabled("USER_CONFIGURABLE_REPORTS")
+    def test_multiple_flags_enabled_at_different_levels(self):
+        from corehq.toggles import ASYNC_RESTORE, USER_CONFIGURABLE_REPORTS
+        assert ASYNC_RESTORE.enabled(...)
+        assert USER_CONFIGURABLE_REPORTS.enabled(...)
