@@ -60,12 +60,8 @@ hqDefine('analytix/js/hubspot', [
 
         demoForm = ctaForms.hubspotCtaForm({
             hubspotFormId: formId,
-            showContactMethod: isVariant,
             showPreferredLanguage: false,
-            useWhatsApp: false,
-            useGoogleHangouts: true,
             nextButtonText: gettext("Submit Request"),
-            phoneNumberSelector: $form.find('input[name="phone"]'),
             submitCallbackFn: function () {
                 $('#get-demo-cta-success').fadeIn();
                 $('#get-demo-cta-form-content').addClass('hidden').addClass('d-none'); // todo after bootstrap 5 migration

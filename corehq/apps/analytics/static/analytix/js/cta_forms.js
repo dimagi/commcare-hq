@@ -5,7 +5,6 @@ hqDefine('analytix/js/cta_forms', [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/assert_properties',
-    'intl-tel-input/build/js/intlTelInput.min',
     'hqwebapp/js/bootstrap3/validators.ko',        // needed for validation of startDate and endDate
 ], function (
     $,
@@ -13,26 +12,18 @@ hqDefine('analytix/js/cta_forms', [
     _,
     initialPageData,
     assertProperties,
-    intlTelInput,
 ) {
     let hubspotCtaForm = function (config) {
         let self = {};
         assertProperties.assertRequired(config, [
             'hubspotFormId',
-            'showContactMethod',
             'showPreferredLanguage',
-            'useWhatsApp',
-            'useGoogleHangouts',
             'nextButtonText',
-            'phoneNumberSelector',
             'submitCallbackFn',
         ]);
 
-        self.showContactMethod = ko.observable(config.showContactMethod);
         self.showPreferredLanguage = ko.observable(config.showPreferredLanguage);
 
-        self.useWhatsApp = ko.observable(config.useWhatsApp);
-        self.useGoogleHangouts = ko.observable(config.useGoogleHangouts);
         self.nextButtonText = ko.observable(config.nextButtonText);
 
         self.firstname = ko.observable()
@@ -67,23 +58,6 @@ hqDefine('analytix/js/cta_forms', [
                 emailRFC2822: true,
             });
 
-        self.preferred_method_of_contact = ko.observable();
-
-        self.phone = ko.observable();
-
-        self.skype__c = ko.observable();
-        self.preferred_whatsapp_number = ko.observable();
-
-        self.showPhoneNumber = ko.computed(function () {
-            return self.preferred_method_of_contact() === "Phone";
-        });
-        self.showSkype = ko.computed(function () {
-            return self.preferred_method_of_contact() === "Skype";
-        });
-        self.showWhatsApp = ko.computed(function () {
-            return self.preferred_method_of_contact() === "WhatsApp";
-        });
-
         self.language__c = ko.observable();
 
         self.areMainFieldsValid = ko.computed(function () {
@@ -97,25 +71,12 @@ hqDefine('analytix/js/cta_forms', [
             });
         });
 
-        self.areContactFieldsValid = ko.computed(function () {
-            if (!self.showContactMethod()) {
-                return true;
-            }
-            if (!self.preferred_method_of_contact()) {
-                return false;
-            }
-            let isWhatsAppValid = self.showWhatsApp() && !!self.preferred_whatsapp_number(),
-                isPhoneValid = self.showPhoneNumber() && !!self.phone(),
-                isSkypeValid = self.showSkype() && !!self.skype__c();
-            return isWhatsAppValid || isPhoneValid || isSkypeValid;
-        });
-
         self.isLanguageFieldValid = ko.computed(function () {
             return !self.showPreferredLanguage() || !!self.language__c();
         });
 
         self.isFormReadyToSubmit = ko.computed(function () {
-            return self.areContactFieldsValid() && self.areMainFieldsValid() && self.isLanguageFieldValid();
+            return self.areMainFieldsValid() && self.isLanguageFieldValid();
         });
 
         self.isSubmitDisabled = ko.computed(function () {
@@ -126,26 +87,6 @@ hqDefine('analytix/js/cta_forms', [
         self.showErrorMessage = ko.computed(function () {
             return !!self.errorMessage();
         });
-
-        var phoneNumberWidget = intlTelInput(config.phoneNumberSelector.get(0), {
-            containerClass: "w-100",
-            separateDialCode: true,
-            loadUtils: () => import("intl-tel-input/utils"),
-            initialCountry: "auto",
-            geoIpLookup: function (success) {
-                $.get("https://ipinfo.io", function () {}, "jsonp").always(function (resp) {
-                    var countryCode = (resp && resp.country) ? resp.country : "";
-                    if (!countryCode) {
-                        countryCode = "us";
-                    }
-                    success(countryCode);
-                });
-            },
-        });
-
-        self.getFullPhoneNumber = function () {
-            return phoneNumberWidget.getNumber();
-        };
 
         self.submitForm = function () {
             let submitData = {
@@ -159,18 +100,6 @@ hqDefine('analytix/js/cta_forms', [
                 page_url: window.location.href,
                 page_name: document.title,
             };
-            if (self.showContactMethod()) {
-                submitData.preferred_method_of_contact = self.preferred_method_of_contact();
-            }
-            if (self.showPhoneNumber()) {
-                submitData.phone = self.phone();
-            }
-            if (self.showWhatsApp()) {
-                submitData.preferred_whatsapp_number = self.preferred_whatsapp_number();
-            }
-            if (self.showSkype()) {
-                submitData.skype__c = self.skype__c();
-            }
             if (self.showPreferredLanguage()) {
                 submitData.language__c = self.language__c();
             }
