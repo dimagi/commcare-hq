@@ -8,6 +8,7 @@
   <form
     hx-post="{{ request.path_info }}"
     hx-target="#{{ container_id }}"
+    hx-disabled-elt="find button"
     hq-hx-action="{{ next_action }}"
   >
     {% crispy form %}
