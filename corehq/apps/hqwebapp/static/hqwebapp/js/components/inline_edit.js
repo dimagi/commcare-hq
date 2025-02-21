@@ -72,7 +72,6 @@ hqDefine('hqwebapp/js/components/inline_edit', [
             self.saveValueName = params.saveValueName || 'value';
             self.hasError = ko.observable(false);
             self.isSaving = ko.observable(false);
-            self.postSave = params.postSave;
 
             // On edit, set editing mode, which controls visibility of inner components
             self.edit = function () {
@@ -118,9 +117,7 @@ hqDefine('hqwebapp/js/components/inline_edit', [
                             self.isSaving(false);
                             self.hasError(false);
                             self.serverValue = self.readOnlyValue;
-                            if (self.postSave) {
-                                self.postSave(data);
-                            }
+                            $(document).trigger("inline-edit-save", data);
                             $(window).off("beforeunload", self.beforeUnload);
                         },
                         error: function (response) {

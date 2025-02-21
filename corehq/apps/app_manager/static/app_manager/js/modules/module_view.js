@@ -1,5 +1,14 @@
 hqDefine("app_manager/js/modules/module_view", function () {
     $(function () {
+        // Module name
+        $(document).on("inline-edit-save", function (e, data) {
+            if (_.has(data.update, '.variable-module_name')) {
+                var appManager = hqImport('app_manager/js/app_manager');
+                appManager.updatePageTitle(data.update['.variable-module_name']);
+                appManager.updateDOM(data.update);
+            }
+        });
+
         $('.case-type-dropdown').select2();
         $('.overwrite-danger').on("click", function () {
             hqImport('analytix/js/kissmetrix').track.event("Overwrite Case Lists/Case Details");
