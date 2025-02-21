@@ -5,7 +5,7 @@ hqDefine('case_importer/js/import_history', [
     'underscore',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/components/inline_edit',
+    'hqwebapp/js/components/bootstrap5/inline_edit',
     'hqwebapp/js/components/pagination',
     'hqwebapp/js/components/search_box',
 ], function (

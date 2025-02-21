@@ -22,7 +22,7 @@ hqDefine("export/js/export_list", [
     'analytix/js/kissmetrix',
     'export/js/utils',
     'hqwebapp/js/bootstrap5/validators.ko',        // needed for validation of startDate and endDate
-    'hqwebapp/js/components/inline_edit',
+    'hqwebapp/js/components/bootstrap5/inline_edit',
     'hqwebapp/js/components/pagination',
     'hqwebapp/js/components/bootstrap5/feedback',
     'select2/dist/js/select2.full.min',

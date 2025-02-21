@@ -12,7 +12,7 @@ hqDefine("registry/js/registry_edit", [
     'hqwebapp/js/bootstrap5/knockout_bindings.ko', // openModal
     'hqwebapp/js/bootstrap5/main', // makeHqHelp
     'hqwebapp/js/multiselect_utils',
-    'hqwebapp/js/components/inline_edit',
+    'hqwebapp/js/components/bootstrap5/inline_edit',
     'commcarehq',
 ], function (
     moment,

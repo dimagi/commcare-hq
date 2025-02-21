@@ -21,7 +21,7 @@
  *  - iconClass: If specified add an icon in front of the container e.g. 'fa fa-envelope
  */
 
-hqDefine('hqwebapp/js/components/inline_edit', [
+hqDefine('hqwebapp/js/components/bootstrap5/inline_edit', [
     'jquery',
     'knockout',
     'underscore',

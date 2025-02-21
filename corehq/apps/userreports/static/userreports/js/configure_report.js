@@ -6,7 +6,7 @@ hqDefine('userreports/js/configure_report', [
     'userreports/js/constants',
     'app_manager/js/forms/case_knockout_bindings',
     'hqwebapp/js/bootstrap3/knockout_bindings.ko',      // sortable and sortableList
-    'hqwebapp/js/components/inline_edit',
+    'hqwebapp/js/components/bootstrap3/inline_edit',
     'hqwebapp/js/components/select_toggle',
     'commcarehq',
 ], function (
