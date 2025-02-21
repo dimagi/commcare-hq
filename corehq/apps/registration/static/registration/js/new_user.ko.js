@@ -187,7 +187,10 @@ hqDefine('registration/js/new_user.ko', [
             });
         self.companyName = ko.observable(defaults.company_name)
             .extend({
-                maxLength: 50,
+                maxLength: {
+                    message: gettext("Please enter fewer than 50 characters."),
+                    params: 50,
+                },
             });
         self.eulaConfirmed = ko.observable(defaults.eula_confirmed || false);
         self.eulaConfirmed.subscribe(function (isConfirmed) {
