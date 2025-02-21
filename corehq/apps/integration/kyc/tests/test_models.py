@@ -9,6 +9,7 @@ from corehq.apps.es.tests.utils import es_test
 from corehq.apps.integration.kyc.models import KycConfig, UserDataStore
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.tests.utils import create_case
+from corehq.motech.const import OAUTH2_CLIENT
 from corehq.motech.models import ConnectionSettings
 
 DOMAIN = 'test-domain'
@@ -33,13 +34,8 @@ class TestGetConnectionSettings(TestCase):
 
         connx = config.get_connection_settings()
         assert isinstance(connx, ConnectionSettings)
-        # First call creates ConnectionSettings
-        assert ConnectionSettings.objects.count() == 1
-
-        connx = config.get_connection_settings()
-        assert isinstance(connx, ConnectionSettings)
-        # Subsequent calls get existing ConnectionSettings
-        assert ConnectionSettings.objects.count() == 1
+        # Doesn't save ConnectionSettings
+        assert ConnectionSettings.objects.count() == 0
 
     def test_bad_config(self):
         config = KycConfig(
@@ -53,6 +49,23 @@ class TestGetConnectionSettings(TestCase):
                   "'invalid'.$",
         ):
             config.get_connection_settings()
+
+    def test_existing_connection_settings(self):
+        connx = ConnectionSettings.objects.create(
+            domain=DOMAIN,
+            name='custom connection',
+            url='https://example.com',
+            auth_type=OAUTH2_CLIENT,
+            client_id='client_id',
+            client_secret='client_secret',
+            token_url='token_url',
+        )
+        config = KycConfig(
+            domain=DOMAIN,
+            user_data_store=UserDataStore.USER_CASE,
+            connection_settings=connx,
+        )
+        assert config.get_connection_settings() == connx
 
 
 class TestGetUserObjectsUsers(TestCase):

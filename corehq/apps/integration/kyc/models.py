@@ -72,7 +72,7 @@ class KycConfig(models.Model):
         if not self.connection_settings_id:
             if self.provider == KycProviders.MTN_KYC:
                 kyc_settings = settings.MTN_KYC_CONNECTION_SETTINGS
-                self.connection_settings = ConnectionSettings.objects.create(
+                return ConnectionSettings(
                     domain=self.domain,
                     name=KycProviders.MTN_KYC.label,
                     url=kyc_settings['url'],
@@ -81,7 +81,6 @@ class KycConfig(models.Model):
                     client_secret=kyc_settings['client_secret'],
                     token_url=kyc_settings['token_url'],
                 )
-                self.save()
             # elif self.provider == KycProviders.NEW_PROVIDER_HERE: ...
             else:
                 raise ValueError(f'Unable to determine connection settings for KYC provider {self.provider!r}.')
