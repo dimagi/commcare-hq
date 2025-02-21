@@ -44,6 +44,13 @@ hqDefine('analytix/js/cta_forms', [
                     params: true,
                 },
             });
+        self.jobtitle = ko.observable()
+            .extend({
+                required: {
+                    message: gettext("Please enter your job title."),
+                    params: true,
+                },
+            });
         self.email = ko.observable()
             .extend({
                 required: {
@@ -64,6 +71,7 @@ hqDefine('analytix/js/cta_forms', [
                 self.firstname,
                 self.lastname,
                 self.company,
+                self.jobtitle,
                 self.email,
             ], function (prop) {
                 return prop() !== undefined && prop.isValid();
@@ -97,6 +105,7 @@ hqDefine('analytix/js/cta_forms', [
                 firstname: self.firstname(),
                 lastname: self.lastname(),
                 company: self.company(),
+                jobtitle: self.jobtitle(),
                 email: self.email(),
                 preferred_language: self.language(),
                 marketing_purposes___how_did_you_hear_about_us_: self.discoverySource(),
