@@ -2,13 +2,13 @@
 {% load hq_shared_tags %}
 
 <div id="ql-toolbar">
-  <select title="header" class="ql-header">
+  <select title="{% trans "header" %}" class="ql-header">
     <option selected="">Paragraph</option>
     <option value="1"></option>
     <option value="2"></option>
     <option value="3"></option>
   </select>
-  <select title="font" class="ql-font">
+  <select title="{% trans "font" %}" class="ql-font">
     <option value="Arial"></option>
     <option value="Courier New"></option>
     <option value="Georgia"></option>
@@ -17,26 +17,34 @@
     <option value="Times New Roman"></option>
     <option value="Verdana"></option>
   </select>
-  <select title="font size" class="ql-size">
+  <select title="{% trans "font size" %}" class="ql-size">
     <option value="small">Small</option>
     <option selected>Default</option>
     <option value="large">Big</option>
     <option value="huge">Huge</option>
   </select>
-  <button title="bold" class="ql-bold"></button>
-  <button title="italic" class="ql-italic"></button>
-  <button title="underline" class="ql-underline"></button>
-  <button title="strike through" class="ql-strike"></button>
-  <select title="text color" class="ql-color"></select>
-  <select title="background color" class="ql-background"></select>
-  <button title="link" class="ql-link"></button>
-  <button title="image" class="ql-image"></button>
-  <button title="ordered list" class="ql-list" value="ordered"></button>
-  <button title="unordered list" class="ql-list" value="bullet"></button>
-  <button title="indent" class="ql-indent" value="-1"></button>
-  <button title="unindent" class="ql-indent" value="+1"></button>
-  <select title="align text" class="ql-align"></select>
-  <button title="clear formatting" class="ql-clean"></button>
+  <button title="{% trans "bold" %}" class="ql-bold"></button>
+  <button title="{% trans "italic" %}" class="ql-italic"></button>
+  <button title="{% trans "underline" %}" class="ql-underline"></button>
+  <button title="{% trans "strike through" %}" class="ql-strike"></button>
+  <select title="{% trans "text color" %}" class="ql-color"></select>
+  <select title="{% trans "background color" %}" class="ql-background"></select>
+  <button title="{% trans "link" %}" class="ql-link"></button>
+  <button title="{% trans "image" %}" class="ql-image"></button>
+  <button
+    title="{% trans "ordered list" %}"
+    class="ql-list"
+    value="ordered"
+  ></button>
+  <button
+    title="{% trans "unordered list" %}"
+    class="ql-list"
+    value="bullet"
+  ></button>
+  <button title="{% trans "indent" %}" class="ql-indent" value="-1"></button>
+  <button title="{% trans "unindent" %}" class="ql-indent" value="+1"></button>
+  <select title="{% trans "align text" %}" class="ql-align"></select>
+  <button title="{% trans "clear formatting" %}" class="ql-clean"></button>
 </div>
 <div data-bind="richEditor: {{ editableText }}"></div>
 
