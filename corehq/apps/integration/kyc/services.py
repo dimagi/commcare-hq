@@ -102,7 +102,7 @@ def verify_user(user_obj, config):
 def save_result(user_obj, config, is_verified):
     update = {
         'kyc_provider': config.provider,
-        'kyc_last_verified_at': datetime.utcnow(),  # TODO: UTC or project timezone?
+        'kyc_last_verified_at': datetime.utcnow().isoformat(),  # TODO: UTC or project timezone?
         'kyc_is_verified': is_verified,
     }
     if config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
