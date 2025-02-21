@@ -59,6 +59,7 @@ hqDefine("app_manager/js/details/screen", function () {
         self.containsSearchConfiguration = options.containsSearchConfiguration;
         self.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
         self.allowsTabs = options.allowsTabs;
+        self.allowsCustomXML = hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML');
 
         let baseCaseTileTemplateOptions = [[null, gettext("Don't Use Case Tiles")]];
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE_CUSTOM')) {
@@ -334,8 +335,7 @@ hqDefine("app_manager/js/details/screen", function () {
             });
         };
         self.allowsEmptyColumns = options.allowsEmptyColumns;
-        self.persistentCaseTileFromModule = (
-            ko.observable(detail.persistent_case_tile_from_module || ""));
+        self.persistentCaseTileFromModule = ko.observable(detail.persistent_case_tile_from_module || "");
         self.fireChange = function () {
             self.fire('change');
         };
@@ -687,12 +687,16 @@ hqDefine("app_manager/js/details/screen", function () {
                 hasAutocomplete: true,
             });
         };
+
+        self.hasGraphing = hqImport('app_manager/js/app_manager').checkCommcareVersion("2.17");
         self.addGraph = function () {
             self.addItem({
                 hasAutocomplete: false,
                 format: 'graph',
             });
         };
+
+        self.hasXpathExpressions = hqImport("hqwebapp/js/initial_page_data").get("add_ons").calc_xpaths;
         self.addXpathExpression = function () {
             self.addItem({
                 hasAutocomplete: false,

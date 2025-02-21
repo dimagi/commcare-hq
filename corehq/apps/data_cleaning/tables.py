@@ -1,5 +1,5 @@
 from django.utils.translation import gettext_lazy
-from django_tables2 import columns
+from django_tables2 import columns, tables
 
 from corehq.apps.hqwebapp.tables.elasticsearch.records import CaseSearchElasticRecord
 from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
@@ -25,4 +25,23 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
     )
     opened_on = columns.Column(
         verbose_name=gettext_lazy("Opened On"),
+    )
+
+
+class CaseCleaningTasksTable(BaseHtmxTable, tables.Table):
+
+    class Meta(BaseHtmxTable.Meta):
+        pass
+
+    status = columns.Column(
+        verbose_name=gettext_lazy("Status"),
+    )
+    time = columns.Column(
+        verbose_name=gettext_lazy("Time"),
+    )
+    case_type = columns.Column(
+        verbose_name=gettext_lazy("Case Type"),
+    )
+    details = columns.Column(
+        verbose_name=gettext_lazy("Details"),
     )

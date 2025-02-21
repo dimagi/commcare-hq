@@ -5,6 +5,8 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.translation import gettext_lazy
 
+from corehq.apps.data_cleaning.exceptions import UnsupportedActionException
+
 
 class BulkEditSessionType:
     CASE = 'case'
@@ -30,6 +32,9 @@ class BulkEditSession(models.Model):
     task_id = models.UUIDField(null=True, blank=True, unique=True, db_index=True)
     result = models.JSONField(null=True, blank=True)
     completed_on = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_on"]
 
 
 class DataType:
@@ -154,7 +159,7 @@ class FilterMatchType:
 class BulkEditColumnFilter(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="column_filters", on_delete=models.CASCADE)
     index = models.IntegerField(default=0)
-    property = models.CharField(max_length=255)  # case property or form question_id
+    prop_id = models.CharField(max_length=255)  # case property or form question_id
     data_type = models.CharField(
         max_length=15,
         default=DataType.TEXT,
@@ -166,6 +171,9 @@ class BulkEditColumnFilter(models.Model):
         choices=FilterMatchType.ALL_CHOICES,
     )
     value = models.TextField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["index"]
 
 
 class PinnedFilterType:
@@ -191,11 +199,14 @@ class BulkEditPinnedFilter(models.Model):
         blank=True,
     )
 
+    class Meta:
+        ordering = ["index"]
+
 
 class BulkEditColumn(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="columns", on_delete=models.CASCADE)
     index = models.IntegerField(default=0)
-    property = models.CharField(max_length=255)  # case property or form question_id
+    prop_id = models.CharField(max_length=255)  # case property or form question_id
     label = models.CharField(max_length=255)
     data_type = models.CharField(
         max_length=15,
@@ -203,6 +214,9 @@ class BulkEditColumn(models.Model):
         choices=DataType.CHOICES,
     )
     is_system = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["index"]
 
 
 class BulkEditRecord(models.Model):
@@ -244,7 +258,7 @@ class BulkEditChange(models.Model):
     change_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     created_on = models.DateTimeField(auto_now_add=True, db_index=True)
     records = models.ManyToManyField(BulkEditRecord, related_name="changes")
-    property = models.CharField(max_length=255)  # case property or form question_id
+    prop_id = models.CharField(max_length=255)  # case property or form question_id
     action_type = models.CharField(
         max_length=12,
         choices=EditActionType.CHOICES,
@@ -252,8 +266,31 @@ class BulkEditChange(models.Model):
     find_string = models.TextField(null=True, blank=True)
     replace_string = models.TextField(null=True, blank=True)
     use_regex = models.BooleanField(default=False)
-    replace_all_string = models.TextField(null=True, blank=True)
-    copy_from_property = models.CharField(max_length=255)
+    copy_from_prop_id = models.CharField(max_length=255)
 
     class Meta:
         ordering = ["created_on"]
+
+    def edited_value(self, case):
+        simple_transformations = {
+            EditActionType.REPLACE: lambda x: self.replace_string,
+            EditActionType.FIND_REPLACE: lambda x: x.replace(self.find_string, self.replace_string),
+            EditActionType.STRIP: str.strip,
+            EditActionType.TITLE_CASE: str.title,
+            EditActionType.UPPER_CASE: str.upper,
+            EditActionType.LOWER_CASE: str.lower,
+            EditActionType.MAKE_EMPTY: lambda x: "",
+            EditActionType.MAKE_NULL: lambda x: None,
+        }
+
+        if self.action_type in simple_transformations:
+            old_value = case.get_case_property(self.prop_id)
+            return simple_transformations[self.action_type](old_value)
+
+        if self.action_type == EditActionType.COPY_REPLACE:
+            return case.get_case_property(self.copy_from_prop_id)
+
+        if self.action_type == EditActionType.RESET:
+            raise UnsupportedActionException(f"{EditActionType.RESET} is not applied by calling edited_value")
+
+        raise UnsupportedActionException(f"edited_value did not recognize action_type {self.action_type}")

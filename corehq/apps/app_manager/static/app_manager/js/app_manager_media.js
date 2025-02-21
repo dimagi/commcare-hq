@@ -8,6 +8,10 @@ hqDefine('app_manager/js/app_manager_media', function () {
                 isDefaultLanguage: initialPageData.get('current_language') === initialPageData.get('default_language'),
             };
 
+        self.trackGoogleEvent = function() {
+            hqImport('analytix/js/google').track.event(...arguments);
+        };
+
         self.enabled = ko.observable(
             o.ref.use_default_media ? self.isDefaultLanguage : true
         );

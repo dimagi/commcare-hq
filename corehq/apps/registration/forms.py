@@ -601,7 +601,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
         )
 
     def clean_email(self):
-        email = self.cleaned_data['email'].strip()
+        email = self.cleaned_data['email'].strip().lower()
 
         from corehq.apps.registration.validation import AdminInvitesUserFormValidator
         error = AdminInvitesUserFormValidator.validate_email(self.domain, email, bool(self.invite))
