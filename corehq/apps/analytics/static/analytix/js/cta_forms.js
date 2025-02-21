@@ -17,12 +17,9 @@ hqDefine('analytix/js/cta_forms', [
         let self = {};
         assertProperties.assertRequired(config, [
             'hubspotFormId',
-            'showPreferredLanguage',
             'nextButtonText',
             'submitCallbackFn',
         ]);
-
-        self.showPreferredLanguage = ko.observable(config.showPreferredLanguage);
 
         self.nextButtonText = ko.observable(config.nextButtonText);
 
@@ -74,7 +71,7 @@ hqDefine('analytix/js/cta_forms', [
         });
 
         self.isLanguageFieldValid = ko.computed(function () {
-            return !self.showPreferredLanguage() || !!self.language();
+            return !!self.language();
         });
 
         self.isDiscoverySourceValid = ko.computed(function () {
@@ -101,6 +98,7 @@ hqDefine('analytix/js/cta_forms', [
                 lastname: self.lastname(),
                 company: self.company(),
                 email: self.email(),
+                preferred_language: self.language(),
                 marketing_purposes___how_did_you_hear_about_us_: self.discoverySource(),
                 if_other___how_did_you_hear_about_us_: self.otherSource(),
 
@@ -108,9 +106,7 @@ hqDefine('analytix/js/cta_forms', [
                 page_url: window.location.href,
                 page_name: document.title,
             };
-            if (self.showPreferredLanguage()) {
-                submitData.preferred_language = self.language();
-            }
+
             $.ajax({
                 method: 'post',
                 url: initialPageData.reverse("submit_hubspot_cta_form"),
