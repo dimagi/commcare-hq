@@ -36,6 +36,17 @@
         </div>
       </div>
     </div>
+    <div class="form-group">
+      <label class="control-label">
+        {% trans "Professional email" %}<span class="asteriskField">*</span>
+      </label>
+      <div class="controls">
+        <input type="email"
+               name="email"
+               data-bind="textInput: email"
+               class="form-control">
+      </div>
+    </div>
     <div class="row">
       <div class="col-sm-6">
         <div class="form-group">
@@ -62,17 +73,6 @@
                   class="form-control">
           </div>
         </div>
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="control-label">
-        {% trans "Professional email address" %}<span class="asteriskField">*</span>
-      </label>
-      <div class="controls">
-        <input type="email"
-               name="email"
-               data-bind="textInput: email"
-               class="form-control">
       </div>
     </div>
     <div class="form-group">
