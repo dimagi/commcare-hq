@@ -546,7 +546,4 @@ def _bulk_case_upload_api(request, domain):
 
 
 def _get_missing_payment_fields(columns):
-    return [
-        field_name for field_name in MOMO_REQUIRED_PAYMENT_FIELDS
-        if field_name not in columns
-    ]
+    return set(MOMO_REQUIRED_PAYMENT_FIELDS) - set(columns)
