@@ -1,6 +1,9 @@
 import architect
 from django.db import models
+from django.conf import settings
 from field_audit import audit_fields
+
+from corehq.util.quickcache import quickcache
 
 AVG = 'AVG'
 MAX = 'MAX'
@@ -97,3 +100,45 @@ class SystemLimit(models.Model):
     def __str__(self):
         domain = f"[{self.domain}] " if self.domain else ""
         return f"{domain}{self.key}: {self.limit}"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.domain:
+            self._get_domain_specific_limit.clear(self.__class__, self.key, self.domain)
+        else:
+            self._get_global_limit.clear(self.__class__, self.key)
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        if self.domain:
+            self._get_domain_specific_limit.clear(self.__class__, self.key, self.domain)
+        else:
+            self._get_global_limit.clear(self.__class__, self.key)
+
+    @classmethod
+    def for_key(cls, key, domain=''):
+        """
+        Return the value associated with the given key, prioritizing the domain specific entry over the general one
+        """
+        domain_limit = cls._get_domain_specific_limit(key, domain) if domain else None
+        if domain_limit is not None:
+            return domain_limit
+        return cls._get_global_limit(key)
+
+    @classmethod
+    @quickcache(['key'], timeout=7 * 24 * 60 * 60, skip_arg=lambda *args, **kwargs: settings.UNIT_TESTING)
+    def _get_global_limit(cls, key):
+        try:
+            return SystemLimit.objects.get(key=key, domain='').limit
+        except SystemLimit.DoesNotExist:
+            return None
+
+    @classmethod
+    @quickcache(
+        ['key', 'domain'], timeout=7 * 24 * 60 * 60, skip_arg=lambda *args, **kwargs: settings.UNIT_TESTING
+    )
+    def _get_domain_specific_limit(cls, key, domain):
+        try:
+            return SystemLimit.objects.get(key=key, domain=domain).limit
+        except SystemLimit.DoesNotExist:
+            return None
