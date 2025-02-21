@@ -226,11 +226,28 @@ def _extract_case_blocks(data, path=None, form_id=Ellipsis):
                 yield from _extract_case_blocks(value, new_path, form_id=form_id)
 
 
-def get_case_updates(xform, for_case=None):
+class TempCaseBlockCache:
+    def __init__(self):
+        self.cache = {}
+
+    def get_case_blocks(self, form):
+        try:
+            case_blocks = self.cache[form.form_id]
+        except KeyError:
+            case_blocks = extract_case_blocks(form)
+            self.cache[form.form_id] = case_blocks
+        return case_blocks
+
+
+def get_case_updates(xform, for_case=None, case_block_cache=None):
     if not xform:
         return []
 
-    updates = [case_update_from_block(cb) for cb in extract_case_blocks(xform)]
+    if case_block_cache:
+        case_blocks = case_block_cache.get_case_blocks(xform)
+    else:
+        case_blocks = extract_case_blocks(xform)
+    updates = [case_update_from_block(cb) for cb in case_blocks]
 
     if for_case:
         updates = [update for update in updates if update.id == for_case]
