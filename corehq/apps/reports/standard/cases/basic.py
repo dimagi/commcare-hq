@@ -1,3 +1,5 @@
+import contextlib
+
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
@@ -107,7 +109,8 @@ class CaseListMixin(ESQueryProfilerMixin, ElasticProjectInspectionReport, Projec
     @memoized
     def es_results(self):
         try:
-            return self._build_query().run().raw
+            with self.profiler.timing_context("ES query") if self.profiler_enabled else contextlib.nullcontext():
+                return self._build_query().run().raw
         except ESError as e:
             original_exception = e.args[0]
             if isinstance(original_exception, TransportError):
@@ -234,3 +237,10 @@ class CaseListReport(CaseListMixin, ProjectReport, ReportDataSource):
                 display.modified_on,
                 display.closed_display
             ]
+
+    @property
+    def json_response(self):
+        with self.profiler.timing_context if self.profiler_enabled else contextlib.nullcontext():
+            response = super().json_response
+
+        return response

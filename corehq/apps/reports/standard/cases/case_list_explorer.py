@@ -96,30 +96,36 @@ class CaseListExplorer(CaseListReport, XpathCaseSearchFilterMixin):
     def _build_query(self, sort=True):
         query = super(CaseListExplorer, self)._build_query()
         query = self._populate_sort(query, sort)
-        query = self.apply_xpath_case_search_filter(query)
+        query = self._apply_xpath_case_search_filter(query)
         return query
 
     def _populate_sort(self, query, sort):
-        if not sort:
-            # Don't sort on export
-            query = query.set_sorting_block(['_doc'])
-            return query
+        with self.profiler.timing_context("Populate sort"):
+            if not sort:
+                # Don't sort on export
+                query = query.set_sorting_block(['_doc'])
+                return query
 
-        num_sort_columns = int(self.request.GET.get('iSortingCols', 0))
-        for col_num in range(num_sort_columns):
-            descending = self.request.GET['sSortDir_{}'.format(col_num)] == 'desc'
-            column_id = int(self.request.GET["iSortCol_{}".format(col_num)])
-            column = self.headers.header[column_id]
-            try:
-                meta_property = INDEXED_METADATA_BY_KEY[column.prop_name]
-                if meta_property.key == '@case_id':
-                    # This condition is added because ES 5 does not allow sorting on _id.
-                    #  When we will have case_id in root of the document, this should be removed.
-                    query.es_query['sort'] = get_case_id_sort_block(descending)
-                    return query
-                query = query.sort(meta_property.es_field_name, desc=descending)
-            except KeyError:
-                query = query.sort_by_case_property(column.prop_name, desc=descending)
+            num_sort_columns = int(self.request.GET.get('iSortingCols', 0))
+            for col_num in range(num_sort_columns):
+                descending = self.request.GET['sSortDir_{}'.format(col_num)] == 'desc'
+                column_id = int(self.request.GET["iSortCol_{}".format(col_num)])
+                column = self.headers.header[column_id]
+                try:
+                    meta_property = INDEXED_METADATA_BY_KEY[column.prop_name]
+                    if meta_property.key == '@case_id':
+                        # This condition is added because ES 5 does not allow sorting on _id.
+                        #  When we will have case_id in root of the document, this should be removed.
+                        query.es_query['sort'] = get_case_id_sort_block(descending)
+                        return query
+                    query = query.sort(meta_property.es_field_name, desc=descending)
+                except KeyError:
+                    query = query.sort_by_case_property(column.prop_name, desc=descending)
+        return query
+
+    def _apply_xpath_case_search_filter(self, query):
+        with self.profiler.timing_context("Apply Xpath case filter"):
+            query = self.apply_xpath_case_search_filter(query)
         return query
 
     @property
@@ -176,8 +182,11 @@ class CaseListExplorer(CaseListReport, XpathCaseSearchFilterMixin):
     @property
     def rows(self):
         self.track_search()
-        data = (wrap_case_search_hit(row) for row in self.es_results['hits'].get('hits', []))
-        return self._get_rows(data)
+
+        with self.profiler.timing_context("Retrieving rows"):
+            data = (wrap_case_search_hit(row) for row in self.es_results['hits'].get('hits', []))
+            with self.profiler.timing_context("Parsing rows"):
+                return self._get_rows(data)
 
     def track_search(self):
         track_workflow(
