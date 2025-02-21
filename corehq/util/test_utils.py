@@ -177,7 +177,7 @@ def disable_overpatch(patch_obj):
         def decorate_callable(func):
             key = getkey(patch)
             if any(key == getkey(p) for p in getattr(func, "patchings", [])):
-                # do not decorate if already patched for this oneshot
+                # do not decorate if already patched
                 return func
             return real_decorate_callable(func)
 
