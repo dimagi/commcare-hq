@@ -99,3 +99,10 @@ class BulkEditChangeTest(TestCase):
             action_type=EditActionType.MAKE_NULL,
         )
         self.assertEqual(change.edited_value(self.case), None)
+
+    def test_reset(self):
+        change = BulkEditChange(
+            prop_id='nearest_ocean',
+            action_type=EditActionType.RESET,
+        )
+        self.assertEqual(change.edited_value(self.case), 'atlantic')

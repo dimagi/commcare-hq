@@ -386,6 +386,7 @@ class BulkEditChange(models.Model):
             EditActionType.LOWER_CASE: str.lower,
             EditActionType.MAKE_EMPTY: lambda x: "",
             EditActionType.MAKE_NULL: lambda x: None,
+            EditActionType.RESET: lambda x: x,
         }
 
         if self.action_type in simple_transformations:
@@ -394,8 +395,5 @@ class BulkEditChange(models.Model):
 
         if self.action_type == EditActionType.COPY_REPLACE:
             return case.get_case_property(self.copy_from_prop_id)
-
-        if self.action_type == EditActionType.RESET:
-            raise UnsupportedActionException(f"{EditActionType.RESET} is not applied by calling edited_value")
 
         raise UnsupportedActionException(f"edited_value did not recognize action_type {self.action_type}")
