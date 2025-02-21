@@ -292,7 +292,7 @@ class BulkEditColumn(models.Model):
             'opened_on': _("Opened On"),
             'opened_by_username': _("Created By"),
             'modified_on': _("Last Modified On"),
-            'status': _("Status"),
+            '@status': _("Status"),
         }
         return known_labels.get(prop_id, prop_id)
 
@@ -307,7 +307,7 @@ class BulkEditColumn(models.Model):
         default_properties = {
             BulkEditSessionType.CASE: (
                 'name', 'owner_name', 'opened_on', 'opened_by_username',
-                'modified_on', 'status',
+                'modified_on', '@status',
             ),
         }.get(session.session_type)
 
