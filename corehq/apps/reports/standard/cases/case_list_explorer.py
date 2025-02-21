@@ -62,6 +62,9 @@ class CaseListExplorer(CaseListReport, XpathCaseSearchFilterMixin):
     documentation_link = DOCS_LINK_CASE_LIST_EXPLORER
     use_bootstrap5 = False
 
+    profiler_enabled = True
+    profiler_name = "Case List Explorer"
+
     exportable = True
     exportable_all = True
     emailable = True

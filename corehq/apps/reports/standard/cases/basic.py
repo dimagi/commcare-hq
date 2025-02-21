@@ -13,7 +13,7 @@ from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard import (
     ProjectReport,
-    ProjectReportParametersMixin,
+    ProjectReportParametersMixin, ESQueryProfilerMixin,
 )
 from corehq.apps.reports.standard.cases.filters import CaseSearchFilter
 from corehq.apps.reports.standard.cases.utils import (
@@ -28,7 +28,7 @@ from corehq.util.es.elasticsearch import TransportError
 from .data_sources import CaseDisplayES
 
 
-class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin):
+class CaseListMixin(ESQueryProfilerMixin, ElasticProjectInspectionReport, ProjectReportParametersMixin):
     fields = [
         'corehq.apps.reports.filters.case_list.CaseListFilter',
         'corehq.apps.reports.filters.select.CaseTypeFilter',
