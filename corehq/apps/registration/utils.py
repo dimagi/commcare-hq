@@ -116,7 +116,7 @@ def activate_new_user(
     return new_user
 
 
-def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=False):
+def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=False, company_name=None):
     now = datetime.utcnow()
     current_user = CouchUser.from_django_user(request.user, strict=True)
 
@@ -155,7 +155,7 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
 
     if not settings.ENTERPRISE_MODE:
         try:
-            _setup_subscription(new_domain.name, current_user)
+            _setup_subscription(new_domain.name, current_user, company_name=company_name)
         except Exception as error:
             # any error thrown in this process will cause the transaction.atomic() block that
             # the subscription setup is wrapped in to fail and any SQL changes related to the subscription
@@ -210,7 +210,7 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
     return new_domain.name
 
 
-def _setup_subscription(domain_name, user):
+def _setup_subscription(domain_name, user, company_name):
     with transaction.atomic():
         ensure_community_or_paused_subscription(
             domain_name, date.today(), SubscriptionAdjustmentMethod.USER,
@@ -219,7 +219,7 @@ def _setup_subscription(domain_name, user):
 
     # add user's email as contact email for billing account for the domain
     account = BillingAccount.get_account_by_domain(domain_name)
-    billing_contact, _ = BillingContactInfo.objects.get_or_create(account=account)
+    billing_contact, _ = BillingContactInfo.objects.get_or_create(account=account, company_name=company_name)
     billing_contact.email_list = [user.email]
     billing_contact.save()
 
