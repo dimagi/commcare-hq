@@ -187,11 +187,12 @@ class WebUserResource(UserResource):
             user = WebUser.get_by_username(username)
             if not (user and user.is_member_of(domain) and user.is_active):
                 user = None
-            return [user] if user else []
-        users = list(WebUser.by_domain(domain))
+            results = [user] if user else []
+        else:
+            results = list(WebUser.by_domain(domain))
         for filter in filters:
-            users = filter(users)
-        return users
+            results = filter(results)
+        return results
 
 
 def _safe_bool(bundle, param, default=False):
