@@ -1,5 +1,3 @@
-import uuid
-
 from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -8,6 +6,7 @@ from django.views.generic import TemplateView
 
 from corehq import toggles
 from corehq.apps.data_cleaning.forms.setup import SelectCaseTypeForm
+from corehq.apps.data_cleaning.models import BulkEditSession
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
@@ -34,15 +33,23 @@ class SetupCaseSessionFormView(HqHtmxActionMixin, LoginAndDomainMixin, DomainVie
     @hq_hx_action('post')
     def validate_session(self, request, *args, **kwargs):
         form = SelectCaseTypeForm(self.domain, request.POST)
+        next_action = 'validate_session'
         if form.is_valid():
-            return self.render_session_redirect()
-        return self.get(request, form=form, *args, **kwargs)
+            case_type = form.cleaned_data['case_type']
+            active_session = BulkEditSession.get_active_case_session(
+                request.user, self.domain, case_type
+            )
+            if not active_session:
+                new_session = BulkEditSession.new_case_session(
+                    request.user, self.domain, case_type
+                )
+                return self.render_session_redirect(new_session)
+        return self.get(request, form=form, next_action=next_action, *args, **kwargs)
 
-    def render_session_redirect(self):
+    def render_session_redirect(self, session):
         from corehq.apps.data_cleaning.views.main import CleanCasesSessionView
-        fake_session_id = uuid.uuid4()
         response = HttpResponse(_("Starting Data Cleaning Session..."))
         response['HX-Redirect'] = reverse(
-            CleanCasesSessionView.urlname, args=(self.domain, fake_session_id, )
+            CleanCasesSessionView.urlname, args=(self.domain, session.session_id, )
         )
         return response
