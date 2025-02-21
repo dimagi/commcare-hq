@@ -297,7 +297,7 @@ def _create_bulk_configs(domain, request, case_upload):
     errors = []
     for index, title in enumerate(worksheet_titles):
         with case_upload.get_spreadsheet(index) as spreadsheet:
-            _, excel_fields, _ = _process_excel_mapping(
+            __, excel_fields, __ = _process_excel_mapping(
                 domain,
                 spreadsheet,
                 request.POST['search_field']
@@ -308,10 +308,8 @@ def _create_bulk_configs(domain, request, case_upload):
                 if missing_fields:
                     errors.append(_(
                         'Sheet with case type "{}" is missing one or more required '
-                        'fields: {}'.format(
-                            title, ', '.join(missing_fields)
-                        )
-                    ))
+                        'fields: {}'
+                    ).format(title, ', '.join(missing_fields)))
                     break
             config = importer_util.ImporterConfig.from_dict({
                 'couch_user_id': request.couch_user._id,
@@ -397,9 +395,9 @@ def excel_fields(request, domain):
             return render_error(
                 request,
                 domain,
-                _('The Excel file is missing the following required fields for the "{}" case type: {}'.format(
+                _('The Excel file is missing the following required fields for the "{}" case type: {}').format(
                     MOMO_PAYMENT_CASE_TYPE, ', '.join(missing_fields)
-                ))
+                )
             )
     context = {
         'case_type': case_type,

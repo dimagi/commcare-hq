@@ -227,8 +227,8 @@ class _TimedAndThrottledImporter:
                     column_name=field_name,
                     message=_(
                         'This field value cannot be set for cases with the '
-                        '"{}" case type.'.format(MOMO_PAYMENT_CASE_TYPE)
-                    ),
+                        '"{}" case type.'
+                    ).format(MOMO_PAYMENT_CASE_TYPE),
                 ))
         for field_name in MOMO_REQUIRED_PAYMENT_FIELDS:
             if field_name not in fields or not fields[field_name]:
@@ -236,8 +236,8 @@ class _TimedAndThrottledImporter:
                     column_name=field_name,
                     message=_(
                         'This field requires a value for cases with the '
-                        '"{}" case type.'.format(MOMO_PAYMENT_CASE_TYPE)
-                    ),
+                        '"{}" case type.'
+                    ).format(MOMO_PAYMENT_CASE_TYPE),
                 ))
         if any(errors):
             raise CaseRowErrorList(errors)
