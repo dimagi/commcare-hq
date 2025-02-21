@@ -29,7 +29,7 @@ from corehq.toggles import (
     BULK_UPLOAD_DATE_OPENED,
     CASE_IMPORT_DATA_DICTIONARY_VALIDATION,
     DOMAIN_PERMISSIONS_MIRROR,
-    MOBILE_WORKER_VERIFICATION,
+    MTN_MOBILE_WORKER_VERIFICATION,
 )
 from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.metrics.load_counters import case_load_counter
@@ -176,7 +176,7 @@ class _TimedAndThrottledImporter:
         search_id = self._parse_search_id(raw_row)
         fields_to_update = self._populate_updated_fields(raw_row)
         if (
-            self.mobile_worker_verification_ff_enabled
+            self.mtn_mobile_worker_verification_ff_enabled
             and self.submission_handler.case_type == MOMO_PAYMENT_CASE_TYPE
         ):
             self._validate_payment_fields(fields_to_update)
@@ -263,8 +263,8 @@ class _TimedAndThrottledImporter:
         return CouchUser.get_by_user_id(self.config.couch_user_id)
 
     @cached_property
-    def mobile_worker_verification_ff_enabled(self):
-        return MOBILE_WORKER_VERIFICATION.enabled(self.domain)
+    def mtn_mobile_worker_verification_ff_enabled(self):
+        return MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain)
 
     def _parse_search_id(self, row):
         """ Find and convert the search id in an Excel row """

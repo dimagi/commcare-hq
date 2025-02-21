@@ -55,7 +55,7 @@ from corehq.apps.reports.analytics.esaccessors import (
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR, MOBILE_WORKER_VERIFICATION
+from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR, MTN_MOBILE_WORKER_VERIFICATION
 from corehq.util.view_utils import absolute_reverse
 from corehq.util.workbook_reading import (
     SpreadsheetFileExtError,
@@ -293,7 +293,7 @@ def _process_excel_mapping(domain, spreadsheet, search_column):
 def _create_bulk_configs(domain, request, case_upload):
     all_configs = []
     worksheet_titles = _get_workbook_sheet_names(case_upload)
-    mobile_worker_verification_ff_enabled = MOBILE_WORKER_VERIFICATION.enabled(domain)
+    mtn_mobile_worker_verification_ff_enabled = MTN_MOBILE_WORKER_VERIFICATION.enabled(domain)
     errors = []
     for index, title in enumerate(worksheet_titles):
         with case_upload.get_spreadsheet(index) as spreadsheet:
@@ -303,7 +303,7 @@ def _create_bulk_configs(domain, request, case_upload):
                 request.POST['search_field']
             )
             excel_fields = list(set(excel_fields) - set(RESERVED_FIELDS))
-            if mobile_worker_verification_ff_enabled and title == MOMO_PAYMENT_CASE_TYPE:
+            if mtn_mobile_worker_verification_ff_enabled and title == MOMO_PAYMENT_CASE_TYPE:
                 missing_fields = _check_payment_fields_exist(excel_fields)
                 if missing_fields:
                     errors.append(_(
@@ -389,7 +389,7 @@ def excel_fields(request, domain):
 
     case_field_specs = [field_spec.to_json() for field_spec in field_specs]
 
-    if MOBILE_WORKER_VERIFICATION.enabled(domain) and case_type == MOMO_PAYMENT_CASE_TYPE:
+    if MTN_MOBILE_WORKER_VERIFICATION.enabled(domain) and case_type == MOMO_PAYMENT_CASE_TYPE:
         missing_fields = _check_payment_fields_exist(columns)
         if any(missing_fields):
             return render_error(

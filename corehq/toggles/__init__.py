@@ -3011,8 +3011,8 @@ KYC_VERIFICATION = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-MOBILE_WORKER_VERIFICATION = StaticToggle(
-    slug='mobile_worker_verification',
+MTN_MOBILE_WORKER_VERIFICATION = StaticToggle(
+    slug='mtn_mobile_worker_verification',
     label='Enable user verification using MTN Mobile Money',
     tag=TAG_SOLUTIONS,
     namespaces=[NAMESPACE_DOMAIN],
