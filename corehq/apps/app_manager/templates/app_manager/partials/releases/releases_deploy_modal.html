@@ -124,13 +124,13 @@
                         </ul>
                       </div>
                       <div class="tab-pane" id="offline-install-tab">
-                        <div data-bind="ifnot: hqImport('app_manager/js/app_manager').versionGE(build_spec.version(), '2.13.0')">
+                        <div data-bind="ifnot: allowOfflineInstall()">
                           Upgrade to CommCare 2.13 to use this feature
                         </div>
                         <div data-bind="ifnot: allow_media_install">
                           Offline install is unavailable for Remote Apps.
                         </div>
-                        <div data-bind="if: hqImport('app_manager/js/app_manager').versionGE(build_spec.version(), '2.13.0') && allow_media_install()">
+                        <div data-bind="if: allowOfflineInstall() && allow_media_install()">
                           {% if build_profile_access and not app.is_remote_app and app.build_profiles %}
                             <div class="form-inline">
                               <label style="font-weight: normal">{% trans "Application Profile" %}:</label>
