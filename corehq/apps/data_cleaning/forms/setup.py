@@ -25,7 +25,6 @@ class SelectCaseTypeForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Field(
                 'case_type',
-                css_class="d-none",
                 x_select2=json.dumps({
                     "placeholder": _("Select a Case Type"),
                 }),
