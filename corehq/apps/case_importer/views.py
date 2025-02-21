@@ -304,7 +304,7 @@ def _create_bulk_configs(domain, request, case_upload):
             )
             excel_fields = list(set(excel_fields) - set(RESERVED_FIELDS))
             if mtn_mobile_worker_verification_ff_enabled and title == MOMO_PAYMENT_CASE_TYPE:
-                missing_fields = _check_payment_fields_exist(excel_fields)
+                missing_fields = _get_missing_payment_fields(excel_fields)
                 if missing_fields:
                     errors.append(_(
                         'Sheet with case type "{}" is missing one or more required '
@@ -390,7 +390,7 @@ def excel_fields(request, domain):
     case_field_specs = [field_spec.to_json() for field_spec in field_specs]
 
     if MTN_MOBILE_WORKER_VERIFICATION.enabled(domain) and case_type == MOMO_PAYMENT_CASE_TYPE:
-        missing_fields = _check_payment_fields_exist(columns)
+        missing_fields = _get_missing_payment_fields(columns)
         if any(missing_fields):
             return render_error(
                 request,
@@ -545,7 +545,7 @@ def _bulk_case_upload_api(request, domain):
     return json_response({"code": 200, "message": "success", "status_url": status_url})
 
 
-def _check_payment_fields_exist(columns):
+def _get_missing_payment_fields(columns):
     return [
         field_name for field_name in MOMO_REQUIRED_PAYMENT_FIELDS
         if field_name not in columns
