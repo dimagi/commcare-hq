@@ -177,7 +177,7 @@ class LocationForm(forms.Form):
         if not self.location.external_id:
             self.fields['external_id'].widget = forms.HiddenInput()
 
-        self.helper = FormHelper()
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.form_tag = False
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
         self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
@@ -412,8 +412,10 @@ class UsersAtLocationForm(forms.Form):
                 _("Specify Workers at this Location"),
                 crispy.Field('selected_ids'),
             ),
-            crispy.ButtonHolder(
-                Submit('submit', gettext_lazy("Update Location Membership"))
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    Submit('submit', gettext_lazy("Update Location Membership"))
+                )
             )
         )
 
@@ -567,12 +569,14 @@ class LocationFilterForm(forms.Form):
                 ),
                 crispy.Field('location_status_active',),
             ),
-            StrictButton(
-                _("Download Locations"),
-                type="submit",
-                css_class="btn btn-primary",
-                data_bind="html: buttonHTML",
-            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Download Locations"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                    data_bind="html: buttonHTML",
+                ),
+            )
         )
 
     def clean_location_id(self):

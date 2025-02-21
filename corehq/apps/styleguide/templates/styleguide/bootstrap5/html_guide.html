@@ -1,0 +1,250 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+{% load hq_shared_tags %}
+
+{% block head %}
+  <script src="{% static 'htmx.org/dist/htmx.min.js' %}"></script>
+{% endblock head %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">HTML Style Guide</h1>
+  <p class="sg-lead">
+    Our standard for formatting HTML.
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li>
+        <a href="#overview">Overview</a>
+        <ul>
+          <li><a href="#tools">Tools for Consistency</a></li>
+        </ul>
+      </li>
+      <li><a href="#indentation">1. Two-Space Indentation</a></li>
+      <li><a href="#block-inline-text">2. Block vs Inline, Text, and Translations</a></li>
+      <li><a href="#attribute-order">3. Attribute Order and Line Breaks</a></li>
+      <li><a href="#attribute-js">4. In-Attribute JavaScript-Like Formatting for Alpine.js</a></li>
+      <li><a href="#attribute-json">5. In-Attribute JSON for <code>hx-vals</code></a></li>
+      <li><a href="#attribute-wrapping">6.  Attribute Wrapping and Line Length</a></li>
+      <li><a href="#self-closing">7.  Self-Closing Elements</a></li>
+      <li><a href="#htmx-alpine-best-practices">8.  Best Practices for Code Readability with HTMX and Alpine</a></li>
+      <li><a href="#example-structure">Example Structure</a></li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <h2 id="overview" class="pt-4">
+    Overview
+  </h2>
+  <p>
+    The guide offered here is a living document and by no means complete. The intention is to standardize and
+    improve the readability of our HTML, especially given an environment where we are making use of more
+    attribute-based frontend libraries like HTMX and Alpine.js.
+  </p>
+  <h3 id="tools" class="pt-3">
+    Tools for Consistency
+  </h3>
+  <p>
+    We are still working on finding a linter to raise formatting issues during pull requests. In the meantime,
+    we request that you make sure your git commit hooks are up-to-date. If you haven't done this in a while,
+    please run <code>git-hooks/install.sh</code> to install the latest commit hooks, including tools to ensure
+    committed HTML is formatted optimally.
+  </p>
+  <h2 id="indentation" class="pt-4">
+    1. Two-Space Indentation
+  </h2>
+  <p>
+    Use two-space indentation for nested content and multi-line attributes. This indentation rule
+    applies to <em>any</em> nested elements, including Django template <code>if</code>/<code>else</code>
+    tags, <code>for</code> loops, etc.
+  </p>
+  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.indentation %}
+
+  <h2 id="block-inline-text" class="pt-4">
+    2. Block vs Inline, Text, and Translations
+  </h2>
+  <p>
+    Elements that are <a href="https://www.w3schools.com/html/html_blocks.asp" target="_blank">block elements</a>
+    should start on their own line. Text within block elements should be indented on a new line as a paragraph
+    within that element if there is more than one line of text.
+  </p>
+  <p>
+    Inline elements, like <code>a</code>, <code>span</code>, <code>code</code>, etc. can be inline with
+    text and other inline elements.
+  </p>
+  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.block_and_inline %}
+
+  <h2 id="attribute-order" class="pt-4">
+    3. Attribute Order and Line Breaks
+  </h2>
+  <ul>
+    <li>
+      <p>
+        <strong>Standard Attributes:</strong> Place primary attributes (e.g., <code>id</code>,
+        <code>class</code>, <code>type</code>) first on the element, followed by a line break
+        if additional attributes exist or if the line exceeds 115 characters when all attributes are inline.
+      </p>
+      {% include 'styleguide/bootstrap5/code_display.html' with content=examples.standard_attributes %}
+    </li>
+    <li>
+      <p>
+        <strong>HTMX Attributes (<code>hx-</code>, <code>hq-hx-</code>):</strong> Place HTMX attributes
+        on their own line immediately after standard attributes. If there are multiple <code>hx-</code>
+        attributes, place each on a separate line.
+      </p>
+    </li>
+    <li>
+      <p>
+        <strong>Alpine.js Attributes:</strong> Place Alpine.js attributes (<code>x-</code>, <code>:&hellip;</code>
+        attributes) after <code>hx-</code> attributes, each on a separate line.
+      </p>
+    </li>
+  </ul>
+
+  <h2 id="attribute-js" class="pt-4">
+    4. In-Attribute JavaScript-Like Formatting for Alpine.js
+  </h2>
+  <p>
+    For complex JavaScript-like values, such as <code>x-data</code>, follow this indentation:
+  </p>
+  <ul>
+    <li>
+      <p>
+        Start the attribute on a new line.
+      </p>
+    </li>
+    <li>
+      <p>
+        Indent JSON or JavaScript-like values by 2 spaces.
+      </p>
+    </li>
+    <li>
+      <p>
+        Align closing brackets with the opening attribute line.
+      </p>
+    </li>
+    <li>
+      <p>
+        As with JavaScript objects, the last element should have a trailing comma.
+      </p>
+    </li>
+  </ul>
+  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.attribute_js %}
+
+  <h2 id="attribute-json" class="pt-4">
+    5. In-Attribute JSON for <code>hx-vals</code>
+  </h2>
+  <p>
+    For hx-vals, JSON should be formatted similarly to point 4, with these additional JSON formatting rules:
+  </p>
+  <ul>
+    <li>
+      <p>
+        Use double quotes around JSON keys and values.
+      </p>
+    </li>
+    <li>
+      <p>
+        Do not include trailing commas for the final key-value pair in the object.
+      </p>
+    </li>
+    <li>
+      <p>
+        For Django Template tags within JSON (e.g., <code>{% verbatim %}{{ }}{% endverbatim %}</code> for variables
+        or <code>{% verbatim %}{% %}{% endverbatim %}</code> for logic), ensure template syntax doesn’t break
+        JSON formatting, paying attention to surrounding quotes.
+      </p>
+    </li>
+  </ul>
+  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.attribute_json %}
+
+  <h2 id="attribute-wrapping" class="pt-4">
+    6.  Attribute Wrapping and Line Length
+  </h2>
+  <p>
+    Limit line length to improve readability, ideally keeping lines below 115 characters
+    maximum, with 80 characters being the best line length for readability.
+  </p>
+  <ul>
+    <li>
+      <p>
+        If the line is less than 80 characters with any attributes (including
+        Alpine and HTMX attributes) then it’s fine to keep all the attributes on a single line.
+      </p>
+      {% include 'styleguide/bootstrap5/code_display.html' with content=examples.attribute_no_wrap %}
+    </li>
+    <li>
+      <p>
+        If the line is more than 80 characters and has HTMX/Alpine/<code>data-</code> attributes, then the
+        HTMX/Alpine/<code>data-</code> attributes should all be on new lines.
+      </p>
+      {% include 'styleguide/bootstrap5/code_display.html' with content=examples.attribute_wrap_data %}
+    </li>
+    <li>
+      <p>
+        If non-HTMX/Alpine/<code>data-</code> attributes exceed 115 characters on one line, wrap
+        attributes so that each line does not exceed 115 characters. Each line may include multiple attributes.
+      </p>
+      {% include 'styleguide/bootstrap5/code_display.html' with content=examples.attribute_wrap_length %}
+    </li>
+  </ul>
+
+  <h2 id="self-closing" class="pt-4">
+    7.  Self-Closing Elements
+  </h2>
+  <p>
+    For self-closing elements, such as <code>&lt;input /&gt;</code>:
+  </p>
+  <ul>
+    <li>
+      <p>
+        Ensure that the trailing slash (<code>/</code>) is included to clearly indicate the element is self-closing.
+      </p>
+    </li>
+    <li>
+      <p>
+        Follow the same attribute ordering and indentation rules as outlined for other elements.
+      </p>
+    </li>
+  </ul>
+  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.self_closing %}
+  <p>
+    If it fits on a single line, remember to still include the trailing slash. Please still follow the rules
+    from point 6 when it comes to attribute wrapping.
+  </p>
+  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.self_closing_line %}
+
+  <h2 id="htmx-alpine-best-practices" class="pt-4">
+    8.  Best Practices for Code Readability with HTMX and Alpine
+  </h2>
+  <ul>
+    <li>
+      <p>
+        <strong>Consistency:</strong> Always follow this attribute order and indentation style
+        throughout the codebase.
+      </p>
+    </li>
+    <li>
+      <p>
+        <strong>Comments:</strong> Use Django template comments (<code>{% verbatim %}{# ... #}{% endverbatim %}</code>)
+        to explain complex Alpine or HTMX interactions when necessary.
+      </p>
+    </li>
+    <li>
+      <p>
+        <strong>Minimize Inline JavaScript:</strong> Keep JavaScript logic within the component or
+        JavaScript files rather than inline, except for simple Alpine data bindings or event handlers.
+      </p>
+    </li>
+  </ul>
+
+  <h2 id="example-structure" class="pt-4">
+    Example Structure
+  </h2>
+  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.final_example %}
+
+{% endblock content %}

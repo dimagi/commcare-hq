@@ -1,4 +1,4 @@
-'use strict';
+
 
 hqDefine('case_search/js/case_search', [
     'jquery',
@@ -12,7 +12,7 @@ hqDefine('case_search/js/case_search', [
     _,
     ko,
     alertUser,
-    initialPageData
+    initialPageData,
 ) {
     var caseSearchModel = function (caseDataUrl) {
         var self = {};
@@ -72,7 +72,7 @@ hqDefine('case_search/js/case_search', [
                     parameters: self.parameters(),
                     customQueryAddition: self.customQueryAddition(),
                     xpath_expressions: _.pluck(self.xpath_expressions(), 'xpath'),
-                }
+                },
                 )}),
                 success: function (data) {
                     self.results(data.values);

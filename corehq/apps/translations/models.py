@@ -3,10 +3,13 @@ from collections import defaultdict
 from django.contrib import admin
 from django.db import models
 from django.urls import reverse
-from django.utils.functional import cached_property
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_app_ids_in_domain
-from corehq.motech.utils import b64_aes_decrypt
+from corehq.motech.const import ALGO_AES_CBC
+from corehq.motech.utils import (
+    b64_aes_cbc_decrypt,
+    b64_aes_cbc_encrypt,
+)
 from corehq.util.quickcache import quickcache
 
 
@@ -165,9 +168,17 @@ class TransifexOrganization(models.Model):
     def __str__(self):
         return self.name + ' (' + self.slug + ')'
 
-    @cached_property
-    def get_api_token(self):
-        return b64_aes_decrypt(self.api_token)
+    @property
+    def plaintext_api_token(self):
+        if self.api_token == '':
+            return ''
+        ciphertext = self.api_token.split('$', 2)[2]
+        return b64_aes_cbc_decrypt(ciphertext)
+
+    @plaintext_api_token.setter
+    def plaintext_api_token(self, plaintext):
+        ciphertext = b64_aes_cbc_encrypt(plaintext)
+        self.api_token = f'${ALGO_AES_CBC}${ciphertext}'
 
 
 class TransifexProject(models.Model):

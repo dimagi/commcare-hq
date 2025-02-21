@@ -1,4 +1,4 @@
-"use strict";
+
 /**
  *  Handles communication with the google tag manager API.
  *  gtx is the filename because some ad blockers blocks 'gtm.js'*
@@ -14,7 +14,7 @@ hqDefine('analytix/js/gtx', [
     _,
     initialAnalytics,
     logging,
-    utils
+    utils,
 ) {
     var _get = initialAnalytics.getFn('gtm'),
         _logger = logging.getLoggerForApi('Google Tag Manager'),
@@ -23,12 +23,36 @@ hqDefine('analytix/js/gtx', [
 
     window.dataLayer = window.dataLayer || [];
 
+    function setAllowedTagTypes() {
+        // https://developers.google.com/tag-platform/tag-manager/restrict
+        // Only allow tags, triggers, and variables we actively use.
+        // Others may come with unknown security risks.
+        var allowList = [
+            'google',   // class that includes GA4 tags, built-in triggers and variables, etc.
+        ];
+
+        // Explicitly block tags, triggers, and variables with known security risks.
+        // Note: blocklist overrides allowlist
+        var blockList = [
+            // Higher risk: running arbitrary code in the browser, DOM manipulation
+            'jsm',      // custom javascript variable
+            'html',     // custom html tag
+
+            // Lower risk: data leakage
+            'img',      // custom image tag
+            'j',        // javascript variable
+            'k',        // first party cookie variable
+        ];
+        window.dataLayer.push({'gtm.allowlist': allowList, 'gtm.blocklist': blockList});
+    }
+
     function addUserPropertiesToDataLayer() {
         var userPropertiesEvent = {
             event: 'userProperties',
             userId: _get('userId', 'none'),
             isDimagi: _get('userIsDimagi', 'no', 'yes'),
             isCommCare: _get('userIsCommCareUser', 'no', 'yes'),
+            isNewUser: _get('isNewUser', 'false'),
             domain: _get('domain', 'none'),
             hqEnvironment: _get('hqInstance', 'none'),
             isTestDomain: _get('isTestDomain', 'none'),
@@ -77,6 +101,7 @@ hqDefine('analytix/js/gtx', [
 
         // userProperties are added to dataLayer at earliest to be readily available once GTM loads
         if (apiId && initialAnalytics.getFn('global')(('isEnabled'))) {
+            setAllowedTagTypes();
             addUserPropertiesToDataLayer();
         }
 

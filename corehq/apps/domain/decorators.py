@@ -108,7 +108,9 @@ def login_and_domain_required(view_func):
 
         if couch_user.is_member_of(domain_obj, allow_enterprise=True):
             if _is_missing_two_factor(view_func, req):
-                return TemplateResponse(request=req, template='two_factor/core/otp_required.html', status=403)
+                return TemplateResponse(request=req,
+                                        template='two_factor/core/bootstrap3/otp_required.html',
+                                        status=403)
             elif not _can_access_project_page(req):
                 return _redirect_to_project_access_upgrade(req)
             elif is_request_blocked_from_viewing_domain_due_to_sso(req, domain_obj):
@@ -319,8 +321,13 @@ def login_or_basic_ex(allow_cc_users=False, allow_sessions=True, require_domain=
     )
 
 
-def login_or_basic_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
-    return _login_or_challenge(basic_or_api_key(), allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
+def login_or_basic_or_api_key_ex(allow_cc_users=False, allow_sessions=True, require_domain=True):
+    return _login_or_challenge(
+        basic_or_api_key(),
+        allow_cc_users=allow_cc_users,
+        allow_sessions=allow_sessions,
+        require_domain=require_domain,
+    )
 
 
 def login_or_digest_ex(allow_cc_users=False, allow_sessions=True, require_domain=True):
@@ -362,7 +369,9 @@ def login_or_oauth2_ex(allow_cc_users=False, allow_sessions=True, require_domain
     )
 
 
-def get_multi_auth_decorator(default, allow_formplayer=False, oauth_scopes=None, allow_creds_in_data=True):
+def get_multi_auth_decorator(
+    default, allow_formplayer=False, oauth_scopes=None, allow_creds_in_data=True, allow_api_key_as_password=False
+):
     """
     :param allow_formplayer: If True this will allow one additional auth mechanism which is used
          by Formplayer:
@@ -371,6 +380,7 @@ def get_multi_auth_decorator(default, allow_formplayer=False, oauth_scopes=None,
              formplayer can not use the session cookie to auth. To allow formplayer access to the
              endpoints we validate each formplayer request using a shared key. See the auth
              function for more details.
+    :param allow_api_key_as_password: If True, allows API Key to be used in BASIC auth
     """
     oauth_scopes = oauth_scopes or ['access_apis']
 
@@ -378,6 +388,8 @@ def get_multi_auth_decorator(default, allow_formplayer=False, oauth_scopes=None,
         @wraps(fn)
         def _inner(request, *args, **kwargs):
             authtype = determine_authtype_from_request(request, default=default)
+            assert not (authtype == DIGEST and allow_api_key_as_password), \
+                'api keys as passwords are not supported for digest auth'
             if authtype == FORMPLAYER and not allow_formplayer:
                 auth_logger.info(
                     "Request rejected reason=%s request=%s",
@@ -389,6 +401,7 @@ def get_multi_auth_decorator(default, allow_formplayer=False, oauth_scopes=None,
                 allow_cc_users=True,
                 oauth_scopes=oauth_scopes,
                 allow_creds_in_data=allow_creds_in_data,
+                allow_api_key_as_password=allow_api_key_as_password,
             )[authtype]
             return function_wrapper(fn)(request, *args, **kwargs)
         return _inner
@@ -414,6 +427,23 @@ def api_auth(*, allow_creds_in_data=True, oauth_scopes=None):
         default=DIGEST,
         oauth_scopes=oauth_scopes,
         allow_creds_in_data=allow_creds_in_data,
+        allow_api_key_as_password=False,  # if supporting digest auth, you cannot use an api key as a password
+    )
+
+
+def api_auth_allow_key_as_password_LIMITED_USE(*, allow_creds_in_data=True, oauth_scopes=None):
+    """
+    Intentionally does not support digest auth to allow using api key as password if desired.
+    See determine_authtype_from_header for more details on how defaulting to BASIC drops DIGEST support
+    This decorator arose because our previous version of authenticating through API keys
+    (providing an authentication header) was not being respected by Excel. This decorator should be used
+    sparingly, as we do not want the widespread ability to circumvent normal BASIC authentication
+    """
+    return get_multi_auth_decorator(
+        default=BASIC,
+        oauth_scopes=oauth_scopes,
+        allow_creds_in_data=allow_creds_in_data,
+        allow_api_key_as_password=True,
     )
 
 
@@ -433,7 +463,13 @@ def get_auth_decorator_map(
         allow_sessions=True,
         oauth_scopes=None,
         allow_creds_in_data=True,
+        allow_api_key_as_password=False,
 ):
+    # Due to the high risk of our login flows, leaving a safety net here to guard against
+    # non-domain endpoints accepting API keys as passwords. We have no current use for this combination,
+    # but this check can be removed if we create new global endpoints that should support api keys as passwords
+    assert not (require_domain is False and allow_api_key_as_password), \
+        'only domain endpoints support API key authentication'
     # get a mapped set of decorators for different auth types with the specified parameters
     oauth_scopes = oauth_scopes or ['access_apis']
     decorator_function_kwargs = {
@@ -441,9 +477,16 @@ def get_auth_decorator_map(
         'require_domain': require_domain,
         'allow_sessions': allow_sessions,
     }
+
+    basic_auth_fn = (
+        login_or_basic_or_api_key_ex(**decorator_function_kwargs)
+        if allow_api_key_as_password
+        else login_or_basic_ex(**decorator_function_kwargs)
+    )
+
     return {
         DIGEST: login_or_digest_ex(**decorator_function_kwargs),
-        BASIC: login_or_basic_ex(**decorator_function_kwargs),
+        BASIC: basic_auth_fn,
         API_KEY: login_or_api_key_ex(allow_creds_in_data=allow_creds_in_data,
                                      **decorator_function_kwargs),
         OAUTH2: login_or_oauth2_ex(oauth_scopes=oauth_scopes, **decorator_function_kwargs),

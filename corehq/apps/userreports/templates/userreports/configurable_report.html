@@ -1,17 +1,9 @@
-{% extends "reports_core/bootstrap3/base_template_new.html" %}
+{% extends "userreports/base.html" %}
 {% load compress %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% block js %}{{ block.super }}
-  {% compress js %}
-    <script src="{% static 'reports/js/reports.util.js' %}"></script>
-    <script src="{% static 'reports/js/bootstrap3/hq_report.js' %}"></script>
-    <script src="{% static 'reports/js/bootstrap3/standard_hq_report.js' %}"></script>
-    <script src="{% static 'reports/js/bootstrap3/report_config_models.js' %}"></script>
-    <script src="{% static 'userreports/js/configurable_report.js' %}"></script>
-  {% endcompress %}
-{% endblock %}
+{% js_entry_b3 "userreports/js/configurable_report" %}
 
 {% block report_alerts %}
   {{ block.super }}
@@ -20,7 +12,6 @@
 
 {% block page_actions %}
   {% registerurl 'add_report_config' domain %}
-  {% initial_page_data 'standardHQReport' True %}
   {% initial_page_data 'builder_report_type' report.spec.report_meta.builder_report_type %}
   {% initial_page_data 'report_builder_events' report_builder_events %}
   {% initial_page_data 'default_config' default_config %}
@@ -32,17 +23,9 @@
     {% initial_page_data 'startdate' datespan.startdate|date:"Y-m-d" %}
     {% initial_page_data 'enddate' datespan.enddate|date:"Y-m-d" %}
   {% endif %}
-  {% initial_page_data 'domain' domain %}
-  {% initial_page_data 'url_root' report.url_root %}
-  {% initial_page_data 'slug' report.slug %}
-  {% initial_page_data 'sub_slug' report.sub_slug %}
   {% initial_page_data 'type' report.type %}
-  {% initial_page_data 'filter_set' report.filter_set %}
-  {% initial_page_data 'needs_filters' report.needs_filters %}
-  {% initial_page_data 'is_exportable' report.is_exportable %}
-  {% initial_page_data 'is_export_all' report.is_export_all %}
-  {% initial_page_data 'is_emailable' report.is_emailable %}
-  {% initial_page_data 'title' report.title %}
+  {% initial_page_data 'js_options' js_options %}
+  {% initial_page_data 'override_report_render_url' True %}
 
   {% if has_report_builder_trial %}
     <a class="btn btn-primary" href="{% url 'report_builder_paywall_pricing' domain %}">

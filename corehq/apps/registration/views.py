@@ -49,6 +49,7 @@ from corehq.apps.registration.models import (
     RegistrationRequest,
     SelfSignupWorkflow,
 )
+from corehq.apps.registration.rate_limiter import rate_limit_check_username_availability
 from corehq.apps.registration.utils import (
     activate_new_user_via_reg_form,
     project_logo_emails_context,
@@ -181,7 +182,6 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                     self.request,
                     reg_form.cleaned_data['project_name'],
                     is_new_user=True,
-                    is_self_signup=False  # TODO: connect this to RegisterWebUserForm
                 )
             except NameUnavailableException:
                 # technically, the form should never reach this as names are
@@ -214,6 +214,12 @@ class ProcessRegistrationView(JSONResponseMixin, View):
 
     @allow_remote_invocation
     def check_username_availability(self, data):
+        if rate_limit_check_username_availability():
+            return {
+                'isValid': False,
+                'message': _("Please try again."),
+            }
+
         email = data['email'].strip()
         duplicate = CouchUser.get_by_username(email)
         is_existing = User.objects.filter(username__iexact=email).count() > 0 or duplicate
@@ -296,23 +302,6 @@ class UserRegistrationView(BasePageView):
             'reg_form': RegisterWebUserForm(initial=prefills),
             'reg_form_defaults': prefills,
             'hide_password_feedback': has_custom_clean_password(),
-            'professional_features': [
-                _("Custom mobile app builder"),
-                _("Powerful case management"),
-                _("Field staff reports"),
-                _("Unlimited mobile users"),
-                _("Full suite of data tools"),
-                _("3rd party integrations"),
-                _("2-way SMS workflows"),
-                _("Guaranteed tech support"),
-                _("Access to Dimagi's Customer Success team"),
-            ],
-            'community_features': [
-                _("Custom mobile app builder"),
-                _("Basic case management"),
-                _("Field staff reports"),
-                _("5 mobile users"),
-            ],
         }
         if settings.IS_SAAS_ENVIRONMENT:
             context['demo_workflow_ab_v2'] = ab_tests.SessionAbTest(

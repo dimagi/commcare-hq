@@ -13,7 +13,7 @@ from corehq.blobs.models import BlobMeta as ShardedModel  # arbitrary SQL model
 def test_database_blocker():
     assert not settings.DB_ENABLED
 
-    with pytest.raises(AttributeError, match="Mock object has no attribute 'info'"):
+    with pytest.raises(RuntimeError, match=re.compile("^Database access not allowed")):
         CouchModel.get_db().info
 
     with pytest.raises(RuntimeError, match=re.compile("^Database access not allowed")):

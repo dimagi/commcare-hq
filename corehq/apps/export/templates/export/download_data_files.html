@@ -5,9 +5,7 @@
 
 {% block title %}{% trans "Download Files" %}{% endblock %}
 
-
-{% requirejs_main_b5 'export/js/download_data_files' %}
-
+{% js_entry 'export/js/download_data_files' %}
 
 {% block page_content %}
   {% registerurl 'download_data_file' domain '---' '---' %}

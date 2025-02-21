@@ -9,7 +9,7 @@ hqDefine('hqwebapp/js/base_ace', [
     _,
     ko,
     ace,
-    initialPageData
+    initialPageData,
 ) {
     var self = {};
     self.editor = [];
@@ -54,6 +54,8 @@ hqDefine('hqwebapp/js/base_ace', [
         editor.getSession().on('change', function () {
             $element.val(editor.getSession().getValue());
         });
+
+        return editor;
     };
 
     var getEditors = function () {

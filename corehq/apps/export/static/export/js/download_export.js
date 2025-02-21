@@ -17,9 +17,10 @@ hqDefine('export/js/download_export', [
     'analytix/js/google',
     'analytix/js/kissmetrix',
     'reports/js/filters/bootstrap5/main',
-    'reports/js/reports.util',
+    'reports/js/util',
     'export/js/utils',
     'jquery.cookie/jquery.cookie',      // for resuming export downloads on refresh
+    'commcarehq',
 ], function (
     $,
     ko,
@@ -31,10 +32,8 @@ hqDefine('export/js/download_export', [
     kissmetricsAnalytics,
     reportFilters,
     reportUtils,
-    exportUtils
+    exportUtils,
 ) {
-    'use strict';
-
     var downloadFormModel = function (options) {
         assertProperties.assert(options, [
             'defaultDateRange',
@@ -367,7 +366,7 @@ hqDefine('export/js/download_export', [
         };
 
         self._dealWithErrors = function (data) {
-            if (self._numErrors > 3) {
+            if (self._numErrors > 3 || data.retry === false) {
                 if (data && data.error) {
                     self.downloadError(data.error);
                 } else {

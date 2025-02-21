@@ -1,0 +1,27 @@
+{% extends "hqwebapp/bootstrap5/base_page.html" %}
+{% load i18n %}
+
+{% block page_content %}
+  <h1>{% block title %}{% trans "Please set up Two-Factor Authentication" %}{% endblock %}</h1>
+
+  <p>
+    {% blocktrans %}
+      For security purposes, your CommCare administrator has required that all users in your project set up
+      two-factor authentication.<br>This is an extra layer of protection used to ensure the security of your account
+      beyond a username and password. 
+    {% endblocktrans %}
+  </p>
+
+  <p>
+    {% blocktrans %}
+      To access your account, please enable two-factor authentication below.
+    {% endblocktrans %}
+  </p>
+
+  <p>
+    <a href="{% url "domain_select_redirect" %}"
+       class="float-end btn btn-link">{% trans "Go back" %}</a>
+    <a href="{% url 'two_factor:setup' %}" class="btn btn-primary">
+      {% trans "Enable Two-Factor Authentication" %}</a>
+  </p>
+{% endblock %}

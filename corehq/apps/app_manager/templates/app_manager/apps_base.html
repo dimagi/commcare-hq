@@ -5,20 +5,15 @@
 {% load i18n %}
 {% load compress %}
 
-{% comment %}
-  This template expects to be passed an app.
-{% endcomment %}
-
 {% block page_sidebar_classes %}
   appmanager-sidebar
 {% endblock %}
-
 
 {% block page_content_classes %}
   appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% endif %}
 {% endblock %}
 
-{% block title %}{% trans "Applications" %}{% endblock %}
+{% block title %}{{ module.name|clean_trans:langs }}{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
   {% include 'app_manager/partials/apps_stylesheets.html' %}
@@ -62,14 +57,44 @@
   {% endcompress %}
 
   {% include 'hqwebapp/includes/atwho.html' %}
-  <script src="{% static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
-  <script src="{% static 'hqwebapp/js/bootstrap-multi-typeahead.js' %}"></script>
 
   {% include 'hqwebapp/includes/ui_element_js.html' %}
   {% compress js %}
     <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
     <script src="{% static 'jquery-textchange/jquery.textchange.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/select2_knockout_bindings.ko.js' %}"></script>
+    <script src="{% static 'app_manager/js/section_changer.js' %}"></script>
+    <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
+    <script src="{% static 'app_manager/js/preview_app.js' %}"></script>
+    <script src="{% static 'app_manager/js/apps_base.js' %}"></script>
+    <script src="{% static 'app_manager/js/menu.js' %}"></script>
+    <script src="{% static 'app_manager/js/app_manager.js' %}"></script><!-- depends on menu.js -->
+    <script src="{% static 'app_manager/js/managed_app.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/bootstrap3/rollout_modal.js' %}"></script>
+    <script src="{% static 'app_manager/js/custom_assertions.js' %}"></script>
   {% endcompress %}
+{% endblock %}
+
+{% block page_navigation %}
+  {% if app %}
+    <div class="appmanager-loading-container">
+      <div class="appmanager-loading appmanager-loading-nav">
+        <i class="fa fa-spin fa-spinner"></i>
+      </div>
+    </div>
+    <nav class="appmanager-content">
+
+      {% include 'app_manager/partials/appnav_menu_header.html' with domain=domain app_id=app.id app_name=app.name releases_active=release_manager settings_active=is_app_settings_page linked_name=linked_name linked_version=app.upstream_version %}
+
+      {% if app.get_doc_type == 'Application' %}
+        {% if not app.is_remote_app and app.langs|length > 1%}
+          {% include 'app_manager/partials/appnav_menu_langs.html' with app_langs=app.langs langs=langs %}
+        {% endif %}
+
+        {% include 'app_manager/partials/menu/appnav_menu.html' %}
+      {% endif %}
+    </nav>
+  {% endif %}
 {% endblock %}
 
 {% block page_breadcrumbs %}{% endblock %}
@@ -79,6 +104,9 @@
   {% include 'app_manager/partials/preview_app.html'%}
 {% endblock %}
 
+{% block pre_page_content %}
+{% endblock %}
+
 {% block page_content %}
   <div class="appmanager-loading-bg">
   </div>
@@ -86,7 +114,16 @@
        id="js-appmanager-body">
     {% include 'app_manager/partials/vellum_case_management_warning.html' %}
 
-    {% block app-content %}{% endblock %}
+    {% initial_page_data 'latest_commcare_version' latest_commcare_version %}
+    {% initial_page_data 'app_subset' app_subset %}
+    {% initial_page_data 'formdesigner' formdesigner %}
+    {% initial_page_data 'add_ons' add_ons %}
+    {% initial_page_data 'add_ons_layout' add_ons_layout %}
+    {% registerurl 'current_app_version' domain app.id %}
+    {% registerurl "new_form" domain app.id "---" %}
+    {% block pre_form_content %}{% endblock %}
+    {% block form-view %}{% endblock %}
+    {% include 'app_manager/partials/add_item_templates.html' %}
   </div>
 {% endblock %}
 
@@ -97,6 +134,8 @@
   {% if app.is_deleted %}
     {% include 'app_manager/partials/undo_delete_app.html' %}
   {% endif %}
+  {% include "hqwebapp/bootstrap3/rollout_revert_modal.html" %}
+  {% include 'app_manager/partials/confirm_delete_app.html' %}
 {% endblock modals %}
 
 {% block page_row_classes %}appmanager-content-row{% endblock %}

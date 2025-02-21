@@ -1,4 +1,4 @@
-{% extends "base_template.html" %}
+{% extends "geospatial/base_template.html" %}
 
 {% load hq_shared_tags %}
 {% load compress %}
@@ -7,11 +7,7 @@
 {{ current_page.title }}
 {% endblock %}
 
-{% block js %}{{ block.super }}
-    {% compress js %}
-        <script src="{% static 'geospatial/js/case_management.js' %}"></script>
-    {% endcompress %}
-{% endblock %}
+{% js_entry_b3 'geospatial/js/case_management' %}
 
 {% block additional_initial_page_data %}{{ block.super }}
     {% initial_page_data "saved_polygons" saved_polygons %}

@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine('geospatial/js/models', [
     'jquery',
     'knockout',
@@ -6,25 +6,37 @@ hqDefine('geospatial/js/models', [
     'hqwebapp/js/initial_page_data',
     'geospatial/js/utils',
     'hqwebapp/js/bootstrap3/alert_user',
+    'mapbox-gl',
+    '@mapbox/mapbox-gl-draw',
+    '@turf/turf',
+    'hqwebapp/js/components/pagination',
 ], function (
     $,
     ko,
     _,
     initialPageData,
     utils,
-    alertUser
+    alertUser,
+    mapboxgl,
+    MapboxDraw,
+    turf,
 ) {
-    const DOWNPLAY_OPACITY = 0.2;
     const FEATURE_QUERY_PARAM = 'features';
     const SELECTED_FEATURE_ID_QUERY_PARAM = 'selected_feature_id';
     const DEFAULT_CENTER_COORD = [-20.0, -0.0];
     const DISBURSEMENT_LAYER_PREFIX = 'route-';
-    const saveGeoPolygonUrl = initialPageData.reverse('geo_polygons');
-    const reassignCasesUrl = initialPageData.reverse('reassign_cases');
     const unexpectedErrorMessage = gettext(
         "Oops! Something went wrong!" +
-        " Please report an issue if the problem persists."
+        " Please report an issue if the problem persists.",
     );
+    const caseMarkerColors = {
+        'default': "#808080", // Gray
+        'selected': "#00FF00", // Green
+    };
+    const userMarkerColors = {
+        'default': "#0e00ff", // Blue
+        'selected': "#0b940d", // Dark Green
+    };
 
     var MissingGPSModel = function () {
         this.casesWithoutGPS = ko.observable([]);
@@ -38,42 +50,31 @@ hqDefine('geospatial/js/models', [
         self.geoJson = polygon.geo_json;
     };
 
-    var MapItem = function (itemId, itemData, marker, markerColors) {
-        var self = this;
-        self.itemId = itemId;
-        self.itemData = itemData;
-        self.marker = marker;
-        self.selectCssId = "select" + itemId;
-        self.isSelected = ko.observable(false);
-        self.markerColors = markerColors;
-
-        self.groupId = null;
-        self.groupCoordinates = null;
-
-        self.setMarkerOpacity = function (opacity) {
-            const element = self.marker.getElement();
-            const svg = element.getElementsByTagName("svg")[0];
-            svg.setAttribute("opacity", opacity);
-        };
-
-        function changeMarkerColor(selectedCase, newColor) {
-            let marker = selectedCase.marker;
-            let element = marker.getElement();
-            let svg = element.getElementsByTagName("svg")[0];
-            let path = svg.getElementsByTagName("path")[0];
-            path.setAttribute("fill", newColor);
-        }
+    var MapItem = function (data, mapModel) {
+        let self = this;
+        self.itemId = data.id;
+        self.name = data.name;
+        self.coordinates = data.coordinates;
+        self.itemType = data.itemType;
+        self.link = data.link;
+        self.selectCssId = `select_${self.itemId}`;
+        self.isSelected = ko.observable(data.isSelected);
+        self.mapModel = mapModel;
+        self.customData = data.customData;
 
         self.getItemType = function () {
-            if (self.itemData.type === "user") {
+            if (self.itemType === 'user') {
                 return gettext("Mobile Worker");
             }
             return gettext("Case");
         };
 
+        function changeMarkerColor(val) {
+            self.mapModel.updatePropertyInSource(self.itemId, 'selected', val);
+            self.mapModel.refreshSource();
+        }
+
         self.updateCheckbox = function () {
-            // Need to update the checkbox through JQuery as we can't rely on dynamically changing its value
-            // with an observable. Doing so breaks all KO bindings in the element
             const checkbox = $(`#${self.selectCssId}`);
             if (!checkbox) {
                 return;
@@ -82,16 +83,33 @@ hqDefine('geospatial/js/models', [
         };
 
         self.isSelected.subscribe(function () {
-            // Popup might be open when value changes, so make sure checkbox shows correct value
             self.updateCheckbox();
-            var color = self.isSelected() ? self.markerColors.selected : self.markerColors.default;
-            changeMarkerColor(self, color);
+            const isSelected = self.isSelected().toString();
+            changeMarkerColor(isSelected);
         });
 
         self.getJson = function () {
             return {
                 'id': self.itemId,
-                'text': self.itemData.name,
+                'text': self.name,
+            };
+        };
+
+        self.getGeoJson = function () {
+            return {
+                'type': 'Feature',
+                'geometry': {
+                    'type': 'Point',
+                    'coordinates': [
+                        self.coordinates.lng,
+                        self.coordinates.lat,
+                    ],
+                },
+                'properties': {
+                    'selected': self.isSelected().toString(),  // Can only use numbers and strings, so use a str to represent true/false
+                    'id': self.itemId,
+                    'type': self.itemType,
+                },
             };
         };
     };
@@ -103,9 +121,10 @@ hqDefine('geospatial/js/models', [
         self.link = link;
         self.groupId = null;
         self.groupCoordinates = null;
+        self.coordinates = itemData.coordinates;
 
         self.toJson = function () {
-            const coordinates = (self.itemData.coordinates) ? `${self.itemData.coordinates.lng} ${self.itemData.coordinates.lat}` : "";
+            const coordinates = (self.coordinates) ? `${self.coordinates.lng} ${self.coordinates.lat}` : "";
             const groupCoordinates = (self.groupCoordinates) ? `${self.groupCoordinates.lng} ${self.groupCoordinates.lat}` : "";
             return {
                 'groupId': self.groupId,
@@ -122,6 +141,14 @@ hqDefine('geospatial/js/models', [
     var Map = function (usesClusters, usesStreetsLayers) {
         var self = this;
 
+        self.userLayerName = 'user-points';
+        self.caseLayerName = 'case-points';
+        self.dataPointsSourceName = 'data-points';
+        self.sourceData = {
+            'type': 'FeatureCollection',
+            'features': [],
+        };
+
         self.usesClusters = usesClusters;
         self.usesStreetsLayers = usesStreetsLayers;
 
@@ -133,13 +160,15 @@ hqDefine('geospatial/js/models', [
 
         self.caseGroupsIndex = {};
 
+        self.DISBURSEMENT_LINES_LAYER_ID = 'disbursement-lines';
+
         self.initMap = function (mapDivId, centerCoordinates) {
-            mapboxgl.accessToken = initialPageData.get('mapbox_access_token');  // eslint-disable-line no-undef
+            mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
             if (!centerCoordinates) {
                 centerCoordinates = [-91.874, 42.76]; // should be domain specific
             }
 
-            self.mapInstance = new mapboxgl.Map({  // eslint-disable-line no-undef
+            self.mapInstance = new mapboxgl.Map({
                 container: mapDivId, // container ID
                 style: 'mapbox://styles/mapbox/streets-v12', // style URL
                 center: centerCoordinates, // starting position [lng, lat]
@@ -148,7 +177,7 @@ hqDefine('geospatial/js/models', [
                              ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
             });
 
-            self.drawControls = new MapboxDraw({  // eslint-disable-line no-undef
+            self.drawControls = new MapboxDraw({
                 // API: https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md
                 displayControlsDefault: false,
                 boxSelect: true, // enables box selection
@@ -160,10 +189,12 @@ hqDefine('geospatial/js/models', [
             self.mapInstance.addControl(self.drawControls);
 
             // Add zoom and rotation controls to the map.
-            self.mapInstance.addControl(new mapboxgl.NavigationControl());  // eslint-disable-line no-undef
+            self.mapInstance.addControl(new mapboxgl.NavigationControl());
 
             if (self.usesClusters) {
                 createClusterLayers();
+            } else {
+                self.mapInstance.on('load', createMarkerLayers);
             }
 
             if (self.usesStreetsLayers) {
@@ -171,6 +202,116 @@ hqDefine('geospatial/js/models', [
                 addLayersToPanel();
             }
         };
+
+        self.addDataToSource = function (features) {
+            self.sourceData.features = self.sourceData.features.concat(features);
+            self.refreshSource();
+        };
+
+        self.removeItemTypeFromSource = function (itemType) {
+            self.sourceData.features = self.sourceData.features.filter(
+                feature => feature.properties.type !== itemType,
+            );
+            self.refreshSource();
+        };
+
+        self.refreshSource = function () {
+            let source = self.mapInstance.getSource(self.dataPointsSourceName);
+            if (!source) {
+                return;
+            }
+            source.setData(self.sourceData);
+        };
+
+        self.updatePropertyInSource = function (itemId, propName, propVal) {
+            const featureIndex = self.sourceData.features.findIndex(feature => feature.properties.id === itemId);
+            if (featureIndex >= 0) {
+                self.sourceData.features[featureIndex].properties[propName] = propVal;
+                self.refreshSource();
+            }
+        };
+
+        function createMarkerLayers() {
+            self.mapInstance.addSource(self.dataPointsSourceName, {
+                'type': 'geojson',
+                'data': self.sourceData,
+            });
+
+            self.mapInstance.loadImage(
+                'https://docs.mapbox.com/mapbox-gl-js/assets/custom_marker.png',
+                (error, image) => {
+                    if (error) {
+                        alertUser.alert_user(unexpectedErrorMessage, 'danger');
+                        return;
+                    }
+                    self.mapInstance.addImage('custom-marker', image, {sdf: true});
+                    self.createMarkerLayer('case-points', self.dataPointsSourceName, 'case', caseMarkerColors.default, caseMarkerColors.selected);
+                    self.mapInstance.on('click', 'case-points', (e) => {
+                        markerClickEvent(e, 'case');
+                    });
+                    self.createMarkerLayer('user-points', self.dataPointsSourceName, 'user', userMarkerColors.default, userMarkerColors.selected);
+                    self.mapInstance.on('click', 'user-points', (e) => {
+                        markerClickEvent(e, 'user');
+                    });
+                },
+            );
+        }
+
+        self.createMarkerLayer = function (layerName, source, itemType, defaultColor, selectedColor) {
+            self.mapInstance.addLayer({
+                'id': layerName,
+                'type': 'symbol',
+                'source': source,
+                'layout': {
+                    'icon-image': 'custom-marker',
+                    'icon-size': [
+                        'interpolate',
+                        ['exponential', 2],
+                        ['zoom'],
+                        5, 0.35,
+                        15, 3,
+                    ],
+                    'icon-allow-overlap': true,
+                },
+                'paint': {
+                    'icon-color': [
+                        'match',
+                        ['get', 'selected'],
+                        'false',
+                        defaultColor,
+                        'true',
+                        selectedColor,
+                        '#0000FF',
+                    ],
+                },
+                'filter': ['==', ['get', 'type'], itemType],
+            });
+        };
+
+        function markerClickEvent(e, itemType) {
+            const coordinates = e.features[0].geometry.coordinates.slice();
+            const markerId = e.features[0].properties.id;
+
+            // Ensure that if the map is zoomed out such that multiple
+            // copies of the feature are visible, the popup appears
+            // over the copy being pointed to.
+            if (['mercator', 'equirectangular'].includes(self.mapInstance.getProjection().name)) {
+                while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                    coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                }
+            }
+
+            const popupDiv = document.createElement('div');
+            const markerItems = (itemType === 'user') ? self.userMapItems() : self.caseMapItems();
+            const mapItem = markerItems.find((mapItem) => {
+                return markerId === mapItem.itemId;
+            });
+
+            const openFunc = () => mapItem.updateCheckbox();
+            const popup = utils.createMapPopup(coordinates, popupDiv, openFunc);
+            popup.addTo(self.mapInstance);
+            $(popupDiv).koApplyBindings(mapItem);
+        }
 
         function loadMapBoxStreetsLayers() {
             self.mapInstance.on('load', () => {
@@ -349,95 +490,6 @@ hqDefine('geospatial/js/models', [
             });
         }
 
-        self.removeMarkersFromMap = function (itemArr) {
-            _.each(itemArr, function (currItem) {
-                currItem.marker.remove();
-            });
-        };
-
-        self.addMarkersToMap = function (itemArr, markerColours) {
-            let outArr = [];
-            _.forEach(itemArr, function (item, itemId) {
-                const coordinates = item.coordinates;
-                if (coordinates && coordinates.lat && coordinates.lng) {
-                    const mapItem = addMarker(itemId, item, markerColours);
-                    outArr.push(mapItem);
-                }
-            });
-            return outArr;
-        };
-
-        function addMarker(itemId, itemData, colors) {
-            const coordinates = itemData.coordinates;
-            // Create the marker
-            const marker = new mapboxgl.Marker({ color: colors.default, draggable: false });  // eslint-disable-line no-undef
-            marker.setLngLat(coordinates);
-
-            // Add the marker to the map
-            marker.addTo(self.mapInstance);
-
-            const popupDiv = document.createElement("div");
-
-            const mapItemInstance = new MapItem(itemId, itemData, marker, colors);
-            let openFunc;
-            if (self.usesClusters) {
-                openFunc = () => highlightMarkerGroup(itemId);
-            } else {
-                openFunc = () => mapItemInstance.updateCheckbox();
-            }
-            const popup = utils.createMapPopup(
-                coordinates,
-                popupDiv,
-                openFunc,
-                resetMarkersOpacity
-            );
-
-            marker.setPopup(popup);
-            $(popupDiv).koApplyBindings(mapItemInstance);
-
-            return mapItemInstance;
-        }
-
-        function resetMarkersOpacity() {
-            let markers = [];
-            Object.keys(self.caseGroupsIndex).forEach(itemCoordinates => {
-                const mapMarkerItem = self.caseGroupsIndex[itemCoordinates];
-                markers.push(mapMarkerItem.item);
-
-                const lineId = self.getLineFeatureId(mapMarkerItem.item.itemId);
-                if (self.mapInstance.getLayer(lineId)) {
-                    self.mapInstance.setPaintProperty(lineId, 'line-opacity', 1);
-                }
-            });
-            changeMarkersOpacity(markers, 1);
-        }
-
-        function highlightMarkerGroup(itemId) {
-            const markerItem = self.caseGroupsIndex[itemId];
-            if (markerItem) {
-                const groupId = markerItem.groupId;
-                let markersToHide = [];
-                Object.keys(self.caseGroupsIndex).forEach(itemCoordinates => {
-                    const mapMarkerItem = self.caseGroupsIndex[itemCoordinates];
-
-                    if (mapMarkerItem.groupId !== groupId) {
-                        markersToHide.push(mapMarkerItem.item);
-                        const lineId = self.getLineFeatureId(mapMarkerItem.item.itemId);
-                        if (self.mapInstance.getLayer(lineId)) {
-                            self.mapInstance.setPaintProperty(lineId, 'line-opacity', DOWNPLAY_OPACITY);
-                        }
-                    }
-                });
-                changeMarkersOpacity(markersToHide, DOWNPLAY_OPACITY);
-            }
-        }
-
-        function changeMarkersOpacity(markers, opacity) {
-            markers.forEach(marker => {
-                marker.setMarkerOpacity(opacity);
-            });
-        }
-
         self.getLineFeatureId = function (itemId) {
             return DISBURSEMENT_LAYER_PREFIX + itemId;
         };
@@ -453,30 +505,29 @@ hqDefine('geospatial/js/models', [
         };
 
         self.selectMapItemInPolygons = function (polygonArr, mapItem) {
-            let isSelected = false;
-            for (const polygon of polygonArr) {
-                if (polygon.geometry.type !== 'Polygon') {
-                    continue;
-                }
-                if (isMapItemInPolygon(polygon, mapItem.itemData.coordinates)) {
-                    isSelected = true;
-                    break;
-                }
-            }
+            const isSelected = self.isMapItemInPolygons(polygonArr, mapItem.coordinates);
             mapItem.isSelected(isSelected);
         };
 
-        function isMapItemInPolygon(polygonFeature, coordinates) {
-            // Will be 0 if a user deletes a point from a three-point polygon,
-            // since mapbox will delete the entire polygon. turf.booleanPointInPolygon()
-            // does not expect this, and will raise a 'TypeError' exception.
-            if (!polygonFeature.geometry.coordinates.length) {
-                return false;
+        self.isMapItemInPolygons = function (polygonFeatures, coordinates) {
+            for (const polygon of polygonFeatures) {
+                if (polygon.geometry.type !== 'Polygon') {
+                    continue;
+                }
+                // Will be 0 if a user deletes a point from a three-point polygon,
+                // since mapbox will delete the entire polygon. turf.booleanPointInPolygon()
+                // does not expect this, and will raise a 'TypeError' exception.
+                if (!polygon.geometry.coordinates.length) {
+                    continue;
+                }
+                const coordinatesArr = [coordinates.lng, coordinates.lat];
+                const point = turf.point(coordinatesArr);  // eslint-disable-line no-undef
+                if (turf.booleanPointInPolygon(point, polygon.geometry)) {
+                    return true;
+                }
             }
-            const coordinatesArr = [coordinates.lng, coordinates.lat];
-            const point = turf.point(coordinatesArr);  // eslint-disable-line no-undef
-            return turf.booleanPointInPolygon(point, polygonFeature.geometry);  // eslint-disable-line no-undef
-        }
+            return false;
+        };
 
         self.mapHasPolygons = function () {
             const drawnFeatures = self.drawControls.getAll().features;
@@ -500,13 +551,13 @@ hqDefine('geospatial/js/models', [
             }
 
             // See https://stackoverflow.com/questions/62939325/scale-mapbox-gl-map-to-fit-set-of-markers
-            const firstCoord = mapItems[0].itemData.coordinates;
+            const firstCoord = mapItems[0].coordinates;
             const bounds = mapItems.reduce(function (bounds, mapItem) {
-                const coord = mapItem.itemData.coordinates;
+                const coord = mapItem.coordinates;
                 if (coord) {
                     return bounds.extend(coord);
                 }
-            }, new mapboxgl.LngLatBounds(firstCoord, firstCoord));  // eslint-disable-line no-undef
+            }, new mapboxgl.LngLatBounds(firstCoord, firstCoord));
 
             self.mapInstance.fitBounds(bounds, {
                 padding: 50,  // in pixels
@@ -515,24 +566,38 @@ hqDefine('geospatial/js/models', [
             });
         };
 
-        self.hasDisbursementLayers = function () {
-            const mapLayers = self.mapInstance.getStyle().layers;
-            return _.any(
-                mapLayers,
-                function (layer) { return layer.id.includes(DISBURSEMENT_LAYER_PREFIX); }
-            );
+        self.hasDisbursementLayer = function () {
+            return self.mapInstance.getLayer(self.DISBURSEMENT_LINES_LAYER_ID);
         };
 
-        self.removeDisbursementLayers = function () {
-            const mapLayers = self.mapInstance.getStyle().layers;
-            let layerRemoved = false;
-            mapLayers.forEach(function (layer) {
-                if (layer.id.includes(DISBURSEMENT_LAYER_PREFIX)) {
-                    self.mapInstance.removeLayer(layer.id);
-                    layerRemoved = true;
-                }
+        self.addDisbursementLinesLayer = function (source) {
+            let layerId = self.DISBURSEMENT_LINES_LAYER_ID;
+            self.mapInstance.addSource(layerId, {
+                'type': 'geojson',
+                'data': source,
             });
-            return layerRemoved;
+            self.mapInstance.addLayer({
+                id: layerId,
+                type: 'line',
+                source: layerId,
+                layout: {
+                    'line-join': 'round',
+                    'line-cap': 'round',
+                },
+                paint: {
+                    'line-color': '#808080',
+                    'line-width': 1,
+                },
+            });
+        };
+
+        self.removeDisbursementLayer = function () {
+            if (self.mapInstance.getLayer(self.DISBURSEMENT_LINES_LAYER_ID)) {
+                self.mapInstance.removeLayer(self.DISBURSEMENT_LINES_LAYER_ID);
+            }
+            if (self.mapInstance.getSource(self.DISBURSEMENT_LINES_LAYER_ID)) {
+                self.mapInstance.removeSource(self.DISBURSEMENT_LINES_LAYER_ID);
+            }
         };
 
         self.hasSelectedUsers = function () {
@@ -644,20 +709,24 @@ hqDefine('geospatial/js/models', [
 
         function removeActivePolygonLayer() {
             if (self.activeSavedPolygon()) {
-                self.mapObj.mapInstance.removeLayer(self.activeSavedPolygon().id);
-                self.mapObj.mapInstance.removeSource(self.activeSavedPolygon().id);
+                const layerName = self.activeSavedPolygon().id + '-layer';
+                const sourceName = self.activeSavedPolygon().id + '-source';
+                self.mapObj.mapInstance.removeLayer(layerName);
+                self.mapObj.mapInstance.removeSource(sourceName);
             }
         }
 
         function createActivePolygonLayer(polygonObj) {
+            const layerName = String(polygonObj.id) + '-layer';
+            const sourceName = String(polygonObj.id) + '-source';
             self.mapObj.mapInstance.addSource(
-                String(polygonObj.id),
-                {'type': 'geojson', 'data': polygonObj.geoJson}
+                sourceName,
+                {'type': 'geojson', 'data': polygonObj.geoJson},
             );
             self.mapObj.mapInstance.addLayer({
-                'id': String(polygonObj.id),
+                'id': layerName,
                 'type': 'fill',
-                'source': String(polygonObj.id),
+                'source': sourceName,
                 'layout': {},
                 'paint': {
                     'fill-color': '#0080ff',
@@ -683,15 +752,17 @@ hqDefine('geospatial/js/models', [
             self.selectedSavedPolygonId('');
             self.clearActivePolygon();
             updateSelectedSavedPolygonParam();
+            const features = mapObj.drawControls.getAll().features;
+            self.mapObj.selectAllMapItems(features);
         };
 
         function clearDisbursementBeforeProceeding() {
             let proceedFurther = true;
-            if (self.mapObj.hasDisbursementLayers()) {
+            if (self.mapObj.hasDisbursementLayer()) {
                 // hide it by default and show it only if necessary
                 $('#disbursement-clear-message').hide();
                 if (confirmForClearingDisbursement()) {
-                    self.mapObj.removeDisbursementLayers();
+                    self.mapObj.removeDisbursementLayer();
                     $('#disbursement-clear-message').show();
                     $('#disbursement-params').hide();
                 } else {
@@ -704,7 +775,7 @@ hqDefine('geospatial/js/models', [
         function confirmForClearingDisbursement() {
             return confirm(
                 gettext("Warning! This action will clear the current disbursement. " +
-                        "Please confirm if you want to proceed.")
+                        "Please confirm if you want to proceed."),
             );
         }
 
@@ -758,7 +829,7 @@ hqDefine('geospatial/js/models', [
 
             const selectedId = parseInt(self.selectedSavedPolygonId());
             const polygonObj = self.savedPolygons().find(
-                function (o) { return o.id === selectedId; }
+                function (o) { return o.id === selectedId; },
             );
             if (!polygonObj) {
                 return;
@@ -808,6 +879,7 @@ hqDefine('geospatial/js/models', [
                 if (!validateSavedPolygonName(name)) {
                     return;
                 }
+                const saveGeoPolygonUrl = initialPageData.reverse('geo_polygons');
 
                 if (!clearDisbursementBeforeProceeding()) {
                     return;
@@ -830,7 +902,7 @@ hqDefine('geospatial/js/models', [
                                 name: name,
                                 id: ret.id,
                                 geo_json: data,
-                            })
+                            }),
                         );
                         // redraw using mapControlsModelInstance
                         self.selectedSavedPolygonId(ret.id);
@@ -925,7 +997,6 @@ hqDefine('geospatial/js/models', [
                 }));
             }
             self.totalItems(self.filteredCaseData().length);
-            self.goToPage(1);
         });
 
         self.hasCheckedRows = ko.computed(function () {
@@ -946,18 +1017,18 @@ hqDefine('geospatial/js/models', [
             const groupData = self.mapModel.caseGroupsIndex;
             self.caseData = [];
             for (const item of self.mapModel.caseMapItems()) {
-                const assignedUserId = groupData[item.itemId].assignedUserId;
+                const assignedUserId = (groupData[item.itemId]) ? groupData[item.itemId].assignedUserId : null;
                 let assignedUsername = emptyColStr;
                 let primaryLocName = emptyColStr;
                 if (assignedUserId) {
-                    const userData = groupData[assignedUserId].item.itemData;
+                    const userData = groupData[assignedUserId].item;
                     assignedUsername = userData.name;
-                    primaryLocName = userData.primary_loc_name;
+                    primaryLocName = userData.customData.primary_loc_name;
                 }
                 self.caseData.push(
                     new AssignmentRow(
-                        item.itemData.name, item.itemId, assignedUserId, assignedUsername, primaryLocName, item
-                    )
+                        item.name, item.itemId, assignedUserId, assignedUsername, primaryLocName, item,
+                    ),
                 );
             }
 
@@ -985,17 +1056,20 @@ hqDefine('geospatial/js/models', [
         };
 
         self.assignUserToCases = function () {
-            const selectedUser = self.mapModel.caseGroupsIndex[self.selectedUserId()];
+            let selectedUser;
+            if (self.selectedUserId()) {
+                selectedUser = self.mapModel.caseGroupsIndex[self.selectedUserId()].item;
+            }
             for (const caseItem of self.caseDataPage()) {
                 if (!caseItem.isSelected()) {
                     continue;
                 }
 
                 caseItem.assignedUsername(
-                    (selectedUser) ? selectedUser.item.itemData.name : emptyColStr
+                    (selectedUser) ? selectedUser.name : emptyColStr,
                 );
                 caseItem.assignedUserPrimaryLocName(
-                    (selectedUser) ? selectedUser.item.itemData.primary_loc_name : emptyColStr
+                    (selectedUser) ? selectedUser.customData.primary_loc_name : emptyColStr,
                 );
                 caseItem.assignedUserId = self.selectedUserId();
                 caseItem.isSelected(false);
@@ -1003,29 +1077,21 @@ hqDefine('geospatial/js/models', [
         };
 
         self.finishAssignment = function () {
-            let userCasesToConnect = {};
-            let casesToClear = [];
             for (const caseItem of self.caseData) {
                 const userItem = self.mapModel.caseGroupsIndex[caseItem.assignedUserId];
-                const groupId = (userItem) ? userItem.groupId : null;
-                self.mapModel.caseGroupsIndex[caseItem.caseId].assignedUserId = caseItem.assignedUserId;
-                self.mapModel.caseGroupsIndex[caseItem.caseId].groupId = groupId;
-
-                casesToClear.push(caseItem.mapItem);
-                if (caseItem.assignedUserId) {
-                    if (!userCasesToConnect[caseItem.assignedUserId]) {
-                        userCasesToConnect[caseItem.assignedUserId] = [];
-                    }
-                    userCasesToConnect[caseItem.assignedUserId].push(caseItem.mapItem);
+                if (userItem) {
+                    self.mapModel.caseGroupsIndex[caseItem.caseId] = {
+                        assignedUserId: caseItem.assignedUserId,
+                        groupId: userItem.groupId,
+                        item: caseItem.mapItem,
+                    };
+                } else if (self.mapModel.caseGroupsIndex[caseItem.caseId]) {
+                    delete self.mapModel.caseGroupsIndex[caseItem.caseId];
                 }
             }
 
-            self.disbursementModel.clearConnectionLines(casesToClear);
-            for (const userId in userCasesToConnect) {
-                const user = self.mapModel.caseGroupsIndex[userId].item;
-                const cases = userCasesToConnect[userId];
-                self.disbursementModel.connectUserWithCasesOnMap(user, cases);
-            }
+            self.mapModel.removeDisbursementLayer();
+            self.disbursementModel.connectUserWithCasesOnMap();
         };
 
         self.exportAssignments = function () {
@@ -1054,7 +1120,7 @@ hqDefine('geospatial/js/models', [
             let caseIdToOwnerId = {};
             for (const caseItem of self.mapModel.caseMapItems()) {
                 const caseData = self.mapModel.caseGroupsIndex[caseItem.itemId];
-                if (caseData.assignedUserId) {
+                if (caseData && caseData.assignedUserId) {
                     caseIdToOwnerId[caseData.item.itemId] = caseData.assignedUserId;
                 }
             }
@@ -1062,7 +1128,7 @@ hqDefine('geospatial/js/models', [
                 'case_id_to_owner_id': caseIdToOwnerId,
                 'include_related_cases': self.includeRelatedCases(),
             };
-
+            const reassignCasesUrl = initialPageData.reverse('reassign_cases');
             self.assignmentAjaxInProgress(true);
             $.ajax({
                 type: 'post',

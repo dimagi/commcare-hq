@@ -1107,20 +1107,6 @@ class AllowedUCRExpressionSettings(models.Model):
         return restricted_expressions - allowed_expressions_for_domain
 
 
-class ProjectLimitType():
-    LIVE_GOOGLE_SHEETS = 'lgs'
-
-    CHOICES = (
-        (LIVE_GOOGLE_SHEETS, "Live Google Sheets"),
-    )
-
-
-class ProjectLimit(models.Model):
-    domain = models.CharField(max_length=256, db_index=True)
-    limit_type = models.CharField(max_length=5, choices=ProjectLimitType.CHOICES)
-    limit_value = models.IntegerField(default=20)
-
-
 class OperatorCallLimitSettings(models.Model):
     CALL_LIMIT_MINIMUM = 1
     CALL_LIMIT_MAXIMUM = 1000

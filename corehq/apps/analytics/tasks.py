@@ -59,7 +59,7 @@ from corehq.apps.es.users import UserES
 from corehq.apps.users.dbaccessors import get_all_user_rows
 from corehq.apps.users.models import WebUser
 from corehq.toggles import deterministic_random
-from corehq.util.dates import unix_time
+from corehq.util.dates import unix_time, unix_time_in_micros
 from corehq.util.decorators import analytics_task
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_LIVESUM, MPM_MAX
@@ -873,3 +873,51 @@ def generate_partner_reports():
         task_time.seconds,
         multiprocess_mode=MPM_LIVESUM
     )
+
+
+def record_event(event_name, couch_user, event_properties=None):
+    """
+    Record an event in Google Analytics.
+    """
+    if not couch_user.analytics_enabled:
+        return
+
+    event_properties = event_properties or {}
+
+    timestamp = unix_time_in_micros(datetime.utcnow())   # Dimagi KISSmetrics account uses UTC
+
+    event_body = {
+        # The client_id is meant to represent a unique user/device pairing, but we don't have access to that
+        # from the backend. Using the user ID as a placeholder, but the important identifying information
+        # is making sure the user ID is assigned correctly, as that needs to match between the frontend
+        # and backend to trace metrics
+        'client_id': couch_user.userID,
+        'user_id': couch_user.userID,
+        'timestamp_micros': timestamp,
+        'events': [{
+            'name': event_name,
+            'params': event_properties,
+        }]
+    }
+
+    _record_event_task.delay(json.dumps(event_body))
+
+
+@analytics_task()
+def _record_event_task(event_json):
+    ga_secret = settings.ANALYTICS_IDS.get('GOOGLE_ANALYTICS_SECRET', None)
+    ga_measurement_id = settings.ANALYTICS_IDS.get('GOOGLE_ANALYTICS_MEASUREMENT_ID', None)
+
+    if not (ga_secret and ga_measurement_id):
+        return
+
+    res = requests.post(
+        'https://www.google-analytics.com/mp/collect',
+        headers={'Content-Type': 'application/json'},
+        params={
+            'api_secret': ga_secret,
+            'measurement_id': ga_measurement_id,
+        },
+        data=event_json
+    )
+    res.raise_for_status()

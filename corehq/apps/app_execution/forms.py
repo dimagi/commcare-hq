@@ -57,7 +57,6 @@ class AppWorkflowConfigForm(forms.ModelForm):
         if self.instance.id:
             self.fields["username"].initial = self.instance.django_user.username
         self.helper = hqcrispy.HQFormHelper()
-        self.helper.form_class = "form-horizontal"
 
         fields = [
             "name",

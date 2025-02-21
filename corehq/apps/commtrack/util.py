@@ -193,8 +193,12 @@ def encode_if_needed(val):
 
 
 def _fetch_ending_numbers(s):
-    matcher = re.compile(r"\d*$")
-    return matcher.search(s).group()
+    postfix = ''
+    for char in s[::-1]:
+        if not char.isdigit():
+            break
+        postfix = char + postfix
+    return postfix
 
 
 def generate_code(object_name, existing_codes):

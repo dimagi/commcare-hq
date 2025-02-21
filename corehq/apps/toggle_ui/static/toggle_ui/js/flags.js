@@ -3,14 +3,15 @@ hqDefine('toggle_ui/js/flags', [
     'knockout',
     'underscore',
     'hqwebapp/js/bootstrap3/alert_user',
-    'reports/js/bootstrap3/config.dataTables.bootstrap',
+    'reports/js/bootstrap3/datatables_config',
     'hqwebapp/js/components/select_toggle',
+    'commcarehq',
 ], function (
     $,
     ko,
     _,
     alertUser,
-    datatablesConfig
+    datatablesConfig,
 ) {
     var dataTableElem = '.datatable';
     let buildViewModel = function () {
@@ -89,7 +90,7 @@ hqDefine('toggle_ui/js/flags', [
                 return true;
             }
             return tag === viewModel.tagFilter();
-        }
+        },
     );
     $('#feature_flags').koApplyBindings(viewModel);
     var table = datatablesConfig.HQReportDataTables({

@@ -1,8 +1,20 @@
-/* globals ace */
-'use strict';
-hqDefine('repeaters/js/bootstrap3/repeat_record_report', function () {
-    const initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        selectAll = document.getElementById('select-all'),
+
+hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'ace-builds/src-min-noconflict/ace',
+    'ace-builds/src-min-noconflict/mode-json',
+    'ace-builds/src-min-noconflict/mode-xml',
+    'repeaters/js/repeat_record_report_selects',
+    'reports/js/bootstrap3/base',
+    'reports/js/bootstrap3/tabular',
+    'commcarehq',
+], function (
+    $,
+    initialPageData,
+    ace,
+) {
+    const selectAll = document.getElementById('select-all'),
         selectPending = document.getElementById('select-pending'),
         selectCancelled = document.getElementById('select-cancelled'),
         $popUp = $('#are-you-sure'),
@@ -44,7 +56,7 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', function () {
                     $row.after(
                         `<tr id="${recordId}" class="attempt-error"><td colspan="10">
                             <div class="alert alert-danger">${errorMessage || defaultText}</div>
-                        </td></tr>`
+                        </td></tr>`,
                     );
                 },
             });
@@ -72,7 +84,7 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', function () {
                                 fontSize: 14,
                                 wrap: true,
                                 useWorker: false,
-                            }
+                            },
                         );
                         editor.setReadOnly(true);
                     }
@@ -223,7 +235,7 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', function () {
         function getRecordIds() {
             const recordEls = getCheckedRecords();
             const recordIds = recordEls.map(
-                record => record.getAttribute('data-id')
+                record => record.getAttribute('data-id'),
             ).join(' ');
             return {record_id: recordIds};
         }

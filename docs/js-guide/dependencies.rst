@@ -112,9 +112,9 @@ Then in your HTML page:
    {% js_entry 'prototype/js/combined_example' %}
 
 The exception to the above is if your page inherits from a legacy page that
-doesn't use a JavaScript bundler, like reports and app manager. This is rare,
+doesn't use a JavaScript bundler, like in app manager. This is rare,
 but one example would be adding a new page to app manager that inherits
-from ``managed_app.html``.
+from ``apps_base.html``.
 
 
 Why is old code formatted differently?
@@ -180,7 +180,7 @@ How do I know whether I’m working with Webpack or RequireJS?
 ------------------------------------------------------------
 
 You are likely working with either Webpack or RequireJS, as most of HQ has been migrated to use a bundler.
-However, two major areas have **not** been migrated: app manager and reports.
+However, one major areas has **not** been migrated: app manager.
 
 The easiest way to determine if a page is using either Webpack or RequireJS is to
 open the JavaScript console on that page and type ``window.USE_WEBPACK``, which will return
@@ -402,8 +402,8 @@ un-migrated files. At the time of writing:
 
     $ ./scripts/codechecks/hqDefine.sh
 
-    97%	(1209/1254) of HTML files are free of inline scripts
-    94%	(553/594) of non-ESM JS files use hqDefine
-    75%	(443/594) of non-ESM JS files specify their dependencies
-    93%	(1162/1254) of HTML files are free of script tags
-    1%	(3/597) of JS files use ESM format
+97%     (1267/1309) of HTML files are free of inline scripts
+95%     (522/552) of non-ESM JS files use hqDefine
+89%     (489/552) of non-ESM JS files specify their dependencies
+98%     (1274/1309) of HTML files are free of script tags
+10%     (57/609) of JS files use ESM format

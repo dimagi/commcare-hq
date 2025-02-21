@@ -54,6 +54,9 @@
       <script src="{% static '@eonasdan/tempus-dominus/dist/js/tempus-dominus.min.js' %}"></script>
     {% endcompress %}
 
+    {% block head %}
+    {% endblock head %}
+
     <script src="{% statici18n LANGUAGE_CODE %}"></script>
   </head>
   <body>
@@ -122,7 +125,6 @@
       <script src="{% static 'hqwebapp/js/bootstrap5/main.js' %}"></script>
       <script src="{% static 'hqwebapp/js/select_2_ajax_widget.js' %}"></script>
       <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>
-      <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
       <script src="{% static 'hqwebapp/js/multiselect_utils.js' %}"></script>
       <script src="{% static 'ace-builds/src-min-noconflict/ace.js' %}"></script>
       <script src="{% static 'ace-builds/src-min-noconflict/mode-python.js' %}"></script>

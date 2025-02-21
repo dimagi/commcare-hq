@@ -1,4 +1,3 @@
-'use strict';
 /**
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
  */
@@ -50,25 +49,43 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                 menus;
 
             $.when(AppsAPI.getAppEntities()).done(function (appCollection) {
+                var appIdType;
                 const app = appCollection.find(function (app) {
                     const currPrimaryAppId = app.get('copy_of');
                     // Prevents breaking if a web apps session spans pre and post deploy. Can remove post deploy.
                     if (app.id && app.id === params.appId) {
+                        appIdType = 'build';
                         return app;
                     }
                     if (currPrimaryAppId && currPrimaryAppId === params.appId) {
+                        appIdType = 'canonical';
                         return app;
                     }
                     if (currPrimaryAppId && (currPrimaryAppId === params.copyOf)) {
+                        appIdType = 'copyOf';
                         return app;
                     }
                 });
+                const additionalSentryData = {
+                    appIdType: appIdType,
+                    appIDsFromURL: params.appId + ' / ' + params.copyOf,
+                    appCollection: appCollection.models.map(
+                        appItem => appItem.attributes._id + ' / ' + appItem.attributes.copy_of),
+                };
+                var errorMsg = 'The application could not be found.';
+                if (params.appId) {
+                    // Likely due to a link followed from an old build.
+                    errorMsg = errorMsg + ' If you clicked on a link, that link may be outdated.';
+                }
                 if (!params.preview) {
                     // Make sure the user has access to the app
                     if (!app) {
                         FormplayerFrontend.trigger(
                             'showError',
-                            gettext('The application could not be found')
+                            gettext(errorMsg),
+                            false,
+                            true,
+                            additionalSentryData,
                         );
                         FormplayerFrontend.trigger('navigateHome');
                         defer.reject();
@@ -99,7 +116,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                                 FormplayerFrontend.trigger(
                                     'showError',
                                     response.exception,
-                                    response.type === 'html'
+                                    response.type === 'html',
                                 );
 
                                 var currentUrl = FormplayerFrontend.getCurrentRoute();
@@ -149,13 +166,13 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                         if (response.status === 423) {
                             FormplayerFrontend.trigger(
                                 'showError',
-                                errors.LOCK_TIMEOUT_ERROR
+                                errors.LOCK_TIMEOUT_ERROR,
                             );
                         } else if (response.status === 401) {
                             FormplayerFrontend.trigger(
                                 'showError',
                                 formEntryUtils.reloginErrorHtml(),
-                                true
+                                true,
                             );
                         } else if (response.statusText === 'abort') {
                             // do nothing
@@ -163,7 +180,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                             FormplayerFrontend.trigger(
                                 'showError',
                                 gettext('Unable to connect to form playing service. ' +
-                                        'Please report an issue if you continue to see this message.')
+                                        'Please report an issue if you continue to see this message.'),
                             );
                         }
                         var urlObject = formplayerUtils.currentUrlToObject();

@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load compress %}
 
-{% requirejs_main 'toggle_ui/js/edit-flag' %}
+{% js_entry_b3 'toggle_ui/js/edit-flag' %}
 
 {% block title %}{% trans "Edit Feature Flag: " %}{{ static_toggle.label }}{% endblock %}
 

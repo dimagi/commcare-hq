@@ -8,13 +8,14 @@ hqDefine("reports/js/bootstrap5/edit_scheduled_report", [
     "hqwebapp/js/bootstrap5/widgets",  // autocomplete widget for email recipient list
     "jquery-ui/ui/widgets/datepicker",
     'hqwebapp/js/components/select_toggle',
+    "commcarehq",
 ], function (
     $,
     _,
     googleAnalytics,
     initialPageData,
     toggles,
-    multiselectUtils
+    multiselectUtils,
 ) {
     var addOptionsToSelect = function ($select, optList, selectedVal) {
         for (var i = 0; i < optList.length; i++) {
@@ -80,10 +81,10 @@ hqDefine("reports/js/bootstrap5/edit_scheduled_report", [
 
     var updateUcrElements = function (selectedConfigs) {
         var showUcrElements = _.any(
-            selectedConfigs, function (i) {return isConfigurableMap[i] === true;}
+            selectedConfigs, function (i) {return isConfigurableMap[i] === true;},
         );
         var showTranslation = showUcrElements || _.any(
-            selectedConfigs, function (i) {return supportsTranslations[i] === true;}
+            selectedConfigs, function (i) {return supportsTranslations[i] === true;},
         );
 
         if (showTranslation) {
@@ -112,7 +113,7 @@ hqDefine("reports/js/bootstrap5/edit_scheduled_report", [
                 // Populate the select2
                 _.map(currentLanguageOptions, function (l) {
                     $idLanguage.append(
-                        $("<option></option>").attr("value", l).text(languagesForSelect[l][1])
+                        $("<option></option>").attr("value", l).text(languagesForSelect[l][1]),
                     );
                 });
                 $idLanguage.val(current);
@@ -134,7 +135,7 @@ hqDefine("reports/js/bootstrap5/edit_scheduled_report", [
         $('#id_config_ids').hide().after(
             $('#id_config_ids').children().map(function () {
                 return $("<div>").text($(this).text()).get(0);
-            })
+            }),
         );
     } else {
         multiselectUtils.createFullMultiselectWidget('id_config_ids', {

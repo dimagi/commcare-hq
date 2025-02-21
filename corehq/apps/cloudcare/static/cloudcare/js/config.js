@@ -1,16 +1,16 @@
-'use strict';
 hqDefine("cloudcare/js/config", [
     'jquery',
     'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/bootstrap5/main',
+    'commcarehq',
 ], function (
     $,
     _,
     ko,
     initialPageData,
-    hqMain
+    hqMain,
 ) {
     $(function () {
         var makeDB = function (list) {

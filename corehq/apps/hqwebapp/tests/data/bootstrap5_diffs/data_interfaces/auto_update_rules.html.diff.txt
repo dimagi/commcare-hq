@@ -1,0 +1,54 @@
+--- 
++++ 
+@@ -1,8 +1,8 @@
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ 
+-{% js_entry_b3 'data_interfaces/js/auto_update_rules' %}
++{% js_entry 'data_interfaces/js/auto_update_rules' %}
+ 
+ {% block page_content %}
+   {% initial_page_data 'rules' rules %}
+@@ -12,10 +12,10 @@
+ 
+   <div id="ko-auto-update-rules">
+     <div class="row">
+-      <div class="col-sm-8">
++      <div class="col-md-8">
+         <p class="lead">
+           {% blocktrans %}
+-            Automatically update or close cases from CommCare HQ
++            Automatically update or btn-close cases from CommCare HQ  {# todo B5: css-close #}
+           {% endblocktrans %}
+         </p>
+         <p>
+@@ -28,21 +28,21 @@
+       </div>
+     </div>
+     <div class="spacer"></div>
+-    <ul class="nav nav-tabs">
+-      <li class="active"><a data-toggle="tab" href="#tabs-update-rules">{% trans "Automatic Update Rules" %}</a></li>
+-      <li><a data-toggle="tab" href="#tabs-rule-run-history">{% trans "Rule Run History" %}</a></li>
++    <ul class="nav nav-tabs">  {# todo B5: css-nav #}
++      <li class="active"><a data-bs-toggle="tab" href="#tabs-update-rules">{% trans "Automatic Update Rules" %}</a></li>
++      <li><a data-bs-toggle="tab" href="#tabs-rule-run-history">{% trans "Rule Run History" %}</a></li>
+     </ul>
+ 
+     <div class="tab-content">
+       <div class="tab-pane fade in active" id="tabs-update-rules">
+-        {% include 'data_interfaces/partials/bootstrap3/auto_update_rule_list.html' %}
++        {% include 'data_interfaces/partials/bootstrap5/auto_update_rule_list.html' %}
+       </div>
+       <div class="tab-pane" id="tabs-rule-run-history">
+-        {% include 'data_interfaces/partials/bootstrap3/auto_update_rule_run_history.html' %}
++        {% include 'data_interfaces/partials/bootstrap5/auto_update_rule_run_history.html' %}
+       </div>
+     </div>
+   </div>
+ 
+-  {% include 'data_interfaces/partials/bootstrap3/modal_edit.html' %}
++  {% include 'data_interfaces/partials/bootstrap5/modal_edit.html' %}
+ 
+ {% endblock %}

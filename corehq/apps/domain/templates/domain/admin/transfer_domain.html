@@ -1,17 +1,15 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 
 
 {% block page_content %}
-  <div class="page-header">
-    <h3>
-      {% blocktrans %}
-        Use this to transfer your project to another user.
-      {% endblocktrans %}
-    </h3>
-  </div>
+  <h3>
+    {% blocktrans %}
+      Use this to transfer your project to another user.
+    {% endblocktrans %}
+  </h3>
   {% crispy form %}
 {% endblock %}
 

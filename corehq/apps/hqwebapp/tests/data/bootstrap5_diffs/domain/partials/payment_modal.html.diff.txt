@@ -1,0 +1,53 @@
+--- 
++++ 
+@@ -4,7 +4,7 @@
+   <div class="modal-dialog">
+     <div class="modal-content">
+       <div class="modal-header">
+-        <button type="button" class="close" data-dismiss="modal"
++        <button type="button" class="btn-close" data-bs-dismiss="modal"  {# todo B5: css-close #}
+                 aria-label="Close">
+           <span aria-hidden="true">&times;</span>
+         </button>
+@@ -43,11 +43,11 @@
+                 <a href="https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment" target="_blank">More information...</a>
+               {% endblocktrans %}
+             </p>
+-            <div class="form-group">
+-              <label class="control-label col-sm-3">
++            <div class="form-group">  {# todo B5: css-form-group #}
++              <label class="form-label col-md-3">
+                 {% trans 'Invoice Recipients' %}
+               </label>
+-              <div class="col-sm-9">
++              <div class="col-md-9">
+                 <input type="text"
+                        data-bind="value: wireEmails"
+                        size="20"
+@@ -80,8 +80,8 @@
+         <div class="modal-footer">
+           <button type="button"
+                   data-bind="visible: paymentIsNotComplete"
+-                  class="btn btn-default"
+-                  data-dismiss="modal">
++                  class="btn btn-outline-primary"
++                  data-bs-dismiss="modal">
+             {% trans "Cancel" %}
+           </button>
+           <!-- ko if: hasAgreedToPrivacy || isSavedCard -->
+@@ -101,12 +101,12 @@
+                                 text: submitBtnText"
+                   disabled="disabled">
+           </button>
+-          <span class="label label-info">{% trans 'Please agree to the Privacy Policy.' %}</span>
++          <span class="badge text-bg-info">{% trans 'Please agree to the Privacy Policy.' %}</span>
+           <!-- /ko -->
+           <button type="button"
+                   data-bind="visible: paymentIsComplete"
+-                  class="btn btn-default"
+-                  data-dismiss="modal">
++                  class="btn btn-outline-primary"
++                  data-bs-dismiss="modal">
+             {% trans "Close" %}
+           </button>
+         </div>

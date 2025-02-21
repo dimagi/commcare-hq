@@ -67,6 +67,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.tasks import (
     create_build_files_for_all_app_profiles,
+    analyse_new_app_build,
 )
 from corehq.apps.app_manager.util import (
     get_and_assert_practice_user_in_domain,
@@ -208,10 +209,7 @@ def get_releases_context(request, domain, app_id):
         'can_view_cloudcare': has_privilege(request, privileges.CLOUDCARE),
         'has_mobile_workers': get_doc_count_in_domain_by_class(domain, CommCareUser) > 0,
         'latest_released_version': get_latest_released_app_version(domain, app_id),
-        'sms_contacts': (
-            get_sms_autocomplete_context(request, domain)['sms_contacts']
-            if can_send_sms else []
-        ),
+        'sms_contacts': get_sms_autocomplete_context(domain) if can_send_sms else [],
         'build_profile_access': build_profile_access,
         'application_profile_url': reverse(LanguageProfilesView.urlname, args=[domain, app_id]),
         'latest_build_id': get_latest_build_id(domain, app_id),
@@ -390,6 +388,7 @@ def make_app_build(app, comment, user_id):
         user_id=user_id,
     )
     copy.save(increment_version=False)
+    analyse_new_app_build.delay(app.domain, copy._id)
     return copy
 
 

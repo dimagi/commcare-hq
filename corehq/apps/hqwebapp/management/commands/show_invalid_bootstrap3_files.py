@@ -8,8 +8,9 @@ from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     get_all_template_paths_for_app,
     get_all_javascript_paths_for_app,
     get_short_path,
-    is_split_path,
     is_ignored_path,
+    is_mocha_path,
+    is_split_path,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.status import (
     get_apps_completed_or_in_progress,
@@ -22,6 +23,7 @@ from corehq.apps.hqwebapp.utils.management_commands import get_break_line
 def _is_relevant_path(app_name, path, completed_paths):
     return not (is_split_path(path)
                 or str(path) in completed_paths
+                or is_mocha_path(path)
                 or is_ignored_path(app_name, path))
 
 

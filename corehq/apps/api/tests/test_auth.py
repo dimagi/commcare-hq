@@ -47,7 +47,7 @@ class AuthenticationTestBase(TestCase):
         )
 
     def _construct_api_auth_header(self, username, api_key):
-        return f'ApiKey {username}:{api_key.key}'
+        return f'ApiKey {username}:{api_key.plaintext_key}'
 
     def _construct_basic_auth_header(self, username, password):
         # https://stackoverflow.com/q/5495452/8207

@@ -52,7 +52,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     def _build_query(self):
         query = self._base_query()
         query.es_query['sort'] = self.get_sorting_block()
-        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        mobile_user_and_group_slugs = self.get_request_param(EMWF.slug, as_list=True)
 
         if self.case_filter:
             query = query.filter(self.case_filter)
@@ -119,7 +119,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     @property
     @memoized
     def case_owners(self):
-        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        mobile_user_and_group_slugs = self.get_request_param(EMWF.slug, as_list=True)
         return get_case_owners(self.request, self.domain, mobile_user_and_group_slugs)
 
     def get_case(self, row):
@@ -138,10 +138,10 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
 
     @property
     def shared_pagination_GET_params(self):
-        shared_params = super(CaseListMixin, self).shared_pagination_GET_params
+        shared_params = super().shared_pagination_GET_params
         shared_params.append(dict(
             name=SelectOpenCloseFilter.slug,
-            value=self.request.GET.get(SelectOpenCloseFilter.slug, '')
+            value=self.get_request_param(SelectOpenCloseFilter.slug, ''),
         ))
         return shared_params
 
@@ -155,6 +155,7 @@ class CaseListReport(CaseListMixin, ProjectReport, ReportDataSource):
 
     name = gettext_lazy('Case List')
     slug = 'case_list'
+    use_bootstrap5 = True
 
     @classmethod
     def get_subpages(cls):
@@ -201,13 +202,20 @@ class CaseListReport(CaseListMixin, ProjectReport, ReportDataSource):
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn(_("Case Type"), prop_name="type.exact"),
-            DataTablesColumn(_("Name"), prop_name="name.exact", css_class="case-name-link"),
-            DataTablesColumn(_("Owner"), prop_name="owner_display", sortable=False),
-            DataTablesColumn(_("Created Date"), prop_name="opened_on"),
-            DataTablesColumn(_("Created By"), prop_name="opened_by_display", sortable=False),
-            DataTablesColumn(_("Modified Date"), prop_name="modified_on"),
-            DataTablesColumn(_("Status"), prop_name="get_status_display", sortable=False)
+            DataTablesColumn(_("Case Type"), prop_name="type.exact",
+                             use_bootstrap5=self.use_bootstrap5),
+            DataTablesColumn(_("Name"), prop_name="name.exact", css_class="case-name-link",
+                             use_bootstrap5=self.use_bootstrap5),
+            DataTablesColumn(_("Owner"), prop_name="owner_display", sortable=False,
+                             use_bootstrap5=self.use_bootstrap5),
+            DataTablesColumn(_("Created Date"), prop_name="opened_on",
+                             use_bootstrap5=self.use_bootstrap5),
+            DataTablesColumn(_("Created By"), prop_name="opened_by_display", sortable=False,
+                             use_bootstrap5=self.use_bootstrap5),
+            DataTablesColumn(_("Modified Date"), prop_name="modified_on",
+                             use_bootstrap5=self.use_bootstrap5),
+            DataTablesColumn(_("Status"), prop_name="get_status_display", sortable=False,
+                             use_bootstrap5=self.use_bootstrap5)
         )
         headers.custom_sort = [[5, 'desc']]
         return headers

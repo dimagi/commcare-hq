@@ -6,7 +6,7 @@
   {% trans "SMS Languages" %}
 {% endblock %}
 
-{% requirejs_main 'sms/js/sms_language_main' %}
+{% js_entry_b3 'sms/js/sms_language_main' %}
 
 {% block stylesheets %}{{ block.super }}
   <link rel="stylesheet" href="{% static 'jquery-ui-built-themes/redmond/jquery-ui.min.css' %}"/>

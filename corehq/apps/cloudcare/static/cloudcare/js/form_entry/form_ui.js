@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/form_entry/form_ui", [
     'jquery',
     'knockout',
@@ -25,7 +24,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
     constants,
     entries,
     UsersModels,
-    formEntryUtils
+    formEntryUtils,
 ) {
     var groupNum = 0;
 
@@ -469,6 +468,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         self.atLastIndex = ko.observable(false);
         self.atFirstIndex = ko.observable(true);
         self.shouldAutoSubmit = json.shouldAutoSubmit;
+        self.fileNameCache = {};
 
         var _updateIndexCallback = function (ix, isAtFirstIndex, isAtLastIndex) {
             self.currentIndex(ix.toString());

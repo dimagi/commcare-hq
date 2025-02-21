@@ -1,0 +1,26 @@
+{% extends "reports/bootstrap3/base_template.html" %}
+
+{% load hq_shared_tags %}
+
+{% block stylesheets %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'mapbox-gl/dist/mapbox-gl.css' %}">
+  <link rel="stylesheet" href="{% static '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css' %}" type="text/css">
+  <style>
+    #layer-toggle-menu {
+      background: #fff;
+      position: absolute;
+      z-index: 1;
+      top: 10px;
+      left: 10px;
+      max-height: 150px;
+      border: 1px solid rgba(0, 0, 0, 0.4);
+      overflow-y: auto;
+    }
+  </style>
+{% endblock %}
+
+
+{% block additional_initial_page_data %}{{ block.super }}
+    {% initial_page_data "mapbox_access_token" mapbox_access_token %}
+{% endblock %}

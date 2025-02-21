@@ -27,56 +27,56 @@
   <!--/ko-->
 </div>
 <!--ko if: !$root._.isEmpty(result.errors)-->
-<div class="alert alert-warning">
-  <ul class="list-unstyled">
-    <!--ko foreach: result.errors-->
-    <!--ko if: rows-->
-    <li>
-      <!--ko if: column-->
-      <p><strong>
-        <!-- ko if: rows.length == 1-->
-        {% blocktrans %}
-          <span data-bind="text: rows.length"></span> row had an invalid
-          "<span data-bind="text: column"></span>" cell and was not saved
-        {% endblocktrans %}
+  <!--ko foreach: result.errors-->
+    <div class="alert alert-warning">
+      <!--ko if: rows-->
+        <!--ko if: column-->
+          <h6>
+            <!-- ko if: rows.length == 1-->
+            {% blocktrans %}
+              <span data-bind="text: rows.length"></span> row had an invalid
+              "<span data-bind="text: column"></span>" cell and was not saved
+            {% endblocktrans %}
+            <!--/ko-->
+            <!-- ko if: rows.length > 1-->
+            {% blocktrans %}
+              <span data-bind="text: rows.length"></span> rows had invalid
+              "<span data-bind="text: column"></span>" cells and were not saved
+            {% endblocktrans %}
+            <!--/ko-->
+          </h6>
         <!--/ko-->
-        <!-- ko if: rows.length > 1-->
-        {% blocktrans %}
-          <span data-bind="text: rows.length"></span> rows had invalid
-          "<span data-bind="text: column"></span>" cells and were not saved
-        {% endblocktrans %}
+        <!--ko if: !column -->
+          <h6 data-bind="text: title"></h6>
         <!--/ko-->
-      </strong></p>
-      <!--/ko-->
-      <!--ko if: !column -->
-      <p><strong data-bind="text: title"></strong></p>
-      <!--/ko-->
-      <p data-bind="text: description">
-      </p>
-      <p data-bind="visible: sample, text: sample">
-      </p>
-      <div data-bind="visible: rows.length">
-        <button type="button"
-                class="btn btn-outline-primary btn-sm"
-                data-bs-toggle="collapse"
-                data-bind="attr: {
-                  'data-bs-target': '#rowDetailsCollapse-' + $parentContext.$index(),
-                  'aria-controls': 'rowDetailsCollapse-' + $parentContext.$index()
-                }"
-                aria-expanded="false">
-          {% trans "Toggle Affected Row(s)" %}
-        </button>
-        <div class="collapse"
-             data-bind="attr: { id: 'rowDetailsCollapse-' + $parentContext.$index() }">
-          <div class="card card-body mt-3"
-               data-bind="text: rows.join(', ')"></div>
+        <p data-bind="text: description"></p>
+        <p data-bind="visible: sample, text: sample"></p>
+        <div data-bind="visible: rows.length">
+          <button
+              type="button"
+              class="btn btn-outline-primary btn-sm"
+              data-bs-toggle="collapse"
+              data-bind="attr: {
+                'data-bs-target': '#rowDetailsCollapse-' + $parentContext.$index() + '-' + $index(),
+                'aria-controls': 'rowDetailsCollapse-' + $parentContext.$index() + '-' + $index()
+              }"
+              aria-expanded="false"
+          >
+            {% trans "Toggle Affected Row(s)" %}
+          </button>
+          <div
+              class="collapse"
+              data-bind="attr: { id: 'rowDetailsCollapse-' + $parentContext.$index() + '-' + $index() }"
+          >
+            <div
+                class="card card-body mt-3"
+                data-bind="text: rows.join(', ')"
+            ></div>
+          </div>
         </div>
-      </div>
-    </li>
-    <!--/ko-->
-    <!--/ko-->
-  </ul>
-</div>
+      <!--/ko-->
+    </div>
+  <!--/ko-->
 <!--/ko-->
 <!--/ko-->
 <!--ko if: state == $root.states.SUCCESS && !result-->

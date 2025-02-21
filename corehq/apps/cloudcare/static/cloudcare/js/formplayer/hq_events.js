@@ -1,4 +1,3 @@
-'use strict';
 /**
  * hq_events.js
  *
@@ -9,7 +8,7 @@ hqDefine("cloudcare/js/formplayer/hq_events", [
     'cloudcare/js/formplayer/app',
 ], function (
     _,
-    FormplayerFrontend
+    FormplayerFrontend,
 ) {
     var self = {};
 

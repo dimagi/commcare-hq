@@ -1,6 +1,5 @@
 import logging
 import numbers
-
 from abc import ABCMeta, abstractmethod, abstractproperty
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -20,12 +19,6 @@ from corehq.apps.app_manager.const import (
     MOBILE_UCR_VERSION_1,
     MOBILE_UCR_VERSION_2,
 )
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.app_manager.exceptions import CannotRestoreException, MobileUCRTooLargeException
-from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
-    is_valid_mobile_select_filter_type,
-)
-from corehq.apps.app_manager.util import get_correct_app_class, is_remote_app
 from corehq.apps.cloudcare.utils import get_web_apps_available_to_user
 from corehq.apps.userreports.exceptions import (
     ReportConfigurationNotFoundError,
@@ -40,6 +33,12 @@ from corehq.util.metrics import metrics_histogram
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.xml_utils import serialize
+
+from ..dbaccessors import get_apps_in_domain
+from ..exceptions import CannotRestoreException, MobileUCRTooLargeException
+from ..models import ReportAppConfig
+from ..suite_xml.features.mobile_ucr import is_valid_mobile_select_filter_type
+from ..util import is_remote_app
 
 
 def _should_sync(restore_state):
@@ -91,15 +90,10 @@ class ReportFixturesProvider(FixtureProvider):
             return []
 
         restore_user = restore_state.restore_user
-        apps = self._get_apps(restore_state, restore_user)
-        report_configs = self._get_report_configs(apps)
+        with restore_state.timing_context('_parse_apps'):
+            needed_versions, report_configs = _parse_apps(restore_state, restore_user)
         if not report_configs:
             return []
-
-        needed_versions = {
-            app.mobile_ucr_restore_version
-            for app in apps
-        }
 
         report_data_cache = ReportDataCache(restore_user.domain, report_configs)
         providers = [
@@ -134,33 +128,35 @@ class ReportFixturesProvider(FixtureProvider):
 
         return True
 
-    def _get_apps(self, restore_state, restore_user):
-        app_aware_sync_app = restore_state.params.app
 
-        if app_aware_sync_app:
-            apps = [app_aware_sync_app]
-        elif (
-            toggles.RESTORE_ACCESSIBLE_REPORTS_ONLY.enabled(restore_user.domain)
-            and restore_state.params.is_webapps
-            # only way to reliably know that this is a web apps restore, not live preview
-            and not restore_user.request_user.can_view_apps(restore_user.domain)
-        ):
-            apps = []
-            for app in get_web_apps_available_to_user(restore_user.domain, restore_user._couch_user):
-                if not is_remote_app(app):
-                    apps.append(get_correct_app_class(app).wrap(app))
-        else:
-            apps = get_apps_in_domain(restore_user.domain, include_remote=False)
+def _parse_apps(restore_state, restore_user):
+    if restore_state.params.app:
+        apps = [restore_state.params.app]
+    elif toggles.RESTORE_ACCESSIBLE_REPORTS_ONLY.enabled(restore_user.domain):
+        needed_versions = set()
+        mobile_ucr_configs = []
+        for app in get_web_apps_available_to_user(restore_user.domain, restore_user._couch_user):
+            if not is_remote_app(app):
+                needed_versions.add(app.get('mobile_ucr_restore_version', MOBILE_UCR_VERSION_2))
+                for module in app['modules']:
+                    if module['doc_type'] == 'ReportModule':
+                        for report_config in module['report_configs']:
+                            mobile_ucr_configs.append(ReportAppConfig.wrap(report_config))
+        return needed_versions, mobile_ucr_configs
+    else:
+        apps = get_apps_in_domain(restore_user.domain, include_remote=False)
 
-        return apps
+    needed_versions = {app.mobile_ucr_restore_version for app in apps}
+    return needed_versions, _get_mobile_ucr_configs(apps)
 
-    def _get_report_configs(self, apps):
-        return [
-            report_config
-            for app_ in apps
-            for module in app_.get_report_modules()
-            for report_config in module.report_configs
-        ]
+
+def _get_mobile_ucr_configs(apps):
+    return [
+        report_config
+        for app_ in apps
+        for module in app_.get_report_modules()
+        for report_config in module.report_configs
+    ]
 
 
 report_fixture_generator = ReportFixturesProvider()
@@ -173,6 +169,7 @@ class ReportDataCache(object):
         self.reports = {}
         self.domain = domain
         self.report_configs = report_configs
+        self.add_row_index = toggles.ADD_ROW_INDEX_TO_MOBILE_UCRS.enabled(domain)
 
     def get_data(self, key, data_source):
         if key not in self.data_cache:
@@ -185,12 +182,12 @@ class ReportDataCache(object):
         Args:
             subset (list[ReportConfig]): Subset of reports to fetch. If None, fetch all reports.
         """
-        subset_ids = {config.report_id for config in subset} if subset else None
-        report_ids = [
-            config.report_id for config in self.report_configs
-            if config.report_id not in self.reports and (subset is None or config.report_id in subset_ids)
-        ]
-        self.reports.update(_get_report_configs(report_ids, self.domain))
+        to_load = {config.report_id for config in self.report_configs} - set(self.reports)
+        if subset is not None:
+            to_load = to_load.intersection({config.report_id for config in subset})
+        if to_load:
+            reports = get_report_configs(to_load, self.domain)
+            self.reports.update({report._id: report for report in reports})
 
     def get_report_and_datasource(self, report_id):
         if not self.reports:
@@ -239,7 +236,8 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
         if needed_versions.intersection({MOBILE_UCR_VERSION_1, MOBILE_UCR_MIGRATING_TO_2}):
             yield _get_report_index_fixture(restore_user)
             try:
-                self.report_data_cache.load_reports()
+                with restore_state.timing_context('V1 load_reports'):
+                    self.report_data_cache.load_reports()
             except Exception:
                 logging.exception("Error fetching reports for domain", extra={
                     "domain": restore_user.domain,
@@ -280,13 +278,11 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
         return root
 
     def report_config_to_fixture(self, report_config, restore_user):
-        row_index_enabled = toggles.ADD_ROW_INDEX_TO_MOBILE_UCRS.enabled(restore_user.domain)
-
         def _row_to_row_elem(
             deferred_fields, filter_options_by_field, row, index, is_total_row=False,
         ):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
-            if row_index_enabled:
+            if self.report_data_cache.add_row_index:
                 row_elem.append(E.column(str(index), id='row_index'))
             for k in sorted(row.keys()):
                 value = serialize(row[k])
@@ -326,7 +322,8 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
             yield _get_report_index_fixture(restore_user, oldest_sync_time)
 
             try:
-                self.report_data_cache.load_reports(synced_fixtures)
+                with restore_state.timing_context('V2 load_reports'):
+                    self.report_data_cache.load_reports(synced_fixtures)
             except Exception:
                 logging.exception("Error fetching reports for domain", extra={
                     "domain": restore_user.domain,
@@ -334,7 +331,8 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
                 })
                 return []
 
-            yield from self._v2_fixtures(restore_user, synced_fixtures, restore_state.params.fail_hard)
+            with restore_state.timing_context('_v2_fixtures'):
+                yield from self._v2_fixtures(restore_state, synced_fixtures)
             for report_uuid in purged_fixture_ids:
                 yield from self._empty_v2_fixtures(report_uuid)
 
@@ -409,10 +407,12 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
         yield E.fixture(id=self._report_fixture_id(report_uuid))
         yield E.fixture(id=self._report_filter_id(report_uuid))
 
-    def _v2_fixtures(self, restore_user, report_configs, fail_hard=False):
+    def _v2_fixtures(self, restore_state, report_configs):
+        fail_hard = restore_state.params.fail_hard
         for report_config in report_configs:
             try:
-                yield from self.report_config_to_fixture(report_config, restore_user)
+                with restore_state.timing_context(report_config.instance_id):
+                    yield from self.report_config_to_fixture(report_config, restore_state.restore_user)
             except ReportConfigurationNotFoundError as err:
                 logging.exception('Error generating report fixture: {}'.format(err))
                 if fail_hard:
@@ -432,7 +432,7 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
     def report_config_to_fixture(self, report_config, restore_user):
         def _row_to_row_elem(deferred_fields, filter_options_by_field, row, index, is_total_row=False):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
-            if toggles.ADD_ROW_INDEX_TO_MOBILE_UCRS.enabled(restore_user.domain):
+            if self.report_data_cache.add_row_index:
                 row_elem.append(E('row_index', str(index)))
             for k in sorted(row.keys()):
                 value = serialize(row[k])
@@ -598,11 +598,6 @@ def _get_filters_elem(defer_filters, filter_options_by_field, couch_user):
             filter_elem.append(option_elem)
         filters_elem.append(filter_elem)
     return filters_elem
-
-
-def _get_report_configs(report_ids, domain):
-    reports = get_report_configs(report_ids, domain)
-    return {report._id: report for report in reports}
 
 
 class MockTotalRowCalculator(object):

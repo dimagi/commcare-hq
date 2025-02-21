@@ -7,6 +7,7 @@ hqDefine('locations/js/location_tree', [
     'hqwebapp/js/bootstrap5/alert_user',
     'analytix/js/google',
     'locations/js/search',
+    'hqwebapp/js/bootstrap5/knockout_bindings.ko',  // fadeVisible
 ], function (
     $,
     ko,
@@ -15,7 +16,7 @@ hqDefine('locations/js/location_tree', [
     initialPageData,
     alertUser,
     googleAnalytics,
-    locationUtils
+    locationUtils,
 ) {
     function apiGetChildren(locUuid, showInactive, callback) {
         var params = (locUuid ? {
@@ -296,7 +297,7 @@ hqDefine('locations/js/location_tree', [
         self.archive_success_message = _.template(gettext("You have successfully archived the location <%-name%>"));
 
         self.delete_success_message = _.template(gettext(
-            "You have successfully deleted the location <%-name%> and all of its child locations"
+            "You have successfully deleted the location <%-name%> and all of its child locations",
         ));
 
         self.delete_error_message = _.template(gettext("An error occurred while deleting your location. If the problem persists, please report an issue"));

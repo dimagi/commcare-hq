@@ -1,3 +1,8 @@
+{% if content.partial %}
+  <div>
+    {% include content.partial %}
+  </div>
+{% endif %}
 <div class="pb-3">
   {% include 'styleguide/bootstrap5/partials/readable_code_block.html' with content=content.code language=content.language %}
 </div>

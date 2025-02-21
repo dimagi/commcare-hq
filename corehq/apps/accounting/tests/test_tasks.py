@@ -15,36 +15,33 @@ from corehq.util.test_utils import make_es_ready_form
 @es_test(requires=[form_adapter], setup_class=True)
 class TestCalculateFormSubmittingMobileWorkers(BaseInvoiceTestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
+    def setUp(self):
+        super().setUp()
         num_workers = 5
-        generator.arbitrary_commcare_users_for_domain(cls.domain.name, num_workers)
+        generator.arbitrary_commcare_users_for_domain(self.domain.name, num_workers)
 
-        cls.num_form_submitting_workers = 3
-        cls.one_day_ago = datetime.date.today() - datetime.timedelta(days=1)
+        self.num_form_submitting_workers = 3
+        self.one_day_ago = datetime.date.today() - datetime.timedelta(days=1)
         one_week_ago_dt = datetime.datetime.combine(
-            cls.one_day_ago - datetime.timedelta(days=6), datetime.time()
+            self.one_day_ago - datetime.timedelta(days=6), datetime.time()
         )
-        for user in cls.domain.all_users()[:cls.num_form_submitting_workers]:
-            cls._submit_form(user, one_week_ago_dt)
+        for user in self.domain.all_users()[:self.num_form_submitting_workers]:
+            self._submit_form(user, one_week_ago_dt)
 
-    @classmethod
-    def _submit_form(cls, user, received_on):
+    def _submit_form(self, user, received_on):
         form_pair = make_es_ready_form(
             TestFormMetadata(
-                domain=cls.domain.name,
+                domain=self.domain.name,
                 user_id=user.user_id,
                 received_on=received_on
             )
         )
         form_adapter.index(form_pair.json_form, refresh=True)
 
-    @classmethod
-    def tearDownClass(cls):
+    def tearDown(self):
         delete_all_users()
         delete_all_domains()
-        return super().tearDownClass()
+        return super().tearDown()
 
     def test_calculate_form_submitting_mobile_workers_in_all_domains(self):
         tasks.calculate_form_submitting_mobile_workers_in_all_domains()

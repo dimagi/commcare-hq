@@ -5,6 +5,7 @@ hqDefine("domain/js/select", [
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/components/search_box',
+    'commcarehq',
 ], function (
     $,
     _,

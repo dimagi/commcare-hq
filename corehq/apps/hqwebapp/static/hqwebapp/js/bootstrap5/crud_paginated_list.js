@@ -4,20 +4,20 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
     "knockout",
     "underscore",
     "es6!hqwebapp/js/bootstrap5_loader",
+    'hqwebapp/js/bootstrap5/knockout_bindings.ko',  // fadeVisible
 ], function (
     $,
     ko,
     _,
-    bootstrap
+    bootstrap,
 ) {
     var CRUDPaginatedListModel = function (
         total,
         pageLimit,
         currentPage,
         options,
-        paginatedItem
+        paginatedItem,
     ) {
-        'use strict';
         options = options || {};
 
         var self = {};
@@ -115,7 +115,7 @@ hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
                         data.paginatedList,
                         function (listItem) {
                             return self.PaginatedItem(listItem, self.initRow);
-                        }
+                        },
                     ));
                     self.deletedList([]);
                     self.newList([]);

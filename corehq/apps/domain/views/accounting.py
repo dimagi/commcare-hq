@@ -126,7 +126,7 @@ PAYMENT_ERROR_MESSAGES = {
 
 class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     page_title = gettext_lazy("Upgrade Required")
-    template_name = "domain/insufficient_privilege_notification.html"
+    template_name = "domain/bootstrap3/insufficient_privilege_notification.html"
 
     @property
     def page_url(self):
@@ -202,7 +202,7 @@ class DomainAccountingSettings(BaseProjectSettingsView):
 
 class DomainSubscriptionView(DomainAccountingSettings):
     urlname = 'domain_subscription_view'
-    template_name = 'domain/current_subscription.html'
+    template_name = 'domain/bootstrap3/current_subscription.html'
     page_title = gettext_lazy("Current Subscription")
 
     @property
@@ -382,7 +382,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
 
 class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin):
-    template_name = 'domain/update_billing_contact_info.html'
+    template_name = 'domain/bootstrap3/update_billing_contact_info.html'
     urlname = 'domain_update_billing_info'
     page_title = gettext_lazy("Billing Information")
     async_handlers = [
@@ -444,7 +444,7 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
 
 
 class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMixin):
-    template_name = 'domain/billing_statements.html'
+    template_name = 'domain/bootstrap3/billing_statements.html'
     urlname = 'domain_billing_statements'
     page_title = gettext_lazy("Billing Statements")
 
@@ -866,7 +866,7 @@ class BillingStatementPdfView(View):
 
 
 class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
-    template_name = 'domain/internal_subscription_management.html'
+    template_name = 'domain/bootstrap3/internal_subscription_management.html'
     urlname = 'internal_subscription_mgmt'
     page_title = gettext_lazy("Dimagi Internal Subscription Management")
     form_classes = INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS
@@ -1090,7 +1090,7 @@ class PlanViewBase(DomainAccountingSettings):
 
 
 class SelectPlanView(PlanViewBase):
-    template_name = 'domain/select_plan.html'
+    template_name = 'domain/bootstrap3/select_plan.html'
     urlname = 'domain_select_plan'
     step_title = gettext_lazy("Select Plan")
 
@@ -1107,7 +1107,7 @@ class SelectPlanView(PlanViewBase):
 
 
 class ContactFormViewBase(PlanViewBase):
-    template_name = 'domain/selected_plan_contact.html'
+    template_name = 'domain/bootstrap3/selected_plan_contact.html'
     step_title = gettext_lazy("Contact Dimagi")
     lead_text = gettext_lazy("Please submit the following form and a member of our sales team will be "
                              "in touch shortly about your plan.")
@@ -1205,7 +1205,7 @@ class SelectedCustomPlanView(ContactFormViewBase):
 
 
 class ConfirmSelectedPlanView(PlanViewBase):
-    template_name = 'domain/confirm_plan.html'
+    template_name = 'domain/bootstrap3/confirm_plan.html'
     urlname = 'confirm_selected_plan'
 
     @property
@@ -1327,7 +1327,7 @@ class ConfirmSelectedPlanView(PlanViewBase):
 
 
 class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
-    template_name = 'domain/confirm_billing_info.html'
+    template_name = 'domain/bootstrap3/confirm_billing_info.html'
     urlname = 'confirm_billing_account_info'
     step_title = gettext_lazy("Confirm Billing Information")
     is_new = False
@@ -1526,7 +1526,7 @@ class SubscriptionRenewalView(PlanViewBase, SubscriptionMixin):
     urlname = "domain_subscription_renewal"
     page_title = gettext_lazy("Renew Plan")
     step_title = gettext_lazy("Renew Plan")
-    template_name = "domain/renew_plan.html"
+    template_name = "domain/bootstrap3/renew_plan.html"
 
     @property
     def current_edition(self):
@@ -1592,7 +1592,7 @@ class SubscriptionRenewalView(PlanViewBase, SubscriptionMixin):
 
 class ConfirmSubscriptionRenewalView(PlanViewBase, DomainAccountingSettings,
                                      AsyncHandlerMixin, SubscriptionMixin):
-    template_name = 'domain/confirm_subscription_renewal.html'
+    template_name = 'domain/bootstrap3/confirm_subscription_renewal.html'
     urlname = 'domain_subscription_renewal_confirmation'
     page_title = gettext_lazy("Confirm Billing Information")
     step_title = gettext_lazy("Confirm Billing Information")

@@ -1,0 +1,47 @@
+{% extends "hqwebapp/bootstrap5/base_navigation.html" %}
+{% load hq_shared_tags %}
+{% load django_tables2 %}
+{% load i18n %}
+
+{# This is the basic entry point for pages using HTMX and Alpine that do not need additional JavaScript: #}
+{% js_entry "hqwebapp/js/htmx_and_alpine" %}
+
+{% block content %}
+  <div class="container p-5">
+    <h1 class="py-3 m-0">
+      {% trans "Simple Pagination: HTMX + Django Tables2" %}
+    </h1>
+    <p>
+      {% blocktrans %}
+        This button will trigger a refresh on the table once its HTMX request is complete:
+      {% endblocktrans %}
+      <br />
+      <button
+        class="btn btn-primary" type="button"
+        hx-get="{% url 'styleguide_a_hanging_view' %}"
+        {# the attribute below triggers an `hqRefresh` event on `ExampleFakeDataTable` after the button's request is complete #}
+        hq-hx-refresh-after="#ExampleFakeDataTable"
+        {# we use none for `hx-swap` because the URL from `hx-get` above returns nothing in this example #}
+        hx-swap="none"
+      >
+        <i class="fa fa-refresh"></i> {% trans "Refresh Table After Request" %}
+      </button>
+    </p>
+    <div
+      hx-trigger="load"
+      {# `hx-get` asynchronously loads the table from HtmxPaginationView on page load, triggered by `hx-trigger` above #}
+      {# The `{% querystring %}` template tag below is from django-tables2. It retrieves the GET parameters from the URL to properly initialize the table when they are present. #}
+      hx-get="{% url "styleguide_b5_paginated_table_view" %}{% querystring %}"
+    >
+      <div class="htmx-indicator">
+        <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading..." %}
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block modals %}
+  {# you can either include this template or include an extension of this template to show HTMX errors to the user #}
+  {% include "hqwebapp/htmx/error_modal.html" %}
+  {{ block.super }}
+{% endblock modals %}

@@ -2,8 +2,8 @@
 
 {% commcarehq_alerts request as alerts %}
 {% for alert in alerts %}
-  <div class="alert alert-warning alert-maintenance hide" data-id="{{ alert.id }}" data-created-by-domain="{{ alert.created_by_domain|BOOL }}">
-      <button class="btn-close" data-bs-dismiss="alert" aria-label="btn-close">&times;</button>
+  <div class="alert alert-warning alert-dismissible alert-maintenance hide" data-id="{{ alert.id }}" data-created-by-domain="{{ alert.created_by_domain|BOOL }}">
       {{ alert.html }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% trans_html_attr "Close" %}"></button>
   </div>
 {% endfor %}

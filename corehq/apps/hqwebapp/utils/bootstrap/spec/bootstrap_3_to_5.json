@@ -68,7 +68,8 @@
         "col-xs-offset-<num>": "offset-sm-<num>"
     },
     "template_tag_renames": {
-        "requirejs_main": "requirejs_main_b5"
+        "requirejs_main": "requirejs_main_b5",
+        "js_entry_b3": "js_entry"
     },
     "data_attribute_renames": {
         "data-toggle": "data-bs-toggle",
@@ -113,6 +114,8 @@
     ],
     "template_tags_with_dependencies": [
         "extends",
+        "js_entry",
+        "js_entry_b3",
         "requirejs_main",
         "requirejs_main_b5",
         "static",

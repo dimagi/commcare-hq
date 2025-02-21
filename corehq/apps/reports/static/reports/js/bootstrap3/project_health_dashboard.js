@@ -1,5 +1,17 @@
-/* globals moment */
-hqDefine("reports/js/bootstrap3/project_health_dashboard", function () {
+hqDefine("reports/js/bootstrap3/project_health_dashboard", [
+    'jquery',
+    'underscore',
+    'd3/d3.min',
+    'moment/moment',
+    'nvd3/nv.d3.min',
+    'nvd3/src/nv.d3.css',
+], function (
+    $,
+    _,
+    d3,
+    moment,
+    nv,
+) {
     // "Performing / Active User Trends" Chart
     function setupCharts(data) {
         var highPerformingSeries = {

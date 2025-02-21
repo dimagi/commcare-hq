@@ -2,6 +2,8 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+{% js_entry_b3 'hqmedia/js/references_main' %}
+
 {% block stylesheets %}{{ block.super }}
   <style type="text/css">
     .media-type-icon,
@@ -9,12 +11,6 @@
       font-size: 22px;
     }
   </style>
-{% endblock %}
-
-{% block js %} {{ block.super }}
-  <script src="{% static 'hqmedia/js/media_reference_models.js' %}"></script>
-  <script src="{% static 'hqmedia/js/references_main.js' %}"></script>
-  <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
 {% endblock %}
 
 {% block page_content %}

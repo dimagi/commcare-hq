@@ -1025,7 +1025,6 @@ class TestUserESAccessors(TestCase):
         self.assertEqual(len(results), 1)
         metadata = results[0].pop('user_data_es')
         self.assertEqual({
-            'commcare_project': 'user-esaccessors-test',
             PROFILE_SLUG: self.profile.id,
             'job': 'reporter',
             'office': 'phone_booth',

@@ -314,6 +314,10 @@ class EditCommCareUserView(BaseEditUserView):
             'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
             'show_deactivate_after_date': self.form_user_update.user_form.show_deactivate_after_date,
             'can_create_groups': can_edit_groups and can_access_all_locations,
+            'can_access_all_locations': can_access_all_locations,
+            'editable_user_can_access_all_locations': self.editable_user.has_permission(
+                self.domain, 'access_all_locations'
+            ),
             'needs_to_downgrade_locations': locations_present and not request_has_locations_privilege,
             'demo_restore_date': naturaltime(demo_restore_date_created(self.editable_user)),
             'group_names': [g.name for g in self.groups],
@@ -381,7 +385,7 @@ class EditCommCareUserView(BaseEditUserView):
         if self.request.POST['form_type'] == "add-phonenumber":
             phone_number = self.request.POST['phone_number']
             phone_number = re.sub(r'\s', '', phone_number)
-            if re.match(r'\d+$', phone_number):
+            if phone_number.isdigit():
                 is_new_phone_number = phone_number not in self.editable_user.phone_numbers
                 self.editable_user.add_phone_number(phone_number)
                 self.editable_user.save(spawn_task=True)
@@ -1609,7 +1613,12 @@ def bulk_user_upload_api(request, domain):
         if file is None:
             raise UserUploadError(_('no file uploaded'))
         workbook = get_workbook(file)
-        user_specs, group_specs = BaseUploadUser.process_workbook(workbook, domain, is_web_upload=False)
+        user_specs, group_specs = BaseUploadUser.process_workbook(
+            workbook,
+            domain,
+            is_web_upload=False,
+            upload_user=request.couch_user
+        )
         BaseUploadUser.upload_users(request, user_specs, group_specs, domain, is_web_upload=False)
         return json_response({'success': True})
     except (WorkbookJSONError, WorksheetNotFound, UserUploadError) as e:

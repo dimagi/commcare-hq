@@ -228,9 +228,16 @@ def check_bootstrap3_references_in_template(line, spec):
                              "It should also use requirejs_main_b5 instead of requirejs_main.")
             if tag == "requirejs_main_b5":
                 issues.append("This template references a bootstrap 3 requirejs file.")
+            if tag == "js_entry_b3":
+                issues.append("This template references a bootstrap 3 webpack entry point. "
+                             "It should also use js_entry instead of js_entry_b3.")
+            if tag == "js_entry":
+                issues.append("This template references a bootstrap 3 webpack entry point.")
         elif re.search(tag_only_regex, line):
             if tag == "requirejs_main":
                 issues.append("This template should use requirejs_main_b5 instead of requirejs_main.")
+            if tag == "js_entry_b3":
+                issues.append("This template should use js_entry instead of js_entry_b3.")
     regex = r"(=[\"\'][\w\/]+)(\/bootstrap3\/)"
     if re.search(regex, line):
         issues.append("This template references a bootstrap 3 file.")

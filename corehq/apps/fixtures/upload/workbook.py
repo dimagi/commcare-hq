@@ -3,11 +3,12 @@ from weakref import WeakKeyDictionary
 from django.utils.translation import gettext as _, gettext_lazy
 
 from corehq.apps.fixtures.exceptions import FixtureUploadError
-from corehq.apps.fixtures.upload.const import DELETE_HEADER, INVALID, MULTIPLE
+from corehq.apps.fixtures.upload.const import DELETE_HEADER, INVALID, MAX_FIXTURE_ROWS, MULTIPLE
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
 from corehq.apps.fixtures.utils import is_identifier_invalid
 from corehq.util.workbook_json.excel import (
     WorkbookJSONError,
+    WorkbookTooManyRows,
     WorksheetNotFound,
 )
 from corehq.util.workbook_json.excel import (
@@ -36,9 +37,14 @@ class _FixtureWorkbook(object):
 
     def __init__(self, file_or_filename):
         try:
-            self.workbook = excel_get_workbook(file_or_filename)
+            self.workbook = excel_get_workbook(file_or_filename, max_row_count=MAX_FIXTURE_ROWS)
         except WorkbookJSONError as e:
             raise FixtureUploadError([str(e)])
+        except WorkbookTooManyRows as e:
+            raise FixtureUploadError([
+                f"Lookup tables can contain a maximum of {e.max_row_count} rows. "
+                f"The uploaded file contains {e.actual_row_count} rows."
+            ])
         self._rows = {}
         self.item_keys = WeakKeyDictionary()
         self.ownership = WeakKeyDictionary()

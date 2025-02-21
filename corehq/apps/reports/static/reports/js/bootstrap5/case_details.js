@@ -2,7 +2,6 @@ hqDefine("reports/js/bootstrap5/case_details", [
     'jquery',
     'knockout',
     'underscore',
-    'clipboard/dist/clipboard',
     'hqwebapp/js/initial_page_data',
     'analytix/js/google',
     'analytix/js/kissmetrix',
@@ -14,17 +13,17 @@ hqDefine("reports/js/bootstrap5/case_details", [
     'reports/js/bootstrap5/readable_form',
     'bootstrap',    // needed for $.tab
     'jquery-memoized-ajax/jquery.memoized.ajax.min',
+    'commcarehq',
 ], function (
     $,
     ko,
     _,
-    Clipboard,
     initialPageData,
     googleAnalytics,
     kissmetrics,
     casePropertyModal,
     dataCorrections,
-    singleForm
+    singleForm,
 ) {
     var xformDataModel = function (data) {
         var self = {};

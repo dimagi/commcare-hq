@@ -17,7 +17,7 @@ from corehq.apps.hqadmin.forms import (
 from corehq.apps.hqadmin.tasks import send_mass_emails
 from corehq.apps.hqadmin.views.utils import (
     BaseAdminSectionView,
-    get_hqadmin_base_context,
+    get_breadcrumbs,
 )
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
@@ -40,9 +40,10 @@ def mass_email(request):
     else:
         form = EmailForm()
 
-    context = get_hqadmin_base_context(request)
-    context['hide_filters'] = True
-    context['form'] = form
+    context = {
+        'form': form,
+        **get_breadcrumbs('Mass Email Users', 'mass_email'),
+    }
     return render(request, "hqadmin/mass_email.html", context)
 
 
@@ -97,11 +98,9 @@ class ReprocessMessagingCaseUpdatesView(BaseAdminSectionView):
 
     @property
     def page_context(self):
-        context = get_hqadmin_base_context(self.request)
-        context.update({
+        return {
             'form': self.form,
-        })
-        return context
+        }
 
     def get_case(self, case_id):
         try:

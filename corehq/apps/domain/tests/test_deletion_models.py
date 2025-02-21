@@ -38,7 +38,6 @@ IGNORE_APPS = {
     'telerivet',
     'toggle_ui',
     'sso',
-    'oauth_integrations',
 }
 
 IGNORE_MODELS = {
@@ -54,7 +53,6 @@ IGNORE_MODELS = {
     'cleanup.DeletedCouchDoc',
     'cleanup.DeletedSQLDoc',
     'domain.DomainAuditRecordEntry',
-    'domain.ProjectLimit',
     'domain.SuperuserProjectEntryRecord',
     'dropbox.DropboxUploadHelper',
     'export.DefaultExportSettings',
@@ -71,6 +69,9 @@ IGNORE_MODELS = {
     'util.ComplaintBounceMeta',
     'util.PermanentBounceMeta',
     'util.TransientBounceEmail',
+    'users.ConnectIDUserLink',       # handled by cascading delete of django user model
+    'users.ConnectIDMessagingKey',   # handled by cascading delete of user link model (from user model)
+    'users.InvitationHistory',
     'users.UserHistory',
 }
 

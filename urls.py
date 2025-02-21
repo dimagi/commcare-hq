@@ -71,11 +71,12 @@ domain_specific = [
     url(r'^', include(hqwebapp_domain_specific)),
     url(r'^case/', include('corehq.apps.hqcase.urls')),
     url(r'^case/', include('corehq.apps.case_search.urls')),
+    url(r'^clean/', include('corehq.apps.data_cleaning.urls')),
     url(r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
-    url(r'^geospatial/', include('corehq.apps.geospatial.urls')),
+    url(r'^microplanning/', include('corehq.apps.geospatial.urls')),
+    url(r'^kyc/', include('corehq.apps.integration.kyc.urls')),
     url(r'^fixtures/', include('corehq.apps.fixtures.urls')),
     url(r'^importer/', include('corehq.apps.case_importer.urls')),
-    url(r'^up_nrhm/', include('custom.up_nrhm.urls')),
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
     url(r'^configurable_reports/', include('corehq.apps.userreports.urls')),
     url(r'^motech/', include('corehq.motech.urls')),
@@ -135,6 +136,7 @@ urlpatterns = [
     url(r'^yo/', include('corehq.messaging.smsbackends.yo.urls')),
     url(r'^gvi/', include('corehq.messaging.smsbackends.grapevine.urls')),
     url(r'^sislog/', include('corehq.messaging.smsbackends.sislog.urls')),
+    url(r'^connectid/', include('corehq.messaging.smsbackends.connectid.urls')),
     url(r'^langcodes/', include('langcodes.urls')),
     url(r'^builds/', include('corehq.apps.builds.urls')),
     url(r'^downloads/temp/', include('soil.urls')),
@@ -160,7 +162,6 @@ urlpatterns = [
         r'(?P<user_email>[\w.%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/(?P<scheduled_report_secret>[\w-]+)/',
         ReportNotificationUnsubscribeView.as_view(), name=ReportNotificationUnsubscribeView.urlname),
     url(r'^phone/list_apps', list_apps, name="list_accessible_apps"),
-    url(r'^oauth/', include('corehq.apps.oauth_integrations.urls')),
 ] + LOCAL_APP_URLS
 
 if settings.ENABLE_PRELOGIN_SITE:

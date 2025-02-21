@@ -150,6 +150,5 @@ class FormOdataTestMixin(OdataTestMixin):
 
 def generate_api_key_from_web_user(web_user):
     api_key = HQApiKey.objects.get_or_create(user=web_user.get_django_user())[0]
-    api_key.key = api_key.generate_key()
     api_key.save()
     return api_key

@@ -3,7 +3,7 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% requirejs_main "accounting/js/base_subscriptions_main" %}
+{% js_entry "accounting/js/base_subscriptions_main" %}
 
 {% block page_content %}
   {% include 'accounting/partials/version_summary_tab.html' %}

@@ -76,6 +76,7 @@ def activate_new_user(
     username, password, created_by, created_via, first_name=None, last_name=None,
     is_domain_admin=False, domain=None, ip=None, atypical_user=False, commit=True
 ):
+    from corehq.apps.analytics.tasks import record_event
     now = datetime.utcnow()
 
     new_user = WebUser.create(
@@ -86,7 +87,8 @@ def activate_new_user(
         created_via,
         is_admin=is_domain_admin,
         by_domain_required_for_log=bool(domain),
-        commit=commit
+        commit=commit,
+        email=username
     )
     new_user.first_name = first_name
     new_user.last_name = last_name
@@ -108,10 +110,15 @@ def activate_new_user(
     if commit:
         new_user.save()
 
+    # Engagement time appears necessary for this event to show up within GA debug view
+    # (when 'debug_mode': '1' is also supplied)
+    # Leaving engagement time in as there doesn't seem a good reason to remove it
+    record_event('backend_new_user', new_user, {'engagement_time_msec': 1000})
+
     return new_user
 
 
-def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=False, is_self_signup=False):
+def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=False):
     now = datetime.utcnow()
     current_user = CouchUser.from_django_user(request.user, strict=True)
 
@@ -166,7 +173,7 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
             new_domain.delete()
             raise ErrorInitializingDomain(f"Subscription setup failed for '{name}'")
 
-        if is_self_signup:
+        if settings.IS_SAAS_ENVIRONMENT:
             SelfSignupWorkflow.objects.create(domain=new_domain.name, initiating_user=current_user.username)
 
     initialize_domain_with_default_roles(new_domain.name)

@@ -1,9 +1,9 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% requirejs_main 'domain/js/internal_settings' %}
+{% js_entry 'domain/js/internal_settings' %}
 
 {% block stylesheets %}
   {{ block.super }}

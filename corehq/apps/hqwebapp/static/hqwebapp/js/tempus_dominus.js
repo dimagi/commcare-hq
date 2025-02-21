@@ -1,4 +1,4 @@
-"use strict";
+
 /**
   * This replaces hqwebapp/js/daterangepicker.config, which is tied to bootstrap3
   *
@@ -14,10 +14,12 @@ hqDefine("hqwebapp/js/tempus_dominus", [
     _,
     Popper,
     tempusDominus,
-    initialPageData
+    initialPageData,
 ) {
     // https://github.com/Eonasdan/tempus-dominus/discussions/2698
-    window.Popper = Popper;
+    if (!window.USE_WEBPACK) {
+        window.Popper = Popper;
+    }
 
     let createDatePicker = function (el, options) {
         let picker = new tempusDominus.TempusDominus(el, _addDefaultOptions(options, {
@@ -74,7 +76,7 @@ hqDefine("hqwebapp/js/tempus_dominus", [
                 localization: _.extend(defaultTranslations, {
                     format: 'yyyy-MM-dd',
                 }),
-            }
+            },
         );
 
         if (start && end) {

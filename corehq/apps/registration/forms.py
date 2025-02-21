@@ -22,9 +22,10 @@ from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.programs.models import Program
+from corehq.apps.reports.models import TableauUser
 from corehq.toggles import WEB_USER_INVITE_ADDITIONAL_FIELDS
 from corehq.apps.users.forms import SelectUserLocationForm, BaseTableauUserForm
-from corehq.apps.users.models import CouchUser, WebUser
+from corehq.apps.users.models import CouchUser
 
 
 class RegisterWebUserForm(forms.Form):
@@ -40,6 +41,7 @@ class RegisterWebUserForm(forms.Form):
     phone_number = forms.CharField(
         label=_("Phone Number"),
         required=False,
+        max_length=20,
     )
     persona = forms.ChoiceField(
         label=_("I will primarily be using CommCare to..."),
@@ -229,7 +231,7 @@ class RegisterWebUserForm(forms.Form):
         phone_number = re.sub(r'\s|\+|\-', '', phone_number)
         if phone_number == '':
             return None
-        elif not re.match(r'\d+$', phone_number):
+        elif not phone_number.isdigit():
             raise forms.ValidationError(gettext(
                 "%s is an invalid phone number." % phone_number
             ))
@@ -430,7 +432,7 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
         return data
 
 
-class WebUserInvitationForm(BaseUserInvitationForm):
+class AcceptedWebUserInvitationForm(BaseUserInvitationForm):
     """
     Form for a brand new user, before they've created a domain or done anything on CommCare HQ.
     """
@@ -489,10 +491,11 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                              max_length=User._meta.get_field('email').max_length)
     role = forms.ChoiceField(choices=(), label="Project Role")
 
-    def __init__(self, data=None, excluded_emails=None, is_add_user=None,
+    def __init__(self, data=None, is_add_user=None,
                  role_choices=(), should_show_location=False, can_edit_tableau_config=False,
-                 custom_data=None, *, domain, **kwargs):
+                 custom_data=None, invitation=None, *, domain, **kwargs):
         self.custom_data = custom_data
+        self.invite = invitation
         if data and self.custom_data:
             data = data.copy()
             custom_data_post_dict = self.custom_data.form.data
@@ -516,11 +519,11 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                 programs = Program.by_domain(domain_obj.name)
                 choices = [('', '')] + list((prog.get_id, prog.name) for prog in programs)
                 self.fields['program'].choices = choices
-
-        self.excluded_emails = [x.lower() for x in excluded_emails] if excluded_emails else []
+                if self.invite:
+                    self.fields['program'].initial = self.invite.program
 
         if self.can_edit_tableau_config:
-            self._initialize_tableau_fields(data, domain)
+            self._initialize_tableau_fields(data, domain, self.invite)
 
         self.helper = FormHelper()
         self.helper.form_method = 'POST'
@@ -528,9 +531,18 @@ class AdminInvitesUserForm(SelectUserLocationForm):
 
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+
+        save_button_text = _("Send Invite")
+        header_text = _("Information for new Web User")
+        add_user_text = _("Add User")
+        if self.invite:
+            self.fields['email'].widget.attrs["readonly"] = True
+            save_button_text = _("Update Invite")
+            header_text = _("Update invitation for new Web User")
+
         fields = [
             crispy.Fieldset(
-                gettext("Information for new Web User"),
+                gettext(header_text),
                 crispy.Field(
                     "email",
                     autocomplete="off",
@@ -551,6 +563,9 @@ class AdminInvitesUserForm(SelectUserLocationForm):
                     'primary_location',
                 )
             )
+        else:
+            self.fields.pop('assigned_locations', None)
+            self.fields.pop('primary_location', None)
         if self.can_edit_tableau_config:
             fields.append(
                 crispy.Fieldset(
@@ -571,8 +586,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    (gettext("Add User") if is_add_user
-                     else gettext("Send Invite")),
+                    (gettext(add_user_text) if is_add_user else gettext(save_button_text)),
                     type="submit",
                     css_class="btn-primary",
                     data_bind="enable: isSubmitEnabled",
@@ -586,30 +600,17 @@ class AdminInvitesUserForm(SelectUserLocationForm):
             ),
         )
 
-    def _validate_profile(self, profile_id):
-        valid_profile_ids = {choice[0] for choice in self.custom_data.form.fields[PROFILE_SLUG].widget.choices}
-        if profile_id and profile_id not in valid_profile_ids:
-            raise forms.ValidationError(
-                _('Invalid profile selected. Please select a valid profile.'),
-            )
-
     def clean_email(self):
-        email = self.cleaned_data['email'].strip()
-        if email.lower() in self.excluded_emails:
-            raise forms.ValidationError(_("A user with this email address is already in "
-                                          "this project or has a pending invitation."))
-        web_user = WebUser.get_by_username(email)
-        if web_user and not web_user.is_active:
-            raise forms.ValidationError(_("A user with this email address is deactivated. "))
+        email = self.cleaned_data['email'].strip().lower()
+
+        from corehq.apps.registration.validation import AdminInvitesUserFormValidator
+        error = AdminInvitesUserFormValidator.validate_email(self.domain, email, bool(self.invite))
+        if error:
+            raise forms.ValidationError(error)
         return email
 
     def clean(self):
         cleaned_data = super(AdminInvitesUserForm, self).clean()
-
-        if (('tableau_role' in cleaned_data or 'tableau_group_indices' in cleaned_data)
-        and not self.can_edit_tableau_config):
-            raise forms.ValidationError(_("You do not have permission to edit Tableau Configuraion."))
-
         if 'tableau_group_indices' in cleaned_data:
             cleaned_data['tableau_group_ids'] = [
                 self.tableau_form.allowed_tableau_groups[int(i)].id
@@ -628,15 +629,35 @@ class AdminInvitesUserForm(SelectUserLocationForm):
 
             if prefixed_profile_key in custom_user_data:
                 profile_id = custom_user_data.pop(prefixed_profile_key)
-                self._validate_profile(profile_id)
                 cleaned_data['profile'] = profile_id
             cleaned_data['custom_user_data'] = get_prefixed(custom_user_data, self.custom_data.prefix)
 
+        from corehq.apps.registration.validation import AdminInvitesUserFormValidator
+        error = AdminInvitesUserFormValidator.validate_parameters(
+            self.domain,
+            self.request.couch_user,
+            cleaned_data.keys()
+        )
+        if error:
+            raise forms.ValidationError(error)
         return cleaned_data
 
-    def _initialize_tableau_fields(self, data, domain):
-        self.tableau_form = BaseTableauUserForm(data, domain=domain)
+    def _initialize_tableau_fields(self, data, domain, invitation=None):
+        readonly = not self.request.couch_user.has_permission(domain, 'edit_user_tableau_config')
+        self.tableau_form = BaseTableauUserForm(data, domain=domain, readonly=readonly)
         self.fields['tableau_group_indices'] = self.tableau_form.fields["groups"]
         self.fields['tableau_group_indices'].label = _('Tableau Groups')
         self.fields['tableau_role'] = self.tableau_form.fields['role']
         self.fields['tableau_role'].label = _('Tableau Role')
+        if invitation:
+            if invitation.tableau_group_ids:
+                initial_groups_indicies = []
+                for group_index in invitation.tableau_group_ids:
+                    for i, group in enumerate(self.tableau_form.allowed_tableau_groups):
+                        if group_index == group.id:
+                            initial_groups_indicies.append(i)
+                self.fields['tableau_group_indices'].initial = initial_groups_indicies
+            try:
+                self.fields['tableau_role'].initial = TableauUser.Roles(invitation.tableau_role)
+            except ValueError:
+                pass

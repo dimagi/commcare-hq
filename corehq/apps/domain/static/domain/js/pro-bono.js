@@ -2,6 +2,7 @@ hqDefine('domain/js/pro-bono', [
     'jquery',
     'hqwebapp/js/utils/email',
     'select2/dist/js/select2.full.min',
+    'commcarehq',
 ], function (
     $,
     emailUtils

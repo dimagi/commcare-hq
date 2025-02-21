@@ -1,4 +1,24 @@
-hqDefine('app_manager/js/releases/releases', function () {
+hqDefine("app_manager/js/releases/releases", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "analytix/js/google",
+    "analytix/js/kissmetrix",
+    "app_manager/js/download_async_modal",
+    "hqwebapp/js/initial_page_data",
+    "app_manager/js/app_manager",
+    "app_manager/js/menu",
+], function (
+    $,
+    ko,
+    _,
+    google,
+    kissmetrix,
+    downloadAsyncModal,
+    initialPageData,
+    appManager,
+    menu,
+) {
     function savedAppModel(appData, releasesMain) {
         var self = ko.mapping.fromJS(appData);
         $.each(['comment_user_name', '_deleteState'], function (i, attr) {
@@ -26,6 +46,9 @@ hqDefine('app_manager/js/releases/releases', function () {
         });
         self.app_code = ko.observable(null);
         self.failed_url_generation = ko.observable(false);
+        self.allowOfflineInstall = ko.observable(function () {
+            return appManager.versionGE(self.build_spec.version(), '2.13.0');
+        });
         self.build_profile = ko.observable('');
 
         self.base_url = function () {
@@ -62,7 +85,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         });
 
         self.track_deploy_type = function (type) {
-            hqImport('analytix/js/google').track.event('App Manager', 'Deploy Type', type);
+            google.track.event('App Manager', 'Deploy Type', type);
         };
 
         self.changeAppCode = function () {
@@ -146,8 +169,8 @@ hqDefine('app_manager/js/releases/releases', function () {
 
         self.click_app_code = function () {
             self.get_app_code();
-            hqImport('analytix/js/google').track.event('App Manager', 'Initiate Install', 'Get App Code');
-            hqImport('analytix/js/kissmetrix').track.event('Initiate Installation Method');
+            google.track.event('App Manager', 'Initiate Install', 'Get App Code');
+            kissmetrix.track.event('Initiate Installation Method');
         };
 
         self.get_app_code = function () {
@@ -196,8 +219,8 @@ hqDefine('app_manager/js/releases/releases', function () {
         };
 
         self.clickDeploy = function () {
-            hqImport('analytix/js/google').track.event('App Manager', 'Deploy Button', self.id());
-            hqImport('analytix/js/kissmetrix').track.event('Clicked Deploy');
+            google.track.event('App Manager', 'Deploy Button', self.id());
+            kissmetrix.track.event('Clicked Deploy');
             $.post(releasesMain.reverse('hubspot_click_deploy'));
             if (self.short_odk_url_is_available()) {
                 self.get_short_odk_url();
@@ -221,8 +244,8 @@ hqDefine('app_manager/js/releases/releases', function () {
         };
 
         self.trackScan = function () {
-            hqImport('analytix/js/google').track.event('App Manager', 'Initiate Install', 'Show Bar Code');
-            hqImport('analytix/js/kissmetrix').track.event('Initiate Installation Method');
+            google.track.event('App Manager', 'Initiate Install', 'Show Bar Code');
+            kissmetrix.track.event('Initiate Installation Method');
         };
 
         return self;
@@ -230,8 +253,7 @@ hqDefine('app_manager/js/releases/releases', function () {
 
     function releasesMainModel(o) {
         /* {fetchUrl, deleteUrl} */
-        var asyncDownloader = hqImport('app_manager/js/download_async_modal').asyncDownloader;
-        var appDiff = hqImport('app_manager/js/releases/app_diff').init('#app-diff-modal .modal-body');
+        var asyncDownloader = downloadAsyncModal.asyncDownloader;
         var self = this;
         self.genericErrorMessage = gettext(
             'An error occurred. Reload the page and click Make New Version to try again.');
@@ -316,10 +338,10 @@ hqDefine('app_manager/js/releases/releases', function () {
             for (var i = 1; i < arguments.length; i++) {
                 arguments[i] = ko.utils.unwrapObservable(arguments[i]);
             }
-            return hqImport("hqwebapp/js/initial_page_data").reverse.apply(null, arguments);
+            return initialPageData.reverse.apply(null, arguments);
         };
         self.webAppsUrl = function (idObservable, copyOf) {
-            var url = hqImport("hqwebapp/js/initial_page_data").reverse("formplayer_main"),
+            var url = initialPageData.reverse("formplayer_main"),
                 data = {
                     appId: ko.utils.unwrapObservable(idObservable),
                     copyOf: copyOf,
@@ -347,12 +369,8 @@ hqDefine('app_manager/js/releases/releases', function () {
         });
 
         self.trackClick = function (message) {
-            hqImport('analytix/js/kissmetrix').track.event(message);
+            kissmetrix.track.event(message);
             return true;
-        };
-
-        self.onViewChanges = function (appIdOne, appIdTwo) {
-            appDiff.renderDiff(appIdOne, appIdTwo);
         };
 
         self.goToPage = function (page) {
@@ -507,7 +525,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                     }
                     self.buildState('');
                     self.buildErrorCode('');
-                    hqImport('app_manager/js/menu').setPublishStatus(false);
+                    menu.setPublishStatus(false);
                 },
                 error: function (xhr) {
                     self.buildErrorCode(xhr.status);

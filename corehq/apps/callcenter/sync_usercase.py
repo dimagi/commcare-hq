@@ -136,10 +136,10 @@ def _get_user_case_fields(user, case_type, owner_id, domain):
     fields = {k: v for k, v in user.get_user_data(domain).items() if
               valid_element_name(k)}
 
-    if user.is_web_user():
-        fields['commcare_location_id'] = user.get_location_id(domain)
+    if location_id := user.get_location_id(domain):
+        fields['commcare_location_id'] = location_id
         fields['commcare_location_ids'] = user_location_data(user.get_location_ids(domain))
-        fields['commcare_primary_case_sharing_id'] = user.get_location_id(domain)
+        fields['commcare_primary_case_sharing_id'] = location_id
 
     # language or phone_number can be null and will break
     # case submission
@@ -155,6 +155,7 @@ def _get_user_case_fields(user, case_type, owner_id, domain):
         'hq_user_id': user.get_id,
         'first_name': user.first_name or '',
         'last_name': user.last_name or '',
+        'commcare_project': domain,
     })
 
     return fields

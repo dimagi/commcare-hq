@@ -3,10 +3,11 @@ hqDefine("hqmedia/js/manage_paths_main", [
     "knockout",
     "hqwebapp/js/assert_properties",
     "hqwebapp/js/components/select_toggle",
+    "commcarehq",
 ], function (
     $,
     ko,
-    assertProperties
+    assertProperties,
 ) {
     var pathsModel = function (options) {
         assertProperties.assertRequired(options, ['baseUrl', 'only_missing']);
