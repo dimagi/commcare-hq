@@ -185,6 +185,10 @@ hqDefine('registration/js/new_user.ko', [
                     params: true,
                 },
             });
+        self.companyName = ko.observable(defaults.company_name)
+            .extend({
+                maxLength: 50,
+            });
         self.eulaConfirmed = ko.observable(defaults.eula_confirmed || false);
         self.eulaConfirmed.subscribe(function (isConfirmed) {
             if (isConfirmed && self.projectName() === undefined) {
@@ -245,6 +249,7 @@ hqDefine('registration/js/new_user.ko', [
                 email: self.email(),
                 password: password,
                 project_name: self.projectName(),
+                company_name: self.companyName(),
                 eula_confirmed: self.eulaConfirmed(),
                 phone_number: module.getPhoneNumberFn() || self.phoneNumber(),
                 atypical_user: defaults.atypical_user,
@@ -290,6 +295,7 @@ hqDefine('registration/js/new_user.ko', [
         self.isStepTwoValid = ko.computed(function () {
             return self.projectName() !== undefined
                 && self.projectName.isValid()
+                && self.companyName.isValid()
                 && self.isPersonaValid()
                 && self.eulaConfirmed();
         });

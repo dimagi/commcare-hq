@@ -60,6 +60,7 @@ class RegisterWebUserForm(forms.Form):
         label=_("Please Specify"),
     )
     project_name = forms.CharField(label=_("Project Name"))
+    company_name = forms.CharField(label=_("Company or Organization"), required=False)
     eula_confirmed = forms.BooleanField(
         required=False,
         label=mark_safe(_(
@@ -198,6 +199,11 @@ class RegisterWebUserForm(forms.Form):
                                   "koValidationStateFeedback: { "
                                   "   validator: projectName "
                                   "}",
+                    ),
+                    hqcrispy.InlineField(
+                        'company_name',
+                        css_class="input-lg",
+                        data_bind="value: companyName"
                     ),
                     crispy.Div(*persona_fields),
                     hqcrispy.InlineField(
