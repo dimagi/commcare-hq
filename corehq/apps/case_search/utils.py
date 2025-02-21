@@ -1,7 +1,7 @@
 import json
 import re
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from functools import wraps
 
 from django.utils.functional import cached_property
@@ -50,44 +50,20 @@ from corehq.apps.registry.exceptions import (
 )
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.util.quickcache import quickcache
-from corehq.util.timer import TimingContext
+from corehq.apps.es.profiling import ESQueryProfiler
 
 
 @dataclass
-class CaseSearchProfiler:
-    debug_mode: bool = False
+class CaseSearchProfiler(ESQueryProfiler):
+    name: str = 'Case Search'
     primary_count: int = 0
     related_count: int = 0
-    timing_context: TimingContext = field(
-        default_factory=lambda: TimingContext('Case Search'))
-    queries: list = field(default_factory=list)
-    _query_number: int = 0
 
-    def get_case_search_class(self, slug=None):
-        profiler = self
-
-        class ProfiledCaseSearchES(CaseSearchES):
-            def run(self):
-                profiler._query_number += 1
-                if profiler.debug_mode:
-                    self.es_query['profile'] = True
-
-                tc = profiler.timing_context(f'run query #{profiler._query_number}: {slug}')
-                timer = tc.peek()
-                with tc:
-                    results = super().run()
-
-                if profiler.debug_mode:
-                    profiler.queries.append({
-                        'slug': slug,
-                        'query_number': profiler._query_number,
-                        'query': self.raw_query,
-                        'duration': timer.duration,
-                        'profile_json': results.raw.pop('profile'),
-                    })
-                return results
-
-        return ProfiledCaseSearchES
+    def __post_init__(self):
+        super().__post_init__()
+        # For some reason defining the default value in the dataclass doesn't work
+        # so we do it here
+        self.search_class = CaseSearchES
 
 
 def time_function():
@@ -181,7 +157,7 @@ class QueryHelper:
 
     def get_base_queryset(self, slug=None):
         # slug is only informational, used for profiling
-        _CaseSearchES = self.profiler.get_case_search_class(slug)
+        _CaseSearchES = self.profiler.get_search_class(slug)
         # See case_search_bha.py docstring for context on index_name
         return _CaseSearchES(index=self.config.index_name or None).domain(self.domain)
 
@@ -210,7 +186,7 @@ class RegistryQueryHelper(QueryHelper):
         self._registry_helper = registry_helper
 
     def get_base_queryset(self, slug=None):
-        _CaseSearchES = self.profiler.get_case_search_class(slug)
+        _CaseSearchES = self.profiler.get_search_class(slug)
         return _CaseSearchES().domain(self._registry_helper.visible_domains)
 
     def wrap_case(self, es_hit, include_score=False):
