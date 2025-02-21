@@ -24,6 +24,7 @@ class BulkEditChangeTest(TestCase):
                 'favorite_beach': 'Playa Bastimento',
                 'art': '\n  :)   \n  \t',
                 'second_favorite_beach': 'no idea',
+                'friend': 'Brittney \t\nClaasen',
             },
         )
 
@@ -49,6 +50,16 @@ class BulkEditChangeTest(TestCase):
             replace_string='Punta',
         )
         self.assertEqual(change.edited_value(self.case), 'Punta Bastimento')
+
+    def test_find_replace_regex(self):
+        change = BulkEditChange(
+            prop_id='friend',
+            action_type=EditActionType.FIND_REPLACE,
+            use_regex=True,
+            find_string='(\\s)+',
+            replace_string=' ',
+        )
+        self.assertEqual(change.edited_value(self.case), 'Brittney Claasen')
 
     def test_strip(self):
         change = BulkEditChange(

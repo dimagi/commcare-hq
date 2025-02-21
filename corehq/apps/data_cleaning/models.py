@@ -1,3 +1,4 @@
+import re
 import uuid
 
 from django.contrib.auth.models import User
@@ -377,6 +378,16 @@ class BulkEditChange(models.Model):
         ordering = ["created_on"]
 
     def edited_value(self, case):
+        regex_transformations = {
+            EditActionType.FIND_REPLACE: lambda x: re.sub(
+                re.compile(self.find_string), self.replace_string, x
+            ),
+        }
+
+        if self.use_regex and self.action_type in regex_transformations:
+            old_value = case.get_case_property(self.prop_id)
+            return regex_transformations[self.action_type](old_value)
+
         simple_transformations = {
             EditActionType.REPLACE: lambda x: self.replace_string,
             EditActionType.FIND_REPLACE: lambda x: x.replace(self.find_string, self.replace_string),
