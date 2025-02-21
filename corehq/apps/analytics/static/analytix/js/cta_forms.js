@@ -58,7 +58,7 @@ hqDefine('analytix/js/cta_forms', [
                 emailRFC2822: true,
             });
 
-        self.language__c = ko.observable();
+        self.language = ko.observable();
 
         self.areMainFieldsValid = ko.computed(function () {
             return _.every([
@@ -72,7 +72,7 @@ hqDefine('analytix/js/cta_forms', [
         });
 
         self.isLanguageFieldValid = ko.computed(function () {
-            return !self.showPreferredLanguage() || !!self.language__c();
+            return !self.showPreferredLanguage() || !!self.language();
         });
 
         self.isFormReadyToSubmit = ko.computed(function () {
@@ -101,7 +101,7 @@ hqDefine('analytix/js/cta_forms', [
                 page_name: document.title,
             };
             if (self.showPreferredLanguage()) {
-                submitData.language__c = self.language__c();
+                submitData.preferred_language = self.language();
             }
             $.ajax({
                 method: 'post',

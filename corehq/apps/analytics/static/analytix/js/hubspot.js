@@ -60,7 +60,7 @@ hqDefine('analytix/js/hubspot', [
 
         demoForm = ctaForms.hubspotCtaForm({
             hubspotFormId: formId,
-            showPreferredLanguage: false,
+            showPreferredLanguage: isVariant,
             nextButtonText: gettext("Submit Request"),
             submitCallbackFn: function () {
                 $('#get-demo-cta-success').fadeIn();
