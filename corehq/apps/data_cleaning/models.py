@@ -72,6 +72,13 @@ class BulkEditSession(models.Model):
         return case_session
 
     @classmethod
+    def restart_case_session(cls, user, domain_name, case_type):
+        previous_session = cls.get_active_case_session(user, domain_name, case_type)
+        previous_session.delete()
+        new_session = cls.new_case_session(user, domain_name, case_type)
+        return new_session
+
+    @classmethod
     def new_form_session(cls, user, domain_name, xmlns):
         raise NotImplementedError("Form data cleaning sessions are not yet supported!")
 
