@@ -1,4 +1,5 @@
 import json
+from datetime import timedelta
 from unittest.mock import Mock, patch, call
 
 from django.test import TestCase
@@ -559,6 +560,21 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(response.status_code, 200)
         api_users = json.loads(response.content)['objects']
         self.assertEqual(len(api_users), 0)
+
+        # last_modified filter
+        lte_filter = (another_user.last_modified + timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S.%f')
+        response = self._assert_auth_get_resource(f'{self.list_endpoint}?last_modified.lte={lte_filter}')
+        self.assertEqual(response.status_code, 200)
+        api_users = json.loads(response.content)['objects']
+        self.assertEqual(len(api_users), 2)
+        self.assertTrue(all(user['last_modified'] <= lte_filter for user in api_users))
+
+        gte_filter = (another_user.last_modified - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S.%f')
+        response = self._assert_auth_get_resource(f'{self.list_endpoint}?last_modified.gte={gte_filter}')
+        self.assertEqual(response.status_code, 200)
+        api_users = json.loads(response.content)['objects']
+        self.assertEqual(len(api_users), 2)
+        self.assertTrue(all(user['last_modified'] >= gte_filter for user in api_users))
 
     def test_get_single(self):
 
