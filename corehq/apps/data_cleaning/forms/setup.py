@@ -15,10 +15,10 @@ class SelectCaseTypeForm(forms.Form):
     )
 
     def __init__(self, domain, *args, **kwargs):
-        self.domain = domain
         super().__init__(*args, **kwargs)
+        self.allowed_case_types = sorted(get_case_types_for_domain(domain))
         self.fields['case_type'].choices = [(None, None)] + [
-            (c, c) for c in sorted(get_case_types_for_domain(self.domain))
+            (c, c) for c in self.allowed_case_types
         ]
         self.helper = hqcrispy.HQFormHelper()
         self.helper.form_tag = False
@@ -43,4 +43,6 @@ class SelectCaseTypeForm(forms.Form):
         case_type = self.cleaned_data['case_type']
         if not self.cleaned_data['case_type']:
             raise forms.ValidationError(_("Please select a case type to continue."))
+        if case_type not in self.allowed_case_types:
+            raise forms.ValidationError(_("'{}' is not a valid case type").format(case_type))
         return case_type
