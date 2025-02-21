@@ -2,19 +2,19 @@
 hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map', [
     'jquery',
     'underscore',
-    'hqwebapp/js/bootstrap3/main',
+    'hqwebapp/js/eventize',
     'DOMPurify/dist/purify.min',
 ], function (
     $,
     _,
-    hqMain,
+    eventize,
     DOMPurify,
 ) {
     var module = {};
 
     var InputMap = function (showDelButton, placeholders) {
         var that = this;
-        hqMain.eventize(this);
+        eventize(this);
         if (!placeholders) {
             placeholders = {};
             placeholders.key = gettext('key');

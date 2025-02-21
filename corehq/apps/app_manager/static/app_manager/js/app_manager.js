@@ -1,7 +1,7 @@
 'use strict';
 hqDefine('app_manager/js/app_manager', function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data");
-    var module = hqImport("hqwebapp/js/bootstrap3/main").eventize({});
+    var module = hqImport("hqwebapp/js/eventize")({});
     var _private = {};
     _private.appendedPageTitle = "";
     _private.prependedPageTitle = "";

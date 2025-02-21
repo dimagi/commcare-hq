@@ -2,12 +2,12 @@ hqDefine("app_manager/js/details/detail_tab_nodeset", [
     "jquery",
     "knockout",
     "underscore",
-    "hqwebapp/js/bootstrap3/main",
+    "hqwebapp/js/eventize",
 ], function (
     $,
     ko,
     _,
-    main,
+    eventize,
 ) {
 /**
  * This provides the UI for a case detail tab's nodeset.
@@ -37,7 +37,7 @@ hqDefine("app_manager/js/details/detail_tab_nodeset", [
         self.ui = $(_.template($("#module-case-detail-tab-nodeset-template").text())());
         self.ui.koApplyBindings(self);
 
-        main.eventize(self);
+        eventize(self);
         self.nodeset.subscribe(function () {
             self.fire('change');
         });

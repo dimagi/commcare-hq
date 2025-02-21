@@ -1,16 +1,16 @@
 
 hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-checkbox', [
     'jquery',
-    'hqwebapp/js/bootstrap3/main',
+    'hqwebapp/js/eventize',
 ], function (
     $,
-    hqMain,
+    eventize,
 ) {
     var module = {};
 
     var Checkbox = function () {
         var that = this;
-        hqMain.eventize(this);
+        eventize(this);
         this.ui = $('<span/>');
         this.value = true;
         this.edit = true;

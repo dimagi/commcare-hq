@@ -31,13 +31,13 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping', [
     'jquery',
     'knockout',
     'underscore',
-    'hqwebapp/js/bootstrap5/main',
+    'hqwebapp/js/eventize',
     'hqwebapp/js/assert_properties',
 ], function (
     $,
     ko,
     _,
-    hqMain,
+    eventize,
     assertProperties,
 ) {
     var module = {};
@@ -374,7 +374,7 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping', [
         $div.attr("data-bind", "template: 'key_value_mapping_template'");
         $div.koApplyBindings(m);
         m.ui = $div;
-        hqMain.eventize(m);
+        eventize(m);
         m.items.subscribe(function () {
             m.fire('change');
         });

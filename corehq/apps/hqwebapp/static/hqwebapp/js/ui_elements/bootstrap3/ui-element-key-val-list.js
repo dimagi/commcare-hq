@@ -2,19 +2,19 @@
 hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list', [
     'jquery',
     'underscore',
-    'hqwebapp/js/bootstrap3/main',
+    'hqwebapp/js/eventize',
     'hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map',
 ], function (
     $,
     _,
-    hqMain,
+    eventize,
     uiInputMap,
 ) {
     var module = {};
 
     var KeyValList = function (guid, modalTitle, subTitle, placeholders, maxDisplay) {
         var that = this;
-        hqMain.eventize(this);
+        eventize(this);
         this.placeholders = placeholders;
         this.ui = $('<div class="enum-pairs" />');
         this.value = {};

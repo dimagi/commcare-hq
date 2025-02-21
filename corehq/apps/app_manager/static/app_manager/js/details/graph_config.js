@@ -17,13 +17,13 @@ hqDefine("app_manager/js/details/graph_config", [
     "jquery",
     "knockout",
     "underscore",
-    "hqwebapp/js/bootstrap3/main",
+    "hqwebapp/js/eventize",
     "clipboard/dist/clipboard",
 ], function (
     $,
     ko,
     _,
-    main,
+    eventize,
     ClipboardJS,
 ) {
     var graphConfigurationUiElement = function (moduleOptions, serverRepresentationOfGraph) {
@@ -72,7 +72,7 @@ hqDefine("app_manager/js/details/graph_config", [
         };
 
         self.ui.koApplyBindings(self);
-        main.eventize(self);
+        eventize(self);
 
         /**
          * Return an object representing this graph configuration that is suitable

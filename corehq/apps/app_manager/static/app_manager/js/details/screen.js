@@ -28,7 +28,7 @@ hqDefine("app_manager/js/details/screen", function () {
         var self = {};
         var i,
             columns;
-        hqImport("hqwebapp/js/bootstrap3/main").eventize(self);
+        hqImport("hqwebapp/js/eventize")(self);
         self.moduleId = options.moduleId;
         self.type = spec.type;
         self.saveUrl = options.saveUrl;

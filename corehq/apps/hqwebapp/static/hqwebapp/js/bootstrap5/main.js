@@ -3,6 +3,7 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
     "knockout",
     "underscore",
     "hqwebapp/js/lib/modernizr",
+    "hqwebapp/js/eventize",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/bootstrap5/alert_user",
     "analytix/js/google",
@@ -14,32 +15,12 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
     ko,
     _,
     modernizr,
+    eventize,
     initialPageData,
     alertUser,
     googleAnalytics,
     bootstrap,
 ) {
-    var eventize = function (that) {
-        var events = {};
-        that.on = function (tag, callback) {
-            if (events[tag] === undefined) {
-                events[tag] = [];
-            }
-            events[tag].push(callback);
-            return that;
-        };
-        that.fire = function (tag, e) {
-            var i;
-            if (events[tag] !== undefined) {
-                for (i = 0; i < events[tag].length; i += 1) {
-                    events[tag][i].apply(that, [e]);
-                }
-            }
-            return that;
-        };
-        return that;
-    };
-
     var makeHqHelp = function (opts, wrap) {
         wrap = wrap === undefined ? true : wrap;
         var el = $(
@@ -512,7 +493,6 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
 
     return {
         beforeUnloadCallback: beforeUnloadCallback,
-        eventize: eventize,
         initBlock: initBlock,
         initDeleteButton: DeleteButton.init,
         initSaveButton: SaveButton.init,

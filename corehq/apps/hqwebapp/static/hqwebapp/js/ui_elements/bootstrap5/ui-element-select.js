@@ -2,17 +2,17 @@
 hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-select', [
     'jquery',
     'underscore',
-    'hqwebapp/js/bootstrap5/main',
+    'hqwebapp/js/eventize',
 ], function (
     $,
     _,
-    hqMain,
+    eventize,
 ) {
     var module = {};
 
     var Select = function (options) {
         var that = this;
-        hqMain.eventize(this);
+        eventize(this);
         this.ui = $('<span/>');
         this.value = "";
         this.valueLabel = "";

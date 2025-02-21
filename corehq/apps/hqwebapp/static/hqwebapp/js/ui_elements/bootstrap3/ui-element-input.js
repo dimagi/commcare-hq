@@ -1,18 +1,18 @@
 
 hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-input', [
     'jquery',
-    'hqwebapp/js/bootstrap3/main',
+    'hqwebapp/js/eventize',
     'hqwebapp/js/ui_elements/ui-element-langcode-button',
 ], function (
     $,
-    hqMain,
+    eventize,
     langcodeButton,
 ) {
     var module = {};
 
     var Input = function ($elem, initialValue, getElemValue, setElemValue, setPlaceholderValue) {
         var that = this;
-        hqMain.eventize(this);
+        eventize(this);
         this.ui = $('<div class="app-designer-input"/>');
         this.value = "";
         this.edit = true;

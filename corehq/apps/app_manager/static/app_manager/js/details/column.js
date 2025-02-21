@@ -24,7 +24,7 @@ hqDefine("app_manager/js/details/column", function () {
             column extras: enum, late_flag
         */
         const self = {};
-        hqImport("hqwebapp/js/bootstrap3/main").eventize(self);
+        hqImport("hqwebapp/js/eventize")(self);
         self.original = JSON.parse(JSON.stringify(col));
 
         // Set defaults for normal (non-tab) column attributes
