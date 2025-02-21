@@ -59,6 +59,8 @@ hqDefine('analytix/js/cta_forms', [
             });
 
         self.language = ko.observable();
+        self.discoverySource = ko.observable();
+        self.otherSource = ko.observable();
 
         self.areMainFieldsValid = ko.computed(function () {
             return _.every([
@@ -75,8 +77,12 @@ hqDefine('analytix/js/cta_forms', [
             return !self.showPreferredLanguage() || !!self.language();
         });
 
+        self.isDiscoverySourceValid = ko.computed(function () {
+            return !!self.discoverySource();
+        });
+
         self.isFormReadyToSubmit = ko.computed(function () {
-            return self.areMainFieldsValid() && self.isLanguageFieldValid();
+            return self.areMainFieldsValid() && self.isLanguageFieldValid() && self.isDiscoverySourceValid();
         });
 
         self.isSubmitDisabled = ko.computed(function () {
@@ -95,6 +101,8 @@ hqDefine('analytix/js/cta_forms', [
                 lastname: self.lastname(),
                 company: self.company(),
                 email: self.email(),
+                marketing_purposes___how_did_you_hear_about_us_: self.discoverySource(),
+                if_other___how_did_you_hear_about_us_: self.otherSource(),
 
                 // needed for hubspot context
                 page_url: window.location.href,

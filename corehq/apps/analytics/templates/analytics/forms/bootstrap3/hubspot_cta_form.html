@@ -74,6 +74,34 @@
         </select>
       </div>
     </div>
+    <div class="form-group">
+      <label class="control-label">
+        {% trans "How did you hear about us?" %}<span class="asteriskField">*</span>
+      </label>
+      <select name="discoverySource"
+              data-bind="value: discoverySource"
+              class="form-control">
+        <option value="">{% trans "Please Select" %}</option>
+        <option value="Newsletter">{% trans "Newsletter" %}</option>
+        <option value="Podcast">{% trans "Podcast" %}</option>
+        <option value="Social Media">{% trans "Social Media" %}</option>
+        <option value="Web Search">{% trans "Web Search (e.g. Google)" %}</option>
+        <option value="Referral">{% trans "Word of Mouth / Referral" %}</option>
+        <option value="Event / Conference">{% trans "Event / Conference" %}</option>
+        <option value="Other">{% trans "Other" %}</option>
+      </select>
+    </div>
+    <div class="form-group" data-bind="visible: discoverySource() === 'Other'">
+      <label class="control-label">
+        {% trans "We'd love to hear more! Please specify -" %}
+      </label>
+      <div class="controls">
+        <input type="text"
+               name="otherSource"
+               data-bind="textInput: otherSource"
+               class="form-control">
+      </div>
+    </div>
     {% blocktrans %}
       By clicking this button, you agree to Dimagi's
       <a href="http://www.dimagi.com/terms/latest/tos/" target="_blank">Terms of Service</a> and
