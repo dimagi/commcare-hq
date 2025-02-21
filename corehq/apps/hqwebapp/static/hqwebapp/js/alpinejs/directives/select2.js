@@ -39,10 +39,10 @@ Alpine.directive('select2', (el, { expression }, { cleanup }) => {
 document.body.addEventListener('htmx:afterSettle', (event) => {
     /**
      * This fixes a bug for forms using x-select2 after submitting, validating, and swapping back into
-     * the DOMusing HTMX.
+     * the DOM using HTMX.
      *
      * Without this fix, you will get the **visible** <select> stacked on top of the select2, and no
-     * validation classes are passed to it.
+     * validation classes are passed to the select2.
      */
     event.target.querySelectorAll('[x-select2]').forEach((el) => {
         const activeSelect2 = $(el).data('select2');
