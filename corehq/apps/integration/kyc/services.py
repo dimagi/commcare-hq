@@ -108,6 +108,7 @@ def save_result(user_obj, config, is_verified):
     if config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
         user_data = user_obj.get_user_data(config.domain)
         user_data.update(update)
+        user_data.save()
     elif config.user_data_store == UserDataStore.USER_CASE:
         case = user_obj.get_usercase()
         update_case(
