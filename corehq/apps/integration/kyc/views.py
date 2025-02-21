@@ -16,6 +16,7 @@ from corehq.apps.integration.kyc.services import (
 from corehq.apps.integration.kyc.tables import KycVerifyTable
 from corehq.apps.users.models import CommCareUser
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
+from corehq.util.metrics import metrics_gauge
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -143,3 +144,20 @@ class KycVerificationReportView(BaseDomainView):
     @property
     def section_url(self):
         return reverse(self.urlname, args=(self.domain,))
+
+    def get(self, request, *args, **kwargs):
+        self._report_users_count_metric()
+        return super().get(request, *args, **kwargs)
+
+    def _report_users_count_metric(self):
+        try:
+            kyc_config = KycConfig.objects.get(domain=self.domain)
+        except KycConfig.DoesNotExist:
+            pass
+        else:
+            total_users = len(kyc_config.get_user_objects())
+            metrics_gauge(
+                'commcare.integration.kyc.total_users.count',
+                total_users,
+                tags={'domain': self.domain}
+            )
