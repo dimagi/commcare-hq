@@ -160,14 +160,16 @@ class WebUserResource(UserResource):
 
     def _property_filter(self, field_name, gt=None, gte=None, lt=None, lte=None):
         def filter(docs):
-            if gt:
-                return [doc for doc in docs if field_name in doc and doc[field_name] and doc[field_name] > gt]
-            elif gte:
-                return [doc for doc in docs if field_name in doc and doc[field_name] and doc[field_name] >= gte]
-            elif lt:
-                return [doc for doc in docs if field_name in doc and doc[field_name] and doc[field_name] < lt]
-            elif lte:
-                return [doc for doc in docs if field_name in doc and doc[field_name] and doc[field_name] <= lte]
+            return [
+                doc for doc in docs
+                if field_name in doc and doc[field_name] is not None
+                and all([
+                    (gt is None or doc[field_name] > gt),
+                    (gte is None or doc[field_name] >= gte),
+                    (lt is None or doc[field_name] < lt),
+                    (lte is None or doc[field_name] <= lte)
+                ])
+            ]
         return filter
 
     def obj_get_list(self, bundle, **kwargs):
