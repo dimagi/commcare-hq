@@ -377,7 +377,13 @@ class BulkEditChange(models.Model):
     class Meta:
         ordering = ["created_on"]
 
-    def edited_value(self, case):
+    def edited_value(self, case, edited_properties=None):
+        """
+        Note: `BulkEditChange`s can be chained/layered. In order to properly chain
+        changes, please call BulkEditRecord.get_edited_case_properties(case) to
+        properly layer all changes in order.
+        """
+        edited_properties = edited_properties or {}
         regex_transformations = {
             EditActionType.FIND_REPLACE: lambda x: re.sub(
                 re.compile(self.find_string), self.replace_string, x
@@ -385,7 +391,7 @@ class BulkEditChange(models.Model):
         }
 
         if self.use_regex and self.action_type in regex_transformations:
-            old_value = case.get_case_property(self.prop_id)
+            old_value = edited_properties.get(self.prop_id, case.get_case_property(self.prop_id))
             return regex_transformations[self.action_type](old_value)
 
         simple_transformations = {
@@ -397,14 +403,18 @@ class BulkEditChange(models.Model):
             EditActionType.LOWER_CASE: str.lower,
             EditActionType.MAKE_EMPTY: lambda x: "",
             EditActionType.MAKE_NULL: lambda x: None,
-            EditActionType.RESET: lambda x: x,
         }
 
         if self.action_type in simple_transformations:
-            old_value = case.get_case_property(self.prop_id)
+            old_value = edited_properties.get(self.prop_id, case.get_case_property(self.prop_id))
             return simple_transformations[self.action_type](old_value)
 
         if self.action_type == EditActionType.COPY_REPLACE:
-            return case.get_case_property(self.copy_from_prop_id)
+            return edited_properties.get(
+                self.copy_from_prop_id, case.get_case_property(self.copy_from_prop_id)
+            )
+
+        if self.action_type == EditActionType.RESET:
+            return case.get_case_property(self.prop_id)
 
         raise UnsupportedActionException(f"edited_value did not recognize action_type {self.action_type}")
