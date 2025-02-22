@@ -6,7 +6,7 @@ class DataCleaningHtmxColumn(TemplateColumn):
 
     def __init__(self, column_spec, *args, **kwargs):
         """
-        Defines the django2_template compatible column object
+        Defines the django2_tables2 compatible column object
         for the bulk data cleaning feature.
 
         :param column_spec: BulkEditColumn
