@@ -42,7 +42,7 @@ class CleanCasesSessionView(BaseProjectDataView):
 
     def get(self, request, *args, **kwargs):
         try:
-            return super(CleanCasesSessionView, self).get(request, *args, **kwargs)
+            return super().get(request, *args, **kwargs)
         except BulkEditSession.DoesNotExist:
             messages.error(request, _("That session does not exist. Please start a new session."))
             return redirect(reverse(CleanCasesMainView.urlname, args=(self.domain, )))
