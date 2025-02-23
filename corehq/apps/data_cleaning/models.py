@@ -384,29 +384,15 @@ class BulkEditChange(models.Model):
         properly layer all changes in order.
         """
         edited_properties = edited_properties or {}
-        regex_transformations = {
-            EditActionType.FIND_REPLACE: lambda x: re.sub(
-                re.compile(self.find_string), self.replace_string, x
-            ),
-        }
-
-        if self.use_regex and self.action_type in regex_transformations:
-            old_value = edited_properties.get(self.prop_id, case.get_case_property(self.prop_id))
-            return regex_transformations[self.action_type](old_value)
+        old_value = edited_properties.get(self.prop_id, case.get_case_property(self.prop_id))
 
         simple_transformations = {
             EditActionType.REPLACE: lambda x: self.replace_string,
-            EditActionType.FIND_REPLACE: lambda x: x.replace(self.find_string, self.replace_string),
-            EditActionType.STRIP: str.strip,
-            EditActionType.TITLE_CASE: str.title,
-            EditActionType.UPPER_CASE: str.upper,
-            EditActionType.LOWER_CASE: str.lower,
             EditActionType.MAKE_EMPTY: lambda x: "",
             EditActionType.MAKE_NULL: lambda x: None,
         }
 
         if self.action_type in simple_transformations:
-            old_value = edited_properties.get(self.prop_id, case.get_case_property(self.prop_id))
             return simple_transformations[self.action_type](old_value)
 
         if self.action_type == EditActionType.COPY_REPLACE:
@@ -416,5 +402,32 @@ class BulkEditChange(models.Model):
 
         if self.action_type == EditActionType.RESET:
             return case.get_case_property(self.prop_id)
+
+        # all transformations past this point will throw an error if None is passed to it
+        if old_value is None:
+            return None
+        return self._string_edited_value(old_value)
+
+    def _string_edited_value(self, old_value):
+        # ensure that the old_value is always a string
+        old_value = str(old_value)
+
+        string_regex_transformations = {
+            EditActionType.FIND_REPLACE: lambda x: re.sub(
+                re.compile(self.find_string), self.replace_string, x
+            ),
+        }
+        if self.use_regex and self.action_type in string_regex_transformations:
+            return string_regex_transformations[self.action_type](old_value)
+
+        string_transformations = {
+            EditActionType.FIND_REPLACE: lambda x: x.replace(self.find_string, self.replace_string),
+            EditActionType.STRIP: str.strip,
+            EditActionType.TITLE_CASE: str.title,
+            EditActionType.UPPER_CASE: str.upper,
+            EditActionType.LOWER_CASE: str.lower,
+        }
+        if self.action_type in string_transformations:
+            return string_transformations[self.action_type](old_value)
 
         raise UnsupportedActionException(f"edited_value did not recognize action_type {self.action_type}")
