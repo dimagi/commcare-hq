@@ -332,6 +332,31 @@ class BulkEditRecord(models.Model):
     calculated_change_id = models.UUIDField(null=True, blank=True)
     calculated_properties = models.JSONField(null=True, blank=True)
 
+    @property
+    def has_property_updates(self):
+        return self.changes.count() > 0 and (
+            self.calculated_change_id is None or self.changes.last().change_id != self.calculated_change_id
+        )
+
+    def get_edited_case_properties(self, case):
+        """
+        Returns a dictionary of properties that have been edited by related BulkEditChanges.
+        :param case: CommCareCase
+        """
+        if case.case_id != self.doc_id:
+            raise ValueError("case.case_id doesn't match record.doc_id")
+
+        if not self.has_property_updates:
+            return self.calculated_properties or {}
+
+        properties = {}
+        for change in self.changes.all():
+            properties[change.prop_id] = change.edited_value(case, edited_properties=properties)
+        self.calculated_properties = properties
+        self.calculated_change_id = self.changes.last().change_id
+        self.save()
+        return properties
+
 
 class EditActionType:
     REPLACE = 'replace'
