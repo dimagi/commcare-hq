@@ -107,7 +107,7 @@ class GenericRepeaterForm(forms.Form):
 class FormRepeaterForm(GenericRepeaterForm):
     include_app_id_param = forms.BooleanField(
         required=False,
-        label=_(""),
+        label="",
         initial=True,
         widget=BootstrapCheckboxInput(
             inline_label=_("Include 'app_id' URL query parameter."),
