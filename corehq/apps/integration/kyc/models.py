@@ -1,3 +1,6 @@
+from datetime import datetime
+from functools import cached_property
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -120,3 +123,79 @@ class KycConfig(models.Model):
         elif self.user_data_store == UserDataStore.OTHER_CASE_TYPE:
             assert self.other_case_type
             return CommCareCase.objects.get_cases(obj_ids, self.domain)
+
+
+class KycUser:
+
+    def __init__(self, kyc_config, user_obj):
+        """
+        :param kyc_config: kyc configuration for the domain
+        :param user_obj: can be an instance of 'CommcareUser' or 'CommcareCase' based on the configuration.
+        """
+        self.kyc_config = kyc_config
+        self.user_obj = user_obj
+
+    @cached_property
+    def user_id(self):
+        if isinstance(self.user_obj, CommCareUser):
+            return self.user_obj.user_id
+        else:
+            return self.user_obj.case_id
+
+    @cached_property
+    def user_data(self):
+        if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
+            return self.user_obj.get_user_data(self.kyc_config.domain).to_dict()
+        elif self.kyc_config.user_data_store == UserDataStore.USER_CASE:
+            return self.user_obj.get_usercase().case_json
+        else:  # UserDataStore.OTHER_CASE_TYPE
+            return self.user_obj.case_json
+
+    @property
+    def kyc_last_verified_at(self):
+        return self.user_data.get('kyc_last_verified_at')
+
+    @property
+    def kyc_is_verified(self):
+        return self.user_data.get('kyc_is_verified')
+
+    @property
+    def kyc_provider(self):
+        return self.user_data.get('kyc_provider')
+
+    def update_verification_status(self, status, device_id=None):
+        from corehq.apps.hqcase.utils import update_case
+        update = {
+            'kyc_provider': self.kyc_config.provider,
+            'kyc_last_verified_at': datetime.utcnow().isoformat(),  # TODO: UTC or project timezone?
+            'kyc_is_verified': status,
+        }
+        if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
+            user_data_obj = self.user_obj.get_user_data(self.kyc_config.domain)
+            user_data_obj.update(update)
+            user_data_obj.save()
+        else:
+            if isinstance(self.user_obj, CommCareUser):
+                case_id = self.user_obj.get_usercase().case_id
+            else:
+                case_id = self.user_obj.case_id
+            update_case(
+                self.kyc_config.domain,
+                case_id,
+                case_properties=update,
+                device_id=device_id or f'{__name__}.update_status',
+            )
+        self.clear_user_data_cache()
+
+    def clear_user_data_cache(self):
+        try:
+            del self.user_data
+        except AttributeError:
+            pass
+
+    @classmethod
+    def from_hq_user_objects(cls, kyc_config, user_objs):
+        kyc_users = []
+        for user_obj in user_objs:
+            kyc_users.append(KycUser(kyc_config, user_obj))
+        return kyc_users
