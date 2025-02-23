@@ -1,4 +1,4 @@
-import sinon from "sinon/pkg/sinon";
+import sinon from "sinon";
 import Middleware from "cloudcare/js/formplayer/middleware";
 
 describe('SessionMiddle', function () {

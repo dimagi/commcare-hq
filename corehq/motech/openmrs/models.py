@@ -22,9 +22,8 @@ from corehq.motech.const import (
     IMPORT_FREQUENCY_DAILY,
     IMPORT_FREQUENCY_MONTHLY,
     IMPORT_FREQUENCY_WEEKLY,
-    ALGO_AES_CBC,
 )
-from corehq.motech.utils import b64_aes_decrypt, b64_aes_cbc_decrypt
+from corehq.motech.utils import b64_aes_cbc_decrypt
 from corehq.motech.openmrs.const import (
     OPENMRS_DATA_TYPE_MILLISECONDS,
     OPENMRS_DATA_TYPES,
@@ -134,10 +133,10 @@ class OpenmrsImporter(Document):
 
     @property
     def plaintext_password(self):
-        if self.password.startswith(f'${ALGO_AES_CBC}$'):
-            ciphertext = self.password.split('$', 2)[2]
-            return b64_aes_cbc_decrypt(ciphertext)
-        return b64_aes_decrypt(self.password)
+        if self.password == '':
+            return ''
+        ciphertext = self.password.split('$', 2)[2]
+        return b64_aes_cbc_decrypt(ciphertext)
 
     @memoized
     def get_timezone(self):

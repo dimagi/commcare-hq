@@ -1,6 +1,6 @@
 import _ from "underscore";
 import Backbone from "backbone";
-import sinon from "sinon/pkg/sinon";
+import sinon from "sinon";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import FormplayerFrontend from "cloudcare/js/formplayer/app";
 import API from "cloudcare/js/formplayer/menus/api";

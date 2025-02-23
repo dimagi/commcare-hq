@@ -550,20 +550,6 @@ class BaseRoleAccessView(BaseUserSettingsView):
 
 
 @method_decorator(always_allow_project_access, name='dispatch')
-@method_decorator(toggles.ENTERPRISE_USER_MANAGEMENT.required_decorator(), name='dispatch')
-class EnterpriseUsersView(BaseRoleAccessView):
-    template_name = 'users/enterprise_users.html'
-    page_title = gettext_lazy("Enterprise Users")
-    urlname = 'enterprise_users'
-
-    @property
-    def page_context(self):
-        return {
-            "show_profile_column": domain_has_privilege(self.domain, privileges.APP_USER_PROFILES),
-        }
-
-
-@method_decorator(always_allow_project_access, name='dispatch')
 @method_decorator(require_can_edit_or_view_web_users, name='dispatch')
 @location_safe
 class ListWebUsersView(BaseRoleAccessView):

@@ -18,7 +18,7 @@ from corehq.util.test_utils import flag_enabled
 from ..fixtures import _get_template_renderer, case_search_fixture_generator
 
 
-@flag_enabled('MODULE_BADGES')
+@flag_enabled('CSQL_FIXTURE')
 @es_test(requires=[case_search_adapter], setup_class=True)
 class TestCaseSearchFixtures(TestCase):
     domain_name = 'test-case-search-fixtures'
