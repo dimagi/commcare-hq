@@ -126,7 +126,20 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
             'success_count': success_count,
             'fail_count': fail_count,
         }
+        self._report_verification_status_metric(success_count, fail_count)
         return self.render_htmx_partial_response(request, 'kyc/partials/kyc_verify_alert.html', context)
+
+    def _report_verification_status_metric(self, success_count, failure_count):
+        metrics_gauge(
+            'commcare.integration.kyc.verification.success.count',
+            success_count,
+            tags={'domain': self.request.domain}
+        )
+        metrics_gauge(
+            'commcare.integration.kyc.verification.failure.count',
+            failure_count,
+            tags={'domain': self.request.domain}
+        )
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
