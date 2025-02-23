@@ -100,8 +100,12 @@ hqDefine("app_manager/js/details/column", function () {
                 label: gettext('Cache & Lazy Load'),
             },
         ];
-        self.optimizationSelectElement = uiElementSelect.new(optimizationOptions).val(self.original.optimization || "");
-        self.$optimizationSelectElement = $('<div/>').append(self.optimizationSelectElement.ui);
+        if (screen.showCaseListOptimizations) {
+            self.optimizationSelectElement = uiElementSelect.new(
+                optimizationOptions,
+            ).val(self.original.optimization || "");
+            self.$optimizationSelectElement = $('<div/>').append(self.optimizationSelectElement.ui);
+        }
         self.tileWidth = ko.observable(self.original.width || self.tileRowMax() - 1);
         self.tileWidthOptions = ko.computed(function () {
             return _.range(1, self.tileColumnMax() + 1 - (self.tileColumnStart() || 1));
@@ -268,6 +272,7 @@ hqDefine("app_manager/js/details/column", function () {
         self.supportsOptimizations = ko.observable(false);
         self.optimizationsSupported = function () {
             return (
+                screen.showCaseListOptimizations &&
                 self.format.val() &&
                 initialPageData.get('formats_supporting_case_list_optimizations').includes(self.format.val())
             );
@@ -383,7 +388,6 @@ hqDefine("app_manager/js/details/column", function () {
             'nodeset_extra',
             'relevant',
             'format',
-            'optimizationSelectElement',
             'date_extra',
             'enum_extra',
             'action_form_extra',
@@ -395,6 +399,9 @@ hqDefine("app_manager/js/details/column", function () {
         ], function (element) {
             self[element].on('change', fireChange);
         });
+        if (self.optimizationSelectElement) {
+            self.optimizationSelectElement.on('change', fireChange);
+        }
         self.case_tile_field.subscribe(fireChange);
         self.tileRowStart.subscribe(fireChange);
         self.tileColumnStart.subscribe(fireChange);
