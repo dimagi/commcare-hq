@@ -7,8 +7,6 @@ from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils.translation import gettext
 
-from celery import chord
-
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from dimagi.utils.logging import notify_exception
@@ -195,27 +193,11 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
 
     if is_new_user and not is_new_sso_user:
         dom_req.save()
-        if settings.IS_SAAS_ENVIRONMENT:
-            #  Load template apps to the user's new domain in parallel
-            from corehq.apps.app_manager.tasks import load_appcues_template_app
-            header = [
-                load_appcues_template_app.si(new_domain.name, current_user.username, slug)
-                for slug in APPCUES_APP_SLUGS
-            ]
-            callback = send_domain_registration_email.si(
-                request.user.email,
-                dom_req.domain,
-                dom_req.activation_guid,
-                request.user.get_full_name(),
-                request.user.first_name
-            )
-            chord(header)(callback)
-        else:
-            send_domain_registration_email(request.user.email,
-                                           dom_req.domain,
-                                           dom_req.activation_guid,
-                                           request.user.get_full_name(),
-                                           request.user.first_name)
+        send_domain_registration_email(request.user.email,
+                                       dom_req.domain,
+                                       dom_req.activation_guid,
+                                       request.user.get_full_name(),
+                                       request.user.first_name)
     send_new_request_update_email(
         request.user,
         get_ip(request),
