@@ -110,7 +110,7 @@ hqDefine("app_manager/js/details/screen", function () {
         });
         self.showCaseListOptimizations = (
             self.columnKey === 'short' &&
-            hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_OPTIMIZATIONS') &&
+            initialPageData.get('app_supports_case_list_optimizations') &&
             initialPageData.get('show_case_list_optimization_options')
         );
         self.persistCaseContext = ko.observable(detail.persist_case_context || false);
