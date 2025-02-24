@@ -182,8 +182,7 @@ DTEND;TZID=America/Chicago:20250220T210441
 SUMMARY: Event for Today
 LOCATION:
 END:VEVENT
-END:VCALENDAR
-            '''
+END:VCALENDAR'''
 
             ics_bytes = io.BytesIO(ics_string.encode('utf-8'))
             file_attachments = [{
