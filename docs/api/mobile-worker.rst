@@ -3,7 +3,7 @@ User Creation (Mobile Worker)
 =============================
 
 Overview
----------
+--------
 
 **Purpose**
     Create a CommCare (mobile-worker) user.
@@ -136,7 +136,10 @@ Request & Response Details
      - ["9a0accdba29e01a61ea099394737c4fb", "b4ccdba29e01a61ea099394737c4fbf7"]
    * - user_data
      - Any additional custom data associated with the user (replaces existing custom data).
-    Note that user data may include system data affecting various features, so it is advised to pull the user's current data and edit it, rather than completely overwriting user data. To get the user's current data, use the single user URL provided at List Mobile Workers API.
+       Note that user data may include system data affecting various features,
+       so it is advised to pull the user's current data and edit it, rather than
+       completely overwriting user data. To get the user's current data, use the
+       single user URL provided at List Mobile Workers API.
      - {"chw_id": "13/43/DFA"}
    * - language
      - User language
@@ -177,10 +180,10 @@ Request & Response Details
     }
 
 User Delete (Mobile Worker)
-==========================
+===========================
 
 Overview
----------
+--------
 
 **Purpose**
     Delete a CommCare (mobile-worker) user.

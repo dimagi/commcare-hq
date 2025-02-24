@@ -182,7 +182,7 @@ Request & Response Details
           },
           "status": "completed"
         },
-        ...
+        "..."
       ],
       "meta": {
         "limit": 20,

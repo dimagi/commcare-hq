@@ -1,6 +1,6 @@
-============
+=============
 CommCare APIs
-============
+=============
 
 CommCare APIs provide access to various system functionalities, including data retrieval, case and form submissions, and user management. This page describes different APIs available for integration.
 
@@ -22,7 +22,6 @@ You can browse and test the Data APIs using the `CommCare API Explorer <https://
 **Implementation of URL Endpoints** - All URL endpoints should be utilized as part of a cURL authentication command. For more information, please review CommCare's API Authentication Documentation: `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
 
 .. toctree::
-    :caption: 
     :maxdepth: 1
 
     application-structure
@@ -39,13 +38,13 @@ You can browse and test the Data APIs using the `CommCare API Explorer <https://
     fixture
     ota-api-restore
     form-case-forwarding
+    download-report-data
 
 User APIs
 ~~~~~~~~~
 The User APIs provide endpoints for managing mobile and web users, including creation, editing, deletion, and authentication. These APIs also support group management, Single Sign-On, and user identity verification.
 
 .. toctree::
-    :caption: 
     :maxdepth: 1
 
     mobile-worker
@@ -56,10 +55,9 @@ The User APIs provide endpoints for managing mobile and web users, including cre
 
 Form Submission API
 ~~~~~~~~~~~~~~~~~~~
-CommCare's Submission API implements the OpenRosa standard Form Submission API for submitting XForms over HTTP/S. 
+CommCare's Submission API implements the OpenRosa standard Form Submission API for submitting XForms over HTTP/S.
 
 .. toctree::
-    :caption:
     :maxdepth: 1
 
     form-submission
@@ -69,10 +67,8 @@ SMS APIs
 SMS APIs enable sending and receiving SMS messages through CommCare, allowing integration with external systems for automated messaging, notifications, and data collection. These APIs support message scheduling, two-way communication, and customization based on workflow needs.
 
 .. toctree::
-    :caption: 
     :maxdepth: 1
 
     messaging-events
     sms-user-registration
     send-install-info-sms
-

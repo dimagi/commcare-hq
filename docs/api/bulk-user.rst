@@ -36,7 +36,7 @@ Currently, the default fields returned are::
 
     ?q=foo&fields=username&fields=first_name&fields=last_name&limit=100&offset=200
 
-This will return the first and last names and usernames of users matching the query "foo".  This request is for the third page of results (200-300) 
+This will return the first and last names and usernames of users matching the query "foo".  This request is for the third page of results (200-300)
 
 **Additional notes**
     It is simple to add more fields if there arises a significant use case.

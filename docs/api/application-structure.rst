@@ -12,7 +12,7 @@ Overview
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/[version]/application/[app_id]
-    
+
 *Omit* ``app_id`` *in the URL to retrieve a list of applications.*
 
 Request & Response Details

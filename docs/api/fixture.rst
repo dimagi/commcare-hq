@@ -156,9 +156,9 @@ Request & Response Details
      - Description
      - Example
    * - code
-     - 200: Success  
-       402: Warning  
-       405: Fail  
+     - 200: Success
+       402: Warning
+       405: Fail
      - 402
    * - message
      - Warning or failure message
@@ -229,7 +229,7 @@ List Lookup Table
                 "resource_uri": "",
                 "tag": "vaccines"
             },
-            ...
+            "..."
         ]
     }
 
@@ -267,7 +267,7 @@ This is for a single group.
 .. code-block:: json
 
     {
-        "tag": "vaccines", 
+        "tag": "vaccines",
         "fields": [
             {"field_name": "name", "properties": ["lang"]},
             {"field_name": "price", "properties": []}
@@ -359,7 +359,7 @@ List Lookup Table Row
                 "id": "e8433b25e60c4e228b0c7a679af2847b",
                 "sort_key": 2
             },
-            ...
+            "..."
         ]
     }
 
@@ -429,6 +429,7 @@ Edit or Delete Lookup Table Row
     PUT, DELETE
 
 **Sample Input**
+
 .. code-block:: json
 
     {
@@ -452,4 +453,3 @@ Edit or Delete Lookup Table Row
         }
       }
     }
-

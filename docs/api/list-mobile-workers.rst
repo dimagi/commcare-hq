@@ -26,7 +26,7 @@ Overview
     All URL endpoints should be utilized as part of a cURL authentication command. For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
 
 Request & Response Details
----------------------------
+--------------------------
 
 **Input Parameters**
 

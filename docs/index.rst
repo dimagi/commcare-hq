@@ -89,7 +89,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     :caption: Integrations
     :maxdepth: 1
 
-    api
+    api/index
     fhir/index
     openmrs
     value_source
@@ -161,11 +161,6 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     :glob:
 
     decisions/*
-
-.. toctree::
-    :caption: CommCare API
-
-    api/README
 
 .. toctree::
     :caption: Documentation Tips

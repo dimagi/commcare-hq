@@ -183,7 +183,7 @@ Create an individual location. Available from version v0.6.
     }
 
 Update Location (Individual)
----------------------------
+----------------------------
 
 **Base URL**
 
@@ -227,7 +227,10 @@ If a part of the location’s update fails due to invalid fields, the update wil
         "location_type_code": "county",
         "parent_location_id": "46329a9e1bad47158739d56f6f667165"
     }
-### Create and Update Locations (in Bulk)
+
+
+Create and Update Locations (in Bulk)
+-------------------------------------
 
 **Base URL**
 

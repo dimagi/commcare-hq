@@ -17,7 +17,7 @@ Overview
     For more information, please review `this <https://dimagi.atlassian.net/wiki/x/LwXKfw>`_.
 
 Request & Response Details
----------------------------
+--------------------------
 
 **Input Parameters**
 
@@ -48,18 +48,18 @@ In addition to all `Case Data API <https://dimagi.atlassian.net/wiki/spaces/comm
      - All open/closed/both cases
    * - ``indexed_on_start``
      - A date (and time). Will return only cases that have had data modified since the passed-in date.
-     - ``indexed_on_start=2021-01-01``  
+     - ``indexed_on_start=2021-01-01``
        ``indexed_on_start=2021-01-01T06:05:42``
-     - This is the recommended field to use for data pagination.  
+     - This is the recommended field to use for data pagination.
        It is very similar to server_date_modified but handles edge cases better.
    * - ``indexed_on_end``
      - A date (and time). Will return only cases that have had data modified before the passed-in date.
-     - ``indexed_on_end=2021-01-01``  
+     - ``indexed_on_end=2021-01-01``
        ``indexed_on_end=2021-01-01T06:05:42``
      - Filters cases modified before this date.
    * - ``date_modified_start``
      - Modified after this date (phone date)
-     - ``date_modified_start=2012-05-20``  
+     - ``date_modified_start=2012-05-20``
        ``date_modified_start=2013-09-29T10:40Z``
      - Defaults to the first submission date.
    * - ``date_modified_end``
@@ -197,5 +197,5 @@ In addition to all `Case Data API <https://dimagi.atlassian.net/wiki/spaces/comm
         "version": "1.0",
         "xform_ids": [ "3HQEXR2S0GIRFY2GF40HAR7ZE" ]
       },
-      ...
+      "..."
     ]

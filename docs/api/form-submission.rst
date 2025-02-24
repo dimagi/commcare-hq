@@ -293,8 +293,8 @@ Response Codes
      -
      - Unexpected server error.
 
-- Example Success Response
-""""""""""""""""""""""""""
+Example Success Response
+""""""""""""""""""""""""
 
 .. code-block:: xml
 
@@ -302,8 +302,8 @@ Response Codes
         <message nature="submit_success">   √   </message>
     </OpenRosaResponse>
 
-- Example Error Response
-""""""""""""""""""""""""
+Example Error Response
+""""""""""""""""""""""
 
 .. code-block:: xml
 
