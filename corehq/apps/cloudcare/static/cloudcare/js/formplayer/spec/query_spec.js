@@ -1,5 +1,5 @@
 import Backbone from "backbone";
-import sinon from "sinon/pkg/sinon";
+import sinon from "sinon";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import Utils from "cloudcare/js/formplayer/utils/utils";
 import QueryListView from "cloudcare/js/formplayer/menus/views/query";

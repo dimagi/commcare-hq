@@ -2,7 +2,7 @@
 hqDefine("export/spec/ExportInstance.spec", [
     'jquery',
     'underscore',
-    'sinon/pkg/sinon',
+    'sinon',
     'hqwebapp/js/initial_page_data',
     'export/js/const',
     'export/js/models',
@@ -182,10 +182,8 @@ hqDefine("export/spec/ExportInstance.spec", [
 
             beforeEach(function () {
                 instance = new viewModels.ExportInstance(basicFormExport);
-                recordSaveAnalyticsSpy = sinon.spy();
+                recordSaveAnalyticsSpy = sinon.stub(instance, 'recordSaveAnalytics'),
                 server = sinon.fakeServer.create();
-
-                sinon.stub(instance, 'recordSaveAnalytics', recordSaveAnalyticsSpy);
             });
 
             afterEach(function () {
