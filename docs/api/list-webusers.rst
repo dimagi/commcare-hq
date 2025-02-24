@@ -1,28 +1,34 @@
 List Web Users
-------------
+==============
 
-**Purpose:**
+Overview
+--------
+
+**Purpose**
     Retrieve a list of web users or a single user.
 
-**Base Request:**
+**Base URL**
 
 .. code-block:: 
 
     https://www.commcarehq.org/a/[domain]/api/[version]/web-user/
 
-**Single User Request:**
+**Single User Request**
 
 .. code-block:: 
 
     https://www.commcarehq.org/a/[domain]/api/[version]/web-user/[user_id]
 
-**Implementation:**
+**Implementation**
     All URL endpoints should be utilized as part of a cURL authentication command. For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
 
-**Permissions Required:**
+**Permissions Required**
     Edit Web Users
 
-**Input Parameters:**
+Request & Response Details
+---------------------------
+
+**Input Parameters**
 
 .. list-table::
    :header-rows: 1
@@ -34,7 +40,7 @@ List Web Users
      - Filter list by username
      - ``username=bob@example.com``
 
-**Output Parameters:**
+**Output Parameters**
 
 .. list-table::
    :header-rows: 1
@@ -73,13 +79,13 @@ List Web Users
      - Whether the user is a project admin
      - ``(see examples)``
 
-**Sample Usage:**
+**Sample Usage**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/demo/api/v0.5/web-user/
 
-**Sample Output (JSON):**
+**Sample Output (JSON)**
 
 .. code-block:: json
 

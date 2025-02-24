@@ -1,10 +1,13 @@
 Application Structure API
--------------------------
+=========================
 
-**Purpose:**
+Overview
+---------
+
+**Purpose**
     Retrieve either a specific application or a list of applications for a project, including their module, form, and case schemata. This supports linked applications.
 
-**Base URL:**
+**Base URL**
 
 .. code-block:: text
 
@@ -12,11 +15,14 @@ Application Structure API
     
 *Omit* ``app_id`` *in the URL to retrieve a list of applications.*
 
-**Input Parameters:**
+Request & Response Details
+---------------------------
+
+**Input Parameters**
 
 - ``extras``: *(boolean)* If ``true``, includes a dump of application data; otherwise, does not include additional data.
 
-**Output Description:**
+**Output Values**
 
 The API response includes an ``objects`` field, which is a list of configurations for your applications. Each application object contains:
 
@@ -32,7 +38,7 @@ The API response includes an ``objects`` field, which is a list of configuration
 - ``versions``: A list of application versions (builds) created from this application.
 - Other application data, if ``extras`` is set to ``true``.
 
-**Sample JSON Output:**
+**Sample Output (JSON)**
 
 .. code-block:: json
 

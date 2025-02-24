@@ -1,17 +1,24 @@
 Form Data API
--------------
+=============
 
-**Purpose:**
+Overview
+--------
+
+**Purpose**
     Retrieve all data associated with a form submission, including all form property values. The form data may be presented to an end-user as detailed data associated with a particular case. For example, by clicking on a prenatal visit hyperlink in a case summary screen, the end user may be presented with clinical data associated with a specific prenatal visit.
-
-**Authentication and Usage:**
-    All URL endpoints should be used as part of a cURL authentication command. For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
 
 **Single Form URL:**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/[version]/form/[form_id]/
+
+**Authentication**
+    All URL endpoints should be used as part of a cURL authentication command. For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
+
+
+Request & Response Details
+---------------------------
 
 **Sample URL**
 

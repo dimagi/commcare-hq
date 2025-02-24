@@ -1,19 +1,25 @@
 List Forms
-----------
+==========
 
-**Purpose:**
+Overview
+--------
+
+**Purpose**
     Get a list of form submissions.
 
-**Base URL:**
+**Base URL**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/v0.5/form/
 
-**Authentication:**
+**Authentication**
     For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
 
-**Input Parameters:**
+Request & Response Details
+---------------------------
+
+**Input Parameters**
 
 The forms can be filtered using the following parameters, which also control paging of the output records.
 
@@ -66,13 +72,13 @@ The forms can be filtered using the following parameters, which also control pag
      - A case UUID. Will only return forms which updated that case.
      - ``case_id=4cf7736e-2cc7-4d46-88e3-4b288b403362``
 
-**Sample Usage:**
+**Sample Usage**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/v0.5/form/
 
-**Sample JSON Output:**
+**Sample JSON Output**
 
 .. code-block:: json
 

@@ -1,19 +1,28 @@
 User Domain List
----------------- 
+================
 
-**Purpose:**
+Overview
+--------
+
+**Purpose**
     Look up the list of domains that the authenticated web user is a member of.
 
-**Authentication:**
-    For more information, please review Authentication.
+**Authentication**
+    For more information, please review  `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
 
-**URL:**
+** Base URL**
 
 .. code-block:: text
 
     https://www.commcarehq.org/api/v0.5/user_domains/
 
-**Sample Response:**
+**Method**
+    GET
+
+Request & Response Details
+---------------------------
+
+**Sample Response**
 
 .. code-block:: json
 

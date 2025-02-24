@@ -1,13 +1,16 @@
 Fixture Data APIs (or Lookup Tables)
-------------------------------------
+====================================
 
-**Purpose:**
+Overview
+--------
+
+**Purpose**
     Retrieve all data associated with a fixture. See `this definition <https://github.com/dimagi/commcare-core/wiki/fixtures>`_.
 
-**Authentication:**
-    For more information, please review Authentication.
+Endpoint Specifications
+-----------------------
 
-**Base URLs:**
+**Base URLs**
 
 - **For individual fixture items:**
 
@@ -26,6 +29,12 @@ Fixture Data APIs (or Lookup Tables)
   .. code-block:: text
 
       https://www.commcarehq.org/a/[domain]/api/[version]/fixture/
+
+**Authentication**
+    For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
+
+Request & Response Details
+---------------------------
 
 **Input Parameters (for the list of all fixtures):**
 
@@ -67,13 +76,13 @@ To get the full table via API, use the 'name of the table', which is the same as
 
 (The string in the Table ID column.)
 
-**Sample Input:**
+**Sample Input**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/demo/api/v0.4/fixture/1J9NF7B4FTH73435PYJJSL5SJ/
 
-**Sample Output:**
+**Sample Output**
 
 .. code-block:: json
 
@@ -89,24 +98,32 @@ To get the full table via API, use the 'name of the table', which is the same as
     }
 
 Bulk Upload Lookup Tables
--------------------------
+=========================
 
-**Purpose:**
+Overview
+---------
+
+**Purpose**
     Create or edit lookup tables by uploading an Excel file containing table data.
 
-**URL:**
+Endpoint Specifications
+-----------------------
+**URL**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/fixtures/fixapi/
 
-**Method:**
+**Method**
     POST
 
-**Authorization:**
+**Authorization**
     Basic Authorization
 
-**Input Parameters:**
+Request & Response Details
+---------------------------
+
+**Input Parameters**
 
 .. list-table::
    :header-rows: 1
@@ -124,7 +141,7 @@ Bulk Upload Lookup Tables
      - If true, the upload will be queued and processed in the background. A status URL will be provided to view progress
      - false
 
-**Sample cURL Request:**
+**Sample cURL Request**
 
 .. code-block:: text
 
@@ -134,7 +151,7 @@ Bulk Upload Lookup Tables
 
 (You may also omit the ':' and password, and curl will request it. This will have the benefit of not showing your password on your screen or storing it in your history.)
 
-**Response:** JSON output with the following parameters.
+**Response** JSON output with the following parameters.
 
 .. list-table::
    :header-rows: 1
@@ -155,21 +172,20 @@ Bulk Upload Lookup Tables
      - https://www.commcarehq.org/a/demo/fixtures/fixapi/status/dl-2998e6834a654ab5ba74f372246caa75/
 
 Lookup Table Individual API
----------------------------
+===========================
 
-**Purpose:**
+Overview
+--------
+**Purpose**
     Manage lookup tables via API calls.
 
-**Authentication:**
-    All URL endpoints should be utilized as part of a cURL authentication command. For more information, please review Authentication.
-
-**Base URL:**
+**Base URL**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/[version]/lookup_table/
 
-**Supported Methods:**
+**Supported Methods**
 
 .. list-table::
    :header-rows: 1
@@ -181,7 +197,10 @@ Lookup Table Individual API
    * - POST
      - Create a new lookup table
 
-**Sample Output:**
+**Authentication**
+    All URL endpoints should be utilized as part of a cURL authentication command. For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
+
+**Sample Output**
 
 .. code-block:: json
 
@@ -207,15 +226,16 @@ Lookup Table Individual API
         ]
     }
 
-**Create Lookup Table:**
+Create Lookup Table
+~~~~~~~~~~~~~~~~~~~
 
-**URL:**
+**URL**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/[version]/lookup_table/
 
-**Input Parameters:**
+**Input Parameters**
 
 .. list-table::
    :header-rows: 1
@@ -229,7 +249,7 @@ Lookup Table Individual API
    * - is_global
      - Boolean if the lookup table is accessible to all users (default: false)
 
-**Sample Input:**
+**Sample Input**
 
 .. code-block:: json
 
@@ -242,15 +262,16 @@ Lookup Table Individual API
         "is_global": true
     }
 
-**Edit or Delete Lookup Table:**
+Edit or Delete Lookup Table
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**URL:**
+**URL**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/[version]/lookup_table/[lookup_table_id]
 
-**Supported Methods:**
+**Supported Methods**
 
 .. list-table::
    :header-rows: 1
@@ -264,7 +285,7 @@ Lookup Table Individual API
    * - DELETE
      - Delete lookup table
 
-**Sample Input:**
+**Sample Input**
 
 .. code-block:: json
 
@@ -277,12 +298,15 @@ Lookup Table Individual API
     }
 
 Lookup Table Rows API
----------------------
+=====================
+
+Overview
+--------
 
 **Purpose:**
     Manage lookup table rows via API calls.
 
-**Base URL:**
+**Base URL**
 
 .. code-block:: text
 
@@ -323,15 +347,16 @@ Lookup Table Rows API
         ]
     }
 
-**Create Lookup Table Row:**
+Create Lookup Table Row
+~~~~~~~~~~~~~~~~~~~~~~~
 
-**URL:**
+**URL**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/[version]/lookup_table_item/
 
-**Input Parameters:**
+**Input Parameters**
 
 .. list-table::
    :header-rows: 1
@@ -343,7 +368,7 @@ Lookup Table Rows API
    * - fields*
      - Fields and their properties
 
-**Sample Input:**
+**Sample Input**
 
 .. code-block:: json
 
@@ -355,15 +380,16 @@ Lookup Table Rows API
         }
     }
 
-**Edit or Delete Lookup Table Row:**
+Edit or Delete Lookup Table Row
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**URL:**
+**URL**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/[version]/lookup_table_item/[lookup_table_item_id]
 
-**Supported Methods:**
+**Supported Methods**
 
 .. list-table::
    :header-rows: 1
@@ -377,7 +403,7 @@ Lookup Table Rows API
    * - DELETE
      - Delete lookup table row
 
-**Sample Input:**
+**Sample Input**
 
 .. code-block:: json
 

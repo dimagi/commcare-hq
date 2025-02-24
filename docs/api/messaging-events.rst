@@ -1,7 +1,10 @@
 Messaging Events
-----------------
+================
 
-**Purpose:**
+Overview
+--------
+
+**Purpose**
     To provide users access to the messaging data.
 
 The data in this API is based on a nested data model:
@@ -20,7 +23,7 @@ For more information, please review `API Authentication <https://dimagi.atlassia
 
     https://www.commcarehq.org/a/[domain]/api/[version]/messaging-event/
 
-**Supported versions:** ``v0.5``
+**Supported versions** ``v0.5``
 
 Filters
 ~~~~~~~
@@ -120,8 +123,10 @@ Example:
 
     # "meta.next" is null so there is no more data.
 
-Sample Output
-~~~~~~~~~~~~~
+Request & Response Details
+---------------------------
+
+**Sample Output**
 
 .. code-block:: json
 
@@ -164,50 +169,23 @@ Sample Output
       }
     }
 
-Sample API Calls
-~~~~~~~~~~~~~~~~
+**Sample API Calls**
 
-Example of a single filter:
+- Example of a single filter:
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/v0.5/messaging-event/?date.gte=2020-07-13T06:30:21.109409
 
-Example of multiple filters:
+- Example of multiple filters:
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/v0.5/messaging-event/?content_type=sms&phone_number=1234567
 
 
-Messaging Events
-================
-
-Summary
--------
-To provide users access to the messaging data.
-
-The data in this API is based on a nested data model:
-
-- **Messaging Event**: The core data model representing a messaging event linked to a specific recipient and from a specific source (e.g., Conditional Alert).
-- **Message**: The actual message that went to the user.
-- A single event may have multiple messages (e.g., SMS surveys which will have one message per interaction with the recipient).
-
-Authentication
---------------
-For more information, please review Authentication.
-
-Base URL
---------
-
-.. code-block:: text
-
-    https://www.commcarehq.org/a/[domain]/api/[version]/messaging-event/
-
-Supported versions: ``v0.5``
-
 API Fields and Data Structure
------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. list-table::  **API Fields**
    :widths: 20 40

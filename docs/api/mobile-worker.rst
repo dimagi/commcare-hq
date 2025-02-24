@@ -1,30 +1,36 @@
 
 User Creation (Mobile Worker)
------------------------------
+=============================
 
-**Purpose:**
+Overview
+---------
+
+**Purpose**
     Create a CommCare (mobile-worker) user.
 
-**Permissions Required:**
+**Permissions Required**
     - Edit Mobile Workers
     - Edit Access API's
 
-**Authentication:**
-    For more information, please review Authentication.
+Endpoint Specifications
+-----------------------
 
-**URL:**
+**URL**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/[version]/user/
 
-**Method:**
+**Method**
 
 .. code-block:: text
 
     POST
 
-**Input Parameters:** (* indicates required)
+Request & Response Details
+---------------------------
+
+**Input Parameters** (* indicates required)
 
 - ``username*``: User name of user (e.g., ``jdoe``)
 - ``password*``: User password (e.g., ``qwer1234``)
@@ -38,11 +44,11 @@ User Creation (Mobile Worker)
 - ``primary_location``: The location ID of the primary location; must be one of the assigned locations (e.g., ``26fc44e2792b4f2fa8ef86178f0a958e``)
 - ``locations``: A list of ``location_ids`` that the mobile worker will be assigned to.
 
-**Output Parameters:**
+**Output Parameters**
 
 - ``user_id``: User UUID (e.g., ``3c5a623af057e23a32ae4000cf291339``)
 
-**Sample Input (JSON Format):**
+**Sample Input (JSON Format)**
 
 .. code-block:: json
 
@@ -74,25 +80,38 @@ User Creation (Mobile Worker)
 User Edit (Mobile Worker)
 =========================
 
-**Purpose:**
+Overview
+--------
+
+**Purpose**
     Edit CommCare (mobile-worker) user.
 
-**Permissions Required:**
+**Permissions Required**
     Edit Mobile Workers & Edit Access APIs
 
-**Authentication:**
-    For more information, please review the **CommCare API Overview**.
+**Authentication**
+    For more information, please review the `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
 
-**URL:**
+Endpoint Specifications
+-----------------------
+
+**URL**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/[version]/user/[id]/
 
-**Method:**
+**Method**
     PUT
 
-**Input Parameters:**
+**Request Header**
+    You must specify in the request header that the **Content-Type** is **application/json**.
+
+
+Request & Response Details
+---------------------------
+
+**Input Parameters**
 
 .. list-table::
    :header-rows: 1
@@ -131,7 +150,7 @@ User Edit (Mobile Worker)
      - List of location IDs assigned to the user (replaces existing locations)
      - ["26fc44e2792b4f2fa8ef86178f0a958e", "c1b029932ed442a6a846a4ea10e46a78"]
 
-**Sample Input:**
+**Sample Input**
 
 .. code-block:: json
 
@@ -156,31 +175,33 @@ User Edit (Mobile Worker)
        }
     }
 
-**Other Information:**
-
-- You must specify in the request header that the **Content-Type** is **application/json**.
-
 User Delete (Mobile Worker)
----------------------------
+==========================
 
-**Purpose:**
+Overview
+---------
+
+**Purpose**
     Delete a CommCare (mobile-worker) user.
 
-**Permissions Required:**
+**Permissions Required**
     - Edit Mobile Workers
     - Edit Access API's
 
-**Authentication:**
-    For more information, please review Authentication.
+Endpoint Specifications
+-----------------------
 
-**URL:**
+**URL**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/[version]/user/[id]/
 
-**Method:**
+**Method**
 
 .. code-block:: text
 
     DELETE
+
+**Authentication**
+    For more information, please review  `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.

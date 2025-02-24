@@ -1,29 +1,37 @@
 Web User Edit
--------------
+=============
 
-**Purpose:**
+Overview
+---------
+
+**Purpose**
     Edit Web User.
 
-**Permissions Required:**
+**Permissions Required**
     - Edit Web Users
     - Edit Access API's
 
-**Authentication:**
-    For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
-
-**URL:**
+Endpoint Specifications
+-----------------------
+**Base URL**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/web-user/[version]/[id]/
 
-**Method:**
+**Method**
 
 .. code-block:: text
 
     PATCH
 
-**Input Parameters:**
+**Authentication:**
+    For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
+
+Request & Response Details
+---------------------------
+
+**Input Parameters**
 
 - ``role``: Role of user (e.g., ``App Editor``)
 - ``primary_location_id``: The location ID of the primary location; must be one of the assigned locations (e.g., ``26fc44e2792b4f2fa8ef86178f0a958e``)
@@ -33,7 +41,7 @@ Web User Edit
 - ``tableau_role``: Tableau Role of the user (Options: ``Explorer``, ``ExplorerCanPublish``, ``SiteAdministratorExplorer``, ``Viewer``, ``Unlicensed``)
 - ``tableau_groups``: List of Tableau Groups the user is assigned to (e.g., ``["city", "county"]``)
 
-**Sample Input (JSON Format):**
+**Sample Input (JSON Format)**
 
 .. code-block:: json
 
@@ -51,7 +59,7 @@ Web User Edit
         "tableau_groups":["city", "county"]
     }
 
-**Sample Output (JSON Format):**
+**Sample Output (JSON Format)**
 
 .. code-block:: json
 
@@ -91,18 +99,24 @@ Web User Edit
 
 
 
-
 User Identity API
------------------
+=================
 
-**Purpose:**
+Overview
+---------
+**Purpose**
     Look up the authenticated web user's details.
 
-**URL:**
+Endpoint Specifications
+-----------------------
+**Base URL**
 
 .. code-block:: text
 
     https://www.commcarehq.org/api/v0.5/identity/
+
+Request & Response Details
+---------------------------
 
 **Sample Response:**
 

@@ -1,10 +1,10 @@
 OTA API Restore
----------------
+===============
 
 CommCare HQ offers a way to see the exact data that is being sent to the phones in the form of the "restore" XML. This can often be useful for troubleshooting issues or when doing advanced app building off of lookup tables and other data structures.
 
 Viewing the Data
-~~~~~~~~~~~~~~~~
+----------------
 
 To view the OTA Restore data, open:
 
@@ -15,13 +15,13 @@ Then enter:
 ``[username]@[domain].commcarehq.org`` and the user's CommCare password.
 
 Understanding the Data Format
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------
 
 The data will look exactly the same as a normal user registration response but with a list of case blocks following the registration data.
 
 See more details: `User Registration API <https://bitbucket.org/javarosa/javarosa/wiki/UserRegistrationAPI>`_
 
-**Example XML Output:**
+**Example XML Output**
 
 .. code-block:: xml
 
@@ -48,7 +48,7 @@ For more information:
 When the phone receives the case blocks, for example, it applies them all in order to its internal database, thus reconstructing the case list.
 
 Making the Request Programmatically
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------
 
 Assuming your domain is called ``DEMO_DOMAIN``, the request must be sent to:
 
@@ -56,7 +56,7 @@ Assuming your domain is called ``DEMO_DOMAIN``, the request must be sent to:
 
 using HTTP basic authentication with the CHW's username and password.
 
-**Example cURL Request:**
+**Example cURL Request**
 
 .. code-block:: bash
 

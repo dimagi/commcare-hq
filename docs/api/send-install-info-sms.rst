@@ -1,40 +1,43 @@
 Send CommCare Install Info over SMS
------------------------------------
-
-**Availability:**
-    This feature is only available on CommCare version 2.44.4 and below. It is not supported in the current CommCare version available in the Play Store.
+===================================
 
 Overview
-~~~~~~~~
-
-**Purpose:**
+--------
+**Purpose**
     Use this API to facilitate the reinstallation of CommCare on the phones of already-registered users. All recipients should be on an Android phone. The users will receive two SMS messages: one with a link to the Google Play store to download and install CommCare, and another with the CommCare app install information used internally by CommCare.
 
-**Project Prerequisites:**
+**Availability**
+    This feature is only available on CommCare version 2.44.4 and below. It is not supported in the current CommCare version available in the Play Store.
+
+**Project Prerequisites**
     - Your project must have a PRO plan or higher to use this feature.
     - "SMS Mobile Worker Registration" must be enabled on the *Messaging -> General Settings* page.
 
-**Authentication:**
-    For more information, please review Authentication.
-
-**Base URL:**
+Endpoint Specifications
+-----------------------
+**Base URL**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/[version]/sms_user_registration_reinstall/
 
-**Available since:** v0_5
-
-**Method:**
+**Method**
 
 .. code-block:: text
 
     POST
 
-**Input and Output Structure**
-------------------------------
+**Authentication**
+    For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
 
-**Input Parameters:**
+
+**Available since**
+    Version - v0.5
+
+Request & Response Details
+--------------------------
+
+**Input Parameters**
 
 .. list-table::
     :header-rows: 1
@@ -78,7 +81,7 @@ Each JSON object in the `users` list should have the following structure:
       - The user's phone number, in E.164 format.
       - 16175551234
 
-**Output Structure:**
+**Output Structure**
 
 .. list-table::
     :header-rows: 1
@@ -102,7 +105,7 @@ Each JSON object in the `users` list should have the following structure:
       - ["16175551234"]
 
 
-**Sample Input (JSON Format):**
+**Sample Input (JSON Format)**
 
 .. code-block:: json
 
@@ -113,7 +116,7 @@ Each JSON object in the `users` list should have the following structure:
       ]
     }
 
-**Sample Output (JSON Format):**
+**Sample Output (JSON Format)**
 
 .. code-block:: json
 

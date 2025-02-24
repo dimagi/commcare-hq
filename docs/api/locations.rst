@@ -1,20 +1,20 @@
-Location API
-------------
+Location APIs
+=============
 
 The Location API is available from version v0.5. Version v0.5 is read-only. It allows you to list locations and get location details.
 
 Version v0.6 has the same read-only list and details endpoints as v0.5 with just a few updates and adds the ability to create and update locations, one at a time or in bulk.
 
 List Locations
--------------
+--------------
 
-**Base URL:**
+**Base URL**
 
 .. code-block:: text
 
     GET https://www.commcarehq.org/a/[domain]/api/[version]/location/
 
-**Input Parameters:**
+**Input Parameters**
 
 v0.5 Locations can be filtered by the following attributes as request parameters:
 
@@ -36,7 +36,7 @@ v0.5 Locations can be filtered by the following attributes as request parameters
    * - ``longitude``
      - Longitude coordinate of the location
 
-**Sample JSON Output (v0.5):**
+**Sample JSON Output (v0.5)**
 
 .. code-block:: json
 
@@ -100,13 +100,13 @@ Also notice how compared to v0.5, the v0.6 location data has just the ``location
 Location Details
 ----------------
 
-**Base URL:**
+**Base URL**
 
 .. code-block:: text
 
     GET https://www.commcarehq.org/a/[domain]/api/[version]/location/[location_id]
 
-**Sample JSON Output (v0.5):**
+**Sample JSON Output (v0.5)**
 
 .. code-block:: json
 
@@ -134,22 +134,22 @@ You can get the details for an individual location using v0.6 as well. See the v
 Create Location (Individual)
 ----------------------------
 
-**Base URL:**
+**Base URL**
 
 .. code-block:: text
 
     POST https://www.commcarehq.org/a/[domain]/api/[version]/location/
 
-**Description:**
+**Description**
 
 Create an individual location. Available from version v0.6.
 
-**Required Fields:**
+**Required Fields**
 
 - ``name``
 - ``location_type_code``
 
-**Other Fields (Optional):**
+**Other Fields (Optional)**
 
 .. list-table::
    :header-rows: 1
@@ -167,7 +167,7 @@ Create an individual location. Available from version v0.6.
    * - ``parent_location_id``
      - The ID will be validated to ensure the parent exists, supports child locations, and has no duplicate names.
 
-**Example Request Body:**
+**Example Request Body**
 
 .. code-block:: json
 
@@ -185,17 +185,17 @@ Create an individual location. Available from version v0.6.
 Update Location (Individual)
 ---------------------------
 
-**Base URL:**
+**Base URL**
 
 .. code-block:: text
 
     PUT https://www.commcarehq.org/a/[domain]/api/[version]/location/[location_id]
 
-**Description:**
+**Description**
 
 Allows editing an individual location. Available from version v0.6.
 
-**Editable Fields:**
+**Editable Fields**
 
 .. list-table::
    :header-rows: 1
@@ -219,7 +219,7 @@ Allows editing an individual location. Available from version v0.6.
 
 If a part of the location’s update fails due to invalid fields, the update will not occur at all.If you wanted to update the location type and parent for the location, an example request body would be - 
 
-**Example Request Body:**
+**Example Request Body**
 
 .. code-block:: json
 
@@ -229,13 +229,13 @@ If a part of the location’s update fails due to invalid fields, the update wil
     }
 ### Create and Update Locations (in Bulk)
 
-**Base URL:**
+**Base URL**
 
 .. code-block:: text
 
     PATCH https://www.commcarehq.org/a/[domain]/api/[version]/location/
 
-**Description:**
+**Description**
 
 Version v0.6 allows you to create and update locations in bulk. Even though the method is PATCH, you can also create locations as well as update using this method.
 
@@ -243,7 +243,7 @@ The request body should be a list of locations, with each location as a JSON dic
 
 When creating a location via this method, the API uses the same validation as the create endpoint. For updating, it uses the same validation as the update endpoint. For updating a location, see the table of allowed fields in the documentation for "Update". For creating, see the table of fields under "Create Location".
 
-**Example Request Body:**
+**Example Request Body**
 
 .. code-block:: json
 
@@ -277,17 +277,17 @@ Lastly, the PATCH request is atomic. Meaning if validation fails for a single lo
 List Location Types
 -------------------
 
-**Base URL:**
+**Base URL**
 
 .. code-block:: text
 
     GET https://www.commcarehq.org/a/[domain]/api/[version]/location_type/
 
-**Description:**
+**Description**
 
 Retrieves a list of location types available in the specified domain.
 
-**Sample JSON Output:**
+**Sample JSON Output**
 
 .. code-block:: json
 
@@ -317,17 +317,17 @@ Retrieves a list of location types available in the specified domain.
 Location Type Details
 ---------------------
 
-**Base URL:**
+**Base URL**
 
 .. code-block:: text
 
     GET https://www.commcarehq.org/a/[domain]/api/[version]/location_type/[id]
 
-**Description:**
+**Description**
 
 Retrieves details for a specific location type.
 
-**Sample JSON Output:**
+**Sample JSON Output**
 
 .. code-block:: json
 

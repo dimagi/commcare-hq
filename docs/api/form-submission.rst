@@ -15,7 +15,7 @@ There are two ways to submit a form to CommCare HQ:
 Below are sample commands for submitting an XForm saved in a file called "xform.xml" to the domain called "demo". (You will need to change these two values in the commands below to suit your own purposes.)
 
 Submission as multipart/form-data
----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -35,7 +35,7 @@ One way to think of this is that the incoming request looks exactly like a reque
     </form>
 
 Submission as the Body of a POST Request
-----------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -46,9 +46,9 @@ Submission as the Body of a POST Request
 There is no equivalent of this as an HTML form because the command above submits the contents of the file as the request body.                                                                                                                   
 
 Submitting for a Specific Application
--------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In a number of places, CommCare reporting relies on tagging form submissions with the application that they belong to. To tag a form submission with its application, submit it to its application's URL:
+In a number of places, CommCare reporting relies on tagging form submissions with the application that they belong to. In order have forms submitted to the API 'tagged' with the appropriate application you should submit them to the application specific URL:
 
 .. code-block:: text
 
@@ -193,7 +193,7 @@ Here is a form that registers a case using the data provided by the answers to t
 If you only want to create or update cases, your form can omit the form questions and answers.
 
 The "data/case" node
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: xml
 
@@ -221,7 +221,7 @@ The "data/case/create" node
 - Cases must also have a case type and a name.
 
 The "data/case/update" node
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: xml
 
@@ -238,7 +238,7 @@ The "data/case/update" node
 - Normal variable name rules apply (all ASCII, starts with a letter, no spaces or punctuation other than underscores). It is convention to use snake case.
 
 The User
-~~~~~~~~
+--------
 
 It is possible to set the case "owner_id" and the form "userID" to the ID of a web user (a user who is able to log into CommCare HQ) and the form "username" to their username, but by default their cases will not appear in reports.
 
@@ -263,10 +263,10 @@ It has two pieces of data:
 In addition to the response XML, the HTTP response code is also important.
 
 OpenRosa V 2.0
---------------
+~~~~~~~~~~~~~~
 
 Response Codes
-~~~~~~~~~~~~~~
+""""""""""""""
 
 .. list-table:: Response Codes
    :widths: 10 20 50
@@ -293,8 +293,8 @@ Response Codes
      - -
      - Unexpected server error.
 
-Example Success Response
-~~~~~~~~~~~~~~~~~~~~~~~~
+- Example Success Response
+""""""""""""""""""""""""""
 
 .. code-block:: xml
 
@@ -302,8 +302,8 @@ Example Success Response
         <message nature="submit_success">   √   </message>
     </OpenRosaResponse>
 
-Example Error Response
-~~~~~~~~~~~~~~~~~~~~~~
+- Example Error Response
+""""""""""""""""""""""""
 
 .. code-block:: xml
 
@@ -342,24 +342,8 @@ Response Codes
 Code Example
 -------------
 
-The `submission_api_example` repository on GitHub has an example script to illustrate how to use the Submission API to create CommCare cases. It also has a short explanation of what the code does, so that you can use it as a reference for implementing in your own language or adapt it for your own use case.
+The `submission_api_example <https://github.com/dimagi/submission_api_example>`_ repository on GitHub has an example script to illustrate how to use the Submission API to create CommCare cases. It also has a short explanation of what the code does, so that you can use it as a reference for implementing in your own language or adapt it for your own use case.
 
-Application-Specific Submissions
---------------------------------
-
-A number of places in CommCare reporting rely on tagging form submissions with the application to which they belong. To have forms submitted to the API 'tagged' with the appropriate application, you should submit them to the application-specific URL:
-
-.. code-block:: text
-
-    https://www.commcarehq.org/a/demo/receiver/[APPLICATION ID]/
-
-The application ID can be found in the application edit URL. Example:
-
-.. code-block:: text
-
-    https://www.commcarehq.org/a/demo/apps/view/952a0b480c7c10dde777b2485375d2237/
-
-Application ID: ``952a0b480c7c10dde777b2485375d2237``
 
 Additional Notes
 ----------------

@@ -1,19 +1,25 @@
 List Groups 
------------
+===========
 
-**Purpose:**
+Overview
+--------
+
+**Purpose**
     Retrieve a list of user groups. The list of groups may be presented to the user as a simple list of group names, where each group name includes a hyperlink to access a list of group members. Group names could, for example, mirror the geographic distribution of CHWs, with a separate group name used for each health district. Access control may be applied, with each web user having access to one or more groups associated with the CommCare domain. Only groups that the user is permitted to access are included in the output.
 
-**Base URL:**
+**Base URL**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/[version]/group/
 
-**Authentication:**
+**Authentication**
     For more information, please review Authentication.
 
-**Input Parameters:**
+Request & Response Details
+---------------------------
+
+**Input Parameters**
 
 .. list-table::
    :header-rows: 1
@@ -25,7 +31,7 @@ List Groups
      - Return data format (optional). Supported formats: ``json`` (default), ``xml``
      - ``format=xml``
 
-**Output Values:**
+**Output Values**
 
 .. list-table::
    :header-rows: 1
@@ -40,13 +46,13 @@ List Groups
      - Group name (e.g., health district)
      - ``Senahú``
 
-**Sample Usage:**
+**Sample Usage**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/demo/api/v0.4/group/
 
-**Sample JSON Output:**
+**Sample JSON Output**
 
 .. code-block:: json
 

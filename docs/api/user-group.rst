@@ -1,18 +1,25 @@
 Group API
----------
+=========
 
-**API Authentication:**
-    All URL endpoints should be utilized as part of a cURL authentication command. For more information, please review Authentication.
+List Groups
+-----------
 
-**List Groups:**
+Endpoint Specifications
+~~~~~~~~~~~~~~~~~~~~~~~
 
-**URL:**
+**URL**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/[version]/group/
 
-**Input Parameters:**
+**API Authentication**
+    All URL endpoints should be utilized as part of a cURL authentication command. For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
+
+Request & Response Details
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Input Parameters**
 
 .. list-table::
    :header-rows: 1
@@ -24,7 +31,7 @@ Group API
      - Return data format (optional). Supported: json (default), xml
      - format=xml
 
-**Sample Output:**
+**Sample Output**
 
 .. code-block:: json
 
@@ -50,15 +57,19 @@ Group API
       ]
     }
 
-**Bulk API:**
+Bulk API
+--------
 
-**URL:**
+Endpoint Specifications
+~~~~~~~~~~~~~~~~~~~~~~~
+
+**URL**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/[version]/group/
 
-**Supported Methods:**
+**Supported Methods**
 
 .. list-table::
    :header-rows: 1
@@ -70,7 +81,10 @@ Group API
    * - PATCH
      - Create multiple groups
 
-**Input Parameters:**
+Request & Response Details
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Input Parameters**
 
 .. list-table::
    :header-rows: 1
@@ -94,7 +108,7 @@ Group API
      - Any additional custom data associated with the group
      - {"localization": "Ghana"}
 
-**Output Parameters:**
+**Output Parameters**
 
 .. list-table::
    :header-rows: 1
@@ -106,9 +120,9 @@ Group API
      - Group UUID
      - 3c5a623af057e23a32ae4000cf291339
 
-**Sample Input:**
+**Sample Input**
 
-**Single Group:**
+- *Single Group*
 
 .. code-block:: json
 
@@ -125,7 +139,7 @@ Group API
       ]
     }
 
-**Multiple Groups:**
+- *Multiple Groups*
 
 .. code-block:: json
 
@@ -144,15 +158,19 @@ Group API
       ]
     }
 
-**Individual API:**
+Individual API
+--------------
 
-**URL:**
+Endpoint Specifications
+~~~~~~~~~~~~~~~~~~~~~~~
+
+**URL**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/[version]/group/[group_id]
 
-**Supported Methods:**
+**Supported Methods**
 
 .. list-table::
    :header-rows: 1
@@ -166,7 +184,10 @@ Group API
    * - DELETE
      - Delete group
 
-**Input Parameters:**
+Request & Response Details
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Input Parameters**
 
 .. list-table::
    :header-rows: 1
@@ -190,7 +211,7 @@ Group API
      - Any additional custom data associated with the group (replaces existing metadata)
      - {"localization": "Ghana"}
 
-**Sample Input:**
+**Sample Input**
 
 .. code-block:: json
 

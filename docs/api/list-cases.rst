@@ -1,19 +1,25 @@
 List Cases (Version 3+)
------------------------
+=======================
 
-**Purpose:**
+Overview
+--------
+
+**Purpose**
     Retrieves a list of cases. The list of cases may be presented to the end user as a simple list of cases, where each case name incudes a hyperlink to access detailed information about the case.
 
-**Base URL:**
+**Base URL**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/v0.5/case/
 
-**Authentication:**
+**Authentication**
     For more information, please review `this <https://dimagi.atlassian.net/wiki/x/LwXKfw>`_.
 
-**Input Parameters:**
+Request & Response Details
+---------------------------
+
+**Input Parameters**
 
 In addition to all `Case Data API <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143957360>`_. parameters, you may use the following input parameters to filter results and control paging:
 
@@ -94,7 +100,7 @@ In addition to all `Case Data API <https://dimagi.atlassian.net/wiki/spaces/comm
      - Defaults to oldest server_date_modified.
 
 
-**Output Values:**
+**Output Values**
 
 .. list-table::
    :header-rows: 1
@@ -136,13 +142,13 @@ In addition to all `Case Data API <https://dimagi.atlassian.net/wiki/spaces/comm
      - Date and time case was closed
      - ``2011-12-20T15:09:47Z``
 
-**Sample Usage:**
+**Sample Usage**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/v0.5/case/?format=xml
 
-**Sample XML Output:**
+**Sample XML Output**
 
 .. code-block:: xml
 
@@ -162,7 +168,7 @@ In addition to all `Case Data API <https://dimagi.atlassian.net/wiki/spaces/comm
         </case>
     </cases>
 
-**Sample JSON Output:**
+**Sample JSON Output**
 
 .. code-block:: json
 

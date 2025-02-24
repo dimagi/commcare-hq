@@ -1,59 +1,73 @@
-Case Data APIs
---------------
+Case Data API
+=============
 
-**Purpose:**
+Overview
+--------
+
+**Purpose**
     Retrieve all data associated with a case, including case property values, a list of associated forms, and referrals. The case data may be presented to the end user as a case details screen.
 
-**Base URL:**
-
+**Base URL**
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/[version]/case/[case_id]/
 
-**Authentication:**
-    For more information, please review Authentication.
+**Authentication**
+    For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
 
-**Input Parameters:**
+Request & Response Details
+---------------------------
 
+**Input Parameters**
 .. list-table::
+   :widths: 20 40 15 25 20
    :header-rows: 1
 
    * - Name
      - Description
      - Values
      - Example
+     - Status
    * - format
      - Return data format
      - xml, json
      - format=xml
+     - Supported
    * - properties
      - Whether to include properties
      - all, none
      - properties=all
+     - Proposed
    * - indices
      - Whether to include indices
      - all, none
      - indices=all
+     - Proposed
    * - xforms_by_name__full
      - Whether to include all xforms by name
      - true
      - xforms_by_name__full=true
+     - Supported
    * - xforms_by_xmlns__full
      - Whether to include all xforms by xmlns
      - true
      - xforms_by_xmlns__full=true
+     - Supported
    * - child_cases__full
      - Whether to include child cases
      - true
      - child_cases__full=true
+     - Supported since version 4
    * - parent_cases__full
      - Whether to include parent cases
      - true
      - parent_cases__full=true
+     - Supported since version 4
 
-**Output Values:**
+**Output Values**
 
-.. list-table::
+.. list-table:: Case Metadata
+   :widths: 20 40 40
    :header-rows: 1
 
    * - Name
@@ -79,23 +93,62 @@ Case Data APIs
      - 2011-12-20T15:09:47Z
    * - properties
      - List of all editable case properties, including both special predefined properties and user-defined dynamic properties
-     - See below
+     -
 
-**Special Properties:**
+.. list-table:: Special Case Properties
+   :widths: 20 40 40
+   :header-rows: 1
 
-- ``owner_id``: ID of the owner of the case (can be user or group)
-- ``case_name``: Name of the case
-- ``external_id``: External ID associated with the case
-- ``case_type``: Type of case
-- ``date_opened``: Date and time case was opened
+   * - Name
+     - Description
+     - Example
+   * - owner_id
+     - ID of the owner of the case (can be user or group)
+     - -
+   * - case_name
+     - Name of case
+     - Rose
+   * - external_id
+     - External ID associated with the case
+     - 123456
+   * - case_type
+     - Type of case
+     - pregnancy
+   * - date_opened
+     - Date and time case was opened
+     - 2011-11-16T14:26:15Z
+   * - indices
+     - End of special properties with a list of references to other cases with properties <case_type/> and <case_id/>
+     -
 
-**Sample Usage:**
+.. list-table:: Start for Forms Associated with the Case. This repeats for each form, as seen in sample output below
+   :widths: 20 40 40
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Example
+   * - form_id
+     - UUID of form associated with the case
+     - 1J9NF7B4FTH73435PYJJSL5SJ
+   * - form_name
+     - Name of form associated with the case
+     - Prenatal visit
+   * - started_on
+     - Date and time form was started
+     - 2011-11-16T14:26:15Z
+   * - ended_on
+     - Date and time form was completed
+     - 2011-11-16T14:27:35Z
+
+
+**Sample Usage**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/demo/api/v0.4/case/0X9OCW3JMV98EYOVN32SGN4II/?format=xml&properties=all&indices=all
 
-**Sample Output:**
+**Sample Output**
 
 .. code-block:: xml
 
@@ -146,28 +199,34 @@ Case Data APIs
         </referrals>
     </case>
 
-Bulk Upload Case Data API
--------------------------
 
-**Purpose:**
+Bulk Upload Case Data API
+=========================
+
+Overview
+--------
+**Purpose**
     Performs bulk imports of case data through the Excel Case Data Importer to either create or update cases.
 
-**URL:**
+**Base URL**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/importer/excel/bulk_upload_api/
 
-**Method:**
+**Method**
     POST
 
-**Body:**
+**Body**
     Multipart Form Submission with File
 
-**Authorization:**
+**Authorization**
     API Token or Basic Authorization
 
-**Input Parameters:**
+Request & Response Details
+---------------------------
+
+**Input Parameters**
 
 .. list-table::
    :header-rows: 1
@@ -208,7 +267,7 @@ Bulk Upload Case Data API
      - optional
      - -
 
-**Sample cURL Request:**
+**Sample cURL Request**
 
 .. code-block:: text
 
@@ -224,7 +283,7 @@ Bulk Upload Case Data API
 **Note:**
     Uploads are subject to the same restrictions as the Excel Importer UI but with limited feedback. Testing uploads in the UI first is recommended.
 
-**Response:**
+**Response**
 
 JSON output with the following parameters. A success code indicates processing but may include business-level errors.
 
@@ -244,7 +303,7 @@ JSON output with the following parameters. A success code indicates processing b
      - URL to poll for processing status (State: 2 - Complete, 3 - Error)
      - https://www.commcarehq.org/a/demo/importer/excel/status/
 
-**Example JSON Response (Successful Upload):**
+- **Example JSON Response (Successful Upload):**
 
 .. code-block:: json
 
@@ -259,7 +318,7 @@ JSON output with the following parameters. A success code indicates processing b
        }
     }
 
-**Example JSON Response (Business Errors Encountered):**
+- **Example JSON Response (Business Errors Encountered):**
 
 .. code-block:: json
 

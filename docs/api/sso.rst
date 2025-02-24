@@ -1,22 +1,22 @@
 Single Sign On
---------------
+==============
 
-**Purpose:**
+Overview
+--------
+
+**Purpose**
     Validate login credentials and get the user profile for a mobile worker or a web user.
 
-**Single Sign On URL:**
+Endpoint Specifications
+-----------------------
+
+**Base URL**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/[version]/sso/
 
-**Sample URL:**
-
-.. code-block:: text
-
-    https://www.commcarehq.org/a/[domain]/api/[version]/sso/
-
-**Authentication:**
+**Authentication**
     Post a URL-encoded username and password, such as:
 
 .. code-block:: text

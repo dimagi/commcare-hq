@@ -1,28 +1,34 @@
 List Mobile Workers
--------------------
+===================
 
-**Purpose:**
+Overview
+--------
+
+**Purpose**
     Get a list of users or a single user. The list of users may be presented to the end user as a simple list of user names, where each name includes a hyperlink to access a list of cases owned by the user.
 
-**Base URL:**
+**Base URL**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/[version]/user/
 
-**Single User URL:**
+**Single User URL**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/[version]/user/[user_id]
 
-**Permissions Required:**
+**Permissions Required**
     Edit Mobile Workers & Edit Access API's
 
-**Authentication and Usage:**
+**Authentication and Usage**
     All URL endpoints should be utilized as part of a cURL authentication command. For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
 
-**Input Parameters:**
+Request & Response Details
+---------------------------
+
+**Input Parameters**
 
 .. list-table::
    :header-rows: 1
@@ -43,7 +49,7 @@ List Mobile Workers
      - Adds extra data fields for recent user activity (may slow down API)
      - ``extras=true``
 
-**Output Values:**
+**Output Values**
 
 .. list-table::
    :header-rows: 1
@@ -85,13 +91,13 @@ List Mobile Workers
      - Any additional custom data associated with the user
      - ``{"chw_id": "13/43/DFA"}``
 
-**Sample Usage:**
+**Sample Usage**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/demo/api/v0.4/user/?format=xml&limit=5
 
-**Sample JSON Output:**
+**Sample JSON Output**
 
 .. code-block:: json
 
@@ -129,7 +135,7 @@ List Mobile Workers
         ]
     }
 
-**Sample XML Output:**
+**Sample XML Output**
 
 .. code-block:: xml
 

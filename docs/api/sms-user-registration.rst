@@ -1,14 +1,16 @@
 SMS Mobile Worker Registration API
-----------------------------------
+==================================
 
-**Purpose:**
+Overview
+--------
+**Purpose**
 Initiate the SMS self-registration workflow for mobile workers. This performs the same functionality as the Messaging -> Mobile Worker Registration page, only over API.
 
 **Project Prerequisites**
 Your project must have a **PRO plan or higher** to use this feature, and you must enable **"SMS Mobile Worker Registration"** on the Messaging -> General Settings page.
 
-**Authentication**
-For more information, please review  `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
+Endpoint Specifications
+-----------------------
 
 **Base URL**
 
@@ -16,12 +18,17 @@ For more information, please review  `API Authentication <https://dimagi.atlassi
 
     https://www.commcarehq.org/a/[domain]/api/[version]/sms_user_registration/
 
-**Available since:** ``v0_5``
+**Available since** ``v0.5``
 
-**Method:** ``POST``
+**Method** ``POST``
 
-Input Parameters
+**Authentication**
+For more information, please review  `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
 
+Request & Response Details
+---------------------------
+
+**Input Parameters**
 
 .. list-table:: 
    :widths: 20 10 10 60
@@ -52,8 +59,7 @@ Input Parameters
      - No
      - A custom SMS message sent instead of the system's default message. Use `{}` as a placeholder for the registration URL.
 
-Users List JSON Structure
-^^^^^^^^^^^^^^^^^^^^^^^^^
+**Users List JSON Structure**
 
 .. list-table:: **Input Structure**
    :widths: 20 10 10 60
@@ -90,10 +96,9 @@ Users List JSON Structure
      - list of string
      - List of phone numbers already registered.
 
-Sample Usage
-^^^^^^^^^^^^
+**Sample Usage**
 
-**Simple Input**
+- *Simple Input*
 
 .. code-block:: json
 
@@ -104,7 +109,7 @@ Sample Usage
       ]
     }
 
-**Complex Input**
+- *Complex Input*
 
 .. code-block:: json
 
