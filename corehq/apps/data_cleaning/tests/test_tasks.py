@@ -13,6 +13,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE
 from corehq.util.test_utils import flag_enabled
 
 
@@ -33,8 +34,8 @@ class CommitCasesTest(TestCase):
         )
         self.addCleanup(self.web_user.delete, self.domain.name, deleted_by=None)
 
-        factory = CaseFactory(domain=self.domain.name)
-        self.case = factory.create_case(
+        self.factory = CaseFactory(domain=self.domain.name)
+        self.case = self.factory.create_case(
             case_type=self.case_type,
             owner_id='crj123',
             case_name='Shadow',
@@ -74,3 +75,38 @@ class CommitCasesTest(TestCase):
 
         case = CommCareCase.objects.get_case(self.case.case_id, self.domain.name)
         self.assertEqual(case.get_case_property('speed'), 'SLOW')
+
+    def test_chunking(self):
+        cases = [self.case]
+        for i in range(0, CASEBLOCK_CHUNKSIZE):
+            cases.append(self.factory.create_case(
+                case_type=self.case_type,
+                owner_id='crj123',
+                case_name=f'case{i}',
+                update={'speed': f'{i}kph'},
+            ))
+
+        records = []
+        for case in cases:
+            records.append(BulkEditRecord(
+                session=self.session,
+                doc_id=case.case_id,
+            ))
+            records[-1].save()
+
+        change = BulkEditChange(
+            session=self.session,
+            prop_id='speed',
+            action_type=EditActionType.FIND_REPLACE,
+            use_regex=True,
+            find_string='$',
+            replace_string='!',
+        )
+        change.save()
+        change.records.add(*records)
+
+        form_ids = commit_data_cleaning(self.session.session_id)
+        self.assertEqual(len(form_ids), 2)
+
+        case = CommCareCase.objects.get_case(self.case.case_id, self.domain.name)
+        self.assertEqual(case.get_case_property('speed'), 'slow!')
