@@ -1,5 +1,7 @@
 import warnings
+import contextlib
 from datetime import datetime
+from functools import wraps
 
 from django.core.cache import cache
 from django.urls import reverse
@@ -334,3 +336,18 @@ class ESQueryProfilerMixin(object):
         if not self.search_class:
             raise NotImplementedError("You must define a search_class attribute.")
         return self.search_class
+
+
+def profile(name=None):
+    """
+    This decorator wraps the given function with a timing context. The results will
+    be labeled by `name`.
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(obj, *args, **kwargs):
+            with obj.profiler.timing_context(name) if obj.profiler_enabled else contextlib.nullcontext():
+                result = func(obj, *args, **kwargs)
+            return result
+        return wrapper
+    return decorator

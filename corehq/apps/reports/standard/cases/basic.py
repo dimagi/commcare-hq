@@ -243,4 +243,7 @@ class CaseListReport(CaseListMixin, ProjectReport, ReportDataSource):
         with self.profiler.timing_context if self.profiler_enabled else contextlib.nullcontext():
             response = super().json_response
 
+        if self.profiler_enabled:
+            # Todo: SC-4181
+            pass
         return response
