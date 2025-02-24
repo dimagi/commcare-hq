@@ -1,4 +1,4 @@
-import sinon from "sinon/pkg/sinon";
+import sinon from "sinon";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import hmacCallout from "integration/js/hmac_callout";
 import markdown from "cloudcare/js/markdown";
@@ -6,16 +6,14 @@ import markdown from "cloudcare/js/markdown";
 describe('Markdown', function () {
     let render = markdown.render;
 
-    let sandbox;
     beforeEach(function () {
         initialPageData.clear();
         initialPageData.register("toggles_dict", { CASE_LIST_TILE_CUSTOM: false });
-        sandbox = sinon.sandbox.create();
     });
 
     afterEach(function () {
         initialPageData.unregister("toggles_dict");
-        sandbox.restore();
+        sinon.restore();
     });
 
     describe('Markdown basics', function () {
