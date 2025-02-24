@@ -85,6 +85,11 @@ def create_dict_batch(entire_dict, batch_size):
 
 
 def run_main(batch_size=10, env='dev', lang='fr'):
+    # TODO: Get the list of languages from the settings
+    # TODO: add support for plural strings
+    # TODO: Run translation in parallel
+    # TODO: integrate it into the build process
+    # TODO: Add verification model
     locale_path = os.path.join(settings.BASE_DIR, 'locale')
     po_file_path = os.path.join(locale_path, lang, 'LC_MESSAGES', 'django.po')
     pojs_file_path = os.path.join(locale_path, lang, 'LC_MESSAGES', 'djangojs.po')
