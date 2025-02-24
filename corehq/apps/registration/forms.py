@@ -60,7 +60,7 @@ class RegisterWebUserForm(forms.Form):
         label=_("Please Specify"),
     )
     project_name = forms.CharField(label=_("Project Name"))
-    company_name = forms.CharField(label=_("Organization or Company"), max_length=50)
+    company_name = forms.CharField(label=_("Organization or Company"), required=False, max_length=50)
     eula_confirmed = forms.BooleanField(
         required=False,
         label=mark_safe(_(
@@ -84,8 +84,17 @@ class RegisterWebUserForm(forms.Form):
         if settings.ENFORCE_SSO_LOGIN and self.is_sso:
             self.fields['password'].required = False
 
-        persona_fields = []
+        additional_fields = []
         if settings.IS_SAAS_ENVIRONMENT:
+            company_name = hqcrispy.InlineField(
+                'company_name',
+                css_class="input-lg",
+                data_bind="value: companyName, "
+                          "valueUpdate: 'keyup', "
+                          "koValidationStateFeedback: { "
+                          "   validator: companyName "
+                          "}",
+            )
             persona_fields = [
                 crispy.Div(
                     hqcrispy.RadioSelect(
@@ -111,6 +120,7 @@ class RegisterWebUserForm(forms.Form):
                               "}",
                 ),
             ]
+            additional_fields = [company_name, *persona_fields]
 
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -200,16 +210,7 @@ class RegisterWebUserForm(forms.Form):
                                   "   validator: projectName "
                                   "}",
                     ),
-                    hqcrispy.InlineField(
-                        'company_name',
-                        css_class="input-lg",
-                        data_bind="value: companyName, "
-                                  "valueUpdate: 'keyup', "
-                                  "koValidationStateFeedback: { "
-                                  "   validator: companyName "
-                                  "}",
-                    ),
-                    crispy.Div(*persona_fields),
+                    crispy.Div(*additional_fields),
                     hqcrispy.InlineField(
                         'eula_confirmed',
                         css_class="input-lg",
