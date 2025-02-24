@@ -462,6 +462,7 @@ class ProjectDataTab(UITab):
         '/a/{domain}/data_dictionary/',
         '/a/{domain}/importer/',
         '/a/{domain}/case/',
+        '/a/{domain}/clean/',
         '/a/{domain}/microplanning/',
         '/a/{domain}/kyc/'
     )
@@ -626,7 +627,7 @@ class ProjectDataTab(UITab):
             items.extend(FixtureInterfaceDispatcher.navigation_sections(
                 request=self._request, domain=self.domain))
 
-        if (toggles.MODULE_BADGES.enabled(self.domain) and self.couch_user.can_edit_data()):
+        if (toggles.CSQL_FIXTURE.enabled(self.domain) and self.couch_user.can_edit_data()):
             items.append([_('CSQL Fixtures'), [{
                 'title': _(CSQLFixtureExpressionView.page_title),
                 'url': reverse(CSQLFixtureExpressionView.urlname, args=[self.domain]),
@@ -654,10 +655,7 @@ class ProjectDataTab(UITab):
         if self._can_view_geospatial:
             items += self._get_geospatial_views()
         if self._can_view_kyc_integration:
-            items.append([_('KYC Verification'), [{
-                'title': KycConfigurationView.page_title,
-                'url': reverse(KycConfigurationView.urlname, args=[self.domain]),
-            }]])
+            items += self._get_kyc_verification_views()
         return items
 
     @cached_property
@@ -972,7 +970,21 @@ class ProjectDataTab(UITab):
             }
             edit_section[0][1].append(deduplication_list_view)
 
+        if self._can_view_case_data_cleaning:
+            from corehq.apps.data_cleaning.views.main import (
+                CleanCasesMainView,
+            )
+            clean_cases_view = {
+                'title': _(CleanCasesMainView.page_title),
+                'url': reverse(CleanCasesMainView.urlname, args=[self.domain]),
+            }
+            edit_section[0][1].append(clean_cases_view)
+
         return edit_section
+
+    @property
+    def _can_view_case_data_cleaning(self):
+        return toggles.DATA_CLEANING_CASES.enabled_for_request(self._request)
 
     def _get_explore_data_views(self):
         explore_data_views = []
@@ -1023,6 +1035,23 @@ class ProjectDataTab(UITab):
         for section in management_sections:
             geospatial_items[0][1].append(section)
         return geospatial_items
+
+    def _get_kyc_verification_views(self):
+        from corehq.apps.integration.kyc.views import KycVerificationReportView
+        items = [[
+            _("Know Your Customer (KYC) Verification"),
+            [
+                {
+                    "title": KycConfigurationView.page_title,
+                    "url": reverse(KycConfigurationView.urlname, args=[self.domain]),
+                },
+                {
+                    'title': KycVerificationReportView.page_title,
+                    'url': reverse(KycVerificationReportView.urlname, args=[self.domain]),
+                },
+            ]
+        ]]
+        return items
 
     @cached_property
     def _can_view_kyc_integration(self):

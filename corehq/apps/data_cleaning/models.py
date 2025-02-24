@@ -3,7 +3,10 @@ import uuid
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_lazy, gettext as _
+
+from corehq.apps.case_search.const import METADATA_IN_REPORTS
+from corehq.apps.data_cleaning.exceptions import UnsupportedActionException
 
 
 class BulkEditSessionType:
@@ -30,6 +33,54 @@ class BulkEditSession(models.Model):
     task_id = models.UUIDField(null=True, blank=True, unique=True, db_index=True)
     result = models.JSONField(null=True, blank=True)
     completed_on = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_on"]
+
+    @classmethod
+    def get_active_case_session(cls, user, domain_name, case_type):
+        return cls._get_active_session(user, domain_name, case_type, BulkEditSessionType.CASE)
+
+    @classmethod
+    def get_active_form_session(cls, user, domain_name, xmlns):
+        return cls._get_active_session(user, domain_name, xmlns, BulkEditSessionType.FORM)
+
+    @classmethod
+    def _get_active_session(cls, user, domain_name, identifier, session_type):
+        try:
+            return cls.objects.get(
+                user=user,
+                domain=domain_name,
+                identifier=identifier,
+                session_type=session_type,
+                committed_on=None,
+                completed_on=None,
+            )
+        except cls.DoesNotExist:
+            return None
+
+    @classmethod
+    def new_case_session(cls, user, domain_name, case_type):
+        case_session = cls.objects.create(
+            user=user,
+            domain=domain_name,
+            identifier=case_type,
+            session_type=BulkEditSessionType.CASE,
+        )
+        BulkEditPinnedFilter.create_default_filters(case_session)
+        BulkEditColumn.create_default_columns(case_session)
+        return case_session
+
+    @classmethod
+    def restart_case_session(cls, user, domain_name, case_type):
+        previous_session = cls.get_active_case_session(user, domain_name, case_type)
+        previous_session.delete()
+        new_session = cls.new_case_session(user, domain_name, case_type)
+        return new_session
+
+    @classmethod
+    def new_form_session(cls, user, domain_name, xmlns):
+        raise NotImplementedError("Form data cleaning sessions are not yet supported!")
 
 
 class DataType:
@@ -154,7 +205,7 @@ class FilterMatchType:
 class BulkEditColumnFilter(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="column_filters", on_delete=models.CASCADE)
     index = models.IntegerField(default=0)
-    property = models.CharField(max_length=255)  # case property or form question_id
+    prop_id = models.CharField(max_length=255)  # case property or form question_id
     data_type = models.CharField(
         max_length=15,
         default=DataType.TEXT,
@@ -167,6 +218,9 @@ class BulkEditColumnFilter(models.Model):
     )
     value = models.TextField(null=True, blank=True)
 
+    class Meta:
+        ordering = ["index"]
+
 
 class PinnedFilterType:
     CASE_OWNERS = 'case_owners'
@@ -175,6 +229,10 @@ class PinnedFilterType:
     CHOICES = (
         (CASE_OWNERS, CASE_OWNERS),
         (CASE_STATUS, CASE_STATUS),
+    )
+
+    DEFAULT_FOR_CASE = (
+        CASE_OWNERS, CASE_STATUS
     )
 
 
@@ -191,11 +249,30 @@ class BulkEditPinnedFilter(models.Model):
         blank=True,
     )
 
+    class Meta:
+        ordering = ["index"]
+
+    @classmethod
+    def create_default_filters(cls, session):
+        default_types = {
+            BulkEditSessionType.CASE: PinnedFilterType.DEFAULT_FOR_CASE,
+        }.get(session.session_type)
+
+        if not default_types:
+            raise NotImplementedError(f"{session.session_type} default pinned filters not yet supported")
+
+        for index, filter_type in enumerate(default_types):
+            cls.objects.create(
+                session=session,
+                index=index,
+                filter_type=filter_type,
+            )
+
 
 class BulkEditColumn(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="columns", on_delete=models.CASCADE)
     index = models.IntegerField(default=0)
-    property = models.CharField(max_length=255)  # case property or form question_id
+    prop_id = models.CharField(max_length=255)  # case property or form question_id
     label = models.CharField(max_length=255)
     data_type = models.CharField(
         max_length=15,
@@ -203,6 +280,48 @@ class BulkEditColumn(models.Model):
         choices=DataType.CHOICES,
     )
     is_system = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["index"]
+
+    @staticmethod
+    def get_default_label(prop_id):
+        known_labels = {
+            'name': _("Name"),
+            'owner_name': _('Owner'),
+            'opened_on': _("Opened On"),
+            'opened_by_username': _("Created By"),
+            'modified_on': _("Last Modified On"),
+            '@status': _("Status"),
+        }
+        return known_labels.get(prop_id, prop_id)
+
+    @staticmethod
+    def is_system_property(prop_id):
+        return prop_id in set(METADATA_IN_REPORTS).difference({
+            'name', 'case_name', 'external_id',
+        })
+
+    @classmethod
+    def create_default_columns(cls, session):
+        default_properties = {
+            BulkEditSessionType.CASE: (
+                'name', 'owner_name', 'opened_on', 'opened_by_username',
+                'modified_on', '@status',
+            ),
+        }.get(session.session_type)
+
+        if not default_properties:
+            raise NotImplementedError(f"{session.session_type} default columns not yet supported")
+
+        for index, prop_id in enumerate(default_properties):
+            cls.objects.create(
+                session=session,
+                index=index,
+                prop_id=prop_id,
+                label=cls.get_default_label(prop_id),
+                is_system=cls.is_system_property(prop_id),
+            )
 
 
 class BulkEditRecord(models.Model):
@@ -244,7 +363,7 @@ class BulkEditChange(models.Model):
     change_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     created_on = models.DateTimeField(auto_now_add=True, db_index=True)
     records = models.ManyToManyField(BulkEditRecord, related_name="changes")
-    property = models.CharField(max_length=255)  # case property or form question_id
+    prop_id = models.CharField(max_length=255)  # case property or form question_id
     action_type = models.CharField(
         max_length=12,
         choices=EditActionType.CHOICES,
@@ -252,8 +371,31 @@ class BulkEditChange(models.Model):
     find_string = models.TextField(null=True, blank=True)
     replace_string = models.TextField(null=True, blank=True)
     use_regex = models.BooleanField(default=False)
-    replace_all_string = models.TextField(null=True, blank=True)
-    copy_from_property = models.CharField(max_length=255)
+    copy_from_prop_id = models.CharField(max_length=255)
 
     class Meta:
         ordering = ["created_on"]
+
+    def edited_value(self, case):
+        simple_transformations = {
+            EditActionType.REPLACE: lambda x: self.replace_string,
+            EditActionType.FIND_REPLACE: lambda x: x.replace(self.find_string, self.replace_string),
+            EditActionType.STRIP: str.strip,
+            EditActionType.TITLE_CASE: str.title,
+            EditActionType.UPPER_CASE: str.upper,
+            EditActionType.LOWER_CASE: str.lower,
+            EditActionType.MAKE_EMPTY: lambda x: "",
+            EditActionType.MAKE_NULL: lambda x: None,
+        }
+
+        if self.action_type in simple_transformations:
+            old_value = case.get_case_property(self.prop_id)
+            return simple_transformations[self.action_type](old_value)
+
+        if self.action_type == EditActionType.COPY_REPLACE:
+            return case.get_case_property(self.copy_from_prop_id)
+
+        if self.action_type == EditActionType.RESET:
+            raise UnsupportedActionException(f"{EditActionType.RESET} is not applied by calling edited_value")
+
+        raise UnsupportedActionException(f"edited_value did not recognize action_type {self.action_type}")

@@ -38,6 +38,10 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             self.moduleCaseTypes = params.moduleCaseTypes;
             self.allowUsercase = params.allowUsercase;
 
+            self.trackGoogleEvent = function() {
+                hqImport('analytix/js/google').track.event(...arguments);
+            };
+
             self.setPropertiesMap = function (propertiesMap) {
                 self.propertiesMap = ko.mapping.fromJS(propertiesMap);
             };
