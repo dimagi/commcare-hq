@@ -1,0 +1,56 @@
+--- 
++++ 
+@@ -1,11 +1,12 @@
+ {% load i18n %}
+ {% load cache %}
+ {% get_current_language as LANGUAGE_CODE %}
+-<ul class="nav navbar-nav mainmenu-tabs collapse" id="hq-main-tabs" role="menu">
++<ul class="navbar-nav mainmenu-tabs"
++    id="hq-main-tabs">
+   {% for tab in tabs %}
+     {% cache 500 header_tab tab.frag_value %}
+       {% with tab.filtered_dropdown_items as items %}
+-        <li class="mainmenu-tab {% if items %}dropdown{% endif %}{% if tab.is_active_tab %} active{% endif %}"
++        <li class="nav-item mainmenu-tab{% if items %} dropdown{% endif %} {% if tab.is_active_tab %} active{% endif %}"
+             id="{{ tab.class_name }}"
+           {% if ANALYTICS_IDS.GOOGLE_ANALYTICS_API_ID and tab.ga_tracker %}
+             data-category="{{ tab.ga_tracker.category }}"
+@@ -15,27 +16,33 @@
+             {% endif %}
+           {% endif %}
+         >
+-          <a {% if items %}class="dropdown-toggle" data-toggle="dropdown"{% endif %}
++          <a class="nav-link{% if items %} dropdown-toggle{% endif %}"
++             {% if tab.is_active_tab %}aria-current="page"{% endif %}
++             {% if items %}role="button" data-bs-toggle="dropdown" aria-expanded="false"{% endif %}
+              href="{% if items %}#{% else %}{{ tab.url }}{% endif %}">
+-            {% trans tab.title %}{% if items %} <b class="caret"></b>{% endif %}
++            {% trans tab.title %}
+           </a>
+           {% if items %}
+             <ul class="dropdown-menu">
+               {% for sub in items %}
+                 {% if sub.is_second_level %}
+                   <li class="dropdown-submenu">
+-                    <a href="{{ sub.url }}" class="dropdown-toggle" data-toggle="dropdown">{{ sub.title }}</a>
++                    <a href="{{ sub.url }}"
++                       class="dropdown-toggle dropdown-item"
++                       role="button"
++                       data-bs-toggle="dropdown"
++                       aria-expanded="false">{{ sub.title }}</a>
+                     <ul class="dropdown-menu">
+                       {% for second_sub in sub.submenu %}
+                         {% with second_sub as submenu %}
+-                          {% include 'tabs/bootstrap3/menu_submenu.html' %}
++                          {% include 'tabs/bootstrap5/menu_submenu.html' %}
+                         {% endwith %}
+                       {% endfor %}
+                     </ul>
+                   </li>
+                 {% else %}
+                   {% with sub as submenu %}
+-                    {% include 'tabs/bootstrap3/menu_submenu.html' %}
++                    {% include 'tabs/bootstrap5/menu_submenu.html' %}
+                   {% endwith %}
+                 {% endif %}
+               {% endfor %}

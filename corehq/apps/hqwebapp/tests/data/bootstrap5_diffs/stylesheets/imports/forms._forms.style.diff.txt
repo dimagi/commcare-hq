@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,356 +1,20 @@
+@@ -1,356 +1,21 @@
 -// FORM ACTIONS from TWBS 2
 -// ------------
 -
@@ -39,6 +39,7 @@
 +:not(.field-label) + .field-control,
 +.row > .field-control:first-child {
 +  @extend .offset-sm-4, .offset-md-3, .offset-lg-2;
++  flex-shrink: initial;
  }
  
 -legend .subtext {
@@ -368,7 +369,7 @@
  }
  
  .form-hide-actions .form-actions {
-@@ -361,21 +25,38 @@
+@@ -361,21 +26,42 @@
    .validationMessage {
      display: block;
      padding-top: 8px;
@@ -409,6 +410,10 @@
 +  border-bottom-right-radius: $border-radius;
 +  padding: $spacer 0;
 +  margin: 0 0 $spacer 0;
++
++  .field-control:first-child {
++    padding-left: ($grid-gutter-width - $spacer) / 2;
++  }
 +
 +  > * {
 +    flex-shrink: initial;

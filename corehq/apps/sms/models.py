@@ -1110,11 +1110,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_EMAIL_BOUNCED = 'EMAIL_BOUNCED'
     ERROR_EMAIL_GATEWAY = 'EMAIL_GATEWAY_ERROR'
     ERROR_NO_FCM_TOKENS = 'NO_FCM_TOKENS'
-    ERROR_FCM_NOT_AVAILABLE = 'FCM_NOT_AVAILABLE'
-    ERROR_FCM_UNSUPPORTED_RECIPIENT = 'FCM_UNSUPPORTED_RECIPIENT'
-    ERROR_FCM_NO_ACTION = "FCM_NO_ACTION"
-    ERROR_FCM_NOTIFICATION_FAILURE = "FCM_NOTIFICATION_FAILURE"
-    ERROR_FCM_DOMAIN_NOT_ENABLED = 'FCM_DOMAIN_NOT_ENABLED'
     FILTER_MISMATCH = 'FILTER_MISMATCH'
 
     ERROR_MESSAGES = {
@@ -1172,11 +1167,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         ERROR_EMAIL_BOUNCED: gettext_noop("Email Bounced"),
         ERROR_EMAIL_GATEWAY: gettext_noop("Email Gateway Error"),
         ERROR_NO_FCM_TOKENS: gettext_noop("No FCM tokens found for recipient."),
-        ERROR_FCM_NOT_AVAILABLE: gettext_noop("FCM not available on this environment."),
-        ERROR_FCM_UNSUPPORTED_RECIPIENT: gettext_noop("FCM is supported for Mobile Workers only."),
-        ERROR_FCM_NO_ACTION: gettext_noop("No action selected for the FCM Data message type."),
-        ERROR_FCM_NOTIFICATION_FAILURE: gettext_noop("Failure while sending FCM notifications to the devices."),
-        ERROR_FCM_DOMAIN_NOT_ENABLED: gettext_noop("Domain is not enabled for FCM Push Notifications"),
         FILTER_MISMATCH: gettext_noop("Recipient did not match filters:")
     }
 

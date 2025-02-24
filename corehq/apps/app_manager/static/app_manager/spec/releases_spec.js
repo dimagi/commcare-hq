@@ -1,6 +1,6 @@
 import $ from "jquery";
 import _ from "underscore";
-import sinon from "sinon/pkg/sinon";
+import sinon from "sinon";
 
 import initialPageData from "hqwebapp/js/initial_page_data";
 import releasesModels from "app_manager/js/releases/releases";
