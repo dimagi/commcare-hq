@@ -9,9 +9,11 @@ Overview
 
 The data in this API is based on a nested data model:
 
-- **Messaging Event**: The core data model representing a messaging event linked to a specific recipient and from a specific source (e.g., Conditional Alert).
-- **Message**: The actual message that went to the user.
-- A single event may have multiple messages (e.g., SMS surveys which will have one message per interaction with the recipient).
+- **Messaging Event**
+    - The core data model representing a messaging event linked to a specific recipient and from a specific source (e.g., Conditional Alert).
+- **Message**
+    - The actual message that went to the user.
+    - A single event may have multiple messages (e.g., SMS surveys which will have one message per interaction with the recipient).
 
 **Authentication**
 
@@ -40,12 +42,12 @@ These are the filter parameters that the API call can use. Examples of how to us
      - Example
    * - limit
      - Number of records to return (Defaults to 20, maximum 5000)
-     - -
+     -
      - ``limit=100``
    * - cursor
      - Used for pagination (value provided in API response)
-     - -
-     - -
+     -
+     -
    * - date.lt (less than)
      - Filter events before a specific date
      - event.date
@@ -63,21 +65,33 @@ These are the filter parameters that the API call can use. Examples of how to us
      - event.date
      - ``date.gte=2021-05-01``
    * - content_type
-     - Filter on the content type of the event
+     - Filter on the content type of the event. (e.g.sms, sms-survey, email, manual-sms, api-sms, chat-sms)
      - event.content_type
      - ``content_type=sms``
    * - source
-     - Filter on the source of the event
+     - Filter on the source of the event (e.g.broadcast (includes scheduled-broadcast, immediate-broadcast), scheduled-broadcast, immediate-broadcast, keyword, reminder, conditional-alert)
      - event.source
      - ``source=broadcast``
    * - status
-     - Filter on the status of the event
+     - Filter on the status of the event (e.g. error, completed, email-sent )
      - event.status
      - ``status=error``
+   * - error_code
+     - Filter on the event error code (e.g. NO_PHONE_NUMBER, NO_RECIPIENT, NO_MESSAGE-sent )
+     - event.error_code
+     - ``error_code=NO_MESSAGE``
    * - phone_number
      - Filter on the recipient phone number
      - event.message.phone_number
-     - -
+     -
+   * - email_address
+     - Filter on the recipient email address
+     - event.message.email_address
+     -
+   * - case_id
+     - Filter on the event case ID
+     - event.case_id
+     -
 
 Sorting
 ~~~~~~~
@@ -100,7 +114,9 @@ These sorting parameters can be applied to the existing search results alongside
 
 Pagination
 ~~~~~~~~~~
-This API makes use of cursor pagination. Each request will include a ``meta.next`` field containing a URL to fetch the next page of data.
+This API makes use of cursor pagination. Each request will include a "meta.next" field which will contain a URL that can be used to fetch the next page of data. This URL includes all the filters that were supplied with the original request and should be used without modification.
+
+If "meta.next" is 'null' it means there is no more data.
 
 Example:
 
@@ -136,20 +152,23 @@ Request & Response Details
           "id": 10215869,
           "content_type": "email",
           "date": "2020-05-15T04:11:27.482899",
+          "date_last_activity": "2020-05-15T04:11:27.482899",
           "case_id": "523132e0-a562-4be1-bbc8-a634423c5c0c",
           "domain": "ny-dev-cdcms",
-          "status": "completed",
+          "error": null,
+          "form": null,
           "messages": [
             {
               "message_id": 153444,
               "date": "2021-04-13T21:25:26.989",
+              "date_modified": null,
               "type": "sms",
               "direction": "outgoing",
               "content": "Welcome to CommCare",
               "status": "sent",
               "backend": "MOBILE_BACKEND_TWILIO",
               "phone_number": "+15555993494"
-            }
+            },
           ],
           "recipient": {
             "recipient_id": "523132e0-a562-4be1-bbc8-a634423c5c0c",
@@ -160,8 +179,10 @@ Request & Response Details
             "source_id": "4654",
             "type": "conditional-alert",
             "name": "Email - Welcome Packet"
-          }
-        }
+          },
+          "status": "completed"
+        },
+        ...
       ],
       "meta": {
         "limit": 20,
@@ -171,17 +192,29 @@ Request & Response Details
 
 **Sample API Calls**
 
+- Sample Format
+
+.. code-block:: text
+
+    https://www.commcarehq.org/a/[domain]/api/v0.5/messaging-event/?[FILTER-NAME]=[FILTER-VALUE]
+
 - Example of a single filter:
+    - Example filter shown: date.gte=2020-07-13T06:30:21.109409
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/v0.5/messaging-event/?date.gte=2020-07-13T06:30:21.109409
 
+
+
 - Example of multiple filters:
+    - Example filters shown: content_type=sms and phone_number=1234567
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/v0.5/messaging-event/?content_type=sms&phone_number=1234567
+
+
 
 
 API Fields and Data Structure

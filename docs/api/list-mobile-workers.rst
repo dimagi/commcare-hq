@@ -90,6 +90,7 @@ Request & Response Details
    * - ``user_data``
      - Any additional custom data associated with the user
      - ``{"chw_id": "13/43/DFA"}``
+        (If the property begins with a number, it will not be returned when using XML)
 
 **Sample Usage**
 
@@ -102,69 +103,106 @@ Request & Response Details
 .. code-block:: json
 
     {
-        "meta": {
-            "limit": 2,
-            "next": null,
-            "offset": 0,
-            "previous": null,
-            "total_count": 29
+      "meta": {
+        "limit": 2,
+        "next": null,
+        "offset": 0,
+        "previous": null,
+        "total_count": 29
+      },
+      "objects": [
+        {
+          "type": "user",
+          "id": "3c5a623af057e23a32ae4000cf291339",
+          "username": "jdoe@example.commcarehq.org",
+          "first_name": "John",
+          "last_name": "Doe",
+          "default_phone_number": "+50253311399",
+          "email": "jdoe@example.org",
+          "phone_numbers": [
+            "+50253311399",
+            "+50253314588"
+          ],
+          "groups": [
+            "9a0accdba29e01a61ea099394737c4fb",
+            "b4ccdba29e01a61ea099394737c4fbf7"
+          ],
+          "locations": [
+            "26fc44e2792b4f2fa8ef86178f0a958e",
+            "c1b029932ed442a6a846a4ea10e46a78"
+          ],
+          "primary_location": "26fc44e2792b4f2fa8ef86178f0a958e",
+          "user_data": {
+            "chw_id": "13/43/DFA"
+          }
         },
-        "objects": [
-            {
-                "type": "user",
-                "id": "3c5a623af057e23a32ae4000cf291339",
-                "username": "jdoe@example.commcarehq.org",
-                "first_name": "John",
-                "last_name": "Doe",
-                "default_phone_number": "+50253311399",
-                "email": "jdoe@example.org",
-                "phone_numbers": [
-                    "+50253311399",
-                    "+50253314588"
-                ],
-                "groups": [
-                    "9a0accdba29e01a61ea099394737c4fb",
-                    "b4ccdba29e01a61ea099394737c4fbf7"
-                ],
-                "locations": ["26fc44e2792b4f2fa8ef86178f0a958e", "c1b029932ed442a6a846a4ea10e46a78"],
-                "primary_location": "26fc44e2792b4f2fa8ef86178f0a958e",
-                "user_data": {
-                    "chw_id": "13/43/DFA"
-                }
-            }
-        ]
+        {
+          "type": "user",
+          "id": "3c5a623af057e23a32ae4000cf2943248",
+          "username": "jsmith@example.commcarehq.org",
+          "first_name": "Jane",
+          "last_name": "Smith",
+          "default_phone_number": "+50253311388",
+          "email": "jsmith@example.org",
+          "phone_numbers": [
+            "+50253311388"
+          ],
+          "locations": [],
+          "primary_location": null,
+          "groups": [],
+          "user_data": {
+            "village": "Patna",
+            "husband_name": "Bob Smith"
+          }
+        }
+      ]
     }
 
 **Sample XML Output**
 
 .. code-block:: xml
 
-    <response>
-        <objects type="list">
-            <object id="3c5a623af057e23a32ae4000cf291339">
-                <username>jdoe@example.commcarehq.org</username>
-                <first_name>John</first_name>
-                <last_name>Doe</last_name>
-                <default_phone_number>+50253311399</default_phone_number>
-                <email>jdoe@example.org</email>
-                <phone_numbers type="list">
-                    <value>+50253311399</value>
-                    <value>+50253314588</value>
-                </phone_numbers>
-                <groups type="list">
-                    <value>9a0accdba29e01a61ea099394737c4fb</value>
-                    <value>b4ccdba29e01a61ea099394737c4fbf7</value>
-                </groups>
-                <user_data type="hash">
-                    <chw_id>13/43/DFA</chw_id>
-                </user_data>
-            </object>
-        </objects>
-        <meta type="hash">
-            <next type="null"/>
-            <total_count type="integer">29</total_count>
-            <previous type="null"/>
-            <limit type="integer">2</limit>
-            <offset type="integer">0</offset>
-        </meta>
-    </response>
+   <response>
+       <objects type="list">
+           <object id="3c5a623af057e23a32ae4000cf291339">
+               <username>jdoe@example.commcarehq.org</username>
+               <first_name>John</first_name>
+               <last_name>Doe</last_name>
+               <default_phone_number>+50253311399</default_phone_number>
+               <email>jdoe@example.org</email>
+               <phone_numbers type="list">
+                   <value>+50253311399</value>
+                   <value>+50253314588</value>
+               </phone_numbers>
+               <groups type="list">
+                   <value>9a0accdba29e01a61ea099394737c4fb</value>
+                   <value>b4ccdba29e01a61ea099394737c4fbf7</value>
+               </groups>
+               <user_data type="hash">
+                   <chw_id>13/43/DFA</chw_id>
+               </user_data>
+           </object>
+           <object id="3c5a623af057e23a32ae4000cf2943248">
+               <username>jsmith@example.commcarehq.org</username>
+               <first_name>Jane</first_name>
+               <last_name>Smith</last_name>
+               <default_phone_number>+50253311388</default_phone_number>
+               <email>jsmith@example.org</email>
+               <phone_numbers type="list">
+                   <value>+50253311388</value>
+               </phone_numbers>
+               <groups type="list"/>
+               <user_data type="hash">
+                   <village>Patna</village>
+                   <husband_name>Bob Smith</husband_name>
+               </user_data>
+           </object>
+       </objects>
+       <meta type="hash">
+           <next type="null"/>
+           <total_count type="integer">29</total_count>
+           <previous type="null"/>
+           <limit type="integer">2</limit>
+           <offset type="integer">0</offset>
+       </meta>
+   </response>

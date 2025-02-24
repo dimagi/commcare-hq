@@ -150,7 +150,7 @@ This node should always be a direct child of the root node (``data`` in this ins
 - ``timeEnd``: When the user completed the form. Like "timeStart", "now" is a reasonable fallback.
 - ``username``: The name of the user / mobile worker who submitted the form.
 - ``userID``: The ID of the user / mobile worker who submitted the form.
-- ``instanceID``: A unique ID for this form submission. Generate a new Version 4 UUID for every form submission.
+- ``instanceID``: A unique ID for this form submission. *Creates a new UUID for every form submission.* This ID needs to be universally unique, so you will need to generate a new Version 4 UUID; do not use an auto-incrementing ID. If "instanceID" is not unique, if the ID is owned by your project space then the new form submission will replace the previous form submission, otherwise if it is not owned by your project space, the form submission will be rejected.
 - ``appVersion``: If the form belongs to an app, this can offer useful context for its data. You can submit an empty node if it is not relevant.
 
 
@@ -242,7 +242,7 @@ The User
 
 It is possible to set the case "owner_id" and the form "userID" to the ID of a web user (a user who is able to log into CommCare HQ) and the form "username" to their username, but by default their cases will not appear in reports.
 
-It is strongly recommended to use the ID and username of a mobile worker.
+**It is strongly recommended to use the ID and username of a mobile worker.**
 
 Response
 --------
@@ -283,14 +283,14 @@ Response Codes
      - Form was received but could not be processed.
        See 'message' for more details.
    * - 401
-     - -
+     -
      - Authentication failed.
        User not allowed to submit forms or authentication credentials incorrect.
    * - 500
      - submit_error
      - Unable to process form XML. Usually due to malformed XML.
    * - 500
-     - -
+     -
      - Unexpected server error.
 
 - Example Success Response
@@ -336,7 +336,7 @@ Response Codes
      - submit_error
      - Unable to process form XML. Usually due to malformed XML.
    * - 500
-     - -
+     -
      - Unexpected server error.
 
 Code Example

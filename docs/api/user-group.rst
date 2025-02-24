@@ -102,10 +102,10 @@ Request & Response Details
      - Whether this group's name will appear in the group filter list for reports
      - true/false (default=true)
    * - users
-     - List of all user IDs belonging to the group
+     - List of all user IDs belonging to the group. This is optional to specify.
      - ["91da6b1c78699adfb8679b741caf9f00", "8a642f722c9e617eeed29290e409fcd5"]
    * - metadata
-     - Any additional custom data associated with the group
+     - Any additional custom data associated with the group. This is optional to specify.
      - {"localization": "Ghana"}
 
 **Output Parameters**
@@ -139,7 +139,7 @@ Request & Response Details
       ]
     }
 
-- *Multiple Groups*
+- *Multiple Groups (can include all other information from single group creation)*
 
 .. code-block:: json
 
@@ -205,10 +205,10 @@ Request & Response Details
      - Whether this group's name will appear in the group filter list for reports
      - true/false
    * - users
-     - List of all user IDs belonging to the group (replaces existing users)
+     - List of all user IDs belonging to the group . his will replace any existing users for the group.
      - ["91da6b1c78699adfb8679b741caf9f00", "8a642f722c9e617eeed29290e409fcd5"]
    * - metadata
-     - Any additional custom data associated with the group (replaces existing metadata)
+     - Any additional custom data associated with the group. This will replace any existing custom data for the group.
      - {"localization": "Ghana"}
 
 **Sample Input**

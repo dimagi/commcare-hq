@@ -4,7 +4,7 @@ Download Report Data
 Overview
 --------
 **Purpose**
-    This endpoint will allow you to download the results of running a report on CommCare. To identify the reports available, see List Reports.
+    This endpoint will allow you to download the results of running a report on CommCare. To identify the reports available, see `List Reports <https://dimagi.atlassian.net/wiki/x/0yHKfw>`_.
 
 **Authentication**
     For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_
@@ -39,13 +39,16 @@ The report data can be filtered (based on the report's filter) and is also paged
      - ``limit=50``
    * - ``filter_name``
      - Each report can be filtered by filters defined on the List Reports API. Each filter is optional and can provide values for multiple filters.
+        - For date filters, you are required to provide "start" and "end" ranges (ex. form_date-start and form_date-end)
+        - To filter on multiple values for a given filter use the %1F separator between the values.
+        - For numeric types, its possible to filter on greater than / less than (i.e. age > 10). To do this, you need to provide an operator and an operand. For example, to filter on age, you can use age-operator=>&age-operand=10. Valid operators are >= <= = != < >.
      - ``state=vermont%1Fnewyork&gender=male&form_date-start=2015-01-01&form_date-end=2015-02-01&age-operator=>&age-operand=10``
 
 **Sample Usage**
 
 .. code-block:: text
 
-    GET https://www.commcarehq.org/a/[PROJECT]/api/v0.5/configurablereportdata/9aab0eeb88555a7b4568676883e7379a/?offset=20&limit=10&state=vermont&gender=male
+    https://www.commcarehq.org/a/[PROJECT]/api/v0.5/configurablereportdata/9aab0eeb88555a7b4568676883e7379a/?offset=20&limit=10&state=vermont&gender=male
 
 **Sample JSON Output**
 

@@ -94,12 +94,85 @@ The forms can be filtered using the following parameters, which also control pag
         {
           "app_id": "effb341b",
           "archived": false,
+          "attachments": {
+            "form.xml": {
+              "content_type": "text/xml",
+              "length": 1103
+            }
+          },
           "build_id": "e0a6125",
           "domain": "my-project",
+          "form": {
+            "#type": "data",
+            "@name": "Case Update",
+            "@uiVersion": "1",
+            "@version": "18",
+            "@xmlns": "http://openrosa.org/formdesigner/4281EB62-46E6-49AD-A08C",
+            "case": {
+              "@case_id": "b6996b7b-6b3f-476a-9006",
+              "@date_modified": "2016-11-29T14:50:41.156000Z",
+              "@user_id": "e7ad965c",
+              "@xmlns": "http://commcarehq.org/case/transaction/v2",
+              "update": {
+                "data_node": "55",
+                "dateval": "2012-09-26",
+                "geodata": "5.0 5.0 5.0 5.0",
+                "intval": "5",
+                "multiselect": "b",
+                "singleselect": "b",
+                "text": "TEST"
+              }
+            },
+            "data_node": "55",
+            "geodata": "5.0 5.0 5.0 5.0",
+            "meta": {
+              "@xmlns": "http://openrosa.org/jr/xforms",
+              "appVersion": "CommCare Android, version \"2.31.0\"(423345). App v18. CommCare Version 2.31. Build 423345, built on: 2016-11-02",
+              "app_build_version": 18,
+              "commcare_version": "2.31.0",
+              "deviceID": "358001070684648",
+              "geo_point": null,
+              "instanceID": "f959449c-8776-42ac-b776-3f564fafc331",
+              "timeEnd": "2016-11-29T14:50:41.156000Z",
+              "timeStart": "2016-11-29T14:50:36.155000Z",
+              "userID": "e7ad965c70802884a7a67add763939e8",
+              "username": "testuser"
+            },
+            "old_data_node": "",
+            "question1": "OK",
+            "question11": "5",
+            "question12": "2012-09-26",
+            "question14": "OK",
+            "question3": "b",
+            "question7": "b",
+            "text": "TEST"
+          },
           "id": "f959449c-8776-42ac-b776-3f564fafc331",
+          "initial_processing_complete": true,
+          "is_phone_submission": "2.0",
+          "metadata": {
+            "appVersion": "CommCare Android, version \"2.31.0\"(423345). App v18. CommCare Version 2.31. Build 423345, built on: 2016-11-02",
+            "app_build_version": 18,
+            "commcare_version": "2.31.0",
+            "deprecatedID": null,
+            "deviceID": "358001070684648",
+            "doc_type": "Metadata",
+            "geo_point": null,
+            "instanceID": "f959449c-8776-42ac-b776-3f564fafc331",
+            "location": null,
+            "timeEnd": "2016-11-29T14:50:41.156000",
+            "timeStart": "2016-11-29T14:50:36.155000",
+            "userID": "e7ad965c70802884a7a67add763939e8",
+            "username": "simon"
+          },
+          "problem": null,
           "received_on": "2016-11-29T14:50:42.530616Z",
+          "resource_uri": "",
+          "server_modified_on": "2016-11-29T14:50:42.530616Z",
           "type": "data",
+          "uiversion": "1",
           "version": "18"
         }
       ]
     }
+

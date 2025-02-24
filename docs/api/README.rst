@@ -33,6 +33,7 @@ You can browse and test the Data APIs using the `CommCare API Explorer <https://
     list-groups
     list-mobile-workers
     list-webusers
+    bulk-user
     list-reports
     locations
     fixture

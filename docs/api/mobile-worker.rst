@@ -135,7 +135,8 @@ Request & Response Details
      - List of all group IDs belonging to the user (replaces existing groups)
      - ["9a0accdba29e01a61ea099394737c4fb", "b4ccdba29e01a61ea099394737c4fbf7"]
    * - user_data
-     - Any additional custom data associated with the user (replaces existing custom data)
+     - Any additional custom data associated with the user (replaces existing custom data).
+    Note that user data may include system data affecting various features, so it is advised to pull the user's current data and edit it, rather than completely overwriting user data. To get the user's current data, use the single user URL provided at List Mobile Workers API.
      - {"chw_id": "13/43/DFA"}
    * - language
      - User language

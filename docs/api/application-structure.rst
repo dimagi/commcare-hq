@@ -33,7 +33,7 @@ The API response includes an ``objects`` field, which is a list of configuration
   - ``case_type``: The case type for the enclosing module.
   - ``case_properties``: A list of all case properties for the case type.
   - ``forms``: A list of all forms in the module.
-  - ``questions``: A schema list for each question in the module.
+     - ``questions``: A schema list for each question in the module.
 
 - ``versions``: A list of application versions (builds) created from this application.
 - Other application data, if ``extras`` is set to ``true``.
@@ -62,7 +62,8 @@ The API response includes an ``objects`` field, which is a list of configuration
           "case_types": {
             "type_of_case_from_app_builder": [
               "case_prop1",
-              "case_prop2"
+              "case_prop2",
+              "..."
             ]
           },
           "modules": [
@@ -72,7 +73,8 @@ The API response includes an ``objects`` field, which is a list of configuration
                 {
                   "name": {
                     "en": "Name in English",
-                    "es": "Nombre en Español"
+                    "es": "Nombre en Español",
+                    "..."
                   },
                   "questions": [
                     {
@@ -80,19 +82,21 @@ The API response includes an ``objects`` field, which is a list of configuration
                       "repeat": "",
                       "tag": "input",
                       "value": "/name_in_english/the_question"
-                    }
+                    },
+                    "..."
                   ]
                 }
+              ],
+              "versions": [
+                {
+                  "id": "app version uuid",
+                  "build_on": "2017-01-30T19:53:20",
+                  "build_comment": "",
+                  "is_released": true,
+                  "version": 16
+                },
+                "..."
               ]
-            }
-          ],
-          "versions": [
-            {
-              "id": "app version uuid",
-              "build_on": "2017-01-30T19:53:20",
-              "build_comment": "",
-              "is_released": true,
-              "version": 16
             }
           ]
         }

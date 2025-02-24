@@ -66,15 +66,11 @@ Request & Response Details
      - Values for the custom fields in the fixture.
      - {"name": "Boston", "population": 617594, "state": "Massachusetts"}
 
-**Note:** A call to the Fixture List API endpoint will return a JSON list of objects with these output values.
+.. note::
 
-To get the full table via API, use the 'name of the table', which is the same as found without an API call from:
+    A call to the Fixture List API endpoint will return a JSON list of objects with these output values.
+    In order to get the full table via API, use the 'name of the table', which is the same as you would find without the API call from https://www.commcarehq.org/a/[domain]/fixtures (the string in the Table ID column)
 
-.. code-block:: text
-
-    https://www.commcarehq.org/a/[domain]/fixtures
-
-(The string in the Table ID column.)
 
 **Sample Input**
 
@@ -172,18 +168,12 @@ Request & Response Details
      - https://www.commcarehq.org/a/demo/fixtures/fixapi/status/dl-2998e6834a654ab5ba74f372246caa75/
 
 Lookup Table Individual API
-===========================
+============================
 
 Overview
 --------
 **Purpose**
     Manage lookup tables via API calls.
-
-**Base URL**
-
-.. code-block:: text
-
-    https://www.commcarehq.org/a/[domain]/api/[version]/lookup_table/
 
 **Supported Methods**
 
@@ -196,9 +186,25 @@ Overview
      - List lookup tables
    * - POST
      - Create a new lookup table
+   * - PUT
+     - Edit lookup table
+   * - DELETE
+     - Delete lookup table
 
 **Authentication**
     All URL endpoints should be utilized as part of a cURL authentication command. For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
+
+List Lookup Table
+~~~~~~~~~~~~~~~~~
+
+**Base URL**
+
+.. code-block:: text
+
+    https://www.commcarehq.org/a/[domain]/api/[version]/lookup_table/
+
+**HTTP Method**
+    GET
 
 **Sample Output**
 
@@ -222,7 +228,8 @@ Overview
                 "is_global": true,
                 "resource_uri": "",
                 "tag": "vaccines"
-            }
+            },
+            ...
         ]
     }
 
@@ -234,6 +241,9 @@ Create Lookup Table
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/[version]/lookup_table/
+
+**HTTP Method**
+    POST
 
 **Input Parameters**
 
@@ -249,7 +259,10 @@ Create Lookup Table
    * - is_global
      - Boolean if the lookup table is accessible to all users (default: false)
 
+
 **Sample Input**
+
+This is for a single group.
 
 .. code-block:: json
 
@@ -271,31 +284,21 @@ Edit or Delete Lookup Table
 
     https://www.commcarehq.org/a/[domain]/api/[version]/lookup_table/[lookup_table_id]
 
-**Supported Methods**
-
-.. list-table::
-   :header-rows: 1
-
-   * - Method
-     - Description
-   * - GET
-     - Get lookup table
-   * - PUT
-     - Edit lookup table
-   * - DELETE
-     - Delete lookup table
+**HTTP Method**
+    PUT, DELETE
 
 **Sample Input**
 
 .. code-block:: json
 
     {
-        "tag": "vaccines", 
+        "tag": "vaccines",
         "fields": [
             {"field_name": "name", "properties": ["lang"]},
             {"field_name": "price", "properties": []}
-        ]
+        ],
     }
+
 
 Lookup Table Rows API
 =====================
@@ -306,12 +309,6 @@ Overview
 **Purpose:**
     Manage lookup table rows via API calls.
 
-**Base URL**
-
-.. code-block:: text
-
-    https://www.commcarehq.org/a/[domain]/api/[version]/lookup_table_item/
-
 **Supported Methods:**
 
 .. list-table::
@@ -321,6 +318,24 @@ Overview
      - Description
    * - GET
      - List lookup table rows
+   * - POST
+     - Create lookup table row
+   * - PUT
+     - Edit lookup table row
+   * - DELETE
+     - Delete lookup table row
+
+List Lookup Table Row
+~~~~~~~~~~~~~~~~~~~~~
+
+**Base URL**
+
+.. code-block:: text
+
+    https://www.commcarehq.org/a/[domain]/api/[version]/lookup_table_item/
+
+**HTTP Method**
+    GET
 
 **Sample Output:**
 
@@ -343,7 +358,8 @@ Overview
                 },
                 "id": "e8433b25e60c4e228b0c7a679af2847b",
                 "sort_key": 2
-            }
+            },
+            ...
         ]
     }
 
@@ -356,6 +372,9 @@ Create Lookup Table Row
 
     https://www.commcarehq.org/a/[domain]/api/[version]/lookup_table_item/
 
+**HTTP Method**
+    POST
+
 **Input Parameters**
 
 .. list-table::
@@ -366,19 +385,36 @@ Create Lookup Table Row
    * - data_type_id*
      - ID of a lookup table
    * - fields*
-     - Fields and their properties
+     - Fields and their properties for the lookup table to have
 
 **Sample Input**
+
+This is for a single row.
 
 .. code-block:: json
 
     {
-        "data_type_id": "bcf49791f7f04f09bd46262097e107f2", 
-        "fields": {
-            "name": {"field_list": [{"field_value": "MMR", "properties": {"lang": "en"}}]},
-            "price": {"field_list": [{"field_value": "7", "properties": {}}]}
+      "data_type_id": "bcf49791f7f04f09bd46262097e107f2",
+      "fields": {
+        "name": {
+          "field_list": [
+            {
+              "field_value": "MMR",
+              "properties": {"lang": "en"}
+            }
+          ]
+        },
+        "price": {
+          "field_list": [
+            {
+              "field_value": "7",
+              "properties": {}
+            }
+          ]
         }
+      }
     }
+
 
 Edit or Delete Lookup Table Row
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -389,30 +425,31 @@ Edit or Delete Lookup Table Row
 
     https://www.commcarehq.org/a/[domain]/api/[version]/lookup_table_item/[lookup_table_item_id]
 
-**Supported Methods**
-
-.. list-table::
-   :header-rows: 1
-
-   * - Method
-     - Description
-   * - GET
-     - Get lookup table row
-   * - PUT
-     - Edit lookup table row
-   * - DELETE
-     - Delete lookup table row
+**HTTP Method**
+    PUT, DELETE
 
 **Sample Input**
-
 .. code-block:: json
 
     {
-        "data_type_id": "bcf49791f7f04f09bd46262097e107f2", 
-        "fields": {
-            "name": {"field_list": [{"field_value": "MMR", "properties": {"lang": "en"}}]},
-            "price": {"field_list": [{"field_value": "10", "properties": {}}]}
+      "data_type_id": "bcf49791f7f04f09bd46262097e107f2",
+      "fields": {
+        "name": {
+          "field_list": [
+            {
+              "field_value": "MMR",
+              "properties": {"lang": "en"}
+            }
+          ]
+        },
+        "price": {
+          "field_list": [
+            {
+              "field_value": "10",
+              "properties": {}
+            }
+          ]
         }
+      }
     }
-
 

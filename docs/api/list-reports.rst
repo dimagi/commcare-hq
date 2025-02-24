@@ -11,7 +11,10 @@ Overview
 
 .. code-block:: text
 
-    GET https://www.commcarehq.org/a/[PROJECT]/api/v0.5/simplereportconfiguration/?format=json
+    https://www.commcarehq.org/a/[PROJECT]/api/v0.5/simplereportconfiguration/?format=json
+
+**HTTP Method**
+    GET
 
 Request & Response Details
 ---------------------------
@@ -25,9 +28,9 @@ An array of the reports defined in the project. Each entry includes:
   - "expanded": Expands into multiple result columns when downloading report data.
 
 - **Filters** The filters that can be used for the report.
-  - The filters can have a datatype that is "string", "integer", or "decimal".
-  - The type of the filter can be "date", "choice_list", or "dynamic_choice_list".
-  - Choice lists contain a set of predefined choices displayed to the user. These can be treated as strings when querying the reports.
+      - The filters can have a datatype that is *"string"*, *"integer"*, or *"decimal"*.
+      - The type of the filter can be *"date"*, *"choice_list"*, or *"dynamic_choice_list"*.
+      - Choice lists contain a set of predefined choices displayed to the user. These can be treated as strings when querying the reports.
 
 **Sample JSON Output**
 

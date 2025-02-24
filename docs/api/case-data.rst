@@ -8,6 +8,7 @@ Overview
     Retrieve all data associated with a case, including case property values, a list of associated forms, and referrals. The case data may be presented to the end user as a case details screen.
 
 **Base URL**
+
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/[version]/case/[case_id]/
@@ -19,6 +20,7 @@ Request & Response Details
 ---------------------------
 
 **Input Parameters**
+
 .. list-table::
    :widths: 20 40 15 25 20
    :header-rows: 1
@@ -66,7 +68,7 @@ Request & Response Details
 
 **Output Values**
 
-.. list-table:: Case Metadata
+.. list-table:: *Case Metadata*
    :widths: 20 40 40
    :header-rows: 1
 
@@ -95,7 +97,7 @@ Request & Response Details
      - List of all editable case properties, including both special predefined properties and user-defined dynamic properties
      -
 
-.. list-table:: Special Case Properties
+.. list-table:: *Special Case Properties*
    :widths: 20 40 40
    :header-rows: 1
 
@@ -104,7 +106,7 @@ Request & Response Details
      - Example
    * - owner_id
      - ID of the owner of the case (can be user or group)
-     - -
+     -
    * - case_name
      - Name of case
      - Rose
@@ -121,7 +123,7 @@ Request & Response Details
      - End of special properties with a list of references to other cases with properties <case_type/> and <case_id/>
      -
 
-.. list-table:: Start for Forms Associated with the Case. This repeats for each form, as seen in sample output below
+.. list-table:: *Start for Forms Associated with the Case. This repeats for each form, as seen in sample output below*
    :widths: 20 40 40
    :header-rows: 1
 
@@ -168,12 +170,14 @@ Request & Response Details
             <owner_id>3c5a623af057e23a32ae4000cf291339</owner_id>
             <case_property1>Dynamic property value 1</case_property1>
             <case_property2>Dynamic property value 2</case_property2>
+            ...
         </properties>
         <indices>
             <case_ref1>
                 <case_type>other_case_type</case_type>
                 <case_id>8GPM05TVPIUH0Q4XLXVIURRTA</case_id>
             </case_ref1>
+            ...
         </indices>
         <forms>
             <form>
@@ -184,8 +188,10 @@ Request & Response Details
                 <properties>
                     <form_property1>Dynamic property value 1</form_property1>
                     <form_property2>Dynamic property value 2</form_property2>
+                    ...
                 </properties>
             </form>
+            ...
         </forms>
         <referrals>
             <referral>
@@ -196,7 +202,9 @@ Request & Response Details
                 <followup_on>2011-11-19T00:00:00Z</followup_on>
                 <referral_status>open</referral_status>
             </referral>
+            ...
         </referrals>
+        ...
     </case>
 
 
@@ -206,13 +214,14 @@ Bulk Upload Case Data API
 Overview
 --------
 **Purpose**
-    Performs bulk imports of case data through the Excel Case Data Importer to either create or update cases.
+    Performs bulk imports of case data through the `Excel Case Data Importer <https://dimagi-dev.atlassian.net/wiki/display/commcarepublic/Importing+Cases+Using+Excel>`_ to either create or update cases.
 
 **Base URL**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/importer/excel/bulk_upload_api/
+
 
 **Method**
     POST
@@ -240,12 +249,12 @@ Request & Response Details
      - Path to the excel file containing Table Data
      - /home/username/household_case_upload.xlsx
      - yes
-     - -
+     -
    * - case_type
      - The case type to be assigned to created cases
      - household
      - yes
-     - -
+     -
    * - search_field
      - Whether to check for matches with existing cases against CommCareHQ's internal case id or an external named id
      - external_id
@@ -260,12 +269,13 @@ Request & Response Details
      - Whether to create new cases when no existing case matches the search_field
      - on
      - optional
-     - -
+     -
    * - name_column
      - The column in the spreadsheet which should be interpreted as the case name
      - household_name
      - optional
-     - -
+     -
+
 
 **Sample cURL Request**
 
@@ -278,14 +288,15 @@ Request & Response Details
          -F "search_column=household_id" \
          -F "create_new_cases=on"
 
-(Note: Omitting the ':' and password will prompt curl to request it, preventing password exposure.)
+(You may also omit the ':' and password and curl will request it. This will have the benefit of not showing your password on your screen or storing it in your history.)
 
-**Note:**
-    Uploads are subject to the same restrictions as the Excel Importer UI but with limited feedback. Testing uploads in the UI first is recommended.
+.. note::
+
+    Uploads are subject to the same restrictions as the Excel Importer User Interface, but with much more limited feedback. It is a good idea to test uploads there first to debug any issues, then use the Bulk Upload API to automate future imports once they are working as expected.
 
 **Response**
 
-JSON output with the following parameters. A success code indicates processing but may include business-level errors.
+JSON output with following Parameters. Note that a success code indicates that the upload was processed, but it may have encountered business-level problems with the import's data, such as uploading a case to an invalid location. Also note that these parameters may change to support for better error handling, so do not plan around them.
 
 .. list-table::
    :header-rows: 1
@@ -295,45 +306,40 @@ JSON output with the following parameters. A success code indicates processing b
      - Example
    * - code
      - 200: Success, 402: Warning, 500: Fail
-     - 500
+     - ``500``
    * - message
      - Warning or Failure message
      - "Error processing your file. Submit a valid (.xlsx) file"
    * - status_url
-     - URL to poll for processing status (State: 2 - Complete, 3 - Error)
-     - https://www.commcarehq.org/a/demo/importer/excel/status/
+     - If an upload is successful, a URL to poll for the status of the processing (State: 2 - Complete, 3 - Error)
+     - ::
 
-- **Example JSON Response (Successful Upload):**
+         JSON result from hitting status url:
+         {
+            "state": 2,
+            "progress": {"percent": 0},
+            "result": {
+               "match_count": 0,
+               "created_count": 15
+               "num_chunks": 0,
+               "errors": []
+            }
+         }
 
-.. code-block:: json
+         JSON result where upload succeeded but encountered business errors:
+         {
+            "state": 2,
+            "progress": {"percent": 0},
+            "result": {
+               "match_count": 0,
+               "created_count": 0,
+               "num_chunks": 0,
+               "errors": [{
+                  "title": "Invalid Owner Name",
+                  "description": "Owner name was used in the mapping but there were errors when uploading because of these values.",
+                  "column": "owner_name",
+                  "rows": [2, 3, 4]
+               }]
+            }
+         }
 
-    {
-       "state": 2,
-       "progress": {"percent": 0},
-       "result": {
-          "match_count": 0,
-          "created_count": 15,
-          "num_chunks": 0,
-          "errors": []
-       }
-    }
-
-- **Example JSON Response (Business Errors Encountered):**
-
-.. code-block:: json
-
-    {
-       "state":2,
-       "progress": {"percent":0},
-       "result": {
-          "match_count":0,
-          "created_count":0,
-          "num_chunks":0,
-          "errors": [{
-             "title":"Invalid Owner Name",
-             "description":"Owner name was used in the mapping but there were errors when uploading because of these values.",
-             "column":"owner_name",
-             "rows": [2,3,4]
-          }]
-       }
-    }

@@ -166,6 +166,7 @@ In addition to all `Case Data API <https://dimagi.atlassian.net/wiki/spaces/comm
             <closed>false</closed>
             <date_closed>2011-12-20 15:09:47</date_closed>
         </case>
+        ...
     </cases>
 
 **Sample JSON Output**
@@ -179,11 +180,22 @@ In addition to all `Case Data API <https://dimagi.atlassian.net/wiki/spaces/comm
         "date_closed": null,
         "date_modified": "2012-03-13T18:21:52Z",
         "domain": "demo",
+        "indices": {},
         "properties": {
           "case_name": "ryan",
           "case_type": "programmer",
           "date_opened": "2012-03-13T18:21:52Z",
-          "external_id": "45WKYXQRFFU3AT4Y022EX7HF2"
-        }
-      }
+          "external_id": "45WKYXQRFFU3AT4Y022EX7HF2",
+          "gender": "m",
+          "languages": "python java javascript c php erlang love",
+          "owner_id": null,
+          "role": "artisan"
+        },
+        "server_date_modified": "2012-04-05T23:56:41Z",
+        "server_date_opened": "2012-04-05T23:56:41Z",
+        "user_id": "06414101dc45bcfdc963b8cb1a1ebdfd",
+        "version": "1.0",
+        "xform_ids": [ "3HQEXR2S0GIRFY2GF40HAR7ZE" ]
+      },
+      ...
     ]

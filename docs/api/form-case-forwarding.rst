@@ -61,24 +61,24 @@ In addition to the form there will be an extra header 'received-on' that is the 
 
 **Example HTTP Request to your server**
 
-QUERYSTRING
+- **QUERYSTRING**
 
    app_id: db9f874f0219444ee7848ddd023e292e
 
-HEADERS
+- **HEADERS**
 
-   Accept-Encoding: identity
-   Host: requestb.in
-   Total-Route-Time: 0
-   Content-Type: text/xml
-   X-Request-Id: 42863ab1-1dfb-49cb-b0ed-33f924f6cd3b
-   Received-On: 2015-04-17T20:14:34.046462Z
-   Connection: close
-   Content-Length: 1135
-   Via: 1.1 vegur
-   Connect-Time: 5
+   - Accept-Encoding: identity
+   - Host: requestb.in
+   - Total-Route-Time: 0
+   - Content-Type: text/xml
+   - X-Request-Id: 42863ab1-1dfb-49cb-b0ed-33f924f6cd3b
+   - Received-On: 2015-04-17T20:14:34.046462Z
+   - Connection: close
+   - Content-Length: 1135
+   - Via: 1.1 vegur
+   - Connect-Time: 5
 
-**RAW BODY**
+- **RAW BODY**
 
 .. code-block:: xml
 
@@ -124,16 +124,16 @@ In addition to the case there will be an extra header 'server-modified-on' that 
 
 - **HEADERS**
 
-   Server-Modified-On: 2015-04-17T20:14:34.139959Z
-   Host: requestb.in
-   Accept-Encoding: identity
-   Via: 1.1 vegur
-   X-Request-Id: 30926e2a-397a-45e4-83f2-a792c5775c7e
-   Total-Route-Time: 1
-   Content-Length: 324
-   Connection: close
-   Connect-Time: 2
-   Content-Type: text/xml
+   - Server-Modified-On: 2015-04-17T20:14:34.139959Z
+   - Host: requestb.in
+   - Accept-Encoding: identity
+   - Via: 1.1 vegur
+   - X-Request-Id: 30926e2a-397a-45e4-83f2-a792c5775c7e
+   - Total-Route-Time: 1
+   - Content-Length: 324
+   - Connection: close
+   - Connect-Time: 2
+   - Content-Type: text/xml
 
 - **RAW BODY (XML)**
 
@@ -184,16 +184,16 @@ This works especially well in conjunction with our Data APIs; you can get notifi
 
 - **HEADERS**
 
-   Host: requestb.in
-   Accept-Encoding: identity
-   Via: 1.1 vegur
-   Received-On: 2015-04-17T20:14:34.046462Z
-   X-Request-Id: 244433bd-85d8-4444-8cea-a56fcc30d6b2
-   Total-Route-Time: 0
-   Content-Length: 151
-   Connection: close
-   Connect-Time: 2
-   Content-Type: text/xml
+   - Host: requestb.in
+   - Accept-Encoding: identity
+   - Via: 1.1 vegur
+   - Received-On: 2015-04-17T20:14:34.046462Z
+   - X-Request-Id: 244433bd-85d8-4444-8cea-a56fcc30d6b2
+   - Total-Route-Time: 0
+   - Content-Length: 151
+   - Connection: close
+   - Connect-Time: 2
+   - Content-Type: text/xml
 
 - **RAW BODY**
 
@@ -216,15 +216,15 @@ You get notified of the app id whenever an app change is saved and the "build id
 
 - **HEADERS**
 
-   Host: requestb.in
-   Accept-Encoding: identity
-   Via: 1.1 vegur
-   X-Request-Id: 9f211dd8-19d0-49be-980d-3c7f879336a5
-   Total-Route-Time: 0
-   Content-Length: 32
-   Connection: close
-   Connect-Time: 0
-   Content-Type: text/xml
+   - Host: requestb.in
+   - Accept-Encoding: identity
+   - Via: 1.1 vegur
+   - X-Request-Id: 9f211dd8-19d0-49be-980d-3c7f879336a5
+   - Total-Route-Time: 0
+   - Content-Length: 32
+   - Connection: close
+   - Connect-Time: 0
+   - Content-Type: text/xml
 
 - **RAW BODY**
 
