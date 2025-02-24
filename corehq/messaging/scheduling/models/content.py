@@ -166,6 +166,31 @@ class EmailContent(Content):
             logged_subevent.error(MessagingEvent.ERROR_TRIAL_EMAIL_LIMIT_REACHED)
             return
 
+        file_attachments = None
+
+        if domain == "mriese":
+            import io
+
+            ics_string = '''BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//commcare//domain//EN
+BEGIN:VEVENT
+UID:1@commcarehq.org
+DTSTART;TZID=America/Chicago:20250220T200441
+DTEND;TZID=America/Chicago:20250220T210441
+SUMMARY: Event for Today
+LOCATION:
+END:VEVENT
+END:VCALENDAR
+            '''
+
+            ics_bytes = io.BytesIO(ics_string.encode('utf-8'))
+            file_attachments = [{
+                'title': 'event.ics',
+                'mimetype': 'text/calendar',
+                'file_obj': ics_bytes,
+            }]
+
         is_conditional_alert = self.case is not None
         metrics_counter('commcare.messaging.email.sent', tags={'domain': domain})
         if toggles.RICH_TEXT_EMAILS.enabled(domain) and html_message:
@@ -177,7 +202,8 @@ class EmailContent(Content):
                 messaging_event_id=logged_subevent.id,
                 domain=domain,
                 use_domain_gateway=True,
-                is_conditional_alert=is_conditional_alert)
+                is_conditional_alert=is_conditional_alert,
+                file_attachments=file_attachments)
         else:
             send_mail_async.delay(
                 subject,
@@ -186,7 +212,8 @@ class EmailContent(Content):
                 messaging_event_id=logged_subevent.id,
                 domain=domain,
                 use_domain_gateway=True,
-                is_conditional_alert=is_conditional_alert)
+                is_conditional_alert=is_conditional_alert,
+                file_attachments=file_attachments)
 
         email = Email(
             domain=domain,
