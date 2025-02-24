@@ -37,6 +37,7 @@ You can browse and test the Data APIs using the `CommCare API Explorer <https://
     locations
     fixture
     ota-api-restore
+    form-case-forwarding
 
 User APIs
 ~~~~~~~~~
