@@ -88,6 +88,13 @@ def create_dict_batch(entire_dict, batch_size):
     return dict_batches
 
 
+def compile_po_file(po_file_path):
+    po = polib.pofile(po_file_path)
+    mo_file_path = po_file_path.replace('.po', '.mo')
+    po.save_as_mofile(mo_file_path)
+    print(f"Compiled MO file saved at: {mo_file_path}")
+
+
 def run_main(batch_size=10, env='dev', lang='fr'):
     # TODO: Get the list of languages from the settings
     # TODO: add support for plural strings
