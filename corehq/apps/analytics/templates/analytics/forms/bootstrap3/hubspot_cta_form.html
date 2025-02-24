@@ -15,10 +15,12 @@
             {% trans "First name" %}<span class="asteriskField">*</span>
           </label>
           <div class="controls">
-            <input type="text"
-                   name="firstname"
-                   data-bind="textInput: firstname"
-                   class="form-control">
+            <input
+              class="form-control"
+              type="text"
+              name="firstname"
+              data-bind="textInput: firstname"
+            />
           </div>
         </div>
       </div>
@@ -28,10 +30,12 @@
             {% trans "Last name" %}<span class="asteriskField">*</span>
           </label>
           <div class="controls">
-            <input type="text"
-                   name="lastname"
-                   data-bind="textInput: lastname"
-                   class="form-control">
+            <input
+              class="form-control"
+              type="text"
+              name="lastname"
+              data-bind="textInput: lastname"
+            />
           </div>
         </div>
       </div>
@@ -41,10 +45,12 @@
         {% trans "Professional email" %}<span class="asteriskField">*</span>
       </label>
       <div class="controls">
-        <input type="email"
-               name="email"
-               data-bind="textInput: email"
-               class="form-control">
+        <input
+          type="email"
+          name="email"
+          data-bind="textInput: email"
+          class="form-control"
+        />
       </div>
     </div>
     <div class="row">
@@ -54,10 +60,12 @@
             {% trans "Organization" %}<span class="asteriskField">*</span>
           </label>
           <div class="controls">
-            <input type="text"
-                  name="company"
-                  data-bind="textInput: company"
-                  class="form-control">
+            <input
+              class="form-control"
+              type="text"
+              name="company"
+              data-bind="textInput: company"
+            />
           </div>
         </div>
       </div>
@@ -67,10 +75,12 @@
             {% trans "Job title" %}<span class="asteriskField">*</span>
           </label>
           <div class="controls">
-            <input type="text"
-                  name="company"
-                  data-bind="textInput: jobtitle"
-                  class="form-control">
+            <input
+              class="form-control"
+              type="text"
+              name="jobtitle"
+              data-bind="textInput: jobtitle"
+            />
           </div>
         </div>
       </div>
@@ -80,9 +90,11 @@
         {% trans "Preferred language" %}<span class="asteriskField">*</span>
       </label>
       <div class="controls">
-        <select name="language"
-                data-bind="value: language"
-                class="form-control">
+        <select
+          class="form-control"
+          name="language"
+          data-bind="value: language"
+        >
           <option value="">{% trans "Please Select" %}</option>
           <option value="English">{% trans "English" %}</option>
           <option value="French">{% trans "French" %}</option>
@@ -94,9 +106,11 @@
       <label class="control-label">
         {% trans "How did you hear about us?" %}
       </label>
-      <select name="discoverySource"
-              data-bind="value: discoverySource"
-              class="form-control">
+      <select
+        class="form-control"
+        name="discoverySource"
+        data-bind="value: discoverySource"
+      >
         <option value="">{% trans "Please Select" %}</option>
         <option value="Newsletter">{% trans "Newsletter" %}</option>
         <option value="Podcast">{% trans "Podcast" %}</option>
@@ -112,10 +126,12 @@
         {% trans "We'd love to hear more! Please specify -" %}
       </label>
       <div class="controls">
-        <input type="text"
-               name="otherSource"
-               data-bind="textInput: otherSource"
-               class="form-control">
+        <input
+          class="form-control"
+          type="text"
+          name="otherSource"
+          data-bind="textInput: otherSource"
+        />
       </div>
     </div>
     {% blocktrans %}
@@ -125,9 +141,11 @@
     {% endblocktrans %}
   </div>
   <div class="modal-footer">
-    <button class="btn btn btn-primary"
-            data-bind="click: submitForm, disable: isSubmitDisabled"
-            type="button">
+    <button
+      class="btn btn btn-primary"
+      type="button"
+      data-bind="click: submitForm, disable: isSubmitDisabled"
+    >
       <!-- ko text: nextButtonText --><!-- /ko -->
     </button>
   </div>
