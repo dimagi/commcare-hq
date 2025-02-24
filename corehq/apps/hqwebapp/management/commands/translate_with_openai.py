@@ -1,3 +1,4 @@
+from time import sleep
 import polib
 import os
 import hashlib
@@ -5,6 +6,7 @@ from openai import OpenAI
 import json
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
+import gevent
 
 
 def get_hash(msg):
@@ -79,9 +81,11 @@ def translate_batch(client, batch, lang, model):
 
 def create_dict_batch(entire_dict, batch_size):
     dict_keys = list(entire_dict.keys())
+    dict_batches = []
     for i in range(0, len(dict_keys), batch_size):
         batch_keys = dict_keys[i:i + batch_size]
-        yield [{key: entire_dict[key].msgid} for key in batch_keys]
+        dict_batches.append([{key: entire_dict[key].msgid} for key in batch_keys])
+    return dict_batches
 
 
 def run_main(batch_size=10, env='dev', lang='fr'):
@@ -103,19 +107,31 @@ def run_main(batch_size=10, env='dev', lang='fr'):
         model = 'gpt-4o-mini'
         client = OpenAI(**params)
 
-        for po_file in [po_file_path, pojs_file_path]:
-            all_translations = polib.pofile(po_file)
-            untranslated_entries = _filter_untranslated_objects(all_translations)
-            translations_to_process = len(untranslated_entries)
-            translation_map = build_translation_obj_map(untranslated_entries)
+    for po_file in [po_file_path, pojs_file_path]:
+        print(f"Translating {po_file}")
+        all_translations = polib.pofile(po_file)
+        untranslated_entries = _filter_untranslated_objects(all_translations)
+        translations_to_process = len(untranslated_entries)
+        translation_map = build_translation_obj_map(untranslated_entries)
 
-            print(f"Total translations {translations_to_process} ")
-            translated = 0
-            for batch in create_dict_batch(translation_map, batch_size):
-                translated_strings = translate_batch(client, batch, lang, model)
-                translated += len(translated_strings)
-                add_translations_to_file(translated_strings, translation_map, all_translations)
-                print(f"added {translated} strings | remaining {translations_to_process-translated}")
+        print(f"Total translations {translations_to_process} ")
+        dict_batches = create_dict_batch(translation_map, batch_size)
+        translated_strings = dict()
+        translation_calls = []
+        iteration = 0
+        for batch in dict_batches:
+            iteration += 1
+            sleep(2)
+            translation_calls.append(
+                gevent.spawn(translate_batch, client, batch, lang, model)
+            )
+        gevent.joinall(translation_calls)
+        results = [call.value for call in translation_calls]
+        for result in results:
+            translated_strings = translated_strings | result
+        add_translations_to_file(translated_strings, translation_map, all_translations)
+        # Add logic to compile the po file
+        compile_po_file(po_file)
 
 
 class Command(BaseCommand):
