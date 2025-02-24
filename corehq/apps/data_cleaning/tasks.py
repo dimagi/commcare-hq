@@ -5,6 +5,7 @@ from corehq.apps.data_cleaning.models import (
     BulkEditSession,
 )
 from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
+from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
 from corehq.apps.users.util import username_to_user_id
 from corehq.form_processor.models import CommCareCase
 
@@ -40,6 +41,8 @@ def _create_case_blocks(session, records):
 
 
 def _submit_case_blocks(session, blocks):
+    rate_limit_submission(session.domain, delay_rather_than_reject=True)
+
     return submit_case_blocks(
         [block.as_text() for block in blocks],
         session.domain,
