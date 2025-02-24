@@ -38,10 +38,15 @@ def build_translation_obj_map(translations):
 
 
 def add_translations_to_file(translated_strings, translation_map, all_translations):
-    for entry in translated_strings:
-        key, translated_str = entry
-        po_translation_obj = translation_map[key]
-        po_translation_obj.msgstr = translated_str
+    for key, translated_str in translated_strings.items():
+        po_translation_obj = translation_map.get(key, None)
+        if po_translation_obj:
+            po_translation_obj.msgstr = translated_str
+        else:
+            # In few cases, the LLMs return a hash that is slightly different from the original hash
+            # In this case, we will just skip the translation.
+            # We will try to re-run the script again to get around with this issue.
+            print(f"Translation object not found for key: {key} | {translated_str}")
     all_translations.save()
 
 
@@ -98,7 +103,6 @@ def compile_po_file(po_file_path):
 def run_main(batch_size=10, env='dev', lang='fr'):
     # TODO: Get the list of languages from the settings
     # TODO: add support for plural strings
-    # TODO: Run translation in parallel
     # TODO: integrate it into the build process
     # TODO: Add verification model
     locale_path = os.path.join(settings.BASE_DIR, 'locale')
