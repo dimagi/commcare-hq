@@ -44,38 +44,17 @@ def add_translations_to_file(translated_strings, translation_map, all_translatio
 
 
 def translate_batch(client, batch, lang, model):
+    print(f"Translating batch of {len(batch)} strings")
+    # Simplified system prompt
     system_prompt = (
-        f"You are a professional translator. Translate the following texts to {lang}."
-        """Maintain the exact same structure and formatting. Do not translate any placeholders enclosed in
-        curly braces(e.g. {example}), Python %-style formatting strings (e.g. %(name)s), HTML tags, or URLs.
-        If the original text starts with a newline,
-        ensure the translated text also starts with an escaped newline(i.e. "\\n").
-        Similarly, if the original text ends with a newline, ensure the translation ends with an escaped newline.
-
-        You will be provided a JSON array of objects,
-        where each object contains a single key-value pair with a unique hash and its corresponding message.
-        For example:
-        [
-            {"hash_1": "message 1"},
-            {"hash_2": "message 2"}
-        ]
-
-        Translate each message and return your result strictly as valid JSON with the following format:
-
-        [
-            ["hash_1", "translated message 1"],
-            ["hash_2", "translated message 2"]
-        ]
-
-        Important:
-
-        Use double quotes for all JSON keys and string values.
-        Ensure that any double quotes within the translated messages are properly escaped (e.g. use \\").
-        All newline characters within messages must be escaped as \\n.
-        Do not include any additional text, explanation,
-        or markdown formatting in your output. Return only the JSON.
-    """)
-
+        f"Translate the following texts to {lang}. Keep the structure and formatting. "
+        "Do not translate placeholders in curly braces, Python %-style strings, HTML tags, or URLs. "
+        "Ensure translated text maintains leading/trailing newlines. "
+        "Input: JSON array of objects with unique hash and message. "
+        "Response: JSON object on the following format: "
+        "{\"hash\":\"translated_message\", \"hash\":\"translated_message\", ...}"
+        "Use double quotes and escape newlines."
+    )
     batch_str = json.dumps(batch)
     completion = client.chat.completions.create(
         model=model,
@@ -84,8 +63,18 @@ def translate_batch(client, batch, lang, model):
             {"role": "user", "content": batch_str}
         ],
         temperature=0.2,
+        response_format={
+            "type": "json_object",
+        },
     )
-    return json.loads(completion.choices[0].message.content)
+    try:
+        return json.loads(completion.choices[0].message.content)
+    except Exception as e:
+        # Fine to skip the batch if the LLM does not return a valid JSON
+        # We will try to re-run the script again to get around with this issue.
+        print(f"Error translating batch: {e}")
+        print(completion.choices[0].message.content)
+        return {}
 
 
 def create_dict_batch(entire_dict, batch_size):
