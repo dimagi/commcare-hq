@@ -196,6 +196,8 @@ class KycUser:
                 case_properties=update,
                 device_id=device_id or f'{__name__}.update_status',
             )
+            if isinstance(self.user_obj, CommCareCase):
+                self.user_obj.refresh_from_db()
         self.clear_user_data_cache()
 
     def clear_user_data_cache(self):
