@@ -182,14 +182,14 @@ class TestExperimentEnabled(TestCase):
 
 
 @fixture
-def temporary_random_seed():
+def random_seed():
     state = random.getstate()
     random.seed(0)
     yield
     random.setstate(state)
 
 
-@temporary_random_seed
+@random_seed
 class TestIsEnabled(TestCase):
 
     @enabled(0)
