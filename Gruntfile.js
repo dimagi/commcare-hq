@@ -1,5 +1,4 @@
 /* globals module, process, require */
-'use strict';
 module.exports = function (grunt) {
     var headless = require('mocha-headless-chrome'),
         _ = require('lodash'),
@@ -38,6 +37,7 @@ module.exports = function (grunt) {
         'cloudcare/form_entry',
         'hqwebapp/bootstrap3',
         'hqwebapp/bootstrap5',
+        'hqwebapp/components',
         'case_importer',
     ];
 
@@ -91,7 +91,7 @@ module.exports = function (grunt) {
                         error && grunt.log.write(error));
                 }
                 fs.writeFile(filePath, JSON.stringify(data.coverage), { flag: 'w+' }, error =>
-                    error && grunt.log.write(error)
+                    error && grunt.log.write(error),
                 );
             }
             finishedTests.push(currentApp);
@@ -99,7 +99,7 @@ module.exports = function (grunt) {
                 _.without(queuedTests, currentApp),
                 taskPromise,
                 finishedTests,
-                failures
+                failures,
             );
         });
     };
@@ -134,7 +134,7 @@ module.exports = function (grunt) {
             var testStatement = "Running tests: " + paths.join(', ');
             grunt.log.writeln(testStatement.bold.green);
             runTest(paths, this.async());
-        }
+        },
     );
 
     grunt.registerTask('list', 'Lists all available apps to test', function () {
