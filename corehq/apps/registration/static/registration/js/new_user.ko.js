@@ -230,6 +230,10 @@ hqDefine('registration/js/new_user.ko', [
         self.isPersonaChoiceOtherNeeded = ko.computed(function () {
             return self.eulaConfirmed() && self.isPersonaChoiceOther() && !self.personaOther();
         });
+        self.isPersonaChoiceProfessional = ko.computed(function () {
+            return self.isPersonaChoiceChosen()
+                && !(self.isPersonaChoiceOther() || self.personaChoice() === 'Personal');
+        });
         self.isPersonaValid = ko.computed(function () {
             if (!self.hasPersonaFields) {
                 return true;

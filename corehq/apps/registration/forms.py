@@ -52,6 +52,7 @@ class RegisterWebUserForm(forms.Form):
             ("Improve Delivery", _("Improve delivery of services")),
             ("Research", _("Collect data for a research project")),
             ("IT", _("Build a technology solution for my team/clients")),
+            ("Personal", _("Explore data collection for personal use")),
             ("Other", _("Other")),
         )
     )
