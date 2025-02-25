@@ -1,4 +1,3 @@
-"use strict";
 hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
 
     $(function () {
@@ -22,7 +21,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
             var self = {};
             self.title = gettext("Save Questions to Case Properties");
 
-            self.trackGoogleEvent = function() {
+            self.trackGoogleEvent = function () {
                 hqImport('analytix/js/google').track.event(...arguments);
             };
 
