@@ -59,20 +59,62 @@ def generate_ics(request):
     dtend = (now + datetime.timedelta(hours=1)).strftime('%Y%m%dT%H%M%S')
 
     ics_content = f"""
-BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Your Organisation//Example Project//EN
-BEGIN:VEVENT
-UID:1
-DTSTART:{dtstart}
-DTEND:{dtend}
-SUMMARY: Event for Today
-LOCATION:
-END:VEVENT
-END:VCALENDAR
-"""
+        BEGIN:VCALENDAR
+        VERSION:2.0
+        PRODID:-//Your Organisation//Example Project//EN
+        BEGIN:VEVENT
+        UID:1
+        DTSTART:{dtstart}
+        DTEND:{dtend}
+        SUMMARY: Event for Today
+        LOCATION:
+        END:VEVENT
+        END:VCALENDAR
+        """
 
     response = HttpResponse(ics_content, content_type='text/calendar')
     response['Content-Disposition'] = 'attachment; filename=event.ics'
 
     return response
+
+
+def email_ics(request):
+    import io
+    from corehq.apps.hqwebapp.tasks import send_html_email_async
+
+    now = datetime.datetime.now()
+    dtstart = now.strftime('%Y%m%dT%H%M%S')
+    dtend = (now + datetime.timedelta(hours=1)).strftime('%Y%m%dT%H%M%S')
+    event_summary = "Test event summary"
+    event_description = "Test event description"
+
+    ics_string = f'''BEGIN:VCALENDAR
+        VERSION:2.0
+        PRODID:-//commcare//domain//EN
+        BEGIN:VEVENT
+        SUMMARY:{event_summary}
+        DESCRIPTION:{event_description}
+        DTSTART;TZID=America/Chicago:{dtstart}
+        DTEND;TZID=America/Chicago:{dtend}
+        SUMMARY: Event for Today
+        LOCATION:
+        END:VEVENT
+        END:VCALENDAR'''
+
+    ics_bytes = io.BytesIO(ics_string.encode('utf-8'))
+    file_attachments = [{
+        'title': 'event.ics',
+        'mimetype': 'text/calendar',
+        'file_obj': ics_bytes,
+    }]
+
+    send_html_email_async.delay(
+        subject="Test email for receiving ICS",
+        recipient=[request.user.username],
+        html_content="This is a test to ensure the attached ICS triggers an 'Add to Calendar' type prompt.",
+        # messaging_event_id=logged_subevent.id
+        domain="SAMPLE DOMAIN",
+        use_domain_gateway=True,
+        file_attachments=file_attachments)
+
+    return HttpResponse()
