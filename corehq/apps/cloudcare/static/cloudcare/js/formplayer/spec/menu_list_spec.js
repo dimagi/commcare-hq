@@ -34,6 +34,7 @@ hqDefine("cloudcare/js/formplayer/spec/menu_list_spec", [
                     SPLIT_SCREEN_CASE_SEARCH: false,
                     DYNAMICALLY_UPDATE_SEARCH_RESULTS: false,
                     USE_PROMINENT_PROGRESS_BAR: false,
+                    ACTIVATE_DATADOG_APM_TRACES: false,
                 },
             );
             sinon.stub(Utils, 'getCurrentQueryInputs').callsFake(function () { return {}; });
