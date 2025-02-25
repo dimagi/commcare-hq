@@ -77,6 +77,15 @@ hqDefine("app_manager/js/forms/form_view", function () {
     }
 
     $(function () {
+        // Form name
+        $(document).on("inline-edit-save", function (e, data) {
+            if (_.has(data.update, '.variable-form_name')) {
+                var appManager = hqImport('app_manager/js/app_manager');
+                appManager.updatePageTitle(data.update['.variable-form_name']);
+                appManager.updateDOM(data.update);
+            }
+        });
+
         // Validation for build
         var setupValidation = hqImport('app_manager/js/app_manager').setupValidation;
         setupValidation(initialPageData.reverse("validate_form_for_build"));

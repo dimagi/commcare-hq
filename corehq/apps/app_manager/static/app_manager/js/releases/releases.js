@@ -6,6 +6,7 @@ hqDefine("app_manager/js/releases/releases", [
     "analytix/js/kissmetrix",
     "app_manager/js/download_async_modal",
     "hqwebapp/js/initial_page_data",
+    "app_manager/js/app_manager",
     "app_manager/js/menu",
 ], function (
     $,
@@ -15,6 +16,7 @@ hqDefine("app_manager/js/releases/releases", [
     kissmetrix,
     downloadAsyncModal,
     initialPageData,
+    appManager,
     menu,
 ) {
     function savedAppModel(appData, releasesMain) {
@@ -44,6 +46,9 @@ hqDefine("app_manager/js/releases/releases", [
         });
         self.app_code = ko.observable(null);
         self.failed_url_generation = ko.observable(false);
+        self.allowOfflineInstall = ko.observable(function () {
+            return appManager.versionGE(self.build_spec.version(), '2.13.0');
+        });
         self.build_profile = ko.observable('');
 
         self.base_url = function () {

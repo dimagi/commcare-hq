@@ -89,12 +89,6 @@ def update_linked_app_and_notify_task(domain, app_id, master_app_id, user_id, em
     update_linked_app_and_notify(domain, app_id, master_app_id, user_id, email)
 
 
-@task
-def load_appcues_template_app(domain, username, app_slug):
-    from corehq.apps.app_manager.views.apps import load_app_from_slug
-    load_app_from_slug(domain, username, app_slug)
-
-
 @task(queue='background_queue', ignore_result=True)
 def analyse_new_app_build(domain, new_build_id):
     new_build = get_app(domain, new_build_id)

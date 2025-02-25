@@ -169,7 +169,6 @@ class TestInlineEditTransFilter(SimpleTestCase):
         langs=['en'],
         url='test-url',
         saveValueName='saveValue',
-        postSave='postSave',
         containerClass='containerClass',
         iconClass='iconClass',
         readOnlyClass='readOnlyClass',
@@ -180,7 +179,6 @@ class TestInlineEditTransFilter(SimpleTestCase):
             langs,
             url,
             saveValueName,
-            postSave,
             containerClass,
             iconClass,
             readOnlyClass,
@@ -213,7 +211,6 @@ class TestInlineEditTransFilter(SimpleTestCase):
             langs=['en'],
             url='test-url',
             saveValueName='saveValue',
-            postSave='postSave',
             containerClass='containerClass',
             iconClass='iconClass',
             readOnlyClass='readOnlyClass',
@@ -227,7 +224,6 @@ class TestInlineEditTransFilter(SimpleTestCase):
         self.assertEqual(params['containerClass'], "'containerClass'")
         self.assertEqual(params['iconClass'], "'iconClass'")
         self.assertEqual(params['readOnlyClass'], "'readOnlyClass'")
-        self.assertEqual(params['postSave'], 'postSave')
         self.assertEqual(params['disallow_edit'], 'false')
 
     def test_primary_language(self):

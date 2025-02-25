@@ -142,6 +142,9 @@ hqDefine("app_manager/js/details/column", function () {
             self.field = uiElementInput.new(self.original.field);
         }
         self.field.setIcon(icon);
+        self.getFieldHtml = function (value) {
+            return hqImport('app_manager/js/details/utils').getFieldHtml(value);
+        };
 
         // Make it possible to observe changes to self.field
         // note self observableVal is read only!
@@ -201,6 +204,7 @@ hqDefine("app_manager/js/details/column", function () {
 
         self.saveAttempted = ko.observable(false);
         self.useXpathExpression = self.original.useXpathExpression;
+        self.warningText = hqImport('app_manager/js/details/utils').fieldFormatWarningMessage;
         self.showWarning = ko.computed(function () {
             if (self.useXpathExpression) {
                 return false;

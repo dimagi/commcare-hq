@@ -3,6 +3,15 @@ hqDefine("app_manager/js/app_view", function () {
     $(function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
+        // App name
+        $(document).on("inline-edit-save", function (e, data) {
+            if (_.has(data.update, '.variable-app_name')) {
+                var appManager = hqImport('app_manager/js/app_manager');
+                appManager.updatePageTitle(data.update['.variable-app_name']);
+                appManager.updateDOM(data.update);
+            }
+        });
+
         // Settings
         var $settingsContainer = $('#commcare-settings');
         if ($settingsContainer.length) {

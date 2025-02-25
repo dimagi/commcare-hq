@@ -72,7 +72,6 @@ hqDefine('hqwebapp/js/components/inline_edit', [
             self.saveValueName = params.saveValueName || 'value';
             self.hasError = ko.observable(false);
             self.isSaving = ko.observable(false);
-            self.postSave = params.postSave;
 
             // On edit, set editing mode, which controls visibility of inner components
             self.edit = function () {
@@ -118,9 +117,13 @@ hqDefine('hqwebapp/js/components/inline_edit', [
                             self.isSaving(false);
                             self.hasError(false);
                             self.serverValue = self.readOnlyValue;
-                            if (self.postSave) {
-                                self.postSave(data);
-                            }
+
+                            // Allow callers to attach logic that will fire after save.
+                            // This code has access to the knockout object, but not the HTML element.
+                            // Calling code typically has access to the HTML element, but not the knockout object.
+                            // So, use the document as a global message bus, which everyone has access to. Gross.
+                            $(document).trigger("inline-edit-save", data);
+
                             $(window).off("beforeunload", self.beforeUnload);
                         },
                         error: function (response) {
