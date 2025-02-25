@@ -4,6 +4,7 @@ from corehq.project_limits.models import (
     DynamicRateDefinition,
     PillowLagGaugeDefinition,
     RateLimitedTwoFactorLog,
+    SystemLimit,
 )
 
 
@@ -26,4 +27,10 @@ class PillowThrottleDefinitionAdmin(admin.ModelAdmin):
     list_display = ('key', 'wait_for_seconds',
                     'max_value', 'average_value', 'is_enabled')
     list_filter = ('key', 'is_enabled')
+    ordering = ('key',)
+
+
+@admin.register(SystemLimit)
+class SystemLimitAdmin(admin.ModelAdmin):
+    list_display = ('key', 'limit', 'domain')
     ordering = ('key',)

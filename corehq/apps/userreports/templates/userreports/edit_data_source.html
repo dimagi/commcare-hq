@@ -17,7 +17,10 @@
           {% trans "Please note that this datasource is being rebuilt in place." %}
         {% endif %}
       </h4>
-      {% trans "If rebuilt again next rebuild will only start when the previous rebuild(s) finishes." %}
+    </div>
+  {% elif data_source.meta.build.awaiting %}
+    <div class="alert alert-info">
+      {% trans "Please note that this datasource is yet be built / rebuilt by CommCare HQ." %}
     </div>
   {% endif %}
   {% if data_source.get_id %}
@@ -72,8 +75,8 @@
         </div>
       {% endif %}
       <div class="btn-group">
-        {% if data_source.disable_destructive_rebuild %}
-          <div style="margin-right: 15px;">
+        {% if data_source.disable_destructive_rebuild or data_source.rebuild_awaiting_or_in_progress %}
+          <div>
             <button
               id="gtm-rebuild-ds-disabled"
               class="btn btn-default"
@@ -85,13 +88,24 @@
                 {% trans 'Rebuild Data Source' %}
               {% endif %}
             </button>
-            {# janky: can't use a tooltip on a disabled button, so instead add a help icon and force extra space (above) so it's clear which button this is for. Todo: After bootstrap 4 upgrade there is a fix https://getbootstrap.com/docs/4.4/components/tooltips/#disabled-elements #}
-            <span
-              class="hq-help-template"
-              data-title="{% trans_html_attr "Rebuild Unavailable" %}"
-              data-content="{% trans_html_attr "Fully rebuilding has been disabled for this data source. Please use the in place rebuild if necessary." %}"
-              data-placement="left"
-            ></span>
+            {% if data_source.disable_destructive_rebuild %}
+              {# janky: can't use a tooltip on a disabled button, so instead add a help icon and force extra space (above) so it's clear which button this is for. Todo: After bootstrap 4 upgrade there is a fix https://getbootstrap.com/docs/4.4/components/tooltips/#disabled-elements #}
+              <span
+                class="hq-help-template"
+                data-title="{% trans_html_attr "Rebuild Unavailable" %}"
+                data-content="{% trans_html_attr "Fully rebuilding has been disabled for this data source. Please use the in place rebuild if necessary." %}"
+                data-placement="left"
+              >
+              </span>
+            {% elif data_source.rebuild_awaiting_or_in_progress %}
+              <span
+                class="hq-help-template"
+                data-title="{% trans_html_attr "Rebuild Unavailable" %}"
+                data-content="{% trans_html_attr "Rebuilding is not available until CommCare HQ finishes building / rebuilding." %}"
+                data-placement="left"
+              >
+              </span>
+            {% endif %}
           </div>
         {% else %}
           <div>
@@ -139,23 +153,32 @@
           {% if not data_source.is_deactivated %}
             <li>
               <a
-                class="submit-dropdown-form"
+                class="submit-dropdown-form
+                {% if not data_source_rebuild_resumable %}btn disabled{% endif %}"
                 href=""
                 data-action="{% url 'resume_build' domain data_source.get_id %}"
               >
                 {% trans 'Resume Build' %}
               </a>
             </li>
-            <li>
-              <a
-                id="gtm-rebuild-in-place-btn"
-                class="submit-dropdown-form"
-                href=""
-                data-action="{% url 'build_in_place' domain data_source.get_id %}"
-              >
-                {% trans 'Rebuild Table in Place' %}
-              </a>
-            </li>
+            {% if data_source.rebuild_awaiting_or_in_progress %}
+              <li>
+                <a id="gtm-rebuild-in-place-disabled" class="btn disabled">
+                  {% trans 'Rebuild Table in Place' %}
+                </a>
+              </li>
+            {% else %}
+              <li>
+                <a
+                  id="gtm-rebuild-in-place-btn"
+                  class="submit-dropdown-form"
+                  href=""
+                  data-action="{% url 'build_in_place' domain data_source.get_id %}"
+                >
+                  {% trans 'Rebuild Table in Place' %}
+                </a>
+              </li>
+            {% endif %}
           {% endif %}
         </ul>
         <form method="post" class="hide" id="dropdown-form">

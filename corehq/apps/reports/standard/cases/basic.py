@@ -155,6 +155,7 @@ class CaseListReport(CaseListMixin, ProjectReport, ReportDataSource):
 
     name = gettext_lazy('Case List')
     slug = 'case_list'
+    use_bootstrap5 = True
 
     @classmethod
     def get_subpages(cls):
@@ -201,13 +202,20 @@ class CaseListReport(CaseListMixin, ProjectReport, ReportDataSource):
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn(_("Case Type"), prop_name="type.exact"),
-            DataTablesColumn(_("Name"), prop_name="name.exact", css_class="case-name-link"),
-            DataTablesColumn(_("Owner"), prop_name="owner_display", sortable=False),
-            DataTablesColumn(_("Created Date"), prop_name="opened_on"),
-            DataTablesColumn(_("Created By"), prop_name="opened_by_display", sortable=False),
-            DataTablesColumn(_("Modified Date"), prop_name="modified_on"),
-            DataTablesColumn(_("Status"), prop_name="get_status_display", sortable=False)
+            DataTablesColumn(_("Case Type"), prop_name="type.exact",
+                             use_bootstrap5=self.use_bootstrap5),
+            DataTablesColumn(_("Name"), prop_name="name.exact", css_class="case-name-link",
+                             use_bootstrap5=self.use_bootstrap5),
+            DataTablesColumn(_("Owner"), prop_name="owner_display", sortable=False,
+                             use_bootstrap5=self.use_bootstrap5),
+            DataTablesColumn(_("Created Date"), prop_name="opened_on",
+                             use_bootstrap5=self.use_bootstrap5),
+            DataTablesColumn(_("Created By"), prop_name="opened_by_display", sortable=False,
+                             use_bootstrap5=self.use_bootstrap5),
+            DataTablesColumn(_("Modified Date"), prop_name="modified_on",
+                             use_bootstrap5=self.use_bootstrap5),
+            DataTablesColumn(_("Status"), prop_name="get_status_display", sortable=False,
+                             use_bootstrap5=self.use_bootstrap5)
         )
         headers.custom_sort = [[5, 'desc']]
         return headers

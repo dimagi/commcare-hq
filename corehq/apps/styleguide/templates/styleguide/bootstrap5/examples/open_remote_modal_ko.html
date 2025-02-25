@@ -1,4 +1,4 @@
-<div id="ko-demo-open-remote-modal">
+<div id="js-ko-demo-open-remote-modal">
   <button type="button"
           class="btn btn-primary"
           data-bind="openRemoteModal: remoteUrl">
@@ -8,7 +8,7 @@
 
 <script>
   $(function () {
-      $("#ko-demo-open-remote-modal").koApplyBindings(function () {
+      $("#js-ko-demo-open-remote-modal").koApplyBindings(function () {
           let initialPageData = hqImport("hqwebapp/js/initial_page_data");
           return {
               remoteUrl: ko.observable(initialPageData.reverse("styleguide_data_remote_modal") + "?testParam=Okaaaaay"),
