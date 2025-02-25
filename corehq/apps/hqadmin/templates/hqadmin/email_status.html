@@ -1,17 +1,27 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load i18n %}
 
 {% block page_content %}
   <p>{% trans "Check the status of an email" %}</p>
-  <form class="form-inline" method="GET" action="">
-    <input
-      name="q"
-      type="text"
-      class="form-control"
-      placeholder="you@example.com"
-    />
-    <input class="btn btn-primary" type="submit" />
-  </form>
+  <div class="">
+    <form method="GET" action="">
+      <div class="row">
+        <div class="col-sm-4">
+          <input
+            name="q"
+            type="text"
+            class="form-control"
+            placeholder="you@example.com"
+          />
+        </div>
+        <div class="col-sm-4">
+          <button class="btn btn-primary" type="submit">
+            {% trans "Check Status" %}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
   {% if statuses %}
     <hr />
     <h1>{% blocktrans %}Email status for {{ email }}{% endblocktrans %}</h1>

@@ -35,6 +35,7 @@ from two_factor.utils import default_device
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.hqadmin.utils import unset_password
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from couchexport.models import Format
 from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.django.email import send_HTML_email
@@ -724,6 +725,7 @@ class OffboardingUserList(UserAdministration):
         return self.get(request, *args, **kwargs)
 
 
+@use_bootstrap5
 @require_superuser
 def email_status(request):
     template = "hqadmin/email_status.html"
