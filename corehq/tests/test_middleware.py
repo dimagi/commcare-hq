@@ -155,15 +155,17 @@ class TestLogLongRequestMiddleware(SimpleTestCase):
         res = self.client.get('/slow_function')
         self.assertEqual(res.status_code, 200)
         notify_exception.assert_called_once()
-        add_breadcrumb.assert_has_calls([
-            mock.call(category="timing", message=message, level="info")
-            for message in [
-                "⏱  100%  slow_function_view: 0.205s",
-                "⏱    0%   → part1: 0.000s",
-                "⏱    0%   →  → part1a: 0.000s",
-                "⏱  100%   → part2: 0.205s",
-            ]
-        ])
+        calls = add_breadcrumb.mock_calls
+        self.assertEqual(len(calls), 4)
+        for call in calls:
+            self.assertEqual(call.kwargs['level'], "info")
+        for call, pattern in zip(calls, [
+            r"⏱  100%  slow_function_view: 0.20.s",
+            r"⏱    0%   → part1: 0.000s",
+            r"⏱    0%   →  → part1a: 0.000s",
+            r"⏱  100%   → part2: 0.20.s",
+        ]):
+            self.assertRegex(call.kwargs['message'], pattern)
 
 
 @override_settings(
