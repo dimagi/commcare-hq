@@ -69,7 +69,7 @@ class Experiment:
                 return old_result
 
             new_time = end - mid
-            diff_pct = (new_time / old_time * 100) if old_time else over_the_top
+            diff_pct = (new_time / old_time * 100) if old_time else (self.percent_buckets[-1] + 1)
             tags = {"notify": "none"}
             try:
                 self._compare(
@@ -85,7 +85,6 @@ class Experiment:
             return old_result
 
         self._warn_on_duplicate()
-        over_the_top = self.percent_buckets[-1] + 1
         wrapper.experiment = self
         return wrapper
 
