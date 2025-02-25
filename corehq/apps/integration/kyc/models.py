@@ -1,3 +1,5 @@
+import ast
+
 from datetime import datetime
 from functools import cached_property
 
@@ -160,7 +162,11 @@ class KycUser:
 
     @property
     def kyc_is_verified(self):
-        return self.user_data.get('kyc_is_verified')
+        value = self.user_data.get('kyc_is_verified')
+        if value:
+            # convert to boolean from string
+            value = ast.literal_eval(value)
+        return value
 
     @property
     def kyc_provider(self):
@@ -168,10 +174,12 @@ class KycUser:
 
     def update_verification_status(self, status, device_id=None):
         from corehq.apps.hqcase.utils import update_case
+
+        assert status in [True, False]
         update = {
             'kyc_provider': self.kyc_config.provider,
             'kyc_last_verified_at': datetime.utcnow().isoformat(),  # TODO: UTC or project timezone?
-            'kyc_is_verified': status,
+            'kyc_is_verified': str(status),
         }
         if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
             user_data_obj = self.user_obj.get_user_data(self.kyc_config.domain)
