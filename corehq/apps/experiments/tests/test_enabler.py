@@ -225,10 +225,12 @@ class TestIsEnabled(TestCase):
             return {}
 
         calls = 0
+        # HACK deep/obscure reach to patch the cached value of _get_enablers
+        # quickcache could make this easier
         with patch.object(_get_enablers.__closure__[0].cell_contents, "fn", fn):
             for x in range(300):
                 is_enabled('test', FUNC_PATH)
-        assert calls == 1
+        assert calls == 1, "patch failed: fn was not called"
 
     @enabled(0, path=PARENT_PATH)
     def test_parent_package_is_disabled(self):
