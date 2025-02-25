@@ -168,12 +168,18 @@ class FilterMatchType:
         (IS_NOT_ALL, IS_NOT_ALL),
     )
 
+    # choices valid for all data types
+    ALL_DATA_TYPES_CHOICES = (
+        (IS_EMPTY, gettext_lazy("is empty")),
+        (IS_NOT_EMPTY, gettext_lazy("is not empty")),
+        (IS_MISSING, gettext_lazy("is missing")),
+        (IS_NOT_MISSING, gettext_lazy("is not missing")),
+    )
+
     TEXT_CHOICES = (
         (EXACT, gettext_lazy("is exactly")),
         (IS_NOT, gettext_lazy("is not")),
         (STARTS, gettext_lazy("starts with")),
-        (IS_EMPTY, gettext_lazy("is empty")),
-        (IS_NOT_EMPTY, gettext_lazy("is not empty")),
         (STARTS_NOT, gettext_lazy("does not start with")),
         (FUZZY, gettext_lazy("is like")),
         (FUZZY_NOT, gettext_lazy("is not like")),
