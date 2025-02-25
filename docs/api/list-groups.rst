@@ -14,7 +14,7 @@ Overview
     https://www.commcarehq.org/a/[domain]/api/[version]/group/
 
 **Authentication**
-    For more information, please review Authentication.
+    For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
 
 Request & Response Details
 ---------------------------
@@ -74,6 +74,7 @@ Request & Response Details
           "path": [],
           "reporting": true,
           "users": ["91da6b1c78699adfb8679b741caf9f00", "8a642f722c9e617eeed29290e409fcd5"]
-        }
+        },
+        "..."
       ]
     }

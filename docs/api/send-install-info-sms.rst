@@ -1,13 +1,17 @@
 Send CommCare Install Info over SMS
 ===================================
 
+.. note::
+
+   This feature is only available on **CommCare version 2.44.4 and below**.
+   It is **not supported** in the current CommCare version available in the Play Store.
+
+
 Overview
 --------
 **Purpose**
     Use this API to facilitate the reinstallation of CommCare on the phones of already-registered users. All recipients should be on an Android phone. The users will receive two SMS messages: one with a link to the Google Play store to download and install CommCare, and another with the CommCare app install information used internally by CommCare.
 
-**Availability**
-    This feature is only available on CommCare version 2.44.4 and below. It is not supported in the current CommCare version available in the Play Store.
 
 **Project Prerequisites**
     - Your project must have a PRO plan or higher to use this feature.
@@ -32,7 +36,7 @@ Endpoint Specifications
 
 
 **Available since**
-    Version - v0.5
+    Version - ``v0.5``
 
 Request & Response Details
 --------------------------

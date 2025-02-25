@@ -14,14 +14,14 @@ Overview
     https://www.commcarehq.org/a/[domain]/api/v0.5/case/
 
 **Authentication**
-    For more information, please review `this <https://dimagi.atlassian.net/wiki/x/LwXKfw>`_.
+    For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
 
 Request & Response Details
 --------------------------
 
 **Input Parameters**
 
-In addition to all `Case Data API <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143957360>`_. parameters, you may use the following input parameters to filter results and control paging:
+In addition to all `Case Data API <case-data.rst>`_ parameters, you may use the following input parameters to filter results and control paging:
 
 .. list-table::
    :header-rows: 1

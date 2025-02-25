@@ -14,9 +14,9 @@ List Locations
 
     GET https://www.commcarehq.org/a/[domain]/api/[version]/location/
 
-**Input Parameters**
+**Input Parameters (v0.5)**
 
-v0.5 Locations can be filtered by the following attributes as request parameters:
+Locations can be filtered by the following attributes as request parameters:
 
 .. list-table::
    :header-rows: 1
@@ -134,15 +134,15 @@ You can get the details for an individual location using v0.6 as well. See the v
 Create Location (Individual)
 ----------------------------
 
+**Description**
+
+Create an individual location. Available from version v0.6.
+
 **Base URL**
 
 .. code-block:: text
 
     POST https://www.commcarehq.org/a/[domain]/api/[version]/location/
-
-**Description**
-
-Create an individual location. Available from version v0.6.
 
 **Required Fields**
 
@@ -185,15 +185,15 @@ Create an individual location. Available from version v0.6.
 Update Location (Individual)
 ----------------------------
 
+**Description**
+
+Allows editing an individual location. Available from version v0.6.
+
 **Base URL**
 
 .. code-block:: text
 
     PUT https://www.commcarehq.org/a/[domain]/api/[version]/location/[location_id]
-
-**Description**
-
-Allows editing an individual location. Available from version v0.6.
 
 **Editable Fields**
 
@@ -217,7 +217,8 @@ Allows editing an individual location. Available from version v0.6.
    * - ``parent_location_id``
      - The parent must exist, be able to have child locations of this type, and must not already have a child with the same name.
 
-If a part of the location’s update fails due to invalid fields, the update will not occur at all.If you wanted to update the location type and parent for the location, an example request body would be - 
+If a part of the location’s update fails due to invalid fields, the update will not occur at all.
+If you wanted to update the location type and parent for the location, an example request body would be -
 
 **Example Request Body**
 
@@ -232,17 +233,17 @@ If a part of the location’s update fails due to invalid fields, the update wil
 Create and Update Locations (in Bulk)
 -------------------------------------
 
+**Description**
+
+Version v0.6 allows you to create and update locations in bulk. Even though the method is PATCH, you can also create locations as well as update using this method.
+
 **Base URL**
 
 .. code-block:: text
 
     PATCH https://www.commcarehq.org/a/[domain]/api/[version]/location/
 
-**Description**
-
-Version v0.6 allows you to create and update locations in bulk. Even though the method is PATCH, you can also create locations as well as update using this method.
-
-The request body should be a list of locations, with each location as a JSON dictionary (if you are using JSON). The list should be called "objects". Include ``location_id`` in the dictionary if you want to update a location, and don’t include it if you want to create a location.
+The request body should be a list of locations, with each location as a JSON dictionary (if you are using JSON). The list should be called ``objects``. Include ``location_id`` in the dictionary if you want to update a location, and don’t include it if you want to create a location.
 
 When creating a location via this method, the API uses the same validation as the create endpoint. For updating, it uses the same validation as the update endpoint. For updating a location, see the table of allowed fields in the documentation for "Update". For creating, see the table of fields under "Create Location".
 
@@ -280,15 +281,16 @@ Lastly, the PATCH request is atomic. Meaning if validation fails for a single lo
 List Location Types
 -------------------
 
+**Description**
+
+Retrieves a list of location types available in the specified domain.
+
 **Base URL**
 
 .. code-block:: text
 
     GET https://www.commcarehq.org/a/[domain]/api/[version]/location_type/
 
-**Description**
-
-Retrieves a list of location types available in the specified domain.
 
 **Sample JSON Output**
 
@@ -320,15 +322,16 @@ Retrieves a list of location types available in the specified domain.
 Location Type Details
 ---------------------
 
+**Description**
+
+Retrieves details for a specific location type.
+
 **Base URL**
 
 .. code-block:: text
 
     GET https://www.commcarehq.org/a/[domain]/api/[version]/location_type/[id]
 
-**Description**
-
-Retrieves details for a specific location type.
 
 **Sample JSON Output**
 

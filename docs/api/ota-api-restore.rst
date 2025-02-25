@@ -41,9 +41,7 @@ See more details: `User Registration API <https://bitbucket.org/javarosa/javaros
         <!-- this is where all the case blocks go -->
     </OpenRosaResponse>
 
-For more information:
-- `CaseXML Spec <https://github.com/dimagi/commcare-core/wiki/casexml20>`_
-- `Fixtures Spec <https://github.com/dimagi/commcare-core/wiki/fixtures>`_
+To understand the casexml spec, see `CaseXML Spec <https://github.com/dimagi/commcare-core/wiki/casexml20>`_ and to understand the fixtures spec, see `Fixtures Spec <https://github.com/dimagi/commcare-core/wiki/fixtures>`_
 
 When the phone receives the case blocks, for example, it applies them all in order to its internal database, thus reconstructing the case list.
 
@@ -63,4 +61,7 @@ using HTTP basic authentication with the CHW's username and password.
     curl --basic -u jason@DEMO_DOMAIN.commcarehq.org:1988 \
     https://www.commcarehq.org/a/DEMO_DOMAIN/phone/restore/?version=2.0
 
-In this example, we are on domain "DEMO_DOMAIN", our CHW's username is ``jason``, and his password is 1988. You'll note that the username, instead of being just ``jason`` is the much longer ``jason@demo.commcarehq.org``. This is to distinguish him from any other ``jason``s on any other domain. The format for the full-length username is:  ``{username}@{domain}.commcarehq.org``
+In this example, we are on domain "DEMO_DOMAIN", our CHW's username is ``jason``, and his password is 1988.
+You'll note that the username, instead of being just ``jason`` is the much longer ``jason@demo.commcarehq.org``. This is to distinguish him from any other ``jason``'s on any other domain.
+
+The format for the full-length username is:   ``{username}@{domain}.commcarehq.org``

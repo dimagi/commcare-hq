@@ -4,7 +4,7 @@ Download Report Data
 Overview
 --------
 **Purpose**
-    This endpoint will allow you to download the results of running a report on CommCare. To identify the reports available, see `List Reports <https://dimagi.atlassian.net/wiki/x/0yHKfw>`_.
+    This endpoint will allow you to download the results of running a report on CommCare. To identify the reports available, see `List Reports <list-reports.rst>`_ .
 
 **Authentication**
     For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_

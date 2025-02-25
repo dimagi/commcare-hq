@@ -28,15 +28,16 @@ The API response includes an ``objects`` field, which is a list of configuration
 
 - ``name``: The name of the application.
 - ``version``: The application version (build number).
-- ``modules``: A list of modules with:
+- **modules**: A list of modules containing:
 
   - ``case_type``: The case type for the enclosing module.
   - ``case_properties``: A list of all case properties for the case type.
   - ``forms``: A list of all forms in the module.
-     - ``questions``: A schema list for each question in the module.
+
+    - ``questions``: A schema list for each question in the module.
 
 - ``versions``: A list of application versions (builds) created from this application.
-- Other application data, if ``extras`` is set to ``true``.
+- Other application data, if ``extras`` is set to `true`.
 
 **Sample Output (JSON)**
 

@@ -147,7 +147,9 @@ Request & Response Details
 
 (You may also omit the ':' and password, and curl will request it. This will have the benefit of not showing your password on your screen or storing it in your history.)
 
-**Response** JSON output with the following parameters.
+**Response**
+
+JSON output with the following parameters.
 
 .. list-table::
    :header-rows: 1

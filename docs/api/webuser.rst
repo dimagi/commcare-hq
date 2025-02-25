@@ -50,7 +50,7 @@ Request & Response Details
      - The location id of the primary location, it must be one of the assigned locations
      - 26fc44e2792b4f2fa8ef86178f0a958e
    * - assigned_location_ids
-     - A list of location_ids that the web user will be assigned to. Location id can be acquired by Location API.
+     - A list of location_ids that the web user will be assigned to. Location id can be acquired by `Location API <locations.rst>`_.
      - ["26fc44e2792b4f2fa8ef86178f0a958e", "c1b029932ed442a6a846a4ea10e46a78"]
    * - profile
      - Profile to assign to the user
@@ -168,13 +168,13 @@ Request & Response Details
      - The location id of the primary location, it must be one of the assigned locations
      - 26fc44e2792b4f2fa8ef86178f0a958e
    * - assigned_location_ids
-     - A list of location_ids that the web user will be assigned to. Location id can be acquired by Location API.
+     - A list of location_ids that the web user will be assigned to. Location id can be acquired by `Location API <locations.rst>`_.
      - ["26fc44e2792b4f2fa8ef86178f0a958e", "c1b029932ed442a6a846a4ea10e46a78"]
    * - profile
      - Profile to assign to the user
      - Facility User
    * - user_data
-     - Any additional custom data associated with the user (see examples)
+     - Any additional custom data associated with the user
      - (see examples)
    * - tableau_role
      - Tableau Role of the user. Options are: “Explorer”, “ExplorerCanPublish”, “SiteAdministratorExplorer”, “Viewer”, and “Unlicensed”

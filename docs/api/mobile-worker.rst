@@ -32,21 +32,58 @@ Request & Response Details
 
 **Input Parameters** (* indicates required)
 
-- ``username*``: User name of user (e.g., ``jdoe``)
-- ``password*``: User password (e.g., ``qwer1234``)
-- ``first_name``: First name of user (e.g., ``John``)
-- ``last_name``: Last name of user (e.g., ``Doe``)
-- ``email``: Email address of user (e.g., ``john.doe@example.org``)
-- ``phone_numbers``: List of all phone numbers of the user. The first one will be set as the default number.
-- ``groups``: List of all group IDs belonging to the user.
-- ``user_data``: Any additional custom data associated with the user.
-- ``language``: User language (e.g., ``en``)
-- ``primary_location``: The location ID of the primary location; must be one of the assigned locations (e.g., ``26fc44e2792b4f2fa8ef86178f0a958e``)
-- ``locations``: A list of ``location_ids`` that the mobile worker will be assigned to.
+.. list-table::
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Example
+   * - username*
+     - User name of user
+     - jdoe
+   * - password*
+     - User password
+     - qwer1234
+   * - first_name
+     - First name of user
+     - John
+   * - last_name
+     - Last name of user
+     - Doe
+   * - email
+     - Email address of user
+     - john.doe@example.org
+   * - phone_numbers
+     - List of all phone numbers of the user. The first one will be set to the default number
+     - (see examples)
+   * - groups
+     - List of all group ids belonging to the user
+     - (see examples)
+   * - user_data
+     - Any additional custom data associated with the user
+     - (see examples)
+   * - language
+     - User language
+     - en
+   * - primary_location
+     - The location id of the primary location, it must be one of the locations
+     - 26fc44e2792b4f2fa8ef86178f0a958e
+   * - locations
+     - A list of location_ids that the mobile worker will be assigned to. Location id can be acquired by `Location API <locations.rst>`_.
+     - ["26fc44e2792b4f2fa8ef86178f0a958e", "c1b029932ed442a6a846a4ea10e46a78"]
+
 
 **Output Parameters**
 
-- ``user_id``: User UUID (e.g., ``3c5a623af057e23a32ae4000cf291339``)
+.. list-table::
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Example
+   * - ``user_id``
+     - User UUID
+     - ``3c5a623af057e23a32ae4000cf291339``
 
 **Sample Input (JSON Format)**
 
@@ -139,7 +176,7 @@ Request & Response Details
        Note that user data may include system data affecting various features,
        so it is advised to pull the user's current data and edit it, rather than
        completely overwriting user data. To get the user's current data, use the
-       single user URL provided at List Mobile Workers API.
+       single user URL provided at `List Mobile Workers API <list-mobile-workers.rst>`_.
      - {"chw_id": "13/43/DFA"}
    * - language
      - User language
@@ -148,10 +185,10 @@ Request & Response Details
      - New password for user
      - fake-password-123
    * - primary_location
-     - The location ID of the primary location (must be one of the user's locations)
+     - The location id of the primary location, it must be one of the locations. To remove the primary_location, pass an empty string.
      - 26fc44e2792b4f2fa8ef86178f0a958e
    * - locations
-     - List of location IDs assigned to the user (replaces existing locations)
+     - A list of location_ids that the mobile worker will be assigned to. Location id can be acquired by `Location API <locations.rst>`_. To remove all assigned locations, pass an empty array.
      - ["26fc44e2792b4f2fa8ef86178f0a958e", "c1b029932ed442a6a846a4ea10e46a78"]
 
 **Sample Input**

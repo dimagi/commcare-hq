@@ -126,7 +126,7 @@ The "data" node
           xmlns="http://openrosa.org/formdesigner/9baceb4c25a5">
 
 - Change "name" and "version" to something useful to you. They are optional, but "name" can be useful for reporting.
-- Change "xmlns" to something that indicates the origin of the form submission. For this example, 'xmlns="http://example.org/covid19/"' could be appropriate.
+- Change "xmlns" to something that indicates the origin of the form submission. For this example, ``xmlns="http://example.org/covid19/"`` could be appropriate.
 
 The "data/meta" node
 ~~~~~~~~~~~~~~~~~~~~
@@ -150,7 +150,7 @@ This node should always be a direct child of the root node (``data`` in this ins
 - ``timeEnd``: When the user completed the form. Like "timeStart", "now" is a reasonable fallback.
 - ``username``: The name of the user / mobile worker who submitted the form.
 - ``userID``: The ID of the user / mobile worker who submitted the form.
-- ``instanceID``: A unique ID for this form submission. *Creates a new UUID for every form submission.* This ID needs to be universally unique, so you will need to generate a new Version 4 UUID; do not use an auto-incrementing ID. If "instanceID" is not unique, if the ID is owned by your project space then the new form submission will replace the previous form submission, otherwise if it is not owned by your project space, the form submission will be rejected.
+- ``instanceID``: A unique ID for this form submission. *Creates a new UUID for every form submission.* This ID needs to be universally unique, so you will need to generate a new `Version 4 UUID <https://en.wikipedia.org/wiki/Universally_unique_identifier>`_ ; do not use an auto-incrementing ID. If "instanceID" is not unique, if the ID is owned by your project space then the new form submission will replace the previous form submission, otherwise if it is not owned by your project space, the form submission will be rejected.
 - ``appVersion``: If the form belongs to an app, this can offer useful context for its data. You can submit an empty node if it is not relevant.
 
 

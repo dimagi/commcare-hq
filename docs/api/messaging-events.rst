@@ -5,9 +5,7 @@ Overview
 --------
 
 **Purpose**
-    To provide users access to the messaging data.
-
-The data in this API is based on a nested data model:
+    To provide users access to the messaging data. The data in this API is based on a nested data model:
 
 - **Messaging Event**
     - The core data model representing a messaging event linked to a specific recipient and from a specific source (e.g., Conditional Alert).
@@ -30,7 +28,7 @@ For more information, please review `API Authentication <https://dimagi.atlassia
 Filters
 ~~~~~~~
 
-These are the filter parameters that the API call can use. Examples of how to use the filters in an API call appear below.
+These are the filter parameters that the API call can use. Examples of how to use the filters in an API call appear in the `Sample API Calls section <response-section_>`_
 
 .. list-table:: Filter Parameters
    :widths: 15 30 20 30
@@ -45,7 +43,7 @@ These are the filter parameters that the API call can use. Examples of how to us
      -
      - ``limit=100``
    * - cursor
-     - Used for pagination (value provided in API response)
+     - Used for pagination (value provided in API response). See `Pagination <pagination-section_>`_
      -
      -
    * - date.lt (less than)
@@ -112,6 +110,8 @@ These sorting parameters can be applied to the existing search results alongside
    * - order_by=-date_last_activity
      - Order data by ``event.date_last_activity`` (descending)
 
+.. _pagination-section:
+
 Pagination
 ~~~~~~~~~~
 This API makes use of cursor pagination. Each request will include a "meta.next" field which will contain a URL that can be used to fetch the next page of data. This URL includes all the filters that were supplied with the original request and should be used without modification.
@@ -138,6 +138,8 @@ Example:
     {"objects": [{}, {}, {}...], "meta": {"limit": 20, "next": null}}
 
     # "meta.next" is null so there is no more data.
+
+.. _response-section:
 
 Request & Response Details
 ---------------------------

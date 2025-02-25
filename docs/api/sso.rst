@@ -23,4 +23,4 @@ Endpoint Specifications
 
     username=MY_USERNAME&password=MY_PASSWORD
 
-If your credentials are correct, the output will be identical to the List User API or List Web User API, as appropriate.
+If your credentials are correct, the output will be identical to the `List User API <list-mobile-workers.rst>`_ or `List Web User API <list-webusers.rst>`_ , as appropriate.

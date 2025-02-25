@@ -5,7 +5,7 @@ Overview
 --------
 
 **Purpose**
-    This endpoint provides a list of reports built in CommCare. This information can be used in the Download Report Data API to run a specific report and get the results.
+    This endpoint provides a list of reports built in CommCare. This information can be used in the `Download Report Data API <download-report-data.rst>`_  to run a specific report and get the results.
 
 **Base URL**
 
@@ -23,14 +23,21 @@ Request & Response Details
 
 An array of the reports defined in the project. Each entry includes:
 
-- **Columns** A list of columns in the report. Each column has a type:
-  - "field": A single field column.
-  - "expanded": Expands into multiple result columns when downloading report data.
+- **Columns**
 
-- **Filters** The filters that can be used for the report.
-      - The filters can have a datatype that is *"string"*, *"integer"*, or *"decimal"*.
-      - The type of the filter can be *"date"*, *"choice_list"*, or *"dynamic_choice_list"*.
-      - Choice lists contain a set of predefined choices displayed to the user. These can be treated as strings when querying the reports.
+  - A list of columns in the report. Each column has a type:
+
+    - **"field"**: A single field column.
+    - **"expanded"**: Expands into multiple result columns when downloading report data.
+
+- **Filters**
+
+  The filters that can be used for the report.
+
+  - The filters can have a datatype that is *"string"*, *"integer"*, or *"decimal"*.
+  - The type of the filter can be *"date"*, *"choice_list"*, or *"dynamic_choice_list"*.
+
+    - Choice lists contain a set of predefined choices displayed to the user. These can be treated as strings when querying the reports.
 
 **Sample JSON Output**
 

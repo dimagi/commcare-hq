@@ -10,7 +10,7 @@ Overview
 **Authentication**
     For more information, please review  `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
 
-** Base URL**
+**Base URL**
 
 .. code-block:: text
 

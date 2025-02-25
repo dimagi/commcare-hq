@@ -1,14 +1,15 @@
 Enabling Data Integration (Form and Case Forwarding)
 ====================================================
 
-This feature requires a CommCare Software Plan
+.. note::
+    This feature requires a CommCare Software Plan.
 
-This feature is only available to CommCare users with a Pro Plan or above. For more details, please see the `CommCare Pricing Overview <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview>`_.
+    This feature is only available to CommCare users with a Pro Plan or above. For more details, please see the `CommCare Pricing Overview <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview>`_.
 
 Setting up a remote API connection
 ------------------------------------
 
-CommCare HQ manages remote API services and credentials under Project Settings > Connection Settings.
+CommCare HQ manages remote API services and credentials under **Project Settings > Connection Settings**.
 
 .. image:: ../images/set_up_remote_connection.png
 
@@ -21,7 +22,7 @@ CommCare HQ manages remote API services and credentials under Project Settings >
 Setting up Data Forwarding
 --------------------------
 
-You can configure your project to forward any incoming forms and/or cases to a specified URL. To do so, in CommCare HQ navigate to Project Settings and then to Data Forwarding. It will look something like this:
+You can configure your project to forward any incoming forms and/or cases to a specified URL. To do so, in CommCare HQ navigate to **Project Settings** and then to **Data Forwarding**. It will look something like this:
 
 .. image:: ../images/set_up_data_forwarding.png
 
@@ -38,7 +39,7 @@ Whether a record is queued for its first or fourth attempt, it enters the same q
 
 If the record is still not successfully sent after multiple retries, its state is changed to "cancelled."
 
-You can follow the status of the payload by clicking on Responses.
+You can follow the status of the payload by clicking on **Responses**.
 
 .. image:: ../images/payload.png
 
@@ -54,7 +55,7 @@ Forward Form
 
 You get the complete form (one POST per form)
 
-In addition to the form there will be an extra header 'received-on' that is the time the form was received by CommCare HQ.
+In addition to the form there will be an extra header ``received-on`` that is the time the form was received by CommCare HQ.
 
 **Example HTTP Request to your server**
 
@@ -115,7 +116,7 @@ When you turn on case forwarding, every time a case changes on HQ, it will forwa
 
 The URL you set up to deal with the in-coming information can expect to receive one case block at a time, in the format specified below (XML or JSON).
 
-In addition to the case there will be an extra header 'server-modified-on' that is the last time the case was modified in CommCare HQ.
+In addition to the case there will be an extra header ``server-modified-on`` that is the last time the case was modified in CommCare HQ.
 
 **Example HTTP Request to your server**
 
@@ -207,7 +208,7 @@ Forward App Schema Changes
 
 **Description**
 
-You get notified of the app id whenever an app change is saved and the "build id" whenever a new version is built.
+You get notified of the ``app_id`` whenever an app change is saved and the ``build_id`` whenever a new version is built.
 
 **Example HTTP Request to your server**
 

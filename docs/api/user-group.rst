@@ -7,13 +7,13 @@ List Groups
 Endpoint Specifications
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-**URL**
+**Base URL**
 
 .. code-block:: text
 
     https://www.commcarehq.org/a/[domain]/api/[version]/group/
 
-**API Authentication**
+**Authentication**
     All URL endpoints should be utilized as part of a cURL authentication command. For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
 
 Request & Response Details
@@ -53,7 +53,8 @@ Request & Response Details
              "path": [], 
              "reporting": true, 
              "users": ["91da6b1c78699adfb8679b741caf9f00", "8a642f722c9e617eeed29290e409fcd5"]
-         }
+         },
+        "..."
       ]
     }
 

@@ -4,6 +4,11 @@ CommCare APIs
 
 CommCare APIs provide access to various system functionalities, including data retrieval, case and form submissions, and user management. This page describes different APIs available for integration.
 
+.. note::
+    This feature requires a **CommCare Software Plan**
+
+    This feature is only available to CommCare users with a **Standard Plan or above**. For more details, please see the `CommCare Pricing Overview <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview>`_
+
 Table of contents
 -----------------
 
@@ -34,11 +39,12 @@ You can browse and test the Data APIs using the `CommCare API Explorer <https://
     list-webusers
     bulk-user
     list-reports
+    download-report-data
     locations
     fixture
     ota-api-restore
     form-case-forwarding
-    download-report-data
+
 
 User APIs
 ~~~~~~~~~

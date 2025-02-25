@@ -22,6 +22,7 @@ Overview
 **Permissions Required**
     Edit Mobile Workers & Edit Access API's
 
+
 **Authentication and Usage**
     All URL endpoints should be utilized as part of a cURL authentication command. For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
 
