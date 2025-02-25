@@ -3,39 +3,41 @@ import ko from "knockout";
 
 import "jquery-ui/ui/widgets/datepicker";
 import "bootstrap-timepicker/js/bootstrap-timepicker";
+
+import "hqwebapp/js/components/rich_text_knockout_bindings";
 import "hqwebapp/js/components/select_toggle";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import select2Handler from "hqwebapp/js/select2_handler";
 
 ko.bindingHandlers.useTimePicker = {
-    init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+    init: function (element) {
         $(element).timepicker({
             showMeridian: false,
             showSeconds: false,
             defaultTime: $(element).val() || '',
         });
     },
-    update: function (element, valueAccessor, allBindings, viewModel, bindingContext) {},
+    update: function () {},
 };
 
-var MessageViewModel = function (language_code, message) {
+var MessageViewModel = function (languageCode, message) {
     var self = this;
 
-    self.language_code = ko.observable(language_code);
+    self.language_code = ko.observable(languageCode);
     self.message = ko.observable(message);
     self.html_message = ko.observable(message);
 };
 
-var TranslationViewModel = function (language_codes, translations) {
+var TranslationViewModel = function (languageCodes, translations) {
     var self = this;
 
     if (typeof translations === 'string') {
         translations = JSON.parse(translations);
     }
     translations = translations || {};
-    var initial_translate = !($.isEmptyObject(translations) || '*' in translations);
+    var initialTranslate = !($.isEmptyObject(translations) || '*' in translations);
 
-    self.translate = ko.observable(initial_translate);
+    self.translate = ko.observable(initialTranslate);
     self.nonTranslatedMessage = ko.observable(translations['*']);
     self.translatedMessages = ko.observableArray();
 
@@ -79,58 +81,58 @@ var TranslationViewModel = function (language_codes, translations) {
     });
 
     self.loadInitialTranslatedMessages = function () {
-        language_codes.forEach(function (language_code) {
-            self.translatedMessages.push(new MessageViewModel(language_code, translations[language_code]));
+        languageCodes.forEach(function (languageCode) {
+            self.translatedMessages.push(new MessageViewModel(languageCode, translations[languageCode]));
         });
     };
 
     self.loadInitialTranslatedMessages();
 };
 
-var ContentViewModel = function (initial_values) {
+var ContentViewModel = function (initialValues) {
     var self = this;
 
     self.subject = new TranslationViewModel(
         initialPageData.get("language_list"),
-        initial_values.subject,
+        initialValues.subject,
     );
 
     self.message = new TranslationViewModel(
         initialPageData.get("language_list"),
-        initial_values.message,
+        initialValues.message,
     );
     self.html_message = new TranslationViewModel(
         initialPageData.get("language_list"),
-        initial_values.html_message,
+        initialValues.html_message,
     );
 
-    self.survey_reminder_intervals_enabled = ko.observable(initial_values.survey_reminder_intervals_enabled);
-    self.fcm_message_type = ko.observable(initial_values.fcm_message_type);
+    self.survey_reminder_intervals_enabled = ko.observable(initialValues.survey_reminder_intervals_enabled);
+    self.fcm_message_type = ko.observable(initialValues.fcm_message_type);
 
 };
 
-var EventAndContentViewModel = function (initial_values) {
+var EventAndContentViewModel = function (initialValues) {
     var self = this;
-    ContentViewModel.call(self, initial_values);
+    ContentViewModel.call(self, initialValues);
 
-    self.day = ko.observable(initial_values.day);
-    self.time = ko.observable(initial_values.time);
-    self.case_property_name = ko.observable(initial_values.case_property_name);
-    self.minutes_to_wait = ko.observable(initial_values.minutes_to_wait);
-    self.deleted = ko.observable(initial_values.DELETE);
-    self.order = ko.observable(initial_values.ORDER);
+    self.day = ko.observable(initialValues.day);
+    self.time = ko.observable(initialValues.time);
+    self.case_property_name = ko.observable(initialValues.case_property_name);
+    self.minutesToWait = ko.observable(initialValues.minutesToWait);
+    self.deleted = ko.observable(initialValues.DELETE);
+    self.order = ko.observable(initialValues.ORDER);
 
     self.waitTimeDisplay = ko.computed(function () {
-        var minutes_to_wait = parseInt(self.minutes_to_wait());
-        if (minutes_to_wait >= 0) {
-            var hours = Math.floor(minutes_to_wait / 60);
-            var minutes = minutes_to_wait % 60;
-            var hours_text = hours + ' ' + gettext('hour(s)');
-            var minutes_text = minutes + ' ' + gettext('minute(s)');
+        var minutesToWait = parseInt(self.minutesToWait());
+        if (minutesToWait >= 0) {
+            var hours = Math.floor(minutesToWait / 60);
+            var minutes = minutesToWait % 60;
+            var hoursText = hours + ' ' + gettext('hour(s)');
+            var minutesText = minutes + ' ' + gettext('minute(s)');
             if (hours > 0) {
-                return hours_text + ', ' + minutes_text;
+                return hoursText + ', ' + minutesText;
             } else {
-                return minutes_text;
+                return minutesText;
             }
         }
         return '';
@@ -168,67 +170,67 @@ var CustomEventContainer = function (id) {
     });
 };
 
-var CreateScheduleViewModel = function (initial_values, select2_user_recipients,
-    select2_user_group_recipients, select2_user_organization_recipients, select2_location_types,
-    select2_case_group_recipients, current_visit_scheduler_form) {
+var CreateScheduleViewModel = function (initialValues, select2UserRecipients,
+    select2UserGroupRecipients, select2UserOrganizationRecipients, select2LocationTypes,
+    select2CaseGroupRecipients, currentVisitSchedulerForm) {
     var self = this;
 
-    self.useCase = ko.observable(initial_values.use_case);
+    self.useCase = ko.observable(initialValues.use_case);
     self.timestamp = new Date().getTime();
-    self.send_frequency = ko.observable(initial_values.send_frequency);
-    self.weekdays = ko.observableArray(initial_values.weekdays || []);
-    self.days_of_month = ko.observableArray(initial_values.days_of_month || []);
-    self.send_time = ko.observable(initial_values.send_time);
-    self.send_time_type = ko.observable(initial_values.send_time_type);
-    self.start_date = ko.observable(initial_values.start_date);
-    self.start_date_type = ko.observable(initial_values.start_date_type);
-    self.start_offset_type = ko.observable(initial_values.start_offset_type);
-    self.repeat = ko.observable(initial_values.repeat);
-    self.repeat_every = ko.observable(initial_values.repeat_every);
-    self.stop_type = ko.observable(initial_values.stop_type);
-    self.occurrences = ko.observable(initial_values.occurrences);
-    self.recipient_types = ko.observableArray(initial_values.recipient_types || []);
+    self.send_frequency = ko.observable(initialValues.send_frequency);
+    self.weekdays = ko.observableArray(initialValues.weekdays || []);
+    self.days_of_month = ko.observableArray(initialValues.days_of_month || []);
+    self.send_time = ko.observable(initialValues.send_time);
+    self.send_time_type = ko.observable(initialValues.send_time_type);
+    self.start_date = ko.observable(initialValues.start_date);
+    self.start_date_type = ko.observable(initialValues.start_date_type);
+    self.start_offset_type = ko.observable(initialValues.start_offset_type);
+    self.repeat = ko.observable(initialValues.repeat);
+    self.repeat_every = ko.observable(initialValues.repeat_every);
+    self.stop_type = ko.observable(initialValues.stop_type);
+    self.occurrences = ko.observable(initialValues.occurrences);
+    self.recipient_types = ko.observableArray(initialValues.recipient_types || []);
     $('#id_schedule-recipient_types').select2();
 
-    self.user_recipients = new recipientsSelect2Handler(select2_user_recipients,
-        initial_values.user_recipients, 'schedule-user_recipients');
+    self.user_recipients = new recipientsSelect2Handler(select2UserRecipients,
+        initialValues.user_recipients, 'schedule-user_recipients');
     self.user_recipients.init();
 
-    self.user_group_recipients = new recipientsSelect2Handler(select2_user_group_recipients,
-        initial_values.user_group_recipients, 'schedule-user_group_recipients');
+    self.user_group_recipients = new recipientsSelect2Handler(select2UserGroupRecipients,
+        initialValues.user_group_recipients, 'schedule-user_group_recipients');
     self.user_group_recipients.init();
 
-    self.user_organization_recipients = new recipientsSelect2Handler(select2_user_organization_recipients,
-        initial_values.user_organization_recipients, 'schedule-user_organization_recipients');
+    self.user_organization_recipients = new recipientsSelect2Handler(select2UserOrganizationRecipients,
+        initialValues.user_organization_recipients, 'schedule-user_organization_recipients');
     self.user_organization_recipients.init();
 
-    self.include_descendant_locations = ko.observable(initial_values.include_descendant_locations);
-    self.restrict_location_types = ko.observable(initial_values.restrict_location_types);
+    self.include_descendant_locations = ko.observable(initialValues.include_descendant_locations);
+    self.restrict_location_types = ko.observable(initialValues.restrict_location_types);
 
-    self.location_types = new recipientsSelect2Handler(select2_location_types,
-        initial_values.location_types, 'schedule-location_types');
+    self.location_types = new recipientsSelect2Handler(select2LocationTypes,
+        initialValues.location_types, 'schedule-location_types');
     self.location_types.init();
 
-    self.case_group_recipients = new recipientsSelect2Handler(select2_case_group_recipients,
-        initial_values.case_group_recipients, 'schedule-case_group_recipients');
+    self.case_group_recipients = new recipientsSelect2Handler(select2CaseGroupRecipients,
+        initialValues.case_group_recipients, 'schedule-case_group_recipients');
     self.case_group_recipients.init();
 
-    self.reset_case_property_enabled = ko.observable(initial_values.reset_case_property_enabled);
-    self.stop_date_case_property_enabled = ko.observable(initial_values.stop_date_case_property_enabled);
-    self.submit_partially_completed_forms = ko.observable(initial_values.submit_partially_completed_forms);
+    self.reset_case_property_enabled = ko.observable(initialValues.reset_case_property_enabled);
+    self.stop_date_case_property_enabled = ko.observable(initialValues.stop_date_case_property_enabled);
+    self.submit_partially_completed_forms = ko.observable(initialValues.submit_partially_completed_forms);
 
-    self.is_trial_project = initial_values.is_trial_project;
+    self.is_trial_project = initialValues.is_trial_project;
     self.displayed_email_trial_message = false;
-    self.content = ko.observable(initial_values.content);
-    self.standalone_content_form = new ContentViewModel(initial_values.standalone_content_form);
+    self.content = ko.observable(initialValues.content);
+    self.standalone_content_form = new ContentViewModel(initialValues.standalone_content_form);
     self.custom_events = ko.observableArray();
-    self.visit_scheduler_app_and_form_unique_id = new formSelect2Handler(current_visit_scheduler_form,
+    self.visit_scheduler_app_and_form_unique_id = new formSelect2Handler(currentVisitSchedulerForm,
         'schedule-visit_scheduler_app_and_form_unique_id', self.timestamp);
     self.visit_scheduler_app_and_form_unique_id.init();
 
-    self.use_user_data_filter = ko.observable(initial_values.use_user_data_filter);
-    self.capture_custom_metadata_item = ko.observable(initial_values.capture_custom_metadata_item);
-    self.editing_custom_immediate_schedule = ko.observable(initial_values.editing_custom_immediate_schedule);
+    self.use_user_data_filter = ko.observable(initialValues.use_user_data_filter);
+    self.capture_custom_metadata_item = ko.observable(initialValues.capture_custom_metadata_item);
+    self.editing_custom_immediate_schedule = ko.observable(initialValues.editing_custom_immediate_schedule);
 
     self.create_day_of_month_choice = function (value) {
         if (value === '-1') {
@@ -287,66 +289,66 @@ var CreateScheduleViewModel = function (initial_values, select2_user_recipients,
         return $.inArray(self.send_frequency(), ['daily', 'weekly', 'monthly', 'custom_daily']) !== -1;
     });
 
-    self.calculateDailyEndDate = function (start_date_milliseconds, repeat_every, occurrences) {
-        var milliseconds_in_a_day = 24 * 60 * 60 * 1000;
-        var days_until_end_date = (occurrences - 1) * repeat_every;
-        return new Date(start_date_milliseconds + (days_until_end_date * milliseconds_in_a_day));
+    self.calculateDailyEndDate = function (startDateMilliseconds, repeatEvery, occurrences) {
+        var millisecondsInADay = 24 * 60 * 60 * 1000;
+        var daysUntilEndDate = (occurrences - 1) * repeatEvery;
+        return new Date(startDateMilliseconds + (daysUntilEndDate * millisecondsInADay));
     };
 
-    self.calculateWeeklyEndDate = function (start_date_milliseconds, repeat_every, occurrences) {
-        var milliseconds_in_a_day = 24 * 60 * 60 * 1000;
-        var js_start_day_of_week = new Date(start_date_milliseconds).getUTCDay();
-        var python_start_day_of_week = (js_start_day_of_week + 6) % 7;
-        var offset_to_last_weekday_in_schedule = null;
+    self.calculateWeeklyEndDate = function (startDateMilliseconds, repeatEvery, occurrences) {
+        var millisecondsInADay = 24 * 60 * 60 * 1000;
+        var jsStartDayOfWeek = new Date(startDateMilliseconds).getUTCDay();
+        var pythonStartDayOfWeek = (jsStartDayOfWeek + 6) % 7;
+        var offsetToLastWeekdayInSchedule = null;
         for (var i = 0; i < 7; i++) {
-            var current_weekday = (python_start_day_of_week + i) % 7;
-            if (self.weekdays().indexOf(current_weekday.toString()) !== -1) {
-                offset_to_last_weekday_in_schedule = i;
+            var currentWeekday = (pythonStartDayOfWeek + i) % 7;
+            if (self.weekdays().indexOf(currentWeekday.toString()) !== -1) {
+                offsetToLastWeekdayInSchedule = i;
             }
         }
-        if (offset_to_last_weekday_in_schedule === null) {
+        if (offsetToLastWeekdayInSchedule === null) {
             return null;
         }
 
         return new Date(
-            start_date_milliseconds +
-            offset_to_last_weekday_in_schedule * milliseconds_in_a_day +
-            (occurrences - 1) * 7 * repeat_every * milliseconds_in_a_day,
+            startDateMilliseconds +
+            offsetToLastWeekdayInSchedule * millisecondsInADay +
+            (occurrences - 1) * 7 * repeatEvery * millisecondsInADay,
         );
     };
 
-    self.calculateMonthlyEndDate = function (start_date_milliseconds, repeat_every, occurrences) {
-        var last_day = null;
+    self.calculateMonthlyEndDate = function (startDateMilliseconds, repeatEvery, occurrences) {
+        var lastDay = null;
         self.days_of_month().forEach(function (value) {
             value = parseInt(value);
-            if (last_day === null) {
-                last_day = value;
-            } else if (last_day > 0) {
+            if (lastDay === null) {
+                lastDay = value;
+            } else if (lastDay > 0) {
                 if (value < 0) {
-                    last_day = value;
-                } else if (value > last_day) {
-                    last_day = value;
+                    lastDay = value;
+                } else if (value > lastDay) {
+                    lastDay = value;
                 }
             } else {
-                if (value < 0 && value > last_day) {
-                    last_day = value;
+                if (value < 0 && value > lastDay) {
+                    lastDay = value;
                 }
             }
         });
-        if (last_day === null) {
+        if (lastDay === null) {
             return null;
         }
 
-        var end_date = new Date(start_date_milliseconds);
-        end_date.setUTCMonth(end_date.getUTCMonth() + (occurrences - 1) * repeat_every);
-        if (last_day < 0) {
-            end_date.setUTCMonth(end_date.getUTCMonth() + 1);
+        var endDate = new Date(startDateMilliseconds);
+        endDate.setUTCMonth(endDate.getUTCMonth() + (occurrences - 1) * repeatEvery);
+        if (lastDay < 0) {
+            endDate.setUTCMonth(endDate.getUTCMonth() + 1);
             // Using a value of 0 sets it to the last day of the previous month
-            end_date.setUTCDate(last_day + 1);
+            endDate.setUTCDate(lastDay + 1);
         } else {
-            end_date.setUTCDate(last_day);
+            endDate.setUTCDate(lastDay);
         }
-        return end_date;
+        return endDate;
     };
 
     self.calculateOccurrences = function () {
@@ -376,29 +378,29 @@ var CreateScheduleViewModel = function (initial_values, select2_user_recipients,
     };
 
     self.computedEndDate = ko.computed(function () {
-        var start_date_milliseconds = Date.parse(self.start_date());
-        var repeat_every = self.calculateRepeatEvery();
+        var startDateMilliseconds = Date.parse(self.start_date());
+        var repeatEvery = self.calculateRepeatEvery();
         var occurrences = self.calculateOccurrences();
 
         if (self.start_date_type() && self.start_date_type() !== 'SPECIFIC_DATE') {
             return '';
         }
 
-        if (isNaN(start_date_milliseconds) || isNaN(occurrences) || isNaN(repeat_every)) {
+        if (isNaN(startDateMilliseconds) || isNaN(occurrences) || isNaN(repeatEvery)) {
             return '';
         }
 
-        var end_date = null;
+        var endDate = null;
         if (self.send_frequency() === 'daily') {
-            end_date = self.calculateDailyEndDate(start_date_milliseconds, repeat_every, occurrences);
+            endDate = self.calculateDailyEndDate(startDateMilliseconds, repeatEvery, occurrences);
         } else if (self.send_frequency() === 'weekly') {
-            end_date = self.calculateWeeklyEndDate(start_date_milliseconds, repeat_every, occurrences);
+            endDate = self.calculateWeeklyEndDate(startDateMilliseconds, repeatEvery, occurrences);
         } else if (self.send_frequency() === 'monthly') {
-            end_date = self.calculateMonthlyEndDate(start_date_milliseconds, repeat_every, occurrences);
+            endDate = self.calculateMonthlyEndDate(startDateMilliseconds, repeatEvery, occurrences);
         }
 
-        if (end_date) {
-            return end_date.toJSON().substr(0, 10);
+        if (endDate) {
+            return endDate.toJSON().substr(0, 10);
         }
 
         return '';
@@ -430,52 +432,52 @@ var CreateScheduleViewModel = function (initial_values, select2_user_recipients,
         self.custom_events.push(new CustomEventContainer(id));
     };
 
-    self.markCustomEventDeleted = function (event_id) {
+    self.markCustomEventDeleted = function (eventId) {
         $.each(self.custom_events(), function (index, value) {
-            if (value.event_id === event_id) {
+            if (value.event_id === eventId) {
                 value.eventAndContentViewModel.deleted(true);
             }
         });
     };
 
-    self.getCustomEventIndex = function (event_id, arr) {
-        var item_index = null;
+    self.getCustomEventIndex = function (eventId, arr) {
+        var itemIndex = null;
         $.each(arr, function (index, value) {
-            if (value.event_id === event_id) {
-                item_index = index;
+            if (value.event_id === eventId) {
+                itemIndex = index;
             }
         });
-        return item_index;
+        return itemIndex;
     };
 
-    self.moveCustomEventUp = function (event_id) {
-        var new_array = self.custom_events();
-        var item_index = self.getCustomEventIndex(event_id, new_array);
-        var swapped_item = null;
+    self.moveCustomEventUp = function (eventId) {
+        var newArray = self.custom_events();
+        var itemIndex = self.getCustomEventIndex(eventId, newArray);
+        var swappedItem = null;
 
-        while (item_index > 0 && (swapped_item === null || swapped_item.eventAndContentViewModel.deleted())) {
-            swapped_item = new_array[item_index - 1];
-            new_array[item_index - 1] = new_array[item_index];
-            new_array[item_index] = swapped_item;
-            item_index -= 1;
+        while (itemIndex > 0 && (swappedItem === null || swappedItem.eventAndContentViewModel.deleted())) {
+            swappedItem = newArray[itemIndex - 1];
+            newArray[itemIndex - 1] = newArray[itemIndex];
+            newArray[itemIndex] = swappedItem;
+            itemIndex -= 1;
         }
 
-        self.custom_events(new_array);
+        self.custom_events(newArray);
     };
 
-    self.moveCustomEventDown = function (event_id) {
-        var new_array = self.custom_events();
-        var item_index = self.getCustomEventIndex(event_id, new_array);
-        var swapped_item = null;
+    self.moveCustomEventDown = function (eventId) {
+        var newArray = self.custom_events();
+        var itemIndex = self.getCustomEventIndex(eventId, newArray);
+        var swappedItem = null;
 
-        while ((item_index < (new_array.length - 1)) && (swapped_item === null || swapped_item.eventAndContentViewModel.deleted())) {
-            swapped_item = new_array[item_index + 1];
-            new_array[item_index + 1] = new_array[item_index];
-            new_array[item_index] = swapped_item;
-            item_index += 1;
+        while ((itemIndex < (newArray.length - 1)) && (swappedItem === null || swappedItem.eventAndContentViewModel.deleted())) {
+            swappedItem = newArray[itemIndex + 1];
+            newArray[itemIndex + 1] = newArray[itemIndex];
+            newArray[itemIndex] = swappedItem;
+            itemIndex += 1;
         }
 
-        self.custom_events(new_array);
+        self.custom_events(newArray);
     };
 
     self.custom_events.subscribe(function (newValue) {
@@ -497,23 +499,23 @@ var CreateScheduleViewModel = function (initial_values, select2_user_recipients,
         self.initDatePicker($("#id_schedule-start_date"));
         self.setRepeatOptionText(self.send_frequency());
 
-        var custom_events = [];
+        var customEvents = [];
         for (var i = 0; i < self.getNextCustomEventIndex(); i++) {
-            custom_events.push(new CustomEventContainer(i));
+            customEvents.push(new CustomEventContainer(i));
         }
-        custom_events.sort(function (item1, item2) {
+        customEvents.sort(function (item1, item2) {
             return item1.eventAndContentViewModel.order() - item2.eventAndContentViewModel.order();
         });
-        self.custom_events(custom_events);
+        self.custom_events(customEvents);
     };
 };
 
 var baseSelect2Handler = select2Handler.baseSelect2Handler,
-    recipientsSelect2Handler = function (initial_object_list, initial_comma_separated_list, field) {
+    recipientsSelect2Handler = function (initialObjectList, initialCommaSeparatedList, field) {
         /*
-         * initial_object_list is a list of {id: ..., text: ...} objects representing the initial value
+         * initialObjectList is a list of {id: ..., text: ...} objects representing the initial value
          *
-         * intial_comma_separated_list is a string representation of initial_object_list consisting of just
+         * intial_comma_separated_list is a string representation of initialObjectList consisting of just
          * the ids separated by a comma
          */
         var self = baseSelect2Handler({
@@ -526,10 +528,10 @@ var baseSelect2Handler = select2Handler.baseSelect2Handler,
         };
 
         self.getInitialData = function () {
-            return initial_object_list;
+            return initialObjectList;
         };
 
-        self.value(initial_comma_separated_list);
+        self.value(initialCommaSeparatedList);
 
         return self;
     };
@@ -537,9 +539,9 @@ var baseSelect2Handler = select2Handler.baseSelect2Handler,
 recipientsSelect2Handler.prototype = Object.create(recipientsSelect2Handler.prototype);
 recipientsSelect2Handler.prototype.constructor = recipientsSelect2Handler;
 
-var formSelect2Handler = function (initial_object, field, timestamp) {
+var formSelect2Handler = function (initialObject, field, timestamp) {
     /*
-     * initial_object is an {id: ..., text: ...} object representing the initial value
+     * initialObject is an {id: ..., text: ...} object representing the initial value
      */
     var self = baseSelect2Handler({
         fieldName: field,
@@ -555,10 +557,10 @@ var formSelect2Handler = function (initial_object, field, timestamp) {
     };
 
     self.getInitialData = function () {
-        return initial_object;
+        return initialObject;
     };
 
-    self.value(initial_object ? initial_object.id : '');
+    self.value(initialObject ? initialObject.id : '');
 
     return self;
 };

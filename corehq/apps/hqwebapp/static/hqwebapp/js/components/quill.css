@@ -1,0 +1,50 @@
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value]::before {
+  content: attr(data-value) !important;
+}
+
+.ql-editor {
+  height: 250px;
+}
+
+.ql-toolbar {
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+}
+
+.ql-container {
+  border-bottom-left-radius: 3px;
+  border-bottom-right-radius: 3px;
+}
+
+.ql-picker-label {
+  overflow: hidden;
+}
+
+.ql-picker-item[data-value="Ariel"] {
+  font-family: "Arial", sans-serif;
+}
+
+.ql-picker-item[data-value="Courier New"] {
+  font-family: "Courier New", sans-serif;
+}
+
+.ql-picker-item[data-value="Georgia"] {
+  font-family: "Georgia", serif;
+}
+
+.ql-picker-item[data-value="Lucida Sans Unicode"] {
+  font-family: "Lucida Sans Unicode", sans-serif;
+}
+
+.ql-picker-item[data-value="Tahoma"] {
+  font-family: "Tahoma", sans-serif;
+}
+
+.ql-picker-item[data-value="Times New Roman"] {
+  font-family: "Times New Roman", serif;
+}
+
+.ql-picker-item[data-value="Verdana"] {
+  font-family: "Verdana", sans-serif;
+}
