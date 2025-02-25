@@ -30,12 +30,13 @@ def _create_case_blocks(session, records):
     case_ids = [rec.doc_id for rec in records]
     cases = {c.case_id: c for c in CommCareCase.objects.get_cases(case_ids, session.domain)}
     for record in records:
-        for change in record.changes.all():
-            case = cases[record.doc_id]
+        case = cases[record.doc_id]
+        update = record.get_edited_case_properties(case)
+        if update:
             blocks.append(CaseBlock(
                 create=False,
                 case_id=record.doc_id,
-                update={change.prop_id: change.edited_value(case)},
+                update=update,
             ))
     return blocks
 

@@ -39,7 +39,10 @@ class CommitCasesTest(TestCase):
             case_type=self.case_type,
             owner_id='crj123',
             case_name='Shadow',
-            update={'speed': 'slow'},
+            update={
+                'speed': 'slow',
+                'year': '2023',
+            },
         )
 
         self.session = BulkEditSession(
@@ -75,6 +78,36 @@ class CommitCasesTest(TestCase):
 
         case = CommCareCase.objects.get_case(self.case.case_id, self.domain.name)
         self.assertEqual(case.get_case_property('speed'), 'SLOW')
+
+    def test_multiple_changes(self):
+        record = BulkEditRecord(
+            session=self.session,
+            doc_id=self.case.case_id,
+        )
+        record.save()
+
+        change = BulkEditChange(
+            session=self.session,
+            prop_id='speed',
+            action_type=EditActionType.UPPER_CASE,
+        )
+        change.save()
+        change.records.add(record)
+
+        change = BulkEditChange(
+            session=self.session,
+            prop_id='speed',
+            action_type=EditActionType.COPY_REPLACE,
+            copy_from_prop_id='year',
+        )
+        change.save()
+        change.records.add(record)
+
+        commit_data_cleaning(self.session.session_id)
+
+        case = CommCareCase.objects.get_case(self.case.case_id, self.domain.name)
+        self.assertEqual(case.get_case_property('speed'), '2023')
+        self.assertEqual(case.get_case_property('year'), '2023')
 
     def test_chunking(self):
         cases = [self.case]
