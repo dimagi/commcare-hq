@@ -12,7 +12,6 @@ from corehq.apps.data_cleaning.tables import (
 )
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.domain.views import DomainViewMixin
-from corehq.apps.es import CaseSearchES
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 
@@ -38,10 +37,6 @@ class CleanCasesTableView(BaseDataCleaningTableView):
             raise Http404(_("Data cleaning session was not found."))
 
     @property
-    def case_type(self):
-        return self.session.identifier
-
-    @property
     def session_id(self):
         return self.kwargs['session_id']
 
@@ -51,7 +46,7 @@ class CleanCasesTableView(BaseDataCleaningTableView):
         }
 
     def get_queryset(self):
-        return CaseSearchES().domain(self.domain).case_type(self.case_type)
+        return self.session.get_queryset()
 
 
 class CaseCleaningTasksTableView(BaseDataCleaningTableView):
