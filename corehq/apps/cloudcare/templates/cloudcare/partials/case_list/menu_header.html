@@ -4,22 +4,37 @@
 <div class="page-header menu-header clearfix" id="case-list-menu-header">
   <div class="float-end">
     <% if (showMap) { %>
-      <button id="hide-map-button" class="btn btn-primary float-end" type="button"
-         aria-expanded="true" aria-controls="module-case-list-map">
-        {% trans "Hide Map" %}
-      </button>
-    <% } %>
-    <% if (sidebarEnabled) { %>
-      <button id="search-more" class="btn btn-primary d-xs-block d-sm-block d-md-block d-lg-none float-end" type="button"
-        data-bs-toggle="collapse" data-bs-target="#sidebar-region" aria-expanded="false" aria-controls="sidebar-region">
-        {% trans "Refine search" %}
-      </button>
-    <% } %>
+    <button
+      id="hide-map-button"
+      class="btn btn-primary float-end"
+      type="button"
+      aria-expanded="true"
+      aria-controls="module-case-list-map"
+    >
+      {% trans "Hide Map" %}
+    </button>
+    <% } %> <% if (sidebarEnabled) { %>
+    <button
+      id="search-more"
+      class="btn btn-primary d-xs-block d-sm-block d-md-block d-lg-none float-end"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#sidebar-region"
+      aria-expanded="false"
+      aria-controls="sidebar-region"
+    >
+      {% trans "Refine search" %}
+    </button>
+    <% } %> {% include "cloudcare/partials/case_list/config.html" %}
+    <button id="case-list-config" class="btn">
+      <i class="fa fa-cog" aria-hidden="true"></i>
+    </button>
   </div>
   <% if (title.length > 0) { %>
-    <h1 aria-label="<%- title %>" class="page-title"><%- title %></h1>
-  <% } %>
-  <% if (sidebarEnabled && description.length > 0) { %>
-    <div aria-label="<%- description %>" class="query-description"><%= description %></div>
+  <h1 aria-label="<%- title %>" class="page-title"><%- title %></h1>
+  <% } %> <% if (sidebarEnabled && description.length > 0) { %>
+  <div aria-label="<%- description %>" class="query-description">
+    <%= description %>
+  </div>
   <% } %>
 </div>

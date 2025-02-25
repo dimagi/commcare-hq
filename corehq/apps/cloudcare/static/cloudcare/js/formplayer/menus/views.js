@@ -652,6 +652,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         return {
             'click @ui.actionButton': 'caseListAction',
             'click @ui.mapShowHideButton': 'showHideMap',
+            'click @ui.case-list-config': 'openCaseListConfig',
             'click @ui.searchButton': 'caseListSearch',
             'click @ui.paginators': 'paginateAction',
             'click @ui.paginationGoButton': 'paginationGoAction',
@@ -829,6 +830,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 hideButton.text(gettext('Hide Map'));
                 $(e.target).attr('aria-expanded', 'true');
             }
+
+        },
+
+        openCaseListConfig: function (e) {
 
         },
 
