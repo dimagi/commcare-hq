@@ -136,6 +136,9 @@ class FilterMatchType:
     LESS_THAN = "lt"
     GREATER_THAN = "gt"
 
+    LESS_THAN_EQUAL = "lte"
+    GREATER_THAN_EQUAL = "gte"
+
     IS_ANY = "is_any"  # we will use selected-any from CQL
     IS_NOT_ANY = "is_not_any"  # we will use not(selected-any()) from CQL
 
@@ -157,6 +160,8 @@ class FilterMatchType:
         (PHONETIC_NOT, PHONETIC_NOT),
         (LESS_THAN, LESS_THAN),
         (GREATER_THAN, GREATER_THAN),
+        (LESS_THAN_EQUAL, LESS_THAN_EQUAL),
+        (GREATER_THAN_EQUAL, GREATER_THAN_EQUAL),
         (IS_ANY, IS_ANY),
         (IS_NOT_ANY, IS_NOT_ANY),
         (IS_ALL, IS_ALL),
@@ -174,8 +179,6 @@ class FilterMatchType:
         (FUZZY_NOT, gettext_lazy("is not like")),
         (PHONETIC, gettext_lazy("sounds like")),
         (PHONETIC_NOT, gettext_lazy("does not sound like")),
-        (LESS_THAN, gettext_lazy("is before")),
-        (GREATER_THAN, gettext_lazy("is after")),
     )
 
     MULTI_SELECT_CHOICES = (
@@ -189,14 +192,17 @@ class FilterMatchType:
         (EXACT, gettext_lazy("equals")),
         (IS_NOT, gettext_lazy("does not equal")),
         (LESS_THAN, gettext_lazy("less than")),
+        (LESS_THAN_EQUAL, gettext_lazy("less than or equal to")),
         (GREATER_THAN, gettext_lazy("greater than")),
-        (STARTS, gettext_lazy("greater than or equal to")),
+        (GREATER_THAN_EQUAL, gettext_lazy("greater than or equal to")),
     )
 
     DATE_CHOICES = (
         (EXACT, gettext_lazy("on")),
         (LESS_THAN, gettext_lazy("before")),
+        (LESS_THAN_EQUAL, gettext_lazy("before or on")),
         (GREATER_THAN, gettext_lazy("after")),
+        (GREATER_THAN_EQUAL, gettext_lazy("on or after")),
     )
 
 
