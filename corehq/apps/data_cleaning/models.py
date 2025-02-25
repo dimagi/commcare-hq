@@ -7,7 +7,10 @@ from django.db import models
 from django.utils.translation import gettext_lazy, gettext as _
 
 from corehq.apps.case_search.const import METADATA_IN_REPORTS
-from corehq.apps.data_cleaning.exceptions import UnsupportedActionException
+from corehq.apps.data_cleaning.exceptions import (
+    UnsupportedActionException,
+    UnsupportedFilterValueException,
+)
 
 
 class BulkEditSessionType:
@@ -271,6 +274,67 @@ class BulkEditColumnFilter(models.Model):
                 return match_type in matches_by_category[category]
 
         return False
+
+    @staticmethod
+    def get_quoted_value(value):
+        has_single_quote = "'" in value
+        has_double_quote = '"' in value
+        if has_double_quote and has_single_quote:
+            # It seems our current xpath parsing library has no way of escaping quotes.
+            # A workaround could be to avoid xpath expression parsing altogether and have
+            # all match_types use `filter_query` directly, but that would require more effort.
+            # The option to use CaseSearchES `xpath_query` was chosen for development speed,
+            # acknowledging that there are limitations. We can re-evaluate this decision
+            # when filtering form data, as we don't have an `xpath_query` filter built for FormES.
+            raise UnsupportedFilterValueException(
+                """We cannot support both single quotes (') and double quotes (") in
+                a filter value at this time."""
+            )
+        return f'"{value}"' if has_single_quote else f"'{value}'"
+
+    def get_xpath_expression(self):
+        """
+        Assumption:
+        - data_type and match_type combination was validated by the form that created this filter
+
+        Limitations:
+        - no support for multiple quote types (double and single) in the same value
+        - no support for special whitespace characters (tab or newline)
+        - no `xpath_query` support in `FormES`
+
+        We can address limitations in later releases of this tool.
+        """
+        match_operators = {
+            FilterMatchType.EXACT: '=',
+            FilterMatchType.IS_NOT: '!=',
+            FilterMatchType.LESS_THAN: '<',
+            FilterMatchType.LESS_THAN_EQUAL: '<=',
+            FilterMatchType.GREATER_THAN: '>',
+            FilterMatchType.GREATER_THAN_EQUAL: '>=',
+        }
+        if self.match_type in match_operators:
+            # we assume the data type was properly verified on creation
+            is_number = self.data_type in DataType.FILTER_CATEGORY_DATA_TYPES[DataType.FILTER_CATEGORY_NUMBER]
+            value = self.value if is_number else self.get_quoted_value(self.value)
+            operator = match_operators[self.match_type]
+            return f"{self.prop_id} {operator} {value}"
+
+        match_expression = {
+            FilterMatchType.STARTS: lambda x: f'starts-with({self.prop_id}, {x})',
+            FilterMatchType.STARTS_NOT: lambda x: f'not(starts-with({self.prop_id}, {x}))',
+            FilterMatchType.FUZZY: lambda x: f'fuzzy-match({self.prop_id}, {x})',
+            FilterMatchType.FUZZY_NOT: lambda x: f'not(fuzzy-match({self.prop_id}, {x}))',
+            FilterMatchType.PHONETIC: lambda x: f'phonetic-match({self.prop_id}, {x})',
+            FilterMatchType.PHONETIC_NOT: lambda x: f'not(phonetic-match({self.prop_id}, {x}))',
+            FilterMatchType.IS_ANY: lambda x: f'selected-any({self.prop_id}, {x})',
+            FilterMatchType.IS_NOT_ANY: lambda x: f"not(selected-any({self.prop_id}, {x}))",
+            FilterMatchType.IS_ALL: lambda x: f'selected-all({self.prop_id}, {x})',
+            FilterMatchType.IS_NOT_ALL: lambda x: f'not(selected-all({self.prop_id}, {x}))',
+        }
+        if self.match_type in match_expression:
+            quoted_value = self.get_quoted_value(self.value)
+            return match_expression[self.match_type](quoted_value)
+
 
 class PinnedFilterType:
     CASE_OWNERS = 'case_owners'
