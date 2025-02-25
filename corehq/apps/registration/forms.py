@@ -84,7 +84,7 @@ class RegisterWebUserForm(forms.Form):
         if settings.ENFORCE_SSO_LOGIN and self.is_sso:
             self.fields['password'].required = False
 
-        additional_fields = []
+        saas_fields = []
         if settings.IS_SAAS_ENVIRONMENT:
             company_name = hqcrispy.InlineField(
                 'company_name',
@@ -120,7 +120,7 @@ class RegisterWebUserForm(forms.Form):
                               "}",
                 ),
             ]
-            additional_fields = [company_name, *persona_fields]
+            saas_fields = [company_name, *persona_fields]
 
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -210,7 +210,7 @@ class RegisterWebUserForm(forms.Form):
                                   "   validator: projectName "
                                   "}",
                     ),
-                    crispy.Div(*additional_fields),
+                    crispy.Div(*saas_fields),
                     hqcrispy.InlineField(
                         'eula_confirmed',
                         css_class="input-lg",
