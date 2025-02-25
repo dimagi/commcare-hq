@@ -45,7 +45,7 @@ beautifulsoup4==4.12.2
     # via -r base-requirements.in
 billiard==3.6.4.0
     # via celery
-bleach[css]==6.1.0
+bleach==6.1.0
     # via -r base-requirements.in
 boto3==1.24.96
     # via -r base-requirements.in
@@ -415,7 +415,7 @@ pygments==2.15.0
     # via ipython
 pyjwkest==1.4.2
     # via oic
-pyjwt[crypto]==2.7.0
+pyjwt==2.7.0
     # via
     #   -r base-requirements.in
     #   msal
