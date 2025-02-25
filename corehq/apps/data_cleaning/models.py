@@ -243,6 +243,16 @@ class BulkEditColumnFilter(models.Model):
     class Meta:
         ordering = ["index"]
 
+    def filter_query(self, query):
+        filter_query_functions = {
+            FilterMatchType.IS_EMPTY: lambda q: q.empty(self.prop_id),
+            FilterMatchType.IS_NOT_EMPTY: lambda q: q.non_null(self.prop_id),
+            FilterMatchType.IS_MISSING: lambda q: q.missing(self.prop_id),
+            FilterMatchType.IS_NOT_MISSING: lambda q: q.exists(self.prop_id),
+        }
+        if self.match_type in filter_query_functions:
+            query = filter_query_functions[self.match_type](query)
+        return query
 
     @staticmethod
     def is_data_and_match_type_valid(match_type, data_type):
