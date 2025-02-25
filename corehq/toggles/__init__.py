@@ -3014,3 +3014,10 @@ KYC_VERIFICATION = StaticToggle(
     tag=TAG_SOLUTIONS,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+MTN_MOBILE_WORKER_VERIFICATION = StaticToggle(
+    slug='mtn_mobile_worker_verification',
+    label='Enable user verification using MTN Mobile Money',
+    tag=TAG_SOLUTIONS,
+    namespaces=[NAMESPACE_DOMAIN],
+)
