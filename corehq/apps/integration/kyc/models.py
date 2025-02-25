@@ -147,7 +147,10 @@ class KycUser:
         if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
             return self.user_obj.get_user_data(self.kyc_config.domain).to_dict()
         elif self.kyc_config.user_data_store == UserDataStore.USER_CASE:
-            return self.user_obj.get_usercase().case_json
+            custom_user_case = self.user_obj.get_usercase()
+            if not custom_user_case:
+                raise UserCaseNotFound("User case not found for the user.")
+            return custom_user_case.case_json
         else:  # UserDataStore.OTHER_CASE_TYPE
             return self.user_obj.case_json
 
@@ -199,3 +202,7 @@ class KycUser:
         for user_obj in user_objs:
             kyc_users.append(KycUser(kyc_config, user_obj))
         return kyc_users
+
+
+class UserCaseNotFound(Exception):
+    pass
