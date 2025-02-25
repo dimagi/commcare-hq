@@ -29,7 +29,7 @@ MOMO_NO_EDIT_PAYMENT_FIELDS = [
     'payment_status',
 ]
 
-MOMO_PAYMENT_CASE_TYPE = 'payment'
+MOMO_PAYMENT_CASE_TYPE = 'commcare_payment'
 
 
 class LookupErrors(object):
