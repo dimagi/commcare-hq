@@ -3,7 +3,12 @@ import datetime
 from django.contrib.auth.models import User
 from django.test import TestCase
 
-from corehq.apps.data_cleaning.models import BulkEditSession, BulkEditSessionType
+from corehq.apps.data_cleaning.models import (
+    BulkEditSession,
+    BulkEditSessionType,
+    DataType,
+    FilterMatchType,
+)
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 
@@ -89,3 +94,33 @@ class BulkEditSessionTest(TestCase):
         old_session_id = old_session.session_id
         new_session = BulkEditSession.restart_case_session(self.django_user, self.domain_name, self.case_type)
         self.assertNotEqual(old_session_id, new_session.session_id)
+
+
+class BulkEditSessionFilteredQuerysetTests(TestCase):
+    domain_name = 'session-test-queryset'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = create_domain(cls.domain_name)
+        cls.addClassCleanup(cls.domain.delete)
+
+        cls.web_user = WebUser.create(
+            cls.domain.name, 'tester@datacleaning.org', 'testpwd', None, None
+        )
+        cls.django_user = User.objects.get(username=cls.web_user.username)
+        cls.addClassCleanup(cls.web_user.delete, cls.domain.name, deleted_by=None)
+
+        cls.case_type = 'child'
+
+    def test_add_column_filters(self):
+        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        session.add_column_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
+        session.add_column_filter('name', DataType.TEXT, FilterMatchType.PHONETIC, "lowkey")
+        session.add_column_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, "2")
+        session.add_column_filter('pot_type', DataType.DATE, FilterMatchType.IS_EMPTY)
+        session.add_column_filter('height_cm', DataType.DECIMAL, FilterMatchType.LESS_THAN_EQUAL, "11.0")
+        column_filters = session.column_filters.all()
+        for index, prop_id in enumerate(['watered_on', 'name', 'num_leaves', 'pot_type', 'height_cm']):
+            self.assertEqual(column_filters[index].prop_id, prop_id)
+            self.assertEqual(column_filters[index].index, index)

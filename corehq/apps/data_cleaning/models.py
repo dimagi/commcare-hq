@@ -86,6 +86,16 @@ class BulkEditSession(models.Model):
     def new_form_session(cls, user, domain_name, xmlns):
         raise NotImplementedError("Form data cleaning sessions are not yet supported!")
 
+    def add_column_filter(self, prop_id, data_type, match_type, value=None):
+        BulkEditColumnFilter.objects.create(
+            session=self,
+            index=self.column_filters.count(),
+            prop_id=prop_id,
+            data_type=data_type,
+            match_type=match_type,
+            value=value,
+        )
+
 
 class DataType:
     TEXT = 'text'
