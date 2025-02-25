@@ -113,6 +113,18 @@ class DataType:
         (PASSWORD, gettext_lazy("Password")),
     )
 
+    FILTER_CATEGORY_TEXT = 'filter_text'
+    FILTER_CATEGORY_NUMBER = 'filter_number'
+    FILTER_CATEGORY_DATE = 'filter_date'
+    FILTER_CATEGORY_MULTI_SELECT = 'filter_multi_select'
+
+    FILTER_CATEGORY_DATA_TYPES = {
+        FILTER_CATEGORY_TEXT: (TEXT, PHONE_NUMBER, BARCODE, PASSWORD, GPS, SINGLE_OPTION, TIME,),
+        FILTER_CATEGORY_NUMBER: (INTEGER, DECIMAL,),
+        FILTER_CATEGORY_DATE: (DATE, DATETIME,),
+        FILTER_CATEGORY_MULTI_SELECT: (MULTIPLE_OPTION,),
+    }
+
 
 class FilterMatchType:
     EXACT = "exact"
