@@ -1,6 +1,11 @@
+from memoized import memoized
+
+from django.http import Http404
 from django.utils.decorators import method_decorator
+from django.utils.translation import gettext as _
 
 from corehq import toggles
+from corehq.apps.data_cleaning.models import BulkEditSession
 from corehq.apps.data_cleaning.tables import (
     CleanCaseTable,
     CaseCleaningTasksTable,
@@ -25,11 +30,28 @@ class CleanCasesTableView(BaseDataCleaningTableView):
     table_class = CleanCaseTable
 
     @property
+    @memoized
+    def session(self):
+        try:
+            return BulkEditSession.objects.get(session_id=self.session_id)
+        except BulkEditSession.DoesNotExist:
+            raise Http404(_("Data cleaning session was not found."))
+
+    @property
+    def case_type(self):
+        return self.session.identifier
+
+    @property
     def session_id(self):
         return self.kwargs['session_id']
 
+    def get_table_kwargs(self):
+        return {
+            'extra_columns': self.table_class.get_columns_from_session(self.session),
+        }
+
     def get_queryset(self):
-        return CaseSearchES().domain(self.domain)
+        return CaseSearchES().domain(self.domain).case_type(self.case_type)
 
 
 class CaseCleaningTasksTableView(BaseDataCleaningTableView):
