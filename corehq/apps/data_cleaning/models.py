@@ -11,6 +11,7 @@ from corehq.apps.data_cleaning.exceptions import (
     UnsupportedActionException,
     UnsupportedFilterValueException,
 )
+from corehq.apps.es import CaseSearchES
 
 
 class BulkEditSessionType:
@@ -107,6 +108,22 @@ class BulkEditSession(models.Model):
             column_filter = self.column_filters.get(filter_id=filter_id)
             column_filter.index = index
             column_filter.save()
+
+    def get_queryset(self):
+        query = CaseSearchES().domain(self.domain).case_type(self.identifier)
+        query = self._apply_column_filters(query)
+        return query
+
+    def _apply_column_filters(self, query):
+        xpath_expressions = []
+        for column_filter in self.column_filters.all():
+            query = column_filter.filter_query(query)
+            column_xpath = column_filter.get_xpath_expression()
+            if column_xpath is not None:
+                xpath_expressions.append(column_xpath)
+        if xpath_expressions:
+            query = query.xpath_query(self.domain, " and ".join(xpath_expressions))
+        return query
 
 
 class DataType:

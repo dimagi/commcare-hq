@@ -10,7 +10,15 @@ from corehq.apps.data_cleaning.models import (
     FilterMatchType,
 )
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es import CaseSearchES
+from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.tests.utils import (
+    case_search_es_setup,
+    es_test,
+)
+from corehq.apps.hqwebapp.tests.tables.generator import get_case_blocks
 from corehq.apps.users.models import WebUser
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
 class BulkEditSessionTest(TestCase):
@@ -96,12 +104,15 @@ class BulkEditSessionTest(TestCase):
         self.assertNotEqual(old_session_id, new_session.session_id)
 
 
+@es_test(requires=[case_search_adapter], setup_class=True)
 class BulkEditSessionFilteredQuerysetTests(TestCase):
     domain_name = 'session-test-queryset'
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        case_search_es_setup(cls.domain_name, get_case_blocks())
+
         cls.domain = create_domain(cls.domain_name)
         cls.addClassCleanup(cls.domain.delete)
 
@@ -112,6 +123,11 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         cls.addClassCleanup(cls.web_user.delete, cls.domain.name, deleted_by=None)
 
         cls.case_type = 'child'
+
+    @classmethod
+    def tearDownClass(cls):
+        FormProcessorTestUtils.delete_all_cases()
+        super().tearDownClass()
 
     def test_add_column_filters(self):
         session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
@@ -149,3 +165,51 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
             reordered_prop_ids,
             ['name', 'watered_on', 'num_leaves', 'height_cm', 'pot_type']
         )
+
+    def test_get_queryset_multiple_column_filters(self):
+        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        session.add_column_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
+        session.add_column_filter('name', DataType.TEXT, FilterMatchType.PHONETIC, 'lowkey')
+        session.add_column_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, '2')
+        session.add_column_filter('pot_type', DataType.DATE, FilterMatchType.IS_EMPTY)
+        session.add_column_filter('height_cm', DataType.DECIMAL, FilterMatchType.LESS_THAN_EQUAL, '11.1')
+        query = session.get_queryset()
+        expected_query = (
+            CaseSearchES()
+            .domain(self.domain_name)
+            .case_type(self.case_type)
+            .exists('watered_on')
+            .empty('pot_type')
+            .xpath_query(
+                self.domain_name,
+                "phonetic-match(name, 'lowkey') and num_leaves > 2 and height_cm <= 11.1"
+            )
+        )
+        self.assertEqual(query.es_query, expected_query.es_query)
+
+    def test_get_queryset_column_filters_no_xpath(self):
+        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        session.add_column_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
+        query = session.get_queryset()
+        expected_query = (
+            CaseSearchES()
+            .domain(self.domain_name)
+            .case_type(self.case_type)
+            .exists('watered_on')
+        )
+        self.assertEqual(query.es_query, expected_query.es_query)
+
+    def test_get_queryset_column_filters_xpath_only(self):
+        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        session.add_column_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, '2')
+        query = session.get_queryset()
+        expected_query = (
+            CaseSearchES()
+            .domain(self.domain_name)
+            .case_type(self.case_type)
+            .xpath_query(
+                self.domain_name,
+                "num_leaves > 2"
+            )
+        )
+        self.assertEqual(query.es_query, expected_query.es_query)
