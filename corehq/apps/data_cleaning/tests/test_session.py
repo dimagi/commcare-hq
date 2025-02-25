@@ -32,7 +32,7 @@ class BulkEditSessionTest(TestCase):
         cls.addClassCleanup(cls.domain.delete)
 
         cls.web_user = WebUser.create(
-            cls.domain.name, 'b@vaultwax.com', 'testpwd', None, None
+            cls.domain.name, 'tester@datacleaning.org', 'testpwd', None, None
         )
         cls.django_user = User.objects.get(username=cls.web_user.username)
         cls.addClassCleanup(cls.web_user.delete, cls.domain.name, deleted_by=None)
