@@ -124,8 +124,8 @@ class FilterMatchType:
     IS_EMPTY = "is_empty"  # empty string
     IS_NOT_EMPTY = "is_not_empty"
 
-    IS_NULL = "is_null"  # un-set
-    IS_NOT_NULL = "is_not_null"
+    IS_MISSING = "missing"  # un-set
+    IS_NOT_MISSING = "not_missing"
 
     FUZZY = "fuzzy"  # will use fuzzy-match from CQL
     FUZZY_NOT = "not_fuzzy"  # will use not(fuzzy-match()) from CQL
@@ -149,8 +149,8 @@ class FilterMatchType:
         (STARTS_NOT, STARTS_NOT),
         (IS_EMPTY, IS_EMPTY),
         (IS_NOT_EMPTY, IS_NOT_EMPTY),
-        (IS_NULL, IS_NULL),
-        (IS_NOT_NULL, IS_NOT_NULL),
+        (IS_MISSING, IS_MISSING),
+        (IS_NOT_MISSING, IS_NOT_MISSING),
         (FUZZY, FUZZY),
         (FUZZY_NOT, FUZZY_NOT),
         (PHONETIC, PHONETIC),
@@ -169,8 +169,6 @@ class FilterMatchType:
         (STARTS, gettext_lazy("starts with")),
         (IS_EMPTY, gettext_lazy("is empty")),
         (IS_NOT_EMPTY, gettext_lazy("is not empty")),
-        (IS_NULL, gettext_lazy("is NULL")),
-        (IS_NOT_NULL, gettext_lazy("is not NULL")),
         (STARTS_NOT, gettext_lazy("does not start with")),
         (FUZZY, gettext_lazy("is like")),
         (FUZZY_NOT, gettext_lazy("is not like")),
