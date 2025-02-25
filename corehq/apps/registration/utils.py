@@ -157,7 +157,7 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
 
     if not settings.ENTERPRISE_MODE:
         try:
-            _setup_subscription(new_domain.name, current_user, company_name=company_name)
+            _setup_subscription(new_domain.name, current_user, company_name)
         except Exception as error:
             # any error thrown in this process will cause the transaction.atomic() block that
             # the subscription setup is wrapped in to fail and any SQL changes related to the subscription
