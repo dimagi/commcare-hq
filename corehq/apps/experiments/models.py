@@ -21,7 +21,7 @@ class ExperimentEnabler(models.Model):
     enabled_percent = models.SmallIntegerField(
         default=0,
         validators=[MinValueValidator(-1), MaxValueValidator(102)],
-        help_text="Zero means run only old, -1 to disable metrics as well. "
+        help_text="0 means run only old, -1 to disable metrics as well. "
                   "1-100 means % of time to run new. 101 means run only "
                   "new, 102 to disable metrics as well.",
     )
