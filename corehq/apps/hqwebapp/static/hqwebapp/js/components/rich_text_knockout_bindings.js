@@ -155,6 +155,9 @@ function updateListType(element, level) {
             child.type = orderedListTypes[level % orderedListTypes.length];
             updateListType(child, level + 1);
         } else {
+            if (child.tagName && child.tagName.toLowerCase() === 'ul') {
+                child.type = 'disc';
+            }
             updateListType(child, level);
         }
     });
