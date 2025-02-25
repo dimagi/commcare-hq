@@ -96,6 +96,18 @@ class BulkEditSession(models.Model):
             value=value,
         )
 
+    def reorder_column_filters(self, filter_ids):
+        """
+        This updates the order of column filters for this session
+        :param filter_ids: list of uuids matching filter_id field of BulkEditColumnFilters
+        """
+        if len(filter_ids) != self.column_filters.count():
+            raise ValueError("the lengths of column_ids and available column filters do not match")
+        for index, filter_id in enumerate(filter_ids):
+            column_filter = self.column_filters.get(filter_id=filter_id)
+            column_filter.index = index
+            column_filter.save()
+
 
 class DataType:
     TEXT = 'text'
