@@ -158,10 +158,10 @@ class TestLogLongRequestMiddleware(SimpleTestCase):
         add_breadcrumb.assert_has_calls([
             mock.call(category="timing", message=message, level="info")
             for message in [
-                "⏱  100%  slow_function_view: 0.200s",
+                "⏱  100%  slow_function_view: 0.205s",
                 "⏱    0%   → part1: 0.000s",
                 "⏱    0%   →  → part1a: 0.000s",
-                "⏱  100%   → part2: 0.200s",
+                "⏱  100%   → part2: 0.205s",
             ]
         ])
 
