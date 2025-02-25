@@ -60,8 +60,12 @@ class RegisterWebUserForm(forms.Form):
         required=False,
         label=_("Please Specify"),
     )
+    company_name = forms.CharField(
+        required=False,
+        label=_("Organization or Company"),
+        max_length=50,
+    )
     project_name = forms.CharField(label=_("Project Name"))
-    company_name = forms.CharField(label=_("Organization or Company"), required=False, max_length=50)
     eula_confirmed = forms.BooleanField(
         required=False,
         label=mark_safe(_(
@@ -87,15 +91,6 @@ class RegisterWebUserForm(forms.Form):
 
         saas_fields = []
         if settings.IS_SAAS_ENVIRONMENT:
-            company_name = hqcrispy.InlineField(
-                'company_name',
-                css_class="input-lg",
-                data_bind="value: companyName, "
-                          "valueUpdate: 'keyup', "
-                          "koValidationStateFeedback: { "
-                          "   validator: companyName "
-                          "}",
-            )
             persona_fields = [
                 crispy.Div(
                     hqcrispy.RadioSelect(
@@ -121,7 +116,21 @@ class RegisterWebUserForm(forms.Form):
                               "}",
                 ),
             ]
-            saas_fields = [company_name, *persona_fields]
+            saas_fields = [
+                *persona_fields,
+                crispy.Div(
+                    hqcrispy.InlineField(
+                        'company_name',
+                        css_class="input-lg",
+                        data_bind="value: companyName, "
+                                  "valueUpdate: 'keyup', "
+                                  "koValidationStateFeedback: { "
+                                  "   validator: companyName "
+                                  "}",
+                    ),
+                    data_bind="visible: isPersonaChoiceProfessional, ",
+                ),
+            ]
 
         self.helper = FormHelper()
         self.helper.form_tag = False
