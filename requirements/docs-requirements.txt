@@ -355,8 +355,6 @@ parsimonious==0.10.0
     # via pyseeyou
 phonenumberslite==8.12.48
     # via -r base-requirements.in
-pickle5==0.0.11
-    # via -r base-requirements.in
 pillow==11.1.0
     # via
     #   -r base-requirements.in

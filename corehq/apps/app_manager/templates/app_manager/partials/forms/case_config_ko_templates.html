@@ -200,7 +200,8 @@
         </div>
       </div>
       <i class="fa fa-arrow-right"></i><i class="fa fa-save"></i>
-      <!-- ko text: title --><!-- /ko -->
+      {# Location of title is different for regular and advanced forms #}
+      <!-- ko text: $data.title || $root.title --><!-- /ko -->
     </h4>
   </div>
   <div class="panel-body">
