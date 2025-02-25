@@ -10,13 +10,12 @@ Setting up a remote API connection
 
 CommCare HQ manages remote API services and credentials under Project Settings > Connection Settings.
 
-.. image:: Open connection_settings.png
-   :target: blob: https://dimagi.atlassian.net/d335d52a-1d13-4bf7-adb7-15b09d97466d#media-blob-url=true&id=949936b5-dc56-46f7-ae97-9f1128677894&collection=contentId-2143945549&contextId=2143945549&width=1071&height=552&alt=
+.. image:: ../images/set_up_remote_connection.png
 
 
 - Give your connection a name.
 - Provide one or more addresses to send notifications to if something unexpected happens when forwarding data.
-- Specify the URL that CommCare will be sending data to.
+- Specify the URL to which CommCare will be sending data.
 - And then select how CommCare must authenticate with the remote API, and provide credentials as required.
 
 Setting up Data Forwarding
@@ -24,8 +23,7 @@ Setting up Data Forwarding
 
 You can configure your project to forward any incoming forms and/or cases to a specified URL. To do so, in CommCare HQ navigate to Project Settings and then to Data Forwarding. It will look something like this:
 
-.. image:: set_up_data_forwarding.png
-   :target: blob:blob: https://dimagi.atlassian.net/93df49d8-a818-4c3a-88d0-9ac17c857069#media-blob-url=true&id=8726150d-da25-4a46-a766-bf3cdfb2e539&collection=contentId-2143945549&contextId=2143945549&width=762&height=886&alt=
+.. image:: ../images/set_up_data_forwarding.png
 
 There are no current limitations on the number of repeaters you can add to your project, but if you set up a repeater and notice a delay in record forwarding times, please contact our support team.
 
@@ -42,11 +40,10 @@ If the record is still not successfully sent after multiple retries, its state i
 
 You can follow the status of the payload by clicking on Responses.
 
-.. image:: payloads.png
-   :target: blob: blob:https://dimagi.atlassian.net/24de9418-4c91-4904-b4ec-761fcaf3c2c0#media-blob-url=true&id=eca5369f-996b-4c51-8f15-fc9ad95e8a28&collection=contentId-2143945549&contextId=2143945549&mimeType=image%2Fpng&name=image-20240819-145700.png&size=29711&width=1077&height=263&alt=image-20240819-145700.png
+.. image:: ../images/payload.png
 
-What to have your server expect
---------------------------------
+What does your server expect
+----------------------------
 
 Data will be forwarded, and the contents of what is forwarded will be in the body of the HTTP POST. This does not use HTML form-style parameters.
 
