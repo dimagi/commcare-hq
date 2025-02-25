@@ -244,6 +244,24 @@ class BulkEditColumnFilter(models.Model):
         ordering = ["index"]
 
 
+    @staticmethod
+    def is_data_and_match_type_valid(match_type, data_type):
+        if match_type in dict(FilterMatchType.ALL_DATA_TYPES_CHOICES):
+            # empty / missing is always valid regardless of data type
+            return True
+
+        matches_by_category = {
+            DataType.FILTER_CATEGORY_TEXT: dict(FilterMatchType.TEXT_CHOICES),
+            DataType.FILTER_CATEGORY_NUMBER: dict(FilterMatchType.NUMBER_CHOICES),
+            DataType.FILTER_CATEGORY_DATE: dict(FilterMatchType.DATE_CHOICES),
+            DataType.FILTER_CATEGORY_MULTI_SELECT: dict(FilterMatchType.MULTI_SELECT_CHOICES),
+        }
+        for category, valid_data_types in DataType.FILTER_CATEGORY_DATA_TYPES.items():
+            if data_type in valid_data_types:
+                return match_type in matches_by_category[category]
+
+        return False
+
 class PinnedFilterType:
     CASE_OWNERS = 'case_owners'
     CASE_STATUS = 'case_status'
