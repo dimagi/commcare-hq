@@ -239,6 +239,7 @@ class FilterMatchType:
 
 class BulkEditColumnFilter(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="column_filters", on_delete=models.CASCADE)
+    filter_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
     index = models.IntegerField(default=0)
     prop_id = models.CharField(max_length=255)  # case property or form question_id
     data_type = models.CharField(
@@ -395,6 +396,7 @@ class BulkEditPinnedFilter(models.Model):
 
 class BulkEditColumn(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="columns", on_delete=models.CASCADE)
+    column_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
     index = models.IntegerField(default=0)
     prop_id = models.CharField(max_length=255)  # case property or form question_id
     label = models.CharField(max_length=255)
