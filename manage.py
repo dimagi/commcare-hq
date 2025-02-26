@@ -36,6 +36,7 @@ def main():
         GeventCommand('copy_events_to_sql', http_adapter_pool_size=32),
         GeventCommand('verify_ssl_connections'),
         GeventCommand('elastic_sync_multiplexed'),
+        GeventCommand('translate_with_openai'),
     )
     _patch_gevent_if_required(sys.argv, GEVENT_COMMANDS)
 

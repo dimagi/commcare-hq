@@ -16,6 +16,7 @@ class Command(BaseCommand):
             'fra': 'fr',
             'hin': 'hi',
             'por': 'pt',
+            'jpn': 'ja',
         }
 
         def _get_django_home():

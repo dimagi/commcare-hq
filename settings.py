@@ -72,6 +72,7 @@ LANGUAGES = (
     ('hin', 'Hindi'),
     ('sw', 'Swahili'),
     ('por', 'Portuguese'),
+    ('jpn', 'Japanese'),
 )
 
 STATICI18N_FILENAME_FUNCTION = 'statici18n.utils.legacy_filename'
