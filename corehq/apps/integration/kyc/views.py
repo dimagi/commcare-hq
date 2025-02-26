@@ -1,3 +1,5 @@
+from functools import cached_property
+
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
@@ -78,13 +80,16 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
     urlname = 'kyc_verify_table'
     table_class = KycVerifyTable
 
-    def get_queryset(self):
-        kyc_config = KycConfig.objects.get(domain=self.request.domain)
-        row_objs = kyc_config.get_kyc_users()
-        return [self._parse_row(row_obj, kyc_config) for row_obj in row_objs]
+    @cached_property
+    def kyc_config(self):
+        return KycConfig.objects.get(domain=self.request.domain)
 
-    def _parse_row(self, row_obj, config):
-        user_data = get_user_data_for_api(row_obj, config)
+    def get_queryset(self):
+        row_objs = self.kyc_config.get_kyc_users()
+        return [self._parse_row(row_obj) for row_obj in row_objs]
+
+    def _parse_row(self, row_obj):
+        user_data = get_user_data_for_api(row_obj, self.kyc_config)
         row_data = {
             'id': row_obj.user_id,
             'has_invalid_data': False,
@@ -109,13 +114,12 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
 
     @hq_hx_action('post')
     def verify_rows(self, request, *args, **kwargs):
-        kyc_config = KycConfig.objects.get(domain=self.request.domain)
         if request.POST.get('verify_all'):
-            kyc_users = kyc_config.get_kyc_users()
+            kyc_users = self.kyc_config.get_kyc_users()
         else:
             selected_ids = request.POST.getlist('selected_ids')
-            kyc_users = kyc_config.get_kyc_users_by_ids(selected_ids)
-        results = verify_users(kyc_users, kyc_config)
+            kyc_users = self.kyc_config.get_kyc_users_by_ids(selected_ids)
+        results = verify_users(kyc_users, self.kyc_config)
         verify_success = all(results.values())
         success_count = sum(1 for result in results.values() if result)
         fail_count = len(results) - success_count
