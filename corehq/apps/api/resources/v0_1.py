@@ -191,7 +191,8 @@ class WebUserResource(UserResource):
                 user = None
             results = [user] if user else []
         else:
-            results = list(WebUser.by_domain(domain))
+            queryset = UserQuerySetAdapter(domain, show_archived=False, is_web_user=True)
+            results = queryset[0:len(queryset)]
         for filter in filters:
             results = filter(results)
         return results
