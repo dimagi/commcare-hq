@@ -17,7 +17,7 @@ from corehq.apps.integration.kyc.services import (
 )
 from corehq.apps.integration.kyc.tables import KycVerifyTable
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
-from corehq.util.metrics import metrics_gauge
+from corehq.util.metrics import metrics_gauge, metrics_counter
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -119,6 +119,7 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         else:
             selected_ids = request.POST.getlist('selected_ids')
             kyc_users = self.kyc_config.get_kyc_users_by_ids(selected_ids)
+        existing_failed_user_ids = self._get_existing_failed_users(kyc_users)
         results = verify_users(kyc_users, self.kyc_config)
         verify_success = all(results.values())
         success_count = sum(1 for result in results.values() if result)
@@ -128,7 +129,10 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
             'success_count': success_count,
             'fail_count': fail_count,
         }
+
         self._report_verification_status_metric(success_count, fail_count)
+        self._report_success_on_reverification_metric(existing_failed_user_ids, results)
+
         return self.render_htmx_partial_response(request, 'kyc/partials/kyc_verify_alert.html', context)
 
     def _report_verification_status_metric(self, success_count, failure_count):
@@ -152,6 +156,19 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
             failure_count,
             tags={'domain': self.request.domain}
         )
+
+    def _report_success_on_reverification_metric(self, existing_failed_user_ids, results):
+        successful_user_ids = [user_id for user_id, status in results.items() if status is True]
+        reverification_success_count = len(set(existing_failed_user_ids) & set(successful_user_ids))
+        if reverification_success_count > 0:
+            metrics_counter(
+                'commcare.integration.kyc.reverification.success.count',
+                reverification_success_count,
+                tags={'domain': self.request.domain}
+            )
+
+    def _get_existing_failed_users(self, kyc_users):
+        return [kyc_user.user_id for kyc_user in kyc_users if kyc_user.kyc_is_verified is False]
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
