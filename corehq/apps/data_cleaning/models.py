@@ -83,6 +83,19 @@ class BulkEditSession(models.Model):
     def new_form_session(cls, user, domain_name, xmlns):
         raise NotImplementedError("Form data cleaning sessions are not yet supported!")
 
+    @classmethod
+    def get_committed_sessions(cls, user, domain_name):
+        return cls.objects.filter(user=user, domain=domain_name, committed_on__isnull=False)
+
+    @property
+    def status(self):
+        if self.committed_on:
+            if self.completed_on:
+                return "complete"
+            else:
+                return "in progress"
+        return "pending"
+
 
 class DataType:
     TEXT = 'text'

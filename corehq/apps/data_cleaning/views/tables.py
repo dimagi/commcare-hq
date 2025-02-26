@@ -62,11 +62,10 @@ class CaseCleaningTasksTableView(BaseDataCleaningTableView):
     table_class = CaseCleaningTasksTable
 
     def get_queryset(self):
-        return [
-            {
-                "status": "test",
-                "time": "no time",
-                "case_type": "placeholder",
-                "details": "foo",
-            }
-        ]
+        return [{
+            "status": session.status,
+            "committed_on": session.committed_on,
+            "completed_on": session.completed_on,
+            "case_type": session.identifier,
+            "details": session.result,
+        } for session in BulkEditSession.get_committed_sessions(self.request.user, self.domain)]
