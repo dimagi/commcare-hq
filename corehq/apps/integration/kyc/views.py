@@ -80,7 +80,7 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
 
     def get_queryset(self):
         kyc_config = KycConfig.objects.get(domain=self.request.domain)
-        row_objs = kyc_config.get_user_objects()
+        row_objs = kyc_config.get_kyc_users()
         return [self._parse_row(row_obj, kyc_config) for row_obj in row_objs]
 
     def _parse_row(self, row_obj, config):
@@ -111,10 +111,10 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
     def verify_rows(self, request, *args, **kwargs):
         kyc_config = KycConfig.objects.get(domain=self.request.domain)
         if request.POST.get('verify_all'):
-            kyc_users = kyc_config.get_user_objects()
+            kyc_users = kyc_config.get_kyc_users()
         else:
             selected_ids = request.POST.getlist('selected_ids')
-            kyc_users = kyc_config.get_user_objects_by_ids(selected_ids)
+            kyc_users = kyc_config.get_kyc_users_by_ids(selected_ids)
         results = verify_users(kyc_users, kyc_config)
         verify_success = bool(results)
         success_count = sum(1 for result in results if result)
@@ -166,7 +166,7 @@ class KycVerificationReportView(BaseDomainView):
         except KycConfig.DoesNotExist:
             pass
         else:
-            total_users = len(kyc_config.get_user_objects())
+            total_users = len(kyc_config.get_kyc_users())
             metrics_gauge(
                 'commcare.integration.kyc.total_users.count',
                 total_users,

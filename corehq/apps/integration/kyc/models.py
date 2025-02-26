@@ -91,7 +91,7 @@ class KycConfig(models.Model):
                 raise ValueError(f'Unable to determine connection settings for KYC provider {self.provider!r}.')
         return self.connection_settings
 
-    def get_user_objects(self):
+    def get_kyc_users(self):
         """
         Returns all CommCareUser or CommCareCase instances based on the
         user data store.
@@ -112,7 +112,7 @@ class KycConfig(models.Model):
                 return []
             return KycUser.from_hq_user_objects(self, CommCareCase.objects.get_cases(case_ids, self.domain))
 
-    def get_user_objects_by_ids(self, obj_ids):
+    def get_kyc_users_by_ids(self, obj_ids):
         """
         Returns all CommCareUser or CommCareCase instances based on the
         user data store and user IDs.

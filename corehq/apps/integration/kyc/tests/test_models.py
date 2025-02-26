@@ -92,7 +92,7 @@ class TestGetUserObjectsUsers(TestCase):
             domain=DOMAIN,
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
         )
-        kyc_users = config.get_user_objects()
+        kyc_users = config.get_kyc_users()
         assert len(kyc_users) == 1
         assert kyc_users[0].user_data == {
             'commcare_profile': '',
@@ -105,7 +105,7 @@ class TestGetUserObjectsUsers(TestCase):
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
         )
         selected_ids = [self.commcare_user.user_id]
-        kyc_users = config.get_user_objects_by_ids(selected_ids)
+        kyc_users = config.get_kyc_users_by_ids(selected_ids)
         assert len(kyc_users) == 1
         assert kyc_users[0].user_data == {
             'commcare_profile': '',
@@ -117,7 +117,7 @@ class TestGetUserObjectsUsers(TestCase):
             domain=DOMAIN,
             user_data_store=UserDataStore.USER_CASE,
         )
-        kyc_users = config.get_user_objects()
+        kyc_users = config.get_kyc_users()
         assert len(kyc_users) == 1
         assert kyc_users[0].user_data == {
             'user_case_property': 'user_case_value',
@@ -129,7 +129,7 @@ class TestGetUserObjectsUsers(TestCase):
             user_data_store=UserDataStore.USER_CASE,
         )
         selected_ids = [self.commcare_user.user_id]
-        kyc_users = config.get_user_objects_by_ids(selected_ids)
+        kyc_users = config.get_kyc_users_by_ids(selected_ids)
         assert len(kyc_users) == 1
         assert kyc_users[0].user_data == {
             'user_case_property': 'user_case_value',
@@ -154,7 +154,7 @@ class TestGetUserObjectsCases(TestCase):
             user_data_store=UserDataStore.OTHER_CASE_TYPE,
             other_case_type='other_case_type',
         )
-        kyc_users = config.get_user_objects()
+        kyc_users = config.get_kyc_users()
         assert len(kyc_users) == 1
         assert kyc_users[0].user_data == {
             'other_case_property': 'other_case_value',
@@ -167,7 +167,7 @@ class TestGetUserObjectsCases(TestCase):
             other_case_type='other_case_type',
         )
         selected_ids = [self.other_case.case_id]
-        kyc_users = config.get_user_objects_by_ids(selected_ids)
+        kyc_users = config.get_kyc_users_by_ids(selected_ids)
         assert len(kyc_users) == 1
         assert kyc_users[0].user_data == {
             'other_case_property': 'other_case_value',
@@ -187,7 +187,7 @@ class TestGetUserObjectsCases(TestCase):
             user_data_store=UserDataStore.OTHER_CASE_TYPE,
         )
         with pytest.raises(AssertionError):
-            config.get_user_objects()
+            config.get_kyc_users()
 
 
 class TestKycUser(TestCase):
