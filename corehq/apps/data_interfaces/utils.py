@@ -191,7 +191,8 @@ def _get_sql_repeat_record(domain, record_id):
         return None
 
 
-def iter_cases_and_run_rules(domain, case_iterator, rules, now, run_id, case_type, db=None, progress_helper=None):
+def iter_cases_and_run_rules(domain, case_iterator, rules, now, run_id, case_type, db=None, progress_helper=None,
+                             curr_updates=0):
     from corehq.apps.data_interfaces.models import (
         CaseRuleActionResult,
         DomainCaseRuleRun,
@@ -213,7 +214,8 @@ def iter_cases_and_run_rules(domain, case_iterator, rules, now, run_id, case_typ
 
         time_elapsed = datetime.utcnow() - start_run
         if (
-            time_elapsed.seconds > HALT_AFTER or case_update_result.total_updates >= max_allowed_updates
+            time_elapsed.seconds > HALT_AFTER
+            or (curr_updates + case_update_result.total_updates) >= max_allowed_updates
             or migration_in_progress
         ):
             notify_error("Halting rule run for domain %s and case type %s." % (domain, case_type))
