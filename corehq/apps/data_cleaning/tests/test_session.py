@@ -141,7 +141,7 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
             self.assertEqual(column_filters[index].prop_id, prop_id)
             self.assertEqual(column_filters[index].index, index)
 
-    def test_reorder_column_filters(self):
+    def test_reorder_wrong_number_of_filter_ids_raises_error(self):
         session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
         session.add_column_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
         session.add_column_filter('name', DataType.TEXT, FilterMatchType.PHONETIC, "lowkey")
@@ -152,14 +152,23 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         new_order = [column_filters[1].filter_id, column_filters[2].filter_id]
         with self.assertRaises(ValueError):
             session.reorder_column_filters(new_order)
-        new_order_final = [
+
+    def test_reorder_column_filters(self):
+        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        session.add_column_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
+        session.add_column_filter('name', DataType.TEXT, FilterMatchType.PHONETIC, "lowkey")
+        session.add_column_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, "2")
+        session.add_column_filter('pot_type', DataType.DATE, FilterMatchType.IS_EMPTY)
+        session.add_column_filter('height_cm', DataType.DECIMAL, FilterMatchType.LESS_THAN_EQUAL, "11.0")
+        column_filters = session.column_filters.all()
+        new_order = [
             column_filters[1].filter_id,
             column_filters[0].filter_id,
             column_filters[2].filter_id,
             column_filters[4].filter_id,
             column_filters[3].filter_id,
         ]
-        session.reorder_column_filters(new_order_final)
+        session.reorder_column_filters(new_order)
         reordered_prop_ids = [c.prop_id for c in session.column_filters.all()]
         self.assertEqual(
             reordered_prop_ids,
@@ -171,7 +180,7 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         session.add_column_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
         session.add_column_filter('name', DataType.TEXT, FilterMatchType.PHONETIC, 'lowkey')
         session.add_column_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, '2')
-        session.add_column_filter('pot_type', DataType.DATE, FilterMatchType.IS_EMPTY)
+        session.add_column_filter('pot_type', DataType.MULTIPLE_OPTION, FilterMatchType.IS_EMPTY)
         session.add_column_filter('height_cm', DataType.DECIMAL, FilterMatchType.LESS_THAN_EQUAL, '11.1')
         query = session.get_queryset()
         expected_query = (
