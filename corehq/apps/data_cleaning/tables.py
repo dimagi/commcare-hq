@@ -2,13 +2,13 @@ from django.utils.translation import gettext_lazy
 from django_tables2 import columns, tables
 
 from corehq.apps.data_cleaning.columns import DataCleaningHtmxColumn
-from corehq.apps.hqwebapp.tables.elasticsearch.records import CaseSearchElasticRecord
+from corehq.apps.data_cleaning.records import EditableCaseSearchElasticRecord
 from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
 from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
 
 
 class CleanCaseTable(BaseHtmxTable, ElasticTable):
-    record_class = CaseSearchElasticRecord
+    record_class = EditableCaseSearchElasticRecord
 
     class Meta(BaseHtmxTable.Meta):
         pass
@@ -30,8 +30,11 @@ class CaseCleaningTasksTable(BaseHtmxTable, tables.Table):
     status = columns.Column(
         verbose_name=gettext_lazy("Status"),
     )
-    time = columns.Column(
-        verbose_name=gettext_lazy("Time"),
+    committed_on = columns.Column(
+        verbose_name=gettext_lazy("Committed On"),
+    )
+    completed_on = columns.Column(
+        verbose_name=gettext_lazy("Completed On"),
     )
     case_type = columns.Column(
         verbose_name=gettext_lazy("Case Type"),

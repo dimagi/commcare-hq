@@ -217,6 +217,10 @@ hqDefine('registration/js/new_user.ko', [
         self.isPersonaChoiceOtherNeeded = ko.computed(function () {
             return self.eulaConfirmed() && self.isPersonaChoiceOther() && !self.personaOther();
         });
+        self.isPersonaChoiceProfessional = ko.computed(function () {
+            return self.isPersonaChoiceChosen()
+                && !(self.isPersonaChoiceOther() || self.personaChoice() === 'Personal');
+        });
         self.isPersonaValid = ko.computed(function () {
             if (!self.hasPersonaFields) {
                 return true;
@@ -225,6 +229,21 @@ hqDefine('registration/js/new_user.ko', [
                    && (!self.isPersonaChoiceOther() || self.isPersonaChoiceOtherPresent());
         });
 
+        // For 'Organization or Company' Field
+        self.hasCompanyNameField = $(containerSelector).find("[name='company_name']").length;
+        self.companyName = ko.observable(defaults.company_name)
+            .extend({
+                required: {
+                    message: gettext("Please list your organization or company name."),
+                    params: true,
+                },
+            });
+        self.requireCompanyName = ko.computed(function () {
+            return self.hasCompanyNameField && self.isPersonaChoiceProfessional();
+        });
+        self.isCompanyNameValid = ko.computed(function () {
+            return !self.requireCompanyName() || self.companyName.isValid();
+        });
 
         // ---------------------------------------------------------------------
         // Form Functionality
@@ -253,6 +272,11 @@ hqDefine('registration/js/new_user.ko', [
                 _.extend(data, {
                     persona: self.personaChoice(),
                     persona_other: self.isPersonaChoiceOther() ? self.personaOther() : '',
+                });
+            }
+            if (self.requireCompanyName()) {
+                _.extend(data, {
+                    company_name: self.companyName(),
                 });
             }
             return data;
@@ -290,6 +314,7 @@ hqDefine('registration/js/new_user.ko', [
         self.isStepTwoValid = ko.computed(function () {
             return self.projectName() !== undefined
                 && self.projectName.isValid()
+                && self.isCompanyNameValid()
                 && self.isPersonaValid()
                 && self.eulaConfirmed();
         });

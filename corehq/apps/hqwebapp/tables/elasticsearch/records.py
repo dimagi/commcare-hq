@@ -11,7 +11,7 @@ from corehq.util.timezones.utils import get_timezone
 
 class BaseElasticRecord(ABC):
 
-    def __init__(self, record, request):
+    def __init__(self, record, request, **kwargs):
         self.record = record
         self.request = request
 
@@ -63,12 +63,12 @@ class CaseSearchElasticRecord(BaseElasticRecord):
     verbose_name = gettext_lazy("case")
     verbose_name_plural = gettext_lazy("cases")
 
-    def __init__(self, record, request):
+    def __init__(self, record, request, **kwargs):
         record = SafeCaseDisplay(
             wrap_case_search_hit(record),
             get_timezone(request, request.domain)
         )
-        super().__init__(record, request)
+        super().__init__(record, request, **kwargs)
 
     def __getitem__(self, item):
         return self.record.get(item)
