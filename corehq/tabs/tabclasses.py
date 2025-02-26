@@ -954,6 +954,7 @@ class ProjectDataTab(UITab):
             automatic_update_rule_list_view = {
                 'title': _(AutomaticUpdateRuleListView.page_title),
                 'url': reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]),
+                'icon': 'fa-solid fa-cogs',
             }
             if edit_section:
                 edit_section[0][1].append(automatic_update_rule_list_view)
@@ -967,6 +968,7 @@ class ProjectDataTab(UITab):
             deduplication_list_view = {
                 'title': _(DeduplicationRuleListView.page_title),
                 'url': reverse(DeduplicationRuleListView.urlname, args=[self.domain]),
+                'icon': 'fa-solid fa-network-wired',
             }
             edit_section[0][1].append(deduplication_list_view)
 
@@ -977,6 +979,7 @@ class ProjectDataTab(UITab):
             clean_cases_view = {
                 'title': _(CleanCasesMainView.page_title),
                 'url': reverse(CleanCasesMainView.urlname, args=[self.domain]),
+                'icon': 'fa-solid fa-shower',
             }
             edit_section[0][1].append(clean_cases_view)
 
