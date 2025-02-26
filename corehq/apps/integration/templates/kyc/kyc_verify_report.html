@@ -8,32 +8,48 @@
   <div>
     <h1 class="py-3 m-0">{% trans "KYC Report" %}</h1>
     <div id="verify-alert"></div>
-    <p>
-      <button
-        id="verify-selected-btn"
-        class="btn btn-primary"
-        type="button"
-        hx-post="{% url 'kyc_verify_table' request.domain %}"
-        hx-swap="innerHTML"
-        hx-target="#verify-alert"
-        hq-hx-action="verify_rows"
-        hx-vals='{
-                "selected_ids": [],
-                "verify_all": true
-            }'
-      >
-        <span> {% trans "Verify All" %} </span>
-        <span class="d-none"> {% trans "Verify Selected" %} </span>
-      </button>
-    </p>
-    <div
-      hx-trigger="load"
-      hx-get="{% url 'kyc_verify_table' domain %}{% querystring %}"
-    >
-      <div class="htmx-indicator">
-        <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading..." %}
+    {% if not domain_has_config %}
+      <div class="alert alert-warning">
+        <i class="fa-valid-alert-icon fa fa-warning"></i>
+        {% blocktrans %}
+          This domain does not have a saved KYC configuration, which is required
+          to view this report. Please create a configuration first.
+        {% endblocktrans %}
+        <a href="{% url 'kyc_configuration' domain %}">
+          {% blocktrans %}
+            Navigate there.
+          {% endblocktrans %}
+        </a>
       </div>
-    </div>
+    {% else %}
+      <p>
+        <button
+          id="verify-selected-btn"
+          class="btn btn-primary"
+          type="button"
+          hx-post="{% url 'kyc_verify_table' request.domain %}"
+          hx-swap="innerHTML"
+          hx-target="#verify-alert"
+          hq-hx-action="verify_rows"
+          hx-vals='{
+                  "selected_ids": [],
+                  "verify_all": true
+              }'
+        >
+          <span> {% trans "Verify All" %} </span>
+          <span class="d-none"> {% trans "Verify Selected" %} </span>
+        </button>
+      </p>
+
+      <div
+        hx-trigger="load"
+        hx-get="{% url 'kyc_verify_table' domain %}{% querystring %}"
+      >
+        <div class="htmx-indicator">
+          <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading..." %}
+        </div>
+      </div>
+    {% endif %}
   </div>
 {% endblock %}
 

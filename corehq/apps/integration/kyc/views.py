@@ -158,6 +158,22 @@ class KycVerificationReportView(BaseDomainView):
     page_title = _('KYC Report')
 
     @property
+    def page_context(self):
+        context = super().page_context
+        context.update({
+            'domain_has_config': self.domain_has_config,
+        })
+        return context
+
+    @property
+    def domain_has_config(self):
+        try:
+            KycConfig.objects.get(domain=self.domain)
+        except KycConfig.DoesNotExist:
+            return False
+        return True
+
+    @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
 
