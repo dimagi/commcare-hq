@@ -48,6 +48,9 @@ class CleanCasesTableView(BaseDataCleaningTableView):
     def get_table_kwargs(self):
         return {
             'extra_columns': self.table_class.get_columns_from_session(self.session),
+            'record_kwargs': {
+                'session': self.session,
+            },
         }
 
     def get_queryset(self):

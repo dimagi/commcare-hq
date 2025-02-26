@@ -66,14 +66,14 @@ class ElasticTable(tables.Table):
     """
     record_class = BaseElasticRecord
 
-    def __init__(self, **kwargs):
+    def __init__(self, record_kwargs=None, **kwargs):
         data = kwargs.pop('data')
         if not ElasticTableData.validate(data):
             raise ValueError(
                 "Please ensure that `data` is a subclass of ESQuery. "
                 "Otherwise, do not inherit from ElasticTable."
             )
-        data = ElasticTableData(data)
+        data = ElasticTableData(data, record_kwargs or {})
         super().__init__(data=data, **kwargs)
 
 
@@ -87,8 +87,9 @@ class ElasticTableData(TableData):
     `django_tables2`.
     """
 
-    def __init__(self, query):
+    def __init__(self, query, record_kwargs):
         self.query = query
+        self.record_kwargs = record_kwargs
         self._length = None
         super().__init__([])  # init sets self.data to this value
 
@@ -103,7 +104,7 @@ class ElasticTableData(TableData):
         size = stop - start
         page_query = self.query.start(start).size(size)
         results = self._get_es_results(page_query)
-        self.data = [self.table.record_class(record, self.table.request)
+        self.data = [self.table.record_class(record, self.table.request, **self.record_kwargs)
                      for record in results['hits'].get('hits', [])]
         return self.data
 
