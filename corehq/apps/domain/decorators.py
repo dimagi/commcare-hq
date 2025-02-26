@@ -188,6 +188,7 @@ def _ensure_request_project(request):
     project = getattr(request, 'project', None)
     if not project and hasattr(request, 'domain'):
         _store_project_on_request(request, request.domain)
+        project = request.project
     return project
 
 
