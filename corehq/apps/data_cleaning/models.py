@@ -367,7 +367,7 @@ class BulkEditColumnFilter(models.Model):
             FilterMatchType.PHONETIC: lambda x: f'phonetic-match({self.prop_id}, {x})',
             FilterMatchType.PHONETIC_NOT: lambda x: f'not(phonetic-match({self.prop_id}, {x}))',
             FilterMatchType.IS_ANY: lambda x: f'selected-any({self.prop_id}, {x})',
-            FilterMatchType.IS_NOT_ANY: lambda x: f"not(selected-any({self.prop_id}, {x}))",
+            FilterMatchType.IS_NOT_ANY: lambda x: f'not(selected-any({self.prop_id}, {x}))',
             FilterMatchType.IS_ALL: lambda x: f'selected-all({self.prop_id}, {x})',
             FilterMatchType.IS_NOT_ALL: lambda x: f'not(selected-all({self.prop_id}, {x}))',
         }
