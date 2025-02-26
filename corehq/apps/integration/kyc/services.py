@@ -1,35 +1,29 @@
 import json
 import os
 import re
-from datetime import datetime
 
 from django.conf import settings
 from django.utils.text import camel_case_to_spaces
 
 import jsonschema
 
-from corehq.apps.hqcase.utils import update_case
-from corehq.apps.integration.kyc.models import UserDataStore
 from corehq.apps.users.models import CommCareUser
 
 
-class UserCaseNotFound(Exception):
-    pass
-
-
-def verify_users(user_objs, config):
+def verify_users(kyc_users, config):
     # TODO: An endpoint to verify a group of users does not seem to be
     #       available using Chenosis. If we have to do this with
     #       multiple calls, consider using Celery gevent workers.
     results = []
-    for user_obj in user_objs:
-        is_verified = verify_user(user_obj, config)
-        save_result(user_obj, config, is_verified)
+    device_id = f'{__name__}.verify_users'
+    for kyc_user in kyc_users:
+        is_verified = verify_user(kyc_user, config)
+        kyc_user.update_verification_status(is_verified, device_id=device_id)
         results.append(is_verified)
     return results
 
 
-def verify_user(user_obj, config):
+def verify_user(kyc_user, config):
     """
     Verify a user using the Chenosis MTN KYC API.
 
@@ -87,7 +81,7 @@ def verify_user(user_obj, config):
         'country': 0,  # e.g "Ivory Coast" vs. "Republic of Côte d'Ivoire" vs. "CIV"?
     }
 
-    user_data = get_user_data_for_api(user_obj, config)
+    user_data = get_user_data_for_api(kyc_user, config)
     _validate_schema('kycVerify/v1', user_data)
     requests = config.get_connection_settings().get_requests()
     response = requests.post(
@@ -99,34 +93,7 @@ def verify_user(user_obj, config):
     return all(v >= required_thresholds[k] for k, v in field_scores.items())
 
 
-def save_result(user_obj, config, is_verified):
-    update = {
-        'kyc_provider': config.provider,
-        'kyc_last_verified_at': datetime.utcnow().isoformat(),  # TODO: UTC or project timezone?
-        'kyc_is_verified': is_verified,
-    }
-    if config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
-        user_data = user_obj.get_user_data(config.domain)
-        user_data.update(update)
-        user_data.save()
-    elif config.user_data_store == UserDataStore.USER_CASE:
-        case = user_obj.get_usercase()
-        update_case(
-            config.domain,
-            case.case_id,
-            case_properties=update,
-            device_id='corehq.apps.integration.kyc.services.save_result',
-        )
-    else:  # UserDataStore.OTHER_CASE_TYPE
-        update_case(
-            config.domain,
-            user_obj.case_id,
-            case_properties=update,
-            device_id='corehq.apps.integration.kyc.services.save_result',
-        )
-
-
-def get_user_data_for_api(source, config):
+def get_user_data_for_api(kyc_user, config):
     """
         Returns a dictionary of user data for the API.
         ``source`` is a CommCareUser or a CommCareCase.
@@ -142,42 +109,22 @@ def get_user_data_for_api(source, config):
         'phone_number',
         'default_phone_number',
     }
-    source_data = _get_source_data(source, config)
     user_data_for_api = {}
     for api_field, user_data_property in config.api_field_to_user_data_map.items():
-        if user_data_property in source_data:
+        if user_data_property in kyc_user.user_data:
             # Fetch value from usercase / custom user data by default
-            value = source_data[user_data_property]
+            value = kyc_user.user_data[user_data_property]
         elif (
-            isinstance(source, CommCareUser)
+            isinstance(kyc_user.user_obj, CommCareUser)
             and user_data_property in safe_commcare_user_properties
         ):
             # Fall back to CommCareUser
-            value = getattr(source, user_data_property)
+            value = getattr(kyc_user.user_obj, user_data_property)
         else:
             # Conservative approach to skip the API field if data is not available for the user
             continue
         user_data_for_api[api_field] = value
     return user_data_for_api
-
-
-def _get_source_data(source, config):
-    """
-    Returns a dictionary of source data.
-
-    :param source: A CommCareUser or a CommCareCase.
-    :param config: A KycConfig instance.
-    """
-    if config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
-        source_data = source.get_user_data(config.domain).to_dict()
-    elif config.user_data_store == UserDataStore.USER_CASE:
-        custom_user_case = source.get_usercase()
-        if not custom_user_case:
-            raise UserCaseNotFound("User case not found for the user.")
-        source_data = custom_user_case.case_json
-    else:
-        source_data = source.case_json
-    return source_data
 
 
 def _validate_schema(endpoint, data):

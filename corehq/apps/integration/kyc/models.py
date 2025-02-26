@@ -100,7 +100,7 @@ class KycConfig(models.Model):
             UserDataStore.CUSTOM_USER_DATA,
             UserDataStore.USER_CASE,
         ):
-            return CommCareUser.by_domain(self.domain)
+            return KycUser.from_hq_user_objects(self, CommCareUser.by_domain(self.domain))
         elif self.user_data_store == UserDataStore.OTHER_CASE_TYPE:
             assert self.other_case_type
             case_ids = (
@@ -110,7 +110,7 @@ class KycConfig(models.Model):
             ).get_ids()
             if not case_ids:
                 return []
-            return CommCareCase.objects.get_cases(case_ids, self.domain)
+            return KycUser.from_hq_user_objects(self, CommCareCase.objects.get_cases(case_ids, self.domain))
 
     def get_user_objects_by_ids(self, obj_ids):
         """
@@ -121,10 +121,10 @@ class KycConfig(models.Model):
             UserDataStore.CUSTOM_USER_DATA,
             UserDataStore.USER_CASE,
         ):
-            return [CommCareUser.get_by_user_id(id_) for id_ in obj_ids]
+            return KycUser.from_hq_user_objects(self, [CommCareUser.get_by_user_id(id_) for id_ in obj_ids])
         elif self.user_data_store == UserDataStore.OTHER_CASE_TYPE:
             assert self.other_case_type
-            return CommCareCase.objects.get_cases(obj_ids, self.domain)
+            return KycUser.from_hq_user_objects(self, CommCareCase.objects.get_cases(obj_ids, self.domain))
 
 
 class KycUser:

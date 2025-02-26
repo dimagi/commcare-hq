@@ -14,7 +14,6 @@ from corehq.apps.integration.kyc.services import (
     verify_users,
 )
 from corehq.apps.integration.kyc.tables import KycVerifyTable
-from corehq.apps.users.models import CommCareUser
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 from corehq.util.metrics import metrics_gauge
 
@@ -86,9 +85,8 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
 
     def _parse_row(self, row_obj, config):
         user_data = get_user_data_for_api(row_obj, config)
-        row_id = row_obj.user_id if isinstance(row_obj, CommCareUser) else row_obj.case_id
         row_data = {
-            'id': row_id,
+            'id': row_obj.user_id,
             'has_invalid_data': False,
         }
         user_fields = [
@@ -113,11 +111,11 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
     def verify_rows(self, request, *args, **kwargs):
         kyc_config = KycConfig.objects.get(domain=self.request.domain)
         if request.POST.get('verify_all'):
-            user_objs = kyc_config.get_user_objects()
+            kyc_users = kyc_config.get_user_objects()
         else:
             selected_ids = request.POST.getlist('selected_ids')
-            user_objs = kyc_config.get_user_objects_by_ids(selected_ids)
-        results = verify_users(user_objs, kyc_config)
+            kyc_users = kyc_config.get_user_objects_by_ids(selected_ids)
+        results = verify_users(kyc_users, kyc_config)
         verify_success = bool(results)
         success_count = sum(1 for result in results if result)
         fail_count = sum(1 for result in results if not result)

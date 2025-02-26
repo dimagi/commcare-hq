@@ -7,10 +7,8 @@ import pytest
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.integration.kyc.models import KycConfig, UserDataStore
+from corehq.apps.integration.kyc.models import KycConfig, UserCaseNotFound, UserDataStore, KycUser
 from corehq.apps.integration.kyc.services import (
-    UserCaseNotFound,
-    _get_source_data,
     _validate_schema,
     get_user_data_for_api,
 )
@@ -25,65 +23,6 @@ def test_doctests():
     import corehq.apps.integration.kyc.services as module
     results = doctest.testmod(module)
     assert results.failed == 0
-
-
-class TestSaveResult(TestCase):
-    # TODO: ...
-    pass
-
-
-class TestGetSourceData(TestCase):
-
-    def setUp(self):
-        self.commcare_user = CommCareUser.create(
-            DOMAIN, f'test.user@{DOMAIN}.commcarehq.org', 'Passw0rd!',
-            None, None,
-            user_data={'custom_field': 'custom_value'},
-        )
-        self.addCleanup(self.commcare_user.delete, DOMAIN, deleted_by=None)
-        self.user_case = create_case(
-            DOMAIN,
-            case_type=USERCASE_TYPE,
-            user_id=self.commcare_user._id,
-            name='test.user',
-            external_id=self.commcare_user._id,
-            save=True,
-            case_json={'user_case_property': 'user_case_value'},
-        )
-        self.other_case = create_case(
-            DOMAIN,
-            case_type='other_case_type',
-            save=True,
-            case_json={'other_case_property': 'other_case_value'},
-        )
-
-    def test_custom_user_data(self):
-        config = KycConfig(
-            domain=DOMAIN,
-            user_data_store=UserDataStore.CUSTOM_USER_DATA,
-        )
-        source_data = _get_source_data(self.commcare_user, config)
-        assert source_data == {
-            'custom_field': 'custom_value',
-            'commcare_profile': '',
-        }
-
-    def test_user_case(self):
-        config = KycConfig(
-            domain=DOMAIN,
-            user_data_store=UserDataStore.USER_CASE,
-        )
-        source_data = _get_source_data(self.commcare_user, config)
-        assert source_data == {'user_case_property': 'user_case_value'}
-
-    def test_other_case_type(self):
-        config = KycConfig(
-            domain=DOMAIN,
-            user_data_store=UserDataStore.OTHER_CASE_TYPE,
-            other_case_type='other_case_type',
-        )
-        source_data = _get_source_data(self.other_case, config)
-        assert source_data == {'other_case_property': 'other_case_value'}
 
 
 class TestValidateSchema(TestCase):
@@ -146,6 +85,7 @@ class TestGetUserDataForAPI(TestCase):
             api_field_to_user_data_map=self._sample_api_field_to_user_data_map(),
             connection_settings=self.connection_settings
         )
+        self.kyc_user = KycUser(self.config, self.user)
 
     def tearDown(self):
         self.user.delete(self.domain, None)
@@ -161,7 +101,7 @@ class TestGetUserDataForAPI(TestCase):
 
     def test_custom_user_data_store(self):
         self.user.get_user_data(self.domain).update({'nationality': 'Indian'})
-        result = get_user_data_for_api(self.user, self.config)
+        result = get_user_data_for_api(self.kyc_user, self.config)
         self.assertEqual(result, {'first_name': 'abc', 'nationality': 'Indian'})
 
     def test_unsafe_custom_user_data_store(self):
@@ -169,11 +109,11 @@ class TestGetUserDataForAPI(TestCase):
             # API field : Custom user data / CommCareUser property
             "first_name": "password",
         }
-        result = get_user_data_for_api(self.user, self.config)
+        result = get_user_data_for_api(self.kyc_user, self.config)
         self.assertEqual(result, {})
 
     def test_custom_user_data_store_with_no_data(self):
-        result = get_user_data_for_api(self.user, self.config)
+        result = get_user_data_for_api(self.kyc_user, self.config)
         self.assertEqual(result, {'first_name': 'abc'})
 
     def test_user_case_data_store(self):
@@ -188,7 +128,7 @@ class TestGetUserDataForAPI(TestCase):
         )
         self.addCleanup(case.delete)
 
-        result = get_user_data_for_api(self.user, self.config)
+        result = get_user_data_for_api(self.kyc_user, self.config)
         self.assertEqual(result, {'first_name': 'abc', 'nationality': 'German'})
 
     def test_user_case_data_store_with_no_case(self):
@@ -196,7 +136,7 @@ class TestGetUserDataForAPI(TestCase):
         self.config.save()
 
         with self.assertRaises(UserCaseNotFound):
-            get_user_data_for_api(self.user, self.config)
+            get_user_data_for_api(self.kyc_user, self.config)
 
     def test_custom_case_data_store(self):
         self.config.user_data_store = UserDataStore.OTHER_CASE_TYPE
@@ -209,8 +149,9 @@ class TestGetUserDataForAPI(TestCase):
             case_json={'first_name': 'abc', 'nationality': 'Dutch'}
         )
         self.addCleanup(case.delete)
+        kyc_user = KycUser(self.config, case)
 
-        result = get_user_data_for_api(case, self.config)
+        result = get_user_data_for_api(kyc_user, self.config)
         self.assertEqual(result, {'first_name': 'abc', 'nationality': 'Dutch'})
 
     def test_custom_case_data_store_with_no_data(self):
@@ -219,8 +160,9 @@ class TestGetUserDataForAPI(TestCase):
         self.config.save()
         case = create_case(self.domain, case_type='other-case', save=True)
         self.addCleanup(case.delete)
+        kyc_user = KycUser(self.config, case)
 
-        result = get_user_data_for_api(case, self.config)
+        result = get_user_data_for_api(kyc_user, self.config)
         self.assertEqual(result, {})
 
     def test_incorrect_mapping_standard_field(self):
@@ -229,6 +171,6 @@ class TestGetUserDataForAPI(TestCase):
         self.config.api_field_to_user_data_map = api_field_to_user_data_map
         self.config.save()
 
-        result = get_user_data_for_api(self.user, self.config)
+        result = get_user_data_for_api(self.kyc_user, self.config)
 
         self.assertEqual(result, {})

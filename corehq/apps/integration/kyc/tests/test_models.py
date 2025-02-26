@@ -92,10 +92,9 @@ class TestGetUserObjectsUsers(TestCase):
             domain=DOMAIN,
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
         )
-        commcare_users = config.get_user_objects()
-        assert len(commcare_users) == 1
-        user_data = commcare_users[0].get_user_data(DOMAIN).to_dict()
-        assert user_data == {
+        kyc_users = config.get_user_objects()
+        assert len(kyc_users) == 1
+        assert kyc_users[0].user_data == {
             'commcare_profile': '',
             'custom_field': 'custom_value',
         }
@@ -106,10 +105,9 @@ class TestGetUserObjectsUsers(TestCase):
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
         )
         selected_ids = [self.commcare_user.user_id]
-        commcare_users = config.get_user_objects_by_ids(selected_ids)
-        assert len(commcare_users) == 1
-        user_data = commcare_users[0].get_user_data(DOMAIN).to_dict()
-        assert user_data == {
+        kyc_users = config.get_user_objects_by_ids(selected_ids)
+        assert len(kyc_users) == 1
+        assert kyc_users[0].user_data == {
             'commcare_profile': '',
             'custom_field': 'custom_value',
         }
@@ -119,10 +117,9 @@ class TestGetUserObjectsUsers(TestCase):
             domain=DOMAIN,
             user_data_store=UserDataStore.USER_CASE,
         )
-        commcare_users = config.get_user_objects()
-        assert len(commcare_users) == 1
-        user_case = commcare_users[0].get_usercase()
-        assert user_case.case_json == {
+        kyc_users = config.get_user_objects()
+        assert len(kyc_users) == 1
+        assert kyc_users[0].user_data == {
             'user_case_property': 'user_case_value',
         }
 
@@ -132,10 +129,9 @@ class TestGetUserObjectsUsers(TestCase):
             user_data_store=UserDataStore.USER_CASE,
         )
         selected_ids = [self.commcare_user.user_id]
-        commcare_users = config.get_user_objects_by_ids(selected_ids)
-        assert len(commcare_users) == 1
-        user_case = commcare_users[0].get_usercase()
-        assert user_case.case_json == {
+        kyc_users = config.get_user_objects_by_ids(selected_ids)
+        assert len(kyc_users) == 1
+        assert kyc_users[0].user_data == {
             'user_case_property': 'user_case_value',
         }
 
@@ -158,9 +154,9 @@ class TestGetUserObjectsCases(TestCase):
             user_data_store=UserDataStore.OTHER_CASE_TYPE,
             other_case_type='other_case_type',
         )
-        commcare_cases = config.get_user_objects()
-        assert len(commcare_cases) == 1
-        assert commcare_cases[0].case_json == {
+        kyc_users = config.get_user_objects()
+        assert len(kyc_users) == 1
+        assert kyc_users[0].user_data == {
             'other_case_property': 'other_case_value',
         }
 
@@ -171,9 +167,9 @@ class TestGetUserObjectsCases(TestCase):
             other_case_type='other_case_type',
         )
         selected_ids = [self.other_case.case_id]
-        commcare_cases = config.get_user_objects_by_ids(selected_ids)
-        assert len(commcare_cases) == 1
-        assert commcare_cases[0].case_json == {
+        kyc_users = config.get_user_objects_by_ids(selected_ids)
+        assert len(kyc_users) == 1
+        assert kyc_users[0].user_data == {
             'other_case_property': 'other_case_value',
         }
 
