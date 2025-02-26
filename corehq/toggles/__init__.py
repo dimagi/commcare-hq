@@ -3022,3 +3022,10 @@ MTN_MOBILE_WORKER_VERIFICATION = StaticToggle(
     tag=TAG_SOLUTIONS,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+ACTIVATE_DATADOG_APM_TRACES = StaticToggle(
+    slug='activate_datadog_apm_traces',
+    label='USH: Turn on Datadog APM traces for a project.',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
