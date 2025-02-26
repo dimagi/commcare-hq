@@ -132,6 +132,16 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         return self.render_htmx_partial_response(request, 'kyc/partials/kyc_verify_alert.html', context)
 
     def _report_verification_status_metric(self, success_count, failure_count):
+        if not self.request.POST.get('verify_all'):
+            # Should always report the total count for the domain
+            kyc_users = self.kyc_config.get_kyc_users()
+            success_count = 0
+            failure_count = 0
+            for kyc_user in kyc_users:
+                if kyc_user.kyc_is_verified is True:
+                    success_count = success_count + 1
+                elif kyc_user.kyc_is_verified is False:
+                    failure_count = failure_count + 1
         metrics_gauge(
             'commcare.integration.kyc.verification.success.count',
             success_count,
