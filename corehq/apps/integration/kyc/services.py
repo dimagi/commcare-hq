@@ -14,12 +14,12 @@ def verify_users(kyc_users, config):
     # TODO: An endpoint to verify a group of users does not seem to be
     #       available using Chenosis. If we have to do this with
     #       multiple calls, consider using Celery gevent workers.
-    results = []
+    results = {}
     device_id = f'{__name__}.verify_users'
     for kyc_user in kyc_users:
         is_verified = verify_user(kyc_user, config)
         kyc_user.update_verification_status(is_verified, device_id=device_id)
-        results.append(is_verified)
+        results[kyc_user.user_id] = is_verified
     return results
 
 
