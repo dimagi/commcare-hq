@@ -114,7 +114,7 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
 
     @hq_hx_action('post')
     def verify_rows(self, request, *args, **kwargs):
-        if request.POST.get('verify_all'):
+        if request.POST.get('verify_all') == 'true':
             kyc_users = self.kyc_config.get_kyc_users()
         else:
             selected_ids = request.POST.getlist('selected_ids')
@@ -136,7 +136,7 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         return self.render_htmx_partial_response(request, 'kyc/partials/kyc_verify_alert.html', context)
 
     def _report_verification_status_metric(self, success_count, failure_count):
-        if not self.request.POST.get('verify_all'):
+        if self.request.POST.get('verify_all') == 'false':
             # Should always report the total count for the domain
             kyc_users = self.kyc_config.get_kyc_users()
             success_count = 0
