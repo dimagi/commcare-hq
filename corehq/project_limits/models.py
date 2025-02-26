@@ -1,6 +1,6 @@
 import architect
 from django.db import models
-from django.core.cache import cache
+from django.conf import settings
 from field_audit import audit_fields
 
 from corehq.util.quickcache import quickcache
@@ -103,6 +103,16 @@ class SystemLimit(models.Model):
         domain = f"[{self.domain}] " if self.domain else ""
         return f"{domain}{self.key}: {self.limit}"
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        SystemLimit._get_global_limit.clear(self.key)
+        SystemLimit._get_domain_specific_limit.clear(self.key, self.domain)
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        SystemLimit._get_global_limit.clear(self.key)
+        SystemLimit._get_domain_specific_limit.clear(self.key, self.domain)
+
     @classmethod
     def for_key(cls, key, domain=''):
         """
@@ -114,12 +124,7 @@ class SystemLimit(models.Model):
         return cls._get_global_limit(key)
 
     @staticmethod
-    @quickcache(
-        vary_on=("key",),
-        timeout=0,  # cache in local memory only
-        memoize_timeout=FIVE_MINUTES,
-        session_function=lambda: '',  # share cache across all requests/tasks
-    )
+    @quickcache(['key'], timeout=FIVE_MINUTES, skip_arg=lambda *args: settings.UNIT_TESTING)
     def _get_global_limit(key):
         try:
             return SystemLimit.objects.get(key=key, domain='').limit
@@ -127,32 +132,9 @@ class SystemLimit(models.Model):
             return None
 
     @staticmethod
+    @quickcache(['key', 'domain'], timeout=FIVE_MINUTES, skip_arg=lambda *args: settings.UNIT_TESTING)
     def _get_domain_specific_limit(key, domain):
-        cache_key = SystemLimit._specific_limit_cache_key(key, domain)
-        cached_limit = cache.get(cache_key)
-        if cached_limit is not None:
-            return cached_limit
-
         try:
-            limit = SystemLimit.objects.get(key=key, domain=domain).limit
+            return SystemLimit.objects.get(key=key, domain=domain).limit
         except SystemLimit.DoesNotExist:
-            limit = None
-
-        if limit is not None:
-            SystemLimit._cache_domain_specific_limit(key, domain, limit)
-
-        return limit
-
-    @staticmethod
-    def _cache_domain_specific_limit(key, domain, limit):
-        cache.set(
-            SystemLimit._specific_limit_cache_key(key, domain),
-            limit,
-            timeout=0,  # cache in local memory only
-            memoize_timeout=FIVE_MINUTES,
-            session_function=lambda: '',  # share cache across all requests/tasks
-        )
-
-    @staticmethod
-    def _specific_limit_cache_key(key, domain):
-        return f'specific-domain-limit-{key}-{domain}-key'
+            return None
