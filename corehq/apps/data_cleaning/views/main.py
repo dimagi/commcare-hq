@@ -83,6 +83,7 @@ class CleanCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
     def page_context(self):
         return {
             "session_id": self.session_id,
+            "pinned_filter_types": [f.filter_type for f in self.session.pinned_filters.all()],
         }
 
 

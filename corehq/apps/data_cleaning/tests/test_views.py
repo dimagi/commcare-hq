@@ -3,7 +3,13 @@ import uuid
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from corehq.apps.data_cleaning.models import BulkEditSession
+from corehq.apps.data_cleaning.models import (
+    BulkEditSession,
+    PinnedFilterType,
+)
+from corehq.apps.data_cleaning.views.filters import (
+    PinnedFilterFormView,
+)
 from corehq.apps.data_cleaning.views.main import (
     CleanCasesMainView,
     CleanCasesSessionView,
@@ -68,6 +74,8 @@ class CleanCasesViewAccessTest(TestCase):
             (CleanCasesSessionView, (cls.domain_name, cls.fake_session_id,)),
             (CleanCasesTableView, (cls.domain_name, cls.real_session_id,)),
             (CleanCasesTableView, (cls.domain_name, cls.fake_session_id,)),
+            (PinnedFilterFormView, (cls.domain_name, cls.real_session_id, PinnedFilterType.CASE_OWNERS)),
+            (PinnedFilterFormView, (cls.domain_name, cls.fake_session_id, PinnedFilterType.CASE_OWNERS)),
         ]
 
     @classmethod
