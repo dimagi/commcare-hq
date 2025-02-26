@@ -1,244 +1,107 @@
 --- 
 +++ 
-@@ -1,6 +1,6 @@
- {% load i18n %}
- 
--<form class="form form-ko-validation" method="post">
-+<form class="form-ko-validation" method="post">
-   {% csrf_token %}
-   <div class="modal-body">
-     <!-- ko if: showErrorMessage -->
-@@ -8,131 +8,106 @@
-         <p data-bind="text: errorMessage"></p>
+@@ -9,9 +9,9 @@
        </div>
      <!-- /ko -->
--    <div class="row">
-+    <div class="row mb-3">
-       <div class="col-sm-6">
+     <div class="row">
+-      <div class="col-sm-6">
 -        <div class="form-group">
 -          <label class="control-label">
--            {% trans "First name" %}<span class="asteriskField">*</span>
--          </label>
--          <div class="controls">
--            <input
--              class="form-control"
--              type="text"
--              name="firstname"
--              data-bind="textInput: firstname"
--            />
--          </div>
--        </div>
-+        <label class="form-label">
-+          {% trans "First name" %}<span class="asteriskField">*</span>
-+        </label>
-+        <input type="text"
-+               name="firstname"
-+               data-bind="textInput: firstname"
-+               class="form-control">
++      <div class="col-md-6">
++        <div class="form-group">  {# todo B5: css-form-group #}
++          <label class="form-label">
+             {% trans "First name" %}<span class="asteriskField">*</span>
+           </label>
+           <div class="controls">
+@@ -24,9 +24,9 @@
+           </div>
+         </div>
        </div>
-       <div class="col-sm-6">
+-      <div class="col-sm-6">
 -        <div class="form-group">
 -          <label class="control-label">
--            {% trans "Last name" %}<span class="asteriskField">*</span>
--          </label>
--          <div class="controls">
--            <input
--              class="form-control"
--              type="text"
--              name="lastname"
--              data-bind="textInput: lastname"
--            />
--          </div>
--        </div>
-+        <label class="form-label">
-+          {% trans "Last name" %}<span class="asteriskField">*</span>
-+        </label>
-+        <input type="text"
-+               name="lastname"
-+               data-bind="textInput: lastname"
-+               class="form-control">
++      <div class="col-md-6">
++        <div class="form-group">  {# todo B5: css-form-group #}
++          <label class="form-label">
+             {% trans "Last name" %}<span class="asteriskField">*</span>
+           </label>
+           <div class="controls">
+@@ -40,8 +40,8 @@
+         </div>
        </div>
      </div>
 -    <div class="form-group">
 -      <label class="control-label">
--        {% trans "Professional email" %}<span class="asteriskField">*</span>
-+    <div class="mb-3">
++    <div class="form-group">  {# todo B5: css-form-group #}
 +      <label class="form-label">
-+        {% trans "Organization" %}<span class="asteriskField">*</span>
+         {% trans "Professional email" %}<span class="asteriskField">*</span>
        </label>
--      <div class="controls">
--        <input
--          type="email"
--          name="email"
--          data-bind="textInput: email"
--          class="form-control"
--        />
--      </div>
-+      <input type="text"
-+             name="company"
-+             data-bind="textInput: company"
-+             class="form-control">
+       <div class="controls">
+@@ -54,9 +54,9 @@
+       </div>
      </div>
--    <div class="row">
+     <div class="row">
 -      <div class="col-sm-6">
 -        <div class="form-group">
 -          <label class="control-label">
--            {% trans "Organization" %}<span class="asteriskField">*</span>
--          </label>
--          <div class="controls">
--            <input
--              class="form-control"
--              type="text"
--              name="company"
--              data-bind="textInput: company"
--            />
--          </div>
--        </div>
--      </div>
++      <div class="col-md-6">
++        <div class="form-group">  {# todo B5: css-form-group #}
++          <label class="form-label">
+             {% trans "Organization" %}<span class="asteriskField">*</span>
+           </label>
+           <div class="controls">
+@@ -69,9 +69,9 @@
+           </div>
+         </div>
+       </div>
 -      <div class="col-sm-6">
 -        <div class="form-group">
 -          <label class="control-label">
--            {% trans "Job title" %}<span class="asteriskField">*</span>
--          </label>
--          <div class="controls">
--            <input
--              class="form-control"
--              type="text"
--              name="jobtitle"
--              data-bind="textInput: jobtitle"
--            />
--          </div>
--        </div>
--      </div>
-+    <div class="mb-3">
-+      <label class="form-label">
-+        {% trans "Professional email address" %}<span class="asteriskField">*</span>
-+      </label>
-+      <input type="email"
-+             name="email"
-+             data-bind="textInput: email"
-+             class="form-control">
++      <div class="col-md-6">
++        <div class="form-group">  {# todo B5: css-form-group #}
++          <label class="form-label">
+             {% trans "Job title" %}<span class="asteriskField">*</span>
+           </label>
+           <div class="controls">
+@@ -85,12 +85,12 @@
+         </div>
+       </div>
      </div>
 -    <div class="form-group">
 -      <label class="control-label">
--        {% trans "Preferred language" %}<span class="asteriskField">*</span>
-+    <div class="mb-3"
-+         data-bind="visible: showContactMethod">
++    <div class="form-group">  {# todo B5: css-form-group #}
 +      <label class="form-label">
-+          {% trans "How should we contact you?" %}<span class="asteriskField">*</span>
+         {% trans "Preferred language" %}<span class="asteriskField">*</span>
        </label>
--      <div class="controls">
+       <div class="controls">
 -        <select
--          class="form-control"
--          name="language"
--          data-bind="value: language"
--        >
--          <option value="">{% trans "Please Select" %}</option>
--          <option value="English">{% trans "English" %}</option>
--          <option value="French">{% trans "French" %}</option>
--          <option value="Spanish">{% trans "Spanish" %}</option>
--        </select>
--      </div>
--    </div>
++        <select  {# todo B5: css-select-form-control #}
+           class="form-control"
+           name="language"
+           data-bind="value: language"
+@@ -102,11 +102,11 @@
+         </select>
+       </div>
+     </div>
 -    <div class="form-group">
 -      <label class="control-label">
--        {% trans "How did you hear about us?" %}
--      </label>
++    <div class="form-group">  {# todo B5: css-form-group #}
++      <label class="form-label">
+         {% trans "How did you hear about us?" %}
+       </label>
 -      <select
--        class="form-control"
--        name="discoverySource"
--        data-bind="value: discoverySource"
--      >
-+      <select name="preferred_method_of_contact"
-+              data-bind="value: preferred_method_of_contact"
-+              class="form-select">
-         <option value="">{% trans "Please Select" %}</option>
--        <option value="Newsletter">{% trans "Newsletter" %}</option>
--        <option value="Podcast">{% trans "Podcast" %}</option>
--        <option value="Social Media">{% trans "Social Media" %}</option>
--        <option value="Web Search">{% trans "Web Search (e.g. Google)" %}</option>
--        <option value="Referral">{% trans "Word of Mouth / Referral" %}</option>
--        <option value="Event / Conference">{% trans "Event / Conference" %}</option>
--        <option value="Other">{% trans "Other" %}</option>
-+        <option value="Phone">{% trans "Phone" %}</option>
-+        <option value="Skype">{% trans "Skype" %}</option>
-+        <!-- ko if: useWhatsApp -->
-+          <option value="WhatsApp">{% trans "WhatsApp" %}</option>
-+        <!-- /ko -->
-+        <!-- ko if: useGoogleHangouts -->
-+          <option value="Google hangouts">{% trans "Google hangouts" %}</option>
-+        <!-- /ko -->
++      <select  {# todo B5: css-select-form-control #}
+         class="form-control"
+         name="discoverySource"
+         data-bind="value: discoverySource"
+@@ -121,8 +121,8 @@
+         <option value="Other">{% trans "Other" %}</option>
        </select>
      </div>
 -    <div class="form-group" data-bind="visible: discoverySource() === 'Other'">
 -      <label class="control-label">
--        {% trans "We'd love to hear more! Please specify -" %}
-+    <div class="mb-3"
-+         data-bind="visible: showPhoneNumber">
++    <div class="form-group" data-bind="visible: discoverySource() === 'Other'">  {# todo B5: css-form-group #}
 +      <label class="form-label">
-+          {% trans "Preferred phone number" %}<span class="asteriskField">*</span>
+         {% trans "We'd love to hear more! Please specify -" %}
        </label>
--      <div class="controls">
--        <input
--          class="form-control"
--          type="text"
--          name="otherSource"
--          data-bind="textInput: otherSource"
--        />
--      </div>
-+      <input type="text"
-+             name="phone"
-+             data-bind="textInput: phone"
-+             class="form-control">
-+    </div>
-+    <div class="mb-3"
-+         data-bind="visible: showSkype">
-+      <label class="form-label">
-+          {% trans "Skype username" %}<span class="asteriskField">*</span>
-+      </label>
-+      <input type="text"
-+             name="skype__c"
-+             data-bind="textInput: skype__c"
-+             class="form-control">
-+    </div>
-+    <div class="mb-3"
-+         data-bind="visible: showWhatsApp">
-+      <label class="form-label">
-+          {% trans "Preferred WhatsApp number" %}<span class="asteriskField">*</span>
-+      </label>
-+      <input type="text"
-+             name="preferred_whatsapp_number"
-+             data-bind="textInput: preferred_whatsapp_number"
-+             class="form-control">
-+    </div>
-+    <div class="mb-3"
-+         data-bind="visible: showPreferredLanguage">
-+      <label class="form-label">
-+        {% trans "Preferred Language" %}<span class="asteriskField">*</span>
-+      </label>
-+      <select name="language__c"
-+              data-bind="value: language__c"
-+              class="form-select">
-+        <option value="">{% trans "Please Select" %}</option>
-+        <option value="English">{% trans "English" %}</option>
-+        <option value="French">{% trans "French" %}</option>
-+        <option value="Spanish">{% trans "Spanish" %}</option>
-+      </select>
-     </div>
-     {% blocktrans %}
-       By clicking this button, you agree to Dimagi's
-@@ -141,11 +116,9 @@
-     {% endblocktrans %}
-   </div>
-   <div class="modal-footer">
--    <button
--      class="btn btn btn-primary"
--      type="button"
--      data-bind="click: submitForm, disable: isSubmitDisabled"
--    >
-+    <button class="btn btn btn-primary"
-+            data-bind="click: submitForm, disable: isSubmitDisabled"
-+            type="button">
-       <!-- ko text: nextButtonText --><!-- /ko -->
-     </button>
-   </div>
+       <div class="controls">
