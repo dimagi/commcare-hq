@@ -106,7 +106,7 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
             'country',
         ]
         for field in user_fields:
-            if field not in user_data:
+            if field not in user_data or user_data[field] in ('', None):
                 row_data['has_invalid_data'] = True
                 continue
             row_data[field] = user_data[field]
