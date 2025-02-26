@@ -209,8 +209,6 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'has_invalid_data': True,
                     'first_name': 'Jane',
                     'last_name': 'Doe',
-                    'phone_number': None,
-                    'email': '',
                 })
             else:
                 self.assertEqual(row, {
