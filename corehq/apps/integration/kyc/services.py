@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import requests
 
 from django.conf import settings
 from django.utils.text import camel_case_to_spaces
@@ -17,7 +18,15 @@ def verify_users(kyc_users, config):
     results = {}
     device_id = f'{__name__}.verify_users'
     for kyc_user in kyc_users:
-        is_verified = verify_user(kyc_user, config)
+        try:
+            is_verified = verify_user(kyc_user, config)
+        # TODO - Decide on how we want to handle these exceptions for the end user
+        except jsonschema.exceptions.ValidationError:
+            is_verified = False
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+            is_verified = False
+        except requests.HTTPError:
+            is_verified = False
         kyc_user.update_verification_status(is_verified, device_id=device_id)
         results[kyc_user.user_id] = is_verified
     return results
