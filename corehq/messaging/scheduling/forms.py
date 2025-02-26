@@ -496,17 +496,8 @@ class ContentForm(Form):
             except AttributeError:
                 plaintext_message[lang] = strip_tags(content)
 
-            # bleach.clean throws out html, head, and body tags no matter what. To keep them we need to clean them
-            # separately and then put them back together.
-            bleached_head = ""
-            if soup.head:
-                bleached_head = bleach.clean(
-                    soup.head.decode_contents(),
-                    attributes=ALLOWED_HTML_ATTRIBUTES,
-                    tags=ALLOWED_HTML_TAGS,
-                    css_sanitizer=css_sanitizer,
-                    strip=True,
-                )
+            # bleach.clean throws out html, head, and body tags no matter what. To keep them we need to clean
+            # just the body and put it back into the html
             bleached_body = bleach.clean(
                 soup.body.decode_contents(),
                 attributes=ALLOWED_HTML_ATTRIBUTES,
@@ -514,7 +505,7 @@ class ContentForm(Form):
                 css_sanitizer=css_sanitizer,
                 strip=True,
             )
-            html_message[lang] = f"<html><head>{bleached_head}</head><body>{bleached_body}</body></html>"
+            html_message[lang] = f"<html><head></head><body>{bleached_body}</body></html>"
         return EmailContent(
             subject=self.cleaned_data['subject'],
             message=plaintext_message,

@@ -64,7 +64,7 @@ describe('Rich Text Editor', function () {
                     ],
                 };
             const html = deltaToHtml(delta);
-            assert.equal("<html><body><ul><li>item</li><li>item</li></ul></body></html>", html);
+            assert.equal('<html><body><ul type="disc"><li>item</li><li>item</li></ul></body></html>', html);
         });
 
         it('ordered list', function () {
