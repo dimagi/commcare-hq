@@ -2,15 +2,16 @@ from dimagi.utils.chunked import chunked
 
 from corehq.apps.es import GroupES, UserES
 from corehq.apps.groups.models import Group
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.user_data import prime_user_data_caches
 
 
 class UserQuerySetAdapter(object):
 
-    def __init__(self, domain, show_archived):
+    def __init__(self, domain, show_archived, is_web_user=False):
         self.domain = domain
         self.show_archived = show_archived
+        self.is_web_user = is_web_user
 
     def count(self):
         return self._query.count()
@@ -19,16 +20,24 @@ class UserQuerySetAdapter(object):
 
     @property
     def _query(self):
-        if self.show_archived:
-            return UserES().mobile_users().domain(self.domain).show_only_inactive().sort('username.exact')
+        if self.is_web_user:
+            query = UserES().web_users()
         else:
-            return UserES().mobile_users().domain(self.domain).sort('username.exact')
+            query = UserES().mobile_users()
+
+        if self.show_archived:
+            return query.domain(self.domain).show_only_inactive().sort('username.exact')
+        else:
+            return query.domain(self.domain).sort('username.exact')
 
     def __getitem__(self, item):
         if isinstance(item, slice):
             limit = item.stop - item.start
             result = self._query.size(limit).start(item.start).run()
-            users = (WrappedUser.wrap(user) for user in result.hits)
+            if self.is_web_user:
+                users = (WebUser.wrap(user) for user in result.hits)
+            else:
+                users = (WrappedUser.wrap(user) for user in result.hits)
             return list(prime_user_data_caches(users, self.domain))
         raise ValueError(
             'Invalid type of argument. Item should be an instance of slice class.')
