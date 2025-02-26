@@ -68,9 +68,9 @@ class TestGetConnectionSettings(TestCase):
         assert config.get_connection_settings() == connx
 
 
-class TestGetUserObjectsUsers(TestCase):
-
+class BaseKycUsersSetup(TestCase):
     def setUp(self):
+        super().setUp()
         self.commcare_user = CommCareUser.create(
             DOMAIN, f'test.user@{DOMAIN}.commcarehq.org', 'Passw0rd!',
             None, None,
@@ -86,6 +86,15 @@ class TestGetUserObjectsUsers(TestCase):
             save=True,
             case_json={'user_case_property': 'user_case_value'},
         )
+        self.other_case = create_case(
+            DOMAIN,
+            case_type='other_case_type',
+            save=True,
+            case_json={'other_case_property': 'other_case_value'},
+        )
+
+
+class TestGetUserObjectsUsers(BaseKycUsersSetup):
 
     def test_custom_user_data(self):
         config = KycConfig(
@@ -190,30 +199,7 @@ class TestGetUserObjectsCases(TestCase):
             config.get_kyc_users()
 
 
-class TestKycUser(TestCase):
-
-    def setUp(self):
-        self.commcare_user = CommCareUser.create(
-            DOMAIN, f'test.user@{DOMAIN}.commcarehq.org', 'Passw0rd!',
-            None, None,
-            user_data={'custom_field': 'custom_value'},
-        )
-        self.addCleanup(self.commcare_user.delete, DOMAIN, deleted_by=None)
-        self.user_case = create_case(
-            DOMAIN,
-            case_type=USERCASE_TYPE,
-            user_id=self.commcare_user._id,
-            name='test.user',
-            external_id=self.commcare_user._id,
-            save=True,
-            case_json={'user_case_property': 'user_case_value'},
-        )
-        self.other_case = create_case(
-            DOMAIN,
-            case_type='other_case_type',
-            save=True,
-            case_json={'other_case_property': 'other_case_value'},
-        )
+class TestKycUser(BaseKycUsersSetup):
 
     def test_custom_user_data(self):
         config = KycConfig(
