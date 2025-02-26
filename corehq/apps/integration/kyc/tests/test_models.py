@@ -208,7 +208,6 @@ class TestKycUser(TestCase):
             save=True,
             case_json={'user_case_property': 'user_case_value'},
         )
-        # self.addCleanup(self.user_case.delete, DOMAIN, deleted_by=None)
         self.other_case = create_case(
             DOMAIN,
             case_type='other_case_type',
