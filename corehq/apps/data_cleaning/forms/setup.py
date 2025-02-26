@@ -71,7 +71,7 @@ class ResumeOrRestartCaseSessionForm(forms.Form):
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
             crispy.HTML(render_to_string(
-                'data_cleaning/partials/forms/active_session_exists.html', {}
+                'data_cleaning/forms/partials/active_session_exists.html', {}
             )),
             crispy.Field(
                 'case_type',

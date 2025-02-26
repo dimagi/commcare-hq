@@ -1,8 +1,4 @@
-from memoized import memoized
-
-from django.http import Http404
 from django.utils.decorators import method_decorator
-from django.utils.translation import gettext as _
 
 from corehq import toggles
 from corehq.apps.data_cleaning.models import BulkEditSession
@@ -10,6 +6,7 @@ from corehq.apps.data_cleaning.tables import (
     CleanCaseTable,
     CaseCleaningTasksTable,
 )
+from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
@@ -24,21 +21,9 @@ class BaseDataCleaningTableView(LoginAndDomainMixin, DomainViewMixin, Selectable
     pass
 
 
-class CleanCasesTableView(BaseDataCleaningTableView):
+class CleanCasesTableView(BulkEditSessionViewMixin, BaseDataCleaningTableView):
     urlname = "data_cleaning_cases_table"
     table_class = CleanCaseTable
-
-    @property
-    @memoized
-    def session(self):
-        try:
-            return BulkEditSession.objects.get(session_id=self.session_id)
-        except BulkEditSession.DoesNotExist:
-            raise Http404(_("Data cleaning session was not found."))
-
-    @property
-    def session_id(self):
-        return self.kwargs['session_id']
 
     def get_table_kwargs(self):
         return {
