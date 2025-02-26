@@ -1,7 +1,8 @@
 import contextlib
-
+from datetime import datetime
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
+from dimagi.utils.logging import notify_exception
 
 from memoized import memoized
 
@@ -240,10 +241,20 @@ class CaseListReport(CaseListMixin, ProjectReport, ReportDataSource):
 
     @property
     def json_response(self):
-        with self.profiler.timing_context if self.profiler_enabled else contextlib.nullcontext():
+        if not self.profiler_enabled:
+            return super().json_response
+
+        start_time = datetime.now()
+        with self.profiler.timing_context:
             response = super().json_response
 
-        if self.profiler_enabled:
-            # Todo: SC-4181
-            pass
+        elapsed_seconds = (datetime.now() - start_time).total_seconds()
+        if elapsed_seconds > 10:
+            self.profiler.timing_context.add_to_sentry_breadcrumbs()
+            request_dict = dict(self.request.GET.lists())
+
+            notify_exception(None, "LongRunningReport", details={
+                'request_dict': request_dict,
+            })
+
         return response
