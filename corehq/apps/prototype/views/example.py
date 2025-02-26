@@ -58,19 +58,17 @@ def generate_ics(request):
     dtstart = now.strftime('%Y%m%dT%H%M%S')
     dtend = (now + datetime.timedelta(hours=1)).strftime('%Y%m%dT%H%M%S')
 
-    ics_content = f"""
-        BEGIN:VCALENDAR
-        VERSION:2.0
-        PRODID:-//Your Organisation//Example Project//EN
-        BEGIN:VEVENT
-        UID:1
-        DTSTART:{dtstart}
-        DTEND:{dtend}
-        SUMMARY: Event for Today
-        LOCATION:
-        END:VEVENT
-        END:VCALENDAR
-        """
+    ics_content = f"""BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Your Organisation//Example Project//EN
+BEGIN:VEVENT
+UID:1
+DTSTART:{dtstart}
+DTEND:{dtend}
+SUMMARY: Event for Today
+LOCATION:
+END:VEVENT
+END:VCALENDAR"""
 
     response = HttpResponse(ics_content, content_type='text/calendar')
     response['Content-Disposition'] = 'attachment; filename=event.ics'
@@ -88,18 +86,17 @@ def email_ics(request):
     event_summary = "Test event summary"
     event_description = "Test event description"
 
-    ics_string = f'''BEGIN:VCALENDAR
-        VERSION:2.0
-        PRODID:-//commcare//domain//EN
-        BEGIN:VEVENT
-        SUMMARY:{event_summary}
-        DESCRIPTION:{event_description}
-        DTSTART;TZID=America/Chicago:{dtstart}
-        DTEND;TZID=America/Chicago:{dtend}
-        SUMMARY: Event for Today
-        LOCATION:
-        END:VEVENT
-        END:VCALENDAR'''
+    ics_string = f"""BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//commcare//domain//EN
+BEGIN:VEVENT
+SUMMARY:{event_summary}
+DESCRIPTION:{event_description}
+DTSTART;TZID=America/Chicago:{dtstart}
+DTEND;TZID=America/Chicago:{dtend}
+LOCATION:
+END:VEVENT
+END:VCALENDAR"""
 
     ics_bytes = io.BytesIO(ics_string.encode('utf-8'))
     file_attachments = [{
