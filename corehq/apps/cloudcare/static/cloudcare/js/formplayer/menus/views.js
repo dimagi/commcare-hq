@@ -645,6 +645,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             searchMoreButton: '#search-more',
             scrollToBottomButton: '#scroll-to-bottom',
             mapShowHideButton: '#hide-map-button',
+            caseListConfigButton: '#case-list-config-button',
         };
     };
 
@@ -652,7 +653,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         return {
             'click @ui.actionButton': 'caseListAction',
             'click @ui.mapShowHideButton': 'showHideMap',
-            'click @ui.case-list-config': 'openCaseListConfig',
+            'click @ui.caseListConfigButton': 'openCaseListConfig',
             'click @ui.searchButton': 'caseListSearch',
             'click @ui.paginators': 'paginateAction',
             'click @ui.paginationGoButton': 'paginationGoAction',
@@ -688,6 +689,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             self.noItemsText = options.triggerEmptyCaseList ? sidebarNoItemsText : this.options.collection.noItemsText;
             self.selectText = options.collection.selectText;
             self.headers = options.triggerEmptyCaseList ? [] : this.options.headers;
+            self.headerHidden = new Array(self.headers.length).fill(false);
             self.redoLast = options.redoLast;
             if (sessionStorage.selectedValues !== undefined) {
                 const parsedSelectedValues = JSON.parse(sessionStorage.selectedValues)[sessionStorage.queryKey];
@@ -833,8 +835,25 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
         },
 
-        openCaseListConfig: function (e) {
+        openCaseListConfig: function () {
+            const self = this;
+            const modalEl = document.getElementById('case-list-config-modal');
 
+            const saveButton = modalEl.querySelector("#modal-save");
+            const handleSave = function () {
+                const checkboxes = modalEl.querySelectorAll('input');
+                checkboxes.forEach(function (checkbox, index) {
+                    self.headerHidden[index] = !checkbox.checked;
+                });
+                self.render();
+                saveButton.removeEventListener('click', handleSave);
+                modal.hide();
+            };
+
+
+            saveButton.addEventListener('click', handleSave);
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
         },
 
         _allCaseIds: function () {
@@ -1057,6 +1076,25 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             if (self.shouldShowScrollButton()) {
                 $('#scroll-to-bottom').removeClass("d-none");
             }
+
+            // config modal
+            const modalEl = document.getElementById('case-list-config-modal');
+            const modalBody = modalEl.querySelector('form');
+            this.headers.forEach(function (headerItem, index) {
+                // creating checkbox for each item
+                let checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.name = 'name';
+                checkbox.value = 'value';
+                checkbox.id = `column-hidden-${index}`;
+                checkbox.checked = true;
+
+                let text = document.createTextNode(headerItem);  // create text node for checkbox label
+
+                // append checkbox and label to modal body
+                modalBody.appendChild(checkbox);
+                modalBody.appendChild(text);
+            });
         },
 
         onBeforeDetach: function () {
@@ -1083,6 +1121,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 description: description === undefined ? "" : markdown.render(description.trim()),
                 selectText: this.selectText === undefined ? "" : this.selectText,
                 headers: this.headers,
+                headerHidden: this.headerHidden,
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,
                 currentPage: this.options.currentPage,
@@ -1106,7 +1145,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                     return this.sortIndices.indexOf(index) > -1;
                 },
                 columnVisible: function (index) {
-                    return !(this.widthHints && this.widthHints[index] === 0);
+                    return !((this.widthHints && this.widthHints[index] === 0) || this.headerHidden[index]);
                 },
             });
         },
