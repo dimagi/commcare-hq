@@ -30,8 +30,11 @@ class CaseCleaningTasksTable(BaseHtmxTable, tables.Table):
     status = columns.Column(
         verbose_name=gettext_lazy("Status"),
     )
-    time = columns.Column(
-        verbose_name=gettext_lazy("Time"),
+    committed_on = columns.Column(
+        verbose_name=gettext_lazy("Committed On"),
+    )
+    completed_on = columns.Column(
+        verbose_name=gettext_lazy("Completed On"),
     )
     case_type = columns.Column(
         verbose_name=gettext_lazy("Case Type"),
