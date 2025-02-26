@@ -1,13 +1,18 @@
+from datetime import datetime
 from memoized import memoized
 
 from django.contrib import messages
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.views.decorators.http import require_POST
 from django.utils.translation import gettext_lazy, gettext as _
 
 from corehq import toggles
 from corehq.apps.data_cleaning.models import BulkEditSession
+from corehq.apps.data_cleaning.tasks import commit_data_cleaning
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.settings.views import BaseProjectDataView
 
@@ -82,3 +87,15 @@ class CleanCasesSessionView(BaseProjectDataView):
         return {
             "session_id": self.session_id,
         }
+
+
+@login_and_domain_required
+@require_POST
+@toggles.DATA_CLEANING_CASES.required_decorator()
+def save_case_session(request, domain, session_id):
+    session = BulkEditSession.objects.get(session_id=session_id)
+    session.committed_on = datetime.utcnow()
+    session.save()
+    commit_data_cleaning.delay(session_id)
+    messages.success(request, _("Session saved."))
+    return HttpResponseRedirect(reverse(CleanCasesMainView.urlname, args=(domain,)))
