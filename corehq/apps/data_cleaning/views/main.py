@@ -2,7 +2,6 @@ from datetime import datetime
 from memoized import memoized
 
 from django.contrib import messages
-from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -98,4 +97,4 @@ def save_case_session(request, domain, session_id):
     session.save()
     commit_data_cleaning.delay(session_id)
     messages.success(request, _("Session saved."))
-    return HttpResponseRedirect(reverse(CleanCasesMainView.urlname, args=(domain,)))
+    return redirect(reverse(CleanCasesMainView.urlname, args=(domain,)))
