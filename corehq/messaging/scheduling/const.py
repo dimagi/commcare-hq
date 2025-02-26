@@ -57,7 +57,14 @@ ALLOWED_HTML_ATTRIBUTES = {
     'figure': ['style', 'class'],
     'table': ['class', 'role', 'cellspacing', 'cellpadding', 'border', 'align', 'width'],
     'td': ['valign'],
-    'meta': ['charset', 'name', 'viewport', 'content', 'initial-scale']
+    'meta': ['charset', 'name', 'viewport', 'content', 'initial-scale'],
+    'ol': ['type'],
+    'ul': ['type'],
+    'em': ['style', 'class'],
+    's': ['style', 'class'],
+    'u': ['style', 'class'],
+    'b': ['style', 'class'],
+    'i': ['style', 'class'],
 }
 
 ALLOWED_CSS_PROPERTIES = {
