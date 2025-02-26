@@ -216,3 +216,12 @@ class KycUser:
 
 class UserCaseNotFound(Exception):
     pass
+
+
+class KycVerificationFailureCause(models.TextChoices):
+    USER_INFORMATION_INCOMPLETE = ('USER_INFORMATION_INCOMPLETE',
+                                   _("User information on HQ is not complete or invalid."))
+    USER_INFORMATION_MISMATCH = ('user_information_mismatch',
+                                 _("User information on HQ does not match with KYC provider."))
+    NETWORK_ERROR = 'network_error', _("Network error occurred. Please reach out to support.")
+    API_ERROR = 'api_error', _("API error occurred. Please reach out to support.")

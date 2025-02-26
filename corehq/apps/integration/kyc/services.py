@@ -1,6 +1,8 @@
 import json
 import os
 import re
+from collections import defaultdict
+
 import requests
 
 from django.conf import settings
@@ -8,7 +10,9 @@ from django.utils.text import camel_case_to_spaces
 
 import jsonschema
 
+from corehq.apps.integration.kyc.models import KycVerificationFailureCause
 from corehq.apps.users.models import CommCareUser
+from corehq.util.metrics import metrics_counter
 
 
 def verify_users(kyc_users, config):
@@ -17,19 +21,36 @@ def verify_users(kyc_users, config):
     #       multiple calls, consider using Celery gevent workers.
     results = {}
     device_id = f'{__name__}.verify_users'
+    errors_with_count = defaultdict(int)
     for kyc_user in kyc_users:
         try:
             is_verified = verify_user(kyc_user, config)
+            if is_verified is False:
+                errors_with_count[KycVerificationFailureCause.USER_INFORMATION_INCOMPLETE.value] += 1
         # TODO - Decide on how we want to handle these exceptions for the end user
         except jsonschema.exceptions.ValidationError:
             is_verified = False
+            errors_with_count[KycVerificationFailureCause.USER_INFORMATION_INCOMPLETE.value] += 1
         except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
             is_verified = False
+            errors_with_count[KycVerificationFailureCause.NETWORK_ERROR.value] += 1
         except requests.HTTPError:
             is_verified = False
+            errors_with_count[KycVerificationFailureCause.API_ERROR.value] += 1
         kyc_user.update_verification_status(is_verified, device_id=device_id)
         results[kyc_user.user_id] = is_verified
+
+    _report_verification_failure_metric(config.domain, errors_with_count)
     return results
+
+
+def _report_verification_failure_metric(domain, errors_with_count):
+    for error, count in errors_with_count.items():
+        metrics_counter(
+            'commcare.integration.kyc.verification_failure.count',
+            count,
+            tags={'domain': domain, 'error': error}
+        )
 
 
 def verify_user(kyc_user, config):
