@@ -8,6 +8,7 @@ from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.integration.kyc.models import KycConfig, UserDataStore, KycUser
 from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import create_case
 from corehq.motech.const import OAUTH2_CLIENT
 from corehq.motech.models import ConnectionSettings
@@ -92,6 +93,11 @@ class BaseKycUsersSetup(TestCase):
             save=True,
             case_json={'other_case_property': 'other_case_value'},
         )
+        self.addCleanup(
+            CommCareCase.objects.hard_delete_cases,
+            DOMAIN,
+            [self.user_case.case_id, self.other_case.case_id]
+        )
 
 
 class TestGetUserObjectsUsers(BaseKycUsersSetup):
@@ -156,6 +162,11 @@ class TestGetUserObjectsCases(TestCase):
             case_json={'other_case_property': 'other_case_value'},
         )
         case_search_adapter.bulk_index([self.other_case], refresh=True)
+        self.addCleanup(
+            CommCareCase.objects.hard_delete_cases,
+            DOMAIN,
+            [self.other_case.case_id]
+        )
 
     def test_other_case_type(self):
         config = KycConfig(
