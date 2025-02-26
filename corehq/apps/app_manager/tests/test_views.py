@@ -718,6 +718,7 @@ class TestViewGeneric(ViewsBase):
         'langs', 'details', 'None', 'CUSTOM_LOGO_URL', 'hq', 'selected_form', 'slug', 'env', 'False', 'id',
         'ANALYTICS_IDS', 'STATIC_URL', 'selected_module', 'role_version', 'EULA_COMPLIANCE', 'sentry',
         'case_list_form_not_allowed_reasons', 'child_module_enabled', 'block', 'IS_ANALYTICS_ENVIRONMENT',
+        'formats_supporting_case_list_optimizations',
     }
 
     expected_keys_form = {
