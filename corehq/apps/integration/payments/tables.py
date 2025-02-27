@@ -2,8 +2,7 @@ from django.utils.translation import gettext as _
 
 from django_tables2 import columns
 
-from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
-from corehq.apps.integration.kyc.tables import DisableableCheckBoxColumn
+from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable, DisableableCheckBoxColumn
 
 
 class PaymentsVerifyTable(BaseHtmxTable):

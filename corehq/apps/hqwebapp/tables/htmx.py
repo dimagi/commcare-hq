@@ -1,4 +1,6 @@
-from django_tables2 import tables
+from django.forms.utils import flatatt
+from django.utils.safestring import mark_safe
+from django_tables2 import tables, columns
 
 DEFAULT_HTMX_TEMPLATE = "hqwebapp/tables/bootstrap5_htmx.html"
 
@@ -48,3 +50,21 @@ class BaseHtmxTable(tables.Table):
             'class': 'table table-striped',
         }
         template_name = DEFAULT_HTMX_TEMPLATE
+
+
+class DisableableCheckBoxColumn(columns.CheckBoxColumn):
+    """
+        A Django table checkbox column with the ability to be disabled
+        if the record has the field 'invalid_flag_prop_name' set to True.
+    """
+    invalid_flag_prop_name = 'has_invalid_data'
+
+    def render(self, value, record, bound_column):
+        default_attrs = {
+            'type': 'checkbox',
+            'name': 'selection',
+            'value': value,
+        }
+        if record.get(self.invalid_flag_prop_name, False):
+            default_attrs['disabled'] = 'disabled'
+        return mark_safe('<input %s/>' % flatatt(default_attrs))
