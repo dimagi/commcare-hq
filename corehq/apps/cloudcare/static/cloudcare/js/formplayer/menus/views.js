@@ -306,6 +306,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             });
             self.smallScreenEnabled = cloudcareUtils.smallScreenIsEnabled();
             self.scrollContainer = $(constants.SCROLLABLE_CONTENT_CONTAINER);
+            this.headerModel = this.options.headerModel;
+            this.listenTo(this.headerModel, 'change:headerVisible', this.render);
         },
 
         className: "formplayer-request case-row",
@@ -475,6 +477,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri.trim(), appId);
                 },
+                headerModel: this.headerModel,
             };
         },
 
@@ -668,6 +671,51 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         };
     };
 
+    // USH-5319: model
+    const HeaderModel = Backbone.Model.extend({
+        defaults: function () {
+            return {
+                headers: [],
+                headerVisible: [],
+            };
+        },
+
+        initialize: function (attributes) {
+            if (attributes && attributes.headers && !attributes.headerVisible) {
+                this.set('headerVisible', Array(attributes.headers.length).fill(true));
+            }
+        },
+
+        isVisible: function (index) {
+            return this.get('headerVisible')[index];
+        },
+    });
+
+    // USH-5319: config view
+    const CaseListConfigView = Marionette.View.extend({
+        template: _.template($("#case-list-config-body").html() || ""),
+
+        initialize: function () {
+            this.headerVisibility = this.model.get('headerVisible').slice();
+        },
+
+        events: {
+            'click .js-save': 'onSave',
+            'change .header-checkbox': 'onCheckboxChange',
+        },
+
+        onSave: function () {
+            this.model.set('headerVisible', this.headerVisibility);
+            this.trigger('save', this.model);
+            this.$el.closest('.modal').modal('hide');
+        },
+
+        onCheckboxChange: function (e) {
+            this.headerVisibility[e.currentTarget.value] = e.currentTarget.checked;
+            console.log(this.headerVisibility);
+        },
+    });
+
     const CaseListView = Marionette.CollectionView.extend({
         tagName: "div",
         template: _.template($("#case-view-list-template").html() || ""),
@@ -678,7 +726,22 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             return {
                 styles: this.options.styles,
                 endpointActions: this.options.endpointActions,
+                headerModel: this.headerModel,
             };
+        },
+
+        regions: {
+            configModalRegion: '.js-config-modal-content',
+        },
+
+        onRender: function () {
+            if (this.$el.find('.js-config-modal-content').length === 0) {
+                this.$el.html(this.template());
+            }
+
+            this.configModalRegion = new Marionette.Region({
+                el: this.$('.js-config-modal-content'),
+            });
         },
 
         initialize: function (options) {
@@ -689,7 +752,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             self.noItemsText = options.triggerEmptyCaseList ? sidebarNoItemsText : this.options.collection.noItemsText;
             self.selectText = options.collection.selectText;
             self.headers = options.triggerEmptyCaseList ? [] : this.options.headers;
-            self.headerHidden = new Array(self.headers.length).fill(false);
+            self.headerModel = new HeaderModel({headers: self.headers});
             self.redoLast = options.redoLast;
             if (sessionStorage.selectedValues !== undefined) {
                 const parsedSelectedValues = JSON.parse(sessionStorage.selectedValues)[sessionStorage.queryKey];
@@ -837,21 +900,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
         openCaseListConfig: function () {
             const self = this;
-            const modalEl = document.getElementById('case-list-config-modal');
-
-            const saveButton = modalEl.querySelector("#modal-save");
-            const handleSave = function () {
-                const checkboxes = modalEl.querySelectorAll('input');
-                checkboxes.forEach(function (checkbox, index) {
-                    self.headerHidden[index] = !checkbox.checked;
-                });
+            const caseListConfigView = new CaseListConfigView({
+                model: this.headerModel,
+            });
+            this.configModalRegion.show(caseListConfigView);
+            this.listenTo(caseListConfigView, 'save', function () {
                 self.render();
-                saveButton.removeEventListener('click', handleSave);
-                modal.hide();
-            };
+            });
 
-
-            saveButton.addEventListener('click', handleSave);
+            const modalEl = document.getElementById('case-list-config-modal');
             const modal = new bootstrap.Modal(modalEl);
             modal.show();
         },
@@ -1076,25 +1133,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             if (self.shouldShowScrollButton()) {
                 $('#scroll-to-bottom').removeClass("d-none");
             }
-
-            // config modal
-            const modalEl = document.getElementById('case-list-config-modal');
-            const modalBody = modalEl.querySelector('form');
-            this.headers.forEach(function (headerItem, index) {
-                // creating checkbox for each item
-                let checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.name = 'name';
-                checkbox.value = 'value';
-                checkbox.id = `column-hidden-${index}`;
-                checkbox.checked = true;
-
-                let text = document.createTextNode(headerItem);  // create text node for checkbox label
-
-                // append checkbox and label to modal body
-                modalBody.appendChild(checkbox);
-                modalBody.appendChild(text);
-            });
         },
 
         onBeforeDetach: function () {
@@ -1121,7 +1159,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 description: description === undefined ? "" : markdown.render(description.trim()),
                 selectText: this.selectText === undefined ? "" : this.selectText,
                 headers: this.headers,
-                headerHidden: this.headerHidden,
+                headerModel: this.headerModel,
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,
                 currentPage: this.options.currentPage,
@@ -1145,7 +1183,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                     return this.sortIndices.indexOf(index) > -1;
                 },
                 columnVisible: function (index) {
-                    return !((this.widthHints && this.widthHints[index] === 0) || this.headerHidden[index]);
+                    return !(this.widthHints && this.widthHints[index] === 0) && this.headerModel.isVisible(index);
                 },
             });
         },
