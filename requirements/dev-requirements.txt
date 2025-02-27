@@ -340,7 +340,7 @@ jsonfield==3.1.0
     # via
     #   -r base-requirements.in
     #   django-prbac
-jsonobject==2.0.0
+jsonobject==2.3.1
     # via
     #   -r base-requirements.in
     #   git-build-branch
@@ -628,7 +628,6 @@ six==1.16.0
     #   eulxml
     #   fixture
     #   isodate
-    #   jsonobject
     #   jsonobject-couchdbkit
     #   jsonpath-ng
     #   mando
