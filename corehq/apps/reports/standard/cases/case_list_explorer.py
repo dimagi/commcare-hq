@@ -204,7 +204,7 @@ class CaseListExplorer(CaseListReport, XpathCaseSearchFilterMixin):
         data = (wrap_case_search_hit(r) for r in query.scroll_ids_to_disk_and_iter_docs())
         return self._get_rows(data)
 
-    @profile("Parsing rows")
+    @profile("Preparing data for display")
     def _get_rows(self, data):
         timer = metrics_histogram_timer(
             'commcare.case_list_explorer_query.row_fetch_timings',
