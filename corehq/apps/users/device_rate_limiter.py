@@ -65,7 +65,7 @@ class DeviceRateLimiter:
             )
             return False
 
-        is_enabled = toggles.DEVICE_RATE_LIMITER.enabled(domain)
+        is_enabled = toggles.DEVICE_RATE_LIMITER.enabled(domain, toggles.NAMESPACE_DOMAIN)
         metrics_counter(
             'commcare.devices_per_user.rate_limited',
             tags={'domain': domain, 'user_id': user_id, 'enabled': str(is_enabled)},
