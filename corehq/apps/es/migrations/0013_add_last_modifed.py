@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     operations = [
         corehq.apps.es.migration_operations.UpdateIndexMapping(
-            name='hqusers_2017-09-07',
+            name='users-20230524',
             type_='user',
             properties={
                 'last_modified': {
@@ -19,6 +19,6 @@ class Migration(migrations.Migration):
                     'format': "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss"
                 },
             },
-            es_versions=[2],
+            es_versions=[5],
         ),
     ]
