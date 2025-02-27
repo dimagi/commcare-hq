@@ -46,7 +46,7 @@ from .new import (
 )
 
 from .deid_export import (
-    DeIdMapping,
+    DeIdHash,
 )
 
 from .export_settings import (

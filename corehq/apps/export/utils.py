@@ -79,5 +79,5 @@ def get_deid_transform_function(func_name):
         import couchexport.deid as module
         return getattr(module, func_name)
     elif func_name == DEID_TRANSFORM_FUNCTIONS[DEID_ID_TRANSFORM]:
-        from corehq.apps.export.models import DeIdMapping
-        return DeIdMapping.get_deid
+        from corehq.apps.export.models import DeIdHash
+        return DeIdHash.get_deid
