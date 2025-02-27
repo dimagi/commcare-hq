@@ -5,8 +5,8 @@
 #
 # Translators:
 # Dimagi Dev <devops@dimagi.com>, 2021
-# Michelle B. Sultan <msultan@dimagi.com>, 2022
 # Gladys Teos <info@enestranslations.com>, 2024
+# Michelle B. Sultan <msultan@dimagi.com>, 2025
 #
 #, fuzzy
 msgid ""
@@ -14,7 +14,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Gladys Teos <info@enestranslations.com>, 2024\n"
+"Last-Translator: Michelle B. Sultan <msultan@dimagi.com>, 2025\n"
 "Language-Team: Spanish (https://app.transifex.com/dimagi/teams/9388/es/)\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -580,6 +580,11 @@ msgid "Select parent"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "Save Questions to Case Properties"
+msgstr "Guardar Preguntas a Propiedades de Caso"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Raw"
 msgstr "Sin procesar"
 
@@ -642,16 +647,8 @@ msgid "You have unchanged user properties settings"
 msgstr "Tiene configuraciones de propiedades sin cambio"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-#, fuzzy
-#| msgid "Optional Instance Properties"
-msgid "Save Questions to Case Properties"
-msgstr "Propiedades de Ejemplo Opcional"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-#, fuzzy
-#| msgid "User Properties"
 msgid "Save Questions to User Properties"
-msgstr "Propiedades del Usuario"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "Property uses unrecognized prefix <strong>"
@@ -4458,7 +4455,6 @@ msgstr "ID de Preguntas"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/standard_hq_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/standard_hq_report.js
-#: corehq/apps/userreports/static/userreports/js/configurable_report.js
 msgid "Report successfully emailed"
 msgstr "Reporte enviado por correo electrónico exitosamente"
 
@@ -4757,12 +4753,6 @@ msgstr ""
 msgid "Please check above for any errors in your configuration."
 msgstr "Por favor verifique arriba si hay algún error en su configuración."
 
-#: corehq/apps/userreports/static/userreports/js/configurable_report.js
-msgid "An error occurred emailing you report. Please try again."
-msgstr ""
-"Ocurrió un error al enviar por correo electrónico su reporte. Por favor "
-"intente de nuevo."
-
 #: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js
 msgid "Edit a custom web report or custom web report source"
 msgstr ""
@@ -4835,14 +4825,6 @@ msgstr "Buscar Grupo..."
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
 msgid "Group membership has changed."
 msgstr "La membresía del grupo ha cambiado."
-
-#: corehq/apps/users/static/users/js/enterprise_users.js
-msgid "Hide Deactivated Mobile Workers"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/enterprise_users.js
-msgid "Show Deactivated Mobile Workers"
-msgstr "Mostrar Usuarios Móviles Desactivados"
 
 #: corehq/apps/users/static/users/js/filtered_download.js
 msgid "<%- user_count %> user"

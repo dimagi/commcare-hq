@@ -87,7 +87,6 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
 
         self.resetForm = function () {
             self.$formElement.find("button[type='submit']").button('reset');
-            self.$formElement.get(0).reset();
             self.cancelBtnEnabled(true);
             self.$submitBtn.button('reset');
             resetErrors();

@@ -3,10 +3,23 @@ import uuid
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from corehq.apps.data_cleaning.views import (
+from corehq.apps.data_cleaning.models import (
+    BulkEditSession,
+    PinnedFilterType,
+)
+from corehq.apps.data_cleaning.views.filters import (
+    PinnedFilterFormView,
+)
+from corehq.apps.data_cleaning.views.main import (
     CleanCasesMainView,
     CleanCasesSessionView,
+)
+from corehq.apps.data_cleaning.views.tables import (
     CleanCasesTableView,
+    CaseCleaningTasksTableView,
+)
+from corehq.apps.data_cleaning.views.setup import (
+    SetupCaseSessionFormView,
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.case_search import case_search_adapter
@@ -48,10 +61,22 @@ class CleanCasesViewAccessTest(TestCase):
             cls.other_domain_obj,
         )
         cls.client = Client()
+        session = BulkEditSession.new_case_session(
+            cls.user_in_domain.get_django_user(), cls.domain_name, 'plants',
+        )
+        cls.real_session_id = session.session_id
         cls.fake_session_id = uuid.uuid4()
-        cls.main_view_url = reverse(CleanCasesMainView.urlname, args=[cls.domain_name])
-        cls.session_view_url = reverse(CleanCasesSessionView.urlname, args=[cls.domain_name, cls.fake_session_id])
-        cls.table_view_url = reverse(CleanCasesTableView.urlname, args=[cls.domain_name, cls.fake_session_id])
+        cls.all_views = [
+            (CleanCasesMainView, (cls.domain_name,)),
+            (SetupCaseSessionFormView, (cls.domain_name,)),
+            (CaseCleaningTasksTableView, (cls.domain_name,)),
+            (CleanCasesSessionView, (cls.domain_name, cls.real_session_id,)),
+            (CleanCasesSessionView, (cls.domain_name, cls.fake_session_id,)),
+            (CleanCasesTableView, (cls.domain_name, cls.real_session_id,)),
+            (CleanCasesTableView, (cls.domain_name, cls.fake_session_id,)),
+            (PinnedFilterFormView, (cls.domain_name, cls.real_session_id, PinnedFilterType.CASE_OWNERS)),
+            (PinnedFilterFormView, (cls.domain_name, cls.fake_session_id, PinnedFilterType.CASE_OWNERS)),
+        ]
 
     @classmethod
     def tearDownClass(cls):
@@ -62,21 +87,25 @@ class CleanCasesViewAccessTest(TestCase):
         super().tearDownClass()
 
     def test_has_no_access_without_login(self):
-        response_main = self.client.get(self.main_view_url)
-        response_session = self.client.get(self.session_view_url)
-        response_table = self.client.get(self.table_view_url)
-        self.assertEqual(response_main.status_code, 404)
-        self.assertEqual(response_session.status_code, 404)
-        self.assertEqual(response_table.status_code, 404)
+        for view_class, args in self.all_views:
+            url = reverse(view_class.urlname, args=args)
+            response = self.client.get(url)
+            self.assertEqual(
+                response.status_code,
+                404,
+                msg=f"{view_class.__name__} should NOT be accessible"
+            )
 
     def test_has_no_access_without_flag(self):
         self.client.login(username=self.user_in_domain.username, password=self.password)
-        response_main = self.client.get(self.main_view_url)
-        response_session = self.client.get(self.session_view_url)
-        response_table = self.client.get(self.table_view_url)
-        self.assertEqual(response_main.status_code, 404)
-        self.assertEqual(response_session.status_code, 404)
-        self.assertEqual(response_table.status_code, 404)
+        for view_class, args in self.all_views:
+            url = reverse(view_class.urlname, args=args)
+            response = self.client.get(url)
+            self.assertEqual(
+                response.status_code,
+                404,
+                msg=f"{view_class.__name__} should NOT be accessible"
+            )
 
     @flag_enabled('DATA_CLEANING_CASES')
     def test_has_access_with_flag(self):
@@ -85,19 +114,40 @@ class CleanCasesViewAccessTest(TestCase):
         and user permissions/roles once specifics are decided.
         """
         self.client.login(username=self.user_in_domain.username, password=self.password)
-        response_main = self.client.get(self.main_view_url)
-        response_session = self.client.get(self.session_view_url)
-        response_table = self.client.get(self.table_view_url)
-        self.assertEqual(response_main.status_code, 200)
-        self.assertEqual(response_session.status_code, 200)
-        self.assertEqual(response_table.status_code, 200)
+        for view_class, args in self.all_views:
+            if self.fake_session_id in args:
+                # only test real sessions
+                continue
+            url = reverse(view_class.urlname, args=args)
+            response = self.client.get(url)
+            self.assertEqual(
+                response.status_code,
+                200,
+                msg=f"{view_class.__name__} should be accessible"
+            )
+
+    @flag_enabled('DATA_CLEANING_CASES')
+    def test_redirects_session_with_no_existing_session(self):
+        self.client.login(username=self.user_in_domain.username, password=self.password)
+        session_url = reverse(CleanCasesSessionView.urlname, args=(self.domain_name, self.fake_session_id))
+        response = self.client.get(session_url)
+        self.assertEqual(response.status_code, 302)
+
+    @flag_enabled('DATA_CLEANING_CASES')
+    def test_table_view_not_found_with_no_existing_session(self):
+        self.client.login(username=self.user_in_domain.username, password=self.password)
+        table_url = reverse(CleanCasesTableView.urlname, args=(self.domain_name, self.fake_session_id))
+        response = self.client.get(table_url)
+        self.assertEqual(response.status_code, 404)
 
     @flag_enabled('DATA_CLEANING_CASES')
     def test_has_no_access_with_other_domain(self):
         self.client.login(username=self.user_outside_of_domain.username, password=self.password)
-        response_main = self.client.get(self.main_view_url)
-        response_session = self.client.get(self.session_view_url)
-        response_table = self.client.get(self.table_view_url)
-        self.assertEqual(response_main.status_code, 404)
-        self.assertEqual(response_session.status_code, 404)
-        self.assertEqual(response_table.status_code, 404)
+        for view_class, args in self.all_views:
+            url = reverse(view_class.urlname, args=args)
+            response = self.client.get(url)
+            self.assertEqual(
+                response.status_code,
+                404,
+                msg=f"{view_class.__name__} should NOT be accessible"
+            )

@@ -566,6 +566,11 @@ msgid "Select parent"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "Save Questions to Case Properties"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Raw"
 msgstr ""
 
@@ -625,10 +630,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "You have unchanged user properties settings"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-msgid "Save Questions to Case Properties"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
@@ -4275,7 +4276,6 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/standard_hq_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/standard_hq_report.js
-#: corehq/apps/userreports/static/userreports/js/configurable_report.js
 msgid "Report successfully emailed"
 msgstr ""
 
@@ -4555,10 +4555,6 @@ msgstr ""
 msgid "Please check above for any errors in your configuration."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/configurable_report.js
-msgid "An error occurred emailing you report. Please try again."
-msgstr ""
-
 #: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js
 msgid "Edit a custom web report or custom web report source"
 msgstr ""
@@ -4628,14 +4624,6 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
 msgid "Group membership has changed."
-msgstr ""
-
-#: corehq/apps/users/static/users/js/enterprise_users.js
-msgid "Hide Deactivated Mobile Workers"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/enterprise_users.js
-msgid "Show Deactivated Mobile Workers"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/filtered_download.js

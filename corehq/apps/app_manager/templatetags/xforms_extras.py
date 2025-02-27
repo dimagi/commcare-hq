@@ -155,7 +155,7 @@ def input_trans(name, langs=None, input_name='name', input_id=None, data_bind=No
 
 
 @register.simple_tag
-def inline_edit_trans(name, langs=None, url='', saveValueName='', postSave='',
+def inline_edit_trans(name, langs=None, url='', saveValueName='',
         containerClass='', iconClass='', readOnlyClass='', disallow_edit='false'):
     options = _get_dynamic_input_trans_options(name, EscapeMethod.JS, langs=langs, allow_blank=False)
     options.update({
@@ -164,7 +164,6 @@ def inline_edit_trans(name, langs=None, url='', saveValueName='', postSave='',
         'containerClass': containerClass,
         'iconClass': iconClass,
         'readOnlyClass': readOnlyClass,
-        'postSave': postSave,
         'disallow_edit': disallow_edit
     })
 
@@ -180,7 +179,6 @@ def inline_edit_trans(name, langs=None, url='', saveValueName='', postSave='',
             containerClass: '{containerClass}',
             iconClass: '{iconClass}',
             readOnlyClass: '{readOnlyClass}',
-            postSave: {postSave},
             disallow_edit: {disallow_edit},
         "></inline-edit>
     '''

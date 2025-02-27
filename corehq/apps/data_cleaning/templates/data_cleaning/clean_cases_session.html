@@ -2,15 +2,25 @@
 {% load hq_shared_tags %}
 {% load django_tables2 %}
 {% load i18n %}
-
-{% js_entry "hqwebapp/js/htmx_and_alpine" %}
+{% js_entry "data_cleaning/js/clean_cases_session" %}
 
 {% block content %}
   {% breadcrumbs current_page section current_page.parents %}
   <div class="d-flex align-items-center m-3">
-    <h1 class="fs-3 pe-3 py-3 m-0">
-      {{ current_page.page_name }}
-    </h1>
+    <h1 class="fs-3 pe-3 py-3 m-0">{{ current_page.page_name }}</h1>
+    <div>
+      {% include "data_cleaning/partials/button_bar.html" %}
+      <form
+        method="POST"
+        action="{% url "save_case_session" domain session_id %}"
+        class="float-end mx-3"
+      >
+        {% csrf_token %}
+        <button type="submit" class="btn btn-success">
+          <i class="fa fa-hippo"></i> Save
+        </button>
+      </form>
+    </div>
   </div>
   <div
     class="mx-3"
@@ -21,6 +31,7 @@
       <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading..." %}
     </div>
   </div>
+  {% include "data_cleaning/partials/offcanvas.html" %}
 {% endblock %}
 
 {% block modals %}
