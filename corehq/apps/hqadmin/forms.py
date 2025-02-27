@@ -248,6 +248,7 @@ class DisableTwoFactorForm(forms.Form):
 
     def clean_username(self):
         username = self.cleaned_data['username']
+        username = username.lower()
         if username != self.username:
             raise forms.ValidationError("Username doesn't match expected.")
 
