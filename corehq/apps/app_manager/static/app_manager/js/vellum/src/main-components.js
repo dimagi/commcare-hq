@@ -23945,7 +23945,7 @@ var __t,__p='',__j=Array.prototype.join,print=function(){__p+=__j.call(arguments
 with(obj||{}){
 __p+='<li>\n  <i class="'+
 ((__t=( icon ))==null?'':__t)+
-'" /> '+
+'"></i> '+
 ((__t=( displayPath ))==null?'':__t)+
 '\n    ';
  if (displayLabel) { 
@@ -47310,7 +47310,7 @@ define('vellum/core',[
         var _this = this,
             $modal, $updateForm, $textarea, codeMirror,
             warn = !this.data.core.form.isFormValid(validateMug) ?
-                " <i class='fd-valid-alert-icon fa fa-warning' /> " +
+                " <i class='fd-valid-alert-icon fa fa-warning'></i> " +
                 gettext("Validation failed. Form may not perform correctly on your device!") :
                 "";
 
