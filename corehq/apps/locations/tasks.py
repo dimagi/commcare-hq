@@ -2,7 +2,6 @@ import logging
 
 from django.conf import settings
 
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 
@@ -137,12 +136,3 @@ def delete_locations_related_rules(location_ids):
             rule.delete_actions()
             rule.delete()
         location_definition.delete()
-
-
-def deactivate_users_at_location(location_id):
-    from corehq.apps.locations.dbaccessors import mobile_user_ids_at_locations
-    user_ids = mobile_user_ids_at_locations([location_id])
-    for doc in iter_docs(CouchUser.get_db(), user_ids):
-        user = CouchUser.wrap_correctly(doc)
-        user.is_active = False
-        user.save(spawn_task=True)
