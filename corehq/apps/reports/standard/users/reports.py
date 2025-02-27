@@ -118,11 +118,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
             return UserHistory.objects.none()
 
         changed_by_user_slugs = self.request.GET.getlist(ChangedByUserFilter.slug)
-        if changed_by_user_slugs:
-            changed_by_user_ids = self._get_user_ids(changed_by_user_slugs)
-        else:
-            # Show records that might be changed not by user in this domain
-            changed_by_user_ids = None
+        changed_by_user_ids = self._get_user_ids(changed_by_user_slugs)
         # return empty queryset if no matching users were found
         if changed_by_user_slugs and not changed_by_user_ids:
             return UserHistory.objects.none()
