@@ -1,4 +1,5 @@
 from corehq.apps.reports.filters.case_list import CaseListFilter
+from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 
 
 class CaseOwnersPinnedFilter(CaseListFilter):
@@ -14,4 +15,14 @@ class CaseOwnersPinnedFilter(CaseListFilter):
         return {
             'report_select2_config': context,
             'filter_help': filter_help,
+        }
+
+
+class CaseStatusPinnedFilter(SelectOpenCloseFilter):
+    template = "data_cleaning/filters/pinned/single_option.html"
+
+    @property
+    def filter_context(self):
+        return {
+            'report_select2_config': super().filter_context,
         }

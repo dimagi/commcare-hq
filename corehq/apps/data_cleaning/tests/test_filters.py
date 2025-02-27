@@ -7,6 +7,7 @@ from django.test import TestCase, RequestFactory
 from corehq.apps.data_cleaning.exceptions import UnsupportedFilterValueException
 from corehq.apps.data_cleaning.filters import (
     CaseOwnersPinnedFilter,
+    CaseStatusPinnedFilter,
 )
 from corehq.apps.data_cleaning.models import (
     BulkEditColumnFilter,
@@ -647,5 +648,30 @@ class TestReportFilterSubclasses(TestCase):
                 '.net/wiki/spaces/commcarepublic/pages/2215051298/Organization+Data'
                 '+Management"target="_blank">Learn more</a>.'
             ],
+        }
+        self.assertEqual(report_filter.filter_context, expected_context)
+
+    def test_case_status_report_filter_context(self):
+        report_filter = CaseStatusPinnedFilter(
+            self.request, self.domain_name, use_bootstrap5=True
+        )
+        expected_context = {
+            'report_select2_config': {
+                'select': {
+                    'options': [
+                        {'val': 'open', 'text': 'Only Open'},
+                        {'val': 'closed', 'text': 'Only Closed'},
+                    ],
+                    'default_text': 'Show All',
+                    'selected': '',
+                    'placeholder': '',
+                },
+                'pagination': {
+                    'enabled': False,
+                    'url': None,
+                    'handler': '',
+                    'action': None,
+                },
+            },
         }
         self.assertEqual(report_filter.filter_context, expected_context)
