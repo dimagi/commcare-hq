@@ -1,9 +1,12 @@
+from django.utils.translation import gettext_lazy
+
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 
 
 class CaseOwnersPinnedFilter(CaseListFilter):
     template = "data_cleaning/filters/pinned/multi_option.html"
+    placeholder = gettext_lazy("Please add case owners to filter the list of cases.")
 
     @property
     def filter_context(self):
