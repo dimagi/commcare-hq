@@ -1289,6 +1289,7 @@ users
  0075_hqapikey_encrypted_key
  0076_connectiduserlink_messaging_consent_and_more
  0077_invitationhistory
+ 0078_connectiduserlink_is_active
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
