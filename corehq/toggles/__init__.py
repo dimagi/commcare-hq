@@ -1563,6 +1563,7 @@ RICH_TEXT_EMAILS = StaticToggle(
     'Enable sending rich text HTML emails in conditional alerts and broadcasts',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    help_link='https://dimagi.atlassian.net/wiki/spaces/USH/pages/2901835924/Rich+text+emails'
 )
 
 RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
@@ -3020,4 +3021,11 @@ MTN_MOBILE_WORKER_VERIFICATION = StaticToggle(
     label='Enable user verification using MTN Mobile Money',
     tag=TAG_SOLUTIONS,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+ACTIVATE_DATADOG_APM_TRACES = StaticToggle(
+    slug='activate_datadog_apm_traces',
+    label='USH: Turn on Datadog APM traces for a project.',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
 )

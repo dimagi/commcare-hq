@@ -22,7 +22,7 @@ from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 ], name='dispatch')
 class SetupCaseSessionFormView(HqHtmxActionMixin, LoginAndDomainMixin, DomainViewMixin, TemplateView):
     urlname = "data_cleaning_select_case_type_form"
-    template_name = "data_cleaning/partials/forms/next_action_form.html"
+    template_name = "data_cleaning/forms/next_action_form.html"
     container_id = "setup-case-session"
 
     def get_context_data(self, **kwargs):

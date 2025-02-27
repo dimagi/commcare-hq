@@ -35,6 +35,13 @@ class BaseTestKycView(TestCase):
             is_admin=True,
         )
         cls.webuser.save()
+        cls.conn_settings = ConnectionSettings.objects.create(
+            name='test-conn',
+            url='http://test.com',
+            username='test',
+            password='test',
+        )
+        cls.addClassCleanup(cls.conn_settings.delete)
 
     @classmethod
     def tearDownClass(cls):
@@ -89,6 +96,21 @@ class TestKycVerificationReportView(BaseTestKycView):
         response = self._make_request()
         assert response.status_code == 200
 
+    @flag_enabled('KYC_VERIFICATION')
+    def test_domain_has_config_context(self):
+        response = self._make_request()
+        assert response.context['domain_has_config'] is False
+
+        kyc_config = KycConfig.objects.create(
+            domain=self.domain,
+            user_data_store=UserDataStore.CUSTOM_USER_DATA,
+            api_field_to_user_data_map=[],
+            connection_settings=self.conn_settings
+        )
+        self.addCleanup(kyc_config.delete)
+        response = self._make_request()
+        assert response.context['domain_has_config'] is True
+
 
 @es_test(requires=[case_search_adapter], setup_class=True)
 class TestKycVerificationTableView(BaseTestKycView):
@@ -97,14 +119,6 @@ class TestKycVerificationTableView(BaseTestKycView):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        conn_settings = ConnectionSettings.objects.create(
-            name='test-conn',
-            url='http://test.com',
-            username='test',
-            password='test',
-        )
-        cls.addClassCleanup(conn_settings.delete)
-
         cls.kyc_mapping = [
             {
                 'fieldName': 'first_name',
@@ -156,7 +170,7 @@ class TestKycVerificationTableView(BaseTestKycView):
             domain=cls.domain,
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
             api_field_to_user_data_map=cls.kyc_mapping,
-            connection_settings=conn_settings,
+            connection_settings=cls.conn_settings,
         )
         cls.addClassCleanup(cls.kyc_config.delete)
         cls.user1 = CommCareUser.create(
