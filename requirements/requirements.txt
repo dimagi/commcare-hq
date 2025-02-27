@@ -230,7 +230,7 @@ future==0.18.3
     # via
     #   pyjwkest
     #   pyseeyou
-gevent==23.9.1
+gevent==24.11.1
     # via
     #   -r base-requirements.in
     #   django-websocket-redis

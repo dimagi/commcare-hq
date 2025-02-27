@@ -47,7 +47,7 @@ elasticsearch5>=5.0.0,<6.0.0
 elasticsearch6>=6.0.0,<7.0.0
 ethiopian-date-converter
 eulxml
-gevent
+gevent>=24.11.1
 greenlet
 gunicorn
 haversine  # SolTech - Used in Geospatial features
