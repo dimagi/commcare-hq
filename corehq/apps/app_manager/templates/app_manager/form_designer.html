@@ -1,13 +1,10 @@
-{% extends 'app_manager/managed_app.html'%}
+{% extends 'app_manager/apps_base.html'%}
 {% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load xforms_extras %}
 
 {% block head %}{{ block.super }}
-  {% if include_fullstory %}
-    {% include 'analytics/fullstory.html' %}
-  {% endif %}
   {% if not vellum_debug %}
     <link href="{% static "app_manager/js/vellum/style.css" %}" type="text/css" rel="stylesheet"/>
   {% elif vellum_debug == "dev-min" %}

@@ -1,6 +1,5 @@
 import datetime
 import json
-import re
 import secrets
 import string
 
@@ -8,7 +7,6 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
 from django.core.validators import EmailValidator, validate_email
-from django.forms.widgets import PasswordInput
 from django.template.loader import get_template
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -36,7 +34,7 @@ from corehq.apps.enterprise.models import (
     EnterprisePermissions,
 )
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.crispy import HQModalFormHelper
+from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
 from corehq.apps.hqwebapp.utils.translation import format_html_lazy
 from corehq.apps.hqwebapp.widgets import BootstrapSwitchInput, Select2Ajax, SelectToggle
 from corehq.apps.locations.models import SQLLocation
@@ -358,7 +356,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
         self.fields['language'].label = gettext_lazy("My Language")
 
-        self.new_helper = FormHelper()
+        self.new_helper = HQFormHelper()
         self.new_helper.form_method = 'POST'
         self.new_helper.attrs = {
             'name': 'user_information',
@@ -395,10 +393,12 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
                 gettext_lazy("Basic"),
                 *basic_fields
             ),
-            twbscrispy.StrictButton(
-                gettext_lazy("Update My Information"),
-                type='submit',
-                css_class='btn-primary',
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    gettext_lazy("Update My Information"),
+                    type='submit',
+                    css_class='btn-primary',
+                )
             )
         )
 
@@ -587,69 +587,6 @@ class SetUserPasswordForm(SetPasswordForm):
         couch_user = CouchUser.from_django_user(self.user)
         clear_login_attempts(couch_user)
         return user
-
-
-class CommCareAccountForm(forms.Form):
-    """
-    Form for CommCareAccounts
-    """
-    username = forms.CharField(required=True)
-    password_1 = forms.CharField(label=gettext_lazy('Password'), widget=PasswordInput(),
-                                 required=True, min_length=1)
-    password_2 = forms.CharField(label=gettext_lazy('Password (reenter)'), widget=PasswordInput(),
-                                 required=True, min_length=1)
-    phone_number = forms.CharField(
-        max_length=80,
-        required=False,
-        help_text=gettext_lazy("Please enter number, including "
-                               "international code, in digits only.")
-    )
-
-    def __init__(self, *args, **kwargs):
-        if 'domain' not in kwargs:
-            raise Exception('Expected kwargs: domain')
-        self.domain = kwargs.pop('domain', None)
-        super(forms.Form, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_tag = False
-        self.helper.label_class = 'col-lg-3'
-        self.helper.field_class = 'col-lg-9'
-        self.helper.layout = Layout(
-            Fieldset(
-                _("Mobile Worker's Primary Information"),
-                'username',
-                'password_1',
-                'password_2',
-                'phone_number',
-            )
-        )
-
-    def clean_username(self):
-        return clean_mobile_worker_username(
-            self.domain,
-            self.cleaned_data.get('username')
-        )
-
-    def clean_phone_number(self):
-        phone_number = self.cleaned_data['phone_number']
-        phone_number = re.sub(r'\s|\+|\-', '', phone_number)
-        if phone_number == '':
-            return None
-        elif not re.match(r'\d+$', phone_number):
-            raise forms.ValidationError(_("%s is an invalid phone number." % phone_number))
-        return phone_number
-
-    def clean(self):
-        try:
-            password_1 = self.cleaned_data['password_1']
-            password_2 = self.cleaned_data['password_2']
-        except KeyError:
-            pass
-        else:
-            if password_1 != password_2:
-                raise forms.ValidationError("Passwords do not match")
-
-        return self.cleaned_data
 
 
 validate_username = EmailValidator(message=gettext_lazy('Username contains invalid characters.'))
@@ -1026,14 +963,15 @@ class GroupMembershipForm(forms.Form):
         super(GroupMembershipForm, self).__init__(*args, **kwargs)
         self.fields['selected_ids'].widget.set_url(group_api_url)
 
-        self.helper = FormHelper()
-        self.helper.label_class = 'form-label'
+        self.helper = HQFormHelper()
         self.helper.form_tag = False
 
         self.helper.layout = crispy.Layout(
             crispy.Field('selected_ids'),
-            crispy.ButtonHolder(
-                Submit('submit', _('Update'))
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    Submit('submit', _('Update'))
+                )
             )
         )
 
@@ -1063,15 +1001,12 @@ class MultipleSelectionForm(forms.Form):
             return super(MyView, self).dispatch(request, *args, **kwargs)
 
         # javascript
-        hqDefine("app/js/module", function() {
-            // Multiselect widget
-            $(function () {
-                var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
-                multiselect_utils.createFullMultiselectWidget('id_of_multiselect_field', {
-                    selectableHeaderTitle: gettext("Available Things"),
-                    selectedHeaderTitle: gettext("Things Selected"),
-                    searchItemTitle: gettext("Search Things..."),
-                });
+        import multiselectUtils from "hqwebapp/js/multiselect_utils";
+        $(function () {
+            multiselectUtils.createFullMultiselectWidget('id_of_multiselect_field', {
+                selectableHeaderTitle: gettext("Available Things"),
+                selectedHeaderTitle: gettext("Things Selected"),
+                searchItemTitle: gettext("Search Things..."),
             });
         });
     """
@@ -1091,16 +1026,15 @@ class MultipleSelectionForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_tag = False
 
+        from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
+        is_bootstrap5 = get_bootstrap_version() == BOOTSTRAP_5
+
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 fieldset_title,
-                crispy.Field('selected_ids', css_class="hide"),
+                crispy.Field('selected_ids', css_class="d-none" if is_bootstrap5 else "hide"),
             ),
-            hqcrispy.FormActions(
-                crispy.ButtonHolder(
-                    Submit('submit', submit_label)
-                )
-            )
+            hqcrispy.FormActions(crispy.ButtonHolder(Submit('submit', submit_label)))
         )
 
 
@@ -1173,18 +1107,12 @@ class SelectUserLocationForm(forms.Form):
         )
 
     def clean_assigned_locations(self):
-        from corehq.apps.locations.models import SQLLocation
-        from corehq.apps.locations.util import get_locations_from_ids
-
+        from corehq.apps.users.validation import validate_assigned_locations_allow_users
         location_ids = self.data.getlist('assigned_locations')
-        try:
-            locations = get_locations_from_ids(location_ids, self.domain)
-        except SQLLocation.DoesNotExist:
-            raise forms.ValidationError(_('One or more of the locations was not found.'))
-        if locations.filter(location_type__has_users=False).exists():
-            raise forms.ValidationError(
-                _('One or more of the locations you specified cannot have users assigned.'))
-        return [location.location_id for location in locations]
+        error = validate_assigned_locations_allow_users(self.domain, location_ids)
+        if error:
+            raise forms.ValidationError(error)
+        return location_ids
 
     def _user_has_permission_to_access_locations(self, new_location_ids):
         assigned_locations = SQLLocation.objects.filter(location_id__in=new_location_ids)
@@ -1194,25 +1122,18 @@ class SelectUserLocationForm(forms.Form):
     def clean(self):
         self.cleaned_data = super(SelectUserLocationForm, self).clean()
 
-        primary_location_id = self.cleaned_data['primary_location']
+        primary_location_id = self.cleaned_data.get('primary_location', '')
         assigned_location_ids = self.cleaned_data.get('assigned_locations', [])
         if not self._user_has_permission_to_access_locations(assigned_location_ids):
             self.add_error(
                 'assigned_locations',
                 _("You do not have permissions to assign one of those locations.")
             )
-        if primary_location_id:
-            if primary_location_id not in assigned_location_ids:
-                self.add_error(
-                    'primary_location',
-                    _("Primary location must be one of the user's locations")
-                )
-        if assigned_location_ids and not primary_location_id:
-            self.add_error(
-                'primary_location',
-                _("Primary location can't be empty if the user has any "
-                  "locations set")
-            )
+        from corehq.apps.users.validation import validate_primary_location_assignment
+        error = validate_primary_location_assignment(primary_location_id, assigned_location_ids)
+        if error:
+            self.add_error('primary_location', error)
+
         return self.cleaned_data
 
 
@@ -1481,25 +1402,26 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
 
 class AddPhoneNumberForm(forms.Form):
     phone_number = forms.CharField(
-        max_length=50, help_text=gettext_lazy('Please enter number, including country code, in digits only.')
+        max_length=20, help_text=gettext_lazy('Please enter number, including country code, in digits only.')
     )
 
     form_type = forms.CharField(initial='add-phonenumber', widget=forms.HiddenInput)
 
     def __init__(self, *args, **kwargs):
         super(AddPhoneNumberForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_class = 'form'
+        self.helper = HQFormHelper()
         self.helper.layout = crispy.Layout(
             Fieldset(
                 _('Add a Phone Number'),
                 'form_type',
                 twbscrispy.PrependedText('phone_number', '+', type='tel', pattern=r'\d+')
             ),
-            StrictButton(
-                _('Add Number'),
-                css_class='btn-primary disable-on-submit',
-                type='submit',
+            hqcrispy.FormActions(
+                StrictButton(
+                    _('Add Number'),
+                    css_class='btn-primary disable-on-submit',
+                    type='submit',
+                )
             )
         )
         self.fields['phone_number'].label = gettext_lazy('Phone number')
@@ -1518,14 +1440,15 @@ class _UserFormSet(object):
     def user_form(self):
         raise NotImplementedError()
 
+    @property
+    def field_view(self):
+        raise NotImplementedError()
+
     @cached_property
     def custom_data(self):
-        from corehq.apps.users.views.mobile.custom_data_fields import (
-            UserFieldsView,
-        )
         return CustomDataEditor(
             domain=self.domain,
-            field_view=UserFieldsView,
+            field_view=self.field_view,
             existing_custom_data=self.editable_user.get_user_data(self.domain).to_dict(),
             post_dict=self.data,
             ko_model="custom_fields",
@@ -1567,6 +1490,11 @@ class CommCareUserFormSet(_UserFormSet):
             request=self.request,
         )
 
+    @property
+    def field_view(self):
+        from .views.mobile.custom_data_fields import CommcareUserFieldsView
+        return CommcareUserFieldsView
+
 
 class WebUserFormSet(_UserFormSet):
     """Combines UpdateUserRoleForm and the Custom Data form"""
@@ -1575,6 +1503,11 @@ class WebUserFormSet(_UserFormSet):
     def user_form(self):
         return UpdateUserRoleForm(data=self.data, domain=self.domain,
                                   existing_user=self.editable_user, request=self.request)
+
+    @property
+    def field_view(self):
+        from .views.mobile.custom_data_fields import WebUserFieldsView
+        return WebUserFieldsView
 
 
 class UserFilterForm(forms.Form):
@@ -1794,7 +1727,12 @@ class BaseTableauUserForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         self.domain = kwargs.pop('domain', None)
+        readonly = kwargs.pop('readonly', True)
         super(BaseTableauUserForm, self).__init__(*args, **kwargs)
+
+        if readonly:
+            self.fields['role'].widget.attrs['readonly'] = True
+            self.fields['groups'].widget.attrs['disabled'] = True
 
         self.allowed_tableau_groups = [
             TableauGroupTuple(group.name, group.id) for group in get_all_tableau_groups(self.domain)
@@ -1810,7 +1748,6 @@ class TableauUserForm(BaseTableauUserForm):
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
-        readonly = kwargs.pop('readonly', True)
         self.username = kwargs.pop('username', None)
         super(TableauUserForm, self).__init__(*args, **kwargs)
 
@@ -1819,10 +1756,6 @@ class TableauUserForm(BaseTableauUserForm):
             if group_name in user_group_names:
                 # Pre-choose groups that the user already belongs to
                 self.fields['groups'].initial.append(i)
-
-        if readonly:
-            self.fields['role'].widget.attrs['readonly'] = True
-            self.fields['groups'].widget.attrs['disabled'] = True
 
         self.helper = FormHelper()
 

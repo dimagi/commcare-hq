@@ -10,14 +10,18 @@ from corehq.apps.case_search.filter_dsl import SearchFilterContext
 from corehq.apps.case_search.xpath_functions.value_functions import (
     date,
     date_add,
+    datetime_,
+    datetime_add,
+    double,
+    now,
     today,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 
 
-@freeze_time('2021-08-02T22:00:00Z')
-class TestToday(TestCase):
+@freeze_time('2021-08-02T22:03:16Z')
+class TestDateFunctions(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.domain_name = "test_today"
@@ -44,9 +48,6 @@ class TestToday(TestCase):
         with self.assertRaises(XPathFunctionException):
             today(node, SearchFilterContext("domain"))
 
-
-@freeze_time('2021-08-02T22:00:00Z')
-class TestDate(TestCase):
     def test_date_string(self):
         the_date = '2021-01-01'
         node = parse_xpath(f"date('{the_date}')")
@@ -63,7 +64,27 @@ class TestDate(TestCase):
         result = date(node, SearchFilterContext("domain"))
         eq(result, '2021-08-02')
 
+    def test_now(self):
+        node = parse_xpath("now()")
+        result = now(node, SearchFilterContext("domain"))
+        eq(result, '2021-08-02T22:03:16+00:00')
 
+
+@freeze_time('2021-08-02T22:03:16Z')
+@pytest.mark.parametrize("expression, expected", [
+    ("datetime('2021-08-02')", '2021-08-02T00:00:00+00:00'),
+    ("datetime('2021-08-02T11:22:16')", '2021-08-02T11:22:16+00:00'),
+    ("datetime(15)", '1970-01-16T00:00:00+00:00'),
+    ("datetime(20041.614995)", '2024-11-14T14:45:35.568000+00:00'),
+    ("datetime(now())", '2021-08-02T22:03:16+00:00'),
+])
+def test_datetime(expression, expected):
+    node = parse_xpath(expression)
+    result = datetime_(node, SearchFilterContext("domain"))
+    eq(result, expected)
+
+
+@freeze_time('2021-08-02T22:03:16Z')
 @pytest.mark.parametrize("expression, expected", [
     ("date-add('2020-02-29', 'years', 1)", "2021-02-28"),
     ("date-add('2020-02-29', 'years', 1.0)", "2021-02-28"),
@@ -75,14 +96,23 @@ class TestDate(TestCase):
     ("date-add('2022-01-01', 'days', -1)", "2021-12-31"),
     ("date-add('2022-01-01', 'days', 1.5)", "2022-01-02"),
     ("date-add('2022-01-01', 'days', '5')", "2022-01-06"),
+    ("date-add('2022-01-01', 'hours', 27)", "2022-01-02"),
     ("date-add(0, 'days', '5')", "1970-01-06"),
     ("date-add(365, 'years', '5')", "1976-01-01"),
     ("date-add(date('2021-01-01'), 'years', '5')", "2026-01-01"),
     ("date-add(date(5), 'months', '1')", "1970-02-06"),
+    ("date-add(today(), 'days', '2')", "2021-08-04"),
+    ("datetime-add(now(), 'days', '-1')", "2021-08-01T22:03:16+00:00"),
+    ("datetime-add(now(), 'hours', '-3')", "2021-08-02T19:03:16+00:00"),
+    ("datetime-add(now(), 'minutes', '-5')", "2021-08-02T21:58:16+00:00"),
+    ("datetime-add(now(), 'seconds', '-17')", "2021-08-02T22:02:59+00:00"),
+    ("datetime-add(now(), 'seconds', '0.5')", "2021-08-02T22:03:16.500000+00:00"),
+    ("datetime-add(today(), 'days', '1')", "2021-08-03T00:00:00+00:00"),
 ])
 def test_date_add(expression, expected):
     node = parse_xpath(expression)
-    result = date_add(node, SearchFilterContext("domain"))
+    fn = date_add if expression.startswith('date-add') else datetime_add
+    result = fn(node, SearchFilterContext("domain"))
     eq(result, expected)
 
 
@@ -90,6 +120,7 @@ def test_date_add(expression, expected):
     # bad date
     "date-add('2020-02-31', 'years', 1)",
     "date-add(1.5, 'years', 1)",
+    "date-add(now(), 'days', '-1')",  # now() is a datetime, not date
 
     # non-integer quantity
     "date-add('2020-02-01', 'years', 1.5)",
@@ -112,4 +143,25 @@ def test_date_add(expression, expected):
 def test_date_add_errors(expression):
     node = parse_xpath(expression)
     with assert_raises(XPathFunctionException):
-        date_add(node, SearchFilterContext("domain"))
+        fn = date_add if expression.startswith('date-add') else datetime_add
+        fn(node, SearchFilterContext("domain"))
+
+
+@freeze_time('2021-08-02T22:03:16Z')
+@pytest.mark.parametrize("expression, expected", [
+    ("double('1.3')", 1.3),
+    ("double('13')", 13.0),
+    ("double(now())", 18841.918935185186),
+    ("double(today())", 18841.0),
+    ("double('2021-01-01')", 18628.0),
+])
+def test_double(expression, expected):
+    node = parse_xpath(expression)
+    result = double(node, SearchFilterContext("domain"))
+    eq(result, expected)
+
+
+def test_double_random_string():
+    node = parse_xpath("double('not double-able')")
+    with assert_raises(XPathFunctionException):
+        double(node, SearchFilterContext("domain"))

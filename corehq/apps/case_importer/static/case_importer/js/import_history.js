@@ -1,17 +1,19 @@
-"use strict";
+
 hqDefine('case_importer/js/import_history', [
     'jquery',
     'knockout',
     'underscore',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/bootstrap5/components.ko',
+    'hqwebapp/js/components/inline_edit',
+    'hqwebapp/js/components/pagination',
+    'hqwebapp/js/components/search_box',
 ], function (
     $,
     ko,
     _,
     assertProperties,
-    initialPageData
+    initialPageData,
 ) {
     var uploadModel = function (options) {
         var self = _.extend({}, _.omit(options, 'comment', 'task_status'));

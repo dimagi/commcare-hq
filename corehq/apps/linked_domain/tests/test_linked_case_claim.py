@@ -62,7 +62,7 @@ class TestRemoteLinkedCaseClaim(BaseLinkedCaseClaimTest):
         cls.couch_user = WebUser.create(cls.domain, "test", "foobar", None, None)
         cls.django_user = cls.couch_user.get_django_user()
         cls.api_key, _ = HQApiKey.objects.get_or_create(user=cls.django_user)
-        cls.auth_headers = {'HTTP_AUTHORIZATION': 'apikey test:%s' % cls.api_key.key}
+        cls.auth_headers = {'HTTP_AUTHORIZATION': 'apikey test:%s' % cls.api_key.plaintext_key}
         cls.domain_link.save()
 
     @classmethod

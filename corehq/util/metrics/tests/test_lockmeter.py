@@ -1,9 +1,14 @@
+import threading
 from unittest import TestCase
+from unittest.mock import call, patch
+from uuid import uuid1
 
 import attr
-from unittest.mock import call, patch
+from django_redis import get_redis_connection
+from redis.lock import Lock
 
 from corehq.util.metrics.tests.utils import capture_metrics
+
 from ..lockmeter import MeteredLock
 
 
@@ -137,6 +142,22 @@ class TestMeteredLock(TestCase):
             call.trace().__exit__(None, None, None),
         ])
 
+    def test_reacquire_untracked(self):
+        fake = FakeLock(timeout=-1)
+        lock = MeteredLock(fake, "test", track_unreleased=False)
+        with patch("corehq.util.metrics.lockmeter.tracer") as tracer:
+            lock.reacquire()
+        self.assertListEqual(tracer.mock_calls, [
+            call.trace("commcare.lock.reacquire", resource="key"),
+            call.trace().__enter__(),
+            call.trace().__enter__().set_tags({
+                "key": "key",
+                "name": "test",
+                "acquired": "true",
+            }),
+            call.trace().__exit__(None, None, None),
+        ])
+
     def test_release_untracked(self):
         fake = FakeLock()
         lock = MeteredLock(fake, "test", track_unreleased=False)
@@ -155,6 +176,19 @@ class TestMeteredLock(TestCase):
             lock.__del__()
         self.assertListEqual(tracer.mock_calls, [])
 
+    def test_local(self):
+        redis = get_redis_connection()
+        name = uuid1().hex
+        with Lock(redis, name, timeout=5) as redis_lock:
+            lock = MeteredLock(redis_lock, name)
+            self.assertEqual(type(lock.local), threading.local)
+
+    def test_no_local(self):
+        fake = FakeLock()
+        lock = MeteredLock(fake, "test")
+        with self.assertRaises(AttributeError):
+            lock.local
+
 
 @attr.s
 class FakeLock(object):
@@ -166,6 +200,9 @@ class FakeLock(object):
     def acquire(self, blocking=True):
         self.locked = True
         return blocking
+
+    def reacquire(self):
+        return True
 
     def release(self):
         self.locked = False

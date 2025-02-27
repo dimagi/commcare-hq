@@ -4,11 +4,10 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
     'knockout',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/base_ace',  // ace editor for UCR filter
-    'hqwebapp/js/bootstrap3/components.ko',    // select toggle widget
+    'hqwebapp/js/components/select_toggle',
 ], function ($, _, ko, initialPageData, baseAce) {
 
     var CaseRuleCriteria = function (initial, constants, caseTypeObservable) {
-        'use strict';
         var self = {};
 
         self.constants = constants;
@@ -261,7 +260,6 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
         };
 
         var notModifiedSinceDefinition = function (koTemplateId) {
-            'use strict';
             var self = {};
             self.koTemplateId = koTemplateId;
 
@@ -271,7 +269,6 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
         };
 
         var matchPropertyDefinition = function (koTemplateId) {
-            'use strict';
             var self = {};
             self.koTemplateId = koTemplateId;
             self.plus_minus = ko.observable();
@@ -291,7 +288,6 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
         };
 
         var customMatchDefinition = function (koTemplateId) {
-            'use strict';
             var self = {};
             self.koTemplateId = koTemplateId;
 
@@ -301,7 +297,6 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
         };
 
         var closedParentDefinition = function (koTemplateId) {
-            'use strict';
             var self = {};
             self.koTemplateId = koTemplateId;
 
@@ -310,7 +305,6 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
         };
 
         var locationDefinition = function (koTemplateId) {
-            'use strict';
             var self = {};
             self.koTemplateId = koTemplateId;
 
@@ -322,7 +316,6 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
         };
 
         var ucrFilterDefinition = function (koTemplateId) {
-            'use strict';
             var self = {};
             self.koTemplateId = koTemplateId;
             self.configured_filter = ko.observable();

@@ -3,9 +3,13 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% requirejs_main 'users/js/invite_web_user' %}
+{% js_entry_b3 'users/js/invite_web_user' %}
 
 {% block page_content %}
+  {% initial_page_data 'custom_fields_slugs' custom_fields_slugs %}
+  {% initial_page_data 'custom_fields_profiles' custom_fields_profiles %}
+  {% initial_page_data 'custom_fields_profile_slug' custom_fields_profile_slug %}
+  {% initial_page_data 'user_data' user_data %}
   {% registerurl "check_sso_trust" domain %}
 
   <div id="invite-web-user-form"

@@ -4,13 +4,15 @@ hqDefine("data_interfaces/js/auto_update_rules", [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'analytix/js/google',
-    'hqwebapp/js/bootstrap3/components.ko', // for pagination and search box
+    'hqwebapp/js/components/pagination',
+    'hqwebapp/js/components/search_box',
+    'commcarehq',
 ], function (
     $,
     ko,
     _,
     initialPageData,
-    googleAnalytics
+    googleAnalytics,
 ) {
 
     var RuleViewModel = function (data, parent) {

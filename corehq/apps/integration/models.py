@@ -6,6 +6,7 @@ import json
 from memoized import memoized
 
 from corehq import toggles
+from corehq.apps.integration.kyc.models import KycConfig # noqa
 
 
 class DialerSettings(models.Model):

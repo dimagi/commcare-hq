@@ -1,9 +1,10 @@
-"use strict";
+
 hqDefine('builds/js/edit_builds', [
     'jquery',
     'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
+    'commcarehq',
 ], function ($, _, ko, initialPageData) {
     var doc = initialPageData.get('doc');
 
@@ -33,7 +34,7 @@ hqDefine('builds/js/edit_builds', [
 
         _.each(doc.menu, function (version) {
             self.versions.push(versionModel(
-                version.build.version, version.label, version.superuser_only
+                version.build.version, version.label, version.superuser_only,
             ));
         });
         _.each(doc.defaults, function (versionDoc) {
@@ -97,7 +98,7 @@ hqDefine('builds/js/edit_builds', [
     $('#menu-form .btn-primary').click(function () {
         postGo(
             $('#menu-form')[0].action,
-            {'doc': JSON.stringify(outputJSON(buildsMenu))}
+            {'doc': JSON.stringify(outputJSON(buildsMenu))},
         );
     });
 });

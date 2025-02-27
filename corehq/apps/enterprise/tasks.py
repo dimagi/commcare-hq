@@ -25,9 +25,9 @@ from corehq.util.view_utils import absolute_reverse
 
 
 @task(serializer='pickle', queue="email_queue")
-def email_enterprise_report(domain: str, slug, couch_user):
+def email_enterprise_report(domain: str, slug, couch_user, **kwargs):
     account = BillingAccount.get_account_by_domain(domain)
-    report = EnterpriseReport.create(slug, account.id, couch_user)
+    report = EnterpriseReport.create(slug, account.id, couch_user, **kwargs)
 
     # Generate file
     csv_file = io.StringIO()

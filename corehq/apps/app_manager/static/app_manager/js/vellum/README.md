@@ -83,7 +83,7 @@ If not present, bundled versions will be loaded.  -->
 ```
 
 See
-[here](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/app_manager/templates/app_manager/v1/form_designer.html)
+[here](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/app_manager/static/app_manager/js/forms/form_designer.js)
 and `tests/main.js` for example options usage.
 
 Vellum targets modern browsers.  IE8 and earlier are not supported.

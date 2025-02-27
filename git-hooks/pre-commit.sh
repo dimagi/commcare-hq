@@ -54,7 +54,18 @@ if [ $? != 0 ]; then status=1; fi
 pyfiles=($(git diff --staged --name-only --diff-filter=d| grep "\.py$"))
 if [ -n "$pyfiles" ]; then
     flake8 --show-source --config=.flake8 "${pyfiles[@]}"
-	if [ $? != 0 ]; then status=1; fi
+	if [ $? != 0 ]; then status=1 && echo; fi
+fi
+
+html_or_stylesheets=($(git diff --staged --name-only --diff-filter=d| grep -E "\.(html|css|scss|less)$"))
+if [ -n "$html_or_stylesheets" ]; then
+    ./node_modules/.bin/prettier --list-different "${html_or_stylesheets[@]}"
+    if [ $? != 0 ]; then
+        status=1;
+	    echo "HTML and/or stylesheets above have code style issues."
+	    echo "After committing changes with --no-verify, run ./scripts/prettify-changed.sh to fix them."
+	    echo
+    fi
 fi
 
 if [ $status != 0 ]

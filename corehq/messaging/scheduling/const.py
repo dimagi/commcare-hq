@@ -8,6 +8,7 @@ VISIT_WINDOW_DUE_DATE = 'WINDOW_DUE_DATE'
 
 
 ALLOWED_HTML_TAGS = {
+    "h1",
     "h2",
     "h3",
     "h4",
@@ -38,27 +39,35 @@ ALLOWED_HTML_TAGS = {
     "tbody",
     "tr",
     "td",
-    "html",
-    "head",
     "meta",
     "title",
-    "body",
     "style",
 }
 
 
 ALLOWED_HTML_ATTRIBUTES = {
-    'a': ['href', 'title'],
+    'a': ['href', 'title', 'style', 'class'],
     'abbr': ['title'],
     'acronym': ['title'],
+    'p': ['style', 'class'],
     'div': ['style', 'class'],
     'span': ['style', 'class'],
     'img': ['style', 'src', 'width', 'height', 'class'],
     'figcaption': ['style', 'class'],
     'figure': ['style', 'class'],
-    'table': ['class', 'role','cellspacing', 'cellpadding', 'border', 'align', 'width'],
+    'table': ['class', 'role', 'cellspacing', 'cellpadding', 'border', 'align', 'width'],
     'td': ['valign'],
-    'meta': ['charset', 'name', 'viewport', 'content', 'initial-scale']
+    'meta': ['charset', 'name', 'viewport', 'content', 'initial-scale'],
+    'ol': ['type'],
+    'ul': ['type'],
+    'h1': ['style', 'class'],
+    'h2': ['style', 'class'],
+    'h3': ['style', 'class'],
+    'em': ['style', 'class'],
+    's': ['style', 'class'],
+    'u': ['style', 'class'],
+    'b': ['style', 'class'],
+    'i': ['style', 'class'],
 }
 
 ALLOWED_CSS_PROPERTIES = {

@@ -98,7 +98,7 @@ class ElasticTestMixin(object):
 @nottest
 def es_test(test=None, requires=None, setup_class=False):
     """Decorator for Elasticsearch tests.
-    The decorator sets the ``es_test`` nose attribute and optionally performs
+    The decorator sets the ``es_test`` pytest marker and optionally performs
     index setup/cleanup before and after the test(s).
 
     :param test: A test class, method, or function -- only used via the

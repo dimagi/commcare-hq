@@ -1,0 +1,70 @@
+{% extends "hqwebapp/bootstrap5/base_page.html"  %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block title %}{% trans "My Projects" %}{% endblock title %}
+
+{% js_entry 'domain/js/select' %}
+
+{% block page_content %}
+  {% initial_page_data 'invitation_links' invitation_links %}
+  {% initial_page_data 'domain_links' domain_links %}
+
+<div id="all-links" class="ko-template">
+  <div class="btn-toolbar" data-bind="visible: invitationLinks().length > 1">
+    <a class="btn btn-primary"
+       href="{% url "accept_all_invitations" %}">
+      <i class="fa fa-envelope"></i>
+      {% trans 'Accept All Invitations' %}
+    </a>
+  </div>
+  <div class="spacer"></div>
+
+  <div class="card text-bg-info" data-bind="visible: invitationLinks().length">  {# todo B5: css-panel #}
+    <div class="card-header ">
+      <h3 class="card-title">
+        {% trans 'My Invitations' %}
+      </h3>
+    </div>
+    <div class="card-body">
+      <ul class="list-invitations" data-bind="foreach: invitationLinks">
+        <li>
+          <a data-bind="attr: {href: url}" class="btn btn-outline-primary btn-sm">
+            <i class='fa fa-envelope'>
+            </i>
+            {% trans "Accept" %}
+          </a>
+          <!-- ko text: display_name -->
+          <!-- /ko -->
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="card ">  {# todo B5: css-panel #}
+    <div class="card-header ">
+      <div class="row">
+        <div class="col-md-6">
+          <h3 class="card-title" style="padding-top: 7px;">  {# todo B5: inline-style #}
+            {% trans 'My Projects' %}
+          </h3>
+        </div>
+        <div class="col-md-6">
+          <search-box data-apply-bindings="false"
+                      params="value: query,
+                              action: search,
+                              immediate: true,
+                              placeholder: '{% trans_html_attr "Search Projects..." %}'">
+          </search-box>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <ul class="nav nav-pills nav-stacked" data-bind="foreach: domainLinks">  {# todo B5: css-nav #}
+        <li>
+          <a data-bind="attr: {href: url}, text: display_name"></a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

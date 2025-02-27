@@ -7,11 +7,14 @@ from corehq.apps.app_manager.models import (
     BuildProfile,
     GlobalAppConfig,
     LatestEnabledBuildProfiles,
-    Module,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import get_simple_form, patch_validate_xform
-from corehq.apps.app_manager.util import split_path
+from corehq.apps.app_manager.tests.util import (
+    get_simple_form,
+    patch_validate_xform,
+    SuiteMixin,
+)
+from corehq.apps.app_manager.util import split_path, does_app_have_mobile_ucr_v1_refs
 from corehq.apps.app_manager.views.utils import get_default_followup_form_xml
 from corehq.apps.domain.models import Domain
 
@@ -213,3 +216,24 @@ class TestSplitPath(SimpleTestCase):
         path, name = split_path('')
         self.assertEqual(path, '')
         self.assertEqual(name, '')
+
+
+class TestDoesAppHaveMobileUCRV1Refs(TestCase, SuiteMixin):
+    file_path = ('data', 'suite')
+
+    def _create_app_with_form(self, xml_source_name):
+        app = Application.new_app('domain', "Untitled Application")
+        app.add_module(AdvancedModule.new_module('module', None))
+        app.new_form(
+            module_id=0,
+            name="My Form",
+            lang=None,
+            attachment=self.get_xml(xml_source_name).decode('utf-8')
+        )
+        return app
+
+    def test_does_app_have_mobile_ucr_v1_refs(self):
+        app_with_refs = self._create_app_with_form('reports_module_data_entry_mobile_ucr_v1')
+        self.assertTrue(does_app_have_mobile_ucr_v1_refs(app_with_refs))
+        app_without_refs = self._create_app_with_form('normal-suite')
+        self.assertFalse(does_app_have_mobile_ucr_v1_refs(app_without_refs))

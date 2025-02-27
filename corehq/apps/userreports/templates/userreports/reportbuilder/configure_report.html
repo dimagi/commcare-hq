@@ -9,19 +9,9 @@
       height: 350px;
     }
   </style>
-  {% include 'analytics/fullstory.html' %}
 {% endblock %}
 
-{% block js %}{{ block.super }}
-  {% compress js %}
-    <script src="{% static 'app_manager/js/forms/case_knockout_bindings.js' %}"></script>
-    <script src="{% static 'userreports/js/constants.js' %}"></script>
-    <script src="{% static 'userreports/js/builder_view_models.js' %}"></script>
-    <script src="{% static 'userreports/js/report_config.js' %}"></script>
-    <script src="{% static 'userreports/js/utils.js' %}"></script>
-    <script src="{% static 'userreports/js/configure_report.js' %}"></script>
-  {% endcompress %}
-{% endblock %}
+{% js_entry_b3 "userreports/js/configure_report" %}
 
 {% block pre_page_content %}{% endblock %}{# Avoid the spacer #}
 

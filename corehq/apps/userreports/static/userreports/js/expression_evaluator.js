@@ -1,4 +1,10 @@
-hqDefine('userreports/js/expression_evaluator', function () {
+hqDefine('userreports/js/expression_evaluator', [
+    'jquery',
+    'knockout',
+], function (
+    $,
+    ko,
+) {
     var expressionModel = function (expressionEditor, docEditor, submitUrl, initialData) {
         var self = {};
         initialData = initialData || {};

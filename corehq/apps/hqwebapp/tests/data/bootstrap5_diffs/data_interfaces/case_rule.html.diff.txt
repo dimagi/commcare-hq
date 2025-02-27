@@ -1,0 +1,41 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+-{% extends 'hqwebapp/bootstrap3/base_section.html' %}
++{% extends 'hqwebapp/bootstrap5/base_section.html' %}
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ {% load crispy_forms_tags %}
+ 
+-{% js_entry_b3 'data_interfaces/js/case_rule_main' %}
++{% js_entry 'data_interfaces/js/case_rule_main' %}
+ 
+ {% block page_content %}
+   {% initial_page_data 'actions_initial' actions_form.current_values %}
+@@ -11,8 +11,8 @@
+   {% initial_page_data 'read_only_mode' read_only_mode %}
+   {% initial_page_data 'requires_sysadmin' requires_sysadmin %}
+ 
+-  {% include 'data_interfaces/partials/bootstrap3/case_rule_criteria.html' with form=criteria_form %}
+-  {% include 'data_interfaces/partials/bootstrap3/case_rule_actions.html' with form=actions_form %}
++  {% include 'data_interfaces/partials/bootstrap5/case_rule_criteria.html' with form=criteria_form %}
++  {% include 'data_interfaces/partials/bootstrap5/case_rule_actions.html' with form=actions_form %}
+ 
+   <div id="rule-definition">
+     {% if requires_sysadmin %}
+@@ -21,11 +21,11 @@
+       </p>
+     {% endif %}
+     <form id="rule-definition-form" class="form form-horizontal main-form" method="POST" action="#">
+-      {% crispy rule_form %}
+-      {% crispy criteria_form %}
+-      {% crispy actions_form %}
++      {% crispy rule_form %}  {# todo B5: crispy #}
++      {% crispy criteria_form %}  {# todo B5: crispy #}
++      {% crispy actions_form %}  {# todo B5: crispy #}
+       <div class="form-actions">
+-        <div class="col-xs-1">
++        <div class="col-sm-1">
+           <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+         </div>
+       </div>

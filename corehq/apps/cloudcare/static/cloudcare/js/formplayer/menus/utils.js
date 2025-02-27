@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/menus/utils", [
     'underscore',
     'backbone',
@@ -11,7 +10,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
     'cloudcare/js/formplayer/users/models',
     'cloudcare/js/formplayer/utils/utils',
     'cloudcare/js/formplayer/menus/views',
-    'analytix/js/gtx',
+    'cloudcare/js/gtx',
 ], function (
     _,
     Backbone,
@@ -24,7 +23,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
     UsersModels,
     utils,
     views,
-    gtx
+    gtx,
 ) {
     var recordPosition = function (position) {
         sessionStorage.locationLat = position.coords.latitude;
@@ -35,7 +34,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
 
     var handleLocationRequest = function (optionsFromLastRequest) {
         var success = function (position) {
-            hqRequire(["cloudcare/js/formplayer/menus/controller"], function (MenusController) {
+            import("cloudcare/js/formplayer/menus/controller").then(function (MenusController) {
                 FormplayerFrontend.regions.getRegion('loadingProgress').empty();
                 recordPosition(position);
                 MenusController.selectMenu(optionsFromLastRequest);
@@ -47,7 +46,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
             FormplayerFrontend.trigger('showError',
                 getErrorMessage(err) +
                 "Without access to your location, computations that rely on the here() function will show up blank.",
-                false, false
+                false, false,
             );
         };
 
@@ -225,7 +224,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
                 moduleName: menuResponse.title,
             });
             kissmetrics.track.event("Viewed Case List", kissmetricsEventData);
-            gtx.sendEvent("web_apps_viewed_case_list", gtxEventData);
+            gtx.logCaseList(gtx.extractSelections(menuResponse), gtxEventData);
 
             if (/search_command\.m\d+/.test(menuResponse.queryKey) && menuResponse.currentPage === 0) {
                 kissmetrics.track.event('Started Case Search', {

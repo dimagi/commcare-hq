@@ -8,6 +8,7 @@ from testil import assert_raises
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase, restrict_user_by_location
+from corehq.apps.reports.models import TableauUser, TableauServer
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.importer import SiteCodeToLocationCache
 from corehq.apps.user_importer.validation import (
@@ -26,13 +27,23 @@ from corehq.apps.user_importer.validation import (
     ConfirmationSmsValidator,
     LocationValidator,
     _get_invitation_or_editable_user,
+    CustomDataValidator,
+    TableauRoleValidator,
+    TableauGroupsValidator,
+    UserAccessValidator,
 )
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, HqPermissions, Invitation, WebUser
 from corehq.apps.users.models_role import UserRole
-from corehq.apps.custom_data_fields.models import (CustomDataFieldsDefinition,
-    CustomDataFieldsProfile)
-from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+    Field)
+from corehq.apps.users.views.mobile.custom_data_fields import (
+    UserFieldsView,
+    WebUserFieldsView,
+    CommcareUserFieldsView,
+)
 from corehq.tests.tools import nottest
 from corehq.util.test_utils import flag_enabled
 
@@ -328,6 +339,7 @@ class TestLocationValidator(LocationHierarchyTestCase):
         cls.editable_user = WebUser.create(cls.domain, 'editable-user', 'password', None, None)
         cls.validator = LocationValidator(cls.domain, cls.upload_user,
                                           SiteCodeToLocationCache(cls.domain), True)
+        cls.user_access_validator = UserAccessValidator(cls.domain, cls.upload_user, True)
 
     def test_success(self):
         self.editable_user.reset_locations(self.domain, [self.locations['Cambridge'].location_id])
@@ -342,19 +354,26 @@ class TestLocationValidator(LocationHierarchyTestCase):
         user_spec = {'username': self.editable_user.username,
                      'location_code': [self.locations['Middlesex'].site_code,
                                        self.locations['Cambridge'].site_code]}
-        validation_result = self.validator.validate_spec(user_spec)
-        assert validation_result == self.validator.error_message_user_access
+        validation_result = self.user_access_validator.validate_spec(user_spec)
+        assert validation_result == self.user_access_validator.error_message_user_access
+
+        user_spec = {'username': self.editable_user.username}
+        validation_result = self.user_access_validator.validate_spec(user_spec)
+        assert validation_result == self.user_access_validator.error_message_user_access
 
     def test_cant_edit_commcare_user(self):
-        self.cc_user_validator = LocationValidator(self.domain, self.upload_user,
-                                                SiteCodeToLocationCache(self.domain), False)
+        self.cc_user_validator = UserAccessValidator(self.domain, self.upload_user, False)
         self.editable_cc_user = CommCareUser.create(self.domain, 'cc-username', 'password', None, None)
         self.editable_cc_user.reset_locations([self.locations['Suffolk'].location_id])
         user_spec = {'user_id': self.editable_cc_user._id,
                      'location_code': [self.locations['Middlesex'].site_code,
                                        self.locations['Cambridge'].site_code]}
         validation_result = self.cc_user_validator.validate_spec(user_spec)
-        assert validation_result == self.validator.error_message_user_access
+        assert validation_result == self.user_access_validator.error_message_user_access
+
+        user_spec = {'user_id': self.editable_cc_user._id}
+        validation_result = self.cc_user_validator.validate_spec(user_spec)
+        assert validation_result == self.user_access_validator.error_message_user_access
 
     def test_cant_edit_invitation(self):
         self.invitation = Invitation.objects.create(
@@ -367,8 +386,12 @@ class TestLocationValidator(LocationHierarchyTestCase):
         user_spec = {'username': self.invitation.email,
                      'location_code': [self.locations['Middlesex'].site_code,
                                        self.locations['Cambridge'].site_code]}
-        validation_result = self.validator.validate_spec(user_spec)
-        assert validation_result == self.validator.error_message_user_access
+        validation_result = self.user_access_validator.validate_spec(user_spec)
+        assert validation_result == self.user_access_validator.error_message_user_access
+
+        user_spec = {'username': self.invitation.email}
+        validation_result = self.user_access_validator.validate_spec(user_spec)
+        assert validation_result == self.user_access_validator.error_message_user_access
 
     def test_cant_add_location(self):
         self.editable_user.reset_locations(self.domain, [self.locations['Cambridge'].location_id])
@@ -388,6 +411,15 @@ class TestLocationValidator(LocationHierarchyTestCase):
         assert validation_result == self.validator.error_message_location_access.format(
             self.locations['Suffolk'].site_code)
 
+    def test_cant_remove_all_locations(self):
+        self.editable_user.reset_locations(self.domain, [self.locations['Suffolk'].location_id,
+                                                         self.locations['Cambridge'].location_id])
+        user_spec = {'username': self.editable_user.username,
+                     'location_code': []}
+        validation_result = self.validator.validate_spec(user_spec)
+        assert validation_result == self.validator.error_message_location_access.format(
+            self.locations['Suffolk'].site_code)
+
     @flag_enabled('USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION')
     def test_location_not_has_users(self):
         self.editable_user.reset_locations(self.domain, [self.locations['Middlesex'].location_id])
@@ -397,7 +429,11 @@ class TestLocationValidator(LocationHierarchyTestCase):
                      'location_code': [self.locations['Cambridge'].site_code,
                                        self.locations['Middlesex'].site_code]}
         validation_result = self.validator.validate_spec(user_spec)
-        assert validation_result == self.validator.error_message_location_not_has_users.format(
+        error_message_location_not_has_users = (
+            "These locations cannot have users assigned because of their "
+            "organization level settings: {}."
+        )
+        assert validation_result == error_message_location_not_has_users.format(
             self.locations['Cambridge'].site_code)
 
     @classmethod
@@ -526,10 +562,133 @@ class TestProfileValidator(TestCase):
         validation_result = self.web_user_import_validator.validate_spec(user_spec)
         assert validation_result == ProfileValidator.error_message_original_user_profile_access
 
+    def test_validation_error_when_profile_required(self):
+        self.definition.profile_required_for_user_type = [UserFieldsView.WEB_USER, UserFieldsView.COMMCARE_USER]
+        self.definition.save()
+        self.upload_user.set_role(self.domain, self.edit_p2_profiles_role.get_qualified_id())
+        user_spec = {'username': self.editable_user.username}
+        validation_result = self.web_user_import_validator.validate_spec(user_spec)
+        expected_result = ProfileValidator.error_message_profile_must_be_assigned.format(
+            "Web Users, Mobile Workers"
+        )
+        assert validation_result == expected_result
+
+    def test_no_validation_error_when_profile_required_and_supplied(self):
+        self.definition.profile_required_for_user_type = [UserFieldsView.WEB_USER, UserFieldsView.COMMCARE_USER]
+        self.definition.save()
+        self.upload_user.set_role(self.domain, self.edit_p2_profiles_role.get_qualified_id())
+        user_spec = {'username': self.editable_user.username, 'user_profile': 'p1'}
+        validation_result = self.web_user_import_validator.validate_spec(user_spec)
+        assert validation_result is None
+
     @classmethod
     def tearDownClass(cls):
         super(TestProfileValidator, cls).tearDownClass()
         delete_all_users()
+
+
+class TestCustomDataValidator(TestCase):
+    domain = 'test-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        delete_all_users()
+        super(TestCustomDataValidator, cls).setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
+
+        cls.definition = CustomDataFieldsDefinition(
+            domain=cls.domain,
+            field_type=UserFieldsView.field_type
+        )
+        cls.definition.save()
+        cls.definition.set_fields([
+            Field(
+                slug='corners',
+                is_required=False,
+                label='Number of corners',
+                regex='^[0-9]+$',
+                regex_msg='This should be a number',
+            ),
+            Field(
+                slug='prefix',
+                is_required=False,
+                label='Prefix',
+                choices=['tri', 'tetra', 'penta'],
+            ),
+            Field(
+                slug='color',
+                is_required=True,
+                required_for=[CommcareUserFieldsView.user_type],
+                label='Color',
+            ),
+            Field(
+                slug='shape_type',
+                is_required=True,
+                required_for=[WebUserFieldsView.user_type],
+                label='Type of Shape',
+            )
+        ])
+        cls.profile1 = CustomDataFieldsProfile(
+            name='p1',
+            fields={'corners': '3', 'color': 'blue', 'shape_type': 'triangle'},
+            definition=cls.definition,
+        )
+        cls.profile1.save()
+
+    def test_valid_fields_without_profile(self):
+        import_validator = CustomDataValidator(self.domain, None, True)
+        custom_data_spec = {
+            'data': {'corners': '3', 'color': 'blue', 'shape_type': 'triangle'},
+        }
+        validation_result = import_validator.validate_spec(custom_data_spec)
+        assert validation_result == ''
+
+    def test_invalid_fields_with_valid_profile(self):
+        user_profiles_by_name = {'p1': self.profile1}
+        import_validator = CustomDataValidator(self.domain, user_profiles_by_name, True)
+        custom_data_spec = {
+            'data': {'corners': 'three'},
+            'user_profile': 'p1',
+        }
+        validation_result = import_validator.validate_spec(custom_data_spec)
+        assert validation_result == ''
+
+    def test_invalid_web_user_required_field(self):
+        import_validator = CustomDataValidator(self.domain, None, True)
+        custom_data_spec = {
+            'data': {'color': 'blue'},
+        }
+        validation_result = import_validator.validate_spec(custom_data_spec)
+        assert validation_result == "Type of Shape is required."
+
+    def test_invalid_commcare_user_required_field(self):
+        import_validator = CustomDataValidator(self.domain, None, False)
+        custom_data_spec = {
+            'data': {'shape_type': 'triangle'},
+        }
+        validation_result = import_validator.validate_spec(custom_data_spec)
+        assert validation_result == "Color is required."
+
+    def test_invalid_choices_field(self):
+        import_validator = CustomDataValidator(self.domain, None, True)
+        custom_data_spec = {
+            'data': {'prefix': 'bi', 'color': 'blue', 'shape_type': 'triangle'},
+        }
+        validation_result = import_validator.validate_spec(custom_data_spec)
+        assert validation_result == (
+            "'bi' is not a valid choice for Prefix. "
+            "The available options are: tri, tetra, penta."
+        )
+
+    def test_invalild_regex_fields(self):
+        import_validator = CustomDataValidator(self.domain, None, True)
+        custom_data_spec = {
+            'data': {'corners': 'three', 'color': 'blue', 'shape_type': 'triangle'},
+        }
+        validation_result = import_validator.validate_spec(custom_data_spec)
+        assert validation_result == (
+            "'three' is not a valid match for Number of corners"
+        )
 
 
 class TestUtil(TestCase):
@@ -559,3 +718,62 @@ class TestUtil(TestCase):
         spec = {}
         self.assertEqual(None, _get_invitation_or_editable_user(spec, True, self.domain).editable_user)
         self.assertEqual(None, _get_invitation_or_editable_user(spec, False, self.domain).editable_user)
+
+
+class TestTableauRoleValidator(TestCase):
+    domain = 'test-domain'
+
+    def test_valid_role(self):
+        validator = TableauRoleValidator(self.domain)
+        spec = {'tableau_role': TableauUser.Roles.EXPLORER.value}
+        self.assertIsNone(validator.validate_spec(spec))
+
+    def test_invalid_role(self):
+        validator = TableauRoleValidator(self.domain)
+        spec = {'tableau_role': 'invalid_role'}
+        expected_error = TableauRoleValidator._error_message.format(
+            'invalid_role', ', '.join([e.value for e in TableauUser.Roles])
+        )
+        self.assertEqual(validator.validate_spec(spec), expected_error)
+
+    def test_no_role(self):
+        validator = TableauRoleValidator(self.domain)
+        spec = {}
+        self.assertIsNone(validator.validate_spec(spec))
+
+
+class TestTableauGroupsValidator(TestCase):
+    domain = 'test-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.allowed_groups = ['group1', 'group2']
+        cls.tableau_server = TableauServer.objects.create(
+            domain=cls.domain,
+            allowed_tableau_groups=cls.allowed_groups
+        )
+        cls.all_specs = [{'tableau_groups': 'group1,group2'}]
+
+    def test_valid_groups(self):
+        validator = TableauGroupsValidator(self.domain, self.all_specs)
+        spec = {'tableau_groups': 'group1,group2'}
+        self.assertIsNone(validator.validate_spec(spec))
+
+    def test_invalid_groups(self):
+        validator = TableauGroupsValidator(self.domain, self.all_specs)
+        spec = {'tableau_groups': 'group1,invalid_group'}
+        expected_error = TableauGroupsValidator._error_message.format(
+            'invalid_group', ', '.join(self.allowed_groups)
+        )
+        self.assertEqual(validator.validate_spec(spec), expected_error)
+
+    def test_no_groups(self):
+        validator = TableauGroupsValidator(self.domain, self.all_specs)
+        spec = {}
+        self.assertIsNone(validator.validate_spec(spec))
+
+    def test_empty_groups(self):
+        validator = TableauGroupsValidator(self.domain, self.all_specs)
+        spec = {'tableau_groups': ''}
+        self.assertIsNone(validator.validate_spec(spec))

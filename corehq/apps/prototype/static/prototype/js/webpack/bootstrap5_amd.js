@@ -1,4 +1,4 @@
-'use strict';
+
 
 hqDefine("prototype/js/webpack/bootstrap5_amd",[
     'jquery',
@@ -8,8 +8,8 @@ hqDefine("prototype/js/webpack/bootstrap5_amd",[
     "commcarehq",  // IMPORTANT :: this has to be included with any Bootstrap 5 entry point
 ], function ($, ko, _, initialPageData) {
     /**
-     * This is an (HQ)AMD-formatted module, intended to be used with webpack_main as follows:
-     * {% webpack_main "prototype/js/webpack/bootstrap5_amd" %}
+     * This is an (HQ)AMD-formatted module, intended to be used with js_entry as follows:
+     * {% js_entry "prototype/js/webpack/bootstrap5_amd" %}
      *
      * It serves as a test to see that Webpack is working fine with this type of module
      * and is an example of what a quick migration of an existing requirejs module might

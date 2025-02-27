@@ -5,23 +5,22 @@
 @reg-form-width: 480px;
 @reg-form-height: 375px;
 
-
 .reg-form-container {
   width: 100%;
   max-width: @reg-form-width;
   margin: 0 auto;
   margin-top: 10vh;
-  transition: margin-top .5s ease-in-out;
+  transition: margin-top 0.5s ease-in-out;
 
   a.btn-primary {
     color: white;
   }
 
-  @media(max-height: 685px) {
+  @media (max-height: 685px) {
     margin-top: 5vh;
   }
 
-  @media(max-height: 602px) {
+  @media (max-height: 602px) {
     margin-top: 0;
   }
 }
@@ -43,11 +42,11 @@ ul.form-step-progress li {
   margin-top: 2vh;
   margin-bottom: 2vh;
 
-  @media(max-height: 685px) {
+  @media (max-height: 685px) {
     margin-top: 5vh;
   }
 
-  @media(max-height: 602px) {
+  @media (max-height: 602px) {
     margin-top: 0;
   }
 }
@@ -76,24 +75,25 @@ ul.form-step-progress li {
 span.validationMessage {
   text-align: left;
   display: block;
-  margin: .5em;
+  margin: 0.5em;
 }
 
 p.validation-message-block {
-  margin: .5em;
+  margin: 0.5em;
   text-align: left;
   margin-top: -0.6em;
   margin-bottom: 1.1em;
 }
 
 p.sso-message-block {
-  margin: .5em;
+  margin: 0.5em;
   margin-bottom: 1.55em;
   text-align: left;
 }
 
 .submit-errors {
-  p, ul {
+  p,
+  ul {
     text-align: left;
   }
 }
@@ -106,7 +106,7 @@ p.sso-message-block {
 .server-errors,
 .submit-success {
   h2 {
-    margin: .5rem 0 1rem;
+    margin: 0.5rem 0 1rem;
   }
 }
 
@@ -128,7 +128,6 @@ p.sso-message-block {
       padding-left: 5px !important;
     }
   }
-
 }
 
 .intl-tel-input .country-list .country {
@@ -158,7 +157,7 @@ p.sso-message-block {
     padding-top: @input-height-large;
   }
   &_label {
-    line-height:  @input-height-large - 2px;
+    line-height: @input-height-large - 2px;
   }
 }
 
@@ -168,8 +167,8 @@ p.sso-message-block {
       + .radio-select_options {
         margin-top: @input-height-large - 2px;
         .radio-select_label {
-          height:  @input-height-base;
-          line-height:  @input-height-base;
+          height: @input-height-base;
+          line-height: @input-height-base;
         }
         .radio-select_label:last-child {
           &:hover {
@@ -181,7 +180,7 @@ p.sso-message-block {
     }
   }
   &_input:checked + .radio-select_label {
-    height:  @input-height-base;
+    height: @input-height-base;
   }
 }
 
@@ -237,157 +236,4 @@ p.sso-message-block {
   h4 {
     text-align: center;
   }
-}
-
-.reg-plan-container {
-  margin-top: 8vh;
-
-  @media (max-height: 815px) {
-    margin-top: 5vh;
-  }
-
-  @media (max-height: 760px) {
-    margin-top: 2vh;
-  }
-
-  @media (max-height: 730px) {
-    margin-top: 10px;
-  }
-}
-
-.plan-container {
-  background-color: @well-bg;
-  border-radius: 5px;
-  padding-bottom: 35px;
-
-  p {
-    margin: 10px 15px 0;
-    text-align: center;
-    font-size: 12px;
-
-    &.lead {
-      margin-top: 20px;
-      font-weight: bold;
-      font-size: 14px;
-    }
-  }
-
-  a,
-  a:link,
-  a:visited {
-    transition: .5s color ease-in-out;
-  }
-
-  ul.check-list {
-    margin: 10px 20px 0;
-
-    li {
-      padding-bottom: 5px;
-
-      &.not-available {
-        color: darken(@well-bg, 30);
-      }
-    }
-  }
-}
-
-.plan-price {
-  font-weight: bold;
-}
-
-.plan-cta {
-  text-align: center;
-  padding-top: 22px;
-  padding-bottom: 10px;
-}
-
-.plan-header {
-  margin: 0;
-  text-align: center;
-  font-weight: 800;
-
-  h2 {
-    margin: 0;
-    padding: 30px 0 25px;
-  }
-
-  small {
-    text-transform: uppercase;
-    display: block;
-    font-size: 12px;
-    margin-bottom: 5px;
-  }
-}
-
-.plan-container-professional {
-  border: 2px solid @cc-brand-mid;
-
-  .plan-header {
-    color: white;
-    background-color: @cc-brand-mid;
-    border-bottom: 2px solid @cc-brand-mid;
-
-    small {
-      color: white;
-    }
-  }
-
-  a,
-  a:link,
-  a:visited {
-    color: @cc-brand-mid;
-
-    &.btn-primary {
-      color: white;
-    }
-  }
-
-  a:hover {
-    color: darken(@cc-brand-mid, 10);
-  }
-
-  a.btn-primary {
-    margin-bottom: 10px;
-  }
-
-  p.lead {
-    color: @cc-brand-mid;
-  }
-}
-
-.plan-container-community {
-  border: 2px solid @cc-dark-cool-accent-mid;
-  padding-bottom: 63px;
-
-  .plan-header {
-    color: @cc-dark-cool-accent-low;
-    border-bottom: 2px solid @cc-dark-cool-accent-mid;
-
-    small {
-      color: @cc-dark-cool-accent-low;
-    }
-  }
-
-  .check-list {
-    height: 225px;
-  }
-
-  p.lead {
-    color: @cc-dark-cool-accent-low;
-  }
-
-  a,
-  a:link,
-  a:visited {
-    color: @cc-dark-cool-accent-low;
-  }
-
-  a.btn {
-    border-color: @cc-dark-cool-accent-low;
-  }
-
-  a:hover {
-    color: darken(@cc-dark-cool-accent-low, 10);
-  }
-
 }

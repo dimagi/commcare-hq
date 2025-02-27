@@ -195,7 +195,7 @@ class ApiKeyFallbackTests(TestCase):
             request.META['HTTP_X_FORWARDED_FOR'] = ip
 
         if can_use_api_key:
-            request.check_for_password_as_api_key = True
+            request.check_for_api_key_as_password = True
 
         return request
 
@@ -303,6 +303,15 @@ class HQApiKeyAuthenticationTests(TestCase):
             response = auth.is_authenticated(request)
             self.assertEqual(response.status_code, 401)
 
+    def test_user_can_authenticate_to_urls_lacking_domain_with_domain_scoped_keys(self):
+        user = self._create_user('test@dimagi.com')
+        self._create_api_key_for_user(user, key='1234', domain='test-domain')
+        request = self._create_request(username='test@dimagi.com', api_key='1234', for_domain='')
+
+        auth = HQApiKeyAuthentication()
+
+        self.assertIs(auth.is_authenticated(request), True)
+
     @classmethod
     def _create_user(cls, username):
         return User.objects.create_user(username=username, password='password')
@@ -339,3 +348,12 @@ class HQApiKeyAuthenticationTests(TestCase):
             request.META['HTTP_X_FORWARDED_FOR'] = ip
 
         return request
+
+    def test_domain_scoped_api_key_allows_authentication_to_domain_agnostic_urls(self):
+        user = self._create_user('test@dimagi.com')
+        self._create_api_key_for_user(user, key='1234', domain='test-domain')
+        request = self._create_request(username='test@dimagi.com', api_key='1234', for_domain='')
+
+        auth = HQApiKeyAuthentication()
+
+        self.assertIs(auth.is_authenticated(request), True)

@@ -10,7 +10,6 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.motech.const import (
     AUTH_PRESETS,
     AUTH_TYPES,
@@ -70,12 +69,9 @@ class ConnectionSettingsForm(forms.ModelForm):
         required=False,
     )
     skip_cert_verify = forms.BooleanField(
-        label="",
+        label=_('Skip certificate verification'),
         help_text=_('Do not use in a production environment'),
         required=False,
-        widget=BootstrapCheckboxInput(
-            inline_label=_('Skip certificate verification'),
-        ),
     )
     notify_addresses_str = forms.CharField(
         label=_('Addresses to send notifications'),
@@ -144,7 +140,6 @@ class ConnectionSettingsForm(forms.ModelForm):
         from corehq.motech.views import ConnectionSettingsListView
 
         helper = hqcrispy.HQFormHelper()
-        helper.form_class = "form-horizontal"
         helper.layout = crispy.Layout(
             crispy.Field('name'),
             crispy.Field('notify_addresses_str'),
@@ -167,20 +162,21 @@ class ConnectionSettingsForm(forms.ModelForm):
                 id="div_id_oauth_settings",
             ),
             crispy.Field('skip_cert_verify'),
-            self.test_connection_button,
-
-            twbscrispy.StrictButton(
-                _("Save"),
-                type="submit",
-                css_class="btn btn-primary",
-            ),
-            hqcrispy.LinkButton(
-                _("Cancel"),
-                reverse(
-                    ConnectionSettingsListView.urlname,
-                    kwargs={'domain': self.domain},
+            hqcrispy.FormActions(
+                self.test_connection_button,
+                twbscrispy.StrictButton(
+                    _("Save"),
+                    type="submit",
+                    css_class="btn btn-primary",
                 ),
-                css_class="btn btn-outline-primary",
+                hqcrispy.LinkButton(
+                    _("Cancel"),
+                    reverse(
+                        ConnectionSettingsListView.urlname,
+                        kwargs={'domain': self.domain},
+                    ),
+                    css_class="btn btn-outline-primary",
+                ),
             ),
         )
 

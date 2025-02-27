@@ -3,14 +3,16 @@ hqDefine("reports/js/bootstrap5/saved_reports_main", [
     'knockout',
     'hqwebapp/js/initial_page_data',
     'reports/js/bootstrap5/report_config_models',
-    'reports/js/bootstrap5/scheduled_reports_list',
+    'reports/js/scheduled_reports_list',
     'hqwebapp/js/bootstrap5/knockout_bindings.ko', // modal binding
+    'hqwebapp/js/components/pagination',
+    'commcarehq',
 ], function (
     $,
     ko,
     initialPageData,
     reportConfigModels,
-    scheduledReports
+    scheduledReports,
 ) {
     $(function () {
 

@@ -3,21 +3,25 @@ import datetime
 from unittest.mock import Mock, patch
 
 from corehq.apps.users.models import Invitation, WebUser
-from corehq.apps.users.views.web import UserInvitationView, WebUserInvitationForm
+from corehq.apps.users.views.web import UserInvitationView, AcceptedWebUserInvitationForm
 
 from django import forms
 from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory, TestCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.apps.users.models import InvitationHistory
+from corehq.apps.users.model_log import InviteModelAction
 from corehq.apps.users.models_role import UserRole
+
+from corehq.const import INVITATION_CHANGE_VIA_WEB
 
 
 class InvitationTestException(Exception):
     pass
 
 
-class StubbedWebUserInvitationForm(WebUserInvitationForm):
+class StubbedAcceptedWebUserInvitationForm(AcceptedWebUserInvitationForm):
 
     def __init__(self, *args, **kwargs):
         self.request_email = kwargs.pop('request_email', False)
@@ -76,7 +80,7 @@ class TestUserInvitation(TestCase):
         self.assertEqual("/accounts/login/", response.url)
 
     def test_redirect_if_invite_email_does_not_match(self):
-        form = StubbedWebUserInvitationForm(
+        form = StubbedAcceptedWebUserInvitationForm(
             {
                 "email": "other_test@dimagi.com",
                 "full_name": "asdf",
@@ -95,7 +99,7 @@ class TestUserInvitation(TestCase):
             str(ve.exception),
             "['You can only sign up with the email address your invitation was sent to.']")
 
-        form = WebUserInvitationForm(
+        form = AcceptedWebUserInvitationForm(
             {
                 "email": "other_test@dimagi.com",
                 "full_name": "asdf",
@@ -110,7 +114,7 @@ class TestUserInvitation(TestCase):
         print(form.errors)
         self.assertTrue(form.is_valid())
 
-        form = WebUserInvitationForm(
+        form = AcceptedWebUserInvitationForm(
             {
                 "email": "test@dimagi.com",
                 "full_name": "asdf",
@@ -168,3 +172,19 @@ class TestUserInvitation(TestCase):
             response = UserInvitationView()(request, invite_uuid, domain=self.domain)
             self.assertEqual(400, response.status_code)
         self.assertIsNone(WebUser.get_by_username('test5@dimagi.com'))
+
+    def test_invitation_save_logging(self):
+        _, invite_uuid = self._setup_invitation_and_request()
+        invitation = Invitation.objects.get(uuid=invite_uuid)
+        invitation.save(logging_values={"changed_by": "anonymous_id",
+                                        "changed_via": INVITATION_CHANGE_VIA_WEB,
+                                        "action": InviteModelAction.CREATE})
+        InvitationHistory.objects.get(invitation=invitation, action=1)
+
+    def test_invitation_delete(self):
+        _, invite_uuid = self._setup_invitation_and_request()
+        invitation = Invitation.objects.get(uuid=invite_uuid)
+        invitation.delete(deleted_by="deleted_id")
+        InvitationHistory.objects.get(invitation=invitation, action=3)
+        with self.assertRaises(Invitation.DoesNotExist):
+            Invitation.objects.get(uuid=invite_uuid)

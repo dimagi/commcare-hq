@@ -1,0 +1,42 @@
+{% load i18n %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="reg-form-container sign-in-container">
+        <div class="form-bubble form-bubble-lg">
+          {% include "login_and_password/two_factor/core/bootstrap5/login.html" %}
+        </div>
+        {% if not restrict_domain_creation %}
+          <div class="card sign-up-bubble form-bubble-purple">  {# todo B5: css-well #}
+            <h2>
+              {% blocktrans %}
+                No account? Sign up today, it's free!
+              {% endblocktrans %}
+            </h2>
+            {% if not allow_domain_requests %}
+              <p class="lead">
+                <strong><a href="http://www.dimagi.com/commcare/">{% trans "Learn more" %}</a></strong>
+                {% blocktrans %}about how CommCare HQ can be your mobile solution for your frontline workforce.{% endblocktrans %}
+              </p>
+            {% endif %}
+            <p class="text-center">
+              <a class="btn btn-purple btn-lg"
+                {% if allow_domain_requests %}
+                 href="{% url "domain_request" domain %}"
+                {% else %}
+                 href="{% url "register_user" %}"
+                {% endif %}
+              >
+                {% if allow_domain_requests %}
+                  {% blocktrans %}Request Access to {{ hr_name }}{% endblocktrans %}
+                {% else %}
+                  {% trans "Sign Up" %}
+                {% endif %}
+              </a>
+            </p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>

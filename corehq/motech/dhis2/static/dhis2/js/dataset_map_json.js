@@ -6,6 +6,7 @@ hqDefine('dhis2/js/dataset_map_json', [
     'hqwebapp/js/bootstrap5/alert_user',
     'hqwebapp/js/base_ace',
     'dhis2/js/json_syntax_parse',
+    'commcarehq',
 ], function (
     $,
     _,
@@ -13,7 +14,7 @@ hqDefine('dhis2/js/dataset_map_json', [
     initialPageData,
     alertUser,
     baseAce,
-    jsonParse
+    jsonParse,
 ) {
     var ViewModel = function (data) {
         var self = {};
@@ -44,7 +45,7 @@ hqDefine('dhis2/js/dataset_map_json', [
                 {'dataset_map': self.dataSetMap()},
                 function (data) {
                     alertUser.alert_user(data['success'], 'success', true);
-                }
+                },
             ).fail(function () {
                 var msg = gettext('Unable to save DataSet map');
                 alertUser.alert_user(msg, 'danger');

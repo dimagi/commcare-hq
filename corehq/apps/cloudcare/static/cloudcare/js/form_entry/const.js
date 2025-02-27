@@ -1,9 +1,9 @@
-'use strict';
 hqDefine("cloudcare/js/form_entry/const", [], function () {
     return {
         GROUP_TYPE: 'sub-group',
         QUESTION_TYPE: 'question',
         GROUPED_ELEMENT_TILE_ROW_TYPE: 'grouped-element-tile-row',
+        BROADCAST_FIELD_FILENAME: 'filename',
 
         // Entry types
         STRING: 'str',
@@ -66,6 +66,7 @@ hqDefine("cloudcare/js/form_entry/const", [], function () {
         QUESTIONS_FOR_INDEX: 'questions_for_index',
         NEXT_QUESTION: 'next_index',
         PREV_QUESTION: 'prev_index',
+        SCROLLABLE_CONTENT_CONTAINER: '#content-plus-version-info-container',
 
         // XForm Actions
         NEW_FORM: 'new-form',
@@ -111,7 +112,7 @@ hqDefine("cloudcare/js/form_entry/const", [], function () {
         FLOAT_VALUE_LIMIT: +("9".repeat(14)),
         FILE_PREFIX: "C:\\fakepath\\",
 
-        // Boostrap
+        // Bootstrap
         GRID_COLUMNS: 12,
     };
 });

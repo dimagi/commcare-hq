@@ -91,6 +91,7 @@ class SsoBackend(ModelBackend):
                             couch_user=web_user, changed_by_user=web_user,
                             fields_changed={'is_active': web_user.is_active},
                             changed_via=USER_CHANGE_VIA_REACTIVATION)
+            user.refresh_from_db()
             request.sso_new_user_messages['success'].append(
                 _("User account for {} has been re-activated.").format(web_user.username)
             )

@@ -6,9 +6,7 @@ from soil import DownloadBase
 
 from corehq.util.workbook_json.excel import WorkbookJSONReader
 
-
-class UnknownFileRefException(Exception):
-    pass
+from .exceptions import UnknownFileRefException
 
 
 class ExcelImporter(object):

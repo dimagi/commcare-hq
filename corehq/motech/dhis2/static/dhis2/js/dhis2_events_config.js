@@ -6,6 +6,7 @@ hqDefine('dhis2/js/dhis2_events_config', [
     'hqwebapp/js/bootstrap5/alert_user',
     'hqwebapp/js/base_ace',
     'dhis2/js/json_syntax_parse',
+    'commcarehq',
 ], function (
     $,
     _,
@@ -13,7 +14,7 @@ hqDefine('dhis2/js/dhis2_events_config', [
     initialPageData,
     alertUser,
     baseAce,
-    jsonParse
+    jsonParse,
 ) {
     var ViewModel = function (data) {
         var self = {};
@@ -45,12 +46,12 @@ hqDefine('dhis2/js/dhis2_events_config', [
                 {'form_configs': self.formConfigs()},
                 function (data) {
                     alertUser.alert_user(data['success'], 'success', true);
-                }
+                },
             ).fail(
                 function (data) {
                     var errors = '<ul><li>' + data.responseJSON['errors'].join('</li><li>') + '</li></ul>';
                     alertUser.alert_user(gettext('Unable to save form configs') + errors, 'danger');
-                }
+                },
             );
         };
 

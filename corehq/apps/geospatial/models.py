@@ -5,13 +5,16 @@ from django.core.exceptions import ValidationError
 
 from corehq.apps.geospatial.const import (
     GPS_POINT_CASE_PROPERTY,
-    ALGO_AES,
     TRAVEL_MODE_WALKING,
     TRAVEL_MODE_CYCLING,
     TRAVEL_MODE_DRIVING,
 )
 from corehq.apps.geospatial.routing_solvers import pulp
-from corehq.motech.utils import b64_aes_encrypt, b64_aes_decrypt
+from corehq.motech.const import ALGO_AES_CBC
+from corehq.motech.utils import (
+    b64_aes_cbc_decrypt,
+    b64_aes_cbc_encrypt,
+)
 
 
 class GeoPolygon(models.Model):
@@ -98,20 +101,7 @@ class GeoConfig(models.Model):
         max_length=50
     )
     api_token = models.CharField(max_length=255, blank=True, null=True, db_column="api_token")
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        self._clear_caches()
-
-    def delete(self, *args, **kwargs):
-        self._clear_caches()
-        return super().delete(*args, **kwargs)
-
-    def _clear_caches(self):
-        from .utils import get_geo_case_property, get_geo_user_property
-
-        get_geo_case_property.clear(self.domain)
-        get_geo_user_property.clear(self.domain)
+    flag_assigned_cases = models.BooleanField(default=False)
 
     @property
     def supports_travel_mode(self):
@@ -125,9 +115,9 @@ class GeoConfig(models.Model):
 
     @property
     def plaintext_api_token(self):
-        if self.api_token and self.api_token.startswith(f'${ALGO_AES}$'):
+        if self.api_token:
             ciphertext = self.api_token.split('$', 2)[2]
-            return b64_aes_decrypt(ciphertext)
+            return b64_aes_cbc_decrypt(ciphertext)
         return self.api_token
 
     @plaintext_api_token.setter
@@ -137,9 +127,9 @@ class GeoConfig(models.Model):
         else:
             assert isinstance(value, str), "Only string values allowed for api token"
 
-            if value and not value.startswith(f'${ALGO_AES}$'):
-                ciphertext = b64_aes_encrypt(value)
-                self.api_token = f'${ALGO_AES}${ciphertext}'
+            if value and not value.startswith(f'${ALGO_AES_CBC}$'):
+                ciphertext = b64_aes_cbc_encrypt(value)
+                self.api_token = f'${ALGO_AES_CBC}${ciphertext}'
             else:
                 raise Exception("Unexpected value set for plaintext api token")
 

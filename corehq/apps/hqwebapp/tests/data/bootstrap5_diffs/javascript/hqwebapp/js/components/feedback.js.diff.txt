@@ -8,17 +8,17 @@
 +hqDefine('hqwebapp/js/components/bootstrap5/feedback', [
      'knockout',
      'jquery',
-     'hqwebapp/js/initial_page_data',
-@@ -24,7 +24,7 @@
+     'underscore',
+@@ -28,7 +28,7 @@
  ) {
-     return {
+     const component = {
          viewModel: function (params) {
 -            var self = {};
 +            let self = {};
  
              if (!params.featureName) {
                  throw new Error("Please specify a featureName in params.");
-@@ -62,11 +62,6 @@
+@@ -66,11 +66,6 @@
                          if (data.success) {
                              self.showSuccess(true);
                          }

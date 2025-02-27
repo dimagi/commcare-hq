@@ -5,13 +5,14 @@ hqDefine("userreports/js/ucr_expression", [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/base_ace',
     'hqwebapp/js/bootstrap3/alert_user',
+    'commcarehq',
 ], function (
     moment,
     ko,
     _,
     initialPageData,
     baseAce,
-    alertUser
+    alertUser,
 ) {
     let EditModel = function (data) {
         const mapping = {
@@ -43,7 +44,9 @@ hqDefine("userreports/js/ucr_expression", [
         };
 
         self.saveExpression = function (form) {
-            $(form).ajaxSubmit({
+            $.ajax({
+                method: 'POST',
+                data: Object.fromEntries(new FormData(form)),
                 dataType: 'json',
                 success: function (response) {
                     alertUser.alert_user(gettext("Expression saved"), 'success');
@@ -67,7 +70,7 @@ hqDefine("userreports/js/ucr_expression", [
 
     $(function () {
         let viewModel = EditModel(
-            initialPageData.get("expression")
+            initialPageData.get("expression"),
         );
         $("#edit-expression").koApplyBindings(viewModel);
         viewModel.editor = baseAce.initObservableJsonWidget($('.observablejsonwidget')[0]);

@@ -32,7 +32,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import CaseSearchES, UserES
 from corehq.apps.es.users import missing_or_empty_user_data_property
-from corehq.apps.geospatial.exceptions import CaseReassignmentValidationError
+from corehq.apps.geospatial.exceptions import CaseReassignmentValidationError, GeoPolygonValidationError
 from corehq.apps.geospatial.filters import GPSDataFilter
 from corehq.apps.geospatial.forms import GeospatialConfigForm
 from corehq.apps.geospatial.reports import CaseManagementMap
@@ -47,18 +47,25 @@ from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.models import CommCareCase
 from corehq.util.timezones.utils import get_timezone
 
-from .const import GPS_POINT_CASE_PROPERTY, POLYGON_COLLECTION_GEOJSON_SCHEMA
+from .const import (
+    GPS_POINT_CASE_PROPERTY,
+    POLYGON_COLLECTION_GEOJSON_SCHEMA,
+    ES_INDEX_TASK_HELPER_BASE_KEY,
+    ES_REASSIGNMENT_UPDATE_OWNERS_BASE_KEY,
+)
 from .models import GeoConfig, GeoPolygon
 from .utils import (
     CaseOwnerUpdate,
-    CeleryTaskTracker,
     create_case_with_gps_property,
+    get_flag_assigned_cases_config,
     get_geo_case_property,
+    get_geo_config,
     get_geo_user_property,
     get_lat_lon_from_dict,
     set_case_gps_property,
     set_user_gps_property,
     update_cases_owner,
+    get_celery_task_tracker,
 )
 
 
@@ -66,11 +73,21 @@ def geospatial_default(request, *args, **kwargs):
     return HttpResponseRedirect(CaseManagementMap.get_url(*args, **kwargs))
 
 
+class BaseGeospatialView(BaseDomainView):
+
+    @property
+    def main_context(self):
+        context = super().main_context
+        celery_task_tracker = get_celery_task_tracker(self.domain, task_slug=ES_INDEX_TASK_HELPER_BASE_KEY)
+        context['index_task_status'] = celery_task_tracker.get_status()
+        return context
+
+
 class CaseDisbursementAlgorithm(BaseDomainView):
     urlname = "case_disbursement"
 
     def post(self, request, domain, *args, **kwargs):
-        config = GeoConfig.objects.get(domain=domain)
+        config = get_geo_config(domain)
         request_json = json.loads(request.body.decode('utf-8'))
 
         solver_class = config.disbursement_solver
@@ -83,7 +100,7 @@ class CaseDisbursementAlgorithm(BaseDomainView):
         })
 
 
-@method_decorator(toggles.GEOSPATIAL.required_decorator(), name="dispatch")
+@method_decorator(toggles.MICROPLANNING.required_decorator(), name="dispatch")
 class GeoPolygonListView(BaseDomainView):
     urlname = 'geo_polygons'
 
@@ -92,24 +109,16 @@ class GeoPolygonListView(BaseDomainView):
             geo_json = json.loads(request.body).get('geo_json', None)
         except json.decoder.JSONDecodeError:
             return HttpResponseBadRequest(
-                'POST Body must be a valid json in {"geo_json": <geo_json>} format'
+                _('POST Body must be a valid json in {"geo_json": <geo_json>} format')
             )
-
-        if not geo_json:
-            return HttpResponseBadRequest('Empty geo_json POST field')
 
         try:
-            jsonschema.validate(geo_json, POLYGON_COLLECTION_GEOJSON_SCHEMA)
-        except jsonschema.exceptions.ValidationError:
-            return HttpResponseBadRequest(
-                'Invalid GeoJSON, geo_json must be a FeatureCollection of Polygons'
-            )
+            self._validate_request_geo_json(geo_json)
 
-        geo_polygon_name = geo_json.pop('name')
-        if GeoPolygon.objects.filter(domain=self.domain, name__iexact=geo_polygon_name).exists():
-            return HttpResponseBadRequest(
-                'GeoPolygon with given name already exists! Please use a different name.'
-            )
+            geo_polygon_name = geo_json.pop('name')
+            self._validate_request_geo_polygon_name(geo_polygon_name)
+        except GeoPolygonValidationError as error:
+            return HttpResponseBadRequest(error)
 
         # Drop ids since they are specific to the Mapbox draw event
         for feature in geo_json["features"]:
@@ -124,8 +133,28 @@ class GeoPolygonListView(BaseDomainView):
             'id': geo_polygon.id,
         })
 
+    def _validate_request_geo_json(self, geo_json):
+        if not geo_json:
+            raise GeoPolygonValidationError(_('Empty geo_json POST field'))
 
-@method_decorator(toggles.GEOSPATIAL.required_decorator(), name="dispatch")
+        try:
+            jsonschema.validate(geo_json, POLYGON_COLLECTION_GEOJSON_SCHEMA)
+        except jsonschema.exceptions.ValidationError:
+            raise GeoPolygonValidationError(
+                _('Invalid GeoJSON, geo_json must be a FeatureCollection of Polygons')
+            )
+
+    def _validate_request_geo_polygon_name(self, geo_polygon_name):
+        if geo_polygon_name == '':
+            raise GeoPolygonValidationError(_('Please specify a name for the GeoPolygon area.'))
+
+        if GeoPolygon.objects.filter(domain=self.domain, name__iexact=geo_polygon_name).exists():
+            raise GeoPolygonValidationError(
+                _('GeoPolygon with given name already exists! Please use a different name.')
+            )
+
+
+@method_decorator(toggles.MICROPLANNING.required_decorator(), name="dispatch")
 class GeoPolygonDetailView(BaseDomainView):
     urlname = 'geo_polygon'
 
@@ -151,10 +180,10 @@ class GeoPolygonDetailView(BaseDomainView):
         })
 
 
-class BaseConfigView(BaseDomainView):
+class BaseConfigView(BaseGeospatialView):
     section_name = _("Data")
 
-    @method_decorator(toggles.GEOSPATIAL.required_decorator())
+    @method_decorator(toggles.MICROPLANNING.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         return super(BaseConfigView, self).dispatch(request, *args, **kwargs)
 
@@ -229,9 +258,9 @@ class GeospatialConfigPage(BaseConfigView):
         return context
 
 
-class GPSCaptureView(BaseDomainView):
+class GPSCaptureView(BaseGeospatialView):
     urlname = 'gps_capture'
-    template_name = 'gps_capture_view.html'
+    template_name = 'geospatial/gps_capture_view.html'
 
     page_name = _("Manage GPS Data")
     section_name = _("Data")
@@ -246,7 +275,7 @@ class GPSCaptureView(BaseDomainView):
 
     @use_datatables
     @use_jquery_ui
-    @method_decorator(toggles.GEOSPATIAL.required_decorator())
+    @method_decorator(toggles.MICROPLANNING.required_decorator())
     def dispatch(self, *args, **kwargs):
         return super(GPSCaptureView, self).dispatch(*args, **kwargs)
 
@@ -293,7 +322,7 @@ class GPSCaptureView(BaseDomainView):
         timezone = get_timezone(self.request, self.domain)
         return get_filter_classes(self.fields, self.request, self.domain, timezone)
 
-    @method_decorator(toggles.GEOSPATIAL.required_decorator())
+    @method_decorator(toggles.MICROPLANNING.required_decorator())
     def post(self, request, *args, **kwargs):
         json_data = json.loads(request.body)
         data_type = json_data.get('data_type', None)
@@ -336,7 +365,7 @@ class GetPaginatedCases(CaseListMixin):
         # override super class corehq.apps.reports.generic.GenericReportView init method to
         # avoid failures for missing expected properties for a report and keep only necessary properties
         self.request = request
-        self.request_params = json_request(self.request.GET)
+        self._request_params = json_request(self.request.GET)
         self.domain = domain
 
     def _base_query(self):
@@ -370,6 +399,12 @@ class GetPaginatedCases(CaseListMixin):
         case_data = []
         for case_obj in cases:
             lat, lon = get_lat_lon_from_dict(case_obj.case_json, location_prop_name)
+
+            # There might be a few moments where GPS data is saved for a case but the ES index hasn't
+            # updated yet, and so will still show as missing data in the ES query. For these instances,
+            #  we can simply filter them out here.
+            if show_cases_with_missing_gps_data_only and (lat or lon):
+                continue
             case_data.append(
                 {
                     'id': case_obj.case_id,
@@ -449,13 +484,13 @@ def get_users_with_gps(request, domain):
     return json_response({'user_data': user_data})
 
 
-@method_decorator(toggles.GEOSPATIAL.required_decorator(), name="dispatch")
+@method_decorator(toggles.MICROPLANNING.required_decorator(), name="dispatch")
 class CasesReassignmentView(BaseDomainView):
     urlname = "reassign_cases"
-    REQUEST_CASES_LIMIT = 100
+    REQUEST_CASES_LIMIT = CaseManagementMap.default_rows
     # Below values denotes the number of cases to be reassigned including the related cases
     ASYNC_CASES_UPDATE_THRESHOLD = 500  # threshold for asynchronous operation
-    TOTAL_CASES_LIMIT = 5000    # maximum number of cases that can be reassigned
+    TOTAL_CASES_LIMIT = 10_000  # maximum number of cases that can be reassigned
 
     def post(self, request, domain, *args, **kwargs):
         try:
@@ -480,7 +515,8 @@ class CasesReassignmentView(BaseDomainView):
             return HttpResponseBadRequest(error)
 
         if CaseOwnerUpdate.total_cases_count(case_owner_updates) <= self.ASYNC_CASES_UPDATE_THRESHOLD:
-            update_cases_owner(domain, CaseOwnerUpdate.to_dict(case_owner_updates))
+            flag_assigned_cases = get_flag_assigned_cases_config(self.domain)
+            update_cases_owner(domain, CaseOwnerUpdate.to_dict(case_owner_updates), flag_assigned_cases)
             return JsonResponse({'success': True, 'message': _('Cases were reassigned successfully')})
         else:
             return self._process_as_async(case_owner_updates)
@@ -587,9 +623,7 @@ class CasesReassignmentView(BaseDomainView):
             case_owner_update.related_case_ids.append(related_case_id)
 
     def _process_as_async(self, case_owner_updates):
-        task_key = f'geo_cases_reassignment_update_owners_{self.domain}'
-        celery_task_tracker = CeleryTaskTracker(task_key)
-
+        celery_task_tracker = get_celery_task_tracker(self.domain, ES_REASSIGNMENT_UPDATE_OWNERS_BASE_KEY)
         if celery_task_tracker.is_active():
             return HttpResponse(
                 _('Case reassignment is currently in progress. Please try again later.'),
@@ -599,7 +633,6 @@ class CasesReassignmentView(BaseDomainView):
         geo_cases_reassignment_update_owners.delay(
             self.domain,
             CaseOwnerUpdate.to_dict(case_owner_updates),
-            task_key,
         )
         celery_task_tracker.mark_requested()
         return JsonResponse(

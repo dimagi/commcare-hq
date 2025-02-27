@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/constants", [], function () {
     return {
         ALLOWED_SAVED_OPTIONS: ['oneQuestionPerScreen', 'language'],
@@ -8,7 +7,7 @@ hqDefine("cloudcare/js/formplayer/constants", [], function () {
         PREVIEW_APP_ENVIRONMENT: 'preview-app',
         GENERIC_ERROR: gettext(
             'An unexpected error occurred. ' +
-            'Please report an issue if you continue to see this message.'
+            'Please report an issue if you continue to see this message.',
         ),
 
         LayoutStyles: {
@@ -50,5 +49,7 @@ hqDefine("cloudcare/js/formplayer/constants", [], function () {
         COLLAPSIBLE_TILE_MAX_HEIGHT: 150,
 
         MILLIS_BEFORE_SHOW_LOADING: 1000,
+
+        SCROLLABLE_CONTENT_CONTAINER: '#content-plus-version-info-container',
     };
 });

@@ -1,8 +1,9 @@
-hqDefine('app_manager/js/import_app', function () {
-    $(function () {
-        $(".historyBack").click(function () {
-            history.back();
-            return false;
-        });
+import "commcarehq";
+import $ from "jquery";
+
+$(function () {
+    $(".historyBack").click(function () {
+        history.back();
+        return false;
     });
 });

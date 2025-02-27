@@ -1,5 +1,5 @@
 $(function () {
-    let teamListener = function() {
+    let teamListener = function () {
         console.log("Triggered willSelectAllListener");
     };
 

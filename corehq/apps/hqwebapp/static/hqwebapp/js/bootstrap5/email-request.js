@@ -2,11 +2,8 @@ hqDefine('hqwebapp/js/bootstrap5/email-request', [
     "jquery",
     "knockout",
     "es6!hqwebapp/js/bootstrap5_loader",
-    "jquery-form/dist/jquery.form.min",
     "hqwebapp/js/bootstrap5/hq.helpers",
 ], function ($, ko, bootstrap) {
-    'use strict';
-
     var EmailRequest = function (modalId, formId) {
         let self = {};
 
@@ -69,11 +66,15 @@ hqDefine('hqwebapp/js/bootstrap5/email-request', [
             } else if (!self.isRequestReportSubmitting) {
                 self.$submitBtn.changeButtonState('loading');
                 self.cancelBtnEnabled(false);
-                self.$formElement.ajaxSubmit({
-                    type: "POST",
+                self.reportUrl(location.href);
+                self.isRequestReportSubmitting = true;
+                $.ajax({
+                    method: "POST",
                     url: self.$formElement.attr('action'),
-                    beforeSerialize: hqwebappRequestReportBeforeSerialize,
-                    beforeSubmit: hqwebappRequestReportBeforeSubmit,
+                    data: new FormData(self.$formElement.get(0)),
+                    contentType: false,
+                    processData: false,
+                    enctype: 'multipart/form-data',
                     success: hqwebappRequestReportSucccess,
                     error: hqwebappRequestReportError,
                 });
@@ -87,7 +88,6 @@ hqDefine('hqwebapp/js/bootstrap5/email-request', [
 
         self.resetForm = function () {
             self.$formElement.find("button[type='submit']").changeButtonState('reset');
-            self.$formElement.resetForm();
             self.cancelBtnEnabled(true);
             self.$submitBtn.changeButtonState('reset');
             resetErrors();
@@ -107,14 +107,6 @@ hqDefine('hqwebapp/js/bootstrap5/email-request', [
             self.hasSubjectError(false);
             self.hasEmailInputError(false);
             self.recipientsErrorMessage(null);
-        }
-
-        function hqwebappRequestReportBeforeSerialize() {
-            self.reportUrl(location.href);
-        }
-
-        function hqwebappRequestReportBeforeSubmit() {
-            self.isRequestReportSubmitting = true;
         }
 
         function hqwebappRequestReportSucccess() {
@@ -138,14 +130,14 @@ hqDefine('hqwebapp/js/bootstrap5/email-request', [
         if (issueReportModal.length) {
             issueReportModal.koApplyBindings(new EmailRequest(
                 "modalReportIssue",
-                "hqwebapp-bugReportForm"
+                "hqwebapp-bugReportForm",
             ));
         }
         const featureRequestModal = $("#modalSolutionsFeatureRequest");
         if (featureRequestModal.length) {
             featureRequestModal.koApplyBindings(new EmailRequest(
                 "modalSolutionsFeatureRequest",
-                "hqwebapp-requestReportForm"
+                "hqwebapp-requestReportForm",
             ));
         }
     });

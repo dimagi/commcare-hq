@@ -168,75 +168,84 @@ class TagTest(SimpleTestCase):
                 {% requirejs_main 'x" %}
             """)
 
-    def test_webpack_main(self):
+    def test_js_entry(self):
         self.assertEqual(
             self.render("""
                 {% extends "webpack_base.html" %}
                 {% load hq_shared_tags %}
-                {% webpack_main "webpack/main" %}
-                {% block content %}{% if use_js_bundler %}{{webpack_main}}{% endif %}{% endblock %}
+                {% js_entry "webpack/main" %}
+                {% block content %}{% if use_js_bundler %}{{js_entry}}{% endif %}{% endblock %}
             """).strip(),
             "webpack/main after tag\nwebpack/main",
         )
 
-    def test_webpack_main_no_arg(self):
+    def test_js_entry_no_arg(self):
         # this version can be used in a base template that may or may not use webpack
         self.assertEqual(
             self.render("""
                 {% load hq_shared_tags %}
-                {% webpack_main %}
+                {% js_entry %}
                 {% if use_js_bundler %}unexpected truth{% endif %}
-                {% if webpack_main %}unexpected truth 2{% endif %}
-                {{webpack_main}}
+                {% if js_entry %}unexpected truth 2{% endif %}
+                {{js_entry}}
             """).strip(),
             "",
         )
 
-    def test_webpack_main_in_context(self):
+    def test_js_entry_in_context(self):
         self.assertEqual(
             self.render(
                 """
                 {% extends "webpack_base.html" %}
                 {% load hq_shared_tags %}
-                {% webpack_main "webpack/main" %}
-                {% block content %}{{webpack_main}}{% endblock %}
+                {% js_entry "webpack/main" %}
+                {% block content %}{{js_entry}}{% endblock %}
                 """,
-                {"webpack_main": "webpack/context"}
+                {"js_entry": "webpack/context"}
             ).strip(),
             "webpack/context before tag\n\n"
             "webpack/context after tag\n"
             "webpack/context",
         )
 
-    def test_webpack_main_multiple_tags(self):
-        msg = r"multiple 'webpack_main' tags not allowed \(\"webpack/two\"\)"
+    def test_js_entry_multiple_tags(self):
+        msg = r"multiple 'js_entry' tags not allowed \(\"webpack/two\"\)"
         with self.assertRaisesRegex(TemplateSyntaxError, msg):
             self.render("""
                 {% load hq_shared_tags %}
-                {% webpack_main "webpack/one" %}
-                {% webpack_main "webpack/two" %}
+                {% js_entry "webpack/one" %}
+                {% js_entry "webpack/two" %}
             """)
 
-    def test_webpack_main_too_short(self):
-        msg = r"bad 'webpack_main' argument: '"
+    def test_js_entry_too_short(self):
+        msg = r"bad 'js_entry' argument: '"
         with self.assertRaisesRegex(TemplateSyntaxError, msg):
             self.render("""
                 {% load hq_shared_tags %}
-                {% webpack_main ' %}
+                {% js_entry ' %}
             """)
 
-    def test_webpack_main_bad_string(self):
-        msg = r"bad 'webpack_main' argument: \.'"
+    def test_js_entry_bad_string(self):
+        msg = r"bad 'js_entry' argument: \.'"
         with self.assertRaisesRegex(TemplateSyntaxError, msg):
             self.render("""
                 {% load hq_shared_tags %}
-                {% webpack_main .' %}
+                {% js_entry .' %}
             """)
 
-    def test_webpack_main_mismatched_delimiter(self):
-        msg = r"bad 'webpack_main' argument: 'x\""
+    def test_js_entry_mismatched_delimiter(self):
+        msg = r"bad 'js_entry' argument: 'x\""
         with self.assertRaisesRegex(TemplateSyntaxError, msg):
             self.render("""
                 {% load hq_shared_tags %}
-                {% webpack_main 'x" %}
+                {% js_entry 'x" %}
+            """)
+
+    def test_requirejs_main_js_entry_conflict(self):
+        msg = "Discarding module/two js_entry value because module/one is using requirejs_main"
+        with self.assertRaisesMessage(AssertionError, msg):
+            self.render("""
+                {% load hq_shared_tags %}
+                {% requirejs_main "module/one" %}
+                {% js_entry "module/two" %}
             """)

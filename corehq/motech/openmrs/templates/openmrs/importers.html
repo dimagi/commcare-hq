@@ -4,7 +4,7 @@
 {% load i18n %}
 {% block title %}OpenMRS Importers{% endblock %}
 
-{% requirejs_main_b5 'openmrs/js/openmrs_importers' %}
+{% js_entry 'openmrs/js/openmrs_importers' %}
 
 {% block page_content %}
 
@@ -24,24 +24,30 @@
                       afterRender: initOpenmrsImporterTemplate
                   }"></div>
 
-  <p>
-    <button type="button"
-            class="btn btn-outline-primary"
-            data-bind="click: addOpenmrsImporter">
-      <i class="fa fa-plus"></i>
-      {% trans "Add OpenMRS Importer" %}
-    </button>
-  </p>
+  <div class="mb-3 row">
+    <div class="field-control">
+      <button type="button"
+              class="btn btn-outline-primary"
+              data-bind="click: addOpenmrsImporter">
+        <i class="fa fa-plus"></i>
+        {% trans "Add OpenMRS Importer" %}
+      </button>
+    </div>
+  </div>
 
   <div class="form-actions">
-    <button class="btn btn-primary" type="submit">
-      {% trans "Update OpenMRS Importers" %}
-    </button>
-    <button class="btn btn-outline-primary"
-            type="button"
-            data-bind="click: importNow">
-      {% trans "Import Now" %}
-    </button>
+    <div class="row">
+      <div class="field-control">
+        <button class="btn btn-primary" type="submit">
+          {% trans "Update OpenMRS Importers" %}
+        </button>
+        <button class="btn btn-outline-primary"
+                type="button"
+                data-bind="click: importNow">
+          {% trans "Import Now" %}
+        </button>
+      </div>
+    </div>
   </div>
 </form>
 {% endblock %}

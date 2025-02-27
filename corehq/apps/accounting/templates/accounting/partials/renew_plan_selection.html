@@ -31,9 +31,11 @@
         {% trans 'Included each month' %}
       </h4>
       <div class="plan-included well well-sm">
-        <dl class="dl-horizontal" data-bind="foreach: selectedPlan().rates">
-          <dt data-bind="text: name"></dt>
-          <dd data-bind="text: included"></dd>
+        <dl class="dl-horizontal" data-bind="foreach: {data: selectedPlan().rates, as: 'rate'}">
+          <!-- ko if: rate.included !== 0 -->
+            <dt data-bind="text: rate.name"></dt>
+            <dd data-bind="text: rate.included"></dd>
+          <!-- /ko -->
         </dl>
       </div>
 

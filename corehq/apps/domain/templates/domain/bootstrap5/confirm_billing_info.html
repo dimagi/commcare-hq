@@ -1,0 +1,32 @@
+{% extends "domain/bootstrap5/base_change_plan.html" %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% requirejs_main_b5 'domain/js/confirm_billing_info' %}
+
+{% block form_content %}
+  {% initial_page_data "plan" plan %}
+  {% initial_page_data "cards" cards %}
+  {% initial_page_data "stripe_public_key" stripe_public_key %}
+  {% initial_page_data "downgrade_email_note" downgrade_email_note %}
+  {% registerurl "cards_view" domain %}
+  <p class="lead text-center">
+    {% blocktrans with plan.name as p%}
+      You are about to subscribe to the <strong>{{ p }} Software Plan</strong>.<br/>
+      Please update your billing information below before continuing.
+    {% endblocktrans %}
+  </p>
+
+  <div class="card card-modern-gray card-form-only" id="billing-info">  {# todo B5: css-panel #}
+    <div class="card-body">
+      {% crispy billing_account_info_form %}  {# todo B5: crispy #}
+    </div>
+  </div>
+
+  <div class="card card-modern-gray card-form-only" id="card-manager">  {# todo B5: css-panel #}
+    <div class="card-body">
+      {% include 'domain/bootstrap5/stripe_cards.html' %}
+    </div>
+  </div>
+{% endblock %}

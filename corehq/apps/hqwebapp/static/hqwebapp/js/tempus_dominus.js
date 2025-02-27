@@ -1,4 +1,4 @@
-"use strict";
+
 /**
   * This replaces hqwebapp/js/daterangepicker.config, which is tied to bootstrap3
   *
@@ -14,10 +14,12 @@ hqDefine("hqwebapp/js/tempus_dominus", [
     _,
     Popper,
     tempusDominus,
-    initialPageData
+    initialPageData,
 ) {
     // https://github.com/Eonasdan/tempus-dominus/discussions/2698
-    window.Popper = Popper;
+    if (!window.USE_WEBPACK) {
+        window.Popper = Popper;
+    }
 
     let createDatePicker = function (el, options) {
         let picker = new tempusDominus.TempusDominus(el, _addDefaultOptions(options, {
@@ -50,12 +52,12 @@ hqDefine("hqwebapp/js/tempus_dominus", [
     };
 
     // This replaces createBootstrap3DefaultDateRangePicker in hqwebapp/js/daterangepicker.config
-    let createDefaultDateRangePicker = function (el) {
-        return createDateRangePicker(el, getDateRangeSeparator());
+    let createDefaultDateRangePicker = function (el, start, end) {
+        return createDateRangePicker(el, getDateRangeSeparator(), start, end);
     };
 
     // This replaces createDateRangePicker in hqwebapp/js/daterangepicker.config
-    let createDateRangePicker = function (el, separator) {
+    let createDateRangePicker = function (el, separator, start, end) {
         let picker = new tempusDominus.TempusDominus(
             el, {
                 dateRange: true,
@@ -74,8 +76,14 @@ hqDefine("hqwebapp/js/tempus_dominus", [
                 localization: _.extend(defaultTranslations, {
                     format: 'yyyy-MM-dd',
                 }),
-            }
+            },
         );
+
+        if (start && end) {
+            picker.dates.setValue(new tempusDominus.DateTime(start), 0);
+            picker.dates.setValue(new tempusDominus.DateTime(end), 1);
+        }
+
 
         // Handle single-date ranges
         picker.subscribe("hide.td", function () {
@@ -138,7 +146,7 @@ hqDefine("hqwebapp/js/tempus_dominus", [
     };
 
     let getDateRangeSeparator = function () {
-        return ' to ';
+        return gettext(' to ');
     };
 
     const defaultTranslations = {

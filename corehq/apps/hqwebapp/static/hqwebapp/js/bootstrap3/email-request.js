@@ -1,7 +1,6 @@
 hqDefine('hqwebapp/js/bootstrap3/email-request', [
     "jquery",
     "knockout",
-    "jquery-form/dist/jquery.form.min",
     "hqwebapp/js/bootstrap3/hq.helpers",
 ], function ($, ko) {
 
@@ -66,11 +65,15 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
             } else if (!self.isRequestReportSubmitting) {
                 self.$submitBtn.button('loading');
                 self.cancelBtnEnabled(false);
-                self.$formElement.ajaxSubmit({
-                    type: "POST",
+                self.reportUrl(location.href);
+                self.isRequestReportSubmitting = true;
+                $.ajax({
+                    method: "POST",
                     url: self.$formElement.attr('action'),
-                    beforeSerialize: hqwebappRequestReportBeforeSerialize,
-                    beforeSubmit: hqwebappRequestReportBeforeSubmit,
+                    data: new FormData(self.$formElement.get(0)),
+                    contentType: false,
+                    processData: false,
+                    enctype: 'multipart/form-data',
                     success: hqwebappRequestReportSucccess,
                     error: hqwebappRequestReportError,
                 });
@@ -84,7 +87,6 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
 
         self.resetForm = function () {
             self.$formElement.find("button[type='submit']").button('reset');
-            self.$formElement.resetForm();
             self.cancelBtnEnabled(true);
             self.$submitBtn.button('reset');
             resetErrors();
@@ -104,14 +106,6 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
             self.hasSubjectError(false);
             self.hasEmailInputError(false);
             self.recipientsErrorMessage(null);
-        }
-
-        function hqwebappRequestReportBeforeSerialize() {
-            self.reportUrl(location.href);
-        }
-
-        function hqwebappRequestReportBeforeSubmit() {
-            self.isRequestReportSubmitting = true;
         }
 
         function hqwebappRequestReportSucccess() {
@@ -135,14 +129,14 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
         if (issueReportModal.length) {
             issueReportModal.koApplyBindings(new EmailRequest(
                 "modalReportIssue",
-                "hqwebapp-bugReportForm"
+                "hqwebapp-bugReportForm",
             ));
         }
         const featureRequestModal = $("#modalSolutionsFeatureRequest");
         if (featureRequestModal.length) {
             featureRequestModal.koApplyBindings(new EmailRequest(
                 "modalSolutionsFeatureRequest",
-                "hqwebapp-requestReportForm"
+                "hqwebapp-requestReportForm",
             ));
         }
     });

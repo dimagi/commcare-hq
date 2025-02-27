@@ -5,13 +5,14 @@ hqDefine("data_interfaces/js/find_by_id", [
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
     'analytix/js/kissmetrix',
+    'commcarehq',
 ], function (
     $,
     _,
     ko,
     assertProperties,
     initialPageData,
-    kissmetrics
+    kissmetrics,
 ) {
     var findModel = function (options) {
         assertProperties.assert(options, ['errorMessage', 'eventName', 'header', 'help', 'placeholder', 'successMessage']);

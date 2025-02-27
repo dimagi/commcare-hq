@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine("case_importer/js/main", [
     'jquery',
     'underscore',
@@ -6,12 +6,14 @@ hqDefine("case_importer/js/main", [
     'case_importer/js/import_history',
     'case_importer/js/excel_fields',
     'hqwebapp/js/bootstrap5/widgets',
+    'hqwebapp/js/components/select_toggle',
+    'commcarehq',
 ], function (
     $,
     _,
     initialPageData,
     importHistory,
-    excelFieldsModule
+    excelFieldsModule,
 ) {
     var behaviorForUploadPage = function () {
         var $recentUploads = $('#recent-uploads');

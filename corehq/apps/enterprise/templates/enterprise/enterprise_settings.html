@@ -2,7 +2,7 @@
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 
-{% requirejs_main_b5 'enterprise/js/enterprise_settings' %}
+{% js_entry 'enterprise/js/enterprise_settings' %}
 
 {% block page_content %}
   {% initial_page_data 'accounts_email' accounts_email %}

@@ -3,15 +3,15 @@ hqDefine('sso/js/new_identity_provider', [
     'knockout',
     'accounting/js/widgets',
     'hqwebapp/js/initial_page_data',
+    'commcarehq',
 ], function (
     $,
     ko,
     widgets,
-    initialPageData
+    initialPageData,
 ) {
 
     var identityProviderModel = function () {
-        'use strict';
         var self = {};
 
         self.owner = widgets.asyncSelect2Handler('owner', false, 'select2_identity_provider');

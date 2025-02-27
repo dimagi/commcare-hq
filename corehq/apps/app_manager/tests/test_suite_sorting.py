@@ -1,5 +1,6 @@
 from django.test import SimpleTestCase
 
+from corehq import privileges
 from corehq.apps.app_manager.models import (
     Application,
     CaseSearch,
@@ -14,6 +15,7 @@ from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
     patch_get_xform_resource_overrides,
 )
+from corehq.util.test_utils import privilege_enabled
 
 
 @patch_get_xform_resource_overrides()
@@ -23,6 +25,7 @@ class SuiteSortingTest(SimpleTestCase, SuiteMixin):
     def test_multisort_suite(self, *args):
         self._test_generic_suite('multi-sort', 'multi-sort')
 
+    @privilege_enabled(privileges.APP_DEPENDENCIES)
     def test_sort_only_value_suite(self, *args):
         self._test_generic_suite('sort-only-value', 'sort-only-value')
         self._test_app_strings('sort-only-value')

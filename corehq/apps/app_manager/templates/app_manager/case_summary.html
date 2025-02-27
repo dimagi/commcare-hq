@@ -4,7 +4,7 @@
 
 {% block title %}{% trans "Case Summary" %} - {% trans "Version" %} {{ app_version }}{% endblock %}
 
-{% requirejs_main 'app_manager/js/summary/case_summary' %}
+{% js_entry_b3 'app_manager/js/summary/case_summary' %}
 
 {% block content_extra %}
   <div class="ko-template" id="case-summary-header">

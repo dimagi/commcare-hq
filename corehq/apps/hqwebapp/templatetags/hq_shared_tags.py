@@ -29,6 +29,7 @@ from corehq.apps.hqwebapp.exceptions import (
 )
 from corehq.apps.hqwebapp.models import Alert
 from corehq.motech.utils import pformat_json
+from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone
 
@@ -245,19 +246,13 @@ def can_use_restore_as(request):
 
 @register.simple_tag
 def css_label_class():
-    from corehq.apps.hqwebapp.crispy import CSS_LABEL_CLASS, CSS_LABEL_CLASS_BOOTSTRAP5
-    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
-    if get_bootstrap_version() == BOOTSTRAP_5:
-        return CSS_LABEL_CLASS_BOOTSTRAP5
+    from corehq.apps.hqwebapp.crispy import CSS_LABEL_CLASS
     return CSS_LABEL_CLASS
 
 
 @register.simple_tag
 def css_field_class():
-    from corehq.apps.hqwebapp.crispy import CSS_FIELD_CLASS, CSS_FIELD_CLASS_BOOTSTRAP5
-    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
-    if get_bootstrap_version() == BOOTSTRAP_5:
-        return CSS_FIELD_CLASS_BOOTSTRAP5
+    from corehq.apps.hqwebapp.crispy import CSS_FIELD_CLASS
     return CSS_FIELD_CLASS
 
 
@@ -561,6 +556,13 @@ def view_pdb(element):
     return element
 
 
+@register.filter
+def is_new_user(user):
+    now = datetime.now()
+    one_week_ago = now - timedelta(days=7)
+    return True if user.created_on >= one_week_ago else False
+
+
 @register.tag
 def registerurl(parser, token):
     split_contents = token.split_contents()
@@ -601,15 +603,15 @@ def html_attr(value):
     return conditional_escape(value)
 
 
-def _create_page_data(parser, token, node_slug):
-    split_contents = token.split_contents()
+def _create_page_data(parser, original_token, node_slug):
+    split_contents = original_token.split_contents()
     tag = split_contents[0]
     name = parse_literal(split_contents[1], parser, tag)
     value = parser.compile_filter(split_contents[2])
 
     class FakeNode(template.Node):
-        # must mock token or error handling code will fail and not reveal real error
-        token = Token(TokenType.TEXT, '', (0, 0), 0)
+        token = original_token
+        origin = parser.origin
 
         def render(self, context):
             resolved = value.resolve(context)
@@ -654,7 +656,7 @@ def _bundler_main(parser, token, flag, node_class):
     # Some templates check for {% if requirejs_main %}
     tag_name = tag_name.rstrip("_b5")
 
-    # likewise with webpack_main_b3, treat identically to webpack_main
+    # likewise with js_entry_b3, treat identically to js_entry
     tag_name = tag_name.rstrip("_b3")
 
     if getattr(parser, flag, False):
@@ -698,27 +700,27 @@ def requirejs_main(parser, token):
 
 
 @register.tag
-def webpack_main(parser, token):
+def js_entry(parser, token):
     """
     Indicate that a page should be using Webpack, by naming the
     JavaScript module to be used as the page's main entry point.
 
-    The base template need not specify a value in its `{% webpack_main %}`
+    The base template need not specify a value in its `{% js_entry %}`
     tag, allowing it to be extended by templates that may or may not
-    use requirejs. In this case the `webpack_main` template variable
+    use requirejs. In this case the `js_entry` template variable
     will have a value of `None` unless an extending template has a
-    `{% webpack_main "..." %}` with a value.
+    `{% js_entry "..." %}` with a value.
     """
-    return _bundler_main(parser, token, "__saw_webpack_main", WebpackMainNode)
+    return _bundler_main(parser, token, "__saw_js_entry", WebpackMainNode)
 
 
 @register.tag
-def webpack_main_b3(parser, token):
+def js_entry_b3(parser, token):
     """
-    Alias for webpack_main. Use this to mark entry points that should be part of the
+    Alias for js_entry. Use this to mark entry points that should be part of the
     bootstrap 3 bundle of webpack.
     """
-    return webpack_main(parser, token)
+    return js_entry(parser, token)
 
 
 class RequireJSMainNode(template.Node):
@@ -726,15 +728,27 @@ class RequireJSMainNode(template.Node):
     def __init__(self, name, value):
         self.name = name
         self.value = value
+        self.origin = None
 
     def __repr__(self):
         return "<RequireJSMain Node: %r>" % (self.value,)
 
     def render(self, context):
         if self.name not in context and self.value:
+            # Check that there isn't already an entry point from the other bundler tool
+            # If there is, don't add this one, because having both set will cause js errors
+            other_tag = "js_entry" if self.name == "requirejs_main" else "requirejs_main"
+            other_value = None
+            for context_dict in context.dicts:
+                if other_tag in context_dict:
+                    other_value = context_dict.get(other_tag)
+                    msg = f"Discarding {self.value} {self.name} value because {other_value} is using {other_tag}"
+                    soft_assert('jschweers@dimagi.com', notify_admins=False, send_to_ops=False)(False, msg)
             # set name in block parent context
-            context.dicts[-2]['use_js_bundler'] = True
-            context.dicts[-2][self.name] = self.value
+            if not other_value:
+                context.dicts[-2]['use_js_bundler'] = True
+                context.dicts[-2][self.name] = self.value
+
         return ''
 
 
@@ -758,6 +772,11 @@ def webpack_bundles(entry_name):
             manifest = get_webpack_manifest('manifest_b3.json')
             webpack_folder = 'webpack_b3'
     except WebpackManifestNotFoundError:
+        # If we're in tests, the manifest genuinely may not be available,
+        # as it's only generated for the test job that includes javascript.
+        if settings.UNIT_TESTING:
+            return []
+
         raise TemplateSyntaxError(
             f"No webpack manifest found!\n"
             f"'{entry_name}' will not load correctly.\n\n"
@@ -774,7 +793,7 @@ def webpack_bundles(entry_name):
         if bootstrap_version == BOOTSTRAP_3:
             webpack_error = (
                 f"{webpack_error}"
-                f"Additionally, did you remember to use `webpack_main_b3` "
+                f"Additionally, did you remember to use `js_entry_b3` "
                 f"on this Bootstrap 3 page?\n\n\n\n"
             )
         raise TemplateSyntaxError(webpack_error)

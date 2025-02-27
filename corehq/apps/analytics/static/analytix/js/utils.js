@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine('analytix/js/utils', [
     'jquery',
     'underscore',
@@ -6,7 +6,7 @@ hqDefine('analytix/js/utils', [
 ], function (
     $,
     _,
-    initialAnalytics
+    initialAnalytics,
 ) {
 
     /**

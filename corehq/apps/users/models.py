@@ -79,15 +79,18 @@ from corehq.apps.users.tasks import (
 from corehq.apps.users.util import (
     filter_by_app,
     log_user_change,
+    log_invitation_change,
     user_display_string,
     user_location_data,
     username_to_user_id,
     bulk_auto_deactivate_commcare_users,
     is_dimagi_email,
 )
+from corehq.const import INVITATION_CHANGE_VIA_WEB
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.models import CommCareCase
+from corehq.motech.utils import b64_aes_cbc_encrypt, b64_aes_cbc_decrypt
 from corehq.toggles import TABLEAU_USER_SYNCING
 from corehq.util.dates import get_timestamp
 from corehq.util.models import BouncedEmail
@@ -104,6 +107,8 @@ from .models_role import (  # noqa
 from .user_data import SQLUserData  # noqa
 from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.mobile_auth.utils import generate_aes_key
+
 
 WEB_USER = 'web'
 COMMCARE_USER = 'commcare'
@@ -552,7 +557,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
 
     def add_as_web_user(self, domain, role, primary_location_id=None,
                         assigned_location_ids=None, program_id=None, profile=None,
-                        tableau_role=None, tableau_group_ids=None):
+                        tableau_role=None, tableau_group_ids=None, custom_user_data=None):
         if assigned_location_ids is None:
             assigned_location_ids = []
         domain_obj = Domain.get_by_name(domain)
@@ -564,9 +569,11 @@ class _AuthorizableMixin(IsMemberOfMixin):
             if primary_location_id:
                 self.set_location(domain, primary_location_id, commit=False)
             self.reset_locations(domain, assigned_location_ids, commit=False)
+        user_data = self.get_user_data(domain_obj.name)
         if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES) and profile:
-            user_data = self.get_user_data(domain_obj.name)
             user_data.update({}, profile_id=profile.id)
+        if custom_user_data:
+            user_data.update(custom_user_data)
         if TABLEAU_USER_SYNCING.enabled(domain) and (tableau_role or tableau_group_ids):
             if tableau_group_ids is None:
                 tableau_group_ids = []
@@ -1159,11 +1166,18 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             session_data[COMMCARE_USER_TYPE_KEY] = COMMCARE_USER_TYPE_DEMO
 
         session_data.update({
+            f'{SYSTEM_PREFIX}_project': domain,
             f'{SYSTEM_PREFIX}_first_name': self.first_name,
             f'{SYSTEM_PREFIX}_last_name': self.last_name,
             f'{SYSTEM_PREFIX}_phone_number': self.phone_number,
             f'{SYSTEM_PREFIX}_user_type': self._get_user_type(),
         })
+
+        if location_id := self.get_location_id(domain):
+            session_data['commcare_location_id'] = location_id
+            session_data['commcare_location_ids'] = user_location_data(self.get_location_ids(domain))
+            session_data['commcare_primary_case_sharing_id'] = location_id
+
         return session_data
 
     def get_owner_ids(self, domain):
@@ -1548,7 +1562,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             # test no username conflict
             by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
             if by_username and by_username['id'] != self._id:
-                raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
+                raise self.Inconsistent("User with username %s already exists" % self.username)
 
             if update_django_user and self._rev and not self.to_be_deleted():
                 django_user = self.sync_to_django_user()
@@ -2060,7 +2074,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         touched = []
         faulty_groups = []
         for to_add in desired - current:
-            group = Group.get(to_add)
+            try:
+                group = Group.get(to_add)
+            except ResourceNotFound:
+                faulty_groups.append(to_add)
+                continue
             if group.domain != self.domain:
                 faulty_groups.append(to_add)
                 continue
@@ -2327,6 +2345,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     @memoized
     def memoized_usercase(self):
         return self.get_usercase()
+
+    def get_usercase_by_domain(self, domain):
+        if self.domain == domain:
+            return self.memoized_usercase
+        return None
 
     def get_usercase(self):
         return CommCareCase.objects.get_case_by_external_id(self.domain, self._id, USERCASE_TYPE)
@@ -2635,14 +2658,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def get_usercase_by_domain(self, domain):
         return CommCareCase.objects.get_case_by_external_id(domain, self._id, USERCASE_TYPE)
 
-    def get_user_session_data(self, domain):
-        # TODO can we do this for both types of users and remove the fields from user data?
-        session_data = super(WebUser, self).get_user_session_data(domain)
-        session_data['commcare_location_id'] = self.get_location_id(domain)
-        session_data['commcare_location_ids'] = user_location_data(self.get_location_ids(domain))
-        session_data['commcare_primary_case_sharing_id'] = self.get_location_id(domain)
-        return session_data
-
 
 class FakeUser(WebUser):
     """
@@ -2736,9 +2751,8 @@ class Invitation(models.Model):
     domain = models.CharField(max_length=255)
     role = models.CharField(max_length=100, null=True, blank=True)  # role qualified ID
     program = models.CharField(max_length=126, null=True, blank=True)   # couch id of a Program
-    supply_point = models.CharField(max_length=126, null=True, blank=True)  # couch id of a Location
     primary_location = models.ForeignKey("locations.SQLLocation", on_delete=models.SET_NULL,
-                                 to_field='location_id', null=True, blank=True)  # to replace supply_point
+                                 to_field='location_id', null=True, blank=True)
     assigned_locations = models.ManyToManyField("locations.SQLLocation", symmetrical=False,
                                                 related_name='invitations')
     profile = models.ForeignKey("custom_data_fields.CustomDataFieldsProfile",
@@ -2752,7 +2766,32 @@ class Invitation(models.Model):
 
     def save(self, *args, **kwargs):
         self.full_clean()
+        logging_values = kwargs.pop('logging_values', None)
         super().save(*args, **kwargs)
+        if logging_values:
+            user = self.get_invited_user()
+            log_invitation_change(
+                domain=self.domain,
+                changed_by=logging_values.get('changed_by'),
+                changed_via=logging_values.get('changed_via'),
+                action=logging_values.get('action'),
+                invite=self,
+                user_id=user.user_id if user else None,
+                changes=logging_values.get('changes'),
+            )
+
+    def delete(self, **kwargs):
+        from corehq.apps.users.model_log import InviteModelAction
+        user = self.get_invited_user()
+        deleted_by = kwargs.get('deleted_by')
+        log_invitation_change(
+            domain=self.domain,
+            user_id=user.user_id if user else None,
+            changed_by=deleted_by,
+            changed_via=INVITATION_CHANGE_VIA_WEB,
+            action=InviteModelAction.DELETE,
+        )
+        super().delete()
 
     @classmethod
     def by_domain(cls, domain, is_accepted=False, **filters):
@@ -2789,7 +2828,7 @@ class Invitation(models.Model):
         with override_language(lang):
             if domain_request is None:
                 text_content = render_to_string("domain/email/domain_invite.txt", params)
-                html_content = render_to_string("domain/email/domain_invite.html", params)
+                html_content = render_to_string("domain/email/bootstrap3/domain_invite.html", params)
                 subject = _('Invitation from %s to join CommCareHQ') % inviter.formatted_name
             else:
                 text_content = render_to_string("domain/email/domain_request_approval.txt", params)
@@ -2801,6 +2840,9 @@ class Invitation(models.Model):
                                     messaging_event_id=f"{self.EMAIL_ID_PREFIX}{self.uuid}",
                                     domain=self.domain,
                                     use_domain_gateway=True)
+
+    def get_invited_user(self):
+        return CouchUser.get_by_username(self.email)
 
     def get_role_name(self):
         if self.role:
@@ -2853,12 +2895,41 @@ class Invitation(models.Model):
             assigned_location_ids=list(self.assigned_locations.all().values_list('location_id', flat=True)),
             program_id=self.program,
             profile=self.profile,
+            custom_user_data=self.custom_user_data,
             tableau_role=self.tableau_role,
             tableau_group_ids=self.tableau_group_ids
         )
         self.is_accepted = True
         self.save()
         self._send_confirmation_email()
+
+
+class InvitationHistory(models.Model):
+    """
+    Modeled off UserHistory
+    """
+    CREATE = 1
+    UPDATE = 2
+    DELETE = 3
+
+    ACTION_CHOICES = (
+        (CREATE, _('Create')),
+        (UPDATE, _('Update')),
+        (DELETE, _('Delete')),
+    )
+    domain = models.CharField(max_length=255)
+    user_id = models.CharField(max_length=128, null=True)  # if user_id is None, the user doesn't exist yet
+    changed_by = models.CharField(max_length=128)
+    changed_at = models.DateTimeField(auto_now_add=True, editable=False)
+    changed_via = models.CharField(max_length=255, blank=True)
+    action = models.PositiveSmallIntegerField(choices=ACTION_CHOICES)
+    invitation = models.ForeignKey(Invitation, on_delete=models.SET_NULL, null=True)
+    changes = models.JSONField(default=dict, encoder=DjangoJSONEncoder, null=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['domain']),
+        ]
 
 
 class DomainRemovalRecord(DeleteRecord):
@@ -3078,6 +3149,7 @@ class ApiKeyManager(models.Manager):
 class HQApiKey(models.Model):
     user = models.ForeignKey(User, related_name='api_keys', on_delete=models.CASCADE)
     key = models.CharField(max_length=128, blank=True, default='', db_index=True)
+    encrypted_key = models.CharField(max_length=128, blank=True, default='', db_index=True)
     name = models.CharField(max_length=255, blank=True, default='')
     created = models.DateTimeField(default=timezone.now)
     ip_allowlist = ArrayField(models.GenericIPAddressField(), default=list)
@@ -3096,17 +3168,36 @@ class HQApiKey(models.Model):
         unique_together = ('user', 'name')
 
     def save(self, *args, **kwargs):
-        if not self.key:
-            self.key = self.generate_key()
+        if not self.plaintext_key:
+            self.plaintext_key = self._generate_key()
             if 'update_fields' in kwargs:
                 kwargs['update_fields'].append('key')
+                kwargs['update_fields'].append('encrypted_key')
 
         return super().save(*args, **kwargs)
 
-    def generate_key(self):
+    def _generate_key(self):
         # From tastypie
         new_uuid = uuid4()
         return hmac.new(new_uuid.bytes, digestmod=sha1).hexdigest()
+
+    @property
+    def plaintext_key(self):
+        try:
+            decrypted_key = b64_aes_cbc_decrypt(self.encrypted_key) if self.encrypted_key else ''
+            if decrypted_key == self.key:
+                return decrypted_key
+            else:
+                logging.warning("Decrypted key does not match stored key for %s", self.name)
+                return self.key
+        except Exception as e:
+            logging.exception(f'Error getting decrypted key for {self.name}. {e}')
+            return self.key
+
+    @plaintext_key.setter
+    def plaintext_key(self, plaintext):
+        self.key = plaintext
+        self.encrypted_key = b64_aes_cbc_encrypt(plaintext)
 
     @property
     @memoized
@@ -3283,6 +3374,24 @@ class ConnectIDUserLink(models.Model):
     connectid_username = models.TextField()
     commcare_user = models.ForeignKey(User, related_name='connectid_user', on_delete=models.CASCADE)
     domain = models.TextField()
+    messaging_consent = models.BooleanField(default=False)
+    channel_id = models.CharField(null=True, blank=True)
 
     class Meta:
         unique_together = ('domain', 'commcare_user')
+
+    @property
+    def messaging_key(self):
+        key = generate_aes_key().decode("utf-8")
+        messaging_key, _ = ConnectIDMessagingKey.objects.get_or_create(
+            connectid_user_link=self, domain=self.domain, active=True, defaults={"key": key}
+        )
+        return messaging_key
+
+
+class ConnectIDMessagingKey(models.Model):
+    domain = models.TextField()
+    connectid_user_link = models.ForeignKey(ConnectIDUserLink, on_delete=models.CASCADE)
+    key = models.CharField(max_length=44, null=True, blank=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+    active = models.BooleanField(default=True)

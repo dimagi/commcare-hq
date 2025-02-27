@@ -1,14 +1,14 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/main", [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'cloudcare/js/formplayer/app',
     'cloudcare/js/sentry',
+    'commcarehq',
 ], function (
     $,
     initialPageData,
     FormplayerFrontEnd,
-    sentry
+    sentry,
 ) {
     $(function () {
         sentry.initSentry();
@@ -25,7 +25,7 @@ hqDefine("cloudcare/js/formplayer/main", [
             environment: initialPageData.get('environment'),
         };
         FormplayerFrontEnd.getXSRF(options).then(() =>
-            FormplayerFrontEnd.start(options)
+            FormplayerFrontEnd.start(options),
         );
 
         var $menuToggle = $('#commcare-menu-toggle'),

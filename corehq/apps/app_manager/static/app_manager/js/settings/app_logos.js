@@ -1,14 +1,12 @@
 hqDefine("app_manager/js/settings/app_logos", function () {
-    var self = {};
-    var HQMediaUploaders = hqImport("hqmedia/js/hqmediauploaders").get(),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data");
-    var refs = initialPageData.get('media_refs');
-    var mediaInfo = initialPageData.get('media_info');
+    let self = {};
+    const initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+        refs = initialPageData.get('media_refs'),
+        mediaInfo = initialPageData.get('media_info');
 
     var imageRefs = {};
     for (var slug in refs) {
-        imageRefs[slug] = hqImport('hqmedia/js/media_reference_models').ImageReference(refs[slug]);
-        imageRefs[slug].upload_controller = HQMediaUploaders[slug];
+        imageRefs[slug] = hqImport('hqmedia/js/media_reference_models').ImageReference(refs[slug], slug);
         imageRefs[slug].setObjReference(mediaInfo[slug]);
     }
 

@@ -3,10 +3,7 @@ hqDefine('events/js/edit_attendee', [
     'knockout',
     'hqwebapp/js/initial_page_data',
     'locations/js/widgets',
-], function (
-    $,
-    ko,
-    initialPageData
-) {
+    "commcarehq",
+], function () {
     // Placeholder for Location & Primary location widgets
 });

@@ -1,23 +1,29 @@
-hqDefine("geospatial/js/gps_capture",[
+hqDefine("geospatial/js/gps_capture", [
     "jquery",
     "knockout",
     'underscore',
     'hqwebapp/js/initial_page_data',
-    "hqwebapp/js/bootstrap3/components.ko", // for pagination
-    'select2/dist/js/select2.full.min',
+    'mapbox-gl/dist/mapbox-gl',
+    '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min',
+    "hqwebapp/js/components/pagination",
+    "hqwebapp/js/components/search_box",
+    'reports/js/bootstrap3/base',
+    'hqwebapp/js/select2_knockout_bindings.ko',
+    'commcarehq',
 ], function (
     $,
     ko,
     _,
-    initialPageData
+    initialPageData,
+    mapboxgl,
+    MapboxGeocoder,
 ) {
-    'use strict';
     const MAP_CONTAINER_ID = "geospatial-map";
     const USERS_PER_PAGE = 10;
 
     var map;
     var selectedDataListObject;
-    var mapMarker = new mapboxgl.Marker({  // eslint-disable-line no-undef
+    var mapMarker = new mapboxgl.Marker({
         draggable: true,
     });
     mapMarker.on('dragend', function () {
@@ -309,13 +315,11 @@ hqDefine("geospatial/js/gps_capture",[
     }
 
     var initMap = function () {
-        'use strict';
-
-        mapboxgl.accessToken = initialPageData.get('mapbox_access_token');  // eslint-disable-line no-undef
+        mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
 
         let centerCoordinates = [2.43333330, 9.750]; // should be domain specific
 
-        map = new mapboxgl.Map({  // eslint-disable-line no-undef
+        map = new mapboxgl.Map({
             container: MAP_CONTAINER_ID, // container ID
             style: 'mapbox://styles/mapbox/streets-v12', // style URL
             center: centerCoordinates, // starting position [lng, lat]
@@ -325,15 +329,15 @@ hqDefine("geospatial/js/gps_capture",[
         });
 
         map.addControl(
-            new MapboxGeocoder({  // eslint-disable-line no-undef
-                accessToken: mapboxgl.accessToken,  // eslint-disable-line no-undef
+            new MapboxGeocoder({
+                accessToken: mapboxgl.accessToken,
                 mapboxgl: map,
                 types: 'address',
                 proximity: centerCoordinates.toString(),  // bias results to this point
                 marker: false,
             }).on('result', function (resultObject) {
                 updateGPSCoordinates(resultObject.result.center[0], resultObject.result.center[1]);
-            })
+            }),
         );
 
         map.on('click', (event) => {

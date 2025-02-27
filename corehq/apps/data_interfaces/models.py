@@ -1163,8 +1163,6 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         if is_copied_case(case):
             return CaseRuleActionResult()
 
-        dedupe_load_counter('unknown', case.domain)()
-
         if not case_matching_rule_criteria_exists_in_es(case, rule):
             ALLOWED_ES_DELAY = timedelta(hours=1)
             if datetime.utcnow() - case.server_modified_on > ALLOWED_ES_DELAY:
@@ -1178,6 +1176,7 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
                 # but disabling this to avoid further quota issues.
                 # raise ValueError(f'Unable to find current ElasticSearch data for: {case.case_id}')
                 # Ignore this result for now
+                dedupe_load_counter('unknown', case.domain, {'result': 'errored'})()
                 return CaseRuleActionResult(num_errors=1)
             else:
                 # Normal processing can involve latency between when a case is written to the database and when
@@ -1189,8 +1188,11 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
                 # inserts into ElasticSearch are asychronous, we can receive cases here that will not yet be
                 # present in ElasticSearch but will never be processed later. In the short-term, we're avoiding
                 # this by resaving the case, with the intention to use a more stable approach in the future
+                dedupe_load_counter('unknown', case.domain, {'result': 'retried'})()
                 resave_case(rule.domain, case, send_post_save_signal=False)
                 return CaseRuleActionResult(num_updates=0)
+
+        dedupe_load_counter('unknown', case.domain, {'result': 'processed'})()
 
         try:
             existing_duplicate = CaseDuplicateNew.objects.get(case_id=case.case_id, action=self)

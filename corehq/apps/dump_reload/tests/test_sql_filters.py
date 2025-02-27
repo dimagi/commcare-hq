@@ -1,10 +1,50 @@
+from django.db import router
 from django.test import TestCase
 
-from corehq.apps.dump_reload.sql.filters import MultimediaBlobMetaFilter
+from corehq.apps.dump_reload.sql.filters import MultimediaBlobMetaFilter, FilteredModelIteratorBuilder
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+from corehq.motech.repeaters.models import Repeater
+from corehq.motech.models import ConnectionSettings
+from corehq.apps.dump_reload.sql.filters import SimpleFilter
+
+
+class TestUseAllObjectsInModelIteratorBuilder(TestCase):
+
+    def test_default_manager_ignores_deleted_objects(self):
+        deleted_repeater = Repeater.objects.create(
+            connection_settings=self.conn_settings, domain="test", is_deleted=True
+        )
+        active_repeater = Repeater.objects.create(connection_settings=self.conn_settings, domain='test')
+        filter = FilteredModelIteratorBuilder(
+            "repeaters.Repeater", SimpleFilter("domain"), use_all_objects=False
+        )
+        built_filter = filter.build('test', Repeater, router.db_for_read(Repeater))
+        object_ids = [obj.id for iterator in built_filter.iterators() for obj in iterator]
+        self.assertTrue(active_repeater.id in object_ids)
+        self.assertTrue(deleted_repeater.id not in object_ids)
+
+    def test_using_all_objects_includes_deleted_objects(self):
+        deleted_repeater = Repeater.objects.create(
+            connection_settings=self.conn_settings, domain="test", is_deleted=True
+        )
+        active_repeater = Repeater.objects.create(connection_settings=self.conn_settings, domain='test')
+        filter = FilteredModelIteratorBuilder(
+            "repeaters.Repeater", SimpleFilter("domain"), use_all_objects=True
+        )
+        built_filter = filter.build('test', Repeater, router.db_for_read(Repeater))
+        object_ids = [obj.id for iterator in built_filter.iterators() for obj in iterator]
+        self.assertTrue(active_repeater.id in object_ids)
+        self.assertTrue(deleted_repeater.id in object_ids)
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.conn_settings = ConnectionSettings.objects.create(
+            domain="test", name="example.com", url="https://example.com/forwarding"
+        )
 
 
 class TestMultimediaBlobMetaFilter(TestCase):

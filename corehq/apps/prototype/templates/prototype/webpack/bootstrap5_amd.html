@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% webpack_main "prototype/js/webpack/bootstrap5_amd" %}
+{% js_entry "prototype/js/webpack/bootstrap5_amd" %}
 
 {% block content %}
   {% initial_page_data 'test_initial' 'successfully retrieved initial page data' %}

@@ -1,15 +1,16 @@
-'use strict';
+
 
 hqDefine("geospatial/js/geo_config", [
     "jquery",
     "knockout",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/bootstrap3/alert_user",
+    "commcarehq",
 ], function (
     $,
     ko,
     initialPageData,
-    alertUser
+    alertUser,
 ) {
     const ROAD_NETWORK_ALGORITHM = initialPageData.get('road_network_algorithm_slug');
 
@@ -59,6 +60,7 @@ hqDefine("geospatial/js/geo_config", [
         self.maxCaseDistance = ko.observable(data.max_case_distance);
         self.maxTravelTime = ko.observable(data.max_case_travel_time);
         self.travelMode = ko.observable(data.travelMode);
+        self.flagAssignedCases = ko.observable(data.flag_assigned_cases);
 
         self.captureApiToken = ko.computed(function () {
             return self.selectedAlgorithm() === ROAD_NETWORK_ALGORITHM;
@@ -78,7 +80,7 @@ hqDefine("geospatial/js/geo_config", [
             }).fail(function () {
                 alertUser.alert_user(
                     gettext("Invalid API token. Please verify that the token matches the one on your Mapbox account and has the correct scope configured."),
-                    "danger"
+                    "danger",
                 );
             });
         };

@@ -12,8 +12,10 @@
  * is responsible for creating the tab "columns" and injecting them into itself.
  */
 hqDefine("app_manager/js/details/column", function () {
-    const uiElement = hqImport('hqwebapp/js/bootstrap3/ui-element');
-    const initialPageData = hqImport('hqwebapp/js/initial_page_data').get;
+    const uiElementInput = hqImport('hqwebapp/js/ui_elements/bootstrap3/ui-element-input');
+    const uiElementKeyValueMapping = hqImport('hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping');
+    const uiElementSelect = hqImport('hqwebapp/js/ui_elements/bootstrap3/ui-element-select');
+    const initialPageData = hqImport('hqwebapp/js/initial_page_data');
     const microCaseImageName = 'cc_case_image';
 
     return function (col, screen) {
@@ -127,7 +129,7 @@ hqDefine("app_manager/js/details/column", function () {
 
         self.screen = screen;
         self.lang = screen.lang;
-        self.model = uiElement.select([{
+        self.model = uiElementSelect.new([{
             label: "Case",
             value: "case",
         }]).val(self.original.model);
@@ -135,11 +137,14 @@ hqDefine("app_manager/js/details/column", function () {
         const icon = Utils.isAttachmentProperty(self.original.field) ? 'fa fa-paperclip' : null;
         self.field = undefined;
         if (self.original.hasAutocomplete) {
-            self.field = uiElement.select();
+            self.field = uiElementSelect.new();
         } else {
-            self.field = uiElement.input(self.original.field);
+            self.field = uiElementInput.new(self.original.field);
         }
         self.field.setIcon(icon);
+        self.getFieldHtml = function (value) {
+            return hqImport('app_manager/js/details/utils').getFieldHtml(value);
+        };
 
         // Make it possible to observe changes to self.field
         // note self observableVal is read only!
@@ -167,14 +172,14 @@ hqDefine("app_manager/js/details/column", function () {
                     }
                 }
             }
-            self.header = uiElement.input().val(invisibleVal);
+            self.header = uiElementInput.new().val(invisibleVal);
             self.header.setVisibleValue(visibleVal);
 
             self.nodeset_extra = hqImport("app_manager/js/details/detail_tab_nodeset")(_.extend({
                 caseTypes: self.screen.childCaseTypes,
             }, _.pick(self.original, ['nodeset', 'nodesetCaseType', 'nodesetFilter'])));
 
-            self.relevant = uiElement.input().val(self.original.relevant);
+            self.relevant = uiElementInput.new().val(self.original.relevant);
             if (self.isTab) {
                 self.header.ui.find("input[type='text']").attr("placeholder", gettext("Tab Name"));
                 self.relevant.ui.find("input[type='text']").attr("placeholder", gettext("Display Condition"));
@@ -199,6 +204,7 @@ hqDefine("app_manager/js/details/column", function () {
 
         self.saveAttempted = ko.observable(false);
         self.useXpathExpression = self.original.useXpathExpression;
+        self.warningText = hqImport('app_manager/js/details/utils').fieldFormatWarningMessage;
         self.showWarning = ko.computed(function () {
             if (self.useXpathExpression) {
                 return false;
@@ -237,7 +243,7 @@ hqDefine("app_manager/js/details/column", function () {
             menuOptions.splice(-1);
         }
 
-        self.format = uiElement.select(menuOptions).val(self.original.format || null);
+        self.format = uiElementSelect.new(menuOptions).val(self.original.format || null);
 
         (function () {
             const o = {
@@ -251,7 +257,7 @@ hqDefine("app_manager/js/details/column", function () {
                 keys_are_conditions: self.original.format === 'conditional-enum',
                 values_are_translatable: self.original.format === 'translatable-enum',
             };
-            self.enum_extra = uiElement.key_value_mapping(o);
+            self.enum_extra = uiElementKeyValueMapping.new(o);
         }());
         const graphConfigurationUiElement = hqImport('app_manager/js/details/graph_config').graphConfigurationUiElement;
         self.graph_extra = graphConfigurationUiElement({
@@ -268,7 +274,7 @@ hqDefine("app_manager/js/details/column", function () {
 
         const yyyy = new Date().getFullYear(),
             yy = String(yyyy).substring(2);
-        self.date_extra = uiElement.select([{
+        self.date_extra = uiElementSelect.new([{
             label: '31/10/' + yy,
             value: '%d/%m/%y',
         }, {
@@ -289,7 +295,7 @@ hqDefine("app_manager/js/details/column", function () {
         self.endpointActionLabel = $('<span>Form to submit on click:</span>');
         const formEndpointOptions = [{value: "-1", label: 'Select a form endpoint'}];
         let moduleName = "";
-        const formEndpoints = Object.entries(initialPageData('form_endpoint_options'));
+        const formEndpoints = Object.entries(initialPageData.get('form_endpoint_options'));
         formEndpoints.forEach(([, endpoint]) => {
             if (endpoint.module_name !== moduleName) {
                 moduleName = endpoint.module_name;
@@ -298,20 +304,20 @@ hqDefine("app_manager/js/details/column", function () {
             formEndpointOptions.push({value: endpoint.id, label: endpoint.form_name});
         });
         const selectedValue = self.original.endpoint_action_id ? self.original.endpoint_action_id : "-1";
-        self.action_form_extra = uiElement.select(formEndpointOptions)
+        self.action_form_extra = uiElementSelect.new(formEndpointOptions)
             .val(selectedValue);
 
-        self.late_flag_extra = uiElement.input().val(self.original.late_flag.toString());
+        self.late_flag_extra = uiElementInput.new().val(self.original.late_flag.toString());
         self.late_flag_extra.ui.find('input').css('width', 'auto').css("display", "inline-block");
         self.late_flag_extra.ui.prepend($('<span>' + gettext(' Days late ') + '</span>'));
 
-        self.filter_xpath_extra = uiElement.input().val(self.original.filter_xpath.toString());
+        self.filter_xpath_extra = uiElementInput.new().val(self.original.filter_xpath.toString());
         self.filter_xpath_extra.ui.prepend($('<div/>'));
 
-        self.calc_xpath_extra = uiElement.input().val(self.original.calc_xpath.toString());
+        self.calc_xpath_extra = uiElementInput.new().val(self.original.calc_xpath.toString());
         self.calc_xpath_extra.ui.prepend($('<div/>'));
 
-        self.time_ago_extra = uiElement.select([{
+        self.time_ago_extra = uiElementSelect.new([{
             label: gettext('Years since date'),
             value: Utils.TIME_AGO.year,
         }, {

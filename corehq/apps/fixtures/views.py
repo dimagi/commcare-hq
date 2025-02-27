@@ -43,11 +43,8 @@ from corehq.apps.fixtures.exceptions import (
     FixtureUploadError,
 )
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
-from corehq.apps.fixtures.models import (
-    LookupTableRow,
-    LookupTable,
-    TypeField,
-)
+from corehq.apps.fixtures.models import (LookupTable, LookupTableRow,
+    TypeField)
 from corehq.apps.fixtures.tasks import (
     async_fixture_download,
     fixture_upload_async,

@@ -1,4 +1,3 @@
-'use strict';
 hqDefine('cloudcare/js/debugger/debugger', [
     'jquery',
     'knockout',
@@ -18,7 +17,7 @@ hqDefine('cloudcare/js/debugger/debugger', [
     Clipboard,
     ace,
     kissmetrics,
-    readableForm
+    readableForm,
 ) {
     /**
      * These define tabs that are availabe in the debugger.
@@ -78,6 +77,8 @@ hqDefine('cloudcare/js/debugger/debugger', [
                 TabIDs.EVAL_XPATH,
             ],
         });
+
+        $('#cloudcare-main').addClass('has-debugger');
 
         self.registeredTabIds = self.options.tabs;
         self.tabs = DebuggerTabs;
@@ -161,7 +162,7 @@ hqDefine('cloudcare/js/debugger/debugger', [
                 username: this.options.username,
                 restoreAs: this.options.restoreAs,
                 domain: this.options.domain,
-            }
+            },
         ).done(function (response) {
             this.formattedQuestionsHtml(response.formattedQuestions);
             readableForm.init();
@@ -188,7 +189,7 @@ hqDefine('cloudcare/js/debugger/debugger', [
                 restoreAs: this.options.restoreAs,
                 domain: this.options.domain,
                 app_id: this.options.appId,
-            }
+            },
         ).done(function (response) {
             this.evalXPath.autocomplete(response.autoCompletableItems);
             this.evalXPath.setRecentXPathQueries(response.recentXPathQueries || []);
@@ -368,7 +369,7 @@ hqDefine('cloudcare/js/debugger/debugger', [
                     query_data: self.options.queryData,
                     debugOutput: self.selectedDebugOption().key,
                 },
-                self.options.sessionType
+                self.options.sessionType,
             ).done(function (response) {
                 var xPathQuery = self.newXPathQuery({
                     status: response.status,
@@ -380,7 +381,7 @@ hqDefine('cloudcare/js/debugger/debugger', [
                 self.recentXPathQueries.unshift(xPathQuery);
                 // Ensure at the maximum we only show 6 queries
                 self.recentXPathQueries(
-                    self.recentXPathQueries.slice(0, 6)
+                    self.recentXPathQueries.slice(0, 6),
                 );
             });
             kissmetrics.track.event('[app-preview] User evaluated XPath');

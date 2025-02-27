@@ -1,4 +1,4 @@
-import sys
+import inspect
 from io import StringIO
 from unittest.mock import patch
 
@@ -15,7 +15,8 @@ def test_profile_decorator():
     def func(arg):
         args.append(arg)
 
-    with patch.object(sys.stderr, "write", output.write):
+    sys_stderr = inspect.signature(profile).parameters["stream"].default
+    with patch.object(sys_stderr, "write", output.write):
         func(1)
     eq(args, [1])
     eq(output.getvalue(), Regex(r"test_decorators.py:\d+\(func\)"))

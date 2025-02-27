@@ -31,6 +31,7 @@
           <li><a href="#un-split-view-files">Un-Split View Files</a></li>
           <li><a href="#deploy-to-staging">Deploy to Staging</a></li>
           <li><a href="#rebuild-diffs">Rebuild Diffs</a></li>
+          <li><a href="#migrating-report-views">Migrating Report Views</a></li>
         </ul>
       </li>
       <li><a href="#completing-migration">Step 4: Completing the App Migration</a></li>
@@ -104,7 +105,7 @@
     To support this approach, we have tooling that facilitates "splitting" and "unsplitting" files:
     copying files, moving them, and updating references to them. This tooling also performs the simpler migration
     updates, such as renaming CSS classes. For updates that it cannot handle automatically, it adds a TODO comment
-    to the relevant code and writes out a changelog.
+    to the relevant code.
   </p>
   <p>
     Once the entire platform is fully migrated to Bootstrap 5, any remaining Bootstrap 3 code can be removed:
@@ -120,10 +121,6 @@
     If you haven't done so, you will need to install Dart Sass to compile
     <code>scss</code> files. The recommended method is with homebrew <code>brew install sass/sass/sass</code>,
     as described in <code>DEV_SETUP.md</code>.
-  </p>
-  <p>
-    Next, you will need to specify <code>BOOTSTRAP_MIGRATION_LOGS_DIR</code> in <code>localsettings.py</code>. This
-    will be where the migration management command will leave longer notes for each migrated file.
   </p>
 
   <h2 id="announce-migration" class="pt-3">
@@ -281,10 +278,6 @@
     attention and could not automatically be updated.  These comments reference helper documents in the
     <a href="https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/utils/bootstrap/changes_guide"
     target="_blank">changes_guide</a> directory.
-  </p>
-  <p>
-    In addition, a changelog for each file will be saved to a markdown file in
-    <code>BOOTSTRAP_MIGRATION_LOGS_DIR</code> (ouside of repository).
   </p>
   <div class="alert alert-primary">
     <p>
@@ -520,18 +513,26 @@ box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);</pre>
     The next step is to migrate the app's views one-by-one. It is recommended to make a pull request for each view
     or group of small related views, rather than migrating a lot of views and having a very large Pull Request.
   </p>
+  <div class="alert alert-primary">
+    If the type of view you are migrating is a <strong>Report View</strong>, please jump to the
+    <a href="#migrating-report-views">Migrating Report Views</a> section below.
+  </div>
   <p>
     The migration process begins by either applying <code>@use_bootstrap5</code> decorator the view function or
-    <code>@method_decorator(use_bootstrap5, name='dispatch')</code> to the view class.
+    <code>@method_decorator(use_bootstrap5, name='dispatch')</code> to the view class. Also update the template's
+    name in the view from <code>bootstrap3/foo.html</code> to <code>bootstrap5/foo.html</code>.
   </p>
   <p>
-    Next, you should go into the view template and ensure that this template inherits from <code>bootstrap5</code>
-    base templates.
-  </p>
-  <p>
-    Finally, you should make sure any javascript files needed to render that view also inherit from <code>bootstrap5</code>
-    dependencies. The migration tool should have handled updating any <code>bootstrap3</code> dependencies to their
+    The automation should have updated the view template so that it inherits from <code>bootstrap5</code>
+    base templates. It should also have updated any <code>bootstrap3</code> javascript dependencies to their
     <code>bootstrap5</code> versions.
+  </p>
+  <p>
+    The automation will have added comments to the template and javascript files noting what changes need to be
+    made. Each comment will be marked with <code>todo B5</code> and the type of change that needs to be made.
+    Each type of change has a corresponding document in the
+    <a href="https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/utils/bootstrap/changes_guide"
+    target="_blank">changes_guide</a> directory explaining what needs to be done.
   </p>
   <p>
     Once a view's template and javascript files are updated, it is now time to load that view and test for
@@ -548,12 +549,6 @@ box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);</pre>
     The most important part of the migration is ensuring that the page is functionally similar to the user and that no
     errors are present on the page that were not previously present in the Bootstrap 3 version.
   </div>
-  <p>
-    There is a chance you might have to introduce changes to the stylesheet if you come across a custom component that
-    has not yet been migrated to Bootstrap 5. If this is the case, please flag this component with the lead developer
-    of the Bootstrap migration. They can assist with updating the stylesheet (if necessary) or updating guidance
-    for replacing this component with Bootstrap 5 best practices.
-  </p>
 
   <h3 id="un-split-view-files" class="pt-3">
     Un-Split View Files
@@ -584,6 +579,93 @@ box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);</pre>
     Please follow the guidance of the <code>complete_bootstrap5_migration</code> management commands for suggested
     commit messages and when to commit changes.
   </p>
+
+  <h3 id="migrating-report-views" class="pt-3">
+    Migrating Report Views
+  </h3>
+  <p>
+    If you are migrating a Report, you may realize there is no <code>dispatch</code> method to apply
+    the <code>@use_bootstrap5</code> decorator to. That's because reports are rendered by a
+    <code>ReportDispatcher</code>.
+  </p>
+  <p>
+    Migrating a Report View will be different from other Views:
+  </p>
+  <h4 class="pt-2">
+    1. Set the <code>use_bootstrap5</code> class variable to <code>True</code>
+  </h4>
+  <p>
+    For example, if we want to
+    migrate the <code>SubmitHistory</code> report, we would do the following:
+  </p>
+  <div class="card text-bg-light mb-3">
+    <div class="card-body">
+      <pre class="m-0">class SubmitHistory(...):
+    ...
+    use_bootstrap5 = True
+    ...</pre>
+    </div>
+  </div>
+  <h4 class="pt-2">2. Use the report debugging tool</h4>
+  <div class="card text-bg-light mb-3">
+    <div class="card-body">
+      <pre class="m-0">class SubmitHistory(...):
+    ...
+    debug_bootstrap5 = True
+    ...</pre>
+    </div>
+  </div>
+  <p>
+    You can then view the output in the console for tips on what templates and filters to migrate.
+    <strong>Important: please don't commit this line at the end!</strong>
+  </p>
+
+  <h4 class="pt-2">3. Migrate report templates (if needed)</h4>
+  <p>
+    Check to see that your report doesn't have custom templates that override base report templates.
+    If it does, it should be flagged by the debug tool from step 2&mdash;so you will know!
+  </p>
+  <p>
+    If a custom template is set, and this is the only report using that template, you can then follow the procedure
+    above to <a href="#un-split-view-files">un-split template files</a>. Prior to doing this, make sure to
+    replace the <code>bootstrap3</code> path of this template with the <code>bootstrap5</code> path.
+    You can then update the template's HTML as needed.
+  </p>
+  <div class="alert alert-primary">
+    If this template is referenced by several reports, consider adding that template to the
+    <code>COMMON_REPORT_TEMPLATES</code> list in <code>corehq.apps.hqwebapp.utils.bootstrap.reports.debug</code>
+    after migrating it. Other reports will then automatically select the <code>bootstrap5</code> version
+    of this template when <code>use_bootstrap5</code> is set to <code>True</code>.
+  </div>
+
+  <h4 class="pt-2">4. Migrate filters and any related javascript</h4>
+  <p>
+    The report debugging tool should provide a list of filters that haven't been migrated.
+    You should take the following steps:
+  </p>
+  <ol>
+    <li>
+      Make sure that all related filters are visible in the report (you might have to enable feature flags).
+    </li>
+    <li>
+      Make sure all the filters modify the report as expected, without javascript errors.
+      Update related javascript as necessary.
+    </li>
+    <li>
+      Make sure any buttons on the page work as expected.
+    </li>
+  </ol>
+  <h4 class="pt-2">4. Commit your changes and save progress</h4>
+  <p>
+    Once you are done migrating the report, you must use the following migration
+    tool to mark the report and its filters as complete:
+  </p>
+
+  <div class="card text-bg-light mb-3">
+    <div class="card-body">
+      <pre class="m-0">./manage.py complete_bootstrap5_report &lt;ReportClassName&gt;</pre>
+    </div>
+  </div>
 
   <h3 id="deploy-to-staging" class="pt-3">
     Deploy to Staging
@@ -664,6 +746,12 @@ box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);</pre>
   </p>
   <p>
     Once these changes are complete, the <code>@use_bootstrap5</code> decorator can be removed from all the views.
+  </p>
+  <p>
+    Additionally, the <code>use_bootstrap5</code> class variable can be removed from all the reports. Cleanup
+    of the <code>bootstrap3</code> templates listed in <code>COMMON_REPORT_TEMPLATES</code> in
+    <code>corehq.apps.hqwebapp.utils.bootstrap.reports.debug</code> can also be completed, as well as the
+    filter templates marked completed by <code>manage.py complete_bootstrap5_report</code>.
   </p>
   <p>
     Then, <code>build_requirejs</code> can be updated to only build <code>bootstrap5</code> version of files, with

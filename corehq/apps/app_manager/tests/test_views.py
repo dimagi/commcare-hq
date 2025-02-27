@@ -3,6 +3,7 @@ import doctest
 import json
 import re
 from contextlib import contextmanager
+from unittest import mock
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
@@ -448,6 +449,122 @@ class TestViews(ViewsBase):
             }
         ])
 
+    def test_copy_regular_app(self, _):
+        other_domain = Domain.get_or_create_with_name('other-domain', is_active=True)
+        self.addCleanup(other_domain.delete)
+
+        module = self.app.add_module(Module.new_module("Module0", "en"))
+        self.app.new_form(module.id, "Form0", "en", attachment=get_simple_form(xmlns='xmlns-0.0'))
+        self.app.save()
+
+        copy_data = {
+            'app': self.app.id,
+            'domain': other_domain.name,
+            'name': 'Copy App',
+            'linked': False,
+        }
+        response = self.client.post(reverse('copy_app', args=[self.domain]), copy_data)
+        self.assertEqual(response.status_code, 302)
+
+        copied_app = other_domain.full_applications()[0]
+        self.assertEqual(copied_app.name, 'Copy App')
+        self.assertEqual(copied_app.doc_type, 'Application')
+
+        copied_module = copied_app.modules[0]
+        copied_form = list(copied_module.get_forms())[0]
+        self.assertEqual(copied_module.name['en'], "Module0")
+        self.assertEqual(copied_form.name['en'], "Form0")
+
+        copied_app.delete()
+
+    def test_copy_linked_app_to_different_domain(self, _):
+        other_domain = Domain.get_or_create_with_name('other-domain', is_active=True)
+        self.addCleanup(other_domain.delete)
+
+        module = self.app.add_module(Module.new_module("Module0", "en"))
+        self.app.new_form(module.id, "Form0", "en", attachment=get_simple_form(xmlns='xmlns-0.0'))
+        self.app.save()
+        build = self.app.make_build()
+        build.is_released = True
+        build.save()
+
+        copy_data = {
+            'app': self.app.id,
+            'domain': other_domain.name,
+            'name': 'Linked App',
+            'linked': True,
+            'build_id': build.id,
+        }
+        with patch('corehq.apps.app_manager.forms.can_domain_access_linked_domains', return_value=True):
+            response = self.client.post(reverse('copy_app', args=[self.domain]), copy_data)
+        self.assertEqual(response.status_code, 302)
+
+        linked_app = other_domain.full_applications()[0]
+        self.assertEqual(linked_app.name, 'Linked App')
+        self.assertEqual(linked_app.doc_type, 'LinkedApplication')
+
+        linked_module = linked_app.modules[0]
+        linked_form = list(linked_module.get_forms())[0]
+        self.assertEqual(linked_module.name['en'], "Module0")
+        self.assertEqual(linked_form.name['en'], "Form0")
+
+        linked_app.delete()
+
+    def test_cannot_copy_linked_app_to_same_domain(self, _):
+        module = self.app.add_module(Module.new_module("Module0", "en"))
+        self.app.new_form(module.id, "Form0", "en", attachment=get_simple_form(xmlns='xmlns-0.0'))
+        self.app.save()
+        build = self.app.make_build()
+        build.is_released = True
+        build.save()
+
+        copy_data = {
+            'app': self.app.id,
+            'domain': self.domain,
+            'name': 'Same Domain Link',
+            'linked': True,
+            'build_id': build.id,
+        }
+        with patch('corehq.apps.app_manager.forms.can_domain_access_linked_domains', return_value=True):
+            response = self.client.post(reverse('copy_app', args=[self.domain]), copy_data)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            ['Creating linked app failed. '
+             'You cannot create a linked app in the same project space as the upstream app.'],
+            [m.message for m in response.wsgi_request._messages]
+        )
+
+    def test_copy_regular_app_toggles(self, _):
+        other_domain = Domain.get_or_create_with_name('other-domain', is_active=True)
+        self.addCleanup(other_domain.delete)
+
+        module = self.app.add_module(Module.new_module("Module0", "en"))
+        self.app.new_form(module.id, "Form0", "en", attachment=get_simple_form(xmlns='xmlns-0.0'))
+        self.app.save()
+
+        from corehq.toggles import NAMESPACE_DOMAIN, StaticToggle, TAG_INTERNAL
+        from corehq.toggles.shortcuts import set_toggle
+
+        TEST_TOGGLE = StaticToggle(
+            'test_toggle',
+            'This is for tests',
+            TAG_INTERNAL,
+            [NAMESPACE_DOMAIN],
+        )
+        set_toggle(TEST_TOGGLE.slug, other_domain.name, False, namespace=NAMESPACE_DOMAIN)
+        copy_data = {
+            'app': self.app.id,
+            'domain': other_domain.name,
+            'name': 'Copy App',
+            'toggles': 'test_toggle',
+        }
+        with patch('corehq.toggles.all_toggles_by_name', return_value={'test_toggle': TEST_TOGGLE}), \
+             mock.patch('corehq.apps.toggle_ui.views.clear_toggle_cache_by_namespace') as mock_clear_cache:
+            self.client.post(reverse('copy_app', args=[self.domain]), copy_data)
+            mock_clear_cache.assert_called_once_with(NAMESPACE_DOMAIN, other_domain.name)
+        self.assertTrue(TEST_TOGGLE.enabled(other_domain.name))
+
 
 @contextmanager
 def apps_modules_setup(test_case):
@@ -565,21 +682,22 @@ class TestViewGeneric(ViewsBase):
         'INVOICING_CONTACT_EMAIL', 'False', 'show_mobile_ux_warning', 'IS_DOMAIN_BILLING_ADMIN', 'translations',
         'hq', 'SALES_EMAIL', 'linked_version', 'confirm', 'show_report_modules', 'lang', 'can_view_cloudcare',
         'title_block', 'CUSTOM_LOGO_URL', 'items', 'request', 'messages', 'build_profile_access', 'form', 'error',
-        'alerts', 'prompt_settings_form', 'submenu', 'domain', 'enable_update_prompts', 'show_shadow_modules',
-        'sentry', 'bulk_ui_translation_upload', 'toggles_dict', 'True', 'full_name', 'latest_build_id',
-        'previews_dict', 'copy_app_form', 'show_status_page', 'is_linked_app', 'show_shadow_module_v1',
-        'use_bootstrap5', 'limit_to_linked_domains', 'add_ons_privileges', 'LANGUAGE_BIDI', 'page_title_block',
-        'LANGUAGES', 'underscore', 'analytics', 'block', 'app_subset', 'restrict_domain_creation',
-        'login_template', 'enterprise_mode', 'mobile_ux_cookie_name', 'commcare_hq_names', 'langs',
-        'title_context_block', 'timezone', 'helpers', 'has_mobile_workers', 'multimedia_state',
-        'bulk_app_translation_upload', 'show_training_modules', 'forloop', 'secure_cookies',
+        'alerts', 'prompt_settings_form', 'submenu', 'domain', 'metrics_domain', 'enable_update_prompts',
+        'show_shadow_modules', 'sentry', 'bulk_ui_translation_upload', 'toggles_dict', 'True', 'full_name',
+        'latest_build_id', 'previews_dict', 'copy_app_form', 'show_status_page', 'is_linked_app',
+        'show_shadow_module_v1', 'use_bootstrap5', 'limit_to_linked_domains', 'add_ons_privileges',
+        'LANGUAGE_BIDI', 'page_title_block', 'LANGUAGES', 'underscore', 'analytics', 'block', 'app_subset',
+        'restrict_domain_creation', 'login_template', 'enterprise_mode', 'mobile_ux_cookie_name',
+        'commcare_hq_names', 'langs', 'title_context_block', 'timezone', 'helpers', 'has_mobile_workers',
+        'multimedia_state', 'bulk_app_translation_upload', 'show_training_modules', 'forloop', 'secure_cookies',
+        'IS_ANALYTICS_ENVIRONMENT',
     }
 
     expected_keys_module = {
         'show_advanced', 'session_endpoints_enabled', 'show_advanced_settings', 'toggles_dict',
         'show_release_mode', 'linked_name', 'linked_version', 'latest_commcare_version',
-        'nav_menu_media_specifics', 'user', 'TIME_ZONE', 'domain', 'module_brief', 'timezone', 'active_tab',
-        'data_registry_enabled', 'confirm', 'messages', 'releases_active', 'show_status_page',
+        'nav_menu_media_specifics', 'user', 'TIME_ZONE', 'domain', 'metrics_domain', 'module_brief', 'timezone',
+        'active_tab', 'data_registry_enabled', 'confirm', 'messages', 'releases_active', 'show_status_page',
         'show_search_workflow', 'data_registries', 'label', 'underscore', 'forloop', 'show_shadow_modules',
         'SUPPORT_EMAIL', 'valid_parents_for_child_module', 'parent_case_modules',
         'current_url_name', 'LANGUAGE_BIDI', 'DEFAULT_MESSAGE_LEVELS', 'show_report_modules', 'BASE_MAIN',
@@ -597,17 +715,17 @@ class TestViewGeneric(ViewsBase):
         'form', 'error', 'previews_dict', 'copy_app_form', 'LANGUAGE_CODE', 'menu', 'add_ons_privileges',
         'shadow_parent', 'restrict_domain_creation', 'show_mobile_ux_warning', 'WEBSOCKET_URI', 'PRIVACY_EMAIL',
         'custom_assertions', 'analytics', 'form_endpoint_options', 'title_context_block', 'secure_cookies',
-        'langs', 'details', 'None', 'CUSTOM_LOGO_URL', 'hq', 'selected_form', 'slug', 'env', 'False',
+        'langs', 'details', 'None', 'CUSTOM_LOGO_URL', 'hq', 'selected_form', 'slug', 'env', 'False', 'id',
         'ANALYTICS_IDS', 'STATIC_URL', 'selected_module', 'role_version', 'EULA_COMPLIANCE', 'sentry',
-        'case_list_form_not_allowed_reasons', 'child_module_enabled', 'block',
+        'case_list_form_not_allowed_reasons', 'child_module_enabled', 'block', 'IS_ANALYTICS_ENVIRONMENT',
     }
 
     expected_keys_form = {
         'show_advanced', 'is_module_filter_enabled', 'session_endpoints_enabled', 'toggles_dict',
         'show_release_mode', 'linked_name', 'linked_version', 'latest_commcare_version',
-        'nav_menu_media_specifics', 'user', 'TIME_ZONE', 'domain', 'case_config_options', 'timezone',
-        'root_requires_same_case', 'active_tab', 'confirm', 'messages', 'releases_active', 'show_status_page',
-        'form_filter_patterns', 'form_workflows', 'label', 'underscore', 'forloop',
+        'nav_menu_media_specifics', 'user', 'TIME_ZONE', 'domain', 'metrics_domain', 'case_config_options',
+        'timezone', 'root_requires_same_case', 'active_tab', 'confirm', 'messages', 'releases_active',
+        'show_status_page', 'form_filter_patterns', 'form_workflows', 'label', 'underscore', 'forloop',
         'SUPPORT_EMAIL', 'current_url_name', 'LANGUAGE_BIDI', 'DEFAULT_MESSAGE_LEVELS', 'show_report_modules',
         'BASE_MAIN', 'xform_languages', 'app_id', 'request', 'allow_usercase', 'MINIMUM_PASSWORD_LENGTH', 'type',
         'is_saas_environment', 'show_all_projects_link', 'enterprise_mode', 'module_is_multi_select', 'csrf_token',
@@ -624,11 +742,11 @@ class TestViewGeneric(ViewsBase):
         'ANALYTICS_CONFIG', 'is_training_module', 'custom_icon', 'page_title_block', 'INVOICING_CONTACT_EMAIL',
         'form', 'error', 'previews_dict', 'copy_app_form', 'LANGUAGE_CODE', 'menu', 'add_ons_privileges',
         'restrict_domain_creation', 'show_mobile_ux_warning', 'WEBSOCKET_URI', 'PRIVACY_EMAIL',
-        'is_allowed_to_be_release_notes_form', 'custom_assertions', 'analytics', 'title_context_block',
+        'is_allowed_to_be_release_notes_form', 'custom_assertions', 'analytics', 'title_context_block', 'id',
         'secure_cookies', 'langs', 'None', 'CUSTOM_LOGO_URL', 'hq', 'allow_form_copy', 'selected_form', 'slug',
         'env', 'False', 'ANALYTICS_IDS', 'STATIC_URL', 'selected_module', 'role_version', 'is_usercase_in_use',
         'module_loads_registry_case', 'EULA_COMPLIANCE', 'sentry', 'show_shadow_modules', 'show_custom_ref',
-        'block',
+        'block', 'IS_ANALYTICS_ENVIRONMENT',
     }
 
 
@@ -658,7 +776,6 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
         cls.web_user_api_key = HQApiKey.objects.get_or_create(
             user=cls.web_user.get_django_user()
         )[0]
-        cls.web_user_api_key.key = cls.web_user_api_key.generate_key()
         cls.web_user_api_key.save()
 
         # The URL that tests in this class will use.
@@ -685,7 +802,7 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
         """Sending a correct API key returns a response with the case summary file."""
         response = self.client.get(
             self.url,
-            HTTP_AUTHORIZATION=f"ApiKey {self.web_user.username}:{self.web_user_api_key.key}",
+            HTTP_AUTHORIZATION=f"ApiKey {self.web_user.username}:{self.web_user_api_key.plaintext_key}",
         )
 
         self.assertEqual(response.status_code, 200)
@@ -701,7 +818,7 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
 
         with self.subTest("Missing username"):
             response = self.client.get(
-                self.url, HTTP_AUTHORIZATION=f"ApiKey :{self.web_user_api_key.key}"
+                self.url, HTTP_AUTHORIZATION=f"ApiKey :{self.web_user_api_key.plaintext_key}"
             )
             self.assertEqual(response.status_code, 401)
 

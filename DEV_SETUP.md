@@ -762,7 +762,23 @@ This can also be used to promote a user created by signing up to a superuser.
 Note that promoting a user to superuser status using this command will also give them the
 ability to assign other users as superuser in the in-app Superuser Management page.
 
-### Step 11: Running CommCare HQ
+### Step 11: Running `yarn dev`
+
+In order to build JavaScript bundles with Webpack, you will need to have `yarn dev`
+running in the background. It will watch any existing Webpack Entry Point, aka modules
+included on a page using the `js_entry` template tag.
+
+When you add a new entry point (`js_entry` tag), please remember to restart `yarn dev` so
+that it can identify the new entry point it needs to watch.
+
+To build Webpack bundles like it's done in production environments, pleas use `yarn build`.
+This command does not have a watch functionality, so it needs to be re-run every time you make
+changes to javascript files bundled by Webpack.
+
+For more information about JavaScript and Static Files, please see the
+[Dimagi JavaScript Guide](https://commcare-hq.readthedocs.io/js-guide/README.html) on Read the Docs.
+
+### Step 12: Running CommCare HQ
 
 Make sure the required services are running (PostgreSQL, Redis, CouchDB, Kafka,
 Elasticsearch).
@@ -793,6 +809,9 @@ yarn install --frozen-lockfile
 ./manage.py compilejsi18n
 ./manage.py fix_less_imports_collectstatic
 ```
+
+See the [Dimagi JavaScript Guide](https://commcare-hq.readthedocs.io/js-guide/README.html) for additional
+useful background and tips.
 
 ## Running Formplayer and submitting data with Web Apps
 
@@ -957,7 +976,7 @@ files from Vellum directly, do the following.
 To run the standard tests for CommCare HQ, run
 
 ```sh
-./manage.py test
+pytest
 ```
 
 These may not all pass in a local environment. It's often more practical, and
@@ -966,23 +985,18 @@ faster, to just run tests for the django app where you're working.
 To run a particular test or subset of tests:
 
 ```sh
-./manage.py test <test.module.path>[:<TestClass>[.<test_name>]]
+pytest <test/file/path.py>[::<TestClass>[::<test_name>]]
 
 # examples
-./manage.py test corehq.apps.app_manager
-./manage.py test corehq.apps.app_manager.tests.test_suite:SuiteTest
-./manage.py test corehq.apps.app_manager.tests.test_suite:SuiteTest.test_picture_format
-
-# alternate: file system path
-./manage.py test corehq/apps/app_manager
-./manage.py test corehq/apps/app_manager/tests/test_suite.py:SuiteTest
-./manage.py test corehq/apps/app_manager/tests/test_suite.py:SuiteTest.test_picture_format
+pytest corehq/apps/app_manager
+pytest corehq/apps/app_manager/tests/test_suite.py::SuiteTest
+pytest corehq/apps/app_manager/tests/test_suite.py::SuiteTest::test_printing
 ```
 
 To use the `pdb` debugger in tests, include the `s` flag:
 
 ```sh
-./manage.py test -s <test.module.path>[:<TestClass>[.<test_name>]]
+pytest -s <test/file/path.py>[::<TestClass>[::<test_name>]]
 ```
 
 If database tests are failing because of a `permission denied` error, give your
@@ -1010,17 +1024,17 @@ To avoid having to run the database setup for each test run you can specify the
 exists:
 
 ```sh
-REUSE_DB=1 ./manage.py test corehq.apps.app_manager
+REUSE_DB=1 pytest corehq/apps/app_manager
 ```
 
 Or, to drop the current test DB and create a fresh one
 
 ```sh
-./manage.py test corehq.apps.app_manager --reusedb=reset
+pytest corehq/apps/app_manager --reusedb=reset
 ```
 
-See `corehq.tests.nose.HqdbContext` ([source](corehq/tests/nose.py)) for full
-description of `REUSE_DB` and `--reusedb`.
+See `corehq.tests.pytest_plugins.reusedb` ([source](corehq/tests/pytest_plugins/reusedb.py))
+for full description of `REUSE_DB` and `--reusedb`.
 
 
 ### Accessing the test shell and database
@@ -1083,36 +1097,36 @@ ignore:unclosed:ResourceWarning'
 Personal whitelist items may also be added in localsettings.py.
 
 
-### Running tests by tag
+### Running tests by marker
 
-You can run all tests with a certain tag as follows:
+You can run all tests with a certain marker as follows:
 
 ```sh
-./manage.py test --attr=tag
+pytest -m MARKER
 ```
 
-Available tags:
+Available markers:
 
 - slow: especially slow tests
 - sharded: tests that should get run on the sharded test runner
 - es_test: Elasticsearch tests
 
-See http://nose.readthedocs.io/en/latest/plugins/attrib.html for more details.
+See https://docs.pytest.org/en/stable/example/markers.html for more details.
 
 
 ### Running on DB tests or Non-DB tests
 
 ```sh
 # only run tests that extend TestCase
-./manage.py test --db=only
+pytest --db=only
 
 # skip all tests that extend TestCase but run everything else
-./manage.py test --db=skip
+pytest --db=skip
 ```
 
 ### Running only failed tests
 
-See https://github.com/nose-devs/nose/blob/master/nose/plugins/testid.py
+See https://docs.pytest.org/en/stable/how-to/cache.html
 
 
 ## Javascript tests

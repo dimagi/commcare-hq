@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/menus/controller", [
     'jquery',
     'underscore',
@@ -17,6 +16,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
     'cloudcare/js/formplayer/menus/views/query',
     'cloudcare/js/formplayer/menus/views',
     'cloudcare/js/formplayer/menus/api',    // app:select:menus and entity:get:details
+    'cloudcare/js/gtx',
 ], function (
     $,
     _,
@@ -33,13 +33,17 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
     Collection,
     menusUtils,
     queryView,
-    views
+    views,
+    api,
+    gtx,
 ) {
+
     var selectMenu = function (options) {
 
         options.preview = UsersModels.getCurrentUser().displayOptions.singleAppMode;
 
         var fetchingNextMenu = FormplayerFrontend.getChannel().request("app:select:menus", options);
+        var promise = $.Deferred();
 
         /*
          Determine the next screen to display.  Could be
@@ -48,8 +52,11 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
          */
         $.when(fetchingNextMenu).done(function (menuResponse) {
             if (menuResponse.abort) {
+                promise.reject();
                 return;
             }
+
+            gtx.logNavigateMenu(gtx.extractSelections(menuResponse));
 
             //set title of tab to application name
             if (menuResponse.breadcrumbs) {
@@ -64,6 +71,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
             // If redirect was set, clear and go home.
             if (menuResponse.clearSession) {
                 FormplayerFrontend.trigger("apps:currentApp");
+                promise.reject();
                 return;
             }
 
@@ -94,6 +102,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
                     FormplayerFrontend.trigger('showError', "Response did not contain appId even though it was" +
                         "required. If this persists, please report an issue to CommCare HQ");
                     FormplayerFrontend.trigger("apps:list");
+                    promise.reject();
                     return;
                 }
                 urlObject.appId = menuResponse.appId;
@@ -110,10 +119,13 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
                 menusUtils.handleLocationRequest(options);
             }
             menusUtils.startOrStopLocationWatching(menuResponse.shouldWatchLocation);
+            promise.resolve(menuResponse);
         }).fail(function () {
             //  if it didn't go through, then it displayed an error message.
             // the right thing to do is then to just stay in the same place.
+            promise.reject();
         });
+        return promise;
     };
 
     var selectDetail = function (caseId, detailIndex, isPersistent, isMultiSelect) {
@@ -160,6 +172,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
             FormplayerFrontend.regions.getRegion('persistentMenu').show(
                 views.PersistentMenuView({
                     collection: _toMenuCommands(menuResponse.persistentMenu, [], menuResponse.selections),
+                    sidebarEnabled: sidebarEnabled,
                 }).render());
         } else {
             FormplayerFrontend.regions.getRegion('persistentMenu').empty();
@@ -204,7 +217,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
                     disableDynamicSearch: !sessionStorage.submitPerformed,
                     groupHeaders: queryResponse.groupHeaders,
                     searchOnClear: queryResponse.searchOnClear,
-                }).render()
+                }).render(),
             );
             FormplayerFrontend.regions.getRegion('main').show(menuListView);
         } else if (menuResponse.type === constants.QUERY) {
@@ -218,7 +231,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
                     disableDynamicSearch: true,
                     groupHeaders: menuResponse.groupHeaders,
                     searchOnClear: menuResponse.searchOnClear,
-                }).render()
+                }).render(),
             );
 
             menuData["triggerEmptyCaseList"] = true;

@@ -4,12 +4,7 @@
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 
-{% block js %}{{ block.super }}
-  {% compress js %}
-  <script src="{% static 'userreports/js/data_source_select_model.js' %}"></script>
-  <script src="{% static 'userreports/js/data_source_from_app.js' %}"></script>
-  {% endcompress %}
-{% endblock %}
+{% js_entry_b3 'userreports/js/data_source_from_app' %}
 
 {% block page_content %}
   {% initial_page_data "sources_map" sources_map %}

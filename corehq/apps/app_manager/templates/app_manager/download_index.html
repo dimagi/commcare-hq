@@ -2,8 +2,8 @@
 {% load hq_shared_tags %}
 {% load compress %}
 {% load i18n %}
-{% requirejs_main 'app_manager/js/download_index_main' %}
 
+{% js_entry_b3 'app_manager/js/download_index_main' %}
 
 {% block page_title %}
   {{ app.name }}: Build #{{ app.version }}{% if app.build_comment %}: {{ app.build_comment }}{% endif %}

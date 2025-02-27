@@ -6,17 +6,13 @@
 {% block stylesheets %}{{ block.super }}
 {% compress css %}
     <link type="text/css"
-          rel="stylesheet"
-          media="all"
-          href="{% static 'nvd3-1.8.6/build/nv.d3.css' %}" />
-    <link type="text/css"
               rel="stylesheet"
               media="screen"
               href="{% static "@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css" %}" />
   {% endcompress %}
 {% endblock %}
 
-{% requirejs_main_b5 'app_execution/js/workflow_logs' %}
+{% js_entry 'app_execution/js/workflow_logs' %}
 
 {% block page_content %}
   {% initial_page_data 'total_items' total %}

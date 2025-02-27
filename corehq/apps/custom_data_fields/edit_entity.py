@@ -33,6 +33,11 @@ def with_prefix(string, prefix):
     return "{}-{}".format(prefix, string)
 
 
+def without_prefix(string, prefix):
+    prefix_len = len(prefix) + 1
+    return string[prefix_len:] if string.startswith(prefix) else string
+
+
 def add_prefix(field_dict, prefix):
     """
     Prefix all keys in the dict.
@@ -104,9 +109,10 @@ class CustomDataEditor(object):
 
     def _make_field(self, field):
         safe_label = escape(field.label)
+        is_required_field = self.field_view.is_field_required(field)
         if field.regex:
             validator = RegexValidator(field.regex, field.regex_msg)
-            return forms.CharField(label=safe_label, required=field.is_required,
+            return forms.CharField(label=safe_label, required=is_required_field,
                                    validators=[validator])
         elif field.choices:
             # If form uses knockout, knockout must have control over the select2.
@@ -124,25 +130,61 @@ class CustomDataEditor(object):
 
             return forms.ChoiceField(
                 label=safe_label,
-                required=field.is_required,
+                required=is_required_field,
                 choices=placeholder_choices + [(c, c) for c in field.choices],
                 widget=forms.Select(attrs=attrs)
             )
         else:
-            return forms.CharField(label=safe_label, required=field.is_required)
+            return forms.CharField(label=safe_label, required=is_required_field)
+
+    def make_fieldsets(self, form_fields, is_post, field_name_includes_prefix=False):
+        if self.ko_model:
+            field_names = []
+            for field_name, field in form_fields.items():
+                data_bind_field_name = (
+                    without_prefix(field_name, self.prefix) if field_name_includes_prefix else field_name)
+                data_binds = [
+                    f"value: {self.ko_model}['{data_bind_field_name}'].value",
+                    f"disable: {self.ko_model}['{data_bind_field_name}'].disable",
+                ]
+                if hasattr(field, 'choices') or without_prefix(field_name, self.prefix) == PROFILE_SLUG:
+                    data_binds.append("select2: " + json.dumps([
+                        {"id": id, "text": text} for id, text in field.widget.choices
+                    ]))
+                field_names.append(Field(
+                    field_name,
+                    data_bind=", ".join(data_binds)
+                ))
+        else:
+            field_names = list(form_fields)
+
+        form_fieldsets = []
+        if field_names:
+            form_fieldsets.append(Fieldset(
+                _("Additional Information"),
+                *field_names,
+                css_class="custom-data-fieldset"
+            ))
+        if not is_post:
+            form_fieldsets.append(self.uncategorized_form)
+        return form_fieldsets
 
     @property
     @memoized
     def fields(self):
-        return list(self.model.get_fields(required_only=self.required_only))
+        field_filter_config = CustomDataFieldsDefinition.FieldFilterConfig(
+            required_only=self.required_only,
+            is_required_check_func=self.field_view.is_field_required
+        )
+        return list(self.model.get_fields(field_filter_config=field_filter_config))
 
     def init_form(self, post_dict=None):
-        fields = OrderedDict()
+        form_fields = OrderedDict()
 
-        from corehq.apps.users.views.mobile import UserFieldsView
+        from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
         has_profile_privilege_and_is_user_fields_view = (
             domain_has_privilege(self.domain, privileges.APP_USER_PROFILES)
-            and self.field_view is UserFieldsView
+            and issubclass(self.field_view, UserFieldsView)
         )
         if has_profile_privilege_and_is_user_fields_view:
             original_profile_id = None
@@ -152,6 +194,12 @@ class CustomDataEditor(object):
             profiles, can_edit_original_profile = self.field_view.get_displayable_profiles_and_edit_permission(
                 original_profile_id, self.domain, self.request_user
             )
+
+            def profile_selection_required():
+                user_type = self.field_view.user_type
+                profile_required_list_user_types = self.model.profile_required_for_user_type or []
+
+                return user_type in profile_required_list_user_types
 
             def validate_profile_slug(value):
                 from django.core.exceptions import ValidationError
@@ -167,9 +215,9 @@ class CustomDataEditor(object):
                 }
                 if not self.ko_model:
                     attrs.update({'class': 'hqwebapp-select2'})
-                fields[PROFILE_SLUG] = forms.IntegerField(
+                form_fields[PROFILE_SLUG] = forms.IntegerField(
                     label=_('Profile'),
-                    required=False,
+                    required=profile_selection_required(),
                     widget=Select(choices=[
                         (p.id, p.name)
                         for p in profiles
@@ -177,74 +225,49 @@ class CustomDataEditor(object):
                     validators=[validate_profile_slug],
                 )
         for field in self.fields:
-            fields[field.slug] = self._make_field(field)
+            form_fields[field.slug] = self._make_field(field)
 
-        if self.ko_model:
-            field_names = []
-            for field_name, field in fields.items():
-                data_binds = [
-                    f"value: {self.ko_model}.{field_name}.value",
-                    f"disable: {self.ko_model}.{field_name}.disable",
-                ]
-                if hasattr(field, 'choices') or field_name == PROFILE_SLUG:
-                    data_binds.append("select2: " + json.dumps([
-                        {"id": id, "text": text} for id, text in field.widget.choices
-                    ]))
-                field_names.append(Field(
-                    field_name,
-                    data_bind=", ".join(data_binds)
-                ))
-        else:
-            field_names = list(fields)
-
-        CustomDataForm = type('CustomDataForm', (forms.Form,), fields)
+        CustomDataForm = type('CustomDataForm', (forms.Form,), form_fields.copy())
         if self.ko_model:
             CustomDataForm.helper = HQModalFormHelper()
         else:
             CustomDataForm.helper = HQFormHelper()
         CustomDataForm.helper.form_tag = False
 
-        additional_fields = []
-        if field_names:
-            additional_fields.append(Fieldset(
-                _("Additional Information"),
-                *field_names,
-                css_class="custom-data-fieldset"
-            ))
-        if post_dict is None:
-            additional_fields.append(self.uncategorized_form)
+        form_fieldsets = self.make_fieldsets(form_fields, post_dict is not None)
+
         CustomDataForm.helper.layout = Layout(
-            *additional_fields
+            *form_fieldsets
         )
 
         CustomDataForm._has_uncategorized = bool(self.uncategorized_form) and post_dict is None
 
         if post_dict:
-            fields = post_dict.copy()   # make mutable
+            form_data = post_dict.copy()   # make mutable
         elif self.existing_custom_data is not None:
-            fields = add_prefix(self.existing_custom_data, self.prefix)
+            form_data = add_prefix(self.existing_custom_data, self.prefix)
         else:
-            fields = None
+            form_data = None
 
         # Add profile fields so that form validation passes
-        if fields and has_profile_privilege_and_is_user_fields_view:
+        if form_data and has_profile_privilege_and_is_user_fields_view:
 
             # When a field is disabled via knockout, it is not included in POST so this
             # adds it back
             if (post_dict and (with_prefix(PROFILE_SLUG, self.prefix)) not in post_dict
                     and not can_edit_original_profile):
-                fields.update({with_prefix(PROFILE_SLUG, self.prefix): original_profile_id})
+                form_data.update({with_prefix(PROFILE_SLUG, self.prefix): original_profile_id})
             try:
                 profile_fields = CustomDataFieldsProfile.objects.get(
-                    id=int(fields.get(with_prefix(PROFILE_SLUG, self.prefix))),
+                    id=int(form_data.get(with_prefix(PROFILE_SLUG, self.prefix))),
                     definition__field_type=self.field_view.field_type,
                     definition__domain=self.domain,
                 ).fields
             except (ValueError, TypeError, CustomDataFieldsProfile.DoesNotExist):
                 profile_fields = {}
-            fields.update(add_prefix(profile_fields, self.prefix))
+            form_data.update(add_prefix(profile_fields, self.prefix))
 
-        self.form = CustomDataForm(fields, prefix=self.prefix)
+        self.form = CustomDataForm(form_data, prefix=self.prefix)
         return self.form
 
     @property

@@ -15,10 +15,17 @@ MISSING_VALUE = '---'
 
 
 class RepeatRecordDisplay:
-    def __init__(self, record, timezone, date_format="%Y-%m-%d %H:%M"):
+    def __init__(
+            self,
+            record,
+            timezone,
+            date_format="%Y-%m-%d %H:%M",
+            process_repeaters_enabled=False,
+    ):
         self.record = record
         self.timezone = timezone
         self.date_format = date_format
+        self.process_repeaters_enabled = process_repeaters_enabled
 
     @property
     def record_id(self):
@@ -30,7 +37,13 @@ class RepeatRecordDisplay:
 
     @property
     def next_check(self):
-        return self._format_date(self.record.next_check)
+        if self.record.repeater.is_paused:
+            return _('Paused')
+        if self.process_repeaters_enabled:
+            next_check_ = self.record.repeater.next_attempt_at
+        else:
+            next_check_ = self.record.next_check
+        return self._format_date(next_check_)
 
     @property
     def url(self):

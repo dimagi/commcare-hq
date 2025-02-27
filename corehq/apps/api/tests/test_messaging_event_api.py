@@ -21,11 +21,12 @@ from corehq.apps.users.models import CommCareUser
 class BaseMessagingEventResourceTest(APIResourceTest):
     @classmethod
     def _get_detail_endpoint(cls, event_id):
-        return reverse('api_messaging_event_detail', kwargs={"domain": cls.domain.name, "event_id": event_id})
+        return reverse('api_messaging_event_detail',
+                       kwargs={"domain": cls.domain.name, "event_id": event_id, 'api_version': 'v1'})
 
     @classmethod
     def _get_list_endpoint(cls):
-        return reverse('api_messaging_event_list', kwargs={"domain": cls.domain.name})
+        return reverse('api_messaging_event_list', kwargs={"domain": cls.domain.name, 'api_version': 'v1'})
 
     def _auth_get_resource(self, url):
         return self._assert_auth_get_resource(url, allow_session_auth=True)
@@ -189,7 +190,8 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
         self.assertEqual(actual, {value})
 
     def test_case_rule(self):
-        rule, event, sms = make_case_rule_sms_for_test(self.domain.name, "case rule name", datetime(2016, 1, 1, 12, 0))
+        rule, event, sms = make_case_rule_sms_for_test(
+            self.domain.name, "case rule name", datetime(2016, 1, 1, 12, 0))
         self.addCleanup(rule.delete)
         self.addCleanup(event.delete)  # cascades to subevent
         self.addCleanup(sms.delete)

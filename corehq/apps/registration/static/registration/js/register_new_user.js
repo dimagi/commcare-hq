@@ -4,47 +4,15 @@ hqDefine('registration/js/register_new_user', [
     'underscore',
     'registration/js/new_user.ko',
     'hqwebapp/js/initial_page_data',
-    'analytix/js/kissmetrix',
     'registration/js/login',
+    'commcarehq',
 ], function (
     $,
     ko,
     _,
     newUser,
     initialPageData,
-    kissmetrics
 ) {
-    'use strict';
-
-    $('#js-create-account').click(function (e) {
-        e.preventDefault();
-        $('#registration-choose-plan-container').hide();
-        $('#registration-form-container').fadeIn();
-
-        $('#back-to-start-btn').removeClass('hide');
-    });
-
-    $('#back-to-start-btn').click(function () {
-        $('#registration-form-container').hide();
-        $('#registration-choose-plan-container').fadeIn();
-    });
-
-    kissmetrics.whenReadyAlways(function () {
-
-        $('#js-start-trial').click(function () {
-            kissmetrics.track.event("Signup alt ux dec2018 - clicked start trial");
-        });
-
-        $('#js-get-tour').click(function () {
-            kissmetrics.track.event("Signup alt ux dec2018 - clicked get a tour");
-            kissmetrics.track.event("Demo Workflow - Get A Tour Button Clicked (new UX)");
-        });
-
-        $('#start-chat-cta-btn').click(function () {
-            kissmetrics.track.event("Signup alt ux dec2018 - clicked start chat");
-        });
-    });
-
     newUser.setOnModuleLoad(function () {
         $('.loading-form-step').fadeOut(500, function () {
             $('.step-1').fadeIn(500);
@@ -58,7 +26,7 @@ hqDefine('registration/js/register_new_user', [
     var regForm = newUser.formViewModel(
         initialPageData.get('reg_form_defaults'),
         '#registration-form-container',
-        ['step-1', 'step-2', 'final-step']
+        ['step-1', 'step-2', 'final-step'],
     );
     $('#registration-form-container').koApplyBindings(regForm);
 

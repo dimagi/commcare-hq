@@ -1,6 +1,7 @@
 hqDefine('email/js/email_settings', [
     "knockout",
     "jquery",
+    "commcarehq",
 ], function (ko, $) {
 
     function initFormBindings() {

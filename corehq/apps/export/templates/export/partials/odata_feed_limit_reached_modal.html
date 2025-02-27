@@ -1,0 +1,28 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div class="modal fade" id="odataFeedLimitReachedModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">
+          {% blocktrans %}
+            Maximum number of OData feeds reached.
+          {% endblocktrans %}
+        </h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+      </div>
+      <div class="modal-body">
+        {% blocktrans %}
+          At this time we allow a maximum of {{ odata_feed_limit }} OData feeds per project space.
+          Please consider deleting the feeds that you don't need anymore.
+        {% endblocktrans %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
+          {% trans "Ok" %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

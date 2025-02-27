@@ -1,11 +1,12 @@
-'use strict';
+
 
 hqDefine("prototype/js/example/knockout_pagination",[
     'jquery',
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    "hqwebapp/js/bootstrap5/components.ko", // for pagination
+    "hqwebapp/js/components/pagination",
+    'commcarehq',
 ], function ($, ko, _, initialPageData) {
     $(function () {
         let rowData = function (data) {

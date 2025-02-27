@@ -20,10 +20,14 @@ from corehq.apps.case_importer.base import location_safe_case_imports_enabled
 from corehq.apps.case_importer.const import (
     ALL_CASE_TYPE_IMPORT,
     MAX_CASE_IMPORTER_COLUMNS,
+    MAX_CASE_IMPORTER_ROWS,
+    MOMO_REQUIRED_PAYMENT_FIELDS,
+    MOMO_PAYMENT_CASE_TYPE,
 )
 from corehq.apps.case_importer.exceptions import (
     CustomImporterError,
     ImporterError,
+    ImporterExcelTooManyRows,
     ImporterFileNotFound,
     ImporterRawError,
 )
@@ -51,7 +55,7 @@ from corehq.apps.reports.analytics.esaccessors import (
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
+from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR, MTN_MOBILE_WORKER_VERIFICATION
 from corehq.util.view_utils import absolute_reverse
 from corehq.util.workbook_reading import (
     SpreadsheetFileExtError,
@@ -121,6 +125,8 @@ def excel_config(request, domain):
         return render_error(request, domain, get_importer_error_message(e))
     except SpreadsheetFileExtError:
         return render_error(request, domain, _("Please upload file with extension .xls or .xlsx"))
+    except ImporterExcelTooManyRows as e:
+        return render_error(request, domain, str(e))
 
     context.update(_case_importer_breadcrumb_context(_('Case Options'), domain))
     return render(request, "case_importer/excel_config.html", context)
@@ -208,7 +214,15 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
 
     case_upload.check_file()
 
+    row_count = 0
     worksheet_titles = _get_workbook_sheet_names(case_upload)
+    for i in range(len(worksheet_titles)):
+        with case_upload.get_spreadsheet(i) as spreadsheet:
+            row_count += spreadsheet.max_row - 1
+
+    if row_count > MAX_CASE_IMPORTER_ROWS:
+        raise ImporterExcelTooManyRows(row_count)
+
     case_types_from_apps = sorted(get_case_types_from_apps(domain))
     unrecognized_case_types = sorted([t for t in get_case_types_for_domain_es(domain)
                                       if t not in case_types_from_apps])
@@ -279,14 +293,24 @@ def _process_excel_mapping(domain, spreadsheet, search_column):
 def _create_bulk_configs(domain, request, case_upload):
     all_configs = []
     worksheet_titles = _get_workbook_sheet_names(case_upload)
+    mtn_mobile_worker_verification_ff_enabled = MTN_MOBILE_WORKER_VERIFICATION.enabled(domain)
+    errors = []
     for index, title in enumerate(worksheet_titles):
         with case_upload.get_spreadsheet(index) as spreadsheet:
-            _, excel_fields, _ = _process_excel_mapping(
+            __, excel_fields, __ = _process_excel_mapping(
                 domain,
                 spreadsheet,
                 request.POST['search_field']
             )
             excel_fields = list(set(excel_fields) - set(RESERVED_FIELDS))
+            if mtn_mobile_worker_verification_ff_enabled and title == MOMO_PAYMENT_CASE_TYPE:
+                missing_fields = _get_missing_payment_fields(excel_fields)
+                if missing_fields:
+                    errors.append(_(
+                        'Sheet with case type "{}" is missing one or more required '
+                        'fields: {}'
+                    ).format(title, ', '.join(missing_fields)))
+                    break
             config = importer_util.ImporterConfig.from_dict({
                 'couch_user_id': request.couch_user._id,
                 'excel_fields': excel_fields,
@@ -298,7 +322,7 @@ def _create_bulk_configs(domain, request, case_upload):
                 'create_new_cases': request.POST['create_new_cases'] == 'True',
             })
             all_configs.append(config)
-    return all_configs
+    return all_configs, errors
 
 
 @require_POST
@@ -365,6 +389,16 @@ def excel_fields(request, domain):
 
     case_field_specs = [field_spec.to_json() for field_spec in field_specs]
 
+    if MTN_MOBILE_WORKER_VERIFICATION.enabled(domain) and case_type == MOMO_PAYMENT_CASE_TYPE:
+        missing_fields = _get_missing_payment_fields(columns)
+        if any(missing_fields):
+            return render_error(
+                request,
+                domain,
+                _('The Excel file is missing the following required fields for the "{}" case type: {}').format(
+                    MOMO_PAYMENT_CASE_TYPE, ', '.join(missing_fields)
+                )
+            )
     context = {
         'case_type': case_type,
         'search_column': search_column,
@@ -409,7 +443,9 @@ def excel_commit(request, domain):
     case_type = request.POST['case_type']
     all_configs = []
     if case_type == ALL_CASE_TYPE_IMPORT:
-        all_configs = _create_bulk_configs(domain, request, case_upload)
+        all_configs, errors = _create_bulk_configs(domain, request, case_upload)
+        if any(errors):
+            return render_error(request, domain, ', '.join(errors))
     else:
         config = importer_util.ImporterConfig.from_request(request)
         all_configs = [config]
@@ -471,7 +507,9 @@ def _bulk_case_upload_api(request, domain):
 
     all_configs = []
     if context['is_bulk_import']:
-        all_configs = _create_bulk_configs(domain, request, case_upload)
+        all_configs, errors = _create_bulk_configs(domain, request, case_upload)
+        if any(errors):
+            raise ImporterError(', '.join(errors))
     else:
         with case_upload.get_spreadsheet() as spreadsheet:
             _, excel_fields, _ = _process_excel_mapping(domain, spreadsheet, search_column)
@@ -505,3 +543,7 @@ def _bulk_case_upload_api(request, domain):
     status_url = absolute_reverse('case_importer_upload_status', args=(domain, upload_id))
 
     return json_response({"code": 200, "message": "success", "status_url": status_url})
+
+
+def _get_missing_payment_fields(columns):
+    return set(MOMO_REQUIRED_PAYMENT_FIELDS) - set(columns)

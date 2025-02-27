@@ -6,23 +6,49 @@
 #menu-region .module-case-list-container {
   background-color: white;
   box-shadow: 0 0 10px 2px rgba(0,0,0,.1);
-  margin-bottom: 2rem;
 }
 
 #menu-region .module-menu-container {
   padding-bottom: 6px;
 }
 
-.persistent-menu-toggle {
-  color: white;
-  background-color: $cc-brand-mid;
-  padding: $spacer / 2;
-  &:hover {
-    background-color: $cc-brand-low;
+#persistent-menu-region {
+  width: 2%;
+}
+
+#persistent-menu-region > div {
+  height: 100%;
+}
+
+.collapsing#persistent-menu-container {
+  @include media-breakpoint-up(sm) {
+    transition: none !important;
   }
 }
 
-$persistent-menu-image-size: 2rem;
+#persistent-menu-container {
+  padding: 1rem;
+  font-size: 14px;
+  overflow-x: visible;
+  overflow-y: scroll;
+  z-index: $zindex-persistent-menu-nav;
+}
+
+#persistent-menu-container .btn-close {
+  right: 15px;
+  top: 15px;
+}
+
+#persistent-menu-arrow-toggle {
+  color: black;
+  z-index: $zindex-persistent-menu-nav-arrow;
+  background-color: $call-to-action-hi;
+  &:hover {
+    background-color: $call-to-action-mid;
+  }
+}
+
+$persistent-menu-image-size: 3rem;
 
 .persistent-menu-image {
   height: $persistent-menu-image-size;
@@ -52,6 +78,8 @@ $persistent-menu-image-size: 2rem;
   }
 }
 
-.persistent-menu-max-width {
-    max-width: 400px;
+@media print {
+  #content-plus-version-info-container {
+    overflow: visible !important;
+  }
 }

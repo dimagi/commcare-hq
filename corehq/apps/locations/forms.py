@@ -31,7 +31,8 @@ from corehq.apps.locations.util import (
     get_location_type
 )
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.util import user_display_string
+from corehq.apps.users.util import log_user_change, user_display_string
+from corehq.const import USER_CHANGE_VIA_LOCATION
 from corehq.util.quickcache import quickcache
 from corehq.util.global_request import get_request_domain
 
@@ -177,7 +178,7 @@ class LocationForm(forms.Form):
         if not self.location.external_id:
             self.fields['external_id'].widget = forms.HiddenInput()
 
-        self.helper = FormHelper()
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.form_tag = False
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
         self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
@@ -290,6 +291,10 @@ class LocationForm(forms.Form):
             if user:
                 user.is_active = False
                 user.save()
+                log_user_change(by_domain=self.domain, for_domain=user.domain,
+                                couch_user=user, changed_by_user=self.user,
+                                changed_via=USER_CHANGE_VIA_LOCATION,
+                                fields_changed={'is_active': user.is_active})
             self.location.user_id = ''
             self.location.save()
 
@@ -534,7 +539,7 @@ class LocationFilterForm(forms.Form):
         initial=False,
     )
     location_status_active = forms.ChoiceField(
-        label=_('Active / Archived'),
+        label="",
         choices=LOCATION_ACTIVE_STATUS,
         required=False,
         widget=SelectToggle(choices=LOCATION_ACTIVE_STATUS, attrs={"ko_value": "location_status_active"}),
@@ -576,7 +581,7 @@ class LocationFilterForm(forms.Form):
                     css_class="btn btn-primary",
                     data_bind="html: buttonHTML",
                 ),
-            ),
+            )
         )
 
     def clean_location_id(self):

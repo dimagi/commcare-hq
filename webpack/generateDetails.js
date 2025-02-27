@@ -31,6 +31,10 @@ const scanTemplates = function (dir, entryRegex, allAppPaths, details, isProdMod
      *                          being that entry filenames end in `.[contenthash].js`, which is necessary for
      *                          cache busting on production.
      */
+    if (!fs.existsSync(dir)) {      // some apps have javascript but no templates
+        return;
+    }
+
     const files = fs.readdirSync(dir);
 
     files.forEach((file) => {
@@ -44,7 +48,7 @@ const scanTemplates = function (dir, entryRegex, allAppPaths, details, isProdMod
             let content = fs.readFileSync(fullPath, 'utf-8');
             let match;
 
-            // Extract all matches of the {% webpack_main "path" %} tag
+            // Extract all matches of the {% js_entry "path" %} tag
             while ((match = entryRegex.exec(content)) !== null) {
                 let entryName = match[1];
                 let folders = entryName.split('/');
@@ -53,6 +57,10 @@ const scanTemplates = function (dir, entryRegex, allAppPaths, details, isProdMod
 
                 if (!fs.existsSync(fullEntryPath)) {
                     console.warn(`JavaScript file not found: ${fullEntryPath}`);
+                    continue;
+                }
+                if (isProdMode && entryName.indexOf('/spec/') !== -1) {
+                    // Skip test files on prod, which doesn't have dev dependencies installed
                     continue;
                 }
                 details.entries[entryName] = {
@@ -120,8 +128,12 @@ if (require.main === module) {
     // these apps, but there are no existing webpack entries from these apps (yet).
     const alwaysIncludeApps = [
         "analytix",
+        "case",
         "hqwebapp",
+        "mocha",
         "notifications",
+        "registration",
+        "reports_core",
     ];
     const aliases = {};
     const appsWithEntries = [];
@@ -133,12 +145,12 @@ if (require.main === module) {
 
     // This splits the builds into bootstrap 5 and bootstrap 3 versions
     const defaultDetails = getDetails(
-        /{% webpack_main ["']([\/\w\-]+)["'] %}/g,
+        /{% js_entry ["']([\/\w\-]+)["'] %}/g,
         allAppPaths,
         isProductionMode
     );
     const b3Details = getDetails(
-        /{% webpack_main_b3 ["']([\/\w\-]+)["'] %}/g,
+        /{% js_entry_b3 ["']([\/\w\-]+)["'] %}/g,
         allAppPaths,
         isProductionMode
     );

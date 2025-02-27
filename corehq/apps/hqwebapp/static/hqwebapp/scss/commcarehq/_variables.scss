@@ -10,6 +10,8 @@ $container-max-widths: (
   xxl: 1160px
 );
 
+// Spacing override
+$enable-negative-margins: true;
 
 // Typography Overrides
 $font-family-sans-serif: "Nunito Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -33,6 +35,9 @@ $navbar-padding-x: 0;
 
 $caret-width: 4px;
 $caret-vertical-align: $caret-width * .87;
+
+// Breadcrumbs
+$breadcrumb-divider: quote(">");
 
 // Dropdowns
 $dropdown-border-radius: 3px;
@@ -228,3 +233,15 @@ $form-validation-states: (
 // Make pagination-lg the same height as other lg inputs
 $pagination-padding-x-lg: 1.0rem;
 $pagination-padding-y-lg: 0.5rem;
+
+// Table loading indicator
+$table-loading-spinner-size: 150px;
+$table-loading-spinner-border-width: 20px;
+
+// Override bootstrap position values to include 25%
+$position-values: (
+  0: 0,
+  25: 25%,
+  50: 50%,
+  100: 100%,
+);

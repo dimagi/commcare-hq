@@ -2,6 +2,7 @@ from django.test import TestCase
 from corehq.blobs import get_blob_db
 from casexml.apps.phone.utils import MockDevice
 from corehq.apps.domain.models import Domain
+from corehq.apps.fixtures.fixturegenerators import item_lists
 from corehq.apps.fixtures.models import (
     FIXTURE_BUCKET,
     Field,
@@ -49,8 +50,14 @@ class OtaFixtureTest(TestCase):
         device = MockDevice(self.domain, self.restore_user)
         restore = device.sync().payload.decode('utf-8')
         self.assertIn('<fixture ', restore)
-        restore_without_fixture = device.sync(skip_fixtures=True).payload.decode('utf-8')
-        self.assertNotIn('<fixture ', restore_without_fixture)
+
+        restore = device.sync(skip_fixtures=True).payload.decode('utf-8')
+        self.assertIn('<fixture ', restore)
+
+        item_lists.ignore_skip_fixtures_flag = False
+        restore = device.sync(skip_fixtures=True).payload.decode('utf-8')
+        self.assertNotIn('<fixture ', restore)
+        item_lists.ignore_skip_fixtures_flag = True  # reset
 
     def test_fixture_ownership(self):
         device = MockDevice(self.domain, self.restore_user)

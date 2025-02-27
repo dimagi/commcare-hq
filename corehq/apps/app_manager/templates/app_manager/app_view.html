@@ -1,27 +1,20 @@
-{% extends "app_manager/managed_app.html" %}
+{% extends "app_manager/apps_base.html" %}
 {% load compress %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load xforms_extras %}
 
-{% block head %}{{ block.super }}
-  {% include 'analytics/fullstory.html' %}
-{% endblock %}
-
 {% block js %}{{  block.super }}
   {% compress js %}
     <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
     <script src="{% static 'app_manager/js/releases/releases.js' %}"></script>
     <script src="{% static 'app_manager/js/releases/language_profiles.js' %}"></script>
-    <script src="{% static "jsdiff/diff.js" %}"></script>
-    <script src="{% static 'app_manager/js/releases/app_diff.js' %}"></script>
     <script src="{% static 'app_manager/js/releases/update_prompt.js' %}"></script>
     <script src="{% static 'hqwebapp/js/bootstrap3/widgets.js' %}"></script>
     <script src="{% static 'app_manager/js/supported_languages.js' %}"></script>
     <script src="{% static 'app_manager/js/settings/translations.js' %}"></script>
-    <script src="{% static 'app_manager/js/settings/password_setter.jquery.js' %}"></script>
-    <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
+    <script src="{% static 'hqmedia/js/uploaders.js' %}"></script>
     <script src="{% static 'hqmedia/js/media_reference_models.js' %}"></script>
     <script src="{% static 'app_manager/js/app_view.js' %}"></script>
     <script src="{% static 'app_manager/js/app_view_application.js' %}"></script>
@@ -47,7 +40,6 @@
         containerClass: 'h3 app-title',
         url: '{% url "edit_app_attr" domain app.id 'name' %}',
         placeholder: '{% trans "Untitled App"|escapejs %}',
-        postSave: function(data) { var appManager = hqImport('app_manager/js/app_manager'); appManager.updatePageTitle(data.update['.variable-app_name']); return appManager.updateDOM(data.update); },
         rows: 1,
         saveValueName: 'name',
         nodeName: 'input',
@@ -76,8 +68,7 @@
 
 {% block modals %}{{ block.super }}
   {% for uploader in uploaders %}
-    {% include 'hqmedia/partials/multimedia_uploader.html' %}
+    {% include 'hqmedia/partials/multimedia_uploader.html' with id=uploader.slug type=uploader.media_type %}
   {% endfor %}
-  {% include 'app_manager/partials/settings/password_setter_modal.html' %}
   {% include 'app_manager/partials/toggle_diff_modal.html' %}
 {% endblock %}

@@ -1,4 +1,3 @@
-'use strict';
 /**
  * The primary Marionette application managing menu navigation and launching form entry
  */
@@ -43,7 +42,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     ProgressBar,
     UsersModels,
     WebFormSession,
-    TemplateCache
+    TemplateCache,
 ) {
     Marionette.setRenderer(TemplateCache.render);
 
@@ -62,17 +61,7 @@ hqDefine("cloudcare/js/formplayer/app", [
         if (!FormplayerFrontend.regions) {
             FormplayerFrontend.regions = CloudcareUtils.getRegionContainer();
         }
-        let sidebar = FormplayerFrontend.regions.getRegion('sidebar');
-        sidebar.on('show', function () {
-            $('#content-container').addClass('full-width');
-            $('#menu-region').addClass('sidebar-push');
-        });
-        sidebar.on('hide empty', function () {
-            $('#content-container').removeClass('full-width');
-            $('#menu-region').removeClass('sidebar-push');
-        });
-
-        hqRequire(["cloudcare/js/formplayer/router"], function (Router) {
+        import("cloudcare/js/formplayer/router").then(function (Router) {
             FormplayerFrontend.router = Router.start();
         });
     });
@@ -97,7 +86,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     };
 
     FormplayerFrontend.showRestoreAs = function (user) {
-        hqRequire(["cloudcare/js/formplayer/users/views"], function (UsersViews) {
+        import("cloudcare/js/formplayer/users/views").then(function (UsersViews) {
             FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
                 UsersViews.RestoreAsBanner({model: user, smallScreen: false}));
             const mobileRegion = FormplayerFrontend.regions.getRegion('mobileRestoreAsBanner');
@@ -150,8 +139,10 @@ hqDefine("cloudcare/js/formplayer/app", [
         FormplayerFrontend.trigger('setUnsavedFormNotInProgress');
         $('#webforms').html("");
         $('.menu-scrollable-container').removeClass("d-none");
+        $('#sidebar-and-content').removeClass('remove-margins-on-mobile');
         $('#webforms-nav').html("");
         $('#cloudcare-debugger').html("");
+        $('#cloudcare-main').removeClass('has-debugger');
         $('.atwho-container').remove();
         bootstrap.Modal.getOrCreateInstance($('#case-detail-modal')).hide();
         sessionStorage.removeItem('collapsedIx');
@@ -174,11 +165,11 @@ hqDefine("cloudcare/js/formplayer/app", [
         $("#cloudcare-notifications").empty();
     });
 
-    FormplayerFrontend.on('showError', function (errorMessage, isHTML, reportToHq) {
+    FormplayerFrontend.on('showError', function (errorMessage, isHTML, reportToHq, additionalData) {
         if (isHTML) {
             CloudcareUtils.showHTMLError(errorMessage, $("#cloudcare-notifications"), null, reportToHq);
         } else {
-            CloudcareUtils.showError(errorMessage, $("#cloudcare-notifications"), reportToHq);
+            CloudcareUtils.showError(errorMessage, $("#cloudcare-notifications"), reportToHq, additionalData);
         }
     });
 
@@ -316,20 +307,19 @@ hqDefine("cloudcare/js/formplayer/app", [
         var sess = WebFormSession.WebFormSession(data);
         sess.renderFormXml(data, $('#webforms'));
         $('.menu-scrollable-container').addClass("d-none");
+        $('#sidebar-and-content').addClass('remove-margins-on-mobile');
     });
 
     FormplayerFrontend.on("start", function (model, options) {
         var self = this,
             user = UsersModels.setCurrentUser(options);
 
-        hqRequire([
-            "cloudcare/js/formplayer/users/utils",  // restoreAsUser
-        ], function () {
+        import("cloudcare/js/formplayer/users/utils").then(function () {   // restoreAsUser
             user.restoreAs = FormplayerFrontend.getChannel().request('restoreAsUser', user.domain, user.username);
             AppsAPI.primeApps(user.restoreAs, options.apps);
         });
 
-        hqRequire(["cloudcare/js/formplayer/router"], function (Router) {
+        import("cloudcare/js/formplayer/router").then(function (Router) {
             FormplayerFrontend.router = Router.start();
             $.when(AppsAPI.getAppEntities()).done(function (appCollection) {
                 var appId;
@@ -359,11 +349,11 @@ hqDefine("cloudcare/js/formplayer/app", [
         });
 
         if (options.allowedHost) {
-            hqRequire(["cloudcare/js/formplayer/hq_events"], function (HQEvents) {
+            import("cloudcare/js/formplayer/hq_events").then(function (HQEvents) {
                 window.addEventListener(
                     "message",
                     HQEvents.Receiver(options.allowedHost),
-                    false
+                    false,
                 );
             });
         }
@@ -392,24 +382,24 @@ hqDefine("cloudcare/js/formplayer/app", [
                     $('.submit').prop('disabled', false);
                     $('.form-control, .form-select').prop('disabled', false);
                 }
-            }
+            },
         );
 
         window.addEventListener(
             'beforeprint', function () {
                 $('.card, .q').last().addClass('last');
-            }
+            },
         );
 
         window.addEventListener(
             'afterprint', function () {
                 $('.last').removeClass('last');
-            }
+            },
         );
     });
 
     FormplayerFrontend.on('configureDebugger', function () {
-        hqRequire(["cloudcare/js/debugger/debugger"], function (Debugger) {
+        import("cloudcare/js/debugger/debugger").then(function (Debugger) {
             var CloudCareDebugger = Debugger.CloudCareDebuggerMenu,
                 TabIDs = Debugger.TabIDs,
                 user = UsersModels.getCurrentUser(),

@@ -4,14 +4,14 @@ hqDefine('reports/v2/js/views/bootstrap5/explore_case_data', [
     'underscore',
     'reports/v2/js/context',
     'reports/v2/js/bootstrap5/datagrid',
+    'hqwebapp/js/components/bootstrap5/feedback',
 ], function (
     $,
     ko,
     _,
     context,
-    datagrid
+    datagrid,
 ) {
-    'use strict';
     var view = {};
 
     view.config = context.getReportConfig();

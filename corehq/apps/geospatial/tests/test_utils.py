@@ -1,23 +1,29 @@
 from uuid import uuid4
 
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
+from corehq.apps.geospatial.const import (
+    ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY,
+    GPS_POINT_CASE_PROPERTY,
+    ES_REASSIGNMENT_UPDATE_OWNERS_BASE_KEY,
+)
 from corehq.apps.geospatial.models import GeoConfig
 from corehq.apps.geospatial.utils import (
     CaseOwnerUpdate,
     CeleryTaskTracker,
     create_case_with_gps_property,
+    get_flag_assigned_cases_config,
     get_geo_case_property,
     get_geo_user_property,
     set_case_gps_property,
     set_user_gps_property,
     update_cases_owner,
+    get_celery_task_tracker,
 )
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
@@ -168,6 +174,14 @@ class TestUpdateCasesOwner(TestCase):
         for case in self.cases:
             case.refresh_from_db()
 
+    def _assert_for_assigned_cases_flag_absent(self):
+        for case in self.cases:
+            self.assertIsNone(case.case_json.get(ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY))
+
+    def _assert_for_assigned_cases_flag_present(self):
+        for case in self.cases:
+            self.assertTrue(case.case_json.get(ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY))
+
     def test_update_cases_owner(self):
         case_owner_updates = [
             CaseOwnerUpdate(case_id=self.case_1.case_id, owner_id=self.user_b.user_id),
@@ -176,17 +190,45 @@ class TestUpdateCasesOwner(TestCase):
                 owner_id=self.user_a.user_id,
                 related_case_ids=[self.related_case_2.case_id]),
         ]
-
-        update_cases_owner(self.domain, CaseOwnerUpdate.to_dict(case_owner_updates))
+        celery_task_tracker = get_celery_task_tracker(self.domain, ES_REASSIGNMENT_UPDATE_OWNERS_BASE_KEY)
+        celery_task_tracker.mark_requested()
+        update_cases_owner(
+            self.domain,
+            case_owner_updates_dict=CaseOwnerUpdate.to_dict(case_owner_updates),
+            flag_assigned_cases=False,
+            celery_task_tracker=celery_task_tracker
+        )
+        task_progress = celery_task_tracker.get_status()
+        self.assertEqual(task_progress['progress'], 100)
 
         self._refresh_cases()
         self.assertEqual(self.case_1.owner_id, self.user_b.user_id)
         self.assertEqual(self.case_2.owner_id, self.user_a.user_id)
         self.assertEqual(self.related_case_2.owner_id, self.user_a.user_id)
+        self._assert_for_assigned_cases_flag_absent()
+
+    def test_update_cases_owner_with_flag_assigned_cases(self):
+        case_owner_updates = [
+            CaseOwnerUpdate(case_id=self.case_1.case_id, owner_id=self.user_b.user_id),
+            CaseOwnerUpdate(
+                case_id=self.case_2.case_id,
+                owner_id=self.user_a.user_id,
+                related_case_ids=[self.related_case_2.case_id]),
+        ]
+
+        update_cases_owner(self.domain, CaseOwnerUpdate.to_dict(case_owner_updates), flag_assigned_cases=True)
+
+        self._refresh_cases()
+        self.assertEqual(self.case_1.owner_id, self.user_b.user_id)
+        self.assertEqual(self.case_2.owner_id, self.user_a.user_id)
+        self.assertEqual(self.related_case_2.owner_id, self.user_a.user_id)
+        self._assert_for_assigned_cases_flag_present()
 
 
 class TestCeleryTaskTracker(TestCase):
     TASK_KEY = 'test-key'
+    PROGRESS_KEY = 'test-key_progress'
+    ERROR_SLUG_KEY = 'test-key_error_slug'
 
     @classmethod
     def setUpClass(cls):
@@ -201,7 +243,7 @@ class TestCeleryTaskTracker(TestCase):
 
     def test_mark_active(self):
         self.celery_task_tracker.mark_requested()
-        self.assertTrue(self.redis_client.has_key(self.TASK_KEY))
+        self.assertTrue(self.redis_client.get(self.TASK_KEY), 'ACTIVE')
 
     def test_get_active(self):
         self.redis_client.set(self.TASK_KEY, 'ACTIVE')
@@ -211,3 +253,75 @@ class TestCeleryTaskTracker(TestCase):
         self.redis_client.set(self.TASK_KEY, 'ACTIVE')
         self.celery_task_tracker.mark_completed()
         self.assertFalse(self.redis_client.has_key(self.TASK_KEY))
+
+    def test_mark_error(self):
+        self.celery_task_tracker.mark_as_error(error_slug='TEST')
+        self.assertEqual(self.redis_client.get(self.TASK_KEY), 'ERROR')
+        self.assertEqual(self.redis_client.get(self.ERROR_SLUG_KEY), 'TEST')
+
+    def test_get_status(self):
+        self.redis_client.set(self.TASK_KEY, 'ERROR')
+        self.redis_client.set(self.ERROR_SLUG_KEY, 'TEST')
+        expected_output = {
+            'status': 'ERROR',
+            'progress': 0,
+            'error_slug': 'TEST'
+        }
+        self.assertEqual(self.celery_task_tracker.get_status(), expected_output)
+
+    def test_set_progress(self):
+        self.assertTrue(self.celery_task_tracker.update_progress(current=1, total=5))
+        self.assertTrue(self.redis_client.has_key(self.PROGRESS_KEY))
+        self.assertEqual(self.redis_client.get(self.PROGRESS_KEY), 20)
+
+    def test_get_progress(self):
+        self.assertEqual(self.celery_task_tracker.get_progress(), 0)
+        self.celery_task_tracker.update_progress(current=1, total=4)
+        self.assertEqual(self.celery_task_tracker.get_progress(), 25)
+
+    def test_clear_progress(self):
+        self.assertFalse(self.celery_task_tracker.clear_progress())
+        self.celery_task_tracker.update_progress(current=1, total=2)
+        self.assertTrue(self.celery_task_tracker.clear_progress())
+        self.assertFalse(self.redis_client.has_key(self.PROGRESS_KEY))
+
+    def test_invalid_progress(self):
+        self.celery_task_tracker.update_progress(current=3, total=0)
+        self.assertEqual(self.celery_task_tracker.get_progress(), 0)
+
+
+class TestGetCeleryTaskTracker(SimpleTestCase):
+    domain = 'foobar'
+    base_key = 'test_me'
+
+    def test_get_celery_task_tracker(self):
+        celery_task_tracker = get_celery_task_tracker(self.domain, self.base_key)
+        self.assertEqual(
+            celery_task_tracker.task_key,
+            'test_me_foobar'
+        )
+        self.assertEqual(
+            celery_task_tracker.progress_key,
+            'test_me_foobar_progress'
+        )
+
+
+class TestGetFlagAssignedCasesConfig(TestCase):
+
+    DOMAIN = "test-domain"
+
+    def test_flag_not_set(self):
+        self.assertFalse(get_flag_assigned_cases_config(self.DOMAIN))
+
+    def test_flag_set(self):
+        config = GeoConfig(
+            domain=self.DOMAIN,
+            flag_assigned_cases=True,
+        )
+        config.save()
+        self.addCleanup(config.delete)
+
+        self.assertTrue(get_flag_assigned_cases_config(self.DOMAIN))
+
+    def test_invalid_domain_provided(self):
+        self.assertFalse(get_flag_assigned_cases_config(None))

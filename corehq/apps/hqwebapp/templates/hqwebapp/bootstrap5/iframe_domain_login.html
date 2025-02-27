@@ -5,12 +5,11 @@
 
 {% block title %}{% trans "Your session has expired" %}{% endblock %}
 
-{% requirejs_main_b5 'registration/js/login' %}
+{% js_entry 'registration/js/login' %}
 
 {% block background_content %}
   <div class="bg-container">
-    <div class="bg-full-cover-fixed bg-registration b-lazy"
-         data-src="{% static 'hqwebapp/images/molly.jpg' %}"></div>
+    <div class="bg-full-cover-fixed bg-registration"></div>
     <div class="bg-overlay"></div>
   </div>
 {% endblock %}
@@ -48,7 +47,7 @@
          id="user-login-form"
          class="ko-template"
          {% endif %}>
-      {% include "login_and_password/partials/login_full.html" %}
+      {% include "login_and_password/partials/bootstrap5/login_full.html" %}
     </div>
   {% endblock %}
 {% endblock content %}

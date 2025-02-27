@@ -15,9 +15,10 @@ from couchforms.analytics import get_exports_by_form
 
 from corehq.apps.app_manager.analytics import get_exports_by_application
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
+from corehq.apps.export.const import ALL_CASE_TYPE_EXPORT
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.registry.models import DataRegistry
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
-from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.userreports.app_manager.data_source_meta import (
     DATA_SOURCE_TYPE_CASE,
@@ -26,7 +27,6 @@ from corehq.apps.userreports.app_manager.data_source_meta import (
 )
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.toggles import AGGREGATE_UCRS
-from corehq.apps.export.const import ALL_CASE_TYPE_EXPORT
 
 DataSource = collections.namedtuple('DataSource', ['application', 'source_type', 'source', 'registry_slug'])
 RMIDataChoice = collections.namedtuple('RMIDataChoice', ['id', 'text', 'data'])
@@ -174,7 +174,7 @@ class ApplicationDataSourceUIHelper(object):
                 optionsText: function(item){return item.text},
                 optionsValue: function(item){return item.value},
                 value: sourceId,
-                options: _.union(sourcesMap[application()][sourceType()], sourcesMap[registrySlug()][sourceType()])
+                options: sourceOptions,
             '''}
         else:
             self.application_field.widget.attrs = {'data-bind': 'value: application'}
@@ -285,8 +285,10 @@ class ApplicationDataRMIHelper(object):
     APP_TYPE_NONE = 'no_app'
     APP_TYPE_UNKNOWN = 'unknown'
 
-    def __init__(self, domain, user, as_dict=True):
+    def __init__(self, domain, project, user, as_dict=True):
         self.domain = domain
+        self.domain_object = project
+
         self.user = user
         self.as_dict = as_dict
         self.form_labels = AppFormRMIPlaceholder(
@@ -420,14 +422,16 @@ class ApplicationDataRMIHelper(object):
     def _all_forms(self):
         forms = []
         unknown_forms = []
-        for f in get_exports_by_form(self.domain):
+
+        for f in get_exports_by_form(self.domain, use_es=self.domain_object.exports_use_elasticsearch):
             form = f['value']
             if form.get('app_deleted') and not form.get('submissions'):
                 continue
             if 'app' in form:
                 form['has_app'] = True
                 forms.append(form)
-            else:
+            elif not self.domain_object.exports_use_elasticsearch:
+                # If the elasticsearch toggle is on, we don't care about forms without apps
                 app_id = f['key'][1] or ''
                 form['app'] = {
                     'id': app_id

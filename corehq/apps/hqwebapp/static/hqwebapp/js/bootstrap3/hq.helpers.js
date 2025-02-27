@@ -3,11 +3,13 @@ hqDefine("hqwebapp/js/bootstrap3/hq.helpers", [
     'knockout',
     'underscore',
     'analytix/js/google',
+    'bootstrap',  // for popover constructor override
+    'jquery.cookie/jquery.cookie',  // $.cookie
 ], function (
     $,
     ko,
     _,
-    googleAnalytics
+    googleAnalytics,
 ) {
     // disable-on-submit is a class for form submit buttons so they're automatically disabled when the form is submitted
     $(document).on('submit', 'form', function (ev) {
@@ -148,11 +150,15 @@ hqDefine("hqwebapp/js/bootstrap3/hq.helpers", [
             // Ignore HTTP methods that do not require CSRF protection
             if (!/^(GET|HEAD|OPTIONS|TRACE)$/.test(settings.type)) {
                 if (!this.crossDomain) {
-                    var $csrfToken = $("#csrfTokenContainer").val();
-                    xhr.setRequestHeader("X-CSRFToken", $csrfToken);
+                    var csrfToken = $("#csrfTokenContainer").val();
+                    if (csrfToken) {
+                        xhr.setRequestHeader("X-CSRFToken", csrfToken);
+                    }
                 }
                 var xsrfToken = $.cookie('XSRF-TOKEN');
-                xhr.setRequestHeader('X-XSRF-TOKEN', xsrfToken);
+                if (xsrfToken) {
+                    xhr.setRequestHeader('X-XSRF-TOKEN', xsrfToken);
+                }
             }
             xhr.withCredentials = true;
         },

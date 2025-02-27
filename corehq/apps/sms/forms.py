@@ -1296,19 +1296,25 @@ class SubscribeSMSForm(Form):
 
 
 class ComposeMessageForm(forms.Form):
-
-    recipients = forms.CharField(widget=forms.Textarea(attrs={"class": "vertical-resize"}),
-                                 help_text=gettext_lazy("Type a username, group name or 'send to all'"))
+    recipients = forms.MultipleChoiceField(
+        widget=forms.SelectMultiple(attrs={'class': 'hqwebapp-select2'}),
+    )
     message = forms.CharField(widget=forms.Textarea(attrs={"class": "vertical-resize"}),
     help_text=gettext_lazy('0 characters (160 max)'))
 
     def __init__(self, *args, **kwargs):
         domain = kwargs.pop('domain')
         super(ComposeMessageForm, self).__init__(*args, **kwargs)
+
+        from corehq.apps.sms.views import get_sms_autocomplete_context
+        self.fields['recipients'].choices = [
+            (contact, contact) for contact in get_sms_autocomplete_context(domain)
+        ]
+
         self.helper = HQFormHelper()
         self.helper.form_action = reverse('send_to_recipients', args=[domain])
         self.helper.layout = crispy.Layout(
-            crispy.Field('recipients', rows=2, css_class='sms-typeahead'),
+            crispy.Field('recipients'),
             crispy.Field('message', rows=2),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(

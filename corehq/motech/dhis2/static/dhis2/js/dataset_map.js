@@ -4,10 +4,11 @@ hqDefine("dhis2/js/dataset_map", [
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/bootstrap5/crud_paginated_list_init",
     "hqwebapp/js/bootstrap5/widgets",
+    "commcarehq",
 ], function (
     $,
     _,
-    initialPageData
+    initialPageData,
 ) {
     $(function () {
         var $sendNowResult = $('#send-now-result'),
@@ -34,7 +35,7 @@ hqDefine("dhis2/js/dataset_map", [
                 .addClass("text-danger");
             $sendNowResult.text(
                 gettext('CommCare HQ was unable to send the DataSet: ')
-                + (resp.responseJSON ? resp.responseJSON['error'] : resp.statusText)
+                + (resp.responseJSON ? resp.responseJSON['error'] : resp.statusText),
             );
             if (resp.responseJSON) {
                 $remoteLogsLink.attr('href', resp.responseJSON['log_url']);

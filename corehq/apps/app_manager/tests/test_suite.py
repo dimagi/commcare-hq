@@ -1,5 +1,7 @@
 from django.test import SimpleTestCase
 
+from corehq import privileges
+
 from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.models import (
     Application,
@@ -15,11 +17,12 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
+    case_search_sync_cases_on_form_entry_enabled_for_domain,
     patch_get_xform_resource_overrides,
-    case_search_sync_cases_on_form_entry_enabled_for_domain
 )
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from corehq.apps.userreports.models import ReportConfiguration
+from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 
 @patch_get_xform_resource_overrides()
@@ -89,8 +92,12 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
     def test_printing(self, *args):
         self._test_generic_suite('app_print_detail', 'suite-print-detail')
 
+    @privilege_enabled(privileges.APP_DEPENDENCIES)
+    @flag_enabled('MOBILE_UCR')
     def test_report_module(self, *args):
-        from corehq.apps.userreports.tests.utils import get_sample_report_config
+        from corehq.apps.userreports.tests.utils import (
+            get_sample_report_config,
+        )
 
         app = Application.new_app('domain', "Untitled Application")
 

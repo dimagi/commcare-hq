@@ -1,4 +1,4 @@
-'use strict';
+
 
 hqDefine('users/js/roles',[
     'jquery',
@@ -205,6 +205,7 @@ hqDefine('users/js/roles',[
                 };
                 self.preventRoleDelete = data.preventRoleDelete;
                 self.hasUnpermittedLocationRestriction = data.has_unpermitted_location_restriction || false;
+
 
                 self.restrictRoleChecked = ko.computed(function () {
                     return data.manageRoleAssignments.specific.some(role => role.value() && !role.access_all_locations);
@@ -567,7 +568,7 @@ hqDefine('users/js/roles',[
                         {
                             permissionText: gettext("Manage Registries"),
                             listHeading: gettext("Select which registries the role can manage:"),
-                        }
+                        },
                     ),
                     selectPermissionModel(
                         'view_registry_contents',
@@ -575,18 +576,19 @@ hqDefine('users/js/roles',[
                         {
                             permissionText: gettext("View Registry Data"),
                             listHeading: gettext("Select which registry data the role can view:"),
-                        }
+                        },
                     ),
                 ];
-
-                self.webAppsPermissions = selectPermissionModel(
+                let webAppsPermissions = selectPermissionModel(
                     'access_web_apps',
                     self.accessWebAppsPermission,
                     {
                         permissionText: gettext("Use Web Apps for online data entry"),
                         listHeading: gettext("Select which web apps the role has access to:"),
-                    }
+                    },
                 );
+                webAppsPermissions.hasRestrictedApplicationAccess = root.hasRestrictedApplicationAccess;
+                self.webAppsPermissions = webAppsPermissions;
 
                 // Automatically disable "Access APIs" when "Full Organization Access" is disabled
                 self.permissions.access_all_locations.subscribe(() => {
@@ -601,7 +603,7 @@ hqDefine('users/js/roles',[
                         if (perm.hasError()) {
                             throw interpolate(
                                 gettext('Select at least one item from the list for "%s"'),
-                                [perm.text]
+                                [perm.text],
                             );
                         }
                     });
@@ -666,6 +668,7 @@ hqDefine('users/js/roles',[
         self.attendanceTrackingPrivilege = o.attendanceTrackingPrivilege;
         self.unlockLinkedRoles = ko.observable(false);
         self.canEditLinkedData = o.canEditLinkedData;
+        self.hasRestrictedApplicationAccess = o.hasRestrictedApplicationAccess;
 
         self.userRoles = ko.observableArray(ko.utils.arrayMap(o.userRoles, function (userRole) {
             return UserRole.wrap(userRole);
@@ -719,7 +722,7 @@ hqDefine('users/js/roles',[
                 var title = gettext("Delete Role: ") + role.name();
                 var context = {role: role.name()};
                 var modalConfirmation = _.template(gettext(
-                    "Are you sure you want to delete the role <%- role %>?"
+                    "Are you sure you want to delete the role <%- role %>?",
                 ))(context);
                 var roleCopy = UserRole.wrap(UserRole.unwrap(role));
 

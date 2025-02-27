@@ -4,6 +4,7 @@ from copy import deepcopy
 from io import BytesIO
 from openpyxl import Workbook
 from unittest.mock import patch, Mock
+import re
 
 from django.http import Http404, HttpResponseRedirect
 from django.test import TestCase, Client
@@ -477,7 +478,7 @@ class BulkUserUploadAPITest(TestCase):
         return self.client.post(
             self.url,
             {'bulk_upload_file': file},
-            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.key}',
+            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.plaintext_key}',
             format='multipart'
         )
 
@@ -505,7 +506,7 @@ class BulkUserUploadAPITest(TestCase):
     def test_no_file_uploaded(self):
         response = self.client.post(
             self.url,
-            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.key}',
+            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.plaintext_key}',
             format='multipart'
         )
         self.assertEqual(response.status_code, 400)
@@ -541,6 +542,52 @@ class BulkUserUploadAPITest(TestCase):
             'success': False
         })
 
+    @flag_enabled('TABLEAU_USER_SYNCING')
+    def test_tableau_role_and_groups_headers(self):
+        workbook = Workbook()
+        users_sheet = workbook.create_sheet(title='users')
+        users_sheet.append(['username', 'email', 'password', 'tableau_role', 'tableau_groups'])
+        users_sheet.append(['test_user', 'test@example.com', 'password', 'fakerole', 'fakegroup'])
+
+        file = BytesIO()
+        workbook.save(file)
+        file.seek(0)
+        file.name = 'users.xlsx'
+
+        # Test user with permission to edit Tableau Configs
+        self.user.is_superuser = False
+        role_with_upload_and_edit_tableau_permission = UserRole.create(
+            self.domain, 'edit-tableau', permissions=HqPermissions(edit_web_users=True,
+                                                                   edit_user_tableau_config=True)
+        )
+        self.user.set_role(self.domain_name,
+                        role_with_upload_and_edit_tableau_permission.get_qualified_id())
+        self.user.save()
+
+        with patch('corehq.apps.users.views.mobile.users.BaseUploadUser.upload_users'):
+            response = self._make_post_request(file)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json(), {'success': True})
+
+        # Test user without permission to edit Tableau Configs
+        role_with_upload_permission = UserRole.create(
+            self.domain, 'edit-web-users', permissions=HqPermissions(edit_web_users=True)
+        )
+        self.user.set_role(self.domain_name, role_with_upload_permission.get_qualified_id())
+        self.user.save()
+
+        file.seek(0)
+        response = self._make_post_request(file)
+        self.assertEqual(response.status_code, 400)
+
+        expected_pattern = re.compile(
+            r"Only users with 'Manage Tableau Configuration' edit permission in domains "
+            r"where Tableau User Syncing is enabled can upload files with 'Tableau Role' "
+            r"and/or 'Tableau Groups' fields\.\nThe following are illegal column headers: "
+            r"(?:tableau_groups, tableau_role|tableau_role, tableau_groups)\.",
+        )
+        self.assertRegex(response.json()['message'], expected_pattern)
+
     @patch('corehq.apps.users.views.mobile.users.BaseUploadUser.upload_users')
     def test_user_upload_error(self, mock_upload_users):
         mock_upload_users.side_effect = UserUploadError('User upload error')
@@ -570,7 +617,7 @@ class BulkUserUploadAPITest(TestCase):
         response = self.client.post(
             self.url,
             {'bulk_upload_file': file1, 'another_file': file2},
-            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.key}',
+            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.plaintext_key}',
             format='multipart'
         )
 
@@ -582,6 +629,13 @@ class BulkUserUploadAPITest(TestCase):
 
 
 class BaseUploadUserTest(TestCase):
+
+    mock_couch_user = WebUser(
+        username="testuser",
+        _id="user123",
+        domain="test-domain",
+    )
+
     def setUp(self):
         self.domain = 'test-domain'
         self.factory = RequestFactory()
@@ -604,6 +658,7 @@ class BaseUploadUserTest(TestCase):
         mock_reverse.return_value = '/success/'
 
         request = self.factory.post('/', {'bulk_upload_file': Mock()})
+        request.couch_user = self.mock_couch_user
         response = self.view.post(request)
 
         mock_reverse.assert_called_once_with(

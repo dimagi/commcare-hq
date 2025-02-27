@@ -232,8 +232,8 @@
           "_panels.scss"
         ],
         [
-          "paused.less",
-          "_paused.scss"
+          "plan_notice.less",
+          "_plan_notice.scss"
         ],
         [
           "popovers.less",
@@ -583,6 +583,26 @@
       "compare_all_files": true
     }
   ],
+  "apps/reports/static/reports/v2/js": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/reports/v2/js",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "views/bootstrap3",
+        "views/bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/reports/v2/js/views",
+      "compare_all_files": true
+    }
+  ],
   "apps/reports/static/reports/spec": [
     {
       "directories": [
@@ -665,23 +685,14 @@
       "compare_all_files": true
     }
   ],
-  "apps/export/templates/export": [
+  "apps/domain/templates/login_and_password": [
     {
       "directories": [
         "bootstrap3",
         "bootstrap5"
       ],
       "file_type": "template",
-      "label": "export",
-      "compare_all_files": true
-    },
-    {
-      "directories": [
-        "dialogs/bootstrap3",
-        "dialogs/bootstrap5"
-      ],
-      "file_type": "template",
-      "label": "export/dialogs",
+      "label": "login_and_password",
       "compare_all_files": true
     },
     {
@@ -690,38 +701,152 @@
         "partials/bootstrap5"
       ],
       "file_type": "template",
-      "label": "export/partials",
+      "label": "login_and_password/partials",
       "compare_all_files": true
     },
     {
       "directories": [
-        "spec/ko/bootstrap3",
-        "spec/ko/bootstrap5"
+        "two_factor/bootstrap3",
+        "two_factor/bootstrap5"
       ],
       "file_type": "template",
-      "label": "export/spec/ko",
+      "label": "login_and_password/two_factor",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "two_factor/core/bootstrap3",
+        "two_factor/core/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "login_and_password/two_factor/core",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "two_factor/profile/bootstrap3",
+        "two_factor/profile/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "login_and_password/two_factor/profile",
       "compare_all_files": true
     }
   ],
-  "apps/export/static/export/js": [
+  "apps/domain/templates/domain": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "domain",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "admin/bootstrap3",
+        "admin/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "domain/admin",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "admin/partials/bootstrap3",
+        "admin/partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "domain/admin/partials",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "email/bootstrap3",
+        "email/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "domain/email",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/bootstrap3",
+        "partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "domain/partials",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "pro_bono/bootstrap3",
+        "pro_bono/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "domain/pro_bono",
+      "compare_all_files": true
+    }
+  ],
+  "apps/domain/static/domain/js": [
     {
       "directories": [
         "bootstrap3",
         "bootstrap5"
       ],
       "file_type": "javascript",
-      "label": "javascript/export/js",
+      "label": "javascript/domain/js",
       "compare_all_files": true
     }
   ],
-  "apps/export/static/export/spec": [
+  "apps/data_interfaces/templates/data_interfaces": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "data_interfaces",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "interfaces/bootstrap3",
+        "interfaces/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "data_interfaces/interfaces",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/bootstrap3",
+        "partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "data_interfaces/partials",
+      "compare_all_files": true
+    }
+  ],
+  "apps/data_interfaces/static/data_interfaces/js": [
     {
       "directories": [
         "bootstrap3",
         "bootstrap5"
       ],
       "file_type": "javascript",
-      "label": "javascript/export/spec",
+      "label": "javascript/data_interfaces/js",
+      "compare_all_files": true
+    }
+  ],
+  "tabs/templates/tabs": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "tabs",
       "compare_all_files": true
     }
   ]

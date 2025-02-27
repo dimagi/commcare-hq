@@ -1,15 +1,16 @@
-'use strict';
+
 
 hqDefine('case_search/js/profile_case_search', [
     'jquery',
     'underscore',
     'knockout',
     'hqwebapp/js/bootstrap5/alert_user',
+    'commcarehq',
 ], function (
     $,
     _,
     ko,
-    alertUser
+    alertUser,
 ) {
     var caseSearchModel = function () {
         var self = {};

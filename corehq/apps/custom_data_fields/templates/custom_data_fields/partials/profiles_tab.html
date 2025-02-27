@@ -1,4 +1,23 @@
 {% load i18n %}
+<div data-bind="visible: profiles().length">
+  <label class="form-label" aria-hidden="true" for="require-for-user-type">{% trans "Make user profiles a requirement for the following user types" %}</label>
+  <span class="hq-help-template"
+      data-title="{% trans "Make user profiles a requirement for the following user types." %}"
+      data-content="{% blocktrans %}
+                      A profile must be provided when creating or editing a user of the selected user type(s).
+                    {% endblocktrans %}">
+  </span>
+  <select class="form-select mb-3"
+    aria-label="{% blocktrans %}
+                  Make user profiles a requirement for the following user types dropdown.
+                {% endblocktrans %}"
+    id="require-for-user-type"
+    data-bind="options: $root.profileRequiredForOptions,
+      optionsText: 'text',
+      optionsValue: 'value',
+      value: profile_required_for">
+  </select>
+</div>
 
 <p>
   <button class="btn btn-outline-primary" data-bind="click: addProfile" type="button">

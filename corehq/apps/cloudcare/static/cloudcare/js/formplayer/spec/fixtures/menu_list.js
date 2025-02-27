@@ -1,8 +1,7 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/spec/fixtures/menu_list", [
     "cloudcare/js/formplayer/spec/fake_formplayer",
 ], function (
-    FakeFormplayer
+    FakeFormplayer,
 ) {
     return FakeFormplayer.makeCommandsResponse({
         "title": "Case Tests",

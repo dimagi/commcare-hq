@@ -1,100 +1,130 @@
 {% load i18n %}
 
-<div class="modal fade" id="review-assignment-results" tabindex="-1" role="dialog">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal">
-                <span aria-hidden="true">&times;</span>
-                </button>
-                <h4 class="modal-title">
-                {% trans 'Review Assignment Results' %}
-                </h4>
-            </div>
-            <div class="modal-body">
-                <p>
-                    {% blocktrans %}
-                        All potential cases for each mobile worker will be pre-selected and de-selecting a case will
-                        remove it from final assignments once the "Assign" button is clicked.
-                    {% endblocktrans %}
-                </p>
-                <div class="row">
-                    <div class="form-group col-lg-6">
-                        <label>
-                            {% trans 'Assignment Status' %}
-                        </label>
-                        <select class="select form-control" data-bind="value: assignedFilter">
-                            <option value="all">{% trans 'Show All' %}</option>
-                            <option value="assigned">{% trans 'Assigned Only' %}</option>
-                            <option value="unassigned">{% trans 'Unassigned Only' %}</option>
-                        </select>
-                    </div>
-                    <div class="form-group col-lg-6">
-                        <label>
-                            {% trans 'Select mobile worker for case assignment' %}
-                        </label>
-                        <select class="select form-control"
-                                type="text"
-                                id="user-assignment-select"
-                                data-bind="value: selectedUserId">
-                        </select>
-                    </div>
-                </div>
-                <table class="table table-striped table-bordered">
-                    <thead>
-                    <tr>
-                        <th class="col-sm-3">
-                            <span>{% trans 'Select' %}</span>
-                            <button class="btn btn-xs btn-default" data-bind="click: toggleSelectAll(true)">{% trans 'All' %}</button>
-                            <button class="btn btn-xs btn-default" data-bind="click: toggleSelectAll(false)">{% trans 'None' %}</button>
-                        </th>
-                        <th>{% trans "Case Name" %}</th>
-                        <th>{% trans "Potential Mobile Worker" %}</th>
-                        <th>{% trans "Mobile Worker Primary Location" %}</th>
-                    </tr>
-                    </thead>
-                    <tbody data-bind="foreach: caseDataPage">
-                        <tr data-bind="css: { active: isSelected }">
-                            <td>
-                                <input type="checkbox" data-bind="checked: isSelected" />
-                            </td>
-                            <td data-bind="text: $data.caseName"></td>
-                            <td data-bind="text: $data.assignedUsername"></td>
-                            <td data-bind="text: $data.assignedUserPrimaryLocName"></td>
-                        </tr>
-                    </tbody>
-                </table>
-                <pagination data-apply-bindings="false"
-                            params="goToPage: goToPage,
+<div
+  class="modal fade"
+  id="review-assignment-results"
+  tabindex="-1"
+  role="dialog"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">{% trans 'Review Assignment Results' %}</h4>
+      </div>
+      <div class="modal-body">
+        <p>
+          {% blocktrans %}
+            All potential cases for each mobile worker will be pre-selected and
+            de-selecting a case will remove it from final assignments once the
+            "Assign" button is clicked.
+          {% endblocktrans %}
+        </p>
+        <div class="row">
+          <div class="form-group col-lg-6">
+            <label> {% trans 'Assignment Status' %} </label>
+            <select
+              class="select form-control"
+              data-bind="value: assignedFilter"
+            >
+              <option value="all">{% trans 'Show All' %}</option>
+              <option value="assigned">{% trans 'Assigned Only' %}</option>
+              <option value="unassigned">{% trans 'Unassigned Only' %}</option>
+            </select>
+          </div>
+          <div class="form-group col-lg-6">
+            <label>
+              {% trans 'Select mobile worker for case assignment' %}
+            </label>
+            <select
+              class="select form-control"
+              type="text"
+              id="user-assignment-select"
+              data-bind="value: selectedUserId"
+            ></select>
+          </div>
+        </div>
+        <div style="overflow-y: auto; max-height: 40vh">
+          <table class="table table-striped table-bordered">
+            <thead>
+              <tr>
+                <th class="col-sm-3">
+                  <span>{% trans 'Select' %}</span>
+                  <button
+                    class="btn btn-xs btn-default"
+                    data-bind="click: toggleSelectAll(true)"
+                  >
+                    {% trans 'All' %}
+                  </button>
+                  <button
+                    class="btn btn-xs btn-default"
+                    data-bind="click: toggleSelectAll(false)"
+                  >
+                    {% trans 'None' %}
+                  </button>
+                </th>
+                <th>{% trans "Case Name" %}</th>
+                <th>{% trans "Potential Mobile Worker" %}</th>
+                <th>{% trans "Mobile Worker Primary Location" %}</th>
+              </tr>
+            </thead>
+            <tbody data-bind="foreach: caseDataPage">
+              <tr data-bind="css: { active: isSelected }">
+                <td>
+                  <input type="checkbox" data-bind="checked: isSelected" />
+                </td>
+                <td data-bind="text: $data.caseName"></td>
+                <td data-bind="text: $data.assignedUsername"></td>
+                <td data-bind="text: $data.assignedUserPrimaryLocName"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <pagination
+          data-apply-bindings="false"
+          params="goToPage: goToPage,
                                     slug: 'assigned-cases',
                                     perPage: itemsPerPage,
-                                    totalItems: totalItems">
-                </pagination>
-            </div>
-            <div class="modal-footer">
-                <div class="row form-horizontal">
-                    <label class="checkbox col-sm-4">
-                        <input type="checkbox" data-bind="checked: includeRelatedCases"/>
-                        {% trans 'Include related cases' %}
-                    </label>
-                    <div class="col-sm-8 pull-right">
-                        <a class="btn btn-default" data-bind="click: assignUserToCases, attr: { disabled: !hasCheckedRows() }">
-                            <span data-bind="visible: selectedUserId">
-                                {% trans 'Assign Cases' %}
-                            </span>
-                            <span data-bind="hidden: selectedUserId">
-                                {% trans 'Unassign Cases' %}
-                            </span>
-                        </a>
-                        <button class="btn btn-default" data-bind="click: exportAssignments">
-                            {% trans 'Export' %}
-                        </button>
-                        <button class="btn btn-default" data-dismiss="modal" data-bind="click: finishAssignment">
-                            {% trans 'Finish' %}
-                        </button>
-                    </div>
-                </div>
-            </div>
+                                    totalItems: totalItems"
+        >
+        </pagination>
+      </div>
+      <div class="modal-footer">
+        <div class="row form-horizontal">
+          <label class="checkbox col-sm-4">
+            <input type="checkbox" data-bind="checked: includeRelatedCases" />
+            {% trans 'Include related cases' %}
+          </label>
+          <div class="col-sm-8 pull-right">
+            <a
+              class="btn btn-default"
+              data-bind="click: assignUserToCases, attr: { disabled: !hasCheckedRows() }"
+            >
+              <span data-bind="visible: selectedUserId">
+                {% trans 'Assign Cases' %}
+              </span>
+              <span data-bind="hidden: selectedUserId">
+                {% trans 'Unassign Cases' %}
+              </span>
+            </a>
+            <button
+              class="btn btn-default"
+              data-bind="click: exportAssignments"
+            >
+              {% trans 'Export' %}
+            </button>
+            <button
+              class="btn btn-default"
+              data-dismiss="modal"
+              data-bind="click: finishAssignment"
+            >
+              {% trans 'Finish' %}
+            </button>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
 </div>

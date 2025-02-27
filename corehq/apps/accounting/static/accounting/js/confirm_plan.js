@@ -4,6 +4,7 @@ hqDefine('accounting/js/confirm_plan', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
+    'commcarehq',
 ], function (
     $,
     ko,

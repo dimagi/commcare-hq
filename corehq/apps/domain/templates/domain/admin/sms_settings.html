@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main_b5 'commtrack/js/sms' %}
+{% js_entry 'commtrack/js/sms' %}
 
 {% block page_content %}
   {% initial_page_data "settings" settings %}
@@ -12,7 +12,7 @@
     <fieldset>
       <legend>{% trans 'Stock Actions' %}</legend>
       <div class="{% css_field_class %}">
-        {% include "domain/admin/commtrack_action_table.html" %}
+        {% include "domain/admin/partials/commtrack_action_table.html" %}
         <button type="button" class="btn btn-outline-primary float-end" data-bind="click: new_action">
           <i class="fa fa-plus"></i> {% trans "New Action" %}
         </button>

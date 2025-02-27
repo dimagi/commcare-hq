@@ -2,16 +2,23 @@ import os
 from unittest import mock
 
 from django.contrib.auth.models import User
-from django.test import TestCase, RequestFactory
+from django.test import RequestFactory, TestCase
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.exceptions import ErrorInitializingDomain
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqmedia.models import CommCareImage, LogoForSystemEmailsReference
+from corehq.apps.hqmedia.models import (
+    CommCareImage,
+    LogoForSystemEmailsReference,
+)
 from corehq.apps.hqmedia.views import ViewMultimediaFile
-from corehq.apps.registration.utils import request_new_domain, project_logo_emails_context
-from corehq.util.test_utils import flag_enabled
+from corehq.apps.registration.models import SelfSignupWorkflow
+from corehq.apps.registration.utils import (
+    project_logo_emails_context,
+    request_new_domain,
+)
 from corehq.apps.users.models import WebUser
+from corehq.util.test_utils import flag_enabled
 from corehq.util.view_utils import absolute_reverse
 
 
@@ -38,13 +45,16 @@ class TestRequestNewDomain(TestCase):
         cls.domain_test = 'test-1'
 
     def tearDown(self):
-        for domain in [self.domain_sso_test, self.domain_test]:
+        subscribed_domains = [self.domain_sso_test, self.domain_test]
+        for domain in subscribed_domains:
             Subscription._get_active_subscription_by_domain.clear(
                 Subscription,
                 domain
             )
+        SelfSignupWorkflow.objects.filter(domain__in=subscribed_domains).delete()
 
-        for test_domain in ['subscription-failed', 'init-default-roles-failed']:
+        failed_subscribed_domains = ['subscription-failed', 'init-default-roles-failed']
+        for test_domain in failed_subscribed_domains:
             domain = Domain.get_by_name(test_domain)
             if domain is not None:
                 domain.delete()
@@ -101,6 +111,19 @@ class TestRequestNewDomain(TestCase):
             )
         domain = Domain.get_by_name('subscription-failed')
         self.assertIsNone(domain)
+
+    @mock.patch('corehq.apps.registration.utils._setup_subscription', _noop)
+    @mock.patch('corehq.apps.registration.utils.notify_exception', _noop)
+    @mock.patch('django.conf.settings.IS_SAAS_ENVIRONMENT', True)
+    def test_saas_environment_creates_self_signup_workflow(self):
+        request_new_domain(
+            self.request,
+            self.domain_test,
+            is_new_user=True,
+        )
+        workflow = SelfSignupWorkflow.get_in_progress_for_domain(self.domain_test)
+        self.assertIsInstance(workflow, SelfSignupWorkflow)
+        self.assertEqual(workflow.initiating_user, self.new_user.username)
 
 
 class TestUsingProjectLogoInEmails(TestCase):

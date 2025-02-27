@@ -12,11 +12,15 @@
               </span>
       </label>
     </div>
-    <form method="post" action="{% url "send_to_recipients" domain %}">{% csrf_token %}
+    <form method="post" action="{% url "send_to_recipients" domain %}">
+      {% csrf_token %}
       <div class="form-group">
         <label>{% trans "Send to" %}</label>
-        <input type="text" name="recipients" value="" class="form-control"
-               data-bind="multiTypeahead: $root.recipients" />
+        <select name="recipients" id="sms-recipients" class="form-control" multiple data-bind="staticSelect2: {}">
+          {% for contact in sms_contacts %}
+            <option>{{ contact }}</option>
+          {% endfor %}
+        </select>
       </div>
       <div class="form-group">
                 <textarea class="bitly form-control vertical-resize" name="message"

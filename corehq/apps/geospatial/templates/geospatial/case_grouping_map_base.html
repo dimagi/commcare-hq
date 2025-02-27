@@ -1,4 +1,4 @@
-{% extends "base_template.html" %}
+{% extends "geospatial/base_template.html" %}
 
 {% load hq_shared_tags %}
 {% load compress %}
@@ -7,15 +7,12 @@
 {{ current_page.title }}
 {% endblock %}
 
-{% block js %}{{ block.super }}
-    {% compress js %}
-        <script src="{% static 'geospatial/js/case_grouping_map.js' %}"></script>
-    {% endcompress %}
-{% endblock %}
+{% js_entry_b3 'geospatial/js/case_grouping_map' %}
 
 {% block additional_initial_page_data %}{{ block.super }}
     {% initial_page_data 'case_row_order' case_row_order %}
     {% initial_page_data "saved_polygons" saved_polygons %}
     {% registerurl 'geo_polygons' domain %}
     {% registerurl 'geo_polygon' domain '---' %}
+    {% registerurl 'reassign_cases' domain %}
 {% endblock %}

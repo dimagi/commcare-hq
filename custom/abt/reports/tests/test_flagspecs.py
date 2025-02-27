@@ -12,4 +12,4 @@ def test_yaml_formatting(filename):
         try:
             load(f.read(), Loader=Loader)
         except parser.ParserError:
-            assert False  # nose will tell us which file, and what went wrong.
+            assert False  # the test runner will tell us which file, and what went wrong.

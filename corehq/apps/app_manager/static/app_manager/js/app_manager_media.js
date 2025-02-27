@@ -3,10 +3,14 @@ hqDefine('app_manager/js/app_manager_media', function () {
     var appMenuMediaManager = function (o) {
         /* This interfaces the media reference for a form or module menu
         (as an icon or image) with the upload manager.*/
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
+        var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
             self = {
-                isDefaultLanguage: initialPageData('current_language') === initialPageData('default_language'),
+                isDefaultLanguage: initialPageData.get('current_language') === initialPageData.get('default_language'),
             };
+
+        self.trackGoogleEvent = function() {
+            hqImport('analytix/js/google').track.event(...arguments);
+        };
 
         self.enabled = ko.observable(
             o.ref.use_default_media ? self.isDefaultLanguage : true
@@ -122,7 +126,6 @@ hqDefine('app_manager/js/app_manager_media', function () {
         };
 
         self.passToUploadController = function () {
-            self.uploadController.resetUploader();
             self.uploadController.currentReference = self.getControllerRef();
             self.uploadController.uploadParams = self.getUploadParams();
             self.uploadController.updateUploadFormUI();

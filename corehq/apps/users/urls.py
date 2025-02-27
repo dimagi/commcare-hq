@@ -6,7 +6,6 @@ from corehq.apps.reports.dispatcher import UserManagementReportDispatcher
 from .views import (
     DefaultProjectUserSettingsView,
     EditWebUserView,
-    EnterpriseUsersView,
     InviteWebUserView,
     UploadWebUsers,
     WebUserUploadStatusView,
@@ -49,7 +48,6 @@ from .views.mobile.users import (
     CommCareUsersLookup,
     ConfirmBillingAccountForExtraUsersView,
     ConfirmTurnOffDemoModeView,
-    CreateCommCareUserModal,
     DemoRestoreStatusView,
     DeleteCommCareUsers,
     DownloadUsersStatusView,
@@ -109,6 +107,7 @@ urlpatterns = [
     url(r'^web/remove/(?P<couch_user_id>[ \w-]+)/$', remove_web_user, name='remove_web_user'),
     url(r'^web/undo_remove/(?P<record_id>[ \w-]+)/$', undo_remove_web_user, name='undo_remove_web_user'),
     url(r'^web/invite/$', InviteWebUserView.as_view(), name=InviteWebUserView.urlname),
+    url(r'^web/invite/edit/(?P<invitation_id>[ \w-]+)/$', InviteWebUserView.as_view(), name='edit_invitation'),
     url(r'^web/reinvite/$', reinvite_web_user, name='reinvite_web_user'),
     url(r'^web/request/$', DomainRequestView.as_view(), name=DomainRequestView.urlname),
     url(r'^web/delete_invitation/$', delete_invitation, name='delete_invitation'),
@@ -135,7 +134,6 @@ urlpatterns = [
         WebUserUploadJobPollView.as_view(),
         name=WebUserUploadJobPollView.urlname
     ),
-    url(r'^enterprise/$', EnterpriseUsersView.as_view(), name=EnterpriseUsersView.urlname),
     url(r'^enterprise/json/$', paginate_enterprise_users, name='paginate_enterprise_users'),
     url(r'^join/(?P<uuid>[ \w-]+)/$', accept_invitation, name='domain_accept_invitation'),
     url(r'^roles/$', ListRolesView.as_view(), name=ListRolesView.urlname),
@@ -227,11 +225,6 @@ urlpatterns = [
         r'^commcare/download/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         user_download_job_poll,
         name='user_download_job_poll'
-    ),
-    url(
-        r'^commcare/new_mobile_worker_modal/$',
-        CreateCommCareUserModal.as_view(),
-        name=CreateCommCareUserModal.urlname
     ),
     url(
         r'^commcare/confirm_charges/$',

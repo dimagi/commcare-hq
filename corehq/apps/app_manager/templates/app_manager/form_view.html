@@ -1,4 +1,4 @@
-{% extends "app_manager/managed_app.html" %}
+{% extends "app_manager/apps_base.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% load compress %}
@@ -14,13 +14,8 @@
   </style>
 {% endblock %}
 
-{% block head %}{{ block.super }}
-  {% include 'analytics/fullstory.html' %}
-{% endblock %}
-
 {% block js %}{{ block.super }}
   {% compress js %}
-    <script src="{% static 'hqwebapp/js/knockout_subscribables.ko.js' %}"></script>
     <script src="{% static 'app_manager/js/forms/form_view.js' %}"></script>
   {% endcompress %}
 {% endblock %}
@@ -60,8 +55,8 @@
   {% endcompress %}
 
   {% include "app_manager/partials/xpathValidator.html" %}
-  {% include 'hqmedia/partials/multimedia_js.html' %}
   {% compress js %}
+    <script src="{% static 'hqmedia/js/uploaders.js' %}"></script>
     <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
     <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
     <script src="{% static 'app_manager/js/nav_menu_media.js' %}"></script>
@@ -88,15 +83,15 @@
   </div>
 
   <div class="appmanager-edit-title">
-    {% with postSave="function(data) { var appManager = hqImport('app_manager/js/app_manager'); appManager.updatePageTitle(data.update['.variable-form_name']); return appManager.updateDOM(data.update);}" disallow_edit=request.couch_user.can_edit_apps|yesno:"false,true" %}
+    {% with disallow_edit=request.couch_user.can_edit_apps|yesno:"false,true" %}
       {% if form.get_action_type == 'open' %}
-        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' postSave=postSave disallow_edit=disallow_edit %}
+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' disallow_edit=disallow_edit %}
       {% elif form.requires_case %}
-        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-updateform' postSave=postSave disallow_edit=disallow_edit %}
+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-updateform' disallow_edit=disallow_edit %}
       {% elif form.form_type == 'shadow_form' %}
-        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa-regular fa-moon' postSave=postSave disallow_edit=disallow_edit %}
+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa-regular fa-moon' disallow_edit=disallow_edit %}
       {% else %}
-        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa-regular fa-file' postSave=postSave disallow_edit=disallow_edit %}
+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa-regular fa-file' disallow_edit=disallow_edit %}
       {% endif %}
     {% endwith %}
   </div>
@@ -312,5 +307,6 @@
 
 {% block modals %}{{ block.super }}
   {% include "app_manager/partials/forms/form_view_modals.html" %}
-  {% include "app_manager/partials/nav_menu_media_modals.html" %}
+  {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.icon.slug type="image" %}
+  {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.audio.slug type="audio" %}
 {% endblock modals %}

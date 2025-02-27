@@ -6,7 +6,7 @@
 
 {% block title %}{% trans "Edit Configuration" %}{% endblock %}
 
-{% requirejs_main_b5 'dhis2/js/dhis2_entity_config' %}
+{% js_entry 'dhis2/js/dhis2_entity_config' %}
 
 {% block page_content %}
 {% initial_page_data 'case_configs' case_configs %}

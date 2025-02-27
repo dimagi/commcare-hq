@@ -71,9 +71,11 @@ from corehq.apps.api.util import (
     parse_str_to_date,
     cursor_based_query_for_datasource
 )
+from corehq.apps.api.validation import WebUserResourceSpec, WebUserValidationException
 from corehq.apps.app_manager.models import Application
 from corehq.apps.auditcare.models import NavigationEventAudit
 from corehq.apps.case_importer.views import require_can_edit_data
+from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, PROFILE_SLUG
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
@@ -83,10 +85,12 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
 )
+from corehq.apps.reports.models import TableauUser, TableauConnectedApp
 from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
     query_location_restricted_forms,
 )
+from corehq.apps.reports.util import get_tableau_groups_for_user
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -127,14 +131,16 @@ from corehq.apps.users.util import (
     log_user_change,
     verify_modify_user_conditions,
 )
+from corehq.apps.users.validation import validate_profile_required
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound
 from corehq.util.timer import TimingContext
 
 from ..exceptions import UpdateUserException
-from ..user_updates import update
+from ..user_updates import CommcareUserUpdates, WebUserUpdates
 from . import (
+    ApiVersioningMixin,
     CorsResourceMixin,
     CouchResourceMixin,
     DomainSpecificResourceMixin,
@@ -230,6 +236,8 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
 
 
 class CommCareUserResource(v0_1.CommCareUserResource):
+    primary_location = fields.CharField()
+    locations = fields.ListField()
 
     class Meta(v0_1.CommCareUserResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
@@ -251,7 +259,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
         return reverse('api_dispatch_detail', kwargs=dict(resource_name=self._meta.resource_name,
                                                           domain=obj.domain,
-                                                          api_name=self._meta.api_name,
+                                                          api_name=self.api_name,
                                                           pk=obj._id))
 
     def obj_create(self, bundle, **kwargs):
@@ -265,7 +273,10 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
         if bundle.data.get('connect_username') and not toggles.COMMCARE_CONNECT.enabled(kwargs['domain']):
             raise BadRequest(_("You don't have permission to use connect_username field"))
-
+        try:
+            validate_profile_required(bundle.data.get('user_profile'), kwargs['domain'])
+        except ValidationError as e:
+            raise BadRequest(e.message)
         try:
             bundle.obj = CommCareUser.create(
                 domain=kwargs['domain'],
@@ -320,12 +331,24 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                         deleted_via=USER_CHANGE_VIA_API)
         return ImmediateHttpResponse(response=http.HttpAccepted())
 
+    def dehydrate_primary_location(self, bundle):
+        return bundle.obj.get_location_id(bundle.obj.domain)
+
+    def dehydrate_locations(self, bundle):
+        return bundle.obj.get_location_ids(bundle.obj.domain)
+
     @classmethod
     def _update(cls, bundle, user_change_logger=None):
         errors = []
-        for key, value in bundle.data.items():
+
+        location_object = {'primary_location': bundle.data.pop('primary_location', None),
+                           'locations': bundle.data.pop('locations', None)}
+
+        items_to_update = list(bundle.data.items()) + [('location', location_object)]
+        updater = CommcareUserUpdates(bundle.obj, bundle.obj.domain, user_change_logger)
+        for key, value in items_to_update:
             try:
-                update(bundle.obj, key, value, user_change_logger)
+                updater.update(key, value)
             except UpdateUserException as e:
                 errors.append(e.message)
 
@@ -333,10 +356,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/activate/$" % self._meta.resource_name,
-                self.wrap_view('activate_user'), name="api_activate_user"),
-            url(r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/deactivate/$" % self._meta.resource_name,
-                self.wrap_view('deactivate_user'), name="api_deactivate_user"),
+            url(r"^(?P<pk>\w[\w/-]*)/activate/$", self.wrap_view('activate_user'), name="api_activate_user"),
+            url(r"^(?P<pk>\w[\w/-]*)/deactivate/$", self.wrap_view('deactivate_user'), name="api_deactivate_user"),
         ]
 
     @location_safe
@@ -372,6 +393,50 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
 
 class WebUserResource(v0_1.WebUserResource):
+    primary_location_id = fields.CharField()
+    assigned_location_ids = fields.ListField(null=True)
+    profile = fields.CharField(null=True)
+    user_data = fields.DictField()
+    tableau_role = fields.CharField(null=True)
+    tableau_groups = fields.ListField(null=True)
+
+    class Meta(v0_1.WebUserResource.Meta):
+        detail_allowed_methods = ['get', 'patch']
+        always_return_data = True
+
+    def dehydrate_primary_location_id(self, bundle):
+        return bundle.obj.get_location_id(bundle.request.domain) or ''
+
+    def dehydrate_assigned_location_ids(self, bundle):
+        return bundle.obj.get_location_ids(bundle.request.domain)
+
+    def dehydrate_tableau_groups(self, bundle):
+        try:
+            return [t.name for t in get_tableau_groups_for_user(bundle.request.domain,
+                                                                bundle.obj.username)]
+        except TableauConnectedApp.DoesNotExist:
+            return []
+
+    def dehydrate_tableau_role(self, bundle):
+        try:
+            t_user = TableauUser.objects.get(username=bundle.obj.username,
+                                             server__domain=bundle.request.domain)
+            return t_user.role
+        except TableauUser.DoesNotExist:
+            return None
+
+    def dehydrate_user_data(self, bundle):
+        user_data = bundle.obj.get_user_data(bundle.request.domain).to_dict()
+        if self.determine_format(bundle.request) == 'application/xml':
+            # attribute names can't start with digits in xml
+            user_data = {k: v for k, v in user_data.items() if not k[0].isdigit()}
+        return user_data
+
+    def dehydrate_profile(self, bundle):
+        profile_id = bundle.obj.get_user_data(bundle.request.domain).profile_id
+        if profile_id:
+            return CustomDataFieldsProfile.objects.get(id=profile_id).name
+        return ''
 
     def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_detail'):
         if bundle_or_obj is None:
@@ -379,9 +444,75 @@ class WebUserResource(v0_1.WebUserResource):
         return reverse('api_dispatch_detail', kwargs={
             'resource_name': self._meta.resource_name,
             'domain': bundle_or_obj.request.domain,
-            'api_name': self._meta.api_name,
+            'api_name': self.api_name,
             'pk': bundle_or_obj.obj._id,
         })
+
+    def obj_update(self, bundle, **kwargs):
+        if bundle.obj and bundle.obj._id is None:
+            bundle.obj = WebUser.get(kwargs['pk'])
+        bundle.data = json.loads(bundle.request.body)
+        user_data = bundle.obj.get_user_data(bundle.request.domain)
+        new_or_existing_user_data = {
+            **bundle.data.get('user_data', {}),
+            **{k: v for k, v in user_data.raw.items() if k not in bundle.data.get('user_data', {})}
+        }
+        new_or_existing_profile_name = (
+            bundle.data.get('profile') if bundle.data.get('profile') is not None
+            else CustomDataFieldsProfile.objects.get(id=user_data.profile_id).name if user_data.profile_id
+            else ''
+        )
+        try:
+            self.spec = WebUserResourceSpec(
+                domain=bundle.request.domain,
+                requesting_user=bundle.request.couch_user,
+                email=bundle.obj.email,
+                is_post=False,
+                role=bundle.data.get('role'),
+                primary_location_id=bundle.data.get('primary_location_id'),
+                assigned_location_ids=bundle.data.get('assigned_location_ids'),
+                new_or_existing_profile_name=new_or_existing_profile_name,
+                new_or_existing_user_data=new_or_existing_user_data,
+                tableau_role=bundle.data.get('tableau_role'),
+                tableau_groups=bundle.data.get('tableau_groups'),
+                parameters=bundle.data.keys(),
+            )
+        except WebUserValidationException as e:
+            raise ImmediateHttpResponse(JsonResponse({"errors": e.message}, status=400))
+
+        user_change_logger = self._get_user_change_logger(bundle)
+        errors = self._update(bundle, user_change_logger)
+        if errors:
+            formatted_errors = ', '.join(errors)
+            raise BadRequest(_('The request resulted in the following errors: {}').format(formatted_errors))
+        bundle.obj.save()
+        user_change_logger.save()
+        return bundle
+
+    def _update(self, bundle, user_change_logger=None):
+        errors = []
+
+        location_object = {'primary_location': bundle.data.pop('primary_location_id', None),
+                           'locations': bundle.data.pop('assigned_location_ids', None)}
+
+        bundle.data.pop('profile', None)
+        user_data = self.spec.new_or_existing_user_data
+        profile = self.spec.profiles_by_name.get(self.spec.new_or_existing_profile_name)
+        user_data[PROFILE_SLUG] = profile.id if profile else None
+        bundle.data['user_data'] = user_data
+
+        items_to_update = {**bundle.data, 'location': location_object}
+        updater = WebUserUpdates(bundle.obj, bundle.request.domain,
+                                 keys_to_update=items_to_update.keys(),
+                                 user_change_logger=user_change_logger)
+
+        for key, value in items_to_update.items():
+            try:
+                updater.update(key, value)
+            except UpdateUserException as e:
+                errors.append(e.message)
+
+        return errors
 
 
 class AdminWebUserResource(v0_1.UserResource):
@@ -488,7 +619,7 @@ class GroupResource(v0_4.GroupResource):
         """Returns the literal string "/a/{domain}/api/v0.5/group/{pk}/" in a DRY way"""
         return reverse('api_dispatch_detail', kwargs=dict(
             resource_name=self._meta.resource_name,
-            api_name=self._meta.api_name,
+            api_name=self.api_name,
             domain='__domain__',
             pk='__pk__')).replace('__pk__', '{pk}').replace('__domain__', '{domain}')
 
@@ -596,7 +727,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
             # limit has not changed, but it may not have been present in get params before.
             new_get_params["limit"] = limit
             return reverse('api_dispatch_detail', kwargs=dict(
-                api_name=self._meta.api_name,
+                api_name=self.api_name,
                 resource_name=self._meta.resource_name,
                 domain=domain,
                 pk=id_,
@@ -833,7 +964,7 @@ UserDomain = namedtuple('UserDomain', 'domain_name project_name')
 UserDomain.__new__.__defaults__ = ('', '')
 
 
-class UserDomainsResource(CorsResourceMixin, Resource):
+class UserDomainsResource(ApiVersioningMixin, CorsResourceMixin, Resource):
     domain_name = fields.CharField(attribute='domain_name')
     project_name = fields.CharField(attribute='project_name')
 
@@ -883,7 +1014,7 @@ class UserDomainsResource(CorsResourceMixin, Resource):
         return results
 
 
-class IdentityResource(CorsResourceMixin, Resource):
+class IdentityResource(ApiVersioningMixin, CorsResourceMixin, Resource):
     id = fields.CharField(attribute='get_id', readonly=True)
     username = fields.CharField(attribute='username', readonly=True)
     first_name = fields.CharField(attribute='first_name', readonly=True)
@@ -907,7 +1038,7 @@ Form = namedtuple('Form', 'form_xmlns form_name')
 Form.__new__.__defaults__ = ('', '')
 
 
-class DomainForms(Resource):
+class DomainForms(ApiVersioningMixin, Resource):
     """
     Returns: list of forms for a given domain with form name formatted for display in Zapier
     """
@@ -947,7 +1078,7 @@ CaseType = namedtuple('CaseType', 'case_type placeholder')
 CaseType.__new__.__defaults__ = ('', '')
 
 
-class DomainCases(Resource):
+class DomainCases(ApiVersioningMixin, Resource):
     """
     Returns: list of case types for a domain
 
@@ -976,7 +1107,7 @@ UserInfo = namedtuple('UserInfo', 'user_id user_name')
 UserInfo.__new__.__defaults__ = ('', '')
 
 
-class DomainUsernames(Resource):
+class DomainUsernames(ApiVersioningMixin, Resource):
     """
     Returns: list of usernames for a domain.
     """
@@ -1016,6 +1147,7 @@ class BaseODataResource(HqBaseResource, DomainSpecificResourceMixin):
                         **response_kwargs):
         data['domain'] = request.domain
         data['api_path'] = request.path
+        data['api_version'] = self.api_name
         # Avoids storing these properties on the class instance which protects against the possibility of
         # concurrent requests making conflicting updates to properties
         data['config_id'] = request.resolver_match.kwargs['config_id']
@@ -1069,10 +1201,8 @@ class ODataCaseResource(BaseODataResource):
 
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/(?P<table_id>[\d]+)/feed".format(
-                self._meta.resource_name), self.wrap_view('dispatch_list')),
-            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/feed".format(
-                self._meta.resource_name), self.wrap_view('dispatch_list')),
+            url(r"^(?P<config_id>[\w\d_.-]+)/(?P<table_id>[\d]+)/feed", self.wrap_view('dispatch_list')),
+            url(r"^(?P<config_id>[\w\d_.-]+)/feed", self.wrap_view('dispatch_list')),
         ]
 
 
@@ -1110,10 +1240,8 @@ class ODataFormResource(BaseODataResource):
 
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/(?P<table_id>[\d]+)/feed".format(
-                self._meta.resource_name), self.wrap_view('dispatch_list')),
-            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/feed".format(
-                self._meta.resource_name), self.wrap_view('dispatch_list')),
+            url(r"^(?P<config_id>[\w\d_.-]+)/(?P<table_id>[\d]+)/feed", self.wrap_view('dispatch_list')),
+            url(r"^(?P<config_id>[\w\d_.-]+)/feed", self.wrap_view('dispatch_list')),
         ]
 
 
@@ -1351,7 +1479,7 @@ class NavigationEventAuditResource(HqBaseResource, Resource):
 @require_can_edit_data
 @requires_privilege_with_fallback(privileges.API_ACCESS)
 @api_throttle
-def get_ucr_data(request, domain):
+def get_ucr_data(request, domain, api_version):
     if not toggles.EXPORT_DATA_SOURCE_DATA.enabled(domain):
         return HttpResponseForbidden()
     try:

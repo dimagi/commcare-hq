@@ -10,7 +10,6 @@ from django.db.models.expressions import RawSQL
 from corehq.apps.groups.models import Group
 from corehq.sql_db.fields import CharIdField
 from corehq.util.jsonattrs import AttrsDict, AttrsList, list_of
-
 from .exceptions import FixtureVersionError
 
 FIXTURE_BUCKET = 'domain-fixtures'

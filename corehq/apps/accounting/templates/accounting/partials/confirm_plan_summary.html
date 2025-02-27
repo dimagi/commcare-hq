@@ -26,8 +26,10 @@
     <div class="plan-included well well-sm">
       <dl class="dl-horizontal">
         {% for rate in plan.rates %}
-          <dt>{{ rate.name }}</dt>
-          <dd>{{ rate.included }}</dd>
+          {% if rate.included != 0 %}
+            <dt>{{ rate.name }}</dt>
+            <dd>{{ rate.included }}</dd>
+          {% endif %}
         {% endfor %}
       </dl>
     </div>
