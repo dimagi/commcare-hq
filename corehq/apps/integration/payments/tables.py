@@ -2,17 +2,21 @@ from django.utils.translation import gettext as _
 
 from django_tables2 import columns
 
+from corehq.apps.hqwebapp.tables.elasticsearch.records import CaseSearchElasticRecord
+from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
 from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable, DisableableCheckBoxColumn
 
 
-class PaymentsVerifyTable(BaseHtmxTable):
+class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
+    record_class = CaseSearchElasticRecord
+
     class Meta(BaseHtmxTable.Meta):
         pass
 
     batch_number = columns.Column(
         verbose_name=_("Batch Number"),
     )
-    user_or_case_id = columns.Column(
+    case_id = columns.Column(
         verbose_name=_("User or Case Id"),
     )
     phone_number = columns.Column(
