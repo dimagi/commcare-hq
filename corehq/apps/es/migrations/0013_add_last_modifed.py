@@ -1,5 +1,6 @@
 
 import corehq.apps.es.migration_operations
+from corehq.apps.es.utils import index_runtime_name
 from django.db import migrations
 
 
@@ -11,7 +12,7 @@ class Migration(migrations.Migration):
 
     operations = [
         corehq.apps.es.migration_operations.UpdateIndexMapping(
-            name='users-20230524',
+            name=index_runtime_name('users-20230524'),
             type_='user',
             properties={
                 'last_modified': {
