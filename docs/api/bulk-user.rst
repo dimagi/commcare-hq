@@ -17,6 +17,8 @@ Overview
 
 **First version available:** ``v0.5``
 
+**Permission Required:** Edit Mobile Worker
+
 Request & Response Details
 ---------------------------
 
