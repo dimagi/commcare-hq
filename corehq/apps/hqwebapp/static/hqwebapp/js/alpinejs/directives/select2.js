@@ -33,7 +33,7 @@ Alpine.directive('select2', (el, { expression }, { cleanup }) => {
      *
      *      <select x-select2></select>
      *          or
-     *      <select x=select2="{{ options|JSON }}"></select>
+     *      <select x-select2="{% html_attr config %}"></select>
      *
      * This is especially useful in crispy forms for a choice field:
      *
@@ -49,8 +49,8 @@ Alpine.directive('select2', (el, { expression }, { cleanup }) => {
      *     ...
      * )
      */
-    const options = (expression) ? JSON.parse(expression) : {};
-    $(el).select2(options);
+    const config = (expression) ? JSON.parse(expression) : {};
+    $(el).select2(config);
 
     cleanup(() => {
         select2Cleanup(el);
