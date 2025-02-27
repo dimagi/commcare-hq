@@ -13,7 +13,6 @@ from casexml.apps.case.exceptions import InvalidCaseIndex, IllegalCaseId
 
 from casexml.apps.case import const
 from casexml.apps.case.xml.parser import case_id_from_block, case_update_from_block
-from custom.covid.casesync import get_ush_extension_cases_to_close
 
 _soft_assert = soft_assert(to="{}@{}.com".format('skelly', 'dimagi'), notify_admins=True)
 
@@ -135,8 +134,6 @@ def close_extension_cases(case_db, cases, device_id, synctoken_id):
 
 def get_all_extensions_to_close(domain, cases):
     if toggles.EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
-        if toggles.USH_DONT_CLOSE_PATIENT_EXTENSIONS.enabled(domain):
-            return get_ush_extension_cases_to_close(domain, cases)
         return get_extensions_to_close(domain, cases)
     return set()
 
