@@ -2,6 +2,12 @@ import $ from 'jquery';
 import 'select2/dist/js/select2.full.min';
 import Alpine from 'alpinejs';
 
+const select2Cleanup = (el) => {
+    if ($(el).data('select2')) {
+        $(el).select2('destroy');
+        $(el).off('select2:select');
+    }
+};
 
 Alpine.directive('select2', (el, { expression }, { cleanup }) => {
     /**
@@ -29,10 +35,7 @@ Alpine.directive('select2', (el, { expression }, { cleanup }) => {
     $(el).select2(options);
 
     cleanup(() => {
-        if ($(el).data('select2')) {
-            $(el).select2('destroy');
-            $(el).off('select2:select');
-        }
+        select2Cleanup(el);
     });
 });
 
@@ -57,3 +60,7 @@ document.body.addEventListener('htmx:afterSettle', (event) => {
         }
     });
 });
+
+export default {
+    select2Cleanup,
+};
