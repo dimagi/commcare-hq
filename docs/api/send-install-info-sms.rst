@@ -17,6 +17,9 @@ Overview
     - Your project must have a PRO plan or higher to use this feature.
     - "SMS Mobile Worker Registration" must be enabled on the *Messaging -> General Settings* page.
 
+**Permissions Required**
+    - Edit Data
+
 Endpoint Specifications
 -----------------------
 **Base URL**

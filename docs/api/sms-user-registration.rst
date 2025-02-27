@@ -9,6 +9,9 @@ Initiate the SMS self-registration workflow for mobile workers. This performs th
 **Project Prerequisites**
 Your project must have a **PRO plan or higher** to use this feature, and you must enable **"SMS Mobile Worker Registration"** on the Messaging -> General Settings page.
 
+**Permissions Required**
+    - Edit Data
+
 Endpoint Specifications
 -----------------------
 

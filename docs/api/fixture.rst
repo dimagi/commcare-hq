@@ -33,6 +33,9 @@ Endpoint Specifications
 **Authentication**
     For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
 
+**Permission Required**
+    Edit Apps
+
 Request & Response Details
 ---------------------------
 
@@ -115,6 +118,9 @@ Endpoint Specifications
 
 **Authorization**
     Basic Authorization
+
+**Permission Required**
+    Edit Apps
 
 Request & Response Details
 ---------------------------

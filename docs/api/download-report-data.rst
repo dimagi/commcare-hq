@@ -18,6 +18,9 @@ Overview
 **Method**
     GET
 
+**Permission Required**
+    View Data
+
 Request & Response Details
 ---------------------------
 
