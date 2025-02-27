@@ -64,6 +64,7 @@ ALLOWED_HTML_ATTRIBUTES = {
     'h2': ['style', 'class'],
     'h3': ['style', 'class'],
     'em': ['style', 'class'],
+    'strong': ['style', 'class'],
     's': ['style', 'class'],
     'u': ['style', 'class'],
     'b': ['style', 'class'],
