@@ -1,0 +1,15 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load hq_shared_tags %}
+{% load django_tables2 %}
+{% load i18n %}
+
+{% block page_content %}
+  <div>
+    <h1 class="py-3 m-0">{% trans "Payments Verification Report" %}</h1>
+  </div>
+{% endblock %}
+
+{% block modals %}
+  {% include "hqwebapp/htmx/error_modal.html" %}
+  {{ block.super }}
+{% endblock modals %}
