@@ -8,10 +8,11 @@ from corehq.apps.users.user_data import prime_user_data_caches
 
 class UserQuerySetAdapter(object):
 
-    def __init__(self, domain, show_archived, is_web_user=False):
+    def __init__(self, domain, show_archived, is_web_user=False, filters=None):
         self.domain = domain
         self.show_archived = show_archived
         self.is_web_user = is_web_user
+        self.filters = filters if filters is not None else []
 
     def count(self):
         return self._query.count()
@@ -24,7 +25,8 @@ class UserQuerySetAdapter(object):
             query = UserES().web_users()
         else:
             query = UserES().mobile_users()
-
+        if self.filters:
+            query = query.AND(*self.filters)
         if self.show_archived:
             return query.domain(self.domain).show_only_inactive().sort('username.exact')
         else:
