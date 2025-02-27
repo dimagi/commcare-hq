@@ -258,7 +258,7 @@ class DisableTwoFactorForm(forms.Form):
         verification_mode = self.cleaned_data['verification_mode']
         if verification_mode == 'via_someone_else' and not self.cleaned_data['via_who']:
             raise forms.ValidationError({
-               "via_who": "Please enter the email address of the person who verified the request."
+                "via_who": "Please enter the email address of the person who verified the request."
             })
 
         return self.cleaned_data
