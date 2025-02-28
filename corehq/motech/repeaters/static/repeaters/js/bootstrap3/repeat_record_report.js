@@ -18,8 +18,8 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
         selectPending = document.getElementById('select-pending'),
         selectCancelled = document.getElementById('select-cancelled'),
         items = document.getElementsByName('record_ids'),
-        buttonCancel = document.getElementById('cancel-all-button'),
-        buttonRequeue = document.getElementById('requeue-all-button'),
+        cancelButton = document.getElementById('cancel-all-button'),
+        requeueButton = document.getElementById('requeue-all-button'),
         $popUp = $('#are-you-sure'),
         $confirmButton = $('#confirm-button');
 
@@ -338,10 +338,10 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
             uncheck(selectAll, selectCancelled);
             turnOnCancelRequeue();
             if (selectPending.checked) {
-                buttonRequeue.disabled = true;
+                requeueButton.disabled = true;
                 checkMultipleItems('cancel');
             } else {
-                buttonRequeue.disabled = false;
+                requeueButton.disabled = false;
             }
         });
 
@@ -350,10 +350,10 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
             uncheck(selectAll, selectPending);
             turnOnCancelRequeue();
             if (selectCancelled.checked) {
-                buttonCancel.disabled = true;
+                cancelButton.disabled = true;
                 checkMultipleItems('requeue');
             } else {
-                buttonCancel.disabled = false;
+                cancelButton.disabled = false;
             }
         });
 
@@ -384,13 +384,13 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
         }
 
         function turnOffCancelRequeue() {
-            buttonCancel.disabled = true;
-            buttonRequeue.disabled = true;
+            cancelButton.disabled = true;
+            requeueButton.disabled = true;
         }
 
         function turnOnCancelRequeue() {
-            buttonCancel.disabled = false;
-            buttonRequeue.disabled = false;
+            cancelButton.disabled = false;
+            requeueButton.disabled = false;
         }
 
         function checkMultipleItems(action) {
