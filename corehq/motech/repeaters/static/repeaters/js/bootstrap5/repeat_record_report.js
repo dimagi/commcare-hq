@@ -5,7 +5,6 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
     'ace-builds/src-min-noconflict/ace',
     'ace-builds/src-min-noconflict/mode-json',
     'ace-builds/src-min-noconflict/mode-xml',
-    'repeaters/js/repeat_record_report_selects',
     'reports/js/bootstrap5/base',
     'reports/js/bootstrap5/tabular',
     'commcarehq',
@@ -17,6 +16,9 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
     const selectAll = document.getElementById('select-all'),
         selectPending = document.getElementById('select-pending'),
         selectCancelled = document.getElementById('select-cancelled'),
+        items = document.getElementsByName('xform_ids'),
+        buttonCancel = document.getElementById('cancel-all-button'),
+        buttonRequeue = document.getElementById('requeue-all-button'),
         $popUp = $('#are-you-sure'),
         $confirmButton = $('#confirm-button');
 
@@ -310,6 +312,112 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
         function hideAllWarnings() {
             $('#no-selection').addClass('hide');
             $('#not-allowed').addClass('hide');
+        }
+
+        // ----- what was once repeat_record_report_selects.js ------
+
+        $('#all').on('click', function () {
+            selectItems();
+            uncheckSelects();
+        });
+
+        $('#none').on('click', function () {
+            unSelectItems();
+            uncheckSelects();
+        });
+
+        $('#select-all').on('click', function () {
+            if (selectAll.checked) {
+                selectItems();
+                uncheck(selectPending, selectCancelled);
+                turnOffCancelRequeue();
+            } else {
+                unSelectItems();
+                turnOnCancelRequeue();
+            }
+        });
+
+        $('#select-pending').on('click', function () {
+            unSelectItems();
+            uncheck(selectAll, selectCancelled);
+            turnOnCancelRequeue();
+            if (selectPending.checked) {
+                buttonRequeue.disabled = true;
+                checkMultipleItems('cancel');
+            } else {
+                buttonRequeue.disabled = false;
+            }
+        });
+
+        $('#select-cancelled').on('click', function () {
+            unSelectItems();
+            uncheck(selectAll, selectPending);
+            turnOnCancelRequeue();
+            if (selectCancelled.checked) {
+                buttonCancel.disabled = true;
+                checkMultipleItems('requeue');
+            } else {
+                buttonCancel.disabled = false;
+            }
+        });
+
+        $('body').on('DOMNodeInserted', 'tbody', function () {
+            for (const item of items) {
+                $(item).on('click', uncheckSelects);
+            }
+        });
+
+        function selectItems() {
+            for (const item of items) {
+                if (item.type === 'checkbox') {
+                    item.checked = true;
+                }
+            }
+        }
+
+        function unSelectItems() {
+            for (const item of items) {
+                if (item.type === 'checkbox') {
+                    item.checked = false;
+                }
+            }
+        }
+
+        function uncheck(checkbox1, checkbox2) {
+            checkbox1.checked = false;
+            checkbox2.checked = false;
+        }
+
+        function uncheckSelects() {
+            selectAll.checked = false;
+            selectPending.checked = false;
+            selectCancelled.checked = false;
+            turnOnCancelRequeue();
+        }
+
+        function turnOffCancelRequeue() {
+            buttonCancel.disabled = true;
+            buttonRequeue.disabled = true;
+        }
+
+        function turnOnCancelRequeue() {
+            buttonCancel.disabled = false;
+            buttonRequeue.disabled = false;
+        }
+
+        function checkMultipleItems(action) {
+            for (const item of items) {
+                const id = item.getAttribute('data-id');
+                const query = `[data-record-id="${id}"][class="btn btn-default ${action}-record-payload"]`;
+                const button = document.querySelector(query);
+                if (!!button && item.type === 'checkbox') {
+                    if (item.checked) {
+                        item.checked = false;
+                    } else {
+                        item.checked = true;
+                    }
+                }
+            }
         }
     });
 });
