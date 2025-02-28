@@ -6,8 +6,6 @@ from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from casexml.apps.case.xform import (
     get_all_extensions_to_close,
-    get_extensions_to_close,
-    get_ush_extension_cases_to_close,
 )
 from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.domain.models import Domain
@@ -145,53 +143,6 @@ class AutoCloseExtensionsTest(TestCase):
         self.assertEqual(
             set(self.extension_ids[0]),
             CommCareCaseIndex.objects.get_extension_chain(self.domain, [self.host_id])
-        )
-
-    @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
-    @flag_enabled('USH_DONT_CLOSE_PATIENT_EXTENSIONS')
-    def test_get_ush_custom_extension_chain(self):
-        # test USH specific tree of where only extension(2) should be included
-        #       patient (host)
-        #     /        \
-        #  contact(id=1)   extension(id=2)
-        #   /
-        # extension(id=3)
-        host = CaseStructure(case_id=self.host_id, attrs={'create': True, 'case_type': 'patient'})
-        contact_extension = CaseStructure(
-            case_id=self.extension_ids[0],
-            indices=[CaseIndex(
-                related_structure=host,
-                relationship="extension",
-            )],
-            attrs={'create': True, 'case_type': 'contact'}
-        )
-        extensions_1 = CaseStructure(
-            case_id=self.extension_ids[1],
-            indices=[CaseIndex(
-                related_structure=host,
-                relationship="extension",
-            )],
-            attrs={'create': True}
-        )
-        ext_of_contact = CaseStructure(
-            case_id=self.extension_ids[2],
-            indices=[CaseIndex(
-                related_structure=contact_extension,
-                relationship="extension",
-            )],
-            attrs={'create': True}
-        )
-        created_cases = self.factory.create_or_update_cases([ext_of_contact])
-        self.factory.create_or_update_cases([extensions_1])
-        created_cases[-1].closed = True
-        self.assertEqual(
-            set(self.extension_ids),
-            get_extensions_to_close(self.domain, [created_cases[-1]])
-        )
-        # contact and its extensions shouldn't be included in USH case
-        self.assertEqual(
-            {self.extension_ids[1]},
-            get_ush_extension_cases_to_close(self.domain, [created_cases[-1]])
         )
 
     def test_get_extension_chain_multiple(self):
