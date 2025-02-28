@@ -32,6 +32,7 @@ hqDefine("reports/js/bootstrap5/data_corrections", [
     "jquery",
     "knockout",
     "underscore",
+    "bootstrap5",
     "hqwebapp/js/assert_properties",
     "analytix/js/kissmetrix",
     'hqwebapp/js/components/pagination',
@@ -41,6 +42,7 @@ hqDefine("reports/js/bootstrap5/data_corrections", [
     $,
     ko,
     _,
+    bootstrap,
     assertProperties,
     kissAnalytics,
 ) {
@@ -111,6 +113,7 @@ hqDefine("reports/js/bootstrap5/data_corrections", [
         ]);
         var self = {};
         self.$modal = options.$modal;
+        self.modal = new bootstrap.Modal(self.$modal);
 
         // Core data, and the order in which it should be displayed
         self.properties = {};                       // map of name => PropertyModel, populated in init
@@ -345,7 +348,7 @@ hqDefine("reports/js/bootstrap5/data_corrections", [
             model = DataCorrectionsModel(options);
             $modal.koApplyBindings(model);
             $trigger.click(function () {
-                $modal.modal();  /* todo B5: plugin:modal */
+                model.modal.show();
                 setupSelect2($modal);
 
             });
