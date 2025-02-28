@@ -317,28 +317,28 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
         // ----- what was once repeat_record_report_selects.js ------
 
         $('#all').on('click', function () {
-            selectItems();
+            toggleItems(true);
             uncheckSelects();
         });
 
         $('#none').on('click', function () {
-            unSelectItems();
+            toggleItems(false);
             uncheckSelects();
         });
 
         $('#select-all').on('click', function () {
             if (selectAll.checked) {
-                selectItems();
+                toggleItems(true);
                 uncheck(selectPending, selectCancelled);
                 turnOffCancelRequeue();
             } else {
-                unSelectItems();
+                toggleItems(false);
                 turnOnCancelRequeue();
             }
         });
 
         $('#select-pending').on('click', function () {
-            unSelectItems();
+            toggleItems(false);
             uncheck(selectAll, selectCancelled);
             turnOnCancelRequeue();
             if (selectPending.checked) {
@@ -350,7 +350,7 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
         });
 
         $('#select-cancelled').on('click', function () {
-            unSelectItems();
+            toggleItems(false);
             uncheck(selectAll, selectPending);
             turnOnCancelRequeue();
             if (selectCancelled.checked) {
@@ -367,18 +367,10 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
             }
         });
 
-        function selectItems() {
+        function toggleItems(checked) {
             for (const item of items) {
                 if (item.type === 'checkbox') {
-                    item.checked = true;
-                }
-            }
-        }
-
-        function unSelectItems() {
-            for (const item of items) {
-                if (item.type === 'checkbox') {
-                    item.checked = false;
+                    item.checked = checked;
                 }
             }
         }
