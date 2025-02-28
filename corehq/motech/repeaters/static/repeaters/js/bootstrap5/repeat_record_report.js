@@ -316,12 +316,12 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
 
         // ----- what was once repeat_record_report_selects.js ------
 
-        $('#all').on('click', function () {
+        $('#report-content').on('click', '#all', function() {
             selectItems();
             uncheckSelects();
         });
 
-        $('#none').on('click', function () {
+        $('#report-content').on('click', '#none', function() {
             unSelectItems();
             uncheckSelects();
         });
