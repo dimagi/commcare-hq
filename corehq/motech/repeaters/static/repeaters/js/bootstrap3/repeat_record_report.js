@@ -17,7 +17,7 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
         selectAllCheckbox = document.getElementById('select-all-checkbox'),
         selectPending = document.getElementById('select-pending'),
         selectCancelled = document.getElementById('select-cancelled'),
-        items = document.getElementsByName('xform_ids'),
+        items = document.getElementsByName('record_ids'),
         buttonCancel = document.getElementById('cancel-all-button'),
         buttonRequeue = document.getElementById('requeue-all-button'),
         $popUp = $('#are-you-sure'),
@@ -202,7 +202,7 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
         }
 
         function getCheckedRecords() {
-            return $.find('input[type=checkbox][name=xform_ids]:checked');
+            return $.find('input[type=checkbox][name=record_ids]:checked');
         }
 
         function isActionPossibleForCheckedItems(action, items) {
