@@ -377,7 +377,7 @@ markdown-it-py==3.0.0
     # via
     #   mdit-py-plugins
     #   myst-parser
-markupsafe==2.1.2
+markupsafe==3.0.2
     # via
     #   jinja2
     #   mako
