@@ -199,7 +199,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             process_repeaters_enabled=self.process_repeaters_enabled,
         )
         checkbox = format_html(
-            '<input type="checkbox" class="xform-checkbox" data-id="{}" name="xform_ids"/>',
+            '<input type="checkbox" class="record-checkbox" data-id="{}" name="record_ids"/>',
             record.id)
         row = [
             checkbox,
