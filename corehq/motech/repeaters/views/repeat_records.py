@@ -226,13 +226,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     def headers(self):
         columns = [
             DataTablesColumn(
-                format_html(
-                    '{}<button id="all" class="select-visible btn btn-xs btn-default">{}</button>'
-                    '<button id="none" class="select-none btn btn-xs btn-default">{}</button>',
-                    _('Select'),
-                    _('all'),
-                    _('none')
-                ),
+                format_html('<input type="checkbox" id="select-all-checkbox"></input>'),
                 sortable=False, span=3
             ),
             DataTablesColumn(_('Status')),
