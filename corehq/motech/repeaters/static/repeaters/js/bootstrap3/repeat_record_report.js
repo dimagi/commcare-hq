@@ -14,6 +14,7 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
     ace,
 ) {
     const selectAll = document.getElementById('select-all'),
+        selectAllCheckbox = document.getElementById('select-all-checkbox'),
         selectPending = document.getElementById('select-pending'),
         selectCancelled = document.getElementById('select-cancelled'),
         items = document.getElementsByName('xform_ids'),
@@ -316,13 +317,8 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
 
         // ----- what was once repeat_record_report_selects.js ------
 
-        $('#report-content').on('click', '#all', function() {
-            toggleItems(true)
-            uncheckSelects();
-        });
-
-        $('#report-content').on('click', '#none', function() {
-            toggleItems(false)
+        $('#report-content').on('click', '#select-all-checkbox', function() {
+            toggleItems(selectAllCheckbox.checked)
             uncheckSelects();
         });
 
