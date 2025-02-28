@@ -21,6 +21,45 @@ Quill.register({
     "formats/header": Header,
 });
 
+const parser = new DOMParser();
+
+const editorImages = new WeakMap();
+
+function extractImages(html) {
+    const images = new Set();
+    if (!html) {
+        return images;
+    }
+
+    const doc = parser.parseFromString(html, 'text/html');
+    const imgElements = doc.querySelectorAll('img');
+
+    imgElements.forEach(img => {
+        const src = img.getAttribute('src');
+        if (src) {
+            images.add(src);
+        }
+    });
+
+    return images;
+}
+
+function deleteUnusedImages(editor, newImages) {
+    const oldImages = editorImages.get(editor) || new Set();
+    for (const oldImage of oldImages) {
+        if (!newImages.has(oldImage)) {
+            console.log(`removing unused image ${oldImage}`);
+            const deleteUrl = oldImage.replace("download", "delete");
+            fetch(deleteUrl, {
+                method: "DELETE",
+                headers: {
+                    "X-CSRFTOKEN": $("#csrfTokenContainer").val(),
+                },
+            });
+        }
+    }
+}
+
 function imageHandler() {
     const self = this;
     const $modal = $('#rich-text-image-dialog');
@@ -71,6 +110,7 @@ function imageHandler() {
                             alt: file.name,
                         }),
                 );
+                editorImages.get(self.quill).add(data.url);
             })
             .catch(function (error) {
                 alert(error.message || gettext('Failed to upload image. Please try again.'));
@@ -163,8 +203,6 @@ function updateListType(element, level) {
     });
 }
 
-const parser = new DOMParser();
-
 /**
  * Convert quill delta to html
  *
@@ -219,7 +257,7 @@ ko.bindingHandlers.richEditor = {
 
         const value = ko.utils.unwrapObservable(valueAccessor());
         editor.clipboard.dangerouslyPasteHTML(value);
-
+        editorImages.set(editor, extractImages(value));
         let isSubscriberChange = false;
         let isEditorChange = false;
 
@@ -227,6 +265,9 @@ ko.bindingHandlers.richEditor = {
             if (!isSubscriberChange) {
                 isEditorChange = true;
                 const html = deltaToHtml(editor.getContents());
+                const newImages = extractImages(html);
+                deleteUnusedImages(editor, newImages);
+                editorImages.set(editor, newImages);
                 valueAccessor()(html);
                 isEditorChange = false;
             }
@@ -235,7 +276,13 @@ ko.bindingHandlers.richEditor = {
         valueAccessor().subscribe(function (value) {
             if (!isEditorChange) {
                 isSubscriberChange = true;
+
                 editor.clipboard.dangerouslyPasteHTML(value);
+
+                const newImages = extractImages(value);
+                deleteUnusedImages(editor, newImages);
+                editorImages.set(editor, newImages);
+
                 isSubscriberChange = false;
             }
         });
