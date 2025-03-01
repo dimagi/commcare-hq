@@ -25,5 +25,6 @@
     "user_id": null,
     "deprecated_form_id": null,
     "doc_type": "XFormInstance",
-    "backend_id": "sql"
+    "backend_id": "sql",
+    "form_load_time": null
 }
