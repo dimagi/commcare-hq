@@ -1,5 +1,6 @@
 from argparse import ArgumentTypeError
 from datetime import datetime
+from copy import deepcopy
 
 from django.core.management.base import CommandError
 from django.db.migrations import Migration
@@ -208,6 +209,31 @@ class Command(makemigrations.Command):
             )
         return adapter, new_name
 
+    @staticmethod
+    def get_nested_value(keys_list, data_dict):
+        """
+        :param keys_list: A list of keys specifying the nested path of the value
+        :param data_dict: The dictionary containing the nested value
+
+        :returns: a nested dictionary corresponding to the keys_list
+
+        Example usage:
+            >>> get_nested_value(['person', 'name'], {'person': {'name': 'Sonny', 'surname': 'Corleone'}})
+            {'person': {'name': 'Sonny'}}
+        """
+        # Get the nested value
+        value = data_dict
+        for key in keys_list:
+            value = value[key]
+
+        # Set the nested value
+        keys_list.reverse()
+        for key in keys_list:
+            temp = dict()
+            temp[key] = value
+            value = temp
+        return value
+
     def adapter_and_properties_type(self, value):
         """Returns a tuple of ``(document_adapter, properties_dict)`` for the
         provided ``--update`` argument value whose format is
@@ -219,6 +245,7 @@ class Command(makemigrations.Command):
         properties for the index are returned.
 
         :param value: the value of an ``--update`` argument
+            It is assumed that a '.' delimiter will be used for nested values, e.g. 'properties.name'
         :raises: ``argparse.ArgumentTypeError`` if ``value`` uses invalid syntax
             or refers to an invalid index canonical name or property name.
         """
@@ -227,11 +254,18 @@ class Command(makemigrations.Command):
         properties = all_properties = adapter.mapping["properties"]
         if delim:
             properties = {}
+            nested_delim = '.'
             for name in property_names.split(","):
                 if not name:
                     continue
+
                 try:
-                    properties[name] = all_properties[name]
+                    if nested_delim in name:
+                        keys = name.split(nested_delim)
+                        value_dict = self.get_nested_value(deepcopy(keys), all_properties)
+                        properties[keys[0]] = value_dict[keys[0]]
+                    else:
+                        properties[name] = all_properties[name]
                 except KeyError:
                     raise ArgumentTypeError(
                         f"Invalid property name for index: {cname} (got "
