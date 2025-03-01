@@ -961,6 +961,7 @@ class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
                 'resource_uri': '/a/user-repeater/api/user/v1/{}/'.format(user._id),
                 'locations': [],
                 'primary_location': None,
+                'last_modified': user.last_modified.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3],
             }
         )
 

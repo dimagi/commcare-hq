@@ -1,4 +1,5 @@
 import datetime
+import functools
 
 from tastypie import fields
 from tastypie.exceptions import BadRequest
@@ -13,6 +14,7 @@ from corehq.apps.api.resources import (
 )
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
+from corehq.apps.api.util import make_date_filter
 from corehq.apps.es import FormES
 from corehq.apps.groups.models import Group
 from corehq.apps.user_importer.helpers import UserChangeLogger
@@ -156,15 +158,43 @@ class WebUserResource(UserResource):
         object_class = WebUser
         resource_name = 'web-user'
 
+    def _property_filter(self, field_name, gt=None, gte=None, lt=None, lte=None):
+        def filter(docs):
+            return [
+                doc for doc in docs
+                if field_name in doc and doc[field_name] is not None
+                and all([
+                    (gt is None or doc[field_name] > gt),
+                    (gte is None or doc[field_name] >= gte),
+                    (lt is None or doc[field_name] < lt),
+                    (lte is None or doc[field_name] <= lte)
+                ])
+            ]
+        return filter
+
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
         username = bundle.request.GET.get('web_username')
+
+        COMPOUND_FILTERS = {
+            'last_modified': make_date_filter(functools.partial(self._property_filter, 'last_modified'))
+        }
+        filters = []
+        for key in bundle.request.GET.keys():
+            if '.' in key and key.split(".")[0] in COMPOUND_FILTERS:
+                prefix, qualifier = key.split(".", maxsplit=1)
+                filters.append(COMPOUND_FILTERS[prefix](qualifier, bundle.request.GET.get(key)))
+
         if username:
             user = WebUser.get_by_username(username)
             if not (user and user.is_member_of(domain) and user.is_active):
                 user = None
-            return [user] if user else []
-        return list(WebUser.by_domain(domain))
+            results = [user] if user else []
+        else:
+            results = list(WebUser.by_domain(domain))
+        for filter in filters:
+            results = filter(results)
+        return results
 
 
 def _safe_bool(bundle, param, default=False):
