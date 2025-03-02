@@ -23,19 +23,17 @@ def verify_users(kyc_users, config):
     device_id = f'{__name__}.verify_users'
     errors_with_count = defaultdict(int)
     for kyc_user in kyc_users:
+        is_verified = False
         try:
             is_verified = verify_user(kyc_user, config)
-            if is_verified is False:
+            if not is_verified:
                 errors_with_count[KycVerificationFailureCause.USER_INFORMATION_INCOMPLETE.value] += 1
         # TODO - Decide on how we want to handle these exceptions for the end user
         except jsonschema.exceptions.ValidationError:
-            is_verified = False
             errors_with_count[KycVerificationFailureCause.USER_INFORMATION_INCOMPLETE.value] += 1
         except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
-            is_verified = False
             errors_with_count[KycVerificationFailureCause.NETWORK_ERROR.value] += 1
         except requests.HTTPError:
-            is_verified = False
             errors_with_count[KycVerificationFailureCause.API_ERROR.value] += 1
         kyc_user.update_verification_status(is_verified, device_id=device_id)
         results[kyc_user.user_id] = is_verified
