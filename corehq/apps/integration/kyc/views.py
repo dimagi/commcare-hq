@@ -169,11 +169,7 @@ class KycVerificationReportView(BaseDomainView):
 
     @property
     def domain_has_config(self):
-        try:
-            KycConfig.objects.get(domain=self.domain)
-        except KycConfig.DoesNotExist:
-            return False
-        return True
+        return KycConfig.objects.filter(domain=self.domain).exists()
 
     @property
     def page_url(self):
@@ -188,11 +184,8 @@ class KycVerificationReportView(BaseDomainView):
         return super().get(request, *args, **kwargs)
 
     def _report_users_count_metric(self):
-        try:
+        if self.domain_has_config:
             kyc_config = KycConfig.objects.get(domain=self.domain)
-        except KycConfig.DoesNotExist:
-            pass
-        else:
             total_users = len(kyc_config.get_kyc_users())
             metrics_gauge(
                 'commcare.integration.kyc.total_users.count',
