@@ -172,20 +172,22 @@ class KycUser:
         if value:
             # convert to boolean from string
             value = ast.literal_eval(value)
+        elif value == '':  # for user custom data when field is defined as a custom field
+            value = None
         return value
 
     @property
     def kyc_provider(self):
         return self.user_data.get('kyc_provider')
 
-    def update_verification_status(self, status, device_id=None):
+    def update_verification_status(self, is_verified, device_id=None):
         from corehq.apps.hqcase.utils import update_case
 
-        assert status in [True, False]
+        assert is_verified in [True, False]
         update = {
             'kyc_provider': self.kyc_config.provider,
             'kyc_last_verified_at': datetime.utcnow().isoformat(),  # TODO: UTC or project timezone?
-            'kyc_is_verified': str(status),
+            'kyc_is_verified': str(is_verified),
         }
         if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
             user_data_obj = self.user_or_case_obj.get_user_data(self.kyc_config.domain)
@@ -218,6 +220,12 @@ class KycUser:
         for user_obj in user_objs:
             kyc_users.append(KycUser(kyc_config, user_obj))
         return kyc_users
+
+
+class KycIsVerifiedChoice(models.TextChoices):
+    TRUE = (True, 'KYC verification successful.')
+    FALSE = (False, 'KYC verification failed.')
+    NONE = (None, 'KYC verification pending.')
 
 
 class KycVerificationFailureCause(models.TextChoices):
