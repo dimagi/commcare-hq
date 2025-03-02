@@ -18,6 +18,7 @@ hqDefine("app_manager/js/details/sort_rows", function () {
         self.sortCalculation = ko.observable(typeof params.sortCalculation !== 'undefined' ? params.sortCalculation : "");
 
         self.showWarning = ko.observable(false);
+        self.warningText = hqImport('app_manager/js/details/utils').fieldFormatWarningMessage;
         self.hasValidPropertyName = function () {
             let name = self.selectField.val();
             // changes here should also be made in

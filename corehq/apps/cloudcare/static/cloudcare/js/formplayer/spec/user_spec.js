@@ -1,5 +1,5 @@
 import _ from "underscore";
-import sinon from "sinon/pkg/sinon";
+import sinon from "sinon";
 import FormplayerFrontend from "cloudcare/js/formplayer/app";
 import UsersCollections from "cloudcare/js/formplayer/users/collections";
 import UsersModels from "cloudcare/js/formplayer/users/models";

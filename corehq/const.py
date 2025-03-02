@@ -33,9 +33,14 @@ USER_CHANGE_VIA_WEB = "web"
 USER_CHANGE_VIA_SMS = "sms"
 USER_CHANGE_VIA_BULK_IMPORTER = "bulk_importer"
 USER_CHANGE_VIA_INVITATION = "invitation"
+USER_CHANGE_VIA_LOCATION = "location"
 USER_CHANGE_VIA_SSO_NEW_USER = "sso_new"
 USER_CHANGE_VIA_SSO_INVITE = "sso_invitation"
 USER_CHANGE_VIA_SYSTEM = "system"
 USER_CHANGE_VIA_AUTO_DEACTIVATE = "auto_deactivate"
+
+INVITATION_CHANGE_VIA_WEB = "invite_web"
+INVITATION_CHANGE_VIA_API = "invite_api"
+INVITATION_CHANGE_VIA_BULK_IMPORTER = "invite_bulk_importer"
 
 LOADTEST_HARD_LIMIT = 500_000  # max cases a loadtest user can sync

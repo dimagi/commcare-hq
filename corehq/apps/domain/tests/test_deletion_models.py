@@ -56,6 +56,7 @@ IGNORE_MODELS = {
     'domain.SuperuserProjectEntryRecord',
     'dropbox.DropboxUploadHelper',
     'export.DefaultExportSettings',
+    'experiments.ExperimentEnabler',
     'field_audit.AuditEvent',
     'fixtures.UserLookupTableStatus',
     'fixtures.LookupTableRow',          # handled by cascading delete
@@ -71,6 +72,7 @@ IGNORE_MODELS = {
     'util.TransientBounceEmail',
     'users.ConnectIDUserLink',       # handled by cascading delete of django user model
     'users.ConnectIDMessagingKey',   # handled by cascading delete of user link model (from user model)
+    'users.InvitationHistory',
     'users.UserHistory',
 }
 

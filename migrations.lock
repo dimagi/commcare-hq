@@ -311,6 +311,10 @@ data_analytics
  0010_maltrow_last_run_date
  0011_domainmetrics
  0012_update_domainmetrics_fields
+data_cleaning
+ 0001_initial
+ 0002_update_fields_and_ordering
+ 0003_column_filter_unique_ids_match_type_updates
 data_dictionary
  0001_squashed_0002_auto_20161116_2209
  0002_auto_20161118_1537
@@ -451,6 +455,8 @@ events
  0008_alter_event__case_id
  0009_attendeemodel
  0010_event_location
+experiments
+ 0001_initial
 export
  0001_initial
  0002_datafile
@@ -728,6 +734,7 @@ motech
  0015_requestlog_duration
  0016_connectionsettings_include_client_id_and_more
  0017_connectionsettings_use_aes_cbc_encryption
+ 0018_openmrsimporter_use_aes_cbc_encryption
 notifications
  0001_squashed_0003_auto_20160504_2049 (3 squashed migrations)
  0002_auto_20160505_2058
@@ -873,6 +880,7 @@ reports
  0018_alter_tableauuser_role
  0019_tableauvisualization_location_safe
  0020_tableauserver_get_reports_using_role
+ 0021_tableauconnectedapp_use_aes_cbc_encryption
 saved_reports
  0001_initial
  0002_scheduledreportlog
@@ -1173,6 +1181,7 @@ translations
  0007_populate_smstranslations
  0008_remove_couch_id
  0009_auto_20200924_1753
+ 0010_transifex_organization_api_token_encryption
 two_factor
  (no migrations)
 user_importer
@@ -1280,6 +1289,7 @@ users
  0074_alter_sqluserdata_profile
  0075_hqapikey_encrypted_key
  0076_connectiduserlink_messaging_consent_and_more
+ 0077_invitationhistory
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
