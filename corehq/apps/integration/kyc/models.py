@@ -100,7 +100,7 @@ class KycConfig(models.Model):
             UserDataStore.CUSTOM_USER_DATA,
             UserDataStore.USER_CASE,
         ):
-            return KycUser.from_hq_user_objects(self, CommCareUser.by_domain(self.domain))
+            return KycUser.from_hq_user_or_case_objects(self, CommCareUser.by_domain(self.domain))
         elif self.user_data_store == UserDataStore.OTHER_CASE_TYPE:
             assert self.other_case_type
             case_ids = (
@@ -110,7 +110,10 @@ class KycConfig(models.Model):
             ).get_ids()
             if not case_ids:
                 return []
-            return KycUser.from_hq_user_objects(self, CommCareCase.objects.get_cases(case_ids, self.domain))
+            return KycUser.from_hq_user_or_case_objects(
+                self,
+                CommCareCase.objects.get_cases(case_ids, self.domain)
+            )
 
     def get_kyc_users_by_ids(self, obj_ids):
         """
@@ -121,40 +124,43 @@ class KycConfig(models.Model):
             UserDataStore.CUSTOM_USER_DATA,
             UserDataStore.USER_CASE,
         ):
-            return KycUser.from_hq_user_objects(self, [CommCareUser.get_by_user_id(id_) for id_ in obj_ids])
+            return KycUser.from_hq_user_or_case_objects(
+                self,
+                [CommCareUser.get_by_user_id(id_) for id_ in obj_ids]
+            )
         elif self.user_data_store == UserDataStore.OTHER_CASE_TYPE:
             assert self.other_case_type
-            return KycUser.from_hq_user_objects(self, CommCareCase.objects.get_cases(obj_ids, self.domain))
+            return KycUser.from_hq_user_or_case_objects(self, CommCareCase.objects.get_cases(obj_ids, self.domain))
 
 
 class KycUser:
 
-    def __init__(self, kyc_config, user_obj):
+    def __init__(self, kyc_config, user_or_case_obj):
         """
         :param kyc_config: kyc configuration for the domain
-        :param user_obj: can be an instance of 'CommcareUser' or 'CommcareCase' based on the configuration.
+        :param user_or_case_obj: can be an instance of 'CommcareUser' or 'CommcareCase' based on the configuration.
         """
         self.kyc_config = kyc_config
-        self.user_obj = user_obj
+        self.user_or_case_obj = user_or_case_obj
 
     @cached_property
     def user_id(self):
-        if isinstance(self.user_obj, CommCareUser):
-            return self.user_obj.user_id
+        if isinstance(self.user_or_case_obj, CommCareUser):
+            return self.user_or_case_obj.user_id
         else:
-            return self.user_obj.case_id
+            return self.user_or_case_obj.case_id
 
     @cached_property
     def user_data(self):
         if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
-            return self.user_obj.get_user_data(self.kyc_config.domain).to_dict()
+            return self.user_or_case_obj.get_user_data(self.kyc_config.domain).to_dict()
         elif self.kyc_config.user_data_store == UserDataStore.USER_CASE:
-            custom_user_case = self.user_obj.get_usercase()
+            custom_user_case = self.user_or_case_obj.get_usercase()
             if not custom_user_case:
                 raise UserCaseNotFound("User case not found for the user.")
             return custom_user_case.case_json
         else:  # UserDataStore.OTHER_CASE_TYPE
-            return self.user_obj.case_json
+            return self.user_or_case_obj.case_json
 
     @property
     def kyc_last_verified_at(self):
@@ -182,22 +188,22 @@ class KycUser:
             'kyc_is_verified': str(status),
         }
         if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
-            user_data_obj = self.user_obj.get_user_data(self.kyc_config.domain)
+            user_data_obj = self.user_or_case_obj.get_user_data(self.kyc_config.domain)
             user_data_obj.update(update)
             user_data_obj.save()
         else:
-            if isinstance(self.user_obj, CommCareUser):
-                case_id = self.user_obj.get_usercase().case_id
+            if isinstance(self.user_or_case_obj, CommCareUser):
+                case_id = self.user_or_case_obj.get_usercase().case_id
             else:
-                case_id = self.user_obj.case_id
+                case_id = self.user_or_case_obj.case_id
             update_case(
                 self.kyc_config.domain,
                 case_id,
                 case_properties=update,
                 device_id=device_id or f'{__name__}.update_status',
             )
-            if isinstance(self.user_obj, CommCareCase):
-                self.user_obj.refresh_from_db()
+            if isinstance(self.user_or_case_obj, CommCareCase):
+                self.user_or_case_obj.refresh_from_db()
         self.clear_user_data_cache()
 
     def clear_user_data_cache(self):
@@ -207,7 +213,7 @@ class KycUser:
             pass
 
     @classmethod
-    def from_hq_user_objects(cls, kyc_config, user_objs):
+    def from_hq_user_or_case_objects(cls, kyc_config, user_objs):
         kyc_users = []
         for user_obj in user_objs:
             kyc_users.append(KycUser(kyc_config, user_obj))

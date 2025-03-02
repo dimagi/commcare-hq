@@ -145,11 +145,11 @@ def get_user_data_for_api(kyc_user, config):
             # Fetch value from usercase / custom user data by default
             value = kyc_user.user_data[user_data_property]
         elif (
-            isinstance(kyc_user.user_obj, CommCareUser)
+            isinstance(kyc_user.user_or_case_obj, CommCareUser)
             and user_data_property in safe_commcare_user_properties
         ):
             # Fall back to CommCareUser
-            value = getattr(kyc_user.user_obj, user_data_property)
+            value = getattr(kyc_user.user_or_case_obj, user_data_property)
         else:
             # Conservative approach to skip the API field if data is not available for the user
             continue
