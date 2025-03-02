@@ -143,9 +143,9 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
             failure_count = 0
             for kyc_user in kyc_users:
                 if kyc_user.kyc_is_verified is True:
-                    success_count = success_count + 1
+                    success_count += 1
                 elif kyc_user.kyc_is_verified is False:
-                    failure_count = failure_count + 1
+                    failure_count += 1
         metrics_gauge(
             'commcare.integration.kyc.verification.success.count',
             success_count,
@@ -160,7 +160,7 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
     def _report_success_on_reverification_metric(self, existing_failed_user_ids, results):
         successful_user_ids = [user_id for user_id, status in results.items() if status is True]
         reverification_success_count = len(set(existing_failed_user_ids) & set(successful_user_ids))
-        if reverification_success_count > 0:
+        if reverification_success_count:
             metrics_counter(
                 'commcare.integration.kyc.reverification.success.count',
                 reverification_success_count,

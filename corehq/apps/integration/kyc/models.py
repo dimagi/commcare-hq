@@ -147,8 +147,7 @@ class KycUser:
     def user_id(self):
         if isinstance(self.user_or_case_obj, CommCareUser):
             return self.user_or_case_obj.user_id
-        else:
-            return self.user_or_case_obj.case_id
+        return self.user_or_case_obj.case_id
 
     @cached_property
     def user_data(self):
@@ -159,8 +158,8 @@ class KycUser:
             if not custom_user_case:
                 raise UserCaseNotFound("User case not found for the user.")
             return custom_user_case.case_json
-        else:  # UserDataStore.OTHER_CASE_TYPE
-            return self.user_or_case_obj.case_json
+        # UserDataStore.OTHER_CASE_TYPE
+        return self.user_or_case_obj.case_json
 
     @property
     def kyc_last_verified_at(self):
