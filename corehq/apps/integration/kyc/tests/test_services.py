@@ -7,7 +7,8 @@ import pytest
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.integration.kyc.models import KycConfig, UserCaseNotFound, UserDataStore, KycUser
+from corehq.apps.integration.kyc.models import KycConfig, UserDataStore, KycUser
+from corehq.apps.integration.kyc.exceptions import UserCaseNotFound
 from corehq.apps.integration.kyc.services import (
     _validate_schema,
     get_user_data_for_api,

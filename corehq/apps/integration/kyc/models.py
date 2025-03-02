@@ -11,6 +11,7 @@ from django.utils.translation import gettext as _
 import jsonfield
 
 from corehq.apps.es.case_search import CaseSearchES
+from corehq.apps.integration.kyc.exceptions import UserCaseNotFound
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.const import OAUTH2_CLIENT
@@ -217,10 +218,6 @@ class KycUser:
         for user_obj in user_objs:
             kyc_users.append(KycUser(kyc_config, user_obj))
         return kyc_users
-
-
-class UserCaseNotFound(Exception):
-    pass
 
 
 class KycVerificationFailureCause(models.TextChoices):
