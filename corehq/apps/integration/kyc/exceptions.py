@@ -1,0 +1,2 @@
+class UserCaseNotFound(Exception):
+    pass
