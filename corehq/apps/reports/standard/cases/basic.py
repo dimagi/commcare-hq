@@ -1,3 +1,5 @@
+import contextlib
+
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
@@ -13,7 +15,7 @@ from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard import (
     ProjectReport,
-    ProjectReportParametersMixin,
+    ProjectReportParametersMixin, ESQueryProfilerMixin,
 )
 from corehq.apps.reports.standard.cases.filters import CaseSearchFilter
 from corehq.apps.reports.standard.cases.utils import (
@@ -28,7 +30,7 @@ from corehq.util.es.elasticsearch import TransportError
 from .data_sources import CaseDisplayES
 
 
-class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin):
+class CaseListMixin(ESQueryProfilerMixin, ElasticProjectInspectionReport, ProjectReportParametersMixin):
     fields = [
         'corehq.apps.reports.filters.case_list.CaseListFilter',
         'corehq.apps.reports.filters.select.CaseTypeFilter',
@@ -107,7 +109,8 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     @memoized
     def es_results(self):
         try:
-            return self._build_query().run().raw
+            with self.profiler.timing_context("ES query") if self.profiler_enabled else contextlib.nullcontext():
+                return self._build_query().run().raw
         except ESError as e:
             original_exception = e.args[0]
             if isinstance(original_exception, TransportError):
@@ -234,3 +237,13 @@ class CaseListReport(CaseListMixin, ProjectReport, ReportDataSource):
                 display.modified_on,
                 display.closed_display
             ]
+
+    @property
+    def json_response(self):
+        with self.profiler.timing_context if self.profiler_enabled else contextlib.nullcontext():
+            response = super().json_response
+
+        if self.profiler_enabled:
+            # Todo: SC-4181
+            pass
+        return response

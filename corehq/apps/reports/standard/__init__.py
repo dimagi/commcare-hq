@@ -1,5 +1,7 @@
 import warnings
+import contextlib
 from datetime import datetime
+from functools import wraps
 
 from django.core.cache import cache
 from django.urls import reverse
@@ -309,8 +311,32 @@ class MonthYearMixin(object):
 
 
 class ESQueryProfilerMixin(object):
-    """
-    This mixin makes it possible to profile your ES queries.
+    """Mixin for profiling Elasticsearch queries.
+
+    This mixin provides timing and profiling capabilities methods in report classes.
+
+    Attributes:
+        profiler_enabled (bool): Must be set to True to enable profiling
+        profiler_name (str): Name of the report to be used in profiling output
+
+    Usage:
+        There are two ways to capture timing information:
+
+        1. Using the decorator:
+            >>> from corehq.apps.reports.standard import profile
+            >>> class MyReport(...):
+            ...     @profile('Method Name')
+            ...     def my_method(self):
+            ...         pass
+
+        2. Using the context manager:
+            >>> def my_method(self):
+            ...     with self.profiler.timing_context('Method Name'):
+            ...         pass
+
+    Notes:
+        The appropriate report class must have profiler_enabled and profiler_name
+        attributes set for the profiling functionality to work.
     """
     profiler_enabled = False
     profiler_name = 'Case List'
@@ -334,3 +360,18 @@ class ESQueryProfilerMixin(object):
         if not self.search_class:
             raise NotImplementedError("You must define a search_class attribute.")
         return self.search_class
+
+
+def profile(name=None):
+    """
+    This decorator wraps the given function with a timing context. The results will
+    be labeled by `name`.
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(obj, *args, **kwargs):
+            with obj.profiler.timing_context(name) if obj.profiler_enabled else contextlib.nullcontext():
+                result = func(obj, *args, **kwargs)
+            return result
+        return wrapper
+    return decorator

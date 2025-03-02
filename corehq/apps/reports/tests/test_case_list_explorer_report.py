@@ -73,6 +73,8 @@ class TestCaseListExplorer(TestCase):
         self.request.GET = get_query_dict
         cle = CaseListExplorer(self.request, domain=self.domain_name)
 
+        assert cle.profiler_enabled
+
         header_names = []
         header_prop_names = []
 
