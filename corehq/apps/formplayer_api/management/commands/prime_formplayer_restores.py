@@ -9,8 +9,11 @@ from django.core.management.base import BaseCommand
 
 from corehq.apps.users.models import CouchUser
 from corehq.util.argparse_types import validate_range
-from custom.covid.tasks import get_users_for_priming, get_prime_restore_user_params, prime_formplayer_db_for_user
-
+from custom.formplayer.restore_priming import (
+    get_users_for_priming,
+    get_prime_restore_user_params,
+    prime_formplayer_db_for_user,
+)
 
 class Command(BaseCommand):
     help = inspect.cleandoc(
