@@ -1397,6 +1397,12 @@ class TestSetBackoff(TestCase):
             in_7_days.isoformat(timespec='seconds')
         )
 
+    def test_reset_on_pause(self):
+        self.repeater.set_backoff()
+        self.repeater.pause()
+        repeater = Repeater.objects.get(id=self.repeater.repeater_id)
+        assert repeater.next_attempt_at is None
+
 
 def fromisoformat(isoformat):
     """

@@ -1,4 +1,4 @@
-import sinon from "sinon/pkg/sinon";
+import sinon from "sinon";
 import Backbone from "backbone";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import FormplayerFrontend from "cloudcare/js/formplayer/app";
@@ -19,6 +19,7 @@ describe('Render a case list', function () {
                 SPLIT_SCREEN_CASE_SEARCH: false,
                 DYNAMICALLY_UPDATE_SEARCH_RESULTS: false,
                 USE_PROMINENT_PROGRESS_BAR: false,
+                ACTIVATE_DATADOG_APM_TRACES: false,
             },
         );
         sinon.stub(Utils, 'getCurrentQueryInputs').callsFake(function () { return {}; });

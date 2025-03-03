@@ -90,7 +90,7 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
             'id': row_id,
             'has_invalid_data': False,
         }
-        user_fields = [
+        user_fields = (
             'first_name',
             'last_name',
             'phone_number',
@@ -100,12 +100,18 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
             'city',
             'post_code',
             'country',
-        ]
+        )
+        system_fields = (
+            'kyc_is_verified',
+            'kyc_last_verified_at',
+        )
         for field in user_fields:
             if field not in user_data:
                 row_data['has_invalid_data'] = True
                 continue
             row_data[field] = user_data[field]
+        for field in system_fields:
+            row_data[field] = user_data.get(field)
         return row_data
 
     @hq_hx_action('post')
@@ -135,6 +141,22 @@ class KycVerificationReportView(BaseDomainView):
     template_name = 'kyc/kyc_verify_report.html'
     section_name = _('Data')
     page_title = _('KYC Report')
+
+    @property
+    def page_context(self):
+        context = super().page_context
+        context.update({
+            'domain_has_config': self.domain_has_config,
+        })
+        return context
+
+    @property
+    def domain_has_config(self):
+        try:
+            KycConfig.objects.get(domain=self.domain)
+        except KycConfig.DoesNotExist:
+            return False
+        return True
 
     @property
     def page_url(self):

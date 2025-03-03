@@ -35,6 +35,13 @@ class BaseTestKycView(TestCase):
             is_admin=True,
         )
         cls.webuser.save()
+        cls.conn_settings = ConnectionSettings.objects.create(
+            name='test-conn',
+            url='http://test.com',
+            username='test',
+            password='test',
+        )
+        cls.addClassCleanup(cls.conn_settings.delete)
 
     @classmethod
     def tearDownClass(cls):
@@ -61,16 +68,16 @@ class TestKycConfigurationView(BaseTestKycView):
 
     def test_not_logged_in(self):
         response = self._make_request(is_logged_in=False)
-        self.assertEqual(response.status_code, 404)
+        assert response.status_code == 404
 
     def test_ff_not_enabled(self):
         response = self._make_request()
-        self.assertEqual(response.status_code, 404)
+        assert response.status_code == 404
 
     @flag_enabled('KYC_VERIFICATION')
     def test_success(self):
         response = self._make_request()
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
 
 class TestKycVerificationReportView(BaseTestKycView):
@@ -78,16 +85,31 @@ class TestKycVerificationReportView(BaseTestKycView):
 
     def test_not_logged_in(self):
         response = self._make_request(is_logged_in=False)
-        self.assertEqual(response.status_code, 404)
+        assert response.status_code == 404
 
     def test_ff_not_enabled(self):
         response = self._make_request()
-        self.assertEqual(response.status_code, 404)
+        assert response.status_code == 404
 
     @flag_enabled('KYC_VERIFICATION')
     def test_success(self):
         response = self._make_request()
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
+
+    @flag_enabled('KYC_VERIFICATION')
+    def test_domain_has_config_context(self):
+        response = self._make_request()
+        assert response.context['domain_has_config'] is False
+
+        kyc_config = KycConfig.objects.create(
+            domain=self.domain,
+            user_data_store=UserDataStore.CUSTOM_USER_DATA,
+            api_field_to_user_data_map=[],
+            connection_settings=self.conn_settings
+        )
+        self.addCleanup(kyc_config.delete)
+        response = self._make_request()
+        assert response.context['domain_has_config'] is True
 
 
 @es_test(requires=[case_search_adapter], setup_class=True)
@@ -97,14 +119,6 @@ class TestKycVerificationTableView(BaseTestKycView):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        conn_settings = ConnectionSettings.objects.create(
-            name='test-conn',
-            url='http://test.com',
-            username='test',
-            password='test',
-        )
-        cls.addClassCleanup(conn_settings.delete)
-
         cls.kyc_mapping = {
             # API field: User data
             'first_name': 'first_name',
@@ -121,7 +135,7 @@ class TestKycVerificationTableView(BaseTestKycView):
             domain=cls.domain,
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
             api_field_to_user_data_map=cls.kyc_mapping,
-            connection_settings=conn_settings,
+            connection_settings=cls.conn_settings,
         )
         cls.addClassCleanup(cls.kyc_config.delete)
         cls.user1 = CommCareUser.create(
@@ -190,30 +204,32 @@ class TestKycVerificationTableView(BaseTestKycView):
 
     def test_ff_not_enabled(self):
         response = self._make_request()
-        self.assertEqual(response.status_code, 404)
+        assert response.status_code == 404
 
     @flag_enabled('KYC_VERIFICATION')
     def test_success(self):
         response = self._make_request()
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
     @flag_enabled('KYC_VERIFICATION')
     def test_response_data_users(self):
         response = self._make_request()
         queryset = response.context['table'].data
-        self.assertEqual(len(queryset), 2)
+        assert len(queryset) == 2
         for row in queryset:
             if row['has_invalid_data']:
-                self.assertEqual(row, {
+                assert row == {
                     'id': self.user2.user_id,
                     'has_invalid_data': True,
                     'first_name': 'Jane',
                     'last_name': 'Doe',
                     'phone_number': None,
                     'email': '',
-                })
+                    'kyc_is_verified': None,
+                    'kyc_last_verified_at': None,
+                }
             else:
-                self.assertEqual(row, {
+                assert row == {
                     'id': self.user1.user_id,
                     'has_invalid_data': False,
                     'first_name': 'John',
@@ -225,7 +241,9 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'city': 'Anytown',
                     'post_code': '12345',
                     'country': 'Anyplace',
-                })
+                    'kyc_is_verified': None,
+                    'kyc_last_verified_at': None,
+                }
 
     @flag_enabled('KYC_VERIFICATION')
     def test_response_data_cases(self):
@@ -240,17 +258,19 @@ class TestKycVerificationTableView(BaseTestKycView):
 
         response = self._make_request()
         queryset = response.context['table'].data
-        self.assertEqual(len(queryset), 2)
+        assert len(queryset) == 2
         for row in queryset:
             if row['has_invalid_data']:
-                self.assertEqual(row, {
+                assert row == {
                     'id': self.case_list[1].case_id,
                     'has_invalid_data': True,
                     'first_name': 'Foo',
                     'last_name': 'Bar',
-                })
+                    'kyc_is_verified': None,
+                    'kyc_last_verified_at': None,
+                }
             else:
-                self.assertEqual(row, {
+                assert row == {
                     'id': self.case_list[0].case_id,
                     'has_invalid_data': False,
                     'first_name': 'Bob',
@@ -262,7 +282,9 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'city': 'Sometown',
                     'post_code': '54321',
                     'country': 'Someplace',
-                })
+                    'kyc_is_verified': None,
+                    'kyc_last_verified_at': None,
+                }
 
 
 def _create_case(factory, name, data):

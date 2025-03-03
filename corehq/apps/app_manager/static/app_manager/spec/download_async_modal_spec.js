@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 
 import $ from "jquery";
-import sinon from "sinon/pkg/sinon";
+import sinon from "sinon";
 
 import asyncDownloader from "app_manager/js/download_async_modal";
 

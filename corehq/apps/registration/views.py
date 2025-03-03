@@ -49,6 +49,7 @@ from corehq.apps.registration.models import (
     RegistrationRequest,
     SelfSignupWorkflow,
 )
+from corehq.apps.registration.rate_limiter import rate_limit_check_username_availability
 from corehq.apps.registration.utils import (
     activate_new_user_via_reg_form,
     project_logo_emails_context,
@@ -181,6 +182,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                     self.request,
                     reg_form.cleaned_data['project_name'],
                     is_new_user=True,
+                    company_name=reg_form.cleaned_data['company_name'],
                 )
             except NameUnavailableException:
                 # technically, the form should never reach this as names are
@@ -213,6 +215,12 @@ class ProcessRegistrationView(JSONResponseMixin, View):
 
     @allow_remote_invocation
     def check_username_availability(self, data):
+        if rate_limit_check_username_availability():
+            return {
+                'isValid': False,
+                'message': _("Please try again."),
+            }
+
         email = data['email'].strip()
         duplicate = CouchUser.get_by_username(email)
         is_existing = User.objects.filter(username__iexact=email).count() > 0 or duplicate

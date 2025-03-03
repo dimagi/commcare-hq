@@ -462,6 +462,7 @@ class ProjectDataTab(UITab):
         '/a/{domain}/data_dictionary/',
         '/a/{domain}/importer/',
         '/a/{domain}/case/',
+        '/a/{domain}/clean/',
         '/a/{domain}/microplanning/',
         '/a/{domain}/kyc/'
     )
@@ -626,7 +627,7 @@ class ProjectDataTab(UITab):
             items.extend(FixtureInterfaceDispatcher.navigation_sections(
                 request=self._request, domain=self.domain))
 
-        if (toggles.MODULE_BADGES.enabled(self.domain) and self.couch_user.can_edit_data()):
+        if (toggles.CSQL_FIXTURE.enabled(self.domain) and self.couch_user.can_edit_data()):
             items.append([_('CSQL Fixtures'), [{
                 'title': _(CSQLFixtureExpressionView.page_title),
                 'url': reverse(CSQLFixtureExpressionView.urlname, args=[self.domain]),
@@ -953,6 +954,7 @@ class ProjectDataTab(UITab):
             automatic_update_rule_list_view = {
                 'title': _(AutomaticUpdateRuleListView.page_title),
                 'url': reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]),
+                'icon': 'fa-solid fa-cogs',
             }
             if edit_section:
                 edit_section[0][1].append(automatic_update_rule_list_view)
@@ -966,10 +968,26 @@ class ProjectDataTab(UITab):
             deduplication_list_view = {
                 'title': _(DeduplicationRuleListView.page_title),
                 'url': reverse(DeduplicationRuleListView.urlname, args=[self.domain]),
+                'icon': 'fa-solid fa-network-wired',
             }
             edit_section[0][1].append(deduplication_list_view)
 
+        if self._can_view_case_data_cleaning:
+            from corehq.apps.data_cleaning.views.main import (
+                CleanCasesMainView,
+            )
+            clean_cases_view = {
+                'title': _(CleanCasesMainView.page_title),
+                'url': reverse(CleanCasesMainView.urlname, args=[self.domain]),
+                'icon': 'fa-solid fa-shower',
+            }
+            edit_section[0][1].append(clean_cases_view)
+
         return edit_section
+
+    @property
+    def _can_view_case_data_cleaning(self):
+        return toggles.DATA_CLEANING_CASES.enabled_for_request(self._request)
 
     def _get_explore_data_views(self):
         explore_data_views = []
@@ -1706,15 +1724,6 @@ class ProjectUsersTab(UITab):
                 'show_in_dropdown': True,
             }
 
-    def _enterprise_users(self):
-        from corehq.apps.users.views import EnterpriseUsersView
-        if toggles.ENTERPRISE_USER_MANAGEMENT.enabled_for_request(self._request):
-            return {
-                'title': _(EnterpriseUsersView.page_title),
-                'url': reverse(EnterpriseUsersView.urlname, args=[self.domain]),
-                'show_in_dropdown': True,
-            }
-
     def _roles_and_permissions(self):
         if ((self.couch_user.is_domain_admin() or self.couch_user.can_view_roles())
                 and self.has_project_access):
@@ -1808,7 +1817,6 @@ class ProjectUsersTab(UITab):
         items = []
 
         users_menu = filter(None, [
-            self._enterprise_users(),
             self._mobile_workers(),
             self._web_users(),
             self._roles_and_permissions(),
@@ -2612,6 +2620,9 @@ class AdminTab(UITab):
                 {'title': _('Manage deleted domains'),
                  'url': reverse('tombstone_management'),
                  'icon': 'fa fa-minus-circle'},
+                {'title': _('Check email status'),
+                 'url': reverse('email_status'),
+                 'icon': 'fa fa-envelope-circle-check'},
             ]
             admin_operations = [
                 {'title': _('CommCare Builds'),

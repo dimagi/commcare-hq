@@ -66,6 +66,7 @@ IGNORE_MODELS = {
     "dropbox.DropboxUploadHelper",
     "enterprise.EnterpriseMobileWorkerSettings",    # tied to an account, not a domain
     "enterprise.EnterprisePermissions",
+    "experiments.ExperimentEnabler",
     "export.DefaultExportSettings",     # tied to an account, not a domain
     "export.EmailExportWhenDoneRequest",  # transient model tied to an export task
     "form_processor.DeprecatedXFormAttachmentSQL",
@@ -167,6 +168,7 @@ UNKNOWN_MODELS = {
     "userreports.DataSourceActionLog",
     "userreports.InvalidUCRData",
     "users.HQApiKey",
+    "users.InvitationHistory",
     "users.UserHistory",
     "users.UserReportingMetadataStaging",
 }
