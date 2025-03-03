@@ -173,11 +173,7 @@ class KycVerificationReportView(BaseDomainView):
 
     @property
     def domain_has_config(self):
-        try:
-            KycConfig.objects.get(domain=self.domain)
-        except KycConfig.DoesNotExist:
-            return False
-        return True
+        return KycConfig.objects.filter(domain=self.domain).exists()
 
     @property
     def page_url(self):
