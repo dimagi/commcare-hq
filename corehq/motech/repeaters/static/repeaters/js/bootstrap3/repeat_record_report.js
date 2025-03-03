@@ -113,38 +113,14 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
             }
         });
 
-        $('#report-content').on('click', '.resend-record-payload', function () {
-            const $btn = $(this),
-                recordId = $btn.data().recordId;
-            $btn.disableButton();
-
-            postResend($btn, {'record_id': recordId});
-        });
-
         $('#resend-all-button').on('click', function () {
             setAction('resend');
             performAction('resend');
         });
 
-        $('#report-content').on('click', '.cancel-record-payload', function () {
-            const $btn = $(this),
-                recordId = $btn.data().recordId;
-            $btn.disableButton();
-
-            postOther($btn, {'record_id': recordId}, 'cancel');
-        });
-
         $('#cancel-all-button').on('click', function () {
             setAction('cancel');
             performAction('cancel');
-        });
-
-        $('#report-content').on('click', '.requeue-record-payload', function () {
-            const $btn = $(this),
-                recordId = $btn.data().recordId;
-            $btn.disableButton();
-
-            postOther($btn, {'record_id': recordId}, 'requeue');
         });
 
         $('#requeue-all-button').on('click', function () {

@@ -40,7 +40,7 @@ from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater
 from corehq.motech.dhis2.parse_response import get_errors, get_diagnosis_message
 from corehq.motech.models import RequestLog
 
-from ..const import State, RECORD_CANCELLED_STATE
+from ..const import State
 from ..models import RepeatRecord
 from ..exceptions import BulkActionMissingParameters
 from .repeat_record_display import RepeatRecordDisplay
@@ -73,26 +73,6 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             toggles.NAMESPACE_DOMAIN,
         )
 
-    def _make_cancel_payload_button(self, record_id):
-        return format_html('''
-                <a
-                    class="btn btn-default cancel-record-payload"
-                    role="button"
-                    data-record-id={}>
-                    Cancel Payload
-                </a>
-                ''', record_id)
-
-    def _make_requeue_payload_button(self, record_id):
-        return format_html('''
-                <a
-                    class="btn btn-default requeue-record-payload"
-                    role="button"
-                    data-record-id={}>
-                    Requeue Payload
-                </a>
-                ''', record_id)
-
     def _make_view_payload_button(self, record_id):
         return format_html('''
         <a
@@ -113,15 +93,6 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             data-record-id={}>
             <i class="fa fa-search"></i>
             Responses
-        </button>
-        ''', record_id)
-
-    def _make_resend_payload_button(self, record_id):
-        return format_html('''
-        <button
-            class="btn btn-default resend-record-payload"
-            data-record-id={}>
-            Resend Payload
         </button>
         ''', record_id)
 
@@ -212,15 +183,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             display.next_check,
             self._make_view_attempts_button(record.id),
             self._make_view_payload_button(record.id),
-            self._make_resend_payload_button(record.id),
         ]
-
-        if record.state == RECORD_CANCELLED_STATE:
-            row.append(self._make_requeue_payload_button(record.id))
-        elif record.is_queued():
-            row.append(self._make_cancel_payload_button(record.id))
-        else:
-            row.append(None)
 
         if toggles.SUPPORT.enabled_for_request(self.request):
             row.insert(2, self._payload_id_and_search_link(record.payload_id))
@@ -238,8 +201,6 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             DataTablesColumn(_('Retry Date')),
             DataTablesColumn(_('Delivery Attempts')),
             DataTablesColumn(_('View Responses')),
-            DataTablesColumn(_('Resend')),
-            DataTablesColumn(_('Cancel or Requeue'))
         ]
         if toggles.SUPPORT.enabled_for_request(self.request):
             columns.insert(2, DataTablesColumn(_('Payload ID')))
