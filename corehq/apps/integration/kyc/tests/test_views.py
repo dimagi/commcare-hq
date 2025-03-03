@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from casexml.apps.case.mock import CaseFactory
@@ -110,6 +110,32 @@ class TestKycVerificationReportView(BaseTestKycView):
         self.addCleanup(kyc_config.delete)
         response = self._make_request()
         assert response.context['domain_has_config'] is True
+
+    def test_domain_has_config_false(self):
+        view = KycVerificationReportView()
+        view.args = (self.domain,)
+        view.request = RequestFactory().get(self.endpoint)
+
+        context = view.page_context
+        assert 'domain_has_config' in context
+        assert context['domain_has_config'] is False
+
+    def test_domain_has_config_true(self):
+        kyc_config = KycConfig.objects.create(
+            domain=self.domain,
+            user_data_store=UserDataStore.CUSTOM_USER_DATA,
+            api_field_to_user_data_map=[],
+            connection_settings=self.conn_settings
+        )
+        self.addCleanup(kyc_config.delete)
+
+        view = KycVerificationReportView()
+        view.args = (self.domain,)
+        view.request = RequestFactory().get(self.endpoint)
+
+        context = view.page_context
+        assert 'domain_has_config' in context
+        assert context['domain_has_config'] is True
 
 
 @es_test(requires=[case_search_adapter], setup_class=True)
