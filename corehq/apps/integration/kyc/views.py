@@ -5,18 +5,16 @@ from django.utils.translation import gettext as _
 from corehq import toggles
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.kyc.forms import KycConfigureForm
-from corehq.apps.integration.kyc.models import (
-    KycConfig,
-    UserDataStore,
+from corehq.apps.integration.kyc.models import KycConfig
+from corehq.apps.integration.kyc.services import (
+    get_user_data_for_api,
+    verify_users,
 )
 from corehq.apps.integration.kyc.tables import KycVerifyTable
-from corehq.apps.integration.kyc.services import get_user_data_for_api
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.models import CommCareCase
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 
 
@@ -82,24 +80,8 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
 
     def get_queryset(self):
         kyc_config = KycConfig.objects.get(domain=self.request.domain)
-        row_objs = self._row_data(kyc_config)
-        rows = []
-        for row_obj in row_objs:
-            rows.append(
-                self._parse_row(row_obj, kyc_config)
-            )
-        return rows
-
-    def _row_data(self, kyc_config):
-        if kyc_config.user_data_store in [UserDataStore.CUSTOM_USER_DATA, UserDataStore.USER_CASE]:
-            return CommCareUser.by_domain(self.request.domain)
-        elif kyc_config.user_data_store == UserDataStore.OTHER_CASE_TYPE:
-            case_ids = (
-                CaseSearchES()
-                .domain(self.request.domain)
-                .case_type(kyc_config.other_case_type)
-            ).get_ids()
-            return CommCareCase.objects.get_cases(case_ids, self.request.domain)
+        row_objs = kyc_config.get_user_objects()
+        return [self._parse_row(row_obj, kyc_config) for row_obj in row_objs]
 
     def _parse_row(self, row_obj, config):
         user_data = get_user_data_for_api(row_obj, config)
@@ -134,19 +116,16 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
 
     @hq_hx_action('post')
     def verify_rows(self, request, *args, **kwargs):
-        verify_all = request.POST.get('verify_all')
-        verify_success = True
-        success_count = 0
-        fail_count = 0
-        if verify_all:
-            # TODO: Need to get all IDS. Could take inspiration from _row_data to fetch all IDs
-            # TODO: Verify all rows
-            pass
+        kyc_config = KycConfig.objects.get(domain=self.request.domain)
+        if request.POST.get('verify_all'):
+            user_objs = kyc_config.get_user_objects()
         else:
-            pass
-            # TODO: Verify selected rows
-            # selected_ids = request.POST.getlist('selected_ids')
-
+            selected_ids = request.POST.getlist('selected_ids')
+            user_objs = kyc_config.get_user_objects_by_ids(selected_ids)
+        results = verify_users(user_objs, kyc_config)
+        verify_success = bool(results)
+        success_count = sum(1 for result in results if result)
+        fail_count = sum(1 for result in results if not result)
         context = {
             'verify_success': verify_success,
             'success_count': success_count,
