@@ -205,18 +205,18 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
             return $.find('input[type=checkbox][name=record_ids]:checked');
         }
 
-        function isActionPossibleForCheckedItems(action, items) {
-            for (const item of items) {
-                const id = item.getAttribute('data-id');
-                const query = `[data-record-id="${id}"][class="btn btn-default ${action}-record-payload"]`;
-                const button = document.querySelector(query);
-                if (!button) {
+        function isActionPossibleForCheckedItems(action, checkedItems) {
+            for (const item of checkedItems) {
+                const isQueued = item.getAttribute('is_queued');
+                if (isQueued == 'false' && action == 'cancel') {
+                    return false;
+                } else if (isQueued == 'true' && ['resend', 'requeue'].includes(action)) {
                     return false;
                 }
             }
-
             return true;
         }
+
 
         function getRequestBody() {
             const bulkSelectors = [selectAll, selectPending, selectCancelled];
@@ -395,15 +395,13 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
 
         function checkMultipleItems(action) {
             for (const item of items) {
-                const id = item.getAttribute('data-id');
-                const query = `[data-record-id="${id}"][class="btn btn-default ${action}-record-payload"]`;
-                const button = document.querySelector(query);
-                if (!!button && item.type === 'checkbox') {
-                    if (item.checked) {
-                        item.checked = false;
-                    } else {
-                        item.checked = true;
-                    }
+                const isQueued = item.getAttribute('is_queued');
+                if (['resend', 'requeue'].includes(action)) {
+                    // if resending or requeueing, only check items that are not already queued
+                    item.checked = isQueued == 0
+                } else {
+                    // if cancelling, only check items that are already queued
+                    item.checked = isQueued == 1
                 }
             }
         }
