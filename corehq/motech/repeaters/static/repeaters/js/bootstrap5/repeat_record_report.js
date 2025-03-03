@@ -15,8 +15,6 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
 ) {
     const selectAll = document.getElementById('select-all'),
         selectAllCheckbox = document.getElementById('select-all-checkbox'),
-        selectPending = document.getElementById('select-pending'),
-        selectCancelled = document.getElementById('select-cancelled'),
         items = document.getElementsByName('record_ids'),
         cancelButton = document.getElementById('cancel-all-button'),
         requeueButton = document.getElementById('requeue-all-button'),
@@ -171,10 +169,6 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
         function bulkSelectionChecked() {
             if (selectAll.checked) {
                 return 'select_all';
-            } else if (selectPending.checked) {
-                return 'select_pending';
-            } else if (selectCancelled.checked) {
-                return 'select_cancelled';
             }
         }
 
@@ -196,8 +190,7 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
 
 
         function getRequestBody() {
-            const bulkSelectors = [selectAll, selectPending, selectCancelled];
-            if (bulkSelectors.some(selector => selector.checked)) {
+            if (selectAll.checked) {
                 return getBulkSelectionProperties();
             } else {
                 return getRecordIds();
@@ -304,30 +297,7 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
         });
 
         $('#select-all').on('click', function () {
-            if (selectAll.checked) {
-                toggleItems(true);
-                uncheck(selectPending, selectCancelled);
-            } else {
-                toggleItems(false);
-            }
-            updateActionButtons();
-        });
-
-        $('#select-pending').on('click', function () {
-            toggleItems(false);
-            uncheck(selectAll, selectCancelled);
-            if (selectPending.checked) {
-                checkMultipleItems('cancel');
-            }
-            updateActionButtons();
-        });
-
-        $('#select-cancelled').on('click', function () {
-            toggleItems(false);
-            uncheck(selectAll, selectPending);
-            if (selectCancelled.checked) {
-                checkMultipleItems('requeue');
-            }
+            toggleItems(selectAll.checked);
             updateActionButtons();
         });
 
@@ -345,15 +315,8 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
             }
         }
 
-        function uncheck(checkbox1, checkbox2) {
-            checkbox1.checked = false;
-            checkbox2.checked = false;
-        }
-
         function uncheckSelects() {
             selectAll.checked = false;
-            selectPending.checked = false;
-            selectCancelled.checked = false;
             updateActionButtons();
         }
 
@@ -382,19 +345,6 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
                 resendButton.disabled = false;
                 requeueButton.disabled = false;
                 cancelButton.disabled = true;
-            }
-        }
-
-        function checkMultipleItems(action) {
-            for (const item of items) {
-                const isQueued = item.getAttribute('is_queued');
-                if (['resend', 'requeue'].includes(action)) {
-                    // if resending or requeueing, only check items that are not already queued
-                    item.checked = isQueued == 0
-                } else {
-                    // if cancelling, only check items that are already queued
-                    item.checked = isQueued == 1
-                }
             }
         }
     });
