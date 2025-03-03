@@ -48,7 +48,6 @@ function deleteUnusedImages(editor, newImages) {
     const oldImages = editorImages.get(editor) || new Set();
     for (const oldImage of oldImages) {
         if (!newImages.has(oldImage)) {
-            console.log(`removing unused image ${oldImage}`);
             const deleteUrl = oldImage.replace("download", "delete");
             fetch(deleteUrl, {
                 method: "DELETE",
