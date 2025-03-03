@@ -15,8 +15,8 @@ Alpine.directive('report-select2', (el, { expression }, { cleanup }) => {
      *
      *      <select x-report-select2="{% html_attr config %}"></select>
      *
-     *      See CaseStatusPinnedFilter for an example of how to format the config
-     *      NOTE: this is **very** specific to Report Filter context.
+     *      See `CaseStatusPinnedFilter` for an example of how to format the config
+     *      The report-select2 config is very specific to the `filter_context` of that class.
      *
      */
     const config = (expression) ? JSON.parse(expression) : {};
@@ -37,8 +37,8 @@ Alpine.directive('report-select2-multi', (el, { expression }, { cleanup }) => {
      *
      *      <select x-report-select2-multi="{% html_attr config %}"></select>
      *
-     *      See CaseOwnersPinnedFilter for an example of how to format the config.
-     *      NOTE: this is **very** specific to Report Filter context.
+     *      See `CaseOwnersPinnedFilter` for an example of how to format the config.
+     *      The report-select2 config is very specific to the `filter_context` of that class.
      *
      */
     const config = (expression) ? JSON.parse(expression) : {};
