@@ -193,7 +193,7 @@ def make_web_user_dict(user, location_cache, domain):
         'email': user.email,
         'role': role_name,
         'location_code': location_codes,
-        'status': gettext('Active User'),
+        'status': gettext('Active User') if user.is_active else gettext('Inactive User'),
         'last_access_date (read only)': domain_membership.last_accessed,
         'last_login (read only)': user.last_login,
         'remove': '',
