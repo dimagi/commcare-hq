@@ -20,6 +20,7 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
         items = document.getElementsByName('record_ids'),
         cancelButton = document.getElementById('cancel-all-button'),
         requeueButton = document.getElementById('requeue-all-button'),
+        resendButton = document.getElementById('resend-all-button'),
         $popUp = $('#are-you-sure'),
         $confirmButton = $('#confirm-button');
 
@@ -297,39 +298,36 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
             uncheckSelects();
         });
 
+        $('#report-content').on('click', '.record-checkbox', function() {
+            updateActionButtons();
+        });
+
         $('#select-all').on('click', function () {
             if (selectAll.checked) {
                 toggleItems(true);
                 uncheck(selectPending, selectCancelled);
-                turnOffCancelRequeue();
             } else {
                 toggleItems(false);
-                turnOnCancelRequeue();
             }
+            updateActionButtons();
         });
 
         $('#select-pending').on('click', function () {
             toggleItems(false);
             uncheck(selectAll, selectCancelled);
-            turnOnCancelRequeue();
             if (selectPending.checked) {
-                requeueButton.disabled = true;
                 checkMultipleItems('cancel');
-            } else {
-                requeueButton.disabled = false;
             }
+            updateActionButtons();
         });
 
         $('#select-cancelled').on('click', function () {
             toggleItems(false);
             uncheck(selectAll, selectPending);
-            turnOnCancelRequeue();
             if (selectCancelled.checked) {
-                cancelButton.disabled = true;
                 checkMultipleItems('requeue');
-            } else {
-                cancelButton.disabled = false;
             }
+            updateActionButtons();
         });
 
         $('body').on('DOMNodeInserted', 'tbody', function () {
@@ -355,17 +353,35 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
             selectAll.checked = false;
             selectPending.checked = false;
             selectCancelled.checked = false;
-            turnOnCancelRequeue();
+            updateActionButtons();
         }
 
-        function turnOffCancelRequeue() {
-            cancelButton.disabled = true;
-            requeueButton.disabled = true;
-        }
+        function updateActionButtons() {
+            const checkedRecords = getCheckedRecords();
+            if (checkedRecords.length == 0) {
+                resendButton.disabled = true;
+                requeueButton.disabled = true;
+                cancelButton.disabled = true;
+                return;
+            }
 
-        function turnOnCancelRequeue() {
-            cancelButton.disabled = false;
-            requeueButton.disabled = false;
+            const containsQueuedRecords = checkedRecords.some(record => {
+                return record.getAttribute('is_queued') == true;
+            });
+
+            // default to no-op on cancelling a batch of records
+            // that contain some already cancelled records
+            // versus allowing no-op when queueing already queued
+            // records
+            if (containsQueuedRecords) {
+                resendButton.disabled = true;
+                requeueButton.disabled = true;
+                cancelButton.disabled = false;
+            } else {
+                resendButton.disabled = false;
+                requeueButton.disabled = false;
+                cancelButton.disabled = true;
+            }
         }
 
         function checkMultipleItems(action) {
