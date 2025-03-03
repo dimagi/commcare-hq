@@ -201,8 +201,10 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             process_repeaters_enabled=self.process_repeaters_enabled,
         )
         checkbox = format_html(
-            '<input type="checkbox" class="record-checkbox" data-id="{}" name="record_ids"/>',
-            record.id)
+            '<input type="checkbox" class="record-checkbox" data-id="{}" name="record_ids" is_queued="{}"/>',
+            record.id,
+            1 if record.is_queued() else 0,
+        )
         row = [
             checkbox,
             display.state,
