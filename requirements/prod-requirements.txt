@@ -375,7 +375,7 @@ protobuf==4.24.2
     # via ddtrace
 psycogreen==1.0.2
     # via -r base-requirements.in
-psycopg2==2.9.6
+psycopg2==2.9.10
     # via -r base-requirements.in
 ptyprocess==0.7.0
     # via pexpect
