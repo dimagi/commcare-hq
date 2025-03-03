@@ -13,14 +13,17 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
     initialPageData,
     ace,
 ) {
-    const selectAll = document.getElementById('select-all'),
-        selectAllCheckbox = document.getElementById('select-all-checkbox'),
+    const selectAllCheckbox = document.getElementById('select-all-checkbox'),
+        selectedPageInfo = document.getElementById('selected-page-info'),
+        selectedTableInfo = document.getElementById('selected-table-info'),
         items = document.getElementsByName('record_ids'),
         cancelButton = document.getElementById('cancel-all-button'),
         requeueButton = document.getElementById('requeue-all-button'),
         resendButton = document.getElementById('resend-all-button'),
         $popUp = $('#are-you-sure'),
         $confirmButton = $('#confirm-button');
+
+    var selectedEntireTable = false;
 
     $(function () {
         $('#report-content').on('click', '.toggle-next-attempt', function (e) {
@@ -150,7 +153,7 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
 
         function performAction(action) {
             const checkedRecords = getCheckedRecords();
-            if (selectAll.checked) {
+            if (selectedEntireTable) {
                 hideAllWarnings();
                 $popUp.modal('show');  /* todo B5: plugin:modal */
             } else if (checkedRecords.length > 0) {
@@ -181,9 +184,8 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
             return true;
         }
 
-
         function getRequestBody() {
-            if (selectAll.checked) {
+            if (selectedEntireTable) {
                 return getBulkSelectionProperties();
             } else {
                 return getRecordIds();
@@ -273,22 +275,41 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
         // ----- what was once repeat_record_report_selects.js ------
 
         $('#select-all-checkbox').on('click', function () {
-            toggleItems(selectAll.checked);
-            uncheckSelects();
+            if (selectAllCheckbox.checked) {
+                toggleItems(true);
+                selectedPageInfo.classList.remove('hide');
+            } else {
+                toggleItems(false);
+                selectedPageInfo.classList.add('hide');
+                // just in case
+                selectedTableInfo.classList.add('hide');
+                selectedEntireTable = false;
+            }
+            updateActionButtons();
         });
 
         $('#report-content').on('click', '.record-checkbox', function() {
             updateActionButtons();
         });
 
-        $('#select-all').on('click', function () {
-            toggleItems(selectAll.checked);
-            updateActionButtons();
+        $("#select-table-button").click(function() {
+            selectedEntireTable = true;
+            selectedPageInfo.classList.add('hide');
+            selectedTableInfo.classList.remove('hide');
+            updateActionButtons()
+        });
+
+        $("#clear-table-selection").click(function() {
+            selectedEntireTable = false;
+            selectAllCheckbox.checked = false;
+            selectedTableInfo.classList.add('hide');
+            toggleItems(false);
+            updateActionButtons()
         });
 
         $('body').on('DOMNodeInserted', 'tbody', function () {
             for (const item of items) {
-                $(item).on('click', uncheckSelects);
+                $(item).on('click', updateActionButtons);
             }
         });
 
@@ -298,11 +319,6 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
                     item.checked = checked;
                 }
             }
-        }
-
-        function uncheckSelects() {
-            selectAll.checked = false;
-            updateActionButtons();
         }
 
         function updateActionButtons() {
