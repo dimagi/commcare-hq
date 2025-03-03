@@ -67,14 +67,18 @@
      .select2-search-field {
          width: 100% !important;
      }
-@@ -72,16 +64,127 @@
+@@ -72,16 +64,132 @@
      .select2-input {
          width: 100% !important;
      }
--
++}
+ 
 -    textarea.select2-search__field {    // Placeholder for multi-select
 -        line-height: 21px;
 -    }
++.select2-search__field::placeholder {
++  font-size: $font-size-base;
++  font-family: $font-family-base;
  }
  
  .select2-container.select2-container-active > .select2-choice {

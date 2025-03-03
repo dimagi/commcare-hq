@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from casexml.apps.case.mock import CaseFactory
@@ -35,6 +35,13 @@ class BaseTestKycView(TestCase):
             is_admin=True,
         )
         cls.webuser.save()
+        cls.conn_settings = ConnectionSettings.objects.create(
+            name='test-conn',
+            url='http://test.com',
+            username='test',
+            password='test',
+        )
+        cls.addClassCleanup(cls.conn_settings.delete)
 
     @classmethod
     def tearDownClass(cls):
@@ -89,6 +96,47 @@ class TestKycVerificationReportView(BaseTestKycView):
         response = self._make_request()
         assert response.status_code == 200
 
+    @flag_enabled('KYC_VERIFICATION')
+    def test_domain_has_config_context(self):
+        response = self._make_request()
+        assert response.context['domain_has_config'] is False
+
+        kyc_config = KycConfig.objects.create(
+            domain=self.domain,
+            user_data_store=UserDataStore.CUSTOM_USER_DATA,
+            api_field_to_user_data_map=[],
+            connection_settings=self.conn_settings
+        )
+        self.addCleanup(kyc_config.delete)
+        response = self._make_request()
+        assert response.context['domain_has_config'] is True
+
+    def test_domain_has_config_false(self):
+        view = KycVerificationReportView()
+        view.args = (self.domain,)
+        view.request = RequestFactory().get(self.endpoint)
+
+        context = view.page_context
+        assert 'domain_has_config' in context
+        assert context['domain_has_config'] is False
+
+    def test_domain_has_config_true(self):
+        kyc_config = KycConfig.objects.create(
+            domain=self.domain,
+            user_data_store=UserDataStore.CUSTOM_USER_DATA,
+            api_field_to_user_data_map=[],
+            connection_settings=self.conn_settings
+        )
+        self.addCleanup(kyc_config.delete)
+
+        view = KycVerificationReportView()
+        view.args = (self.domain,)
+        view.request = RequestFactory().get(self.endpoint)
+
+        context = view.page_context
+        assert 'domain_has_config' in context
+        assert context['domain_has_config'] is True
+
 
 @es_test(requires=[case_search_adapter], setup_class=True)
 class TestKycVerificationTableView(BaseTestKycView):
@@ -97,66 +145,23 @@ class TestKycVerificationTableView(BaseTestKycView):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        conn_settings = ConnectionSettings.objects.create(
-            name='test-conn',
-            url='http://test.com',
-            username='test',
-            password='test',
-        )
-        cls.addClassCleanup(conn_settings.delete)
-
-        cls.kyc_mapping = [
-            {
-                'fieldName': 'first_name',
-                'mapsTo': 'first_name',
-                'source': 'standard',
-            },
-            {
-                'fieldName': 'last_name',
-                'mapsTo': 'last_name',
-                'source': 'standard'
-            },
-            {
-                'fieldName': 'email',
-                'mapsTo': 'email',
-                'source': 'standard'
-            },
-            {
-                'fieldName': 'phone_number',
-                'mapsTo': 'phone_number',
-                'source': 'custom',
-            },
-            {
-                'fieldName': 'national_id_number',
-                'mapsTo': 'national_id_number',
-                'source': 'custom',
-            },
-            {
-                'fieldName': 'street_address',
-                'mapsTo': 'street_address',
-                'source': 'custom',
-            },
-            {
-                'fieldName': 'city',
-                'mapsTo': 'city',
-                'source': 'custom',
-            },
-            {
-                'fieldName': 'post_code',
-                'mapsTo': 'post_code',
-                'source': 'custom',
-            },
-            {
-                'fieldName': 'country',
-                'mapsTo': 'country',
-                'source': 'custom',
-            },
-        ]
+        cls.kyc_mapping = {
+            # API field: User data
+            'first_name': 'first_name',
+            'last_name': 'last_name',
+            'email': 'email',
+            'phone_number': 'phone_number',
+            'national_id_number': 'national_id_number',
+            'street_address': 'street_address',
+            'city': 'city',
+            'post_code': 'post_code',
+            'country': 'country',
+        }
         cls.kyc_config = KycConfig.objects.create(
             domain=cls.domain,
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
             api_field_to_user_data_map=cls.kyc_mapping,
-            connection_settings=conn_settings,
+            connection_settings=cls.conn_settings,
         )
         cls.addClassCleanup(cls.kyc_config.delete)
         cls.user1 = CommCareUser.create(
@@ -244,7 +249,10 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'has_invalid_data': True,
                     'first_name': 'Jane',
                     'last_name': 'Doe',
+                    'phone_number': None,
                     'email': '',
+                    'kyc_is_verified': None,
+                    'kyc_last_verified_at': None,
                 }
             else:
                 assert row == {
@@ -259,29 +267,19 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'city': 'Anytown',
                     'post_code': '12345',
                     'country': 'Anyplace',
+                    'kyc_is_verified': None,
+                    'kyc_last_verified_at': None,
                 }
 
     @flag_enabled('KYC_VERIFICATION')
     def test_response_data_cases(self):
         self.kyc_config.user_data_store = UserDataStore.OTHER_CASE_TYPE
         self.kyc_config.other_case_type = 'other-case'
-        self.kyc_config.api_field_to_user_data_map[0:3] = [
-            {
-                'fieldName': 'first_name',
-                'mapsTo': 'first_name',
-                'source': 'custom'
-            },
-            {
-                'fieldName': 'last_name',
-                'mapsTo': 'last_name',
-                'source': 'custom'
-            },
-            {
-                'fieldName': 'email',
-                'mapsTo': 'email',
-                'source': 'custom'
-            }
-        ]
+        self.kyc_config.api_field_to_user_data_map.update({
+            'first_name': 'first_name',
+            'last_name': 'last_name',
+            'email': 'email',
+        })
         self.kyc_config.save()
 
         response = self._make_request()
@@ -294,6 +292,8 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'has_invalid_data': True,
                     'first_name': 'Foo',
                     'last_name': 'Bar',
+                    'kyc_is_verified': None,
+                    'kyc_last_verified_at': None,
                 }
             else:
                 assert row == {
@@ -308,6 +308,8 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'city': 'Sometown',
                     'post_code': '54321',
                     'country': 'Someplace',
+                    'kyc_is_verified': None,
+                    'kyc_last_verified_at': None,
                 }
 
 

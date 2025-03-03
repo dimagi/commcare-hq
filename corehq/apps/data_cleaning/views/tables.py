@@ -1,13 +1,14 @@
 from django.utils.decorators import method_decorator
 
 from corehq import toggles
+from corehq.apps.data_cleaning.models import BulkEditSession
 from corehq.apps.data_cleaning.tables import (
     CleanCaseTable,
     CaseCleaningTasksTable,
 )
+from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.domain.views import DomainViewMixin
-from corehq.apps.es import CaseSearchES
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 
@@ -20,16 +21,20 @@ class BaseDataCleaningTableView(LoginAndDomainMixin, DomainViewMixin, Selectable
     pass
 
 
-class CleanCasesTableView(BaseDataCleaningTableView):
+class CleanCasesTableView(BulkEditSessionViewMixin, BaseDataCleaningTableView):
     urlname = "data_cleaning_cases_table"
     table_class = CleanCaseTable
 
-    @property
-    def session_id(self):
-        return self.kwargs['session_id']
+    def get_table_kwargs(self):
+        return {
+            'extra_columns': self.table_class.get_columns_from_session(self.session),
+            'record_kwargs': {
+                'session': self.session,
+            },
+        }
 
     def get_queryset(self):
-        return CaseSearchES().domain(self.domain)
+        return self.session.get_queryset()
 
 
 class CaseCleaningTasksTableView(BaseDataCleaningTableView):
@@ -37,11 +42,10 @@ class CaseCleaningTasksTableView(BaseDataCleaningTableView):
     table_class = CaseCleaningTasksTable
 
     def get_queryset(self):
-        return [
-            {
-                "status": "test",
-                "time": "no time",
-                "case_type": "placeholder",
-                "details": "foo",
-            }
-        ]
+        return [{
+            "status": session.status,
+            "committed_on": session.committed_on,
+            "completed_on": session.completed_on,
+            "case_type": session.identifier,
+            "details": session.result,
+        } for session in BulkEditSession.get_committed_sessions(self.request.user, self.domain)]

@@ -340,7 +340,7 @@ jsonfield==3.1.0
     # via
     #   -r base-requirements.in
     #   django-prbac
-jsonobject==2.0.0
+jsonobject==2.3.1
     # via
     #   -r base-requirements.in
     #   git-build-branch
@@ -425,11 +425,9 @@ pexpect==4.8.0
     # via ipython
 phonenumberslite==8.12.48
     # via -r base-requirements.in
-pickle5==0.0.11
-    # via -r base-requirements.in
 pickleshare==0.7.5
     # via ipython
-pillow==10.3.0
+pillow==11.1.0
     # via
     #   -r base-requirements.in
     #   reportlab
@@ -630,7 +628,6 @@ six==1.16.0
     #   eulxml
     #   fixture
     #   isodate
-    #   jsonobject
     #   jsonobject-couchdbkit
     #   jsonpath-ng
     #   mando

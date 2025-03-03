@@ -1246,6 +1246,7 @@ class AccountingSingleOptionResponseView(View, AsyncHandlerMixin):
         return HttpResponseBadRequest("Please check your query.")
 
 
+@method_decorator(ACCOUNTING_TESTING_TOOLS.required_decorator(), name="dispatch")
 class BaseTriggerAccountingTestView(AccountingSectionView, AsyncHandlerMixin):
     template_name = 'accounting/trigger_accounting_tests.html'
     async_handlers = [

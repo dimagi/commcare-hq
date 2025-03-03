@@ -287,7 +287,7 @@ jsonfield==3.1.0
     # via
     #   -r base-requirements.in
     #   django-prbac
-jsonobject==2.0.0
+jsonobject==2.3.1
     # via
     #   -r base-requirements.in
     #   jsonobject-couchdbkit
@@ -355,9 +355,7 @@ parsimonious==0.10.0
     # via pyseeyou
 phonenumberslite==8.12.48
     # via -r base-requirements.in
-pickle5==0.0.11
-    # via -r base-requirements.in
-pillow==10.3.0
+pillow==11.1.0
     # via
     #   -r base-requirements.in
     #   reportlab
@@ -515,7 +513,6 @@ six==1.16.0
     #   dropbox
     #   ethiopian-date-converter
     #   eulxml
-    #   jsonobject
     #   jsonobject-couchdbkit
     #   jsonpath-ng
     #   pyjwkest
