@@ -592,7 +592,7 @@ class TestReportFilterSubclasses(TestCase):
                     'selected': [
                         {'id': 'project_data', 'text': '[Project Data]'},
                     ],
-                    'placeholder': 'Add case owners to filter this report.',
+                    'placeholder': 'Please add case owners to filter the list of cases.',
                 },
                 'pagination': {
                     'enabled': False,
@@ -626,7 +626,7 @@ class TestReportFilterSubclasses(TestCase):
                     'selected': [
                         {'id': 'project_data', 'text': '[Project Data]'},
                     ],
-                    'placeholder': 'Add case owners to filter this report.',
+                    'placeholder': 'Please add case owners to filter the list of cases.',
                 },
                 'pagination': {
                     'enabled': False,
