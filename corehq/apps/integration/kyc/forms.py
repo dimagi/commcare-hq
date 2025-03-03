@@ -45,7 +45,7 @@ class KycConfigureForm(forms.ModelForm):
     api_field_to_user_data_map = JsonField(
         label=_('API Field to User Data Map'),
         required=True,
-        expected_type=list,
+        expected_type=dict,
     )
     connection_settings = forms.ModelChoiceField(
         label=_('Connection Settings'),
@@ -101,12 +101,3 @@ class KycConfigureForm(forms.ModelForm):
                 }),
             )
         )
-
-    def clean(self):
-        user_data_store = self.cleaned_data['user_data_store']
-        other_case_type = self.cleaned_data['other_case_type']
-        if user_data_store == UserDataStore.OTHER_CASE_TYPE and not other_case_type:
-            self.add_error('other_case_type', _('Please specify a value'))
-        elif user_data_store != UserDataStore.OTHER_CASE_TYPE:
-            self.cleaned_data['other_case_type'] = None
-        return self.cleaned_data
