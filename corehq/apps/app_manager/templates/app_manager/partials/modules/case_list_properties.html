@@ -18,6 +18,9 @@
         <!-- ko ifnot: showCaseTileMappingColumn() -->
         <th class="col-sm-2">{% trans "Format" %}</th>
         <!-- /ko -->
+        <!-- ko if: showCaseListOptimizations -->
+        <th class="col-sm-2">{% trans "Optimize" %}</th>
+        <!-- /ko -->
         <!-- ko if: showCaseTileConfigColumns() -->
         <th class="col-sm-1">{% trans "Row/Column" %}</th>
         <th class="col-sm-1">{% trans "Width/Height" %}</th>
@@ -84,6 +87,18 @@
                               'col-sm-2': !$parent.showCaseTileMappingColumn(),
                           }"
         ></td>
+        <!-- ko if: $parent.showCaseListOptimizations -->
+        <!-- ko if: supportsOptimizations -->
+        <td data-bind="jqueryElement: $optimizationSelectElement"></td>
+        <!-- /ko -->
+        <!-- ko ifnot: supportsOptimizations -->
+        <td>
+          <select class="form-control" disabled>
+            <option>{% trans "N/A" %}</option>
+          </select>
+        </td>
+        <!-- /ko -->
+        <!-- /ko -->
         <!-- ko if: $parent.showCaseTileConfigColumns() -->
         <td class="col-sm-1">
           <select
