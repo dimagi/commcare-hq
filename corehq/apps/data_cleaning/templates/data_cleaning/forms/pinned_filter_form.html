@@ -11,6 +11,10 @@
       hx-target="#{{ container_id }}"
       hx-disabled-elt="find button"
       hq-hx-action="update_filters"
+      x-data="{
+        isSubmitEnabled: false,
+      }"
+      @report-filter-updated.camel="isSubmitEnabled = true;"
     >
       {% for form_filter in form_filters %}
         {{ form_filter }}
@@ -19,6 +23,8 @@
         <button
           class="btn btn-disabled"
           type="submit"
+          :disabled="!isSubmitEnabled"
+          :class="(isSubmitEnabled) ? 'btn-primary' : 'btn-disabled';"
         >
           {% trans "Apply" %}
         </button>

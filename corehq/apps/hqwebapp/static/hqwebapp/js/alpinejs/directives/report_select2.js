@@ -9,6 +9,18 @@ import utils from 'hqwebapp/js/alpinejs/directives/select2';
  * select2 utilities in `reports/js/filters/select2s`.
  */
 
+const _updateFormOnChange = (el) => {
+    $(el).on('change', () => {
+        const parentForm = el.form;
+        if (parentForm) {
+            parentForm.dispatchEvent(new CustomEvent('reportFilterUpdated', {
+                el: el,
+                name: el.name,
+            }));
+        }
+    });
+};
+
 Alpine.directive('report-select2', (el, { expression }, { cleanup }) => {
     /**
      * To use, add x-report-select2-multi to your select element.
@@ -25,6 +37,8 @@ Alpine.directive('report-select2', (el, { expression }, { cleanup }) => {
     } else {
         _createSelect2(el, config);
     }
+
+    _updateFormOnChange(el);
 
     cleanup(() => {
         utils.select2Cleanup(el);
@@ -47,6 +61,8 @@ Alpine.directive('report-select2-multi', (el, { expression }, { cleanup }) => {
     } else {
         _createSelect2Multi(el, config);
     }
+
+    _updateFormOnChange(el);
 
     cleanup(() => {
         utils.select2Cleanup(el);
