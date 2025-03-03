@@ -27,6 +27,7 @@ from corehq.apps.reports.standard.cases.utils import (
 )
 from corehq.elastic import ESError
 from corehq.util.es.elasticsearch import TransportError
+from corehq.apps.reports.const import LONG_RUNNING_CLE_THRESHOLD
 
 from .data_sources import CaseDisplayES
 
@@ -249,7 +250,7 @@ class CaseListReport(CaseListMixin, ProjectReport, ReportDataSource):
             response = super().json_response
 
         elapsed_seconds = round((datetime.now() - start_time).total_seconds(), 1)
-        if elapsed_seconds > 10:
+        if elapsed_seconds > LONG_RUNNING_CLE_THRESHOLD:
             self.profiler.timing_context.add_to_sentry_breadcrumbs()
             request_dict = dict(self.request.GET.lists())
 
