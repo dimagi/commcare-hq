@@ -609,7 +609,7 @@ class TestReportFilterSubclasses(TestCase):
                 'target="_blank"> Filter Definitions</a>.',
             ],
         }
-        self.assertEqual(report_filter.filter_context, expected_context)
+        self.assertDictEqual(report_filter.filter_context, expected_context)
 
     @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
     def test_case_owners_report_filter_context_locations(self):
@@ -649,7 +649,7 @@ class TestReportFilterSubclasses(TestCase):
                 '+Management"target="_blank">Learn more</a>.'
             ],
         }
-        self.assertEqual(report_filter.filter_context, expected_context)
+        self.assertDictEqual(report_filter.filter_context, expected_context)
 
     def test_case_status_report_filter_context(self):
         report_filter = CaseStatusPinnedFilter(
@@ -674,4 +674,4 @@ class TestReportFilterSubclasses(TestCase):
                 },
             },
         }
-        self.assertEqual(report_filter.filter_context, expected_context)
+        self.assertDictEqual(report_filter.filter_context, expected_context)
