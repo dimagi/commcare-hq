@@ -248,7 +248,7 @@ class CaseListReport(CaseListMixin, ProjectReport, ReportDataSource):
         with self.profiler.timing_context:
             response = super().json_response
 
-        elapsed_seconds = (datetime.now() - start_time).total_seconds()
+        elapsed_seconds = round((datetime.now() - start_time).total_seconds(), 1)
         if elapsed_seconds > 10:
             self.profiler.timing_context.add_to_sentry_breadcrumbs()
             request_dict = dict(self.request.GET.lists())
