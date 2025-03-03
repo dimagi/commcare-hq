@@ -31,9 +31,9 @@ FAILURE_MESSAGES = {
         "'{prop_key}' is not correctly formatted in 'types' sheet. Whether a field is indexed should be specified "
         "as 'field 1: is_indexed?'. Its value should be 'yes' or 'no'."
     ),
-    "invalid_field_name_numerical": gettext_noop(
+    "invalid_field_name": gettext_noop(
         "Error in 'types' sheet for 'field {i}', '{val}'. "
-        "Field names should be strings, not numbers"
+        "Field names must be valid XML tag names"
     ),
     "invalid_field_syntax": gettext_noop(
         "In Excel worksheet '{tag}', field '{field}' should be numbered as 'field: {field} integer",
