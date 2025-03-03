@@ -15,6 +15,7 @@ from custom.formplayer.restore_priming import (
     prime_formplayer_db_for_user,
 )
 
+
 class Command(BaseCommand):
     help = inspect.cleandoc(
         """Call the Formplayer sync API for users from CSV or matching criteria.
