@@ -21,7 +21,7 @@ from corehq.util.timezones.utils import get_timezone
     use_bootstrap5,
     toggles.DATA_CLEANING_CASES.required_decorator(),
 ], name='dispatch')
-class BaseFilterFormView(HqHtmxActionMixin, LoginAndDomainMixin, DomainViewMixin, TemplateView):
+class BaseFilterFormView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin, TemplateView):
     pass
 
 
