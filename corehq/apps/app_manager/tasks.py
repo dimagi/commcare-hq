@@ -93,13 +93,13 @@ def refresh_data_dictionary_from_app(domain, app_id):
                 if form.form_type == 'advanced_form':
                     for action in form.actions.load_update_cases:
                         add_properties_to_data_dictionary(domain, action.case_type,
-                                                          list(action.case_properties.keys()))
+                                                          list(action.case_properties))
                 else:
                     add_properties_to_data_dictionary(domain, module.case_type,
-                                                      list(form.actions.update_case.update.keys()))
+                                                      list(form.actions.update_case.update))
                     if actions_use_usercase(form.actions):
                         add_properties_to_data_dictionary(domain, USERCASE_TYPE,
-                                                          list(form.actions.usercase_update.update.keys()))
+                                                          list(form.actions.usercase_update.update))
 
 
 @task(queue='background_queue', ignore_result=True)
