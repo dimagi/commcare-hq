@@ -89,6 +89,10 @@ const _createSelect2 = (el, config) => {
     $(el).select2({
         clearable: true,
     });
+    if (config.select.selected) {
+        $(el).val(config.select.selected);
+        $(el).trigger('change.select2');
+    }
 };
 
 const _createPaginatedSelect2 = (el, config) => {
