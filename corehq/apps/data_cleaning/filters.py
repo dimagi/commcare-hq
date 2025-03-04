@@ -62,3 +62,8 @@ class CaseStatusPinnedFilter(SessionPinnedFilterMixin, SelectOpenCloseFilter):
         return {
             'report_select2_config': super().filter_context,
         }
+
+    @property
+    @memoized
+    def selected(self):
+        return self.pinned_filter.value[0] if self.pinned_filter.value else ""
