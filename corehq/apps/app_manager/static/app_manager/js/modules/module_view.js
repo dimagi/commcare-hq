@@ -173,9 +173,9 @@ hqDefine("app_manager/js/modules/module_view", function () {
             });
         }
 
-        var showCaseListOptimizationsElement = $('#show_case_list_optimization_options');
-        if (showCaseListOptimizationsElement.length > 0) {
-            showCaseListOptimizationsElement.koApplyBindings({
+        var $showCaseListOptimizationsElement = $('#show_case_list_optimization_options');
+        if ($showCaseListOptimizationsElement.length) {
+            $showCaseListOptimizationsElement.koApplyBindings({
                 show_case_list_optimization_options: ko.observable(
                     initialPageData.get('show_case_list_optimization_options'),
                 ),
