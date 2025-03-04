@@ -96,6 +96,10 @@ class FieldNameValidationTest(SimpleTestCase):
         bad_name = "ﾉｲ丂 ﾑ ｲ尺ﾑｱ! \\_(ツ)_/¯"
         self.assertTrue(is_identifier_invalid(bad_name))
 
+    def test_includes_attribute(self):
+        bad_name = 'hi there="error"'
+        self.assertTrue(is_identifier_invalid(bad_name))
+
     def test_alphanumeric_nonascii(self):
         good_name = "província"
         self.assertFalse(is_identifier_invalid(good_name))
