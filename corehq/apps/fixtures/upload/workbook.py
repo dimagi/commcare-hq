@@ -1,7 +1,6 @@
 from weakref import WeakKeyDictionary
 
 from django.utils.translation import gettext as _, gettext_lazy
-from lxml.etree import Element
 
 from corehq.apps.fixtures.exceptions import FixtureUploadError
 from corehq.apps.fixtures.upload.const import DELETE_HEADER, INVALID, MAX_FIXTURE_ROWS, MULTIPLE
@@ -264,15 +263,8 @@ class _FixtureTableDefinition(object):
                     raise FixtureUploadError([error_message])
             return is_indexed
 
-        def is_valid_field_name(text):
-            try:
-                Element(text)
-                return True
-            except (ValueError, TypeError):
-                return False
-
         for i, field_name in enumerate(field_names):
-            if not is_valid_field_name(field_name):
+            if is_identifier_invalid(field_name):
                 message = _(FAILURE_MESSAGES['invalid_field_name']).format(
                     i=i + 1,
                     val=field_name,
