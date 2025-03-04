@@ -293,6 +293,10 @@
                 <li>{% blocktrans with couch_user.human_friendly_name as friendly_name %}
                   Will delete <strong>all</strong> of {{ friendly_name }}'s form submissions.
                 {% endblocktrans %}</li>
+                <li>{% blocktrans with couch_user.human_friendly_name as friendly_name %}
+                  Will delete all cases owned by {{ friendly_name }} and all the forms associated with those cases, unless the forms are linked to any other active cases.
+                  <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955907/Data+Removal#Deleting-Users" target="_blank">Read more about this</a>.
+                  {% endblocktrans %}</li>
                 <li>{% trans "Is permanent." %}</li>
               </ul>
               <p>
