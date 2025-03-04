@@ -40,7 +40,7 @@ class PinnedFilterFormView(BulkEditSessionViewMixin, BaseFilterFormView):
 
     @hq_hx_action('post')
     def update_filters(self, request, *args, **kwargs):
-        # todo
+        [f.update_stored_value() for f in self.form_filters]
         return self.get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
