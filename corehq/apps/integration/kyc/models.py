@@ -137,31 +137,59 @@ class KycConfig(models.Model):
 
 class KycUser:
 
+    # CommCareUser properties that could map to API fields
+    safe_commcare_user_properties = {
+        'first_name',
+        'last_name',
+        'full_name',
+        'name',
+        'email',
+        'username',  # For CommCareUsers this is an email address
+        'phone_number',
+        'default_phone_number',
+    }
+
     def __init__(self, kyc_config, user_or_case_obj):
         """
         :param kyc_config: kyc configuration for the domain
         :param user_or_case_obj: can be an instance of 'CommcareUser' or 'CommcareCase' based on the configuration.
         """
         self.kyc_config = kyc_config
-        self.user_or_case_obj = user_or_case_obj
-        if isinstance(self.user_or_case_obj, CommCareUser):
-            self.user_id = self.user_or_case_obj.user_id
+        self._user_or_case_obj = user_or_case_obj
+        if isinstance(self._user_or_case_obj, CommCareUser):
+            self.user_id = self._user_or_case_obj.user_id
         else:
-            self.user_id = self.user_or_case_obj.case_id
+            self.user_id = self._user_or_case_obj.case_id
         self._user_data = None
+
+    def __getitem__(self, item):
+        """
+        Allow user data to be accessible like a dictionary.
+        """
+        if item in self.user_data:
+            # Fetch value from usercase / custom user data by default
+            return self.user_data[item]
+        if (
+            isinstance(self._user_or_case_obj, CommCareUser)
+            and item in self.safe_commcare_user_properties
+        ):
+            # Fall back to CommCareUser
+            return getattr(self._user_or_case_obj, item)
+        else:
+            raise KeyError(item)
 
     @property
     def user_data(self):
         if self._user_data is None:
             if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
-                self._user_data = self.user_or_case_obj.get_user_data(self.kyc_config.domain).to_dict()
+                self._user_data = self._user_or_case_obj.get_user_data(self.kyc_config.domain).to_dict()
             elif self.kyc_config.user_data_store == UserDataStore.USER_CASE:
-                custom_user_case = self.user_or_case_obj.get_usercase()
+                custom_user_case = self._user_or_case_obj.get_usercase()
                 if not custom_user_case:
                     raise UserCaseNotFound("User case not found for the user.")
                 self._user_data = custom_user_case.case_json
             else:  # UserDataStore.OTHER_CASE_TYPE
-                self._user_data = self.user_or_case_obj.case_json
+                self._user_data = self._user_or_case_obj.case_json
         return self._user_data
 
     @property
@@ -193,22 +221,22 @@ class KycUser:
             'kyc_is_verified': str(is_verified),
         }
         if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
-            user_data_obj = self.user_or_case_obj.get_user_data(self.kyc_config.domain)
+            user_data_obj = self._user_or_case_obj.get_user_data(self.kyc_config.domain)
             user_data_obj.update(update)
             user_data_obj.save()
         else:
-            if isinstance(self.user_or_case_obj, CommCareUser):
-                case_id = self.user_or_case_obj.get_usercase().case_id
+            if isinstance(self._user_or_case_obj, CommCareUser):
+                case_id = self._user_or_case_obj.get_usercase().case_id
             else:
-                case_id = self.user_or_case_obj.case_id
+                case_id = self._user_or_case_obj.case_id
             update_case(
                 self.kyc_config.domain,
                 case_id,
                 case_properties=update,
                 device_id=device_id or f'{__name__}.update_status',
             )
-            if isinstance(self.user_or_case_obj, CommCareCase):
-                self.user_or_case_obj.refresh_from_db()
+            if isinstance(self._user_or_case_obj, CommCareCase):
+                self._user_or_case_obj.refresh_from_db()
         self._user_data = None
 
 

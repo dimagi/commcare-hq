@@ -11,7 +11,6 @@ from django.utils.text import camel_case_to_spaces
 import jsonschema
 
 from corehq.apps.integration.kyc.models import KycVerificationFailureCause
-from corehq.apps.users.models import CommCareUser
 from corehq.util.metrics import metrics_counter
 
 
@@ -126,29 +125,11 @@ def get_user_data_for_api(kyc_user, config):
         Returns a dictionary of user data for the API.
         ``source`` is a CommCareUser or a CommCareCase.
     """
-    # CommCareUser properties that could map to API fields
-    safe_commcare_user_properties = {
-        'first_name',
-        'last_name',
-        'full_name',
-        'name',
-        'email',
-        'username',  # For CommCareUsers this is an email address
-        'phone_number',
-        'default_phone_number',
-    }
     user_data_for_api = {}
     for api_field, user_data_property in config.api_field_to_user_data_map.items():
-        if user_data_property in kyc_user.user_data:
-            # Fetch value from usercase / custom user data by default
-            value = kyc_user.user_data[user_data_property]
-        elif (
-            isinstance(kyc_user.user_or_case_obj, CommCareUser)
-            and user_data_property in safe_commcare_user_properties
-        ):
-            # Fall back to CommCareUser
-            value = getattr(kyc_user.user_or_case_obj, user_data_property)
-        else:
+        try:
+            value = kyc_user[user_data_property]
+        except KeyError:
             # Conservative approach to skip the API field if data is not available for the user
             continue
         user_data_for_api[api_field] = value
