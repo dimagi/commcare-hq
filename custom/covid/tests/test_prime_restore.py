@@ -5,7 +5,7 @@ from django.test import TestCase
 
 from casexml.apps.phone.models import SyncLogSQL
 from corehq.apps.domain.auth import FORMPLAYER
-from custom.formplayer.restore_priming import get_users_for_priming
+from corehq.apps.formplayer_api.tasks import get_users_for_priming
 
 
 def make_synclog(domain, date, user, request_user=None, is_formplayer=True, case_count=None, auth_type=None):

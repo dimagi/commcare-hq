@@ -8,7 +8,7 @@ from dateutil.relativedelta import relativedelta
 from corehq.apps.celery import periodic_task
 from corehq.toggles import PRIME_FORMPLAYER_DBS_BHA
 
-from custom.formplayer.restore_priming import (
+from corehq.apps.formplayer_api.tasks import (
     prime_formplayer_db_for_user,
     get_users_for_priming,
 )
