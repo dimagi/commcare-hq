@@ -2068,6 +2068,60 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         )
         self.assertEqual(getattr(self.user_invite.primary_location, 'location_id', None), self.loc1._id)
 
+    def test_invite_update_locations(self):
+        self.setup_locations()
+        invite_spec = self._get_invited_spec()
+        invite = Invitation.objects.create(
+            email=invite_spec['email'],
+            invited_by='friend@country.com',
+            invited_on=datetime.datetime.utcnow(),
+            domain=self.domain.name,
+            primary_location=self.loc1,
+        )
+        invite.assigned_locations.set([self.loc1, self.loc2])
+
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_invited_spec(location_code=[a.site_code for a in [self.loc2]])],
+            [],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            True
+        )
+
+        self.assertEqual(getattr(self.user_invite.primary_location, 'location_id', None), self.loc2._id)
+        self.assertEqual(
+            {getattr(loc, 'location_id', None) for loc in self.user_invite.assigned_locations.all()},
+            {self.loc2._id}
+        )
+
+    def test_invite_ignore_locations(self):
+        self.setup_locations()
+        invite_spec = self._get_invited_spec()
+        invite = Invitation.objects.create(
+            email=invite_spec['email'],
+            invited_by='friend@country.com',
+            invited_on=datetime.datetime.utcnow(),
+            domain=self.domain.name,
+            primary_location=self.loc1,
+        )
+        invite.assigned_locations.set([self.loc1, self.loc2])
+
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_invited_spec()],
+            [],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            True
+        )
+
+        self.assertEqual(getattr(self.user_invite.primary_location, 'location_id', None), self.loc1._id)
+        self.assertEqual(
+            {getattr(loc, 'location_id', None) for loc in self.user_invite.assigned_locations.all()},
+            {self.loc1._id, self.loc2._id}
+        )
+
     def setup_locations(self):
         self.loc1 = make_loc('loc1', type='state', domain=self.domain_name)
         self.loc2 = make_loc('loc2', type='state', domain=self.domain_name)
