@@ -1382,8 +1382,7 @@ CASE_LIST_OPTIMIZATIONS = StaticToggle(
     'Enable options to cache and lazy load case list columns',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    # ToDo: Add help link when available
-    # help_link=''
+    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2939519055/Feature+Usage+Guide+Case+List+Caching+and+Lazy+Loading+in+CommCare',  # noqa: E501
 )
 
 CUSTOM_PROPERTIES = StaticToggle(
