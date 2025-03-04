@@ -655,6 +655,7 @@ class FormRepeater(Repeater):
                 not self.white_listed_form_xmlns
                 or payload.xmlns in self.white_listed_form_xmlns
             )
+            and payload.user_id not in self.user_blocklist
         )
 
     def get_url(self, repeat_record):
