@@ -159,7 +159,7 @@
                 {% csrf_token %}
                 <button type="submit" class="btn btn-default">
                   {% if couch_user.is_demo_user %}
-                    <i class="icon-trash"></i>
+                    <i class="fa-regular fa-trash-can"></i>
                     {% trans 'Turn Off Demo Mode for this Mobile Worker' %}
                   {% else %}
                     {% trans 'Turn On Demo Mode for this Mobile Worker' %}
@@ -174,7 +174,7 @@
                       method="post">
                   {% csrf_token %}
                   <button type="submit" class="btn btn-default">
-                    <i class="icon-refresh"></i>
+                    <i class="fa-solid fa-refresh"></i>
                     {% trans 'Refresh Demo Mode data' %}
                   </button>
                   {% blocktrans with when=demo_restore_date %}
