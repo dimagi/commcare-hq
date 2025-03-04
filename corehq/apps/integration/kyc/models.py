@@ -101,7 +101,10 @@ class KycConfig(models.Model):
             UserDataStore.CUSTOM_USER_DATA,
             UserDataStore.USER_CASE,
         ):
-            return KycUser.from_hq_user_or_case_objects(self, CommCareUser.by_domain(self.domain))
+            return [
+                KycUser(self, user_obj)
+                for user_obj in CommCareUser.by_domain(self.domain)
+            ]
         elif self.user_data_store == UserDataStore.OTHER_CASE_TYPE:
             assert self.other_case_type
             case_ids = (
@@ -111,10 +114,10 @@ class KycConfig(models.Model):
             ).get_ids()
             if not case_ids:
                 return []
-            return KycUser.from_hq_user_or_case_objects(
-                self,
-                CommCareCase.objects.get_cases(case_ids, self.domain)
-            )
+            return [
+                KycUser(self, user_obj)
+                for user_obj in CommCareCase.objects.get_cases(case_ids, self.domain)
+            ]
 
     def get_kyc_users_by_ids(self, obj_ids):
         """
@@ -125,13 +128,14 @@ class KycConfig(models.Model):
             UserDataStore.CUSTOM_USER_DATA,
             UserDataStore.USER_CASE,
         ):
-            return KycUser.from_hq_user_or_case_objects(
-                self,
-                [CommCareUser.get_by_user_id(id_) for id_ in obj_ids]
-            )
+            user_objs = [CommCareUser.get_by_user_id(id_) for id_ in obj_ids]
+            return [KycUser(self, user_obj) for user_obj in user_objs]
         elif self.user_data_store == UserDataStore.OTHER_CASE_TYPE:
             assert self.other_case_type
-            return KycUser.from_hq_user_or_case_objects(self, CommCareCase.objects.get_cases(obj_ids, self.domain))
+            return [
+                KycUser(self, user_obj)
+                for user_obj in CommCareCase.objects.get_cases(obj_ids, self.domain)
+            ]
 
 
 class KycUser:
@@ -213,13 +217,6 @@ class KycUser:
             del self.user_data
         except AttributeError:
             pass
-
-    @classmethod
-    def from_hq_user_or_case_objects(cls, kyc_config, user_objs):
-        kyc_users = []
-        for user_obj in user_objs:
-            kyc_users.append(KycUser(kyc_config, user_obj))
-        return kyc_users
 
 
 class KycIsVerifiedChoice(models.TextChoices):
