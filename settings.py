@@ -235,7 +235,6 @@ DEFAULT_APPS = (
     'django_tables2',
     'two_factor',
     'two_factor.plugins.phonenumber',
-    'ws4redis',
     'statici18n',
     'django_user_agents',
     'oauth2_provider',
@@ -637,12 +636,6 @@ DEFAULT_REPEATER_WORKERS = 7
 # guardrail to prevent one repeater from hogging repeat_record_queue
 # workers and to ensure that repeaters are iterated fairly.
 MAX_REPEATER_WORKERS = 79
-
-# websockets config
-WEBSOCKET_URL = '/ws/'
-WS4REDIS_PREFIX = 'ws'
-WSGI_APPLICATION = 'ws4redis.django_runserver.application'
-WS4REDIS_ALLOWED_CHANNELS = helper.get_allowed_websocket_channels
 
 
 TEST_RUNNER = 'testrunner.TwoStageTestRunner'
