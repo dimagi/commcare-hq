@@ -60,3 +60,13 @@ function updateSelectAllCheckbox(selectedCount) {
     const $selectAll = $('input[name="select_all"]');
     $selectAll.prop('checked', false);
 }
+
+$(document).on('htmx:afterRequest', function(event) {
+    // Reset on pagination as the table is recreated after htmx request
+   const requestPath = event.detail.requestConfig.path;
+   const method = event.detail.requestConfig.verb;
+   if (requestPath.includes('/kyc/verify/table/') && method === 'get' && event.detail.successful === true){
+       selectedUsers = [];
+       updateVerifyButton(0)
+   }
+});
