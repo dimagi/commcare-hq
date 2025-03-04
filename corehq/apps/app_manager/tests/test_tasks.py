@@ -115,8 +115,8 @@ class AppManagerTasksTest(AppManagerTest):
 
         types = CaseType.objects.filter(domain=self.domain)
         self.assertEqual(types.count(), 3)
-        self.assertSetEqual(set([t.name for t in types]), set(['case', 'person', 'commcare-user']))
+        self.assertEqual({t.name for t in types}, {'case', 'person', 'commcare-user'})
 
         props = CaseProperty.objects.filter(case_type__domain=self.domain)
         self.assertEqual(props.count(), 2)
-        self.assertSetEqual(set([p.name for p in props]), set(['texture', 'favorite_color']))
+        self.assertEqual({p.name for p in props}, {'texture', 'favorite_color'})
