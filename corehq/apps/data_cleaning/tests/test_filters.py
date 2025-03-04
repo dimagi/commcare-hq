@@ -13,6 +13,7 @@ from corehq.apps.data_cleaning.models import (
     BulkEditColumnFilter,
     DataType,
     FilterMatchType,
+    BulkEditSession,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
@@ -577,10 +578,13 @@ class TestReportFilterSubclasses(TestCase):
         self.request.can_access_all_locations = True
         self.request.couch_user = self.web_user
         self.request.project = self.domain
+        self.session = BulkEditSession.new_case_session(
+            self.web_user.get_django_user(), self.domain_name, 'plants',
+        )
 
     def test_case_owners_report_filter_context(self):
         report_filter = CaseOwnersPinnedFilter(
-            self.request, self.domain_name, use_bootstrap5=True
+            self.session, self.request, self.domain_name, use_bootstrap5=True
         )
         expected_context = {
             'report_select2_config': {
@@ -614,7 +618,7 @@ class TestReportFilterSubclasses(TestCase):
     @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
     def test_case_owners_report_filter_context_locations(self):
         report_filter = CaseOwnersPinnedFilter(
-            self.request, self.domain_name, use_bootstrap5=True
+            self.session, self.request, self.domain_name, use_bootstrap5=True
         )
         expected_context = {
             'report_select2_config': {
@@ -653,7 +657,7 @@ class TestReportFilterSubclasses(TestCase):
 
     def test_case_status_report_filter_context(self):
         report_filter = CaseStatusPinnedFilter(
-            self.request, self.domain_name, use_bootstrap5=True
+            self.session, self.request, self.domain_name, use_bootstrap5=True
         )
         expected_context = {
             'report_select2_config': {
