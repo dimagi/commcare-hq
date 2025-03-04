@@ -1,5 +1,3 @@
-import ast
-
 from datetime import datetime
 
 from django.conf import settings
@@ -173,12 +171,13 @@ class KycUser:
     @property
     def kyc_is_verified(self):
         value = self.user_data.get('kyc_is_verified')
-        if value:
-            # convert to boolean from string
-            value = ast.literal_eval(value)
-        elif value == '':  # for user custom data when field is defined as a custom field
-            value = None
-        return value
+        # value can be '' when field is defined as a custom field in custom user data
+        assert value in (None, 'True', 'False', '')
+        if value == 'True':
+            return True
+        if value == 'False':
+            return False
+        return None
 
     @property
     def kyc_provider(self):
