@@ -132,7 +132,7 @@ class TestDomainResourceMapping(SimpleTestCase):
     def test_headers(self):
         report = EnterpriseDomainReport(None, None)
 
-        header_mapping = {name: report.headers[index] for (name, index) in DomainResource.COLUMN_INDEX_MAP.items()}
+        header_mapping = {name: report.headers[index] for (name, index) in DomainResource.COLUMN_MAP.items()}
         expectedMapping = {
             'domain': 'Project Space Name',
             'created_on': 'Created On [UTC]',
@@ -153,7 +153,7 @@ class TestWebUserResourceMapping(SimpleTestCase):
         report = EnterpriseWebUserReport(None, None)
 
         header_mapping = {name: report.headers[index] for (name, index) in
-                          WebUserResource.COLUMN_INDEX_MAP.items()}
+                          WebUserResource.COLUMN_MAP.items()}
         expectedMapping = {
             'email': 'Email Address',
             'name': 'Name',
@@ -172,7 +172,7 @@ class TestMobileUserResourceMapping(SimpleTestCase):
         report = EnterpriseMobileWorkerReport(None, None)
 
         header_mapping = {name: report.headers[index] for (name, index) in
-                          MobileUserResource.COLUMN_INDEX_MAP.items()}
+                          MobileUserResource.COLUMN_MAP.items()}
         expectedMapping = {
             'username': 'Username',
             'name': 'Name',
@@ -193,7 +193,7 @@ class TestSMSResourceMapping(SimpleTestCase):
     def test_headers(self):
         report = EnterpriseSMSReport(None, None)
 
-        header_mapping = {name: report.headers[index] for (name, index) in SMSResource.COLUMN_INDEX_MAP.items()}
+        header_mapping = {name: report.headers[index] for (name, index) in SMSResource.COLUMN_MAP.items()}
         expectedMapping = {
             'domain': 'Project Space',
             'num_sent': '# Sent',
@@ -209,7 +209,7 @@ class TestODataFeedResourceMapping(SimpleTestCase):
         report = EnterpriseODataReport(None, None)
 
         header_mapping = {name: report.headers[index] for (name, index) in
-                          ODataFeedResource.COLUMN_INDEX_MAP.items()}
+                          ODataFeedResource.COLUMN_MAP.items()}
         expectedMapping = {
             'domain': 'Project Space',
             'report_name': 'Name',
@@ -224,7 +224,7 @@ class TestCaseManagementResourceMapping(SimpleTestCase):
         report = EnterpriseCaseManagementReport(None, None)
 
         header_mapping = {name: report.headers[index] for (name, index) in
-                          CaseManagementResource.COLUMN_INDEX_MAP.items()}
+                          CaseManagementResource.COLUMN_MAP.items()}
         expectedMapping = {
             'domain': 'Project Space',
             'num_applications': '# Applications',
@@ -241,7 +241,7 @@ class TestDataExportResourceMapping(SimpleTestCase):
         report = EnterpriseDataExportReport(None, None)
 
         header_mapping = {name: report.headers[index] for (name, index) in
-                          DataExportReportResource.COLUMN_INDEX_MAP.items()}
+                          DataExportReportResource.COLUMN_MAP.items()}
         expectedMapping = {
             'domain': 'Project Space',
             'name': 'Name',
@@ -258,7 +258,7 @@ class TestTwoFactorAuthResourceMapping(SimpleTestCase):
         report = Enterprise2FAReport(None, None)
 
         header_mapping = {name: report.headers[index] for (name, index) in
-                          TwoFactorAuthResource.COLUMN_INDEX_MAP.items()}
+                          TwoFactorAuthResource.COLUMN_MAP.items()}
         expectedMapping = {
             'domain_without_2fa': 'Project Space without 2FA',
         }
@@ -271,7 +271,7 @@ class TestCommCareVersionComplianceResourceMapping(SimpleTestCase):
         report = EnterpriseCommCareVersionReport(None, None)
 
         header_mapping = {name: report.headers[index] for (name, index) in
-                          CommCareVersionComplianceResource.COLUMN_INDEX_MAP.items()}
+                          CommCareVersionComplianceResource.COLUMN_MAP.items()}
         expectedMapping = {
             'mobile_worker': 'Mobile Worker',
             'domain': 'Project Space',
@@ -287,7 +287,7 @@ class TestAPIKeysResourceMapping(SimpleTestCase):
         report = EnterpriseAPIReport(None, None)
 
         header_mapping = {name: report.headers[index] for (name, index) in
-                          APIKeysResource.COLUMN_INDEX_MAP.items()}
+                          APIKeysResource.COLUMN_MAP.items()}
         expectedMapping = {
             'web_user': 'Web User',
             'api_key_name': 'API Key Name',
@@ -305,7 +305,7 @@ class TestDataForwardingResourceMapping(SimpleTestCase):
         report = EnterpriseDataForwardingReport(None, None)
 
         header_mapping = {name: report.headers[index] for (name, index) in
-                          DataForwardingResource.COLUMN_INDEX_MAP.items()}
+                          DataForwardingResource.COLUMN_MAP.items()}
         expectedMapping = {
             'domain': 'Project Space',
             'service_name': 'Service Name',
@@ -321,7 +321,7 @@ class TestApplicationVersionComplianceResourceMapping(SimpleTestCase):
         report = EnterpriseAppVersionComplianceReport(None, None)
 
         header_mapping = {name: report.headers[index] for (name, index) in
-                          ApplicationVersionComplianceResource.COLUMN_INDEX_MAP.items()}
+                          ApplicationVersionComplianceResource.COLUMN_MAP.items()}
         expectedMapping = {
             'mobile_worker': 'Mobile Worker',
             'domain': 'Project Space',

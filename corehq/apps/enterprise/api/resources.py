@@ -160,7 +160,7 @@ class ODataEnterpriseReportResource(ODataResource):
     RETRY_IN_PROGRESS_DELAY = 60
     RETRY_CONFLICT_DELAY = 120
 
-    COLUMN_INDEX_MAP = {}  # Override with full mapping
+    COLUMN_MAP = {}  # Override with full mapping
 
     class Meta(ODataResource.Meta):
         authentication = EnterpriseODataAuthentication()
@@ -205,7 +205,7 @@ class ODataEnterpriseReportResource(ODataResource):
 
     def dehydrate(self, bundle):
         for (field_name, field) in self.fields.items():
-            obj = bundle.obj[self.COLUMN_INDEX_MAP[field_name]]
+            obj = bundle.obj[self.COLUMN_MAP[field_name]]
             if isinstance(field, fields.DateTimeField):
                 obj = self.convert_datetime(obj)
             bundle.data[field_name] = obj
@@ -240,7 +240,7 @@ class DomainResource(ODataEnterpriseReportResource):
 
     REPORT_SLUG = EnterpriseReport.DOMAINS
 
-    COLUMN_INDEX_MAP = {
+    COLUMN_MAP = {
         'domain': 8,
         'created_on': 0,
         'num_apps': 1,
@@ -267,7 +267,7 @@ class WebUserResource(ODataEnterpriseReportResource):
 
     REPORT_SLUG = EnterpriseReport.WEB_USERS
 
-    COLUMN_INDEX_MAP = {
+    COLUMN_MAP = {
         'email': 0,
         'name': 1,
         'role': 2,
@@ -278,10 +278,10 @@ class WebUserResource(ODataEnterpriseReportResource):
     }
 
     def dehydrate(self, bundle):
-        bundle.obj[self.COLUMN_INDEX_MAP['last_login']] = \
-            self.convert_not_available(bundle.obj[self.COLUMN_INDEX_MAP['last_login']])
-        bundle.obj[self.COLUMN_INDEX_MAP['last_access_date']] = \
-            self.convert_not_available(bundle.obj[self.COLUMN_INDEX_MAP['last_access_date']])
+        bundle.obj[self.COLUMN_MAP['last_login']] = \
+            self.convert_not_available(bundle.obj[self.COLUMN_MAP['last_login']])
+        bundle.obj[self.COLUMN_MAP['last_access_date']] = \
+            self.convert_not_available(bundle.obj[self.COLUMN_MAP['last_access_date']])
         bundle = super().dehydrate(bundle)
         bundle.data['name'] = self.convert_not_available(bundle.data['name'])
 
@@ -309,7 +309,7 @@ class MobileUserResource(ODataEnterpriseReportResource):
 
     REPORT_SLUG = EnterpriseReport.MOBILE_USERS
 
-    COLUMN_INDEX_MAP = {
+    COLUMN_MAP = {
         'username': 0,
         'name': 1,
         'email': 2,
@@ -334,7 +334,7 @@ class SMSResource(ODataEnterpriseReportResource):
 
     REPORT_SLUG = EnterpriseReport.SMS
 
-    COLUMN_INDEX_MAP = {
+    COLUMN_MAP = {
         'domain': 0,
         'num_sent': 1,
         'num_received': 2,
@@ -381,7 +381,7 @@ class ODataFeedResource(ODataEnterpriseReportResource):
 
     REPORT_SLUG = EnterpriseReport.ODATA_FEEDS
 
-    COLUMN_INDEX_MAP = {
+    COLUMN_MAP = {
         'domain': 0,
         'report_name': 1,
         'report_rows': 2,
@@ -406,6 +406,17 @@ class FormSubmissionResource(ODataEnterpriseReportResource):
 
     REPORT_SLUG = EnterpriseReport.FORM_SUBMISSIONS
 
+    # Because FormSubmissionResource retrieves its data from an IterableEnterpriseFormQuery rather than
+    # an enterprise report, the columns are referenced by string rather than index
+    COLUMN_MAP = {
+        'form_id': 'form_id',
+        'form_name': 'form_name',
+        'submitted': 'submitted',
+        'app_name': 'app_name',
+        'username': 'username',
+        'domain': 'domain'
+    }
+
     def get_object_list(self, request):
         start_date = request.GET.get('startdate', None)
         if start_date:
@@ -426,16 +437,6 @@ class FormSubmissionResource(ODataEnterpriseReportResource):
 
         return IterableEnterpriseFormQuery(account, converter, start_date, end_date, **query_kwargs)
 
-    def dehydrate(self, bundle):
-        bundle.data['form_id'] = bundle.obj['form_id']
-        bundle.data['form_name'] = bundle.obj['form_name']
-        bundle.data['submitted'] = self.convert_datetime(bundle.obj['submitted'])
-        bundle.data['app_name'] = bundle.obj['app_name']
-        bundle.data['username'] = bundle.obj['username']
-        bundle.data['domain'] = bundle.obj['domain']
-
-        return bundle
-
     def get_primary_keys(self):
         return ('form_id', 'submitted',)
 
@@ -449,7 +450,7 @@ class CaseManagementResource(ODataEnterpriseReportResource):
 
     REPORT_SLUG = EnterpriseReport.CASE_MANAGEMENT
 
-    COLUMN_INDEX_MAP = {
+    COLUMN_MAP = {
         'domain': 0,
         'num_applications': 1,
         'num_surveys_only': 2,
@@ -470,7 +471,7 @@ class DataExportReportResource(ODataEnterpriseReportResource):
 
     REPORT_SLUG = EnterpriseReport.DATA_EXPORTS
 
-    COLUMN_INDEX_MAP = {
+    COLUMN_MAP = {
         'domain': 0,
         'name': 1,
         'export_type': 2,
@@ -487,7 +488,7 @@ class TwoFactorAuthResource(ODataEnterpriseReportResource):
 
     REPORT_SLUG = EnterpriseReport.TWO_FACTOR_AUTH
 
-    COLUMN_INDEX_MAP = {
+    COLUMN_MAP = {
         'domain_without_2fa': 0,
     }
 
@@ -503,7 +504,7 @@ class CommCareVersionComplianceResource(ODataEnterpriseReportResource):
 
     REPORT_SLUG = EnterpriseReport.COMMCARE_VERSION_COMPLIANCE
 
-    COLUMN_INDEX_MAP = {
+    COLUMN_MAP = {
         'mobile_worker': 0,
         'domain': 1,
         'latest_version_available_at_submission': 2,
@@ -524,7 +525,7 @@ class APIKeysResource(ODataEnterpriseReportResource):
 
     REPORT_SLUG = EnterpriseReport.API_KEYS
 
-    COLUMN_INDEX_MAP = {
+    COLUMN_MAP = {
         'web_user': 0,
         'api_key_name': 1,
         'scope': 2,
@@ -545,7 +546,7 @@ class DataForwardingResource(ODataEnterpriseReportResource):
 
     REPORT_SLUG = EnterpriseReport.DATA_FORWARDING
 
-    COLUMN_INDEX_MAP = {
+    COLUMN_MAP = {
         'domain': 0,
         'service_name': 1,
         'service_type': 2,
@@ -566,7 +567,7 @@ class ApplicationVersionComplianceResource(ODataEnterpriseReportResource):
 
     REPORT_SLUG = EnterpriseReport.APP_VERSION_COMPLIANCE
 
-    COLUMN_INDEX_MAP = {
+    COLUMN_MAP = {
         'mobile_worker': 0,
         'domain': 1,
         'application': 2,
