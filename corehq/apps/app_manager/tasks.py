@@ -14,6 +14,7 @@ from corehq.apps.app_manager.exceptions import (
     SavedAppBuildException,
 )
 from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.toggles import USH_USERCASES_FOR_WEB_USERS
 from corehq.util.decorators import serial_task
 from corehq.util.metrics import metrics_counter
@@ -79,6 +80,26 @@ def prune_auto_generated_builds(domain, app_id):
         app.delete_app()
         logger.info("Pruned build {} from domain {}".format(app.id, domain))
         app.save(increment_version=False)
+
+
+@task(queue='background_queue', ignore_result=True)
+def refresh_data_dictionary_from_app(domain, app_id):
+    from corehq.apps.app_manager.util import actions_use_usercase
+    from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
+    app = get_app(domain, app_id)
+    for module in app.get_modules():
+        if not module.is_surveys:
+            for form in module.get_forms():
+                if form.form_type == 'advanced_form':
+                    for action in form.actions.load_update_cases:
+                        add_properties_to_data_dictionary(domain, action.case_type,
+                                                          list(action.case_properties.keys()))
+                else:
+                    add_properties_to_data_dictionary(domain, module.case_type,
+                                                      list(form.actions.update_case.update.keys()))
+                    if actions_use_usercase(form.actions):
+                        add_properties_to_data_dictionary(domain, USERCASE_TYPE,
+                                                          list(form.actions.usercase_update.update.keys()))
 
 
 @task(queue='background_queue', ignore_result=True)
