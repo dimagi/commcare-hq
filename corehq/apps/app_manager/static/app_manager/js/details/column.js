@@ -270,15 +270,13 @@ hqDefine("app_manager/js/details/column", function () {
 
         self.format = uiElementSelect.new(menuOptions).val(self.original.format || null);
         self.supportsOptimizations = ko.observable(false);
-        self.optimizationsSupported = function () {
-            return (
+        self.setSupportOptimizations = function () {
+            let optimizationsSupported = (
                 screen.showCaseListOptimizations &&
                 self.format.val() &&
                 initialPageData.get('formats_supporting_case_list_optimizations').includes(self.format.val())
             );
-        };
-        self.setSupportOptimizations = function () {
-            self.supportsOptimizations(self.optimizationsSupported());
+            self.supportsOptimizations(optimizationsSupported);
         };
         self.setSupportOptimizations();
 
