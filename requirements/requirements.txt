@@ -293,7 +293,7 @@ mako==1.2.2
     #   oic
 markdown==3.4.1
     # via -r base-requirements.in
-markupsafe==2.1.2
+markupsafe==3.0.2
     # via
     #   jinja2
     #   mako
