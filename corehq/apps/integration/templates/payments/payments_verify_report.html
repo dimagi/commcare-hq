@@ -8,8 +8,7 @@
   <div>
     <h1 class="py-3 m-0">{% trans "Payments Verification Report" %}</h1>
   </div>
-  <div id="verify-alert">
-  </div>
+  <div id="verify-alert"></div>
   <p>
     <button
       id="verify-selected-btn"
@@ -24,12 +23,12 @@
               "selected_ids": []
           }'
     >
-      <span > {% trans "Verify Selected" %} </span>
+      <span> {% trans "Verify Selected" %} </span>
     </button>
   </p>
   <div
-      hx-trigger="load"
-      hx-get="{% url 'payments_verify_table' domain %}{% querystring %}"
+    hx-trigger="load"
+    hx-get="{% url 'payments_verify_table' domain %}{% querystring %}"
   >
     <div class="htmx-indicator">
       <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading..." %}
