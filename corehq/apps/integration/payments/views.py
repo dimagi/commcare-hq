@@ -10,7 +10,7 @@ from corehq.apps.es import CaseSearchES
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.payments.tables import PaymentsVerifyTable
-from corehq.util.htmx_action import HqHtmxActionMixin
+from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -34,3 +34,16 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
 
     def get_queryset(self):
         return CaseSearchES().domain(self.request.domain).case_type(MOMO_PAYMENT_CASE_TYPE)
+
+    @hq_hx_action('post')
+    def verify_rows(self, request, *args, **kwargs):
+        # TODO Verify payments to be done in a followup ticket
+        verify_success = True
+        success_count = 0
+        failure_count = 0
+        context = {
+            'verify_success': verify_success,
+            'success_count': success_count,
+            'failure_count': failure_count,
+        }
+        return self.render_htmx_partial_response(request, 'payments/partials/payments_verify_alert.html', context)

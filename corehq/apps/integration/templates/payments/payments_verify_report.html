@@ -8,6 +8,25 @@
   <div>
     <h1 class="py-3 m-0">{% trans "Payments Verification Report" %}</h1>
   </div>
+  <div id="verify-alert">
+  </div>
+  <p>
+    <button
+      id="verify-selected-btn"
+      class="btn btn-primary"
+      type="button"
+      disabled="true"
+      hx-post="{% url 'payments_verify_table' request.domain %}"
+      hx-swap="innerHTML"
+      hx-target="#verify-alert"
+      hq-hx-action="verify_rows"
+      hx-vals='{
+              "selected_ids": []
+          }'
+    >
+      <span > {% trans "Verify Selected" %} </span>
+    </button>
+  </p>
   <div
       hx-trigger="load"
       hx-get="{% url 'payments_verify_table' domain %}{% querystring %}"
