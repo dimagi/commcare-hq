@@ -1,5 +1,6 @@
 from django.utils.translation import gettext_noop
 
+INVALID_NAME_ERROR = "%s cannot include special characters or begin with 'xml' or a number"
 FAILURE_MESSAGES = {
     "has_no_column": gettext_noop(
         "Workbook 'types' has no column '{column_name}'."
@@ -33,7 +34,7 @@ FAILURE_MESSAGES = {
     ),
     "invalid_field_name": gettext_noop(
         "Error in 'types' sheet for 'field {i}', '{val}'. "
-        "Field names must be valid XML tag names"
+        "Field names cannot include special characters or begin with 'xml' or a number"
     ),
     "invalid_field_syntax": gettext_noop(
         "In Excel worksheet '{tag}', field '{field}' should be numbered as 'field: {field} integer",

@@ -209,14 +209,14 @@ validation_test_cases = [
     }),
     ('invalid_field_name', [
         "Error in 'types' sheet for 'field 1', 'name()'. "
-        "Field names must be valid XML tag names",
+        "Field names cannot include special characters or begin with 'xml' or a number",
     ], {
         'things': [('UID', 'Delete(Y/N)', 'field: name()'), (None, 'N', 'apple')],
         'types': [('Delete(Y/N)', 'table_id', 'is_global?', 'field 1'), ('N', 'things', 'yes', 'name()')]
     }),
     ('invalid_field_name_numerical', [
         "Error in 'types' sheet for 'field 1', '100'. "
-        "Field names must be valid XML tag names",
+        "Field names cannot include special characters or begin with 'xml' or a number",
     ], {
         'things': [('UID', 'Delete(Y/N)', 'field: name'), (None, 'N', 'apple')],
         'types': [('Delete(Y/N)', 'table_id', 'is_global?', 'field 1'), ('N', 'things', 'yes', 100)]
