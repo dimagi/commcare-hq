@@ -1,3 +1,5 @@
+from django.forms.utils import flatatt
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
 from django_tables2 import columns
@@ -44,3 +46,19 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
     payer_message = columns.Column(
         verbose_name=_("Payer Message"),
     )
+
+    def render_verify_select(self, record, value):
+        default_attrs = {
+            'type': 'checkbox',
+            'name': 'selection',
+            'value': value,
+        }
+        # All columns are required except the checkbox
+        required_fields = list(self.base_columns.keys())
+        required_fields.remove('verify_select')
+
+        for field in required_fields:
+            if not record.record.get(field):
+                default_attrs['disabled'] = 'disabled'
+                break
+        return mark_safe('<input %s/>' % flatatt(default_attrs))
