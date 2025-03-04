@@ -85,7 +85,7 @@ hqDefine("app_manager/js/details/column", function () {
         let optimizationOptions = [
             {
                 value: "",
-                label: "",
+                label: "---",
             },
             {
                 value: "cache",
