@@ -2284,13 +2284,6 @@ CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
     default_randomness=0.001
 )
 
-PRIME_FORMPLAYER_DBS = StaticToggle(
-    'prime_formplayer_dbs',
-    'USH: Control which domains will be included in the prime formplayer task runs',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/saas/Prime+Formplayer+DBS"
-)
 
 PRIME_FORMPLAYER_DBS_BHA = StaticToggle(
     'prime_formplayer_dbs_bha',
