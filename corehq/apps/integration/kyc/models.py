@@ -147,6 +147,7 @@ class KycUser:
         """
         self.kyc_config = kyc_config
         self.user_or_case_obj = user_or_case_obj
+        self._user_data = None
 
     @cached_property
     def user_id(self):
@@ -154,17 +155,19 @@ class KycUser:
             return self.user_or_case_obj.user_id
         return self.user_or_case_obj.case_id
 
-    @cached_property
+    @property
     def user_data(self):
-        if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
-            return self.user_or_case_obj.get_user_data(self.kyc_config.domain).to_dict()
-        elif self.kyc_config.user_data_store == UserDataStore.USER_CASE:
-            custom_user_case = self.user_or_case_obj.get_usercase()
-            if not custom_user_case:
-                raise UserCaseNotFound("User case not found for the user.")
-            return custom_user_case.case_json
-        # UserDataStore.OTHER_CASE_TYPE
-        return self.user_or_case_obj.case_json
+        if self._user_data is None:
+            if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
+                self._user_data = self.user_or_case_obj.get_user_data(self.kyc_config.domain).to_dict()
+            elif self.kyc_config.user_data_store == UserDataStore.USER_CASE:
+                custom_user_case = self.user_or_case_obj.get_usercase()
+                if not custom_user_case:
+                    raise UserCaseNotFound("User case not found for the user.")
+                self._user_data = custom_user_case.case_json
+            else:  # UserDataStore.OTHER_CASE_TYPE
+                self._user_data = self.user_or_case_obj.case_json
+        return self._user_data
 
     @property
     def kyc_last_verified_at(self):
@@ -210,13 +213,7 @@ class KycUser:
             )
             if isinstance(self.user_or_case_obj, CommCareCase):
                 self.user_or_case_obj.refresh_from_db()
-        self.clear_user_data_cache()
-
-    def clear_user_data_cache(self):
-        try:
-            del self.user_data
-        except AttributeError:
-            pass
+        self._user_data = None
 
 
 class KycIsVerifiedChoice(models.TextChoices):
