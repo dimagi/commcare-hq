@@ -27,7 +27,7 @@ def verify_users(kyc_users, config):
         try:
             is_verified = verify_user(kyc_user, config)
             if not is_verified:
-                errors_with_count[KycVerificationFailureCause.USER_INFORMATION_INCOMPLETE.value] += 1
+                errors_with_count[KycVerificationFailureCause.USER_INFORMATION_MISMATCH.value] += 1
         # TODO - Decide on how we want to handle these exceptions for the end user
         except jsonschema.exceptions.ValidationError:
             errors_with_count[KycVerificationFailureCause.USER_INFORMATION_INCOMPLETE.value] += 1
