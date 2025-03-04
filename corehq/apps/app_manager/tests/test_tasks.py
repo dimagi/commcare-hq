@@ -17,10 +17,6 @@ from corehq.apps.app_manager.views.releases import make_app_build
 @patch_validate_xform()
 class AppManagerTasksTest(AppManagerTest):
 
-    def tearDown(self):
-        CaseType.objects.filter(domain=self.domain).delete()
-        super().tearDown()
-
     def test_prune_auto_generated_builds(self):
         # Build #1, manually generated
         app = import_app(self._yesno_source, self.domain)
