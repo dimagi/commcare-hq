@@ -2997,13 +2997,13 @@ INCLUDE_ALL_LOCATIONS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-INCREASE_DEVICE_LIMIT_PER_USER = StaticToggle(
-    slug='increase_device_per_user_limit',
-    label='In the event that the DEVICE_LIMIT_PER_USER in settings becomes too restrictive, this flag can be used '
-          'to increase the limit without completely removing it. See INCREASED_DEVICE_LIMIT_PER_USER in settings '
-          'to see the exact value.',
-    tag=TAG_SAAS_CONDITIONAL,
+DEVICE_RATE_LIMITER = FeatureRelease(
+    slug='device_rate_limiter',
+    label='Limits the number of devices a single user can use in a one minute time window.'
+          'See SystemLimit for DEVICE_LIMIT_PER_USER_KEY to identify the limit.',
+    tag=TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
+    owner='Graham Herceg',
 )
 
 KYC_VERIFICATION = StaticToggle(
