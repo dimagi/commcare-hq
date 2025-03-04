@@ -47,6 +47,11 @@ class CaseOwnersPinnedFilter(SessionPinnedFilterMixin, CaseListFilter):
             'filter_help': filter_help,
         }
 
+    @property
+    @memoized
+    def selected(self):
+        return self._get_selected_from_selected_ids(self.pinned_filter.value)
+
 
 class CaseStatusPinnedFilter(SessionPinnedFilterMixin, SelectOpenCloseFilter):
     template = "data_cleaning/filters/pinned/single_option.html"
