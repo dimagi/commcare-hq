@@ -1,0 +1,17 @@
+{% extends 'data_cleaning/filters/pinned/base.html' %}
+{% load hq_shared_tags %}
+
+{% block filter_content %}
+  <div
+    x-data="{
+      selected: '{{ report_select2_config.select.selected|default:'' }}',
+    }"
+  >
+    <select
+      class="form-select"
+      name="{{ slug }}"
+      x-model="selected"
+      x-report-select2="{% html_attr report_select2_config %}"
+    ></select>
+  </div>
+{% endblock %}

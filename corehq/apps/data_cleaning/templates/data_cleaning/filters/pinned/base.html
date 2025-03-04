@@ -1,0 +1,9 @@
+{% load i18n %}
+
+<div class="row mb-2">
+  <label for="{{ css_id }}" class="form-label col-2">{{ label }}</label>
+  <div class="col-10">
+    {% block filter_content %}
+    {% endblock %}
+  </div>
+</div>
