@@ -14,8 +14,9 @@ from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard import (
+    ESQueryProfilerMixin,
     ProjectReport,
-    ProjectReportParametersMixin, ESQueryProfilerMixin,
+    ProjectReportParametersMixin,
 )
 from corehq.apps.reports.standard.cases.filters import CaseSearchFilter
 from corehq.apps.reports.standard.cases.utils import (
