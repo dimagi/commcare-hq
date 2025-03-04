@@ -17,9 +17,9 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
         selectedPageInfo = document.getElementById('selected-page-info'),
         selectedTableInfo = document.getElementById('selected-table-info'),
         items = document.getElementsByName('record_ids'),
-        cancelButton = document.getElementById('cancel-all-button'),
-        requeueButton = document.getElementById('requeue-all-button'),
-        resendButton = document.getElementById('resend-all-button'),
+        cancelButton = document.getElementById('cancel-button'),
+        requeueButton = document.getElementById('requeue-button'),
+        resendButton = document.getElementById('resend-button'),
         $popUp = $('#are-you-sure'),
         $confirmButton = $('#confirm-button');
 
@@ -115,17 +115,17 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
             }
         });
 
-        $('#resend-all-button').on('click', function () {
+        $('#resend-button').on('click', function () {
             setAction('resend');
             performAction('resend');
         });
 
-        $('#cancel-all-button').on('click', function () {
+        $('#cancel-button').on('click', function () {
             setAction('cancel');
             performAction('cancel');
         });
 
-        $('#requeue-all-button').on('click', function () {
+        $('#requeue-button').on('click', function () {
             setAction('requeue');
             performAction('requeue');
         });
@@ -137,15 +137,15 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
 
             $popUp.modal('hide');
             if (action === 'resend') {
-                $btn = $('#resend-all-button');
+                $btn = $('#resend-button');
                 $btn.disableButton();
                 postResend($btn, requestBody);
             } else if (action === 'cancel') {
-                $btn = $('#cancel-all-button');
+                $btn = $('#cancel-button');
                 $btn.disableButton();
                 postOther($btn, requestBody, action);
             } else if (action === 'requeue') {
-                $btn = $('#requeue-all-button');
+                $btn = $('#requeue-button');
                 $btn.disableButton();
                 postOther($btn, requestBody, action);
             }
