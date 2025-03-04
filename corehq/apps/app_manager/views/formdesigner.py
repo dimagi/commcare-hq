@@ -45,10 +45,6 @@ from corehq.apps.app_manager.util import (
 )
 from corehq.apps.app_manager.views.apps import get_apps_base_context
 from corehq.apps.app_manager.views.forms import FormHasSubmissionsView
-from corehq.apps.app_manager.views.notifications import (
-    get_facility_for_form,
-    notify_form_opened,
-)
 from corehq.apps.app_manager.views.utils import (
     back_to_main,
     bail,
@@ -153,8 +149,6 @@ def _get_form_designer_view(request, domain, app, module, form):
         ),
     })
     context.update(_get_requirejs_context())
-
-    notify_form_opened(domain, request.couch_user, app.id, form.unique_id)
 
     response = render(request, "app_manager/form_designer.html", context)
     set_lang_cookie(response, context['lang'])
