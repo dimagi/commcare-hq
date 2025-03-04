@@ -1,6 +1,6 @@
 from django.utils.translation import gettext_noop
 
-INVALID_NAME_ERROR = "%s cannot include special characters or begin with 'xml' or a number"
+INVALID_NAME_ERROR = gettext_noop("%s cannot include special characters or begin with 'xml' or a number")
 FAILURE_MESSAGES = {
     "has_no_column": gettext_noop(
         "Workbook 'types' has no column '{column_name}'."
