@@ -151,7 +151,7 @@
                   {% endblocktrans %}
                 {% endif %}
               </p>
-              <p>
+              <div style="margin-top: 5px;">
               <form class="form form-horizontal"
                     action="{% url "toggle_demo_mode" domain couch_user.user_id %}"
                     method="post">
@@ -166,9 +166,9 @@
                   {% endif %}
                 </button>
               </form>
-              </p>
+              </div>
               {% if couch_user.is_demo_user %}
-                <p>
+                <div style="margin-top: 5px;">
                 <form class="form form-horizontal"
                       action="{% url "reset_demo_user_restore" domain couch_user.user_id %}"
                       method="post">
@@ -181,7 +181,7 @@
                     <span> Last refreshed {{ when }}</span>
                   {% endblocktrans %}
                 </form>
-                </p>
+                </div>
               {% endif %}
             </div>
           {% endif %}
