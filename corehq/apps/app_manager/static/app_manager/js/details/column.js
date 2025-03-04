@@ -510,10 +510,7 @@ hqDefine("app_manager/js/details/column", function () {
             column.field = self.field.val();
             column.header[self.lang] = self.header.val();
             column.format = self.format.val();
-            // fetch val by searching the select element instead of directly from optimizationSelectElement since
-            // the event binding to fire change on optimizationSelectElement with change on select, gets lost
-            // when the element is hidden and then revealed again based on format.
-            column.optimization = self.supportsOptimizations() ? self.optimizationSelectElement.ui.find("select").val() : null;
+            column.optimization = self.supportsOptimizations() ? self.optimizationSelectElement.val() : null;
             column.date_format = self.date_extra.val();
             column.enum = self.enum_extra.getItems();
             column.endpoint_action_id = self.action_form_extra.val() === "-1" ? null : self.action_form_extra.val();

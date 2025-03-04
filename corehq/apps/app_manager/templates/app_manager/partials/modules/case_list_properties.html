@@ -160,16 +160,14 @@
         </td>
         <!-- /ko -->
         <!-- ko if: $parent.showCaseListOptimizations -->
-        <!-- ko if: supportsOptimizations -->
-        <td data-bind="jqueryElement: $optimizationSelectElement"></td>
-        <!-- /ko -->
-        <!-- ko ifnot: supportsOptimizations -->
-        <td>
+        <td
+          data-bind="jqueryElement: $optimizationSelectElement, visible: supportsOptimizations"
+        ></td>
+        <td data-bind="hidden: supportsOptimizations">
           <select class="form-control" disabled>
             <option>{% trans "N/A" %}</option>
           </select>
         </td>
-        <!-- /ko -->
         <!-- /ko -->
         <td class="col-sm-1 text-center">
           <i
