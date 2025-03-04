@@ -124,7 +124,7 @@ from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es
 )
-from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
+from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary, get_data_dict_deprecated_case_types
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
 from corehq.apps.userreports.models import (
@@ -725,6 +725,8 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         else:
             old_case_type = module["case_type"]
             module["case_type"] = case_type
+
+            add_properties_to_data_dictionary(domain, case_type, [])
 
             # rename other reference to the old case type
             all_advanced_modules = []

@@ -82,8 +82,7 @@ def _get_current_case_types_and_properties(domain):
 
 
 def add_properties_to_data_dictionary(domain, case_type, properties):
-    if properties:
-        _create_properties_for_case_types(domain, {case_type: properties})
+    _create_properties_for_case_types(domain, {case_type: properties})
 
 
 def _create_properties_for_case_types(domain, case_type_to_prop):
