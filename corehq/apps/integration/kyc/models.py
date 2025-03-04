@@ -1,7 +1,6 @@
 import ast
 
 from datetime import datetime
-from functools import cached_property
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -147,13 +146,11 @@ class KycUser:
         """
         self.kyc_config = kyc_config
         self.user_or_case_obj = user_or_case_obj
-        self._user_data = None
-
-    @cached_property
-    def user_id(self):
         if isinstance(self.user_or_case_obj, CommCareUser):
-            return self.user_or_case_obj.user_id
-        return self.user_or_case_obj.case_id
+            self.user_id = self.user_or_case_obj.user_id
+        else:
+            self.user_id = self.user_or_case_obj.case_id
+        self._user_data = None
 
     @property
     def user_data(self):
