@@ -25,6 +25,8 @@ const parser = new DOMParser();
 
 const editorImages = new WeakMap();
 
+const fullDomain = window.location.origin
+
 function extractImages(html) {
     const images = new Set();
     if (!html) {
@@ -36,7 +38,7 @@ function extractImages(html) {
 
     imgElements.forEach(img => {
         const src = img.getAttribute('src');
-        if (src) {
+        if (src && src.startsWith(fullDomain)) {
             images.add(src);
         }
     });
