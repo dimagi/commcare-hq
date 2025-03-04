@@ -299,7 +299,14 @@ class FormattedDetailColumn(object):
             print_id = self.column.field
 
         if self.app.enable_multi_sort:
-            field = sx.Field(
+            lazy_loading = None
+            cache_enabled = None
+            if self.app.supports_case_list_optimizations and self.column.supports_optimizations:
+                if self.column.optimization in ['lazy_load', 'cache_and_lazy_load']:
+                    lazy_loading = True
+                if self.column.optimization in ['cache', 'cache_and_lazy_load']:
+                    cache_enabled = True
+            yield sx.Field(
                 style=self.style,
                 header=self.header,
                 template=self.template,
@@ -307,13 +314,9 @@ class FormattedDetailColumn(object):
                 print_id=print_id,
                 endpoint_action=self.action,
                 alt_text=self.alt_text,
+                lazy_loading=lazy_loading,
+                cache_enabled=cache_enabled,
             )
-            # since case list optimizations are only available for versions higher than the
-            # ones needed for multi sort, it's safe to assume that case list optimizations
-            # should only be added only when multi sort is enabled
-            if self.app.supports_case_list_optimizations and self.column.supports_optimizations:
-                self._set_case_list_optimizations(field, self.column.optimization)
-            yield field
         elif (self.sort_xpath_function and self.detail.display == 'short'
               and self.column.format != 'translatable-enum'):
             yield sx.Field(
@@ -335,13 +338,6 @@ class FormattedDetailColumn(object):
                 template=self.template,
                 print_id=print_id,
             )
-
-    @staticmethod
-    def _set_case_list_optimizations(field, optimization):
-        if optimization in ['lazy_load', 'cache_and_lazy_load']:
-            field.lazy_loading = True
-        if optimization in ['cache', 'cache_and_lazy_load']:
-            field.cache_enabled = True
 
 
 class HideShortHeaderColumn(FormattedDetailColumn):
