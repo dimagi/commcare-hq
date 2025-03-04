@@ -2,10 +2,19 @@
 {% load hq_shared_tags %}
 {% load django_tables2 %}
 {% load i18n %}
+{% js_entry "integration/js/payments/payments_verify" %}
 
 {% block page_content %}
   <div>
     <h1 class="py-3 m-0">{% trans "Payments Verification Report" %}</h1>
+  </div>
+  <div
+      hx-trigger="load"
+      hx-get="{% url 'payments_verify_table' domain %}{% querystring %}"
+  >
+    <div class="htmx-indicator">
+      <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading..." %}
+    </div>
   </div>
 {% endblock %}
 
