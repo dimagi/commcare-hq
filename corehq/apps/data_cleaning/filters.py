@@ -1,12 +1,39 @@
+from abc import ABC, abstractmethod
+from memoized import memoized
+
 from django.utils.translation import gettext_lazy
 
+from corehq.apps.data_cleaning.models import PinnedFilterType
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 
 
-class CaseOwnersPinnedFilter(CaseListFilter):
+class SessionPinnedFilterMixin(ABC):
+
+    def __init__(self, session, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.session = session
+
+    @property
+    @abstractmethod
+    def filter_type(self):
+        """
+        This helps tie the report filter subclass to a pinned filter for the
+        `BulkEditSession`
+        :return: `PinnedFilterType`
+        """
+        raise NotImplementedError("please specify a filter_type")
+
+    @property
+    @memoized
+    def pinned_filter(self):
+        return self.session.pinned_filters.get(filter_type=self.filter_type)
+
+
+class CaseOwnersPinnedFilter(SessionPinnedFilterMixin, CaseListFilter):
     template = "data_cleaning/filters/pinned/multi_option.html"
     placeholder = gettext_lazy("Please add case owners to filter the list of cases.")
+    filter_type = PinnedFilterType.CASE_OWNERS
 
     @property
     def filter_context(self):
@@ -21,8 +48,9 @@ class CaseOwnersPinnedFilter(CaseListFilter):
         }
 
 
-class CaseStatusPinnedFilter(SelectOpenCloseFilter):
+class CaseStatusPinnedFilter(SessionPinnedFilterMixin, SelectOpenCloseFilter):
     template = "data_cleaning/filters/pinned/single_option.html"
+    filter_type = PinnedFilterType.CASE_STATUS
 
     @property
     def filter_context(self):

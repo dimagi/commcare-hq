@@ -4,11 +4,6 @@ from django.views.generic import TemplateView
 from memoized import memoized
 
 from corehq import toggles
-from corehq.apps.data_cleaning.filters import (
-    CaseOwnersPinnedFilter,
-    CaseStatusPinnedFilter,
-)
-from corehq.apps.data_cleaning.models import PinnedFilterType
 from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.domain.views import DomainViewMixin
@@ -34,20 +29,13 @@ class PinnedFilterFormView(BulkEditSessionViewMixin, BaseFilterFormView):
     def timezone(self):
         return get_timezone(self.request, self.domain)
 
-    @staticmethod
-    def get_form_filter_class(filter_type):
-        return {
-            PinnedFilterType.CASE_OWNERS: CaseOwnersPinnedFilter,
-            PinnedFilterType.CASE_STATUS: CaseStatusPinnedFilter,
-        }[filter_type]
-
     @property
     @memoized
     def form_filters(self):
         return [
-            (f.filter_type, self.get_form_filter_class(f.filter_type)(
-                self.request, self.domain, self.timezone, use_bootstrap5=True
-            )) for f in self.session.pinned_filters.all()
+            f.get_report_filter_class()(
+                self.session, self.request, self.domain, self.timezone, use_bootstrap5=True
+            ) for f in self.session.pinned_filters.all()
         ]
 
     @hq_hx_action('post')
@@ -60,7 +48,7 @@ class PinnedFilterFormView(BulkEditSessionViewMixin, BaseFilterFormView):
         context.update({
             'container_id': 'pinned-filters',
             'form_filters': [
-                f[1].render() for f in self.form_filters
+                f.render() for f in self.form_filters
             ],
         })
         return context
