@@ -64,7 +64,7 @@
           <button type="button" data-dismiss="modal" class="btn btn-default">
             {% blocktrans %}No{% endblocktrans %}
           </button>
-          <button type="button" id="confirm-button" data-action="" data-flag="" class="btn btn-primary">
+          <button type="button" id="confirm-button" data-action="" class="btn btn-primary">
             {% blocktrans %}Yes{% endblocktrans %}
           </button>
         </div>
@@ -79,6 +79,7 @@
     {% registerurl 'requeue_repeat_record' domain %}
     {% initial_page_data 'payload_id' payload_id %}
     {% initial_page_data 'repeater_id' repeater_id %}
+    {% initial_page_data 'state' state %}
 {% endblock %}
 
 {% block modals %}{{ block.super }}
