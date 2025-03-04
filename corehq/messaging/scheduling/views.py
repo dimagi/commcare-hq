@@ -1144,6 +1144,9 @@ def messaging_image_download_view(request, domain, image_key):
     return HttpResponse(image_blob, content_type=image_meta.content_type)
 
 
+@requires_privilege_json_response(privileges.REMINDERS_FRAMEWORK)
+@require_permission(HqPermissions.edit_messaging)
+@RICH_TEXT_EMAILS.required_decorator()
 def messaging_image_delete_view(request, domain, image_key):
     try:
         image = EmailImage.get_by_key(domain, image_key)
