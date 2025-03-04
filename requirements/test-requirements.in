@@ -15,4 +15,3 @@ pytest @ git+https://github.com/pytest-dev/pytest.git@85760bff2776989b365167c7ae
 pytest-django
 pytest-unmagic
 coverage
-uWSGI
