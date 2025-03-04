@@ -11,14 +11,16 @@
       {% if total > 0 %}
         <div id="form_options" class="well form-inline">
           <div>
-            <button id="resend-button"
-                    class="btn btn-default"
-                    data-target="#are-you-sure"
-                    disabled="true"
-                    title="{% trans 'Resend selected records' %}">
-              <i class="fa fa-play"></i>
-              {% trans 'Resend' %}
-            </button>
+            {% if is_superuser %}
+              <button id="resend-button"
+                      class="btn btn-default"
+                      data-target="#are-you-sure"
+                      disabled="true"
+                      title="{% trans 'Resend selected records' %}">
+                <i class="fa fa-play"></i>
+                {% trans 'Resend' %}
+              </button>
+            {% endif %}
             <button id="requeue-button"
                     class="btn btn-default"
                     data-target="#are-you-sure"

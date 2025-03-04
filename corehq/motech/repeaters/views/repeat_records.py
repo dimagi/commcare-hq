@@ -27,7 +27,7 @@ from corehq.apps.data_interfaces.tasks import (
     task_generate_ids_and_operate_on_payloads,
     task_operate_on_payloads,
 )
-from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.domain.decorators import domain_admin_required, require_superuser
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
@@ -225,6 +225,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             payload_id=self.payload_id,
             repeater_id=self.repeater_id,
             state=self.state.label.upper() if self.state else 'ALL',
+            is_superuser=self.request.user.is_superuser,
         )
         return context
 
@@ -296,6 +297,7 @@ class RepeatRecordView(View):
             'content_type': content_type,
         })
 
+    @method_decorator(require_superuser)
     def post(self, request, domain):
         # Retriggers a repeat record
         if _get_state(request):
