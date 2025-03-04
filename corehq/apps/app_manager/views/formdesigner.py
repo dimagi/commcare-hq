@@ -59,7 +59,6 @@ from corehq.apps.cloudcare.utils import should_show_preview_app
 from corehq.apps.domain.decorators import track_domain_request
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import cachebuster
-from corehq.util.context_processors import websockets_override
 
 logger = logging.getLogger(__name__)
 
@@ -154,9 +153,6 @@ def _get_form_designer_view(request, domain, app, module, form):
         ),
     })
     context.update(_get_requirejs_context())
-
-    if request.user.is_superuser:
-        context.update({'notification_options': _get_notification_options(request, domain, app, form)})
 
     notify_form_opened(domain, request.couch_user, app.id, form.unique_id)
 
@@ -376,18 +372,6 @@ def _get_core_context_scheduler_data_nodes(module, form):
             if getattr(f, 'schedule', False) and f.schedule.enabled
         ])
     return scheduler_data_nodes
-
-
-def _get_notification_options(request, domain, app, form):
-    notification_options = websockets_override(request)
-    if notification_options['WS4REDIS_HEARTBEAT'] in ['null', 'undefined']:
-        notification_options['WS4REDIS_HEARTBEAT'] = None
-    notification_options.update({
-        'notify_facility': get_facility_for_form(domain, app.id,
-                                                 form.unique_id),
-        'user_id': request.couch_user.get_id,
-    })
-    return notification_options
 
 
 def _get_requirejs_context():
