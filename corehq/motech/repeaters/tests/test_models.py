@@ -692,6 +692,11 @@ class TestFormRepeaterAllowedToForward(RepeaterTestCase):
         payload = Mock(xmlns='http://openrosa.org/formdesigner/def456')
         self.assertFalse(self.repeater.allowed_to_forward(payload))
 
+    def test_payload_user_blocked(self):
+        self.repeater.user_blocklist = ['deadbeef']
+        payload = Mock(user_id='deadbeef')
+        self.assertFalse(self.repeater.allowed_to_forward(payload))
+
 
 class TestRepeatRecordManager(RepeaterTestCase):
     before_now = datetime.utcnow() - timedelta(days=1)
