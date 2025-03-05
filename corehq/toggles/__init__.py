@@ -958,18 +958,6 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-USH_DONT_CLOSE_PATIENT_EXTENSIONS = StaticToggle(
-    'ush_dont_close_patient_extensions',
-    'USH: Suppress closing extensions on closing hosts for host/extension pairs of patient/contact case-types',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    Suppress the normal behaviour of 'closing host cases closes its extension cases'.
-    Enabling this results in 'closing patient type cases will not close its contact type
-    extension cases'. Designed for specific USH domain use-case
-    """
-)
-
 WEB_APPS_PERMISSIONS_VIA_GROUPS = StaticToggle(
     'web_apps_permissions_via_groups',
     "USH: Allow users to control access to specific web apps via mobile worker groups.",
@@ -1374,6 +1362,15 @@ CACHE_AND_INDEX = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/pages/viewpage.action?pageId=41484944',
+)
+
+
+CASE_LIST_OPTIMIZATIONS = StaticToggle(
+    'case_list_optimizations',
+    'Enable options to cache and lazy load case list columns',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2939519055/Feature+Usage+Guide+Case+List+Caching+and+Lazy+Loading+in+CommCare',  # noqa: E501
 )
 
 CUSTOM_PROPERTIES = StaticToggle(

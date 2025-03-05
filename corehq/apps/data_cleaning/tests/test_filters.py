@@ -1,13 +1,21 @@
 import pytest
 from testil import eq
-from django.test import TestCase
+from unittest import mock
+
+from django.test import TestCase, RequestFactory
 
 from corehq.apps.data_cleaning.exceptions import UnsupportedFilterValueException
+from corehq.apps.data_cleaning.filters import (
+    CaseOwnersPinnedFilter,
+    CaseStatusPinnedFilter,
+)
 from corehq.apps.data_cleaning.models import (
     BulkEditColumnFilter,
     DataType,
     FilterMatchType,
 )
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import CaseSearchES
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import (
@@ -15,6 +23,7 @@ from corehq.apps.es.tests.utils import (
     es_test,
 )
 from corehq.apps.hqwebapp.tests.tables.generator import get_case_blocks
+from corehq.apps.users.models import WebUser
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
@@ -545,3 +554,124 @@ class BulkEditColumnFilterXpathTest(TestCase):
                     column_filter.get_xpath_expression(),
                     msg=f"{match_type} for {data_type} should not return an xpath expression"
                 )
+
+
+class TestReportFilterSubclasses(TestCase):
+    domain_name = 'report-filter-pinned-test'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = create_domain(cls.domain_name)
+        cls.addClassCleanup(cls.domain.delete)
+
+        cls.web_user = WebUser.create(
+            cls.domain.name, 'tester@datacleaning.org', 'testpwd', None, None
+        )
+        cls.addClassCleanup(cls.web_user.delete, cls.domain.name, deleted_by=None)
+
+    def setUp(self):
+        super().setUp()
+        self.request = RequestFactory().get('/cases/')
+        self.request.domain = self.domain_name
+        self.request.can_access_all_locations = True
+        self.request.couch_user = self.web_user
+        self.request.project = self.domain
+
+    def test_case_owners_report_filter_context(self):
+        report_filter = CaseOwnersPinnedFilter(
+            self.request, self.domain_name, use_bootstrap5=True
+        )
+        expected_context = {
+            'report_select2_config': {
+                'select': {
+                    'options': [
+                        {'val': 't__0', 'text': '[Active Mobile Workers]'}
+                    ],
+                    'default_text': 'Filter by...',
+                    'selected': [
+                        {'id': 'project_data', 'text': '[Project Data]'},
+                    ],
+                    'placeholder': 'Please add case owners to filter the list of cases.',
+                },
+                'pagination': {
+                    'enabled': False,
+                    'url': None,
+                    'handler': '',
+                    'action': None,
+                },
+                'endpoint': '/a/report-filter-pinned-test/reports/filters/case_list_options/',
+            },
+            'filter_help': [
+                '<i class="fa fa-info-circle"></i> See <a href="'
+                'https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/'
+                '2215051298/Organization+Data+Management#Search-for-Locations" '
+                'target="_blank"> Filter Definitions</a>.',
+            ],
+        }
+        self.assertDictEqual(report_filter.filter_context, expected_context)
+
+    @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
+    def test_case_owners_report_filter_context_locations(self):
+        report_filter = CaseOwnersPinnedFilter(
+            self.request, self.domain_name, use_bootstrap5=True
+        )
+        expected_context = {
+            'report_select2_config': {
+                'select': {
+                    'options': [
+                        {'val': 't__0', 'text': '[Active Mobile Workers]'}
+                    ],
+                    'default_text': 'Filter by...',
+                    'selected': [
+                        {'id': 'project_data', 'text': '[Project Data]'},
+                    ],
+                    'placeholder': 'Please add case owners to filter the list of cases.',
+                },
+                'pagination': {
+                    'enabled': False,
+                    'url': None,
+                    'handler': '',
+                    'action': None,
+                },
+                'endpoint': '/a/report-filter-pinned-test/reports/filters/case_list_options/',
+            },
+            'filter_help': [
+                '<i class="fa fa-info-circle"></i> See <a href="'
+                'https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/'
+                '2215051298/Organization+Data+Management#Search-for-Locations" '
+                'target="_blank"> Filter Definitions</a>.',
+                'When searching by location, put your location name in quotes to '
+                'show only exact matches. To more easily find a location, you may '
+                'specify multiple levels by separating with a "/". For example, '
+                '"Massachusetts/Suffolk/Boston". <a href="https://dimagi.atlassian'
+                '.net/wiki/spaces/commcarepublic/pages/2215051298/Organization+Data'
+                '+Management"target="_blank">Learn more</a>.'
+            ],
+        }
+        self.assertDictEqual(report_filter.filter_context, expected_context)
+
+    def test_case_status_report_filter_context(self):
+        report_filter = CaseStatusPinnedFilter(
+            self.request, self.domain_name, use_bootstrap5=True
+        )
+        expected_context = {
+            'report_select2_config': {
+                'select': {
+                    'options': [
+                        {'val': 'open', 'text': 'Only Open'},
+                        {'val': 'closed', 'text': 'Only Closed'},
+                    ],
+                    'default_text': 'Show All',
+                    'selected': '',
+                    'placeholder': '',
+                },
+                'pagination': {
+                    'enabled': False,
+                    'url': None,
+                    'handler': '',
+                    'action': None,
+                },
+            },
+        }
+        self.assertDictEqual(report_filter.filter_context, expected_context)
