@@ -1,0 +1,38 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load hq_shared_tags %}
+{% load django_tables2 %}
+{% load i18n %}
+{% js_entry "integration/js/payments/payments_verify" %}
+
+{% block page_content %}
+  <div>
+    <h1 class="py-3 m-0">{% trans "Payments Verification Report" %}</h1>
+  </div>
+  <div id="verify-alert"></div>
+  <p>
+    <button
+      id="verify-selected-btn"
+      class="btn btn-primary"
+      type="button"
+      disabled="true"
+      data-bs-toggle="modal"
+      data-bs-target="#verify-confirmation-modal"
+    >
+      <span> {% trans "Verify Selected" %} </span>
+    </button>
+  </p>
+  <div
+    hx-trigger="load"
+    hx-get="{% url 'payments_verify_table' domain %}{% querystring %}"
+  >
+    <div class="htmx-indicator">
+      <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading..." %}
+    </div>
+  </div>
+  {% include "payments/partials/payments_confirmation_modal.html" %}
+{% endblock %}
+
+{% block modals %}
+  {% include "hqwebapp/htmx/error_modal.html" %}
+  {{ block.super }}
+{% endblock modals %}
