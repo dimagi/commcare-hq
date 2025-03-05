@@ -2,6 +2,7 @@ from django.utils.translation import gettext as _
 
 from corehq.apps.celery import task
 from celery.utils.log import get_task_logger
+from collections import defaultdict
 
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
@@ -85,21 +86,21 @@ def prune_auto_generated_builds(domain, app_id):
 @task(queue='background_queue', ignore_result=True)
 def refresh_data_dictionary_from_app(domain, app_id):
     from corehq.apps.app_manager.util import actions_use_usercase
-    from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
+    from corehq.apps.data_dictionary.util import create_properties_for_case_types
     app = get_app(domain, app_id)
+    case_type_to_prop = defaultdict(set)
     for module in app.get_modules():
         if not module.is_surveys:
             for form in module.get_forms():
                 if form.form_type == 'advanced_form':
                     for action in form.actions.load_update_cases:
-                        add_properties_to_data_dictionary(domain, action.case_type,
-                                                          list(action.case_properties))
+                        case_type_to_prop[action.case_type].update(action.case_properties)
                 else:
-                    add_properties_to_data_dictionary(domain, module.case_type,
-                                                      list(form.actions.update_case.update))
+                    case_type_to_prop[module.case_type].update(form.actions.update_case.update)
                     if actions_use_usercase(form.actions):
-                        add_properties_to_data_dictionary(domain, USERCASE_TYPE,
-                                                          list(form.actions.usercase_update.update))
+                        case_type_to_prop[USERCASE_TYPE].update(form.actions.usercase_update.update)
+    if case_type_to_prop:
+        create_properties_for_case_types(domain, case_type_to_prop)
 
 
 @task(queue='background_queue', ignore_result=True)

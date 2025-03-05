@@ -30,7 +30,7 @@ from corehq.util.quickcache import quickcache
 
 def generate_data_dictionary(domain):
     properties_by_case_type = _get_properties_by_case_type(domain)
-    _create_properties_for_case_types(domain, properties_by_case_type)
+    create_properties_for_case_types(domain, properties_by_case_type)
     CaseType.objects.filter(domain=domain, name__in=list(properties_by_case_type)).update(fully_generated=True)
     return True
 
@@ -82,10 +82,10 @@ def _get_current_case_types_and_properties(domain):
 
 
 def add_properties_to_data_dictionary(domain, case_type, properties):
-    _create_properties_for_case_types(domain, {case_type: properties})
+    create_properties_for_case_types(domain, {case_type: properties})
 
 
-def _create_properties_for_case_types(domain, case_type_to_prop):
+def create_properties_for_case_types(domain, case_type_to_prop):
     current_case_types, current_properties = _get_current_case_types_and_properties(domain)
     new_case_properties = []
 
