@@ -1,6 +1,6 @@
 {% load i18n %}
 
-{% if verify_success %}
+{% if success_count %}
   <div class="alert alert-success alert-dismissable fade show" role="alert">
     {% blocktrans %}
       Successfully verified {{ success_count }} rows!
@@ -12,7 +12,8 @@
       aria-label="{% trans Close %}"
     ></button>
   </div>
-{% else %}
+{% endif %}
+{% if fail_count %}
   <div class="alert alert-danger alert-dismissable fade show" role="alert">
     {% blocktrans %}
       Failed to verify {{ fail_count }} rows!
