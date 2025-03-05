@@ -52,9 +52,8 @@ function multiCheckboxSelectionHandler(selectRowInputName, selectAllInputName, c
     };
 
     const updateSelectAllCheckbox = function () {
-        const $selectAll = $(`input[name="${selectAllInputName}"]`);
         if (self.selectedIds.length === 0) {
-            $selectAll.prop('checked', false);
+            $(`input[name="${selectAllInputName}"]`).prop('checked', false);
         }
     };
 }

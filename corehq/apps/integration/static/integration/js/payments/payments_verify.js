@@ -8,13 +8,8 @@ function updateVerifyButton(selectedIds) {
     const $verifyBtn = $('#verify-selected-btn');
     let verifyBtnVals = JSON.parse($verifyBtn.attr('hx-vals'));
 
-    if (selectedIds.length > 0) {
-        $verifyBtn.prop('disabled', false);
-        verifyBtnVals['selected_ids'] = selectedIds;
-    } else {
-        $verifyBtn.prop('disabled', true);
-        verifyBtnVals['selected_ids'] = [];
-    }
+    $verifyBtn.prop('disabled', !(selectedIds.length));
+    verifyBtnVals['selected_ids'] = selectedIds;
     $verifyBtn.attr('hx-vals', JSON.stringify(verifyBtnVals));
 }
 
@@ -27,7 +22,7 @@ $(document).on('htmx:afterRequest', function (event) {
     // Reset on pagination as the table is recreated after htmx request
     const requestPath = event.detail.requestConfig.path;
     const method = event.detail.requestConfig.verb;
-    if (requestPath.includes('/payments/verify/table/') && method === 'get' && event.detail.successful === true) {
+    if (requestPath.includes('/payments/verify/table/') && method === 'get' && event.detail.successful) {
         handler.selectedIds = [];
         updateVerifyButton([]);
     }

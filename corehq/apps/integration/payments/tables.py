@@ -38,7 +38,7 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
         verbose_name=_("Currency"),
     )
     user_or_case_id = columns.Column(
-        verbose_name=_("user or Case Id"),
+        verbose_name=_("User or Case ID"),
     )
     payee_note = columns.Column(
         verbose_name=_("Payee Note"),

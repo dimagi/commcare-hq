@@ -28,7 +28,6 @@
           class="btn btn-primary"
           type="button"
           hx-post="{% url 'kyc_verify_table' request.domain %}"
-          hx-swap="innerHTML"
           hx-target="#verify-alert"
           hq-hx-action="verify_rows"
           hx-vals='{

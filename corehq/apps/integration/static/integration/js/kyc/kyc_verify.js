@@ -12,14 +12,13 @@ function updateVerifyButton(selectedIds) {
     if (selectedIds.length > 0) {
         $verifyAll.addClass('d-none');
         $verifySelected.removeClass('d-none');
-        verifyBtnVals['selected_ids'] = selectedIds;
         verifyBtnVals['verify_all'] = false;
     } else {
         $verifyAll.removeClass('d-none');
         $verifySelected.addClass('d-none');
-        verifyBtnVals['selected_ids'] = [];
         verifyBtnVals['verify_all'] = true;
     }
+    verifyBtnVals['selected_ids'] = selectedIds;
     $verifyBtn.attr('hx-vals', JSON.stringify(verifyBtnVals));
 }
 
@@ -32,7 +31,7 @@ $(document).on('htmx:afterRequest', function (event) {
     // Reset on pagination as the table is recreated after htmx request
     const requestPath = event.detail.requestConfig.path;
     const method = event.detail.requestConfig.verb;
-    if (requestPath.includes('/kyc/verify/table/') && method === 'get' && event.detail.successful === true) {
+    if (requestPath.includes('/kyc/verify/table/') && method === 'get' && event.detail.successful) {
         handler.selectedIds = [];
         updateVerifyButton([]);
     }
