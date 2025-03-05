@@ -1364,6 +1364,15 @@ CACHE_AND_INDEX = StaticToggle(
     help_link='https://confluence.dimagi.com/pages/viewpage.action?pageId=41484944',
 )
 
+
+CASE_LIST_OPTIMIZATIONS = StaticToggle(
+    'case_list_optimizations',
+    'Enable options to cache and lazy load case list columns',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2939519055/Feature+Usage+Guide+Case+List+Caching+and+Lazy+Loading+in+CommCare',  # noqa: E501
+)
+
 CUSTOM_PROPERTIES = StaticToggle(
     'custom_properties',
     'Allow users to add arbitrary custom properties to their application',
