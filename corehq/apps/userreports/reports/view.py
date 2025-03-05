@@ -147,10 +147,12 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     template_name = 'userreports/configurable_report.html'
     slug = "configurable"
     prefix = slug
-    emailable = False
     is_exportable = True
     exportable_all = False
     show_filters = True
+
+    # The UCR UI does not currently support emailing. However, UCRs can be emailed via scheduled reports.
+    emailable = True
 
     _domain = None
 
@@ -374,7 +376,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             "type": self.type,
             "isExportable": self.is_exportable,
             "isExportAll": self.exportable_all,
-            "isEmailable": self.emailable,
+            "isEmailable": False,       # see emailable attr above
             "emailDefaultSubject": self.title,
         }
 
