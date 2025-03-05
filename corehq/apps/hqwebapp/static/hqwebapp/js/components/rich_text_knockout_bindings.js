@@ -25,7 +25,7 @@ const parser = new DOMParser();
 
 const editorImages = new WeakMap();
 
-const fullDomain = window.location.origin
+const fullDomain = window.location.origin;
 
 function extractImages(html) {
     const images = new Set();
