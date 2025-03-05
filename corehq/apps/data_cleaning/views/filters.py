@@ -1,20 +1,14 @@
-from django.http import Http404
 from django.utils.decorators import method_decorator
-from django.utils.translation import gettext_lazy, gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.generic import TemplateView
 from memoized import memoized
 
 from corehq import toggles
-from corehq.apps.data_cleaning.filters import (
-    CaseOwnersPinnedFilter,
-    CaseStatusPinnedFilter,
-)
-from corehq.apps.data_cleaning.models import PinnedFilterType
 from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
-from corehq.util.htmx_action import HqHtmxActionMixin
+from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 from corehq.util.timezones.utils import get_timezone
 
 
@@ -22,7 +16,7 @@ from corehq.util.timezones.utils import get_timezone
     use_bootstrap5,
     toggles.DATA_CLEANING_CASES.required_decorator(),
 ], name='dispatch')
-class BaseFilterFormView(HqHtmxActionMixin, LoginAndDomainMixin, DomainViewMixin, TemplateView):
+class BaseFilterFormView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin, TemplateView):
     pass
 
 
@@ -32,36 +26,29 @@ class PinnedFilterFormView(BulkEditSessionViewMixin, BaseFilterFormView):
     session_not_found_message = gettext_lazy("Cannot retrieve pinned filter, session was not found.")
 
     @property
-    @memoized
     def timezone(self):
         return get_timezone(self.request, self.domain)
 
     @property
-    def filter_type(self):
-        return self.kwargs['filter_type']
-
-    @property
-    def form_filter_class(self):
-        filter_type_to_class = {
-            PinnedFilterType.CASE_OWNERS: CaseOwnersPinnedFilter,
-            PinnedFilterType.CASE_STATUS: CaseStatusPinnedFilter,
-        }
-        try:
-            return filter_type_to_class[self.filter_type]
-        except KeyError:
-            raise Http404(_("unsupported filter type: {}").format(self.filter_type))
-
-    @property
     @memoized
-    def form_filter(self):
-        return self.form_filter_class(
-            self.request, self.domain, self.timezone, use_bootstrap5=True
-        )
+    def form_filters(self):
+        return [
+            f.get_report_filter_class()(
+                self.session, self.request, self.domain, self.timezone, use_bootstrap5=True
+            ) for f in self.session.pinned_filters.all()
+        ]
+
+    @hq_hx_action('post')
+    def update_filters(self, request, *args, **kwargs):
+        [f.update_stored_value() for f in self.form_filters]
+        return self.get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
-            "filter_type": self.filter_type,
-            "rendered_filter": self.form_filter.render(),
+            'container_id': 'pinned-filters',
+            'form_filters': [
+                f.render() for f in self.form_filters
+            ],
         })
         return context

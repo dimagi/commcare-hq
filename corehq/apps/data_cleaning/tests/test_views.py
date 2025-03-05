@@ -5,7 +5,6 @@ from django.urls import reverse
 
 from corehq.apps.data_cleaning.models import (
     BulkEditSession,
-    PinnedFilterType,
 )
 from corehq.apps.data_cleaning.views.filters import (
     PinnedFilterFormView,
@@ -74,8 +73,12 @@ class CleanCasesViewAccessTest(TestCase):
             (CleanCasesSessionView, (cls.domain_name, cls.fake_session_id,)),
             (CleanCasesTableView, (cls.domain_name, cls.real_session_id,)),
             (CleanCasesTableView, (cls.domain_name, cls.fake_session_id,)),
-            (PinnedFilterFormView, (cls.domain_name, cls.real_session_id, PinnedFilterType.CASE_OWNERS)),
-            (PinnedFilterFormView, (cls.domain_name, cls.fake_session_id, PinnedFilterType.CASE_OWNERS)),
+            (PinnedFilterFormView, (cls.domain_name, cls.real_session_id,)),
+            (PinnedFilterFormView, (cls.domain_name, cls.fake_session_id,)),
+        ]
+        cls.views_not_found_with_invalid_session = [
+            CleanCasesTableView,
+            PinnedFilterFormView,
         ]
 
     @classmethod
@@ -134,11 +137,21 @@ class CleanCasesViewAccessTest(TestCase):
         self.assertEqual(response.status_code, 302)
 
     @flag_enabled('DATA_CLEANING_CASES')
-    def test_table_view_not_found_with_no_existing_session(self):
+    def test_views_not_found_with_invalid_session(self):
         self.client.login(username=self.user_in_domain.username, password=self.password)
-        table_url = reverse(CleanCasesTableView.urlname, args=(self.domain_name, self.fake_session_id))
-        response = self.client.get(table_url)
-        self.assertEqual(response.status_code, 404)
+
+        for view_class, args in self.all_views:
+            if not (self.fake_session_id in args
+                    and view_class in self.views_not_found_with_invalid_session):
+                # only test views expected to 404 with invalid sessions
+                continue
+            url = reverse(view_class.urlname, args=args)
+            response = self.client.get(url)
+            self.assertEqual(
+                response.status_code,
+                404,
+                msg=f"{view_class.__name__} should NOT be accessible"
+            )
 
     @flag_enabled('DATA_CLEANING_CASES')
     def test_has_no_access_with_other_domain(self):
