@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
 
     operations = [
         corehq.apps.es.migration_operations.UpdateIndexMapping(
-            name=index_runtime_name('users-20230524'),
+            name=index_runtime_name('users-2024-05-09'),
             type_='user',
             properties={
                 'last_modified': {
