@@ -34,11 +34,7 @@
       {% endblocktrans %}
     </p>
   {% endif %}
-  <ul
-    class="nav nav-tabs sticky-tabs"
-    id="user-settings-tabs"
-    style="margin-bottom: 10px;"
-  >
+  <ul class="nav nav-tabs sticky-tabs mb-3" id="user-settings-tabs">
     <li><a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a></li>
     <li><a href="#groups" data-toggle="tab">{% trans "Groups" %}</a></li>
     {% if commtrack_enabled or uses_locations %}
@@ -200,7 +196,7 @@
                     {% endblocktrans %}
                   {% endif %}
                 </p>
-                <div style="margin-top: 5px;">
+                <div class="mt-2">
                   <form
                     class="form form-horizontal"
                     action="{% url "toggle_demo_mode" domain couch_user.user_id %}"
@@ -223,7 +219,7 @@
                   </form>
                 </div>
                 {% if couch_user.is_demo_user %}
-                  <div style="margin-top: 5px;">
+                  <div class="mt-2">
                     <form
                       class="form form-horizontal"
                       action="{% url "reset_demo_user_restore" domain couch_user.user_id %}"
@@ -348,8 +344,7 @@
             </h4>
           </div>
           <form
-            class="form-horizontal"
-            style="margin: 0; padding: 0"
+            class="form-horizontal m-0 p-0"
             action="{% url "delete_commcare_user" domain couch_user.user_id %}"
             method="post"
             data-bind="submit: submit"
