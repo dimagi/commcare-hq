@@ -238,7 +238,6 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
 class CommCareUserResource(v0_1.CommCareUserResource):
     primary_location = fields.CharField()
     locations = fields.ListField()
-    last_modified = fields.DateTimeField(null=True, attribute='last_modified')
 
     class Meta(v0_1.CommCareUserResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
@@ -400,7 +399,6 @@ class WebUserResource(v0_1.WebUserResource):
     user_data = fields.DictField()
     tableau_role = fields.CharField(null=True)
     tableau_groups = fields.ListField(null=True)
-    last_modified = fields.DateTimeField(null=True, attribute='last_modified')
 
     class Meta(v0_1.WebUserResource.Meta):
         detail_allowed_methods = ['get', 'patch']
