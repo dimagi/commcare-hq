@@ -12,12 +12,12 @@ function multiCheckboxSelectionHandler(selectRowInputName, selectAllInputName, c
     var self = this;
     self.selectedIds = [];
 
-    self.init = function() {
+    self.init = function () {
         $(document).on('change', `input[name="${selectRowInputName}"]`, handleRowSelection);
         $(document).on('change', `input[name="${selectAllInputName}"]`, handleSelectAll);
     };
 
-    const handleRowSelection = function(event) {
+    const handleRowSelection = function (event) {
         const rowId = $(event.target).val();
         const isChecked = $(event.target).prop('checked');
 
@@ -33,7 +33,7 @@ function multiCheckboxSelectionHandler(selectRowInputName, selectAllInputName, c
         updateSelectAllCheckbox();
     };
 
-    const handleSelectAll = function(event) {
+    const handleSelectAll = function (event) {
         const isChecked = $(event.target).prop('checked');
         const $rowCheckboxes = $(`input[name="${selectRowInputName}"]:not(:disabled)`);
 
@@ -51,7 +51,7 @@ function multiCheckboxSelectionHandler(selectRowInputName, selectAllInputName, c
         }
     };
 
-    const updateSelectAllCheckbox = function() {
+    const updateSelectAllCheckbox = function () {
         const $selectAll = $(`input[name="${selectAllInputName}"]`);
         if (self.selectedIds.length === 0) {
             $selectAll.prop('checked', false);
