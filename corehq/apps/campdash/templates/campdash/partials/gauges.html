@@ -1,0 +1,38 @@
+{% load i18n %}
+
+<div class="row" x-data="{ gauges: initialPageData.get('gauges') }">
+  <template x-for="(gauge, index) in gauges" :key="index">
+    <div class="col-md-4 mb-4">
+      <div class="text-center">
+        <h3 class="h6 mb-3" x-text="gauge.title"></h3>
+        <div class="gauge-container">
+          <canvas :id="'gauge-' + index" width="200" height="200" class="gauge-canvas"></canvas>
+          <div class="gauge-value">
+            <span x-text="gauge.value"></span>
+            <span x-show="gauge.type === 'percentage'">%</span>
+          </div>
+        </div>
+        <div class="gauge-labels mt-2">
+          <div class="d-flex justify-content-between">
+            <span x-text="gauge.min"></span>
+            <span x-text="gauge.max"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+</div>
+
+<script>
+  document.addEventListener('alpine:init', () => {
+    // Initialize gauges after Alpine.js has loaded
+    const gauges = initialPageData.get('gauges');
+    if (gauges) {
+      setTimeout(() => {
+        gauges.forEach((gauge, index) => {
+          initGauge('gauge-' + index, gauge);
+        });
+      }, 100);
+    }
+  });
+</script> 

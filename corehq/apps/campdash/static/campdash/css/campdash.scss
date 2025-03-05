@@ -1,0 +1,115 @@
+/* Campaign Dashboard Styles */
+
+/* Gauge Styles */
+.gauge-container {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin: 0 auto;
+}
+
+.gauge-canvas {
+  display: block;
+  margin: 0 auto;
+}
+
+.gauge-value {
+  position: absolute;
+  bottom: 40px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+}
+
+.gauge-labels {
+  width: 80%;
+  margin: 0 auto;
+  font-size: 12px;
+  color: #666;
+}
+
+/* Report Styles */
+.table th {
+  cursor: pointer;
+  position: relative;
+  
+  &.sorting-asc::after,
+  &.sorting-desc::after {
+    content: '';
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+  }
+  
+  &.sorting-asc::after {
+    border-bottom: 5px solid #333;
+    margin-top: -5px;
+  }
+  
+  &.sorting-desc::after {
+    border-top: 5px solid #333;
+    margin-top: 0;
+  }
+}
+
+/* Map Styles */
+#campaign-map {
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+.map-popup {
+  h5 {
+    margin-top: 0;
+    margin-bottom: 5px;
+    font-size: 14px;
+  }
+  
+  p {
+    margin: 0;
+    font-size: 12px;
+  }
+}
+
+/* HTMX Indicator Styles */
+.htmx-indicator {
+  opacity: 0;
+  transition: opacity 200ms ease-in;
+}
+
+.htmx-request .htmx-indicator {
+  opacity: 1;
+}
+
+.htmx-request.htmx-indicator {
+  opacity: 1;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .gauge-container {
+    width: 150px;
+    height: 150px;
+  }
+  
+  .gauge-canvas {
+    width: 150px;
+    height: 150px;
+  }
+  
+  .gauge-value {
+    font-size: 20px;
+    bottom: 30px;
+  }
+  
+  #campaign-map {
+    height: 300px !important;
+  }
+} 
