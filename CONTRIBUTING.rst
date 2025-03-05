@@ -194,7 +194,7 @@ Reviews with CodeRabbit
 
 CodeRabbit is an AI-powered code reviewer that delivers context-aware feedback on pull requests within
 minutes. It provides a fresh perspective and catches issues that are often missed, enhancing the
-overall review quality.
+overall review quality. A clean CodeRabbit review does not constitute approval allowing the PR to be merged.
 
 Although not required, it's recommended that you use CodeRabbit to review your PRs, ideally before any human-reviewers
 do so. A good way to do this is creating a draft PR first, let CodeRabbit review, address the feedback, then
