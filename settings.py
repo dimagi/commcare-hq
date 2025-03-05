@@ -393,8 +393,6 @@ HQ_APPS = (
     'custom.reports.mc',
     'custom.ucla',
 
-    'custom.common',
-
     'custom.hki',
     'custom.bha',
     'custom.covid',
