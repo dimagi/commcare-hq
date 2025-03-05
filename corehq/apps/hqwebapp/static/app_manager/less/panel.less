@@ -138,7 +138,14 @@
     min-width: 250px;
   }
   .ko-inline-edit {
-    margin-left: 20px;
+    .read-only {
+      margin-left: 20px;
+    }
+    .read-write textarea {
+      margin-top: 1px;
+      margin-bottom: 1px;
+      width: 100%;
+    }
   }
 }
 .panel-case-actions {
