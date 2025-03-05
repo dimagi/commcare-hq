@@ -958,18 +958,6 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-USH_DONT_CLOSE_PATIENT_EXTENSIONS = StaticToggle(
-    'ush_dont_close_patient_extensions',
-    'USH: Suppress closing extensions on closing hosts for host/extension pairs of patient/contact case-types',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    Suppress the normal behaviour of 'closing host cases closes its extension cases'.
-    Enabling this results in 'closing patient type cases will not close its contact type
-    extension cases'. Designed for specific USH domain use-case
-    """
-)
-
 WEB_APPS_PERMISSIONS_VIA_GROUPS = StaticToggle(
     'web_apps_permissions_via_groups',
     "USH: Allow users to control access to specific web apps via mobile worker groups.",
@@ -1563,6 +1551,7 @@ RICH_TEXT_EMAILS = StaticToggle(
     'Enable sending rich text HTML emails in conditional alerts and broadcasts',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    help_link='https://dimagi.atlassian.net/wiki/spaces/USH/pages/2901835924/Rich+text+emails'
 )
 
 RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
@@ -3020,4 +3009,11 @@ MTN_MOBILE_WORKER_VERIFICATION = StaticToggle(
     label='Enable user verification using MTN Mobile Money',
     tag=TAG_SOLUTIONS,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+ACTIVATE_DATADOG_APM_TRACES = StaticToggle(
+    slug='activate_datadog_apm_traces',
+    label='USH: Turn on Datadog APM traces for a project.',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
 )

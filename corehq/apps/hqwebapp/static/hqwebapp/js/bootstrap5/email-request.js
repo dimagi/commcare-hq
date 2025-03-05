@@ -88,7 +88,6 @@ hqDefine('hqwebapp/js/bootstrap5/email-request', [
 
         self.resetForm = function () {
             self.$formElement.find("button[type='submit']").changeButtonState('reset');
-            self.$formElement.get(0).reset();
             self.cancelBtnEnabled(true);
             self.$submitBtn.changeButtonState('reset');
             resetErrors();

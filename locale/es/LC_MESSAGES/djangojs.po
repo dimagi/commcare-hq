@@ -580,6 +580,11 @@ msgid "Select parent"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "Save Questions to Case Properties"
+msgstr "Guardar Preguntas a Propiedades de Caso"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Raw"
 msgstr "Sin procesar"
 
@@ -640,10 +645,6 @@ msgstr "Tiene configuraciones de caso sin cambio"
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "You have unchanged user properties settings"
 msgstr "Tiene configuraciones de propiedades sin cambio"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-msgid "Save Questions to Case Properties"
-msgstr "Guardar Preguntas a Propiedades de Caso"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "Save Questions to User Properties"
@@ -5450,11 +5451,3 @@ msgstr "¡Incorrecto! La respuesta es:"
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr ""
-
-#~ msgid "An error occurred emailing you report. Please try again."
-#~ msgstr ""
-#~ "Ocurrió un error al enviar por correo electrónico su reporte. Por favor "
-#~ "intente de nuevo."
-
-#~ msgid "Show Deactivated Mobile Workers"
-#~ msgstr "Mostrar Usuarios Móviles Desactivados"

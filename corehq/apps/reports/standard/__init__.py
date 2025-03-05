@@ -1,5 +1,4 @@
 import warnings
-import contextlib
 from datetime import datetime
 from functools import wraps
 
@@ -370,8 +369,9 @@ def profile(name=None):
     def decorator(func):
         @wraps(func)
         def wrapper(obj, *args, **kwargs):
-            with obj.profiler.timing_context(name) if obj.profiler_enabled else contextlib.nullcontext():
-                result = func(obj, *args, **kwargs)
-            return result
+            if obj.profiler_enabled:
+                with obj.profiler.timing_context(name):
+                    return func(obj, *args, **kwargs)
+            return func(obj, *args, **kwargs)
         return wrapper
     return decorator

@@ -570,6 +570,11 @@ msgid "Select parent"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "Save Questions to Case Properties"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Raw"
 msgstr ""
 
@@ -629,10 +634,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "You have unchanged user properties settings"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-msgid "Save Questions to Case Properties"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js

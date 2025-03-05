@@ -1,0 +1,19 @@
+{% extends 'data_cleaning/filters/pinned/base.html' %}
+{% load hq_shared_tags %}
+
+{% block filter_content %}
+  <div class="input-group">
+    <select
+      class="form-select"
+      name="{{ slug }}"
+      multiple
+      x-report-select2-multi="{% html_attr report_select2_config %}"
+    ></select>
+  </div>
+
+  {% for help in filter_help %}
+    <div class="help-block">
+      {{ help }}
+    </div>
+  {% endfor %}
+{% endblock %}
