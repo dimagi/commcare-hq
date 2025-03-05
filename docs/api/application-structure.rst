@@ -15,6 +15,9 @@ Overview
 
 *Omit* ``app_id`` *in the URL to retrieve a list of applications.*
 
+**Permission Required**
+    Edit Apps
+
 Request & Response Details
 ---------------------------
 

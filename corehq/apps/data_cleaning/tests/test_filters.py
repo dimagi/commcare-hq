@@ -2,6 +2,7 @@ import pytest
 from testil import eq
 from unittest import mock
 
+from django.http import QueryDict
 from django.test import TestCase, RequestFactory
 
 from corehq.apps.data_cleaning.exceptions import UnsupportedFilterValueException
@@ -13,6 +14,8 @@ from corehq.apps.data_cleaning.models import (
     BulkEditColumnFilter,
     DataType,
     FilterMatchType,
+    BulkEditSession,
+    PinnedFilterType,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
@@ -577,10 +580,13 @@ class TestReportFilterSubclasses(TestCase):
         self.request.can_access_all_locations = True
         self.request.couch_user = self.web_user
         self.request.project = self.domain
+        self.session = BulkEditSession.new_case_session(
+            self.web_user.get_django_user(), self.domain_name, 'plants',
+        )
 
     def test_case_owners_report_filter_context(self):
         report_filter = CaseOwnersPinnedFilter(
-            self.request, self.domain_name, use_bootstrap5=True
+            self.session, self.request, self.domain_name, use_bootstrap5=True
         )
         expected_context = {
             'report_select2_config': {
@@ -614,7 +620,7 @@ class TestReportFilterSubclasses(TestCase):
     @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
     def test_case_owners_report_filter_context_locations(self):
         report_filter = CaseOwnersPinnedFilter(
-            self.request, self.domain_name, use_bootstrap5=True
+            self.session, self.request, self.domain_name, use_bootstrap5=True
         )
         expected_context = {
             'report_select2_config': {
@@ -651,9 +657,32 @@ class TestReportFilterSubclasses(TestCase):
         }
         self.assertDictEqual(report_filter.filter_context, expected_context)
 
+    def test_case_owners_update_stored_value(self):
+        self.request.POST = QueryDict(
+            'case_list_filter=project_data&case_list_filter=t__6&case_list_filter=t__3'
+        )
+        self.request.method = 'POST'
+        pinned_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_OWNERS)
+        self.assertIsNone(pinned_filter.value)
+        report_filter = CaseOwnersPinnedFilter(
+            self.session, self.request, self.domain_name, use_bootstrap5=True
+        )
+        report_filter.update_stored_value()
+        pinned_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_OWNERS)
+        self.assertEqual(pinned_filter.value, ['project_data', 't__6', 't__3'])
+        expected_value = [
+            {'id': 'project_data', 'text': '[Project Data]'},
+            {'id': 't__6', 'text': '[Web Users]'},
+            {'id': 't__3', 'text': '[Unknown Users]'},
+        ]
+        self.assertEqual(
+            report_filter.filter_context['report_select2_config']['select']['selected'],
+            expected_value
+        )
+
     def test_case_status_report_filter_context(self):
         report_filter = CaseStatusPinnedFilter(
-            self.request, self.domain_name, use_bootstrap5=True
+            self.session, self.request, self.domain_name, use_bootstrap5=True
         )
         expected_context = {
             'report_select2_config': {
@@ -675,3 +704,21 @@ class TestReportFilterSubclasses(TestCase):
             },
         }
         self.assertDictEqual(report_filter.filter_context, expected_context)
+
+    def test_case_status_update_stored_value(self):
+        self.request.POST = QueryDict(
+            'is_open=open'
+        )
+        self.request.method = 'POST'
+        pinned_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_STATUS)
+        self.assertIsNone(pinned_filter.value)
+        report_filter = CaseStatusPinnedFilter(
+            self.session, self.request, self.domain_name, use_bootstrap5=True
+        )
+        report_filter.update_stored_value()
+        pinned_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_STATUS)
+        self.assertEqual(pinned_filter.value, ['open'])
+        self.assertEqual(
+            report_filter.filter_context['report_select2_config']['select']['selected'],
+            'open'
+        )
