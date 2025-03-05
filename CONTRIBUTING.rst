@@ -190,7 +190,7 @@ As long as either of these labels are present on the PR it will have a pending s
 Reviews with CodeRabbit
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. note:: CodeRabbit is still being experimented with in CommCareHQ.
+.. note:: CodeRabbit is being evaluated as a code review tool for CommCare HQ.
 
 CodeRabbit is an AI-powered code reviewer that delivers context-aware feedback on pull requests within
 minutes. It provides a fresh perspective and catches issues that are often missed, enhancing the
