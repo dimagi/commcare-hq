@@ -35,7 +35,7 @@
           class="btn btn-primary"
           id="verify-confirmation-btn"
           data-bs-dismiss="modal"
-          hx-post="{% url 'payments_verify_table' request.domain %}"
+          hx-post="{% url 'payments_verify_table' domain %}"
           hx-target="#verify-alert"
           hq-hx-action="verify_rows"
           hx-vals='{
