@@ -61,7 +61,8 @@ class AppManagerTest(TestCase, TestXmlMixin):
         add_build(**cls.build2)
 
         cls.domain = 'test-domain'
-        create_domain(cls.domain)
+        domain = create_domain(cls.domain)
+        cls.addClassCleanup(domain.delete)
 
         cls.xform_str = cls.get_xml('very_simple_form').decode('utf-8')
 

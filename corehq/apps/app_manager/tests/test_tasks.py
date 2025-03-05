@@ -32,7 +32,8 @@ class AppManagerTasksTest(TestCase):
         add_build(**cls.build2)
 
         cls.domain = 'test-domain'
-        create_domain(cls.domain)
+        domain = create_domain(cls.domain)
+        cls.addClassCleanup(domain.delete)
 
     @property
     def _yesno_source(self):
