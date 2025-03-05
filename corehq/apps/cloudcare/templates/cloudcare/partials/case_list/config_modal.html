@@ -9,7 +9,12 @@
               <% _.each(headers, function(header, index) { %>
                   <div class="checkbox">
                       <label>
-                          <input type="checkbox" class="header-checkbox" value="<%= index %>" data-index="<%= index %>" checked="<%= headerVisible[index] %>" >
+                          <input
+                            type="checkbox"
+                              class="header-checkbox"
+                              value="<%= index %>"
+                              data-index="<%= index %>"
+                              <%= headerVisible[index] ? 'checked' : '' %> >
                           <%= header %>
                       </label>
                   </div>
