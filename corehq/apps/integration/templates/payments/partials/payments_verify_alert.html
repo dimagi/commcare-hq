@@ -1,6 +1,6 @@
 {% load i18n %}
 
-{% if verify_success %}
+{% if success_count %}
   <div class="alert alert-success alert-dismissable fade show" role="alert">
     {% blocktrans %}
       Successfully submitted {{ success_count }} records for payments!
@@ -12,7 +12,8 @@
       aria-label="{% trans Close %}"
     ></button>
   </div>
-{% else %}
+{% endif %}
+{% if failure_count %}
   <div class="alert alert-danger alert-dismissable fade show" role="alert">
     {% blocktrans %}
       Failed to submit {{ failure_count }} records for payments!

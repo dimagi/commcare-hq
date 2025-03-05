@@ -38,11 +38,9 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
     @hq_hx_action('post')
     def verify_rows(self, request, *args, **kwargs):
         # TODO Verify payments to be done in a followup ticket
-        verify_success = True
         success_count = 0
         failure_count = 0
         context = {
-            'verify_success': verify_success,
             'success_count': success_count,
             'failure_count': failure_count,
         }
