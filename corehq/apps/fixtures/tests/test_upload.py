@@ -207,15 +207,22 @@ validation_test_cases = [
             ('N', 'things', 'yes', 'name', 'lang')
         ]
     }),
+    ('invalid_field_name', [
+        "Error in 'types' sheet for 'field 1', 'name()'. "
+        "Field names cannot include special characters or begin with 'xml' or a number",
+    ], {
+        'things': [('UID', 'Delete(Y/N)', 'field: name()'), (None, 'N', 'apple')],
+        'types': [('Delete(Y/N)', 'table_id', 'is_global?', 'field 1'), ('N', 'things', 'yes', 'name()')]
+    }),
     ('invalid_field_name_numerical', [
         "Error in 'types' sheet for 'field 1', '100'. "
-        "Field names should be strings, not numbers",
+        "Field names cannot include special characters or begin with 'xml' or a number",
     ], {
         'things': [('UID', 'Delete(Y/N)', 'field: name'), (None, 'N', 'apple')],
         'types': [('Delete(Y/N)', 'table_id', 'is_global?', 'field 1'), ('N', 'things', 'yes', 100)]
     }),
     ('not_excel_file', [
-        "Upload failed! Please make sure you are using a valid Excel 2007 or later (.xlsx) file. " \
+        "Upload failed! Please make sure you are using a valid Excel 2007 or later (.xlsx) file. "
         "Error details: \"There is no item named '[Content_Types].xml' in the archive\".",
     ], None),
     ('no_types_sheet', [
