@@ -1665,6 +1665,22 @@
     tag: hidden
     type: DataBindOnly
     value: /progress_note/meta/appVersion
+  - calculate: null
+    children: []
+    comment: null
+    constraint: null
+    group: ''
+    hashtagValue: /progress_note/meta/formLoadTime
+    label: meta/formLoadTime
+    options: []
+    relevant: null
+    repeat: null
+    required: null
+    response: null
+    setvalue: '111'
+    tag: hidden
+    type: DataBindOnly
+    value: /progress_note/meta/formLoadTime
   - calculate: /progress_note/note/encounter_date
     children: []
     comment: null

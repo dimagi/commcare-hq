@@ -9,6 +9,7 @@
 		<n0:userID>6046f531e7c5bdb2cb59258a783c00b1</n0:userID>
 		<n0:instanceID>801b5a2f-42f0-4394-97b9-fd0622ff6448</n0:instanceID>
 		<cc:appVersion>v1.4.0dev (09e3a4-862681-unvers-??-Generic/AnyPhone) b:2012-Mar-02 r:--</cc:appVersion>
+        <n0:formLoadTime>111</n0:formLoadTime>
 	</n0:meta>
 	<n1:case case_id="4aaeeb3f-87d6-4c21-90f5-4d2aabdff589"
 		date_modified="2012-03-02" user_id="6046f531e7c5bdb2cb59258a783c00b1"

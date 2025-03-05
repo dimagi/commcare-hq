@@ -23,6 +23,7 @@
                         <orx:userID/>
                         <orx:instanceID/>
                         <cc:appVersion/>
+                        <orx:formLoadTime/>
                     </orx:meta>
                 </data>
             </instance>

@@ -520,6 +520,7 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
     time_start = models.DateTimeField(null=True, blank=True)
     commcare_version = models.CharField(max_length=8, blank=True, null=True)
     app_version = models.PositiveIntegerField(null=True, blank=True)
+    form_load_time = models.CharField(max_length=8, null=True, blank=True)
 
     def __init__(self, *args, **kwargs):
         super(XFormInstance, self).__init__(*args, **kwargs)
@@ -819,6 +820,7 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
         <Meta>
             <timeStart />
             <timeEnd />
+            <formLoadTime />
             <instanceID />
             <userID />
             <deviceID />
@@ -842,6 +844,7 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
     username = jsonobject.StringProperty()
     appVersion = jsonobject.StringProperty()
     location = GeoPointProperty()
+    formLoadTime = jsonobject.StringProperty()
 
     @property
     def commcare_version(self):
