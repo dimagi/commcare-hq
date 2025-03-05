@@ -1,0 +1,50 @@
+{% load i18n %}
+
+<div
+  class="modal fade"
+  id="verify-confirmation-modal"
+  tabindex="-1"
+  role="dialog"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{% trans "Confirm Payments" %}</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <p>
+          {% trans "Are you sure you want to proceed with the selected payments?" %}
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-outline-primary"
+          data-bs-dismiss="modal"
+        >
+          {% trans "Cancel" %}
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          id="verify-confirmation-btn"
+          data-bs-dismiss="modal"
+          hx-post="{% url 'payments_verify_table' request.domain %}"
+          hx-target="#verify-alert"
+          hq-hx-action="verify_rows"
+          hx-vals='{
+                    "selected_ids": []
+            }'
+        >
+          {% trans "Confirm" %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

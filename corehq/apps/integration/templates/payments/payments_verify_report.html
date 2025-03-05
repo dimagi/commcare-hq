@@ -15,12 +15,8 @@
       class="btn btn-primary"
       type="button"
       disabled="true"
-      hx-post="{% url 'payments_verify_table' request.domain %}"
-      hx-target="#verify-alert"
-      hq-hx-action="verify_rows"
-      hx-vals='{
-              "selected_ids": []
-          }'
+      data-bs-toggle="modal"
+      data-bs-target="#verify-confirmation-modal"
     >
       <span> {% trans "Verify Selected" %} </span>
     </button>
@@ -33,6 +29,7 @@
       <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading..." %}
     </div>
   </div>
+  {% include "payments/partials/payments_confirmation_modal.html" %}
 {% endblock %}
 
 {% block modals %}

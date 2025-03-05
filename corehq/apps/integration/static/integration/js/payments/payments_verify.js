@@ -5,12 +5,14 @@ import { multiCheckboxSelectionHandler } from "integration/js/checkbox_selection
 
 
 function updateVerifyButton(selectedIds) {
-    const $verifyBtn = $('#verify-selected-btn');
-    let verifyBtnVals = JSON.parse($verifyBtn.attr('hx-vals'));
+    const $verifySelectedBtn = $('#verify-selected-btn');
+    const $verifyConfirmationBtn = $('#verify-confirmation-btn');
 
-    $verifyBtn.prop('disabled', !(selectedIds.length));
+    let verifyBtnVals = JSON.parse($verifyConfirmationBtn.attr('hx-vals'));
+
+    $verifySelectedBtn.prop('disabled', !(selectedIds.length));
     verifyBtnVals['selected_ids'] = selectedIds;
-    $verifyBtn.attr('hx-vals', JSON.stringify(verifyBtnVals));
+    $verifyConfirmationBtn.attr('hx-vals', JSON.stringify(verifyBtnVals));
 }
 
 const handler = new multiCheckboxSelectionHandler('selection', 'select_all', updateVerifyButton);
