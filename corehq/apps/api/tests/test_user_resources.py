@@ -481,6 +481,7 @@ class TestWebUserResource(APIResourceTest):
                                                     field_type=UserFieldsView.field_type)
         cls.definition.save()
         cls.addClassCleanup(cls.definition.delete)
+        cls.addClassCleanup(UserFieldsView.get_definition_for_domain.reset_cache)
 
         cls.profile = CustomDataFieldsProfile(
             name='test_profile',
