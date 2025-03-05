@@ -1,3 +1,7 @@
+import json
+import os
+
+from django.test import TestCase
 from unittest.mock import patch
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
@@ -9,13 +13,33 @@ from corehq.apps.app_manager.tasks import (
     refresh_data_dictionary_from_app,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.test_apps import AppManagerTest
-from corehq.apps.app_manager.tests.util import get_simple_form, patch_validate_xform
+from corehq.apps.app_manager.tests.util import add_build, get_simple_form, patch_validate_xform
 from corehq.apps.app_manager.views.releases import make_app_build
+from corehq.apps.domain.shortcuts import create_domain
 
 
 @patch_validate_xform()
-class AppManagerTasksTest(AppManagerTest):
+class AppManagerTasksTest(TestCase):
+    file_path = ('data',)
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.build1 = {'version': '1.2.0', 'build_number': 7106}
+        cls.build2 = {'version': '2.7.0', 'build_number': 20655}
+
+        add_build(**cls.build1)
+        add_build(**cls.build2)
+
+        cls.domain = 'test-domain'
+        create_domain(cls.domain)
+
+    @property
+    def _yesno_source(self):
+        # this app fixture uses both the (new) '_attachment'
+        # and the (old) 'contents' conventions, to test that both work
+        with open(os.path.join(os.path.dirname(__file__), 'data', 'yesno.json'), encoding='utf-8') as f:
+            return json.load(f)
 
     def test_prune_auto_generated_builds(self):
         # Build #1, manually generated
