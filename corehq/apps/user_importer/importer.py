@@ -841,9 +841,10 @@ class WebUserRow(BaseUserRow):
             if cv['status'] == "Invited":
                 self.check_invitation_status(self.domain, cv['username'])
 
-            user_invite_loc_id = None
-            user_invite_locs_ids = []
+            invite_kwargs = {}
             if self.domain_info.can_assign_locations and cv['location_codes']:
+                user_invite_loc_id = None
+                user_invite_locs_ids = []
                 if len(cv['location_codes']) > 0:
                     user_invite_loc = get_location_from_site_code(
                         cv['location_codes'][0], self.domain_info.location_cache
@@ -853,21 +854,23 @@ class WebUserRow(BaseUserRow):
                         for loc in cv['location_codes']
                     ]
                     user_invite_loc_id = user_invite_loc.location_id
-            profile = None
+                invite_kwargs.update({
+                    'primary_location_id': user_invite_loc_id,
+                    'assigned_location_ids': user_invite_locs_ids,
+                })
             if cv["profile_name"]:
-                profile = self.domain_info.profiles_by_name[cv["profile_name"]]
-            tableau_role = cv["tableau_role"]
-            tableau_group_ids = None
-            if cv["tableau_groups"] is not None:
-                groups_list = cv["tableau_groups"].split(',')
-                tableau_group_ids = get_tableau_group_ids_by_names(groups_list, self.domain)
+                invite_kwargs['profile'] = self.domain_info.profiles_by_name[cv["profile_name"]]
+            if cv["tableau_role"]:
+                invite_kwargs['tableau_role'] = cv["tableau_role"]
+            if cv["tableau_groups"]:
+                tableau_group_ids = None
+                if cv["tableau_groups"] is not None:
+                    groups_list = cv["tableau_groups"].split(',')
+                    tableau_group_ids = get_tableau_group_ids_by_names(groups_list, self.domain)
+                invite_kwargs['tableau_group_ids'] = tableau_group_ids
             create_or_update_web_user_invite(
                 cv['username'], self.domain, self.domain_info.roles_by_name[cv['role']], self.importer.upload_user,
-                user_invite_loc_id,
-                assigned_location_ids=user_invite_locs_ids,
-                profile=profile,
-                tableau_role=tableau_role,
-                tableau_group_ids=tableau_group_ids,
+                **invite_kwargs
             )
             self.status_row['flag'] = 'invited'
 
