@@ -4,7 +4,7 @@ from django.test import SimpleTestCase
 
 from unittest.mock import MagicMock, patch
 
-import corehq.apps.app_manager.app_schemas.case_properties
+import corehq.apps.app_manager.app_schemas.case_properties as mod
 from corehq.apps.app_manager.app_schemas.case_properties import (
     _CaseRelationshipManager,
     _CaseTypeEquivalence,
@@ -63,6 +63,32 @@ class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
                 'app2': 'yes',
             })
             self.assertCaseProperties(factory1.app, 'patient', ['app1', 'app2'])
+
+    @patch.object(mod, 'get_case_sharing_apps_in_domain')
+    def test_case_sharing_with_parent_child_relationship(self, mock):
+        factory1 = AppFactory()
+        factory2 = AppFactory()
+        factory1.app.case_sharing = True
+        factory2.app.case_sharing = True
+        mock.return_value = [factory1.app, factory2.app]
+
+        house, house_form = factory1.new_basic_module('house_module', 'house')
+        owner, owner_form = factory1.new_basic_module('owner_module', 'owner')
+
+        factory1.form_requires_case(house_form, update={'name': 'Usher'})
+        factory1.form_opens_case(house_form, 'owner', is_subcase=True)
+        factory1.form_requires_case(owner_form, update={
+            'parent/color': 'Blue',
+            'lady': 'Marion',
+            'age': '25',
+        })
+
+        self.assertCaseProperties(factory2.app, 'owner', [
+            'parent/name',
+            'parent/color',
+            'lady',
+            'age',
+        ])
 
     def test_parent_child_properties(self):
         factory = AppFactory()
@@ -180,5 +206,5 @@ class TestCycle(SimpleTestCase):
 class DocTests(SimpleTestCase):
 
     def test_doctests(self):
-        results = doctest.testmod(corehq.apps.app_manager.app_schemas.case_properties)
+        results = doctest.testmod(mod)
         self.assertEqual(results.failed, 0)
