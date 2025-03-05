@@ -201,6 +201,7 @@
                   value: build_comment,
                   iconClass: 'fa fa-comment',
                   rows: 1,
+                  cols: 60,
                   placeholder: '{% trans "(Click here to add a comment)"|escapejs %}',
                   url: '{% url "update_build_comment" domain app.id %}',
                   saveParams: {'build_id': id},
