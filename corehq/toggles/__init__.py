@@ -2297,7 +2297,7 @@ PRIME_FORMPLAYER_DBS_BHA = StaticToggle(
     'USH-BHA: Control which domains will be included in the prime formplayer task runs',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/saas/Prime+Formplayer+DBS"
+    help_link="https://dimagi.atlassian.net/wiki/spaces/saas/pages/2963013633/Prime+Formplayer+DBS+BHA"
 )
 
 FHIR_INTEGRATION = StaticToggle(
