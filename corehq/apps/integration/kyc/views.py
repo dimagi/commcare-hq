@@ -128,10 +128,10 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         existing_failed_user_ids = self._get_existing_failed_users(kyc_users)
         results = verify_users(kyc_users, self.kyc_config)
         success_count = sum(1 for result in results.values() if result)
-        fail_count = len(results) - success_count
+        failure_count = len(results) - success_count
         context = {
             'success_count': success_count,
-            'fail_count': fail_count,
+            'failure_count': failure_count,
         }
 
         self._report_success_on_reverification_metric(existing_failed_user_ids, results)
