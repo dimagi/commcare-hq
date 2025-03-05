@@ -445,6 +445,7 @@ es
  0010_delete_reverted_indices
  0011_add_indices_for_es5_reindex
  0012_add_new_index_for_bha
+ 0013_add_last_modifed
 events
  0001_add_events_model
  0002_attendancetrackingconfig
