@@ -3,7 +3,7 @@
 {% if verify_success %}
   <div class="alert alert-success alert-dismissable fade show" role="alert">
     {% blocktrans %}
-      Successfully submitted {{ success_count }} cases for payments.!
+      Successfully submitted {{ success_count }} records for payments!
     {% endblocktrans %}
     <button
       type="button"
@@ -15,7 +15,7 @@
 {% else %}
   <div class="alert alert-danger alert-dismissable fade show" role="alert">
     {% blocktrans %}
-      Failed to submit {{ failure_count }} cases for payments.!
+      Failed to submit {{ failure_count }} records for payments!
     {% endblocktrans %}
     <button
       type="button"
