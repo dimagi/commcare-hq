@@ -464,7 +464,8 @@ class ProjectDataTab(UITab):
         '/a/{domain}/case/',
         '/a/{domain}/clean/',
         '/a/{domain}/microplanning/',
-        '/a/{domain}/kyc/'
+        '/a/{domain}/kyc/',
+        '/a/{domain}/payments/'
     )
 
     @property
@@ -656,6 +657,8 @@ class ProjectDataTab(UITab):
             items += self._get_geospatial_views()
         if self._can_view_kyc_integration:
             items += self._get_kyc_verification_views()
+        if self._can_view_payments_integration:
+            items += self._get_payments_verification_views()
         return items
 
     @cached_property
@@ -1059,6 +1062,23 @@ class ProjectDataTab(UITab):
     @cached_property
     def _can_view_kyc_integration(self):
         return toggles.KYC_VERIFICATION.enabled(self.domain)
+
+    @cached_property
+    def _can_view_payments_integration(self):
+        return toggles.MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain)
+
+    def _get_payments_verification_views(self):
+        from corehq.apps.integration.payments.views import PaymentsVerificationReportView
+        items = [[
+            _("Payments Verification"),
+            [
+                {
+                    "title": PaymentsVerificationReportView.page_title,
+                    "url": reverse(PaymentsVerificationReportView.urlname, args=[self.domain]),
+                },
+            ]
+        ]]
+        return items
 
     @property
     def dropdown_items(self):

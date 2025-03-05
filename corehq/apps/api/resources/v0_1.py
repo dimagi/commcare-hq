@@ -158,20 +158,6 @@ class WebUserResource(UserResource):
         object_class = WebUser
         resource_name = 'web-user'
 
-    def _property_filter(self, field_name, gt=None, gte=None, lt=None, lte=None):
-        def filter(docs):
-            return [
-                doc for doc in docs
-                if field_name in doc and doc[field_name] is not None
-                and all([
-                    (gt is None or doc[field_name] > gt),
-                    (gte is None or doc[field_name] >= gte),
-                    (lt is None or doc[field_name] < lt),
-                    (lte is None or doc[field_name] <= lte)
-                ])
-            ]
-        return filter
-
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
         username = bundle.request.GET.get('web_username')

@@ -118,6 +118,7 @@ accounting
  0096_formsubmittingmobileworkerhistory_and_featuretype_choice
  0097_add_form_submitting_mobile_worker_feature
  0098_app_dependencies_priv
+ 0099_data_cleaning_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -659,6 +660,8 @@ integration
  0006_kycconfig
  0007_alter_kycconfig_api_field_to_user_data_map
  0008_kycconfig_provider_kycconfig_unique_domain_provider
+ 0009_alter_kycconfig_connection_settings
+ 0010_alter_kycconfig_api_field_to_user_data_map
 ivr
  0001_initial
  0002_call_app_id

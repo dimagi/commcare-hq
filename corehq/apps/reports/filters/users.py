@@ -288,6 +288,9 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         selected_ids = DatatablesServerSideParams.get_value_from_request(
             self.request, self.slug, as_list=True
         )
+        return self._get_selected_from_selected_ids(selected_ids)
+
+    def _get_selected_from_selected_ids(self, selected_ids):
         if not selected_ids:
             return [{'id': selection_tuple[0], 'text': selection_tuple[1]}
                     for selection_tuple in self.get_default_selections()]

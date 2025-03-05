@@ -435,6 +435,16 @@ class BulkEditPinnedFilter(models.Model):
                 filter_type=filter_type,
             )
 
+    def get_report_filter_class(self):
+        from corehq.apps.data_cleaning.filters import (
+            CaseOwnersPinnedFilter,
+            CaseStatusPinnedFilter,
+        )
+        return {
+            PinnedFilterType.CASE_OWNERS: CaseOwnersPinnedFilter,
+            PinnedFilterType.CASE_STATUS: CaseStatusPinnedFilter,
+        }[self.filter_type]
+
 
 class BulkEditColumn(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="columns", on_delete=models.CASCADE)

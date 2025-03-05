@@ -238,7 +238,6 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
 class CommCareUserResource(v0_1.CommCareUserResource):
     primary_location = fields.CharField()
     locations = fields.ListField()
-    last_modified = fields.DateTimeField(null=True, attribute='last_modified')
 
     class Meta(v0_1.CommCareUserResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
