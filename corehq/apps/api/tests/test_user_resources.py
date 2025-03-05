@@ -436,6 +436,7 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertTrue(updated_location_user.is_active)
 
 
+@es_test(requires=[user_adapter])
 class TestWebUserResource(APIResourceTest):
     """
     Basic sanity checking of v0_5.WebUserResource
@@ -480,6 +481,7 @@ class TestWebUserResource(APIResourceTest):
                                                     field_type=UserFieldsView.field_type)
         cls.definition.save()
         cls.addClassCleanup(cls.definition.delete)
+        cls.addClassCleanup(UserFieldsView.get_definition_for_domain.reset_cache)
 
         cls.profile = CustomDataFieldsProfile(
             name='test_profile',
@@ -525,8 +527,10 @@ class TestWebUserResource(APIResourceTest):
         ]:
             self.assertEqual(getattr(role.permissions, perm), json_user['permissions'][perm])
 
+    @sync_users_to_es()
     def test_get_list(self):
-
+        self.user.save()
+        update_analytics_indexes()
         response = self._assert_auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
 
@@ -538,6 +542,7 @@ class TestWebUserResource(APIResourceTest):
         role = UserRole.objects.get(domain=self.domain, name=UserRolePresets.FIELD_IMPLEMENTER)
         another_user.set_role(self.domain.name, role.get_qualified_id())
         another_user.save()
+        update_analytics_indexes()
         self.addCleanup(another_user.delete, self.domain.name, deleted_by=None)
 
         response = self._assert_auth_get_resource(self.list_endpoint)

@@ -399,7 +399,8 @@ class WebUserResource(v0_1.WebUserResource):
     profile = fields.CharField(null=True)
     user_data = fields.DictField()
     tableau_role = fields.CharField(null=True)
-    tableau_groups = fields.ListField(null=True)
+    # Don't use in list for performance - it currently makes a request for each user in the response
+    tableau_groups = fields.ListField(null=True, use_in='detail')
     last_modified = fields.DateTimeField(null=True, attribute='last_modified')
 
     class Meta(v0_1.WebUserResource.Meta):
