@@ -1,43 +1,14 @@
 import "commcarehq";
 import "hqwebapp/js/htmx_and_alpine";
 import $ from "jquery";
+import { multiCheckboxSelectionHandler } from "integration/js/checkbox_selection_handler";
 
 
-let selectedIds = [];
-
-$(document).on('change', 'input[name="selection"]', function () {
-    const rowId = $(this).val();
-    const isChecked = $(this).prop('checked');
-    if (isChecked) {
-        selectedIds.push(rowId);
-    } else {
-        selectedIds = selectedIds.filter(id => id !== rowId);
-    }
-    updateVerifyButton(selectedIds.length);
-    updateSelectAllCheckbox(selectedIds.length);
-});
-
-$(document).on('change', 'input[name="select_all"]', function () {
-    const isChecked = $(this).prop('checked');
-
-    const $rowCheckboxes = $('input[name="selection"]:not(:disabled)');
-    $rowCheckboxes.prop('checked', isChecked);
-
-    if (isChecked) {
-        selectedIds = $rowCheckboxes.map(function () {
-            return $(this).val();
-        }).get();
-    } else {
-        selectedIds = [];
-    }
-    updateVerifyButton(selectedIds.length);
-});
-
-function updateVerifyButton(selectedCount) {
+function updateVerifyButton(selectedIds) {
     const $verifyBtn = $('#verify-selected-btn');
     let verifyBtnVals = JSON.parse($verifyBtn.attr('hx-vals'));
 
-    if (selectedCount > 0) {
+    if (selectedIds.length > 0) {
         $verifyBtn.prop('disabled', false);
         verifyBtnVals['selected_ids'] = selectedIds;
     } else {
@@ -47,20 +18,17 @@ function updateVerifyButton(selectedCount) {
     $verifyBtn.attr('hx-vals', JSON.stringify(verifyBtnVals));
 }
 
-function updateSelectAllCheckbox(selectedCount) {
-    if (selectedCount > 0) {
-        return;
-    }
-    const $selectAll = $('input[name="select_all"]');
-    $selectAll.prop('checked', false);
-}
+const handler = new multiCheckboxSelectionHandler('selection', 'select_all', updateVerifyButton);
+$(document).ready(function() {
+    handler.init();
+});
 
 $(document).on('htmx:afterRequest', function(event) {
     // Reset on pagination as the table is recreated after htmx request
    const requestPath = event.detail.requestConfig.path;
    const method = event.detail.requestConfig.verb;
    if (requestPath.includes('/payments/verify/table/') && method === 'get' && event.detail.successful === true){
-        selectedIds = [];
-        updateVerifyButton(0);
+        handler.selectedIds = [];
+        updateVerifyButton([]);
    }
 });
