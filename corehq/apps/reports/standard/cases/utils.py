@@ -21,16 +21,32 @@ def _get_special_owner_ids(domain, admin, unknown, web, demo, commtrack):
         return []
 
     user_filters = [filter_ for include, filter_ in [
-        (admin, user_es.admin_users()),
-        (unknown, filters.OR(user_es.unknown_users())),
         (web, user_es.web_users()),
         (demo, user_es.demo_users()),
     ] if include]
 
-    owner_ids = (user_es.UserES()
-                 .domain(domain)
-                 .OR(*user_filters)
-                 .get_ids())
+    if user_filters:
+        owner_ids = (user_es.UserES()
+                     .domain(domain)
+                     .OR(*user_filters)
+                     .get_ids())
+    else:
+        owner_ids = []
+
+    special_user_filters = [filter_ for include, filter_ in [
+        (admin, user_es.admin_users()),
+        (unknown, user_es.unknown_users()),
+    ] if include]
+
+    if special_user_filters:
+        # using `remove_default_filters()` is necessary to retrieve users with the
+        # AdminUser and UnknownUser doc types (see UnknownUserPillowTest in test_user_pillow.py)
+        special_owner_ids = (user_es.UserES()
+                             .remove_default_filters()
+                             .domain(domain)
+                             .OR(*special_user_filters)
+                             .get_ids())
+        owner_ids.extend(special_owner_ids)
 
     if commtrack:
         owner_ids.append("commtrack-system")
