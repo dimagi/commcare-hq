@@ -23,7 +23,6 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     TestXmlMixin,
-    add_build,
     delete_all_multimedia,
     patch_default_builds, get_simple_form, patch_validate_xform,
 )
@@ -54,11 +53,6 @@ class AppManagerTest(TestCase, TestXmlMixin):
     @classmethod
     def setUpClass(cls):
         super(AppManagerTest, cls).setUpClass()
-        cls.build1 = {'version': '1.2.0', 'build_number': 7106}
-        cls.build2 = {'version': '2.7.0', 'build_number': 20655}
-
-        add_build(**cls.build1)
-        add_build(**cls.build2)
 
         cls.domain = 'test-domain'
         domain = create_domain(cls.domain)
