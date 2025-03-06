@@ -64,7 +64,17 @@ def deactivated_case_owners(domain):
 
 def get_case_owners(can_access_all_locations, domain, mobile_user_and_group_slugs):
     """
-    For unrestricted user
+    Returns a list of user, group, and location ids that are owners for cases.
+
+    :param can_access_all_locations: boolean
+        - generally obtained from `request.can_access_all_locations`
+    :param domain: string
+        - the domain string that the case owners belong to
+    :param mobile_user_and_group_slugs: list
+        - a list of user ids and special formatted strings returned by
+          the `ExpandedMobileWorkerFilter` and its subclasses
+
+    For unrestricted user (can_access_all_locations = True)
     :return:
     user ids for selected user types
     for selected reporting group ids, returns user_ids belonging to these groups
@@ -76,7 +86,7 @@ def get_case_owners(can_access_all_locations, domain, mobile_user_and_group_slug
     ids and descendants ids of selected locations
         assigned users at selected locations and their descendants
 
-    For restricted user
+    For restricted user (can_access_all_locations = False)
     :return:
     selected user ids
         also finds the sharing groups which has any user from the above selected users
