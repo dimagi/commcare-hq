@@ -172,3 +172,13 @@ class CaseStatusPinnedFilter(SessionPinnedFilterMixin, SelectOpenCloseFilter):
     def get_value_for_db(self):
         value = self.get_value(self.request, self.domain)
         return None if not value else [value]
+
+    @classmethod
+    def filter_query(cls, query, pinned_filter):
+        case_status = pinned_filter.value
+        if case_status:
+            # the `pinned_filter` values are always stored in an `ArrayField`,
+            # and the value is either a list or `None`,
+            # so we need to call `case_status[0]`
+            query = query.is_closed(case_status[0] == 'closed')
+        return query
