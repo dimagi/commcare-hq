@@ -1,0 +1,58 @@
+{% load i18n %}
+
+<div class="offcanvas offcanvas-end" id="editOffcanvas" data-bs-scroll="true" tabindex="-1">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">
+      <i class="fa-solid fa-shower"></i> {% trans "Clean Data" %}
+    </h5>
+    <button
+      class="btn-close" type="button" aria-label="{% trans "Close" %}"
+      data-bs-dismiss="offcanvas"
+    ></button>
+  </div>
+  <div
+    class="offcanvas-body"
+    hx-get="{% url "data_cleaning_clean_data_form" %}"
+    hx-trigger="load"
+  >
+    {% include "prototype/data_cleaning/partials/htmx_loading_indicator.html" %}
+  </div>
+</div>
+
+<div class="offcanvas offcanvas-end" id="configureColumnsOffcanvas" tabindex="-1">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">
+      <i class="fa-solid fa-table-columns"></i> {% trans "Configure Columns" %}
+    </h5>
+    <button
+      class="btn-close" type="button" aria-label="{% trans "Close" %}"
+      data-bs-dismiss="offcanvas"
+    ></button>
+  </div>
+  <div
+    class="offcanvas-body"
+    hx-get="{% url "data_cleaning_configure_columns_form" %}"
+    hx-trigger="load"
+  >
+    {% include "prototype/data_cleaning/partials/htmx_loading_indicator.html" %}
+  </div>
+</div>
+
+<div class="offcanvas offcanvas-end" id="filterDataOffcanvas" tabindex="-1">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">
+      <i class="fa-solid fa-filter"></i> {% trans "Filter Values" %}
+    </h5>
+    <button
+      class="btn-close" type="button" aria-label="{% trans "Close" %}"
+      data-bs-dismiss="offcanvas"
+    ></button>
+  </div>
+  <div
+    class="offcanvas-body"
+    hx-get="{% url "data_cleaning_filter_columns_form" %}"
+    hx-trigger="load"
+  >
+    {% include "prototype/data_cleaning/partials/htmx_loading_indicator.html" %}
+  </div>
+</div>
