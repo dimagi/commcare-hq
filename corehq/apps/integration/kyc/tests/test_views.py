@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
@@ -75,7 +77,8 @@ class TestKycConfigurationView(BaseTestKycView):
         assert response.status_code == 404
 
     @flag_enabled('KYC_VERIFICATION')
-    def test_success(self):
+    @patch('corehq.apps.integration.kyc.forms.get_case_types_for_domain', return_value=['case-1'])
+    def test_success(self, *args):
         response = self._make_request()
         assert response.status_code == 200
 
