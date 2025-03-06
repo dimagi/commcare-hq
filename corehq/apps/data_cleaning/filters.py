@@ -29,6 +29,21 @@ class SessionPinnedFilterMixin(ABC):
     def pinned_filter(self):
         return self.session.pinned_filters.get(filter_type=self.filter_type)
 
+    @classmethod
+    def filter_query(cls, query, pinned_filter):
+        """
+        This method should return a filtered `ESQuery` object based on the value
+        stored in the database.
+
+        This will be called by the `filter_query(query)` function of
+        the `BulkEditPinnedFilter` instance.
+
+        :param query: an `ESQuery` instance (e.g. `CaseSearchQuery`)
+        :param pinned_filter: Instance of `BulkEditPinnedFilter`
+        :return: `ESQuery` of the same type as `query`
+        """
+        raise NotImplementedError("please implement `filter_query")
+
     @abstractmethod
     def get_value_for_db(self):
         """
