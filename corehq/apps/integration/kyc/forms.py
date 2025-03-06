@@ -29,7 +29,7 @@ class KycConfigureForm(forms.ModelForm):
         ]
 
     user_data_store = forms.ChoiceField(
-        label=_('User Data Store'),
+        label=_('Recipient Data Store'),
         required=True,
         choices=UserDataStore.CHOICES,
     )
@@ -43,7 +43,7 @@ class KycConfigureForm(forms.ModelForm):
         choices=KycProviders.choices,
     )
     api_field_to_user_data_map = JsonField(
-        label=_('API Field to User Data Map'),
+        label=_('API Field to Recipient Data Map'),
         required=True,
         expected_type=dict,
     )
