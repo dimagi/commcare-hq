@@ -341,11 +341,16 @@ hqDefine("app_manager/js/releases/releases", [
             return initialPageData.reverse.apply(null, arguments);
         };
         self.webAppsUrl = function (idObservable, copyOf) {
-            var url = initialPageData.reverse("formplayer_main"),
-                data = {
-                    appId: ko.utils.unwrapObservable(idObservable),
-                    copyOf: copyOf,
-                };
+            const buildId = ko.utils.unwrapObservable(idObservable);
+            var url = initialPageData.reverse(
+                "formplayer_main_view_build",
+                copyOf,
+                buildId,
+            );
+            var data = {
+                appId: buildId,
+                copyOf: copyOf,
+            };
 
             return url + '#' + encodeURI(JSON.stringify(data));
         };
