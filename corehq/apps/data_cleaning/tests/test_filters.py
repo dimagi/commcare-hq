@@ -986,3 +986,63 @@ class TestCaseOwnersPinnedFilterQuery(BaseCaseOwnersTest):
             ))
         ), self.domain, self.web_location_user)
         self.assertDictEqual(filtered_query.es_query, expected_query.es_query)
+
+
+@es_test(requires=[case_search_adapter], setup_class=True)
+class TestCaseStatusPinnedFilterQuery(TestCase):
+    domain = 'test-case-status-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+        cls.web_user = WebUser.create(
+            cls.domain, 'tester@datacleaning.org', 'testpwd', None, None
+        )
+        cls.addClassCleanup(cls.web_user.delete, cls.domain, deleted_by=None)
+
+        case_search_es_setup(cls.domain, get_case_blocks())
+
+    @classmethod
+    def tearDownClass(cls):
+        FormProcessorTestUtils.delete_all_cases()
+        super().tearDownClass()
+
+    def setUp(self):
+        super().setUp()
+        self.session = BulkEditSession.new_case_session(
+            self.web_user.get_django_user(), self.domain, 'plants',
+        )
+
+    def test_default(self):
+        query = CaseSearchES().domain(self.domain)
+        pinned_filter = self.session.pinned_filters.get(
+            filter_type=PinnedFilterType.CASE_STATUS
+        )
+        self.assertIsNone(pinned_filter.value)
+        filtered_query = pinned_filter.filter_query(query)
+        self.assertDictEqual(filtered_query.es_query, query.es_query)
+
+    def test_open(self):
+        query = CaseSearchES().domain(self.domain)
+        pinned_filter = self.session.pinned_filters.get(
+            filter_type=PinnedFilterType.CASE_STATUS
+        )
+        pinned_filter.value = ['open']
+        pinned_filter.save()
+        filtered_query = pinned_filter.filter_query(query)
+        expected_query = query.is_closed(False)
+        self.assertDictEqual(filtered_query.es_query, expected_query.es_query)
+
+    def test_closed(self):
+        query = CaseSearchES().domain(self.domain)
+        pinned_filter = self.session.pinned_filters.get(
+            filter_type=PinnedFilterType.CASE_STATUS
+        )
+        pinned_filter.value = ['closed']
+        pinned_filter.save()
+        filtered_query = pinned_filter.filter_query(query)
+        expected_query = query.is_closed(True)
+        self.assertDictEqual(filtered_query.es_query, expected_query.es_query)
