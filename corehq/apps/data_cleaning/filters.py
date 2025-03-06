@@ -4,8 +4,16 @@ from memoized import memoized
 from django.utils.translation import gettext_lazy
 
 from corehq.apps.data_cleaning.models import PinnedFilterType
+from corehq.apps.es import cases as case_es
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
+from corehq.apps.reports.standard.cases.utils import (
+    all_project_data_filter,
+    deactivated_case_owners,
+    get_case_owners,
+    query_location_restricted_cases,
+)
+from corehq.apps.users.models import CouchUser
 
 
 class SessionPinnedFilterMixin(ABC):
@@ -95,6 +103,55 @@ class CaseOwnersPinnedFilter(SessionPinnedFilterMixin, CaseListFilter):
     def get_value_for_db(self):
         value = self.get_value(self.request, self.domain)
         return None if value == self._get_default_db_value() else value
+
+    @classmethod
+    def filter_query(cls, query, pinned_filter):
+        """
+        todo: it would be nice to de-duplicate the logic here
+        with the logic in CaseListReport, but we can address that at a later date.
+        """
+        couch_user = CouchUser.get_by_username(pinned_filter.session.user.username)
+        domain = pinned_filter.session.domain
+        can_access_all_locations = couch_user.has_permission(
+            domain, 'access_all_locations'
+        )
+        emwf_slugs = pinned_filter.value or cls._get_default_db_value()
+
+        if can_access_all_locations and cls.show_all_data(emwf_slugs):
+            # don't apply any case owner filters
+            return query
+
+        case_owner_filters = []
+
+        if can_access_all_locations and cls.show_project_data(emwf_slugs):
+            case_owner_filters.append(
+                all_project_data_filter(domain, emwf_slugs)
+            )
+
+        if can_access_all_locations and cls.show_deactivated_data(emwf_slugs):
+            case_owner_filters.append(deactivated_case_owners(domain))
+
+        if (
+            cls.selected_user_ids(emwf_slugs)
+            or cls.selected_user_types(emwf_slugs)
+            or cls.selected_group_ids(emwf_slugs)
+            or cls.selected_location_ids(emwf_slugs)
+        ):
+            case_owners = get_case_owners(
+                can_access_all_locations, domain, emwf_slugs
+            )
+            if case_owners:
+                case_owner_filters.append(case_es.owner(case_owners))
+
+        if case_owner_filters:
+            query = query.OR(*case_owner_filters)
+
+        if not can_access_all_locations:
+            query = query_location_restricted_cases(
+                query, domain, couch_user,
+            )
+
+        return query
 
 
 class CaseStatusPinnedFilter(SessionPinnedFilterMixin, SelectOpenCloseFilter):
