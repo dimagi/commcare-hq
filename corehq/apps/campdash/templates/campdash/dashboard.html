@@ -1,0 +1,114 @@
+{% extends 'hqwebapp/bootstrap5/base_navigation.html' %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block title %}{% trans "Campaign Dashboard" %}{% endblock %}
+
+{% block stylesheets %}
+  {% compress css %}
+    <link type="text/scss"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'campdash/css/campdash.scss' %}" />
+  {% endcompress %}
+{% endblock stylesheets %}
+
+{% block js %}{{ block.super }}
+  {% compress js %}
+    <script src="{% static 'campdash/js/campdash.js' %}"></script>
+    <script src="{% static 'campdash/js/gauge.js' %}"></script>
+    <script src="{% static 'campdash/js/report.js' %}"></script>
+    <script src="{% static 'campdash/js/map.js' %}"></script>
+  {% endcompress %}
+  
+  <!-- HTMX and Alpine.js -->
+  <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.13.0/dist/cdn.min.js"></script>
+{% endblock %}
+
+{% block content %}
+  {% initial_page_data 'gauges' gauges %}
+  {% initial_page_data 'report' report %}
+  {% initial_page_data 'map_data' map_data %}
+  {% initial_page_data 'domain' domain %}
+  {% registerurl 'campaign_dashboard_data' domain %}
+  
+  <div class="container-fluid" id="campaign-dashboard">
+    <div class="row mb-4">
+      <div class="col-12">
+        <h1 class="mb-3 mt-4">
+          {% trans "Campaign Dashboard" %}
+        </h1>
+        <p class="lead">
+          {% trans "Track the progress of your campaign with real-time metrics and visualizations." %}
+        </p>
+      </div>
+    </div>
+    
+    <!-- Gauges Section -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="h5 mb-0">{% trans "Key Metrics" %}</h2>
+          </div>
+          <div class="card-body">
+            <div class="row" id="gauges-container">
+              {% include "campdash/partials/gauges.html" %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Report and Map Section -->
+    <div class="row mb-4">
+      <!-- Report Section -->
+      <div class="col-md-6 mb-4 mb-md-0">
+        <div class="card h-100">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">{{ report.title }}</h2>
+            <div class="dropdown">
+              <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="reportOptionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                {% trans "Options" %}
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="reportOptionsDropdown">
+                <li><a class="dropdown-item" href="#" hx-get="{% url 'campaign_dashboard_data' domain %}" hx-target="#report-container" hx-trigger="click">{% trans "Refresh" %}</a></li>
+                <li><a class="dropdown-item" href="#">{% trans "Export" %}</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="report-container">
+              {% include "campdash/partials/report.html" %}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Map Section -->
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">{{ map_data.title }}</h2>
+            <div class="dropdown">
+              <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="mapOptionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                {% trans "Options" %}
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="mapOptionsDropdown">
+                <li><a class="dropdown-item" href="#" hx-get="{% url 'campaign_dashboard_data' domain %}" hx-target="#map-container" hx-trigger="click">{% trans "Refresh" %}</a></li>
+                <li><a class="dropdown-item" href="#">{% trans "Full Screen" %}</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="map-container">
+              {% include "campdash/partials/map.html" %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %} 
