@@ -1,3 +1,6 @@
+from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.topics import get_topic_offset
+from corehq.apps.change_feed.producer import producer
 from corehq.apps.es.client import manager
 from corehq.apps.es.groups import group_adapter
 from corehq.apps.es.tests.utils import (
@@ -9,6 +12,12 @@ from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard.cases.utils import get_case_owners
 from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.form_processor.change_publishers import change_meta_from_sql_form
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.form_processor.utils import TestFormMetadata
+from corehq.pillows.xform import get_xform_pillow
+from corehq.util.test_utils import get_form_ready_to_save
 
 
 class BaseCaseOwnersTest(LocationHierarchyTestCase):
@@ -32,6 +41,23 @@ class BaseCaseOwnersTest(LocationHierarchyTestCase):
             ]),
         ]),
     ]
+
+    @classmethod
+    def _set_up_unknown_admin_users(cls):
+        cls.admin_user_id = 'test-admin-user'
+        cls.unknown_user_id = 'test-unknown-user'
+        for username, user_id in (
+            ('unknown', cls.unknown_user_id),
+            ('admin', cls.admin_user_id),
+        ):
+            metadata = TestFormMetadata(domain=cls.domain, user_id=user_id, username=username)
+            form = get_form_ready_to_save(metadata)
+            FormProcessorInterface(domain=cls.domain).save_processed_models([form])
+            topic = topics.FORM_SQL
+            since = get_topic_offset(topics.FORM_SQL)
+            producer.send_change(topic, change_meta_from_sql_form(form))
+            pillow = get_xform_pillow()
+            pillow.process_changes(since=since, forever=False)
 
     @classmethod
     def _set_up_commcare_users(cls):
@@ -93,6 +119,7 @@ class BaseCaseOwnersTest(LocationHierarchyTestCase):
         cls.location_types['city'].shares_cases = True
         cls.location_types['city'].save()
 
+        cls._set_up_unknown_admin_users()
         cls._set_up_commcare_users()
         cls._set_up_web_users()
         cls._set_up_groups()
@@ -102,6 +129,8 @@ class BaseCaseOwnersTest(LocationHierarchyTestCase):
 
     @classmethod
     def tearDownClass(cls):
+        FormProcessorTestUtils.delete_all_xforms()
+
         for group in [cls.group1, cls.group2]:
             group.delete()
 
@@ -126,6 +155,22 @@ class CaseOwnersTest(BaseCaseOwnersTest):
 
     def test_web_users_restricted(self):
         owners = get_case_owners(False, self.domain, [f't__{HQUserType.WEB}'])
+        self.assertListEqual(owners, [])
+
+    def test_admin_users(self):
+        owners = get_case_owners(True, self.domain, [f't__{HQUserType.ADMIN}'])
+        self.assertListEqual(owners, [self.admin_user_id])
+
+    def test_admin_users_restricted(self):
+        owners = get_case_owners(False, self.domain, [f't__{HQUserType.ADMIN}'])
+        self.assertListEqual(owners, [])
+
+    def test_unknown_users(self):
+        owners = get_case_owners(True, self.domain, [f't__{HQUserType.UNKNOWN}'])
+        self.assertListEqual(owners, [self.unknown_user_id])
+
+    def test_unknown_users_restricted(self):
+        owners = get_case_owners(False, self.domain, [f't__{HQUserType.UNKNOWN}'])
         self.assertListEqual(owners, [])
 
     def test_deactivated_users(self):
