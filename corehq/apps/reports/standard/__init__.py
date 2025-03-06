@@ -355,6 +355,10 @@ class ESQueryProfilerMixin(object):
     def profiler(self):
         return self._profiler
 
+    @property
+    def should_profile(self):
+        return self.profiler_enabled and self.profiler
+
     def _get_search_class(self):
         if not self.search_class:
             raise NotImplementedError("You must define a search_class attribute.")
@@ -369,7 +373,7 @@ def profile(name=None):
     def decorator(func):
         @wraps(func)
         def wrapper(obj, *args, **kwargs):
-            if obj.profiler_enabled and obj.profiler:
+            if obj.should_profile:
                 with obj.profiler.timing_context(name):
                     return func(obj, *args, **kwargs)
             return func(obj, *args, **kwargs)

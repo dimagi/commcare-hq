@@ -245,8 +245,7 @@ class CaseListReport(CaseListMixin, ProjectReport, ReportDataSource):
 
     @property
     def json_response(self):
-        should_profile = self.profiler_enabled and self.profiler
-        with self.profiler.timing_context if should_profile else contextlib.nullcontext():
+        with self.profiler.timing_context if self.should_profile else contextlib.nullcontext():
             response = super().json_response
 
         if self.profiler_enabled:
