@@ -450,7 +450,10 @@ def get_all_apps(domain):
             include_docs=False,
             wrapper=lambda row: row['id'],
         )
-        correct_wrap = lambda app_doc: get_correct_app_class(app_doc).wrap(app_doc)
+
+        def correct_wrap(app_doc):
+            return get_correct_app_class(app_doc).wrap(app_doc)
+
         return map(correct_wrap, iter_docs(Application.get_db(), saved_app_ids))
 
     return chain(get_apps_in_domain(domain), _saved_apps())
