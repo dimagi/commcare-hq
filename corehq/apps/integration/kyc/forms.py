@@ -13,7 +13,6 @@ from corehq.apps.integration.kyc.models import (
     UserDataStore,
 )
 from corehq.apps.userreports.ui.fields import JsonField
-from corehq.motech.models import ConnectionSettings
 
 
 class KycConfigureForm(forms.ModelForm):
@@ -25,7 +24,6 @@ class KycConfigureForm(forms.ModelForm):
             'other_case_type',
             'provider',
             'api_field_to_user_data_map',
-            'connection_settings',
         ]
 
     user_data_store = forms.ChoiceField(
@@ -47,18 +45,10 @@ class KycConfigureForm(forms.ModelForm):
         required=True,
         expected_type=dict,
     )
-    connection_settings = forms.ModelChoiceField(
-        label=_('Connection Settings'),
-        required=True,
-        queryset=None,
-    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance = kwargs.pop('instance')
-        self.fields['connection_settings'].queryset = ConnectionSettings.objects.filter(
-            domain=self.instance.domain
-        )
 
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -84,10 +74,6 @@ class KycConfigureForm(forms.ModelForm):
                     'api_field_to_user_data_map',
                     x_init='api_field_to_user_data_map = $el.value',
                     css_id='api-mapping',
-                ),
-                crispy.Field(
-                    'connection_settings',
-                    x_init='connection_settings = $el.value',
                 ),
                 twbscrispy.StrictButton(
                     _('Save'),
