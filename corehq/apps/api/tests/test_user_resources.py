@@ -108,7 +108,6 @@ class TestCommCareUserResource(APIResourceTest):
             'first_name': '',
             'groups': [],
             'id': backend_id,
-            'last_modified': commcare_user.last_modified.strftime('%Y-%m-%dT%H:%M:%S.%f'),
             'last_name': '',
             'phone_numbers': [],
             'resource_uri': '/a/qwerty/api/v0.5/user/{}/'.format(backend_id),
