@@ -2,6 +2,7 @@ from django.urls import re_path as url
 
 from corehq.apps.data_cleaning.views.filters import (
     PinnedFilterFormView,
+    ColumnFilterFormView,
 )
 from corehq.apps.data_cleaning.views.main import (
     CleanCasesMainView,
@@ -26,5 +27,7 @@ urlpatterns = [
         name=CleanCasesTableView.urlname),
     url(r'^cases/(?P<session_id>[\w\-]+)/filters/pinned/$', PinnedFilterFormView.as_view(),
         name=PinnedFilterFormView.urlname),
+    url(r'^cases/(?P<session_id>[\w\-]+)/filters/column/$', ColumnFilterFormView.as_view(),
+        name=ColumnFilterFormView.urlname),
     url(r'^cases/save/(?P<session_id>[\w\-]+)/$', save_case_session, name='save_case_session'),
 ]

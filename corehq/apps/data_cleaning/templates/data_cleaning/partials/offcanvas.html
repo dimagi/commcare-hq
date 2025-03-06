@@ -22,6 +22,13 @@
     >
       {% include "data_cleaning/partials/loading_indicator.html" %}
     </div>
+    <div
+      class="mt-3"
+      hx-get="{% url "data_cleaning_column_filter_form" domain session_id %}"
+      hx-trigger="load"
+    >
+      {% include "data_cleaning/partials/loading_indicator.html" %}
+    </div>
   </div>
 </div>
 
