@@ -571,33 +571,33 @@ class BulkEditColumnFilterXpathTest(TestCase):
 
 
 class TestReportFilterSubclasses(TestCase):
-    domain_name = 'report-filter-pinned-test'
+    domain = 'report-filter-pinned-test'
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.domain = create_domain(cls.domain_name)
-        cls.addClassCleanup(cls.domain.delete)
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
 
         cls.web_user = WebUser.create(
-            cls.domain.name, 'tester@datacleaning.org', 'testpwd', None, None
+            cls.domain, 'tester@datacleaning.org', 'testpwd', None, None
         )
-        cls.addClassCleanup(cls.web_user.delete, cls.domain.name, deleted_by=None)
+        cls.addClassCleanup(cls.web_user.delete, cls.domain, deleted_by=None)
 
     def setUp(self):
         super().setUp()
         self.request = RequestFactory().get('/cases/')
-        self.request.domain = self.domain_name
+        self.request.domain = self.domain
         self.request.can_access_all_locations = True
         self.request.couch_user = self.web_user
-        self.request.project = self.domain
+        self.request.project = self.domain_obj
         self.session = BulkEditSession.new_case_session(
-            self.web_user.get_django_user(), self.domain_name, 'plants',
+            self.web_user.get_django_user(), self.domain, 'plants',
         )
 
     def test_case_owners_report_filter_context(self):
         report_filter = CaseOwnersPinnedFilter(
-            self.session, self.request, self.domain_name, use_bootstrap5=True
+            self.session, self.request, self.domain, use_bootstrap5=True
         )
         expected_context = {
             'report_select2_config': {
@@ -631,7 +631,7 @@ class TestReportFilterSubclasses(TestCase):
     @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
     def test_case_owners_report_filter_context_locations(self):
         report_filter = CaseOwnersPinnedFilter(
-            self.session, self.request, self.domain_name, use_bootstrap5=True
+            self.session, self.request, self.domain, use_bootstrap5=True
         )
         expected_context = {
             'report_select2_config': {
@@ -676,7 +676,7 @@ class TestReportFilterSubclasses(TestCase):
         pinned_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_OWNERS)
         self.assertIsNone(pinned_filter.value)
         report_filter = CaseOwnersPinnedFilter(
-            self.session, self.request, self.domain_name, use_bootstrap5=True
+            self.session, self.request, self.domain, use_bootstrap5=True
         )
         report_filter.update_stored_value()
         pinned_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_OWNERS)
@@ -693,7 +693,7 @@ class TestReportFilterSubclasses(TestCase):
 
     def test_case_status_report_filter_context(self):
         report_filter = CaseStatusPinnedFilter(
-            self.session, self.request, self.domain_name, use_bootstrap5=True
+            self.session, self.request, self.domain, use_bootstrap5=True
         )
         expected_context = {
             'report_select2_config': {
@@ -724,7 +724,7 @@ class TestReportFilterSubclasses(TestCase):
         pinned_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_STATUS)
         self.assertIsNone(pinned_filter.value)
         report_filter = CaseStatusPinnedFilter(
-            self.session, self.request, self.domain_name, use_bootstrap5=True
+            self.session, self.request, self.domain, use_bootstrap5=True
         )
         report_filter.update_stored_value()
         pinned_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_STATUS)
