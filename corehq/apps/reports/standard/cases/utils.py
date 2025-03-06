@@ -62,7 +62,7 @@ def deactivated_case_owners(domain):
     return case_es.owner(owner_ids)
 
 
-def get_case_owners(request, domain, mobile_user_and_group_slugs):
+def get_case_owners(can_access_all_locations, domain, mobile_user_and_group_slugs):
     """
     For unrestricted user
     :return:
@@ -87,7 +87,7 @@ def get_case_owners(request, domain, mobile_user_and_group_slugs):
     special_owner_ids, selected_sharing_group_ids, selected_reporting_group_users = [], [], []
     sharing_group_ids, location_owner_ids, assigned_user_ids_at_selected_locations = [], [], []
 
-    if request.can_access_all_locations:
+    if can_access_all_locations:
         user_types = EMWF.selected_user_types(mobile_user_and_group_slugs)
 
         special_owner_ids = _get_special_owner_ids(
