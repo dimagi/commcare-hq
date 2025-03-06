@@ -33,7 +33,7 @@ class KycConfigureForm(forms.ModelForm):
         required=True,
         choices=UserDataStore.CHOICES,
     )
-    other_case_type = forms.CharField(
+    other_case_type = forms.ChoiceField(
         label=_('Other Case Type'),
         required=False,
     )
