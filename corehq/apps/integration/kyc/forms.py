@@ -7,11 +7,14 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 
+from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from corehq.apps.integration.kyc.models import (
     KycConfig,
     KycProviders,
     UserDataStore,
 )
+from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.motech.models import ConnectionSettings
 
@@ -59,7 +62,7 @@ class KycConfigureForm(forms.ModelForm):
         self.fields['connection_settings'].queryset = ConnectionSettings.objects.filter(
             domain=self.instance.domain
         )
-
+        self.fields['other_case_type'].choices = self._get_case_types()
         self.helper = FormHelper()
         self.helper.form_tag = False
 
@@ -101,3 +104,10 @@ class KycConfigureForm(forms.ModelForm):
                 }),
             )
         )
+
+    def _get_case_types(self):
+        case_types = sorted(get_case_types_for_domain(self.instance.domain))
+        return [
+            (case, case) for case in case_types
+            if case not in (USERCASE_TYPE, USER_LOCATION_OWNER_MAP_TYPE)
+        ]
