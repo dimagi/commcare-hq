@@ -289,6 +289,7 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
         });
 
         $('#report-content').on('click', '.record-checkbox', function() {
+            resetTableSelections();
             updateActionButtons();
         });
 
@@ -300,10 +301,8 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
         });
 
         $("#clear-table-selection").click(function() {
-            selectedEntireTable = false;
-            selectAllCheckbox.checked = false;
-            selectedTableInfo.classList.add('hide');
             toggleItems(false);
+            resetTableSelections();
             updateActionButtons()
         });
 
@@ -347,6 +346,13 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
                 requeueButton.disabled = false;
                 cancelButton.disabled = true;
             }
+        }
+
+        function resetTableSelections() {
+            selectedEntireTable = false;
+            selectAllCheckbox.checked = false;
+            selectedPageInfo.classList.add('hide');
+            selectedTableInfo.classList.add('hide');
         }
     });
 });
