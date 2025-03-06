@@ -918,18 +918,18 @@ class TestCaseOwnersPinnedFilterQuery(BaseCaseOwnersTest):
         query = CaseSearchES().domain(self.domain)
         # HQUserType.DEACTIVATED is tested in test_deactivated
         # HQUserType.ACTIVE is not an option the filter (all mobile workers)
-        for user_type, is_owners_empty in [
-            (f't__{HQUserType.DEMO_USER}', False),
-            (f't__{HQUserType.ADMIN}', True),  # not currently functional with get_case_owners()
-            (f't__{HQUserType.UNKNOWN}', True),  # not currently functional with get_case_owners()
-            (f't__{HQUserType.COMMTRACK}', False),
-            (f't__{HQUserType.WEB}', False),
+        for user_type in [
+            f't__{HQUserType.DEMO_USER}',
+            f't__{HQUserType.ADMIN}',
+            f't__{HQUserType.UNKNOWN}',
+            f't__{HQUserType.COMMTRACK}',
+            f't__{HQUserType.WEB}',
         ]:
             pinned_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_OWNERS)
             pinned_filter.value = [user_type]
             pinned_filter.save()
             filtered_query = pinned_filter.filter_query(query)
-            expected_query = query if is_owners_empty else query.OR(case_es.owner(get_case_owners(
+            expected_query = query.OR(case_es.owner(get_case_owners(
                 True, self.domain, pinned_filter.value
             )))
             self.assertDictEqual(
@@ -943,8 +943,8 @@ class TestCaseOwnersPinnedFilterQuery(BaseCaseOwnersTest):
         # HQUserType.ACTIVE is not an option the filter (all mobile workers)
         for user_type in [
             f't__{HQUserType.DEMO_USER}',
-            f't__{HQUserType.ADMIN}',  # not currently functional with get_case_owners()
-            f't__{HQUserType.UNKNOWN}',  # not currently functional with get_case_owners()
+            f't__{HQUserType.ADMIN}',
+            f't__{HQUserType.UNKNOWN}',
             f't__{HQUserType.COMMTRACK}',
             f't__{HQUserType.WEB}',
         ]:
