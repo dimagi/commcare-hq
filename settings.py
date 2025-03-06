@@ -388,6 +388,7 @@ HQ_APPS = (
     'corehq.apps.zapier.apps.ZapierConfig',
     'corehq.apps.translations',
     'corehq.apps.app_execution',
+    'corehq.apps.campdash',
 
     # custom reports
     'custom.reports.mc',
