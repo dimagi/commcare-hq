@@ -188,6 +188,12 @@ def _get_default_tiles(request):
     def is_billing_admin(req):
         return req.couch_user.can_edit_billing()
 
+    def can_view_campaign_dashboard(req):
+        return (
+            req.couch_user.is_domain_admin(req.domain)
+            or req.couch_user.has_permission(req.domain, 'view_campaign_dashboard')
+        )
+
     def apps_link(urlname, req):
         return (
             '' if domain_has_apps(req.domain)
@@ -263,6 +269,15 @@ def _get_default_tiles(request):
             urlname='sms_default',
             visibility_check=can_use_messaging,
             help_text=_('Configure and schedule SMS messages and keywords'),
+        ),
+        Tile(
+            request,
+            title=_('Campaign Dashboard'),
+            slug='campaign_dashboard',
+            icon='fcc fcc-dashboard',
+            urlname='campaign_dashboard',
+            visibility_check=can_view_campaign_dashboard,
+            help_text=_('Track campaign progress with metrics and visualizations'),
         ),
         Tile(
             request,

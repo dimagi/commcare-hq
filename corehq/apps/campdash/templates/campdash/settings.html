@@ -1,0 +1,175 @@
+{% extends 'hqwebapp/bootstrap5/base_navigation.html' %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block title %}{% trans "Campaign Dashboard Settings" %}{% endblock %}
+
+{% block stylesheets %}
+  {% compress css %}
+    <link type="text/scss"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'campdash/css/campdash.scss' %}" />
+  {% endcompress %}
+{% endblock stylesheets %}
+
+{% block js %}{{ block.super }}
+  {% compress js %}
+    <script src="{% static 'campdash/js/campdash.js' %}"></script>
+  {% endcompress %}
+  
+  <!-- HTMX and Alpine.js -->
+  <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.13.0/dist/cdn.min.js"></script>
+{% endblock %}
+
+{% block content %}
+  <div class="container-fluid" id="campaign-dashboard-settings">
+    <div class="row mb-4">
+      <div class="col-12">
+        <h1 class="mb-3 mt-4">
+          {% trans "Campaign Dashboard Settings" %}
+        </h1>
+        <p class="lead">
+          {% trans "Configure your campaign dashboards" %}
+        </p>
+      </div>
+    </div>
+    
+    <!-- Dashboards List -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">{% trans "Campaign Dashboards" %}</h2>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newDashboardModal">
+              <i class="fa fa-plus"></i> {% trans "New Dashboard" %}
+            </button>
+          </div>
+          <div class="card-body">
+            {% if dashboards %}
+              <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                  <thead>
+                    <tr>
+                      <th>{% trans "Name" %}</th>
+                      <th>{% trans "Description" %}</th>
+                      <th>{% trans "Created By" %}</th>
+                      <th>{% trans "Created On" %}</th>
+                      <th>{% trans "Actions" %}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for dashboard in dashboards %}
+                      <tr>
+                        <td>{{ dashboard.name }}</td>
+                        <td>{{ dashboard.description|default:"-" }}</td>
+                        <td>{{ dashboard.created_by }}</td>
+                        <td>{{ dashboard.created_on|date:"M d, Y" }}</td>
+                        <td>
+                          <div class="btn-group">
+                            <a href="{% url 'campaign_dashboard' domain %}?dashboard_id={{ dashboard.id }}" class="btn btn-sm btn-outline-primary">
+                              <i class="fa fa-eye"></i> {% trans "View" %}
+                            </a>
+                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editDashboardModal" data-dashboard-id="{{ dashboard.id }}">
+                              <i class="fa fa-pencil"></i> {% trans "Edit" %}
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteDashboardModal" data-dashboard-id="{{ dashboard.id }}">
+                              <i class="fa fa-trash"></i> {% trans "Delete" %}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="alert alert-info">
+                {% trans "No campaign dashboards have been created yet. Click the 'New Dashboard' button to create one." %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- New Dashboard Modal -->
+  <div class="modal fade" id="newDashboardModal" tabindex="-1" aria-labelledby="newDashboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="newDashboardModalLabel">{% trans "Create New Dashboard" %}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="newDashboardForm">
+            <div class="mb-3">
+              <label for="dashboardName" class="form-label">{% trans "Dashboard Name" %}</label>
+              <input type="text" class="form-control" id="dashboardName" required>
+            </div>
+            <div class="mb-3">
+              <label for="dashboardDescription" class="form-label">{% trans "Description" %}</label>
+              <textarea class="form-control" id="dashboardDescription" rows="3"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+          <button type="button" class="btn btn-primary">{% trans "Create Dashboard" %}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Edit Dashboard Modal -->
+  <div class="modal fade" id="editDashboardModal" tabindex="-1" aria-labelledby="editDashboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editDashboardModalLabel">{% trans "Edit Dashboard" %}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editDashboardForm">
+            <input type="hidden" id="editDashboardId">
+            <div class="mb-3">
+              <label for="editDashboardName" class="form-label">{% trans "Dashboard Name" %}</label>
+              <input type="text" class="form-control" id="editDashboardName" required>
+            </div>
+            <div class="mb-3">
+              <label for="editDashboardDescription" class="form-label">{% trans "Description" %}</label>
+              <textarea class="form-control" id="editDashboardDescription" rows="3"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+          <button type="button" class="btn btn-primary">{% trans "Save Changes" %}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Delete Dashboard Modal -->
+  <div class="modal fade" id="deleteDashboardModal" tabindex="-1" aria-labelledby="deleteDashboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteDashboardModalLabel">{% trans "Delete Dashboard" %}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>{% trans "Are you sure you want to delete this dashboard? This action cannot be undone." %}</p>
+          <input type="hidden" id="deleteDashboardId">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+          <button type="button" class="btn btn-danger">{% trans "Delete Dashboard" %}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %} 

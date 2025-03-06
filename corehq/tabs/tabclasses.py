@@ -2761,3 +2761,47 @@ class AttendanceTrackingTab(UITab):
     def _is_viewable(self):
         # The FF check is temporary until the full feature is released
         return toggles.ATTENDANCE_TRACKING.enabled(self.domain) and self.couch_user.can_manage_events(self.domain)
+
+
+class CampaignDashboardTab(UITab):
+    title = gettext_noop("Campaign Dashboard")
+    view = "campaign_dashboard"
+
+    url_prefix_formats = ('/a/{domain}/campdash/',)
+
+    @property
+    def _is_viewable(self):
+        return (
+            self.domain
+            and self.project
+            and not self.project.is_snapshot
+            and (self.couch_user.is_domain_admin(self.domain)
+                 or self.couch_user.has_permission(self.domain, 'view_campaign_dashboard'))
+        )
+
+    @property
+    @memoized
+    def url(self):
+        from corehq.apps.campdash.views import CampaignDashboardView
+        return reverse(CampaignDashboardView.urlname, args=[self.domain])
+
+    @property
+    def sidebar_items(self):
+        items = []
+        
+        items.append((_('Campaign Dashboard'), [{
+            'title': _('Dashboard'),
+            'url': reverse('campaign_dashboard', args=[self.domain]),
+            'description': _('View campaign progress and metrics'),
+            'icon': 'fa fa-dashboard',
+        }]))
+        
+        if self.couch_user.is_domain_admin(self.domain):
+            items.append((_('Settings'), [{
+                'title': _('Configure Dashboard'),
+                'url': reverse('campaign_dashboard_settings', args=[self.domain]),
+                'description': _('Configure campaign dashboard settings'),
+                'icon': 'fa fa-cog',
+            }]))
+        
+        return items

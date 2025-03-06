@@ -90,6 +90,34 @@ class CampaignDashboardView(BasePageView, DomainViewMixin):
         return context
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
+@method_decorator(login_and_domain_required, name='dispatch')
+@location_safe
+class CampaignDashboardSettingsView(BasePageView, DomainViewMixin):
+    """
+    Settings view for the campaign dashboard
+    """
+    urlname = 'campaign_dashboard_settings'
+    page_title = gettext_lazy("Campaign Dashboard Settings")
+    template_name = 'campdash/settings.html'
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    @property
+    def page_context(self):
+        # Get all dashboards for this domain
+        dashboards = CampaignDashboard.objects.filter(domain=self.domain, is_active=True)
+        
+        context = {
+            'dashboards': dashboards,
+            'domain': self.domain,
+        }
+        
+        return context
+
+
 @login_and_domain_required
 @location_safe
 def campaign_dashboard_data(request, domain):
