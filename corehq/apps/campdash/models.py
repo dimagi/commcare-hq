@@ -19,6 +19,21 @@ class CampaignDashboard(models.Model):
 
     class Meta:
         app_label = 'campdash'
+        indexes = [
+            models.Index(fields=['domain'], name='campdash_domain_idx'),
+            models.Index(fields=['is_active'], name='campdash_active_idx'),
+            models.Index(fields=['domain', 'is_active'], name='campdash_domain_active_idx'),
+        ]
+        permissions = [
+            ('view_all_campaign_dashboards', 'Can view all campaign dashboards'),
+            ('edit_all_campaign_dashboards', 'Can edit all campaign dashboards'),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['domain', 'name'],
+                name='unique_dashboard_name_per_domain'
+            ),
+        ]
 
     def __str__(self):
         return f"{self.name} ({self.domain})"
@@ -47,9 +62,38 @@ class DashboardGauge(models.Model):
     class Meta:
         app_label = 'campdash'
         ordering = ['display_order']
+        indexes = [
+            models.Index(fields=['display_order'], name='campdash_gauge_order_idx'),
+        ]
+        permissions = [
+            ('configure_gauges', 'Can configure dashboard gauges'),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(min_value__lt=models.F('max_value')),
+                name='gauge_min_less_than_max'
+            ),
+            models.CheckConstraint(
+                check=models.Q(current_value__gte=models.F('min_value'), 
+                               current_value__lte=models.F('max_value')),
+                name='gauge_value_in_range'
+            ),
+        ]
 
     def __str__(self):
         return f"{self.title} - {self.dashboard.name}"
+
+    def clean(self):
+        """
+        Validate the gauge values
+        """
+        from django.core.exceptions import ValidationError
+        
+        if self.min_value >= self.max_value:
+            raise ValidationError({'min_value': _('Minimum value must be less than maximum value')})
+        
+        if self.current_value < self.min_value or self.current_value > self.max_value:
+            raise ValidationError({'current_value': _('Current value must be between minimum and maximum values')})
 
 
 class DashboardReport(models.Model):
@@ -73,6 +117,12 @@ class DashboardReport(models.Model):
     class Meta:
         app_label = 'campdash'
         ordering = ['display_order']
+        indexes = [
+            models.Index(fields=['display_order'], name='campdash_report_order_idx'),
+        ]
+        permissions = [
+            ('configure_reports', 'Can configure dashboard reports'),
+        ]
 
     def __str__(self):
         return f"{self.title} - {self.dashboard.name}"
@@ -99,6 +149,12 @@ class DashboardMap(models.Model):
     class Meta:
         app_label = 'campdash'
         ordering = ['display_order']
+        indexes = [
+            models.Index(fields=['display_order'], name='campdash_map_order_idx'),
+        ]
+        permissions = [
+            ('configure_maps', 'Can configure dashboard maps'),
+        ]
 
     def __str__(self):
         return f"{self.title} - {self.dashboard.name}"
