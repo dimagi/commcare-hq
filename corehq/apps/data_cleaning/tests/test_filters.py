@@ -19,14 +19,25 @@ from corehq.apps.data_cleaning.models import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.es import CaseSearchES
+from corehq.apps.es import CaseSearchES, cases as case_es
 from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.client import manager
+from corehq.apps.es.groups import group_adapter
 from corehq.apps.es.tests.utils import (
     case_search_es_setup,
     es_test,
 )
+from corehq.apps.es.users import user_adapter
 from corehq.apps.hqwebapp.tests.tables.generator import get_case_blocks
-from corehq.apps.users.models import WebUser
+from corehq.apps.reports.models import HQUserType
+from corehq.apps.reports.standard.cases.utils import (
+    all_project_data_filter,
+    deactivated_case_owners,
+    get_case_owners,
+    query_location_restricted_cases,
+)
+from corehq.apps.reports.tests.standard.cases.test_utils import BaseCaseOwnersTest
+from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
@@ -722,3 +733,256 @@ class TestReportFilterSubclasses(TestCase):
             report_filter.filter_context['report_select2_config']['select']['selected'],
             'open'
         )
+
+
+@es_test(requires=[case_search_adapter, user_adapter, group_adapter], setup_class=True)
+class TestCaseOwnersPinnedFilterQuery(BaseCaseOwnersTest):
+    domain = 'case-owners-pinned-filter-test-x1'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.deactivated_user = CommCareUser.create(
+            cls.domain, 'deactivated-user-test', 'Passw0rd!', None, None
+        )
+        cls.deactivated_user.is_active = False
+        user_adapter.index(cls.deactivated_user)
+        cls.deactivated_user.save()
+
+        cls.web_location_user = WebUser.create(
+            cls.domain, 'restricted@datacleaning.org', 'Passw0rd!', None, None
+
+        )
+        cls.web_location_user.set_location(cls.domain, cls.locations['Suffolk'])
+        cls.restrict_user_to_assigned_locations(cls.web_location_user)
+        cls.web_location_user.save()
+        user_adapter.index(cls.web_location_user)
+
+        cls.session_user = cls.web_users[0]
+
+        case_search_es_setup(cls.domain, get_case_blocks())
+        manager.index_refresh(user_adapter.index_name)
+        manager.index_refresh(group_adapter.index_name)
+
+    def setUp(self):
+        super().setUp()
+        self.session = BulkEditSession.new_case_session(
+            self.session_user.get_django_user(), self.domain, 'plants',
+        )
+        self.session_location_restricted = BulkEditSession.new_case_session(
+            self.web_location_user.get_django_user(), self.domain, 'plants',
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        FormProcessorTestUtils.delete_all_cases()
+
+        from couchdbkit import ResourceNotFound
+        for user in [cls.deactivated_user, cls.web_location_user]:
+            try:
+                user.delete(cls.domain, None)
+            except ResourceNotFound:
+                pass
+
+        super().tearDownClass()
+
+    def test_default(self):
+        query = CaseSearchES().domain(self.domain)
+        pinned_filter = self.session.pinned_filters.get(
+            filter_type=PinnedFilterType.CASE_OWNERS
+        )
+        self.assertIsNone(pinned_filter.value)
+        filtered_query = pinned_filter.filter_query(query)
+        expected_query = query.OR(all_project_data_filter(self.domain, ['project_data']))
+        self.assertDictEqual(filtered_query.es_query, expected_query.es_query)
+
+    def test_default_location_restricted(self):
+        query = CaseSearchES().domain(self.domain)
+        pinned_filter = self.session_location_restricted.pinned_filters.get(
+            filter_type=PinnedFilterType.CASE_OWNERS
+        )
+        self.assertIsNone(pinned_filter.value)
+        filtered_query = pinned_filter.filter_query(query)
+        expected_query = query_location_restricted_cases(query, self.domain, self.web_location_user)
+        self.assertDictEqual(filtered_query.es_query, expected_query.es_query)
+
+    def test_all_data(self):
+        query = CaseSearchES().domain(self.domain)
+        pinned_filter = self.session.pinned_filters.get(
+            filter_type=PinnedFilterType.CASE_OWNERS
+        )
+        pinned_filter.value = ['project_data', 'all_data', 't__5']
+        pinned_filter.save()
+        filtered_query = pinned_filter.filter_query(query)
+        self.assertDictEqual(filtered_query.es_query, query.es_query)
+
+    def test_all_data_location_restricted(self):
+        # location restricted users can't view "all data", ensure that's the case
+        query = CaseSearchES().domain(self.domain)
+        pinned_filter = self.session_location_restricted.pinned_filters.get(
+            filter_type=PinnedFilterType.CASE_OWNERS
+        )
+        pinned_filter.value = ['project_data', 'all_data', 't__5']
+        pinned_filter.save()
+        filtered_query = pinned_filter.filter_query(query)
+        expected_query = query_location_restricted_cases(
+            query, self.domain, self.web_location_user
+        )
+        self.assertDictEqual(filtered_query.es_query, expected_query.es_query)
+
+    def test_deactivated(self):
+        query = CaseSearchES().domain(self.domain)
+        pinned_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_OWNERS)
+        pinned_filter.value = ['t__5']
+        pinned_filter.save()
+        expected_query = query.OR(deactivated_case_owners(self.domain))
+        filtered_query = pinned_filter.filter_query(query)
+        self.assertDictEqual(filtered_query.es_query, expected_query.es_query)
+
+    def test_deactivated_location_restricted(self):
+        query = CaseSearchES().domain(self.domain)
+        pinned_filter = self.session_location_restricted.pinned_filters.get(
+            filter_type=PinnedFilterType.CASE_OWNERS
+        )
+        pinned_filter.value = ['t__5']
+        pinned_filter.save()
+        expected_query = query_location_restricted_cases(query, self.domain, self.web_location_user)
+        filtered_query = pinned_filter.filter_query(query)
+        self.assertDictEqual(filtered_query.es_query, expected_query.es_query)
+
+    def test_selected_user_types(self):
+        query = CaseSearchES().domain(self.domain)
+        # HQUserType.DEACTIVATED is tested in test_deactivated
+        # HQUserType.ACTIVE is not an option the filter (all mobile workers)
+        for user_type, is_owners_empty in [
+            (f't__{HQUserType.DEMO_USER}', False),
+            (f't__{HQUserType.ADMIN}', True),  # not currently functional with get_case_owners()
+            (f't__{HQUserType.UNKNOWN}', True),  # not currently functional with get_case_owners()
+            (f't__{HQUserType.COMMTRACK}', False),
+            (f't__{HQUserType.WEB}', False),
+        ]:
+            pinned_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_OWNERS)
+            pinned_filter.value = [user_type]
+            pinned_filter.save()
+            filtered_query = pinned_filter.filter_query(query)
+            expected_query = query if is_owners_empty else query.OR(case_es.owner(get_case_owners(
+                True, self.domain, pinned_filter.value
+            )))
+            self.assertDictEqual(
+                filtered_query.es_query, expected_query.es_query,
+                msg=f"expected query did not match for user type {user_type}"
+            )
+
+    def test_selected_user_types_location_restricted(self):
+        query = CaseSearchES().domain(self.domain)
+        # HQUserType.DEACTIVATED is tested in test_deactivated
+        # HQUserType.ACTIVE is not an option the filter (all mobile workers)
+        for user_type in [
+            f't__{HQUserType.DEMO_USER}',
+            f't__{HQUserType.ADMIN}',  # not currently functional with get_case_owners()
+            f't__{HQUserType.UNKNOWN}',  # not currently functional with get_case_owners()
+            f't__{HQUserType.COMMTRACK}',
+            f't__{HQUserType.WEB}',
+        ]:
+            pinned_filter = self.session_location_restricted.pinned_filters.get(
+                filter_type=PinnedFilterType.CASE_OWNERS
+            )
+            pinned_filter.value = [user_type]
+            pinned_filter.save()
+            filtered_query = pinned_filter.filter_query(query)
+            expected_query = query_location_restricted_cases(
+                query, self.domain, self.web_location_user
+            )
+            self.assertDictEqual(
+                filtered_query.es_query, expected_query.es_query,
+                msg=f"expected query did not match for user type {user_type}"
+            )
+
+    def test_selected_user_ids(self):
+        selected_user_ids = [
+            self.users[0]._id,
+            self.users[3]._id,
+            self.users[4]._id
+        ]
+        query = CaseSearchES().domain(self.domain)
+        pinned_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_OWNERS)
+        pinned_filter.value = [f"u__{user_id}" for user_id in selected_user_ids]
+        pinned_filter.save()
+        filtered_query = pinned_filter.filter_query(query)
+        expected_query = query.OR(case_es.owner(get_case_owners(
+            True, self.domain, pinned_filter.value
+        )))
+        self.assertDictEqual(filtered_query.es_query, expected_query.es_query)
+
+    def test_selected_user_ids_location_restricted(self):
+        selected_user_ids = [
+            self.users[0]._id,
+            self.users[3]._id,
+            self.users[4]._id
+        ]
+        query = CaseSearchES().domain(self.domain)
+        pinned_filter = self.session_location_restricted.pinned_filters.get(
+            filter_type=PinnedFilterType.CASE_OWNERS
+        )
+        pinned_filter.value = [f"u__{user_id}" for user_id in selected_user_ids]
+        pinned_filter.save()
+        filtered_query = pinned_filter.filter_query(query)
+        expected_query = query_location_restricted_cases(query.OR(
+            case_es.owner(get_case_owners(
+                False, self.domain, pinned_filter.value
+            ))
+        ), self.domain, self.web_location_user)
+        self.assertDictEqual(filtered_query.es_query, expected_query.es_query)
+
+    def test_groups(self):
+        query = CaseSearchES().domain(self.domain)
+        pinned_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_OWNERS)
+        pinned_filter.value = [f'g__{self.group1._id}']
+        pinned_filter.save()
+        filtered_query = pinned_filter.filter_query(query)
+        expected_query = query.OR(case_es.owner(get_case_owners(
+            True, self.domain, pinned_filter.value
+        )))
+        self.assertDictEqual(filtered_query.es_query, expected_query.es_query)
+
+    def test_groups_location_restricted(self):
+        query = CaseSearchES().domain(self.domain)
+        pinned_filter = self.session_location_restricted.pinned_filters.get(
+            filter_type=PinnedFilterType.CASE_OWNERS
+        )
+        pinned_filter.value = [f'g__{self.group1._id}']
+        pinned_filter.save()
+        filtered_query = pinned_filter.filter_query(query)
+        expected_query = query_location_restricted_cases(
+            query, self.domain, self.web_location_user
+        )
+        self.assertDictEqual(filtered_query.es_query, expected_query.es_query)
+
+    def test_location_ids(self):
+        location_id = self.locations['Brooklyn'].location_id
+        query = CaseSearchES().domain(self.domain)
+        pinned_filter = self.session.pinned_filters.get(filter_type=PinnedFilterType.CASE_OWNERS)
+        pinned_filter.value = [f'l__{location_id}']
+        pinned_filter.save()
+        filtered_query = pinned_filter.filter_query(query)
+        expected_query = query.OR(case_es.owner(get_case_owners(
+            True, self.domain, pinned_filter.value
+        )))
+        self.assertDictEqual(filtered_query.es_query, expected_query.es_query)
+
+    def test_location_ids_location_restricted(self):
+        location_id = self.locations['Brooklyn'].location_id
+        query = CaseSearchES().domain(self.domain)
+        pinned_filter = self.session_location_restricted.pinned_filters.get(
+            filter_type=PinnedFilterType.CASE_OWNERS
+        )
+        pinned_filter.value = [f'l__{location_id}']
+        pinned_filter.save()
+        filtered_query = pinned_filter.filter_query(query)
+        expected_query = query_location_restricted_cases(query.OR(
+            case_es.owner(get_case_owners(
+                False, self.domain, pinned_filter.value
+            ))
+        ), self.domain, self.web_location_user)
+        self.assertDictEqual(filtered_query.es_query, expected_query.es_query)
