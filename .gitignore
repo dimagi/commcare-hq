@@ -47,7 +47,7 @@ formplayer.properties
 application.properties
 formplayer.jar
 .vscode/*
-
+.env
 submodules/formdesigner
 submodules/vellum/Vellum
 
