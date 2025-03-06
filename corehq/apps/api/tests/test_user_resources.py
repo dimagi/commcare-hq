@@ -153,7 +153,6 @@ class TestCommCareUserResource(APIResourceTest):
             'username': 'fake_user',
             'primary_location': self.loc2.location_id,
             'locations': [self.loc1.location_id, self.loc2.location_id],
-            'last_modified': commcare_user.last_modified.strftime('%Y-%m-%dT%H:%M:%S.%f'),
         })
 
     def test_create(self):
