@@ -369,7 +369,7 @@ def profile(name=None):
     def decorator(func):
         @wraps(func)
         def wrapper(obj, *args, **kwargs):
-            if obj.profiler_enabled:
+            if obj.profiler_enabled and obj.profiler:
                 with obj.profiler.timing_context(name):
                     return func(obj, *args, **kwargs)
             return func(obj, *args, **kwargs)
