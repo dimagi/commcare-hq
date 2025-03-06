@@ -1,3 +1,4 @@
+from django.http import Http404
 from django.utils.translation import gettext as _
 
 from corehq.apps.celery import task
@@ -85,9 +86,14 @@ def prune_auto_generated_builds(domain, app_id):
 
 @task(queue='background_queue', ignore_result=True)
 def refresh_data_dictionary_from_app(domain, app_id):
+    try:
+        app = get_app(domain, app_id)
+    except Http404:
+        # If there's no app, trhere's nothing to do
+        return
+
     from corehq.apps.app_manager.util import actions_use_usercase
     from corehq.apps.data_dictionary.util import create_properties_for_case_types
-    app = get_app(domain, app_id)
     case_type_to_prop = defaultdict(set)
     for module in app.get_modules():
         if not module.is_surveys:
