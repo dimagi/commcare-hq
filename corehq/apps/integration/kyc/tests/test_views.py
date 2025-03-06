@@ -13,7 +13,6 @@ from corehq.apps.integration.kyc.views import (
     KycVerificationTableView,
 )
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.motech.models import ConnectionSettings
 from corehq.util.test_utils import flag_enabled
 
 
@@ -35,13 +34,6 @@ class BaseTestKycView(TestCase):
             is_admin=True,
         )
         cls.webuser.save()
-        cls.conn_settings = ConnectionSettings.objects.create(
-            name='test-conn',
-            url='http://test.com',
-            username='test',
-            password='test',
-        )
-        cls.addClassCleanup(cls.conn_settings.delete)
 
     @classmethod
     def tearDownClass(cls):
@@ -105,7 +97,6 @@ class TestKycVerificationReportView(BaseTestKycView):
             domain=self.domain,
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
             api_field_to_user_data_map=[],
-            connection_settings=self.conn_settings
         )
         self.addCleanup(kyc_config.delete)
         response = self._make_request()
@@ -125,7 +116,6 @@ class TestKycVerificationReportView(BaseTestKycView):
             domain=self.domain,
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
             api_field_to_user_data_map=[],
-            connection_settings=self.conn_settings
         )
         self.addCleanup(kyc_config.delete)
 
@@ -161,7 +151,6 @@ class TestKycVerificationTableView(BaseTestKycView):
             domain=cls.domain,
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
             api_field_to_user_data_map=cls.kyc_mapping,
-            connection_settings=cls.conn_settings,
         )
         cls.addClassCleanup(cls.kyc_config.delete)
         cls.user1 = CommCareUser.create(
