@@ -168,7 +168,9 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
                 'first_domain_for_user': is_new_user,
                 'error': str(error),
             })
-            new_domain.delete(leave_tombstone=True)
+            # It is safe to delete the domain without leaving a tombstone
+            # because the domain was just created.
+            new_domain.delete(leave_tombstone=False)
             raise ErrorInitializingDomain(f"Subscription setup failed for '{name}'")
 
         if settings.IS_SAAS_ENVIRONMENT:
