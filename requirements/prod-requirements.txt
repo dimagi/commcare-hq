@@ -43,7 +43,7 @@ beautifulsoup4==4.12.2
     # via -r base-requirements.in
 billiard==3.6.4.0
     # via celery
-bleach==6.1.0
+bleach[css]==6.1.0
     # via -r base-requirements.in
 boto3==1.24.96
     # via -r base-requirements.in
@@ -271,7 +271,7 @@ isodate==0.6.1
     # via python3-saml
 jedi==0.18.1
     # via ipython
-jinja2==3.1.5
+jinja2==3.1.6
     # via -r base-requirements.in
 jmespath==0.10.0
     # via
@@ -405,7 +405,7 @@ pygments==2.15.0
     # via ipython
 pyjwkest==1.4.2
     # via oic
-pyjwt==2.7.0
+pyjwt[crypto]==2.7.0
     # via
     #   -r base-requirements.in
     #   msal
