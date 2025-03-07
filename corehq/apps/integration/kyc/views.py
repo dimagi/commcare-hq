@@ -151,7 +151,7 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
     def _get_existing_failed_users(self, kyc_users):
         return [
             kyc_user.user_id for kyc_user in kyc_users
-            if kyc_user.kyc_verification_status is KycVerificationStatus.FAILED
+            if kyc_user.kyc_verification_status == KycVerificationStatus.FAILED
         ]
 
 
