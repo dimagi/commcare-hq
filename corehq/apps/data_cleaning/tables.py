@@ -1,31 +1,25 @@
 from django.utils.translation import gettext_lazy
 from django_tables2 import columns, tables
 
-from corehq.apps.hqwebapp.tables.elasticsearch.records import CaseSearchElasticRecord
+from corehq.apps.data_cleaning.columns import DataCleaningHtmxColumn
+from corehq.apps.data_cleaning.records import EditableCaseSearchElasticRecord
 from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
 from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
 
 
 class CleanCaseTable(BaseHtmxTable, ElasticTable):
-    record_class = CaseSearchElasticRecord
+    record_class = EditableCaseSearchElasticRecord
 
     class Meta(BaseHtmxTable.Meta):
         pass
 
-    name = columns.Column(
-        verbose_name=gettext_lazy("Case Name"),
-    )
-    case_type = columns.Column(
-        accessor="@case_type",
-        verbose_name=gettext_lazy("Case Type"),
-    )
-    status = columns.Column(
-        accessor="@status",
-        verbose_name=gettext_lazy("Status"),
-    )
-    opened_on = columns.Column(
-        verbose_name=gettext_lazy("Opened On"),
-    )
+    @classmethod
+    def get_columns_from_session(cls, session):
+        visible_columns = []
+        for column_spec in session.columns.all():
+            slug = column_spec.prop_id.replace('@', '')
+            visible_columns.append((slug, DataCleaningHtmxColumn(column_spec)))
+        return visible_columns
 
 
 class CaseCleaningTasksTable(BaseHtmxTable, tables.Table):
@@ -36,8 +30,11 @@ class CaseCleaningTasksTable(BaseHtmxTable, tables.Table):
     status = columns.Column(
         verbose_name=gettext_lazy("Status"),
     )
-    time = columns.Column(
-        verbose_name=gettext_lazy("Time"),
+    committed_on = columns.Column(
+        verbose_name=gettext_lazy("Committed On"),
+    )
+    completed_on = columns.Column(
+        verbose_name=gettext_lazy("Completed On"),
     )
     case_type = columns.Column(
         verbose_name=gettext_lazy("Case Type"),

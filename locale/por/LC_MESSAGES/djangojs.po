@@ -140,6 +140,12 @@ msgid "Please enter your organization."
 msgstr ""
 
 #: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#, fuzzy
+#| msgid "Please enter a valid email."
+msgid "Please enter your job title."
+msgstr "Introduze um email válido, por favor."
+
+#: corehq/apps/analytics/static/analytix/js/cta_forms.js
 msgid "Please enter your email address."
 msgstr ""
 
@@ -574,6 +580,11 @@ msgid "Select parent"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "Save Questions to Case Properties"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Raw"
 msgstr ""
 
@@ -633,10 +644,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "You have unchanged user properties settings"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-msgid "Save Questions to Case Properties"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
@@ -3609,6 +3616,18 @@ msgstr ""
 msgid "Showing <%- firstItem %> to <%- lastItem %> of <%- maxItems %> entries"
 msgstr ""
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/rich_text_knockout_bindings.js
+msgid "No File selected"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/rich_text_knockout_bindings.js
+msgid "Failed to upload image: "
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/rich_text_knockout_bindings.js
+msgid "Failed to upload image. Please try again."
+msgstr ""
+
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js
 msgid "Clear"
 msgstr ""
@@ -4016,6 +4035,10 @@ msgstr ""
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please specify."
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/new_user.ko.js
+msgid "Please list your organization or company name."
 msgstr ""
 
 #: corehq/apps/registry/static/registry/js/registry_actions.js
@@ -5261,6 +5284,3 @@ msgstr ""
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr ""
-
-#~ msgid "Show Deactivated Mobile Workers"
-#~ msgstr "Mostrar os Trabalhadores Móveis Desativados"

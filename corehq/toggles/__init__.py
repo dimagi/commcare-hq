@@ -958,18 +958,6 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-USH_DONT_CLOSE_PATIENT_EXTENSIONS = StaticToggle(
-    'ush_dont_close_patient_extensions',
-    'USH: Suppress closing extensions on closing hosts for host/extension pairs of patient/contact case-types',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    Suppress the normal behaviour of 'closing host cases closes its extension cases'.
-    Enabling this results in 'closing patient type cases will not close its contact type
-    extension cases'. Designed for specific USH domain use-case
-    """
-)
-
 WEB_APPS_PERMISSIONS_VIA_GROUPS = StaticToggle(
     'web_apps_permissions_via_groups',
     "USH: Allow users to control access to specific web apps via mobile worker groups.",
@@ -1376,6 +1364,15 @@ CACHE_AND_INDEX = StaticToggle(
     help_link='https://confluence.dimagi.com/pages/viewpage.action?pageId=41484944',
 )
 
+
+CASE_LIST_OPTIMIZATIONS = StaticToggle(
+    'case_list_optimizations',
+    'Enable options to cache and lazy load case list columns',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2939519055/Feature+Usage+Guide+Case+List+Caching+and+Lazy+Loading+in+CommCare',  # noqa: E501
+)
+
 CUSTOM_PROPERTIES = StaticToggle(
     'custom_properties',
     'Allow users to add arbitrary custom properties to their application',
@@ -1563,6 +1560,7 @@ RICH_TEXT_EMAILS = StaticToggle(
     'Enable sending rich text HTML emails in conditional alerts and broadcasts',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    help_link='https://dimagi.atlassian.net/wiki/spaces/USH/pages/2901835924/Rich+text+emails'
 )
 
 RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
@@ -2001,14 +1999,6 @@ LOCATION_COLUMNS_APP_STATUS_REPORT = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-SKIP_CREATING_DEFAULT_BUILD_FILES_ON_BUILD = StaticToggle(
-    'skip_creating_default_build_files_on_build',
-    'Skips creating the build files for default profile each time a build is made'
-    'which helps speed up the build and revert process',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
     'disable_case_update_rule_task',
     'Disable the `run_case_update_rules` periodic task '
@@ -2289,6 +2279,14 @@ PRIME_FORMPLAYER_DBS = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/Prime+Formplayer+DBS"
+)
+
+PRIME_FORMPLAYER_DBS_BHA = StaticToggle(
+    'prime_formplayer_dbs_bha',
+    'USH-BHA: Control which domains will be included in the prime formplayer task runs',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://dimagi.atlassian.net/wiki/spaces/saas/pages/2963013633/Prime+Formplayer+DBS+BHA"
 )
 
 FHIR_INTEGRATION = StaticToggle(
@@ -3013,4 +3011,18 @@ KYC_VERIFICATION = StaticToggle(
     label='Enable KYC verification',
     tag=TAG_SOLUTIONS,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+MTN_MOBILE_WORKER_VERIFICATION = StaticToggle(
+    slug='mtn_mobile_worker_verification',
+    label='Enable user verification using MTN Mobile Money',
+    tag=TAG_SOLUTIONS,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+ACTIVATE_DATADOG_APM_TRACES = StaticToggle(
+    slug='activate_datadog_apm_traces',
+    label='USH: Turn on Datadog APM traces for a project.',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
 )

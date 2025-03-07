@@ -464,7 +464,8 @@ class ProjectDataTab(UITab):
         '/a/{domain}/case/',
         '/a/{domain}/clean/',
         '/a/{domain}/microplanning/',
-        '/a/{domain}/kyc/'
+        '/a/{domain}/kyc/',
+        '/a/{domain}/payments/'
     )
 
     @property
@@ -656,6 +657,8 @@ class ProjectDataTab(UITab):
             items += self._get_geospatial_views()
         if self._can_view_kyc_integration:
             items += self._get_kyc_verification_views()
+        if self._can_view_payments_integration:
+            items += self._get_payments_verification_views()
         return items
 
     @cached_property
@@ -954,6 +957,7 @@ class ProjectDataTab(UITab):
             automatic_update_rule_list_view = {
                 'title': _(AutomaticUpdateRuleListView.page_title),
                 'url': reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]),
+                'icon': 'fa-solid fa-cogs',
             }
             if edit_section:
                 edit_section[0][1].append(automatic_update_rule_list_view)
@@ -967,6 +971,7 @@ class ProjectDataTab(UITab):
             deduplication_list_view = {
                 'title': _(DeduplicationRuleListView.page_title),
                 'url': reverse(DeduplicationRuleListView.urlname, args=[self.domain]),
+                'icon': 'fa-solid fa-network-wired',
             }
             edit_section[0][1].append(deduplication_list_view)
 
@@ -977,6 +982,7 @@ class ProjectDataTab(UITab):
             clean_cases_view = {
                 'title': _(CleanCasesMainView.page_title),
                 'url': reverse(CleanCasesMainView.urlname, args=[self.domain]),
+                'icon': 'fa-solid fa-shower',
             }
             edit_section[0][1].append(clean_cases_view)
 
@@ -1056,6 +1062,23 @@ class ProjectDataTab(UITab):
     @cached_property
     def _can_view_kyc_integration(self):
         return toggles.KYC_VERIFICATION.enabled(self.domain)
+
+    @cached_property
+    def _can_view_payments_integration(self):
+        return toggles.MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain)
+
+    def _get_payments_verification_views(self):
+        from corehq.apps.integration.payments.views import PaymentsVerificationReportView
+        items = [[
+            _("Payments Verification"),
+            [
+                {
+                    "title": PaymentsVerificationReportView.page_title,
+                    "url": reverse(PaymentsVerificationReportView.urlname, args=[self.domain]),
+                },
+            ]
+        ]]
+        return items
 
     @property
     def dropdown_items(self):
@@ -2617,6 +2640,9 @@ class AdminTab(UITab):
                 {'title': _('Manage deleted domains'),
                  'url': reverse('tombstone_management'),
                  'icon': 'fa fa-minus-circle'},
+                {'title': _('Check email status'),
+                 'url': reverse('email_status'),
+                 'icon': 'fa fa-envelope-circle-check'},
             ]
             admin_operations = [
                 {'title': _('CommCare Builds'),

@@ -1,0 +1,34 @@
+{% load i18n %}
+
+<div
+  id="{{ container_id }}"
+  class="card"
+  hx-swap="outerHTML"
+>
+  <div class="card-body">
+    <form
+      hx-post="{{ request.path_info }}"
+      hx-target="#{{ container_id }}"
+      hx-disabled-elt="find button"
+      hq-hx-action="update_filters"
+      x-data="{
+        isSubmitEnabled: false,
+      }"
+      @report-filter-updated.camel="isSubmitEnabled = true;"
+    >
+      {% for form_filter in form_filters %}
+        {{ form_filter }}
+      {% endfor %}
+      <div class="py-1">
+        <button
+          class="btn btn-disabled"
+          type="submit"
+          :disabled="!isSubmitEnabled"
+          :class="(isSubmitEnabled) ? 'btn-primary' : 'btn-disabled';"
+        >
+          {% trans "Apply" %}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

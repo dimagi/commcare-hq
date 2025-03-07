@@ -7,7 +7,11 @@ from django.db import models
 from django.utils.translation import gettext_lazy, gettext as _
 
 from corehq.apps.case_search.const import METADATA_IN_REPORTS
-from corehq.apps.data_cleaning.exceptions import UnsupportedActionException
+from corehq.apps.data_cleaning.exceptions import (
+    UnsupportedActionException,
+    UnsupportedFilterValueException,
+)
+from corehq.apps.es import CaseSearchES
 
 
 class BulkEditSessionType:
@@ -83,6 +87,57 @@ class BulkEditSession(models.Model):
     def new_form_session(cls, user, domain_name, xmlns):
         raise NotImplementedError("Form data cleaning sessions are not yet supported!")
 
+    @classmethod
+    def get_committed_sessions(cls, user, domain_name):
+        return cls.objects.filter(user=user, domain=domain_name, committed_on__isnull=False)
+
+    @property
+    def status(self):
+        if self.committed_on:
+            if self.completed_on:
+                return "complete"
+            else:
+                return "in progress"
+        return "pending"
+
+    def add_column_filter(self, prop_id, data_type, match_type, value=None):
+        BulkEditColumnFilter.objects.create(
+            session=self,
+            index=self.column_filters.count(),
+            prop_id=prop_id,
+            data_type=data_type,
+            match_type=match_type,
+            value=value,
+        )
+
+    def reorder_column_filters(self, filter_ids):
+        """
+        This updates the order of column filters for this session
+        :param filter_ids: list of uuids matching filter_id field of BulkEditColumnFilters
+        """
+        if len(filter_ids) != self.column_filters.count():
+            raise ValueError("the lengths of column_ids and available column filters do not match")
+        for index, filter_id in enumerate(filter_ids):
+            column_filter = self.column_filters.get(filter_id=filter_id)
+            column_filter.index = index
+            column_filter.save()
+
+    def get_queryset(self):
+        query = CaseSearchES().domain(self.domain).case_type(self.identifier)
+        query = self._apply_column_filters(query)
+        return query
+
+    def _apply_column_filters(self, query):
+        xpath_expressions = []
+        for column_filter in self.column_filters.all():
+            query = column_filter.filter_query(query)
+            column_xpath = column_filter.get_xpath_expression()
+            if column_xpath is not None:
+                xpath_expressions.append(column_xpath)
+        if xpath_expressions:
+            query = query.xpath_query(self.domain, " and ".join(xpath_expressions))
+        return query
+
 
 class DataType:
     TEXT = 'text'
@@ -113,19 +168,31 @@ class DataType:
         (PASSWORD, gettext_lazy("Password")),
     )
 
+    FILTER_CATEGORY_TEXT = 'filter_text'
+    FILTER_CATEGORY_NUMBER = 'filter_number'
+    FILTER_CATEGORY_DATE = 'filter_date'
+    FILTER_CATEGORY_MULTI_SELECT = 'filter_multi_select'
+
+    FILTER_CATEGORY_DATA_TYPES = {
+        FILTER_CATEGORY_TEXT: (TEXT, PHONE_NUMBER, BARCODE, PASSWORD, GPS, SINGLE_OPTION, TIME,),
+        FILTER_CATEGORY_NUMBER: (INTEGER, DECIMAL,),
+        FILTER_CATEGORY_DATE: (DATE, DATETIME,),
+        FILTER_CATEGORY_MULTI_SELECT: (MULTIPLE_OPTION,),
+    }
+
 
 class FilterMatchType:
     EXACT = "exact"
     IS_NOT = "is_not"
 
     STARTS = "starts"
-    ENDS = "ends"
+    STARTS_NOT = "starts_not"
 
     IS_EMPTY = "is_empty"  # empty string
     IS_NOT_EMPTY = "is_not_empty"
 
-    IS_NULL = "is_null"  # un-set
-    IS_NOT_NULL = "is_not_null"
+    IS_MISSING = "missing"  # un-set
+    IS_NOT_MISSING = "not_missing"
 
     FUZZY = "fuzzy"  # will use fuzzy-match from CQL
     FUZZY_NOT = "not_fuzzy"  # will use not(fuzzy-match()) from CQL
@@ -135,6 +202,9 @@ class FilterMatchType:
 
     LESS_THAN = "lt"
     GREATER_THAN = "gt"
+
+    LESS_THAN_EQUAL = "lte"
+    GREATER_THAN_EQUAL = "gte"
 
     IS_ANY = "is_any"  # we will use selected-any from CQL
     IS_NOT_ANY = "is_not_any"  # we will use not(selected-any()) from CQL
@@ -146,38 +216,42 @@ class FilterMatchType:
         (EXACT, EXACT),
         (IS_NOT, IS_NOT),
         (STARTS, STARTS),
-        (ENDS, ENDS),
+        (STARTS_NOT, STARTS_NOT),
         (IS_EMPTY, IS_EMPTY),
         (IS_NOT_EMPTY, IS_NOT_EMPTY),
-        (IS_NULL, IS_NULL),
-        (IS_NOT_NULL, IS_NOT_NULL),
+        (IS_MISSING, IS_MISSING),
+        (IS_NOT_MISSING, IS_NOT_MISSING),
         (FUZZY, FUZZY),
         (FUZZY_NOT, FUZZY_NOT),
         (PHONETIC, PHONETIC),
         (PHONETIC_NOT, PHONETIC_NOT),
         (LESS_THAN, LESS_THAN),
         (GREATER_THAN, GREATER_THAN),
+        (LESS_THAN_EQUAL, LESS_THAN_EQUAL),
+        (GREATER_THAN_EQUAL, GREATER_THAN_EQUAL),
         (IS_ANY, IS_ANY),
         (IS_NOT_ANY, IS_NOT_ANY),
         (IS_ALL, IS_ALL),
         (IS_NOT_ALL, IS_NOT_ALL),
     )
 
+    # choices valid for all data types
+    ALL_DATA_TYPES_CHOICES = (
+        (IS_EMPTY, gettext_lazy("is empty")),
+        (IS_NOT_EMPTY, gettext_lazy("is not empty")),
+        (IS_MISSING, gettext_lazy("is missing")),
+        (IS_NOT_MISSING, gettext_lazy("is not missing")),
+    )
+
     TEXT_CHOICES = (
         (EXACT, gettext_lazy("is exactly")),
         (IS_NOT, gettext_lazy("is not")),
         (STARTS, gettext_lazy("starts with")),
-        (ENDS, gettext_lazy("ends with")),
-        (IS_EMPTY, gettext_lazy("is empty")),
-        (IS_NOT_EMPTY, gettext_lazy("is not empty")),
-        (IS_NULL, gettext_lazy("is NULL")),
-        (IS_NOT_NULL, gettext_lazy("is not NULL")),
+        (STARTS_NOT, gettext_lazy("does not start with")),
         (FUZZY, gettext_lazy("is like")),
         (FUZZY_NOT, gettext_lazy("is not like")),
         (PHONETIC, gettext_lazy("sounds like")),
         (PHONETIC_NOT, gettext_lazy("does not sound like")),
-        (LESS_THAN, gettext_lazy("is before")),
-        (GREATER_THAN, gettext_lazy("is after")),
     )
 
     MULTI_SELECT_CHOICES = (
@@ -191,20 +265,23 @@ class FilterMatchType:
         (EXACT, gettext_lazy("equals")),
         (IS_NOT, gettext_lazy("does not equal")),
         (LESS_THAN, gettext_lazy("less than")),
-        (ENDS, gettext_lazy("less than or equal to")),
+        (LESS_THAN_EQUAL, gettext_lazy("less than or equal to")),
         (GREATER_THAN, gettext_lazy("greater than")),
-        (STARTS, gettext_lazy("greater than or equal to")),
+        (GREATER_THAN_EQUAL, gettext_lazy("greater than or equal to")),
     )
 
     DATE_CHOICES = (
         (EXACT, gettext_lazy("on")),
         (LESS_THAN, gettext_lazy("before")),
+        (LESS_THAN_EQUAL, gettext_lazy("before or on")),
         (GREATER_THAN, gettext_lazy("after")),
+        (GREATER_THAN_EQUAL, gettext_lazy("on or after")),
     )
 
 
 class BulkEditColumnFilter(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="column_filters", on_delete=models.CASCADE)
+    filter_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
     index = models.IntegerField(default=0)
     prop_id = models.CharField(max_length=255)  # case property or form question_id
     data_type = models.CharField(
@@ -221,6 +298,95 @@ class BulkEditColumnFilter(models.Model):
 
     class Meta:
         ordering = ["index"]
+
+    def filter_query(self, query):
+        filter_query_functions = {
+            FilterMatchType.IS_EMPTY: lambda q: q.empty(self.prop_id),
+            FilterMatchType.IS_NOT_EMPTY: lambda q: q.non_null(self.prop_id),
+            FilterMatchType.IS_MISSING: lambda q: q.missing(self.prop_id),
+            FilterMatchType.IS_NOT_MISSING: lambda q: q.exists(self.prop_id),
+        }
+        if self.match_type in filter_query_functions:
+            query = filter_query_functions[self.match_type](query)
+        return query
+
+    @staticmethod
+    def is_data_and_match_type_valid(match_type, data_type):
+        if match_type in dict(FilterMatchType.ALL_DATA_TYPES_CHOICES):
+            # empty / missing is always valid regardless of data type
+            return True
+
+        matches_by_category = {
+            DataType.FILTER_CATEGORY_TEXT: dict(FilterMatchType.TEXT_CHOICES),
+            DataType.FILTER_CATEGORY_NUMBER: dict(FilterMatchType.NUMBER_CHOICES),
+            DataType.FILTER_CATEGORY_DATE: dict(FilterMatchType.DATE_CHOICES),
+            DataType.FILTER_CATEGORY_MULTI_SELECT: dict(FilterMatchType.MULTI_SELECT_CHOICES),
+        }
+        for category, valid_data_types in DataType.FILTER_CATEGORY_DATA_TYPES.items():
+            if data_type in valid_data_types:
+                return match_type in matches_by_category[category]
+
+        return False
+
+    @staticmethod
+    def get_quoted_value(value):
+        has_single_quote = "'" in value
+        has_double_quote = '"' in value
+        if has_double_quote and has_single_quote:
+            # It seems our current xpath parsing library has no way of escaping quotes.
+            # A workaround could be to avoid xpath expression parsing altogether and have
+            # all match_types use `filter_query` directly, but that would require more effort.
+            # The option to use CaseSearchES `xpath_query` was chosen for development speed,
+            # acknowledging that there are limitations. We can re-evaluate this decision
+            # when filtering form data, as we don't have an `xpath_query` filter built for FormES.
+            raise UnsupportedFilterValueException(
+                """We cannot support both single quotes (') and double quotes (") in
+                a filter value at this time."""
+            )
+        return f'"{value}"' if has_single_quote else f"'{value}'"
+
+    def get_xpath_expression(self):
+        """
+        Assumption:
+        - data_type and match_type combination was validated by the form that created this filter
+
+        Limitations:
+        - no support for multiple quote types (double and single) in the same value
+        - no support for special whitespace characters (tab or newline)
+        - no `xpath_query` support in `FormES`
+
+        We can address limitations in later releases of this tool.
+        """
+        match_operators = {
+            FilterMatchType.EXACT: '=',
+            FilterMatchType.IS_NOT: '!=',
+            FilterMatchType.LESS_THAN: '<',
+            FilterMatchType.LESS_THAN_EQUAL: '<=',
+            FilterMatchType.GREATER_THAN: '>',
+            FilterMatchType.GREATER_THAN_EQUAL: '>=',
+        }
+        if self.match_type in match_operators:
+            # we assume the data type was properly verified on creation
+            is_number = self.data_type in DataType.FILTER_CATEGORY_DATA_TYPES[DataType.FILTER_CATEGORY_NUMBER]
+            value = self.value if is_number else self.get_quoted_value(self.value)
+            operator = match_operators[self.match_type]
+            return f"{self.prop_id} {operator} {value}"
+
+        match_expression = {
+            FilterMatchType.STARTS: lambda x: f'starts-with({self.prop_id}, {x})',
+            FilterMatchType.STARTS_NOT: lambda x: f'not(starts-with({self.prop_id}, {x}))',
+            FilterMatchType.FUZZY: lambda x: f'fuzzy-match({self.prop_id}, {x})',
+            FilterMatchType.FUZZY_NOT: lambda x: f'not(fuzzy-match({self.prop_id}, {x}))',
+            FilterMatchType.PHONETIC: lambda x: f'phonetic-match({self.prop_id}, {x})',
+            FilterMatchType.PHONETIC_NOT: lambda x: f'not(phonetic-match({self.prop_id}, {x}))',
+            FilterMatchType.IS_ANY: lambda x: f'selected-any({self.prop_id}, {x})',
+            FilterMatchType.IS_NOT_ANY: lambda x: f'not(selected-any({self.prop_id}, {x}))',
+            FilterMatchType.IS_ALL: lambda x: f'selected-all({self.prop_id}, {x})',
+            FilterMatchType.IS_NOT_ALL: lambda x: f'not(selected-all({self.prop_id}, {x}))',
+        }
+        if self.match_type in match_expression:
+            quoted_value = self.get_quoted_value(self.value)
+            return match_expression[self.match_type](quoted_value)
 
 
 class PinnedFilterType:
@@ -269,9 +435,20 @@ class BulkEditPinnedFilter(models.Model):
                 filter_type=filter_type,
             )
 
+    def get_report_filter_class(self):
+        from corehq.apps.data_cleaning.filters import (
+            CaseOwnersPinnedFilter,
+            CaseStatusPinnedFilter,
+        )
+        return {
+            PinnedFilterType.CASE_OWNERS: CaseOwnersPinnedFilter,
+            PinnedFilterType.CASE_STATUS: CaseStatusPinnedFilter,
+        }[self.filter_type]
+
 
 class BulkEditColumn(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="columns", on_delete=models.CASCADE)
+    column_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
     index = models.IntegerField(default=0)
     prop_id = models.CharField(max_length=255)  # case property or form question_id
     label = models.CharField(max_length=255)

@@ -70,6 +70,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
     get_usercase_properties,
 )
 from corehq.apps.app_manager.commcare_settings import check_condition
+from corehq.apps.app_manager.const import FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
@@ -1860,6 +1861,7 @@ class DetailColumn(IndexedSchema):
     field = StringProperty()
     useXpathExpression = BooleanProperty(default=False)
     format = StringProperty(exclude_if_none=True)
+    optimization = StringProperty(exclude_if_none=True)
 
     # Only applies to custom case list tile. grid_x and grid_y are zero-based values
     # representing the starting row and column.
@@ -1920,11 +1922,17 @@ class DetailColumn(IndexedSchema):
             for item in to_ret.enum:
                 for lang, path in item.value.items():
                     item.value[lang] = interpolate_media_path(path)
+
+        if to_ret.optimization and not to_ret.supports_optimizations:
+            to_ret.optimization = None
         return to_ret
 
     @property
     def invisible(self):
         return self.format == 'invisible'
+
+    def supports_optimizations(self):
+        return self.format in FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS
 
 
 class SortElement(IndexedSchema):
@@ -2060,7 +2068,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
         for column in self.columns:
             column.rename_lang(old_lang, new_lang)
 
-    def sort_nodeset_columns_for_detail(self):
+    def sort_nodeset_columns_for_long_detail(self):
         return (
             self.display == "long"
             and any(tab for tab in self.get_tabs() if tab.has_nodeset)
@@ -2576,6 +2584,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     search_config = SchemaProperty(CaseSearch)
     display_style = StringProperty(default='list')
     lazy_load_case_list_fields = BooleanProperty(default=False)
+    show_case_list_optimization_options = BooleanProperty(default=False)
 
     @classmethod
     def new_module(cls, name, lang):
@@ -4458,8 +4467,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         if errors:
             raise AppValidationError(errors)
 
-        if copy.create_build_files_on_build:
-            copy.create_build_files()
+        copy.create_build_files()
 
         # since this hard to put in a test
         # I'm putting this assert here if copy._id is ever None
@@ -4511,11 +4519,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         for name in other.lazy_list_attachments() or {}:
             if regexp is None or re.match(regexp, name):
                 self.lazy_put_attachment(other.lazy_fetch_attachment(name), name)
-
-    @property
-    @memoized
-    def create_build_files_on_build(self):
-        return not toggles.SKIP_CREATING_DEFAULT_BUILD_FILES_ON_BUILD.enabled(self.domain)
 
     def delete_app(self):
         domain_has_apps.clear(self.domain)

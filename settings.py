@@ -272,6 +272,7 @@ HQ_APPS = (
     'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
     'corehq.apps.enterprise',
+    'corehq.apps.experiments',
     'corehq.apps.formplayer_api',
     'corehq.apps.hqadmin.app_config.HqAdminModule',
     'corehq.apps.hqcase',
@@ -300,6 +301,7 @@ HQ_APPS = (
     'corehq.apps.data_dictionary',
     'corehq.apps.analytics',
     'corehq.apps.callcenter',
+    'corehq.apps.campdash',
     'corehq.apps.change_feed',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
@@ -391,8 +393,6 @@ HQ_APPS = (
     # custom reports
     'custom.reports.mc',
     'custom.ucla',
-
-    'custom.common',
 
     'custom.hki',
     'custom.bha',
@@ -1171,6 +1171,14 @@ ENABLE_DEVICE_RATE_LIMITER = False
 
 # used by periodic tasks that delete soft deleted data older than PERMANENT_DELETION_WINDOW days
 PERMANENT_DELETION_WINDOW = 30  # days
+
+# Used by `corehq.apps.integration.kyc`. Override in localsettings.py
+MTN_KYC_CONNECTION_SETTINGS = {
+    'url': 'https://dev.api.chenosis.io/',
+    'token_url': 'https://dev.api.chenosis.io/oauth/client/accesstoken',
+    'client_id': 'test',
+    'client_secret': 'password',
+}
 
 
 try:

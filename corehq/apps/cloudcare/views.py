@@ -44,6 +44,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_current_app_doc,
+    get_build_doc_by_build_id,
 )
 from corehq.apps.cloudcare.const import (
     PREVIEW_APP_ENVIRONMENT,
@@ -110,9 +111,23 @@ class FormplayerMain(View):
     def fetch_app_fn(self):
         return get_latest_build_for_web_apps
 
-    def get_web_apps_for_user(self, domain, user):
+    def make_specific_build_fetcher(self, original_app_id, build_id):
+        def get_build_or_latest(domain, username, app_id):
+            if original_app_id == app_id:
+                return get_build_doc_by_build_id(build_id)
+
+            return self.fetch_app_fn()(domain, username, app_id)
+
+        return get_build_or_latest
+
+    def get_web_apps_for_user(self, domain, user, app_id=None, build_id=None):
+        if app_id and build_id:
+            fetch_app_fn = self.make_specific_build_fetcher(app_id, build_id)
+        else:
+            fetch_app_fn = self.fetch_app_fn()
+
         apps = get_web_apps_available_to_user(
-            domain, user, is_preview=self.preview, fetch_app_fn=self.fetch_app_fn()
+            domain, user, is_preview=self.preview, fetch_app_fn=fetch_app_fn
         )
         apps = [_format_app_doc(app) for app in apps]
         return sorted(apps, key=lambda app: app['name'].lower())
@@ -169,25 +184,29 @@ class FormplayerMain(View):
 
         return request.couch_user, set_cookie
 
-    def get(self, request, domain):
+    def get(self, request, domain, **kwargs):
         mobile_ucr_count = get_mobile_ucr_count(domain)
         if should_restrict_web_apps_usage(domain, mobile_ucr_count):
             return redirect('block_web_apps', domain=domain)
 
+        # These options allow a user to fetch a specific build id while populating apps
+        app_id = kwargs.get('app_id', None)
+        build_id = kwargs.get('build_id', None)
+
         option = request.GET.get('option')
         if option == 'apps':
-            return self.get_option_apps(request, domain)
+            return self.get_option_apps(request, domain, app_id, build_id)
         else:
-            return self.get_main(request, domain)
+            return self.get_main(request, domain, app_id, build_id)
 
-    def get_option_apps(self, request, domain):
+    def get_option_apps(self, request, domain, app_id, build_id):
         restore_as, set_cookie = self.get_restore_as_user(request, domain)
-        apps = self.get_web_apps_for_user(domain, restore_as)
+        apps = self.get_web_apps_for_user(domain, restore_as, app_id, build_id)
         return JsonResponse(apps, safe=False)
 
-    def get_main(self, request, domain):
+    def get_main(self, request, domain, app_id, build_id):
         restore_as, set_cookie = self.get_restore_as_user(request, domain)
-        apps = self.get_web_apps_for_user(domain, restore_as)
+        apps = self.get_web_apps_for_user(domain, restore_as, app_id, build_id)
 
         def _default_lang():
             try:
