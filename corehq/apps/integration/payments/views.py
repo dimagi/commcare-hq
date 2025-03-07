@@ -44,4 +44,8 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
             'success_count': success_count,
             'failure_count': failure_count,
         }
-        return self.render_htmx_partial_response(request, 'payments/partials/payments_verify_alert.html', context)
+        return self.render_htmx_partial_response(
+            request,
+            'payments/partials/payments_verify_alert.html',
+            context,
+        )
