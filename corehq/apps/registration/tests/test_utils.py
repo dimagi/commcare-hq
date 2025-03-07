@@ -5,8 +5,10 @@ from django.contrib.auth.models import User
 from django.test import RequestFactory, TestCase
 
 from corehq.apps.accounting.models import Subscription
+from corehq.apps.domain.dbaccessors import domain_or_deleted_domain_exists
 from corehq.apps.domain.exceptions import ErrorInitializingDomain
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.tests.test_utils import domain_tombstone_patch, suspend
 from corehq.apps.hqmedia.models import (
     CommCareImage,
     LogoForSystemEmailsReference,
@@ -97,6 +99,7 @@ class TestRequestNewDomain(TestCase):
         domain = Domain.get_by_name(domain_name)
         self.assertFalse(domain.is_active)
 
+    @suspend(domain_tombstone_patch)
     @mock.patch('corehq.apps.registration.utils._setup_subscription', _issue_initializing_domain)
     @mock.patch('corehq.apps.registration.utils.notify_exception', _noop)
     def test_subscription_exception_raises_error_and_domain_is_deleted(self):
@@ -109,8 +112,7 @@ class TestRequestNewDomain(TestCase):
                 'subscription-failed',
                 is_new_user=True,
             )
-        domain = Domain.get_by_name('subscription-failed')
-        self.assertIsNone(domain)
+        self.assertFalse(domain_or_deleted_domain_exists('subscription-failed'))
 
     @mock.patch('corehq.apps.registration.utils._setup_subscription', _noop)
     @mock.patch('corehq.apps.registration.utils.notify_exception', _noop)
