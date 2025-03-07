@@ -190,6 +190,7 @@ class HQTOTPDeviceForm(TOTPDeviceForm):
             attrs={
                 'pattern': r'^[0-9]{6}$',
                 'maxlength': totp_digits(),
+                'inputmode': 'numeric',
             }
         ),
     )
