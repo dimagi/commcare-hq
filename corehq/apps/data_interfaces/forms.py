@@ -584,6 +584,8 @@ class CaseRuleCriteriaForm(forms.Form):
                 })
             elif match_type in (
                 MatchPropertyDefinition.MATCH_DAYS_LESS_THAN,
+                MatchPropertyDefinition.MATCH_DAYS_LESS_OR_EQUAL,
+                MatchPropertyDefinition.MATCH_DAYS_GREATER_THAN,
                 MatchPropertyDefinition.MATCH_DAYS_GREATER_OR_EQUAL,
             ):
                 property_value = obj['property_value']
