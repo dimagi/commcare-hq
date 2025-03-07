@@ -218,6 +218,8 @@ class KycUser:
         update = {
             'kyc_provider': self.kyc_config.provider,
             'kyc_last_verified_at': datetime.utcnow().isoformat(),  # TODO: UTC or project timezone?
+            # Cases internally stores boolean case property as string .
+            # Stores as string for a consistent data type across different data stores.
             'kyc_verification_status': str(is_verified),
         }
         if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
