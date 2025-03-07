@@ -68,6 +68,11 @@ from corehq.apps.data_interfaces.models import (
     CaseRuleSubmission,
     DomainCaseRuleRun,
 )
+from corehq.apps.domain.dbaccessors import (
+    deleted_domain_exists,
+    domain_exists,
+    domain_or_deleted_domain_exists,
+)
 from corehq.apps.domain.deletion import DOMAIN_DELETE_OPERATIONS
 from corehq.apps.domain.models import Domain, TransferDomainRequest
 from corehq.apps.es import case_adapter, case_search_adapter, form_adapter
@@ -147,7 +152,7 @@ from corehq.util.test_utils import flag_enabled
 from settings import HQ_ACCOUNT_ROOT
 
 from .. import deletion as mod
-from .test_utils import delete_es_docs_patch, suspend
+from .test_utils import delete_es_docs_patch, domain_tombstone_patch, suspend
 
 
 class TestDeleteDomain(TestCase):
@@ -1074,6 +1079,28 @@ class TestDeleteDomain(TestCase):
         self.assertEqual(count_lookup_table_row_owners(self.domain2.name), 1)
 
 
+@suspend(domain_tombstone_patch)
+class TestDomainTombstones(TestCase):
+
+    def setUp(self):
+        self.domain = Domain(name="test", is_active=True)
+        self.domain.save()
+        self.addCleanup(ensure_deleted, self.domain)
+
+    def test_delete_domain_leave_tombstone_argument_is_required(self):
+        with self.assertRaises(TypeError):
+            self.domain.delete()
+        self.assertTrue(domain_exists("test"))
+
+    def test_delete_domain_leave_tombstone(self):
+        self.domain.delete(leave_tombstone=True)
+        self.assertTrue(deleted_domain_exists("test"))
+
+    def test_delete_domain_dont_leave_tombstone(self):
+        self.domain.delete(leave_tombstone=False)
+        self.assertFalse(domain_or_deleted_domain_exists("test"))
+
+
 class HardDeleteFormsAndCasesInDomainTests(TestCase):
 
     def test_normal_forms_are_deleted(self):
@@ -1233,7 +1260,7 @@ def ensure_deleted(domain):
         with ExitStack() as stack:
             for op in DOMAIN_DELETE_OPERATIONS:
                 stack.enter_context(patch.object(op, "execute", make_exe(op)))
-            domain.delete()
+            domain.delete(leave_tombstone=False)
 
 
 def get_product_plan_version(edition=SoftwarePlanEdition.ADVANCED):
