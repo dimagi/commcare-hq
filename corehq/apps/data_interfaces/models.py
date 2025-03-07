@@ -587,7 +587,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
 
     property_name = models.CharField(max_length=126)
     property_value = models.CharField(max_length=126, null=True)
-    match_type = models.CharField(max_length=15)
+    match_type = models.CharField(max_length=25)
 
     def get_case_values(self, case):
         values = case.resolve_case_property(self.property_name)
