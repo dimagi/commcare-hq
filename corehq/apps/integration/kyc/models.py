@@ -202,9 +202,9 @@ class KycUser:
         # value can be '' when field is defined as a custom field in custom user data
         assert value in (None, 'True', 'False', '')
         if value == 'True':
-            return True
+            return KycVerificationStatus.PASSED
         if value == 'False':
-            return False
+            return KycVerificationStatus.FAILED
         return None
 
     @property
@@ -214,7 +214,7 @@ class KycUser:
     def update_verification_status(self, verification_status, device_id=None):
         from corehq.apps.hqcase.utils import update_case
 
-        assert verification_status in [True, False]
+        assert verification_status in [KycVerificationStatus.PASSED, KycVerificationStatus.FAILED]
         update = {
             'kyc_provider': self.kyc_config.provider,
             'kyc_last_verified_at': datetime.utcnow().isoformat(),  # TODO: UTC or project timezone?
