@@ -123,6 +123,9 @@
             </div>
           </div>
           <small id="version-info" class="pb-5"></small>
+          {% if request.couch_user.can_edit_data %}
+            <div class="pb-4"></div>
+          {% endif %}
         </div>
       </div>
     </div>
