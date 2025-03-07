@@ -211,16 +211,16 @@ class KycUser:
     def kyc_provider(self):
         return self.user_data.get('kyc_provider')
 
-    def update_verification_status(self, is_verified, device_id=None):
+    def update_verification_status(self, verification_status, device_id=None):
         from corehq.apps.hqcase.utils import update_case
 
-        assert is_verified in [True, False]
+        assert verification_status in [True, False]
         update = {
             'kyc_provider': self.kyc_config.provider,
             'kyc_last_verified_at': datetime.utcnow().isoformat(),  # TODO: UTC or project timezone?
             # Cases internally stores boolean case property as string .
             # Stores as string for a consistent data type across different data stores.
-            'kyc_verification_status': str(is_verified),
+            'kyc_verification_status': str(verification_status),
         }
         if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
             user_data_obj = self._user_or_case_obj.get_user_data(self.kyc_config.domain)

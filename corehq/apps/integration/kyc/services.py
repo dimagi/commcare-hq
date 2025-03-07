@@ -22,10 +22,10 @@ def verify_users(kyc_users, config):
     device_id = f'{__name__}.verify_users'
     errors_with_count = defaultdict(int)
     for kyc_user in kyc_users:
-        is_verified = KycVerificationStatus.PENDING
+        verification_status = KycVerificationStatus.PENDING
         try:
-            is_verified = verify_user(kyc_user, config)
-            if is_verified == KycVerificationStatus.FAILED:
+            verification_status = verify_user(kyc_user, config)
+            if verification_status == KycVerificationStatus.FAILED:
                 errors_with_count[KycVerificationFailureCause.USER_INFORMATION_MISMATCH.value] += 1
         # TODO - Decide on how we want to handle these exceptions for the end user
         except jsonschema.exceptions.ValidationError:
@@ -36,10 +36,10 @@ def verify_users(kyc_users, config):
             errors_with_count[KycVerificationFailureCause.API_ERROR.value] += 1
 
         # Store result only when API successfully returns a verification response
-        if is_verified in (KycVerificationStatus.PASSED, KycVerificationStatus.FAILED):
-            kyc_user.update_verification_status(is_verified, device_id=device_id)
+        if verification_status in (KycVerificationStatus.PASSED, KycVerificationStatus.FAILED):
+            kyc_user.update_verification_status(verification_status, device_id=device_id)
 
-        results[kyc_user.user_id] = is_verified
+        results[kyc_user.user_id] = verification_status
 
     _report_verification_failure_metric(config.domain, errors_with_count)
     return results
