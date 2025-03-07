@@ -10,7 +10,9 @@ from corehq.apps.es import CaseSearchES
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.payments.tables import PaymentsVerifyTable
+from corehq.apps.users.models import WebUser
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
+from corehq.apps.integration.payments.utils import verify_payment_cases
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -37,9 +39,13 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
 
     @hq_hx_action('post')
     def verify_rows(self, request, *args, **kwargs):
-        # TODO Verify payments to be done in a followup ticket
-        success_count = 0
-        failure_count = 0
+        web_user = WebUser.get_by_username(request.user.username)
+        success_count, failure_count = verify_payment_cases(
+            request.domain,
+            case_ids=request.POST.getlist('selected_ids'),
+            verifying_user=web_user,
+        )
+
         context = {
             'success_count': success_count,
             'failure_count': failure_count,
