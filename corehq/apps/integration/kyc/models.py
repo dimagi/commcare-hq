@@ -240,10 +240,11 @@ class KycUser:
         self._user_data = None
 
 
-class KycIsVerifiedChoice(models.TextChoices):
-    TRUE = (True, 'KYC verification successful.')
-    FALSE = (False, 'KYC verification failed.')
-    NONE = (None, 'KYC verification pending.')
+class KycVerificationStatus(models.TextChoices):
+    PASSED = (True, 'KYC verification passed.')
+    # FAILED indicates a request was made to KYC Provider and the KYC failed
+    FAILED = (False, 'KYC verification failed.')
+    PENDING = (None, 'KYC verification pending.')
 
 
 class KycVerificationFailureCause(models.TextChoices):

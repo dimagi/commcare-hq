@@ -10,7 +10,7 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.kyc.forms import KycConfigureForm
-from corehq.apps.integration.kyc.models import KycConfig, KycIsVerifiedChoice
+from corehq.apps.integration.kyc.models import KycConfig, KycVerificationStatus
 from corehq.apps.integration.kyc.services import (
     get_user_data_for_api,
     verify_users,
@@ -151,7 +151,7 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
     def _get_existing_failed_users(self, kyc_users):
         return [
             kyc_user.user_id for kyc_user in kyc_users
-            if kyc_user.kyc_verification_status is KycIsVerifiedChoice.FALSE
+            if kyc_user.kyc_verification_status is KycVerificationStatus.FAILED
         ]
 
 
