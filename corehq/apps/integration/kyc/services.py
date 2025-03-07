@@ -10,7 +10,7 @@ from django.utils.text import camel_case_to_spaces
 
 import jsonschema
 
-from corehq.apps.integration.kyc.models import KycVerificationFailureCause
+from corehq.apps.integration.kyc.models import KycVerificationFailureCause, KycVerificationStatus
 from corehq.util.metrics import metrics_counter
 
 
@@ -22,10 +22,10 @@ def verify_users(kyc_users, config):
     device_id = f'{__name__}.verify_users'
     errors_with_count = defaultdict(int)
     for kyc_user in kyc_users:
-        is_verified = False
+        is_verified = KycVerificationStatus.PENDING
         try:
             is_verified = verify_user(kyc_user, config)
-            if not is_verified:
+            if is_verified == KycVerificationStatus.FAILED:
                 errors_with_count[KycVerificationFailureCause.USER_INFORMATION_MISMATCH.value] += 1
         # TODO - Decide on how we want to handle these exceptions for the end user
         except jsonschema.exceptions.ValidationError:
@@ -34,7 +34,11 @@ def verify_users(kyc_users, config):
             errors_with_count[KycVerificationFailureCause.NETWORK_ERROR.value] += 1
         except requests.HTTPError:
             errors_with_count[KycVerificationFailureCause.API_ERROR.value] += 1
-        kyc_user.update_verification_status(is_verified, device_id=device_id)
+
+        # Store result only when API successfully returns a verification response
+        if is_verified in (KycVerificationStatus.PASSED, KycVerificationStatus.FAILED):
+            kyc_user.update_verification_status(is_verified, device_id=device_id)
+
         results[kyc_user.user_id] = is_verified
 
     _report_verification_failure_metric(config.domain, errors_with_count)
