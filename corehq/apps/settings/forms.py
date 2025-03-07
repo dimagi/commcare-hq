@@ -188,7 +188,7 @@ class HQTOTPDeviceForm(TOTPDeviceForm):
         max_value=int('9' * totp_digits()),
         widget=forms.TextInput(
             attrs={
-                'pattern': r'^[0-9]{6}$',
+                'pattern': r'^[0-9]{%s}$' % totp_digits(),
                 'maxlength': totp_digits(),
                 'inputmode': 'numeric',
             }
