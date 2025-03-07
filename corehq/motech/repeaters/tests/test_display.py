@@ -54,6 +54,18 @@ class RepeaterTestCase(TestCase):
             )
             self.assertEqual(display.next_check, '2025-01-01 00:00:00')
 
+    def test_record_display_succeeded(self):
+        jan_1 = datetime.strptime('2025-01-01 00:00:00', self.date_format)
+        self.repeater.next_attempt_at = jan_1
+        with make_repeat_record(self.repeater, State.Success) as record:
+            display = RepeatRecordDisplay(
+                record,
+                pytz.UTC,
+                date_format=self.date_format,
+                process_repeaters_enabled=True,
+            )
+            self.assertEqual(display.next_check, '---')
+
     def test_record_display_repeater_paused(self):
         self.repeater.is_paused = True
         with make_repeat_record(self.repeater, State.Pending) as record:
