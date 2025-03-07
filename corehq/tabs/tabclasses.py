@@ -2761,3 +2761,40 @@ class AttendanceTrackingTab(UITab):
     def _is_viewable(self):
         # The FF check is temporary until the full feature is released
         return toggles.ATTENDANCE_TRACKING.enabled(self.domain) and self.couch_user.can_manage_events(self.domain)
+
+
+class CampaignDashboardTab(UITab):
+    title = gettext_noop("Campaign")
+    view = "campaign_dashboard"
+
+    url_prefix_formats = ('/a/{domain}/campdash/',)
+
+    @property
+    def _is_viewable(self):
+        return (
+            self.domain
+            and self.project
+            and not self.project.is_snapshot
+            and toggles.MICROPLANNING.enabled(
+                self.domain,
+                namespace=toggles.NAMESPACE_DOMAIN,
+            )
+        )
+
+    @property
+    @memoized
+    def url(self):
+        from corehq.apps.campdash.views import CampaignDashboardView
+        return reverse(CampaignDashboardView.urlname, args=[self.domain])
+
+    @property
+    def sidebar_items(self):
+        return [(
+            _('Campaign Dashboard'),
+            [{
+                'title': _('Dashboard'),
+                'url': reverse('campaign_dashboard', args=[self.domain]),
+                'description': _('View campaign progress and metrics'),
+                'icon': 'fcc fcc-globe',
+            }]
+        )]
