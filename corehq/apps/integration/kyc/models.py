@@ -197,28 +197,30 @@ class KycUser:
         return self.user_data.get('kyc_last_verified_at')
 
     @property
-    def kyc_is_verified(self):
-        value = self.user_data.get('kyc_is_verified')
+    def kyc_verification_status(self):
+        value = self.user_data.get('kyc_verification_status')
         # value can be '' when field is defined as a custom field in custom user data
         assert value in (None, 'True', 'False', '')
         if value == 'True':
-            return True
+            return KycVerificationStatus.PASSED
         if value == 'False':
-            return False
+            return KycVerificationStatus.FAILED
         return None
 
     @property
     def kyc_provider(self):
         return self.user_data.get('kyc_provider')
 
-    def update_verification_status(self, is_verified, device_id=None):
+    def update_verification_status(self, verification_status, device_id=None):
         from corehq.apps.hqcase.utils import update_case
 
-        assert is_verified in [True, False]
+        assert verification_status in [KycVerificationStatus.PASSED, KycVerificationStatus.FAILED]
         update = {
             'kyc_provider': self.kyc_config.provider,
             'kyc_last_verified_at': datetime.utcnow().isoformat(),  # TODO: UTC or project timezone?
-            'kyc_is_verified': str(is_verified),
+            # Cases internally stores boolean case property as string .
+            # Stores as string for a consistent data type across different data stores.
+            'kyc_verification_status': str(verification_status),
         }
         if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
             user_data_obj = self._user_or_case_obj.get_user_data(self.kyc_config.domain)
@@ -240,10 +242,11 @@ class KycUser:
         self._user_data = None
 
 
-class KycIsVerifiedChoice(models.TextChoices):
-    TRUE = (True, 'KYC verification successful.')
-    FALSE = (False, 'KYC verification failed.')
-    NONE = (None, 'KYC verification pending.')
+class KycVerificationStatus:
+    PASSED = True
+    # FAILED indicates a request was made to KYC Provider and the KYC failed
+    FAILED = False
+    PENDING = None
 
 
 class KycVerificationFailureCause(models.TextChoices):

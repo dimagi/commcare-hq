@@ -1,8 +1,8 @@
 {% load i18n %}
 
-{% if record.kyc_is_verified is True %}
+{% if record.kyc_verification_status is True %}
   <span class="badge bg-success">{% trans "Pass" %}</span>
-{% elif record.kyc_is_verified is False %}
+{% elif record.kyc_verification_status is False %}
   <span class="badge bg-danger"
     >{%
       trans "Fail" }</span>
