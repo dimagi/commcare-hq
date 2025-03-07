@@ -197,8 +197,8 @@ class KycUser:
         return self.user_data.get('kyc_last_verified_at')
 
     @property
-    def kyc_is_verified(self):
-        value = self.user_data.get('kyc_is_verified')
+    def kyc_verification_status(self):
+        value = self.user_data.get('kyc_verification_status')
         # value can be '' when field is defined as a custom field in custom user data
         assert value in (None, 'True', 'False', '')
         if value == 'True':
@@ -218,7 +218,7 @@ class KycUser:
         update = {
             'kyc_provider': self.kyc_config.provider,
             'kyc_last_verified_at': datetime.utcnow().isoformat(),  # TODO: UTC or project timezone?
-            'kyc_is_verified': str(is_verified),
+            'kyc_verification_status': str(is_verified),
         }
         if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
             user_data_obj = self._user_or_case_obj.get_user_data(self.kyc_config.domain)

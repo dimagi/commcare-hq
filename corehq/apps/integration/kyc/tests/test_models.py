@@ -257,12 +257,12 @@ class TestKycUser(BaseKycUsersSetup):
 
         kyc_user = KycUser(config, self.commcare_user)
 
-        assert kyc_user.kyc_is_verified is None
+        assert kyc_user.kyc_verification_status is None
         assert kyc_user.kyc_last_verified_at is None
         assert kyc_user.kyc_provider is None
 
     def _assert_for_verification_status(self, kyc_user, expected_status, expected_provider):
-        assert kyc_user.kyc_is_verified is expected_status
+        assert kyc_user.kyc_verification_status is expected_status
         assert kyc_user.kyc_last_verified_at is not None
         assert kyc_user.kyc_provider == expected_provider
 

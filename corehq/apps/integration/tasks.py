@@ -17,9 +17,9 @@ def report_verification_status_count():
         success_count = 0
         failure_count = 0
         for kyc_user in kyc_users:
-            if kyc_user.kyc_is_verified is KycIsVerifiedChoice.TRUE:
+            if kyc_user.kyc_verification_status is KycIsVerifiedChoice.TRUE:
                 success_count += 1
-            elif kyc_user.kyc_is_verified is KycIsVerifiedChoice.FALSE:
+            elif kyc_user.kyc_verification_status is KycIsVerifiedChoice.FALSE:
                 failure_count += 1
 
         metrics_gauge(
