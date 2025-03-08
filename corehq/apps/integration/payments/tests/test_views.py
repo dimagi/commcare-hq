@@ -144,6 +144,20 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
                     'phone_number': '0987654322',
                 }
 
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_verify_rows(self):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={
+                'selected_ids': [case.case_id for case in self.case_list],
+            },
+            headers={'HQ-HX-Action': 'verify_rows'},
+        )
+        assert response.status_code == 200
+        assert response.context['success_count'] == 2
+        assert response.context['failure_count'] == 0
+
 
 def _create_case(factory, name, data):
     return factory.create_case(
