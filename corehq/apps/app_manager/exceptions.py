@@ -204,3 +204,10 @@ class MobileUCRTooLargeException(CannotRestoreException):
     def __init__(self, message, row_count):
         super().__init__(message)
         self.row_count = row_count
+
+
+class AppInDifferentDomainException(AppManagerException):
+    """
+    This exception is raised when an app is requested from a domain that is different from the domain of the app.
+    """
+    pass
