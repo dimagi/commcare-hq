@@ -10,7 +10,7 @@ from django_prbac.utils import has_privilege
 
 from dimagi.utils.web import json_response
 
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.accounting.mixins import BillingModalsMixin
 from corehq.apps.accounting.models import SoftwarePlanEdition
@@ -188,6 +188,12 @@ def _get_default_tiles(request):
     def is_billing_admin(req):
         return req.couch_user.can_edit_billing()
 
+    def can_view_campaign_dashboard(req):
+        return toggles.MICROPLANNING.enabled(
+            req.domain,
+            namespace=toggles.NAMESPACE_DOMAIN,
+        )
+
     def apps_link(urlname, req):
         return (
             '' if domain_has_apps(req.domain)
@@ -197,6 +203,15 @@ def _get_default_tiles(request):
     commcare_name = commcare_hq_names(request)['commcare_hq_names']['COMMCARE_NAME']
 
     return [
+        Tile(
+            request,
+            title=_('Campaign Dashboard'),
+            slug='campaign_dashboard',
+            icon='fcc fcc-globe',
+            urlname='campaign_dashboard',
+            visibility_check=can_view_campaign_dashboard,
+            help_text=_('Track campaign progress with metrics and visualizations'),
+        ),
         Tile(
             request,
             title=_('Applications'),
