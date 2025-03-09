@@ -21,13 +21,15 @@ from corehq.apps.data_cleaning.views.setup import (
     SetupCaseSessionFormView,
 )
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es import group_adapter
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
 
 
-@es_test(requires=[case_search_adapter])
+@es_test(requires=[case_search_adapter, user_adapter, group_adapter], setup_class=True)
 class CleanCasesViewAccessTest(TestCase):
     domain_name = 'clean-data-view-test'
     other_domain_name = 'no-access-view-test'

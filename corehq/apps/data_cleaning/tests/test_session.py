@@ -10,13 +10,14 @@ from corehq.apps.data_cleaning.models import (
     FilterMatchType,
 )
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.es import CaseSearchES
+from corehq.apps.es import CaseSearchES, user_adapter, group_adapter
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import (
     case_search_es_setup,
     es_test,
 )
 from corehq.apps.hqwebapp.tests.tables.generator import get_case_blocks
+from corehq.apps.reports.standard.cases.utils import all_project_data_filter
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
@@ -104,7 +105,7 @@ class BulkEditSessionTest(TestCase):
         self.assertNotEqual(old_session_id, new_session.session_id)
 
 
-@es_test(requires=[case_search_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter, user_adapter, group_adapter], setup_class=True)
 class BulkEditSessionFilteredQuerysetTests(TestCase):
     domain_name = 'session-test-queryset'
 
@@ -193,6 +194,7 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
                 self.domain_name,
                 "phonetic-match(name, 'lowkey') and num_leaves > 2 and height_cm <= 11.1"
             )
+            .OR(all_project_data_filter(self.domain_name, ['project_data']))  # default Case Owners pinned filter
         )
         self.assertEqual(query.es_query, expected_query.es_query)
 
@@ -205,6 +207,7 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
             .domain(self.domain_name)
             .case_type(self.case_type)
             .exists('watered_on')
+            .OR(all_project_data_filter(self.domain_name, ['project_data']))  # default Case Owners pinned filter
         )
         self.assertEqual(query.es_query, expected_query.es_query)
 
@@ -220,5 +223,6 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
                 self.domain_name,
                 "num_leaves > 2"
             )
+            .OR(all_project_data_filter(self.domain_name, ['project_data']))  # default Case Owners pinned filter
         )
         self.assertEqual(query.es_query, expected_query.es_query)
