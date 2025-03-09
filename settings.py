@@ -403,6 +403,7 @@ HQ_APPS = (
     'custom.hmhb',
 
     'custom.ccqa',
+    'custom.benin',
 
     'corehq.extensions.app_config.ExtensionAppConfig',  # this should be last in the list
 )
@@ -1444,6 +1445,12 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,
             'backupCount': 20
         },
+        'custom_benin_script': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'simple',
+            'filename': "%s/%s" % (FILEPATH, "custom_benin_case_updates.log"),
+        },
     },
     'root': {
         'level': 'INFO',
@@ -1538,6 +1545,11 @@ LOGGING = {
         'commcare_auth': {
             'handlers': ['file'],
             'level': 'INFO',
+            'propagate': False,
+        },
+        'custom_benin_script': {
+            'handlers': ['custom_benin_script', 'console'],
+            'level': 'DEBUG',
             'propagate': False,
         }
     }
