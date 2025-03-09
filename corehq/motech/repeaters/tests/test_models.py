@@ -520,15 +520,6 @@ class TestConnectionSettingsUsedBy(TestCase):
 
         self.assertEqual(self.conn.used_by, {'Data Forwarding'})
 
-    def test_connection_settings_used_by_kyc(self):
-        KycConfig.objects.create(
-            domain=DOMAIN,
-            user_data_store=UserDataStore.CUSTOM_USER_DATA,
-            connection_settings_id=self.conn.id
-        )
-
-        self.assertEqual(self.conn.used_by, {'KYC Integration'})
-
     def test_conn_with_no_used_by(self):
         self.assertEqual(self.conn.used_by, set())
 

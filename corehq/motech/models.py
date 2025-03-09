@@ -275,8 +275,6 @@ class ConnectionSettings(models.Model):
             kinds.add(_('DHIS2 DataSet Maps'))
         if self.repeaters.exists():
             kinds.add(_('Data Forwarding'))
-        if self.kycconfig_set.exists():
-            kinds.add(_('KYC Integration'))
 
         return kinds
 
