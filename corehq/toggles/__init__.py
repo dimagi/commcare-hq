@@ -2631,6 +2631,14 @@ MICROPLANNING = StaticToggle(
 
 )
 
+CAMPAIGN_DASHBOARD = StaticToggle(
+    'campaign_dashboard',
+    'Allows access to Campaign Dashboard',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Access to new dashboard being developed to show various metrics for campaigns',
+)
+
 COMMCARE_CONNECT = StaticToggle(
     'commcare_connect',
     'Enable CommCare Connect features',
