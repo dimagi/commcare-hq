@@ -209,7 +209,7 @@ blobs
  0012_rename_indexes
  0013_drop_icds_cas_index
  0014_alter_deletedblobmeta_id
-campdash
+campaign
  (no migrations)
 case_importer
  0001_initial
