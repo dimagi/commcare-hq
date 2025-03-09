@@ -27,7 +27,6 @@ from corehq.apps.accounting.views import (
     TriggerRemovedSsoUserAutoDeactivationView,
 )
 from corehq.apps.app_manager.dbaccessors import (
-    domain_has_apps,
     get_brief_apps_in_domain,
 )
 from corehq.apps.app_manager.util import is_remote_app, is_linked_app
@@ -311,11 +310,8 @@ class DashboardTab(UITab):
     @property
     def _is_viewable(self):
         if self.domain and self.project and not self.project.is_snapshot and self.couch_user:
-            if self.couch_user.is_commcare_user():
-                # never show the dashboard for mobile workers
-                return False
-            else:
-                return domain_has_apps(self.domain)
+            # never show the dashboard for mobile workers
+            return not self.couch_user.is_commcare_user()
         return False
 
     @property
