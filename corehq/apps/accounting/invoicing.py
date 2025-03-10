@@ -3,13 +3,13 @@ import datetime
 from collections import defaultdict
 from decimal import Decimal
 
-import simplejson
 from django.conf import settings
 from django.db import transaction
 from django.db.models import F, Max, Min, Q, Sum
 from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
 
+import simplejson
 from dateutil.relativedelta import relativedelta
 from memoized import memoized
 
@@ -26,8 +26,8 @@ from corehq.apps.accounting.exceptions import (
 )
 from corehq.apps.accounting.models import (
     BillingAccount,
-    BillingRecord,
     BillingAccountWebUserHistory,
+    BillingRecord,
     CreditLine,
     CustomerBillingRecord,
     CustomerInvoice,
@@ -53,8 +53,10 @@ from corehq.apps.accounting.utils import (
     log_accounting_info,
     months_from_date,
 )
-from corehq.apps.domain.dbaccessors import domain_exists, deleted_domain_exists
-from corehq.apps.domain.utils import get_serializable_wire_invoice_general_credit
+from corehq.apps.domain.dbaccessors import deleted_domain_exists, domain_exists
+from corehq.apps.domain.utils import (
+    get_serializable_wire_invoice_general_credit,
+)
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.util.dates import (
     get_first_last_days,

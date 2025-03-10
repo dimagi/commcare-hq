@@ -9,7 +9,6 @@ from django.utils.translation import gettext_lazy as _
 
 from django_prbac.models import Grant, Role, UserRole
 
-from corehq.const import USER_DATE_FORMAT
 from dimagi.utils.dates import add_months
 
 from corehq import privileges
@@ -19,6 +18,7 @@ from corehq.apps.accounting.exceptions import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.forms import FormES
+from corehq.const import USER_DATE_FORMAT
 from corehq.toggles import domain_has_privilege_from_toggle
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
@@ -102,7 +102,8 @@ def get_change_status(from_plan_version, to_plan_version):
     downgraded_privs = from_privs.difference(to_privs)
     upgraded_privs = to_privs
 
-    from corehq.apps.accounting.models import SubscriptionAdjustmentReason as Reason
+    from corehq.apps.accounting.models import \
+        SubscriptionAdjustmentReason as Reason
     if from_plan_version is None:
         adjustment_reason = Reason.CREATE
     else:
@@ -395,13 +396,13 @@ def cancel_future_subscriptions(domain_name, from_date, web_user):
 
 def pause_current_subscription(domain_name, web_user, current_subscription):
     from corehq.apps.accounting.models import (
-        Subscription,
         DefaultProductPlan,
+        FundingSource,
+        ProBonoStatus,
         SoftwarePlanEdition,
+        Subscription,
         SubscriptionAdjustmentMethod,
         SubscriptionType,
-        ProBonoStatus,
-        FundingSource,
     )
     cancel_future_subscriptions(domain_name, datetime.date.today(), web_user)
     paused_plan_version = DefaultProductPlan.get_default_plan_version(
@@ -472,7 +473,7 @@ def get_paused_plan_context(request, domain):
 
 
 def get_pending_plan_context(request, domain):
-    from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
+    from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
     from corehq.apps.domain.views import SelectPlanView
     from corehq.apps.registration.models import SelfSignupWorkflow
 

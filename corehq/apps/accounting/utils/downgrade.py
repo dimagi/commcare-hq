@@ -11,24 +11,24 @@ from corehq.apps.accounting.const import (
     OVERDUE_INVOICE_LIMIT_DAYS,
 )
 from corehq.apps.accounting.models import (
-    SoftwarePlanEdition,
-    DefaultProductPlan,
-    SubscriptionAdjustmentMethod,
-    Subscription,
-    InvoiceCommunicationHistory,
-    CustomerInvoiceCommunicationHistory,
     CommunicationType,
+    CustomerInvoiceCommunicationHistory,
+    DefaultProductPlan,
+    InvoiceCommunicationHistory,
+    SoftwarePlanEdition,
+    Subscription,
+    SubscriptionAdjustmentMethod,
 )
-from corehq.apps.accounting.utils.invoicing import (
-    get_domains_with_subscription_invoices_over_threshold,
-    get_accounts_with_customer_invoices_over_threshold,
-    get_oldest_unpaid_invoice_over_threshold,
-)
-from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.accounting.utils import (
     get_dimagi_from_email,
     log_accounting_error,
 )
+from corehq.apps.accounting.utils.invoicing import (
+    get_accounts_with_customer_invoices_over_threshold,
+    get_domains_with_subscription_invoices_over_threshold,
+    get_oldest_unpaid_invoice_over_threshold,
+)
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.util.view_utils import absolute_reverse
 
 
@@ -167,7 +167,10 @@ def _send_overdue_notice(invoice, communication_model, context):
 
 
 def _apply_downgrade_process(oldest_unpaid_invoice, total, today, subscription):
-    from corehq.apps.domain.views.accounting import DomainBillingStatementsView, DomainSubscriptionView
+    from corehq.apps.domain.views.accounting import (
+        DomainBillingStatementsView,
+        DomainSubscriptionView,
+    )
     from corehq.apps.enterprise.views import EnterpriseBillingStatementsView
 
     context = {

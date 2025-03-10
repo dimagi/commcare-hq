@@ -521,7 +521,9 @@ class InvoiceTemplate(object):
         flywire_text.wrapOn(self.canvas, width, inches(.4))
         flywire_text.drawOn(self.canvas, left_x, inches(2.95))
 
-        from corehq.apps.domain.views.accounting import DomainBillingStatementsView
+        from corehq.apps.domain.views.accounting import (
+            DomainBillingStatementsView,
+        )
         credit_card = """<strong>Credit card payments (USD)</strong> can be made online here:<br />
                             <link href='{payment_page}' color='blue'>{payment_page}</link><br />""".format(
             payment_page=absolute_reverse(

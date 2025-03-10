@@ -7,12 +7,12 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext
 
 from couchdbkit import ResourceConflict
-
-from dimagi.utils.parsing import json_format_date
 from field_audit.models import AuditAction
 
-from corehq import privileges
+from dimagi.utils.parsing import json_format_date
+
 import corehq.apps.events.tasks as attendance_tracking_tasks
+from corehq import privileges
 from corehq.apps.accounting.const import UNLIMITED_FEATURE_USAGE
 from corehq.apps.accounting.utils import get_privileges, log_accounting_error
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
@@ -25,12 +25,12 @@ from corehq.apps.userreports.exceptions import (
 )
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.role_utils import (
+    archive_attendance_coordinator_role_for_domain,
     archive_custom_roles_for_domain,
+    enable_attendance_coordinator_role_for_domain,
     get_custom_roles_for_domain,
     reset_initial_roles_for_domain,
     unarchive_roles_for_domain,
-    enable_attendance_coordinator_role_for_domain,
-    archive_attendance_coordinator_role_for_domain,
 )
 from corehq.const import USER_DATE_FORMAT
 from corehq.messaging.scheduling.models import (
@@ -402,8 +402,10 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
 
     @staticmethod
     def response_report_builder(project, new_plan_version):
+        from corehq.apps.userreports.dbaccessors import (
+            get_report_and_registry_report_configs_for_domain,
+        )
         from corehq.apps.userreports.tasks import rebuild_indicators
-        from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
         reports = get_report_and_registry_report_configs_for_domain(project.name)
         builder_reports = [report for report in reports if report.report_meta.created_by_builder]
         for report in builder_reports:
@@ -442,7 +444,9 @@ def _has_report_builder_add_on(plan_version):
 
 
 def _get_report_builder_reports(project):
-    from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
+    from corehq.apps.userreports.dbaccessors import (
+        get_report_and_registry_report_configs_for_domain,
+    )
     reports = get_report_and_registry_report_configs_for_domain(project.name)
     return [report for report in reports if report.report_meta.created_by_builder]
 
@@ -610,10 +614,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         Get the allowed number of mobile workers based on plan version.
         """
-        from corehq.apps.accounting.models import (
-            FeatureRate,
-            FeatureType,
-        )
+        from corehq.apps.accounting.models import FeatureRate, FeatureType
         num_users = CommCareUser.total_by_domain(self.domain.name, is_active=True)
         try:
             user_rate = self.new_plan_version.feature_rates.filter(

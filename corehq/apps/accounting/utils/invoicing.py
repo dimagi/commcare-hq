@@ -4,9 +4,9 @@ from django.db.models import Q, Sum
 
 from corehq.apps.accounting.const import UNPAID_INVOICE_THRESHOLD
 from corehq.apps.accounting.models import (
+    CustomerInvoice,
     Invoice,
     SubscriptionType,
-    CustomerInvoice,
 )
 
 
