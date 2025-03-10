@@ -22,6 +22,7 @@ from corehq.util.test_utils import _create_case, flag_enabled
 from ..const import (
     MAX_ATTEMPTS,
     MAX_BACKOFF_ATTEMPTS,
+    RECORD_QUEUED_STATES,
     State,
 )
 from ..models import (
@@ -858,7 +859,7 @@ class TestRepeatRecordManager(RepeaterTestCase):
 
     def make_records(self, n, domain=DOMAIN, state=State.Pending, payload_id="c0ffee"):
         now = timezone.now() - timedelta(seconds=10)
-        is_pending = state in [State.Pending, State.Fail]
+        is_pending = state in RECORD_QUEUED_STATES
         records = RepeatRecord.objects.bulk_create(RepeatRecord(
             domain=domain,
             repeater=self.repeater,

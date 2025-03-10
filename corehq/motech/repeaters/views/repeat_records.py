@@ -3,19 +3,14 @@ import re
 from typing import Literal
 
 from django.db.models import Q
-from django.http import (
-    Http404,
-    HttpRequest,
-    HttpResponse,
-    JsonResponse,
-)
+from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import View
-from django.template.loader import render_to_string
 
 from memoized import memoized
 
@@ -34,15 +29,18 @@ from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.form_processor.exceptions import XFormNotFound
+from corehq.motech.dhis2.parse_response import (
+    get_diagnosis_message,
+    get_errors,
+)
+from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater
+from corehq.motech.models import RequestLog
 from corehq.motech.utils import pformat_json
 from corehq.util.xml_utils import indent_xml
-from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater
-from corehq.motech.dhis2.parse_response import get_errors, get_diagnosis_message
-from corehq.motech.models import RequestLog
 
-from ..const import State
-from ..models import RepeatRecord
+from ..const import RECORD_QUEUED_STATES, State
 from ..exceptions import BulkActionMissingParameters
+from ..models import RepeatRecord
 from .repeat_record_display import RepeatRecordDisplay
 
 
@@ -215,7 +213,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
 
         if record.state == State.Cancelled:
             row.append(self._make_requeue_payload_button(record.id))
-        elif record.is_queued():
+        elif record.state in RECORD_QUEUED_STATES:
             row.append(self._make_cancel_payload_button(record.id))
         else:
             row.append(None)

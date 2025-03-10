@@ -1,7 +1,7 @@
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 
-from corehq.motech.repeaters.const import State
+from corehq.motech.repeaters.const import RECORD_QUEUED_STATES, State
 from corehq.util.timezones.conversions import ServerTime
 
 MISSING_VALUE = '---'
@@ -30,7 +30,7 @@ class RepeatRecordDisplay:
 
     @property
     def next_check(self):
-        if self.record.state not in (State.Pending, State.Fail):
+        if self.record.state not in RECORD_QUEUED_STATES:
             return '---'
         if self.record.repeater.is_paused:
             return _('Paused')
