@@ -8,7 +8,7 @@
   <div class="modal-dialog">
     <div class="modal-content">
 
-      <div class="modal-header {% if days_until_downgrade <= 30 %}bg-danger text-danger{% endif %}">
+      <div class="modal-header {% if days_until_downgrade <= 7 %}bg-danger text-danger{% endif %}">
         <h4 class="modal-title">
           {% blocktrans %}
             Your invoice for {{ invoice_month }} is past due!

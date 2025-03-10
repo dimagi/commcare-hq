@@ -1,6 +1,7 @@
 import itertools
 from datetime import date, timedelta
 
+from corehq.apps.accounting.const import DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE
 from corehq.apps.accounting.models import CreditLine, Subscription
 from corehq.apps.accounting.utils import months_from_date
 from corehq.apps.accounting.utils.invoicing import (
@@ -76,7 +77,7 @@ class BillingModalsMixin(object):
         if overdue_invoice:
             days_overdue = (date.today() - overdue_invoice.date_due).days
             context['invoice_month'] = overdue_invoice.date_start.strftime('%B %Y')
-            context['days_until_downgrade'] = max(1, 61 - days_overdue)
+            context['days_until_downgrade'] = max(1, DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE - days_overdue)
         return context
 
     @property
