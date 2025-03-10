@@ -89,16 +89,22 @@ class Experiment:
         return wrapper
 
     def _run(self, enabled, func, args, kwargs):
+        from .models import get_error_on
+        error_on = get_error_on(self.campaign, self.path)
         old_result = new_result = old_error = new_error = None
         if enabled is not None:
             try:
                 old_result = func(*args, **kwargs, **self.old_args)
+                if error_on in "old both":
+                    raise ValueError(f"artificial old code path failure: {old_result!r}")
             except Exception as err:
                 old_error = err
             mid = time.time()
         if enabled or enabled is None:
             try:
                 new_result = func(*args, **kwargs, **self.new_args)
+                if error_on == "new both":
+                    raise ValueError(f"artificial new code path failure: {old_result!r}")
             except Exception as err:
                 new_error = err
             if enabled is None:
@@ -135,7 +141,9 @@ class Experiment:
             except Exception as err:
                 notify_exception(err, "is_equal failed in experiment", details=self.tags)
                 equal = False
-            if not equal:
+            from .models import get_error_on
+            error_on = get_error_on(self.campaign, self.path)
+            if not equal or error_on == "diff":
                 tags["notify"] = "diff"
                 notify_error(
                     f"{describe(func, args, kwargs)}: {old_result!r} != {new_result!r}",
