@@ -6,10 +6,7 @@ from django.core.management.base import BaseCommand
 
 from memoized import memoized
 
-from corehq.motech.repeaters.const import (
-    RECORD_CANCELLED_STATE,
-    RECORD_SUCCESS_STATE,
-)
+from corehq.motech.repeaters.const import State
 from corehq.motech.repeaters.models import Repeater, RepeatRecord
 
 
@@ -34,7 +31,7 @@ class Command(BaseCommand):
     def most_recent_success(self):
         res = {}
         for record in RepeatRecord.objects.iterate(
-                self.domain, repeater_id=self.repeater_id, state=RECORD_SUCCESS_STATE):
+                self.domain, repeater_id=self.repeater_id, state=State.Success):
             if record.last_checked:
                 res[record.payload_id] = max(res.get(record.payload_id, datetime.datetime.min),
                                              record.last_checked)
@@ -48,7 +45,7 @@ class Command(BaseCommand):
 
         redundant_records = []
         records_by_payload_id = defaultdict(list)
-        records = RepeatRecord.objects.iterate(domain, repeater_id=repeater_id, state=RECORD_CANCELLED_STATE)
+        records = RepeatRecord.objects.iterate(domain, repeater_id=repeater_id, state=State.Cancelled)
         total_records = 0
         for record in records:
             total_records += 1
