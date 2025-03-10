@@ -22,7 +22,6 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-  <script src="{% static 'moment/moment.js' %}"></script>
   {# This is fine as an inline script; it'll be removed once form designer is migrated to RequireJS #}
   <script>
     /*
@@ -35,8 +34,6 @@
     define = undefined;
   </script>
   {% compress js %}
-    <script src="{% static 'app_manager/js/forms/app_notifications.js' %}"></script>
-    <script src="{% static 'js/ws4redis.js' %}"></script>
     <script src="{% static 'app_manager/js/forms/edit_form_details.js' %}"></script>
     <script src="{% static 'app_manager/js/forms/form_designer.js' %}"></script>
   {% endcompress %}
@@ -52,7 +49,6 @@
   {% initial_page_data 'form_uses_cases' form.uses_cases %}
   {% initial_page_data 'is_registration_form' form.is_registration_form %}
   {% initial_page_data 'is_survey' module.is_surveys %}
-  {% initial_page_data 'notification_options' notification_options %}
   {% initial_page_data 'requirejs_args' requirejs_args %}
   {% initial_page_data 'requirejs_url' requirejs_url|static %}
   {% initial_page_data 'vellum_debug' vellum_debug %}

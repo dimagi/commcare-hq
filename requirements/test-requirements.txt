@@ -606,8 +606,6 @@ urllib3==1.26.19
     #   sentry-sdk
 user-agents==2.2.0
     # via django-user-agents
-uwsgi==2.0.22
-    # via -r test-requirements.in
 vine==5.0.0
     # via
     #   amqp
