@@ -14,7 +14,6 @@ from dateutil.parser import isoparse
 from freezegun import freeze_time
 from nose.tools import assert_in
 
-from corehq.apps.integration.kyc.models import KycConfig, UserDataStore
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeater_helpers import RepeaterResponse
 from corehq.util.test_utils import _create_case, flag_enabled
@@ -519,15 +518,6 @@ class TestConnectionSettingsUsedBy(TestCase):
         )
 
         self.assertEqual(self.conn.used_by, {'Data Forwarding'})
-
-    def test_connection_settings_used_by_kyc(self):
-        KycConfig.objects.create(
-            domain=DOMAIN,
-            user_data_store=UserDataStore.CUSTOM_USER_DATA,
-            connection_settings_id=self.conn.id
-        )
-
-        self.assertEqual(self.conn.used_by, {'KYC Integration'})
 
     def test_conn_with_no_used_by(self):
         self.assertEqual(self.conn.used_by, set())

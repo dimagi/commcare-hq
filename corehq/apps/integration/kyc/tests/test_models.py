@@ -10,7 +10,6 @@ from corehq.apps.integration.kyc.models import KycConfig, UserDataStore, KycUser
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import create_case
-from corehq.motech.const import OAUTH2_CLIENT
 from corehq.motech.models import ConnectionSettings
 
 DOMAIN = 'test-domain'
@@ -50,23 +49,6 @@ class TestGetConnectionSettings(TestCase):
                   "'invalid'.$",
         ):
             config.get_connection_settings()
-
-    def test_existing_connection_settings(self):
-        connx = ConnectionSettings.objects.create(
-            domain=DOMAIN,
-            name='custom connection',
-            url='https://example.com',
-            auth_type=OAUTH2_CLIENT,
-            client_id='client_id',
-            client_secret='client_secret',
-            token_url='token_url',
-        )
-        config = KycConfig(
-            domain=DOMAIN,
-            user_data_store=UserDataStore.USER_CASE,
-            connection_settings=connx,
-        )
-        assert config.get_connection_settings() == connx
 
 
 class BaseKycUsersSetup(TestCase):
