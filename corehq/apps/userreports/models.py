@@ -983,6 +983,14 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
             }
 
     @property
+    def report_type(self):
+        if self.location_column_id:
+            return 'map'
+        if self.aggregation_columns != ['doc_id']:
+            return 'table'
+        return 'list'
+
+    @property
     @memoized
     def sort_order(self):
         return [ReportOrderByFactory.from_spec(e) for e in self.sort_expression]

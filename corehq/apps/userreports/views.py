@@ -621,12 +621,7 @@ class ConfigureReport(ReportBuilderView):
 
     def _get_existing_report_type(self):
         if self.existing_report:
-            type_ = "list"
-            if self.existing_report.aggregation_columns != ["doc_id"]:
-                type_ = "table"
-            if self.existing_report.map_config:
-                type_ = "map"
-            return type_
+            return self.existing_report.report_type
 
     def _get_property_id_by_indicator_id(self, indicator_column_id):
         """
