@@ -35,14 +35,6 @@ class State(IntegerChoices):
     InvalidPayload = 32, _('Invalid Payload')  # Implies Cancelled.
 
 
-RECORD_PENDING_STATE = State.Pending
-RECORD_SUCCESS_STATE = State.Success
-RECORD_FAILURE_STATE = State.Fail
-RECORD_CANCELLED_STATE = State.Cancelled
-RECORD_EMPTY_STATE = State.Empty
-RECORD_INVALIDPAYLOAD_STATE = State.InvalidPayload
-
-
 class UCRRestrictionFFStatus(IntegerChoices):
     Enabled = 1, _('Is enabled')
     NotEnabled = 2, _('Is not enabled')

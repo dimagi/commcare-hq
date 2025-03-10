@@ -1,14 +1,7 @@
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 
-from corehq.motech.repeaters.const import (
-    RECORD_CANCELLED_STATE,
-    RECORD_EMPTY_STATE,
-    RECORD_FAILURE_STATE,
-    RECORD_INVALIDPAYLOAD_STATE,
-    RECORD_PENDING_STATE,
-    RECORD_SUCCESS_STATE,
-)
+from corehq.motech.repeaters.const import State
 from corehq.util.timezones.conversions import ServerTime
 
 MISSING_VALUE = '---'
@@ -37,7 +30,7 @@ class RepeatRecordDisplay:
 
     @property
     def next_check(self):
-        if self.record.state not in (RECORD_PENDING_STATE, RECORD_FAILURE_STATE):
+        if self.record.state not in (State.Pending, State.Fail):
             return '---'
         if self.record.repeater.is_paused:
             return _('Paused')
@@ -71,22 +64,22 @@ class RepeatRecordDisplay:
 
 
 def _get_state_tuple(record):
-    if record.state == RECORD_SUCCESS_STATE:
+    if record.state == State.Success:
         label_cls = 'success'
         label_text = _('Success')
-    elif record.state == RECORD_PENDING_STATE:
+    elif record.state == State.Pending:
         label_cls = 'warning'
         label_text = _('Pending')
-    elif record.state == RECORD_CANCELLED_STATE:
+    elif record.state == State.Cancelled:
         label_cls = 'danger'
         label_text = _('Cancelled')
-    elif record.state == RECORD_FAILURE_STATE:
+    elif record.state == State.Fail:
         label_cls = 'danger'
         label_text = _('Failed')
-    elif record.state == RECORD_EMPTY_STATE:
+    elif record.state == State.Empty:
         label_cls = 'success'
         label_text = _('Empty')
-    elif record.state == RECORD_INVALIDPAYLOAD_STATE:
+    elif record.state == State.InvalidPayload:
         label_cls = 'danger'
         label_text = _('Invalid Payload')
     else:

@@ -40,7 +40,7 @@ from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater
 from corehq.motech.dhis2.parse_response import get_errors, get_diagnosis_message
 from corehq.motech.models import RequestLog
 
-from ..const import State, RECORD_CANCELLED_STATE
+from ..const import State
 from ..models import RepeatRecord
 from ..exceptions import BulkActionMissingParameters
 from .repeat_record_display import RepeatRecordDisplay
@@ -213,7 +213,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             self._make_resend_payload_button(record.id),
         ]
 
-        if record.state == RECORD_CANCELLED_STATE:
+        if record.state == State.Cancelled:
             row.append(self._make_requeue_payload_button(record.id))
         elif record.is_queued():
             row.append(self._make_cancel_payload_button(record.id))
