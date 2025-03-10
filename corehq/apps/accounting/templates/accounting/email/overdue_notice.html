@@ -7,29 +7,77 @@
 
 <p>
   {% blocktrans %}
-    Your billing account has unpaid CommCare Billing Statements which are more than {{ days_overdue }} days overdue. The balance currently owed is: ${{ total }}.
+    Your billing account has unpaid CommCare Billing Statements which are more
+    than {{ days_overdue }} days overdue. The balance currently owed is:
+    ${{ total }}.
   {% endblocktrans %}
 </p>
 
 <p>
-  {% blocktrans %}To see the full list of unpaid invoices you can follow this link: {% endblocktrans %}<a href="{{ statements_url }}">{{  statements_url }}</a>
+  {% blocktrans %}
+    To see the full list of unpaid invoices you can follow this link:
+  {% endblocktrans %}<a href="{{ statements_url }}">{{ statements_url }}</a>
 </p>
 <ul>
-  <li>{% blocktrans %}As a reminder, payments can be made via credit card, Electronic Fund Transfer (EFT), or check by following these <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143956507/Payment+Methods+Instructions">instructions</a>.{% endblocktrans %}</li>
-  <li>{% blocktrans %}You can also pre-pay for several months at any time by following <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143950358/CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing">these steps</a>.{% endblocktrans %}</li>
+  <li>
+    {% blocktrans %}
+      As a reminder, payments can be made via credit card, Electronic Fund
+      Transfer (EFT), or check by following these
+      <a
+        href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143956507/Payment+Methods+Instructions"
+        >instructions</a
+      >.
+    {% endblocktrans %}
+  </li>
+  <li>
+    {% blocktrans %}
+      You can also pre-pay for several months at any time by following
+      <a
+        href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143950358/CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing"
+        >these steps</a
+      >.
+    {% endblocktrans %}
+  </li>
+</ul>
+<ul>
+  <li>
+    {% blocktrans %}
+      As a reminder, payments can be made via credit card, Electronic Fund
+      Transfer (EFT), or check by following these
+      <a
+        href="https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment"
+        >instructions</a
+      >.
+    {% endblocktrans %}
+  </li>
+  <li>
+    {% blocktrans %}
+      You can also pre-pay for several months at any time by following
+      <a
+        href="https://confluence.dimagi.com/display/commcarepublic/CommCare+Pricing+FAQs#CommCarePricingFAQs-Pre-payment"
+        >these steps</a
+      >.
+    {% endblocktrans %}
+  </li>
 </ul>
 
 <p>
   {% blocktrans %}
     <em>Please make a payment as soon as possible for the amount due.</em>
-    <strong>If you are not able to make a payment, your subscription will be paused on {{ date_to_pause }}.</strong>
-    As of this date, you will lose access to your project space until you re-subscribe to a paid plan.
+    <strong
+      >If you are not able to make a payment, your subscription will be paused
+      on {{ date_to_pause }}.</strong
+    >
+    As of this date, you will lose access to your project space until you
+    re-subscribe to a paid plan.
   {% endblocktrans %}
 </p>
 
 <p>
   {% blocktrans %}
-    If you have any questions or if you think your recent payments haven’t been reflected in this balance, please don't hesitate to contact <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.
+    If you have any questions or if you think your recent payments haven’t been
+    reflected in this balance, please don't hesitate to contact
+    <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.
   {% endblocktrans %}
 </p>
 
