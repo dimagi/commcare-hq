@@ -211,6 +211,7 @@ blobs
  0014_alter_deletedblobmeta_id
 campaign
  0001_initial
+ 0002_dashboardmap_dashboardreport
 case_importer
  0001_initial
  0002_auto_20161206_1937
