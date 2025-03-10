@@ -545,9 +545,9 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         Reminder rules will be deactivated.
         """
         num_active = (
-            len(_get_active_immediate_broadcasts(domain)) +
-            len(_get_active_scheduled_broadcasts(domain)) +
-            len(_get_active_scheduling_rules(domain))
+            len(_get_active_immediate_broadcasts(domain))
+            + len(_get_active_scheduled_broadcasts(domain))
+            + len(_get_active_scheduling_rules(domain))
         )
         if num_active > 0:
             return _fmt_alert(
@@ -568,9 +568,9 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         All Reminder rules utilizing "survey" will be deactivated.
         """
         num_survey = (
-            len(_get_active_immediate_broadcasts(domain, survey_only=True)) +
-            len(_get_active_scheduled_broadcasts(domain, survey_only=True)) +
-            len(_get_active_scheduling_rules(domain, survey_only=True))
+            len(_get_active_immediate_broadcasts(domain, survey_only=True))
+            + len(_get_active_scheduled_broadcasts(domain, survey_only=True))
+            + len(_get_active_scheduling_rules(domain, survey_only=True))
         )
         if num_survey > 0:
             return _fmt_alert(
