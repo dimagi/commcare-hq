@@ -12,7 +12,7 @@ from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.payments.tables import PaymentsVerifyTable
 from corehq.apps.users.models import WebUser
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
-from corehq.apps.integration.payments.utils import verify_payment_cases
+from corehq.apps.integration.payments.services import verify_payment_cases
 
 
 @method_decorator(use_bootstrap5, name='dispatch')

@@ -5,7 +5,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
-from corehq.apps.integration.payments.utils import verify_payment_cases
+from corehq.apps.integration.payments.services import verify_payment_cases
 
 
 class TestVerifyPaymentCases(TestCase):
