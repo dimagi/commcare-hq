@@ -92,13 +92,13 @@ class BulkEditSession(models.Model):
         return cls.objects.filter(user=user, domain=domain_name, committed_on__isnull=False)
 
     @property
-    def status(self):
+    def status_tuple(self):
         if self.committed_on:
             if self.completed_on:
-                return "complete"
+                return ("complete", "success")
             else:
-                return "in progress"
-        return "pending"
+                return ("in progress", "primary")
+        return ("pending", "secondary")
 
     def add_column_filter(self, prop_id, data_type, match_type, value=None):
         BulkEditColumnFilter.objects.create(
@@ -143,6 +143,27 @@ class BulkEditSession(models.Model):
         for pinned_filter in self.pinned_filters.all():
             query = pinned_filter.filter_query(query)
         return query
+
+    def update_result(self, record_count, form_id=None):
+        result = self.result or {}
+
+        if 'form_ids' not in result:
+            result['form_ids'] = []
+        if 'record_count' not in result:
+            result['record_count'] = 0
+        if 'percent' not in result:
+            result['percent'] = 0
+
+        if form_id:
+            result['form_ids'].append(form_id)
+        result['record_count'] += record_count
+        if self.records.count() == 0:
+            result['percent'] = 100
+        else:
+            result['percent'] = result['record_count'] * 100 / self.records.count()
+
+        self.result = result
+        self.save()
 
 
 class DataType:
