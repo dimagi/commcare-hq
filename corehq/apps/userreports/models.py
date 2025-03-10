@@ -978,7 +978,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
                 'layer_name': {
                     'XFormInstance': _('Forms'),
                     'CommCareCase': _('Cases')
-                }.get(self.config.referenced_doc_type, "Layer"),
+                }.get(self.config.referenced_doc_type, _("Layer")),
                 'columns': [x for x in (map_col(col) for col in self.columns) if x]
             }
 
