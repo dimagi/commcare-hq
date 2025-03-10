@@ -7,7 +7,7 @@
 
 <p>
   {% blocktrans %}
-    Your billing account has unpaid CommCare Billing Statements which are more than 30 days overdue. The balance currently owed is: ${{ total }}.
+    Your billing account has unpaid CommCare Billing Statements which are more than {{ days_overdue }} days overdue. The balance currently owed is: ${{ total }}.
   {% endblocktrans %}
 </p>
 
@@ -22,7 +22,7 @@
 <p>
   {% blocktrans %}
     <b><i>Please make a payment as soon as possible for the amount due.</i></b>
-    If you are not able to make a payment, your subscription will be paused on {{ date_60 }}.
+    If you are not able to make a payment, your subscription will be paused on {{ date_to_pause }}.
     As of this date, you will lose access to your project space until you re-subscribe to a paid plan.
   {% endblocktrans %}
 </p>

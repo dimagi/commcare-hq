@@ -2,7 +2,7 @@
 {% blocktrans %}
 Dear {{ domain_or_account }} administrator,
 
-Your CommCare {{ subscriptions_to_downgrade }} will be paused after tomorrow because your CommCare Billing Statements are more than 60 days overdue.
+Your CommCare {{ subscriptions_to_downgrade }} will be paused after tomorrow because your CommCare Billing Statements are more than {{ days_overdue }} days overdue.
 If you do not make a payment before tomorrow, your subscription will automatically be paused and you will lose access to your project space and data until you re-subscribe to paid plan.
 
 To see the full list of unpaid invoices you can follow this link: {{ statements_url }}
