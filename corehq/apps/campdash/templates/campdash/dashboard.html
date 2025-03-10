@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/bootstrap5/base_navigation.html' %}
+{% extends 'hqwebapp/bootstrap3/base_navigation.html' %}
 {% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -18,7 +18,7 @@
 
 {% block content %}
   {% initial_page_data 'mapbox_access_token' mapbox_access_token %}
-  {% registerurl 'api_cases_with_gps' request.domain %}
+
 
   <div class="container-fluid" id="campaign-dashboard">
     <div class="row mb-4">
