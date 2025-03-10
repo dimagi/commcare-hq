@@ -1,0 +1,44 @@
+{% extends "userreports/base.html" %}
+{% load compress %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% js_entry_b3 "userreports/js/configurable_report" %}
+
+{% block report_alerts %}
+  {{ block.super }}
+  {% include 'userreports/partials/build_in_progress_warning.html' with data_source_config=report.data_source.config %}
+{% endblock %}
+
+{% block page_actions %}
+  {% registerurl 'add_report_config' domain %}
+  {% initial_page_data 'builder_report_type' report.spec.report_meta.builder_report_type %}
+  {% initial_page_data 'report_builder_events' report_builder_events %}
+  {% initial_page_data 'default_config' default_config %}
+  {% initial_page_data 'report_configs' report_configs %}
+  {% initial_page_data 'has_datespan' report.has_datespan %}
+  {% initial_page_data 'datespan_filters' datespan_filters %}
+  {% initial_page_data 'daterangepicker-show-clear' 'true'%}
+  {% if request.datespan %}
+    {% initial_page_data 'startdate' datespan.startdate|date:"Y-m-d" %}
+    {% initial_page_data 'enddate' datespan.enddate|date:"Y-m-d" %}
+  {% endif %}
+  {% initial_page_data 'type' report.type %}
+  {% initial_page_data 'js_options' js_options %}
+  {% initial_page_data 'override_report_render_url' True %}
+
+  {% if has_report_builder_trial %}
+    <a class="btn btn-primary" href="{% url 'report_builder_paywall_pricing' domain %}">
+      {% trans "Subscribe to Report Builder" %}
+    </a>
+  {% endif %}
+  {% if can_edit_report %}
+    {% include 'userreports/partials/edit_report_button.html' %}
+  {% elif can_delete_report %}
+    {% include 'userreports/partials/delete_report_button.html' with report_id=report.report_config_id %}
+  {% endif %}
+{% endblock %}
+
+{% block filter_panel %}
+  {% include "userreports/partials/filter_panel.html" %}
+{% endblock %}

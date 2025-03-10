@@ -13,9 +13,13 @@
     defer
     src="https://unpkg.com/alpinejs@3.13.0/dist/cdn.min.js"
   ></script>
+  <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
 {% endblock %}
 
 {% block content %}
+  {% initial_page_data 'mapbox_access_token' mapbox_access_token %}
+  {% registerurl 'api_cases_with_gps' request.domain %}
+
   <div class="container-fluid" id="campaign-dashboard">
     <div class="row mb-4">
       <div class="col-12">
@@ -29,6 +33,37 @@
     </div>
 
     <!-- Report and Map Section -->
-    <div class="row mb-4"></div>
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="d-flex justify-content-between mb-3">
+          <h3>{% trans "Reports & Maps" %}</h3>
+          <div>
+            <button
+              class="btn btn-primary"
+              hx-get='{% url "campaign_map_report" request.domain "46b6f9a56a3d41bf7d2e4bac320031a4" %}'
+              hx-target="#map-reports-container"
+              hx-swap="beforeend"
+              hx-trigger="click"
+              hx-indicator="#loading-indicator"
+            >
+              <i class="fa fa-map-marker me-1"></i> {% trans "Add Map Report" %}
+            </button>
+
+          </div>
+        </div>
+        
+        <div id="loading-indicator" class="htmx-indicator">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+        
+        <!-- Container for map reports -->
+        <div id="map-reports-container" >
+          <div id="map-container" style="height: 500px"></div>
+          <!-- Map reports will be loaded here -->
+        </div>
+      </div>
+    </div>
   </div>
 {% endblock content %}

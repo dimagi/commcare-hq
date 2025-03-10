@@ -9,7 +9,10 @@ from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.locations.permissions import location_safe
 
 
-@method_decorator(use_bootstrap5, name='dispatch')
+from corehq.apps.userreports.reports.view import ConfigurableReportView
+
+
+# @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(login_and_domain_required, name='dispatch')
 @location_safe
 class CampaignDashboardView(BasePageView, DomainViewMixin):
@@ -23,3 +26,12 @@ class CampaignDashboardView(BasePageView, DomainViewMixin):
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
+
+
+# @method_decorator(use_bootstrap5, name='dispatch')
+class MapReportView(ConfigurableReportView):
+    template_name = 'campdash/partials/report.html' # 'campdash/partials/base_report.html'
+    slug = 'configurable'
+    prefix = slug
+
+    is_exportable = False
