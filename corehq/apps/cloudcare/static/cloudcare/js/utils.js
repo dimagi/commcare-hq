@@ -373,7 +373,7 @@ hqDefine('cloudcare/js/utils', [
             useCurrent: false,
         };
         if (selectedDate) {
-            options.viewDate = new hqTempusDominus.tempusDominus.DateTime(selectedDate);
+            options.viewDate = new Date(selectedDate);
         }
         let picker = hqTempusDominus.createDatePicker($el.get(0), options);
 
