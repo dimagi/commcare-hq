@@ -2,6 +2,9 @@ from corehq.apps.celery import task
 
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.data_cleaning.models import (
+    BulkEditColumn,
+    BulkEditColumnFilter,
+    BulkEditPinnedFilter,
     BulkEditSession,
 )
 from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
@@ -13,6 +16,11 @@ from corehq.form_processor.models import CommCareCase
 @task(queue='case_import_queue')
 def commit_data_cleaning(bulk_edit_session_id):
     session = BulkEditSession.objects.get(session_id=bulk_edit_session_id)
+
+    # Delete UI-only models
+    BulkEditColumnFilter.objects.filter(session=session).delete()
+    BulkEditPinnedFilter.objects.filter(session=session).delete()
+    BulkEditColumn.objects.filter(session=session).delete()
 
     form_ids = []
     case_index = 0
