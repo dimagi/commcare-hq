@@ -133,16 +133,18 @@ class TestInvoice(BaseInvoiceTestCase):
         self.assertFalse(self.community.feature_charges_exist_for_domain(domain_under_limits))
 
     def test_date_due_not_set_small_invoice(self):
-        """Date Due doesn't get set if the invoice is small"""
+        """Date Due doesn't get set if the invoice is very small"""
+        self.subscription.plan_version = generator.custom_plan_version(monthly_fee=1.00)
+        self.subscription.save()
         invoice_date_small = utils.months_from_date(self.subscription.date_start, 1)
         self.create_invoices(invoice_date_small)
-        small_invoice = self.subscription.invoice_set.first()
+        small_invoice = self.subscription.invoice_set.last()
 
         self.assertTrue(small_invoice.balance <= SMALL_INVOICE_THRESHOLD)
         self.assertIsNone(small_invoice.date_due)
 
     def test_date_due_set_large_invoice(self):
-        """Date Due only gets set for a large invoice (> $100)"""
+        """Date Due only gets set for a 'large' invoice (> $1)"""
         self.subscription.plan_version = generator.subscribable_plan_version(SoftwarePlanEdition.ADVANCED)
         self.subscription.save()
         invoice_date_large = utils.months_from_date(self.subscription.date_start, 3)
@@ -153,7 +155,9 @@ class TestInvoice(BaseInvoiceTestCase):
         self.assertIsNotNone(large_invoice.date_due)
 
     def test_date_due_gets_set_autopay(self):
-        """Date due always gets set for autopay """
+        """Date due gets set for autopay even if invoice is very small"""
+        self.subscription.plan_version = generator.custom_plan_version(monthly_fee=1.00)
+        self.subscription.save()
         self.subscription.account.update_autopay_user(self.billing_contact, self.domain)
         invoice_date_autopay = utils.months_from_date(self.subscription.date_start, 1)
         self.create_invoices(invoice_date_autopay)
