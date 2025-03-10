@@ -144,6 +144,27 @@ class BulkEditSession(models.Model):
             query = pinned_filter.filter_query(query)
         return query
 
+    def update_result(self, record_count, form_id=None):
+        result = self.result or {}
+
+        if 'form_ids' not in result:
+            result['form_ids'] = []
+        if 'record_count' not in result:
+            result['record_count'] = 0
+        if 'percent' not in result:
+            result['percent'] = 0
+
+        if form_id:
+            result['form_ids'].append(form_id)
+        result['record_count'] += record_count
+        if self.records.count() == 0:
+            result['percent'] = 100
+        else:
+            result['percent'] = result['record_count'] * 100 / self.records.count()
+
+        self.result = result
+        self.save()
+
 
 class DataType:
     TEXT = 'text'
