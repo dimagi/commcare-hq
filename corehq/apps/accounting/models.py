@@ -2607,6 +2607,7 @@ class BillingRecordBase(models.Model):
                 DomainBillingStatementsView.urlname, args=[domain]),
             'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
             'accounts_email': settings.ACCOUNTS_EMAIL,
+            'small_invoice_threshold': SMALL_INVOICE_THRESHOLD,
         }
         return context
 
