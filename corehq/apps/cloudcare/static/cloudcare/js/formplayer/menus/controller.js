@@ -56,7 +56,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
                 return;
             }
 
-            gtx.logNavigateMenu(gtx.extractSelections(menuResponse));
+            gtx.logNavigateMenu(menuResponse);
 
             //set title of tab to application name
             if (menuResponse.breadcrumbs) {
