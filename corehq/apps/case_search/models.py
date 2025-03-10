@@ -21,6 +21,7 @@ CLAIM_CASE_TYPE = 'commcare-case-claim'
 FUZZY_PROPERTIES = "fuzzy_properties"
 CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY = 'commcare_blacklisted_owner_ids'
 CASE_SEARCH_XPATH_QUERY_KEY = '_xpath_query'
+CASE_SEARCH_XPATH_VAR_PREFIX = '_xpath_var_'
 CASE_SEARCH_CASE_TYPE_KEY = "case_type"
 CASE_SEARCH_INDEX_KEY_PREFIX = "indices."
 CASE_SEARCH_SORT_KEY = "commcare_sort"
@@ -187,6 +188,7 @@ class CaseSearchRequestConfig:
     custom_related_case_property = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
     include_all_related_cases = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
     commcare_sort = attr.ib(kw_only=True, default=None, converter=_parse_commcare_sort_properties)
+    xpath_vars = attr.ib(kw_only=True, factory=dict)
 
     @case_types.validator
     def _require_case_type(self, attribute, value):
@@ -209,8 +211,12 @@ def extract_search_request_config(request_dict):
         config_name: params.pop(param_name, None)
         for param_name, config_name in CONFIG_KEYS_MAPPING.items()
     }
+    xpath_vars = {
+        k.removeprefix(CASE_SEARCH_XPATH_VAR_PREFIX): _flatten_singleton_list(params.pop(k))
+        for k in list(params.keys()) if k.startswith(CASE_SEARCH_XPATH_VAR_PREFIX)
+    }
     criteria = criteria_dict_to_criteria_list(params)
-    return CaseSearchRequestConfig(criteria=criteria, **kwargs_from_params)
+    return CaseSearchRequestConfig(criteria=criteria, xpath_vars=xpath_vars, **kwargs_from_params)
 
 
 class GetOrNoneManager(models.Manager):
