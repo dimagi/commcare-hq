@@ -92,13 +92,13 @@ class BulkEditSession(models.Model):
         return cls.objects.filter(user=user, domain=domain_name, committed_on__isnull=False)
 
     @property
-    def status(self):
+    def status_tuple(self):
         if self.committed_on:
             if self.completed_on:
-                return "complete"
+                return ("complete", "success")
             else:
-                return "in progress"
-        return "pending"
+                return ("in progress", "primary")
+        return ("pending", "secondary")
 
     def add_column_filter(self, prop_id, data_type, match_type, value=None):
         BulkEditColumnFilter.objects.create(

@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseFactory
@@ -50,6 +51,7 @@ class CommitCasesTest(TestCase):
             user=self.web_user.get_django_user(),
             session_type=BulkEditSessionType.CASE,
             identifier=self.case_type,
+            committed_on=datetime.utcnow(),
         )
         self.session.save()
 
@@ -118,6 +120,8 @@ class CommitCasesTest(TestCase):
             'record_count': 1,
             'percent': 100,
         })
+        self.assertIsNotNone(self.session.completed_on)
+        self.assertListEqual(list(self.session.status_tuple), ['complete', 'success'])
 
     def test_chunking(self):
         cases = [self.case]
