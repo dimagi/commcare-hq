@@ -57,6 +57,7 @@ from corehq.const import LOADTEST_HARD_LIMIT, USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.feature_previews import USE_LOCATION_DISPLAY_NAME
 from corehq.toggles import (
+    COMMCARE_CONNECT,
     TWO_STAGE_USER_PROVISIONING,
     TWO_STAGE_USER_PROVISIONING_BY_SMS,
 )
@@ -672,6 +673,13 @@ class NewMobileWorkerForm(forms.Form):
         ),
         required=False,
     )
+    account_invite_by_cid = forms.BooleanField(
+        label=gettext_noop("Invite using ConnectID phone number?"),
+        help_text=gettext_noop(
+            "If checked, the user will be sent an SMS to join the project using their ConnectID app."
+        ),
+        required=False,
+    )
     phone_number = forms.CharField(
         required=False,
         label=gettext_noop("Phone Number"),
@@ -770,10 +778,16 @@ class NewMobileWorkerForm(forms.Form):
                 data_bind='value: send_account_confirmation_email',
             )
 
-        if TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
+        # cid => connect-id
+        provision_by_cid = COMMCARE_CONNECT.enabled(self.domain)
+
+        provision_by_sms = TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain)
+
+        if provision_by_sms or provision_by_cid:
+            varname = 'account_invite_by_cid' if provision_by_cid else 'force_account_confirmation_by_sms'
             confirm_account_by_sms_field = crispy.Field(
-                'force_account_confirmation_by_sms',
-                data_bind='checked: force_account_confirmation_by_sms',
+                varname,
+                data_bind=f'checked: {varname}',
             )
             phone_number_field = crispy.Div(
                 crispy.Field(
@@ -869,8 +883,13 @@ class NewMobileWorkerForm(forms.Form):
                                         <i class="fa fa-warning"></i> {disabled_email}
                                     <!-- /ko -->
                                     <!-- ko if: !($root.stagedUser().force_account_confirmation())
-                                    && $root.stagedUser().force_account_confirmation_by_sms() -->
+                                    && ($root.stagedUser().force_account_confirmation_by_sms()
+                                    || $root.stagedUser().account_invite_by_cid) -->
                                         <i class="fa fa-warning"></i> {disabled_phone}
+                                    <!-- /ko -->
+                                    <!-- ko if: !($root.stagedUser().force_account_confirmation())
+                                    && $root.stagedUser().account_invite_by_cid() -->
+                                        <i class="fa fa-warning"></i> {disabled_cid}
                                     <!-- /ko -->
                                 <!-- /ko -->
                             </p>
@@ -893,6 +912,11 @@ class NewMobileWorkerForm(forms.Form):
                                 "Setting a password is disabled. The user "
                                 "will set their own password on confirming "
                                 "their account phone number."
+                            ),
+                            disabled_cid = _(
+                                "Setting a password is disabled. The user "
+                                "will be to access by logging into their "
+                                "ConnectID app."
                             ),
                             short=_("Password must have at least {password_length} characters."
                                     ).format(password_length=settings.MINIMUM_PASSWORD_LENGTH)
