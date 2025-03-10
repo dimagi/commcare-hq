@@ -5,8 +5,8 @@ Dear {{ domain_or_account }} administrator,
 Your billing account has unpaid CommCare Billing Statements which are more than {{ days_overdue }} days overdue. The balance currently owed is: ${{ total }}.
 
 To see the full list of unpaid invoices you can follow this link: {{  statements_url }}
-As a reminder, payments can be made via credit card, Electronic Fund Transfer (EFT), or check by following the instructions at https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment
-You can also pre-pay for several months at any time by following the steps at https://confluence.dimagi.com/display/commcarepublic/CommCare+Pricing+FAQs#CommCarePricingFAQs-Pre-payment
+As a reminder, payments can be made via credit card, Electronic Fund Transfer (EFT), or check by following the instructions at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143956507/Payment+Methods+Instructions
+You can also pre-pay for several months at any time by following the steps at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143950358/CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing
 
 Please make a payment as soon as possible for the amount due.
 If you are not able to make a payment, your subscription will be paused on {{ date_to_pause }}.
