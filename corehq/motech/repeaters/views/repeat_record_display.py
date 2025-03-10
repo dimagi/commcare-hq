@@ -55,7 +55,8 @@ class RepeatRecordDisplay:
 
     @property
     def state(self):
-        return format_html('<span class="label label-{}">{}</span>', *_get_state_tuple(self.record))
+        label_cls, label_text = _get_state_tuple(self.record)
+        return format_html(f'<span class="label label-{label_cls}">{label_text}</span>')
 
     def _format_date(self, date):
         if not date:
@@ -65,25 +66,15 @@ class RepeatRecordDisplay:
 
 def _get_state_tuple(record):
     if record.state == State.Success:
-        label_cls = 'success'
-        label_text = _('Success')
-    elif record.state == State.Pending:
-        label_cls = 'warning'
-        label_text = _('Pending')
-    elif record.state == State.Cancelled:
-        label_cls = 'danger'
-        label_text = _('Cancelled')
-    elif record.state == State.Fail:
-        label_cls = 'danger'
-        label_text = _('Failed')
-    elif record.state == State.Empty:
-        label_cls = 'success'
-        label_text = _('Empty')
-    elif record.state == State.InvalidPayload:
-        label_cls = 'danger'
-        label_text = _('Invalid Payload')
-    else:
-        label_cls = ''
-        label_text = ''
-
-    return label_cls, label_text
+        return 'success', _('Success')
+    if record.state == State.Pending:
+        return 'warning', _('Pending')
+    if record.state == State.Cancelled:
+        return 'danger', _('Cancelled')
+    if record.state == State.Fail:
+        return 'danger', _('Failed')
+    if record.state == State.Empty:
+        return 'success', _('Empty')
+    if record.state == State.InvalidPayload:
+        return 'danger', _('Invalid payload')
+    return '', ''

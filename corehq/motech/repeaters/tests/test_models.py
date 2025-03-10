@@ -177,22 +177,28 @@ class RepeaterManagerTests(RepeaterTestCase):
             self.assertEqual(len(repeater_ids), 0)
 
     def test_all_ready_paused(self):
-        with make_repeat_record(self.repeater, State.Pending), \
-                pause(self.repeater):
+        with (
+            make_repeat_record(self.repeater, State.Pending),
+            pause(self.repeater)
+        ):
             repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
             self.assertEqual(len(repeater_ids), 0)
 
     def test_all_ready_next_future(self):
         in_five_mins = timezone.now() + timedelta(minutes=5)
-        with make_repeat_record(self.repeater, State.Pending), \
-                set_next_attempt_at(self.repeater, in_five_mins):
+        with (
+            make_repeat_record(self.repeater, State.Pending),
+            set_next_attempt_at(self.repeater, in_five_mins)
+        ):
             repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
             self.assertEqual(len(repeater_ids), 0)
 
     def test_all_ready_next_past(self):
         five_mins_ago = timezone.now() - timedelta(minutes=5)
-        with make_repeat_record(self.repeater, State.Pending), \
-                set_next_attempt_at(self.repeater, five_mins_ago):
+        with (
+            make_repeat_record(self.repeater, State.Pending),
+            set_next_attempt_at(self.repeater, five_mins_ago)
+        ):
             repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
             self.assertEqual(
                 dict(repeater_ids),
@@ -977,8 +983,10 @@ class TestRepeatRecordMethodsNoDB(SimpleTestCase):
             state=State.Fail
         )
 
-        with patch.object(RepeatRecord, "num_attempts", 0), \
-                patch.object(repeat_record, "max_possible_tries", 1):
+        with (
+            patch.object(RepeatRecord, "num_attempts", 0),
+            patch.object(repeat_record, "max_possible_tries", 1)
+        ):
             self.assertFalse(repeat_record.exceeded_max_retries)
 
     def test_exceeded_max_retries_returns_true_if_equal(self):
@@ -989,8 +997,10 @@ class TestRepeatRecordMethodsNoDB(SimpleTestCase):
             state=State.Fail
         )
 
-        with patch.object(RepeatRecord, "num_attempts", 1), \
-                patch.object(repeat_record, "max_possible_tries", 1):
+        with (
+            patch.object(RepeatRecord, "num_attempts", 1),
+            patch.object(repeat_record, "max_possible_tries", 1)
+        ):
             self.assertTrue(repeat_record.exceeded_max_retries)
 
     def test_exceeded_max_retries_returns_true_if_more_tries_than_possible(self):
@@ -1001,8 +1011,10 @@ class TestRepeatRecordMethodsNoDB(SimpleTestCase):
             state=State.Fail
         )
 
-        with patch.object(RepeatRecord, "num_attempts", 2), \
-                patch.object(repeat_record, "max_possible_tries", 1):
+        with (
+            patch.object(RepeatRecord, "num_attempts", 2),
+            patch.object(repeat_record, "max_possible_tries", 1)
+        ):
             self.assertTrue(repeat_record.exceeded_max_retries)
 
     def test_exceeded_max_retries_returns_false_if_not_failure_state(
@@ -1014,8 +1026,10 @@ class TestRepeatRecordMethodsNoDB(SimpleTestCase):
             state=State.Success,
         )
 
-        with patch.object(RepeatRecord, "num_attempts", 2), \
-                patch.object(repeat_record, "max_possible_tries", 1):
+        with (
+            patch.object(RepeatRecord, "num_attempts", 2),
+            patch.object(repeat_record, "max_possible_tries", 1)
+        ):
             self.assertFalse(repeat_record.exceeded_max_retries)
 
 
