@@ -9,6 +9,8 @@
 {% endblock %}
 
 {% block page_content %}
+  <!-- ToDo: inject via the recommended way -->
+  <script src="https://canvas-gauges.com/download/latest/all/gauge.min.js"></script>
   <ul class="nav nav-tabs" role="tablist">
     <li role="presentation" class="nav-item">
       <a
@@ -38,6 +40,77 @@
       <!-- Gauges Section -->
       <div class="row">
         <h2>{% trans "Gauges" %}</h2>
+        <!-- ToDo: update to use stylesheet instead -->
+        <div style="width: 300px; height: 300px; padding: 20px; margin: 20px;">
+          <canvas
+            data-type="radial-gauge"
+            data-value="20"
+            data-value-box="true"
+            data-animation-rule="bounce"
+            data-animation-duration="500"
+            data-animated-value="true"
+            data-highlights='[
+                { "from": 0, "to": 20, "color": "rgba(0,255,0,.15)" },
+                { "from": 20, "to": 40, "color": "rgba(255,255,0,.15)" },
+                { "from": 40, "to": 60, "color": "rgba(255,30,0,.25)" },
+                { "from": 60, "to": 80, "color": "rgba(255,0,225,.25)" },
+                { "from": 80, "to": 100, "color": "rgba(0,0,255,.25)" }
+            ]'
+            data-width="250"
+            data-height="250"
+            title="Gauge 1"
+          >
+          </canvas>
+        </div>
+        <div style="width: 300px; height: 300px; padding: 20px; margin: 20px;">
+          <canvas
+            data-type="radial-gauge"
+            data-value="30"
+            data-value-box="true"
+            data-animation-rule="bounce"
+            data-animation-duration="500"
+            data-animated-value="true"
+            data-width="250"
+            data-height="250"
+            title="Gauge 2"
+          >
+          </canvas>
+        </div>
+        <div style="width: 300px; height: 300px; padding: 20px; margin: 20px;">
+          <canvas
+            data-type="radial-gauge"
+            data-width="250"
+            data-height="250"
+            data-units="Km/h"
+            data-title="false"
+            data-value="0"
+            data-min-value="0"
+            data-max-value="220"
+            data-major-ticks="0,20,40,60,80,100,120,140,160,180,200,220"
+            data-minor-ticks="2"
+            data-stroke-ticks="false"
+            data-highlights='[
+                      { "from": 0, "to": 50, "color": "rgba(0,255,0,.15)" },
+                      { "from": 50, "to": 100, "color": "rgba(255,255,0,.15)" },
+                      { "from": 100, "to": 150, "color": "rgba(255,30,0,.25)" },
+                      { "from": 150, "to": 200, "color": "rgba(255,0,225,.25)" },
+                      { "from": 200, "to": 220, "color": "rgba(0,0,255,.25)" }
+                  ]'
+            data-color-plate="#222"
+            data-color-major-ticks="#f5f5f5"
+            data-color-minor-ticks="#ddd"
+            data-color-title="#fff"
+            data-color-units="#ccc"
+            data-color-numbers="#eee"
+            data-color-needle-start="rgba(240, 128, 128, 1)"
+            data-color-needle-end="rgba(255, 160, 122, .9)"
+            data-value-box="true"
+            data-animation-rule="bounce"
+            data-animation-duration="500"
+            data-font-value="Led"
+            data-animated-value="true"
+          ></canvas>
+        </div>
       </div>
       <div class="spacer"></div>
       <!-- Report and Map Section -->
