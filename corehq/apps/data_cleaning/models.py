@@ -125,6 +125,7 @@ class BulkEditSession(models.Model):
     def get_queryset(self):
         query = CaseSearchES().domain(self.domain).case_type(self.identifier)
         query = self._apply_column_filters(query)
+        query = self._apply_pinned_filters(query)
         return query
 
     def _apply_column_filters(self, query):
@@ -136,6 +137,11 @@ class BulkEditSession(models.Model):
                 xpath_expressions.append(column_xpath)
         if xpath_expressions:
             query = query.xpath_query(self.domain, " and ".join(xpath_expressions))
+        return query
+
+    def _apply_pinned_filters(self, query):
+        for pinned_filter in self.pinned_filters.all():
+            query = pinned_filter.filter_query(query)
         return query
 
 
@@ -444,6 +450,9 @@ class BulkEditPinnedFilter(models.Model):
             PinnedFilterType.CASE_OWNERS: CaseOwnersPinnedFilter,
             PinnedFilterType.CASE_STATUS: CaseStatusPinnedFilter,
         }[self.filter_type]
+
+    def filter_query(self, query):
+        return self.get_report_filter_class().filter_query(query, self)
 
 
 class BulkEditColumn(models.Model):

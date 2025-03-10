@@ -37,7 +37,7 @@ class CaseOwnerReportFilter(BaseReportFilter):
             return query.filter(deactivated_case_owners(self.domain))
 
         selected_user_types = [v['id'] for v in self.value]
-        case_owners = get_case_owners(self.request, self.domain, selected_user_types)
+        case_owners = get_case_owners(self.request.can_access_all_locations, self.domain, selected_user_types)
         return query.owner(case_owners)
 
 

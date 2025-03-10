@@ -378,7 +378,7 @@ class FoodData:
                     .show_only_inactive()
                     .domain(domain)
                     .get_ids())
-        return get_case_owners(request, domain, slugs)
+        return get_case_owners(request.can_access_all_locations, domain, slugs)
 
     def _matches_in_memory_filters(self, row):
         # If a gap type is specified, show only rows with gaps of that type
