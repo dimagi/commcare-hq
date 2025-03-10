@@ -8,7 +8,7 @@ from corehq.apps.accounting.models import (
     CustomerInvoice,
 )
 
-UNPAID_INVOICE_THRESHOLD = 100
+UNPAID_INVOICE_THRESHOLD = 1
 
 
 def _get_all_unpaid_saas_invoices():

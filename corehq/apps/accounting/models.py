@@ -86,7 +86,7 @@ from django.db.models import OuterRef, Subquery
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
 MAX_INVOICE_COMMUNICATIONS = 5
-SMALL_INVOICE_THRESHOLD = 100
+SMALL_INVOICE_THRESHOLD = 1
 
 UNLIMITED_FEATURE_USAGE = -1
 
