@@ -46,8 +46,12 @@ class CaseListMixin(ESQueryProfilerMixin, ElasticProjectInspectionReport, Projec
     search_class = case_es.CaseES
 
     def _base_query(self):
+        if getattr(self, 'rendered_as', None) == 'export':
+            search_class = self.search_class(for_export=True)
+        else:
+            search_class = self.search_class()
         return (
-            self.search_class()
+            search_class
             .domain(self.domain)
             .size(self.pagination.count)
             .start(self.pagination.start)
