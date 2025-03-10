@@ -1,0 +1,34 @@
+{% extends 'hqwebapp/bootstrap5/base_navigation.html' %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block title %}{% trans "Campaign Dashboard" %}{% endblock %}
+
+{% block js %}
+  {{ block.super }}
+  <!-- HTMX and Alpine.js -->
+  <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+  <script
+    defer
+    src="https://unpkg.com/alpinejs@3.13.0/dist/cdn.min.js"
+  ></script>
+{% endblock %}
+
+{% block content %}
+  <div class="container-fluid" id="campaign-dashboard">
+    <div class="row mb-4">
+      <div class="col-12">
+        <h1 class="mb-3 mt-4">{% trans "Campaign Dashboard" %}</h1>
+      </div>
+    </div>
+
+    <!-- Gauges Section -->
+    <div class="row mb-4">
+      <div class="col-12"></div>
+    </div>
+
+    <!-- Report and Map Section -->
+    <div class="row mb-4"></div>
+  </div>
+{% endblock content %}
