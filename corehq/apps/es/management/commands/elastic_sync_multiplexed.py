@@ -269,9 +269,9 @@ class ESSyncUtil:
 
     def set_checkpoints_for_new_index(self, cnames):
         """
-        Takes in an index cnames and create new checkpoint for all the pillows that use the older index name
+        Takes in a list of index cnames and creates a new checkpoint for all pillows that use the older index name
         for that cname.
-        If 'all' is passed, it will copy checkpoints for all the indices.
+        If the list of cnames contains 'all', checkpoints will be copied for all indices.
         Can only be performed when indexes are still multiplexed and not swapped.
         When we swap the indexes, the primary index changes which updates the checkpoint names.
         We should stop the pillows and copy the checkpoint to the new checkpoint ids, swap the indexes
@@ -279,11 +279,12 @@ class ESSyncUtil:
         """
         all_pillows = get_all_pillow_instances()
         if 'all' in cnames:
+            assert len(cnames) == 1, f"Unexpected cnames provided with 'all': {cnames}"
             cnames = iter_index_cnames()
         for cname in cnames:
             adapter = doc_adapter_from_cname(cname)
             if not isinstance(adapter, ElasticMultiplexAdapter):
-                raise IndexNotMultiplexedException(f"""Checkpoints can be copied on multiplexed indexes.
+                raise IndexNotMultiplexedException(f"""Checkpoints can only be copied on multiplexed indexes.
                     Make sure you have set ES_{cname.upper()}_INDEX_MULTIPLEXED to True """)
 
             current_index_name, older_index_name = self._get_current_and_older_index_name(cname)
@@ -304,7 +305,6 @@ class ESSyncUtil:
                     new_checkpoint_id = new_checkpoint_id.replace(older_index_name, current_index_name)
                     checkpoint_updated = True
             if checkpoint_updated:
-                print(old_checkpoint_id, new_checkpoint_id)
                 print(f"Copying checkpoints of Checkpoint ID -  [{old_checkpoint_id}] to [{new_checkpoint_id}]")
                 self._copy_checkpoints(pillow, new_checkpoint_id)
 
