@@ -36,6 +36,10 @@ class Command(BaseCommand):
 
         # Get list of installed app paths
         installed_apps = {get_app_name(app.name): app.path for app in apps.get_app_configs()}
+        from collections import Counter
+        names = Counter([get_app_name(app.name) for app in apps.get_app_configs()])
+        assert names.most_common(1)[0][1] == 1, "found duplicate app names: " \
+            + ', '.join(n for n in names if names[n] > 1)
         print(installed_apps)
         # Additional directories to copy
         additional_dirs = ['jsi18n', 'webpack', 'webpack_b3', 'CACHE']
