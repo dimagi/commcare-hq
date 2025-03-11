@@ -65,10 +65,9 @@ class TestVerifyPaymentCases(TestCase):
             assert 'momo_payment_verified' not in case.case_json
 
         case_ids = [case_.case_id for case_ in self.case_list]
-        success_count, failed_count = verify_payment_cases(self.domain, case_ids, self.webuser)
+        verified_cases = verify_payment_cases(self.domain, case_ids, self.webuser)
 
-        assert success_count == 2
-        assert failed_count == 0
+        assert len(verified_cases) == 2
 
         for case in self.case_list:
             case.refresh_from_db()

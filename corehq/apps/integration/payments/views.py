@@ -40,15 +40,17 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
     @hq_hx_action('post')
     def verify_rows(self, request, *args, **kwargs):
         web_user = WebUser.get_by_username(request.user.username)
-        success_count, failure_count = verify_payment_cases(
+        case_ids = request.POST.getlist('selected_ids')
+
+        verified_cases = verify_payment_cases(
             request.domain,
-            case_ids=request.POST.getlist('selected_ids'),
+            case_ids=case_ids,
             verifying_user=web_user,
         )
-
+        success_count = len(verified_cases)
         context = {
             'success_count': success_count,
-            'failure_count': failure_count,
+            'failure_count': len(case_ids) - success_count,
         }
         return self.render_htmx_partial_response(
             request,
