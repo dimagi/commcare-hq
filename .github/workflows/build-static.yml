@@ -38,31 +38,22 @@ jobs:
         run: |
           echo "Starting resource_static..."
           ./manage.py resource_static
-          echo "Finished resource_static."
           echo "Starting collectstatic..."
           ./manage.py collectstatic --noinput -v 0
-          echo "Finished collectstatic."
           echo "Starting fix_less_imports_collectstatic..."
           ./manage.py fix_less_imports_collectstatic
-          echo "Finished fix_less_imports_collectstatic."
           echo "Starting compilejsi18n..."
           ./manage.py compilejsi18n
-          echo "Finished compilejsi18n."
           echo "Starting build_requirejs..."
           ./manage.py build_requirejs
-          echo "Finished build_requirejs."
           echo "Starting generate_webpack_settings..."
           ./manage.py generate_webpack_settings
-          echo "Finished generate_webpack_settings."
           echo "Starting yarn build..."
           yarn build
-          echo "Finished yarn build."
           echo "Starting compress..."
           ./manage.py compress --force -v 0
-          echo "Finished compress."
           echo "Starting Copy Required static files..."
           ./manage.py copy_required_static_files
-          echo "Finished copy_required_static_files."
 
       - name: Upload Static Files On Push
         uses: actions/upload-artifact@v4
