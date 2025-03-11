@@ -1,8 +1,6 @@
 from django.db import models
 from django.db.models import Prefetch
 
-from corehq.apps.userreports.models import ReportConfiguration
-
 
 class DashboardManager(models.Manager):
     def get_queryset(self):
@@ -33,16 +31,9 @@ class DashboardMapReport(models.Model):
         related_name='reports'
     )
     display_order = models.IntegerField(default=0)
-    report_configuration_id = models.CharField(max_length=126)
+    case_type = models.CharField(max_length=126)
+    geo_case_property = models.CharField(max_length=126)
 
     class Meta:
         app_label = 'campaign'
         ordering = ['display_order']
-
-    @property
-    def report_configuration(self):
-        return ReportConfiguration.get(self.report_configuration_id)
-
-    @property
-    def is_map(self):
-        return self.report_configuration.report_type == 'map'
