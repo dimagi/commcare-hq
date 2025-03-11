@@ -103,15 +103,6 @@ class BulkEditSession(models.Model):
             return None
         return round(self.result['percent'])
 
-    @property
-    def status_tuple(self):
-        if self.committed_on:
-            if self.completed_on:
-                return (_("Success"), "success")
-            else:
-                return (_("In Progress"), "primary")
-        return (_("Pending"), "secondary")
-
     def add_column_filter(self, prop_id, data_type, match_type, value=None):
         BulkEditColumnFilter.objects.create(
             session=self,

@@ -48,10 +48,7 @@ class CaseCleaningTasksTableView(BaseDataCleaningTableView):
         ]
 
     def _get_record(self, session):
-        (status_text, status_class) = session.status_tuple
         return {
-            "status_class": status_class,
-            "status_text": status_text,
             "committed_on": session.committed_on,
             "completed_on": session.completed_on,
             "case_type": session.identifier,

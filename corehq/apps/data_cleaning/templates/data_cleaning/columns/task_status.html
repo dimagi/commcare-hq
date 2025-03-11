@@ -1,6 +1,9 @@
 {% load hq_shared_tags %}
+{% load i18n %}
 
-{% if record.percent and record.percent < 100 %}
+{% if record.completed_on %}
+  <span class="badge text-bg-success"> {% trans "Success" %} </span>
+{% elif record.percent and record.percent < 100 %}
   <div
     class="progress"
     role="progressbar"
@@ -16,8 +19,6 @@
       {{ record.percent }}%
     </div>
   </div>
-{% else %}
-  <span class="badge text-bg-{{ record.status_class }}">
-    {{ record.status_text }}
-  </span>
+{% elif record.committed_on %}
+  <span class="badge text-bg-secondary"> {% trans "Pending" %} </span>
 {% endif %}
