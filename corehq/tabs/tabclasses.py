@@ -27,7 +27,6 @@ from corehq.apps.accounting.views import (
     TriggerRemovedSsoUserAutoDeactivationView,
 )
 from corehq.apps.app_manager.dbaccessors import (
-    domain_has_apps,
     get_brief_apps_in_domain,
 )
 from corehq.apps.app_manager.util import is_remote_app, is_linked_app
@@ -129,6 +128,7 @@ class ProjectReportsTab(UITab):
         '/a/{domain}/reports/',
         '/a/{domain}/configurable_reports/',
         '/a/{domain}/location_reassignment_download/',
+        '/a/{domain}/campaign/',
     )
 
     @property
@@ -147,12 +147,13 @@ class ProjectReportsTab(UITab):
         tools = self._get_tools_items()
         tableau = self._get_tableau_items()
         report_builder_nav = self._get_report_builder_items()
+        campaign = self._get_campaign_items()
 
         project_reports = ProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-        sidebar_items = (tools + tableau + report_builder_nav + custom_reports + project_reports)
+        sidebar_items = (tools + tableau + campaign + report_builder_nav + custom_reports + project_reports)
         return self._filter_sidebar_items(sidebar_items)
 
     def _get_tools_items(self):
@@ -209,6 +210,22 @@ class ProjectReportsTab(UITab):
         ]
 
         return [(_("Tableau Reports"), items)] if items else []
+
+    def _get_campaign_items(self):
+        if not toggles.CAMPAIGN_DASHBOARD.enabled(self.domain):
+            return []
+
+        from corehq.apps.campaign.views import DashboardView
+        items = [
+            {
+                'title': DashboardView.page_title,
+                'url': reverse(DashboardView.urlname, args=[self.domain]),
+                'icon': 'icon-tasks fa fa-compass',
+                'show_in_dropdown': True,
+            }
+        ]
+
+        return [(_("Campaign"), items)]
 
     def _get_report_builder_items(self):
         user_reports = []
@@ -311,11 +328,8 @@ class DashboardTab(UITab):
     @property
     def _is_viewable(self):
         if self.domain and self.project and not self.project.is_snapshot and self.couch_user:
-            if self.couch_user.is_commcare_user():
-                # never show the dashboard for mobile workers
-                return False
-            else:
-                return domain_has_apps(self.domain)
+            # never show the dashboard for mobile workers
+            return not self.couch_user.is_commcare_user()
         return False
 
     @property

@@ -209,7 +209,7 @@ blobs
  0012_rename_indexes
  0013_drop_icds_cas_index
  0014_alter_deletedblobmeta_id
-campdash
+campaign
  (no migrations)
 case_importer
  0001_initial
@@ -664,6 +664,7 @@ integration
  0008_kycconfig_provider_kycconfig_unique_domain_provider
  0009_alter_kycconfig_connection_settings
  0010_alter_kycconfig_api_field_to_user_data_map
+ 0011_remove_kycconfig_connection_settings
 ivr
  0001_initial
  0002_call_app_id

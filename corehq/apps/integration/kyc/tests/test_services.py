@@ -18,7 +18,6 @@ from corehq.apps.integration.kyc.services import (
 )
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.tests.utils import create_case
-from corehq.motech.models import ConnectionSettings
 
 DOMAIN = 'test-domain'
 
@@ -64,15 +63,9 @@ class BaseKycUserSetup(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain_obj = create_domain(cls.domain)
-        cls.connection_settings = ConnectionSettings.objects.create(
-            domain=cls.domain,
-            name='test',
-            url='https://example.com'
-        )
 
     @classmethod
     def tearDownClass(cls):
-        cls.connection_settings.delete()
         cls.domain_obj.delete()
         super().tearDownClass()
 
@@ -87,7 +80,6 @@ class BaseKycUserSetup(TestCase):
             domain=self.domain,
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
             api_field_to_user_data_map=self._sample_api_field_to_user_data_map(),
-            connection_settings=self.connection_settings
         )
         self.kyc_user = KycUser(self.config, self.user)
 

@@ -43,13 +43,6 @@ class KycConfig(models.Model):
         choices=KycProviders.choices,
         default=KycProviders.MTN_KYC,
     )
-    connection_settings = models.ForeignKey(
-        ConnectionSettings,
-        on_delete=models.PROTECT,
-        # Assumes we can determine connection settings for provider
-        null=True,
-        blank=True,
-    )
 
     class Meta:
         constraints = [
@@ -72,22 +65,20 @@ class KycConfig(models.Model):
             self.other_case_type = None
 
     def get_connection_settings(self):
-        if not self.connection_settings_id:
-            if self.provider == KycProviders.MTN_KYC:
-                kyc_settings = settings.MTN_KYC_CONNECTION_SETTINGS
-                return ConnectionSettings(
-                    domain=self.domain,
-                    name=KycProviders.MTN_KYC.label,
-                    url=kyc_settings['url'],
-                    auth_type=OAUTH2_CLIENT,
-                    client_id=kyc_settings['client_id'],
-                    client_secret=kyc_settings['client_secret'],
-                    token_url=kyc_settings['token_url'],
-                )
-            # elif self.provider == KycProviders.NEW_PROVIDER_HERE: ...
-            else:
-                raise ValueError(f'Unable to determine connection settings for KYC provider {self.provider!r}.')
-        return self.connection_settings
+        if self.provider == KycProviders.MTN_KYC:
+            kyc_settings = settings.MTN_KYC_CONNECTION_SETTINGS
+            return ConnectionSettings(
+                domain=self.domain,
+                name=KycProviders.MTN_KYC.label,
+                url=kyc_settings['url'],
+                auth_type=OAUTH2_CLIENT,
+                client_id=kyc_settings['client_id'],
+                client_secret=kyc_settings['client_secret'],
+                token_url=kyc_settings['token_url'],
+            )
+        # elif self.provider == KycProviders.NEW_PROVIDER_HERE: ...
+        else:
+            raise ValueError(f'Unable to determine connection settings for KYC provider {self.provider!r}.')
 
     def get_kyc_users(self):
         """
