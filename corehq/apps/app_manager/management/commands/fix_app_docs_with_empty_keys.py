@@ -107,7 +107,7 @@ class Command(BaseCommand):
 
                 for change in changes:
                     path = change['path'].strip('/')
-                    value = json.loads(change['value'])
+                    value = change['value']
 
                     # Navigate to the correct location in the document
                     if path:
@@ -207,7 +207,7 @@ class Command(BaseCommand):
             log_entry = {
                 'app_id': app_id,
                 'path': path,
-                'value': json.dumps(value)
+                'value': value
             }
             json.dump(log_entry, log_file)
             log_file.write('\n')

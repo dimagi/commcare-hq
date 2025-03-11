@@ -79,7 +79,7 @@ class TestFixAppDocsWithEmptyKeys(TestCase):
             assert any(
                 entry['app_id'] == app._id
                 and entry['path'] == '/random_field'
-                and json.loads(entry['value']) == {'other_key': 'another_val'}
+                and entry['value'] == {'other_key': 'another_val'}
                 for entry in log_entries
             )
 
@@ -161,7 +161,7 @@ class TestFixAppDocsWithEmptyKeys(TestCase):
             assert any(
                 entry['app_id'] == app._id
                 and entry['path'] == '/random_field'
-                and json.loads(entry['value']) == 'some_val'
+                and entry['value'] == 'some_val'
                 for entry in log_entries
             )
 
