@@ -18,6 +18,17 @@
       padding-bottom: 0;
       margin-bottom: 0;
     }
+    .custom-button-style {
+      border: 1px solid #ccc;
+      padding: 5px 10px;
+      margin-right: 10px;
+    }
+    .custom-button-style:hover {
+      border-color: #999;
+    }
+    .btn-group > .custom-button-style {
+      border-radius: 4px !important;
+    }
   </style>
 {% endblock %}
 
@@ -64,14 +75,12 @@
 
   <script type="text/html" id="js-fd-form-actions">
     <div class="btn-group pull-right">
-      <a class="btn btn-form-action track-usage-link" href="{% url "app_form_summary" domain app.id %}"
-         data-category="App Builder" data-action="Form Action Link" data-label="App Summary"
-      >
+      <a class="btn btn-form-action track-usage-link custom-button-style" href="{% url "app_form_summary" domain app.id %}"
+         data-category="App Builder" data-action="Form Action Link" data-label="App Summary">
         <i class="fa-regular fa-rectangle-list"></i> {% trans 'App Summary' %}
       </a>
-      <a class="btn btn-form-action track-usage-link" href="{% url "view_form" domain app.id form.unique_id %}"
-         data-category="App Builder" data-action="Form Action Link" data-label="Manage Case"
-      >
+      <a class="btn btn-form-action track-usage-link custom-button-style" href="{% url "view_form" domain app.id form.unique_id %}"
+         data-category="App Builder" data-action="Form Action Link" data-label="Manage Case">
         <i class="fa fa-cog"></i> {% trans 'Manage Case' %}
       </a>
     </div>
