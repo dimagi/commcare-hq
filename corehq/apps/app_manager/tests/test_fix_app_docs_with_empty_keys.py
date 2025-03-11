@@ -20,7 +20,6 @@ class TestFixAppDocsWithEmptyKeys(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.command = Command()
-        # Set test file paths
         cls.command.log_file = cls.TEST_LOG_FILE
         cls.command.ids_file = cls.TEST_IDS_FILE
 
@@ -235,7 +234,6 @@ class TestFixAppDocsWithEmptyKeys(TestCase):
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
-        # Delete all the files created during test run
         if os.path.exists(cls.TEST_LOG_FILE):
             os.remove(cls.TEST_LOG_FILE)
         if os.path.exists(cls.TEST_IDS_FILE):
