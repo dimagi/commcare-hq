@@ -7,13 +7,13 @@ from django.core import mail
 from django.test import override_settings
 
 from corehq.apps.accounting import utils
+from corehq.apps.accounting.const import SMALL_INVOICE_THRESHOLD
 from corehq.apps.accounting.invoicing import (
     CustomerAccountInvoiceFactory,
     DomainInvoiceFactory,
     should_create_invoice,
 )
 from corehq.apps.accounting.models import (
-    SMALL_INVOICE_THRESHOLD,
     BillingAccount,
     BillingRecord,
     DefaultProductPlan,

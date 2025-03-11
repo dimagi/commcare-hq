@@ -13,11 +13,7 @@ import simplejson
 from dateutil.relativedelta import relativedelta
 from memoized import memoized
 
-from corehq.apps.accounting.const import (
-    DEFAULT_DAYS_UNTIL_INVOICE_DUE,
-    SMALL_INVOICE_THRESHOLD,
-    UNLIMITED_FEATURE_USAGE,
-)
+from corehq.apps.accounting.const import SMALL_INVOICE_THRESHOLD
 from corehq.apps.accounting.exceptions import (
     InvoiceAlreadyCreatedError,
     InvoiceEmailThrottledError,
@@ -25,6 +21,7 @@ from corehq.apps.accounting.exceptions import (
     LineItemError,
 )
 from corehq.apps.accounting.models import (
+    UNLIMITED_FEATURE_USAGE,
     BillingAccount,
     BillingAccountWebUserHistory,
     BillingRecord,
@@ -62,6 +59,8 @@ from corehq.util.dates import (
     get_first_last_days,
     get_previous_month_date_range,
 )
+
+DEFAULT_DAYS_UNTIL_DUE = 30
 
 
 class DomainInvoiceFactory(object):
@@ -202,7 +201,7 @@ class DomainInvoiceFactory(object):
             or (invoice.account.auto_pay_enabled and total_balance > Decimal(0))
         )
         if should_set_date_due:
-            days_until_due = DEFAULT_DAYS_UNTIL_INVOICE_DUE
+            days_until_due = DEFAULT_DAYS_UNTIL_DUE
             invoice.date_due = self.date_end + datetime.timedelta(days_until_due)
         invoice.save()
 
@@ -258,7 +257,7 @@ class DomainWireInvoiceFactory(object):
         if not date_end:
             date_end = datetime.datetime.today()
 
-        date_due = date_end + datetime.timedelta(DEFAULT_DAYS_UNTIL_INVOICE_DUE)
+        date_due = date_end + datetime.timedelta(DEFAULT_DAYS_UNTIL_DUE)
 
         wire_invoice = WireInvoice.objects.create(
             domain=self.domain.name,
@@ -363,7 +362,7 @@ class CustomerAccountInvoiceFactory(object):
             or (invoice.account.auto_pay_enabled and invoice.balance > Decimal(0))
         )
         if should_set_date_due:
-            invoice.date_due = factory_date_end + datetime.timedelta(DEFAULT_DAYS_UNTIL_INVOICE_DUE)
+            invoice.date_due = factory_date_end + datetime.timedelta(DEFAULT_DAYS_UNTIL_DUE)
         invoice.save()
 
     def _email_invoice(self):

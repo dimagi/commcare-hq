@@ -2,12 +2,13 @@ import datetime
 
 from django.db.models import Q, Sum
 
-from corehq.apps.accounting.const import UNPAID_INVOICE_THRESHOLD
 from corehq.apps.accounting.models import (
     CustomerInvoice,
     Invoice,
     SubscriptionType,
 )
+
+UNPAID_INVOICE_THRESHOLD = 1
 
 
 def _get_all_unpaid_saas_invoices():

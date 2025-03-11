@@ -29,12 +29,8 @@ from dimagi.ext.couchdbkit import (
 from dimagi.utils.web import get_site_domain
 
 from corehq.apps.accounting.const import (
-    DEFAULT_ACCOUNT_FORMAT,
     EXCHANGE_RATE_DECIMAL_PLACES,
-    MAX_INVOICE_COMMUNICATIONS,
-    MINIMUM_SUBSCRIPTION_LENGTH,
     SMALL_INVOICE_THRESHOLD,
-    UNLIMITED_FEATURE_USAGE,
 )
 from corehq.apps.accounting.emails import (
     send_self_start_subscription_alert,
@@ -94,6 +90,11 @@ from corehq.util.view_utils import absolute_reverse
 
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
+MAX_INVOICE_COMMUNICATIONS = 5
+
+UNLIMITED_FEATURE_USAGE = -1
+
+MINIMUM_SUBSCRIPTION_LENGTH = 30
 
 _soft_assert_contact_emails_missing = soft_assert(
     to=['{}@{}'.format(email, 'dimagi.com') for email in [
@@ -374,6 +375,9 @@ class Currency(models.Model):
     def get_default(cls):
         default, _ = cls.objects.get_or_create(code=settings.DEFAULT_CURRENCY)
         return default
+
+
+DEFAULT_ACCOUNT_FORMAT = 'Account for Project %s'
 
 
 class BillingAccount(ValidateModelMixin, models.Model):

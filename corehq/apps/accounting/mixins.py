@@ -4,11 +4,11 @@ from datetime import date, timedelta
 from corehq.apps.accounting.const import DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE
 from corehq.apps.accounting.models import CreditLine, Subscription
 from corehq.apps.accounting.utils import months_from_date
-from corehq.apps.accounting.utils.invoicing import (
-    get_oldest_unpaid_invoice_over_threshold,
-)
 from corehq.apps.accounting.utils.downgrade import (
     is_subscription_eligible_for_downgrade_process,
+)
+from corehq.apps.accounting.utils.invoicing import (
+    get_oldest_unpaid_invoice_over_threshold,
 )
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import HqPermissions
