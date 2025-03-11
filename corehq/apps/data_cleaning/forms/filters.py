@@ -66,8 +66,9 @@ class AddColumnFilterForm(forms.Form):
         required=False
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, session, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.session = session
 
         self.helper = FormHelper()
         self.helper.form_tag = False
