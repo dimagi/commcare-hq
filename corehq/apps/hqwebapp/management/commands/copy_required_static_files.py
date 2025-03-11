@@ -54,19 +54,7 @@ class Command(BaseCommand):
         files_to_copy = ['build.b3.js', 'build.b3.txt', 'build.b5.js', 'build.b5.txt', 'build.js', 'build.txt']
 
         def should_copy_directory(dir_name):
-            # Skip node_modules
-            if 'node_modules' in dir_name:
-                return False
-
-            # Check if directory is an installed app
-            if dir_name in installed_apps:
-                return True
-
-            # Check if directory is in additional_dirs
-            if dir_name in additional_dirs:
-                return True
-
-            return False
+            return dir_name in installed_apps or dir_name in additional_dirs
 
         def copy_directory(src, dst):
             if not os.path.exists(dst):
