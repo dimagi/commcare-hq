@@ -181,6 +181,21 @@ class DataType:
     PASSWORD = 'password'
 
     CHOICES = (
+        (TEXT, TEXT),
+        (INTEGER, INTEGER),
+        (PHONE_NUMBER, PHONE_NUMBER),
+        (DECIMAL, DECIMAL),
+        (DATE, DATE),
+        (TIME, TIME),
+        (DATETIME, DATETIME),
+        (SINGLE_OPTION, SINGLE_OPTION),
+        (MULTIPLE_OPTION, MULTIPLE_OPTION),
+        (GPS, GPS),
+        (BARCODE, BARCODE),
+        (PASSWORD, PASSWORD),
+    )
+
+    FORM_CHOICES = (
         (TEXT, gettext_lazy("Text")),
         (INTEGER, gettext_lazy("Integer")),
         (PHONE_NUMBER, gettext_lazy("Phone Number or Numeric ID")),
@@ -192,6 +207,18 @@ class DataType:
         (MULTIPLE_OPTION, gettext_lazy("Multiple Option")),
         (GPS, gettext_lazy("GPS")),
         (BARCODE, gettext_lazy("Barcode")),
+        (PASSWORD, gettext_lazy("Password")),
+    )
+
+    CASE_CHOICES = (
+        (TEXT, gettext_lazy("Text")),
+        (INTEGER, gettext_lazy("Number")),
+        (DATE, gettext_lazy("Date")),
+        (DATETIME, gettext_lazy("Date and Time")),
+        (MULTIPLE_OPTION, gettext_lazy("Multiple Choice")),
+        (BARCODE, gettext_lazy("Barcode")),
+        (GPS, gettext_lazy("GPS")),
+        (PHONE_NUMBER, gettext_lazy("Phone Number or Numeric ID")),
         (PASSWORD, gettext_lazy("Password")),
     )
 
