@@ -57,22 +57,6 @@ class Command(BaseCommand):
         def should_copy_directory(dir_name):
             return dir_name in installed_apps or dir_name in additional_dirs
 
-        def copy_directory(src, dst):
-            if not os.path.exists(dst):
-                os.makedirs(dst)
-
-            for item in os.listdir(src):
-                s = os.path.join(src, item)
-                d = os.path.join(dst, item)
-
-                if os.path.isdir(s):
-                    if 'node_modules' not in s:
-                        copy_directory(s, d)
-                else:
-                    if not os.path.exists(os.path.dirname(d)):
-                        os.makedirs(os.path.dirname(d))
-                    shutil.copy2(s, d)
-
         # Copy files
         copied_count = 0
         for item in os.listdir(static_root):
@@ -81,7 +65,8 @@ class Command(BaseCommand):
 
             if os.path.isdir(src_path) and should_copy_directory(item):
                 self.stdout.write(f"Copying {item}...")
-                copy_directory(src_path, dst_path)
+                shutil.copytree(src_path, dst_path, dirs_exist_ok=True,
+                                ignore=shutil.ignore_patterns("node_modules"))
                 copied_count += 1
 
         self.stdout.write(self.style.SUCCESS(
