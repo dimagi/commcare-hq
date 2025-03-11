@@ -235,7 +235,7 @@ def get_common_icons():
         {
             'name': 'Common FontAwesome secondary icons',
             'icons': _add_prefix_to_icons('fa-solid', [
-                'fa-cloud-download', 'fa-cloud-upload', 'fa-warning', 'fa-info-circle', 'fa-question-circle',
+                'fa-cloud-arrow-down', 'fa-cloud-arrow-up', 'fa-warning', 'fa-info-circle', 'fa-question-circle',
                 'fa-check', 'fa-external-link',
             ]),
         }
