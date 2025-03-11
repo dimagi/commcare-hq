@@ -11,12 +11,12 @@ from corehq.apps.data_cleaning.models import (
     DataType,
     FilterMatchType,
 )
+from corehq.apps.data_cleaning.utils.cases import get_case_property_details
 
 
 class AddColumnFilterForm(forms.Form):
     prop_id = forms.ChoiceField(
         label=gettext_lazy("Case Property"),
-        choices=(),
         required=False
     )
     data_type = forms.ChoiceField(
@@ -70,11 +70,21 @@ class AddColumnFilterForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.session = session
 
+        property_details = get_case_property_details(self.session.domain, self.session.identifier)
+        self.fields['prop_id'].choices = [(None, None)] + [
+            (p, p) for p in property_details.keys()
+        ]
+
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
             crispy.Div(
-                'prop_id',
+                crispy.Field(
+                    'prop_id',
+                    x_select2=json.dumps({
+                        "placeholder": _("Select a Case Property"),
+                    }),
+                ),
                 crispy.Field(
                     'data_type',
                     x_init="dataType = $el.value",
