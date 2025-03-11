@@ -43,7 +43,8 @@ class AddColumnFilterForm(forms.Form):
     )
     number_value = forms.CharField(
         label=gettext_lazy("Value"),
-        required=False
+        required=False,
+        widget=forms.NumberInput,
     )
 
     date_match_type = forms.ChoiceField(
