@@ -22,21 +22,9 @@ def verify_users(kyc_users, config):
     device_id = f'{__name__}.verify_users'
     errors_with_count = defaultdict(int)
     for kyc_user in kyc_users:
-        verification_error = None
-        is_verified = False
-        try:
-            is_verified = verify_user(kyc_user, config)
-            if not is_verified:
-                verification_error = KycVerificationFailureCause.USER_INFORMATION_MISMATCH.value
-                errors_with_count[verification_error] += 1
-        except jsonschema.exceptions.ValidationError:
-            verification_error = KycVerificationFailureCause.USER_INFORMATION_INCOMPLETE.value
-            errors_with_count[verification_error] += 1
-        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
-            verification_error = KycVerificationFailureCause.NETWORK_ERROR.value
-            errors_with_count[verification_error] += 1
-        except requests.HTTPError:
-            verification_error = KycVerificationFailureCause.API_ERROR.value
+        is_verified, verification_error = verify_user(kyc_user, config)
+
+        if verification_error:
             errors_with_count[verification_error] += 1
 
         kyc_user.update_verification_status(is_verified, device_id=device_id, error_message=verification_error)
@@ -46,16 +34,25 @@ def verify_users(kyc_users, config):
     return results
 
 
-def _report_verification_failure_metric(domain, errors_with_count):
-    for error, count in errors_with_count.items():
-        metrics_counter(
-            'commcare.integration.kyc.verification_failure.count',
-            count,
-            tags={'domain': domain, 'error': error}
-        )
-
-
 def verify_user(kyc_user, config):
+    is_verified = False
+    verification_error = None
+
+    try:
+        is_verified = _verify_user(kyc_user, config)
+        if not is_verified:
+            verification_error = KycVerificationFailureCause.USER_INFORMATION_MISMATCH.value
+    except jsonschema.exceptions.ValidationError:
+        verification_error = KycVerificationFailureCause.USER_INFORMATION_INCOMPLETE.value
+    except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+        verification_error = KycVerificationFailureCause.NETWORK_ERROR.value
+    except requests.HTTPError:
+        verification_error = KycVerificationFailureCause.API_ERROR.value
+
+    return is_verified, verification_error
+
+
+def _verify_user(kyc_user, config):
     """
     Verify a user using the Chenosis MTN KYC API.
 
@@ -123,6 +120,15 @@ def verify_user(kyc_user, config):
     response.raise_for_status()
     field_scores = response.json().get('data', {})
     return all(v >= required_thresholds[k] for k, v in field_scores.items())
+
+
+def _report_verification_failure_metric(domain, errors_with_count):
+    for error, count in errors_with_count.items():
+        metrics_counter(
+            'commcare.integration.kyc.verification_failure.count',
+            count,
+            tags={'domain': domain, 'error': error}
+        )
 
 
 def get_user_data_for_api(kyc_user, config):
