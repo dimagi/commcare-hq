@@ -1,3 +1,4 @@
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from corehq import toggles
 from corehq.apps.data_cleaning.models import BulkEditSession
@@ -55,6 +56,7 @@ class CaseCleaningTasksTableView(BaseDataCleaningTableView):
             "completed_on": session.completed_on,
             "case_type": session.identifier,
             "case_count": session.records.count(),
-            "details": session.result,
             "percent": session.percent_complete,
+            "form_ids_url": reverse('download_form_ids', args=(session.domain, session.session_id)),
+            "has_form_ids": bool(len(session.form_ids)),
         }

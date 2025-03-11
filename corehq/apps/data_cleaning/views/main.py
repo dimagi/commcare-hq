@@ -4,9 +4,10 @@ from memoized import memoized
 
 from django.contrib import messages
 from django.shortcuts import redirect
+from django.http import StreamingHttpResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 from django.utils.translation import gettext_lazy, gettext as _
 
 from corehq import toggles
@@ -16,6 +17,7 @@ from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.settings.views import BaseProjectDataView
+from corehq.util.view_utils import set_file_download
 
 
 @method_decorator([
@@ -102,3 +104,16 @@ def save_case_session(request, domain, session_id):
 
     messages.success(request, _("Session saved."))
     return redirect(reverse(CleanCasesMainView.urlname, args=(domain,)))
+
+
+@login_and_domain_required
+@require_GET
+@toggles.DATA_CLEANING_CASES.required_decorator()
+def download_form_ids(request, domain, session_id):
+    session = BulkEditSession.objects.get(session_id=session_id)
+
+    ids_stream = ('{}\n'.format(form_id) for form_id in session.form_ids)
+    response = StreamingHttpResponse(ids_stream, content_type='text/plain')
+    set_file_download(response, f"{domain}-data_cleaning-form_ids.txt")
+
+    return response

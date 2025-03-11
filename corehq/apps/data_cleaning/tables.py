@@ -43,6 +43,7 @@ class CaseCleaningTasksTable(BaseHtmxTable, tables.Table):
     case_count = columns.Column(
         verbose_name=gettext_lazy("# Cases Cleaned"),
     )
-    details = columns.Column(
-        verbose_name=gettext_lazy("Details"),
+    form_ids = columns.TemplateColumn(
+        template_name="data_cleaning/columns/task_form_ids.html",
+        verbose_name=gettext_lazy("Form IDs"),
     )

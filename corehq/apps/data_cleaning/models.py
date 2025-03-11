@@ -92,6 +92,12 @@ class BulkEditSession(models.Model):
         return cls.objects.filter(user=user, domain=domain_name, committed_on__isnull=False)
 
     @property
+    def form_ids(self):
+        if self.result is None or 'form_ids' not in self.result:
+            return []
+        return self.result['form_ids']
+
+    @property
     def percent_complete(self):
         if self.result is None or 'percent' not in self.result:
             return None
