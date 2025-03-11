@@ -126,8 +126,9 @@ class CommitCasesTest(TestCase):
             'record_count': 1,
             'percent': 100,
         })
+        self.assertEqual(self.session.percent_complete, 100)
+        self.assertListEqual(list(self.session.form_ids), form_ids)
         self.assertIsNotNone(self.session.completed_on)
-        self.assertListEqual(list(self.session.status_tuple), ['complete', 'success'])
 
     def test_chunking(self):
         cases = [self.case]
