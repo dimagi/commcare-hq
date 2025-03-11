@@ -198,8 +198,8 @@ class DataType:
     FORM_CHOICES = (
         (TEXT, gettext_lazy("Text")),
         (INTEGER, gettext_lazy("Integer")),
-        (PHONE_NUMBER, gettext_lazy("Phone Number or Numeric ID")),
         (DECIMAL, gettext_lazy("Decimal")),
+        (PHONE_NUMBER, gettext_lazy("Phone Number or Numeric ID")),
         (DATE, gettext_lazy("Date")),
         (TIME, gettext_lazy("Time")),
         (DATETIME, gettext_lazy("Date and Time")),
