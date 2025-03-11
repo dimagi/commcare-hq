@@ -56,6 +56,10 @@ class AddColumnFilterForm(forms.Form):
         label=gettext_lazy("Value"),
         required=False
     )
+    datetime_value = forms.CharField(
+        label=gettext_lazy("Value"),
+        required=False
+    )
 
     multi_select_match_type = forms.ChoiceField(
         label=gettext_lazy("Match Type"),
@@ -88,6 +92,8 @@ class AddColumnFilterForm(forms.Form):
             "propId": initial_prop_id,
             "casePropertyDetails": property_details,
             "isEditable": is_initial_editable,
+            "datetimeTypes": [DataType.DATETIME],
+            "dateTypes": [DataType.DATE],
             "textDataTypes": DataType.FILTER_CATEGORY_DATA_TYPES[
                 DataType.FILTER_CATEGORY_TEXT
             ],
@@ -182,8 +188,20 @@ class AddColumnFilterForm(forms.Form):
                         })
                     ),
                     crispy.Div(
-                        'date_value',
-                        x_show="!matchTypesWithNoValue.includes(dateMatchType)"
+                        crispy.Field(
+                            'date_value',
+                            x_datepicker="",
+                        ),
+                        x_show="!matchTypesWithNoValue.includes(dateMatchType) "
+                               "&& dateTypes.includes(dataType)"
+                    ),
+                    crispy.Div(
+                        'datetime_value',
+                        x_datepicker=json.dumps({
+                            "datetime": True,
+                        }),
+                        x_show="!matchTypesWithNoValue.includes(dateMatchType) "
+                               "&& datetimeTypes.includes(dataType)"
                     ),
                     x_show="dateDataTypes.includes(dataType)",
                 ),
