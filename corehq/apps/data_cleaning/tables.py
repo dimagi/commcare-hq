@@ -27,7 +27,8 @@ class CaseCleaningTasksTable(BaseHtmxTable, tables.Table):
     class Meta(BaseHtmxTable.Meta):
         pass
 
-    status = columns.Column(
+    status = columns.TemplateColumn(
+        template_name="data_cleaning/columns/task_status.html",
         verbose_name=gettext_lazy("Status"),
     )
     committed_on = columns.Column(

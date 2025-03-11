@@ -1,6 +1,4 @@
 from django.utils.decorators import method_decorator
-from django.utils.safestring import mark_safe
-
 from corehq import toggles
 from corehq.apps.data_cleaning.models import BulkEditSession
 from corehq.apps.data_cleaning.tables import (
@@ -43,14 +41,18 @@ class CaseCleaningTasksTableView(BaseDataCleaningTableView):
     table_class = CaseCleaningTasksTable
 
     def get_queryset(self):
-        return [{
-            "status": mark_safe(self._get_status_content(session)),     # nosec: doesn't include user input
+        return [
+            self._get_record(session)
+            for session in BulkEditSession.get_committed_sessions(self.request.user, self.domain)
+        ]
+
+    def _get_record(self, session):
+        (status_text, status_class) = session.status_tuple
+        return {
+            "status_class": status_class,
+            "status_text": status_text,
             "committed_on": session.committed_on,
             "completed_on": session.completed_on,
             "case_type": session.identifier,
             "details": session.result,
-        } for session in BulkEditSession.get_committed_sessions(self.request.user, self.domain)]
-
-    def _get_status_content(self, session):
-        (status, status_class) = session.status_tuple
-        return f"<span class='badge text-bg-{status_class}'>{status}</span>"
+        }
