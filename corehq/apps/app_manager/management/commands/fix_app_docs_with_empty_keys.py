@@ -106,30 +106,30 @@ class Command(BaseCommand):
                 app_json = app.to_json()
 
                 for change in changes:
-                    path = change['path'].strip('/')
+                    path = change['path']
                     value = change['value']
 
                     # Navigate to the correct location in the document
                     if path:
-                        path_parts = path.split('/')
                         current = app_json
 
                         # Navigate to the parent object
-                        for i, part in enumerate(path_parts[:-1]):
-                            if part.endswith(']'):
+                        for i, part in enumerate(path[:-1]):
+                            if isinstance(part, int) or (isinstance(part, str) and part.isdigit()):
                                 # Handle array index
-                                array_name, idx = part[:-1].split('[')
-                                current = current[array_name][int(idx)]
+                                part = int(part) if isinstance(part, str) else part
+                                current = current[part]
                             else:
                                 if part not in current:
                                     current[part] = {}
                                 current = current[part]
 
                         # Set the empty key in the parent object
-                        last_part = path_parts[-1]
-                        if last_part.endswith(']'):
-                            array_name, idx = last_part[:-1].split('[')
-                            current = current[array_name][int(idx)]
+                        last_part = path[-1]
+                        if isinstance(last_part, int) or (isinstance(last_part, str) and last_part.isdigit()):
+                            # Handle array index
+                            last_part = int(last_part) if isinstance(last_part, str) else last_part
+                            current = current[last_part]
                             current[''] = value
                         else:
                             if last_part not in current:
@@ -212,17 +212,22 @@ class Command(BaseCommand):
             json.dump(log_entry, log_file)
             log_file.write('\n')
 
-    def remove_empty_keys(self, doc, path=""):
+    def remove_empty_keys(self, doc, path=None):
+        if path is None:
+            path = []
+
         def clean_dict(d, current_path):
             if isinstance(d, dict):
                 if '' in d:
                     self.log_deleted_keys(doc['_id'], current_path, d[''])
                     del d['']
-                for key, value in d.items():
-                    clean_dict(value, f"{current_path}/{key}")
+                for key, value in list(d.items()):
+                    new_path = current_path + [key]
+                    clean_dict(value, new_path)
             elif isinstance(d, list):
                 for index, item in enumerate(d):
-                    clean_dict(item, f"{current_path}[{index}]")
+                    new_path = current_path + [index]
+                    clean_dict(item, new_path)
 
         if not isinstance(doc, dict):
             doc = doc.to_json()

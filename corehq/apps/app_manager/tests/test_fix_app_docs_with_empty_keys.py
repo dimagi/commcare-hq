@@ -78,7 +78,7 @@ class TestFixAppDocsWithEmptyKeys(TestCase):
             print(log_entries)
             assert any(
                 entry['app_id'] == app._id
-                and entry['path'] == '/random_field'
+                and entry['path'] == ['random_field']
                 and entry['value'] == {'other_key': 'another_val'}
                 for entry in log_entries
             )
@@ -160,7 +160,7 @@ class TestFixAppDocsWithEmptyKeys(TestCase):
             log_entries = [json.loads(line) for line in log_file]
             assert any(
                 entry['app_id'] == app._id
-                and entry['path'] == '/random_field'
+                and entry['path'] == ['random_field']
                 and entry['value'] == 'some_val'
                 for entry in log_entries
             )
