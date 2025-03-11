@@ -27,7 +27,11 @@ def verify_users(kyc_users, config):
         if verification_error:
             errors_with_count[verification_error] += 1
 
-        kyc_user.update_verification_status(is_verified, device_id=device_id, error_message=verification_error)
+        kyc_user.update_verification_status(
+            is_verified,
+            device_id=device_id,
+            error_message=KycVerificationFailureCause(verification_error).label if verification_error else None,
+        )
         results[kyc_user.user_id] = is_verified
 
     _report_verification_failure_metric(config.domain, errors_with_count)
