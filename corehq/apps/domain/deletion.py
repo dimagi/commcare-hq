@@ -502,7 +502,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('email', 'EmailSettings', 'domain'),
     ModelDeletion('hqmedia', 'LogoForSystemEmailsReference', 'domain'),
     ModelDeletion('campaign', 'Dashboard', 'domain', extra_models=[
-        'DashboardMapReport',
+        'DashboardMap',
     ]),
 ]
 
