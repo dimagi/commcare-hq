@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy
 from django.views.generic import TemplateView
 from memoized import memoized
 
-from corehq import toggles
+from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
 from corehq.apps.data_cleaning.forms.filters import AddColumnFilterForm
 from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
 from corehq.apps.domain.decorators import LoginAndDomainMixin
@@ -15,7 +15,7 @@ from corehq.util.timezones.utils import get_timezone
 
 @method_decorator([
     use_bootstrap5,
-    toggles.DATA_CLEANING_CASES.required_decorator(),
+    require_bulk_data_cleaning_cases,
 ], name='dispatch')
 class BaseFilterFormView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin, TemplateView):
     pass

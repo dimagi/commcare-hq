@@ -32,6 +32,7 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.app_manager.util import is_remote_app, is_linked_app
 from corehq.apps.builds.views import EditMenuView
 from corehq.apps.data_dictionary.views import DataDictionaryView
+from corehq.apps.data_cleaning.decorators import bulk_data_cleaning_enabled_for_request
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import ManageReleasesByLocation
@@ -1004,7 +1005,10 @@ class ProjectDataTab(UITab):
 
     @property
     def _can_view_case_data_cleaning(self):
-        return toggles.DATA_CLEANING_CASES.enabled_for_request(self._request)
+        return (
+            bulk_data_cleaning_enabled_for_request(self._request)
+            and toggles.DATA_CLEANING_CASES.enabled_for_request(self._request)
+        )
 
     def _get_explore_data_views(self):
         explore_data_views = []
