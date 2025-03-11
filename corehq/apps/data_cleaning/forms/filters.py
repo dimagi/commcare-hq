@@ -75,6 +75,22 @@ class AddColumnFilterForm(forms.Form):
             (p, p) for p in property_details.keys()
         ]
 
+        alpine_data_model = {
+            "dataType": self.fields['data_type'].initial,
+            "textDataTypes": DataType.FILTER_CATEGORY_DATA_TYPES[
+                DataType.FILTER_CATEGORY_TEXT
+            ],
+            "numberDataTypes": DataType.FILTER_CATEGORY_DATA_TYPES[
+                DataType.FILTER_CATEGORY_NUMBER
+            ],
+            "dateDataTypes": DataType.FILTER_CATEGORY_DATA_TYPES[
+                DataType.FILTER_CATEGORY_DATE
+            ],
+            "multiSelectDataTypes": DataType.FILTER_CATEGORY_DATA_TYPES[
+                DataType.FILTER_CATEGORY_MULTI_SELECT
+            ],
+        }
+
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
@@ -115,20 +131,6 @@ class AddColumnFilterForm(forms.Form):
                     type="submit",
                     css_class="btn-primary",
                 ),
-                x_data=json.dumps({
-                    "dataType": self.fields['data_type'].initial,
-                    "textDataTypes": DataType.FILTER_CATEGORY_DATA_TYPES[
-                        DataType.FILTER_CATEGORY_TEXT
-                    ],
-                    "numberDataTypes": DataType.FILTER_CATEGORY_DATA_TYPES[
-                        DataType.FILTER_CATEGORY_NUMBER
-                    ],
-                    "dateDataTypes": DataType.FILTER_CATEGORY_DATA_TYPES[
-                        DataType.FILTER_CATEGORY_DATE
-                    ],
-                    "multiSelectDataTypes": DataType.FILTER_CATEGORY_DATA_TYPES[
-                        DataType.FILTER_CATEGORY_MULTI_SELECT
-                    ],
-                }),
+                x_data=json.dumps(alpine_data_model),
             ),
         )
