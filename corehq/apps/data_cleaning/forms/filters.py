@@ -62,7 +62,7 @@ class AddColumnFilterForm(forms.Form):
         choices=FilterMatchType.MULTI_SELECT_CHOICES + FilterMatchType.ALL_DATA_TYPES_CHOICES,
         required=False
     )
-    multi_select_value = forms.CharField(
+    multi_select_value = forms.MultipleChoiceField(
         label=gettext_lazy("Value"),
         required=False
     )
@@ -180,7 +180,17 @@ class AddColumnFilterForm(forms.Form):
                         x_model="multiSelectMatchType",
                     ),
                     crispy.Div(
-                        'multi_select_value',
+                        crispy.Field(
+                            'multi_select_value',
+                            x_init="$watch("
+                                   "  'propId',"
+                                   "  value => $dispatch('updateAddFilterPropId', { value: value })"
+                                   ")",
+                            x_dynamic_options_select2=json.dumps({
+                                "details": property_details,
+                                "eventName": 'updateAddFilterPropId',
+                            }),
+                        ),
                         x_show="!matchTypesWithNoValue.includes(multiSelectMatchType)",
 
                     ),
