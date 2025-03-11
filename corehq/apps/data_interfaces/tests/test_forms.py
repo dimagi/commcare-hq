@@ -1,7 +1,7 @@
 import json
 from unittest.mock import patch
 from django.test import SimpleTestCase
-from corehq.apps.data_interfaces.forms import CaseRuleCriteriaForm
+from corehq.apps.data_interfaces.forms import CaseRuleCriteriaForm, MatchPropertyDefinition
 from corehq.apps.data_interfaces import forms
 
 
@@ -27,7 +27,7 @@ class CaseRuleCriteriaFormTests(SimpleTestCase):
             {
                 'property_name': 'prop1',
                 'property_value': '30',
-                'match_type': 'DAYS_GREATER_THAN',
+                'match_type': MatchPropertyDefinition.MATCH_DAYS_GREATER_THAN,
             }
         ]
 
@@ -38,15 +38,15 @@ class CaseRuleCriteriaFormTests(SimpleTestCase):
         self.assertEqual(form.cleaned_data['property_match_definitions'], [{
             'property_name': 'prop1',
             'property_value': '30',
-            'match_type': 'DAYS_GREATER_THAN',
+            'match_type': MatchPropertyDefinition.MATCH_DAYS_GREATER_THAN,
         }])
 
-    def test_form_is_valid_when_date_is_using_less_than(self):
+    def test_form_is_valid_when_date_is_using_less_than_or_equal(self):
         property_match_def = [
             {
                 'property_name': 'prop1',
                 'property_value': '30',
-                'match_type': 'DAYS_LESS_OR_EQUAL',
+                'match_type': MatchPropertyDefinition.MATCH_DAYS_LESS_OR_EQUAL,
             }
         ]
 
@@ -57,7 +57,7 @@ class CaseRuleCriteriaFormTests(SimpleTestCase):
         self.assertEqual(form.cleaned_data['property_match_definitions'], [{
             'property_name': 'prop1',
             'property_value': '30',
-            'match_type': 'DAYS_LESS_OR_EQUAL',
+            'match_type': MatchPropertyDefinition.MATCH_DAYS_LESS_OR_EQUAL,
         }])
 
     def setUp(self):
