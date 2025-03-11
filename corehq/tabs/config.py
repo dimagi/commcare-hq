@@ -4,6 +4,7 @@ from corehq.tabs.tabclasses import (
     AccountingTab,
     AdminTab,
     ApplicationsTab,
+    CampaignDashboardTab,
     CloudcareTab,
     DashboardTab,
     EnterpriseSettingsTab,
@@ -28,6 +29,7 @@ MENU_TABS = (
     ApplicationsTab,
     CloudcareTab,
     MessagingTab,
+    CampaignDashboardTab,
     AttendanceTrackingTab,
     # invisible
     ProjectSettingsTab,

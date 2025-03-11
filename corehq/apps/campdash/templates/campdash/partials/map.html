@@ -1,0 +1,41 @@
+{% load i18n %}
+
+<div x-data="{ mapData: initialPageData.get('map_data') }">
+  <div id="campaign-map" style="height: 400px; width: 100%;"></div>
+  
+  <div class="mt-3 text-center" x-show="!mapData.markers || mapData.markers.length === 0">
+    <p class="text-muted">{% trans "No map data available" %}</p>
+  </div>
+  
+  <div class="mt-3 d-flex justify-content-between align-items-center">
+    <div>
+      <span class="text-muted">{% trans "Markers:" %} <span x-text="mapData.markers ? mapData.markers.length : 0"></span></span>
+    </div>
+    <div>
+      <button class="btn btn-sm btn-outline-primary" 
+              hx-get="{% url 'campaign_dashboard_data' domain %}" 
+              hx-target="#map-container" 
+              hx-indicator="#map-loading">
+        <i class="fa fa-refresh"></i> {% trans "Refresh" %}
+      </button>
+    </div>
+  </div>
+  
+  <div id="map-loading" class="htmx-indicator text-center mt-3">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">{% trans "Loading..." %}</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('alpine:init', () => {
+    // Initialize map after Alpine.js has loaded
+    const mapData = initialPageData.get('map_data');
+    if (mapData) {
+      setTimeout(() => {
+        initMap('campaign-map', mapData);
+      }, 100);
+    }
+  });
+</script> 
