@@ -73,7 +73,7 @@ class AddColumnFilterForm(forms.Form):
 
         property_details = get_case_property_details(self.session.domain, self.session.identifier)
         self.fields['prop_id'].choices = [(None, None)] + [
-            (p, p) for p in property_details.keys()
+            (p, p) for p in sorted(property_details.keys())
         ]
 
         initial_prop_id = self.fields['prop_id'].initial
