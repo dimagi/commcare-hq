@@ -51,6 +51,11 @@ Alpine.directive('select2', (el, { expression }, { cleanup }) => {
      */
     const config = (expression) ? JSON.parse(expression) : {};
     $(el).select2(config);
+    $(el).select2(config).on('change', () => {
+        el.dispatchEvent(new CustomEvent('select2change', {
+            detail: $(el).val(),
+        }));
+    });
 
     cleanup(() => {
         select2Cleanup(el);

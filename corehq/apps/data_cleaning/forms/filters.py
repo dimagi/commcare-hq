@@ -75,8 +75,16 @@ class AddColumnFilterForm(forms.Form):
             (p, p) for p in property_details.keys()
         ]
 
+        initial_prop_id = self.fields['prop_id'].initial
+        is_initial_editable = (
+            property_details[initial_prop_id]['is_editable'] if initial_prop_id else True
+        )
+
         alpine_data_model = {
             "dataType": self.fields['data_type'].initial,
+            "propId": initial_prop_id,
+            "casePropertyDetails": property_details,
+            "isEditable": is_initial_editable,
             "textDataTypes": DataType.FILTER_CATEGORY_DATA_TYPES[
                 DataType.FILTER_CATEGORY_TEXT
             ],
@@ -100,11 +108,19 @@ class AddColumnFilterForm(forms.Form):
                     x_select2=json.dumps({
                         "placeholder": _("Select a Case Property"),
                     }),
+                    **({
+                        "@select2change": "propId = $event.detail; "
+                                          "dataType = casePropertyDetails[$event.detail].data_type; "
+                                          "isEditable = casePropertyDetails[$event.detail].is_editable;",
+                    })
                 ),
                 crispy.Field(
                     'data_type',
                     x_init="dataType = $el.value",
                     x_model="dataType",
+                    **({
+                        ":disabled": "!isEditable",
+                    })
                 ),
                 crispy.Div(
                     'text_match_type',
