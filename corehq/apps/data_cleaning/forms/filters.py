@@ -97,6 +97,13 @@ class AddColumnFilterForm(forms.Form):
             "multiSelectDataTypes": DataType.FILTER_CATEGORY_DATA_TYPES[
                 DataType.FILTER_CATEGORY_MULTI_SELECT
             ],
+            "textMatchType": self.fields['text_match_type'].initial,
+            "numberMatchType": self.fields['number_match_type'].initial,
+            "dateMatchType": self.fields['date_match_type'].initial,
+            "multiSelectMatchType": self.fields['multi_select_match_type'].initial,
+            "matchTypesWithNoValue": [
+                f[0] for f in FilterMatchType.ALL_DATA_TYPES_CHOICES
+            ],
         }
 
         self.helper = FormHelper()
@@ -124,23 +131,52 @@ class AddColumnFilterForm(forms.Form):
                     })
                 ),
                 crispy.Div(
-                    'text_match_type',
-                    'text_value',
+                    crispy.Field(
+                        'text_match_type',
+                        x_init="textMatchType = $el.value",
+                        x_model="textMatchType",
+                    ),
+                    crispy.Div(
+                        'text_value',
+                        x_show="!matchTypesWithNoValue.includes(textMatchType)"
+                    ),
                     x_show="textDataTypes.includes(dataType)",
                 ),
                 crispy.Div(
-                    'number_match_type',
-                    'number_value',
+                    crispy.Field(
+                        'number_match_type',
+                        x_init="numberMatchType = $el.value",
+                        x_model="numberMatchType",
+                    ),
+                    crispy.Div(
+                        'number_value',
+                        x_show="!matchTypesWithNoValue.includes(numberMatchType)"
+                    ),
                     x_show="numberDataTypes.includes(dataType)",
                 ),
                 crispy.Div(
-                    'date_match_type',
-                    'date_value',
+                    crispy.Field(
+                        'date_match_type',
+                        x_init="dateMatchType = $el.value",
+                        x_model="dateMatchType",
+                    ),
+                    crispy.Div(
+                        'date_value',
+                        x_show="!matchTypesWithNoValue.includes(dateMatchType)"
+                    ),
                     x_show="dateDataTypes.includes(dataType)",
                 ),
                 crispy.Div(
-                    'multi_select_match_type',
-                    'multi_select_value',
+                    crispy.Field(
+                        'multi_select_match_type',
+                        x_init="multiSelectMatchType = $el.value",
+                        x_model="multiSelectMatchType",
+                    ),
+                    crispy.Div(
+                        'multi_select_value',
+                        x_show="!matchTypesWithNoValue.includes(multiSelectMatchType)",
+
+                    ),
                     x_show="multiSelectDataTypes.includes(dataType)",
                 ),
                 twbscrispy.StrictButton(
