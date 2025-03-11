@@ -200,12 +200,15 @@ class KycUser:
     def kyc_verification_status(self):
         value = self.user_data.get('kyc_verification_status')
         # value can be '' when field is defined as a custom field in custom user data
-        assert value in (None, 'True', 'False', '')
-        if value == 'True':
-            return KycVerificationStatus.PASSED
-        if value == 'False':
-            return KycVerificationStatus.FAILED
-        return None
+        assert value in (
+            KycVerificationStatus.PENDING,
+            KycVerificationStatus.PASSED,
+            KycVerificationStatus.FAILED,
+            ''
+        )
+        if value == '':
+            return KycVerificationStatus.PENDING
+        return value
 
     @property
     def kyc_provider(self):
@@ -220,7 +223,7 @@ class KycUser:
             'kyc_last_verified_at': datetime.utcnow().isoformat(),  # TODO: UTC or project timezone?
             # Cases internally stores boolean case property as string .
             # Stores as string for a consistent data type across different data stores.
-            'kyc_verification_status': str(verification_status),
+            'kyc_verification_status': verification_status,
         }
         if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
             user_data_obj = self._user_or_case_obj.get_user_data(self.kyc_config.domain)
@@ -243,9 +246,9 @@ class KycUser:
 
 
 class KycVerificationStatus:
-    PASSED = True
+    PASSED = 'passed'
     # FAILED indicates a request was made to KYC Provider and the KYC failed
-    FAILED = False
+    FAILED = 'failed'
     PENDING = None
 
 
