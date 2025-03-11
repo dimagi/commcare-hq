@@ -137,7 +137,10 @@ class AddColumnFilterForm(forms.Form):
                         x_model="textMatchType",
                     ),
                     crispy.Div(
-                        'text_value',
+                        crispy.Field(
+                            'text_value',
+                            autocomplete="off",
+                        ),
                         x_show="!matchTypesWithNoValue.includes(textMatchType)"
                     ),
                     x_show="textDataTypes.includes(dataType)",
@@ -149,7 +152,10 @@ class AddColumnFilterForm(forms.Form):
                         x_model="numberMatchType",
                     ),
                     crispy.Div(
-                        'number_value',
+                        crispy.Field(
+                            'number_value',
+                            autocomplete="off",
+                        ),
                         x_show="!matchTypesWithNoValue.includes(numberMatchType)"
                     ),
                     x_show="numberDataTypes.includes(dataType)",
