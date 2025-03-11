@@ -243,6 +243,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'last_name': 'Doe',
                     'kyc_is_verified': None,
                     'kyc_last_verified_at': None,
+                    'kyc_verification_error': None,
                 }
             else:
                 assert row == {
@@ -259,6 +260,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'country': 'Anyplace',
                     'kyc_is_verified': None,
                     'kyc_last_verified_at': None,
+                    'kyc_verification_error': None,
                 }
 
     @flag_enabled('KYC_VERIFICATION')
@@ -284,6 +286,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'last_name': 'Bar',
                     'kyc_is_verified': None,
                     'kyc_last_verified_at': None,
+                    'kyc_verification_error': None,
                 }
             else:
                 assert row == {
@@ -300,6 +303,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'country': 'Someplace',
                     'kyc_is_verified': None,
                     'kyc_last_verified_at': None,
+                    'kyc_verification_error': None,
                 }
 
 

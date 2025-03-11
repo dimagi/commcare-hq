@@ -1,15 +1,16 @@
 {% load i18n %}
 
 {% if record.kyc_is_verified is True %}
-  <span class="badge bg-success">
-    {% trans "Pass" %}
-  </span>
+  <span class="badge bg-success"> {% trans "Pass" %} </span>
 {% elif record.kyc_is_verified is False %}
-  <span class="badge bg-danger">
-    {% trans "Fail" %}
+  <span class="d-flex flex-column" style="width: 8rem;">
+    <span class="d-flex justify-content-center">
+      <span class="badge bg-danger"> {% trans "Fail" %} </span>
+    </span>
+    <span class="d-flex justify-content-center text-wrap">
+      {{ record.kyc_verification_error|default:'Unknown error' }}
+    </span>
   </span>
 {% else %}
-  <span class="badge bg-secondary">
-    {% trans "Not Checked" %}
-  </span>
+  <span class="badge bg-secondary"> {% trans "Not Checked" %} </span>
 {% endif %}

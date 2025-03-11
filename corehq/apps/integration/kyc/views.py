@@ -108,6 +108,7 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         system_fields = (
             'kyc_is_verified',
             'kyc_last_verified_at',
+            'kyc_verification_error',
         )
         for field in user_fields:
             if field not in user_data or user_data[field] in ('', None):
