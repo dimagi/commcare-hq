@@ -92,6 +92,12 @@ class BulkEditSession(models.Model):
         return cls.objects.filter(user=user, domain=domain_name, committed_on__isnull=False)
 
     @property
+    def percent_complete(self):
+        if self.result is None or 'percent' not in self.result:
+            return None
+        return round(self.result['percent'])
+
+    @property
     def status_tuple(self):
         if self.committed_on:
             if self.completed_on:

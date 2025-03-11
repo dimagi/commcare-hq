@@ -56,4 +56,5 @@ class CaseCleaningTasksTableView(BaseDataCleaningTableView):
             "case_type": session.identifier,
             "case_count": session.records.count(),
             "details": session.result,
+            "percent": session.percent_complete,
         }
