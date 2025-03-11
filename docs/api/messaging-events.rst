@@ -25,6 +25,8 @@ For more information, please review `API Authentication <https://dimagi.atlassia
 
 **Supported versions** ``v0.5``
 
+**Permissions Required:** Edit Data
+
 Filters
 ~~~~~~~
 

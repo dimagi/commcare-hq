@@ -1364,6 +1364,15 @@ CACHE_AND_INDEX = StaticToggle(
     help_link='https://confluence.dimagi.com/pages/viewpage.action?pageId=41484944',
 )
 
+
+CASE_LIST_OPTIMIZATIONS = StaticToggle(
+    'case_list_optimizations',
+    'Enable options to cache and lazy load case list columns',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2939519055/Feature+Usage+Guide+Case+List+Caching+and+Lazy+Loading+in+CommCare',  # noqa: E501
+)
+
 CUSTOM_PROPERTIES = StaticToggle(
     'custom_properties',
     'Allow users to add arbitrary custom properties to their application',
@@ -1990,14 +1999,6 @@ LOCATION_COLUMNS_APP_STATUS_REPORT = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-SKIP_CREATING_DEFAULT_BUILD_FILES_ON_BUILD = StaticToggle(
-    'skip_creating_default_build_files_on_build',
-    'Skips creating the build files for default profile each time a build is made'
-    'which helps speed up the build and revert process',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
     'disable_case_update_rule_task',
     'Disable the `run_case_update_rules` periodic task '
@@ -2278,6 +2279,14 @@ PRIME_FORMPLAYER_DBS = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/Prime+Formplayer+DBS"
+)
+
+PRIME_FORMPLAYER_DBS_BHA = StaticToggle(
+    'prime_formplayer_dbs_bha',
+    'USH-BHA: Control which domains will be included in the prime formplayer task runs',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://dimagi.atlassian.net/wiki/spaces/saas/pages/2963013633/Prime+Formplayer+DBS+BHA"
 )
 
 FHIR_INTEGRATION = StaticToggle(
@@ -2620,6 +2629,14 @@ MICROPLANNING = StaticToggle(
                 'and assigning cases on a map.',
     save_fn=_handle_geospatial_es_index,
 
+)
+
+CAMPAIGN_DASHBOARD = StaticToggle(
+    'campaign_dashboard',
+    'Allows access to Campaign Dashboard',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Access to a dashboard to show various metrics for campaigns',
 )
 
 COMMCARE_CONNECT = StaticToggle(

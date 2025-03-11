@@ -64,7 +64,7 @@ class KycConfig(models.Model):
         ):
             raise ValidationError({
                 'other_case_type': _(
-                    'This field is required when "User Data Store" is set to '
+                    'This field is required when "Recipient Data Store" is set to '
                     '"Other Case Type".'
                 )
             })

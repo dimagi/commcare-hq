@@ -301,6 +301,7 @@ HQ_APPS = (
     'corehq.apps.data_dictionary',
     'corehq.apps.analytics',
     'corehq.apps.callcenter',
+    'corehq.apps.campaign',
     'corehq.apps.change_feed',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
@@ -392,8 +393,6 @@ HQ_APPS = (
     # custom reports
     'custom.reports.mc',
     'custom.ucla',
-
-    'custom.common',
 
     'custom.hki',
     'custom.bha',

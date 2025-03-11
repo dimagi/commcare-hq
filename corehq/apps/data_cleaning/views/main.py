@@ -1,3 +1,4 @@
+from celery import uuid
 from datetime import datetime
 from memoized import memoized
 
@@ -83,7 +84,6 @@ class CleanCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
     def page_context(self):
         return {
             "session_id": self.session_id,
-            "pinned_filter_types": [f.filter_type for f in self.session.pinned_filters.all()],
         }
 
 
@@ -92,8 +92,13 @@ class CleanCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
 @toggles.DATA_CLEANING_CASES.required_decorator()
 def save_case_session(request, domain, session_id):
     session = BulkEditSession.objects.get(session_id=session_id)
+
+    task_id = uuid()
+    session.task_id = task_id
     session.committed_on = datetime.utcnow()
     session.save()
-    commit_data_cleaning.delay(session_id)
+
+    commit_data_cleaning.apply_async((session_id,), task_id=task_id)
+
     messages.success(request, _("Session saved."))
     return redirect(reverse(CleanCasesMainView.urlname, args=(domain,)))

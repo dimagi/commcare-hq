@@ -139,6 +139,12 @@ msgid "Please enter your organization."
 msgstr ""
 
 #: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#, fuzzy
+#| msgid "Please enter your name."
+msgid "Please enter your job title."
+msgstr "Por favor ingrese su nombre."
+
+#: corehq/apps/analytics/static/analytix/js/cta_forms.js
 msgid "Please enter your email address."
 msgstr ""
 
@@ -3750,6 +3756,22 @@ msgstr ""
 msgid "Showing <%- firstItem %> to <%- lastItem %> of <%- maxItems %> entries"
 msgstr ""
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/rich_text_knockout_bindings.js
+#, fuzzy
+#| msgid "Data file deleted."
+msgid "No File selected"
+msgstr "Archivo de datos borrado."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/rich_text_knockout_bindings.js
+#, fuzzy
+#| msgid "Failed to save "
+msgid "Failed to upload image: "
+msgstr "Error al guardar"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/rich_text_knockout_bindings.js
+msgid "Failed to upload image. Please try again."
+msgstr ""
+
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js
 msgid "Clear"
 msgstr "Borrar"
@@ -4161,6 +4183,10 @@ msgstr "Por favor especifique un nombre de proyecto."
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please specify."
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/new_user.ko.js
+msgid "Please list your organization or company name."
 msgstr ""
 
 #: corehq/apps/registry/static/registry/js/registry_actions.js
