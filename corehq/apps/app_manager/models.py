@@ -4537,6 +4537,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def save(self, response_json=None, increment_version=None, **params):
         from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
+        from corehq.apps.app_manager.tasks import refresh_data_dictionary_from_app
         from corehq.apps.case_search.utils import get_app_context_by_case_type
         self.last_modified = datetime.datetime.utcnow()
         if not self._rev and not domain_has_apps(self.domain):
@@ -4558,6 +4559,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         if user and user.days_since_created == 0:
             track_workflow(user.get_email(), 'Saved the App Builder within first 24 hours')
         send_hubspot_form(HUBSPOT_SAVED_APP_FORM_ID, request)
+        refresh_data_dictionary_from_app.delay(self.domain, self.get_id)
         if self.copy_of:
             cache.delete('app_build_cache_{}_{}'.format(self.domain, self.get_id))
 
