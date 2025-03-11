@@ -21,7 +21,7 @@ class AddColumnFilterForm(forms.Form):
     )
     data_type = forms.ChoiceField(
         label=gettext_lazy("Data Type"),
-        choices=DataType.CHOICES,
+        choices=DataType.CASE_CHOICES,
         required=False
     )
 
