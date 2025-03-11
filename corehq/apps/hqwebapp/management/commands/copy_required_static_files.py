@@ -32,19 +32,7 @@ class Command(BaseCommand):
             # Handle both string paths and config objects
             if hasattr(app_path, 'name'):
                 app_path = app_path.name
-            # Split on dots and get the last part
-            parts = app_path.split('.')
-
-            # Handle special cases like 'django.contrib.admin' -> 'admin'
-            if 'contrib' in parts:
-                return parts[-1]
-
-            # Handle cases like 'corehq.apps.users' -> 'users'
-            if 'apps' in parts:
-                return parts[-1]
-
-            # Default to last part of path
-            return parts[-1]
+            return app_path.rsplit('.', 1)[-1]
 
         # Get list of installed app paths
         installed_apps = {get_app_name(app.name): app.path for app in apps.get_app_configs()}
