@@ -13,6 +13,7 @@ from field_audit.models import AuditAction
 
 from corehq import privileges
 import corehq.apps.events.tasks as attendance_tracking_tasks
+from corehq.apps.accounting.const import UNLIMITED_FEATURE_USAGE
 from corehq.apps.accounting.utils import get_privileges, log_accounting_error
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
@@ -329,7 +330,6 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
     def response_mobile_worker_creation(domain, new_plan_version):
         """ Deactivates users if there are too many for a community plan """
         from corehq.apps.accounting.models import (
-            UNLIMITED_FEATURE_USAGE,
             DefaultProductPlan,
             FeatureType,
         )
@@ -611,7 +611,6 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         Get the allowed number of mobile workers based on plan version.
         """
         from corehq.apps.accounting.models import (
-            UNLIMITED_FEATURE_USAGE,
             FeatureRate,
             FeatureType,
         )

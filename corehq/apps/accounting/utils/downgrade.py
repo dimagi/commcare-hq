@@ -4,6 +4,12 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
+from corehq.apps.accounting.const import (
+    DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE,
+    DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE_WARNING,
+    DAYS_PAST_DUE_TO_TRIGGER_OVERDUE_NOTICE,
+    OVERDUE_INVOICE_LIMIT_DAYS,
+)
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
     DefaultProductPlan,
@@ -24,11 +30,6 @@ from corehq.apps.accounting.utils import (
     log_accounting_error,
 )
 from corehq.util.view_utils import absolute_reverse
-
-OVERDUE_LIMIT_DAYS = 15
-DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE = OVERDUE_LIMIT_DAYS + 1
-DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE_WARNING = OVERDUE_LIMIT_DAYS - 2
-DAYS_PAST_DUE_TO_TRIGGER_OVERDUE_NOTICE = OVERDUE_LIMIT_DAYS - 7
 
 
 def downgrade_eligible_domains(only_downgrade_domain=None):
@@ -101,7 +102,7 @@ def _downgrade_domain(subscription):
             SoftwarePlanEdition.PAUSED
         ),
         adjustment_method=SubscriptionAdjustmentMethod.AUTOMATIC_DOWNGRADE,
-        note=f'Automatic pausing of subscription for invoice {OVERDUE_LIMIT_DAYS} days late',
+        note=f'Automatic pausing of subscription for invoice {OVERDUE_INVOICE_LIMIT_DAYS} days late',
         internal_change=True
     )
 
@@ -203,7 +204,7 @@ def _apply_downgrade_process(oldest_unpaid_invoice, total, today, subscription):
 
     elif _can_send_downgrade_warning(days_ago, communication_model, oldest_unpaid_invoice):
         context.update({
-            'days_overdue': OVERDUE_LIMIT_DAYS,
+            'days_overdue': OVERDUE_INVOICE_LIMIT_DAYS,
         })
         _send_downgrade_warning(oldest_unpaid_invoice, communication_model, context)
 

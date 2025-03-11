@@ -25,8 +25,6 @@ from corehq.util.view_utils import absolute_reverse
 
 logger = logging.getLogger('accounting')
 
-EXCHANGE_RATE_DECIMAL_PLACES = 9
-
 
 def log_accounting_error(message, show_stack_trace=False):
     logger.error("[BILLING] %s" % message, exc_info=show_stack_trace)

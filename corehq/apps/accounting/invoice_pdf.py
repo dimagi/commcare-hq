@@ -7,13 +7,18 @@ from reportlab.lib.units import inch
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.platypus import Paragraph
 
+from corehq.apps.accounting.const import (
+    LOGO_FILENAME,
+    PDF_BLACK,
+    PDF_DEFAULT_FONT_SIZE,
+    PDF_LIGHT_GRAY,
+    PDF_SMALL_FONT_SIZE,
+    PDF_STROKE_COLOR,
+)
 from corehq.apps.accounting.exceptions import InvoiceError
 from corehq.apps.accounting.utils import get_money_str
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.view_utils import absolute_reverse
-
-LOGO_FILENAME = \
-    'corehq/apps/accounting/static/accounting/images/Dimagi-Deep-Purple-Standard-Logo.jpg'
 
 
 def prepend_newline_if_not_empty(string):
@@ -95,13 +100,6 @@ class Address(object):
         ).lstrip()
 
 
-LIGHT_GRAY = (0.9, 0.9, 0.9)
-STROKE_COLOR = (0.85, 0.85, 0.85)
-BLACK = (0, 0, 0)
-DEFAULT_FONT_SIZE = 10
-SMALL_FONT_SIZE = 8
-
-
 def inches(num_inches):
     return inch * num_inches
 
@@ -143,7 +141,7 @@ class InvoiceTemplate(object):
                  subtotal=None, tax_rate=None, applied_tax=None, total=None,
                  is_wire=False, is_customer=False, is_prepayment=False, account_name=''):
         self.canvas = Canvas(filename)
-        self.canvas.setFontSize(DEFAULT_FONT_SIZE)
+        self.canvas.setFontSize(PDF_DEFAULT_FONT_SIZE)
         self.logo_image = logo_image
         self.from_address = from_address
         self.to_address = to_address
@@ -239,15 +237,15 @@ class InvoiceTemplate(object):
         bottom = inches(-1.35)
         self.canvas.rect(left, bottom, right - left, top - bottom)
 
-        self.canvas.setFillColorRGB(*LIGHT_GRAY)
+        self.canvas.setFillColorRGB(*PDF_LIGHT_GRAY)
         self.canvas.rect(left, middle_horizational, right - left,
                          top - middle_horizational, fill=1)
 
-        self.canvas.setFillColorRGB(*BLACK)
-        self.canvas.setFontSize(SMALL_FONT_SIZE)
+        self.canvas.setFillColorRGB(*PDF_BLACK)
+        self.canvas.setFontSize(PDF_SMALL_FONT_SIZE)
         self.draw_text("BILL TO", left + inches(0.2),
                        middle_horizational + inches(0.1))
-        self.canvas.setFontSize(DEFAULT_FONT_SIZE)
+        self.canvas.setFontSize(PDF_DEFAULT_FONT_SIZE)
 
         if self.to_address.mailing_address is not None:
             self.draw_text(
@@ -275,18 +273,18 @@ class InvoiceTemplate(object):
         bottom = inches(-0.3)
         self.canvas.rect(left, bottom, right - left, top - bottom)
 
-        self.canvas.setFillColorRGB(*LIGHT_GRAY)
+        self.canvas.setFillColorRGB(*PDF_LIGHT_GRAY)
         self.canvas.rect(left, bottom, middle_vertical - left, top - bottom,
                          fill=1)
 
-        self.canvas.setFillColorRGB(*BLACK)
-        self.canvas.setFontSize(SMALL_FONT_SIZE)
+        self.canvas.setFillColorRGB(*PDF_BLACK)
+        self.canvas.setFontSize(PDF_SMALL_FONT_SIZE)
         self.canvas.drawCentredString(
             midpoint(left - inches(.1), middle_vertical),
             bottom + inches(0.1),
             "PROJECT"
         )
-        self.canvas.setFontSize(DEFAULT_FONT_SIZE)
+        self.canvas.setFontSize(PDF_DEFAULT_FONT_SIZE)
         self.canvas.drawString(middle_vertical + inches(0.2),
                                bottom + inches(0.1), self.project_name)
 
@@ -304,18 +302,18 @@ class InvoiceTemplate(object):
         bottom = inches(-0.3)
         self.canvas.rect(left, bottom, right - left, top - bottom)
 
-        self.canvas.setFillColorRGB(*LIGHT_GRAY)
+        self.canvas.setFillColorRGB(*PDF_LIGHT_GRAY)
         self.canvas.rect(left, bottom, middle_vertical - left, top - bottom,
                          fill=1)
 
-        self.canvas.setFillColorRGB(*BLACK)
-        self.canvas.setFontSize(SMALL_FONT_SIZE)
+        self.canvas.setFillColorRGB(*PDF_BLACK)
+        self.canvas.setFontSize(PDF_SMALL_FONT_SIZE)
         self.canvas.drawCentredString(
             midpoint(left - inches(.1), middle_vertical),
             bottom + inches(0.1),
             "ACCOUNT"
         )
-        self.canvas.setFontSize(DEFAULT_FONT_SIZE)
+        self.canvas.setFontSize(PDF_DEFAULT_FONT_SIZE)
         self.canvas.drawString(middle_vertical + inches(0.2),
                                bottom + inches(0.1), self.account_name)
 
@@ -340,7 +338,7 @@ class InvoiceTemplate(object):
     def draw_invoice_label(self):
         self.canvas.setFontSize(22)
         self.canvas.drawString(inches(2.5), inches(10.8), "INVOICE")
-        self.canvas.setFontSize(DEFAULT_FONT_SIZE)
+        self.canvas.setFontSize(PDF_DEFAULT_FONT_SIZE)
 
     def draw_details(self):
         origin_x = inches(4.5)
@@ -357,18 +355,18 @@ class InvoiceTemplate(object):
         middle_x = midpoint(left, right)
         middle_y = midpoint(bottom, top)
 
-        self.canvas.setFillColorRGB(*LIGHT_GRAY)
+        self.canvas.setFillColorRGB(*PDF_LIGHT_GRAY)
         self.canvas.rect(left, middle_y - label_height,
                          right - left, label_height, fill=1)
         self.canvas.rect(left, top - label_height, right - left, label_height,
                          fill=1)
-        self.canvas.setFillColorRGB(*BLACK)
+        self.canvas.setFillColorRGB(*PDF_BLACK)
 
         self.canvas.rect(left, bottom, right - left, top - bottom)
         self.canvas.rect(left, bottom, 0.5 * (right - left), top - bottom)
         self.canvas.rect(left, bottom, right - left, 0.5 * (top - bottom))
 
-        self.canvas.setFontSize(SMALL_FONT_SIZE)
+        self.canvas.setFontSize(PDF_SMALL_FONT_SIZE)
         self.canvas.drawCentredString(midpoint(left, middle_x),
                                       top - label_offset, "DATE")
         self.canvas.drawCentredString(midpoint(middle_x, right),
@@ -377,7 +375,7 @@ class InvoiceTemplate(object):
                                       middle_y - label_offset, "TERMS")
         self.canvas.drawCentredString(midpoint(middle_x, right),
                                       middle_y - label_offset, "DUE DATE")
-        self.canvas.setFontSize(DEFAULT_FONT_SIZE)
+        self.canvas.setFontSize(PDF_DEFAULT_FONT_SIZE)
 
         # Date
         self.canvas.drawCentredString(midpoint(left, middle_x),
@@ -399,7 +397,7 @@ class InvoiceTemplate(object):
         self.canvas.translate(-origin_x, -origin_y)
 
     def draw_header(self):
-        self.canvas.setStrokeColor(STROKE_COLOR)
+        self.canvas.setStrokeColor(PDF_STROKE_COLOR)
         self.draw_logo()
         self.draw_from_address()
         self.draw_to_address()
@@ -427,17 +425,17 @@ class InvoiceTemplate(object):
         header_height = inches(0.3)
 
         self.canvas.rect(0, 0, total_x, -height)
-        self.canvas.setFillColorRGB(*LIGHT_GRAY)
+        self.canvas.setFillColorRGB(*PDF_LIGHT_GRAY)
         self.canvas.rect(0, 0, total_x, header_height,
                          fill=1)
-        self.canvas.setFillColorRGB(*BLACK)
+        self.canvas.setFillColorRGB(*PDF_BLACK)
         self.canvas.line(description_x, header_height, description_x, -height)
         self.canvas.line(quantity_x, header_height, quantity_x, -height)
         self.canvas.line(rate_x, header_height, rate_x, -height)
         self.canvas.line(subtotal_x, header_height, subtotal_x, -height)
         self.canvas.line(credits_x, header_height, credits_x, -height)
 
-        self.canvas.setFontSize(SMALL_FONT_SIZE)
+        self.canvas.setFontSize(PDF_SMALL_FONT_SIZE)
         self.canvas.drawCentredString(midpoint(0, description_x),
                                       inches(0.1),
                                       "PRODUCT")
@@ -456,7 +454,7 @@ class InvoiceTemplate(object):
         self.canvas.drawCentredString(midpoint(credits_x, total_x),
                                       inches(0.1),
                                       "TOTAL")
-        self.canvas.setFontSize(DEFAULT_FONT_SIZE)
+        self.canvas.setFontSize(PDF_DEFAULT_FONT_SIZE)
 
         coord_y = 0
         for item_index in range(len(items)):
@@ -466,7 +464,7 @@ class InvoiceTemplate(object):
 
             description = Paragraph(item.description,
                                     ParagraphStyle('',
-                                                   fontSize=DEFAULT_FONT_SIZE,
+                                                   fontSize=PDF_DEFAULT_FONT_SIZE,
                                                    ))
             description.wrapOn(self.canvas, description_x - inches(0.2),
                                -header_height)
@@ -507,11 +505,11 @@ class InvoiceTemplate(object):
         left_x = inches(0.5)
 
         options = "PAYMENT OPTIONS:"
-        self.canvas.setFontSize(SMALL_FONT_SIZE)
+        self.canvas.setFontSize(PDF_SMALL_FONT_SIZE)
         options_text = Paragraph(options, ParagraphStyle(''))
         options_text.wrapOn(self.canvas, width, inches(.12))
         options_text.drawOn(self.canvas, left_x, inches(3.5))
-        self.canvas.setFontSize(DEFAULT_FONT_SIZE)
+        self.canvas.setFontSize(PDF_DEFAULT_FONT_SIZE)
 
         flywire = """<strong>International payments:</strong>
                             Make payments in your local currency
@@ -583,7 +581,7 @@ class InvoiceTemplate(object):
         self.canvas.showPage()
 
     def draw_totals_on_new_page(self):
-        self.canvas.setStrokeColor(STROKE_COLOR)
+        self.canvas.setStrokeColor(PDF_STROKE_COLOR)
         self.draw_logo()
         self.draw_from_address()
         self.draw_to_address()
@@ -604,7 +602,7 @@ class InvoiceTemplate(object):
 
         totals_money_x = totals_x + inches(1)
 
-        self.canvas.setFillColorRGB(*LIGHT_GRAY)
+        self.canvas.setFillColorRGB(*PDF_LIGHT_GRAY)
         self.canvas.rect(
             inches(5.7),
             subtotal_y - inches(1.2),
@@ -612,7 +610,7 @@ class InvoiceTemplate(object):
             inches(0.5),
             fill=1
         )
-        self.canvas.setFillColorRGB(*BLACK)
+        self.canvas.setFillColorRGB(*PDF_BLACK)
 
         self.canvas.drawString(totals_x, subtotal_y, "Subtotal:")
         self.canvas.drawString(totals_x, tax_y,
@@ -640,7 +638,7 @@ class InvoiceTemplate(object):
             get_money_str(self.total)
         )
 
-        self.canvas.setFontSize(SMALL_FONT_SIZE)
+        self.canvas.setFontSize(PDF_SMALL_FONT_SIZE)
         self.canvas.drawString(inches(5.85), subtotal_y - inches(1.4),
                                "Thank you for using CommCare HQ.")
-        self.canvas.setFontSize(DEFAULT_FONT_SIZE)
+        self.canvas.setFontSize(PDF_DEFAULT_FONT_SIZE)
