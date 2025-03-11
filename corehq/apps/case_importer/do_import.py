@@ -592,7 +592,7 @@ class _CaseImportRow(object):
             self.domain,
             self.config.case_type
         )
-        _log_case_lookup(self.domain)()
+        _log_case_lookup(self.domain)
         if error == LookupErrors.MultipleResults:
             raise TooManyMatches()
         return case
@@ -619,7 +619,7 @@ class _CaseImportRow(object):
             if search_id:
                 parent_case, error = lookup_case(
                     search_field, search_id, self.domain, self.parent_type)
-                _log_case_lookup(self.domain)()
+                _log_case_lookup(self.domain)
                 if parent_case:
                     self.validate_parent_column()
                     if self.parent_relationship_type == 'child':
@@ -676,7 +676,7 @@ class _CaseImportRow(object):
 
 
 def _log_case_lookup(domain):
-    case_load_counter("case_importer", domain)
+    case_load_counter("case_importer", domain)()
 
 
 class _ImportResults(object):
