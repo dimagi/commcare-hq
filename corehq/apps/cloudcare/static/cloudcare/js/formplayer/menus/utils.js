@@ -224,7 +224,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
                 moduleName: menuResponse.title,
             });
             kissmetrics.track.event("Viewed Case List", kissmetricsEventData);
-            gtx.logCaseList(gtx.extractSelections(menuResponse), gtxEventData);
+            gtx.logCaseList(menuResponse);
 
             if (/search_command\.m\d+/.test(menuResponse.queryKey) && menuResponse.currentPage === 0) {
                 kissmetrics.track.event('Started Case Search', {
