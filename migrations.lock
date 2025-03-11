@@ -119,6 +119,7 @@ accounting
  0097_add_form_submitting_mobile_worker_feature
  0098_app_dependencies_priv
  0099_data_cleaning_priv
+ 0100_alter_customerinvoicecommunicationhistory_communication_type_and_more
 admin
  0001_initial
  0002_logentry_remove_auto_add
