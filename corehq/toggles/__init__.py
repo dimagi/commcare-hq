@@ -2636,7 +2636,7 @@ CAMPAIGN_DASHBOARD = StaticToggle(
     'Allows access to Campaign Dashboard',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
-    description='Access to new dashboard being developed to show various metrics for campaigns',
+    description='Access to a dashboard to show various metrics for campaigns',
 )
 
 COMMCARE_CONNECT = StaticToggle(

@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseFactory
@@ -50,10 +51,14 @@ class CommitCasesTest(TestCase):
             user=self.web_user.get_django_user(),
             session_type=BulkEditSessionType.CASE,
             identifier=self.case_type,
+            committed_on=datetime.utcnow(),
         )
         self.session.save()
 
         super().setUp()
+
+    def _refresh_session(self):
+        self.session = BulkEditSession.objects.get(id=self.session.id)
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
@@ -103,11 +108,20 @@ class CommitCasesTest(TestCase):
         change.save()
         change.records.add(record)
 
-        commit_data_cleaning(self.session.session_id)
+        form_ids = commit_data_cleaning(self.session.session_id)
 
         case = CommCareCase.objects.get_case(self.case.case_id, self.domain.name)
         self.assertEqual(case.get_case_property('speed'), '2023')
         self.assertEqual(case.get_case_property('year'), '2023')
+
+        self._refresh_session()
+        self.assertDictEqual(self.session.result, {
+            'form_ids': form_ids,
+            'record_count': 1,
+            'percent': 100,
+        })
+        self.assertIsNotNone(self.session.completed_on)
+        self.assertListEqual(list(self.session.status_tuple), ['complete', 'success'])
 
     def test_chunking(self):
         cases = [self.case]

@@ -1,3 +1,4 @@
+from datetime import datetime
 from corehq.apps.celery import task
 
 from casexml.apps.case.mock import CaseBlock
@@ -16,11 +17,18 @@ def commit_data_cleaning(bulk_edit_session_id):
 
     form_ids = []
     case_index = 0
+    session.update_result(0)
     while case_index < session.records.count():
         records = session.records.all()[case_index:case_index + CASEBLOCK_CHUNKSIZE]
         case_index += CASEBLOCK_CHUNKSIZE
         blocks = _create_case_blocks(session, records)
-        form_ids.append(_submit_case_blocks(session, blocks))
+        xform = _submit_case_blocks(session, blocks)
+        form_ids.append(xform.form_id)
+        session.update_result(len(records), xform.form_id)
+        session.save()
+
+    session.completed_on = datetime.now()
+    session.save()
 
     return form_ids
 
@@ -50,4 +58,4 @@ def _submit_case_blocks(session, blocks):
         session.user.username,
         username_to_user_id(session.user.username),
         device_id=__name__ + ".data_cleaning",
-    )
+    )[0]
