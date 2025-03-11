@@ -138,7 +138,7 @@ class TestInvoice(BaseInvoiceTestCase):
         self.subscription.save()
         invoice_date_small = utils.months_from_date(self.subscription.date_start, 1)
         self.create_invoices(invoice_date_small)
-        small_invoice = self.subscription.invoice_set.last()
+        small_invoice = self.subscription.invoice_set.first()
 
         self.assertTrue(small_invoice.balance <= SMALL_INVOICE_THRESHOLD)
         self.assertIsNone(small_invoice.date_due)
@@ -149,7 +149,7 @@ class TestInvoice(BaseInvoiceTestCase):
         self.subscription.save()
         invoice_date_large = utils.months_from_date(self.subscription.date_start, 3)
         self.create_invoices(invoice_date_large)
-        large_invoice = self.subscription.invoice_set.last()
+        large_invoice = self.subscription.invoice_set.first()
 
         self.assertTrue(large_invoice.balance > SMALL_INVOICE_THRESHOLD)
         self.assertIsNotNone(large_invoice.date_due)
@@ -162,7 +162,7 @@ class TestInvoice(BaseInvoiceTestCase):
         invoice_date_autopay = utils.months_from_date(self.subscription.date_start, 1)
         self.create_invoices(invoice_date_autopay)
 
-        autopay_invoice = self.subscription.invoice_set.last()
+        autopay_invoice = self.subscription.invoice_set.first()
         self.assertTrue(autopay_invoice.balance <= SMALL_INVOICE_THRESHOLD)
         self.assertIsNotNone(autopay_invoice.date_due)
 
