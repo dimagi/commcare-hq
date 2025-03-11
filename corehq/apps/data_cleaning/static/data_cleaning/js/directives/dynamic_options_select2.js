@@ -39,7 +39,7 @@ Alpine.directive('dynamic-options-select2', (el, { expression }, { cleanup }) =>
     window.addEventListener(config.eventName, (event) => {
         const propId = event.detail.value;
         const propertyInfo = (propId) ? config.details[propId] : {};
-        if (propertyInfo.options !== undefined) {
+        if (propertyInfo.data_type === 'multiple_option') {
             utils.select2Cleanup(el);
             _createMultiOptionSelect2(el, propertyInfo.options);
         }
