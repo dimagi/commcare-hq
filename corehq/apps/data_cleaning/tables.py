@@ -40,6 +40,9 @@ class CaseCleaningTasksTable(BaseHtmxTable, tables.Table):
     case_type = columns.Column(
         verbose_name=gettext_lazy("Case Type"),
     )
+    case_count = columns.Column(
+        verbose_name=gettext_lazy("# Cases Cleaned"),
+    )
     details = columns.Column(
         verbose_name=gettext_lazy("Details"),
     )
