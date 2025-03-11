@@ -4553,6 +4553,9 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         get_apps_in_domain.clear(self.domain, True)
         get_apps_in_domain.clear(self.domain, False)
         get_mobile_ucr_count.clear(self.domain)
+        if toggles.DATA_CLEANING_CASES.enabled(self.domain):
+            from corehq.apps.data_cleaning.utils.cases import clear_caches_case_data_cleaning
+            clear_caches_case_data_cleaning(self.domain)
 
         request = view_utils.get_request()
         user = getattr(request, 'couch_user', None)

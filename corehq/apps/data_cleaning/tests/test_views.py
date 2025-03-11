@@ -6,8 +6,10 @@ from django.urls import reverse
 from corehq.apps.data_cleaning.models import (
     BulkEditSession,
 )
+from corehq.apps.data_cleaning.utils.cases import clear_caches_case_data_cleaning
 from corehq.apps.data_cleaning.views.filters import (
     PinnedFilterFormView,
+    ColumnFilterFormView,
 )
 from corehq.apps.data_cleaning.views.main import (
     CleanCasesMainView,
@@ -77,11 +79,16 @@ class CleanCasesViewAccessTest(TestCase):
             (CleanCasesTableView, (cls.domain_name, cls.fake_session_id,)),
             (PinnedFilterFormView, (cls.domain_name, cls.real_session_id,)),
             (PinnedFilterFormView, (cls.domain_name, cls.fake_session_id,)),
+            (ColumnFilterFormView, (cls.domain_name, cls.real_session_id,)),
+            (ColumnFilterFormView, (cls.domain_name, cls.fake_session_id,)),
         ]
         cls.views_not_found_with_invalid_session = [
             CleanCasesTableView,
             PinnedFilterFormView,
+            ColumnFilterFormView,
         ]
+
+        clear_caches_case_data_cleaning(cls.domain_name)
 
     @classmethod
     def tearDownClass(cls):
