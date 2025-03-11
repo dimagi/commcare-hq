@@ -107,6 +107,7 @@ class AddColumnFilterForm(forms.Form):
                     'prop_id',
                     x_select2=json.dumps({
                         "placeholder": _("Select a Case Property"),
+                        "dropdownParent": "#offcanvas-filter",
                     }),
                     **({
                         "@select2change": "propId = $event.detail; "
