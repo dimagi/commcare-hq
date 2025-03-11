@@ -24,7 +24,7 @@ class BaseFilterFormView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
 class PinnedFilterFormView(BulkEditSessionViewMixin, BaseFilterFormView):
     urlname = "data_cleaning_pinned_filter_form"
     template_name = "data_cleaning/forms/pinned_filter_form.html"
-    session_not_found_message = gettext_lazy("Cannot retrieve pinned filter, session was not found.")
+    session_not_found_message = gettext_lazy("Cannot retrieve pinned filters, session was not found.")
 
     @property
     def timezone(self):
