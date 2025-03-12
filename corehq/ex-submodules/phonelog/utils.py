@@ -100,6 +100,8 @@ def _process_log_subreport(domain, xform):
             device_id=form_data.get('device_id'),
             username=logged_in_username,
             user_id=logged_in_user_id,
+            device_model=log["device_model"],
+            android_version=log["android_version"],
         ))
     DeviceReportEntry.objects.bulk_create(to_save)
 
