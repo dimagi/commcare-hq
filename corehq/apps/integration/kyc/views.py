@@ -115,7 +115,10 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
                 continue
             row_data[field] = user_data[field]
         for field in system_fields:
-            row_data[field] = user_data.get(field)
+            try:
+                row_data[field] = row_obj[field]
+            except KeyError:
+                continue
         return row_data
 
     @hq_hx_action('post')
