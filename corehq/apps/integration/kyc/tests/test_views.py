@@ -241,7 +241,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'has_invalid_data': True,
                     'first_name': 'Jane',
                     'last_name': 'Doe',
-                    'kyc_is_verified': None,
+                    'kyc_verification_status': None,
                     'kyc_last_verified_at': None,
                 }
             else:
@@ -257,7 +257,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'city': 'Anytown',
                     'post_code': '12345',
                     'country': 'Anyplace',
-                    'kyc_is_verified': None,
+                    'kyc_verification_status': None,
                     'kyc_last_verified_at': None,
                 }
 
@@ -282,7 +282,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'has_invalid_data': True,
                     'first_name': 'Foo',
                     'last_name': 'Bar',
-                    'kyc_is_verified': None,
+                    'kyc_verification_status': None,
                     'kyc_last_verified_at': None,
                 }
             else:
@@ -298,7 +298,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'city': 'Sometown',
                     'post_code': '54321',
                     'country': 'Someplace',
-                    'kyc_is_verified': None,
+                    'kyc_verification_status': None,
                     'kyc_last_verified_at': None,
                 }
 
