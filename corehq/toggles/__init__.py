@@ -3035,3 +3035,10 @@ ACTIVATE_DATADOG_APM_TRACES = StaticToggle(
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )
+
+USH_DISABLE_INTERVAL_SYNC = StaticToggle(
+    slug='ush_disable_interval_sync',
+    label='Disable interval sync',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
