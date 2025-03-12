@@ -3,7 +3,7 @@ import "hqwebapp/js/htmx_and_alpine";
 import 'reports/js/bootstrap5/base';
 import $ from 'jquery';
 import initialPageData from "hqwebapp/js/initial_page_data";
-import { Map } from "geospatial/js/models";
+import { Map, MapItem } from "geospatial/js/models";
 
 
 let mobileWorkerMapsInitialized = false;
@@ -45,5 +45,62 @@ var MapWidget = function (mapWidgetConfig) {
         const containerName = `map-container-${self.id}`;
         self.mapInstance = new Map(false, false);
         self.mapInstance.initMap(containerName);
+
+        const $filterForm = $(`#map-widget-filters-${self.id}`).find('form');
+        $filterForm.on('submit', function (e) {
+            e.preventDefault();
+            const formDataString = $filterForm.serialize();
+            fetchMapData(formDataString);
+        });
+
+        fetchMapData();
     };
+
+    function fetchMapData(queryStr) {
+        let url = initialPageData.reverse('api_cases_with_gps');
+        if (queryStr) {
+            url += `?${queryStr}`;
+        }
+        $.ajax({
+            method: 'GET',
+            url: url,
+            data: {
+                // TODO: Add ability to paginate on UI
+                page: 1,
+                limit: 100,
+                case_type: self.caseType,
+                gps_prop_name: self.gpsPropName,
+            },
+            success: function (data) {
+                loadCases(data.items);
+            },
+            error: function () {
+                $(`#error-alert-${self.id}`).removeClass('d-none');
+            },
+        });
+    }
+
+    function loadCases(caseData) {
+        self.mapInstance.removeItemTypeFromSource('case');
+        self.mapInstance.caseMapItems([]);
+        let features = [];
+        let caseMapItems = [];
+        for (const caseItem of caseData) {
+            const parsedData = {
+                id: caseItem.id,
+                coordinates: caseItem.coordinates,
+                link: caseItem.name,
+                name: caseItem.name,
+                itemType: 'case',
+                isSelected: false,
+                customData: {},
+            };
+            const caseMapItem = new MapItem(parsedData, self.mapInstance);
+            caseMapItems.push(caseMapItem);
+            features.push(caseMapItem.getGeoJson());
+        }
+        self.mapInstance.caseMapItems(caseMapItems);
+        self.mapInstance.addDataToSource(features);
+        self.mapInstance.fitMapBounds(caseMapItems);
+    }
 };
