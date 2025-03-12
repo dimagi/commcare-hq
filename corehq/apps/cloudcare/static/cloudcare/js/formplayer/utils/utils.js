@@ -458,6 +458,10 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
             customProperties = currentApp.attributes.profile.custom_properties || {};
         }
 
+        if (toggles.toggleEnabled('USH_DISABLE_INTERVAL_SYNC')) {
+            console.log("interval sync is disabled");
+            return;
+        }
         const useAggressiveSyncTiming = (customProperties[constants.POST_FORM_SYNC] === "yes");
         if (!useAggressiveSyncTiming) {
             return;
