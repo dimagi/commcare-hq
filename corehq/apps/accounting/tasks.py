@@ -70,7 +70,10 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.accounting.utils.subscription import (
     assign_explicit_unpaid_subscription,
 )
-from corehq.apps.accounting.utils.downgrade import Downgrade
+from corehq.apps.accounting.utils.downgrade import (
+    Downgrade,
+    InvoiceReminder,
+)
 from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.models import Domain
@@ -675,6 +678,11 @@ def send_credits_on_hq_report():
 @periodic_task(run_every=crontab(minute=0, hour=9), queue='background_queue', acks_late=True)
 def run_auto_pause_process():
     Downgrade.run_action()
+
+
+@periodic_task(run_every=crontab(minute=0, hour=9), queue='background_queue', acks_late=True)
+def send_invoice_reminders():
+    InvoiceReminder.run_action()
 
 
 @task(queue='background_queue', ignore_result=True, acks_late=True,

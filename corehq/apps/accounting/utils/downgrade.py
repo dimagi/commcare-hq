@@ -5,6 +5,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
 from corehq.apps.accounting.const import (
+    DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER,
     DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE,
     DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE_WARNING,
     DAYS_PAST_DUE_TO_TRIGGER_OVERDUE_NOTICE,
@@ -20,11 +21,14 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustmentMethod,
 )
 from corehq.apps.accounting.utils import (
+    fmt_dollar_amount,
     get_dimagi_from_email,
     log_accounting_error,
 )
 from corehq.apps.accounting.utils.invoicing import (
+    get_accounts_with_customer_invoices_due_soon,
     get_accounts_with_customer_invoices_overdue,
+    get_domains_with_subscription_invoices_due_soon,
     get_domains_with_subscription_invoices_overdue,
     get_oldest_overdue_invoice_over_threshold,
 )
@@ -99,6 +103,80 @@ class UnpaidInvoiceAction:
                 'domain_or_account': domain
             }
         return communication_model, context
+
+
+class InvoiceReminder(UnpaidInvoiceAction):
+    process_name = 'invoice reminder'
+    get_eligible_domains_fn = get_domains_with_subscription_invoices_due_soon
+    get_eligible_customer_billing_accounts_fn = get_accounts_with_customer_invoices_due_soon
+
+    @staticmethod
+    def is_subscription_eligible_for_process(subscription):
+        return subscription.plan_version.plan.edition != SoftwarePlanEdition.PAUSED
+
+    @classmethod
+    def _check_and_perform_action(cls, communication_model, context,
+                                  oldest_unpaid_invoice, total, today, subscription):
+        if cls._should_send_invoice_reminder(communication_model, oldest_unpaid_invoice):
+            context = cls._update_email_context(context, oldest_unpaid_invoice, total, today, subscription)
+            cls._send_reminder_email(oldest_unpaid_invoice, communication_model, context)
+
+    @staticmethod
+    def _should_send_invoice_reminder(communication_model, invoice):
+        return not communication_model.objects.filter(
+            invoice=invoice,
+            communication_type=CommunicationType.INVOICE_REMINDER,
+        ).exists()
+
+    @staticmethod
+    def _send_reminder_email(invoice, communication_model, context):
+        if invoice.is_customer_invoice:
+            account_name = invoice.account.name
+            bcc = None
+        else:
+            account_name = invoice.get_domain()
+            bcc = [settings.GROWTH_EMAIL]
+
+        subject = _(
+            "Your CommCare Billing Statement for {} is due in {} days".format(
+                account_name, DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER
+            ))
+
+        send_html_email_async.delay(
+            subject,
+            invoice.get_contact_emails(include_domain_admins=True, filter_out_dimagi=True),
+            render_to_string('accounting/email/invoice_reminder.html', context),
+            render_to_string('accounting/email/invoice_reminder.txt', context),
+            cc=[settings.ACCOUNTS_EMAIL],
+            bcc=bcc,
+            email_from=get_dimagi_from_email())
+        communication_model.objects.create(
+            invoice=invoice,
+            communication_type=CommunicationType.INVOICE_REMINDER,
+        )
+
+    @staticmethod
+    def _update_email_context(context, invoice, total, today, subscription):
+        from corehq.apps.domain.views.settings import DefaultProjectSettingsView
+
+        month_name = invoice.date_start.strftime("%B")
+        domain = invoice.get_domain()
+        days_until_due = (invoice.date_due - today).days
+        context.update({
+            'month_name': month_name,
+            'domain_url': absolute_reverse(DefaultProjectSettingsView.urlname,
+                                        args=[domain]),
+            'statement_number': invoice.invoice_number,
+            'payment_status': (_("Paid") if invoice.is_paid
+                            else _("Payment Required")),
+            'amount_due': fmt_dollar_amount(invoice.balance),
+            'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
+            'days_until_due': days_until_due,
+            'date_due': invoice.date_due,
+            'total_balance': fmt_dollar_amount(total),
+            'plan_name': subscription.plan_version.plan.name,
+        })
+        return context
 
 
 class Downgrade(UnpaidInvoiceAction):
