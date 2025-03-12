@@ -179,7 +179,6 @@ class ConnectionSettings(models.Model):
         self,
         payload_id: Optional[str] = None,
         logger: Optional[Callable] = None,
-        session_headers: Optional[dict] = None,
     ):
         from corehq.motech.requests import Requests
 
@@ -192,7 +191,7 @@ class ConnectionSettings(models.Model):
             notify_addresses=self.notify_addresses,
             payload_id=payload_id,
             logger=logger,
-            session_headers=session_headers,
+            session_headers=self.custom_headers,
         )
 
     def get_auth_manager(self):
