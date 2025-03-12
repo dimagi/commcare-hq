@@ -68,7 +68,8 @@ def get_user_import_validators(domain_obj, all_specs, is_web_user_import, all_us
             NewUserPasswordValidator(domain),
             PasswordValidator(domain) if validate_passwords else noop,
             GroupValidator(domain, allowed_groups),
-            ConfirmationSmsValidator(domain)
+            ConfirmationSmsValidator(domain),
+            ConnectIdInviteValidator(domain)
         ]
 
 
@@ -500,6 +501,10 @@ class ConfirmationSmsValidator(ImportValidator):
                 if error_values:
                     errors_formatted = ' and '.join(error_values)
                     return self.error_existing_user.format(self.confirmation_sms_header, errors_formatted)
+
+
+class ConnectIdInviteValidator(ConfirmationSmsValidator):
+    confirmation_sms_header = "send_connectid_invite"
 
 
 class UserAccessValidator(ImportValidator):
