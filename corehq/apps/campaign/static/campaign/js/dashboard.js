@@ -44,7 +44,7 @@ var MapWidget = function (mapWidgetConfig) {
     self.initializeMap = function () {
         const containerName = `map-container-${self.id}`;
         self.mapInstance = new Map(false, false);
-        self.mapInstance.initMap(containerName);
+        self.mapInstance.initMap(containerName, null, true);
 
         const $filterForm = $(`#map-widget-filters-${self.id}`).find('form');
         $filterForm.on('submit', function (e) {

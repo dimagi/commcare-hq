@@ -162,7 +162,7 @@ hqDefine('geospatial/js/models', [
 
         self.DISBURSEMENT_LINES_LAYER_ID = 'disbursement-lines';
 
-        self.initMap = function (mapDivId, centerCoordinates) {
+        self.initMap = function (mapDivId, centerCoordinates, disableDrawControls) {
             mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
             if (!centerCoordinates) {
                 centerCoordinates = [-91.874, 42.76]; // should be domain specific
@@ -177,16 +177,18 @@ hqDefine('geospatial/js/models', [
                              ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
             });
 
-            self.drawControls = new MapboxDraw({
-                // API: https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md
-                displayControlsDefault: false,
-                boxSelect: true, // enables box selection
-                controls: {
-                    polygon: true,
-                    trash: true,
-                },
-            });
-            self.mapInstance.addControl(self.drawControls);
+            if (!disableDrawControls) {
+                self.drawControls = new MapboxDraw({
+                    // API: https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md
+                    displayControlsDefault: false,
+                    boxSelect: true, // enables box selection
+                    controls: {
+                        polygon: true,
+                        trash: true,
+                    },
+                });
+                self.mapInstance.addControl(self.drawControls);
+            }
 
             // Add zoom and rotation controls to the map.
             self.mapInstance.addControl(new mapboxgl.NavigationControl());
