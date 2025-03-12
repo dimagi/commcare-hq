@@ -43,6 +43,11 @@
       <!-- Report and Map Section -->
       <div class="row">
         <h2>{% trans "Reports" %}</h2>
+        <div id="map-reports-container-cases" >
+          {% for widget in map_widgets.cases %}
+            {% include 'campaign/partials/dashboard_map.html' %}
+          {% endfor %}
+        </div>
       </div>
     </div>
 
@@ -56,6 +61,11 @@
       <!-- Report and Map Section -->
       <div class="row">
         <h2>{% trans "Reports" %}</h2>
+        <div id="map-reports-container-mobile-workers">
+          {% for widget in map_widgets.mobile_workers %}
+            {% include 'campaign/partials/dashboard_map.html' %}
+          {% endfor %}
+        </div>
       </div>
     </div>
   </div>
