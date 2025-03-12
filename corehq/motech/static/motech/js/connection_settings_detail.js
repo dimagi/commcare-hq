@@ -23,11 +23,14 @@ hqDefine("motech/js/connection_settings_detail", [
                     'pass_credentials_in_header',
                     'include_client_id',
                     'scope',
+                    'custom_headers',
                 ];
             if (authPreset === 'CUSTOM') {
                 _.each(customAuthPresetFields, function (field) {
                     $('#div_id_' + field).removeClass("d-none");
                 });
+            } else if (authPreset == 'mtn_momo_settings') {
+                $('#div_id_custom_headers').addClass("d-none");
             } else {
                 _.each(customAuthPresetFields, function (field) {
                     $('#div_id_' + field).addClass("d-none");
@@ -150,6 +153,7 @@ hqDefine("motech/js/connection_settings_detail", [
                 token_url: $('#id_token_url').val(),
                 auth_preset: $('#id_auth_preset').val(),
                 skip_cert_verify: $('#id_skip_cert_verify').prop('checked'),
+                custom_headers: $('#id_custom_headers').val(),
             };
             $testConnectionButton.disableButton();
 

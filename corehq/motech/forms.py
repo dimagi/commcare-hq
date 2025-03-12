@@ -21,6 +21,7 @@ from corehq.motech.requests import validate_user_input_url_for_repeaters
 from corehq.motech.utils import api_setting_matches_preset, get_endpoint_url
 from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
+from corehq.apps.userreports.ui.fields import JsonField
 
 
 class ConnectionSettingsForm(forms.ModelForm):
@@ -87,6 +88,13 @@ class ConnectionSettingsForm(forms.ModelForm):
         initial=None,
         required=False,
     )
+    custom_headers = JsonField(
+        label=_('Headers to include on requests'),
+        required=False,
+        initial={},
+        help_text=_('A JSON object of headers to include on requests'),
+        expected_type=dict,
+    )
 
     class Meta:
         model = ConnectionSettings
@@ -105,6 +113,7 @@ class ConnectionSettingsForm(forms.ModelForm):
             'token_url',
             'refresh_url',
             'pass_credentials_in_header',
+            'custom_headers',
         ]
 
     def __init__(self, domain, *args, **kwargs):
@@ -124,6 +133,7 @@ class ConnectionSettingsForm(forms.ModelForm):
                     'plaintext_password': PASSWORD_PLACEHOLDER if password else '',
                     'plaintext_client_secret': PASSWORD_PLACEHOLDER if secret else '',
                     'auth_preset': api_setting_matches_preset(kwargs['instance']),
+                    'custom_headers': kwargs['instance'].custom_headers,
                 })
             else:
                 kwargs['initial'] = {
@@ -158,6 +168,7 @@ class ConnectionSettingsForm(forms.ModelForm):
                     crispy.Field('pass_credentials_in_header'),
                     crispy.Field('include_client_id'),
                     crispy.Field('scope'),
+                    crispy.Field('custom_headers'),
                 ),
                 id="div_id_oauth_settings",
             ),
