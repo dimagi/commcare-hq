@@ -1,0 +1,12 @@
+{% load hq_shared_tags %}
+ {% load compress %}
+
+ {% compress css %}
+     <link rel="stylesheet" href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}">
+ {% endcompress %}
+
+ {% compress js %}
+     <script src="{% static 'Caret.js/dist/jquery.caret.min.js' %}"></script>
+     <script src="{% static 'At.js/dist/js/jquery.atwho.min.js' %}"></script>
+     <script src="{% static 'hqwebapp/js/atwho.js' %}"></script>
+ {% endcompress %}
