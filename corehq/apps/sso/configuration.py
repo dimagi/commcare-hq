@@ -71,7 +71,7 @@ def _get_advanced_saml2_settings(identity_provider):
             "wantNameId": True,
             "wantMessagesSigned": False,  # Entra ID does not support this, premium or standard
             "wantNameIdEncrypted": False,  # Entra ID will not accept if True
-            "requestedAuthnContext": False,
+            "failOnAuthnContextMismatch": True,  # very important
             "signatureAlgorithm": "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",
             "digestAlgorithm": "http://www.w3.org/2001/04/xmlenc#sha256",
             "metadataValidUntil": metadata_valid_until.isoformat(),
