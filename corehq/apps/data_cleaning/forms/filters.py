@@ -56,6 +56,10 @@ class AddColumnFilterForm(forms.Form):
         label=gettext_lazy("Value"),
         required=False
     )
+    datetime_value = forms.CharField(
+        label=gettext_lazy("Value"),
+        required=False
+    )
 
     multi_select_match_type = forms.ChoiceField(
         label=gettext_lazy("Match Type"),
@@ -73,7 +77,7 @@ class AddColumnFilterForm(forms.Form):
 
         property_details = get_case_property_details(self.session.domain, self.session.identifier)
         self.fields['prop_id'].choices = [(None, None)] + [
-            (p, p) for p in property_details.keys()
+            (p, p) for p in sorted(property_details.keys())
         ]
 
         initial_prop_id = self.fields['prop_id'].initial
@@ -81,11 +85,15 @@ class AddColumnFilterForm(forms.Form):
             property_details[initial_prop_id]['is_editable'] if initial_prop_id else True
         )
 
+        select2_parent_selector = "#offcanvas-filter"
+
         alpine_data_model = {
             "dataType": self.fields['data_type'].initial,
             "propId": initial_prop_id,
             "casePropertyDetails": property_details,
             "isEditable": is_initial_editable,
+            "datetimeTypes": [DataType.DATETIME],
+            "dateTypes": [DataType.DATE],
             "textDataTypes": DataType.FILTER_CATEGORY_DATA_TYPES[
                 DataType.FILTER_CATEGORY_TEXT
             ],
@@ -115,7 +123,7 @@ class AddColumnFilterForm(forms.Form):
                     'prop_id',
                     x_select2=json.dumps({
                         "placeholder": _("Select a Case Property"),
-                        "dropdownParent": "#offcanvas-filter",
+                        "dropdownParent": select2_parent_selector,
                     }),
                     **({
                         "@select2change": "propId = $event.detail; "
@@ -134,8 +142,12 @@ class AddColumnFilterForm(forms.Form):
                 crispy.Div(
                     crispy.Field(
                         'text_match_type',
-                        x_init="textMatchType = $el.value",
-                        x_model="textMatchType",
+                        x_select2=json.dumps({
+                            "dropdownParent": select2_parent_selector,
+                        }),
+                        **({
+                            "@select2change": "textMatchType = $event.detail",
+                        })
                     ),
                     crispy.Div(
                         crispy.Field(
@@ -149,8 +161,12 @@ class AddColumnFilterForm(forms.Form):
                 crispy.Div(
                     crispy.Field(
                         'number_match_type',
-                        x_init="numberMatchType = $el.value",
-                        x_model="numberMatchType",
+                        x_select2=json.dumps({
+                            "dropdownParent": select2_parent_selector,
+                        }),
+                        **({
+                            "@select2change": "numberMatchType = $event.detail",
+                        })
                     ),
                     crispy.Div(
                         crispy.Field(
@@ -164,20 +180,40 @@ class AddColumnFilterForm(forms.Form):
                 crispy.Div(
                     crispy.Field(
                         'date_match_type',
-                        x_init="dateMatchType = $el.value",
-                        x_model="dateMatchType",
+                        x_select2=json.dumps({
+                            "dropdownParent": select2_parent_selector,
+                        }),
+                        **({
+                            "@select2change": "dateMatchType = $event.detail",
+                        })
                     ),
                     crispy.Div(
-                        'date_value',
-                        x_show="!matchTypesWithNoValue.includes(dateMatchType)"
+                        crispy.Field(
+                            'date_value',
+                            x_datepicker="",
+                        ),
+                        x_show="!matchTypesWithNoValue.includes(dateMatchType) "
+                               "&& dateTypes.includes(dataType)"
+                    ),
+                    crispy.Div(
+                        'datetime_value',
+                        x_datepicker=json.dumps({
+                            "datetime": True,
+                        }),
+                        x_show="!matchTypesWithNoValue.includes(dateMatchType) "
+                               "&& datetimeTypes.includes(dataType)"
                     ),
                     x_show="dateDataTypes.includes(dataType)",
                 ),
                 crispy.Div(
                     crispy.Field(
                         'multi_select_match_type',
-                        x_init="multiSelectMatchType = $el.value",
-                        x_model="multiSelectMatchType",
+                        x_select2=json.dumps({
+                            "dropdownParent": select2_parent_selector,
+                        }),
+                        **({
+                            "@select2change": "multiSelectMatchType = $event.detail",
+                        })
                     ),
                     crispy.Div(
                         crispy.Field(
