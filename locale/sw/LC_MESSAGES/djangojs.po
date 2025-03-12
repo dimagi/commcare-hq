@@ -251,6 +251,18 @@ msgid "Select a Lookup Table..."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Cache"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Lazy Load"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Cache & Lazy Load"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
 msgid "Tab Name"
 msgstr ""
 
@@ -2938,6 +2950,10 @@ msgstr ""
 
 #: corehq/apps/custom_data_fields/static/custom_data_fields/js/custom_data_fields.js
 msgid "Edit Profile"
+msgstr ""
+
+#: corehq/apps/data_cleaning/static/data_cleaning/js/directives/dynamic_options_select2.js
+msgid "No available suggestions. Add more by separating words with spaces."
 msgstr ""
 
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js

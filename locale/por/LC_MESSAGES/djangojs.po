@@ -140,10 +140,8 @@ msgid "Please enter your organization."
 msgstr ""
 
 #: corehq/apps/analytics/static/analytix/js/cta_forms.js
-#, fuzzy
-#| msgid "Please enter a valid email."
 msgid "Please enter your job title."
-msgstr "Introduze um email válido, por favor."
+msgstr ""
 
 #: corehq/apps/analytics/static/analytix/js/cta_forms.js
 msgid "Please enter your email address."
@@ -254,6 +252,18 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 msgid "Select a Lookup Table..."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Cache"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Lazy Load"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Cache & Lazy Load"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
@@ -2945,6 +2955,10 @@ msgstr ""
 
 #: corehq/apps/custom_data_fields/static/custom_data_fields/js/custom_data_fields.js
 msgid "Edit Profile"
+msgstr ""
+
+#: corehq/apps/data_cleaning/static/data_cleaning/js/directives/dynamic_options_select2.js
+msgid "No available suggestions. Add more by separating words with spaces."
 msgstr ""
 
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js
