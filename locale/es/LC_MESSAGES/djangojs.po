@@ -139,10 +139,8 @@ msgid "Please enter your organization."
 msgstr ""
 
 #: corehq/apps/analytics/static/analytix/js/cta_forms.js
-#, fuzzy
-#| msgid "Please enter your name."
 msgid "Please enter your job title."
-msgstr "Por favor ingrese su nombre."
+msgstr ""
 
 #: corehq/apps/analytics/static/analytix/js/cta_forms.js
 msgid "Please enter your email address."
@@ -255,6 +253,18 @@ msgstr "Tabla de Búsqueda"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 msgid "Select a Lookup Table..."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Cache"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Lazy Load"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Cache & Lazy Load"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
@@ -3082,6 +3092,10 @@ msgstr ""
 msgid "Edit Profile"
 msgstr ""
 
+#: corehq/apps/data_cleaning/static/data_cleaning/js/directives/dynamic_options_select2.js
+msgid "No available suggestions. Add more by separating words with spaces."
+msgstr ""
+
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js
 msgid "No Name"
 msgstr "No hay Nombre"
@@ -3757,16 +3771,12 @@ msgid "Showing <%- firstItem %> to <%- lastItem %> of <%- maxItems %> entries"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/rich_text_knockout_bindings.js
-#, fuzzy
-#| msgid "Data file deleted."
 msgid "No File selected"
-msgstr "Archivo de datos borrado."
+msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/rich_text_knockout_bindings.js
-#, fuzzy
-#| msgid "Failed to save "
 msgid "Failed to upload image: "
-msgstr "Error al guardar"
+msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/rich_text_knockout_bindings.js
 msgid "Failed to upload image. Please try again."
