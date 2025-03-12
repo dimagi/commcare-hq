@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from jsonfield.fields import JSONField
 
 from corehq.apps.userreports.models import ReportConfiguration
 
@@ -73,3 +74,23 @@ class DashboardReport(DashboardWidgetBase):
     @property
     def report_configuration(self):
         return ReportConfiguration.get(self.report_configuration_id)
+
+
+class Gauge(DashboardWidgetBase):
+    """
+    Configuration for a gauge in a campaign dashboard
+    """
+    dashboard = models.ForeignKey(
+        Dashboard,
+        on_delete=models.CASCADE,
+        related_name='gauges',
+    )
+
+    # cases gauge fields
+    case_type = models.CharField(null=True)
+
+    # one of the metric from the ones available as set in GAUGE_METRICS
+    metric = models.CharField(null=False, blank=False)
+
+    # optional additional configuration set to customize gauge appearance
+    configuration = JSONField(default=dict)
