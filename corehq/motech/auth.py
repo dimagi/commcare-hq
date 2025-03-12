@@ -95,7 +95,7 @@ class AuthManager:
         """
         return None
 
-    def get_session(self, domain_name: str) -> Session:
+    def get_session(self, domain_name: str, headers: Optional[dict] = None) -> Session:
         """
         Returns an instance of requests.Session. Manages authentication
         tokens, if applicable.
@@ -214,7 +214,7 @@ class OAuth2ClientGrantManager(AuthManager):
         self.connection_settings.last_token = value
         self.connection_settings.save()
 
-    def get_session(self, domain_name: str) -> Session:
+    def get_session(self, domain_name: str, headers: Optional[dict] = None) -> Session:
         # Compare to OAuth2PasswordGrantManager.get_session()
 
         def set_last_token(token):
@@ -240,6 +240,7 @@ class OAuth2ClientGrantManager(AuthManager):
                     token_url=self.token_url,
                     auth=auth,
                     include_client_id=self.include_client_id,
+                    headers=headers,
                 )
             else:
                 self.last_token = session.fetch_token(
@@ -247,6 +248,7 @@ class OAuth2ClientGrantManager(AuthManager):
                     client_id=self.client_id,
                     client_secret=self.client_secret,
                     include_client_id=self.include_client_id,
+                    headers=headers,
                 )
 
         refresh_kwargs = {
@@ -260,6 +262,10 @@ class OAuth2ClientGrantManager(AuthManager):
             auto_refresh_kwargs=refresh_kwargs,
             token_updater=set_last_token
         )
+
+        if headers:
+            session.headers.update(headers)
+
         make_session_public_only(
             session,
             domain_name,
@@ -313,7 +319,7 @@ class OAuth2PasswordGrantManager(AuthManager):
         self.connection_settings.last_token = value
         self.connection_settings.save()
 
-    def get_session(self, domain_name: str) -> Session:
+    def get_session(self, domain_name: str, **kwargs) -> Session:
 
         def set_last_token(token):
             # Used by OAuth2Session
