@@ -10,6 +10,16 @@ hqDefine("app_manager/js/app_view", [
     "hqwebapp/js/bootstrap3/main",
     "app_manager/js/app_manager",
     "app_manager/js/section_changer",
+    "app_manager/js/apps_base",
+    "app_manager/js/app_view_application",   // TODO: combine this with app_manager/js/app_view?
+    "app_manager/js/widgets",   // app version widget when copying an app
+    "app_manager/js/download_async_modal",  // TODO: test if this is needed, I think this it's for the download multimedia button
+    "hqwebapp/js/bootstrap3/widgets",
+    "app_manager/js/add_ons",
+    "app_manager/js/settings/translations", // TODO: keep models in here and move handlers into this entry point?  Don't love that this has side effects. Same goes for app_manager/js/add_ons and possibly others
+    "app_manager/js/supported_languages",
+    "app_manager/js/custom_assertions",
+    "app_manager/js/managed_app",
 ], function (
     $,
     ko,
