@@ -191,7 +191,6 @@ class ConnectionSettings(models.Model):
             notify_addresses=self.notify_addresses,
             payload_id=payload_id,
             logger=logger,
-            session_headers=self.custom_headers,
         )
 
     def get_auth_manager(self):

@@ -95,7 +95,7 @@ class AuthManager:
         """
         return None
 
-    def get_session(self, domain_name: str, headers: Optional[dict] = None) -> Session:
+    def get_session(self, domain_name: str) -> Session:
         """
         Returns an instance of requests.Session. Manages authentication
         tokens, if applicable.
@@ -214,7 +214,7 @@ class OAuth2ClientGrantManager(AuthManager):
         self.connection_settings.last_token = value
         self.connection_settings.save()
 
-    def get_session(self, domain_name: str, headers: Optional[dict] = None) -> Session:
+    def get_session(self, domain_name: str) -> Session:
         # Compare to OAuth2PasswordGrantManager.get_session()
 
         def set_last_token(token):
@@ -222,6 +222,7 @@ class OAuth2ClientGrantManager(AuthManager):
             self.last_token = token
 
         request_fresh_token = not self.last_token or self.last_token.get('refresh_token') is None
+        additional_headers = self.connection_settings.custom_headers
 
         if toggles.SUPERSET_ANALYTICS.enabled(domain_name):
             if (
@@ -240,7 +241,7 @@ class OAuth2ClientGrantManager(AuthManager):
                     token_url=self.token_url,
                     auth=auth,
                     include_client_id=self.include_client_id,
-                    headers=headers,
+                    headers=additional_headers,
                 )
             else:
                 self.last_token = session.fetch_token(
@@ -248,7 +249,7 @@ class OAuth2ClientGrantManager(AuthManager):
                     client_id=self.client_id,
                     client_secret=self.client_secret,
                     include_client_id=self.include_client_id,
-                    headers=headers,
+                    headers=additional_headers,
                 )
 
         refresh_kwargs = {
@@ -263,8 +264,8 @@ class OAuth2ClientGrantManager(AuthManager):
             token_updater=set_last_token
         )
 
-        if headers:
-            session.headers.update(headers)
+        if additional_headers:
+            session.headers.update(additional_headers)
 
         make_session_public_only(
             session,
@@ -319,7 +320,7 @@ class OAuth2PasswordGrantManager(AuthManager):
         self.connection_settings.last_token = value
         self.connection_settings.save()
 
-    def get_session(self, domain_name: str, **kwargs) -> Session:
+    def get_session(self, domain_name: str) -> Session:
 
         def set_last_token(token):
             # Used by OAuth2Session

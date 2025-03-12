@@ -103,7 +103,6 @@ class Requests(object):
         notify_addresses: Optional[list] = None,
         payload_id: Optional[str] = None,
         logger: Optional[Callable] = None,
-        session_headers: Optional[dict] = None,
     ):
         """
         Initialise instance
@@ -129,10 +128,9 @@ class Requests(object):
         self.logger = logger or RequestLog.log
         self.send_request = log_request(self, self.send_request_unlogged, self.logger)
         self._session = None
-        self.session_headers = session_headers
 
     def __enter__(self):
-        self._session = self.auth_manager.get_session(self.domain_name, self.session_headers)
+        self._session = self.auth_manager.get_session(self.domain_name)
         return self
 
     def __exit__(self, *args):
