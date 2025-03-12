@@ -1,6 +1,6 @@
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from corehq import toggles
+from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
 from corehq.apps.data_cleaning.models import BulkEditSession
 from corehq.apps.data_cleaning.tables import (
     CleanCaseTable,
@@ -15,7 +15,7 @@ from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 
 @method_decorator([
     use_bootstrap5,
-    toggles.DATA_CLEANING_CASES.required_decorator(),
+    require_bulk_data_cleaning_cases,
 ], name='dispatch')
 class BaseDataCleaningTableView(LoginAndDomainMixin, DomainViewMixin, SelectablePaginatedTableView):
     pass
