@@ -8,7 +8,7 @@ from corehq.apps.accounting.utils.downgrade import (
     is_subscription_eligible_for_downgrade_process,
 )
 from corehq.apps.accounting.utils.invoicing import (
-    get_oldest_unpaid_invoice_over_threshold,
+    get_oldest_overdue_invoice_over_threshold,
 )
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import HqPermissions
@@ -19,7 +19,7 @@ from corehq.util.quickcache import quickcache
 def get_overdue_invoice(domain_name):
     current_subscription = Subscription.get_active_subscription_by_domain(domain_name)
     if current_subscription and is_subscription_eligible_for_downgrade_process(current_subscription):
-        overdue_invoice, _ = get_oldest_unpaid_invoice_over_threshold(date.today(), domain_name)
+        overdue_invoice, _ = get_oldest_overdue_invoice_over_threshold(date.today(), domain_name)
         return overdue_invoice
 
 

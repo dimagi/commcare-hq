@@ -24,9 +24,9 @@ from corehq.apps.accounting.utils import (
     log_accounting_error,
 )
 from corehq.apps.accounting.utils.invoicing import (
-    get_accounts_with_customer_invoices_over_threshold,
-    get_domains_with_subscription_invoices_over_threshold,
-    get_oldest_unpaid_invoice_over_threshold,
+    get_accounts_with_customer_invoices_overdue,
+    get_domains_with_subscription_invoices_overdue,
+    get_oldest_overdue_invoice_over_threshold,
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.util.view_utils import absolute_reverse
@@ -35,7 +35,7 @@ from corehq.util.view_utils import absolute_reverse
 def downgrade_eligible_domains(only_downgrade_domain=None):
     today = datetime.date.today()
 
-    for domain, oldest_unpaid_invoice, total in get_domains_with_subscription_invoices_over_threshold(today):
+    for domain, oldest_unpaid_invoice, total in get_domains_with_subscription_invoices_overdue(today):
         try:
             if only_downgrade_domain and domain != only_downgrade_domain:
                 continue
@@ -51,7 +51,7 @@ def downgrade_eligible_domains(only_downgrade_domain=None):
                 show_stack_trace=True
             )
 
-    for oldest_unpaid_invoice, total in get_accounts_with_customer_invoices_over_threshold(today):
+    for oldest_unpaid_invoice, total in get_accounts_with_customer_invoices_overdue(today):
         try:
             subscription_on_invoice = oldest_unpaid_invoice.subscriptions.first()
             if only_downgrade_domain and subscription_on_invoice.subscriber.domain != only_downgrade_domain:
@@ -68,7 +68,7 @@ def downgrade_eligible_domains(only_downgrade_domain=None):
 
 def can_domain_unpause(domain):
     today = datetime.date.today()
-    oldest_unpaid_invoice = get_oldest_unpaid_invoice_over_threshold(today, domain)[0]
+    oldest_unpaid_invoice = get_oldest_overdue_invoice_over_threshold(today, domain)[0]
     if not oldest_unpaid_invoice:
         return True
     days_ago = (today - oldest_unpaid_invoice.date_due).days
