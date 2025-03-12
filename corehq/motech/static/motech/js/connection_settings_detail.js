@@ -29,8 +29,6 @@ hqDefine("motech/js/connection_settings_detail", [
                 _.each(customAuthPresetFields, function (field) {
                     $('#div_id_' + field).removeClass("d-none");
                 });
-            } else if (authPreset == 'mtn_momo_settings') {
-                $('#div_id_custom_headers').addClass("d-none");
             } else {
                 _.each(customAuthPresetFields, function (field) {
                     $('#div_id_' + field).addClass("d-none");
