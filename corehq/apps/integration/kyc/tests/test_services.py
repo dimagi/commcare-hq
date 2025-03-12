@@ -1,5 +1,7 @@
 import doctest
+from unittest.mock import patch, Mock
 
+import requests
 from django.test import TestCase
 
 import jsonschema
@@ -7,11 +9,12 @@ import pytest
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.integration.kyc.models import KycConfig, UserDataStore, KycUser
+from corehq.apps.integration.kyc.models import KycConfig, UserDataStore, KycUser, KycVerificationStatus
 from corehq.apps.integration.kyc.exceptions import UserCaseNotFound
 from corehq.apps.integration.kyc.services import (
     _validate_schema,
     get_user_data_for_api,
+    verify_user,
 )
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.tests.utils import create_case
@@ -53,7 +56,7 @@ class TestValidateSchema(TestCase):
             _validate_schema(endpoint, data)
 
 
-class TestGetUserDataForAPI(TestCase):
+class BaseKycUserSetup(TestCase):
     domain = 'test-kyc-integration'
 
     @classmethod
@@ -91,6 +94,9 @@ class TestGetUserDataForAPI(TestCase):
             "first_name": "first_name",
             "nationality": "nationality",
         }
+
+
+class TestGetUserDataForAPI(BaseKycUserSetup):
 
     def test_custom_user_data_store(self):
         self.user.get_user_data(self.domain).update({'nationality': 'Indian'})
@@ -167,3 +173,57 @@ class TestGetUserDataForAPI(TestCase):
         result = get_user_data_for_api(self.kyc_user, self.config)
 
         self.assertEqual(result, {})
+
+
+class TestVerifyUser(BaseKycUserSetup):
+
+    def _sample_response_json(self):
+        return {
+            'data': {
+                "firstName": 100,
+                "lastName": 100,
+                "phoneNumber": 100,
+                "emailAddress": 100,
+                "nationalIdNumber": 100,
+                "streetAddress": 100,
+                "city": 100,
+                "postCode": 100,
+                "country": 100,
+            }
+        }
+
+    @patch('corehq.apps.integration.kyc.services._validate_schema', return_value=True)
+    @patch('corehq.apps.integration.kyc.services.get_user_data_for_api', return_value={'phoneNumber': 1234})
+    @patch('corehq.motech.requests.Requests.post')
+    def test_kyc_success(self, mock_post, *args):
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = self._sample_response_json()
+        mock_post.return_value = mock_response
+
+        verification_status = verify_user(self.kyc_user, self.config)
+
+        assert verification_status == KycVerificationStatus.PASSED
+
+    @patch('corehq.apps.integration.kyc.services._validate_schema', return_value=True)
+    @patch('corehq.apps.integration.kyc.services.get_user_data_for_api', return_value={'phoneNumber': 1234})
+    @patch('corehq.motech.requests.Requests.post')
+    def test_kyc_failed(self, mock_post, *args):
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = self._sample_response_json()
+        mock_response.json.return_value['data'].update({'phoneNumber': 10})  # below threshold
+        mock_post.return_value = mock_response
+
+        verification_status = verify_user(self.kyc_user, self.config)
+
+        assert verification_status == KycVerificationStatus.FAILED
+
+    @patch('corehq.apps.integration.kyc.services._validate_schema', return_value=True)
+    @patch('corehq.apps.integration.kyc.services.get_user_data_for_api', return_value={'phoneNumber': 1234})
+    @patch('corehq.motech.requests.Requests.post')
+    def test_api_error(self, mock_post, *args):
+        mock_post.side_effect = requests.HTTPError
+
+        with self.assertRaises(requests.HTTPError):
+            verify_user(self.kyc_user, self.config)
