@@ -183,8 +183,9 @@ hqDefine("reports/js/bootstrap5/hq_report", [
                     .removeClass('disabled')
                     .prop('disabled', false);
             });
-            $('#paramSelectorForm fieldset').on('change apply', function () {
-                $(self.filterSubmitSelector)
+            $('#paramSelectorForm fieldset').on('change apply', function (e) {
+                const submitButton = $(e.target).closest('#reportFilters').find(self.filterSubmitSelector);
+                $(submitButton)
                     .changeButtonState('reset')
                     .addClass('btn-primary')
                     .removeClass('disabled')
