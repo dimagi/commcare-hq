@@ -6,8 +6,12 @@
 
 {% block stylesheets %}
   {{ block.super }}
-  <link rel="stylesheet" href="{% static 'mapbox-gl/dist/mapbox-gl.css' %}">
-  <link rel="stylesheet" href="{% static '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css' %}" type="text/css">
+  <link rel="stylesheet" href="{% static 'mapbox-gl/dist/mapbox-gl.css' %}" />
+  <link
+    rel="stylesheet"
+    href="{% static '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css' %}"
+    type="text/css"
+  />
 {% endblock %}
 
 {% block title %}
@@ -53,7 +57,7 @@
       <!-- Report and Map Section -->
       <div class="row">
         <h2>{% trans "Reports" %}</h2>
-        <div id="map-reports-container-cases" >
+        <div id="map-reports-container-cases">
           {% for widget in map_widgets.cases %}
             {% include 'campaign/partials/dashboard_map.html' %}
           {% endfor %}
