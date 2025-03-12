@@ -28,7 +28,7 @@ from corehq.apps.es.aggregations import (
     FilterAggregation,
     NestedAggregation,
 )
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.exceptions import BadRequestError
@@ -127,7 +127,19 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     @property
     def headers(self):
-        columns = self._columns
+        columns = []
+        if self.include_location_data():
+            # we don't know which all location types would be present in data,
+            # We assume that all will be needed.
+            location_types = LocationType.objects.by_domain(self.domain)
+            location_columns = ['{} Name'.format(loc_col.name) for loc_col in location_types]
+            for location_column in location_columns:
+                columns.append(
+                    DataTablesColumn(location_column,
+                                     sortable=False,
+                                     use_bootstrap5=self.use_bootstrap5)
+                )
+        columns.extend(self._columns)
         if self.show_build_profile:
             columns.append(
                 DataTablesColumn(_("Build Profile"),
@@ -270,7 +282,6 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         return user_query
 
     def get_location_columns(self, grouped_ancestor_locs):
-        from corehq.apps.locations.models import LocationType
         location_types = LocationType.objects.by_domain(self.domain)
         all_user_locations = grouped_ancestor_locs.values()
         all_user_loc_types = {loc.location_type_id for user_locs in all_user_locations for loc in user_locs}
@@ -321,7 +332,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         return (
             (
                 toggle.enabled(self.request.domain, toggles.NAMESPACE_DOMAIN)
-                and self.rendered_as in ['export']
+                # export: Export to Excel, json: data for UI, async: headers fetched async
+                and self.rendered_as in ['export', 'json', 'async']
             )
         )
 
