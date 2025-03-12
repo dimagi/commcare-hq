@@ -21,4 +21,4 @@ class DeIdHash(models.Model):
     @quickcache(['domain'], timeout=24 * 60 * 60)
     def _get_salt(cls, domain):
         instance, __ = cls.objects.get_or_create(domain=domain)
-        return instance.id
+        return instance.id.hex
