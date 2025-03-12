@@ -30,7 +30,7 @@
                             value: value()[$parent.lang]
                         "/>
           </div>
-          <!-- ko if: $parent.values_are_icons() -->
+          <!-- ko if: $parent.values_are_icons() && iconManagerReady() -->
           <div data-bind="template: {name: 'value_icon_uploader', data: iconManager}">
           </div>
           <!-- /ko -->
@@ -50,7 +50,7 @@
         </div>
         {% if app.supports_alt_text %}
           <div class="row">
-            <!-- ko if: $parent.values_are_icons() -->
+            <!-- ko if: $parent.values_are_icons() && iconManagerReady() -->
             <div data-bind="template: {name: 'icon_alt_text', data: iconManager}"
                 style="margin-top: 3px">
             </div>
@@ -58,7 +58,7 @@
           </div>
         {% endif %}
         <div class="row">
-          <!-- ko if: $parent.values_are_icons() -->
+          <!-- ko if: $parent.values_are_icons() && iconManagerReady() -->
           <div data-bind="template: {name: 'icon_uploader_path', data: iconManager}"
                style="margin-top: 3px">
           </div>
