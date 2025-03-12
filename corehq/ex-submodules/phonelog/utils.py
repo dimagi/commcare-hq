@@ -227,6 +227,8 @@ class SumoLogicLog(object):
             "[app_version={app_version}] "
             "[cc_version={cc_version}] "
             "[msg={msg}]"
+            "[device_model={devicel_model}]"
+            "[android_version={android_version}]"
         )
         appversion_text = self.xform.form_data.get('app_version')
         return template.format(
@@ -239,6 +241,8 @@ class SumoLogicLog(object):
             app_version=get_version_from_appversion_text(appversion_text),
             cc_version=get_commcare_version_from_appversion_text(appversion_text),
             msg=log["msg"],
+            device_model=log["device_model"],
+            android_version=log["android_version"],
         )
 
     def _get_user_info(self, log):
