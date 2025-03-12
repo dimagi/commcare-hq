@@ -4,9 +4,7 @@ from datetime import date, timedelta
 from corehq.apps.accounting.const import DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE
 from corehq.apps.accounting.models import CreditLine, Subscription
 from corehq.apps.accounting.utils import months_from_date
-from corehq.apps.accounting.utils.downgrade import (
-    is_subscription_eligible_for_downgrade_process,
-)
+from corehq.apps.accounting.utils.downgrade import Downgrade
 from corehq.apps.accounting.utils.invoicing import (
     get_oldest_overdue_invoice_over_threshold,
 )
@@ -18,7 +16,7 @@ from corehq.util.quickcache import quickcache
 @quickcache(['domain_name'], timeout=60 * 60)
 def get_overdue_invoice(domain_name):
     current_subscription = Subscription.get_active_subscription_by_domain(domain_name)
-    if current_subscription and is_subscription_eligible_for_downgrade_process(current_subscription):
+    if current_subscription and Downgrade.is_subscription_eligible_for_process(current_subscription):
         overdue_invoice, _ = get_oldest_overdue_invoice_over_threshold(date.today(), domain_name)
         return overdue_invoice
 
