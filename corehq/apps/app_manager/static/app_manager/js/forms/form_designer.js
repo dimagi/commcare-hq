@@ -1,7 +1,6 @@
 hqDefine("app_manager/js/forms/form_designer", [
     "jquery",
     "underscore",
-    "moment",
     "hqwebapp/js/initial_page_data",
     "analytix/js/appcues",
     "app_manager/js/app_manager",
@@ -14,7 +13,6 @@ hqDefine("app_manager/js/forms/form_designer", [
 ], function (
     $,
     _,
-    moment,
     initialPageData,
     appcues,
     appManager,
@@ -22,7 +20,6 @@ hqDefine("app_manager/js/forms/form_designer", [
     google,
     appNotifications,
     editFormDetails,
-    WS4Redis
 ) {
     const FORM_TYPES = {
             REGISTRATION: "registration",

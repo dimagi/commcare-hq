@@ -4,8 +4,6 @@
 {% load i18n %}
 {% load xforms_extras %}
 
-{% js_entry_b3 "app_manager/js/forms/form_designer" %}
-
 {% block head %}
   {{ block.super }}
   {% if not vellum_debug %}
@@ -35,6 +33,7 @@
 
 {% block js %}
   {{ block.super }}
+  <script src="{% static 'moment/moment.js' %}"></script>
   {# This is fine as an inline script; it'll be removed once form designer is migrated to RequireJS #}
   <script>
     /*
@@ -46,9 +45,15 @@
     */
     define = undefined;
   </script>
+  {% compress js %}
+    <script src="{% static 'app_manager/js/forms/app_notifications.js' %}"></script>
+    <script src="{% static 'js/ws4redis.js' %}"></script>
+    <script src="{% static 'app_manager/js/forms/edit_form_details.js' %}"></script>
+    <script src="{% static 'app_manager/js/forms/form_designer.js' %}"></script>
+  {% endcompress %}
 {% endblock %}
 
-{% block title %}{# controlled by app_manager/js/forms/form_designer.js #}{% endblock %}
+{% block title %}{# controlled by app_manager/js/form_designer.js #}{% endblock %}
 
 {% block form-view %}
   {% initial_page_data 'CKEDITOR_BASEPATH' CKEDITOR_BASEPATH|static %}
