@@ -1,27 +1,8 @@
-hqDefine("app_manager/js/forms/form_designer", [
-    "jquery",
-    "underscore",
-    "hqwebapp/js/initial_page_data",
-    "analytix/js/appcues",
-    "app_manager/js/app_manager",
-    "analytix/js/kissmetrix",
-    "analytix/js/google",
-    "app_manager/js/forms/app_notifications",
-    "app_manager/js/forms/edit_form_details",
-    //"js/ws4redis",    // TODO: fix or remove, webpack doesn't know where this is
-    "commcarehq",
-], function (
-    $,
-    _,
-    initialPageData,
-    appcues,
-    appManager,
-    kissmetrix,
-    google,
-    appNotifications,
-    editFormDetails,
-) {
-    const FORM_TYPES = {
+/* globals require, WS4Redis */
+hqDefine("app_manager/js/forms/form_designer", function () {
+    var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+        appcues = hqImport('analytix/js/appcues'),
+        FORM_TYPES = {
             REGISTRATION: "registration",
             SURVEY: "survey",
             FOLLOWUP: "followup",
@@ -82,10 +63,11 @@ hqDefine("app_manager/js/forms/form_designer", [
         });
         VELLUM_OPTIONS.core = _.extend(VELLUM_OPTIONS.core, {
             onFormSave: function (data) {
+                var appManager = hqImport('app_manager/js/app_manager');
                 appManager.updateDOM(data.update);
                 $('.js-preview-toggle').removeAttr('disabled');
                 if (initialPageData.get("days_since_created") === 0) {
-                    kissmetrix.track.event('Saved the Form Builder within first 24 hours');
+                    hqImport('analytix/js/kissmetrix').track.event('Saved the Form Builder within first 24 hours');
                 }
                 trackFormEvent(appcues.EVENT_TYPES.FORM_SAVE);
             },
@@ -103,7 +85,7 @@ hqDefine("app_manager/js/forms/form_designer", [
                 var kissmetrixTrack = function () {};
                 if (initialPageData.get('days_since_created') === 0) {
                     kissmetrixTrack = function () {
-                        kissmetrix.track.event(
+                        hqImport('analytix/js/kissmetrix').track.event(
                             'Added question in Form Builder within first 24 hours'
                         );
                     };
@@ -134,11 +116,11 @@ hqDefine("app_manager/js/forms/form_designer", [
                 define("moment", [], function () { return window.moment; });
                 define("vellum/hqAnalytics", [], function () {
                     function workflow(message) {
-                        kissmetrix.track.event(message);
+                        hqImport('analytix/js/kissmetrix').track.event(message);
                     }
 
                     function usage(label, group, message) {
-                        google.track.event(label, group, message);
+                        hqImport('analytix/js/google').track.event(label, group, message);
                     }
 
                     function fbUsage(group, message) {
@@ -152,44 +134,43 @@ hqDefine("app_manager/js/forms/form_designer", [
                     };
                 });
 
-                // TODO: deal with this
-                /*require.config({
+                require.config({
                     /* to use non-built files in HQ:
                         * clone Vellum into submodules/formdesigner
                         * Run make in that directory (requires node.js)
                         * set settings.VELLUM_DEBUG to "dev" or "dev-min"
                     */
-                    /*baseUrl: initialPageData.get('requirejs_url'),
+                    baseUrl: initialPageData.get('requirejs_url'),
                     // handle very bad connections
                     waitSeconds: 60,
                     urlArgs: initialPageData.get('requirejs_args'),
                     paths: {
                         'jquery.vellum': 'main',
                     },
-                });*/
+                });
 
-                // TODO: deal with this
-                /*require(["jquery", "jquery.vellum", "moment"], function ($) {
+                require(["jquery", "jquery.vellum", "moment"], function ($) {
                     $(function () {
                         $("#edit").hide();
                         $('#hq-footer').hide();
                         $('#formdesigner').vellum(VELLUM_OPTIONS);
                         var notificationOptions = initialPageData.get("notification_options");
                         if (notificationOptions) {
-                            var vellum = $("#formdesigner").vellum("get");
+                            var notifications = hqImport('app_manager/js/forms/app_notifications'),
+                                vellum = $("#formdesigner").vellum("get");
                             // initialize redis
                             WS4Redis({
                                 uri: notificationOptions.WEBSOCKET_URI + notificationOptions.notify_facility + '?subscribe-broadcast',
-                                receive_message: appNotifications.alertUser(notificationOptions.user_id, vellum.alertUser, vellum),
+                                receive_message: notifications.alertUser(notificationOptions.user_id, vellum.alertUser, vellum),
                                 heartbeat_msg: notificationOptions.WS4REDIS_HEARTBEAT,
                             });
                         }
                     });
-                });*/
-                kissmetrix.track.event('Entered the Form Builder');
+                });
+                hqImport('analytix/js/kissmetrix').track.event('Entered the Form Builder');
 
-                appManager.setPrependedPageTitle("\u270E ", true);
-                appManager.setAppendedPageTitle(gettext("Edit Form"));
+                hqImport('app_manager/js/app_manager').setPrependedPageTitle("\u270E ", true);
+                hqImport('app_manager/js/app_manager').setAppendedPageTitle(gettext("Edit Form"));
 
                 if (initialPageData.get('form_uses_cases')) {
                     // todo make this a more broadly used util, perhaps? actually add buttons to formplayer?
@@ -215,28 +196,29 @@ hqDefine("app_manager/js/forms/form_designer", [
                     );
                 }
 
-                appManager.updatePageTitle(initialPageData.get("form_name"));
-                editFormDetails.initName(
+                var editDetails = hqImport('app_manager/js/forms/edit_form_details');
+                hqImport('app_manager/js/app_manager').updatePageTitle(initialPageData.get("form_name"));
+                editDetails.initName(
                     initialPageData.get("form_name"),
                     initialPageData.reverse("edit_form_attr", "name")
                 );
-                editFormDetails.initComment(
+                editDetails.initComment(
                     initialPageData.get("form_comment").replace(/\\n/g, "\n"),
                     initialPageData.reverse("edit_form_attr", "comment")
                 );
-                editFormDetails.setUpdateCallbackFn(function (name) {
+                editDetails.setUpdateCallbackFn(function (name) {
                     $('#formdesigner .fd-content-left .fd-head-text').text(name);
                     $('.variable-form_name').text(name);
-                    appManager.updatePageTitle(name);
+                    hqImport('app_manager/js/app_manager').updatePageTitle(name);
                     $('#edit-form-name-modal').modal('hide');
                     $('#edit-form-name-modal').find('.disable-on-submit').enableButton();
                 });
-                $('#edit-form-name-modal').koApplyBindings(editFormDetails);
+                $('#edit-form-name-modal').koApplyBindings(editDetails);
                 $("#edit-form-name-modal button[type='submit']").click(function () {
-                    kissmetrix.track.event("Renamed form from form builder");
+                    hqImport('analytix/js/kissmetrix').track.event("Renamed form from form builder");
                 });
             });
         };
-        appcues.then(initFormBuilder, initFormBuilder);
+        hqImport("analytix/js/appcues").then(initFormBuilder, initFormBuilder);
     });
 });
