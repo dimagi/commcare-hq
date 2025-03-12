@@ -121,8 +121,8 @@ def verify_user(kyc_user, config):
     )
     response.raise_for_status()
     field_scores = response.json().get('data', {})
-    verification_result = all(v >= required_thresholds[k] for k, v in field_scores.items())
-    return KycVerificationStatus.PASSED if verification_result else KycVerificationStatus.FAILED
+    verification_successful = all(v >= required_thresholds[k] for k, v in field_scores.items())
+    return KycVerificationStatus.PASSED if verification_successful else KycVerificationStatus.FAILED
 
 
 def get_user_data_for_api(kyc_user, config):
