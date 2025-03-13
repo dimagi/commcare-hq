@@ -24,6 +24,14 @@ EXCLUDED_FILTERED_PROPERTIES = [
 ]
 
 
+class DynamicMultipleChoiceField(forms.MultipleChoiceField):
+    def valid_value(self, value):
+        """
+        Override the parent valid_value method to allow any user-created value
+        """
+        return True
+
+
 class AddColumnFilterForm(forms.Form):
     prop_id = forms.ChoiceField(
         label=gettext_lazy("Case Property"),
@@ -76,7 +84,7 @@ class AddColumnFilterForm(forms.Form):
         choices=FilterMatchType.MULTI_SELECT_CHOICES + FilterMatchType.ALL_DATA_TYPES_CHOICES,
         required=False
     )
-    multi_select_value = forms.MultipleChoiceField(
+    multi_select_value = DynamicMultipleChoiceField(
         label=gettext_lazy("Value"),
         required=False
     )
