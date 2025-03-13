@@ -7,7 +7,7 @@
       <span class="badge bg-danger"> {% trans "Fail" %} </span>
     </span>
     <span class="text-wrap">
-      {{ record.kyc_verification_error|default:'Unknown error' }}
+      {% trans record.kyc_verification_error|default:"Unknown error" %}
     </span>
   </span>
 {% else %}

@@ -9,7 +9,8 @@ import pytest
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.integration.kyc.models import KycConfig, UserDataStore, KycUser, KycVerificationStatus
+from corehq.apps.integration.kyc.models import KycConfig, UserDataStore, KycUser, KycVerificationStatus, \
+    KycVerificationFailureCause
 from corehq.apps.integration.kyc.exceptions import UserCaseNotFound
 from corehq.apps.integration.kyc.services import (
     _validate_schema,
@@ -201,9 +202,10 @@ class TestVerifyUser(BaseKycUserSetup):
         mock_response.json.return_value = self._sample_response_json()
         mock_post.return_value = mock_response
 
-        verification_status = verify_user(self.kyc_user, self.config)
+        verification_status, error = verify_user(self.kyc_user, self.config)
 
         assert verification_status == KycVerificationStatus.PASSED
+        assert error is None
 
     @patch('corehq.apps.integration.kyc.services._validate_schema', return_value=True)
     @patch('corehq.apps.integration.kyc.services.get_user_data_for_api', return_value={'phoneNumber': 1234})
@@ -215,9 +217,10 @@ class TestVerifyUser(BaseKycUserSetup):
         mock_response.json.return_value['data'].update({'phoneNumber': 10})  # below threshold
         mock_post.return_value = mock_response
 
-        verification_status = verify_user(self.kyc_user, self.config)
+        verification_status, error = verify_user(self.kyc_user, self.config)
 
         assert verification_status == KycVerificationStatus.FAILED
+        assert error == KycVerificationFailureCause.USER_INFORMATION_MISMATCH.value
 
     @patch('corehq.apps.integration.kyc.services._validate_schema', return_value=True)
     @patch('corehq.apps.integration.kyc.services.get_user_data_for_api', return_value={'phoneNumber': 1234})
@@ -225,5 +228,5 @@ class TestVerifyUser(BaseKycUserSetup):
     def test_api_error(self, mock_post, *args):
         mock_post.side_effect = requests.HTTPError
 
-        with self.assertRaises(requests.HTTPError):
-            verify_user(self.kyc_user, self.config)
+        verification_status, error = verify_user(self.kyc_user, self.config)
+        assert error == KycVerificationFailureCause.API_ERROR.value
