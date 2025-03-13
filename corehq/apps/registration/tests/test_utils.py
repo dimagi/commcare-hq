@@ -56,7 +56,7 @@ class TestRequestNewDomain(TestCase):
     def tearDown(self):
         subscribed_domains = [self.domain_sso_test, self.domain_test]
         for domain in subscribed_domains:
-            Subscription._get_active_subscription_by_domain.clear(Subscription, domain)
+            Subscription.clear_caches(domain)
             SelfSignupWorkflow.get_in_progress_for_domain.clear(SelfSignupWorkflow, domain)
         super().tearDown()
 
