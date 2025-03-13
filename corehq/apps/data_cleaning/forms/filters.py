@@ -159,12 +159,12 @@ class AddColumnFilterForm(forms.Form):
                                           "isEditable = casePropertyDetails[$event.detail].is_editable;",
                     })
                 ),
-                crispy.Field(
-                    'data_type',
-                    x_model="dataType",
-                    **({
-                        ":disabled": "!isEditable",
-                    })
+                crispy.Div(
+                    crispy.Field(
+                        'data_type',
+                        x_model="dataType",
+                    ),
+                    x_show="isEditable",
                 ),
                 crispy.Div(
                     crispy.Field(
