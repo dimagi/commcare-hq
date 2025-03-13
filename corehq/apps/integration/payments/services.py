@@ -1,10 +1,31 @@
+import uuid
 from datetime import datetime
 
 from dimagi.utils.chunked import chunked
 from corehq.apps.users.models import WebUser
 from corehq.apps.hqcase.api.updates import handle_case_update
+from corehq.apps.integration.payments.exceptions import MoMoPaymentFailed
 
 CHUNK_SIZE = 100
+
+
+def request_payment(payee, connection_settings):
+    request_body = {}  # todo: parse from payee details
+
+    transaction_id = str(uuid.uuid4())
+    requests = connection_settings.get_requests()
+
+    response = requests.post(
+        '/disbursement/v2_0/deposit',
+        json=request_body,
+        headers={
+            'X-Reference-Id': transaction_id,
+            'X-Target-Environment': 'sandbox',
+        }
+    )
+    if response.status_code != 202:
+        raise MoMoPaymentFailed("Payment failed")
+    return transaction_id
 
 
 def verify_payment_cases(domain, case_ids: list, verifying_user: WebUser):
