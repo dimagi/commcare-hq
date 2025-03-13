@@ -667,6 +667,7 @@ integration
  0009_alter_kycconfig_connection_settings
  0010_alter_kycconfig_api_field_to_user_data_map
  0011_remove_kycconfig_connection_settings
+ 0012_momoconfig
 ivr
  0001_initial
  0002_call_app_id
