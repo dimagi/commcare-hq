@@ -1,5 +1,4 @@
 {% extends "reports/bootstrap3/base_template.html" %}
-
 {% load hq_shared_tags %}
 
 {% block stylesheets %}
@@ -18,7 +17,7 @@
   </style>
 {% endblock %}
 
-
-{% block additional_initial_page_data %}{{ block.super }}
-    {% initial_page_data "mapbox_access_token" mapbox_access_token %}
+{% block additional_initial_page_data %}
+  {{ block.super }}
+  {% initial_page_data "mapbox_access_token" mapbox_access_token %}
 {% endblock %}
