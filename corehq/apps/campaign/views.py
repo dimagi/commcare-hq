@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.core.paginator import Paginator
-from django.forms.models import model_to_dict
 from django.http import JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -66,9 +65,20 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        map_widgets = self._dashboard_map_configs
+        report_widgets = self._dashboard_report_configs
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
-            'map_widgets': self._dashboard_map_configs,
+            'map_report_widgets': {
+                'cases': sorted(
+                    map_widgets['cases'] + report_widgets['cases'],
+                    key=lambda x: x['display_order'],
+                ),
+                'mobile_workers': sorted(
+                    map_widgets['mobile_workers'] + report_widgets['mobile_workers'],
+                    key=lambda x: x['display_order'],
+                ),
+            },
         })
         context.update(self.dashboard_map_case_filters_context())
         return context
@@ -81,9 +91,31 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
             'mobile_workers': [],
         }
         for dashboard_map in dashboard_maps:
-            config = model_to_dict(dashboard_map, exclude=['dashboard', 'dashboard_tab', 'display_order'])
+            config = model_to_widget(dashboard_map)
             dashboard_map_configs[dashboard_map.dashboard_tab].append(config)
         return dashboard_map_configs
+
+    @property
+    def _dashboard_report_configs(self):
+        reports = Dashboard.objects.get(domain=self.domain).reports.all()
+        configs = {
+            'cases': [],
+            'mobile_workers': [],
+        }
+        for report in reports:
+            config = model_to_widget(report)
+            configs[report.dashboard_tab].append(config)
+        return configs
+
+
+def model_to_widget(instance):
+    """
+    Like model_to_dict, but excludes relations, and adds 'widget_type'.
+    """
+    widget = instance.__dict__.copy()
+    widget.pop('_state', None)  # Remove Django's internal state field
+    widget['widget_type'] = instance.__class__.__name__
+    return widget
 
 
 @method_decorator([login_and_domain_required, require_GET], name='dispatch')

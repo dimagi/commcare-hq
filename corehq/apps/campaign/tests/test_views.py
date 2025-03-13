@@ -95,7 +95,7 @@ class TestDashboardView(BaseTestCampaignView):
         assert response.status_code == 200
 
         context = response.context
-        assert context['map_widgets'] == {
+        assert context['map_report_widgets'] == {
             'cases': [{
                 'id': self.dashboard_map_cases.id,
                 'title': 'Cases Map',
