@@ -64,7 +64,7 @@ class ColumnFilterFormView(BulkEditSessionViewMixin, BaseFilterFormView):
         context = super().get_context_data(**kwargs)
         context.update({
             'container_id': 'column-filters',
-            'add_filter_form': kwargs.pop('filter_form', AddColumnFilterForm(self.session)),
+            'add_filter_form': kwargs.pop('filter_form', None) or AddColumnFilterForm(self.session),
         })
         return context
 
