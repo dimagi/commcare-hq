@@ -118,7 +118,11 @@ class ConnectionSettings(models.Model):
     all_objects = ConnectionQuerySet.as_manager()
 
     # Used when serializing data to ensure encrypted fields are reset
-    encrypted_fields = {"password": PASSWORD_PLACEHOLDER, "client_secret": PASSWORD_PLACEHOLDER}
+    encrypted_fields = {
+        "password": PASSWORD_PLACEHOLDER,
+        "client_secret": PASSWORD_PLACEHOLDER,
+        "custom_headers": PASSWORD_PLACEHOLDER,
+    }
 
     def __str__(self):
         return f"{self.name} [{self.domain}]"
