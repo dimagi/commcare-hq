@@ -755,9 +755,12 @@ class DataSourcePayloadGenerator(BasePayloadGenerator):
         Returns the request body to be forwarded to CommCare Analytics
         for ``payload_doc``, which is a ``DataSourceUpdateLog``.
         """
+        if payload_doc is None:
+            return None
         data = {
             "data": payload_doc.rows,
-            "data_source_id": payload_doc.data_source_id,
-            "doc_id": payload_doc.doc_id,
+            "data_source_id": payload_doc.data_source_id.hex,
+            "doc_id": payload_doc.get_id,
+            "doc_ids": payload_doc.doc_ids,
         }
         return json.dumps(data, cls=CommCareJSONEncoder)
