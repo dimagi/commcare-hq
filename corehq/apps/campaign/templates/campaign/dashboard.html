@@ -51,6 +51,8 @@
           {% for widget in map_report_widgets.cases %}
             {% if widget.widget_type == 'DashboardMap' %}
               {% include 'campaign/partials/dashboard_map.html' %}
+            {% elif widget.widget_type == 'DashboardReport' %}
+              {% include 'campaign/partials/dashboard_report.html' %}
             {% endif %}
           {% endfor %}
         </div>
@@ -71,6 +73,8 @@
           {% for widget in map_report_widgets.mobile_workers %}
             {% if widget.widget_type == 'DashboardMap' %}
               {% include 'campaign/partials/dashboard_map.html' %}
+            {% elif widget.widget_type == 'DashboardReport' %}
+              {% include 'campaign/partials/dashboard_report.html' %}
             {% endif %}
           {% endfor %}
         </div>
