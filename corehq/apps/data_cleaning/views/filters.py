@@ -70,7 +70,7 @@ class ColumnFilterFormView(BulkEditSessionViewMixin, BaseFilterFormView):
 
     @hq_hx_action('post')
     def add_column_filter(self, request, *args, **kwargs):
-        filter_form = AddColumnFilterForm(request.POST)
+        filter_form = AddColumnFilterForm(self.session, request.POST)
         if filter_form.is_valid():
             filter_form = None
         return self.get(request, filter_form=filter_form, *args, **kwargs)
