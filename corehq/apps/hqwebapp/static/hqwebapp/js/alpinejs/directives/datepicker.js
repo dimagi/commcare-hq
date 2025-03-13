@@ -1,4 +1,5 @@
 import { TempusDominus } from '@eonasdan/tempus-dominus';
+import {faFiveIcons} from '@eonasdan/tempus-dominus/dist/plugins/fa-five';
 import '@eonasdan/tempus-dominus/dist/css/tempus-dominus.css';
 import Alpine from 'alpinejs';
 import _ from 'underscore';
@@ -74,6 +75,7 @@ Alpine.directive('datepicker', (el, { expression }, { cleanup }) => {
         display: {
             theme: 'light',
             components: components,
+            icons: faFiveIcons,
         },
         localization: _.extend(defaultTranslations, localization),
     });
