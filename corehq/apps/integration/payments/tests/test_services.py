@@ -11,7 +11,7 @@ from corehq.apps.users.models import WebUser
 
 from corehq.motech.models import ConnectionSettings
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
-from corehq.apps.integration.payments.services import verify_payment_cases
+from corehq.apps.integration.payments.services import verify_payment_cases, request_payments_for_cases
 from corehq.apps.integration.payments.const import PaymentProperties
 from corehq.apps.integration.payments.services import request_payment
 from corehq.apps.integration.payments.exceptions import PaymentRequestError
@@ -186,6 +186,120 @@ class TestPaymentRequest(TestCase):
             PaymentProperties.PAYEE_NOTE: 'Jan payment',
             PaymentProperties.PAYER_MESSAGE: 'Thanks',
         }
+
+
+class TestRequestPaymentsForCases(TestCase):
+    domain = 'test-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        connection_settings = ConnectionSettings.objects.create(
+            domain=cls.domain,
+            name='test-conn-settings',
+            username='test-username',
+            password='test-password',
+            url='http://test-url.com',
+        )
+        cls.config = MoMoConfig.objects.create(
+            domain=cls.domain,
+            connection_settings=connection_settings,
+            environment='sandbox',
+        )
+
+        cls.factory = CaseFactory(cls.domain)
+        cls.case_list = []
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.config.delete()
+        for case in cls.case_list:
+            case.delete()
+        super().tearDownClass()
+
+    def _create_payment_case(self, name, properties):
+        case, = _create_case(self.factory, name, properties),
+        return case
+
+    @property
+    def _payment_details(self):
+        return {
+            PaymentProperties.BATCH_NUMBER: 'B001',
+            PaymentProperties.EMAIL: 'bsmith@example.org',
+            PaymentProperties.PHONE_NUMBER: '0987654321',
+            PaymentProperties.AMOUNT: '100',
+            PaymentProperties.CURRENCY: 'Dollar',
+            PaymentProperties.PAYEE_NOTE: 'Jan payment',
+            PaymentProperties.PAYER_MESSAGE: 'Thanks',
+            PaymentProperties.PAYMENT_VERIFIED: 'True',
+        }
+
+    @patch('corehq.apps.integration.payments.services._make_payment_request')
+    @patch('corehq.apps.integration.payments.services.bulk_update_cases')
+    def test_request_payments_for_cases(self, bulk_update_cases_mock, make_payment_request_mock):
+        transaction_id = str(uuid.uuid4())
+        make_payment_request_mock.return_value = transaction_id
+
+        payment_cases = [
+            self._create_payment_case('case 1', self._payment_details),
+            self._create_payment_case('case 2', self._payment_details),
+        ]
+        self.case_list.extend(payment_cases)  # for cleanup
+
+        for payment_case in payment_cases:
+            case_data = payment_case.case_json
+            assert case_data.get('transaction_id') is None
+            assert PaymentProperties.PAYMENT_SUBMITTED not in case_data
+            assert PaymentProperties.PAYMENT_TIMESTAMP not in case_data
+
+        request_payments_for_cases([_case.case_id for _case in payment_cases], self.config)
+
+        bulk_update_cases_mock.assert_called_once()
+        _, payment_updates = bulk_update_cases_mock.call_args[0]
+        assert len(payment_updates) == 2
+
+        case_id, payment_property_update, _ = payment_updates[0]
+        assert case_id == payment_cases[0].case_id
+        assert payment_property_update['transaction_id'] == transaction_id
+        assert payment_property_update[PaymentProperties.PAYMENT_SUBMITTED]
+        assert PaymentProperties.PAYMENT_TIMESTAMP in payment_property_update
+
+    @patch('corehq.apps.integration.payments.services._make_payment_request')
+    @patch('corehq.apps.integration.payments.services.bulk_update_cases')
+    def test_request_payments_for_cases_with_some_missing_data(
+        self, bulk_update_cases_mock, make_payment_request_mock
+    ):
+        transaction_id = str(uuid.uuid4())
+        make_payment_request_mock.return_value = transaction_id
+
+        payment_cases = [
+            self._create_payment_case('Eligible case', self._payment_details),
+            self._create_payment_case(
+                'Not eligible case',
+                {
+                    **self._payment_details,
+                    'email': None,
+                    'phone_number': None
+                }
+            ),
+        ]
+        self.case_list.extend(payment_cases)  # for cleanup
+
+        for payment_case in payment_cases:
+            case_data = payment_case.case_json
+            assert case_data.get('transaction_id') is None
+            assert PaymentProperties.PAYMENT_SUBMITTED not in case_data
+            assert PaymentProperties.PAYMENT_TIMESTAMP not in case_data
+
+        request_payments_for_cases([_case.case_id for _case in payment_cases], self.config)
+
+        bulk_update_cases_mock.assert_called_once()
+        _, payment_updates = bulk_update_cases_mock.call_args[0]
+        assert len(payment_updates) == 1
+
+        case_id, payment_property_update, _ = payment_updates[0]
+        eligible_case = payment_cases[0]
+        assert case_id == eligible_case.case_id
 
 
 def _create_case(factory, name, data):

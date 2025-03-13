@@ -10,8 +10,38 @@ from corehq.apps.integration.payments.schemas import PaymentTransferDetails, Par
 from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.form_processor.models import CommCareCase
 from corehq.apps.integration.payments.const import PaymentProperties
+from corehq.apps.hqcase.utils import bulk_update_cases
 
 CHUNK_SIZE = 100
+
+
+def request_payments_for_cases(case_ids, config):
+    payment_updates = []
+
+    for payment_case in CommCareCase.objects.get_cases(case_ids=case_ids):
+        try:
+            transaction_id = request_payment(payment_case, config)
+        except PaymentRequestError:
+            continue
+
+        payment_update = {
+            'transaction_id': transaction_id,
+            PaymentProperties.PAYMENT_SUBMITTED: True,
+            PaymentProperties.PAYMENT_TIMESTAMP: str(datetime.now()),
+        }
+        payment_updates.append(
+            (payment_case.case_id, payment_update, False)
+        )
+        if len(payment_updates) >= CHUNK_SIZE:
+            bulk_update_cases(
+                config.domain, payment_updates, device_id='momo_payment_submitted'
+            )
+            payment_updates = []
+
+    if payment_updates:
+        bulk_update_cases(
+            config.domain, payment_updates, device_id='momo_payment_submitted'
+        )
 
 
 def request_payment(payee_case: CommCareCase, config: MoMoConfig):
@@ -91,12 +121,12 @@ def _get_transfer_details(payee_case: CommCareCase) -> PaymentTransferDetails:
 
 
 def _get_payee_details(case_data: dict) -> PartyDetails:
-    if PaymentProperties.PHONE_NUMBER in case_data:
+    if case_data.get(PaymentProperties.PHONE_NUMBER):
         return PartyDetails(
             partyIdType="MSISDN",
             partyId=case_data.get(PaymentProperties.PHONE_NUMBER),
         )
-    elif PaymentProperties.EMAIL in case_data:
+    elif case_data.get(PaymentProperties.EMAIL):
         return PartyDetails(
             partyIdType="EMAIL",
             partyId=case_data.get(PaymentProperties.EMAIL),
