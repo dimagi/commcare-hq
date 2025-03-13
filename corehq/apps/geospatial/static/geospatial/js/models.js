@@ -164,7 +164,7 @@ hqDefine('geospatial/js/models', [
 
         self.DISBURSEMENT_LINES_LAYER_ID = 'disbursement-lines';
 
-        self.initMap = function (mapDivId, centerCoordinates, disableDrawControls) {
+        self.initMap = function (mapDivId, centerCoordinates, disableDrawControls = false) {
             mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
             if (!centerCoordinates) {
                 centerCoordinates = [-91.874, 42.76]; // should be domain specific

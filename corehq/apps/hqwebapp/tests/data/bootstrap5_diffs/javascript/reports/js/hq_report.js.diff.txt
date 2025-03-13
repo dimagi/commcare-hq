@@ -57,7 +57,7 @@
                      .addClass('btn-primary')
                      .removeClass('disabled')
                      .prop('disabled', false);
-@@ -255,16 +255,16 @@
+@@ -257,16 +257,16 @@
  
              self.sendEmail = function () {
                  var $sendButton = $(hqReport.emailReportModal).find('.send-button');
@@ -77,7 +77,7 @@
                          self.resetModal();
                          const errors = JSON.parse(response.responseText);
                          let messages = [hqReport.emailErrorMessage].concat(errors);
-@@ -274,7 +274,7 @@
+@@ -276,7 +276,7 @@
              };
  
              self.resetModal = function () {
