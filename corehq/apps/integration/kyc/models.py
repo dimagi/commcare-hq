@@ -197,9 +197,7 @@ class KycUser:
             KycVerificationStatus.FAILED,
             ''
         )
-        if value == '':
-            return KycVerificationStatus.PENDING
-        return value
+        return value or KycVerificationStatus.PENDING
 
     @property
     def kyc_provider(self):
@@ -238,6 +236,8 @@ class KycVerificationStatus:
     PASSED = 'passed'
     # FAILED indicates a request was made to KYC Provider and the KYC failed
     FAILED = 'failed'
+    # PENDING indicates KYC is yet to be initiated and in that case, verification status is returned as None
+    # as case property/field does not exist or is empty.
     PENDING = None
 
 
