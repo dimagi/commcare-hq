@@ -1,3 +1,4 @@
+import datetime
 import json
 
 from django import forms
@@ -8,9 +9,11 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 
+from corehq.apps.data_cleaning.exceptions import UnsupportedFilterValueException
 from corehq.apps.data_cleaning.models import (
     DataType,
     FilterMatchType,
+    BulkEditColumnFilter,
 )
 from corehq.apps.data_cleaning.utils.cases import get_case_property_details
 
@@ -275,3 +278,124 @@ class AddColumnFilterForm(forms.Form):
         return self.data.get(
             field_name, self.fields[field_name].initial or default_value
         )
+
+    def clean_prop_id(self):
+        prop_id = self.cleaned_data['prop_id']
+        if not prop_id:
+            raise forms.ValidationError(_("Please select a case property to filter on."))
+        return prop_id
+
+    def clean_data_type(self):
+        data_type = self.cleaned_data['data_type']
+        return data_type or DataType.TEXT
+
+    def clean(self):
+        cleaned_data = super().clean()
+        data_type = cleaned_data.get('data_type')
+        if data_type is None:
+            self.add_error('data_type', _("Please specify a data type."))
+            return cleaned_data
+
+        category = self.get_data_type_category(data_type)
+        clean_fn = {
+            DataType.FILTER_CATEGORY_TEXT: lambda x: self._clean_text_filter(x),
+            DataType.FILTER_CATEGORY_NUMBER: lambda x: self._clean_number_filter(x),
+            DataType.FILTER_CATEGORY_DATE: lambda x: self._clean_date_filter(x),
+            DataType.FILTER_CATEGORY_MULTI_SELECT: lambda x: self._clean_multi_select_filter(x),
+        }.get(category)
+        if not clean_fn:
+            # should never be reached unless a user manually edits the form
+            self.add_error('data_type', _("Unrecognized data type."))
+            return cleaned_data
+
+        return clean_fn(cleaned_data)
+
+    @staticmethod
+    def get_data_type_category(data_type):
+        for category, valid_data_types in DataType.FILTER_CATEGORY_DATA_TYPES.items():
+            if data_type in valid_data_types:
+                return category
+
+    def _clean_text_filter(self, cleaned_data):
+        match_type = self._clean_required_match_type('text_match_type', cleaned_data)
+        value = self._clean_value_for_match_type('text_value', cleaned_data, match_type)
+        if value is not None:
+            try:
+                BulkEditColumnFilter.get_quoted_value(value)
+            except UnsupportedFilterValueException:
+                self.add_error('text_value', _("This value cannot contain both single quotes (') "
+                                               "and double quotes (\") at the same time."))
+        return self._save_to_cleaned_data(cleaned_data, match_type, value)
+
+    def _clean_number_filter(self, cleaned_data):
+        match_type = self._clean_required_match_type('number_match_type', cleaned_data)
+        value = self._clean_value_for_match_type('number_value', cleaned_data, match_type)
+        if value:
+            try:
+                # we currently do not differentiate between integer or decimal
+                float(value)
+            except ValueError:
+                self.add_error('number_value', _("Not a valid number."))
+        return self._save_to_cleaned_data(cleaned_data, match_type, value)
+
+    def _clean_date_filter(self, cleaned_data):
+        data_type = cleaned_data['data_type']
+        match_type = self._clean_required_match_type('date_match_type', cleaned_data)
+        value_field_name = {
+            DataType.DATE: 'date_value',
+            DataType.DATETIME: 'datetime_value',
+        }.get(data_type)
+        if not value_field_name:
+            # we should never arrive here, but just in case
+            self.add_error('data_type', _("Unknown date type."))
+            return cleaned_data
+        value = self._clean_value_for_match_type(value_field_name, cleaned_data, match_type)
+        valid_format, error_message = {
+            DataType.DATE: (
+                "%Y-%m-%d", _("Date format should be 'YYYY-MM-DD'")
+            ),
+            DataType.DATETIME: (
+                "%Y-%m-%d %H:%M:%S", _("Date and Time format should be 'YYYY-MM-DD HH:MM:SS', "
+                                       "where the hour is the 24-hour format, 00 to 23.")
+            ),
+        }[data_type]
+        if value is not None:
+            try:
+                datetime.datetime.strptime(value, valid_format)
+            except ValueError:
+                self.add_error(value_field_name, error_message)
+        return self._save_to_cleaned_data(cleaned_data, match_type, value)
+
+    def _clean_required_match_type(self, match_type_field_name, cleaned_data):
+        match_type = cleaned_data.get(match_type_field_name)
+        if not match_type:
+            self.add_error(match_type_field_name, _("Please select a match type."))
+        return match_type
+
+    def _clean_multi_select_filter(self, cleaned_data):
+        match_type = self._clean_required_match_type('multi_select_match_type', cleaned_data)
+        value = self._clean_value_for_match_type('multi_select_value', cleaned_data, match_type)
+        if value is not None:
+            value = " ".join(value)
+        return self._save_to_cleaned_data(cleaned_data, match_type, value)
+
+    def _clean_value_for_match_type(self, value_field_name, cleaned_data, match_type):
+        is_value_required = match_type not in dict(FilterMatchType.ALL_DATA_TYPES_CHOICES)
+        value = cleaned_data.get(value_field_name)
+        if is_value_required and not value:
+            self.add_error(value_field_name, _("Please provide a value or use the "
+                                               "'empty' or 'missing' match types."))
+        return value if is_value_required else None
+
+    def _save_to_cleaned_data(self, cleaned_data, match_type, value):
+        data_type = cleaned_data['data_type']
+        cleaned_data['match_type'] = match_type
+        cleaned_data['value'] = value
+        # one last check
+        if not BulkEditColumnFilter.is_data_and_match_type_valid(
+            match_type, data_type
+        ):
+            self.add_error('data_type', _("Data type '{}' cannot have match type '{}'.").format(
+                data_type, match_type
+            ))
+        return cleaned_data
