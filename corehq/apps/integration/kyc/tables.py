@@ -25,47 +25,32 @@ class KycVerifyTable(BaseHtmxTable):
     class Meta(BaseHtmxTable.Meta):
         pass
 
-    verify_select = DisableableCheckBoxColumn(
-        accessor='id',
-        attrs={
-            'th__input': {'name': 'select_all'},
-        },
-    )
-    first_name = columns.Column(
-        verbose_name=_('First Name'),
-    )
-    last_name = columns.Column(
-        verbose_name=_('Last Name'),
-    )
-    phone_number = columns.Column(
-        verbose_name=_('Phone Number'),
-    )
-    email = columns.Column(
-        verbose_name=_('Email Address'),
-    )
-    national_id_number = columns.Column(
-        verbose_name=_('National ID Number'),
-    )
-    street_address = columns.Column(
-        verbose_name=_('Street Address'),
-    )
-    city = columns.Column(
-        verbose_name=_('City'),
-    )
-    post_code = columns.Column(
-        verbose_name=_('Post Code'),
-    )
-    country = columns.Column(
-        verbose_name=_('Country'),
-    )
-    kyc_verification_status = columns.TemplateColumn(
-        template_name='kyc/partials/kyc_verify_status.html',
-        verbose_name=_('KYC Status'),
-    )
-    kyc_last_verified_at = columns.DateTimeColumn(
-        verbose_name=_('Last Verified'),
-    )
-    verify_btn = columns.TemplateColumn(
-        template_name='kyc/partials/kyc_verify_button.html',
-        verbose_name=_('Verify'),
-    )
+    @staticmethod
+    def get_extra_columns(kyc_config):
+        cols = [
+            ('verify_select', DisableableCheckBoxColumn(
+                accessor='id',
+                attrs={
+                    'th__input': {'name': 'select_all'},
+                },
+            ))
+        ]
+        for field in kyc_config.api_field_to_user_data_map.values():
+            # TODO: We could look up a verbose name using the data
+            #       dictionary or custom user field label
+            name = field.replace('_', ' ').title()
+            cols.append((field, columns.Column(verbose_name=name)))
+        cols.extend([
+            ('kyc_verification_status', columns.TemplateColumn(
+                template_name='kyc/partials/kyc_verify_status.html',
+                verbose_name=_('KYC Status'),
+            )),
+            ('kyc_last_verified_at', columns.DateTimeColumn(
+                verbose_name=_('Last Verified'),
+            )),
+            ('verify_btn', columns.TemplateColumn(
+                template_name='kyc/partials/kyc_verify_button.html',
+                verbose_name=_('Verify'),
+            )),
+        ])
+        return cols
