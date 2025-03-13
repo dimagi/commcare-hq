@@ -1,12 +1,20 @@
+import uuid
+from unittest.mock import patch
+
+import pytest
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseFactory
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.apps.users.models import WebUser
 
+from corehq.motech.models import ConnectionSettings
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 from corehq.apps.integration.payments.services import verify_payment_cases
 from corehq.apps.integration.payments.const import PaymentProperties
+from corehq.apps.integration.payments.services import request_payment
+from corehq.apps.integration.payments.exceptions import PaymentRequestError
 
 
 class TestVerifyPaymentCases(TestCase):
@@ -76,6 +84,108 @@ class TestVerifyPaymentCases(TestCase):
             assert case.case_json[PaymentProperties.PAYMENT_VERIFIED_BY] == self.webuser.username
             assert case.case_json[PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID] == self.webuser.user_id
             assert case.case_json[PaymentProperties.PAYMENT_VERIFIED_ON_UTC] is not None
+
+
+class TestPaymentRequest(TestCase):
+    domain = "test-domain"
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.factory = CaseFactory(cls.domain)
+        connection_settings = ConnectionSettings.objects.create(
+            domain=cls.domain,
+            name='test-conn-settings',
+            username='test-username',
+            password='test-password',
+            url='http://test-url.com',
+        )
+        cls.config = MoMoConfig.objects.create(
+            domain='test-domain',
+            connection_settings=connection_settings,
+            environment='sandbox',
+        )
+        cls.case_list = []
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.config.delete()
+        for case in cls.case_list:
+            case.delete()
+        super().tearDownClass()
+
+    def test_case_not_verified(self):
+        unverified_case = _create_case(
+            self.factory,
+            name='foo',
+            data={**self._payment_details}
+        )
+        self._add_cleanup(unverified_case)
+
+        with pytest.raises(PaymentRequestError, match="Payment has not been verified"):
+            request_payment(unverified_case, self.config)
+
+    def test_duplicate_payment_request(self):
+        previously_submitted_case = _create_case(
+            self.factory,
+            name='foo',
+            data={
+                PaymentProperties.PAYMENT_VERIFIED: True,
+                PaymentProperties.PAYMENT_SUBMITTED: True,
+                **self._payment_details,
+            }
+        )
+        self._add_cleanup(previously_submitted_case)
+
+        with pytest.raises(PaymentRequestError, match="Payment has already been submitted"):
+            request_payment(previously_submitted_case, self.config)
+
+    def test_verified_payment_with_missing_data(self):
+        verified_case_with_missing_data = _create_case(
+            self.factory,
+            name='foo',
+            data={
+                PaymentProperties.PAYMENT_VERIFIED: True,
+                PaymentProperties.BATCH_NUMBER: 'B001',
+                PaymentProperties.AMOUNT: '100',
+                PaymentProperties.CURRENCY: 'Dollar',
+                PaymentProperties.PAYEE_NOTE: 'Jan payment',
+                PaymentProperties.PAYER_MESSAGE: 'Thanks',
+            }
+        )
+        self._add_cleanup(verified_case_with_missing_data)
+        with pytest.raises(PaymentRequestError, match="Invalid payee details"):
+            request_payment(verified_case_with_missing_data, self.config)
+
+    @patch('corehq.apps.integration.payments.services._make_payment_request')
+    def test_successful_payment_request(self, make_payment_request_mock):
+        make_payment_request_mock.return_value = str(uuid.uuid4())
+
+        verified_case = _create_case(
+            self.factory,
+            name='foo',
+            data={
+                PaymentProperties.PAYMENT_VERIFIED: True,
+                **self._payment_details,
+            }
+        )
+        self._add_cleanup(verified_case)
+        assert request_payment(verified_case, self.config) is not None
+
+    def _add_cleanup(self, case):
+        self.case_list.append(case)
+
+    @property
+    def _payment_details(self):
+        return {
+            PaymentProperties.BATCH_NUMBER: 'B001',
+            PaymentProperties.EMAIL: 'bsmith@example.org',
+            PaymentProperties.PHONE_NUMBER: '0987654321',
+            PaymentProperties.AMOUNT: '100',
+            PaymentProperties.CURRENCY: 'Dollar',
+            PaymentProperties.PAYEE_NOTE: 'Jan payment',
+            PaymentProperties.PAYER_MESSAGE: 'Thanks',
+        }
 
 
 def _create_case(factory, name, data):

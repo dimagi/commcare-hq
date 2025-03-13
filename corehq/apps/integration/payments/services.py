@@ -15,17 +15,24 @@ CHUNK_SIZE = 100
 
 
 def request_payment(payee_case: CommCareCase, config: MoMoConfig):
-    _validate_payment_request(payee_case)
+    _validate_payment_request(payee_case.case_json)
 
+    transfer_details = _get_transfer_details(payee_case)
+    transaction_id = _make_payment_request(
+        request_data=asdict(transfer_details),
+        config=config,
+    )
+    return transaction_id
+
+
+def _make_payment_request(request_data, config: MoMoConfig):
     connection_settings = config.connection_settings
     requests = connection_settings.get_requests()
 
-    transfer_details = _get_transfer_details(payee_case)
     transaction_id = str(uuid.uuid4())
-
     response = requests.post(
         '/disbursement/v2_0/deposit',
-        json=asdict(transfer_details),
+        json=request_data,
         headers={
             'X-Reference-Id': transaction_id,
             'X-Target-Environment': config.environment,
@@ -98,8 +105,7 @@ def _get_payee_details(case_data: dict) -> PartyDetails:
         raise PaymentRequestError("Invalid payee details")
 
 
-def _validate_payment_request(payee_case: CommCareCase):
-    case_data = payee_case.case_json
+def _validate_payment_request(case_data: dict):
     if not _payment_is_verified(case_data):
         raise PaymentRequestError("Payment has not been verified")
     if _payment_already_submitted(case_data):
