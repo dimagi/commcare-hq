@@ -70,7 +70,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.accounting.utils.subscription import (
     assign_explicit_unpaid_subscription,
 )
-from corehq.apps.accounting.utils.downgrade import (
+from corehq.apps.accounting.utils.unpaid_invoice import (
     Downgrade,
     InvoiceReminder,
 )
