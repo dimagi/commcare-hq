@@ -89,10 +89,10 @@ class ConnectionSettingsForm(forms.ModelForm):
         required=False,
     )
     custom_headers = JsonField(
-        label=_('Headers to include on requests'),
+        label=_('Additional headers'),
         required=False,
         initial={},
-        help_text=_('A JSON object of headers to include on requests'),
+        help_text=_('A JSON object of additional headers to include on all requests'),
         expected_type=dict,
     )
 
