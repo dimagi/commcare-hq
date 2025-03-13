@@ -92,6 +92,7 @@ Alpine.directive('datepicker', (el, { expression }, { cleanup }) => {
         },
         localization: _.extend(defaultTranslations, localization),
         promptTimeOnDateChange: !!config.datetime,
+        container: (config.container) ? document.querySelector(config.container) : undefined,
     });
 
     if (!config.datetime) {

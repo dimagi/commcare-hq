@@ -86,7 +86,7 @@ class AddColumnFilterForm(forms.Form):
             property_details[initial_prop_id]['is_editable'] if initial_prop_id else True
         )
 
-        select2_parent_selector = "#offcanvas-filter"
+        offcanvas_selector = "#offcanvas-filter"
 
         alpine_data_model = {
             "dataType": self.fields['data_type'].initial,
@@ -124,7 +124,7 @@ class AddColumnFilterForm(forms.Form):
                     'prop_id',
                     x_select2=json.dumps({
                         "placeholder": _("Select a Case Property"),
-                        "dropdownParent": select2_parent_selector,
+                        "dropdownParent": offcanvas_selector,
                     }),
                     **({
                         "@select2change": "propId = $event.detail; "
@@ -144,7 +144,7 @@ class AddColumnFilterForm(forms.Form):
                     crispy.Field(
                         'text_match_type',
                         x_select2=json.dumps({
-                            "dropdownParent": select2_parent_selector,
+                            "dropdownParent": offcanvas_selector,
                         }),
                         **({
                             "@select2change": "textMatchType = $event.detail",
@@ -163,7 +163,7 @@ class AddColumnFilterForm(forms.Form):
                     crispy.Field(
                         'number_match_type',
                         x_select2=json.dumps({
-                            "dropdownParent": select2_parent_selector,
+                            "dropdownParent": offcanvas_selector,
                         }),
                         **({
                             "@select2change": "numberMatchType = $event.detail",
@@ -182,7 +182,7 @@ class AddColumnFilterForm(forms.Form):
                     crispy.Field(
                         'date_match_type',
                         x_select2=json.dumps({
-                            "dropdownParent": select2_parent_selector,
+                            "dropdownParent": offcanvas_selector,
                         }),
                         **({
                             "@select2change": "dateMatchType = $event.detail",
@@ -195,6 +195,7 @@ class AddColumnFilterForm(forms.Form):
                                 '<i class="fa-solid fa-calendar-days"></i>'
                             ),
                             x_datepicker=json.dumps({
+                                "container": offcanvas_selector,
                                 "useInputGroup": True,
                             }),
                         ),
@@ -209,6 +210,7 @@ class AddColumnFilterForm(forms.Form):
                             ),
                             x_datepicker=json.dumps({
                                 "datetime": True,
+                                "container": offcanvas_selector,
                                 "useInputGroup": True,
                             }),
                         ),
@@ -221,7 +223,7 @@ class AddColumnFilterForm(forms.Form):
                     crispy.Field(
                         'multi_select_match_type',
                         x_select2=json.dumps({
-                            "dropdownParent": select2_parent_selector,
+                            "dropdownParent": offcanvas_selector,
                         }),
                         **({
                             "@select2change": "multiSelectMatchType = $event.detail",
