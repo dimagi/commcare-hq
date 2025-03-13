@@ -82,73 +82,27 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(f"Starting rollback using log file: {self.log_file}"))
 
-        # Grouping log entries by app_id to process each app once
-        app_changes = {}
+        total_apps = self.count_total_apps_with_empty_keys()
+        failed_apps = []
+        restored_apps = 0
         with open(self.log_file, 'r') as log_file:
             for line in log_file:
                 try:
                     entry = json.loads(line)
-                    app_id = entry['app_id']
-                    if app_id not in app_changes:
-                        app_changes[app_id] = []
-                    app_changes[app_id].append(entry)
+                    self.add_back_empty_keys_and_save(entry)
+                    restored_apps += 1
+                    self.stdout.write(
+                        self.style.SUCCESS(f"Restored : {entry['app_id']} ({restored_apps}/{total_apps})")
+                    )
                 except json.JSONDecodeError:
                     self.stdout.write(self.style.WARNING(f"Skipping invalid log entry: {line}"))
-
-        total_apps = len(app_changes)
-        processed_apps = 0
-        restored_apps = 0
-
-        for app_id, changes in app_changes.items():
-            processed_apps += 1
-            try:
-                app = Application.get(app_id)
-                app_json = app.to_json()
-
-                for change in changes:
-                    path = change['path']
-                    value = change['value']
-
-                    # Navigate to the correct location in the document
-                    if path:
-                        current = app_json
-
-                        # Navigate to the parent object
-                        for i, part in enumerate(path[:-1]):
-                            if isinstance(part, int) or (isinstance(part, str) and part.isdigit()):
-                                # Handle array index
-                                part = int(part) if isinstance(part, str) else part
-                                current = current[part]
-                            else:
-                                if part not in current:
-                                    current[part] = {}
-                                current = current[part]
-
-                        # Set the empty key in the parent object
-                        last_part = path[-1]
-                        if isinstance(last_part, int) or (isinstance(last_part, str) and last_part.isdigit()):
-                            # Handle array index
-                            last_part = int(last_part) if isinstance(last_part, str) else last_part
-                            current = current[last_part]
-                            current[''] = value
-                        else:
-                            if last_part not in current:
-                                current[last_part] = {}
-                            current[last_part][''] = value
-                    else:
-                        # Empty key at root level
-                        app_json[''] = value
-
-                Application.wrap(app_json).save()
-                restored_apps += 1
-                self.stdout.write(
-                    self.style.SUCCESS(f"Restored empty keys for app: {app_id} ({processed_apps}/{total_apps})")
-                )
-            except Exception as e:
-                self.stdout.write(self.style.ERROR(f"Error restoring app {app_id}: {e}"))
+                    failed_apps.append(line)
 
         self.stdout.write(
-            self.style.SUCCESS(f"Rollback completed. Restored {restored_apps} out of {total_apps} apps.")
+            self.style.SUCCESS(
+                f"Rollback completed. Restored {restored_apps} out of {total_apps} apps. \n"
+                f"Failed to restore: \n{failed_apps}"
+            )
         )
 
     def count_total_apps_with_empty_keys(self):
