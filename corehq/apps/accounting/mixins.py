@@ -4,7 +4,7 @@ from datetime import date, timedelta
 from corehq.apps.accounting.const import DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE
 from corehq.apps.accounting.models import CreditLine, Subscription
 from corehq.apps.accounting.utils import months_from_date
-from corehq.apps.accounting.utils.downgrade import Downgrade
+from corehq.apps.accounting.utils.unpaid_invoice import Downgrade
 from corehq.apps.accounting.utils.invoicing import (
     get_oldest_overdue_invoice_over_threshold,
 )

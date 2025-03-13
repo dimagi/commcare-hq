@@ -20,7 +20,7 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
-from corehq.apps.accounting.utils.downgrade import Downgrade, InvoiceReminder
+from corehq.apps.accounting.utils.unpaid_invoice import Downgrade, InvoiceReminder
 
 
 def _generate_invoice_and_subscription(days_ago, is_customer_billing_account=False):

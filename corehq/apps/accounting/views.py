@@ -31,7 +31,7 @@ from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.accounting.utils.invoicing import (
     get_oldest_overdue_invoice_over_threshold,
 )
-from corehq.apps.accounting.utils.downgrade import Downgrade
+from corehq.apps.accounting.utils.unpaid_invoice import Downgrade
 from corehq.apps.sso.tasks import auto_deactivate_removed_sso_users
 from corehq.toggles import ACCOUNTING_TESTING_TOOLS
 
