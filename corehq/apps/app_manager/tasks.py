@@ -98,13 +98,13 @@ def refresh_data_dictionary_from_app(domain, app_id):
     for module in app.get_modules():
         if not module.is_surveys:
             for form in module.get_forms():
-                if form.form_type == 'advanced_form':
-                    for action in form.actions.load_update_cases:
-                        case_type_to_prop[action.case_type].update(action.case_properties)
-                else:
+                if form.form_type == 'module_form':
                     case_type_to_prop[module.case_type].update(form.actions.update_case.update)
                     if actions_use_usercase(form.actions):
                         case_type_to_prop[USERCASE_TYPE].update(form.actions.usercase_update.update)
+                else:
+                    for action in form.actions.load_update_cases:
+                        case_type_to_prop[action.case_type].update(action.case_properties)
     if case_type_to_prop:
         create_properties_for_case_types(domain, case_type_to_prop)
 

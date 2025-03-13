@@ -1,0 +1,24 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% if record.completed_on %}
+  <span class="badge text-bg-success"> {% trans "Success" %} </span>
+{% elif record.percent and record.percent < 100 %}
+  <div
+    class="progress"
+    role="progressbar"
+    aria-label="{% trans_html_attr 'Cleaning progress' %}"
+    aria-valuenow="{{ record.percent }}"
+    aria-valuemin="0"
+    aria-valuemax="100"
+  >
+    <div
+      class="progress-bar progress-bar-striped progress-bar-animated"
+      style="width: {{ record.percent }}%"
+    >
+      {{ record.percent }}%
+    </div>
+  </div>
+{% elif record.committed_on %}
+  <span class="badge text-bg-secondary"> {% trans "Pending" %} </span>
+{% endif %}

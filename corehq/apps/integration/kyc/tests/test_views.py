@@ -15,7 +15,6 @@ from corehq.apps.integration.kyc.views import (
     KycVerificationTableView,
 )
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.motech.models import ConnectionSettings
 from corehq.util.test_utils import flag_enabled
 
 
@@ -37,13 +36,6 @@ class BaseTestKycView(TestCase):
             is_admin=True,
         )
         cls.webuser.save()
-        cls.conn_settings = ConnectionSettings.objects.create(
-            name='test-conn',
-            url='http://test.com',
-            username='test',
-            password='test',
-        )
-        cls.addClassCleanup(cls.conn_settings.delete)
 
     @classmethod
     def tearDownClass(cls):
@@ -108,7 +100,6 @@ class TestKycVerificationReportView(BaseTestKycView):
             domain=self.domain,
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
             api_field_to_user_data_map=[],
-            connection_settings=self.conn_settings
         )
         self.addCleanup(kyc_config.delete)
         response = self._make_request()
@@ -128,7 +119,6 @@ class TestKycVerificationReportView(BaseTestKycView):
             domain=self.domain,
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
             api_field_to_user_data_map=[],
-            connection_settings=self.conn_settings
         )
         self.addCleanup(kyc_config.delete)
 
@@ -164,7 +154,6 @@ class TestKycVerificationTableView(BaseTestKycView):
             domain=cls.domain,
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
             api_field_to_user_data_map=cls.kyc_mapping,
-            connection_settings=cls.conn_settings,
         )
         cls.addClassCleanup(cls.kyc_config.delete)
         cls.user1 = CommCareUser.create(
@@ -252,7 +241,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'has_invalid_data': True,
                     'first_name': 'Jane',
                     'last_name': 'Doe',
-                    'kyc_is_verified': None,
+                    'kyc_verification_status': None,
                     'kyc_last_verified_at': None,
                 }
             else:
@@ -268,7 +257,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'city': 'Anytown',
                     'post_code': '12345',
                     'country': 'Anyplace',
-                    'kyc_is_verified': None,
+                    'kyc_verification_status': None,
                     'kyc_last_verified_at': None,
                 }
 
@@ -293,7 +282,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'has_invalid_data': True,
                     'first_name': 'Foo',
                     'last_name': 'Bar',
-                    'kyc_is_verified': None,
+                    'kyc_verification_status': None,
                     'kyc_last_verified_at': None,
                 }
             else:
@@ -309,7 +298,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'city': 'Sometown',
                     'post_code': '54321',
                     'country': 'Someplace',
-                    'kyc_is_verified': None,
+                    'kyc_verification_status': None,
                     'kyc_last_verified_at': None,
                 }
 

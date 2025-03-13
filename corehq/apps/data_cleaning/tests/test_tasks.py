@@ -1,12 +1,18 @@
+from datetime import datetime
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseFactory
 from corehq.apps.data_cleaning.models import (
     BulkEditChange,
+    BulkEditColumn,
+    BulkEditColumnFilter,
+    BulkEditPinnedFilter,
     BulkEditRecord,
     BulkEditSessionType,
     BulkEditSession,
+    DataType,
     EditActionType,
+    FilterMatchType,
 )
 from corehq.apps.data_cleaning.tasks import commit_data_cleaning
 from corehq.apps.domain.shortcuts import create_domain
@@ -40,6 +46,7 @@ class CommitCasesTest(TestCase):
             owner_id='crj123',
             case_name='Shadow',
             update={
+                'play_count': 10,
                 'speed': 'slow',
                 'year': '2023',
             },
@@ -50,10 +57,14 @@ class CommitCasesTest(TestCase):
             user=self.web_user.get_django_user(),
             session_type=BulkEditSessionType.CASE,
             identifier=self.case_type,
+            committed_on=datetime.utcnow(),
         )
         self.session.save()
 
         super().setUp()
+
+    def _refresh_session(self):
+        self.session = BulkEditSession.objects.get(id=self.session.id)
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
@@ -103,11 +114,21 @@ class CommitCasesTest(TestCase):
         change.save()
         change.records.add(record)
 
-        commit_data_cleaning(self.session.session_id)
+        form_ids = commit_data_cleaning(self.session.session_id)
 
         case = CommCareCase.objects.get_case(self.case.case_id, self.domain.name)
         self.assertEqual(case.get_case_property('speed'), '2023')
         self.assertEqual(case.get_case_property('year'), '2023')
+
+        self._refresh_session()
+        self.assertDictEqual(self.session.result, {
+            'form_ids': form_ids,
+            'record_count': 1,
+            'percent': 100,
+        })
+        self.assertEqual(self.session.percent_complete, 100)
+        self.assertListEqual(list(self.session.form_ids), form_ids)
+        self.assertIsNotNone(self.session.completed_on)
 
     def test_chunking(self):
         cases = [self.case]
@@ -143,3 +164,32 @@ class CommitCasesTest(TestCase):
 
         case = CommCareCase.objects.get_case(self.case.case_id, self.domain.name)
         self.assertEqual(case.get_case_property('speed'), 'slow!')
+
+    def test_delete_ui_models(self):
+        record = BulkEditRecord(
+            session=self.session,
+            doc_id=self.case.case_id,
+        )
+        record.save()
+
+        change = BulkEditChange(
+            session=self.session,
+            prop_id='speed',
+            action_type=EditActionType.UPPER_CASE,
+        )
+        change.save()
+
+        BulkEditPinnedFilter.create_default_filters(self.session)
+        BulkEditColumn.create_default_columns(self.session)
+        self.session.add_column_filter('play_count', DataType.INTEGER, FilterMatchType.GREATER_THAN, 1)
+        self.session.save()
+
+        self.assertTrue(BulkEditColumnFilter.objects.filter(session=self.session).count() > 0)
+        self.assertTrue(BulkEditPinnedFilter.objects.filter(session=self.session).count() > 0)
+        self.assertTrue(BulkEditColumn.objects.filter(session=self.session).count() > 0)
+
+        commit_data_cleaning(self.session.session_id)
+
+        self.assertEqual(BulkEditColumnFilter.objects.filter(session=self.session).count(), 0)
+        self.assertEqual(BulkEditPinnedFilter.objects.filter(session=self.session).count(), 0)
+        self.assertEqual(BulkEditColumn.objects.filter(session=self.session).count(), 0)

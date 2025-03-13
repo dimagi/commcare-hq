@@ -92,13 +92,16 @@ class BulkEditSession(models.Model):
         return cls.objects.filter(user=user, domain=domain_name, committed_on__isnull=False)
 
     @property
-    def status(self):
-        if self.committed_on:
-            if self.completed_on:
-                return "complete"
-            else:
-                return "in progress"
-        return "pending"
+    def form_ids(self):
+        if self.result is None or 'form_ids' not in self.result:
+            return []
+        return self.result['form_ids']
+
+    @property
+    def percent_complete(self):
+        if self.result is None or 'percent' not in self.result:
+            return None
+        return round(self.result['percent'])
 
     def add_column_filter(self, prop_id, data_type, match_type, value=None):
         BulkEditColumnFilter.objects.create(
@@ -125,6 +128,7 @@ class BulkEditSession(models.Model):
     def get_queryset(self):
         query = CaseSearchES().domain(self.domain).case_type(self.identifier)
         query = self._apply_column_filters(query)
+        query = self._apply_pinned_filters(query)
         return query
 
     def _apply_column_filters(self, query):
@@ -137,6 +141,32 @@ class BulkEditSession(models.Model):
         if xpath_expressions:
             query = query.xpath_query(self.domain, " and ".join(xpath_expressions))
         return query
+
+    def _apply_pinned_filters(self, query):
+        for pinned_filter in self.pinned_filters.all():
+            query = pinned_filter.filter_query(query)
+        return query
+
+    def update_result(self, record_count, form_id=None):
+        result = self.result or {}
+
+        if 'form_ids' not in result:
+            result['form_ids'] = []
+        if 'record_count' not in result:
+            result['record_count'] = 0
+        if 'percent' not in result:
+            result['percent'] = 0
+
+        if form_id:
+            result['form_ids'].append(form_id)
+        result['record_count'] += record_count
+        if self.records.count() == 0:
+            result['percent'] = 100
+        else:
+            result['percent'] = result['record_count'] * 100 / self.records.count()
+
+        self.result = result
+        self.save()
 
 
 class DataType:
@@ -154,10 +184,25 @@ class DataType:
     PASSWORD = 'password'
 
     CHOICES = (
+        (TEXT, TEXT),
+        (INTEGER, INTEGER),
+        (PHONE_NUMBER, PHONE_NUMBER),
+        (DECIMAL, DECIMAL),
+        (DATE, DATE),
+        (TIME, TIME),
+        (DATETIME, DATETIME),
+        (SINGLE_OPTION, SINGLE_OPTION),
+        (MULTIPLE_OPTION, MULTIPLE_OPTION),
+        (GPS, GPS),
+        (BARCODE, BARCODE),
+        (PASSWORD, PASSWORD),
+    )
+
+    FORM_CHOICES = (
         (TEXT, gettext_lazy("Text")),
         (INTEGER, gettext_lazy("Integer")),
-        (PHONE_NUMBER, gettext_lazy("Phone Number or Numeric ID")),
         (DECIMAL, gettext_lazy("Decimal")),
+        (PHONE_NUMBER, gettext_lazy("Phone Number or Numeric ID")),
         (DATE, gettext_lazy("Date")),
         (TIME, gettext_lazy("Time")),
         (DATETIME, gettext_lazy("Date and Time")),
@@ -165,6 +210,18 @@ class DataType:
         (MULTIPLE_OPTION, gettext_lazy("Multiple Option")),
         (GPS, gettext_lazy("GPS")),
         (BARCODE, gettext_lazy("Barcode")),
+        (PASSWORD, gettext_lazy("Password")),
+    )
+
+    CASE_CHOICES = (
+        (TEXT, gettext_lazy("Text")),
+        (INTEGER, gettext_lazy("Number")),
+        (DATE, gettext_lazy("Date")),
+        (DATETIME, gettext_lazy("Date and Time")),
+        (MULTIPLE_OPTION, gettext_lazy("Multiple Choice")),
+        (BARCODE, gettext_lazy("Barcode")),
+        (GPS, gettext_lazy("GPS")),
+        (PHONE_NUMBER, gettext_lazy("Phone Number or Numeric ID")),
         (PASSWORD, gettext_lazy("Password")),
     )
 
@@ -444,6 +501,9 @@ class BulkEditPinnedFilter(models.Model):
             PinnedFilterType.CASE_OWNERS: CaseOwnersPinnedFilter,
             PinnedFilterType.CASE_STATUS: CaseStatusPinnedFilter,
         }[self.filter_type]
+
+    def filter_query(self, query):
+        return self.get_report_filter_class().filter_query(query, self)
 
 
 class BulkEditColumn(models.Model):
