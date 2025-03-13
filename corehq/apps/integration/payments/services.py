@@ -1,30 +1,38 @@
 import uuid
 from datetime import datetime
+from dataclasses import asdict
 
 from dimagi.utils.chunked import chunked
 from corehq.apps.users.models import WebUser
 from corehq.apps.hqcase.api.updates import handle_case_update
-from corehq.apps.integration.payments.exceptions import MoMoPaymentFailed
+from corehq.apps.integration.payments.exceptions import PaymentRequestError
+from corehq.apps.integration.payments.schemas import PaymentTransferDetails, PartyDetails
+from corehq.apps.integration.payments.models import MoMoConfig
+from corehq.form_processor.models import CommCareCase
 
 CHUNK_SIZE = 100
 
 
-def request_payment(payee, connection_settings):
-    request_body = {}  # todo: parse from payee details
+def request_payment(payee_case: CommCareCase, config: MoMoConfig):
+    if not payee_case.case_json['momo_payment_verified'] == 'True':
+        raise PaymentRequestError("Payment has not been verified")
 
-    transaction_id = str(uuid.uuid4())
+    connection_settings = config.connection_settings
     requests = connection_settings.get_requests()
+
+    transfer_details = _get_transfer_details(payee_case)
+    transaction_id = str(uuid.uuid4())
 
     response = requests.post(
         '/disbursement/v2_0/deposit',
-        json=request_body,
+        json=asdict(transfer_details),
         headers={
             'X-Reference-Id': transaction_id,
-            'X-Target-Environment': 'sandbox',
+            'X-Target-Environment': config.environment,
         }
     )
     if response.status_code != 202:
-        raise MoMoPaymentFailed("Payment failed")
+        raise PaymentRequestError("Payment request failed")
     return transaction_id
 
 
@@ -60,3 +68,29 @@ def _get_cases_updates(case_ids, updates):
         }
         cases.append(case)
     return cases
+
+
+def _get_transfer_details(payee_case) -> PaymentTransferDetails:
+    case_json = payee_case.case_json
+
+    if 'phone_number' in case_json:
+        payee_details = PartyDetails(
+            partyIdType="MSISDN",
+            partyId=case_json.get('phone_number'),
+        )
+    elif 'email' in case_json:
+        payee_details = PartyDetails(
+            partyIdType="EMAIL",
+            partyId=case_json.get('email'),
+        )
+    else:
+        raise PaymentRequestError("Invalid payee details")
+
+    return PaymentTransferDetails(
+        payee=payee_details,
+        amount=case_json.get('amount'),
+        currency=case_json.get('currency'),
+        payeeNote=case_json.get('payee_note'),
+        payerMessage=case_json.get('payer_message'),
+        externalId=case_json.get('user_or_case_id'),
+    )

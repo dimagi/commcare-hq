@@ -1,3 +1,3 @@
 
-class MoMoPaymentFailed(Exception):
+class PaymentRequestError(Exception):
     pass
