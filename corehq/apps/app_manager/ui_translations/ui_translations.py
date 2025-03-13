@@ -68,6 +68,10 @@ def process_ui_translation_upload(app, trans_file):
         return ", ".join(["${{{}}}".format(num) for num in numbers])
 
     for row in translations:
+        if row["property"] == "":
+            warnings.append("Property '" + row["property"] + "' is empty, "
+                            "We did not add it to the translations")
+            continue
         if row["property"] not in commcare_ui_strings:
             # Add a warning for  unknown properties, but still add them to the translation dict
             warnings.append("Property '" + row["property"] + "' is not a known CommCare UI string, "
