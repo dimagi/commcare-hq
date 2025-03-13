@@ -51,5 +51,5 @@ Alpine.directive('dynamic-options-select2', (el, { expression }, { cleanup }) =>
 });
 
 document.body.addEventListener('htmx:afterSettle', (event) => {
-    utils.fixSelect2htmx(event, '[x-multi-option-select2]');
+    utils.fixSelect2htmx(event, '[x-dynamic-options-select2]');
 });
