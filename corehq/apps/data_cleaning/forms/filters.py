@@ -16,6 +16,7 @@ from corehq.apps.data_cleaning.models import (
     BulkEditColumnFilter,
 )
 from corehq.apps.data_cleaning.utils.cases import get_case_property_details
+from corehq.apps.hqwebapp.widgets import AlpineSelect
 
 EXCLUDED_FILTERED_PROPERTIES = [
     '@case_type',  # Data cleaning only works with one case type at a time
@@ -39,6 +40,7 @@ class AddColumnFilterForm(forms.Form):
     )
     data_type = forms.ChoiceField(
         label=gettext_lazy("Data Type"),
+        widget=AlpineSelect,
         choices=DataType.CASE_CHOICES,
         required=False
     )
