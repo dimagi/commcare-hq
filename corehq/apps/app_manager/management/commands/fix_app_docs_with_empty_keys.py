@@ -151,6 +151,19 @@ class Command(BaseCommand):
             self.style.SUCCESS(f"Rollback completed. Restored {restored_apps} out of {total_apps} apps.")
         )
 
+    def count_total_apps_with_empty_keys(self):
+        with open(self.log_file, 'r') as log_file:
+            return sum(1 for line in log_file)
+
+    def add_back_empty_keys_and_save(self, change):
+        app = Application.get(change['app_id'])
+        app_json = app.to_json()
+        current = app_json
+        for part in change['path']:
+            current = current[part]
+        current[''] = change['value']
+        Application.wrap(app_json).save()
+
     def find_docs_with_empty_keys(self):
         # Query Elasticsearch to find documents with empty keys
         ids_with_empty_keys = []
