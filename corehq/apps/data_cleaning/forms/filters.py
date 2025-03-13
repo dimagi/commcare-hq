@@ -254,6 +254,7 @@ class AddColumnFilterForm(forms.Form):
                             x_dynamic_options_select2=json.dumps({
                                 "details": property_details,
                                 "eventName": 'updateAddFilterPropId',
+                                "initialPropId": initial_prop_id,
                             }),
                         ),
                         x_show="!matchTypesWithNoValue.includes(multiSelectMatchType)",
