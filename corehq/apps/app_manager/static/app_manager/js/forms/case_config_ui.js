@@ -1,4 +1,4 @@
-hqDefine('app_manager/js/forms/case_config_ui', function () {
+hqDefine('app_manager/js/forms/case_config_ui', ['hqwebapp/js/bootstrap3/main'], function (webappMain) {
     $(function () {
         var caseConfigUtils = hqImport('app_manager/js/case_config_utils'),
             initialPageData = hqImport("hqwebapp/js/initial_page_data"),
@@ -171,6 +171,12 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                     .on('textchange', x);
             };
 
+            self.enableHelp = function (elements) {
+                $(elements).find('.hq-help-template').each(function () {
+                    webappMain.transformHelpTemplate($(this), true);
+                });
+            };
+
             self.init = function () {
                 var $home = self.home;
                 var $usercaseMgmt = $('#usercase-config-ko');
@@ -180,7 +186,10 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                         $home.on('textchange', 'input', self.change)
                             // all select2's are represented by an input[type="hidden"]
                             .on('change', 'select, input[type="hidden"]', self.change)
-                            .on('click', 'a', self.change);
+                            // help links should not trigger a change.
+                            // I did not see anchor tags that *should* trigger a change, but left in this trigger.
+                            // Ideally, changes should be triggered off something more specific than an anchor tag
+                            .on('click', ':not(.hq-help) > a', self.change);
                         self.forceRefreshTextchangeBinding($home);
                     }
 

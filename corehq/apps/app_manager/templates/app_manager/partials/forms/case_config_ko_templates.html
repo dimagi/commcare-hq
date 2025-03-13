@@ -228,6 +228,12 @@
         <th class="col-sm-1"></th>
         <th data-bind="class: saveOnlyEditedFormFieldsEnabled ? 'col-sm-3' : 'col-sm-4'">
           {% trans "Case Property" %}
+          <span class="hq-help-template"
+                data-content='{% blocktrans %}
+                                Saving a question as a case property makes it accessible and reusable across
+                                your application. Case properties can be tracked and updated over time.
+                              {% endblocktrans %}'
+          ></span>
         </th>
         {% comment %} The odd style additions in this block were necessary to put the question mark
         in line with the text when the text is both wrapped and unwrapped. {% endcomment %}
