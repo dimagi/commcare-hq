@@ -39,6 +39,32 @@ class BulkUiTranslation(SimpleTestCase):
         self.assertEqual(dict(translations), {})
         self.assertEqual(len(error_properties), 0)
 
+    def test_empty_key_warning(self):
+        headers = (('translations', ('property', 'en', 'fra')),)
+        data = (('', 'wobble', 'bobble'),
+                ('key.manage.title', 'wabble', 'babble'))
+
+        f = self._build_translation_download_file(headers, data)
+        translations, error_properties, warnings = process_ui_translation_upload(self.app, f)
+        self.assertEqual(
+            dict(translations),
+            {
+                'en': {
+                    'key.manage.title': 'wabble',
+                },
+                'fra': {
+                    'key.manage.title': 'babble',
+                }
+            }
+
+        )
+
+        self.assertEqual(len(error_properties), 0)
+        self.assertEqual(len(warnings), 1)
+        self.assertEqual([e.strip() for e in warnings], [
+            "Property '' is empty, We did not add it to the translations"
+        ])
+
     def test_translation(self):
         headers = (('translations', ('property', 'en', 'fra')),)
         # on an update to 2.31.0, the keys date.tomorrow, entity.sort.title,
