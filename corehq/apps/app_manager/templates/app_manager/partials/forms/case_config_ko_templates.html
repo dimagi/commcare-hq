@@ -228,6 +228,7 @@
         <th class="col-sm-1"></th>
         <th data-bind="class: saveOnlyEditedFormFieldsEnabled ? 'col-sm-3' : 'col-sm-4'">
           {% trans "Case Property" %}
+          <!-- ko ifnot: case_type() == 'commcare-user' -->
           <span
                 data-bind="makeHqHelp: {
                   description: '{% blocktrans trimmed %}
@@ -236,6 +237,7 @@
                     {% endblocktrans %}'
                 }"
           ></span>
+          <!-- /ko -->
         </th>
         {% comment %} The odd style additions in this block were necessary to put the question mark
         in line with the text when the text is both wrapped and unwrapped. {% endcomment %}
