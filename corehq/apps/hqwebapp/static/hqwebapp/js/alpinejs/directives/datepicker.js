@@ -71,7 +71,16 @@ Alpine.directive('datepicker', (el, { expression }, { cleanup }) => {
         };
     }
 
-    const picker = new TempusDominus(el, {
+    let pickerEl = el;
+    if (config.useInputGroup) {
+        if (!el.parentElement.classList.contains('input-group')) {
+            throw new Error("useInputGroup - Please surround input with input-group or use AppendedText or PrependText in crispy forms.");
+        }
+        pickerEl = el.parentElement;
+        pickerEl.id = el.id + '-datepicker';
+    }
+
+    const picker = new TempusDominus(pickerEl, {
         display: {
             theme: 'light',
             components: components,

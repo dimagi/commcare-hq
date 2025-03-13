@@ -1,6 +1,7 @@
 import json
 
 from django import forms
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, gettext_lazy
 
 from crispy_forms import bootstrap as twbscrispy
@@ -188,18 +189,29 @@ class AddColumnFilterForm(forms.Form):
                         })
                     ),
                     crispy.Div(
-                        crispy.Field(
+                        twbscrispy.AppendedText(
                             'date_value',
-                            x_datepicker="",
+                            mark_safe(  # nosec: no user input
+                                '<i class="fa-solid fa-calendar-days"></i>'
+                            ),
+                            x_datepicker=json.dumps({
+                                "useInputGroup": True,
+                            }),
                         ),
                         x_show="!matchTypesWithNoValue.includes(dateMatchType) "
                                "&& dateTypes.includes(dataType)"
                     ),
                     crispy.Div(
-                        'datetime_value',
-                        x_datepicker=json.dumps({
-                            "datetime": True,
-                        }),
+                        twbscrispy.AppendedText(
+                            'datetime_value',
+                            mark_safe(  # nosec: no user input
+                                '<i class="fcc fcc-fd-datetime"></i>'
+                            ),
+                            x_datepicker=json.dumps({
+                                "datetime": True,
+                                "useInputGroup": True,
+                            }),
+                        ),
                         x_show="!matchTypesWithNoValue.includes(dateMatchType) "
                                "&& datetimeTypes.includes(dataType)"
                     ),
