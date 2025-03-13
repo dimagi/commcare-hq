@@ -92,13 +92,16 @@ class BulkEditSession(models.Model):
         return cls.objects.filter(user=user, domain=domain_name, committed_on__isnull=False)
 
     @property
-    def status_tuple(self):
-        if self.committed_on:
-            if self.completed_on:
-                return ("complete", "success")
-            else:
-                return ("in progress", "primary")
-        return ("pending", "secondary")
+    def form_ids(self):
+        if self.result is None or 'form_ids' not in self.result:
+            return []
+        return self.result['form_ids']
+
+    @property
+    def percent_complete(self):
+        if self.result is None or 'percent' not in self.result:
+            return None
+        return round(self.result['percent'])
 
     def add_column_filter(self, prop_id, data_type, match_type, value=None):
         BulkEditColumnFilter.objects.create(
@@ -181,10 +184,25 @@ class DataType:
     PASSWORD = 'password'
 
     CHOICES = (
+        (TEXT, TEXT),
+        (INTEGER, INTEGER),
+        (PHONE_NUMBER, PHONE_NUMBER),
+        (DECIMAL, DECIMAL),
+        (DATE, DATE),
+        (TIME, TIME),
+        (DATETIME, DATETIME),
+        (SINGLE_OPTION, SINGLE_OPTION),
+        (MULTIPLE_OPTION, MULTIPLE_OPTION),
+        (GPS, GPS),
+        (BARCODE, BARCODE),
+        (PASSWORD, PASSWORD),
+    )
+
+    FORM_CHOICES = (
         (TEXT, gettext_lazy("Text")),
         (INTEGER, gettext_lazy("Integer")),
-        (PHONE_NUMBER, gettext_lazy("Phone Number or Numeric ID")),
         (DECIMAL, gettext_lazy("Decimal")),
+        (PHONE_NUMBER, gettext_lazy("Phone Number or Numeric ID")),
         (DATE, gettext_lazy("Date")),
         (TIME, gettext_lazy("Time")),
         (DATETIME, gettext_lazy("Date and Time")),
@@ -192,6 +210,18 @@ class DataType:
         (MULTIPLE_OPTION, gettext_lazy("Multiple Option")),
         (GPS, gettext_lazy("GPS")),
         (BARCODE, gettext_lazy("Barcode")),
+        (PASSWORD, gettext_lazy("Password")),
+    )
+
+    CASE_CHOICES = (
+        (TEXT, gettext_lazy("Text")),
+        (INTEGER, gettext_lazy("Number")),
+        (DATE, gettext_lazy("Date")),
+        (DATETIME, gettext_lazy("Date and Time")),
+        (MULTIPLE_OPTION, gettext_lazy("Multiple Choice")),
+        (BARCODE, gettext_lazy("Barcode")),
+        (GPS, gettext_lazy("GPS")),
+        (PHONE_NUMBER, gettext_lazy("Phone Number or Numeric ID")),
         (PASSWORD, gettext_lazy("Password")),
     )
 

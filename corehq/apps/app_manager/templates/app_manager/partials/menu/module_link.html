@@ -36,7 +36,15 @@
             data-toggle="tooltip"
             data-placement="right"
             data-container="body"></i>
-        <span {% if module.unique_id == selected_module.unique_id %}class="variable-module_name"{% endif %}>
+        <span
+          {% if module.unique_id == selected_module.unique_id %}class="variable-module_name"{% endif %}
+          {% if module.case_type %}
+            title="{% blocktrans  with module.case_type as case_type %}case type: {{case_type}}{% endblocktrans %}"
+            data-toggle="tooltip"
+            data-placement="right"
+            data-container="body"
+          {% endif %}
+        >
             {{ module.name|html_trans_prefix:langs }}
         </span>
     </a>

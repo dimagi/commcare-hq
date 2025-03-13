@@ -136,7 +136,7 @@
        <case-property-input params="
          valueObservable: property_name,
          caseTypeObservable: $root.caseType,
-@@ -161,35 +161,35 @@
+@@ -161,37 +161,37 @@
  {# An instance of this template is bound to an instance of the js object MatchPropertyDefinition #}
  
  <script type="text/html" id="advanced-date-case-property-filter">
@@ -150,8 +150,10 @@
 +    <label class="form-label col-sm-2">{% trans "When the current date is" %}</label>
 +    <div class="controls col-sm-2">
 +      <select class="select form-select" data-bind="value: match_type">
-         <option value="{{ form.constants.MATCH_DAYS_GREATER_OR_EQUAL }}">{% trans "greater than" %}</option>
+         <option value="{{ form.constants.MATCH_DAYS_GREATER_THAN }}">{% trans "greater than" %}</option>
+         <option value="{{ form.constants.MATCH_DAYS_GREATER_OR_EQUAL }}">{% trans "greater than or equal" %}</option>
          <option value="{{ form.constants.MATCH_DAYS_LESS_THAN }}">{% trans "less than" %}</option>
+         <option value="{{ form.constants.MATCH_DAYS_LESS_OR_EQUAL }}">{% trans "less than or equal" %}</option>
        </select>
      </div>
 -    <div class="col-xs-2">
@@ -186,7 +188,7 @@
      </div>
    </div>
  </script>
-@@ -198,9 +198,9 @@
+@@ -200,9 +200,9 @@
  {# An instance of this template is bound to an instance of the js object ClosedParentDefinition #}
  
  <script type="text/html" id="parent-closed-filter">
@@ -199,7 +201,7 @@
    </div>
  </script>
  
-@@ -208,18 +208,18 @@
+@@ -210,18 +210,18 @@
  {# An instance of this template is bound to an instance of the js object CustomMatchDefinition #}
  
  <script type="text/html" id="custom-filter">
@@ -225,7 +227,7 @@
      </label>
    </div>
  </script>
-@@ -227,21 +227,21 @@
+@@ -229,21 +229,21 @@
  {# Template for location filter #}
  
  <script type="text/html" id="locations-filter">
@@ -255,7 +257,7 @@
      </div>
    </div>
  </script>
-@@ -250,10 +250,10 @@
+@@ -252,10 +252,10 @@
  {# An instance of this template is bound to an instance of the js object UCRFilterDefinition #}
  
  <script type="text/html" id="ucr-filter">

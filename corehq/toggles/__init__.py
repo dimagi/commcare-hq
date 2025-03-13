@@ -3005,13 +3005,14 @@ INCLUDE_ALL_LOCATIONS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-INCREASE_DEVICE_LIMIT_PER_USER = StaticToggle(
-    slug='increase_device_per_user_limit',
-    label='In the event that the DEVICE_LIMIT_PER_USER in settings becomes too restrictive, this flag can be used '
-          'to increase the limit without completely removing it. See INCREASED_DEVICE_LIMIT_PER_USER in settings '
-          'to see the exact value.',
-    tag=TAG_SAAS_CONDITIONAL,
+DEVICE_RATE_LIMITER = FeatureRelease(
+    slug='device_rate_limiter',
+    label='Apply rate limiting to the number of devices a single user can use in a one minute time window.',
+    description='Form submissions, restores, and heartbeat requests count towards usage. View and update in the '
+                'django admin under the SystemLimit table. The key is "device_limit_per_user"',
+    tag=TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
+    owner='Graham Herceg',
 )
 
 KYC_VERIFICATION = StaticToggle(
@@ -3031,6 +3032,13 @@ MTN_MOBILE_WORKER_VERIFICATION = StaticToggle(
 ACTIVATE_DATADOG_APM_TRACES = StaticToggle(
     slug='activate_datadog_apm_traces',
     label='USH: Turn on Datadog APM traces for a project.',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+USH_DISABLE_INTERVAL_SYNC = StaticToggle(
+    slug='ush_disable_interval_sync',
+    label='Disable interval sync',
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )
