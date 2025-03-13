@@ -5,8 +5,7 @@ hqDefine("app_manager/js/modules/module_view_report", [
     "app_manager/js/app_manager_media",
     "app_manager/js/modules/report_module",
     "reports_core/js/choice_list_utils",
-    // TODO: support xpathValidator
-    //{% include "app_manager/partials/xpathValidator.html" %}
+    "app_manager/js/xpathValidator",
 ], function (
     $,
     _,

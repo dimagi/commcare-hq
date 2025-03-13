@@ -28,6 +28,12 @@ module.exports = Object.assign({}, commonDefault, {
             "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
             "datatables.fixedColumns": "datatables-fixedcolumns/js/dataTables.fixedColumns",
         }),
+
+        // Needed for js-xpath in app manager
+        fallback: {
+            "path": false,
+            "fs": false,
+        },
     },
 
     optimization: {

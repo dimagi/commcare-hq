@@ -13,7 +13,7 @@ hqDefine("app_manager/js/modules/module_view", [
     "app_manager/js/nav_menu_media",
     "app_manager/js/modules/case_list_setting",
     "hqwebapp/js/key-value-mapping",
-    //{% include "app_manager/partials/xpathValidator.html" %}  // TODO: xpathValidator
+    "app_manager/js/xpathValidator",
     "app_manager/js/apps_base",
     "app_manager/js/custom_assertions",
 ], function (
