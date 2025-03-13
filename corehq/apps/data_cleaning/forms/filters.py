@@ -14,6 +14,12 @@ from corehq.apps.data_cleaning.models import (
 )
 from corehq.apps.data_cleaning.utils.cases import get_case_property_details
 
+EXCLUDED_FILTERED_PROPERTIES = [
+    '@case_type',  # Data cleaning only works with one case type at a time
+    '@status',  # the Case Status pinned filter takes care of this
+    '@owner_id',  # the Case Owner(s) pinned filter takes care of this
+]
+
 
 class AddColumnFilterForm(forms.Form):
     prop_id = forms.ChoiceField(
@@ -78,7 +84,7 @@ class AddColumnFilterForm(forms.Form):
 
         property_details = get_case_property_details(self.session.domain, self.session.identifier)
         self.fields['prop_id'].choices = [(None, None)] + [
-            (p, p) for p in sorted(property_details.keys())
+            (p, p) for p in sorted(property_details.keys()) if p not in EXCLUDED_FILTERED_PROPERTIES
         ]
 
         initial_prop_id = self.fields['prop_id'].initial
