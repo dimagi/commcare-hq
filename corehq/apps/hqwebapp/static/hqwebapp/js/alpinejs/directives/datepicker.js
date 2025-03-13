@@ -76,9 +76,20 @@ Alpine.directive('datepicker', (el, { expression }, { cleanup }) => {
             theme: 'light',
             components: components,
             icons: faFiveIcons,
+            buttons: {
+                // show close button when date + time widget is used, as it is a multi-click action
+                close: !!config.datetime,
+            },
         },
         localization: _.extend(defaultTranslations, localization),
     });
+
+    if (!config.datetime) {
+        // Since picking a date is a single-click action, hide the picker on date selection
+        picker.subscribe('change.td',  () => {
+            picker.hide();
+        });
+    }
 
     cleanup(() => {
         picker.dispose();
