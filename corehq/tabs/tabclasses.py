@@ -56,6 +56,7 @@ from corehq.apps.hqadmin.reports import (
 from corehq.apps.hqadmin.views.system import GlobalThresholds
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
+from corehq.apps.integration.payments.views import PaymentConfigurationView
 from corehq.apps.integration.views import (
     DialerSettingsView,
     GaenOtpServerSettingsView,
@@ -1090,6 +1091,10 @@ class ProjectDataTab(UITab):
         items = [[
             _("Payments Verification"),
             [
+                {
+                    "title": PaymentConfigurationView.page_title,
+                    "url": reverse(PaymentConfigurationView.urlname, args=[self.domain]),
+                },
                 {
                     "title": PaymentsVerificationReportView.page_title,
                     "url": reverse(PaymentsVerificationReportView.urlname, args=[self.domain]),

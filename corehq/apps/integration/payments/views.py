@@ -13,6 +13,8 @@ from corehq.apps.integration.payments.tables import PaymentsVerifyTable
 from corehq.apps.users.models import WebUser
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 from corehq.apps.integration.payments.services import verify_payment_cases
+from corehq.apps.integration.payments.models import MoMoConfig
+from corehq.apps.integration.payments.forms import PaymentConfigureForm
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -57,3 +59,55 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
             'payments/partials/payments_verify_alert.html',
             context,
         )
+
+
+@method_decorator(use_bootstrap5, name='dispatch')
+@method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
+class PaymentConfigurationView(HqHtmxActionMixin, BaseDomainView):
+    section_name = _("Data")
+    urlname = 'momo_configuration'
+    template_name = 'payments/payments_config_base.html'
+    page_title = _('Payments Configuration')
+
+    form_class = PaymentConfigureForm
+    form_template_partial_name = 'payments/partials/payments_config_form_partial.html'
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    @property
+    def section_url(self):
+        return reverse(self.urlname, args=(self.domain,))
+
+    @property
+    def page_context(self):
+        return {
+            'payments_config_form': self.config_form,
+        }
+
+    @property
+    def config(self):
+        try:
+            return MoMoConfig.objects.get(domain=self.domain)
+        except MoMoConfig.DoesNotExist:
+            return MoMoConfig(domain=self.domain)
+
+    @property
+    def config_form(self):
+        if self.request.method == 'POST':
+            return self.form_class(self.request.POST, instance=self.config)
+        return self.form_class(instance=self.config)
+
+    def post(self, request, *args, **kwargs):
+        form = self.config_form
+        show_success = False
+        if form.is_valid():
+            form.save()
+            show_success = True
+
+        context = {
+            'payments_config_form': form,
+            'show_success': show_success,
+        }
+        return self.render_htmx_partial_response(request, self.form_template_partial_name, context)
