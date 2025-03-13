@@ -72,7 +72,6 @@ class TestFixAppDocsWithEmptyKeys(TestCase):
         self.command.write_ids_to_file([app._id])
         self.command.fix_documents([app._id])
 
-        # Check that the log file contains the correct entry
         with open(self.TEST_LOG_FILE, 'r') as log_file:
             log_entries = [json.loads(line) for line in log_file]
             print(log_entries)
@@ -138,24 +137,19 @@ class TestFixAppDocsWithEmptyKeys(TestCase):
         self.addCleanup(app.delete)
         self._send_to_es(app)
 
-        # Step 1: Find documents with empty keys
         ids_with_empty_keys = self.command.find_docs_with_empty_keys()
         self.command.write_ids_to_file(ids_with_empty_keys)
 
-        # Verify IDs file contains the app ID
         with open(self.TEST_IDS_FILE, 'r') as ids_file:
             saved_ids = json.load(ids_file)
             assert app._id in saved_ids
 
-        # Step 2: Fix documents using the IDs file
         self.command.fix_documents(saved_ids)
 
-        # Verify empty keys are removed
         app_fixed = Application.get(app._id)
         assert '' not in app_fixed.random_field
         assert 'other_field' in app_fixed.random_field
 
-        # Verify log file contains the correct entry
         with open(self.TEST_LOG_FILE, 'r') as log_file:
             log_entries = [json.loads(line) for line in log_file]
             assert any(
@@ -172,7 +166,6 @@ class TestFixAppDocsWithEmptyKeys(TestCase):
         self.addCleanup(app.delete)
         self._send_to_es(app)
 
-        # Run the command with find-only option
         command = Command()
         command.log_file = self.TEST_LOG_FILE
         command.ids_file = self.TEST_IDS_FILE
@@ -188,7 +181,6 @@ class TestFixAppDocsWithEmptyKeys(TestCase):
             saved_ids = json.load(ids_file)
             assert app._id in saved_ids
 
-        # Verify the app still has the empty key (not fixed)
         app_reloaded = Application.get(app._id)
         assert '' in app_reloaded.random_field
 
@@ -199,7 +191,6 @@ class TestFixAppDocsWithEmptyKeys(TestCase):
         self.addCleanup(app.delete)
         self._send_to_es(app)
 
-        # First, find and save IDs
         command = Command()
         command.log_file = self.TEST_LOG_FILE
         command.ids_file = self.TEST_IDS_FILE
@@ -211,7 +202,6 @@ class TestFixAppDocsWithEmptyKeys(TestCase):
             ids_file=self.TEST_IDS_FILE
         )
 
-        # Then run the command with fix-only option
         command.handle(
             fix_only=True,
             find_only=False,
@@ -220,7 +210,6 @@ class TestFixAppDocsWithEmptyKeys(TestCase):
             ids_file=self.TEST_IDS_FILE
         )
 
-        # Verify the app no longer has the empty key
         app_fixed = Application.get(app._id)
         assert '' not in app_fixed.random_field
 

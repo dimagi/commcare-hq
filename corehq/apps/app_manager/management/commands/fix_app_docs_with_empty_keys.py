@@ -119,14 +119,12 @@ class Command(BaseCommand):
         Application.wrap(app_json).save()
 
     def find_docs_with_empty_keys(self):
-        # Query Elasticsearch to find documents with empty keys
         ids_with_empty_keys = []
         query = {
             "query": {
                 "match_all": {}
             }
         }
-        # Count total documents
         total_docs = app_adapter.count(query)
         processed_docs = 0
         scroll = app_adapter.scroll(query, size=1000)
@@ -134,7 +132,6 @@ class Command(BaseCommand):
             processed_docs += 1
             if self.has_empty_keys(doc):
                 ids_with_empty_keys.append(doc['_id'])
-            # Print progress every 1000 documents
             if processed_docs % 1000 == 0:
                 self.stdout.write(f"Processed {processed_docs}/{total_docs} documents...")
         self.stdout.write(
