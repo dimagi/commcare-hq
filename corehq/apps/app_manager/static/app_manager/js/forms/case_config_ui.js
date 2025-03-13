@@ -1,4 +1,4 @@
-hqDefine('app_manager/js/forms/case_config_ui', ['hqwebapp/js/bootstrap3/main'], function (webappMain) {
+hqDefine('app_manager/js/forms/case_config_ui', [], function () {
     $(function () {
         var caseConfigUtils = hqImport('app_manager/js/case_config_utils'),
             initialPageData = hqImport("hqwebapp/js/initial_page_data"),
@@ -169,12 +169,6 @@ hqDefine('app_manager/js/forms/case_config_ui', ['hqwebapp/js/bootstrap3/main'],
                 domNode.find('input')
                     .off('textchange', x)
                     .on('textchange', x);
-            };
-
-            self.enableHelp = function (elements) {
-                $(elements).find('.hq-help-template').each(function () {
-                    webappMain.transformHelpTemplate($(this), true);
-                });
             };
 
             self.init = function () {
