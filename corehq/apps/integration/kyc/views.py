@@ -84,12 +84,12 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         return KycConfig.objects.get(domain=self.request.domain)
 
     def get_queryset(self):
-        row_objs = self.kyc_config.get_kyc_users()
-        return [self._parse_row(row_obj) for row_obj in row_objs]
+        kyc_users = self.kyc_config.get_kyc_users()
+        return [self._parse_row(kyc_user) for kyc_user in kyc_users]
 
-    def _parse_row(self, row_obj):
+    def _parse_row(self, kyc_user):
         row_data = {
-            'id': row_obj.user_id,
+            'id': kyc_user.user_id,
             'has_invalid_data': False,
         }
         user_fields = (
@@ -108,16 +108,11 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
             'kyc_last_verified_at',
         )
         for field in (user_fields + system_fields):
-            value = None
-            try:
-                value = row_obj[field]
-            except KeyError:
-                pass
-            finally:
-                if value in ['', None] and field in user_fields:
-                    row_data['has_invalid_data'] = True
-                else:
-                    row_data[field] = value
+            value = kyc_user.get(field)
+            if not value and field in user_fields:
+                row_data['has_invalid_data'] = True
+            else:
+                row_data[field] = value
         return row_data
 
     @hq_hx_action('post')
