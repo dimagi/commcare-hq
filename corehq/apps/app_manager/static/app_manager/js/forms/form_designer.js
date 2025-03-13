@@ -1,3 +1,4 @@
+/* global require */
 hqDefine("app_manager/js/forms/form_designer", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         appcues = hqImport('analytix/js/appcues'),
