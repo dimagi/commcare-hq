@@ -15,10 +15,7 @@ from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.const import (
-    RECORD_FAILURE_STATE,
-    RECORD_SUCCESS_STATE,
-)
+from corehq.motech.repeaters.const import State
 from corehq.motech.repeaters.models import FormRepeater
 from corehq.util.test_utils import timelimit
 
@@ -70,7 +67,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             self.repeat_record.fire()
 
             self.assertEqual(self.repeat_record.attempts.last().state,
-                             RECORD_SUCCESS_STATE)
+                             State.Success)
             repeater = self.reget_repeater()
             repeat_record = repeater.repeat_records.last()
             self.assertIsNone(repeat_record.next_check)
@@ -83,7 +80,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             self.repeat_record.fire()
 
             self.assertEqual(self.repeat_record.attempts.last().state,
-                             RECORD_FAILURE_STATE)
+                             State.Fail)
             repeater = self.reget_repeater()
             repeat_record = repeater.repeat_records.last()
             # Trying tomorrow is just as likely to work as in 5 minutes
@@ -97,7 +94,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             self.repeat_record.fire()
 
             self.assertEqual(self.repeat_record.attempts.last().state,
-                             RECORD_FAILURE_STATE)
+                             State.Fail)
             repeater = self.reget_repeater()
             repeat_record = repeater.repeat_records.last()
             self.assertIsNotNone(repeat_record.next_check)
@@ -133,7 +130,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             self.repeat_record.fire()
 
             self.assertEqual(self.repeat_record.attempts.last().state,
-                             RECORD_FAILURE_STATE)
+                             State.Fail)
             repeater = self.reget_repeater()
             repeat_record = repeater.repeat_records.last()
             self.assertIsNotNone(repeat_record.next_check)
@@ -145,7 +142,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             self.repeat_record.fire()
 
             self.assertEqual(self.repeat_record.attempts.last().state,
-                             RECORD_FAILURE_STATE)
+                             State.Fail)
             repeater = self.reget_repeater()
             repeat_record = repeater.repeat_records.last()
             self.assertIsNotNone(repeat_record.next_check)

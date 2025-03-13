@@ -4,7 +4,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.views.generic import TemplateView
 
-from corehq import toggles
+from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
 from corehq.apps.data_cleaning.forms.setup import (
     SelectCaseTypeForm,
     ResumeOrRestartCaseSessionForm,
@@ -18,7 +18,7 @@ from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 
 @method_decorator([
     use_bootstrap5,
-    toggles.DATA_CLEANING_CASES.required_decorator(),
+    require_bulk_data_cleaning_cases,
 ], name='dispatch')
 class SetupCaseSessionFormView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin, TemplateView):
     urlname = "data_cleaning_select_case_type_form"

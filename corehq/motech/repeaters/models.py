@@ -128,6 +128,7 @@ from .const import (
     MAX_RETRY_WAIT,
     MIN_REPEATER_RETRY_WAIT,
     MIN_RETRY_WAIT,
+    RECORD_QUEUED_STATES,
     State,
 )
 from .exceptions import RequestConnectionError, UnknownRepeater
@@ -265,7 +266,7 @@ class RepeaterManager(models.Manager):
             self.get_queryset()
             .filter(is_paused=False)
             .filter(next_attempt_at__isnull=True)
-            .filter(repeat_records__state__in=(State.Pending, State.Fail))
+            .filter(repeat_records__state__in=RECORD_QUEUED_STATES)
         )
 
     def get_all_ready_next_attempt_now(self):
@@ -276,7 +277,7 @@ class RepeaterManager(models.Manager):
             self.get_queryset()
             .filter(is_paused=False)
             .filter(next_attempt_at__lte=timezone.now())
-            .filter(repeat_records__state__in=(State.Pending, State.Fail))
+            .filter(repeat_records__state__in=RECORD_QUEUED_STATES)
         )
 
     def get_queryset(self):
@@ -413,7 +414,7 @@ class Repeater(RepeaterSuperProxy):
         """
         return (
             self.repeat_records
-            .filter(state__in=(State.Pending, State.Fail))
+            .filter(state__in=RECORD_QUEUED_STATES)
             .order_by('registered_at')
         )
 
@@ -1116,7 +1117,7 @@ class RepeatRecord(models.Model):
             models.Index(
                 name="state_partial_idx",
                 fields=["repeater_id"],
-                condition=models.Q(state__in=(State.Pending, State.Fail)),
+                condition=models.Q(state__in=RECORD_QUEUED_STATES),
             ),
         ]
         constraints = [
@@ -1263,9 +1264,6 @@ class RepeatRecord(models.Model):
         # See also the comment in add_success_attempt about possible
         # incorrect status code interpretation resulting in Empty state.
         return self.state == State.Success or self.state == State.Empty
-
-    def is_queued(self):
-        return self.state == State.Pending or self.state == State.Fail
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Members below this line have been added to support the

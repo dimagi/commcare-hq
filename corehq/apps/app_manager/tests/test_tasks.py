@@ -122,6 +122,7 @@ class AppManagerTasksTest(TestCase):
         })
         m1, f1 = factory.new_advanced_module('advanced', 'case')
         factory.form_requires_case(f1, 'person')
+        factory.new_shadow_form(m1)
         factory.app.save()
         self.addCleanup(factory.app.delete)
 

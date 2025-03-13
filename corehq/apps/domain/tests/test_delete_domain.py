@@ -134,7 +134,7 @@ from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import create_case, create_form_for_test
 from corehq.motech.models import ConnectionSettings, RequestLog
-from corehq.motech.repeaters.const import RECORD_SUCCESS_STATE
+from corehq.motech.repeaters.const import State
 from corehq.motech.repeaters.models import (
     CaseRepeater,
     Repeater,
@@ -1010,7 +1010,7 @@ class TestDeleteDomain(TestCase):
                 domain=domain_name,
                 registered_at=datetime.utcnow(),
             )
-            record.attempt_set.create(state=RECORD_SUCCESS_STATE)
+            record.attempt_set.create(state=State.Success)
             self._assert_repeaters_count(domain_name, 1)
             self.addCleanup(repeater.delete)
 
