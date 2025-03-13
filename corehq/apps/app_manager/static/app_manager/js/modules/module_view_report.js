@@ -11,7 +11,7 @@ hqDefine("app_manager/js/modules/module_view_report", [
     _,
     initialPageData,
     appManagerMedia,
-    reportModule,
+    reportModule,       // TODO: this is undefined
     choiceListUtils,
 ) {
     $(function () {
