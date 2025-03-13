@@ -6,6 +6,7 @@ from corehq.apps.users.models import WebUser
 
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 from corehq.apps.integration.payments.services import verify_payment_cases
+from corehq.apps.integration.payments.const import PaymentProperties
 
 
 class TestVerifyPaymentCases(TestCase):
@@ -62,7 +63,7 @@ class TestVerifyPaymentCases(TestCase):
 
     def test_verify_payment_cases(self):
         for case in self.case_list:
-            assert 'momo_payment_verified' not in case.case_json
+            assert PaymentProperties.PAYMENT_VERIFIED not in case.case_json
 
         case_ids = [case_.case_id for case_ in self.case_list]
         verified_cases = verify_payment_cases(self.domain, case_ids, self.webuser)
@@ -71,10 +72,10 @@ class TestVerifyPaymentCases(TestCase):
 
         for case in self.case_list:
             case.refresh_from_db()
-            assert case.case_json['momo_payment_verified'] == 'True'
-            assert case.case_json['momo_payment_verified_by'] == self.webuser.username
-            assert case.case_json['momo_payment_verified_by_user_id'] == self.webuser.user_id
-            assert case.case_json['momo_payment_verified_on_utc'] is not None
+            assert case.case_json[PaymentProperties.PAYMENT_VERIFIED] == 'True'
+            assert case.case_json[PaymentProperties.PAYMENT_VERIFIED_BY] == self.webuser.username
+            assert case.case_json[PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID] == self.webuser.user_id
+            assert case.case_json[PaymentProperties.PAYMENT_VERIFIED_ON_UTC] is not None
 
 
 def _create_case(factory, name, data):

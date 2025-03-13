@@ -9,12 +9,13 @@ from corehq.apps.integration.payments.exceptions import PaymentRequestError
 from corehq.apps.integration.payments.schemas import PaymentTransferDetails, PartyDetails
 from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.form_processor.models import CommCareCase
+from corehq.apps.integration.payments.const import PaymentProperties
 
 CHUNK_SIZE = 100
 
 
 def request_payment(payee_case: CommCareCase, config: MoMoConfig):
-    if not payee_case.case_json['momo_payment_verified'] == 'True':
+    if not _payment_is_verified(payee_case):
         raise PaymentRequestError("Payment has not been verified")
 
     connection_settings = config.connection_settings
@@ -41,10 +42,10 @@ def verify_payment_cases(domain, case_ids: list, verifying_user: WebUser):
         return []
 
     payment_properties_update = {
-        'momo_payment_verified': str(True),
-        'momo_payment_verified_on_utc': str(datetime.now()),
-        'momo_payment_verified_by': verifying_user.username,
-        'momo_payment_verified_by_user_id': verifying_user.user_id,
+        PaymentProperties.PAYMENT_VERIFIED: str(True),
+        PaymentProperties.PAYMENT_VERIFIED_ON_UTC: str(datetime.now()),
+        PaymentProperties.PAYMENT_VERIFIED_BY: verifying_user.username,
+        PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID: verifying_user.user_id,
     }
 
     updated_cases = []
@@ -70,27 +71,33 @@ def _get_cases_updates(case_ids, updates):
     return cases
 
 
-def _get_transfer_details(payee_case) -> PaymentTransferDetails:
+def _get_transfer_details(payee_case: CommCareCase) -> PaymentTransferDetails:
     case_json = payee_case.case_json
 
-    if 'phone_number' in case_json:
-        payee_details = PartyDetails(
+    return PaymentTransferDetails(
+        payee=_get_payee_details(case_json),
+        amount=case_json.get(PaymentProperties.AMOUNT),
+        currency=case_json.get(PaymentProperties.CURRENCY),
+        payeeNote=case_json.get(PaymentProperties.PAYEE_NOTE),
+        payerMessage=case_json.get(PaymentProperties.PAYER_MESSAGE),
+        externalId=case_json.get(PaymentProperties.USER_OR_CASE_ID),
+    )
+
+
+def _get_payee_details(case_data: dict) -> PartyDetails:
+    if PaymentProperties.PHONE_NUMBER in case_data:
+        return PartyDetails(
             partyIdType="MSISDN",
-            partyId=case_json.get('phone_number'),
+            partyId=case_data.get(PaymentProperties.PHONE_NUMBER),
         )
-    elif 'email' in case_json:
-        payee_details = PartyDetails(
+    elif PaymentProperties.EMAIL in case_data:
+        return PartyDetails(
             partyIdType="EMAIL",
-            partyId=case_json.get('email'),
+            partyId=case_data.get(PaymentProperties.EMAIL),
         )
     else:
         raise PaymentRequestError("Invalid payee details")
 
-    return PaymentTransferDetails(
-        payee=payee_details,
-        amount=case_json.get('amount'),
-        currency=case_json.get('currency'),
-        payeeNote=case_json.get('payee_note'),
-        payerMessage=case_json.get('payer_message'),
-        externalId=case_json.get('user_or_case_id'),
-    )
+
+def _payment_is_verified(payee_case: CommCareCase):
+    return payee_case.case_json[PaymentProperties.PAYMENT_VERIFIED] == 'True'
