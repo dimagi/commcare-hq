@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.userreports.models import ReportConfiguration
 
@@ -13,39 +14,61 @@ class Dashboard(models.Model):
         app_label = 'campaign'
 
 
-class DashboardMap(models.Model):
+class DashboardTab(models.TextChoices):
+    """
+    The tab on which a dashboard widget is displayed
+    """
+    CASES = 'cases', _('Cases')
+    MOBILE_WORKERS = 'mobile_workers', _('Mobile Workers')
+
+
+class DashboardWidgetBase(models.Model):
+    """
+    Base class for dashboard widgets
+    """
+    title = models.CharField(max_length=255, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    dashboard_tab = models.CharField(max_length=14, choices=DashboardTab.choices)
+    display_order = models.IntegerField(default=0)
+    dashboard = models.ForeignKey(
+        Dashboard,
+        on_delete=models.CASCADE,
+    )
+
+    class Meta:
+        abstract = True
+        ordering = ['dashboard_tab', 'display_order']
+
+
+class DashboardMap(DashboardWidgetBase):
     """
     Configuration for a map in a campaign dashboard
     """
     dashboard = models.ForeignKey(
         Dashboard,
         on_delete=models.CASCADE,
-        related_name='maps'
+        related_name='maps',
     )
-    display_order = models.IntegerField(default=0)
     case_type = models.CharField(max_length=255)
     geo_case_property = models.CharField(max_length=255)
 
-    class Meta:
+    class Meta(DashboardWidgetBase.Meta):
         app_label = 'campaign'
-        ordering = ['display_order']
 
 
-class DashboardReport(models.Model):
+class DashboardReport(DashboardWidgetBase):
     """
     Configuration for a report in a campaign dashboard
     """
     dashboard = models.ForeignKey(
         Dashboard,
         on_delete=models.CASCADE,
-        related_name='reports'
+        related_name='reports',
     )
-    display_order = models.IntegerField(default=0)
     report_configuration_id = models.CharField(max_length=36)
 
-    class Meta:
+    class Meta(DashboardWidgetBase.Meta):
         app_label = 'campaign'
-        ordering = ['display_order']
 
     @property
     def report_configuration(self):
