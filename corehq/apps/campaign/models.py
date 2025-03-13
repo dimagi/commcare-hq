@@ -1,5 +1,9 @@
+from itertools import chain
+
 from django.db import models
+from django.forms import model_to_dict
 from django.utils.translation import gettext_lazy as _
+
 from jsonfield.fields import JSONField
 
 from corehq.apps.userreports.models import ReportConfiguration
@@ -14,6 +18,18 @@ class Dashboard(models.Model):
 
     class Meta:
         app_label = 'campaign'
+
+    def get_map_report_widgets_by_tab(self):
+        """
+        Returns a dictionary of map and report widgets by tab.
+        """
+        widgets_by_tab = {tab: [] for tab in DashboardTab.values}
+        for instance in sorted(
+            chain(self.maps.all(), self.reports.all()),
+            key=lambda inst: inst.display_order
+        ):
+            widgets_by_tab[instance.dashboard_tab].append(instance.to_widget())
+        return widgets_by_tab
 
 
 class DashboardTab(models.TextChoices):
@@ -57,6 +73,12 @@ class DashboardMap(DashboardWidgetBase):
     class Meta(DashboardWidgetBase.Meta):
         app_label = 'campaign'
 
+    def to_widget(self):
+        return model_to_widget(
+            self,
+            exclude=['dashboard_tab', 'display_order'],
+        )
+
 
 class DashboardReport(DashboardWidgetBase):
     """
@@ -88,6 +110,13 @@ class DashboardReport(DashboardWidgetBase):
             args=[self.dashboard.domain, self.report_configuration_id],
         )
 
+    def to_widget(self):
+        return model_to_widget(
+            self,
+            exclude=['dashboard_tab', 'display_order'],
+            properties=['url'],
+        )
+
 
 class DashboardGauge(DashboardWidgetBase):
     """
@@ -108,3 +137,17 @@ class DashboardGauge(DashboardWidgetBase):
 
     # optional additional configuration set to customize gauge appearance
     configuration = JSONField(default=dict)
+
+
+def model_to_widget(instance, fields=None, exclude=None, properties=()):
+    """
+    Like model_to_dict, but adds 'widget_type', 'dashboard', and
+    properties given in ``properties``.
+    """
+    widget = model_to_dict(instance, fields, exclude)
+    widget.update(
+        {prop: getattr(instance, prop) for prop in properties},
+        widget_type=instance.__class__.__name__,
+        dashboard=model_to_dict(instance.dashboard, exclude=['id']),
+    )
+    return widget
