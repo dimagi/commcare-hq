@@ -15,8 +15,7 @@ CHUNK_SIZE = 100
 
 
 def request_payment(payee_case: CommCareCase, config: MoMoConfig):
-    if not _payment_is_verified(payee_case):
-        raise PaymentRequestError("Payment has not been verified")
+    _validate_payment_request(payee_case)
 
     connection_settings = config.connection_settings
     requests = connection_settings.get_requests()
@@ -99,5 +98,17 @@ def _get_payee_details(case_data: dict) -> PartyDetails:
         raise PaymentRequestError("Invalid payee details")
 
 
-def _payment_is_verified(payee_case: CommCareCase):
-    return payee_case.case_json[PaymentProperties.PAYMENT_VERIFIED] == 'True'
+def _validate_payment_request(payee_case: CommCareCase):
+    case_data = payee_case.case_json
+    if not _payment_is_verified(case_data):
+        raise PaymentRequestError("Payment has not been verified")
+    if _payment_already_submitted(case_data):
+        raise PaymentRequestError("Payment has already been submitted")
+
+
+def _payment_is_verified(case_data: dict):
+    return case_data.get(PaymentProperties.PAYMENT_VERIFIED, '') == 'True'
+
+
+def _payment_already_submitted(case_data: dict):
+    return case_data.get(PaymentProperties.PAYMENT_SUBMITTED, '') == 'True'
