@@ -109,7 +109,7 @@ def verify_user(kyc_user, config):
     }
 
     user_data = get_user_data_for_api(kyc_user, config)
-    _validate_schema('kycVerify/v1', user_data)
+    _validate_schema('kycVerify/v1', user_data)  # See kyc-verify-v1.json
     requests = config.get_connection_settings().get_requests()
     response = requests.post(
         f'/kycVerify/v1/customers/{user_data["phoneNumber"]}',
