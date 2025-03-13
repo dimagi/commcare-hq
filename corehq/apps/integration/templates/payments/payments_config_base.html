@@ -1,0 +1,8 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% js_entry "hqwebapp/js/htmx_and_alpine" %}
+
+{% block page_content %}
+  <div>{% include 'payments/partials/payments_config_form_partial.html' %}</div>
+{% endblock %}
