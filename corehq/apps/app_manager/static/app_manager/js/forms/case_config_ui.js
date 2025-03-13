@@ -1,4 +1,4 @@
-hqDefine('app_manager/js/forms/case_config_ui', [], function () {
+hqDefine('app_manager/js/forms/case_config_ui', function () {
     $(function () {
         var caseConfigUtils = hqImport('app_manager/js/case_config_utils'),
             initialPageData = hqImport("hqwebapp/js/initial_page_data"),
