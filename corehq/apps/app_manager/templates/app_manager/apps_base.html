@@ -71,6 +71,16 @@
     {% block pre_form_content %}{% endblock %}
     {% block form-view %}{% endblock %}
     {% include 'app_manager/partials/add_item_templates.html' %}
+    <script type="text/html" id="XPathValidator.template">
+      <div class="js-xpath-input-target control-group" data-bind="css: {error: xpathValidator.error}">
+        <textarea class="form-control vertical-resize" spellcheck="false"
+                  data-bind="attr: {name: input.getAttribute('name'), placeholder: input.getAttribute('placeholder')},
+                          value: xpathValidator.xpathText"></textarea>
+        <!--ko if: xpathValidator.error()-->
+        <div class="alert alert-danger" data-bind="html: errorHtml"></div>
+        <!--/ko-->
+      </div>
+    </script>
   </div>
 {% endblock %}
 
