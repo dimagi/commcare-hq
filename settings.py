@@ -1166,7 +1166,7 @@ MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict
 MAX_MOBILE_UCR_SIZE = 100000  # max number of rows allowed when syncing a mobile UCR
 
 # used by periodic tasks that delete soft deleted data older than PERMANENT_DELETION_WINDOW days
-PERMANENT_DELETION_WINDOW = 30  # days
+PERMANENT_DELETION_WINDOW = 90  # days
 
 # Used by `corehq.apps.integration.kyc`. Override in localsettings.py
 MTN_KYC_CONNECTION_SETTINGS = {
