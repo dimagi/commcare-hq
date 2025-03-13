@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.core.paginator import Paginator
+from django.forms.models import model_to_dict
 from django.http import JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -80,16 +81,8 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
             'mobile_workers': [],
         }
         for dashboard_map in dashboard_maps:
-            config = {
-                'id': dashboard_map.id,
-                'title': dashboard_map.title,
-                'case_type': dashboard_map.case_type,
-                'gps_prop_name': dashboard_map.geo_case_property,
-            }
-            if dashboard_map.dashboard_tab == 'cases':
-                dashboard_map_configs['cases'].append(config)
-            else:
-                dashboard_map_configs['mobile_workers'].append(config)
+            config = model_to_dict(dashboard_map, exclude=['dashboard', 'dashboard_tab', 'display_order'])
+            dashboard_map_configs[dashboard_map.dashboard_tab].append(config)
         return dashboard_map_configs
 
 

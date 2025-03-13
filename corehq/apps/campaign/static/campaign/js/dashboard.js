@@ -36,7 +36,7 @@ var MapWidget = function (mapWidgetConfig) {
     let self = this;
     self.id = mapWidgetConfig.id;
     self.caseType = mapWidgetConfig.case_type;
-    self.gpsPropName = mapWidgetConfig.gps_prop_name;
+    self.gpsPropName = mapWidgetConfig.geo_case_property;
     self.title = mapWidgetConfig.title;
 
     self.mapInstance;

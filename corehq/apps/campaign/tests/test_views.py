@@ -64,17 +64,18 @@ class TestDashboardView(BaseTestCampaignView):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        dashboard = Dashboard.objects.create(domain=cls.domain)
+        cls.dashboard = Dashboard.objects.create(domain=cls.domain)
         cls.dashboard_map_cases = DashboardMap.objects.create(
-            dashboard=dashboard,
+            dashboard=cls.dashboard,
             title='Cases Map',
             case_type='foo',
             geo_case_property='somewhere',
             dashboard_tab=DashboardTab.CASES,
         )
         cls.dashboard_map_mobile_workers = DashboardMap.objects.create(
-            dashboard=dashboard,
+            dashboard=cls.dashboard,
             title='Mobile Workers Map',
+            description='My cool map',
             case_type='bar',
             geo_case_property='nowhere',
             dashboard_tab=DashboardTab.MOBILE_WORKERS,
@@ -98,14 +99,16 @@ class TestDashboardView(BaseTestCampaignView):
             'cases': [{
                 'id': self.dashboard_map_cases.id,
                 'title': 'Cases Map',
+                'description': None,
                 'case_type': 'foo',
-                'gps_prop_name': 'somewhere',
+                'geo_case_property': 'somewhere',
             }],
             'mobile_workers': [{
                 'id': self.dashboard_map_mobile_workers.id,
                 'title': 'Mobile Workers Map',
+                'description': 'My cool map',
                 'case_type': 'bar',
-                'gps_prop_name': 'nowhere',
+                'geo_case_property': 'nowhere',
             }],
         }
 
