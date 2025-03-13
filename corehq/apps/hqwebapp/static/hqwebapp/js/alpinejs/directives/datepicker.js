@@ -91,6 +91,11 @@ Alpine.directive('datepicker', (el, { expression }, { cleanup }) => {
         });
     }
 
+    el.addEventListener('error.td', (event) => {
+        picker.dates.setValue(null);
+        event.stopPropagation();
+    });
+
     cleanup(() => {
         picker.dispose();
     });
