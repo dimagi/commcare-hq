@@ -10,6 +10,8 @@ hqDefine('geospatial/js/models', [
     '@mapbox/mapbox-gl-draw',
     '@turf/turf',
     'hqwebapp/js/components/pagination',
+    'style-loader!mapbox-gl/dist/mapbox-gl.css',
+    'style-loader!@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css',
 ], function (
     $,
     ko,

@@ -4,15 +4,6 @@
 {% load i18n %}
 {% js_entry "campaign/js/dashboard" %}
 
-{% block stylesheets %}
-  {{ block.super }}
-  <link rel="stylesheet" href="{% static 'mapbox-gl/dist/mapbox-gl.css' %}" />
-  <link
-    rel="stylesheet"
-    href="{% static '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css' %}"
-    type="text/css"
-  />
-{% endblock %}
 
 {% block title %}
   {% trans "Campaign Dashboard" %}
