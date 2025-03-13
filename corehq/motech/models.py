@@ -112,6 +112,7 @@ class ConnectionSettings(models.Model):
     # last_token is stored encrypted because it can contain secrets
     last_token_aes = models.TextField(blank=True, default="")
     is_deleted = models.BooleanField(default=False, db_index=True)
+    custom_headers = models.JSONField(null=True, blank=True)
 
     objects = ConnectionSoftDeleteManager.from_queryset(ConnectionQuerySet)()
     all_objects = ConnectionQuerySet.as_manager()
