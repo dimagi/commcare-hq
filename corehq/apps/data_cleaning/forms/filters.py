@@ -87,7 +87,7 @@ class AddColumnFilterForm(forms.Form):
             (p, p) for p in sorted(property_details.keys()) if p not in EXCLUDED_FILTERED_PROPERTIES
         ]
 
-        initial_prop_id = self.fields['prop_id'].initial
+        initial_prop_id = self._get_initial_value('prop_id')
         is_initial_editable = (
             property_details[initial_prop_id]['is_editable'] if initial_prop_id else True
         )
@@ -95,7 +95,9 @@ class AddColumnFilterForm(forms.Form):
         offcanvas_selector = "#offcanvas-filter"
 
         alpine_data_model = {
-            "dataType": self.fields['data_type'].initial,
+            "dataType": self._get_initial_value(
+                'data_type', DataType.CASE_CHOICES[0][0]
+            ),
             "propId": initial_prop_id,
             "casePropertyDetails": property_details,
             "isEditable": is_initial_editable,
@@ -113,10 +115,18 @@ class AddColumnFilterForm(forms.Form):
             "multiSelectDataTypes": DataType.FILTER_CATEGORY_DATA_TYPES[
                 DataType.FILTER_CATEGORY_MULTI_SELECT
             ],
-            "textMatchType": self.fields['text_match_type'].initial,
-            "numberMatchType": self.fields['number_match_type'].initial,
-            "dateMatchType": self.fields['date_match_type'].initial,
-            "multiSelectMatchType": self.fields['multi_select_match_type'].initial,
+            "textMatchType": self._get_initial_value(
+                'text_match_type', FilterMatchType.TEXT_CHOICES[0][0]
+            ),
+            "numberMatchType": self._get_initial_value(
+                'number_match_type', FilterMatchType.NUMBER_CHOICES[0][0]
+            ),
+            "dateMatchType": self._get_initial_value(
+                'date_match_type', FilterMatchType.DATE_CHOICES[0][0]
+            ),
+            "multiSelectMatchType": self._get_initial_value(
+                'multi_select_match_type', FilterMatchType.MULTI_SELECT_CHOICES[0][0]
+            ),
             "matchTypesWithNoValue": [
                 f[0] for f in FilterMatchType.ALL_DATA_TYPES_CHOICES
             ],
@@ -140,7 +150,6 @@ class AddColumnFilterForm(forms.Form):
                 ),
                 crispy.Field(
                     'data_type',
-                    x_init="dataType = $el.value",
                     x_model="dataType",
                     **({
                         ":disabled": "!isEditable",
@@ -259,4 +268,9 @@ class AddColumnFilterForm(forms.Form):
                 ),
                 x_data=json.dumps(alpine_data_model),
             ),
+        )
+
+    def _get_initial_value(self, field_name, default_value=None):
+        return self.data.get(
+            field_name, self.fields[field_name].initial or default_value
         )
