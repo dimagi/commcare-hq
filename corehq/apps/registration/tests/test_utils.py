@@ -4,7 +4,11 @@ from unittest import mock
 from django.contrib.auth.models import User
 from django.test import RequestFactory, TestCase
 
-from corehq.apps.accounting.models import Subscription
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    BillingContactInfo,
+    Subscription,
+)
 from corehq.apps.domain.dbaccessors import domain_or_deleted_domain_exists
 from corehq.apps.domain.exceptions import ErrorInitializingDomain
 from corehq.apps.domain.models import Domain
@@ -23,8 +27,15 @@ from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
 from corehq.util.view_utils import absolute_reverse
 
+real_BillingContactInfo_get_or_create = BillingContactInfo.objects.get_or_create
+
 
 def _issue_initializing_domain(*args, **kwargs):
+    # Create object, then raise excpetion. This will cause
+    # _setup_subscription to fail, but SQL objects related to the domain
+    # will have been saved to the database. They should be cleaned up on
+    # transaction rollback due to the exception.
+    real_BillingContactInfo_get_or_create(*args, **kwargs)
     raise Exception()
 
 
@@ -94,17 +105,26 @@ class TestRequestNewDomain(TestCase):
         self.assertFalse(domain.is_active)
 
     @suspend(domain_tombstone_patch)
-    @mock.patch('corehq.apps.registration.utils._setup_subscription', _issue_initializing_domain)
+    @mock.patch.object(BillingContactInfo.objects, 'get_or_create', _issue_initializing_domain)
     def test_subscription_exception_raises_error_and_domain_is_deleted(self):
         # We want to ensure that errors during the Subscription initialization process
         # do not result in incomplete domains (a domain without a Subscription)
+        def check_preconditions():
+            # verify that accounting models created during domain setup do not exist
+            Subscription.clear_caches(domain_name)
+            self.assertFalse(domain_or_deleted_domain_exists(domain_name))
+            self.assertIsNone(BillingAccount.get_account_by_domain(domain_name))
+            self.assertIsNone(Subscription.get_active_subscription_by_domain(domain_name))
+
         domain_name = 'subscription-failed'
         self.addCleanup(_cleanup_domain, domain_name)
+        check_preconditions()
+
         with self.assertRaisesMessage(ErrorInitializingDomain,
                                       "Subscription setup failed for 'subscription-failed'"):
             request_new_domain(self.request, domain_name, is_new_user=True)
 
-        self.assertFalse(domain_or_deleted_domain_exists(domain_name))
+        check_preconditions()
 
     @mock.patch('corehq.apps.registration.utils._setup_subscription', _noop)
     @mock.patch('django.conf.settings.IS_SAAS_ENVIRONMENT', True)
