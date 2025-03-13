@@ -38,7 +38,7 @@ hqDefine('app_manager/js/forms/case_config_ui', ['hqwebapp/js/bootstrap3/main'],
             self.moduleCaseTypes = params.moduleCaseTypes;
             self.allowUsercase = params.allowUsercase;
 
-            self.trackGoogleEvent = function() {
+            self.trackGoogleEvent = function () {
                 hqImport('analytix/js/google').track.event(...arguments);
             };
 
