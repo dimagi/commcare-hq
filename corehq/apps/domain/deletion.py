@@ -501,6 +501,10 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('geospatial', 'GeoConfig', 'domain'),
     ModelDeletion('email', 'EmailSettings', 'domain'),
     ModelDeletion('hqmedia', 'LogoForSystemEmailsReference', 'domain'),
+    ModelDeletion('campaign', 'Dashboard', 'domain', extra_models=[
+        'DashboardMap',
+        'DashboardReport',
+    ]),
 ]
 
 

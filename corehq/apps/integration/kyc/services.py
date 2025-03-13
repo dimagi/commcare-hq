@@ -10,7 +10,7 @@ from django.utils.text import camel_case_to_spaces
 
 import jsonschema
 
-from corehq.apps.integration.kyc.models import KycVerificationFailureCause
+from corehq.apps.integration.kyc.models import KycVerificationFailureCause, KycVerificationStatus
 from corehq.util.metrics import metrics_counter
 
 
@@ -22,41 +22,32 @@ def verify_users(kyc_users, config):
     device_id = f'{__name__}.verify_users'
     errors_with_count = defaultdict(int)
     for kyc_user in kyc_users:
-        is_verified, verification_error = verify_user(kyc_user, config)
+        verification_status = KycVerificationStatus.PENDING
+        try:
+            verification_status = verify_user(kyc_user, config)
+            if verification_status == KycVerificationStatus.FAILED:
+                errors_with_count[KycVerificationFailureCause.USER_INFORMATION_MISMATCH.value] += 1
+        # TODO - Decide on how we want to handle these exceptions for the end user
+        except jsonschema.exceptions.ValidationError:
+            errors_with_count[KycVerificationFailureCause.USER_INFORMATION_INCOMPLETE.value] += 1
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+            errors_with_count[KycVerificationFailureCause.NETWORK_ERROR.value] += 1
+        except requests.HTTPError:
+            errors_with_count[KycVerificationFailureCause.API_ERROR.value] += 1
 
-        if verification_error:
-            errors_with_count[verification_error] += 1
+        # Store result only when API successfully returns a verification response
+        if verification_status in (KycVerificationStatus.PASSED, KycVerificationStatus.FAILED):
+            kyc_user.update_verification_status(verification_status, device_id=device_id)
 
-        kyc_user.update_verification_status(
-            is_verified,
-            device_id=device_id,
-            error_message=KycVerificationFailureCause(verification_error).label if verification_error else None,
-        )
-        results[kyc_user.user_id] = is_verified
+        results[kyc_user.user_id] = verification_status
 
     _report_verification_failure_metric(config.domain, errors_with_count)
     return results
 
 
+
+
 def verify_user(kyc_user, config):
-    is_verified = False
-    verification_error = None
-
-    try:
-        is_verified = _verify_user(kyc_user, config)
-        if not is_verified:
-            verification_error = KycVerificationFailureCause.USER_INFORMATION_MISMATCH.value
-    except jsonschema.exceptions.ValidationError:
-        verification_error = KycVerificationFailureCause.USER_INFORMATION_INCOMPLETE.value
-    except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
-        verification_error = KycVerificationFailureCause.NETWORK_ERROR.value
-    except requests.HTTPError:
-        verification_error = KycVerificationFailureCause.API_ERROR.value
-
-    return is_verified, verification_error
-
-
-def _verify_user(kyc_user, config):
     """
     Verify a user using the Chenosis MTN KYC API.
 
@@ -123,7 +114,8 @@ def _verify_user(kyc_user, config):
     )
     response.raise_for_status()
     field_scores = response.json().get('data', {})
-    return all(v >= required_thresholds[k] for k, v in field_scores.items())
+    verification_successful = all(v >= required_thresholds[k] for k, v in field_scores.items())
+    return KycVerificationStatus.PASSED if verification_successful else KycVerificationStatus.FAILED
 
 
 def _report_verification_failure_metric(domain, errors_with_count):

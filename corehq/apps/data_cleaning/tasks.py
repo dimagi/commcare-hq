@@ -3,26 +3,37 @@ from corehq.apps.celery import task
 
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.data_cleaning.models import (
+    BulkEditColumn,
+    BulkEditColumnFilter,
+    BulkEditPinnedFilter,
     BulkEditSession,
 )
 from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
 from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
 from corehq.apps.users.util import username_to_user_id
 from corehq.form_processor.models import CommCareCase
+from corehq.util.metrics.load_counters import case_load_counter
 
 
 @task(queue='case_import_queue')
 def commit_data_cleaning(bulk_edit_session_id):
     session = BulkEditSession.objects.get(session_id=bulk_edit_session_id)
 
+    # Delete UI-only models
+    BulkEditColumnFilter.objects.filter(session=session).delete()
+    BulkEditPinnedFilter.objects.filter(session=session).delete()
+    BulkEditColumn.objects.filter(session=session).delete()
+
     form_ids = []
     case_index = 0
     session.update_result(0)
+    count_cases = case_load_counter("bulk_case_cleaning", session.domain)
     while case_index < session.records.count():
         records = session.records.all()[case_index:case_index + CASEBLOCK_CHUNKSIZE]
         case_index += CASEBLOCK_CHUNKSIZE
         blocks = _create_case_blocks(session, records)
         xform = _submit_case_blocks(session, blocks)
+        count_cases(value=len(records) * 2)       # 1 read + 1 write per case
         form_ids.append(xform.form_id)
         session.update_result(len(records), xform.form_id)
         session.save()
