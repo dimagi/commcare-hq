@@ -64,9 +64,9 @@ def _get_payment_case_ids_on_domain(domain):
         .case_type(MOMO_PAYMENT_CASE_TYPE)
         .filter(
             filters.AND(
-                case_property_query(PaymentProperties.PAYMENT_VERIFIED, True),
+                case_property_query(PaymentProperties.PAYMENT_VERIFIED, 'True'),
                 filters.OR(
-                    case_property_query(PaymentProperties.PAYMENT_SUBMITTED, False),
+                    case_property_query(PaymentProperties.PAYMENT_SUBMITTED, 'False'),
                     case_property_missing(PaymentProperties.PAYMENT_SUBMITTED),
                 ),
             )
