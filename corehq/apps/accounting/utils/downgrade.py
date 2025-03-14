@@ -70,6 +70,40 @@ class Downgrade:
                     show_stack_trace=True
                 )
 
+    @classmethod
+    def _apply_downgrade_process(cls, oldest_unpaid_invoice, total, today, subscription):
+        domain = subscription.subscriber.domain
+        communication_model, context = cls._get_communication_model_context(domain, oldest_unpaid_invoice)
+        cls._check_and_perform_action(communication_model, context,
+                                      oldest_unpaid_invoice, total, today, subscription)
+
+    @staticmethod
+    def _get_communication_model_context(domain, oldest_unpaid_invoice):
+        from corehq.apps.domain.views.accounting import (
+            DomainBillingStatementsView,
+            DomainSubscriptionView,
+        )
+        from corehq.apps.enterprise.views import EnterpriseBillingStatementsView
+
+        if oldest_unpaid_invoice.is_customer_invoice:
+            communication_model = CustomerInvoiceCommunicationHistory
+            context = {
+                'statements_url': absolute_reverse(
+                    EnterpriseBillingStatementsView.urlname, args=[domain]),
+                'domain_or_account': oldest_unpaid_invoice.account.name
+            }
+        else:
+            communication_model = InvoiceCommunicationHistory
+            context = {
+                'domain': domain,
+                'subscription_url': absolute_reverse(DomainSubscriptionView.urlname,
+                                                     args=[domain]),
+                'statements_url': absolute_reverse(DomainBillingStatementsView.urlname,
+                                                   args=[domain]),
+                'domain_or_account': domain
+            }
+        return communication_model, context
+
     @staticmethod
     def is_subscription_eligible_for_downgrade_process(subscription):
         return (
@@ -77,6 +111,82 @@ class Downgrade:
                 SoftwarePlanEdition.COMMUNITY,
                 SoftwarePlanEdition.PAUSED,
             ] and not subscription.skip_auto_downgrade
+        )
+
+    @classmethod
+    def _check_and_perform_action(cls, communication_model, context,
+                                  oldest_unpaid_invoice, total, today, subscription):
+        context.update({
+            'total': format(total, '7.2f'),
+            'date_to_pause': oldest_unpaid_invoice.date_due + datetime.timedelta(days=OVERDUE_INVOICE_LIMIT_DAYS),
+            'contact_email': settings.INVOICING_CONTACT_EMAIL
+        })
+
+        days_ago = (today - oldest_unpaid_invoice.date_due).days
+        if cls._can_trigger_downgrade(today, days_ago, communication_model, oldest_unpaid_invoice):
+            # We do not automatically downgrade customer invoices
+            if not oldest_unpaid_invoice.is_customer_invoice:
+                cls._downgrade_domain(subscription)
+                cls._send_downgrade_notice(oldest_unpaid_invoice, context)
+
+        elif cls._can_send_downgrade_warning(days_ago, communication_model, oldest_unpaid_invoice):
+            context.update({
+                'days_overdue': OVERDUE_INVOICE_LIMIT_DAYS,
+            })
+            cls._send_downgrade_warning(oldest_unpaid_invoice, communication_model, context)
+
+        elif cls._can_send_overdue_notification(days_ago, communication_model, oldest_unpaid_invoice):
+            context.update({
+                'days_overdue': DAYS_PAST_DUE_TO_TRIGGER_OVERDUE_NOTICE,
+            })
+            cls._send_overdue_notice(oldest_unpaid_invoice, communication_model, context)
+
+    @staticmethod
+    def _can_trigger_downgrade(today, days_ago, communication_model, invoice):
+        if days_ago < DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE:
+            return False
+
+        communication_history = communication_model.objects.filter(
+            invoice=invoice,
+            communication_type=CommunicationType.DOWNGRADE_WARNING,
+        ).order_by('-date_created')
+        if not communication_history.exists():
+            # make sure we always communicate to the customer first
+            return False
+
+        # make sure we give enough time to pass after a downgrade warning
+        days_since_warning = (today - communication_history.first().date_created).days
+        return days_since_warning >= (
+            DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE - DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE_WARNING
+        )
+
+    @staticmethod
+    def _can_send_downgrade_warning(days_ago, communication_model, invoice):
+        if days_ago < DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE_WARNING:
+            return False
+        return not communication_model.objects.filter(
+            invoice=invoice,
+            communication_type=CommunicationType.DOWNGRADE_WARNING,
+        ).exists()
+
+    @staticmethod
+    def _can_send_overdue_notification(days_ago, communication_model, invoice):
+        if days_ago < DAYS_PAST_DUE_TO_TRIGGER_OVERDUE_NOTICE:
+            return False
+        return not communication_model.objects.filter(
+            invoice=invoice,
+            communication_type=CommunicationType.OVERDUE_INVOICE,
+        ).exists()
+
+    @staticmethod
+    def _downgrade_domain(subscription):
+        subscription.change_plan(
+            DefaultProductPlan.get_default_plan_version(
+                SoftwarePlanEdition.PAUSED
+            ),
+            adjustment_method=SubscriptionAdjustmentMethod.AUTOMATIC_DOWNGRADE,
+            note=f'Automatic pausing of subscription for invoice {OVERDUE_INVOICE_LIMIT_DAYS} days late',
+            internal_change=True
         )
 
     @staticmethod
@@ -89,17 +199,6 @@ class Downgrade:
             cc=[settings.ACCOUNTS_EMAIL],
             bcc=[settings.GROWTH_EMAIL],
             email_from=get_dimagi_from_email()
-        )
-
-    @staticmethod
-    def _downgrade_domain(subscription):
-        subscription.change_plan(
-            DefaultProductPlan.get_default_plan_version(
-                SoftwarePlanEdition.PAUSED
-            ),
-            adjustment_method=SubscriptionAdjustmentMethod.AUTOMATIC_DOWNGRADE,
-            note=f'Automatic pausing of subscription for invoice {OVERDUE_INVOICE_LIMIT_DAYS} days late',
-            internal_change=True
         )
 
     @staticmethod
@@ -159,96 +258,6 @@ class Downgrade:
         communication_model.objects.create(
             invoice=invoice,
             communication_type=CommunicationType.OVERDUE_INVOICE,
-        )
-
-    @classmethod
-    def _apply_downgrade_process(cls, oldest_unpaid_invoice, total, today, subscription):
-        from corehq.apps.domain.views.accounting import (
-            DomainBillingStatementsView,
-            DomainSubscriptionView,
-        )
-        from corehq.apps.enterprise.views import EnterpriseBillingStatementsView
-
-        context = {
-            'total': format(total, '7.2f'),
-            'date_to_pause': oldest_unpaid_invoice.date_due + datetime.timedelta(days=OVERDUE_INVOICE_LIMIT_DAYS),
-            'contact_email': settings.INVOICING_CONTACT_EMAIL
-        }
-
-        domain = subscription.subscriber.domain
-        if oldest_unpaid_invoice.is_customer_invoice:
-            communication_model = CustomerInvoiceCommunicationHistory
-            context.update({
-                'statements_url': absolute_reverse(
-                    EnterpriseBillingStatementsView.urlname, args=[domain]),
-                'domain_or_account': oldest_unpaid_invoice.account.name
-            })
-        else:
-            communication_model = InvoiceCommunicationHistory
-            context.update({
-                'domain': domain,
-                'subscription_url': absolute_reverse(DomainSubscriptionView.urlname,
-                                                     args=[domain]),
-                'statements_url': absolute_reverse(DomainBillingStatementsView.urlname,
-                                                   args=[domain]),
-                'domain_or_account': domain
-            })
-
-        days_ago = (today - oldest_unpaid_invoice.date_due).days
-
-        if cls._can_trigger_downgrade(today, days_ago, communication_model, oldest_unpaid_invoice):
-            # We do not automatically downgrade customer invoices
-            if not oldest_unpaid_invoice.is_customer_invoice:
-                cls._downgrade_domain(subscription)
-                cls._send_downgrade_notice(oldest_unpaid_invoice, context)
-
-        elif cls._can_send_downgrade_warning(days_ago, communication_model, oldest_unpaid_invoice):
-            context.update({
-                'days_overdue': OVERDUE_INVOICE_LIMIT_DAYS,
-            })
-            cls._send_downgrade_warning(oldest_unpaid_invoice, communication_model, context)
-
-        elif cls._can_send_overdue_notification(days_ago, communication_model, oldest_unpaid_invoice):
-            context.update({
-                'days_overdue': DAYS_PAST_DUE_TO_TRIGGER_OVERDUE_NOTICE,
-            })
-            cls._send_overdue_notice(oldest_unpaid_invoice, communication_model, context)
-
-    @staticmethod
-    def _can_send_overdue_notification(days_ago, communication_model, invoice):
-        if days_ago < DAYS_PAST_DUE_TO_TRIGGER_OVERDUE_NOTICE:
-            return False
-        return not communication_model.objects.filter(
-            invoice=invoice,
-            communication_type=CommunicationType.OVERDUE_INVOICE,
-        ).exists()
-
-    @staticmethod
-    def _can_send_downgrade_warning(days_ago, communication_model, invoice):
-        if days_ago < DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE_WARNING:
-            return False
-        return not communication_model.objects.filter(
-            invoice=invoice,
-            communication_type=CommunicationType.DOWNGRADE_WARNING,
-        ).exists()
-
-    @staticmethod
-    def _can_trigger_downgrade(today, days_ago, communication_model, invoice):
-        if days_ago < DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE:
-            return False
-
-        communication_history = communication_model.objects.filter(
-            invoice=invoice,
-            communication_type=CommunicationType.DOWNGRADE_WARNING,
-        ).order_by('-date_created')
-        if not communication_history.exists():
-            # make sure we always communicate to the customer first
-            return False
-
-        # make sure we give enough time to pass after a downgrade warning
-        days_since_warning = (today - communication_history.first().date_created).days
-        return days_since_warning >= (
-            DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE - DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE_WARNING
         )
 
 
