@@ -25,6 +25,9 @@ $dashboard-icon-size: 100px;
     text-decoration: none;
     outline: none;
   }
+  i.dashboard-icon::before{
+    padding: 7px 0;
+  }
 }
 
 .card-dashboard {
