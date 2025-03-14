@@ -15,3 +15,4 @@ class PaymentProperties(object):
     EMAIL = 'email'
     PHONE_NUMBER = 'phone_number'
     BATCH_NUMBER = 'batch_number'
+    PAYMENT_ERROR = 'payment_error'

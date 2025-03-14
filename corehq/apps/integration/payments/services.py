@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 from dataclasses import asdict
+from django.utils.translation import gettext as _
 
 from dimagi.utils.chunked import chunked
 from corehq.apps.users.models import WebUser
@@ -19,16 +20,18 @@ def request_payments_for_cases(case_ids, config):
     payment_updates = []
 
     for payment_case in CommCareCase.objects.get_cases(case_ids=case_ids):
+        payment_update = {}
+        payment_submitted = False
         try:
             transaction_id = request_payment(payment_case, config)
-        except PaymentRequestError:
-            continue
+            payment_update['transaction_id'] = transaction_id
+            payment_submitted = True
+        except PaymentRequestError as e:
+            payment_update[PaymentProperties.PAYMENT_ERROR] = str(e)
+        finally:
+            payment_update[PaymentProperties.PAYMENT_SUBMITTED] = payment_submitted
+            payment_update[PaymentProperties.PAYMENT_TIMESTAMP] = str(datetime.now())
 
-        payment_update = {
-            'transaction_id': transaction_id,
-            PaymentProperties.PAYMENT_SUBMITTED: True,
-            PaymentProperties.PAYMENT_TIMESTAMP: str(datetime.now()),
-        }
         payment_updates.append(
             (payment_case.case_id, payment_update, False)
         )
@@ -69,7 +72,7 @@ def _make_payment_request(request_data, config: MoMoConfig):
         }
     )
     if response.status_code != 202:
-        raise PaymentRequestError("Payment request failed")
+        raise PaymentRequestError(_("Payment request failed"))
     return transaction_id
 
 
@@ -132,14 +135,14 @@ def _get_payee_details(case_data: dict) -> PartyDetails:
             partyId=case_data.get(PaymentProperties.EMAIL),
         )
     else:
-        raise PaymentRequestError("Invalid payee details")
+        raise PaymentRequestError(_("Invalid payee details"))
 
 
 def _validate_payment_request(case_data: dict):
     if not _payment_is_verified(case_data):
-        raise PaymentRequestError("Payment has not been verified")
+        raise PaymentRequestError(_("Payment has not been verified"))
     if _payment_already_submitted(case_data):
-        raise PaymentRequestError("Payment has already been submitted")
+        raise PaymentRequestError(_("Payment has already been submitted"))
 
 
 def _payment_is_verified(case_data: dict):

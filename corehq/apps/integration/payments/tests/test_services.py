@@ -295,11 +295,19 @@ class TestRequestPaymentsForCases(TestCase):
 
         bulk_update_cases_mock.assert_called_once()
         _, payment_updates = bulk_update_cases_mock.call_args[0]
-        assert len(payment_updates) == 1
+        assert len(payment_updates) == 2
 
         case_id, payment_property_update, _ = payment_updates[0]
         eligible_case = payment_cases[0]
         assert case_id == eligible_case.case_id
+
+        case_id, payment_property_update, _ = payment_updates[1]
+        non_eligible_case = payment_cases[1]
+        assert case_id == non_eligible_case.case_id
+        assert 'transaction_id' not in payment_property_update
+        assert PaymentProperties.PAYMENT_TIMESTAMP in payment_property_update
+        assert not payment_property_update[PaymentProperties.PAYMENT_SUBMITTED]
+        assert payment_property_update[PaymentProperties.PAYMENT_ERROR] == 'Invalid payee details'
 
 
 def _create_case(factory, name, data):
