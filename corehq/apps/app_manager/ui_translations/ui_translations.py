@@ -4,14 +4,15 @@ from collections import defaultdict
 
 from django.utils.translation import gettext as _
 
+from commcare_translations import load_translations
+
 from couchexport.export import export_raw_to_writer
 
-from commcare_translations import load_translations
 from corehq.apps.app_manager import app_strings
 from corehq.apps.app_manager.ui_translations.commcare_versioning import (
     get_commcare_version_from_workbook,
-    set_commcare_version_in_workbook,
     get_strict_commcare_version_string,
+    set_commcare_version_in_workbook,
 )
 from corehq.apps.translations.models import TransifexBlacklist
 from corehq.util.workbook_json.excel import (
@@ -94,8 +95,8 @@ def process_ui_translation_upload(app, trans_file):
                                 expected=default_params_text,
                                 lang=lang,
                                 actual=params_text))
-                if not (lang_with_defaults == lang and
-                        row[lang] == default_trans.get(row["property"], "")):
+                if not (lang_with_defaults == lang
+                        and row[lang] == default_trans.get(row["property"], "")):
                     trans_dict[lang].update({row["property"]: row[lang]})
 
     return trans_dict, error_properties, warnings
