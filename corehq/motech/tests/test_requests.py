@@ -12,6 +12,7 @@ from corehq.motech.const import OAUTH2_PWD, REQUEST_TIMEOUT, OAUTH2_CLIENT
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import get_basic_requests
 from corehq.motech.views import ConnectionSettingsListView
+from corehq.util.test_utils import flag_enabled
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
 from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 from corehq.util.view_utils import absolute_reverse
@@ -287,6 +288,7 @@ class TestOAuth2CustomHeaders(TestCase):
             client_secret=f"client_secret_{random.randint(10_000, 99_999)}",
         )
 
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
     def test_session_with_custom_headers(self):
         self.connection_settings.custom_headers = {'X-Custom-Header': 'custom-value'}
         self.connection_settings.save()
