@@ -19,7 +19,7 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
-from corehq.apps.accounting.utils.downgrade import downgrade_eligible_domains
+from corehq.apps.accounting.utils.downgrade import Downgrade
 
 
 def _generate_invoice_and_subscription(days_ago, is_customer_billing_account=False):
@@ -106,7 +106,7 @@ class TestDowngrades(BaseAccountingTest):
             is_customer_billing_account=is_customer_billing_account
         )
         self.domains.append(domain)
-        downgrade_eligible_domains(only_downgrade_domain=domain.name)
+        Downgrade.run_action(only_downgrade_domain=domain.name)
         return domain, latest_invoice
 
     def test_no_notification(self):
@@ -130,7 +130,7 @@ class TestDowngrades(BaseAccountingTest):
 
         # try to trigger another communication (it should fail), and make sure
         # only one communication was ever sent
-        downgrade_eligible_domains(only_downgrade_domain=domain.name)
+        Downgrade.run_action(only_downgrade_domain=domain.name)
         self.assertTrue(InvoiceCommunicationHistory.objects.filter(
             invoice=latest_invoice,
         ).count(), 1)
@@ -160,7 +160,7 @@ class TestDowngrades(BaseAccountingTest):
         ).exists())
 
         # make sure a downgrade warning isn't sent again
-        downgrade_eligible_domains(only_downgrade_domain=domain.name)
+        Downgrade.run_action(only_downgrade_domain=domain.name)
         self.assertTrue(InvoiceCommunicationHistory.objects.filter(
             invoice=latest_invoice,
             communication_type=CommunicationType.DOWNGRADE_WARNING,
@@ -185,7 +185,7 @@ class TestDowngrades(BaseAccountingTest):
         history.save()
 
         # now trigger a successful downgrade
-        downgrade_eligible_domains(only_downgrade_domain=domain.name)
+        Downgrade.run_action(only_downgrade_domain=domain.name)
         subscription = Subscription.get_active_subscription_by_domain(domain)
         self.assertEqual(subscription.plan_version.plan.edition, SoftwarePlanEdition.PAUSED)
 
