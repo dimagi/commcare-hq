@@ -27,12 +27,12 @@ from corehq.apps.accounting.views import (
     TriggerRemovedSsoUserAutoDeactivationView,
 )
 from corehq.apps.app_manager.dbaccessors import (
-    domain_has_apps,
     get_brief_apps_in_domain,
 )
 from corehq.apps.app_manager.util import is_remote_app, is_linked_app
 from corehq.apps.builds.views import EditMenuView
 from corehq.apps.data_dictionary.views import DataDictionaryView
+from corehq.apps.data_cleaning.decorators import bulk_data_cleaning_enabled_for_request
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import ManageReleasesByLocation
@@ -118,6 +118,7 @@ from corehq.apps.geospatial.views import (
     GeospatialConfigPage,
     GPSCaptureView,
 )
+from corehq.apps.integration.kyc.views import KycConfigurationView
 
 
 class ProjectReportsTab(UITab):
@@ -128,6 +129,7 @@ class ProjectReportsTab(UITab):
         '/a/{domain}/reports/',
         '/a/{domain}/configurable_reports/',
         '/a/{domain}/location_reassignment_download/',
+        '/a/{domain}/campaign/',
     )
 
     @property
@@ -146,12 +148,13 @@ class ProjectReportsTab(UITab):
         tools = self._get_tools_items()
         tableau = self._get_tableau_items()
         report_builder_nav = self._get_report_builder_items()
+        campaign = self._get_campaign_items()
 
         project_reports = ProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-        sidebar_items = (tools + tableau + report_builder_nav + custom_reports + project_reports)
+        sidebar_items = (tools + tableau + campaign + report_builder_nav + custom_reports + project_reports)
         return self._filter_sidebar_items(sidebar_items)
 
     def _get_tools_items(self):
@@ -208,6 +211,22 @@ class ProjectReportsTab(UITab):
         ]
 
         return [(_("Tableau Reports"), items)] if items else []
+
+    def _get_campaign_items(self):
+        if not toggles.CAMPAIGN_DASHBOARD.enabled(self.domain):
+            return []
+
+        from corehq.apps.campaign.views import DashboardView
+        items = [
+            {
+                'title': DashboardView.page_title,
+                'url': reverse(DashboardView.urlname, args=[self.domain]),
+                'icon': 'icon-tasks fa fa-compass',
+                'show_in_dropdown': True,
+            }
+        ]
+
+        return [(_("Campaign"), items)]
 
     def _get_report_builder_items(self):
         user_reports = []
@@ -310,11 +329,8 @@ class DashboardTab(UITab):
     @property
     def _is_viewable(self):
         if self.domain and self.project and not self.project.is_snapshot and self.couch_user:
-            if self.couch_user.is_commcare_user():
-                # never show the dashboard for mobile workers
-                return False
-            else:
-                return domain_has_apps(self.domain)
+            # never show the dashboard for mobile workers
+            return not self.couch_user.is_commcare_user()
         return False
 
     @property
@@ -461,7 +477,10 @@ class ProjectDataTab(UITab):
         '/a/{domain}/data_dictionary/',
         '/a/{domain}/importer/',
         '/a/{domain}/case/',
+        '/a/{domain}/clean/',
         '/a/{domain}/microplanning/',
+        '/a/{domain}/kyc/',
+        '/a/{domain}/payments/'
     )
 
     @property
@@ -624,7 +643,7 @@ class ProjectDataTab(UITab):
             items.extend(FixtureInterfaceDispatcher.navigation_sections(
                 request=self._request, domain=self.domain))
 
-        if (toggles.MODULE_BADGES.enabled(self.domain) and self.couch_user.can_edit_data()):
+        if (toggles.CSQL_FIXTURE.enabled(self.domain) and self.couch_user.can_edit_data()):
             items.append([_('CSQL Fixtures'), [{
                 'title': _(CSQLFixtureExpressionView.page_title),
                 'url': reverse(CSQLFixtureExpressionView.urlname, args=[self.domain]),
@@ -651,6 +670,10 @@ class ProjectDataTab(UITab):
             )
         if self._can_view_geospatial:
             items += self._get_geospatial_views()
+        if self._can_view_kyc_integration:
+            items += self._get_kyc_verification_views()
+        if self._can_view_payments_integration:
+            items += self._get_payments_verification_views()
         return items
 
     @cached_property
@@ -949,6 +972,7 @@ class ProjectDataTab(UITab):
             automatic_update_rule_list_view = {
                 'title': _(AutomaticUpdateRuleListView.page_title),
                 'url': reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]),
+                'icon': 'fa-solid fa-cogs',
             }
             if edit_section:
                 edit_section[0][1].append(automatic_update_rule_list_view)
@@ -962,10 +986,29 @@ class ProjectDataTab(UITab):
             deduplication_list_view = {
                 'title': _(DeduplicationRuleListView.page_title),
                 'url': reverse(DeduplicationRuleListView.urlname, args=[self.domain]),
+                'icon': 'fa-solid fa-network-wired',
             }
             edit_section[0][1].append(deduplication_list_view)
 
+        if self._can_view_case_data_cleaning:
+            from corehq.apps.data_cleaning.views.main import (
+                CleanCasesMainView,
+            )
+            clean_cases_view = {
+                'title': _(CleanCasesMainView.page_title),
+                'url': reverse(CleanCasesMainView.urlname, args=[self.domain]),
+                'icon': 'fa-solid fa-shower',
+            }
+            edit_section[0][1].append(clean_cases_view)
+
         return edit_section
+
+    @property
+    def _can_view_case_data_cleaning(self):
+        return (
+            bulk_data_cleaning_enabled_for_request(self._request)
+            and toggles.DATA_CLEANING_CASES.enabled_for_request(self._request)
+        )
 
     def _get_explore_data_views(self):
         explore_data_views = []
@@ -1016,6 +1059,44 @@ class ProjectDataTab(UITab):
         for section in management_sections:
             geospatial_items[0][1].append(section)
         return geospatial_items
+
+    def _get_kyc_verification_views(self):
+        from corehq.apps.integration.kyc.views import KycVerificationReportView
+        items = [[
+            _("Know Your Customer (KYC) Verification"),
+            [
+                {
+                    "title": KycConfigurationView.page_title,
+                    "url": reverse(KycConfigurationView.urlname, args=[self.domain]),
+                },
+                {
+                    'title': KycVerificationReportView.page_title,
+                    'url': reverse(KycVerificationReportView.urlname, args=[self.domain]),
+                },
+            ]
+        ]]
+        return items
+
+    @cached_property
+    def _can_view_kyc_integration(self):
+        return toggles.KYC_VERIFICATION.enabled(self.domain)
+
+    @cached_property
+    def _can_view_payments_integration(self):
+        return toggles.MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain)
+
+    def _get_payments_verification_views(self):
+        from corehq.apps.integration.payments.views import PaymentsVerificationReportView
+        items = [[
+            _("Payments Verification"),
+            [
+                {
+                    "title": PaymentsVerificationReportView.page_title,
+                    "url": reverse(PaymentsVerificationReportView.urlname, args=[self.domain]),
+                },
+            ]
+        ]]
+        return items
 
     @property
     def dropdown_items(self):
@@ -1447,6 +1528,18 @@ class MessagingTab(UITab):
         return whatsapp_urls
 
     @property
+    def connect_urls(self):
+        from corehq.apps.sms.views import ConnectMessagingUserView
+
+        connect_urls = []
+        if toggles.COMMCARE_CONNECT.enabled(self.domain):
+            connect_urls.append({
+                'title': _('User Consent'),
+                'url': reverse(ConnectMessagingUserView.urlname, args=[self.domain]),
+            })
+        return connect_urls
+
+    @property
     def dropdown_items(self):
         result = []
 
@@ -1498,6 +1591,7 @@ class MessagingTab(UITab):
             (_("Contacts"), self.contacts_urls),
             (_("Settings"), self.settings_urls),
             (_("WhatsApp Settings"), self.whatsapp_urls),
+            (_("Connect Messsaging"), self.connect_urls),
         ):
             if urls:
                 items.append((title, urls))
@@ -1668,15 +1762,6 @@ class ProjectUsersTab(UITab):
                 'show_in_dropdown': True,
             }
 
-    def _enterprise_users(self):
-        from corehq.apps.users.views import EnterpriseUsersView
-        if toggles.ENTERPRISE_USER_MANAGEMENT.enabled_for_request(self._request):
-            return {
-                'title': _(EnterpriseUsersView.page_title),
-                'url': reverse(EnterpriseUsersView.urlname, args=[self.domain]),
-                'show_in_dropdown': True,
-            }
-
     def _roles_and_permissions(self):
         if ((self.couch_user.is_domain_admin() or self.couch_user.can_view_roles())
                 and self.has_project_access):
@@ -1770,7 +1855,6 @@ class ProjectUsersTab(UITab):
         items = []
 
         users_menu = filter(None, [
-            self._enterprise_users(),
             self._mobile_workers(),
             self._web_users(),
             self._roles_and_permissions(),
@@ -2574,6 +2658,9 @@ class AdminTab(UITab):
                 {'title': _('Manage deleted domains'),
                  'url': reverse('tombstone_management'),
                  'icon': 'fa fa-minus-circle'},
+                {'title': _('Check email status'),
+                 'url': reverse('email_status'),
+                 'icon': 'fa fa-envelope-circle-check'},
             ]
             admin_operations = [
                 {'title': _('CommCare Builds'),

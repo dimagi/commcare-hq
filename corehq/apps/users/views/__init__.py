@@ -13,6 +13,7 @@ from crispy_forms.utils import render_crispy_form
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_application_access_for_domain
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, CustomDataFieldsDefinition, PROFILE_SLUG
+from corehq.apps.programs.models import Program
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.models import TableauVisualization, TableauUser
 from corehq.apps.sso.models import IdentityProvider
@@ -114,6 +115,7 @@ from corehq.apps.users.models import (
     HqPermissions,
     UserRole,
 )
+from corehq.apps.users.model_log import InviteModelAction
 from corehq.apps.users.util import log_user_change
 from corehq.apps.users.views.utils import (
     filter_user_query_by_locations_accessible_to_user,
@@ -123,7 +125,7 @@ from corehq.apps.users.views.utils import (
 from corehq.apps.user_importer.importer import UserUploadError
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups, parallel_user_import
-from corehq.const import USER_CHANGE_VIA_WEB
+from corehq.const import USER_CHANGE_VIA_WEB, INVITATION_CHANGE_VIA_WEB
 from corehq.pillows.utils import WEB_USER_TYPE
 from corehq.toggles import PARALLEL_USER_IMPORTS
 from corehq.util.couch import get_document_or_404
@@ -545,20 +547,6 @@ class BaseRoleAccessView(BaseUserSettingsView):
     def can_restrict_access_by_location(self):
         return self.domain_object.has_privilege(
             privileges.RESTRICT_ACCESS_BY_LOCATION)
-
-
-@method_decorator(always_allow_project_access, name='dispatch')
-@method_decorator(toggles.ENTERPRISE_USER_MANAGEMENT.required_decorator(), name='dispatch')
-class EnterpriseUsersView(BaseRoleAccessView):
-    template_name = 'users/enterprise_users.html'
-    page_title = gettext_lazy("Enterprise Users")
-    urlname = 'enterprise_users'
-
-    @property
-    def page_context(self):
-        return {
-            "show_profile_column": domain_has_privilege(self.domain, privileges.APP_USER_PROFILES),
-        }
 
 
 @method_decorator(always_allow_project_access, name='dispatch')
@@ -1243,25 +1231,26 @@ class InviteWebUserView(BaseManageWebUserView):
             profile = CustomDataFieldsProfile.objects.get(
                 id=profile_id,
                 definition__domain=self.domain) if profile_id else None
+            user = CouchUser.get_by_username(data["email"])
             invitation = self.invitation
             if invitation:
                 create_invitation = False
-                invitation.profile = profile
-                invitation.primary_location, assigned_locations = self._get_sql_locations(
-                    data.pop("primary_location", None), data.pop("assigned_locations", []))
-                invitation.assigned_locations.set(assigned_locations)
-                invitation.custom_user_data = data.get("custom_user_data", {})
-
-                invitation.role = data.get("role")
-                invitation.program = data.get("program", None)
-                invitation.tableau_role = data.get("tableau_role", None)
-                invitation.tableau_group_ids = data.get("tableau_group_ids", None)
-                invitation.save()
+                invitation, changed_values = self._get_and_set_changes(invitation, data, profile)
+                changes = self.format_changes(self.domain, changed_values)
+                user_data = data.get("custom_user_data", {})
+                changed_user_data = {}
+                for key, value in invitation.custom_user_data.items():
+                    if key in user_data and user_data[key] != value:
+                        changed_user_data[key] = user_data[key]
+                changes.update({"custom_user_data": changed_user_data})
+                invitation.custom_user_data = user_data
+                invitation.save(logging_values={"changed_by": request.couch_user.user_id,
+                                                "changed_via": INVITATION_CHANGE_VIA_WEB,
+                                                "action": InviteModelAction.UPDATE, "changes": changes})
                 messages.success(request, "Invite to %s was successfully updated." % data["email"])
             elif domain_request is not None:
                 domain_request.is_approved = True
                 domain_request.save()
-                user = CouchUser.get_by_username(domain_request.email)
                 if user is not None:
                     domain_request.send_approval_email()
                     create_invitation = False
@@ -1290,7 +1279,20 @@ class InviteWebUserView(BaseManageWebUserView):
                 data["primary_location"], assigned_locations = self._get_sql_locations(
                     data.pop("primary_location", None), data.pop("assigned_locations", []))
                 invite = Invitation(**data)
-                invite.save()
+                changes = self.format_changes(self.domain,
+                                              {'role_name': data.get("role"),
+                                               'profile': profile,
+                                               'assigned_locations': assigned_locations,
+                                               'primary_location': data["primary_location"],
+                                               'program_id': data.get("program", None)})
+                for key in changes:
+                    if key in data:
+                        data.pop(key, None)
+                data.pop("primary_location", None)
+                changes.update(data)
+                invite.save(logging_values={"changed_by": request.couch_user.user_id,
+                                            "changed_via": INVITATION_CHANGE_VIA_WEB,
+                                            "action": InviteModelAction.CREATE, "changes": changes})
                 invite.assigned_locations.set(assigned_locations)
                 invite.send_activation_email()
 
@@ -1314,6 +1316,68 @@ class InviteWebUserView(BaseManageWebUserView):
                               for assigned_location_id in assigned_location_ids
                               if assigned_location_id is not None]
         return primary_location, assigned_locations
+
+    def _get_and_set_changes(self, invite, form_data, profile):
+        change_values = {}
+        role = form_data.get("role")
+        if invite.role != role:
+            change_values['role_name'] = role
+            invite.role = role
+        if invite.profile != profile:
+            change_values['profile'] = profile
+            invite.profile = profile
+        primary_location, assigned_locations = self._get_sql_locations(
+            form_data.pop("primary_location", None), form_data.pop("assigned_locations", []))
+        previous_locations = [loc for loc in invite.assigned_locations.all()]
+        if len(assigned_locations) != len(previous_locations) \
+           or set(assigned_locations) != set(previous_locations):
+            change_values['assigned_locations'] = assigned_locations
+            invite.assigned_locations.set(assigned_locations)
+        if invite.primary_location != primary_location:
+            change_values['primary_location'] = primary_location
+            invite.primary_location = primary_location
+        if invite.program != form_data.get("program", None):
+            program = form_data.get("program", None)
+            change_values['program_id'] = program
+            invite.program = program
+        if invite.tableau_role != form_data.get("tableau_role", None):
+            tableau_role = form_data.get("program", None)
+            change_values['tableau_role'] = tableau_role
+            invite.tableau_role = tableau_role
+        if invite.tableau_group_ids != form_data.get("tableau_group_ids", None):
+            tableau_group_ids = form_data.get("tableau_group_ids", None)
+            change_values['tableau_group_ids'] = tableau_group_ids
+            invite.program = tableau_group_ids
+
+        return invite, change_values
+
+    @staticmethod
+    def format_changes(domain, changed_values):
+        role_name = changed_values.pop("role_name", None)
+        if role_name:
+            if role_name == "admin":
+                role = StaticRole.domain_admin(domain)
+            else:
+                try:
+                    role = UserRole.objects.get(couch_id=role_name.replace("user-role:", ''), domain=domain)
+                except UserRole.DoesNotExist:
+                    role = None
+            if role:
+                changed_values.update(UserChangeMessage.role_change(role))
+        profile = changed_values.pop('profile', None)
+        if profile:
+            changed_values.update(UserChangeMessage.profile_info(profile.id, profile.name))
+        program_id = changed_values.pop('program_id', None)
+        if program_id:
+            changed_values.update(UserChangeMessage.program_change(Program.get(program_id)))
+        assigned_locations = changed_values.pop('assigned_locations', None)
+        if assigned_locations:
+            changed_values.update(UserChangeMessage.assigned_locations_info(assigned_locations))
+        primary_location = changed_values.pop('primary_location', None)
+        if primary_location:
+            changed_values.update(UserChangeMessage.primary_location_info(primary_location))
+
+        return changed_values
 
 
 class BaseUploadUser(BaseUserSettingsView):

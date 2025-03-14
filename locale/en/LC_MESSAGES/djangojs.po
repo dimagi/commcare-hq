@@ -132,6 +132,10 @@ msgid "Please enter your organization."
 msgstr ""
 
 #: corehq/apps/analytics/static/analytix/js/cta_forms.js
+msgid "Please enter your job title."
+msgstr ""
+
+#: corehq/apps/analytics/static/analytix/js/cta_forms.js
 msgid "Please enter your email address."
 msgstr ""
 
@@ -566,6 +570,11 @@ msgid "Select parent"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "Save Questions to Case Properties"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Raw"
 msgstr ""
 
@@ -625,6 +634,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "You have unchanged user properties settings"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "Save Questions to User Properties"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
@@ -742,35 +755,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
 msgid "This code is used in multiple places."
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Crunching app diff..."
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Error generating the application diff. Please report an issue."
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Form Changes"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Case Changes"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Save Questions"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Load Questions"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-#: corehq/apps/app_manager/static/app_manager/js/summary/utils.js
-msgid "[unknown]"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/app_view_release_manager.js
@@ -984,6 +968,10 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "Latest saved"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/utils.js
+msgid "[unknown]"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
@@ -3617,6 +3605,18 @@ msgstr ""
 msgid "Showing <%- firstItem %> to <%- lastItem %> of <%- maxItems %> entries"
 msgstr ""
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/rich_text_knockout_bindings.js
+msgid "No File selected"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/rich_text_knockout_bindings.js
+msgid "Failed to upload image: "
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/rich_text_knockout_bindings.js
+msgid "Failed to upload image. Please try again."
+msgstr ""
+
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js
 msgid "Clear"
 msgstr ""
@@ -4026,6 +4026,10 @@ msgstr ""
 msgid "Please specify."
 msgstr ""
 
+#: corehq/apps/registration/static/registration/js/new_user.ko.js
+msgid "Please list your organization or company name."
+msgstr ""
+
 #: corehq/apps/registry/static/registry/js/registry_actions.js
 msgid "An unknown error occurred. Please try again or report an issue."
 msgstr ""
@@ -4292,7 +4296,6 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/standard_hq_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/standard_hq_report.js
-#: corehq/apps/userreports/static/userreports/js/configurable_report.js
 msgid "Report successfully emailed"
 msgstr ""
 
@@ -4319,6 +4322,14 @@ msgstr ""
 #: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js
 msgid "Failed to re-process"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
+msgid "_MENU_ per page"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
+msgid "All Rows"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/filters/bootstrap3/main.js
@@ -4564,10 +4575,6 @@ msgstr ""
 msgid "Please check above for any errors in your configuration."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/configurable_report.js
-msgid "An error occurred emailing you report. Please try again."
-msgstr ""
-
 #: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js
 msgid "Edit a custom web report or custom web report source"
 msgstr ""
@@ -4637,14 +4644,6 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
 msgid "Group membership has changed."
-msgstr ""
-
-#: corehq/apps/users/static/users/js/enterprise_users.js
-msgid "Hide Deactivated Mobile Workers"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/enterprise_users.js
-msgid "Show Deactivated Mobile Workers"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/filtered_download.js

@@ -1,7 +1,7 @@
 hqDefine("userreports/spec/PropertyListItem.spec", [
     "userreports/js/builder_view_models",
 ], function (
-    models
+    models,
 ) {
     describe("PropertyListItem Behavior", function () {
 

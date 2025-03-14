@@ -1,6 +1,9 @@
-from django.db import models
-
 import architect
+from django.db import models
+from django.conf import settings
+from field_audit import audit_fields
+
+from corehq.util.quickcache import quickcache
 
 AVG = 'AVG'
 MAX = 'MAX'
@@ -9,6 +12,8 @@ AGGREGATION_OPTIONS = [
     (AVG, 'Average'),
     (MAX, 'Maximum'),
 ]
+
+FIVE_MINUTES = 5 * 60
 
 
 class DynamicRateDefinition(models.Model):
@@ -29,6 +34,7 @@ class DynamicRateDefinition(models.Model):
 
     def _clear_caches(self):
         from corehq.project_limits.rate_limiter import get_dynamic_rate_definition
+
         get_dynamic_rate_definition.clear(self.key, {})
 
 
@@ -37,6 +43,7 @@ class GaugeDefinition(models.Model):
     An abstract model to be used to define configuration to limit gauge values.
     The model is used by GaugeLimiter class to decide weather to limit or not.
     """
+
     key = models.CharField(max_length=512, blank=False, null=False, unique=True, db_index=True)
     wait_for_seconds = models.IntegerField(null=False)
     acceptable_value = models.FloatField(default=None, blank=True, null=True)
@@ -59,12 +66,12 @@ class GaugeDefinition(models.Model):
 
 
 class PillowLagGaugeDefinition(GaugeDefinition):
-
     max_value = models.FloatField(default=None, blank=True, null=True)
     average_value = models.FloatField(default=None, blank=True, null=True)
 
     def _clear_caches(self):
         from corehq.project_limits.gauge import get_pillow_throttle_definition
+
         get_pillow_throttle_definition.clear(self.key)
 
 
@@ -80,3 +87,54 @@ class RateLimitedTwoFactorLog(models.Model):
     window = models.CharField(max_length=15, null=False)
     # largest input is 'number_rate_limited', 31 for headroom
     status = models.CharField(max_length=31, null=False)
+
+
+@audit_fields("limit")
+class SystemLimit(models.Model):
+    key = models.CharField(max_length=255)
+    limit = models.PositiveIntegerField()
+    # the domain field is reserved for extreme cases since limits should apply globally in steady state
+    domain = models.CharField(max_length=128, blank=True, default="")
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['key', 'domain'], name='unique_key_per_domain_constraint')]
+
+    def __str__(self):
+        domain = f"[{self.domain}] " if self.domain else ""
+        return f"{domain}{self.key}: {self.limit}"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        SystemLimit._get_global_limit.clear(self.key)
+        SystemLimit._get_domain_specific_limit.clear(self.key, self.domain)
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        SystemLimit._get_global_limit.clear(self.key)
+        SystemLimit._get_domain_specific_limit.clear(self.key, self.domain)
+
+    @classmethod
+    def for_key(cls, key, domain=''):
+        """
+        Return the value associated with the given key, prioritizing the domain specific entry over the general one
+        """
+        domain_limit = cls._get_domain_specific_limit(key, domain) if domain else None
+        if domain_limit is not None:
+            return domain_limit
+        return cls._get_global_limit(key)
+
+    @staticmethod
+    @quickcache(['key'], timeout=FIVE_MINUTES, skip_arg=lambda *args: settings.UNIT_TESTING)
+    def _get_global_limit(key):
+        try:
+            return SystemLimit.objects.get(key=key, domain='').limit
+        except SystemLimit.DoesNotExist:
+            return None
+
+    @staticmethod
+    @quickcache(['key', 'domain'], timeout=FIVE_MINUTES, skip_arg=lambda *args: settings.UNIT_TESTING)
+    def _get_domain_specific_limit(key, domain):
+        try:
+            return SystemLimit.objects.get(key=key, domain=domain).limit
+        except SystemLimit.DoesNotExist:
+            return None

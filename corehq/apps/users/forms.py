@@ -1001,15 +1001,12 @@ class MultipleSelectionForm(forms.Form):
             return super(MyView, self).dispatch(request, *args, **kwargs)
 
         # javascript
-        hqDefine("app/js/module", function() {
-            // Multiselect widget
-            $(function () {
-                var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
-                multiselect_utils.createFullMultiselectWidget('id_of_multiselect_field', {
-                    selectableHeaderTitle: gettext("Available Things"),
-                    selectedHeaderTitle: gettext("Things Selected"),
-                    searchItemTitle: gettext("Search Things..."),
-                });
+        import multiselectUtils from "hqwebapp/js/multiselect_utils";
+        $(function () {
+            multiselectUtils.createFullMultiselectWidget('id_of_multiselect_field', {
+                selectableHeaderTitle: gettext("Available Things"),
+                selectedHeaderTitle: gettext("Things Selected"),
+                searchItemTitle: gettext("Search Things..."),
             });
         });
     """

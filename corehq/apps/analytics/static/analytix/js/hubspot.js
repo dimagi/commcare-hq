@@ -1,4 +1,4 @@
-"use strict";
+
 /**
  * Instatiates the Hubspot analytics platform.
  */
@@ -17,9 +17,8 @@ hqDefine('analytix/js/hubspot', [
     logging,
     utils,
     kissmetrics,
-    ctaForms
+    ctaForms,
 ) {
-    'use strict';
     var _get = initialAnalytics.getFn('hubspot'),
         _logger = logging.getLoggerForApi('Hubspot'),
         _ready = $.Deferred(),
@@ -45,28 +44,15 @@ hqDefine('analytix/js/hubspot', [
      * Activates the Hubspot Request Demo form
      */
     _utils.loadDemoForm = function () {
-        let isTrial = _get('isDemoTrial'),
-            isVariant = _get('demoABv2') && _get('demoABv2').version === 'variant',
-            $modal = $('#cta-form-get-demo'),
+        let $modal = $('#cta-form-get-demo'),
             $form = $('#get-demo-cta-form-content'),
             hasInteractedWithForm = false,
-            formId,
+            formId = "f6ebf161-fccf-4083-9a72-5839a0c8ac8c",
             demoForm;
-
-        if (isTrial) {
-            formId = isVariant ? "c2381f55-9bd9-4f27-8476-82900e58bfd6" : "4474515e-fea6-4154-b3cf-1fe42b1c1333";
-        } else {
-            formId = isVariant ? "f6ebf161-fccf-4083-9a72-5839a0c8ac8c" : "d1897875-a5bb-4b63-9b9c-3d8fdbbe8274";
-        }
 
         demoForm = ctaForms.hubspotCtaForm({
             hubspotFormId: formId,
-            showContactMethod: isVariant,
-            showPreferredLanguage: false,
-            useWhatsApp: false,
-            useGoogleHangouts: true,
             nextButtonText: gettext("Submit Request"),
-            phoneNumberSelector: $form.find('input[name="phone"]'),
             submitCallbackFn: function () {
                 $('#get-demo-cta-success').fadeIn();
                 $('#get-demo-cta-form-content').addClass('hidden').addClass('d-none'); // todo after bootstrap 5 migration

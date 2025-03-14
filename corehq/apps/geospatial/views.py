@@ -59,6 +59,7 @@ from .utils import (
     create_case_with_gps_property,
     get_flag_assigned_cases_config,
     get_geo_case_property,
+    get_geo_config,
     get_geo_user_property,
     get_lat_lon_from_dict,
     set_case_gps_property,
@@ -86,7 +87,7 @@ class CaseDisbursementAlgorithm(BaseDomainView):
     urlname = "case_disbursement"
 
     def post(self, request, domain, *args, **kwargs):
-        config = GeoConfig.objects.get(domain=domain)
+        config = get_geo_config(domain)
         request_json = json.loads(request.body.decode('utf-8'))
 
         solver_class = config.disbursement_solver
@@ -364,7 +365,7 @@ class GetPaginatedCases(CaseListMixin):
         # override super class corehq.apps.reports.generic.GenericReportView init method to
         # avoid failures for missing expected properties for a report and keep only necessary properties
         self.request = request
-        self.request_params = json_request(self.request.GET)
+        self._request_params = json_request(self.request.GET)
         self.domain = domain
 
     def _base_query(self):
@@ -398,6 +399,12 @@ class GetPaginatedCases(CaseListMixin):
         case_data = []
         for case_obj in cases:
             lat, lon = get_lat_lon_from_dict(case_obj.case_json, location_prop_name)
+
+            # There might be a few moments where GPS data is saved for a case but the ES index hasn't
+            # updated yet, and so will still show as missing data in the ES query. For these instances,
+            #  we can simply filter them out here.
+            if show_cases_with_missing_gps_data_only and (lat or lon):
+                continue
             case_data.append(
                 {
                     'id': case_obj.case_id,

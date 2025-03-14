@@ -118,6 +118,7 @@ accounting
  0096_formsubmittingmobileworkerhistory_and_featuretype_choice
  0097_add_form_submitting_mobile_worker_feature
  0098_app_dependencies_priv
+ 0099_data_cleaning_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -208,6 +209,10 @@ blobs
  0012_rename_indexes
  0013_drop_icds_cas_index
  0014_alter_deletedblobmeta_id
+campaign
+ 0001_initial
+ 0002_dashboardmap_dashboardreport
+ 0003_add_dashboard_widget_fields
 case_importer
  0001_initial
  0002_auto_20161206_1937
@@ -256,6 +261,7 @@ cleanup
  0015_deletedcouchdoc_unique_id_and_type
  0016_add_deletedsqldoc
  0017_delete_oauth_integrations_models
+ 0018_delete_ewsghana_models
 cloudcare
  0001_initial
  0002_sqlapplicationaccess
@@ -310,6 +316,11 @@ data_analytics
  0010_maltrow_last_run_date
  0011_domainmetrics
  0012_update_domainmetrics_fields
+data_cleaning
+ 0001_initial
+ 0002_update_fields_and_ordering
+ 0003_column_filter_unique_ids_match_type_updates
+ 0004_alter_bulkeditcolumn_data_type_and_more
 data_dictionary
  0001_squashed_0002_auto_20161116_2209
  0002_auto_20161118_1537
@@ -439,6 +450,7 @@ es
  0010_delete_reverted_indices
  0011_add_indices_for_es5_reindex
  0012_add_new_index_for_bha
+ 0013_add_last_modifed
 events
  0001_add_events_model
  0002_attendancetrackingconfig
@@ -450,6 +462,8 @@ events
  0008_alter_event__case_id
  0009_attendeemodel
  0010_event_location
+experiments
+ 0001_initial
 export
  0001_initial
  0002_datafile
@@ -649,6 +663,11 @@ integration
  0004_gaenotpserversettings
  0005_gaenotpserversettings_server_type
  0006_kycconfig
+ 0007_alter_kycconfig_api_field_to_user_data_map
+ 0008_kycconfig_provider_kycconfig_unique_domain_provider
+ 0009_alter_kycconfig_connection_settings
+ 0010_alter_kycconfig_api_field_to_user_data_map
+ 0011_remove_kycconfig_connection_settings
 ivr
  0001_initial
  0002_call_app_id
@@ -724,6 +743,7 @@ motech
  0015_requestlog_duration
  0016_connectionsettings_include_client_id_and_more
  0017_connectionsettings_use_aes_cbc_encryption
+ 0018_openmrsimporter_use_aes_cbc_encryption
 notifications
  0001_squashed_0003_auto_20160504_2049 (3 squashed migrations)
  0002_auto_20160505_2058
@@ -812,6 +832,7 @@ project_limits
  0001_initial
  0002_ratelimitedtwofactorlog
  0003_pillowlaggaugedefinition
+ 0004_systemlimit
 registration
  0001_initial
  0002_alter_request_ip
@@ -868,6 +889,7 @@ reports
  0018_alter_tableauuser_role
  0019_tableauvisualization_location_safe
  0020_tableauserver_get_reports_using_role
+ 0021_tableauconnectedapp_use_aes_cbc_encryption
 saved_reports
  0001_initial
  0002_scheduledreportlog
@@ -900,6 +922,7 @@ scheduling
  0026_add_model_fcm_notification_content
  0027_emailcontent_html_message
  0028_alertschedule_use_user_case_for_filter_and_more
+ 0029_connectmessagecontent_connectmessagesurveycontent_and_more
 scheduling_partitioned
  0001_initial
  0002_case_schedule_instances
@@ -974,6 +997,7 @@ sms
  0057_fcm_content_type_messaging_events
  0058_email_html_body
  0059_remove_unicel_backend
+ 0060_alter_messagingevent_content_type_and_more
 smsbillables
  0001_initial
  0002_bootstrap
@@ -1166,6 +1190,7 @@ translations
  0007_populate_smstranslations
  0008_remove_couch_id
  0009_auto_20200924_1753
+ 0010_transifex_organization_api_token_encryption
 two_factor
  (no migrations)
 user_importer
@@ -1272,7 +1297,9 @@ users
  0073_rm_location_from_user_data
  0074_alter_sqluserdata_profile
  0075_hqapikey_encrypted_key
- 0076_remove_hqapikey_key
+ 0076_connectiduserlink_messaging_consent_and_more
+ 0077_invitationhistory
+ 0078_remove_hqapikey_key
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

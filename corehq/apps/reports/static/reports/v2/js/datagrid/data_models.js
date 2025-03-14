@@ -14,10 +14,8 @@ hqDefine('reports/v2/js/datagrid/data_models', [
     ko,
     _,
     kissmetrics,
-    initialPageData
+    initialPageData,
 ) {
-    'use strict';
-
     var scrollingDataModel = function (endpoint) {
         var self = {};
 

@@ -15,7 +15,6 @@ from corehq.motech.models import (
     RequestLogEntry,
 )
 from corehq.motech.requests import get_basic_requests
-from corehq.motech.utils import b64_aes_encrypt
 from corehq.util import as_json_text, as_text
 
 TEST_API_URL = 'http://example.com:9080/api/'
@@ -199,13 +198,6 @@ class ConnectionSettingsPropertiesTests(SimpleTestCase):
         cs = ConnectionSettings()
         token = {'key': 'value'}
         cs.last_token = token
-        self.assertEqual(cs.last_token, token)
-
-    def test_last_token_getter_decrypts_ecb(self):
-        cs = ConnectionSettings()
-        token = {'key': 'value'}
-        plaintext = json.dumps(token)
-        cs.last_token_aes = b64_aes_encrypt(plaintext)
         self.assertEqual(cs.last_token, token)
 
     def test_password_getter_returns(self):

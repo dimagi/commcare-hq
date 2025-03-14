@@ -15,10 +15,8 @@ hqDefine("events/js/event_attendees",[
     _,
     initialPageData,
     RMI,
-    locationsWidgets
+    locationsWidgets,
 ) {
-    'use strict';
-
     var STATUS_CSS = {
         NONE: '',
         PENDING: 'pending',
@@ -200,7 +198,7 @@ hqDefine("events/js/event_attendees",[
     $(function () {
         var rmiInvoker = RMI(
             initialPageData.reverse('event_attendees'),
-            $("#csrfTokenContainer").val()
+            $("#csrfTokenContainer").val(),
         );
         rmi = function (remoteMethod, data) {
             return rmiInvoker("", data, {

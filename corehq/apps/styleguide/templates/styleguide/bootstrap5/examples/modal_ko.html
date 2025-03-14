@@ -1,4 +1,4 @@
-<div id="ko-demo-modal">
+<div id="js-ko-demo-modal">
   <div class="row">
     <!-- ko foreach: items -->
     <div class="col-6">
@@ -6,9 +6,11 @@
         <div class="card-body">
           <h5 data-bind="text: name"></h5>
           <p data-bind="text: description"></p>
-          <button type="button"
-                  data-bind="click: $root.setItemBeingEdited"
-                  class="btn btn-outline-primary">
+          <button
+            class="btn btn-outline-primary"
+            type="button"
+            data-bind="click: $root.setItemBeingEdited"
+          >
             <i class="fa fa-edit"></i> Edit <!-- ko text: name --><!-- /ko -->
           </button>
         </div>
@@ -17,27 +19,60 @@
     <!-- /ko -->
   </div>
 
-  <div class="modal fade" data-bind="modal: itemBeingEdited" tabindex="-1" aria-labelledby="exampleKoModalLabel" aria-hidden="true">
+  <div
+    class="modal fade"
+    tabindex="-1" aria-labelledby="example-ko-modal-label" aria-hidden="true"
+    data-bind="modal: itemBeingEdited"
+  >
     <div class="modal-dialog">
-      <div class="modal-content" data-bind="with: itemBeingEdited">
+      <div
+        class="modal-content"
+        data-bind="with: itemBeingEdited"
+      >
         <div class="modal-header">
-          <h4 class="modal-title" id="exampleKoModalLabel" data-bind="text: modalTitle"></h4>
-          <button type="button" class="btn-close"  data-bind="click: $root.unsetItemBeingEdited" aria-label="Close"></button>
+          <h4
+            id="example-ko-modal-label"
+            class="modal-title"
+            data-bind="text: modalTitle"
+          ></h4>
+          <button
+            class="btn-close"
+            type="button" aria-label="Close"
+            data-bind="click: $root.unsetItemBeingEdited"
+          ></button>
         </div>
         <form data-bind="submit: $root.submitItemChanges">
           <div class="modal-body">
             <div class="mb-3">
-              <label for="exampleItemName" class="form-label">Name</label>
-              <input type="text" class="form-control" id="exampleItemName" data-bind="value: name">
+              <label for="id-example-item-name" class="form-label">Name</label>
+              <input
+                id="id-example-item-name"
+                class="form-control"
+                type="text"
+                data-bind="value: name"
+              />
             </div>
             <div class="mb-3">
-              <label for="exampleItemDescription" class="form-label">Description</label>
-              <textarea class="form-control" id="exampleItemDescription" rows="3" data-bind="value: description"></textarea>
+              <label for="id-example-item-description" class="form-label">Description</label>
+              <textarea
+                id="id-example-item-description"
+                class="form-control"
+                rows="3"
+                data-bind="value: description"
+              ></textarea>
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-outline-primary" data-bind="click: $root.unsetItemBeingEdited">Cancel</button>
-            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <button
+              class="btn btn-outline-primary"
+              type="button"
+              data-bind="click: $root.unsetItemBeingEdited"
+            >
+              Cancel
+            </button>
+            <button class="btn btn-primary" type="submit">
+              Save Changes
+            </button>
           </div>
         </form>
       </div>
@@ -56,7 +91,7 @@
       return self;
     };
 
-    $("#ko-demo-modal").koApplyBindings(function () {
+    $("#js-ko-demo-modal").koApplyBindings(function () {
       let self = {};
       self.items = ko.observableArray([
         Item(1, "First", "This is the first test item"),

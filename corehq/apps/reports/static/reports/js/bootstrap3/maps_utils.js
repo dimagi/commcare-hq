@@ -9,7 +9,7 @@ hqDefine("reports/js/bootstrap3/maps_utils", [
     ko,
     _,
     dataTablesConfig,
-    L
+    L,
 ) {
     var module = {};
     module.displayDimensions = ['size', 'color', 'icon'];
@@ -1683,7 +1683,7 @@ hqDefine("reports/js/bootstrap3/maps_utils", [
                     return data.features[i].visible;
                 }
                 return true;
-            }
+            },
         );
         var table;
         table = dataTablesConfig.HQReportDataTables({

@@ -33,6 +33,7 @@ from .base import (
     BaseReportFilter,
     BaseSingleOptionFilter,
 )
+from ..util import DatatablesServerSideParams
 
 
 class UserOrGroupFilter(BaseSingleOptionFilter):
@@ -196,7 +197,9 @@ class UsersUtils(EmwfUtils):
 class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     """
     To get raw filter results:
-        mobile_user_and_group_slugs = request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+        mobile_user_and_group_slugs = DatatablesServerSideParams.get_value_from_request(
+            request, ExpandedMobileWorkerFilter.slug, as_list=True
+        )
 
         user_ids = emwf.selected_user_ids(mobile_user_and_group_slugs)
         user_types = emwf.selected_user_types(mobile_user_and_group_slugs)
@@ -282,7 +285,12 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     @property
     @memoized
     def selected(self):
-        selected_ids = self.request.GET.getlist(self.slug)
+        selected_ids = DatatablesServerSideParams.get_value_from_request(
+            self.request, self.slug, as_list=True
+        )
+        return self._get_selected_from_selected_ids(selected_ids)
+
+    def _get_selected_from_selected_ids(self, selected_ids):
         if not selected_ids:
             return [{'id': selection_tuple[0], 'text': selection_tuple[1]}
                     for selection_tuple in self.get_default_selections()]
@@ -586,11 +594,12 @@ class UserUploadRecordFilter(BaseSingleOptionFilter):
 def get_user_toggle(request):
     ufilter = group = individual = show_commtrack = None
     try:
-        request_obj = request.POST if request.method == 'POST' else request.GET
-        if request_obj.get('ufilter', ''):
-            ufilter = request_obj.getlist('ufilter')
-        group = request_obj.get('group', '')
-        individual = request_obj.get('individual', '')
+        if DatatablesServerSideParams.get_value_from_request(request, 'ufilter', ''):
+            ufilter = DatatablesServerSideParams.get_value_from_request(
+                request, 'ufilter', as_list=True
+            )
+        group = DatatablesServerSideParams.get_value_from_request(request, 'group', '')
+        individual = DatatablesServerSideParams.get_value_from_request(request, 'individual', '')
         show_commtrack = request.project.commtrack_enabled
     except (KeyError, AttributeError):
         pass

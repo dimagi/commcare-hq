@@ -11,9 +11,8 @@ hqDefine('analytix/js/kissmetrix', [
     _,
     initialAnalytics,
     logging,
-    utils
+    utils,
 ) {
-    'use strict';
     var _get = initialAnalytics.getFn('kissmetrics'),
         _allAbTests = {},
         _logger = logging.getLoggerForApi('Kissmetrics'),
@@ -36,8 +35,8 @@ hqDefine('analytix/js/kissmetrix', [
             data = {
                 event: 'km_' + commandName,
             };
-            if (eventName) data.km_event = eventName;
-            if (properties) data.km_property = properties;
+            if (eventName) {data.km_event = eventName;}
+            if (properties) {data.km_property = properties;}
             window.dataLayer.push(data);
             _logger.verbose.log(command, ['window._kmq.push', 'window.dataLayer.push', '_kmqPushCommand', commandName]);
         }).fail(function () {

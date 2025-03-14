@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list', [
     'jquery',
     'underscore',
@@ -8,7 +8,7 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list', [
     $,
     _,
     hqMain,
-    uiInputMap
+    uiInputMap,
 ) {
     var module = {};
 
@@ -47,7 +47,7 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list', [
             + '</h4>'
             + this.sub_title
             + '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' + gettext("Close") + '"></button>'
-            + '</div>'
+            + '</div>',
         );
         var $modalEditor = $('<div class="hq-enum-editor"/>'),
             $modalBody = $('<div class="modal-body" style="max-height:372px; overflow-y: scroll;" />');

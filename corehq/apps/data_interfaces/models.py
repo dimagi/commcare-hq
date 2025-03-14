@@ -562,9 +562,9 @@ class CaseRuleCriteriaDefinition(models.Model):
 
 class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
     MATCH_DAYS_LESS_THAN = 'DAYS_BEFORE'
-    MATCH_DAYS_LESS_OR_EQUAL = 'DAYS_LESS_OR_EQUAL'
+    MATCH_DAYS_LESS_OR_EQUAL = 'DAYS_LTE'
 
-    MATCH_DAYS_GREATER_THAN = 'DAYS_GREATER_THAN'
+    MATCH_DAYS_GREATER_THAN = 'DAYS_GT'
     MATCH_DAYS_GREATER_OR_EQUAL = 'DAYS'
 
     MATCH_EQUAL = 'EQUAL'

@@ -9,7 +9,7 @@ hqDefine("userreports/js/configurable_reports_home", [
     $,
     _,
     DOMPurify,
-    initialPageData
+    initialPageData,
 ) {
     var $select = $("#select2-navigation");
     $select.on('select2:select', function () {

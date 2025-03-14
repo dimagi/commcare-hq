@@ -69,7 +69,7 @@ from corehq.apps.reports.standard import (
     ProjectReport,
     ProjectReportParametersMixin,
 )
-from corehq.apps.reports.util import format_datatables_data, friendly_timedelta
+from corehq.apps.reports.util import format_datatables_data, friendly_timedelta, DatatablesServerSideParams
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util import flatten_list
@@ -135,14 +135,14 @@ class WorkerMonitoringFormReportTableBase(WorkerMonitoringReportTableBase):
 
     def get_raw_row_link(self, row_obj):
         params = {
-            "form_unknown": self.request.GET.get("form_unknown", ''),
-            "form_unknown_xmlns": self.request.GET.get("form_unknown_xmlns", ''),
-            "form_status": self.request.GET.get("form_status", ''),
-            "form_app_id": self.request.GET.get("form_app_id", ''),
-            "form_module": self.request.GET.get("form_module", ''),
-            "form_xmlns": self.request.GET.get("form_xmlns", ''),
-            "startdate": self.request.GET.get("startdate", ''),
-            "enddate": self.request.GET.get("enddate", '')
+            "form_unknown": self.get_request_param("form_unknown", ''),
+            "form_unknown_xmlns": self.get_request_param("form_unknown_xmlns", ''),
+            "form_status": self.get_request_param("form_status", ''),
+            "form_app_id": self.get_request_param("form_app_id", ''),
+            "form_module": self.get_request_param("form_module", ''),
+            "form_xmlns": self.get_request_param("form_xmlns", ''),
+            "startdate": self.get_request_param("startdate", ''),
+            "enddate": self.get_request_param("enddate", '')
         }
 
         params.update(EMWF.for_user(row_obj.user_id))
@@ -216,7 +216,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     @property
     @memoized
     def view_by_groups(self):
-        return self.request.GET.get('view_by') == 'groups'
+        return self.get_request_param('view_by') == 'groups'
 
     @property
     def shared_pagination_GET_params(self):
@@ -229,15 +229,15 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                 value=CaseTypeFilter.get_value(self.request, self.domain)),
             dict(
                 name='milestone',
-                value=self.request.GET.get('milestone')
+                value=self.get_request_param('milestone')
             ),
             dict(
                 name='landmark',
-                value=self.request.GET.get('landmark')
+                value=self.get_request_param('landmark')
             ),
             dict(
                 name='view_by',
-                value=self.request.GET.get('view_by')
+                value=self.get_request_param('view_by')
             )
         ]
         return params
@@ -288,7 +288,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     @property
     @memoized
     def landmarks(self):
-        landmarks_param = self.request_params.get('landmarks')
+        landmarks_param = self.get_request_param('landmarks', from_json=True)
         landmarks_param = landmarks_param if isinstance(landmarks_param, list) else []
         landmarks_param = [param for param in landmarks_param if isinstance(param, int)]
         landmarks = landmarks_param if landmarks_param else self._default_landmarks
@@ -300,7 +300,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     @property
     @memoized
     def milestone(self):
-        milestone_param = self.request_params.get('milestone')
+        milestone_param = self.get_request_param('milestone', from_json=True)
         milestone_param = milestone_param if isinstance(milestone_param, int) else None
         milestone = milestone_param if milestone_param else self._default_milestone
         return datetime.timedelta(days=milestone)
@@ -844,7 +844,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
     def rows(self):
         export = self.rendered_as in ('email', 'export')
         if util.is_query_too_big(
-            self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user,
+            self.domain, self.get_request_param(EMWF.slug, as_list=True), self.request.couch_user,
         ) and not export:
             raise BadRequestError(
                 _('Query selects too many users. Please modify your filters to select fewer than {} users').format(
@@ -878,7 +878,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
     @property
     @memoized
     def _form_counts(self):
-        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        mobile_user_and_group_slugs = self.get_request_param(EMWF.slug, as_list=True)
         if (EMWF.show_all_mobile_workers(mobile_user_and_group_slugs)
                 and self.request.can_access_all_locations):
             user_ids = []
@@ -1005,7 +1005,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         else:
             get_counts_by_user = get_completed_counts_by_user
 
-        if EMWF.show_all_mobile_workers(self.request.GET.getlist(EMWF.slug)):
+        if EMWF.show_all_mobile_workers(self.get_request_param(EMWF.slug, as_list=True)):
             user_ids = None  # Don't restrict query by user ID
         else:
             user_ids = [u.user_id for u in self.selected_users]
@@ -1370,7 +1370,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
 
 class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
     flush_layout = True
-    report_template_path = "reports/async/basic.html"
+    report_template_path = "reports/async/bootstrap3/basic.html"
 
 
 def _worker_activity_is_location_safe(view, request, *args, **kwargs):
@@ -1413,7 +1413,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @property
     def case_types(self):
-        return [_f for _f in self.request.GET.getlist('case_type') if _f]
+        return [_f for _f in self.get_request_param('case_type', as_list=True) if _f]
 
     @property
     @memoized
@@ -1422,7 +1422,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             track_workflow(self.request.couch_user.username,
                            "Worker Activity Report: view_by_groups disabled by EMWF_WORKER_ACTIVITY_REPORT")
             return False
-        view_by_groups = self.request.GET.get('view_by', None) == 'groups'
+        view_by_groups = self.get_request_param('view_by', None) == 'groups'
         track_workflow(self.request.couch_user.username,
                        "Worker Activity Report: view_by_groups == {}".format(view_by_groups))
         return view_by_groups
@@ -1466,13 +1466,13 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @property
     def group_ids(self):
-        return [group_id for group_id in self.request.GET.getlist('group')
+        return [group_id for group_id in self.get_request_param('group', as_list=True)
                 if group_id and group_id != '_all']
 
     @property
     @memoized
     def users_by_group(self):
-        if not self.group_ids or self.request.GET.get('all_groups', 'off') == 'on':
+        if not self.group_ids or self.get_request_param('all_groups', 'off') == 'on':
             groups = Group.get_reporting_groups(self.domain)
         else:
             groups = [Group.get(g) for g in self.group_ids]
@@ -1495,7 +1495,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return user_dict
 
     def get_admins_and_demo_users(self):
-        ufilters = [uf for uf in ['1', '2', '3'] if uf in self.request.GET.getlist('ufilter')]
+        ufilters = [uf for uf in ['1', '2', '3'] if uf in self.get_request_param('ufilter', as_list=True)]
         return self.get_all_users_by_domain(
             group=None,
             user_filter=tuple(HQUserType.use_filter(ufilters)),
@@ -1507,7 +1507,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     def users_to_iterate(self):
         if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
             user_query = EMWF.user_es_query(
-                self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user
+                self.domain, self.get_request_param(EMWF.slug, as_list=True), self.request.couch_user
             )
             return util.get_simplified_users(user_query)
         elif not self.group_ids:
@@ -1868,7 +1868,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     def user_rows(self):
         user_es_query = EMWF.user_es_query(
-            self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user
+            self.domain, self.get_request_param(EMWF.slug, as_list=True), self.request.couch_user
         )
         chunk_size = 50000
         user_iterator = user_es_query.scroll_ids_to_disk_and_iter_docs()
@@ -1960,7 +1960,7 @@ def _get_selected_users(domain, request):
     """
     return util.get_simplified_users(EMWF.user_es_query(
         domain,
-        request.GET.getlist(EMWF.slug),
+        DatatablesServerSideParams.get_value_from_request(request, EMWF.slug, as_list=True),
         request.couch_user,
     ))
 

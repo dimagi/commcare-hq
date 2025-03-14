@@ -34,12 +34,11 @@ from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_daterangepicker,
     use_jquery_ui,
-    use_nvd3,
 )
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.dispatcher import ReportDispatcher
-from corehq.apps.reports.util import DatatablesParams
+from corehq.apps.reports.util import DatatablesPagination
 from corehq.apps.reports_core.exceptions import FilterException
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.saved_reports.models import ReportConfig
@@ -148,10 +147,12 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     template_name = 'userreports/configurable_report.html'
     slug = "configurable"
     prefix = slug
-    emailable = True
     is_exportable = True
-    exportable_all = True
+    exportable_all = False
     show_filters = True
+
+    # The UCR UI does not currently support emailing. However, UCRs can be emailed via scheduled reports.
+    emailable = True
 
     _domain = None
 
@@ -164,7 +165,6 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @use_daterangepicker
     @use_jquery_ui
     @use_datatables
-    @use_nvd3
     @track_domain_request(calculated_prop='cp_n_viewed_ucr_reports')
     def dispatch(self, request, *args, **kwargs):
         if self.should_redirect_to_paywall(request):
@@ -348,6 +348,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         context = {
             'report': self,
             'report_table': {'default_rows': 25},
+            'js_options': self.js_options,
             'filter_context': self.filter_context,
             'url': self.url,
             'method': 'POST',
@@ -365,6 +366,19 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         if self.request.couch_user.is_staff and hasattr(self.data_source, 'data_source'):
             context['queries'] = self.data_source.data_source.get_query_strings()
         return context
+
+    @property
+    def js_options(self):
+        return {
+            "domain": self.domain,
+            "slug": self.slug,
+            "subReportSlug": self.sub_slug,
+            "type": self.type,
+            "isExportable": self.is_exportable,
+            "isExportAll": self.exportable_all,
+            "isEmailable": False,       # see emailable attr above
+            "emailDefaultSubject": self.title,
+        }
 
     def pop_report_builder_context_data(self):
         """
@@ -433,7 +447,8 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         sort_column = params.get('iSortCol_0')
         sort_order = params.get('sSortDir_0', 'ASC')
         echo = int(params.get('sEcho', 1))
-        datatables_params = DatatablesParams.from_request_dict(params)
+        # todo update this for Bootstrap 5:
+        datatables_params = DatatablesPagination.from_request_dict(params)
 
         try:
             data_source = self.data_source

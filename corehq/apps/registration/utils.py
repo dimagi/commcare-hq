@@ -7,8 +7,6 @@ from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils.translation import gettext
 
-from celery import chord
-
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from dimagi.utils.logging import notify_exception
@@ -76,6 +74,7 @@ def activate_new_user(
     username, password, created_by, created_via, first_name=None, last_name=None,
     is_domain_admin=False, domain=None, ip=None, atypical_user=False, commit=True
 ):
+    from corehq.apps.analytics.tasks import record_event
     now = datetime.utcnow()
 
     new_user = WebUser.create(
@@ -109,10 +108,15 @@ def activate_new_user(
     if commit:
         new_user.save()
 
+    # Engagement time appears necessary for this event to show up within GA debug view
+    # (when 'debug_mode': '1' is also supplied)
+    # Leaving engagement time in as there doesn't seem a good reason to remove it
+    record_event('backend_new_user', new_user, {'engagement_time_msec': 1000})
+
     return new_user
 
 
-def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=False):
+def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=False, company_name=None):
     now = datetime.utcnow()
     current_user = CouchUser.from_django_user(request.user, strict=True)
 
@@ -151,7 +155,7 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
 
     if not settings.ENTERPRISE_MODE:
         try:
-            _setup_subscription(new_domain.name, current_user)
+            _setup_subscription(new_domain.name, current_user, company_name)
         except Exception as error:
             # any error thrown in this process will cause the transaction.atomic() block that
             # the subscription setup is wrapped in to fail and any SQL changes related to the subscription
@@ -164,7 +168,7 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
                 'first_domain_for_user': is_new_user,
                 'error': str(error),
             })
-            new_domain.delete()
+            new_domain.delete(leave_tombstone=True)
             raise ErrorInitializingDomain(f"Subscription setup failed for '{name}'")
 
         if settings.IS_SAAS_ENVIRONMENT:
@@ -189,27 +193,11 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
 
     if is_new_user and not is_new_sso_user:
         dom_req.save()
-        if settings.IS_SAAS_ENVIRONMENT:
-            #  Load template apps to the user's new domain in parallel
-            from corehq.apps.app_manager.tasks import load_appcues_template_app
-            header = [
-                load_appcues_template_app.si(new_domain.name, current_user.username, slug)
-                for slug in APPCUES_APP_SLUGS
-            ]
-            callback = send_domain_registration_email.si(
-                request.user.email,
-                dom_req.domain,
-                dom_req.activation_guid,
-                request.user.get_full_name(),
-                request.user.first_name
-            )
-            chord(header)(callback)
-        else:
-            send_domain_registration_email(request.user.email,
-                                           dom_req.domain,
-                                           dom_req.activation_guid,
-                                           request.user.get_full_name(),
-                                           request.user.first_name)
+        send_domain_registration_email(request.user.email,
+                                       dom_req.domain,
+                                       dom_req.activation_guid,
+                                       request.user.get_full_name(),
+                                       request.user.first_name)
     send_new_request_update_email(
         request.user,
         get_ip(request),
@@ -222,7 +210,7 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
     return new_domain.name
 
 
-def _setup_subscription(domain_name, user):
+def _setup_subscription(domain_name, user, company_name):
     with transaction.atomic():
         ensure_community_or_paused_subscription(
             domain_name, date.today(), SubscriptionAdjustmentMethod.USER,
@@ -231,7 +219,7 @@ def _setup_subscription(domain_name, user):
 
     # add user's email as contact email for billing account for the domain
     account = BillingAccount.get_account_by_domain(domain_name)
-    billing_contact, _ = BillingContactInfo.objects.get_or_create(account=account)
+    billing_contact, _ = BillingContactInfo.objects.get_or_create(account=account, company_name=company_name)
     billing_contact.email_list = [user.email]
     billing_contact.save()
 

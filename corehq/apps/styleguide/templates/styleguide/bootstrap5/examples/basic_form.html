@@ -1,28 +1,34 @@
-<form action="#someUrl"
-      method="post">
+<form
+  action="#someUrl"
+  method="post"
+>
   <!-- the {% csrf_token %} template tag should be included here -->
   <fieldset>
     <legend>Basic Information</legend>
     <div class="row mb-3">
-      <label for="id_first_name" class="field-label">
+      <label for="id-first-name" class="field-label">
         First Name
       </label>
       <div class="field-control">
-        <input type="text"
-               name="first_name"
-               class="form-control"
-               id="id_first_name"
-               autocomplete="off" />
+        <input
+          id="id-first-name"
+          class="form-control"
+          type="text"
+          name="first_name"
+          autocomplete="off"
+        />
       </div>
     </div>
     <div class="row mb-3">
-      <label for="id_favorite_color" class="field-label">
+      <label for="id-favorite-color" class="field-label">
         Favorite Color
       </label>
       <div class="field-control">
-        <select name="favorite_color"
-                class="form-select hqwebapp-select2"
-                id="id_favorite_color">
+        <select
+          id="id-favorite-color"
+          class="form-select hqwebapp-select2"
+          name="favorite_color"
+        >
           <option value="red">Red</option>
           <option value="green">Green</option>
           <option value="blue">Blue</option>
@@ -30,13 +36,15 @@
       </div>
     </div>
     <div class="row mb-3">
-      <label for="id_hopes" class="field-label">
+      <label for="id-hopes" class="field-label">
         Hopes and Dreams
       </label>
       <div class="field-control">
-        <textarea name="hopes"
-                  class="form-control vertical-resize"
-                  id="id_hopes"></textarea>
+        <textarea
+          id="id-hopes"
+          class="form-control vertical-resize"
+          name="hopes"
+        ></textarea>
       </div>
     </div>
   </fieldset>

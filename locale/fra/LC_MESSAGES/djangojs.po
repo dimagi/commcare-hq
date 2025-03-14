@@ -16,8 +16,8 @@
 # Carla Legros <clegros@dimagi.com>, 2023
 # patrick keating <pkeating@dimagi.com>, 2023
 # Tyler Wymer <twymer@dimagi.com>, 2024
-# Aissetou Sawadogo <ais107@hotmail.com>, 2024
 # Claire_Cravero <ccravero@dimagi.com>, 2024
+# Aissetou Sawadogo <ais107@hotmail.com>, 2025
 #
 #, fuzzy
 msgid ""
@@ -25,7 +25,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Claire_Cravero <ccravero@dimagi.com>, 2024\n"
+"Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>, 2025\n"
 "Language-Team: French (https://app.transifex.com/dimagi/teams/9388/fr/)\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -148,6 +148,12 @@ msgstr ""
 #: corehq/apps/analytics/static/analytix/js/cta_forms.js
 msgid "Please enter your organization."
 msgstr ""
+
+#: corehq/apps/analytics/static/analytix/js/cta_forms.js
+#, fuzzy
+#| msgid "Please enter your name."
+msgid "Please enter your job title."
+msgstr "Veuillez saisir votre nom"
 
 #: corehq/apps/analytics/static/analytix/js/cta_forms.js
 msgid "Please enter your email address."
@@ -590,6 +596,11 @@ msgid "Select parent"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "Save Questions to Case Properties"
+msgstr "Enregistrer les questions dans les propriétés de dossier."
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Raw"
 msgstr "Brut"
 
@@ -650,6 +661,10 @@ msgstr "Vous avez des paramètres de dossier non sauvegardées"
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "You have unchanged user properties settings"
 msgstr "Vous avez des paramètres d'utilisateur non sauvegardées"
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
+msgid "Save Questions to User Properties"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "Property uses unrecognized prefix <strong>"
@@ -774,35 +789,6 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js
 msgid "This code is used in multiple places."
 msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Crunching app diff..."
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Error generating the application diff. Please report an issue."
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Form Changes"
-msgstr "Modifications de formulaire"
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Case Changes"
-msgstr "Modifications de dossier"
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Save Questions"
-msgstr "Enregistrer les questions"
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-msgid "Load Questions"
-msgstr "Charger les questions"
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js
-#: corehq/apps/app_manager/static/app_manager/js/summary/utils.js
-msgid "[unknown]"
-msgstr "[inconnu]"
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/app_view_release_manager.js
 msgid "Releases"
@@ -1019,6 +1005,10 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "Latest saved"
 msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/summary/utils.js
+msgid "[unknown]"
+msgstr "[inconnu]"
 
 #: corehq/apps/app_manager/static/app_manager/js/supported_languages.js
 msgid "Warning: unrecognized language"
@@ -3660,6 +3650,18 @@ msgstr ""
 msgid "Showing <%- firstItem %> to <%- lastItem %> of <%- maxItems %> entries"
 msgstr ""
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/rich_text_knockout_bindings.js
+msgid "No File selected"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/rich_text_knockout_bindings.js
+msgid "Failed to upload image: "
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/rich_text_knockout_bindings.js
+msgid "Failed to upload image. Please try again."
+msgstr ""
+
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js
 msgid "Clear"
 msgstr "Effacer"
@@ -4071,6 +4073,10 @@ msgstr "Veuillez spécifier un nom de projet."
 msgid "Please specify."
 msgstr ""
 
+#: corehq/apps/registration/static/registration/js/new_user.ko.js
+msgid "Please list your organization or company name."
+msgstr ""
+
 #: corehq/apps/registry/static/registry/js/registry_actions.js
 msgid "An unknown error occurred. Please try again or report an issue."
 msgstr ""
@@ -4344,7 +4350,6 @@ msgstr "Identifications de question"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/standard_hq_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/standard_hq_report.js
-#: corehq/apps/userreports/static/userreports/js/configurable_report.js
 msgid "Report successfully emailed"
 msgstr "Le rapport a été envoyé par courrier électronique avec succès"
 
@@ -4373,6 +4378,14 @@ msgstr "Échoué "
 #: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js
 msgid "Failed to re-process"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
+msgid "_MENU_ per page"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/bootstrap5/datatables_config.js
+msgid "All Rows"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/filters/bootstrap3/main.js
@@ -4620,12 +4633,6 @@ msgstr ""
 msgid "Please check above for any errors in your configuration."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/configurable_report.js
-msgid "An error occurred emailing you report. Please try again."
-msgstr ""
-"Une erreur est survenue lors de l'envoi du rapport par courrier "
-"électronique. Veuillez essayer à nouveau."
-
 #: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js
 msgid "Edit a custom web report or custom web report source"
 msgstr ""
@@ -4697,14 +4704,6 @@ msgstr ""
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
 msgid "Group membership has changed."
 msgstr "L'adhésion au groupe a été modifiée."
-
-#: corehq/apps/users/static/users/js/enterprise_users.js
-msgid "Hide Deactivated Mobile Workers"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/enterprise_users.js
-msgid "Show Deactivated Mobile Workers"
-msgstr "Montrer Utilisateurs Mobiles Désactivés"
 
 #: corehq/apps/users/static/users/js/filtered_download.js
 msgid "<%- user_count %> user"

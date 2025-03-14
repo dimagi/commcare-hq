@@ -1,0 +1,8 @@
+{% load i18n %}
+{% if record.kyc_verification_status == 'passed' %}
+  <span class="badge bg-success">{% trans "Pass" %}</span>
+{% elif record.kyc_verification_status == 'failed' %}
+  <span class="badge bg-danger">{% trans "Fail" %} </span>
+{% else %}
+  <span class="badge bg-secondary">{% trans "Not Checked" %}</span>
+{% endif %}

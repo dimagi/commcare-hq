@@ -7,8 +7,6 @@ from django.conf import settings
 from django.http import QueryDict
 from django.template import NodeList, TemplateSyntaxError, loader_tags
 from django.template.base import (
-    Token,
-    TokenType,
     Variable,
     VariableDoesNotExist,
 )
@@ -556,16 +554,23 @@ def view_pdb(element):
     return element
 
 
+@register.filter
+def is_new_user(user):
+    now = datetime.now()
+    one_week_ago = now - timedelta(days=7)
+    return True if user.created_on >= one_week_ago else False
+
+
 @register.tag
-def registerurl(parser, token):
-    split_contents = token.split_contents()
+def registerurl(parser, original_token):
+    split_contents = original_token.split_contents()
     tag = split_contents[0]
     url_name = parse_literal(split_contents[1], parser, tag)
     expressions = [parser.compile_filter(arg) for arg in split_contents[2:]]
 
     class FakeNode(template.Node):
-        # must mock token or error handling code will fail and not reveal real error
-        token = Token(TokenType.TEXT, '', (0, 0), 0)
+        token = original_token
+        origin = parser.origin
 
         def render(self, context):
             args = [expression.resolve(context) for expression in expressions]
@@ -596,15 +601,15 @@ def html_attr(value):
     return conditional_escape(value)
 
 
-def _create_page_data(parser, token, node_slug):
-    split_contents = token.split_contents()
+def _create_page_data(parser, original_token, node_slug):
+    split_contents = original_token.split_contents()
     tag = split_contents[0]
     name = parse_literal(split_contents[1], parser, tag)
     value = parser.compile_filter(split_contents[2])
 
     class FakeNode(template.Node):
-        # must mock token or error handling code will fail and not reveal real error
-        token = Token(TokenType.TEXT, '', (0, 0), 0)
+        token = original_token
+        origin = parser.origin
 
         def render(self, context):
             resolved = value.resolve(context)

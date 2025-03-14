@@ -6,10 +6,8 @@ hqDefine("reports/js/filters/case_list_explorer", [
 ], function (
     $,
     ko,
-    _
+    _,
 ) {
-    'use strict';
-
     var applySuggestions = function (allSuggestions) {
         // Adds the required properties to filter the case type autocomplete dropdowns
         var self = this;
@@ -108,7 +106,7 @@ hqDefine("reports/js/filters/case_list_explorer", [
                         name: property.name(),
                         label: property.label(),
                     };
-                })
+                }),
             );
         });
 

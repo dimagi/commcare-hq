@@ -17,7 +17,7 @@ hqDefine("linked_domain/js/domain_links", [
     ko,
     alertUser,
     multiselectUtils,
-    kissmetrics
+    kissmetrics,
 ) {
     var _private = {};
     _private.RMI = function () {};
@@ -507,7 +507,7 @@ hqDefine("linked_domain/js/domain_links", [
                     self.parent.goToPage(1);
                 } else {
                     var errorMessage = _.template(
-                        gettext('Unable to link project spaces. <%- error %>')
+                        gettext('Unable to link project spaces. <%- error %>'),
                     )({error: response.message});
                     alertUser.alert_user(errorMessage, 'danger');
                 }

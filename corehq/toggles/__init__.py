@@ -958,18 +958,6 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-USH_DONT_CLOSE_PATIENT_EXTENSIONS = StaticToggle(
-    'ush_dont_close_patient_extensions',
-    'USH: Suppress closing extensions on closing hosts for host/extension pairs of patient/contact case-types',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    Suppress the normal behaviour of 'closing host cases closes its extension cases'.
-    Enabling this results in 'closing patient type cases will not close its contact type
-    extension cases'. Designed for specific USH domain use-case
-    """
-)
-
 WEB_APPS_PERMISSIONS_VIA_GROUPS = StaticToggle(
     'web_apps_permissions_via_groups',
     "USH: Allow users to control access to specific web apps via mobile worker groups.",
@@ -1229,6 +1217,15 @@ SAAS_PROTOTYPE = StaticToggle(
     description='Use this for rapid prototypes developed by the SaaS product team.',
 )
 
+DATA_CLEANING_CASES = StaticToggle(
+    'saas_data_cleaning_cases',
+    'Access Data Cleaning for Cases',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER],
+    description='Use this to allow specific users to access the case '
+                'data cleaning tool (in development)',
+)
+
 ECD_MIGRATED_DOMAINS = StaticToggle(
     'ecd_migrated_domains',
     'Explore Case Data for domains that have undergone migration',
@@ -1365,6 +1362,15 @@ CACHE_AND_INDEX = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/pages/viewpage.action?pageId=41484944',
+)
+
+
+CASE_LIST_OPTIMIZATIONS = StaticToggle(
+    'case_list_optimizations',
+    'Enable options to cache and lazy load case list columns',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://dimagi.atlassian.net/wiki/spaces/GS/pages/2939519055/Feature+Usage+Guide+Case+List+Caching+and+Lazy+Loading+in+CommCare',  # noqa: E501
 )
 
 CUSTOM_PROPERTIES = StaticToggle(
@@ -1554,6 +1560,7 @@ RICH_TEXT_EMAILS = StaticToggle(
     'Enable sending rich text HTML emails in conditional alerts and broadcasts',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    help_link='https://dimagi.atlassian.net/wiki/spaces/USH/pages/2901835924/Rich+text+emails'
 )
 
 RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
@@ -1988,15 +1995,7 @@ ENABLE_UCR_MIRRORS = StaticToggle(
 LOCATION_COLUMNS_APP_STATUS_REPORT = StaticToggle(
     'location_columns_app_status_report',
     'Enables location columns to app status report',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
-SKIP_CREATING_DEFAULT_BUILD_FILES_ON_BUILD = StaticToggle(
-    'skip_creating_default_build_files_on_build',
-    'Skips creating the build files for default profile each time a build is made'
-    'which helps speed up the build and revert process',
-    TAG_CUSTOM,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN]
 )
 
@@ -2266,14 +2265,6 @@ BLOCKED_DOMAIN_EMAIL_SENDERS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-ENTERPRISE_USER_MANAGEMENT = StaticToggle(
-    'enterprise_user_management',
-    'USH: UI for managing all web users in an enterprise',
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_USER],
-    help_link="https://confluence.dimagi.com/display/saas/USH%3A+UI+for+managing+all+web+users+in+an+enterprise",
-)
-
 CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
     'clean_old_formplayer_syncs',
     'Delete old formplayer syncs during submission processing',
@@ -2288,6 +2279,14 @@ PRIME_FORMPLAYER_DBS = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/Prime+Formplayer+DBS"
+)
+
+PRIME_FORMPLAYER_DBS_BHA = StaticToggle(
+    'prime_formplayer_dbs_bha',
+    'USH-BHA: Control which domains will be included in the prime formplayer task runs',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link="https://dimagi.atlassian.net/wiki/spaces/saas/pages/2963013633/Prime+Formplayer+DBS+BHA"
 )
 
 FHIR_INTEGRATION = StaticToggle(
@@ -2632,18 +2631,25 @@ MICROPLANNING = StaticToggle(
 
 )
 
+CAMPAIGN_DASHBOARD = StaticToggle(
+    'campaign_dashboard',
+    'Allows access to Campaign Dashboard',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Access to a dashboard to show various metrics for campaigns',
+)
+
 COMMCARE_CONNECT = StaticToggle(
     'commcare_connect',
     'Enable CommCare Connect features',
     tag=TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
     description='More details to come',
-
 )
 
 FCM_NOTIFICATION = StaticToggle(
     'fcm_notification',
-    'Allows access to FCM Push Notifications',
+    'FCM Push Notifications - no longer functional',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description='Push Notification option will be available in content for '
@@ -2957,10 +2963,11 @@ USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION = StaticToggle(
 
 RESTRICT_DATA_SOURCE_REBUILD = StaticToggle(
     slug='restrict_data_source_rebuilds',
-    label='Restrict data source rebuilt from UI',
+    label='Force asynchronous processing for large data sources on UI',
     tag=TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
-    description='Restrict data source rebuilt from UI if the relevant data for the data source crosses a threshold'
+    description='Force data sources to be marked for asynchronous processing from UI if it crosses a threshold '
+                'for the number of records to be populated during building or rebuilding'
 )
 
 APP_TESTING = StaticToggle(
@@ -2978,11 +2985,16 @@ SMART_LINKS_FOR_WEB_USERS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-MODULE_BADGES = StaticToggle(
+CSQL_FIXTURE = StaticToggle(
     slug='module_badges',
-    label='USH: Show case counts from CSQL queries as badges on modules',
+    label='USH: CSQL Fixture (FKA Module Badges)',
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+    description=(
+        'Configure fixture containing indicators specified as CSQL expressions, where each '
+        'indicator is a count of cases matching the expression.'
+    ),
+    help_link='https://dimagi.atlassian.net/wiki/spaces/USH/pages/2884206593/CSQL+Fixtures',
 )
 
 INCLUDE_ALL_LOCATIONS = StaticToggle(
@@ -2991,4 +3003,42 @@ INCLUDE_ALL_LOCATIONS = StaticToggle(
           'the location no matter if it is their primary location or not.',
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+DEVICE_RATE_LIMITER = FeatureRelease(
+    slug='device_rate_limiter',
+    label='Apply rate limiting to the number of devices a single user can use in a one minute time window.',
+    description='Form submissions, restores, and heartbeat requests count towards usage. View and update in the '
+                'django admin under the SystemLimit table. The key is "device_limit_per_user"',
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Graham Herceg',
+)
+
+KYC_VERIFICATION = StaticToggle(
+    slug='kyc_verification',
+    label='Enable KYC verification',
+    tag=TAG_SOLUTIONS,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+MTN_MOBILE_WORKER_VERIFICATION = StaticToggle(
+    slug='mtn_mobile_worker_verification',
+    label='Enable user verification using MTN Mobile Money',
+    tag=TAG_SOLUTIONS,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+ACTIVATE_DATADOG_APM_TRACES = StaticToggle(
+    slug='activate_datadog_apm_traces',
+    label='USH: Turn on Datadog APM traces for a project.',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+USH_DISABLE_INTERVAL_SYNC = StaticToggle(
+    slug='ush_disable_interval_sync',
+    label='Disable interval sync',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
 )

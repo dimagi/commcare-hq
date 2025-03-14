@@ -162,7 +162,7 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target):
     sh.tar("xf", vellum_tar, "-C", hq_vellum)
     git.add("--all", hq_vellum)
 
-    message = "{}:{}\n\n[ci skip]".format(target, vellum_rev)
+    message = "{}:{}".format(target, vellum_rev)
     if branch == 'vellum-staging':
         message += """
 

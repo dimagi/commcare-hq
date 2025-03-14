@@ -7,7 +7,7 @@ hqDefine("reports/js/bootstrap3/datatables_config", [
 ], function (
     $,
     _,
-    googleAnalytics
+    googleAnalytics,
 ) {
     var HQReportDataTables = function (options) {
         var self = {};
