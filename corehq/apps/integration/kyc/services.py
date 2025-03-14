@@ -48,15 +48,15 @@ def verify_user(kyc_user, config):
 
     except jsonschema.exceptions.ValidationError:
         verification_error = KycVerificationFailureCause.USER_INFORMATION_INCOMPLETE.value
-        verification_status = KycVerificationStatus.FAILED
+        verification_status = KycVerificationStatus.ERROR
 
     except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
         verification_error = KycVerificationFailureCause.NETWORK_ERROR.value
-        verification_status = KycVerificationStatus.FAILED
+        verification_status = KycVerificationStatus.ERROR
 
     except requests.HTTPError:
         verification_error = KycVerificationFailureCause.API_ERROR.value
-        verification_status = KycVerificationStatus.FAILED
+        verification_status = KycVerificationStatus.ERROR
 
     return verification_status, verification_error
 

@@ -244,6 +244,7 @@ class KycVerificationStatus:
     # PENDING indicates KYC is yet to be initiated and in that case, verification status is returned as None
     # as case property/field does not exist or is empty.
     PENDING = None
+    ERROR = 'error'
 
 
 class KycVerificationFailureCause(models.TextChoices):
