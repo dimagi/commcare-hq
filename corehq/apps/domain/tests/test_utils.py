@@ -1,4 +1,5 @@
 import json
+from functools import wraps
 from contextlib import contextmanager
 from random import randint
 from unittest.mock import patch
@@ -19,6 +20,7 @@ from corehq.apps.domain.utils import (
 from corehq.apps.users.models import CommCareUser
 from corehq.motech.utils import b64_aes_decrypt
 from corehq.tests.tools import nottest
+from corehq.tests.util.context import testcontextmanager
 from corehq.util.test_utils import generate_cases, unit_testing_only
 
 
@@ -219,21 +221,31 @@ class IsDomainInUseTests(SimpleTestCase):
         self.addCleanup(self.get_by_name_patcher.stop)
 
 
+@wraps(Domain.delete)
+@unit_testing_only
+def _delete_test_domain(self, leave_tombstone=False):
+    return _delete_test_domain.__wrapped__(self, leave_tombstone=leave_tombstone)
+
+
 delete_es_docs_patch = patch('corehq.apps.domain.deletion._delete_es_docs')
+domain_tombstone_patch = patch.object(Domain, 'delete', _delete_test_domain)
 
 
 def patch_domain_deletion():
-    """Do not delete docs in Elasticsearch when deleting a domain
+    """Setup domain deletion for tests
+
+    - Do not create a tombstone (unless requested) when deleting a domain.
+    - Do not delete docs in Elasticsearch when deleting a domain
 
     Without this, every test that deletes a domain would need to be
-    decorated with `@es_test`.
+    decorated with `@es_test` and call .delete(leave_tombstone=False)
     """
     # Use __enter__ and __exit__ to start/stop so patch.stopall() does not stop it.
     assert settings.UNIT_TESTING
     delete_es_docs_patch.__enter__()
+    domain_tombstone_patch.__enter__()
 
 
-@contextmanager
 def suspend(patch_obj):
     """Contextmanager/decorator to suspend an active patch
 
@@ -248,9 +260,13 @@ def suspend(patch_obj):
         with suspend(delete_es_docs_patch):
             ...  # do thing with ES docs deletion
     """
-    assert settings.UNIT_TESTING
-    patch_obj.__exit__(None, None, None)
-    try:
-        yield
-    finally:
-        patch_obj.__enter__()
+    @testcontextmanager
+    def suspend_patch():
+        assert settings.UNIT_TESTING
+        patch_obj.__exit__(None, None, None)
+        try:
+            yield
+        finally:
+            patch_obj.__enter__()
+
+    return suspend_patch
