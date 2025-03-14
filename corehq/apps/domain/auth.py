@@ -285,14 +285,22 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
             return False
 
         # ensure API Key exists
-        query = Q(key=api_key)
+        query = Q()
         domain = getattr(request, 'domain', '')
         if domain:
             domain_accessible = Q(domain='') | Q(domain=domain)
             query = domain_accessible & query
         try:
-            key = user.api_keys.get(query)
+            filtered_keys = user.api_keys.filter(query)
         except HQApiKey.DoesNotExist:
+            return self._unauthorized()
+
+        key = None
+        for filtered_key in filtered_keys:
+            if filtered_key.plaintext_key == api_key:
+                key = filtered_key
+                break
+        if not key:
             return self._unauthorized()
 
         # update api_key.last used every 30 seconds
