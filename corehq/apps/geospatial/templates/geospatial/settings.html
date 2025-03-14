@@ -1,9 +1,9 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% js_entry_b3 'geospatial/js/geo_config' %}
+{% js_entry 'geospatial/js/geo_config' %}
 
 {% block page_content %}
 {% initial_page_data 'config' config %}

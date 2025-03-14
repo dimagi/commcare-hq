@@ -1,5 +1,3 @@
-
-
 hqDefine("geospatial/js/case_management", [
     "jquery",
     "underscore",
@@ -7,8 +5,8 @@ hqDefine("geospatial/js/case_management", [
     "knockout",
     'geospatial/js/models',
     'geospatial/js/utils',
-    'hqwebapp/js/bootstrap3/alert_user',
-    'reports/js/bootstrap3/base',
+    'hqwebapp/js/bootstrap5/alert_user',
+    'reports/js/bootstrap5/base',
     'hqwebapp/js/select2_knockout_bindings.ko',
     'commcarehq',
 ], function (
