@@ -230,3 +230,21 @@ class TestVerifyUser(BaseKycUserSetup):
 
         verification_status, error = verify_user(self.kyc_user, self.config)
         assert error == KycVerificationFailureCause.API_ERROR.value
+        assert verification_status == KycVerificationStatus.ERROR
+
+    @patch('corehq.apps.integration.kyc.services._validate_schema', return_value=True)
+    @patch('corehq.apps.integration.kyc.services.get_user_data_for_api', return_value={'phoneNumber': 1234})
+    @patch('corehq.motech.requests.Requests.post')
+    def test_network_error(self, mock_post, *args):
+        mock_post.side_effect = requests.ConnectionError
+
+        verification_status, error = verify_user(self.kyc_user, self.config)
+        assert error == KycVerificationFailureCause.NETWORK_ERROR.value
+        assert verification_status == KycVerificationStatus.ERROR
+
+    @patch('corehq.apps.integration.kyc.services.get_user_data_for_api', return_value={})
+    @patch('corehq.motech.requests.Requests.post')
+    def test_information_incomplete(self, mock_post, *args):
+        verification_status, error = verify_user(self.kyc_user, self.config)
+        assert error == KycVerificationFailureCause.USER_INFORMATION_INCOMPLETE.value
+        assert verification_status == KycVerificationStatus.ERROR
