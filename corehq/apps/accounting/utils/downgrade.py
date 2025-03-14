@@ -32,46 +32,42 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.util.view_utils import absolute_reverse
 
 
-class Downgrade:
+class UnpaidInvoiceAction:
     @classmethod
     def run_action(cls, only_downgrade_domain=None):
         today = datetime.date.today()
-
-        for domain, oldest_unpaid_invoice, total in get_domains_with_subscription_invoices_overdue(today):
+        for domain, oldest_unpaid_invoice, total in cls.get_eligible_domains_fn(today):
             try:
                 if only_downgrade_domain and domain != only_downgrade_domain:
                     continue
                 current_subscription = Subscription.get_active_subscription_by_domain(domain)
-                if (
-                    current_subscription
-                    and cls.is_subscription_eligible_for_downgrade_process(current_subscription)
-                ):
-                    cls._apply_downgrade_process(
+                if current_subscription and cls.is_subscription_eligible_for_process(current_subscription):
+                    cls._apply_process(
                         oldest_unpaid_invoice, total, today, current_subscription
                     )
             except Exception:
                 log_accounting_error(
-                    f"There was an issue applying the downgrade process "
+                    f"There was an issue applying the {cls.process_name} process "
                     f"to {domain}.",
                     show_stack_trace=True
                 )
 
-        for oldest_unpaid_invoice, total in get_accounts_with_customer_invoices_overdue(today):
+        for oldest_unpaid_invoice, total in cls.get_eligible_customer_billing_accounts_fn(today):
             try:
                 subscription_on_invoice = oldest_unpaid_invoice.subscriptions.first()
                 if only_downgrade_domain and subscription_on_invoice.subscriber.domain != only_downgrade_domain:
                     continue
-                if cls.is_subscription_eligible_for_downgrade_process(subscription_on_invoice):
-                    cls._apply_downgrade_process(oldest_unpaid_invoice, total, today, subscription_on_invoice)
+                if cls.is_subscription_eligible_for_process(subscription_on_invoice):
+                    cls._apply_process(oldest_unpaid_invoice, total, today, subscription_on_invoice)
             except Exception:
                 log_accounting_error(
-                    f"There was an issue applying the downgrade process "
+                    f"There was an issue applying the {cls.process_name} process "
                     f"to customer invoice {oldest_unpaid_invoice.id}.",
                     show_stack_trace=True
                 )
 
     @classmethod
-    def _apply_downgrade_process(cls, oldest_unpaid_invoice, total, today, subscription):
+    def _apply_process(cls, oldest_unpaid_invoice, total, today, subscription):
         domain = subscription.subscriber.domain
         communication_model, context = cls._get_communication_model_context(domain, oldest_unpaid_invoice)
         cls._check_and_perform_action(communication_model, context,
@@ -104,8 +100,14 @@ class Downgrade:
             }
         return communication_model, context
 
+
+class Downgrade(UnpaidInvoiceAction):
+    process_name = 'downgrade'
+    get_eligible_domains_fn = get_domains_with_subscription_invoices_overdue
+    get_eligible_customer_billing_accounts_fn = get_accounts_with_customer_invoices_overdue
+
     @staticmethod
-    def is_subscription_eligible_for_downgrade_process(subscription):
+    def is_subscription_eligible_for_process(subscription):
         return (
             subscription.plan_version.plan.edition not in [
                 SoftwarePlanEdition.COMMUNITY,
