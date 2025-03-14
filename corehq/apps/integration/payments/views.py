@@ -73,10 +73,6 @@ class PaymentConfigurationView(HqHtmxActionMixin, BaseDomainView):
     form_template_partial_name = 'payments/partials/payments_config_form_partial.html'
 
     @property
-    def page_url(self):
-        return reverse(self.urlname, args=[self.domain])
-
-    @property
     def section_url(self):
         return reverse(self.urlname, args=[self.domain])
 
