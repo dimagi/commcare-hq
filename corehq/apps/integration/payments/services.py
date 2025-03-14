@@ -54,7 +54,7 @@ def request_payment(payment_case: CommCareCase, config: MoMoConfig):
     try:
         transaction_id = _request_payment(payment_case, config)
         payment_update.update({
-            'transaction_id': transaction_id,
+            'transaction_id': transaction_id,  # can be used to check payment status
             PaymentProperties.PAYMENT_SUBMITTED: True
         })
     except PaymentRequestError as e:
