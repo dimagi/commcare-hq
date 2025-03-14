@@ -78,7 +78,7 @@ class PaymentConfigurationView(HqHtmxActionMixin, BaseDomainView):
 
     @property
     def section_url(self):
-        return reverse(self.urlname, args=(self.domain,))
+        return reverse(self.urlname, args=[self.domain])
 
     @property
     def page_context(self):
