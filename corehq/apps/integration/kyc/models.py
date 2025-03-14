@@ -157,6 +157,7 @@ class KycUser:
         """
         Allow user data to be accessible like a dictionary.
         """
+        print(item)
         if item in self.user_data:
             # Fetch value from usercase / custom user data by default
             return self.user_data[item]

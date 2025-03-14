@@ -1,0 +1,22 @@
+{% load i18n %}
+
+<div class="btn-group">
+    <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+      {% trans "Add Widget" %}
+    </button>
+    <ul class="dropdown-menu">
+    {% for choice, label in widget_choices %}
+    <li>
+        <a class="dropdown-item" href="#"
+           hx-get="{% url 'dashboard_widget' domain %}?widget={{ choice }}"
+           hx-target="#add-widget-modal-body"
+           hx-swap="innerHTML"
+           data-bs-toggle="modal"
+           data-bs-target="#add-widget-modal">
+            {{ label }}
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+
+</div>

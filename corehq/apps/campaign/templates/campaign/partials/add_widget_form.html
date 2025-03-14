@@ -1,0 +1,29 @@
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+<div id="add-widget-form">
+    {% if show_success %}
+    <div class="alert alert-success alert-dismissable fade show" role="alert">
+      {% blocktrans %}
+        Widget added successfully! Please reload dashboard..
+      {% endblocktrans %}
+      <button
+        type="button"
+        class="btn-close float-end"
+        data-bs-dismiss="alert"
+        aria-label="{% trans Close %}"
+      ></button>
+    </div>
+  {% endif %}
+<h5 class="h2 mb-4">
+  New {{ widget }} widget
+</h5>
+  <form
+    hx-post="{{ request.path_info }}"
+    hx-target="#add-widget-form"
+    hx-swap="outerHTML"
+    hx-vals='{"widget": {{ widget|escapejs }} }'
+  >
+    {% crispy add_widget_form %}
+  </form>
+</div>
