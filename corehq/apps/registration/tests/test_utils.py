@@ -27,16 +27,18 @@ from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
 from corehq.util.view_utils import absolute_reverse
 
-real_BillingContactInfo_get_or_create = BillingContactInfo.objects.get_or_create
+_get_or_create = type(BillingContactInfo.objects).get_or_create
 
 
-def _issue_initializing_domain(*args, **kwargs):
+def _issue_initializing_domain(self, *args, **kwargs):
     # Create object, then raise excpetion. This will cause
     # _setup_subscription to fail, but SQL objects related to the domain
     # will have been saved to the database. They should be cleaned up on
-    # transaction rollback due to the exception.
-    real_BillingContactInfo_get_or_create(*args, **kwargs)
-    raise Exception()
+    # transaction rollback caused by the exception.
+    value = _get_or_create(self, *args, **kwargs)
+    if self.model is BillingContactInfo:
+        raise Exception()
+    return value
 
 
 def _noop(*args, **kwargs):
@@ -105,7 +107,7 @@ class TestRequestNewDomain(TestCase):
         self.assertFalse(domain.is_active)
 
     @suspend(domain_tombstone_patch)
-    @mock.patch.object(BillingContactInfo.objects, 'get_or_create', _issue_initializing_domain)
+    @mock.patch.object(type(BillingContactInfo.objects), 'get_or_create', _issue_initializing_domain)
     def test_subscription_exception_raises_error_and_domain_is_deleted(self):
         # We want to ensure that errors during the Subscription initialization process
         # do not result in incomplete domains (a domain without a Subscription)
