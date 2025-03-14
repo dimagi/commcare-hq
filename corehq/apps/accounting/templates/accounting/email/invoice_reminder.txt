@@ -1,0 +1,55 @@
+{% load i18n %}
+
+{% blocktrans %}
+Dear {{ domain_or_account }} administrator, this is a reminder that your
+{{ plan_name }} Billing Statement for {{ month_name }} is due in
+{{ days_until_due }} days.
+
+Statement No.: {{ statement_number }}
+Project Space: {{ domain }}
+Software Plan: {{ plan_name }}
+Status: {{ payment_status }}
+Amount Due this Month: {{ amount_due }}
+Total Balance: {{ total_balance }}
+{% endblocktrans %}
+{% if total_balance > 0 %}
+{% blocktrans %}
+    Payment Due Date: {{ date_due }}
+{% endblocktrans %}
+{% endif %}
+
+{% if can_view_statement %}
+{% blocktrans %}
+    To view the full billing statement, log into your project space on
+    CommCare HQ and navigate to Billing Statements: {{ statements_url }}.
+{% endblocktrans %}
+{% else %}
+{% blocktrans %}
+    Your project's administrator can view the full billing statement by
+    logging into your project space on CommCare HQ and navigating to
+    navigate to Billing Statements: {{ statements_url }}.
+{% endblocktrans %}
+{% endif %}
+
+
+{% blocktrans %}
+To pay this bill, you can either choose a credit card or wire payment:
+    - To pay by credit card, please go to your Billing Statements page, click
+    on the green "Make Payment" button in front of your unpaid invoice(s),
+    and fill in the amount you want to pay as well as your credit card
+    details.
+    - To pay by wire, find Dimagi's bank account details on your invoice.
+    Please include the invoice number in your wire payment and make sure to
+    send an email to {{ accounts_email }} after you have made the payment,
+    mentioning the date of the payment, the amount, the invoice number, and
+    the project space.
+{% endblocktrans %}
+
+{% blocktrans %}
+Thank you for using {{ plan_name }}. If you have any questions, please don't
+hesitate to contact {{ invoicing_contact_email }}.
+
+Best Regards,
+The CommCare HQ Team
+www.commcarehq.org
+{% endblocktrans %}

@@ -28,10 +28,10 @@ from django_prbac.models import Grant, Role
 from memoized import memoized
 
 from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
-from corehq.apps.accounting.utils.downgrade import downgrade_eligible_domains
 from corehq.apps.accounting.utils.invoicing import (
-    get_oldest_unpaid_invoice_over_threshold,
+    get_oldest_overdue_invoice_over_threshold,
 )
+from corehq.apps.accounting.utils.unpaid_invoice import Downgrade
 from corehq.apps.sso.tasks import auto_deactivate_removed_sso_users
 from corehq.toggles import ACCOUNTING_TESTING_TOOLS
 
@@ -1285,7 +1285,7 @@ class TriggerDowngradeView(BaseTriggerAccountingTestView):
             return self.async_response
         if self.trigger_form.is_valid():
             domain = self.trigger_form.cleaned_data['domain']
-            overdue_invoice, _ = get_oldest_unpaid_invoice_over_threshold(
+            overdue_invoice, _ = get_oldest_overdue_invoice_over_threshold(
                 datetime.date.today(),
                 domain
             )
@@ -1295,7 +1295,7 @@ class TriggerDowngradeView(BaseTriggerAccountingTestView):
                     f'No overdue invoices were found for project "{domain}"',
                 )
             else:
-                downgrade_eligible_domains(only_downgrade_domain=domain)
+                Downgrade.run_action(only_downgrade_domain=domain)
                 messages.success(
                     request,
                     f'Successfully triggered the downgrade process '
