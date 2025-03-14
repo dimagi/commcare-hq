@@ -121,7 +121,7 @@ def sso_saml_login(request, idp_slug):
     This view initiates a SAML 2.0 login request with the Identity Provider.
     """
     login_url = add_username_hint_to_login_url(
-        request.saml2_auth.login(return_to=request.GET.get('next')),
+        request.saml2_auth.login(return_to=request.GET.get('next'), force_authn=True),
         request
     )
     return HttpResponseRedirect(login_url)
