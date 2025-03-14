@@ -88,7 +88,7 @@ from corehq.apps.hqwebapp.forms import (
     HQBackupTokenForm
 )
 from corehq.apps.hqwebapp.models import HQOauthApplication
-from corehq.apps.hqwebapp.login_utils import get_custom_login_page
+from corehq.apps.hqwebapp.login_utils import get_custom_login_page, is_logged_in
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version
 from corehq.apps.locations.permissions import location_safe
@@ -372,7 +372,7 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 @sensitive_post_parameters('auth-password')
 def _login(req, domain_name, custom_login_page, extra_context=None):
     extra_context = extra_context or {}
-    if req.user.is_authenticated and req.method == "GET":
+    if is_logged_in(req.user) and req.method == "GET":
         redirect_to = req.GET.get('next', '')
         if redirect_to:
             return HttpResponseRedirect(redirect_to)
