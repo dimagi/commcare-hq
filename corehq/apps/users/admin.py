@@ -71,7 +71,7 @@ class HQApiKeyAdmin(admin.ModelAdmin):
     list_filter = ['created', 'domain']
 
     readonly_fields = ('created',)
-    exclude = ('key',)
+    exclude = ('encrypted_key',)
 
 
 admin.site.register(HQApiKey, HQApiKeyAdmin)
