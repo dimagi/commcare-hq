@@ -2,9 +2,11 @@
 {% if record.kyc_verification_status == 'passed' %}
   <span class="badge bg-success">{% trans "Pass" %}</span>
 {% elif record.kyc_verification_status == 'failed' %}
+  <span class="badge bg-danger"> {% trans "Fail" %} </span>
+{% elif record.kyc_verification_status == 'error' %}
   <span class="d-flex flex-column" style="width: 8rem;">
     <span>
-      <span class="badge bg-danger"> {% trans "Fail" %} </span>
+      <span class="badge bg-danger"> {% trans "Error" %} </span>
     </span>
     <span class="text-wrap">
       {% trans record.kyc_verification_error|default:"Unknown error" %}

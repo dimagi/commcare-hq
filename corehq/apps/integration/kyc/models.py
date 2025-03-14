@@ -210,7 +210,11 @@ class KycUser:
     def update_verification_status(self, verification_status, device_id=None, error_message=None):
         from corehq.apps.hqcase.utils import update_case
 
-        assert verification_status in [KycVerificationStatus.PASSED, KycVerificationStatus.FAILED]
+        assert verification_status in [
+            KycVerificationStatus.PASSED,
+            KycVerificationStatus.FAILED,
+            KycVerificationStatus.ERROR,
+        ]
         update = {
             'kyc_provider': self.kyc_config.provider,
             'kyc_last_verified_at': datetime.utcnow().isoformat(),  # TODO: UTC or project timezone?
