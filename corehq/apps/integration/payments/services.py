@@ -10,7 +10,7 @@ from corehq.apps.integration.payments.exceptions import PaymentRequestError
 from corehq.apps.integration.payments.schemas import PaymentTransferDetails, PartyDetails
 from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.form_processor.models import CommCareCase
-from corehq.apps.integration.payments.const import PaymentProperties
+from corehq.apps.integration.payments.const import PaymentProperties, PAYMENT_SUCCESS_STATUS_CODE
 from corehq.apps.hqcase.utils import bulk_update_cases
 
 CHUNK_SIZE = 100
@@ -20,17 +20,7 @@ def request_payments_for_cases(case_ids, config):
     payment_updates = []
 
     for payment_case in CommCareCase.objects.get_cases(case_ids=case_ids):
-        payment_update = {}
-        payment_submitted = False
-        try:
-            transaction_id = request_payment(payment_case, config)
-            payment_update['transaction_id'] = transaction_id
-            payment_submitted = True
-        except PaymentRequestError as e:
-            payment_update[PaymentProperties.PAYMENT_ERROR] = str(e)
-        finally:
-            payment_update[PaymentProperties.PAYMENT_SUBMITTED] = payment_submitted
-            payment_update[PaymentProperties.PAYMENT_TIMESTAMP] = str(datetime.now())
+        payment_update = request_payment(payment_case, config)
 
         payment_updates.append(
             (payment_case.case_id, payment_update, False)
@@ -47,7 +37,25 @@ def request_payments_for_cases(case_ids, config):
         )
 
 
-def request_payment(payee_case: CommCareCase, config: MoMoConfig):
+def request_payment(payment_case: CommCareCase, config: MoMoConfig):
+    payment_update = {
+        PaymentProperties.PAYMENT_SUBMITTED: False,
+        PaymentProperties.PAYMENT_TIMESTAMP: datetime.utcnow().isoformat()
+    }
+
+    try:
+        transaction_id = _request_payment(payment_case, config)
+        payment_update.update({
+            'transaction_id': transaction_id,
+            PaymentProperties.PAYMENT_SUBMITTED: True
+        })
+    except PaymentRequestError as e:
+        payment_update[PaymentProperties.PAYMENT_ERROR] = str(e)
+
+    return payment_update
+
+
+def _request_payment(payee_case: CommCareCase, config: MoMoConfig):
     _validate_payment_request(payee_case.case_json)
 
     transfer_details = _get_transfer_details(payee_case)
@@ -71,7 +79,7 @@ def _make_payment_request(request_data, config: MoMoConfig):
             'X-Target-Environment': config.environment,
         }
     )
-    if response.status_code != 202:
+    if response.status_code != PAYMENT_SUCCESS_STATUS_CODE:
         raise PaymentRequestError(_("Payment request failed"))
     return transaction_id
 

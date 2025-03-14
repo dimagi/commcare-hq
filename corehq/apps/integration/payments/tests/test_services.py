@@ -13,7 +13,7 @@ from corehq.motech.models import ConnectionSettings
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 from corehq.apps.integration.payments.services import verify_payment_cases, request_payments_for_cases
 from corehq.apps.integration.payments.const import PaymentProperties
-from corehq.apps.integration.payments.services import request_payment
+from corehq.apps.integration.payments.services import _request_payment
 from corehq.apps.integration.payments.exceptions import PaymentRequestError
 
 
@@ -123,7 +123,7 @@ class TestPaymentRequest(TestCase):
         self._add_cleanup(unverified_case)
 
         with pytest.raises(PaymentRequestError, match="Payment has not been verified"):
-            request_payment(unverified_case, self.config)
+            _request_payment(unverified_case, self.config)
 
     def test_duplicate_payment_request(self):
         previously_submitted_case = _create_case(
@@ -138,7 +138,7 @@ class TestPaymentRequest(TestCase):
         self._add_cleanup(previously_submitted_case)
 
         with pytest.raises(PaymentRequestError, match="Payment has already been submitted"):
-            request_payment(previously_submitted_case, self.config)
+            _request_payment(previously_submitted_case, self.config)
 
     def test_verified_payment_with_missing_data(self):
         verified_case_with_missing_data = _create_case(
@@ -155,7 +155,7 @@ class TestPaymentRequest(TestCase):
         )
         self._add_cleanup(verified_case_with_missing_data)
         with pytest.raises(PaymentRequestError, match="Invalid payee details"):
-            request_payment(verified_case_with_missing_data, self.config)
+            _request_payment(verified_case_with_missing_data, self.config)
 
     @patch('corehq.apps.integration.payments.services._make_payment_request')
     def test_successful_payment_request(self, make_payment_request_mock):
@@ -170,7 +170,7 @@ class TestPaymentRequest(TestCase):
             }
         )
         self._add_cleanup(verified_case)
-        assert request_payment(verified_case, self.config) is not None
+        assert _request_payment(verified_case, self.config) is not None
 
     def _add_cleanup(self, case):
         self.case_list.append(case)

@@ -16,3 +16,6 @@ class PaymentProperties(object):
     PHONE_NUMBER = 'phone_number'
     BATCH_NUMBER = 'batch_number'
     PAYMENT_ERROR = 'payment_error'
+
+
+PAYMENT_SUCCESS_STATUS_CODE = 202
