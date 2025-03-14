@@ -162,8 +162,8 @@ def _validate_payment_request(case_data: dict):
 
 
 def _payment_is_verified(case_data: dict):
-    return case_data.get(PaymentProperties.PAYMENT_VERIFIED, '') == 'True'
+    return case_data.get(PaymentProperties.PAYMENT_VERIFIED) == 'True'
 
 
 def _payment_already_submitted(case_data: dict):
-    return case_data.get(PaymentProperties.PAYMENT_SUBMITTED, '') == 'True'
+    return case_data.get(PaymentProperties.PAYMENT_SUBMITTED) == 'True'
