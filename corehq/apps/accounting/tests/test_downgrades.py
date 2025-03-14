@@ -1,25 +1,25 @@
 import datetime
 
-from corehq.apps.accounting import utils, tasks
+from corehq.apps.accounting import tasks, utils
+from corehq.apps.accounting.const import (
+    DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE,
+    DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE_WARNING,
+    DAYS_PAST_DUE_TO_TRIGGER_OVERDUE_NOTICE,
+)
 from corehq.apps.accounting.models import (
+    CommunicationType,
+    CustomerInvoice,
+    CustomerInvoiceCommunicationHistory,
+    DefaultProductPlan,
     DomainUserHistory,
     InvoiceCommunicationHistory,
-    CommunicationType,
-    DefaultProductPlan,
     SoftwarePlanEdition,
-    SubscriptionType,
     Subscription,
-    CustomerInvoiceCommunicationHistory,
-    CustomerInvoice,
+    SubscriptionType,
 )
-from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.tests import generator
-from corehq.apps.accounting.utils.downgrade import (
-    DAYS_PAST_DUE_TO_TRIGGER_OVERDUE_NOTICE,
-    downgrade_eligible_domains,
-    DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE_WARNING,
-    DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE,
-)
+from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
+from corehq.apps.accounting.utils.downgrade import downgrade_eligible_domains
 
 
 def _generate_invoice_and_subscription(days_ago, is_customer_billing_account=False):

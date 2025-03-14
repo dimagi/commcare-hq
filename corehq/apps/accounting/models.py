@@ -9,7 +9,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import IntegrityError, models, transaction
-from django.db.models import F, Q
+from django.db.models import F, OuterRef, Q, Subquery
 from django.db.models.manager import Manager
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -19,10 +19,7 @@ import jsonfield
 import stripe
 from django_prbac.models import Role
 from memoized import memoized
-from corehq.apps.accounting.utils.stripe import charge_through_stripe
 
-from corehq.apps.domain.shortcuts import publish_domain_saved
-from corehq.apps.users.dbaccessors import get_active_web_usernames_by_domain, get_web_user_count
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -31,6 +28,10 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.web import get_site_domain
 
+from corehq.apps.accounting.const import (
+    EXCHANGE_RATE_DECIMAL_PLACES,
+    SMALL_INVOICE_THRESHOLD,
+)
 from corehq.apps.accounting.emails import (
     send_self_start_subscription_alert,
     send_subscription_change_alert,
@@ -54,7 +55,6 @@ from corehq.apps.accounting.subscription_changes import (
     DomainUpgradeActionHandler,
 )
 from corehq.apps.accounting.utils import (
-    EXCHANGE_RATE_DECIMAL_PLACES,
     ensure_domain_instance,
     fmt_dollar_amount,
     get_account_name_from_default_name,
@@ -68,9 +68,15 @@ from corehq.apps.accounting.utils import (
     quantize_accounting_decimal,
     self_signup_workflow_in_progress,
 )
+from corehq.apps.accounting.utils.stripe import charge_through_stripe
 from corehq.apps.domain import UNKNOWN_DOMAIN
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import publish_domain_saved
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.users.dbaccessors import (
+    get_active_web_usernames_by_domain,
+    get_web_user_count,
+)
 from corehq.apps.users.models import WebUser
 from corehq.apps.users.util import is_dimagi_email
 from corehq.blobs.mixin import CODES, BlobMixin
@@ -81,12 +87,10 @@ from corehq.util.mixin import ValidateModelMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
-from django.db.models import OuterRef, Subquery
 
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
 MAX_INVOICE_COMMUNICATIONS = 5
-SMALL_INVOICE_THRESHOLD = 100
 
 UNLIMITED_FEATURE_USAGE = -1
 
@@ -551,7 +555,9 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
     def _send_autopay_card_removed_email(self, new_user, domain):
         """Sends an email to the old autopayer for this account telling them {new_user} is now the autopayer"""
-        from corehq.apps.domain.views.accounting import EditExistingBillingAccountView
+        from corehq.apps.domain.views.accounting import (
+            EditExistingBillingAccountView,
+        )
         old_username = self.auto_pay_user
         subject = _("Your card is no longer being used to auto-pay for {billing_account}").format(
             billing_account=self.name)
@@ -583,7 +589,9 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
     def _send_autopay_card_added_email(self, domain):
         """Sends an email to the new autopayer for this account telling them they are now the autopayer"""
-        from corehq.apps.domain.views.accounting import EditExistingBillingAccountView
+        from corehq.apps.domain.views.accounting import (
+            EditExistingBillingAccountView,
+        )
         subject = _("Your card is being used to auto-pay for {billing_account}").format(
             billing_account=self.name)
         web_user = WebUser.get_by_username(self.auto_pay_user)
@@ -966,7 +974,10 @@ class SoftwarePlanVersion(models.Model):
 
     @property
     def user_facing_description(self):
-        from corehq.apps.accounting.user_text import DESC_BY_EDITION, FEATURE_TYPE_TO_NAME
+        from corehq.apps.accounting.user_text import (
+            DESC_BY_EDITION,
+            FEATURE_TYPE_TO_NAME,
+        )
 
         def _default_description(plan, monthly_limit):
             if plan.edition in [
@@ -1876,7 +1887,9 @@ class Subscription(models.Model):
                 if BillingContactInfo.objects.filter(account=self.account).exists() else []
             )
             if not billing_contact_emails:
-                from corehq.apps.accounting.views import ManageBillingAccountView
+                from corehq.apps.accounting.views import (
+                    ManageBillingAccountView,
+                )
                 _soft_assert_contact_emails_missing(
                     False,
                     'Billing Account for project %s is missing client contact emails: %s' % (
@@ -2591,8 +2604,12 @@ class BillingRecordBase(models.Model):
             })
 
     def email_context(self):
-        from corehq.apps.domain.views.accounting import DomainBillingStatementsView
-        from corehq.apps.domain.views.settings import DefaultProjectSettingsView
+        from corehq.apps.domain.views.accounting import (
+            DomainBillingStatementsView,
+        )
+        from corehq.apps.domain.views.settings import (
+            DefaultProjectSettingsView,
+        )
 
         month_name = self.invoice.date_start.strftime("%B")
         domain = self.invoice.get_domain()
@@ -2609,6 +2626,7 @@ class BillingRecordBase(models.Model):
                 DomainBillingStatementsView.urlname, args=[domain]),
             'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
             'accounts_email': settings.ACCOUNTS_EMAIL,
+            'small_invoice_threshold': SMALL_INVOICE_THRESHOLD,
         }
         return context
 
@@ -2780,7 +2798,9 @@ class BillingRecord(BillingRecordBase):
             'payment_status': payment_status,
         })
         if self.invoice.subscription.service_type == SubscriptionType.IMPLEMENTATION:
-            from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
+            from corehq.apps.accounting.dispatcher import (
+                AccountingAdminInterfaceDispatcher,
+            )
             context.update({
                 'salesforce_contract_id': self.invoice.subscription.salesforce_contract_id,
                 'billing_account': self.invoice.subscription.account.name,
@@ -3019,7 +3039,9 @@ class CustomerBillingRecord(BillingRecordBase):
         return not self.invoice.is_hidden
 
     def email_context(self):
-        from corehq.apps.enterprise.views import EnterpriseBillingStatementsView
+        from corehq.apps.enterprise.views import (
+            EnterpriseBillingStatementsView,
+        )
         context = super(CustomerBillingRecord, self).email_context()
         is_small_invoice = self.invoice.balance < SMALL_INVOICE_THRESHOLD
         payment_status = (_("Paid")

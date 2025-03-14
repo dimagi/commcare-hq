@@ -5,8 +5,8 @@ from django.db import models
 
 from corehq import toggles
 from corehq.apps.accounting import models as accounting
+from corehq.apps.accounting.const import EXCHANGE_RATE_DECIMAL_PLACES
 from corehq.apps.accounting.models import BillingAccount, Currency, Subscription
-from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES
 from corehq.apps.sms.models import (
     DIRECTION_CHOICES,
     SQLMobileBackend,

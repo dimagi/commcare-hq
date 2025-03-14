@@ -4,31 +4,32 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
+from corehq.apps.accounting.const import (
+    DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE,
+    DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE_WARNING,
+    DAYS_PAST_DUE_TO_TRIGGER_OVERDUE_NOTICE,
+    OVERDUE_INVOICE_LIMIT_DAYS,
+)
 from corehq.apps.accounting.models import (
-    SoftwarePlanEdition,
-    DefaultProductPlan,
-    SubscriptionAdjustmentMethod,
-    Subscription,
-    InvoiceCommunicationHistory,
-    CustomerInvoiceCommunicationHistory,
     CommunicationType,
+    CustomerInvoiceCommunicationHistory,
+    DefaultProductPlan,
+    InvoiceCommunicationHistory,
+    SoftwarePlanEdition,
+    Subscription,
+    SubscriptionAdjustmentMethod,
 )
-from corehq.apps.accounting.utils.invoicing import (
-    get_domains_with_subscription_invoices_over_threshold,
-    get_accounts_with_customer_invoices_over_threshold,
-    get_oldest_unpaid_invoice_over_threshold,
-)
-from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.accounting.utils import (
     get_dimagi_from_email,
     log_accounting_error,
 )
+from corehq.apps.accounting.utils.invoicing import (
+    get_accounts_with_customer_invoices_over_threshold,
+    get_domains_with_subscription_invoices_over_threshold,
+    get_oldest_unpaid_invoice_over_threshold,
+)
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.util.view_utils import absolute_reverse
-
-
-DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE = 61
-DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE_WARNING = 58
-DAYS_PAST_DUE_TO_TRIGGER_OVERDUE_NOTICE = 30
 
 
 def downgrade_eligible_domains(only_downgrade_domain=None):
@@ -101,7 +102,7 @@ def _downgrade_domain(subscription):
             SoftwarePlanEdition.PAUSED
         ),
         adjustment_method=SubscriptionAdjustmentMethod.AUTOMATIC_DOWNGRADE,
-        note='Automatic pausing of subscription for invoice 60 days late',
+        note=f'Automatic pausing of subscription for invoice {OVERDUE_INVOICE_LIMIT_DAYS} days late',
         internal_change=True
     )
 
@@ -149,10 +150,12 @@ def _send_overdue_notice(invoice, communication_model, context):
     else:
         bcc = [settings.GROWTH_EMAIL]
     send_html_email_async.delay(
-        _('CommCare Billing Statement 30 days Overdue for {}'.format(context['domain_or_account'])),
+        _('CommCare Billing Statement {} days Overdue for {}'.format(
+            DAYS_PAST_DUE_TO_TRIGGER_OVERDUE_NOTICE, context['domain_or_account']
+        )),
         invoice.get_contact_emails(include_domain_admins=True, filter_out_dimagi=True),
-        render_to_string('accounting/email/30_days.html', context),
-        render_to_string('accounting/email/30_days.txt', context),
+        render_to_string('accounting/email/overdue_notice.html', context),
+        render_to_string('accounting/email/overdue_notice.txt', context),
         cc=[settings.ACCOUNTS_EMAIL],
         bcc=bcc,
         email_from=get_dimagi_from_email()
@@ -164,12 +167,15 @@ def _send_overdue_notice(invoice, communication_model, context):
 
 
 def _apply_downgrade_process(oldest_unpaid_invoice, total, today, subscription):
-    from corehq.apps.domain.views.accounting import DomainBillingStatementsView, DomainSubscriptionView
+    from corehq.apps.domain.views.accounting import (
+        DomainBillingStatementsView,
+        DomainSubscriptionView,
+    )
     from corehq.apps.enterprise.views import EnterpriseBillingStatementsView
 
     context = {
         'total': format(total, '7.2f'),
-        'date_60': oldest_unpaid_invoice.date_due + datetime.timedelta(days=60),
+        'date_to_pause': oldest_unpaid_invoice.date_due + datetime.timedelta(days=OVERDUE_INVOICE_LIMIT_DAYS),
         'contact_email': settings.INVOICING_CONTACT_EMAIL
     }
 
@@ -200,9 +206,15 @@ def _apply_downgrade_process(oldest_unpaid_invoice, total, today, subscription):
             _send_downgrade_notice(oldest_unpaid_invoice, context)
 
     elif _can_send_downgrade_warning(days_ago, communication_model, oldest_unpaid_invoice):
+        context.update({
+            'days_overdue': OVERDUE_INVOICE_LIMIT_DAYS,
+        })
         _send_downgrade_warning(oldest_unpaid_invoice, communication_model, context)
 
     elif _can_send_overdue_notification(days_ago, communication_model, oldest_unpaid_invoice):
+        context.update({
+            'days_overdue': DAYS_PAST_DUE_TO_TRIGGER_OVERDUE_NOTICE,
+        })
         _send_overdue_notice(oldest_unpaid_invoice, communication_model, context)
 
 

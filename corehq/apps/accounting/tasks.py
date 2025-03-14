@@ -673,7 +673,7 @@ def send_credits_on_hq_report():
 
 
 @periodic_task(run_every=crontab(minute=0, hour=9), queue='background_queue', acks_late=True)
-def run_downgrade_process():
+def run_auto_pause_process():
     downgrade_eligible_domains()
 
 

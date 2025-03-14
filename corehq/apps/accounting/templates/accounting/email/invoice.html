@@ -4,165 +4,110 @@
 
 <p>
   {% blocktrans %}
-    Your {{ plan_name }} Billing Statement is now available for {{ month_name }}.
+    Your {{ plan_name }} Billing Statement is now available for
+    {{ month_name }}.
   {% endblocktrans %}
 </p>
 
 <table cellpadding="2">
   <tr>
-    <th align="right">
-      {% trans 'Statement No.' %}:
-    </th>
+    <th align="right">{% trans 'Statement No.' %}:</th>
+    <td>{{ statement_number }}</td>
+  </tr>
+  <tr>
+    <th align="right">{% trans 'Project Space' %}:</th>
     <td>
-      {{ statement_number }}
+      <a href="{{ domain_url }}"> {{ domain }} </a>
     </td>
   </tr>
   <tr>
-    <th align="right">
-      {% trans 'Project Space' %}:
-    </th>
-    <td>
-      <a href="{{ domain_url }}">
-        {{ domain }}
-      </a>
-    </td>
+    <th align="right">{% trans 'Software Plan' %}:</th>
+    <td>{{ plan_name }}</td>
   </tr>
   <tr>
-    <th align="right">
-      {% trans 'Software Plan' %}:
-    </th>
-    <td>
-      {{ plan_name }}
-    </td>
+    <th align="right">{% trans 'Status' %}:</th>
+    <td>{{ payment_status }}</td>
   </tr>
   <tr>
-    <th align="right">
-      {% trans 'Status' %}:
-    </th>
-    <td>
-      {{ payment_status }}
-    </td>
+    <th align="right">{% trans 'Amount Due this Month' %}:</th>
+    <td>{{ amount_due }}</td>
   </tr>
   <tr>
-    <th align="right">
-      {% trans 'Amount Due this Month' %}:
-    </th>
-    <td>
-      {{ amount_due }}
-    </td>
-  </tr>
-  <tr>
-    <th align="right">
-      {% trans 'Total Balance' %}:
-    </th>
-    <td>
-      {{ total_balance }}
-    </td>
+    <th align="right">{% trans 'Total Balance' %}:</th>
+    <td>{{ total_balance }}</td>
   </tr>
   {% if total_balance > 0 %}
     <tr>
-      <th align="right">
-        {% trans 'Payment Due Date' %}:
-      </th>
-      <td>
-        {{ date_due }}
-      </td>
+      <th align="right">{% trans 'Payment Due Date' %}:</th>
+      <td>{{ date_due }}</td>
     </tr>
   {% endif %}
 
   {% if credits.subscription %}
     <tr>
       <th align="right">
-        <span style="text-decoration:underline;">{% trans 'Subscription Credits Remaining' %}</span>
+        <span style="text-decoration:underline;"
+          >{% trans 'Subscription Credits Remaining' %}</span
+        >
       </th>
     </tr>
   {% endif %}
   {% if credits.subscription.product %}
     <tr>
-      <th align="right">
-        {% trans 'Plan Credits' %}:
-      </th>
-      <td>
-        {{ credits.subscription.product.amount }}
-      </td>
+      <th align="right">{% trans 'Plan Credits' %}:</th>
+      <td>{{ credits.subscription.product.amount }}</td>
     </tr>
   {% endif %}
   {% if credits.subscription.user %}
     <tr>
-      <th align="right">
-        {% trans 'User Credits' %}:
-      </th>
-      <td>
-        {{ credits.subscription.user.amount }}
-      </td>
+      <th align="right">{% trans 'User Credits' %}:</th>
+      <td>{{ credits.subscription.user.amount }}</td>
     </tr>
   {% endif %}
   {% if credits.subscription.sms %}
     <tr>
-      <th align="right">
-        {% trans 'SMS Credits' %}:
-      </th>
-      <td>
-        {{ credits.subscription.sms.amount }}
-      </td>
+      <th align="right">{% trans 'SMS Credits' %}:</th>
+      <td>{{ credits.subscription.sms.amount }}</td>
     </tr>
   {% endif %}
   {% if credits.subscription.general %}
     <tr>
-      <th align="right">
-        {% trans 'General Credits' %}:
-      </th>
-      <td>
-        {{ credits.subscription.general.amount }}
-      </td>
+      <th align="right">{% trans 'General Credits' %}:</th>
+      <td>{{ credits.subscription.general.amount }}</td>
     </tr>
   {% endif %}
 
   {% if credits.account %}
     <tr>
       <th align="right">
-        <span style="text-decoration:underline;">{% trans 'Account Credits Remaining' %}</span>
+        <span style="text-decoration:underline;"
+          >{% trans 'Account Credits Remaining' %}</span
+        >
       </th>
     </tr>
   {% endif %}
   {% if credits.account.product %}
     <tr>
-      <th align="right">
-        {% trans 'Plan Credits' %}:
-      </th>
-      <td>
-        {{ credits.account.product.amount }}
-      </td>
+      <th align="right">{% trans 'Plan Credits' %}:</th>
+      <td>{{ credits.account.product.amount }}</td>
     </tr>
   {% endif %}
   {% if credits.account.user %}
     <tr>
-      <th align="right">
-        {% trans 'User Credits' %}:
-      </th>
-      <td>
-        {{ credits.account.user.amount }}
-      </td>
+      <th align="right">{% trans 'User Credits' %}:</th>
+      <td>{{ credits.account.user.amount }}</td>
     </tr>
   {% endif %}
   {% if credits.account.sms %}
     <tr>
-      <th align="right">
-        {% trans 'SMS Credits' %}:
-      </th>
-      <td>
-        {{ credits.account.sms.amount }}
-      </td>
+      <th align="right">{% trans 'SMS Credits' %}:</th>
+      <td>{{ credits.account.sms.amount }}</td>
     </tr>
   {% endif %}
   {% if credits.account.general %}
     <tr>
-      <th align="right">
-        {% trans 'General Credits' %}:
-      </th>
-      <td>
-        {{ credits.account.general.amount }}
-      </td>
+      <th align="right">{% trans 'General Credits' %}:</th>
+      <td>{{ credits.account.general.amount }}</td>
     </tr>
   {% endif %}
 </table>
@@ -172,14 +117,15 @@
     {% if is_small_invoice %}
       {% blocktrans %}
         Please note that the due date for this {{ month_name }} payment has been
-        postponed, as the amount due this month is less than $100. However as
-        your total balance is now beyond $100, please note that you have to pay
+        postponed, as the amount due this month is less than
+        ${{ small_invoice_threshold }}. However as your total balance is now
+        beyond ${{ small_invoice_threshold }}, please note that you have to pay
         your balance within the next 30 days.
       {% endblocktrans %}
-    {% else  %}
+    {% else %}
       {% blocktrans %}
-        Your total balance is now beyond $100, please note that you have to pay
-        your balance within the next 30 days.
+        Your total balance is now beyond ${{ small_invoice_threshold }}, please
+        note that you have to pay your balance within the next 30 days.
       {% endblocktrans %}
     {% endif %}
   </p>
@@ -188,8 +134,8 @@
     {% if can_view_statement %}
       {% blocktrans %}
         To view the full billing statement, log into your project space on
-        CommCare HQ and navigate to <a href="{{ statements_url }}">
-        Billing Statements</a>.
+        CommCare HQ and navigate to
+        <a href="{{ statements_url }}"> Billing Statements</a>.
       {% endblocktrans %}
     {% else %}
       {% blocktrans %}
@@ -206,17 +152,17 @@
       <ul>
         <li>
           To pay by credit card, please go to your
-          <a href="{{ statements_url }}">Billing Statements</a> page, click
-          on the green "Make Payment" button in front of your unpaid
-          invoice(s), and fill in the amount you want to pay as well as your
-          credit card details.
+          <a href="{{ statements_url }}">Billing Statements</a> page, click on
+          the green "Make Payment" button in front of your unpaid invoice(s),
+          and fill in the amount you want to pay as well as your credit card
+          details.
         </li>
         <li>
           To pay by wire, find Dimagi's bank account details on your invoice.
-          Please include the invoice number in your wire payment and make
-          sure to send an email to {{ accounts_email }} after you have made
-          the payment, mentioning the date of the payment, the amount, the
-          invoice number, and the project space.
+          Please include the invoice number in your wire payment and make sure
+          to send an email to {{ accounts_email }} after you have made the
+          payment, mentioning the date of the payment, the amount, the invoice
+          number, and the project space.
         </li>
       </ul>
     {% endblocktrans %}
@@ -226,20 +172,23 @@
     {% if total_balance > 0 %}
       {% blocktrans %}
         Please note that the due date for this payment has been postponed, as
-        the amount due this month is less than $100.  You will start receiving
-        reminder emails for payments once your total balance reaches $100.
+        the amount due this month is less than ${{ small_invoice_threshold }}.
+        You will start receiving reminder emails for payments once your total
+        balance reaches ${{ small_invoice_threshold }}.
       {% endblocktrans %}
     {% endif %}
 
     {% if can_view_statement %}
       {% blocktrans %}
         To view and pay invoices, you can log into your project space on
-        CommCare HQ and navigate to <a href="{{ statements_url }}">Billing Statements</a>.
+        CommCare HQ and navigate to
+        <a href="{{ statements_url }}">Billing Statements</a>.
       {% endblocktrans %}
     {% else %}
       {% blocktrans %}
-        To view and pay invoices, your project's administrator can log into your project space on
-        CommCare HQ and navigate to <a href="{{ statements_url }}">Billing Statements</a>.
+        To view and pay invoices, your project's administrator can log into your
+        project space on CommCare HQ and navigate to
+        <a href="{{ statements_url }}">Billing Statements</a>.
       {% endblocktrans %}
     {% endif %}
   </p>
@@ -247,7 +196,8 @@
 
 <p>
   {% blocktrans %}
-    Thank you for using {{ plan_name }}. If you have any questions, please don't hesitate to contact {{ invoicing_contact_email }}.
+    Thank you for using {{ plan_name }}. If you have any questions, please don't
+    hesitate to contact {{ invoicing_contact_email }}.
   {% endblocktrans %}
 </p>
 
@@ -261,8 +211,7 @@
 
 <p>
   {% blocktrans %}
-    Statement From:
-    CommCare HQ and the corporation Dimagi, Inc.
-    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA
+    Statement From: CommCare HQ and the corporation Dimagi, Inc. 585
+    Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA
   {% endblocktrans %}
 </p>
