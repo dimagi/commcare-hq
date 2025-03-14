@@ -1,7 +1,8 @@
 import uuid
-from hashlib import md5
 
 from django.db import models
+
+from dimagi.utils.data.deid_generator import DeidGenerator
 
 from corehq.util.quickcache import quickcache
 
@@ -14,8 +15,7 @@ class DeIdHash(models.Model):
     def get_deid(cls, value, doc):
         domain = doc['domain'] if isinstance(doc, dict) else doc.domain
         salt = cls._get_salt(domain)
-        data = f'{value}{salt}'.encode('utf-8')
-        return md5(data).hexdigest()
+        return DeidGenerator(value, salt).random_hash()
 
     @classmethod
     @quickcache(['domain'], timeout=24 * 60 * 60)
