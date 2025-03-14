@@ -215,6 +215,35 @@ class ConnectionSettingsPropertiesTests(SimpleTestCase):
         cs.last_token_aes = ''
         self.assertIsNone(cs.last_token)
 
+    def test_set_custom_headers_encrypts(self):
+        cs = ConnectionSettings()
+        cs.set_custom_headers({"secret-header": "top secret"})
+        self.assertTrue(cs.custom_headers["secret-header"].startswith(f'${ALGO_AES_CBC}$'))
+
+    def test_get_custom_headers_decrypts(self):
+        cs = ConnectionSettings()
+        cs.set_custom_headers({"secret-header": "top secret"})
+        self.assertEqual(cs.plaintext_custom_headers, {"secret-header": "top secret"})
+
+    def test_get_custom_header_display_hides_header_values(self):
+        cs = ConnectionSettings()
+        cs.set_custom_headers({"secret-header": "top secret"})
+        self.assertEqual(cs.get_custom_headers_display(), {"secret-header": PASSWORD_PLACEHOLDER})
+
+    def test_remove_a_custom_header(self):
+        cs = ConnectionSettings()
+        cs.set_custom_headers({"secret-header": "top secret", "secret-header-2": "top secret 2"})
+        self.assertEqual(
+            cs.plaintext_custom_headers,
+            {"secret-header": "top secret", "secret-header-2": "top secret 2"}
+        )
+
+        cs.set_custom_headers({"secret-header": "top secret", "secret-header-3": "top secret 3"})
+        self.assertEqual(
+            cs.plaintext_custom_headers,
+            {"secret-header": "top secret", "secret-header-3": "top secret 3"}
+        )
+
 
 class NotifyAddressesTests(SimpleTestCase):
 

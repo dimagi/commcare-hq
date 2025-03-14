@@ -118,7 +118,11 @@ class ConnectionSettings(models.Model):
     all_objects = ConnectionQuerySet.as_manager()
 
     # Used when serializing data to ensure encrypted fields are reset
-    encrypted_fields = {"password": PASSWORD_PLACEHOLDER, "client_secret": PASSWORD_PLACEHOLDER}
+    encrypted_fields = {
+        "password": PASSWORD_PLACEHOLDER,
+        "client_secret": PASSWORD_PLACEHOLDER,
+        "custom_headers": PASSWORD_PLACEHOLDER,
+    }
 
     def __str__(self):
         return f"{self.name} [{self.domain}]"
@@ -153,6 +157,35 @@ class ConnectionSettings(models.Model):
         if plaintext != PASSWORD_PLACEHOLDER:
             ciphertext = b64_aes_cbc_encrypt(plaintext)
             self.client_secret = f'${ALGO_AES_CBC}${ciphertext}'
+
+    @property
+    def plaintext_custom_headers(self):
+        def decrypt(value):
+            if value.startswith(f'${ALGO_AES_CBC}$'):
+                ciphertext = value.split('$', 2)[2]
+                return b64_aes_cbc_decrypt(ciphertext)
+            return value
+        return {k: decrypt(v) for k, v in self.custom_headers.items()}
+
+    def set_custom_headers(self, headers):
+        """
+        Makes sure the header values are encrypted before saving them
+        """
+        self.custom_headers = self.custom_headers or {}
+        for header, value in headers.items():
+            if value != PASSWORD_PLACEHOLDER:
+                ciphertext = b64_aes_cbc_encrypt(value)
+                self.custom_headers[header] = f'${ALGO_AES_CBC}${ciphertext}'
+
+        # Remove any custom headers that are not in the new headers
+        relevant_headers = headers.keys()
+        self.custom_headers = {
+            header: value for header, value in self.custom_headers.items()
+            if header in relevant_headers
+        }
+
+    def get_custom_headers_display(self):
+        return {k: PASSWORD_PLACEHOLDER for k, v in self.custom_headers.items()}
 
     @property
     def last_token(self) -> Optional[dict]:
