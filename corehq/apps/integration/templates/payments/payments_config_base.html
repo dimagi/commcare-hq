@@ -6,3 +6,8 @@
 {% block page_content %}
   <div>{% include 'payments/partials/payments_config_form_partial.html' %}</div>
 {% endblock %}
+
+{% block modals %}
+  {% include "hqwebapp/htmx/error_modal.html" %}
+  {{ block.super }}
+{% endblock modals %}
