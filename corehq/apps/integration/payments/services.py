@@ -1,17 +1,25 @@
 import uuid
-from datetime import datetime
 from dataclasses import asdict
+from datetime import datetime
+
 from django.utils.translation import gettext as _
 
 from dimagi.utils.chunked import chunked
-from corehq.apps.users.models import WebUser
+
 from corehq.apps.hqcase.api.updates import handle_case_update
-from corehq.apps.integration.payments.exceptions import PaymentRequestError
-from corehq.apps.integration.payments.schemas import PaymentTransferDetails, PartyDetails
-from corehq.apps.integration.payments.models import MoMoConfig
-from corehq.form_processor.models import CommCareCase
-from corehq.apps.integration.payments.const import PaymentProperties, PAYMENT_SUCCESS_STATUS_CODE
 from corehq.apps.hqcase.utils import bulk_update_cases
+from corehq.apps.integration.payments.const import (
+    PAYMENT_SUCCESS_STATUS_CODE,
+    PaymentProperties,
+)
+from corehq.apps.integration.payments.exceptions import PaymentRequestError
+from corehq.apps.integration.payments.models import MoMoConfig
+from corehq.apps.integration.payments.schemas import (
+    PartyDetails,
+    PaymentTransferDetails,
+)
+from corehq.apps.users.models import WebUser
+from corehq.form_processor.models import CommCareCase
 
 CHUNK_SIZE = 100
 
