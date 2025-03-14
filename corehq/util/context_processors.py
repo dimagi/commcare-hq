@@ -4,7 +4,6 @@ from django.conf import settings
 from django.http import Http404
 from django.urls import resolve, reverse
 from django_prbac.utils import has_privilege
-from ws4redis.context_processors import default
 
 from corehq import feature_previews, privileges, toggles
 from corehq.apps.accounting.models import BillingAccount, Subscription, SubscriptionType
@@ -157,20 +156,6 @@ def js_privileges(request):
     return {
         'privileges': list(get_privileges(plan_version)),
     }
-
-
-def websockets_override(request):
-    # for some reason our proxy setup doesn't properly detect these things, so manually override them
-    try:
-        context = default(request)
-        context['WEBSOCKET_URI'] = context['WEBSOCKET_URI'].replace(request.get_host(), settings.BASE_ADDRESS)
-        if settings.DEFAULT_PROTOCOL == 'https':
-            context['WEBSOCKET_URI'] = context['WEBSOCKET_URI'].replace('ws://', 'wss://')
-        return context
-    except Exception:
-        # it's very unlikely this was needed, and some workflows (like scheduled reports) aren't
-        # able to generate this, so don't worry about it.
-        return {}
 
 
 def enterprise_mode(request):

@@ -4,7 +4,6 @@ pip
 
 flower
 setproctitle
-uWSGI
 ipython  # for nicer django shell experience
 
 idna
