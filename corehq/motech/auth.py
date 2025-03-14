@@ -222,7 +222,7 @@ class OAuth2ClientGrantManager(AuthManager):
             self.last_token = token
 
         request_fresh_token = not self.last_token or self.last_token.get('refresh_token') is None
-        additional_headers = self.connection_settings.custom_headers
+        additional_headers = self.connection_settings.plaintext_custom_headers
 
         if toggles.SUPERSET_ANALYTICS.enabled(domain_name):
             if (

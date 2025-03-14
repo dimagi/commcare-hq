@@ -88,7 +88,7 @@ class ConnectionSettingsForm(forms.ModelForm):
         initial=None,
         required=False,
     )
-    custom_headers = JsonField(
+    plaintext_custom_headers = JsonField(
         label=_('Additional headers'),
         required=False,
         initial={},
@@ -113,7 +113,7 @@ class ConnectionSettingsForm(forms.ModelForm):
             'token_url',
             'refresh_url',
             'pass_credentials_in_header',
-            'custom_headers',
+            'plaintext_custom_headers',
         ]
 
     def __init__(self, domain, *args, **kwargs):
@@ -133,7 +133,7 @@ class ConnectionSettingsForm(forms.ModelForm):
                     'plaintext_password': PASSWORD_PLACEHOLDER if password else '',
                     'plaintext_client_secret': PASSWORD_PLACEHOLDER if secret else '',
                     'auth_preset': api_setting_matches_preset(kwargs['instance']),
-                    'custom_headers': kwargs['instance'].custom_headers,
+                    'plaintext_custom_headers': kwargs['instance'].get_custom_headers_display(),
                 })
             else:
                 kwargs['initial'] = {
@@ -168,7 +168,7 @@ class ConnectionSettingsForm(forms.ModelForm):
                     crispy.Field('pass_credentials_in_header'),
                     crispy.Field('include_client_id'),
                     crispy.Field('scope'),
-                    crispy.Field('custom_headers'),
+                    crispy.Field('plaintext_custom_headers'),
                 ),
                 id="div_id_oauth_settings",
             ),
@@ -268,6 +268,8 @@ class ConnectionSettingsForm(forms.ModelForm):
         self.instance.plaintext_password = self.cleaned_data['plaintext_password']
         self.instance.plaintext_client_secret = self.cleaned_data['plaintext_client_secret']
         self.instance.last_token = None
+
+        self.instance.set_custom_headers(self.cleaned_data['plaintext_custom_headers'])
 
         new_auth_preset = self.cleaned_data['auth_preset'] in AUTH_PRESETS
         url_changed_and_preset_set = (
