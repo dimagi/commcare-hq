@@ -169,6 +169,12 @@ class KycUser:
         else:
             raise KeyError(item)
 
+    def get(self, item, default=None):
+        try:
+            return self[item]
+        except KeyError:
+            return default
+
     @property
     def user_data(self):
         if self._user_data is None:
