@@ -3148,7 +3148,6 @@ class ApiKeyManager(models.Manager):
 
 class HQApiKey(models.Model):
     user = models.ForeignKey(User, related_name='api_keys', on_delete=models.CASCADE)
-    key = models.CharField(max_length=128, blank=True, default='', db_index=True)
     encrypted_key = models.CharField(max_length=128, blank=True, default='', db_index=True)
     name = models.CharField(max_length=255, blank=True, default='')
     created = models.DateTimeField(default=timezone.now)
@@ -3181,22 +3180,23 @@ class HQApiKey(models.Model):
         new_uuid = uuid4()
         return hmac.new(new_uuid.bytes, digestmod=sha1).hexdigest()
 
+    # Remove this after key fields are deleted and verified no errors occur
+    @property
+    def key(self):
+        logging.warning("Attempted to access api key directly for %s", self.name)
+        return self.plaintext_key
+
+    @key.setter
+    def key(self, value):
+        logging.warning("Attempted to set api key directly for %s", self.name)
+        self.plaintext_key = value
+
     @property
     def plaintext_key(self):
-        try:
-            decrypted_key = b64_aes_cbc_decrypt(self.encrypted_key) if self.encrypted_key else ''
-            if decrypted_key == self.key:
-                return decrypted_key
-            else:
-                logging.warning("Decrypted key does not match stored key for %s", self.name)
-                return self.key
-        except Exception as e:
-            logging.exception(f'Error getting decrypted key for {self.name}. {e}')
-            return self.key
+        return b64_aes_cbc_decrypt(self.encrypted_key) if self.encrypted_key else ''
 
     @plaintext_key.setter
     def plaintext_key(self, plaintext):
-        self.key = plaintext
         self.encrypted_key = b64_aes_cbc_encrypt(plaintext)
 
     @property
