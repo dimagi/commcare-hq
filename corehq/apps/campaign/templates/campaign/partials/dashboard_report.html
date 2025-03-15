@@ -18,11 +18,14 @@
         <!-- Left Column: Filter Space -->
         <div class="col-md-4 border-end">
           <div id="report-widget-filters-{{ widget.id }}" class="p-3">
+            {% comment %}
+            {% include "campaign/partials/filter_panel.html" %}
+            {% endcomment %}
             {% include "reports/standard/partials/bootstrap5/filter_panel.html" %}
           </div>
         </div>
 
-        <!-- Right Column: Table -->
+        <!-- Right Column: Report Content -->
         <div class="col-md-8">
           <div class="position-relative">
             <div
@@ -30,7 +33,57 @@
               data-report-configuration-id="{{ widget.report_configuration_id }}"
               class="report-container"
               style="height:500px"
-            ></div>
+            >
+              {% include "reports/async/bootstrap5/default.html" %}
+
+    {# From corehq/apps/userreports/templates/userreports/base.html #}
+    {% comment %}
+    <div id="reportHint" class="alert alert-info">
+      <h4><i class="fa fa-info-circle"></i> {% blocktrans %}Why can't I see any data?{% endblocktrans %}</h4>
+      <p>{% blocktrans %}Please choose your filters above and click <strong>Apply</strong> to see report data.{% endblocktrans %}</p>
+    </div>
+    <div id="reportContent" class="hide">
+      {% block reportcharts %}
+        <section id="chart-container" style="display: none;">
+        </section>
+        <section id="chart-warning" class="alert alert-warning hide">
+          {% blocktrans %}
+            Charts cannot be displayed with more than 25 categories. Please filter the data or change your report to limit the number of rows.
+          {% endblocktrans %}
+        </section>
+        <section id="map-container" style="display: none;" >
+        </section>
+        <div id="zoomtofit" class="leaflet-control-layers" style="display: none;">
+          <div id="zoomtofit-target" class="zoomtofit leaflet-control-layers-toggle" title="{% trans "Fit all data into view" %}"></div>
+        </div>
+
+        <div id="report-info" class="alert alert-info hide">
+          {% blocktrans %}
+            Note:
+          {% endblocktrans %}
+          <span id="info-message"></span>
+        </div>
+      {% endblock %}
+      {% block reporttable %}
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h4>{{ report.title }}</h4>
+          </div>
+          <div class="panel-body hq-datatable-container">
+            <table id="report_table_{{ report.slug }}" class="table table-striped">
+              <thead>
+              {{ headers.render_html }}
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {% endblock reporttable %}
+    </div>
+    {% endcomment %}
+
+            </div>
           </div>
         </div>
       </div>

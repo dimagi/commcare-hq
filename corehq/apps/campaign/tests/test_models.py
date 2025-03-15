@@ -113,3 +113,10 @@ def test_dashboard_report_ordering():
         ('Report 3', 'mobile_workers', 1),
         ('Report 4', 'mobile_workers', 2),
     ]
+
+
+@use('db', dashboard_reports)
+def test_dashboard_report_url_root():
+    dashboard = dashboard_fixture()
+    report = dashboard.reports.first()
+    assert report.url_root.endswith('/a/test-domain/reports/configurable/report1/')
