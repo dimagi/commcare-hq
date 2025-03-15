@@ -744,6 +744,7 @@ motech
  0016_connectionsettings_include_client_id_and_more
  0017_connectionsettings_use_aes_cbc_encryption
  0018_openmrsimporter_use_aes_cbc_encryption
+ 0019_connectionsettings_custom_headers
 notifications
  0001_squashed_0003_auto_20160504_2049 (3 squashed migrations)
  0002_auto_20160505_2058
