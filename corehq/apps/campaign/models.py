@@ -87,10 +87,10 @@ class Gauge(DashboardWidgetBase):
     )
 
     # cases gauge fields
-    case_type = models.CharField(null=True)
+    case_type = models.CharField(max_length=255, null=True, blank=True)
 
     # one of the metric from the ones available as set in GAUGE_METRICS
-    metric = models.CharField(null=False, blank=False)
+    metric = models.CharField(max_length=255, null=False, blank=False)
 
     # optional additional configuration set to customize gauge appearance
     configuration = JSONField(default=dict)
