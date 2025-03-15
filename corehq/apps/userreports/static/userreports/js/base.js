@@ -3,9 +3,9 @@ hqDefine('userreports/js/base', [
     'hqwebapp/js/initial_page_data',
     'reports_core/js/charts',
     'reports_core/js/bootstrap3/maps',
-    'reports/js/bootstrap3/datatables_config',
+    'reports/js/bootstrap5/datatables_config',
     'reports/js/charts/main',
-    'reports/js/filters/bootstrap3/main',
+    'reports/js/filters/bootstrap5/main',
 ], function (
     $,
     initialPageData,
