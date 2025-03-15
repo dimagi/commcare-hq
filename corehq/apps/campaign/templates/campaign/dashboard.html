@@ -2,13 +2,17 @@
 {% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% js_entry "hqwebapp/js/htmx_and_alpine" %}
+{% js_entry "campaign/js/dashboard" %}
 
 {% block title %}
   {% trans "Campaign Dashboard" %}
 {% endblock %}
 
 {% block page_content %}
+  {% initial_page_data 'mapbox_access_token' mapbox_access_token %}
+  {% registerurl 'api_cases_with_gps' request.domain %}
+  {% initial_page_data 'map_widgets' map_widgets %}
+
   <ul class="nav nav-tabs" role="tablist">
     <li role="presentation" class="nav-item">
       <a
@@ -43,6 +47,11 @@
       <!-- Report and Map Section -->
       <div class="row">
         <h2>{% trans "Reports" %}</h2>
+        <div id="map-reports-container-cases">
+          {% for widget in map_widgets.cases %}
+            {% include 'campaign/partials/dashboard_map.html' %}
+          {% endfor %}
+        </div>
       </div>
     </div>
 
@@ -56,6 +65,11 @@
       <!-- Report and Map Section -->
       <div class="row">
         <h2>{% trans "Reports" %}</h2>
+        <div id="map-reports-container-mobile-workers">
+          {% for widget in map_widgets.mobile_workers %}
+            {% include 'campaign/partials/dashboard_map.html' %}
+          {% endfor %}
+        </div>
       </div>
     </div>
   </div>
