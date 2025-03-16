@@ -76,7 +76,7 @@ class DashboardReport(DashboardWidgetBase):
         return ReportConfiguration.get(self.report_configuration_id)
 
 
-class Gauge(DashboardWidgetBase):
+class DashboardGauge(DashboardWidgetBase):
     """
     Configuration for a gauge in a campaign dashboard
     """
