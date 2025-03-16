@@ -1,0 +1,19 @@
+{% load i18n %}
+{% load userreports_tags %}
+
+<div class="hq-report-filters">
+  {% if report_filters %}
+    {% for filter in report_filters %}
+      <div class="mb-3">
+        <h4 class="form-label">{{ filter.label }}</h4>
+        {% with filter_context|get:filter.css_id as context_ %}
+          {{ context_.html|safe }}
+        {% endwith %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="alert alert-info">
+      {% trans "This report does not have any filters." %}
+    </div>
+  {% endif %}
+</div>

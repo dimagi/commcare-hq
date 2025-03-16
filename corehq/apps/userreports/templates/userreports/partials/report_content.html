@@ -1,0 +1,53 @@
+{% load i18n %}
+
+<div class="report-content">
+  {% if report_table.data_source %}
+    <div class="table-responsive">
+      <table
+        class="table table-striped datatable"
+        id="report_table_{{ report.slug }}"
+      >
+        <thead>
+          <tr>
+            {% for column in report_table.data_source.columns %}
+              <th>{{ column.header }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% if report_table.data_source.data %}
+            {% for row in report_table.data_source.data %}
+              <tr>
+                {% for key, value in row.items %}
+                  <td>{{ value|safe }}</td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td
+                colspan="{{ report_table.data_source.columns|length }}"
+                class="text-center"
+              >
+                {% trans "No data available" %}
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+        {% if report_table.data_source.total_row %}
+          <tfoot>
+            <tr>
+              {% for cell in report_table.data_source.total_row %}
+                <td>{{ cell|safe }}</td>
+              {% endfor %}
+            </tr>
+          </tfoot>
+        {% endif %}
+      </table>
+    </div>
+  {% else %}
+    <div class="alert alert-info">
+      {% trans "Please apply filters to see report data." %}
+    </div>
+  {% endif %}
+</div>
