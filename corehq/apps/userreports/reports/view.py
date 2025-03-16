@@ -11,6 +11,7 @@ from django.http import (
 )
 from django.http.response import HttpResponseServerError
 from django.shortcuts import redirect, render
+from django.template.loader import render_to_string
 from django.utils.safestring import SafeText
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
@@ -281,6 +282,117 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             return self._lang
         return self.request.couch_user.language or default_language()
 
+    @property
+    def template_filters(self):
+        return 'userreports/partials/report_filters.html'
+
+    @property
+    def template_report(self):
+        return 'userreports/partials/report_content.html'
+
+    @property
+    @memoized
+    def async_response(self):
+        """
+        Renders the asynchronous view of the report template, returned as json.
+        """
+        return JsonResponse(self._async_context())
+
+    def _async_context(self):
+        """
+        Prepares the context for the asynchronous request.
+        """
+        self.update_template_context()
+        self.update_report_context()
+
+        rendered_filters = None
+        # Check if 'hq_filters' parameter is present
+        if self.request.GET.get('hq_filters', False):
+            self.update_filter_context()
+
+            rendered_filters = render_to_string(
+                self.template_filters, context=self.main_context, request=self.request
+            )
+
+        # If we're not just requesting filters, prepare the report data
+        if not self.request.GET.get('hq_filters', False):
+            try:
+                # Fetch data for the report
+                if hasattr(self, 'data_source') and self.data_source:
+                    self.data_source.set_filter_values(self.filter_values)
+                    data = list(self.data_source.get_data())
+                    total_row = self.data_source.get_total_row() if self.data_source.has_total_row else None
+
+                    # Update the context with the fetched data
+                    self.data_source.data = data
+                    self.data_source.total_row = total_row
+            except Exception:
+                # Continue to render the template even if there's an error
+                pass
+
+        rendered_report = render_to_string(
+            self.template_report, self.main_context, request=self.request
+        )
+
+        report_table_js_options = self.main_context.get('report_table_js_options', {})
+
+        return {
+            'filters': rendered_filters,
+            'report': rendered_report,
+            'report_table_js_options': report_table_js_options,
+            'title': self.spec.title,
+            'slug': self.slug,
+            'url_root': self.url,
+        }
+
+    def update_template_context(self):
+        """
+        Update the template context with common values.
+        """
+        self.main_context.update({
+            'report': {
+                'title': self.spec.title,
+                'description': self.spec.description,
+                'section_name': self.section_name,
+                'spec': self.spec,
+                'status': self.spec.status if hasattr(self.spec, 'status') else None,
+                'slug': self.slug,
+            }
+        })
+
+    def update_report_context(self):
+        """
+        Update the context for the report content.
+        """
+        if hasattr(self, 'data_source') and self.data_source:
+            report_config = self.spec
+
+            # Initialize data and total_row attributes
+            self.data_source.data = []
+            self.data_source.total_row = None
+
+            self.main_context.update({
+                'report_table': {
+                    'data_source': self.data_source,
+                    'default_rows': report_config.default_rows if hasattr(report_config, 'default_rows') else 25,
+                    'filter_values': self.filter_values,
+                }
+            })
+
+    def update_filter_context(self):
+        """
+        Update the context for the filter template.
+        """
+        filter_context = {}
+        for filter in self.filters:
+            filter_context[filter.css_id] = filter.context(self.request_dict, self.request_user, self.lang)
+
+        self.main_context.update({
+            'report_filters': self.filters,
+            'filter_values': self.filter_values,
+            'filter_context': filter_context,
+        })
+
     def get(self, request, *args, **kwargs):
         if self.has_permissions(self.domain, request.couch_user):
             self.get_spec_or_404()
@@ -291,6 +403,9 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             elif request.GET.get('format', None) == "export":
                 return self.export_response
             elif is_ajax(request) or request.GET.get('format', None) == 'json':
+                # If hq_filters parameter is present, return async_response
+                if request.GET.get('hq_filters', False):
+                    return self.async_response
                 return self.get_ajax(self.request.GET)
             self.content_type = None
             try:
