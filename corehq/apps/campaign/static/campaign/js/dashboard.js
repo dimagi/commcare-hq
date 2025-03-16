@@ -4,17 +4,20 @@ import 'reports/js/bootstrap5/base';
 import $ from 'jquery';
 import initialPageData from "hqwebapp/js/initial_page_data";
 import { Map, MapItem } from "geospatial/js/models";
-
+import { getAsyncHQReport } from 'campaign/js/standard_hq_report';
 
 let mobileWorkerMapsInitialized = false;
 
 $(function () {
-    // Only init case map widgets since this is the default tab
+    // Only init widgets on "cases" tab since this is the default tab
     const widgetConfigs = initialPageData.get('map_report_widgets');
     for (const widgetConfig of widgetConfigs.cases) {
         if (widgetConfig.widget_type === 'DashboardMap') {
             const mapWidget = new MapWidget(widgetConfig);
             mapWidget.initializeMap();
+        } else if (widgetConfig.widget_type === 'DashboardReport') {
+            const reportWidget = new ReportWidget(widgetConfig);
+            reportWidget.init();
         }
     }
     $('a[data-bs-toggle="tab"]').on('shown.bs.tab', tabSwitch);
@@ -31,12 +34,15 @@ function tabSwitch(e) {
             if (widgetConfig.widget_type === 'DashboardMap') {
                 const mapWidget = new MapWidget(widgetConfig);
                 mapWidget.initializeMap();
+            } else if (widgetConfig.widget_type === 'DashboardReport') {
+                const reportWidget = new ReportWidget(widgetConfig);
+                reportWidget.init();
             }
         }
     }
 }
 
-var MapWidget = function (mapWidgetConfig) {
+let MapWidget = function (mapWidgetConfig) {
     let self = this;
     self.id = mapWidgetConfig.id;
     self.caseType = mapWidgetConfig.case_type;
@@ -108,3 +114,38 @@ var MapWidget = function (mapWidgetConfig) {
         self.mapInstance.fitMapBounds(caseMapItems);
     }
 };
+
+let ReportWidget = function (reportWidgetConfig) {
+    let self = this;
+    self.id = reportWidgetConfig.id;
+    self.title = reportWidgetConfig.title;
+    self.reportConfigurationId = reportWidgetConfig.report_configuration_id;
+    self.urlRoot = reportWidgetConfig.url_root;
+    self.domain = initialPageData.get('domain');
+    
+    // Make sure urlRoot ends with a slash
+    if (self.urlRoot && !self.urlRoot.endsWith('/')) {
+        self.urlRoot += '/';
+    }
+    
+    self.datespan = undefined;
+
+    self.init = function () {
+        const $widgetFilters = $(`#report-widget-filters-${self.id}`);
+        const reportOptions = {
+            "widgetFilters": $widgetFilters,
+            "filterForm": $widgetFilters.find('form'),
+            "reportContent": $(`#report-container-${self.id}`),
+            "domain": self.domain,
+            "needsFilters": true,
+            "urlRoot": self.urlRoot,
+            "datespan": self.datespan,
+            "slug": "configurable",  // Required for async report loading
+            "async": true,
+            "subReportSlug": self.reportConfigurationId,  // Used as reportId in async_configurable_report.js
+            "reportConfigurationId": self.reportConfigurationId,  // Used as reportId in async_configurable_report.js
+            "type": "configurable",  // Required to use async_configurable_report.js
+        };
+        getAsyncHQReport(reportOptions);
+    };
+}

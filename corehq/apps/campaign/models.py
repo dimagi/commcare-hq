@@ -2,6 +2,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.userreports.models import ReportConfiguration
+from corehq.util.view_utils import absolute_reverse
 
 
 class Dashboard(models.Model):
@@ -73,3 +74,11 @@ class DashboardReport(DashboardWidgetBase):
     @property
     def report_configuration(self):
         return ReportConfiguration.get(self.report_configuration_id)
+
+    @property
+    def url_root(self):
+        # e.g. http://localhost:8000/a/demo/reports/configurable/73d9ead4e0e78d63d3b33ec7f200551b/
+        return absolute_reverse(
+            'configurable',
+            args=[self.dashboard.domain, self.report_configuration_id],
+        )

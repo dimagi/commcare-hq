@@ -9,8 +9,10 @@
 {% endblock %}
 
 {% block page_content %}
+  {% registerurl 'api_cases_with_gps' domain %}
+  {% registerurl 'add_report_config' domain %}{# Required by reports/js/bootstrap5/base.js #}
+  {% initial_page_data 'domain' domain %}
   {% initial_page_data 'mapbox_access_token' mapbox_access_token %}
-  {% registerurl 'api_cases_with_gps' request.domain %}
   {% initial_page_data 'map_report_widgets' map_report_widgets %}
 
   <ul class="nav nav-tabs" role="tablist">
@@ -51,6 +53,8 @@
           {% for widget in map_report_widgets.cases %}
             {% if widget.widget_type == 'DashboardMap' %}
               {% include 'campaign/partials/dashboard_map.html' %}
+            {% elif widget.widget_type == 'DashboardReport' %}
+              {% include 'campaign/partials/dashboard_report.html' %}
             {% endif %}
           {% endfor %}
         </div>
@@ -71,6 +75,8 @@
           {% for widget in map_report_widgets.mobile_workers %}
             {% if widget.widget_type == 'DashboardMap' %}
               {% include 'campaign/partials/dashboard_map.html' %}
+            {% elif widget.widget_type == 'DashboardReport' %}
+              {% include 'campaign/partials/dashboard_report.html' %}
             {% endif %}
           {% endfor %}
         </div>

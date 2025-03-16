@@ -11,7 +11,6 @@ from memoized import memoized
 from dimagi.utils.web import json_request
 
 from corehq import toggles
-from corehq.apps.campaign.models import Dashboard
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es.case_search import CaseSearchES, case_property_missing
@@ -24,29 +23,36 @@ from corehq.apps.reports.views import BaseProjectReportSectionView
 from corehq.form_processor.models import CommCareCase
 from corehq.util.timezones.utils import get_timezone
 
+from .models import Dashboard
 
-class DashboardMapFilterMixin(object):
+
+class DashboardMapReportFilterMixin:
+    """
+    Provides view context for dashboard maps and reports
+    """
     fields = [
         'corehq.apps.reports.filters.case_list.CaseListFilter',
         'corehq.apps.reports.standard.cases.filters.CaseSearchFilter',
     ]
 
-    def dashboard_map_case_filters_context(self):
+    def dashboard_map_report_filters_context(self):
         return {
             'report': {
                 'title': self.page_title,
                 'section_name': self.section_name,
                 'show_filters': True,
+                'is_async': False,  # Don't hide div #reportFiltersAccordion
             },
             'report_filters': [
-                dict(field=f.render(), slug=f.slug) for f in self.dashboard_map_filter_classes
+                dict(field=filter_class.render(), slug=filter_class.slug)
+                for filter_class in self.dashboard_map_report_filter_classes
             ],
             'report_filter_form_action_css_class': CSS_ACTION_CLASS,
         }
 
     @property
     @memoized
-    def dashboard_map_filter_classes(self):
+    def dashboard_map_report_filter_classes(self):
         timezone = get_timezone(self.request, self.domain)
         return get_filter_classes(self.fields, self.request, self.domain, timezone)
 
@@ -54,7 +60,7 @@ class DashboardMapFilterMixin(object):
 @method_decorator(login_and_domain_required, name='dispatch')
 @method_decorator(toggles.CAMPAIGN_DASHBOARD.required_decorator(), name='dispatch')
 @method_decorator(use_bootstrap5, name='dispatch')
-class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
+class DashboardView(BaseProjectReportSectionView, DashboardMapReportFilterMixin):
     urlname = 'campaign_dashboard'
     page_title = gettext_lazy("Campaign Dashboard")
     template_name = 'campaign/dashboard.html'
@@ -65,8 +71,9 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        map_widgets = self._dashboard_map_configs
-        report_widgets = self._dashboard_report_configs
+        dashboard, __ = Dashboard.objects.get_or_create(domain=self.domain)
+        map_widgets = self._dashboard_map_configs(dashboard)
+        report_widgets = self._dashboard_report_configs(dashboard)
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
             'map_report_widgets': {
@@ -80,30 +87,26 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
                 ),
             },
         })
-        context.update(self.dashboard_map_case_filters_context())
+        context.update(self.dashboard_map_report_filters_context())
         return context
 
-    @property
-    def _dashboard_map_configs(self):
-        dashboard_maps = Dashboard.objects.get(domain=self.domain).maps.all()
+    def _dashboard_map_configs(self, dashboard):
         dashboard_map_configs = {
             'cases': [],
             'mobile_workers': [],
         }
-        for dashboard_map in dashboard_maps:
+        for dashboard_map in dashboard.maps.all():
             config = model_to_widget(dashboard_map)
             dashboard_map_configs[dashboard_map.dashboard_tab].append(config)
         return dashboard_map_configs
 
-    @property
-    def _dashboard_report_configs(self):
-        reports = Dashboard.objects.get(domain=self.domain).reports.all()
+    def _dashboard_report_configs(self, dashboard):
         configs = {
             'cases': [],
             'mobile_workers': [],
         }
-        for report in reports:
-            config = model_to_widget(report)
+        for report in dashboard.reports.all():
+            config = report_to_widget(report)
             configs[report.dashboard_tab].append(config)
         return configs
 
@@ -115,6 +118,15 @@ def model_to_widget(instance):
     widget = instance.__dict__.copy()
     widget.pop('_state', None)  # Remove Django's internal state field
     widget['widget_type'] = instance.__class__.__name__
+    return widget
+
+
+def report_to_widget(instance):
+    """
+    Adds 'url_root' to the widget.
+    """
+    widget = model_to_widget(instance)
+    widget['url_root'] = instance.url_root
     return widget
 
 
