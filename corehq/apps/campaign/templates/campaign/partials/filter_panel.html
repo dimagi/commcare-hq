@@ -1,0 +1,25 @@
+{# Based on corehq/apps/userreports/templates/userreports/partials/filter_panel.html #}
+{% extends "reports_core/partials/bootstrap5/filter_panel.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block report_filter_actions %}
+  <div class="{{ report_filter_form_action_css_class }}">
+    <div id="savedReports">
+      <div class="btn-toolbar">
+        <div class="btn-group">
+          <button
+            id="apply-filters"
+            type="submit"
+            class="filters btn btn-primary"
+            data-loading-text="{% trans 'Generating Report...' %}"
+            data-standard-text="{% trans 'Apply' %}"
+            disabled
+          >
+            {% trans 'Apply' %}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

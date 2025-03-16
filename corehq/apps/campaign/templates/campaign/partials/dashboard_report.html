@@ -1,0 +1,144 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div id="report-widget-{{ widget.id }}" class="paginated-report-widget mb-4">
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">{{ widget.title }}</h5>
+    </div>
+
+    <div class="card-body p-0">
+      <div id="error-alert-{{ widget.id }}" class="alert alert-danger d-none">
+        {% blocktrans %}
+          Something went wrong while loading this widget! Please try again.
+        {% endblocktrans %}
+      </div>
+      <div class="row g-0">
+        <!-- Left Column: Filter Space -->
+        <div class="col-md-4 border-end">
+          <div id="report-widget-filters-{{ widget.id }}" class="p-3">
+            <div
+              class="accordion"
+              id="reportFiltersAccordion-{{ widget.report_configuration_id }}"
+            >
+              <div class="accordion-item">
+                <h2
+                  class="accordion-header"
+                  id="reportFiltersHeader-{{ widget.report_configuration_id }}"
+                >
+                  <button
+                    class="accordion-button"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#reportFilters-{{ widget.report_configuration_id }}"
+                    aria-expanded="true"
+                    aria-controls="reportFilters-{{ widget.report_configuration_id }}"
+                  >
+                    {% trans "Report Filters" %}
+                  </button>
+                </h2>
+                <div
+                  id="reportFilters-{{ widget.report_configuration_id }}"
+                  class="accordion-collapse collapse show"
+                  aria-labelledby="reportFiltersHeader-{{ widget.report_configuration_id }}"
+                >
+                  <div class="accordion-body">
+                    <form
+                      id="paramSelectorForm-{{ widget.report_configuration_id }}"
+                      method="get"
+                    >
+                      <div
+                        id="hq-report-filters-{{ widget.report_configuration_id }}"
+                      >
+                        <!-- Filters will be loaded here -->
+                        <div class="loading-filters text-center">
+                          <i class="fa fa-spinner fa-spin"></i>
+                          {% trans "Loading filters..." %}
+                        </div>
+                      </div>
+                      <div class="form-actions mt-3">
+                        <button
+                          type="submit"
+                          id="apply-filters-{{ widget.report_configuration_id }}"
+                          class="btn btn-primary"
+                        >
+                          {% trans "Apply" %}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Report Content -->
+        <div class="col-md-8">
+          <div class="position-relative">
+            <div
+              id="report-container-{{ widget.id }}"
+              data-report-configuration-id="{{ widget.report_configuration_id }}"
+              class="report-container"
+              style="height:500px"
+            >
+              <div
+                class="loading-backdrop"
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.7); z-index: 1000; display: flex; justify-content: center; align-items: center;"
+              >
+                <div class="text-center">
+                  <i class="fa fa-spinner fa-spin fa-2x"></i>
+                  <h4 class="mt-2">{% trans "Loading report..." %}</h4>
+                </div>
+              </div>
+              {% include "reports/async/bootstrap5/default.html" %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for loading issues -->
+<div
+  class="modal fade"
+  id="loadingReportIssueModal-{{ widget.report_configuration_id }}"
+  tabindex="-1"
+  role="dialog"
+>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{% trans "Problem Loading Report" %}</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <p>{% trans "Sorry, there was a problem loading this report." %}</p>
+        <div class="report-error-status"></div>
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-outline-primary"
+          data-bs-dismiss="modal"
+        >
+          {% trans "Cancel" %}
+        </button>
+        <button type="button" class="btn btn-primary try-again">
+          {% trans "Try Again" %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Saved reports section -->
+<div id="savedReports-{{ widget.report_configuration_id }}" class="d-none">
+  <!-- This will be populated by the report configs view model -->
+</div>
