@@ -504,6 +504,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('campaign', 'Dashboard', 'domain', extra_models=[
         'DashboardMap',
         'DashboardReport',
+        'DashboardGauge'
     ]),
 ]
 

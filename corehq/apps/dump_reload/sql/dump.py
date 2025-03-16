@@ -45,6 +45,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('campaign.Dashboard', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('campaign.DashboardMap', SimpleFilter('dashboard__domain')),
     FilteredModelIteratorBuilder('campaign.DashboardReport', SimpleFilter('dashboard__domain')),
+    FilteredModelIteratorBuilder('campaign.DashboardGauge', SimpleFilter('dashboard__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.SMSContent', SimpleFilter('alertevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.SMSContent', SimpleFilter('timedevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.SMSContent',
