@@ -2,6 +2,7 @@ import datetime
 
 from django.db.models import Q, Sum
 
+from corehq.apps.accounting.const import DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE
 from corehq.apps.accounting.models import (
     CustomerInvoice,
     Invoice,
@@ -59,7 +60,7 @@ def _get_domains_over_threshold(invoices, today, get_oldest_invoice_fn):
 
 
 def get_accounts_with_customer_invoices_overdue(today):
-    date_start = today - datetime.timedelta(days=61)
+    date_start = today - datetime.timedelta(days=DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE)
     date_end = today - datetime.timedelta(days=1)
     return _get_accounts_over_threshold(date_start, date_end)
 
