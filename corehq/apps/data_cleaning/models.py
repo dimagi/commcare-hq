@@ -113,6 +113,11 @@ class BulkEditSession(models.Model):
             value=value,
         )
 
+    def remove_column_filter(self, filter_id):
+        self.column_filters.get(filter_id=filter_id).delete()
+        remaining_ids = self.column_filters.values_list('filter_id', flat=True)
+        self.reorder_column_filters(remaining_ids)
+
     def reorder_column_filters(self, filter_ids):
         """
         This updates the order of column filters for this session

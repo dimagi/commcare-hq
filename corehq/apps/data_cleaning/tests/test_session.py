@@ -142,6 +142,22 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
             self.assertEqual(column_filters[index].prop_id, prop_id)
             self.assertEqual(column_filters[index].index, index)
 
+    def test_remove_column_filters(self):
+        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        session.add_column_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
+        session.add_column_filter('name', DataType.TEXT, FilterMatchType.PHONETIC, "lowkey")
+        session.add_column_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, "2")
+        session.add_column_filter('pot_type', DataType.DATE, FilterMatchType.IS_EMPTY)
+        session.add_column_filter('height_cm', DataType.DECIMAL, FilterMatchType.LESS_THAN_EQUAL, "11.0")
+        filter_to_remove = session.column_filters.all()[1]  # name
+        self.assertEqual(filter_to_remove.prop_id, 'name')
+        session.remove_column_filter(filter_to_remove.filter_id)
+        column_filters = session.column_filters.all()
+        self.assertEqual(len(column_filters), 4)
+        for index, prop_id in enumerate(['watered_on', 'num_leaves', 'pot_type', 'height_cm']):
+            self.assertEqual(column_filters[index].prop_id, prop_id)
+            self.assertEqual(column_filters[index].index, index)
+
     def test_reorder_wrong_number_of_filter_ids_raises_error(self):
         session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
         session.add_column_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
