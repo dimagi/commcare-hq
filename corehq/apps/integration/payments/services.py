@@ -26,25 +26,23 @@ CHUNK_SIZE = 100
 
 
 def request_payments_for_cases(case_ids, config):
-    payment_updates = []
+    for case_ids_chunk in chunked(case_ids, CHUNK_SIZE):
+        payment_updates = _get_payment_cases_updates(case_ids_chunk, config)
+        bulk_update_cases(
+            config.domain, payment_updates, device_id=PAYMENT_SUBMITTED_DEVICE_ID
+        )
 
-    for payment_case in CommCareCase.objects.get_cases(case_ids=case_ids):
+
+def _get_payment_cases_updates(case_ids_chunk, config):
+    payment_updates = []
+    for payment_case in CommCareCase.objects.get_cases(case_ids=list(case_ids_chunk)):
         payment_update = request_payment(payment_case, config)
 
         should_close = False
         payment_updates.append(
             (payment_case.case_id, payment_update, should_close)
         )
-        if len(payment_updates) >= CHUNK_SIZE:
-            bulk_update_cases(
-                config.domain, payment_updates, device_id=PAYMENT_SUBMITTED_DEVICE_ID
-            )
-            payment_updates = []
-
-    if payment_updates:
-        bulk_update_cases(
-            config.domain, payment_updates, device_id=PAYMENT_SUBMITTED_DEVICE_ID
-        )
+    return payment_updates
 
 
 def request_payment(payment_case: CommCareCase, config: MoMoConfig):
@@ -68,7 +66,6 @@ def request_payment(payment_case: CommCareCase, config: MoMoConfig):
 
 def _request_payment(payee_case: CommCareCase, config: MoMoConfig):
     _validate_payment_request(payee_case.case_json)
-
     transfer_details = _get_transfer_details(payee_case)
     transaction_id = _make_payment_request(
         request_data=asdict(transfer_details),
