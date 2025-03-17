@@ -70,7 +70,7 @@ class ColumnFilterFormView(BulkEditSessionViewMixin, BaseFilterFormView):
         return context
 
     @hq_hx_action('post')
-    def add_column_filter(self, request, *args, **kwargs):
+    def add_filter(self, request, *args, **kwargs):
         filter_form = AddColumnFilterForm(self.session, request.POST)
         if filter_form.is_valid():
             filter_form.create_filter()
@@ -84,5 +84,5 @@ class ColumnFilterFormView(BulkEditSessionViewMixin, BaseFilterFormView):
 
     @hq_hx_action('post')
     def delete_filter(self, request, *args, **kwargs):
-        self.session.remove_column_filter(request.POST['delete_id'])
+        self.session.remove_filter(request.POST['delete_id'])
         return self.get(request, *args, **kwargs)

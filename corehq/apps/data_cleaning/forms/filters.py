@@ -414,7 +414,7 @@ class AddColumnFilterForm(forms.Form):
         return cleaned_data
 
     def create_filter(self):
-        self.session.add_column_filter(
+        self.session.add_filter(
             self.cleaned_data['prop_id'],
             self.cleaned_data['data_type'],
             self.cleaned_data['match_type'],

@@ -181,7 +181,7 @@ class CommitCasesTest(TestCase):
 
         BulkEditPinnedFilter.create_default_filters(self.session)
         BulkEditColumn.create_default_columns(self.session)
-        self.session.add_column_filter('play_count', DataType.INTEGER, FilterMatchType.GREATER_THAN, 1)
+        self.session.add_filter('play_count', DataType.INTEGER, FilterMatchType.GREATER_THAN, 1)
         self.session.save()
 
         self.assertTrue(BulkEditFilter.objects.filter(session=self.session).count() > 0)

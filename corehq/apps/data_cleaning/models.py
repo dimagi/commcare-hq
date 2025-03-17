@@ -103,7 +103,7 @@ class BulkEditSession(models.Model):
             return None
         return round(self.result['percent'])
 
-    def add_column_filter(self, prop_id, data_type, match_type, value=None):
+    def add_filter(self, prop_id, data_type, match_type, value=None):
         BulkEditFilter.objects.create(
             session=self,
             index=self.filters.count(),
@@ -113,7 +113,7 @@ class BulkEditSession(models.Model):
             value=value,
         )
 
-    def remove_column_filter(self, filter_id):
+    def remove_filter(self, filter_id):
         self.filters.get(filter_id=filter_id).delete()
         remaining_ids = self.filters.values_list('filter_id', flat=True)
         self.reorder_filters(remaining_ids)
@@ -126,9 +126,9 @@ class BulkEditSession(models.Model):
         if len(filter_ids) != self.filters.count():
             raise ValueError("the lengths of column_ids and available column filters do not match")
         for index, filter_id in enumerate(filter_ids):
-            column_filter = self.filters.get(filter_id=filter_id)
-            column_filter.index = index
-            column_filter.save()
+            active_filter = self.filters.get(filter_id=filter_id)
+            active_filter.index = index
+            active_filter.save()
 
     def get_queryset(self):
         query = CaseSearchES().domain(self.domain).case_type(self.identifier)
@@ -138,9 +138,9 @@ class BulkEditSession(models.Model):
 
     def _apply_filters(self, query):
         xpath_expressions = []
-        for column_filter in self.filters.all():
-            query = column_filter.filter_query(query)
-            column_xpath = column_filter.get_xpath_expression()
+        for custom_filter in self.filters.all():
+            query = custom_filter.filter_query(query)
+            column_xpath = custom_filter.get_xpath_expression()
             if column_xpath is not None:
                 xpath_expressions.append(column_xpath)
         if xpath_expressions:

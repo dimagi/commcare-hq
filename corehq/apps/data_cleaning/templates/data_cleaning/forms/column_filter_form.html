@@ -32,7 +32,7 @@
         hx-post="{{ request.path_info }}"
         hx-target="#{{ container_id }}"
         hx-disabled-elt="find button"
-        hq-hx-action="add_column_filter"
+        hq-hx-action="add_filter"
       >
         {% crispy add_filter_form %}
       </form>
