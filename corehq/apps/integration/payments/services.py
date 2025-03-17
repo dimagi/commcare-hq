@@ -11,6 +11,7 @@ from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.apps.integration.payments.const import (
     PAYMENT_SUCCESS_STATUS_CODE,
     PaymentProperties,
+    PAYMENT_SUBMITTED_DEVICE_ID,
 )
 from corehq.apps.integration.payments.exceptions import PaymentRequestError
 from corehq.apps.integration.payments.models import MoMoConfig
@@ -36,13 +37,13 @@ def request_payments_for_cases(case_ids, config):
         )
         if len(payment_updates) >= CHUNK_SIZE:
             bulk_update_cases(
-                config.domain, payment_updates, device_id='momo_payment_submitted'
+                config.domain, payment_updates, device_id=PAYMENT_SUBMITTED_DEVICE_ID
             )
             payment_updates = []
 
     if payment_updates:
         bulk_update_cases(
-            config.domain, payment_updates, device_id='momo_payment_submitted'
+            config.domain, payment_updates, device_id=PAYMENT_SUBMITTED_DEVICE_ID
         )
 
 

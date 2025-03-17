@@ -19,3 +19,4 @@ class PaymentProperties(object):
 
 
 PAYMENT_SUCCESS_STATUS_CODE = 202
+PAYMENT_SUBMITTED_DEVICE_ID = 'momo_payment_submitted'
