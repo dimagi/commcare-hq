@@ -13,6 +13,8 @@ from dimagi.utils.web import json_request
 
 from corehq import toggles
 from corehq.apps.campaign.models import Dashboard
+from corehq.apps.campaign.models import WidgetType
+
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es.case_search import CaseSearchES, case_property_missing
@@ -69,6 +71,8 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
             'map_widgets': self._dashboard_map_configs,
+            'widget_types': WidgetType.choices(),
+
         })
         context.update(self.dashboard_map_case_filters_context())
         return context

@@ -1,0 +1,22 @@
+{% load i18n %}
+
+<div class="btn-group d-flex flex-row-reverse">
+  <div>
+    <button
+      type="button"
+      class="btn btn-primary dropdown-toggle"
+      data-bs-toggle="dropdown"
+      aria-expanded="false"
+    >
+      {% trans "Add Widget" %}
+    </button>
+
+    <ul class="dropdown-menu">
+      {% for value, label in widget_types %}
+        <li>
+          <a class="dropdown-item" href="#"> {{ label }} </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
