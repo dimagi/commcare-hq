@@ -343,8 +343,8 @@ class Downgrade(UnpaidInvoiceAction):
 
 def can_domain_unpause(domain):
     today = datetime.date.today()
-    oldest_unpaid_invoice = get_oldest_overdue_invoice_over_threshold(today, domain)[0]
-    if not oldest_unpaid_invoice:
+    oldest_overdue_invoice = get_oldest_overdue_invoice_over_threshold(today, domain)[0]
+    if not oldest_overdue_invoice:
         return True
-    days_ago = (today - oldest_unpaid_invoice.date_due).days
+    days_ago = (today - oldest_overdue_invoice.date_due).days
     return days_ago < DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE

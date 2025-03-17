@@ -68,32 +68,32 @@ def get_oldest_due_soon_invoice_over_threshold(today, domain):
 
 
 def _get_oldest_invoice_over_threshold(domain, invoices):
-    for overdue_invoice in invoices.filter(
+    for unpaid_invoice in invoices.filter(
         subscription__subscriber__domain=domain
     ):
         total_overdue_by_domain_and_invoice_date = _get_all_unpaid_saas_invoices().filter(
-            Q(date_due__lte=overdue_invoice.date_due)
-            | (Q(date_due__isnull=True) & Q(date_end__lte=overdue_invoice.date_end)),
+            Q(date_due__lte=unpaid_invoice.date_due)
+            | (Q(date_due__isnull=True) & Q(date_end__lte=unpaid_invoice.date_end)),
             subscription__subscriber__domain=domain,
         ).aggregate(Sum('balance'))['balance__sum']
         if total_overdue_by_domain_and_invoice_date >= UNPAID_INVOICE_THRESHOLD:
-            return overdue_invoice, total_overdue_by_domain_and_invoice_date
+            return unpaid_invoice, total_overdue_by_domain_and_invoice_date
     return None, None
 
 
 def get_accounts_with_customer_invoices_due_soon(today):
     date_start = today + datetime.timedelta(days=1)
     date_end = today + datetime.timedelta(days=DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER)
-    return _get_accounts_over_threshold(date_start, date_end)
+    return _get_accounts_over_threshold_in_daterange(date_start, date_end)
 
 
 def get_accounts_with_customer_invoices_overdue(today):
     date_start = today - datetime.timedelta(days=DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE)
     date_end = today - datetime.timedelta(days=1)
-    return _get_accounts_over_threshold(date_start, date_end)
+    return _get_accounts_over_threshold_in_daterange(date_start, date_end)
 
 
-def _get_accounts_over_threshold(date_start, date_end):
+def _get_accounts_over_threshold_in_daterange(date_start, date_end):
     unpaid_customer_invoices = CustomerInvoice.objects.filter(
         is_hidden=False,
         date_paid__isnull=True,
