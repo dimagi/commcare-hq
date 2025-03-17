@@ -361,6 +361,12 @@ class BulkEditColumnFilter(models.Model):
     class Meta:
         ordering = ["index"]
 
+    @property
+    def is_editable_property(self):
+        from corehq.apps.data_cleaning.utils.cases import get_case_property_details
+        property_details = get_case_property_details(self.session.domain, self.session.identifier)
+        return property_details.get(self.prop_id, {}).get('is_editable', True)
+
     def filter_query(self, query):
         filter_query_functions = {
             FilterMatchType.IS_EMPTY: lambda q: q.empty(self.prop_id),
@@ -368,7 +374,9 @@ class BulkEditColumnFilter(models.Model):
             FilterMatchType.IS_MISSING: lambda q: q.missing(self.prop_id),
             FilterMatchType.IS_NOT_MISSING: lambda q: q.exists(self.prop_id),
         }
-        if self.match_type in filter_query_functions:
+        # if a property is not editable, then it can't be empty or missing
+        # we need the `is_editable_property` check to avoid elasticsearch RequestErrors on system fields
+        if self.match_type in filter_query_functions and self.is_editable_property:
             query = filter_query_functions[self.match_type](query)
         return query
 

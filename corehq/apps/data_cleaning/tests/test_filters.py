@@ -111,7 +111,21 @@ class BulkEditColumnFilterQueryTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+        cls.web_user = WebUser.create(
+            cls.domain, 'tester@datacleaning.org', 'testpwd', None, None
+        )
+        cls.addClassCleanup(cls.web_user.delete, cls.domain, deleted_by=None)
+
         case_search_es_setup(cls.domain, get_case_blocks())
+
+    def setUp(self):
+        super().setUp()
+        self.session = BulkEditSession.new_case_session(
+            self.web_user.get_django_user(), self.domain, 'plants',
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -122,6 +136,7 @@ class BulkEditColumnFilterQueryTests(TestCase):
         query = CaseSearchES().domain(self.domain)
         for data_type, _ in DataType.CHOICES:
             column_filter = BulkEditColumnFilter(
+                session=self.session,
                 prop_id='soil_contents',
                 data_type=data_type,
                 match_type=FilterMatchType.IS_EMPTY,
@@ -134,10 +149,22 @@ class BulkEditColumnFilterQueryTests(TestCase):
                     f"properly for FilterMatchType.is_empty"
             )
 
+    def test_filter_query_is_empty_system_property(self):
+        query = CaseSearchES().domain(self.domain)
+        column_filter = BulkEditColumnFilter(
+            session=self.session,
+            prop_id='last_modified',
+            data_type=DataType.DATETIME,
+            match_type=FilterMatchType.IS_EMPTY,
+        )
+        filtered_query = column_filter.filter_query(query)
+        self.assertEqual(filtered_query, query)
+
     def test_filter_query_is_not_empty(self):
         query = CaseSearchES().domain(self.domain)
         for data_type, _ in DataType.CHOICES:
             column_filter = BulkEditColumnFilter(
+                session=self.session,
                 prop_id='soil_contents',
                 data_type=data_type,
                 match_type=FilterMatchType.IS_NOT_EMPTY,
@@ -150,10 +177,22 @@ class BulkEditColumnFilterQueryTests(TestCase):
                     f"properly for FilterMatchType.is_empty"
             )
 
+    def test_filter_query_is_not_empty_system_property(self):
+        query = CaseSearchES().domain(self.domain)
+        column_filter = BulkEditColumnFilter(
+            session=self.session,
+            prop_id='last_modified',
+            data_type=DataType.DATETIME,
+            match_type=FilterMatchType.IS_NOT_EMPTY,
+        )
+        filtered_query = column_filter.filter_query(query)
+        self.assertEqual(filtered_query, query)
+
     def test_filter_query_is_missing(self):
         query = CaseSearchES().domain(self.domain)
         for data_type, _ in DataType.CHOICES:
             column_filter = BulkEditColumnFilter(
+                session=self.session,
                 prop_id='soil_contents',
                 data_type=data_type,
                 match_type=FilterMatchType.IS_MISSING,
@@ -166,10 +205,22 @@ class BulkEditColumnFilterQueryTests(TestCase):
                     f"properly for FilterMatchType.is_empty"
             )
 
+    def test_filter_query_is_missing_system_property(self):
+        query = CaseSearchES().domain(self.domain)
+        column_filter = BulkEditColumnFilter(
+            session=self.session,
+            prop_id='last_modified',
+            data_type=DataType.DATETIME,
+            match_type=FilterMatchType.IS_MISSING,
+        )
+        filtered_query = column_filter.filter_query(query)
+        self.assertEqual(filtered_query, query)
+
     def test_filter_query_is_not_missing(self):
         query = CaseSearchES().domain(self.domain)
         for data_type, _ in DataType.CHOICES:
             column_filter = BulkEditColumnFilter(
+                session=self.session,
                 prop_id='soil_contents',
                 data_type=data_type,
                 match_type=FilterMatchType.IS_NOT_MISSING,
@@ -182,6 +233,17 @@ class BulkEditColumnFilterQueryTests(TestCase):
                     f"properly for FilterMatchType.is_empty"
             )
 
+    def test_filter_query_is_not_missing_system_property(self):
+        query = CaseSearchES().domain(self.domain)
+        column_filter = BulkEditColumnFilter(
+            session=self.session,
+            prop_id='last_modified',
+            data_type=DataType.DATETIME,
+            match_type=FilterMatchType.IS_NOT_MISSING,
+        )
+        filtered_query = column_filter.filter_query(query)
+        self.assertEqual(filtered_query, query)
+
     def filter_query_remains_unchanged_for_other_match_types(self):
         query = CaseSearchES().domain(self.domain)
         for match_type, _ in FilterMatchType.ALL_CHOICES:
@@ -189,6 +251,7 @@ class BulkEditColumnFilterQueryTests(TestCase):
                 continue
             for data_type, _ in DataType.CHOICES:
                 column_filter = BulkEditColumnFilter(
+                    session=self.session,
                     prop_id='soil_contents',
                     data_type=data_type,
                     match_type=match_type,
