@@ -114,7 +114,8 @@ def safe_cached_download(f):
             if not username:
                 content_response = dict(error="app.update.not.allowed.user.logged_out",
                                         default_response=_("Please log in to the app to check for an update."))
-                return HttpResponse(status=406, content=json.dumps(content_response))
+                return HttpResponse(status=406, content=json.dumps(content_response),
+                                    content_type='application/json')
         if latest and not target:
             latest_enabled_build = _get_latest_enabled_build(domain, username, app_id, request.GET.get('profile'),
                                                              location_flag_enabled)

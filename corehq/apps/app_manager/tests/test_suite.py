@@ -1,5 +1,7 @@
 from django.test import SimpleTestCase
 
+from corehq import privileges
+
 from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.models import (
     Application,
@@ -7,6 +9,7 @@ from corehq.apps.app_manager.models import (
     CaseSearchAgainLabel,
     CaseSearchLabel,
     CaseSearchProperty,
+    DetailColumn,
     GraphConfiguration,
     GraphSeries,
     ReportAppConfig,
@@ -15,11 +18,12 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
+    case_search_sync_cases_on_form_entry_enabled_for_domain,
     patch_get_xform_resource_overrides,
-    case_search_sync_cases_on_form_entry_enabled_for_domain
 )
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from corehq.apps.userreports.models import ReportConfiguration
+from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 
 @patch_get_xform_resource_overrides()
@@ -89,8 +93,12 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
     def test_printing(self, *args):
         self._test_generic_suite('app_print_detail', 'suite-print-detail')
 
+    @privilege_enabled(privileges.APP_DEPENDENCIES)
+    @flag_enabled('MOBILE_UCR')
     def test_report_module(self, *args):
-        from corehq.apps.userreports.tests.utils import get_sample_report_config
+        from corehq.apps.userreports.tests.utils import (
+            get_sample_report_config,
+        )
 
         app = Application.new_app('domain', "Untitled Application")
 
@@ -296,3 +304,186 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
         )
         module.assign_references()
         self.assertXmlHasXpath(factory.app.create_suite(), "./entry/post")
+
+    def test_case_list_optimizations_without_feature_flag(self):
+        factory = AppFactory(build_version='2.56.0')
+        module, form = factory.new_basic_module('m0', 'case')
+
+        module.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'CachedProperty'},
+                model='case',
+                field="prop1",
+                optimization='cache',
+            )
+        ]
+
+        suite = factory.app.create_suite()
+
+        cached_property_template = """
+        <partial>
+          <field>
+            <header>
+              <text>
+                <locale id="m0.case_short.case_prop1_1.header"/>
+              </text>
+            </header>
+            <template>
+              <text>
+                <xpath function="prop1"/>
+              </text>
+            </template>
+          </field>
+        </partial>
+        """
+
+        self.assertXmlPartialEqual(
+            cached_property_template,
+            suite,
+            './detail[@id="m0_case_short"]/field[1]'
+        )
+
+        # No optimizations added on detail as well
+        self.assertIn('<detail id="m0_case_short">', str(suite))
+
+    @flag_enabled('CASE_LIST_OPTIMIZATIONS')
+    def test_case_list_optimizations_without_necessary_build_version(self):
+        factory = AppFactory(build_version='2.55.0')
+        module, form = factory.new_basic_module('m0', 'case')
+
+        module.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'CachedProperty'},
+                model='case',
+                field="prop1",
+                optimization='cache',
+            )
+        ]
+
+        suite = factory.app.create_suite()
+
+        cached_property_template = """
+        <partial>
+          <field>
+            <header>
+              <text>
+                <locale id="m0.case_short.case_prop1_1.header"/>
+              </text>
+            </header>
+            <template>
+              <text>
+                <xpath function="prop1"/>
+              </text>
+            </template>
+          </field>
+        </partial>
+        """
+
+        self.assertXmlPartialEqual(
+            cached_property_template,
+            suite,
+            './detail[@id="m0_case_short"]/field[1]'
+        )
+
+        # No optimizations added on detail as well
+        self.assertIn('<detail id="m0_case_short">', str(suite))
+
+    @flag_enabled('CASE_LIST_OPTIMIZATIONS')
+    def test_case_list_optimizations(self):
+        factory = AppFactory(build_version='2.56.0')
+        module, form = factory.new_basic_module('m0', 'case')
+
+        module.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'CachedProperty'},
+                model='case',
+                field="prop1",
+                optimization='cache',
+            ),
+            DetailColumn(
+                header={'en': 'lazyLoadedProperty'},
+                model='case',
+                field="prop2",
+                optimization='lazy_load',
+            ),
+            DetailColumn(
+                header={'en': 'Cached&LazyLoadedProperty'},
+                model='case',
+                field="prop3",
+                optimization='cache_and_lazy_load',
+            ),
+        ]
+
+        suite = factory.app.create_suite()
+
+        cached_property_template = """
+        <partial>
+          <field cache_enabled="true">
+            <header>
+              <text>
+                <locale id="m0.case_short.case_prop1_1.header"/>
+              </text>
+            </header>
+            <template>
+              <text>
+                <xpath function="prop1"/>
+              </text>
+            </template>
+          </field>
+        </partial>
+        """
+
+        self.assertXmlPartialEqual(
+            cached_property_template,
+            suite,
+            './detail[@id="m0_case_short"]/field[1]'
+        )
+
+        lazy_loaded_property_template = """
+        <partial>
+          <field lazy_loading="true">
+            <header>
+              <text>
+                <locale id="m0.case_short.case_prop2_2.header"/>
+              </text>
+            </header>
+            <template>
+              <text>
+                <xpath function="prop2"/>
+              </text>
+            </template>
+          </field>
+        </partial>
+        """
+
+        self.assertXmlPartialEqual(
+            lazy_loaded_property_template,
+            suite,
+            './detail[@id="m0_case_short"]/field[2]'
+        )
+
+        cached_and_lazy_loaded_property_template = """
+        <partial>
+          <field cache_enabled="true" lazy_loading="true">
+            <header>
+              <text>
+                <locale id="m0.case_short.case_prop3_3.header"/>
+              </text>
+            </header>
+            <template>
+              <text>
+                <xpath function="prop3"/>
+              </text>
+            </template>
+          </field>
+        </partial>
+        """
+
+        self.assertXmlPartialEqual(
+            cached_and_lazy_loaded_property_template,
+            suite,
+            './detail[@id="m0_case_short"]/field[3]'
+        )
+
+        # Optimizations added on detail as well
+        self.assertIn('<detail id="m0_case_short" cache_enabled="true" lazy_loading="true">', str(suite))

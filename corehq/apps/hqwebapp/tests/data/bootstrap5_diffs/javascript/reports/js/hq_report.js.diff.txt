@@ -15,26 +15,28 @@
  ], function (
      $,
      ko,
-@@ -57,7 +57,7 @@
+@@ -56,7 +56,7 @@
  
                  if (self.needsFilters) {
                      self.filterSubmitButton
 -                        .button('reset')
-+                        .button('reset')  /* todo B5: plugin:button */
++                        .changeButtonState('reset')
                          .addClass('btn-primary')
                          .removeClass('disabled')
                          .prop('disabled', false);
-@@ -150,18 +150,18 @@
+@@ -148,19 +148,19 @@
+         };
  
          var checkFilterAccordionToggleState = function () {
-             $(self.filterAccordion).addClass('in');
+-            $(self.filterAccordion).addClass('in');
 -            $(self.toggleFiltersButton).button('close');
-+            $(self.toggleFiltersButton).button('close');  /* todo B5: plugin:button */
++            $(self.filterAccordion).addClass('show');
++            $(self.toggleFiltersButton).changeButtonState('close');
  
              var hiddenFilterButtonStatus = function (data) {
                  if (!(data.target && $(data.target).hasClass('modal'))) {
 -                    $(self.toggleFiltersButton).button('open');
-+                    $(self.toggleFiltersButton).button('open');  /* todo B5: plugin:button */
++                    $(self.toggleFiltersButton).changeButtonState('open');
                  }
              };
  
@@ -42,33 +44,25 @@
  
              var showFilterButtonStatus = function () {
 -                $(self.toggleFiltersButton).button('close');
-+                $(self.toggleFiltersButton).button('close');  /* todo B5: plugin:button */
++                $(self.toggleFiltersButton).changeButtonState('close');
              };
  
              $(self.filterAccordion).on('show.bs.collapse', showFilterButtonStatus);
-@@ -179,14 +179,14 @@
+@@ -178,7 +178,7 @@
          self.resetFilterState = function () {
              $('#paramSelectorForm fieldset button, #paramSelectorForm fieldset span[data-dropdown="dropdown"]').click(function () {
                  $(self.filterSubmitSelector)
 -                    .button('reset')
-+                    .button('reset')  /* todo B5: plugin:button */
++                    .changeButtonState('reset')
                      .addClass('btn-primary')
                      .removeClass('disabled')
                      .prop('disabled', false);
-             });
-             $('#paramSelectorForm fieldset').on('change apply', function () {
-                 $(self.filterSubmitSelector)
--                    .button('reset')
-+                    .button('reset')  /* todo B5: plugin:button */
-                     .addClass('btn-primary')
-                     .removeClass('disabled')
-                     .prop('disabled', false);
-@@ -255,16 +255,16 @@
+@@ -257,16 +257,16 @@
  
              self.sendEmail = function () {
                  var $sendButton = $(hqReport.emailReportModal).find('.send-button');
 -                $sendButton.button('loading');
-+                $sendButton.button('loading');  /* todo B5: plugin:button */
++                $sendButton.changeButtonState('loading');
  
                  $.post(getReportBaseUrl("email_onceoff"), $.param(self.unwrap()))
                      .done(function () {
@@ -83,12 +77,12 @@
                          self.resetModal();
                          const errors = JSON.parse(response.responseText);
                          let messages = [hqReport.emailErrorMessage].concat(errors);
-@@ -274,7 +274,7 @@
+@@ -276,7 +276,7 @@
              };
  
              self.resetModal = function () {
 -                $(hqReport.emailReportModal).find('.send-button').button('reset');
-+                $(hqReport.emailReportModal).find('.send-button').button('reset');  /* todo B5: plugin:button */
++                $(hqReport.emailReportModal).find('.send-button').changeButtonState('reset');  /* todo B5: plugin:button */
              };
          }
  

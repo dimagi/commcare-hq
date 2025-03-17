@@ -55,9 +55,18 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             self.config, get_metadata(self.engine_id), override_table_name=self.override_table_name
         )
 
+    @memoized
+    def get_existing_table_from_db(self):
+        """Loads existing table directly from database if one exists"""
+        try:
+            return sqlalchemy.Table(self.get_table().name, sqlalchemy.MetaData(), autoload_with=self.engine)
+        except sqlalchemy.exc.NoSuchTableError:
+            pass
+
     @property
     def table_exists(self):
-        return self.engine.has_table(self.get_table().name)
+        table_name = _get_table_name_for_adapter(self.override_table_name, self.config)
+        return self.engine.has_table(table_name)
 
     @memoized
     def get_sqlalchemy_orm_table(self):
@@ -360,9 +369,13 @@ class ErrorRaisingMultiDBAdapter(MultiDBSqlAdapter):
     mirror_adapter_cls = ErrorRaisingIndicatorSqlAdapter
 
 
+def _get_table_name_for_adapter(override_table_name, config):
+    return override_table_name or get_table_name(config.domain, config.table_id)
+
+
 def get_indicator_table(indicator_config, metadata, override_table_name=None):
     sql_columns = [column_to_sql(col) for col in indicator_config.get_columns()]
-    table_name = override_table_name or get_table_name(indicator_config.domain, indicator_config.table_id)
+    table_name = _get_table_name_for_adapter(override_table_name, indicator_config)
     columns_by_col_id = {col.database_column_name.decode('utf-8') for col in indicator_config.get_columns()}
     extra_indices = []
 

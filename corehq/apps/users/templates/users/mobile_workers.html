@@ -4,13 +4,14 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% requirejs_main 'users/js/mobile_workers' %}
+{% js_entry_b3 'users/js/mobile_workers' %}
 
 {% block page_content %}
   {% initial_page_data 'can_access_all_locations' can_access_all_locations %}
   {% initial_page_data 'can_edit_original_profile' can_edit_original_profile %}
   {% initial_page_data 'custom_fields_slugs' custom_fields_slugs %}
   {% initial_page_data 'custom_fields_profiles' custom_fields_profiles %}
+  {% initial_page_data 'required_custom_fields_slugs' required_custom_fields_slugs %}
   {% initial_page_data 'custom_fields_profile_slug' custom_fields_profile_slug %}
   {% initial_page_data 'skip_standard_password_validations' skip_standard_password_validations %}
   {% initial_page_data 'pagination_limit_cookie_name' pagination_limit_cookie_name %}
@@ -73,11 +74,11 @@
             {% if request|request_has_privilege:"FILTERED_BULK_USER_DOWNLOAD" %}
               <a class="btn btn-danger" href="{% url "delete_commcare_users" domain %}">
                 <i class="fa-regular fa-trash-can"></i>
-                {% trans "Bulk Delete Users" %}
+                {% trans "Bulk Delete Mobile Workers" %}
               </a>
               <a class="btn btn-default" href="{% url "commcare_users_lookup" domain %}">
                 <i class="fa fa-search"></i>
-                {% trans "Bulk Lookup of Users" %}
+                {% trans "Bulk Lookup of Mobile Workers" %}
               </a>
             {% endif %}
           {% endif %}

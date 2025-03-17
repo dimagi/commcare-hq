@@ -97,7 +97,7 @@ hqDefine('app_manager/js/supported_languages',[
                         var i;
                         for (i = 0; i < langs.length; i++) {
                             if (langs[i] !== data[i]) {
-                                throw "There was an error saving.";
+                                throw new Error("There was an error saving.");
                             }
                         }
                         self.removedLanguages.removeAll();

@@ -12,7 +12,7 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.users.util import raw_username
-from corehq.motech.const import REQUEST_METHODS, REQUEST_POST
+from corehq.motech.const import DEFAULT_REQUEST_METHODS, REQUEST_POST
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 from corehq.motech.views import ConnectionSettingsListView
@@ -59,7 +59,7 @@ class GenericRepeaterForm(forms.Form):
         )
         self.fields['request_method'] = forms.ChoiceField(
             label=_("HTTP Request Method"),
-            choices=[(rm, rm) for rm in REQUEST_METHODS],
+            choices=[(rm, rm) for rm in DEFAULT_REQUEST_METHODS],
             initial=REQUEST_POST,
             required=True,
         )
@@ -78,10 +78,12 @@ class GenericRepeaterForm(forms.Form):
                 'Forwarding Settings',
                 *self.get_ordered_crispy_form_fields()
             ),
-            twbscrispy.StrictButton(
-                self.submit_btn_text,
-                type="submit",
-                css_class='btn-primary',
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    self.submit_btn_text,
+                    type="submit",
+                    css_class='btn-primary',
+                )
             )
         )
 

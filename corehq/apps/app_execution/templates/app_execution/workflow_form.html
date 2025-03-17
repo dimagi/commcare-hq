@@ -1,5 +1,16 @@
 {% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load i18n %}
 {% load crispy_forms_tags %}
 {% block page_content %}
+  {% if workflow %}
+    {% blocktrans asvar title_text with workflow_name=workflow.name %}
+      Editing "{{ workflow_name }}"
+    {% endblocktrans %}
+    {% include "app_execution/components/title_bar.html" with workflow_id=workflow.id title_text=title_text show_edit=False %}
+  {% else %}
+    <div class="mb-3">
+      <h2>{% translate "New workflow" %}</h2>
+    </div>
+  {% endif %}
   {% crispy form %}
 {% endblock %}

@@ -3,7 +3,7 @@ hqDefine('accounting/js/payment_method_handler', [
     'jquery',
     'knockout',
     'underscore',
-    'accounting/js/lib/stripe',
+    'stripe',
 ], function (
     $,
     ko,
@@ -63,7 +63,11 @@ hqDefine('accounting/js/payment_method_handler', [
         self.paymentMethod = ko.observable();
 
         self.submitForm = function () {
-            $('#' + self.formId).ajaxSubmit({
+            const $form = $('#' + self.formId);
+            $.ajax({
+                url: $form.attr("action"),
+                data: Object.fromEntries(new FormData($form.get(0))),
+                method: 'POST',
                 success: self.handleSuccess,
                 error: self.handleGeneralError,
             });
@@ -200,10 +204,13 @@ hqDefine('accounting/js/payment_method_handler', [
         self.removeSavedCard = function () {
             self.isRemovingCard(true);
             self.showConfirmRemoveCard(false);
-            $('#' + self.formId).ajaxSubmit({
-                data: {
-                    removeCard: true,
-                },
+            const $form = $('#' + self.formId);
+            let formData = new FormData($form.get(0));
+            formData.set("removeCard", true);
+            $.ajax({
+                url: $form.attr("action"),
+                method: "POST",
+                data: Object.fromEntries(formData),
                 success: function (response) {
                     self.handleProcessingErrors(response);
                     for (var i = 0; i < self.handlers.length; i++) {

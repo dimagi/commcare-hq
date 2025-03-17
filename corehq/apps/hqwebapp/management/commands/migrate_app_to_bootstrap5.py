@@ -1,7 +1,5 @@
 import time
-from pathlib import Path
 
-from django.conf import settings
 from django.core.management import BaseCommand
 
 from corehq.apps.hqwebapp.utils.bootstrap import BOOTSTRAP_3, BOOTSTRAP_5
@@ -9,6 +7,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     get_spec,
     make_direct_css_renames,
     make_numbered_css_renames,
+    make_select_form_control_renames,
     make_template_tag_renames,
     make_data_attribute_renames,
     make_javascript_dependency_renames,
@@ -17,7 +16,9 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     flag_stateful_button_changes_bootstrap5,
     flag_changed_javascript_plugins,
     flag_crispy_forms_in_template,
+    flag_file_inputs,
     flag_inline_styles,
+    flag_selects_without_form_control,
     add_todo_comments_for_flags,
     update_gruntfile,
 )
@@ -87,14 +88,6 @@ class Command(BaseCommand):
         )
 
     def handle(self, app_name, **options):
-        if not settings.BOOTSTRAP_MIGRATION_LOGS_DIR:
-            self.stderr.write("\nPlease make sure BOOTSTRAP_MIGRATION_LOGS_DIR is "
-                              "set in your localsettings.py before continuing...\n\n")
-            self.stdout.write(self.style.MIGRATE_LABEL(
-                "TIP: path should be outside of this repository\n\n"
-            ))
-            return
-
         selected_filename = options.get('filename')
 
         is_app_migration_complete = is_app_completed(app_name)
@@ -113,7 +106,8 @@ class Command(BaseCommand):
             if not confirm:
                 return
 
-        if not is_app_in_progress(app_name) and not is_app_migration_complete:
+        self.no_split = options.get('no_split')
+        if not is_app_in_progress(app_name) and not is_app_migration_complete and not self.no_split:
             self.stdout.write(self.style.WARNING(
                 f"\n\n'{app_name}' is not marked as 'in progress'.\n"
             ))
@@ -129,7 +123,6 @@ class Command(BaseCommand):
                     show_apply_commit=not has_changes
                 )
 
-        self.no_split = options.get('no_split')
         self.skip_all = options.get('skip_all')
         if self.skip_all and self.no_split:
             self.stderr.write(
@@ -196,11 +189,12 @@ class Command(BaseCommand):
             "time in the event of nested dependencies / inheritance "
             "in split files.\n\n"
         ))
-        self.stdout.write("After this, please update `bootstrap5_diff_config.json` "
-                          "using the command below and follow the next steps after.\n\n")
-        self.stdout.write(self.style.MIGRATE_HEADING(
-            f"./manage.py build_bootstrap5_diffs --update_app {app_name}\n\n"
-        ))
+        if not self.no_split:
+            self.stdout.write("After this, please update `bootstrap5_diff_config.json` "
+                              "using the command below and follow the next steps after.\n\n")
+            self.stdout.write(self.style.MIGRATE_HEADING(
+                f"./manage.py build_bootstrap5_diffs --update_app {app_name}\n\n"
+            ))
         self.stdout.write("Thank you for your dedication to this migration! <3\n\n")
         self.stdout.write("You may review the full migration guide here:")
         self.stdout.write(self.style.MIGRATE_HEADING(
@@ -276,7 +270,7 @@ class Command(BaseCommand):
             self.stdout.write("\n")
             if not self.skip_all:
                 review_changes = get_confirmation(
-                    'Do you want to review each change line-by-line here?', default='n'
+                    'Do you want to review each change line-by-line here?', default='y'
                 )
             else:
                 review_changes = False
@@ -328,7 +322,6 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.WARNING(
                     self.format_header(f"Finalizing changes for {short_path}...")
                 ))
-                self.record_file_changes(file_path, app_name, file_changelog, is_template)
                 if self.no_split:
                     self.migrate_file_in_place(app_name, file_path, new_lines, is_template)
                     if is_template:
@@ -379,7 +372,7 @@ class Command(BaseCommand):
                 self.display_rename_summary(changelog)
                 changelog.append("\n\n")
                 if review_changes:
-                    confirm = get_confirmation("Keep changes?")
+                    confirm = get_confirmation("Keep changes?", default='y')
                     if not confirm:
                         changelog.append("CHANGES DISCARDED\n\n")
                         self.write_response("ok, discarding changes...")
@@ -402,31 +395,6 @@ class Command(BaseCommand):
         changelog.append("\n\n")
         self.stdout.write("\n\n\nAnswering 'y' below will automatically make this change "
                           "in the Bootstrap 5 version of this file.\n\n")
-
-    def record_file_changes(self, template_path, app_name, changelog, is_template):
-        if is_split_path(template_path):
-            parent_dir = template_path.parent.parent
-        else:
-            parent_dir = template_path.parent
-        short_path = get_short_path(app_name, parent_dir, is_template)
-        readme_directory = Path(settings.BOOTSTRAP_MIGRATION_LOGS_DIR) / short_path
-        readme_directory.mkdir(parents=True, exist_ok=True)
-        extension = '.html' if is_template else '.js'
-        readme_filename = template_path.name.replace(extension, '.md')
-        readme_path = readme_directory / readme_filename
-        with open(readme_path, 'w') as readme_file:
-            readme_file.writelines(changelog)
-        self.show_information_about_readme(readme_path)
-
-    def show_information_about_readme(self, readme_path):
-        if self.no_split:
-            self.stdout.write("\nThe changelog summarizing the "
-                              "migration changes can be found here:\n")
-        else:
-            self.stdout.write("\nThe changelog for all changes to the Bootstrap 5 "
-                              "version of this file can be found here:\n")
-        self.stdout.write(f"\n{readme_path}\n\n")
-        self.stdout.write("** Please make a note of this for reviewing later.\n\n\n")
 
     def migrate_file_in_place(self, app_name, file_path, bootstrap5_lines, is_template):
         short_path = get_short_path(app_name, file_path, is_template)
@@ -612,6 +580,8 @@ class Command(BaseCommand):
 
         new_line, attribute_renames = make_data_attribute_renames(new_line, spec)
         renames.extend(attribute_renames)
+        new_line, select_renames = make_select_form_control_renames(new_line, spec)
+        renames.extend(select_renames)
         new_line, template_dependency_renames = make_template_dependency_renames(new_line, spec)
         renames.extend(template_dependency_renames)
         new_line, template_tag_renames = make_template_tag_renames(new_line, spec)
@@ -623,7 +593,9 @@ class Command(BaseCommand):
         flags = flag_changed_css_classes(template_line, spec)
         flags.extend(flag_stateful_button_changes_bootstrap5(template_line))
         flags.extend(flag_crispy_forms_in_template(template_line))
+        flags.extend(flag_file_inputs(template_line))
         flags.extend(flag_inline_styles(template_line))
+        flags.extend(flag_selects_without_form_control(template_line))
         return flags
 
     @staticmethod

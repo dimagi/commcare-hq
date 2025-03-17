@@ -6,23 +6,19 @@
 {% block stylesheets %}{{ block.super }}
 {% compress css %}
     <link type="text/css"
-          rel="stylesheet"
-          media="all"
-          href="{% static 'nvd3-1.8.6/build/nv.d3.css' %}" />
-    <link type="text/css"
               rel="stylesheet"
               media="screen"
               href="{% static "@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css" %}" />
   {% endcompress %}
 {% endblock %}
 
-{% requirejs_main_b5 'app_execution/js/workflow_logs' %}
+{% js_entry 'app_execution/js/workflow_logs' %}
 
 {% block page_content %}
   {% initial_page_data 'total_items' total %}
   {% registerurl "app_execution:logs_json" request.domain workflow.id %}
-
-  <h2>{% translate 'Logs for workflow' %} "<a href="{% url "app_execution:edit_workflow" request.domain workflow.id %}">{{ workflow.name }}</a>"</h2>
+  {% blocktranslate asvar title_text with name=workflow.name %}Logs for workflow "{{ name }}"{% endblocktranslate %}
+  {% include "app_execution/components/title_bar.html" with workflow_id=workflow.id show_logs=False title_text=title_text %}
   <div class="row row-cols-lg-1 row-cols-xl-2">
     <div id="timing_linechart" class="col">
       <h4 class="text-center">{% translate "Average Timings" %}</h4>

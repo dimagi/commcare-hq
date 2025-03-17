@@ -66,7 +66,7 @@ def _check_required_when_active(is_active, value):
 
 def _ensure_entity_id_matches_expected_provider(entity_id, identity_provider):
     if (identity_provider.idp_type == IdentityProviderType.ONE_LOGIN
-            and not re.match(r'^https:\/\/[A-za-z\d-]*.onelogin.com\/', entity_id)):
+            and not re.match(r'^https:\/\/[A-za-z\d-]*\.onelogin\.com\/', entity_id)):
         raise forms.ValidationError(
             _("This is not a valid One Login URL.")
         )

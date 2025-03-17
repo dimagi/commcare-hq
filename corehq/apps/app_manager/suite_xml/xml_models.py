@@ -91,14 +91,23 @@ class XPathEnum(TextXPath):
             v_val = get_value(v_key)
             variables.append(XPathVariable(name=v_key, locale_id=v_val))
         parts = []
-        for i, item in enumerate(enum):
-            template_context = get_template_context(item, i)
-            parts.append(template.format(**template_context))
+        if format == 'translatable-enum':
+            calculated_property = get_template_context()['calculated_property']
+            # converting variables into suite.xml recognized variables (i.e. $variable > $kvariable)
+            for item in enum:
+                key = item.key_as_variable
+                if key[1:] in calculated_property:
+                    calculated_property = calculated_property.replace(key[1:], key)
+            parts.append(calculated_property)
+        else:
+            for i, item in enumerate(enum):
+                template_context = get_template_context(item, i)
+                parts.append(template.format(**template_context))
         if type == "display" and format == "enum":
             parts.insert(0, "replace(join(' ', ")
             parts[-1] = parts[-1][:-2]  # removes extra comma from last string
             parts.append("), '\\s+', ' ')")
-        else:
+        elif format != "translatable-enum":
             parts.append("''")
             parts.append(")" * len(enum))
 
@@ -857,6 +866,8 @@ class Field(OrderedXmlObject):
 
     sort = StringField('@sort')
     print_id = StringField('@print-id')
+    lazy_loading = BooleanField('@lazy_loading', required=False)
+    cache_enabled = BooleanField('@cache_enabled', required=False)
     style = NodeField('style', Style)
     header = NodeField('header', Header)
     template = NodeField('template', Template)
@@ -927,6 +938,7 @@ class Detail(OrderedXmlObject, IdNode):
     ROOT_NAME = 'detail'
 
     lazy_loading = BooleanField('@lazy_loading')
+    cache_enabled = BooleanField('@cache_enabled', required=False)
 
     ORDER = ('title', 'lookup', 'no_items_text', 'details', 'fields')
 

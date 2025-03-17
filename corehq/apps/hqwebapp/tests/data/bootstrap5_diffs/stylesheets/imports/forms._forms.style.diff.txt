@@ -1,20 +1,19 @@
 --- 
 +++ 
-@@ -1,356 +1,7 @@
+@@ -1,356 +1,21 @@
 -// FORM ACTIONS from TWBS 2
 -// ------------
 -
 -[ng\:cloak],[ng-cloak],.ng-cloak{
 -  display:none !important
--}
--
++.field-label {
++  @extend .col-form-label, .col-12, .col-sm-4, .col-md-3, .col-lg-2;
+ }
+ 
 -.form-actions {
 -  padding: (@line-height-base * @font-size-base - 1px) 0px @line-height-base * @font-size-base;
 -  margin-top: @line-height-base * 1em;
-+.row > div > .form-check:first-child,
-+.row > div > .input-group > .form-check:first-child {
-+  padding-top: add($input-padding-y, $input-border-width);
-   margin-bottom: 0;
+-  margin-bottom: 0;
 -  background-color: @navbar-default-bg;
 -  border-top: 1px solid @legend-border-color;
 -  .border-bottom-radius(@border-radius-base);
@@ -31,12 +30,18 @@
 -      margin-left: 0;
 -    }
 -  }
--}
--
++.field-label + .field-control {
++  @extend .col-12, .col-sm-8, .col-md-9, .col-lg-10;
+ }
+ 
 -.form-horizontal .control-label {
 -  text-align: left;     // override bootstrap
--}
--
++:not(.field-label) + .field-control,
++.row > .field-control:first-child {
++  @extend .offset-sm-4, .offset-md-3, .offset-lg-2;
++  flex-shrink: initial;
+ }
+ 
 -legend .subtext {
 -  font-size: .8em;
 -  color: lighten(@cc-text, 40%);
@@ -357,10 +362,14 @@
 -
 -.controls-text {
 -  padding-top: 7px;
++.row > div > .form-check:first-child,
++.row > div > .input-group > .form-check:first-child {
++  padding-top: add($input-padding-y, $input-border-width);
++  margin-bottom: 0;
  }
  
  .form-hide-actions .form-actions {
-@@ -361,15 +12,34 @@
+@@ -361,21 +26,42 @@
    .validationMessage {
      display: block;
      padding-top: 8px;
@@ -376,19 +385,23 @@
 -  float: none;
 -  position: initial;
 -  width: 13px;
--}+.help-block,
++.help-block,
 +p.help-block {
 +  display: block;
 +  margin-top: 5px;
 +  margin-bottom: 10px;
 +  color: lighten($cc-text, 25%);
-+}
-+
+ }
+ 
+-#id_bulk_upload_file.form-control {     // override .form-control styles
+-  border: none;
+-  box-shadow: none;
+-  padding: 0;
 +legend {
 +  border-bottom: 1px solid $border-color;
 +  padding-bottom: $spacer * .25;
 +  margin-bottom: $spacer * 1.25;
-+}
+ }
 +
 +.form-actions {
 +  border-top: 1px solid $border-color;
@@ -397,6 +410,14 @@
 +  border-bottom-right-radius: $border-radius;
 +  padding: $spacer 0;
 +  margin: 0 0 $spacer 0;
++
++  .field-control:first-child {
++    padding-left: ($grid-gutter-width - $spacer) / 2;
++  }
++
++  > * {
++    flex-shrink: initial;
++  }
 +}
 +
 +.ms-header .btn {

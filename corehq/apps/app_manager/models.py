@@ -70,6 +70,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
     get_usercase_properties,
 )
 from corehq.apps.app_manager.commcare_settings import check_condition
+from corehq.apps.app_manager.const import FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
@@ -1860,6 +1861,7 @@ class DetailColumn(IndexedSchema):
     field = StringProperty()
     useXpathExpression = BooleanProperty(default=False)
     format = StringProperty(exclude_if_none=True)
+    optimization = StringProperty(exclude_if_none=True)
 
     # Only applies to custom case list tile. grid_x and grid_y are zero-based values
     # representing the starting row and column.
@@ -1920,11 +1922,17 @@ class DetailColumn(IndexedSchema):
             for item in to_ret.enum:
                 for lang, path in item.value.items():
                     item.value[lang] = interpolate_media_path(path)
+
+        if to_ret.optimization and not to_ret.supports_optimizations:
+            to_ret.optimization = None
         return to_ret
 
     @property
     def invisible(self):
         return self.format == 'invisible'
+
+    def supports_optimizations(self):
+        return self.format in FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS
 
 
 class SortElement(IndexedSchema):
@@ -2060,7 +2068,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
         for column in self.columns:
             column.rename_lang(old_lang, new_lang)
 
-    def sort_nodeset_columns_for_detail(self):
+    def sort_nodeset_columns_for_long_detail(self):
         return (
             self.display == "long"
             and any(tab for tab in self.get_tabs() if tab.has_nodeset)
@@ -2576,6 +2584,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     search_config = SchemaProperty(CaseSearch)
     display_style = StringProperty(default='list')
     lazy_load_case_list_fields = BooleanProperty(default=False)
+    show_case_list_optimization_options = BooleanProperty(default=False)
 
     @classmethod
     def new_module(cls, name, lang):
@@ -4179,7 +4188,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     has_submissions = BooleanProperty(default=False)
 
     mobile_ucr_restore_version = StringProperty(
-        default=const.MOBILE_UCR_VERSION_1, choices=const.MOBILE_UCR_VERSIONS, required=False
+        default=const.MOBILE_UCR_VERSION_2, choices=const.MOBILE_UCR_VERSIONS, required=False
     )
     location_fixture_restore = StringProperty(
         default=const.DEFAULT_LOCATION_FIXTURE_OPTION, choices=const.LOCATION_FIXTURE_OPTIONS,
@@ -4458,8 +4467,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         if errors:
             raise AppValidationError(errors)
 
-        if copy.create_build_files_on_build:
-            copy.create_build_files()
+        copy.create_build_files()
 
         # since this hard to put in a test
         # I'm putting this assert here if copy._id is ever None
@@ -4512,11 +4520,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             if regexp is None or re.match(regexp, name):
                 self.lazy_put_attachment(other.lazy_fetch_attachment(name), name)
 
-    @property
-    @memoized
-    def create_build_files_on_build(self):
-        return not toggles.SKIP_CREATING_DEFAULT_BUILD_FILES_ON_BUILD.enabled(self.domain)
-
     def delete_app(self):
         domain_has_apps.clear(self.domain)
         get_app_languages.clear(self.domain)
@@ -4534,6 +4537,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def save(self, response_json=None, increment_version=None, **params):
         from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
+        from corehq.apps.app_manager.tasks import refresh_data_dictionary_from_app
         from corehq.apps.case_search.utils import get_app_context_by_case_type
         self.last_modified = datetime.datetime.utcnow()
         if not self._rev and not domain_has_apps(self.domain):
@@ -4549,12 +4553,16 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         get_apps_in_domain.clear(self.domain, True)
         get_apps_in_domain.clear(self.domain, False)
         get_mobile_ucr_count.clear(self.domain)
+        if toggles.DATA_CLEANING_CASES.enabled(self.domain):
+            from corehq.apps.data_cleaning.utils.cases import clear_caches_case_data_cleaning
+            clear_caches_case_data_cleaning(self.domain)
 
         request = view_utils.get_request()
         user = getattr(request, 'couch_user', None)
         if user and user.days_since_created == 0:
             track_workflow(user.get_email(), 'Saved the App Builder within first 24 hours')
         send_hubspot_form(HUBSPOT_SAVED_APP_FORM_ID, request)
+        refresh_data_dictionary_from_app.delay(self.domain, self.get_id)
         if self.copy_of:
             cache.delete('app_build_cache_{}_{}'.format(self.domain, self.get_id))
 
@@ -4922,6 +4930,12 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
 
         if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
             app_profile['custom_properties'].update(self__profile['custom_properties'])
+
+        if not domain_has_privilege(self.domain, privileges.APP_DEPENDENCIES):
+            # remove any previous dependencies if privilege was revoked
+            if 'dependencies' in app_profile['features']:
+                del app_profile['features']['dependencies']
+
         apk_heartbeat_url = self.heartbeat_url(build_profile_id)
         locale = self.get_build_langs(build_profile_id)[0]
         target_package_id = {

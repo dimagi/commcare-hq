@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,124 +1,230 @@
+@@ -1,130 +1,247 @@
 -@import "@{b3-import-variables}";
 -
 -// Nunito Sans is used on dimagi.com and embedded in hqwebapp/base.html
@@ -20,6 +20,8 @@
 +  xxl: 1160px
 +);
 +
++// Spacing override
++$enable-negative-margins: true;
 +
 +// Typography Overrides
 +$font-family-sans-serif: "Nunito Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -43,6 +45,9 @@
 +
 +$caret-width: 4px;
 +$caret-vertical-align: $caret-width * .87;
++
++// Breadcrumbs
++$breadcrumb-divider: quote(">");
 +
 +// Dropdowns
 +$dropdown-border-radius: 3px;
@@ -135,6 +140,9 @@
 -@cc-brand-hi:   #bcdeff;
 -@cc-brand-mid:  #004ebc;
 -@cc-brand-low:  #002c5f;
+-
+-// used in registration app only. will be merged into "brand" color Bootstrap 5 migration
+-@commcare-blue:  #5D70D2;
 +$cc-brand-hi:   #bcdeff;
 +$cc-brand-mid:  #004ebc;
 +$cc-brand-low:  #002c5f;
@@ -167,7 +175,7 @@
 -@navbar-padding-vertical:        ((@navbar-height - @line-height-computed) / 2);
 -@navbar-default-bg:              @cc-bg;
 -
--@navbar-footer-height:            38px;
+-@navbar-footer-height:            40px;
 -@navbar-footer-link-color:        mix(darken(#ffffff, 10), @brand-primary, 90);
 -@navbar-footer-link-color-hover:  @gray-lighter;
 -@navbar-footer-button-color:      #474747;
@@ -177,9 +185,6 @@
 -@btn-footer-border: #cccccc;
 -
 -@checkbox-default-color: @call-to-action-mid;
--
--@breadcrumb-separator: '>';
--@breadcrumb-height-cloudcare: 46px;
 -
 -@grid-gutter-width: 20px;
 -
@@ -191,13 +196,19 @@
 -@zindexAccountingPricingTableHeader:  800;
 -
 -// Other Zindecies
--@zindex-report-loading:               100;
+-@zindex-hq-navigation:               1060;
+-@zindex-select2-results:             1056;  // higher than $zindex-modal so select2s can be used in modals
+-@zindex-cloudcare-debugger:          1040;
+-@zindex-persistent-menu-nav:         1030;
+-@zindex-persistent-menu-nav-arrow:   @zindex-persistent-menu-nav + 1;
+-@zindex-navbar:                      1000;
 -@zindex-app-preview:                  998;
 -@zindex-navbar-cloudcare:             995;
 -@zindex-persistent-tile-cloudcare:    993;
 -@zindex-formplayer-progress:          990;
--@zindex-cloudcare-debugger:           1005;
+-@zindex-report-loading:               100;
 -@zindex-formplayer-scroll-to-bottom:    5;
+-@zindex-next-error:                     5;  // Above the sticky submit button
 -@zindex-formplayer-anchored-submit:     4;
 -
 -
@@ -335,3 +346,15 @@
 +// Make pagination-lg the same height as other lg inputs
 +$pagination-padding-x-lg: 1.0rem;
 +$pagination-padding-y-lg: 0.5rem;
++
++// Table loading indicator
++$table-loading-spinner-size: 150px;
++$table-loading-spinner-border-width: 20px;
++
++// Override bootstrap position values to include 25%
++$position-values: (
++  0: 0,
++  25: 25%,
++  50: 50%,
++  100: 100%,
++);

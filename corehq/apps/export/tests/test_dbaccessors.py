@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
+
+import pytest
 from django.test import TestCase
-from nose.plugins.attrib import attr
 
 from corehq.apps.export.dbaccessors import (
     get_brief_deid_exports,
@@ -291,7 +292,7 @@ class TestInferredSchemasDBAccessors(TestCase):
         self.assertIsNone(result)
 
 
-@attr('slow')
+@pytest.mark.slow
 class TestODataExportFetcher(TestCase):
     def setUp(self):
         self.fetcher = ODataExportFetcher()

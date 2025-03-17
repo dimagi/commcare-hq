@@ -5,10 +5,11 @@ from operator import attrgetter
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.db.models import Count
 from django.db.models.query import Prefetch
 from django.db.transaction import atomic
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
@@ -17,7 +18,12 @@ from django.views.generic import View
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 
-from corehq import toggles
+from corehq import privileges, toggles
+from corehq.apps.accounting.decorators import (
+    requires_privilege,
+    requires_privilege_with_fallback,
+)
+from corehq.apps.app_manager.dbaccessors import get_case_type_app_module_count
 from corehq.apps.data_dictionary.models import (
     CaseProperty,
     CasePropertyAllowedValue,
@@ -25,33 +31,32 @@ from corehq.apps.data_dictionary.models import (
     CaseType,
 )
 from corehq.apps.data_dictionary.util import (
+    delete_case_property,
+    get_data_dict_props_by_case_type,
+    get_used_props_by_case_type,
     save_case_property,
     save_case_property_group,
-    delete_case_property,
-    get_used_props_by_case_type,
-    get_data_dict_props_by_case_type,
+    update_url_query_params,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.geospatial.utils import get_geo_case_property
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.motech.fhir.utils import (
-    load_fhir_resource_mappings,
+    load_fhir_case_properties_mapping,
+    load_fhir_case_type_mapping,
     load_fhir_resource_types,
     remove_fhir_resource_type,
     update_fhir_resource_type,
 )
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback, requires_privilege
-from corehq import privileges
-from corehq.apps.app_manager.dbaccessors import get_case_type_app_module_count
-from corehq.apps.geospatial.utils import get_geo_case_property
 
 from .bulk import (
-    process_bulk_upload,
-    FHIR_RESOURCE_TYPE_MAPPING_SHEET,
     ALLOWED_VALUES_SHEET_SUFFIX,
+    FHIR_RESOURCE_TYPE_MAPPING_SHEET,
+    process_bulk_upload,
 )
 
 
@@ -71,8 +76,9 @@ def data_dictionary_json(request, domain, case_type_name=None):
         Prefetch('properties__allowed_values', queryset=CasePropertyAllowedValue.objects.order_by('allowed_value'))
     )
     if toggles.FHIR_INTEGRATION.enabled(domain):
-        fhir_resource_type_name_by_case_type, fhir_resource_prop_by_case_prop = load_fhir_resource_mappings(
-            domain)
+        fhir_resource_type_name_by_case_type = load_fhir_case_type_mapping(domain)
+        fhir_resource_prop_by_case_prop = load_fhir_case_properties_mapping(domain)
+
     if case_type_name:
         queryset = queryset.filter(name=case_type_name)
 
@@ -104,6 +110,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
                     'name': prop.name,
                     'deprecated': prop.deprecated,
                     'is_safe_to_delete': prop.name not in used_props and prop.name != geo_case_prop,
+                    'index': prop.index,
                 }
                 | (
                     {
@@ -141,6 +148,159 @@ def data_dictionary_json(request, domain, case_type_name=None):
         'case_types': props,
         'geo_case_property': geo_case_prop,
     })
+
+
+@login_and_domain_required
+@requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
+def data_dictionary_json_case_types(request, domain):
+    fhir_resource_type_name_by_case_type = {}
+    if toggles.FHIR_INTEGRATION.enabled(domain):
+        fhir_resource_type_name_by_case_type = load_fhir_case_type_mapping(domain)
+
+    queryset = CaseType.objects.filter(domain=domain).annotate(properties_count=Count('property'))
+    if not request.GET.get('load_deprecated_case_types', False) == 'true':
+        queryset = queryset.filter(is_deprecated=False)
+
+    case_type_app_module_count = get_case_type_app_module_count(domain)
+    used_props_by_case_type = get_used_props_by_case_type(domain)
+    geo_case_prop = get_geo_case_property(domain)
+    case_types_data = []
+    for case_type in queryset:
+        module_count = case_type_app_module_count.get(case_type.name, 0)
+        used_props = used_props_by_case_type.get(case_type.name, [])
+        case_types_data.append({
+            "name": case_type.name,
+            "fhir_resource_type": fhir_resource_type_name_by_case_type.get(case_type),
+            "is_deprecated": case_type.is_deprecated,
+            "module_count": module_count,
+            "properties_count": case_type.properties_count,
+            "is_safe_to_delete": len(used_props) == 0,
+        })
+    return JsonResponse({
+        'case_types': case_types_data,
+        'geo_case_property': geo_case_prop,
+    })
+
+
+@login_and_domain_required
+@requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
+def data_dictionary_json_case_properties(request, domain, case_type_name):
+    try:
+        skip = int(request.GET.get('skip', 0))
+        limit = int(request.GET.get('limit', 500))
+        if skip < 0 or limit < 0:
+            raise ValueError
+    except ValueError:
+        return JsonResponse({"error": _("skip and limit must be positive integers")}, status=400)
+
+    fhir_resource_prop_by_case_prop = {}
+    if toggles.FHIR_INTEGRATION.enabled(domain):
+        fhir_resource_prop_by_case_prop = load_fhir_case_properties_mapping(domain)
+
+    case_type = get_object_or_404(
+        CaseType.objects.annotate(properties_count=Count('property')),
+        domain=domain,
+        name=case_type_name
+    )
+    case_type_data = {
+        "name": case_type.name,
+        "properties_count": case_type.properties_count,
+        "groups": []
+    }
+
+    current_url = request.build_absolute_uri()
+    case_type_data["_links"] = _get_pagination_links(current_url, case_type_data["properties_count"], skip, limit)
+
+    properties_queryset = (
+        CaseProperty.objects
+        .select_related('group')
+        .filter(case_type=case_type)
+        .order_by('group_id', 'index', 'pk')[skip:skip + limit]
+        .prefetch_related(Prefetch(
+            'allowed_values',
+            queryset=CasePropertyAllowedValue.objects.order_by('allowed_value')
+        ))
+    )
+
+    data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
+    used_props_by_case_type = get_used_props_by_case_type(domain, case_type_name)
+    geo_case_prop = get_geo_case_property(domain)
+
+    used_props = used_props_by_case_type.get(case_type.name, [])
+
+    for group_id, props in itertools.groupby(properties_queryset, key=attrgetter("group_id")):
+        props = list(props)
+        grouped_properties = []
+        for prop in props:
+            prop_data = {
+                'id': prop.id,
+                'description': prop.description,
+                'label': prop.label,
+                'fhir_resource_prop_path': fhir_resource_prop_by_case_prop.get(prop),
+                'name': prop.name,
+                'deprecated': prop.deprecated,
+                'is_safe_to_delete': prop.name not in used_props and prop.name != geo_case_prop,
+                'index': prop.index,
+            }
+            if data_validation_enabled:
+                prop_data.update({
+                    'data_type': prop.data_type,
+                    'allowed_values': {
+                        av.allowed_value: av.description
+                        for av in prop.allowed_values.all()
+                    },
+                })
+            grouped_properties.append(prop_data)
+
+        group_data = {
+            "name": "",
+            "properties": grouped_properties
+        }
+        # Note that properties can be without group
+        if group_id:
+            group = props[0].group
+            group_data.update({
+                "id": group.id,
+                "name": group.name,
+                "description": group.description,
+                "deprecated": group.deprecated,
+            })
+        case_type_data["groups"].append(group_data)
+    if not properties_queryset:
+        case_type_data["groups"].append({
+            "name": "",
+            "properties": []
+        })
+
+    # properties_queryset skips groups with no properties. Add them here
+    empty_groups = (
+        CasePropertyGroup.objects
+        .annotate(properties_count=Count('property'))
+        .filter(case_type=case_type)
+        .filter(properties_count=0)
+    )
+    for group in empty_groups:
+        case_type_data["groups"].append({
+            "id": group.id,
+            "name": group.name,
+            "description": group.description,
+            "deprecated": group.deprecated,
+            "properties": []
+        })
+
+    return JsonResponse(case_type_data)
+
+
+def _get_pagination_links(current_url, total_records, skip, limit):
+    links = {"self": update_url_query_params(current_url, {"skip": skip, "limit": limit})}
+    if skip:
+        links["previous"] = update_url_query_params(
+            current_url,
+            {"skip": max(skip - limit, 0), "limit": limit}
+        )
+    if total_records > (skip + limit):
+        links["next"] = update_url_query_params(current_url, {"skip": skip + limit, "limit": limit})
+    return links
 
 
 @login_and_domain_required
@@ -341,9 +501,8 @@ def _generate_data_for_export(domain, export_fhir_data):
     fhir_resource_prop_by_case_prop = {}
 
     if export_fhir_data:
-        fhir_resource_type_name_by_case_type, fhir_resource_prop_by_case_prop = load_fhir_resource_mappings(
-            domain
-        )
+        fhir_resource_type_name_by_case_type = load_fhir_case_type_mapping(domain)
+        fhir_resource_prop_by_case_prop = load_fhir_case_properties_mapping(domain)
         _add_fhir_resource_mapping_sheet(case_type_data, fhir_resource_type_name_by_case_type)
 
     for case_type in queryset:

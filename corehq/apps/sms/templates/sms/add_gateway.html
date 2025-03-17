@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% requirejs_main 'sms/js/add_gateway' %}
+{% js_entry_b3 'sms/js/add_gateway' %}
 
 {% block page_content %}
   {% initial_page_data 'give_other_domains_access' form.give_other_domains_access.value %}

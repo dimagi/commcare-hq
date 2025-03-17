@@ -1,6 +1,13 @@
 from django.urls import include, re_path as url
 
 from corehq.apps.styleguide.examples.bootstrap5.example_urls import urlpatterns as example_urlpatterns
+from corehq.apps.styleguide.examples.bootstrap5.htmx_alpine_form_views import (
+    HtmxAlpineFormDemoView,
+    FilterDemoFormView,
+)
+from corehq.apps.styleguide.examples.bootstrap5.htmx_hq_hx_action import TodoListDemoView
+from corehq.apps.styleguide.examples.bootstrap5.htmx_pagination_host_view import HtmxPaginationView
+from corehq.apps.styleguide.examples.bootstrap5.htmx_pagination_table_view import ExamplePaginatedTableView
 from corehq.apps.styleguide.views import (
     AtomsStyleGuideView,
     MainStyleGuideView,
@@ -19,6 +26,16 @@ doc_urlpatterns = [
         include('corehq.apps.styleguide.examples.simple_crispy_form.urls')),
 ]
 
+advanced_demo_urlpatterns = [
+    url(r'^htmx_todo/$', TodoListDemoView.as_view(), name=TodoListDemoView.urlname),
+    url(r'^htmx_alpine_form/$', HtmxAlpineFormDemoView.as_view(), name=HtmxAlpineFormDemoView.urlname),
+    url(r'^htmx_alpine_form/form/$', FilterDemoFormView.as_view(), name=FilterDemoFormView.urlname),
+    url(r'^htmx_pagination/$', HtmxPaginationView.as_view(),
+        name=HtmxPaginationView.urlname),
+    url(r'^htmx_pagination/table/$', ExamplePaginatedTableView.as_view(),
+        name=ExamplePaginatedTableView.urlname),
+]
+
 urlpatterns = [
     url(r'^$', MainStyleGuideView.as_view(), name=MainStyleGuideView.urlname),
     url(r'^atoms/$', AtomsStyleGuideView.as_view(),
@@ -30,6 +47,7 @@ urlpatterns = [
     url(r'^pages/$', PagesStyleGuideView.as_view(),
         name=PagesStyleGuideView.urlname),
     url(r'^docs/', include(doc_urlpatterns)),
+    url(r'^demo/', include(advanced_demo_urlpatterns)),
     url(r'^b5/$', bootstrap5.styleguide_home, name="styleguide_home_b5"),
     url(r'^b5/data/select2_ajax_demo$', bootstrap5_data.select2_ajax_demo,
         name="styleguide_data_select2_ajax_demo"),
@@ -45,6 +63,8 @@ urlpatterns = [
         name="styleguide_datatables_data"),
     url(r'^b5/data/paginated_table_data$', bootstrap5_data.paginated_table_data,
         name="styleguide_paginated_table_data"),
+    url(r'^b5/data/a_hanging_view$', bootstrap5_data.a_hanging_view,
+        name="styleguide_a_hanging_view"),
     url(r'^b5/example/', include(example_urlpatterns)),
     url(r'^b5/guidelines/$', bootstrap5.styleguide_code_guidelines,
         name="styleguide_code_guidelines_b5"),
@@ -52,6 +72,10 @@ urlpatterns = [
         name="styleguide_migration_guide_b5"),
     url(r'^b5/javascript/$', bootstrap5.styleguide_javascript_guide,
         name="styleguide_javascript_guide_b5"),
+    url(r'^b5/html/$', bootstrap5.styleguide_html_guide,
+        name="styleguide_html_guide_b5"),
+    url(r'^b5/htmx_alpine/$', bootstrap5.styleguide_htmx_and_alpine,
+        name="styleguide_htmx_and_alpine_b5"),
     url(r'^b5/atoms/accessibility/$', bootstrap5.styleguide_atoms_accessibility,
         name="styleguide_atoms_accessibility_b5"),
     url(r'^b5/atoms/typography/$', bootstrap5.styleguide_atoms_typography,

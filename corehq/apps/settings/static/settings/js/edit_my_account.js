@@ -1,8 +1,9 @@
 hqDefine('settings/js/edit_my_account', [
     'jquery',
     'select2/dist/js/select2.full.min',
+    'commcarehq',
 ], function (
-    $
+    $,
 ) {
     $(function () {
         $('#id_language').select2();

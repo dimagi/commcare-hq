@@ -1,0 +1,13 @@
+--- 
++++ 
+@@ -1,8 +1,7 @@
+-hqDefine('domain/js/bootstrap3/internal_subscription_management', [
++hqDefine('domain/js/bootstrap5/internal_subscription_management', [
+     'jquery',
+     'knockout',
+-    'hqwebapp/js/bootstrap3/widgets',
+-    'commcarehq',
++    'hqwebapp/js/bootstrap5/widgets',
+ ], function (
+     $,
+     ko

@@ -1,9 +1,7 @@
-$cloudcare-nav-height: 30px;
-
 .navbar-cloudcare {
   margin-bottom: 0;
   border: none;
-  background-color: $cc-brand-low;
+  background-color: $cc-brand-mid;
   min-height: $cloudcare-nav-height;
   transition: 1s all;
   z-index: $zindex-navbar-cloudcare;
@@ -11,10 +9,8 @@ $cloudcare-nav-height: 30px;
 
 .navbar-cloudcare .navbar-brand {
   color: $cc-bg;
-  height: $cloudcare-nav-height;
-  padding: 6.5px 15px;
+  padding: 6.5px 0;
   text-transform: uppercase;
-  font-size: 11px;
 }
 
 .navbar-cloudcare .navbar-nav {

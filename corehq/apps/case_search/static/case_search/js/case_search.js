@@ -1,4 +1,4 @@
-'use strict';
+
 
 hqDefine('case_search/js/case_search', [
     'jquery',
@@ -6,12 +6,13 @@ hqDefine('case_search/js/case_search', [
     'knockout',
     'hqwebapp/js/bootstrap5/alert_user',
     'hqwebapp/js/initial_page_data',
+    'commcarehq',
 ], function (
     $,
     _,
     ko,
     alertUser,
-    initialPageData
+    initialPageData,
 ) {
     var caseSearchModel = function (caseDataUrl) {
         var self = {};
@@ -71,7 +72,7 @@ hqDefine('case_search/js/case_search', [
                     parameters: self.parameters(),
                     customQueryAddition: self.customQueryAddition(),
                     xpath_expressions: _.pluck(self.xpath_expressions(), 'xpath'),
-                }
+                },
                 )}),
                 success: function (data) {
                     self.results(data.values);

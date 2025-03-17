@@ -104,10 +104,17 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         # the closed case causes there to be some data with an end_column
         cls.closed_case_id = cls._create_closed_case()
 
+        def cleanup_datasource(data_source, adapter):
+            data_source.get_db().delete_doc(data_source.get_id)
+            adapter.drop_table()
+
         # populate the UCRs with the data we just created
         cls.form_adapter = get_indicator_adapter(cls.form_data_source)
+        cls.addClassCleanup(cleanup_datasource, cls.form_data_source, cls.form_adapter)
         cls.case_adapter = get_indicator_adapter(cls.case_data_source)
+        cls.addClassCleanup(cleanup_datasource, cls.case_data_source, cls.case_adapter)
         cls.parent_case_adapter = get_indicator_adapter(cls.parent_case_data_source)
+        cls.addClassCleanup(cleanup_datasource, cls.parent_case_data_source, cls.parent_case_adapter)
 
         cls.form_adapter.rebuild_table()
         cls.case_adapter.rebuild_table()

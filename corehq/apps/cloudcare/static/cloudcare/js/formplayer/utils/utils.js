@@ -1,20 +1,23 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/utils/utils", [
     'jquery',
     'underscore',
     'backbone',
     'DOMPurify/dist/purify.min',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
-    "cloudcare/js/formplayer/constants"
+    "cloudcare/js/formplayer/constants",
+    'cloudcare/js/formplayer/apps/api',
 ], function (
     $,
     _,
     Backbone,
     DOMPurify,
+    bootstrap,
     initialPageData,
     toggles,
-    constants
+    constants,
+    AppsAPI,
 ) {
     var Utils = {};
 
@@ -51,7 +54,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
         $confirmationButton.on('click.confirmationModal', function (e) {
             options.onConfirm(e);
         });
-        $modal.modal('show');
+        bootstrap.Modal.getOrCreateInstance($modal).show();
     };
 
     Utils.encodedUrlToObject = function (encodedUrl) {
@@ -312,6 +315,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
             sessionStorage.removeItem('validationInProgress');
             sessionStorage.removeItem('answerQuestionInProgress');
             sessionStorage.removeItem('formplayerQueryInProgress');
+            sessionStorage.removeItem('collapsedIx');
         };
 
         this.onSubmit = function () {
@@ -448,26 +452,27 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
     };
 
     Utils.setSyncInterval = function (appId, restartInterval) {
-        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
-            const currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId);
-            let customProperties = {};
-            if (currentApp && currentApp.attributes && currentApp.attributes.profile) {
-                customProperties = currentApp.attributes.profile.custom_properties || {};
-            }
+        const currentApp = AppsAPI.getAppEntity(appId);
+        let customProperties = {};
+        if (currentApp && currentApp.attributes && currentApp.attributes.profile) {
+            customProperties = currentApp.attributes.profile.custom_properties || {};
+        }
 
-            const useAggressiveSyncTiming = (customProperties[constants.POST_FORM_SYNC] === "yes");
-            if (!useAggressiveSyncTiming) {
-                return;
-            }
+        if (toggles.toggleEnabled('USH_DISABLE_INTERVAL_SYNC')) {
+            return;
+        }
+        const useAggressiveSyncTiming = (customProperties[constants.POST_FORM_SYNC] === "yes");
+        if (!useAggressiveSyncTiming) {
+            return;
+        }
 
-            const FIVE_MINUTES_IN_MILLISECONDS = 1000 * 60 * 5;
-            if (restartInterval) {
-                stopSyncInterval();
-                startSyncInterval(FIVE_MINUTES_IN_MILLISECONDS);
-            } else {
-                startSyncInterval(FIVE_MINUTES_IN_MILLISECONDS);
-            }
-        });
+        const FIVE_MINUTES_IN_MILLISECONDS = 1000 * 60 * 5;
+        if (restartInterval) {
+            stopSyncInterval();
+            startSyncInterval(FIVE_MINUTES_IN_MILLISECONDS);
+        } else {
+            startSyncInterval(FIVE_MINUTES_IN_MILLISECONDS);
+        }
     };
 
     function startSyncInterval(delayInMilliseconds) {
@@ -481,11 +486,11 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
             }
         }
 
-        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
+        import("cloudcare/js/formplayer/app").then(function (FormplayerFrontend) {
             if (!FormplayerFrontend.syncInterval) {
                 FormplayerFrontend.syncInterval = setInterval(function () {
                     const urlObject = Utils.currentUrlToObject(),
-                        currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", urlObject.appId);
+                        currentApp = AppsAPI.getAppEntity(urlObject.appId);
                     let customProperties = {};
                     if (currentApp && currentApp.attributes && currentApp.attributes.profile) {
                         customProperties = currentApp.attributes.profile.custom_properties || {};
@@ -503,7 +508,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
     }
 
     function stopSyncInterval() {
-        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
+        import("cloudcare/js/formplayer/app").then(function (FormplayerFrontend) {
             clearInterval(FormplayerFrontend.syncInterval);
             FormplayerFrontend.syncInterval = null;
         });

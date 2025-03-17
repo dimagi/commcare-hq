@@ -13,10 +13,9 @@ hqDefine("reports/js/bootstrap3/hq_report", [
     alertUser,
     kissmetrics,
     initialPageData,
-    widgets  // eslint-disable-line no-unused-vars
+    widgets,  // eslint-disable-line no-unused-vars
 ) {
     var hqReport = function (options) {
-        'use strict';
         var self = {};
         self.domain = options.domain;
         self.datespan = options.datespan;
@@ -184,9 +183,12 @@ hqDefine("reports/js/bootstrap3/hq_report", [
                     .removeClass('disabled')
                     .prop('disabled', false);
             });
-            $('#paramSelectorForm fieldset').on('change apply', function () {
-                $(self.filterSubmitSelector)
-                    .button('reset')
+            $('#paramSelectorForm fieldset').on('change apply', function (e) {
+                // Ensure correct submit button is found in context of which form the button belongs to.
+                // This is necessary for pages that contain multiple filter panels, since we are using CSS IDs.
+                const submitButton = $(e.target).closest('#reportFilters').find(self.filterSubmitSelector);
+                $(submitButton)
+                    .changeButtonState('reset')
                     .addClass('btn-primary')
                     .removeClass('disabled')
                     .prop('disabled', false);

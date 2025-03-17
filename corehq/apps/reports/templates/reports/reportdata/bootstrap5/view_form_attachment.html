@@ -7,9 +7,15 @@
     {% if is_image %}
       <img src="{{ download_url }}">
     {% else %}
-      <video controls {% if disable_download %} controlsList="nodownload" {% endif %} autoplay name="{{ content_name }}" style="top: 10%; left: 10%; position: absolute;">  {# todo B5: inline style #}
-        <source src="{{ download_url }}">
-      </video>
+      {% if disable_download %}
+        <audio controls oncontextmenu="return false;" controlsList="nodownload" autoplay name="{{ content_name }}" style="top: 10%; left: 10%; position: absolute;">
+          <source src="{{ download_url }}">
+        </audio>
+      {% else %}
+        <video controls autoplay name="{{ content_name }}" style="top: 10%; left: 10%; position: absolute;">  {# todo B5: inline style #}
+          <source src="{{ download_url }}">
+        </video>
+      {% endif %}
     {% endif %}
   </body>
 </html>

@@ -20,6 +20,7 @@ from corehq.apps.hqcase.utils import AUTO_UPDATE_XMLNS
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.models import XFormInstance
 from corehq.apps.case_importer.do_import import SubmitCaseBlockHandler, RowAndCase
+from corehq.motech.repeaters.const import State
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.toggles import DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
@@ -212,27 +213,14 @@ def task_generate_ids_and_operate_on_payloads(
     payload_id: Optional[str],
     repeater_id: Optional[str],
     domain: str,
-    action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
+    action: Literal['resend', 'cancel', 'requeue'],
+    state: Literal[None, State.Pending, State.Cancelled] = None,
 ) -> dict:
-    repeat_record_ids = _get_repeat_record_ids(payload_id, repeater_id, domain)
+    repeat_record_ids = RepeatRecord.objects.get_repeat_record_ids(
+        domain, repeater_id=repeater_id, state=state, payload_id=payload_id,
+    )
     return operate_on_payloads(repeat_record_ids, domain, action,
                                task=task_generate_ids_and_operate_on_payloads)
-
-
-def _get_repeat_record_ids(payload_id, repeater_id, domain):
-    if payload_id:
-        queryset = RepeatRecord.objects.filter(
-            domain=domain,
-            payload_id=payload_id,
-        )
-    elif repeater_id:
-        queryset = RepeatRecord.objects.filter(
-            domain=domain,
-            repeater__id=repeater_id,
-        )
-    else:
-        return []
-    return list(queryset.order_by().values_list("id", flat=True))
 
 
 @task

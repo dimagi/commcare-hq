@@ -1,10 +1,12 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
 
-from casexml.apps.phone.models import OTARestoreUser
-from casexml.apps.case.xml import V1, V2
 from django.conf import settings
+
+from memoized import memoized
+
+from casexml.apps.case.xml import V1
+from casexml.apps.phone.models import OTARestoreUser
 from dimagi.utils.modules import to_function
-import itertools
 
 
 class FixtureProvider(metaclass=ABCMeta):
@@ -18,11 +20,9 @@ class FixtureProvider(metaclass=ABCMeta):
         raise NotImplementedError
 
 
-class FixtureGenerator(object):
+@memoized
+def _fixture_generators():
     """
-    The generator object, which gets fixtures from your config file that should
-    be included when OTA restoring.
-
     See: https://bitbucket.org/javarosa/javarosa/wiki/externalinstances
 
     To use, add the following to your settings.py
@@ -45,19 +45,19 @@ class FixtureGenerator(object):
 
     The function should return an empty list if there are no fixtures
     """
-
-    def __init__(self):
-        functions = [to_function(func_path, failhard=True) for func_path in settings.FIXTURE_GENERATORS]
-        self._generator_providers = [f for f in functions if f]
-
-    def get_providers(self, user, fixture_id=None, version=V2):
-        if version == V1:
-            return []  # V1 phones will never use or want fixtures
-
-        if not isinstance(user, OTARestoreUser):
-            return []
-
-        return self._generator_providers
+    functions = [to_function(func_path, failhard=True) for func_path in settings.FIXTURE_GENERATORS]
+    return [f for f in functions if f]
 
 
-generator = FixtureGenerator()
+def get_fixture_elements(restore_state, timing_context, skip_fixtures):
+    if restore_state.version == V1:
+        return  # V1 phones will never use or want fixtures
+
+    if not isinstance(restore_state.restore_user, OTARestoreUser):
+        return
+
+    for provider in _fixture_generators():
+        if not skip_fixtures or getattr(provider, 'ignore_skip_fixtures_flag', False):
+            with timing_context('fixture:{}'.format(provider.id)):
+                for element in provider(restore_state):
+                    yield element

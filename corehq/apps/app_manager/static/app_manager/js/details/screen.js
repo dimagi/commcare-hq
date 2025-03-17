@@ -14,7 +14,8 @@
 hqDefine("app_manager/js/details/screen", function () {
     const Utils = hqImport('app_manager/js/details/utils'),
         ColumnModel = hqImport("app_manager/js/details/column"),
-        uiMapList = hqImport("hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list");
+        uiMapList = hqImport("hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list"),
+        initialPageData = hqImport('hqwebapp/js/initial_page_data');
 
     const getPropertyTitle = function (property) {
         // Strip "<prefix>:" before converting to title case.
@@ -59,6 +60,7 @@ hqDefine("app_manager/js/details/screen", function () {
         self.containsSearchConfiguration = options.containsSearchConfiguration;
         self.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
         self.allowsTabs = options.allowsTabs;
+        self.allowsCustomXML = hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML');
 
         let baseCaseTileTemplateOptions = [[null, gettext("Don't Use Case Tiles")]];
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE_CUSTOM')) {
@@ -106,6 +108,11 @@ hqDefine("app_manager/js/details/screen", function () {
             const caseTileTemplate = self.caseTileTemplate() && self.caseTileTemplate() !== "custom";
             return caseTileTemplate && featureFlag;
         });
+        self.showCaseListOptimizations = (
+            self.columnKey === 'short' &&
+            initialPageData.get('app_supports_case_list_optimizations') &&
+            initialPageData.get('show_case_list_optimization_options')
+        );
         self.persistCaseContext = ko.observable(detail.persist_case_context || false);
         self.persistentCaseContextXML = ko.observable(detail.persistent_case_context_xml || 'case_name');
 
@@ -334,8 +341,7 @@ hqDefine("app_manager/js/details/screen", function () {
             });
         };
         self.allowsEmptyColumns = options.allowsEmptyColumns;
-        self.persistentCaseTileFromModule = (
-            ko.observable(detail.persistent_case_tile_from_module || ""));
+        self.persistentCaseTileFromModule = ko.observable(detail.persistent_case_tile_from_module || "");
         self.fireChange = function () {
             self.fire('change');
         };
@@ -494,7 +500,8 @@ hqDefine("app_manager/js/details/screen", function () {
         self.save = function () {
             // Only save if property names are valid
             var errors = [],
-                containsTab = false;
+                containsTab = false,
+                imageColumnCount = 0;
             _.each(self.columns(), function (column) {
                 column.saveAttempted(true);
                 if (column.isTab) {
@@ -504,8 +511,14 @@ hqDefine("app_manager/js/details/screen", function () {
                     }
                 } else if (column.showWarning()) {
                     errors.push(gettext("There is an error in your property name: ") + column.field.value);
+                } else if (column.format.value === 'image') {
+                    imageColumnCount += 1;
                 }
             });
+
+            if (imageColumnCount > 1) {
+                errors.push(gettext("You can only have one property with the 'Image' format"));
+            }
             if (containsTab) {
                 if (!self.columns()[0].isTab) {
                     errors.push(gettext("All properties must be below a tab."));
@@ -680,12 +693,16 @@ hqDefine("app_manager/js/details/screen", function () {
                 hasAutocomplete: true,
             });
         };
+
+        self.hasGraphing = hqImport('app_manager/js/app_manager').checkCommcareVersion("2.17");
         self.addGraph = function () {
             self.addItem({
                 hasAutocomplete: false,
                 format: 'graph',
             });
         };
+
+        self.hasXpathExpressions = hqImport("hqwebapp/js/initial_page_data").get("add_ons").calc_xpaths;
         self.addXpathExpression = function () {
             self.addItem({
                 hasAutocomplete: false,

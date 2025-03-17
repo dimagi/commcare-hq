@@ -11,7 +11,7 @@ hqDefine('notifications/js/bootstrap5/notifications_service_main', [
     $,
     initialPageData,
     notificationsService,
-    googleAnalytics
+    googleAnalytics,
 ) {
     var initNotifications = function () {
         var csrfToken = $("#csrfTokenContainer").val();

@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load compress %}
 
-{% requirejs_main 'toggle_ui/js/edit-flag' %}
+{% js_entry_b3 'toggle_ui/js/edit-flag' %}
 
 {% block title %}{% trans "Edit Feature Flag: " %}{{ static_toggle.label }}{% endblock %}
 
@@ -22,7 +22,7 @@
 
 {% block page_content %}
   {% registerurl 'edit_toggle' toggle.slug %}
-  {% registerurl 'domain_internal_settings' '___' %}
+  {% registerurl 'domain_internal_settings' '---' %}
   {% initial_page_data 'items' toggle.enabled_users %}
   {% initial_page_data 'namespaces' namespaces %}
   {% initial_page_data 'last_used' last_used %}
@@ -155,7 +155,7 @@
         {% trans "Enabled toggle items" %}
         {% if is_random %}
         <span data-bind="makeHqHelp: {
-            description: '{% trans "Items added here will be enabled regardless of the randomness" %}'}"></span>
+            description: '{% trans "Items added here will be enabled regardless of the randomness (or disabled if preceded by `!`)" %}'}"></span>
         {% endif %}
       </h4>
       <table class="table table-condensed"><!-- B5: add table-borderless and remove `border: none` inline styles on table cells -->
@@ -169,6 +169,12 @@
                   </button>
                 </span>
                 <input class="form-control" type="text" data-bind="value: value">
+                <!-- ko if: value() && value()[0] == '!' -->
+                <span class="input-group-addon"><i class="fa fa-circle-xmark"></i></span>
+                <!-- /ko -->
+                <!-- ko ifnot: value() && value()[0] == '!' -->
+                <span class="input-group-addon"><i class="fa fa-check"></i></span>
+                <!-- /ko -->
               </div>
             </td>
             <!-- B5: replace inline styles with vertical alignment class: https://getbootstrap.com/docs/5.3/utilities/vertical-align/#css -->

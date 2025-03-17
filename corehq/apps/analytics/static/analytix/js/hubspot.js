@@ -1,4 +1,4 @@
-"use strict";
+
 /**
  * Instatiates the Hubspot analytics platform.
  */
@@ -17,9 +17,8 @@ hqDefine('analytix/js/hubspot', [
     logging,
     utils,
     kissmetrics,
-    ctaForms
+    ctaForms,
 ) {
-    'use strict';
     var _get = initialAnalytics.getFn('hubspot'),
         _logger = logging.getLoggerForApi('Hubspot'),
         _ready = $.Deferred(),
@@ -35,7 +34,6 @@ hqDefine('analytix/js/hubspot', [
         _ready = utils.initApi(_ready, apiId, scriptUrl, _logger);
 
         // these forms get processed on the backend, so they don't need the hubspot js to be loaded
-        _utils.loadTrialForm();
         if (_get('isDemoVisible')) {
             _utils.loadDemoForm();
         }
@@ -46,28 +44,15 @@ hqDefine('analytix/js/hubspot', [
      * Activates the Hubspot Request Demo form
      */
     _utils.loadDemoForm = function () {
-        let isTrial = _get('isDemoTrial'),
-            isVariant = _get('demoABv2') && _get('demoABv2').version === 'variant',
-            $modal = $('#cta-form-get-demo'),
+        let $modal = $('#cta-form-get-demo'),
             $form = $('#get-demo-cta-form-content'),
             hasInteractedWithForm = false,
-            formId,
+            formId = "f6ebf161-fccf-4083-9a72-5839a0c8ac8c",
             demoForm;
-
-        if (isTrial) {
-            formId = isVariant ? "c2381f55-9bd9-4f27-8476-82900e58bfd6" : "4474515e-fea6-4154-b3cf-1fe42b1c1333";
-        } else {
-            formId = isVariant ? "f6ebf161-fccf-4083-9a72-5839a0c8ac8c" : "d1897875-a5bb-4b63-9b9c-3d8fdbbe8274";
-        }
 
         demoForm = ctaForms.hubspotCtaForm({
             hubspotFormId: formId,
-            showContactMethod: isVariant,
-            showPreferredLanguage: false,
-            useWhatsApp: false,
-            useGoogleHangouts: true,
             nextButtonText: gettext("Submit Request"),
-            phoneNumberSelector: $form.find('input[name="phone"]'),
             submitCallbackFn: function () {
                 $('#get-demo-cta-success').fadeIn();
                 $('#get-demo-cta-form-content').addClass('hidden').addClass('d-none'); // todo after bootstrap 5 migration
@@ -89,52 +74,6 @@ hqDefine('analytix/js/hubspot', [
         $form.find('input').click(function () {
             if (!hasInteractedWithForm) {
                 kissmetrics.track.event("Demo Workflow - Interacted With Form");
-                hasInteractedWithForm = true;
-            }
-        });
-    };
-
-    /**
-     * Activates the Hubspot Request Trial form
-     */
-    _utils.loadTrialForm = function () {
-        let $modal = $('#cta-form-start-trial'),
-            $form = $('#get-trial-cta-form-content'),
-            hasInteractedWithForm = false,
-            trialForm;
-
-        if ($form.length === 0) {
-            return;
-        }
-
-        trialForm = ctaForms.hubspotCtaForm({
-            hubspotFormId: '9c8ecc33-b088-474e-8f4c-1b10fae50c2f',
-            showContactMethod: true,
-            showPreferredLanguage: true,
-            useWhatsApp: true,
-            useGoogleHangouts: false,
-            nextButtonText: gettext("Next"),
-            phoneNumberSelector: $form.find('input[name="phone"]'),
-            submitCallbackFn: function () {
-                kissmetrics.track.event("Get Trial Workflow - Contact Info Received");
-
-                $('#choose-callback-options').toggleClass('hidden').toggleClass('d-none'); // todo after bootstrap 5 migration
-                $('#get-trial-cta-form-content').addClass('hidden').addClass('d-none'); // todo after bootstrap 5 migration
-                $('#start-trial-modal-header').text(gettext("Your trial request has been received!"));
-            },
-        });
-        $form.koApplyBindings(trialForm);
-
-        $modal.on('shown.bs.modal', function () {
-            kissmetrics.track.event("Get Trial Workflow - Viewed Form");
-        });
-        $modal.on('hide.bs.modal', function () {
-            kissmetrics.track.event("Get Trial Workflow - Dismissed Form");
-        });
-
-        $form.find('input').click(function () {
-            if (!hasInteractedWithForm) {
-                kissmetrics.track.event("Get Trial Workflow - Interacted With Form");
                 hasInteractedWithForm = true;
             }
         });

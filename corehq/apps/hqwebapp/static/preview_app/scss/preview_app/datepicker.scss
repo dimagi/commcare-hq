@@ -1,0 +1,27 @@
+$datepicker-width: 247px;
+$datepicker-width-tablet: 447px;
+$datepicker-height: 410px;
+$datepicker-height-tablet: 565px;
+
+.tempus-dominus-widget {
+  transform: none !important;
+  position: fixed;
+  top: 30px !important;
+  left: 0px !important;
+  padding-bottom: 15px !important;
+  min-height: $datepicker-height !important;
+
+  padding: 5px !important;
+  width: $datepicker-width !important;
+  margin-left: 2px !important;
+  margin-right: 2px !important;
+
+  .datepicker {
+    margin: auto;
+  }
+}
+
+.preview-tablet-mode .tempus-dominus-widget {
+  width: $datepicker-width-tablet !important;
+  min-height: $datepicker-height-tablet !important;
+}

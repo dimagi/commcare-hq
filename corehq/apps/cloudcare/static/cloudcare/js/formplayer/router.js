@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/router", [
     'underscore',
     'backbone',
@@ -29,13 +28,12 @@ hqDefine("cloudcare/js/formplayer/router", [
     sessionsController,
     usersController,
     usersModels,
-    AppRouter
+    AppRouter,
 ) {
     var params = {
         appRoutes: {
             "apps": "listApps", // list all apps available to this user
             "single_app/:id": "singleApp", // Show app in phone mode (SingleAppView)
-            "home/:id": "landingPageApp", // Show app in landing page mode (LandingPageAppView)
             "sessions": "listSessions", //list all this user's current sessions (incomplete forms)
             "sessions/:id": "getSession",
             "restore_as/:page/:query": "listUsers",
@@ -59,9 +57,6 @@ hqDefine("cloudcare/js/formplayer/router", [
             user.previewAppId = appId;
             appsController.singleApp(appId);
         },
-        landingPageApp: function (appId) {
-            appsController.landingPageApp(appId);
-        },
         selectApp: function (appId, isInitial) {
             menusController.selectMenu({
                 'appId': appId,
@@ -76,7 +71,7 @@ hqDefine("cloudcare/js/formplayer/router", [
                 // We can't do any menu navigation without an appId
                 FormplayerFrontend.trigger("apps:list");
             } else {
-                menusController.selectMenu(urlObject);
+                return menusController.selectMenu(urlObject);
             }
         },
         listUsers: function (page, query) {
@@ -129,7 +124,7 @@ hqDefine("cloudcare/js/formplayer/router", [
             // entry if it is a form response.
             menuCollection = menusCollections(
                 response,
-                { parse: true }
+                { parse: true },
             );
             // Need to get URL fragment again since fetch might have updated it
             currentFragment = Backbone.history.getFragment();
@@ -163,11 +158,6 @@ hqDefine("cloudcare/js/formplayer/router", [
     FormplayerFrontend.on('app:singleApp', function (appId) {
         utils.navigate("/single_app/" + appId);
         API.singleApp(appId);
-    });
-
-    FormplayerFrontend.on('app:landingPageApp', function (appId) {
-        utils.navigate("/home/" + appId);
-        API.landingPageApp(appId);
     });
 
     FormplayerFrontend.on("menu:select", function (index) {
@@ -226,7 +216,7 @@ hqDefine("cloudcare/js/formplayer/router", [
         API.listMenus();
     });
 
-    FormplayerFrontend.on("menu:query", function (queryDict, sidebarEnabled, initiatedByTag) {
+    FormplayerFrontend.getChannel().reply("menu:query", function (queryDict, sidebarEnabled, initiatedByTag) {
         var urlObject = utils.currentUrlToObject();
         var queryObject = _.extend(
             {
@@ -234,7 +224,7 @@ hqDefine("cloudcare/js/formplayer/router", [
                 execute: true,
             },
             // force manual search in split screen case search for workflow compatibility
-            sidebarEnabled ? { forceManualSearch: true } : {}
+            sidebarEnabled ? { forceManualSearch: true } : {},
         );
         urlObject.setQueryData(queryObject);
         utils.setUrlToObject(urlObject);
@@ -243,7 +233,7 @@ hqDefine("cloudcare/js/formplayer/router", [
         urlObject.setRequestInitiatedByTag(initiatedByTag);
         let encodedUrl = utils.objectToEncodedUrl(urlObject.toJson());
         sessionStorage.removeItem('selectedValues');
-        API.listMenus(encodedUrl);
+        return API.listMenus(encodedUrl);
     });
 
     FormplayerFrontend.on('restore_as:list', function () {
@@ -275,16 +265,31 @@ hqDefine("cloudcare/js/formplayer/router", [
     });
 
     FormplayerFrontend.on("breadcrumbSelect", function (index) {
+        if (!FormplayerFrontend.confirmUserWantsToNavigateAwayFromForm()) {
+            return;
+        }
         FormplayerFrontend.trigger("clearForm");
         var urlObject = utils.currentUrlToObject();
         urlObject.spliceSelections(index);
         utils.setUrlToObject(urlObject);
         var options = {
             'appId': urlObject.appId,
+            'copyOf': urlObject.copyOf,
             'selections': urlObject.selections,
             'queryData': urlObject.queryData,
         };
         menusController.selectMenu(options);
+    });
+
+    FormplayerFrontend.on("persistentMenuSelect", function (selections) {
+        if (!FormplayerFrontend.confirmUserWantsToNavigateAwayFromForm()) {
+            return;
+        }
+        FormplayerFrontend.trigger("clearForm");
+        menusController.selectMenu({
+            'appId': utils.currentUrlToObject().appId,
+            'selections': selections,
+        });
     });
 
     return {

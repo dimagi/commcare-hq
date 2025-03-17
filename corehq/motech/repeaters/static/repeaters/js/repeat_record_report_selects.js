@@ -1,9 +1,9 @@
-/* globals ace */
-hqDefine('repeaters/js/repeat_record_report_selects', function() {
-    var items = document.getElementsByName('xform_ids'),
-        all = document.getElementById('select-all'),
-        allCancel = document.getElementById('cancel-all'),
-        allRequeue = document.getElementById('requeue-all'),
+
+hqDefine('repeaters/js/repeat_record_report_selects', ['jquery'], function ($) {
+    const items = document.getElementsByName('xform_ids'),
+        selectAll = document.getElementById('select-all'),
+        selectPending = document.getElementById('select-pending'),
+        selectCancelled = document.getElementById('select-cancelled'),
         buttonCancel = document.getElementById('cancel-all-button'),
         buttonRequeue = document.getElementById('requeue-all-button');
 
@@ -18,9 +18,9 @@ hqDefine('repeaters/js/repeat_record_report_selects', function() {
     });
 
     $('#select-all').on('click', function () {
-        if (all.checked) {
+        if (selectAll.checked) {
             selectItems();
-            uncheck(allCancel, allRequeue);
+            uncheck(selectPending, selectCancelled);
             turnOffCancelRequeue();
         } else {
             unSelectItems();
@@ -28,11 +28,11 @@ hqDefine('repeaters/js/repeat_record_report_selects', function() {
         }
     });
 
-    $('#cancel-all').on('click', function () {
+    $('#select-pending').on('click', function () {
         unSelectItems();
-        uncheck(all, allRequeue);
+        uncheck(selectAll, selectCancelled);
         turnOnCancelRequeue();
-        if (allCancel.checked) {
+        if (selectPending.checked) {
             buttonRequeue.disabled = true;
             checkMultipleItems('cancel');
         } else {
@@ -40,11 +40,11 @@ hqDefine('repeaters/js/repeat_record_report_selects', function() {
         }
     });
 
-    $('#requeue-all').on('click', function () {
+    $('#select-cancelled').on('click', function () {
         unSelectItems();
-        uncheck(all, allCancel);
+        uncheck(selectAll, selectPending);
         turnOnCancelRequeue();
-        if (allRequeue.checked) {
+        if (selectCancelled.checked) {
             buttonCancel.disabled = true;
             checkMultipleItems('requeue');
         } else {
@@ -53,22 +53,24 @@ hqDefine('repeaters/js/repeat_record_report_selects', function() {
     });
 
     $('body').on('DOMNodeInserted', 'tbody', function () {
-      for (var i = 0; i < items.length; i++) {
-            $(items[i]).on('click', uncheckSelects);
+        for (const item of items) {
+            $(item).on('click', uncheckSelects);
         }
     });
 
     function selectItems() {
-        for (var i = 0; i < items.length; i++) {
-            if (items[i].type == 'checkbox')
-                items[i].checked = true;
+        for (const item of items) {
+            if (item.type === 'checkbox') {
+                item.checked = true;
+            }
         }
     }
 
     function unSelectItems() {
-        for (var i = 0; i < items.length; i++) {
-            if (items[i].type == 'checkbox')
-                items[i].checked = false;
+        for (const item of items) {
+            if (item.type === 'checkbox') {
+                item.checked = false;
+            }
         }
     }
 
@@ -78,9 +80,9 @@ hqDefine('repeaters/js/repeat_record_report_selects', function() {
     }
 
     function uncheckSelects() {
-        all.checked = false;
-        allCancel.checked = false;
-        allRequeue.checked = false;
+        selectAll.checked = false;
+        selectPending.checked = false;
+        selectCancelled.checked = false;
         turnOnCancelRequeue();
     }
 
@@ -95,15 +97,15 @@ hqDefine('repeaters/js/repeat_record_report_selects', function() {
     }
 
     function checkMultipleItems(action) {
-        for (var i = 0; i < items.length; i++) {
-            var id = items[i].getAttribute('data-id');
-            var query = '[data-record-id="' + id + '"][class="btn btn-default ' + action + '-record-payload"]';
-            var button = document.querySelector(query);
-            if (button != null && items[i].type == 'checkbox') {
-                if (items[i].checked) {
-                    items[i].checked = false;
+        for (const item of items) {
+            const id = item.getAttribute('data-id');
+            const query = `[data-record-id="${id}"][class="btn btn-default ${action}-record-payload"]`;
+            const button = document.querySelector(query);
+            if (!!button && item.type === 'checkbox') {
+                if (item.checked) {
+                    item.checked = false;
                 } else {
-                    items[i].checked = true;
+                    item.checked = true;
                 }
             }
         }

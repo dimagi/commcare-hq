@@ -23,7 +23,7 @@ from corehq.motech.auth import (
     ApiKeyAuthManager,
 )
 from corehq.motech.const import (
-    ALGO_AES,
+    ALGO_AES_CBC,
     AUTH_TYPES,
     BASIC_AUTH,
     BEARER_AUTH,
@@ -34,7 +34,11 @@ from corehq.motech.const import (
     OAUTH2_PWD,
     PASSWORD_PLACEHOLDER, APIKEY_AUTH,
 )
-from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
+from corehq.motech.utils import (
+    b64_aes_cbc_decrypt,
+    b64_aes_cbc_encrypt,
+)
+from corehq.toggles import MTN_MOBILE_WORKER_VERIFICATION
 from corehq.util import as_json_text, as_text
 
 
@@ -51,6 +55,7 @@ class RequestLogEntry:
     response_status: int
     response_headers: dict
     response_body: str
+    duration: int
 
 
 class ConnectionQuerySet(models.QuerySet):
@@ -94,7 +99,7 @@ class ConnectionSettings(models.Model):
         choices=api_auth_settings_choices,
     )
     username = models.CharField(max_length=255, null=True, blank=True)
-    password = models.CharField(max_length=255, blank=True)
+    password = models.CharField(max_length=1023, blank=True)
     # OAuth 2.0 Password Grant needs username, password, client_id & client_secret
     client_id = models.CharField(max_length=255, null=True, blank=True)
     client_secret = models.CharField(max_length=255, blank=True)
@@ -102,19 +107,26 @@ class ConnectionSettings(models.Model):
     token_url = models.CharField(max_length=255, blank=True, null=True)
     refresh_url = models.CharField(max_length=255, blank=True, null=True)
     pass_credentials_in_header = models.BooleanField(default=None, null=True)
+    include_client_id = models.BooleanField(default=None, null=True)
+    scope = models.TextField(null=True, blank=True)
     notify_addresses_str = models.CharField(max_length=255, default="")
     # last_token is stored encrypted because it can contain secrets
     last_token_aes = models.TextField(blank=True, default="")
     is_deleted = models.BooleanField(default=False, db_index=True)
+    custom_headers = models.JSONField(null=True, blank=True)
 
     objects = ConnectionSoftDeleteManager.from_queryset(ConnectionQuerySet)()
     all_objects = ConnectionQuerySet.as_manager()
 
     # Used when serializing data to ensure encrypted fields are reset
-    encrypted_fields = {"password": PASSWORD_PLACEHOLDER, "client_secret": PASSWORD_PLACEHOLDER}
+    encrypted_fields = {
+        "password": PASSWORD_PLACEHOLDER,
+        "client_secret": PASSWORD_PLACEHOLDER,
+        "custom_headers": PASSWORD_PLACEHOLDER,
+    }
 
     def __str__(self):
-        return self.name
+        return f"{self.name} [{self.domain}]"
 
     @property
     def repeaters(self):
@@ -123,34 +135,72 @@ class ConnectionSettings(models.Model):
 
     @property
     def plaintext_password(self):
-        if self.password.startswith(f'${ALGO_AES}$'):
+        if self.password.startswith(f'${ALGO_AES_CBC}$'):
             ciphertext = self.password.split('$', 2)[2]
-            return b64_aes_decrypt(ciphertext)
+            return b64_aes_cbc_decrypt(ciphertext)
         return self.password
 
     @plaintext_password.setter
     def plaintext_password(self, plaintext):
         if plaintext != PASSWORD_PLACEHOLDER:
-            ciphertext = b64_aes_encrypt(plaintext)
-            self.password = f'${ALGO_AES}${ciphertext}'
+            ciphertext = b64_aes_cbc_encrypt(plaintext)
+            self.password = f'${ALGO_AES_CBC}${ciphertext}'
 
     @property
     def plaintext_client_secret(self):
-        if self.client_secret.startswith(f'${ALGO_AES}$'):
+        if self.client_secret.startswith(f'${ALGO_AES_CBC}$'):
             ciphertext = self.client_secret.split('$', 2)[2]
-            return b64_aes_decrypt(ciphertext)
+            return b64_aes_cbc_decrypt(ciphertext)
         return self.client_secret
 
     @plaintext_client_secret.setter
     def plaintext_client_secret(self, plaintext):
         if plaintext != PASSWORD_PLACEHOLDER:
-            ciphertext = b64_aes_encrypt(plaintext)
-            self.client_secret = f'${ALGO_AES}${ciphertext}'
+            ciphertext = b64_aes_cbc_encrypt(plaintext)
+            self.client_secret = f'${ALGO_AES_CBC}${ciphertext}'
+
+    @property
+    def plaintext_custom_headers(self):
+        if not MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain):
+            return {}
+
+        def decrypt(value):
+            if value.startswith(f'${ALGO_AES_CBC}$'):
+                ciphertext = value.split('$', 2)[2]
+                return b64_aes_cbc_decrypt(ciphertext)
+            return value
+        return {k: decrypt(v) for k, v in self.custom_headers.items()}
+
+    def set_custom_headers(self, headers):
+        """
+        Makes sure the header values are encrypted before saving them
+        """
+        if not MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain):
+            return
+
+        self.custom_headers = self.custom_headers or {}
+        for header, value in headers.items():
+            if value != PASSWORD_PLACEHOLDER:
+                ciphertext = b64_aes_cbc_encrypt(value)
+                self.custom_headers[header] = f'${ALGO_AES_CBC}${ciphertext}'
+
+        # Remove any custom headers that are not in the new headers
+        relevant_headers = headers.keys()
+        self.custom_headers = {
+            header: value for header, value in self.custom_headers.items()
+            if header in relevant_headers
+        }
+
+    def get_custom_headers_display(self):
+        if not MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain):
+            return {}
+        return {k: PASSWORD_PLACEHOLDER for k, v in self.custom_headers.items()}
 
     @property
     def last_token(self) -> Optional[dict]:
         if self.last_token_aes:
-            plaintext = b64_aes_decrypt(self.last_token_aes)
+            ciphertext = self.last_token_aes.split('$', 2)[2]
+            plaintext = b64_aes_cbc_decrypt(ciphertext)
             return json.loads(plaintext)
         return None
 
@@ -160,7 +210,8 @@ class ConnectionSettings(models.Model):
             self.last_token_aes = ''
         else:
             plaintext = json.dumps(token)
-            self.last_token_aes = b64_aes_encrypt(plaintext)
+            ciphertext = b64_aes_cbc_encrypt(plaintext)
+            self.last_token_aes = f'${ALGO_AES_CBC}${ciphertext}'
 
     @property
     def notify_addresses(self):
@@ -203,6 +254,8 @@ class ConnectionSettings(models.Model):
                 token_url=self.token_url,
                 refresh_url=self.refresh_url,
                 pass_credentials_in_header=self.pass_credentials_in_header,
+                include_client_id=self.include_client_id,
+                scope=self.scope or None,
                 connection_settings=self,
             )
 
@@ -225,7 +278,7 @@ class ConnectionSettings(models.Model):
                 self.plaintext_password,
             )
         if self.auth_type == APIKEY_AUTH:
-            return ApiKeyAuthManager(self.plaintext_password)
+            return ApiKeyAuthManager(self.username, self.plaintext_password)
         if self.auth_type == OAUTH2_PWD:
             return OAuth2PasswordGrantManager(
                 self.url,
@@ -236,6 +289,8 @@ class ConnectionSettings(models.Model):
                 token_url=self.token_url,
                 refresh_url=self.refresh_url,
                 pass_credentials_in_header=self.pass_credentials_in_header,
+                include_client_id=self.include_client_id,
+                scope=self.scope or None,
                 connection_settings=self,
             )
         raise ValueError(f'Unknown auth type {self.auth_type!r}')
@@ -256,14 +311,13 @@ class ConnectionSettings(models.Model):
         this instance. Used for informing users, and determining whether
         the instance can be deleted.
         """
+        # TODO: Check OpenmrsImporters (when OpenmrsImporters use ConnectionSettings)
 
         kinds = set()
         if self.sqldatasetmap_set.exists():
             kinds.add(_('DHIS2 DataSet Maps'))
         if self.repeaters.exists():
             kinds.add(_('Data Forwarding'))
-
-        # TODO: Check OpenmrsImporters (when OpenmrsImporters use ConnectionSettings)
 
         return kinds
 
@@ -278,6 +332,12 @@ class ConnectionSettings(models.Model):
     def soft_delete(self):
         self.is_deleted = True
         self.save()
+
+    def clear_caches(self):
+        try:
+            del self.used_by
+        except AttributeError:
+            pass
 
 
 class RequestLog(models.Model):
@@ -302,6 +362,7 @@ class RequestLog(models.Model):
     response_status = models.IntegerField(null=True, db_index=True)
     response_headers = jsonfield.JSONField(blank=True, null=True)
     response_body = models.TextField(blank=True, null=True)
+    duration = models.IntegerField(null=True)  # milliseconds
 
     class Meta:
         db_table = 'dhis2_jsonapilog'
@@ -321,4 +382,5 @@ class RequestLog(models.Model):
             response_status=log_entry.response_status,
             response_headers=log_entry.response_headers,
             response_body=as_text(log_entry.response_body)[:MAX_REQUEST_LOG_LENGTH],
+            duration=log_entry.duration,
         )

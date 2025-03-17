@@ -16,7 +16,7 @@
      _,
 +    bootstrap,
      assertProperties,
-     initialPageData
+     initialPageData,
  ) {
 @@ -57,7 +59,7 @@
      };
@@ -57,7 +57,7 @@
  
          var hideWarningModal = function (showLogin) {
 -            $warningModal.modal('hide');
-+           $warningModal.hide();
++            $warningModal.hide();
              if (showLogin) {
 -                $modal.modal({backdrop: 'static', keyboard: false});
 +                loginModal.show();
@@ -81,9 +81,11 @@
 +                $newVersionModal.find('#incompleteFormWarning').removeClass('d-none');
              } else {
 -                $newVersionModal.find('#incompleteFormWarning').hide();
+-            }
+-            if (!isModalOpen($modal)) {
 +                $newVersionModal.find('#incompleteFormWarning').addClass('d-none');
-             }
-             if (!isModalOpen($modal)) {
++            }
++            if (!isModalOpen($loginModal)) {
                  if (isModalOpen($warningModal)) {
 -                    $warningModal.modal('hide');
 +                    warningModal.hide();
@@ -100,7 +102,7 @@
 +                // Parsing the app id out of URL hash will fail on the web apps home page, login as, etc.
 +                // where the hash isn't a JSON object but instead a string like "#apps".
 +                // In these cases, there's no app to check for a new version.
-                 log("Could not parse app id out of " + window.location.hash)
+                 log("Could not parse app id out of " + window.location.hash);
 -                return;
 +                selectedAppId = null;
              }
@@ -112,7 +114,7 @@
                  success: function (data) {
 -                    log(
 -                        "ping_login response: " + (data.success ? "User is logged in" : "User is logged out")
--                        + ", " + (data.new_app_version_available ? "new app version available" : "no new app version")
+-                        + ", " + (data.new_app_version_available ? "new app version available" : "no new app version"),
 -                    );
                      if (!data.success) {
                          _.each($(".select2-hidden-accessible"), function (el) {
@@ -149,7 +151,7 @@
                  success: function (data) {
 +                    log(
 +                        "ping_login response: " + (data.success ? "User is logged in" : "User is logged out")
-+                        + ", " + (data.new_app_version_available ? "new app version available" : "no new app version")
++                        + ", " + (data.new_app_version_available ? "new app version available" : "no new app version"),
 +                    );
                      $button.enableButton();
                      var error = "";

@@ -1,8 +1,0 @@
---- 
-+++ 
-@@ -1,4 +1,4 @@
--{% extends "cloudcare/bootstrap3/preview_app_base.html" %}
-+{% extends "cloudcare/bootstrap5/preview_app_base.html" %}
- {% load hq_shared_tags %}
- {% load compress %}
- {% load i18n %}

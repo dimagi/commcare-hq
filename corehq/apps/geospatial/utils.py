@@ -1,31 +1,44 @@
+from dataclasses import asdict, dataclass, field
+
+import math
 import jsonschema
 from jsonobject.exceptions import BadValueError
 
+from casexml.apps.case.mock import CaseBlock
+from corehq.apps.geospatial.const import ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY
 from couchforms.geopoint import GeoPoint
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 
+from corehq.apps.geospatial.models import GeoConfig
 from corehq.apps.hqcase.case_helper import CaseHelper
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
-from corehq.util.quickcache import quickcache
-
-from .models import GeoConfig
+from corehq.const import ONE_DAY
 
 
-@quickcache(['domain'], timeout=24 * 60 * 60)
 def get_geo_case_property(domain):
-    try:
-        config = GeoConfig.objects.get(domain=domain)
-    except GeoConfig.DoesNotExist:
-        config = GeoConfig()
-    return config.case_location_property_name
+    return get_geo_config(domain).case_location_property_name
 
 
-@quickcache(['domain'], timeout=24 * 60 * 60)
 def get_geo_user_property(domain):
+    return get_geo_config(domain).user_location_property_name
+
+
+def get_flag_assigned_cases_config(domain):
+    return get_geo_config(domain).flag_assigned_cases
+
+
+def get_geo_config(domain):
     try:
         config = GeoConfig.objects.get(domain=domain)
     except GeoConfig.DoesNotExist:
         config = GeoConfig()
-    return config.user_location_property_name
+    return config
+
+
+def get_celery_task_tracker(domain, task_slug):
+    task_key = f'{task_slug}_{domain}'
+    return CeleryTaskTracker(task_key)
 
 
 def _format_coordinates(lat, lon):
@@ -165,3 +178,110 @@ def geojson_to_es_geoshape(geojson):
     es_geoshape = geojson['geometry'].copy()
     es_geoshape['type'] = es_geoshape['type'].lower()
     return es_geoshape
+
+
+@dataclass
+class CaseOwnerUpdate:
+    case_id: str
+    owner_id: str
+    related_case_ids: list = field(default_factory=list)
+
+    @classmethod
+    def from_case_to_owner_id_dict(cls, case_to_owner_id):
+        result = []
+        for case_id, owner_id in case_to_owner_id.items():
+            result.append(cls(case_id=case_id, owner_id=owner_id))
+        return result
+
+    @classmethod
+    def total_cases_count(cls, case_owner_updates):
+        count = len(case_owner_updates)
+        for case_owner_update in case_owner_updates:
+            count += len(case_owner_update.related_case_ids)
+        return count
+
+    @classmethod
+    def to_dict(cls, case_owner_updates):
+        return [asdict(obj) for obj in case_owner_updates]
+
+
+def update_cases_owner(domain, case_owner_updates_dict, flag_assigned_cases=False, celery_task_tracker=None):
+    case_properties = {}
+    if flag_assigned_cases:
+        case_properties[ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY] = True
+
+    for i, case_owner_update in enumerate(case_owner_updates_dict):
+        case_blocks = []
+        cases_to_updates = [case_owner_update['case_id']] + case_owner_update['related_case_ids']
+        for case_id in cases_to_updates:
+            case_blocks.append(
+                CaseBlock(
+                    create=False,
+                    case_id=case_id,
+                    owner_id=case_owner_update['owner_id'],
+                    update=case_properties,
+                ).as_text()
+            )
+        submit_case_blocks(
+            case_blocks=case_blocks,
+            domain=domain,
+            device_id=__name__ + '.update_cases_owners'
+        )
+        if celery_task_tracker:
+            celery_task_tracker.update_progress(
+                current=i + 1,
+                total=len(case_owner_updates_dict)
+            )
+
+
+class CeleryTaskTracker(object):
+    """
+    Simple Helper class using redis to track if a celery task was requested and is not completed yet.
+    """
+
+    def __init__(self, task_key):
+        self.task_key = task_key
+        self.progress_key = f'{task_key}_progress'
+        self.error_slug_key = f'{task_key}_error_slug'
+        self._client = get_redis_client()
+
+    def mark_requested(self, timeout=ONE_DAY):
+        # Timeout here is just a fail safe mechanism in case task is not processed by Celery
+        # due to unexpected circumstances
+        self.clear_progress()
+        self._client.delete(self.error_slug_key)
+        self._client.set(self.task_key, 'ACTIVE', timeout=timeout)
+
+    def mark_as_error(self, error_slug=None, timeout=ONE_DAY * 14):
+        if error_slug:
+            self._client.set(self.error_slug_key, error_slug, timeout)
+        return self._client.set(self.task_key, 'ERROR', timeout=timeout)
+
+    def is_active(self):
+        return self._client.get(self.task_key) == 'ACTIVE'
+
+    def get_status(self):
+        status = self._client.get(self.task_key)
+        return {
+            'status': status,
+            'progress': self.get_progress(),
+            'error_slug': self._client.get(self.error_slug_key) if status == 'ERROR' else None,
+        }
+
+    def mark_completed(self):
+        return self._client.delete(self.task_key)
+
+    def update_progress(self, current, total, timeout=ONE_DAY):
+        progress_val = 0
+        if total > 0:
+            progress_val = math.ceil(current / total * 100)
+        return self._client.set(self.progress_key, progress_val, timeout)
+
+    def get_progress(self):
+        progress = self._client.get(self.progress_key)
+        if not progress:
+            return 0
+        return progress
+
+    def clear_progress(self):
+        return self._client.delete(self.progress_key)

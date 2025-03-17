@@ -1,7 +1,7 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load hq_shared_tags %}
 
-{% requirejs_main 'locations/js/import' %}
+{% js_entry 'locations/js/import' %}
 
 {% block page_content %}
   {% include "locations/manage/partials/bulk_upload.html" %}

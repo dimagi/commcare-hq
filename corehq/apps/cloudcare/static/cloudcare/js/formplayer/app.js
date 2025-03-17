@@ -1,4 +1,3 @@
-'use strict';
 /**
  * The primary Marionette application managing menu navigation and launching form entry
  */
@@ -9,6 +8,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     'backbone',
     'backbone.marionette',
     'markdown-it/dist/markdown-it',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     'analytix/js/appcues',
     'analytix/js/google',
@@ -30,6 +30,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     Backbone,
     Marionette,
     markdowner,
+    bootstrap,
     initialPageData,
     appcues,
     GGAnalytics,
@@ -41,38 +42,26 @@ hqDefine("cloudcare/js/formplayer/app", [
     ProgressBar,
     UsersModels,
     WebFormSession,
-    TemplateCache
+    TemplateCache,
 ) {
     Marionette.setRenderer(TemplateCache.render);
-    var FormplayerFrontend = new Marionette.Application();
 
-    FormplayerFrontend.on("before:start", function (app, options) {
-        const xsrfRequest = new $.Deferred();
-        this.xsrfRequest = xsrfRequest.promise();
-        // Make a get call if the csrf token isn't available when the page loads.
-        if ($.cookie('XSRF-TOKEN') === undefined) {
-            $.get(
-                {url: options.formplayer_url + '/serverup', global: false, xhrFields: { withCredentials: true }}
-            ).always(() => { xsrfRequest.resolve(); });
-        } else {
-            // resolve immediately
-            xsrfRequest.resolve();
-        }
+    const WebApp = Marionette.Application.extend({
+        getXSRF: function (options) {
+            return $.get({
+                url: options.formplayer_url + '/serverup',
+                global: false, xhrFields: {withCredentials: true},
+            });
+        },
+    });
 
+    const FormplayerFrontend = new WebApp();
+
+    FormplayerFrontend.on("before:start", function () {
         if (!FormplayerFrontend.regions) {
             FormplayerFrontend.regions = CloudcareUtils.getRegionContainer();
         }
-        let sidebar = FormplayerFrontend.regions.getRegion('sidebar');
-        sidebar.on('show', function () {
-            $('#content-container').addClass('full-width');
-            $('#menu-region').addClass('sidebar-push');
-        });
-        sidebar.on('hide empty', function () {
-            $('#content-container').removeClass('full-width');
-            $('#menu-region').removeClass('sidebar-push');
-        });
-
-        hqRequire(["cloudcare/js/formplayer/router"], function (Router) {
+        import("cloudcare/js/formplayer/router").then(function (Router) {
             FormplayerFrontend.router = Router.start();
         });
     });
@@ -83,6 +72,28 @@ hqDefine("cloudcare/js/formplayer/app", [
 
     FormplayerFrontend.getChannel = function () {
         return Backbone.Radio.channel('formplayer');
+    };
+
+    FormplayerFrontend.confirmUserWantsToNavigateAwayFromForm = function () {
+        if (FormplayerFrontend.unsavedFormInProgress) {
+            const userConfirmedYes = window.confirm(gettext("You have a form in progress. Are you sure you want to navigate away?"));
+            if (!userConfirmedYes) {
+                return false;
+            }
+        }
+        FormplayerFrontend.trigger('setUnsavedFormNotInProgress');
+        return true;
+    };
+
+    FormplayerFrontend.showRestoreAs = function (user) {
+        import("cloudcare/js/formplayer/users/views").then(function (UsersViews) {
+            FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
+                UsersViews.RestoreAsBanner({model: user, smallScreen: false}));
+            const mobileRegion = FormplayerFrontend.regions.getRegion('mobileRestoreAsBanner');
+            if (mobileRegion.$el.length) {      // This region doesn't exist in app preview
+                mobileRegion.show(UsersViews.RestoreAsBanner({model: user, smallScreen: true}));
+            }
+        });
     };
 
     /**
@@ -125,12 +136,16 @@ hqDefine("cloudcare/js/formplayer/app", [
     });
 
     FormplayerFrontend.on('clearForm', function () {
+        FormplayerFrontend.trigger('setUnsavedFormNotInProgress');
         $('#webforms').html("");
-        $('.menu-scrollable-container').removeClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
+        $('.menu-scrollable-container').removeClass("d-none");
+        $('#sidebar-and-content').removeClass('remove-margins-on-mobile');
         $('#webforms-nav').html("");
         $('#cloudcare-debugger').html("");
+        $('#cloudcare-main').removeClass('has-debugger');
         $('.atwho-container').remove();
-        $('#case-detail-modal').modal('hide');
+        bootstrap.Modal.getOrCreateInstance($('#case-detail-modal')).hide();
+        sessionStorage.removeItem('collapsedIx');
     });
 
     FormplayerFrontend.getChannel().reply('clearMenu', function () {
@@ -150,11 +165,11 @@ hqDefine("cloudcare/js/formplayer/app", [
         $("#cloudcare-notifications").empty();
     });
 
-    FormplayerFrontend.on('showError', function (errorMessage, isHTML, reportToHq) {
+    FormplayerFrontend.on('showError', function (errorMessage, isHTML, reportToHq, additionalData) {
         if (isHTML) {
             CloudcareUtils.showHTMLError(errorMessage, $("#cloudcare-notifications"), null, reportToHq);
         } else {
-            CloudcareUtils.showError(errorMessage, $("#cloudcare-notifications"), reportToHq);
+            CloudcareUtils.showError(errorMessage, $("#cloudcare-notifications"), reportToHq, additionalData);
         }
     });
 
@@ -249,7 +264,7 @@ hqDefine("cloudcare/js/formplayer/app", [
                     });
                 }
 
-                if (user.environment === Const.PREVIEW_APP_ENVIRONMENT) {
+                if (user.isAppPreview) {
                     Kissmetrics.track.event("[app-preview] User submitted a form");
                     GGAnalytics.track.event("App Preview", "User submitted a form");
                     appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT, { success: true });
@@ -277,7 +292,7 @@ hqDefine("cloudcare/js/formplayer/app", [
                     FormplayerUtils.navigate('/apps', { trigger: true });
                 }
             } else {
-                if (user.environment === Const.PREVIEW_APP_ENVIRONMENT) {
+                if (user.isAppPreview) {
                     appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT, { success: false });
                 }
                 CloudcareUtils.showError(resp.output, $("#cloudcare-notifications"));
@@ -291,35 +306,28 @@ hqDefine("cloudcare/js/formplayer/app", [
         };
         var sess = WebFormSession.WebFormSession(data);
         sess.renderFormXml(data, $('#webforms'));
-        $('.menu-scrollable-container').addClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
+        $('.menu-scrollable-container').addClass("d-none");
+        $('#sidebar-and-content').addClass('remove-margins-on-mobile');
     });
 
     FormplayerFrontend.on("start", function (model, options) {
         var self = this,
             user = UsersModels.setCurrentUser(options);
 
-        hqRequire([
-            "cloudcare/js/formplayer/users/utils",  // restoreAsUser
-        ], function () {
+        import("cloudcare/js/formplayer/users/utils").then(function () {   // restoreAsUser
             user.restoreAs = FormplayerFrontend.getChannel().request('restoreAsUser', user.domain, user.username);
             AppsAPI.primeApps(user.restoreAs, options.apps);
         });
 
-        hqRequire(["cloudcare/js/formplayer/router"], function (Router) {
+        import("cloudcare/js/formplayer/router").then(function (Router) {
             FormplayerFrontend.router = Router.start();
             $.when(AppsAPI.getAppEntities()).done(function (appCollection) {
                 var appId;
                 var apps = appCollection.toJSON();
                 if (Backbone.history) {
                     Backbone.history.start();
-                    hqRequire(["cloudcare/js/formplayer/users/views"], function (UsersViews) {
-                        FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
-                            UsersViews.RestoreAsBanner({
-                                model: user,
-                            })
-                        );
-                    });
-                    if (user.displayOptions.singleAppMode || user.displayOptions.landingPageAppMode) {
+                    FormplayerFrontend.showRestoreAs(user);
+                    if (user.displayOptions.singleAppMode) {
                         appId = apps[0]['_id'];
                     }
 
@@ -327,9 +335,6 @@ hqDefine("cloudcare/js/formplayer/app", [
                         if (user.displayOptions.singleAppMode) {
                             FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
                             FormplayerFrontend.trigger("app:singleApp", appId);
-                        } else if (user.displayOptions.landingPageAppMode) {
-                            FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
-                            FormplayerFrontend.trigger("app:landingPageApp", appId);
                         } else {
                             FormplayerFrontend.trigger("apps:list", apps);
                         }
@@ -344,11 +349,11 @@ hqDefine("cloudcare/js/formplayer/app", [
         });
 
         if (options.allowedHost) {
-            hqRequire(["cloudcare/js/formplayer/hq_events"], function (HQEvents) {
+            import("cloudcare/js/formplayer/hq_events").then(function (HQEvents) {
                 window.addEventListener(
                     "message",
                     HQEvents.Receiver(options.allowedHost),
-                    false
+                    false,
                 );
             });
         }
@@ -365,7 +370,7 @@ hqDefine("cloudcare/js/formplayer/app", [
                             "for offline use. Please reconnect to the Internet before " +
                             "continuing."), $("#cloudcare-notifications"));
                         $('.submit').prop('disabled', 'disabled');
-                        $('.form-control').prop('disabled', 'disabled');
+                        $('.form-control, .form-select').prop('disabled', 'disabled');
                     }
                 },reconnectTimingWindow);
             });
@@ -375,26 +380,26 @@ hqDefine("cloudcare/js/formplayer/app", [
                 if ((new Date() - offlineTime) > reconnectTimingWindow) {
                     CloudcareUtils.showSuccess(gettext("You are are back online."), $("#cloudcare-notifications"));
                     $('.submit').prop('disabled', false);
-                    $('.form-control').prop('disabled', false);
+                    $('.form-control, .form-select').prop('disabled', false);
                 }
-            }
+            },
         );
 
         window.addEventListener(
             'beforeprint', function () {
-                $('.panel.panel-default, .q.form-group').last().addClass('last');
-            }
+                $('.card, .q').last().addClass('last');
+            },
         );
 
         window.addEventListener(
             'afterprint', function () {
                 $('.last').removeClass('last');
-            }
+            },
         );
     });
 
     FormplayerFrontend.on('configureDebugger', function () {
-        hqRequire(["cloudcare/js/debugger/debugger"], function (Debugger) {
+        import("cloudcare/js/debugger/debugger").then(function (Debugger) {
             var CloudCareDebugger = Debugger.CloudCareDebuggerMenu,
                 TabIDs = Debugger.TabIDs,
                 user = UsersModels.getCurrentUser(),
@@ -716,6 +721,7 @@ hqDefine("cloudcare/js/formplayer/app", [
         urlObject.clearExceptApp();
         FormplayerFrontend.regions.getRegion('sidebar').empty();
         FormplayerFrontend.regions.getRegion('breadcrumb').empty();
+        FormplayerFrontend.regions.getRegion('persistentMenu').empty();
         if (currentUser.displayOptions.singleAppMode) {
             appId = FormplayerFrontend.getChannel().request('getCurrentAppId');
             FormplayerFrontend.trigger("app:singleApp", appId);
@@ -754,6 +760,20 @@ hqDefine("cloudcare/js/formplayer/app", [
             var match = (window || this).location.href.match(/#(.*)$/);
             return match ? decodeURI(match[1]) : '';
         },
+    });
+
+    FormplayerFrontend.on("setUnsavedFormInProgress", function () {
+        FormplayerFrontend.unsavedFormInProgress = true;
+        window.onbeforeunload = function () {
+            return true;
+        };
+    });
+
+    FormplayerFrontend.on("setUnsavedFormNotInProgress", function () {
+        if (FormplayerFrontend.unsavedFormInProgress) {
+            FormplayerFrontend.unsavedFormInProgress = false;
+            window.onbeforeunload = null;
+        }
     });
 
     return FormplayerFrontend;

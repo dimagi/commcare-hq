@@ -1,8 +1,7 @@
 import hashlib
 import json
 import logging
-import re
-from xml.dom.minidom import parseString
+from xml.sax.saxutils import escape
 
 from django.conf import settings
 from django.contrib import messages
@@ -36,7 +35,6 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 )
 from corehq.apps.app_manager.const import (
     USERCASE_PREFIX,
-    USERCASE_TYPE,
     WORKFLOW_DEFAULT,
     WORKFLOW_FORM,
     WORKFLOW_MODULE,
@@ -110,9 +108,8 @@ from corehq.apps.app_manager.xform import (
     XFormValidationError,
 )
 from corehq.apps.data_dictionary.util import (
-    add_properties_to_data_dictionary,
-    get_case_property_description_dict,
     get_case_property_deprecated_dict,
+    get_case_property_description_dict,
 )
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
@@ -212,8 +209,6 @@ def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
         form.extra_actions = actions
     else:
         form.actions = actions
-    for action in actions.load_update_cases:
-        add_properties_to_data_dictionary(domain, action.case_type, list(action.case_properties.keys()))
     if advanced_actions_use_usercase(actions) and not is_usercase_in_use(domain):
         enable_usercase(domain)
 
@@ -232,10 +227,8 @@ def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
 def edit_form_actions(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
     form = app.get_form(form_unique_id)
-    module = form.get_module()
     old_load_from_form = form.actions.load_from_form
     form.actions = FormActions.wrap(json.loads(request.POST['actions']))
-    add_properties_to_data_dictionary(domain, module.case_type, list(form.actions.update_case.update.keys()))
     if old_load_from_form:
         form.actions.load_from_form = old_load_from_form
 
@@ -246,7 +239,6 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     if actions_use_usercase(form.actions):
         if not is_usercase_in_use(domain):
             enable_usercase(domain)
-        add_properties_to_data_dictionary(domain, USERCASE_TYPE, list(form.actions.usercase_update.update.keys()))
 
     response_json = {}
     app.save(response_json)
@@ -334,17 +326,6 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                     xform = str(xform, encoding="utf-8")
                 except Exception:
                     raise Exception("Error uploading form: Please make sure your form is encoded in UTF-8")
-
-            if request.POST.get('cleanup', False):
-                try:
-                    # First, we strip all newlines and reformat the DOM.
-                    px = parseString(xform.replace('\r\n', '')).toprettyxml()
-                    # Then we remove excess newlines from the DOM output.
-                    text_re = re.compile(r'>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
-                    prettyXml = text_re.sub(r'>\g<1></', px)
-                    xform = prettyXml
-                except Exception:
-                    pass
             if xform:
                 if isinstance(xform, str):
                     xform = xform.encode('utf-8')
@@ -419,18 +400,13 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
 
     if should_edit('custom_instances'):
         instances = json.loads(request.POST.get('custom_instances'))
-        try:  # validate that custom instances can be added into the XML
-            for instance in instances:
-                etree.fromstring(
-                    "<instance id='{}' src='{}' />".format(
-                        instance.get('instanceId'),
-                        instance.get('instancePath')
+        for instance in instances:
+            for key in ['instanceId', 'instancePath']:
+                val = instance.get(key)
+                if val != escape(val):
+                    raise AppMisconfigurationError(
+                        _("'{val}' is an invalid custom instance {key}").format(val=val, key=key)
                     )
-                )
-        except etree.XMLSyntaxError as error:
-            raise AppMisconfigurationError(
-                _("There was an issue with your custom instances: {}").format(error)
-            )
 
         form.custom_instances = [
             CustomInstance(
@@ -470,7 +446,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     app.save(resp)
     notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
     if ajax:
-        return HttpResponse(json.dumps(resp))
+        return JsonResponse(resp)
     else:
         return back_to_main(request, domain, app_id=app_id, form_unique_id=form_unique_id)
 
@@ -588,8 +564,7 @@ def get_xform_source(request, domain, app_id, form_unique_id):
 
     lang = request.COOKIES.get('lang', app.langs[0])
     source = form.source
-    response = HttpResponse(source)
-    response['Content-Type'] = "application/xml"
+    response = HttpResponse(source, content_type='application/xml')
     filename = form.default_name()
     for lc in [lang] + app.langs:
         if lc in form.name:

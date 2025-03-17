@@ -1,5 +1,16 @@
 /* global _, nv, d3 */
-hqDefine('reports_core/js/charts', function () {
+hqDefine('reports_core/js/charts', [
+    'jquery',
+    'underscore',
+    'd3/d3.min',
+    'nvd3/nv.d3.min',
+    'nvd3/src/nv.d3.css',
+], function (
+    $,
+    _,
+    d3,
+    nv,
+) {
     var fn = {};
     var renderPie = function (config, data, svgSelector) {
         return function () {

@@ -109,10 +109,10 @@ from corehq.apps.userreports.util import (
     get_ucr_class_name,
 )
 from corehq.apps.users.models import UserRole, HqPermissions
-from corehq.apps.users.views.mobile import UserFieldsView
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.toggles import NAMESPACE_DOMAIN, EMBEDDED_TABLEAU
 from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
-from corehq.toggles.shortcuts import set_toggle
+from corehq.toggles.shortcuts import set_toggles
 
 from corehq.apps.users.role_utils import UserRolePresets
 
@@ -158,8 +158,7 @@ def update_toggles(domain_link, is_pull=False, overwrite=False):
     downstream_toggles = set(local_enabled_toggles(domain_link.linked_domain))
 
     def _set_toggles(collection, enabled):
-        for slug in collection:
-            set_toggle(slug, domain_link.linked_domain, enabled, NAMESPACE_DOMAIN)
+        set_toggles(collection, domain_link.linked_domain, enabled, NAMESPACE_DOMAIN)
 
     # enable downstream toggles that are enabled upstream
     _set_toggles(upstream_toggles - downstream_toggles, True)
@@ -175,8 +174,7 @@ def update_previews(domain_link, is_pull=False, overwrite=False):
     downstream_previews = set(local_enabled_previews(domain_link.linked_domain))
 
     def _set_toggles(collection, enabled):
-        for slug in collection:
-            set_toggle(slug, domain_link.linked_domain, enabled, NAMESPACE_DOMAIN)
+        set_toggles(collection, domain_link.linked_domain, enabled, NAMESPACE_DOMAIN)
 
     # enable downstream previews that are enabled upstream
     _set_toggles(upstream_previews - downstream_previews, True)
@@ -311,6 +309,7 @@ def create_local_field(upstream_field_definition):
     return Field(
         slug=upstream_field_definition['slug'],
         is_required=upstream_field_definition['is_required'],
+        required_for=upstream_field_definition['required_for'],
         label=upstream_field_definition['label'],
         choices=upstream_field_definition['choices'],
         regex=upstream_field_definition['regex'],
@@ -408,13 +407,16 @@ def update_user_roles(domain_link, is_pull=False, overwrite=False):
         if role.upstream_id:
             downstream_roles_by_upstream_id[role.upstream_id] = role
 
+    # Permission lists
     downstream_apps = get_brief_apps_in_domain(domain_link.linked_domain)
     app_id_map = {app.origin_id: app.upstream_app_id for app in downstream_apps}
-
+    profiles_for_downstream_domain = CustomDataFieldsProfile.objects.filter(
+        definition__domain=domain_link.linked_domain)
     is_embedded_tableau_enabled = EMBEDDED_TABLEAU.enabled(domain_link.linked_domain)
     if is_embedded_tableau_enabled:
-        visualizations_for_linked_domain = TableauVisualization.objects.filter(
+        visualizations_for_downstream_domain = TableauVisualization.objects.filter(
             domain=domain_link.linked_domain)
+
     failed_default_updates = []
     failed_custom_updates = []
     successful_updates = []
@@ -433,15 +435,21 @@ def update_user_roles(domain_link, is_pull=False, overwrite=False):
             continue
 
         permissions = HqPermissions.wrap(upstream_role_def["permissions"])
+
+        # Permission lists
         if permissions.web_apps_list:
             permissions.web_apps_list = [
                 downstream_id for downstream_id, upstream_id in app_id_map.items()
                 if upstream_id in permissions.web_apps_list
             ]
-
+        permissions.edit_user_profile_list = _get_new_list_permissions(
+            profiles_for_downstream_domain, permissions.edit_user_profile_list,
+            role.permissions.edit_user_profile_list)
         if is_embedded_tableau_enabled:
-            permissions.view_tableau_list = _get_new_tableau_report_permissions(
-                visualizations_for_linked_domain, permissions, role.permissions)
+            permissions.view_tableau_list = _get_new_list_permissions(
+                visualizations_for_downstream_domain, permissions.view_tableau_list,
+                role.permissions.view_tableau_list)
+
         role.save()
         role.set_permissions(permissions.to_list())
         successful_updates.append(upstream_role_def)
@@ -841,13 +849,13 @@ def _convert_reports_permissions(domain_link, master_results):
         role_def['permissions']['view_report_list'] = new_report_perms
 
 
-def _get_new_tableau_report_permissions(downstream_domain_visualizations, upstream_permissions,
-                                        original_downstream_permissions):
-    new_downstream_view_tableau_list = []
-    for viz in downstream_domain_visualizations:
-        upstream_viz_enabled = viz.upstream_id and viz.upstream_id in upstream_permissions.view_tableau_list
-        no_upstream_viz_and_viz_enabled_downstream = (not viz.upstream_id
-            and str(viz.id) in original_downstream_permissions.view_tableau_list)
-        if upstream_viz_enabled or no_upstream_viz_and_viz_enabled_downstream:
-            new_downstream_view_tableau_list.append(str(viz.id))
-    return new_downstream_view_tableau_list
+def _get_new_list_permissions(downstream_obj_list, upstream_permissions_list,
+                              current_downstream_permissions_list):
+    new_downstream_permissions_list = []
+    for obj in downstream_obj_list:
+        if obj.upstream_id:
+            if obj.upstream_id in upstream_permissions_list:
+                new_downstream_permissions_list.append(str(obj.id))
+        elif str(obj.id) in current_downstream_permissions_list:
+            new_downstream_permissions_list.append(str(obj.id))
+    return new_downstream_permissions_list

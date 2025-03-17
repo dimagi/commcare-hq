@@ -122,12 +122,14 @@ class FundamentalCaseTests(FundamentalBaseTests):
         case_id = uuid.uuid4().hex
         modified_on = datetime.utcnow()
         xmlns = 'http://commcare.org/test_xmlns'
+        device_id = "a.b.c.DemoDevice"
         _submit_case_block(
             True, case_id, user_id='user1', owner_id='owner1', case_type='demo',
             case_name='create_case', date_modified=modified_on, date_opened=modified_on, update={
                 'dynamic': '123'
             },
-            xmlns=xmlns
+            xmlns=xmlns,
+            device_id=device_id
         )
 
         case = self.casedb.get_case(case_id, DOMAIN)
@@ -149,6 +151,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
         transactions = case.get_form_transactions()
         self.assertEqual(1, len(transactions))
         self.assertEqual(transactions[0].xmlns, xmlns)
+        self.assertEqual(transactions[0].device_id, device_id)
 
     def test_create_case_unicode_name(self):
         """

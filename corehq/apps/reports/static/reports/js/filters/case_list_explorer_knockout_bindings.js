@@ -1,5 +1,18 @@
-hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', 'underscore', 'knockout', 'hqwebapp/js/atwho', 'ace-builds/src-min-noconflict/ace'], function ($, _, ko, atwho, ace) {
-
+hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/atwho',
+    'ace-builds/src-min-noconflict/ace',
+    'ace-builds/src-min-noconflict/mode-xquery',
+    'ace-builds/src-min-noconflict/ext-language_tools',
+], function (
+    $,
+    ko,
+    _,
+    atwho,
+    ace,
+) {
     ko.bindingHandlers.xPathAutocomplete = {
         init: function (element, valueAccessor, allBindings, viewModel) {
             var $element = $(element),
@@ -19,7 +32,7 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', '
                         wrap: true,
                         indentedSoftWrap: false,
                         useWorker: false, // enable the worker to show syntax errors
-                    }
+                    },
                 );
             editor.session.setMode('ace/mode/xquery'); // does reasonable syntax highlighting for XPath
 
@@ -91,7 +104,7 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', '
         init: function (element) {
             var $element = $(element);
             if (!$element.atwho) {
-                throw new Error("The typeahead binding requires Atwho.js and Caret.js");
+                throw new Error("The explorerColumnsAutocomplete binding requires Atwho.js and Caret.js");
             }
 
             atwho.init($element, {

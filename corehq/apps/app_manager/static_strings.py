@@ -46,7 +46,7 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     gettext_noop('Auto-login'),
     gettext_noop('Auto-manage URLs'),
     gettext_noop('Automatic'),
-    gettext_noop('Automatically resizes images within forms. Follow <a href=\'https://confluence.dimagi.com/display/commcarepublic/Auto-Resize+Images+on+Android\'> the instructions here</a> to determine which value to use.'),
+    gettext_noop('Automatically resizes images within forms. Follow <a href=\'https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946731/Images+in+CommCare#Auto-Resize-Images-on-Android\'> the instructions here</a> to determine which value to use.'),
     gettext_noop('Automatically trigger a two-way sync on a regular schedule'),
     gettext_noop('Basic'),
     gettext_noop('Both Hierarchical and Flat Fixture'),
@@ -142,6 +142,8 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     gettext_noop('Only Flat Fixture'),
     gettext_noop('Only Hierarchical Fixture'),
     gettext_noop('Oops! This setting has been discontinued. We recommend you change this setting to Version 2, and it will no longer appear on your settings page.'),
+    gettext_noop('This setting has been discontinued. We recommend you change this setting to Version 2.'
+                 ' Upon doing so this setting will no longer appear on this page.'),
     gettext_noop('Practice Mobile Worker'),
     gettext_noop('Prevents mobile workers from using a CommCare app until the '
                  'Android apps that it needs have been installed on the '
@@ -203,7 +205,7 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     gettext_noop('What kind of log transmission the phone should attempt on a daily basis (submitted to PostURL)'),
     gettext_noop('What kind of log transmission the phone should attempt on a weekly basis (submitted to PostURL)'),
     gettext_noop('What the \'Extra Key\' (# on Nokia Phones) does when pressed'),
-    gettext_noop('When a value is selected, this feature controls the display size of any user-provided image such that it will be consistent with the size of the original image file, and consistent across devices. Follow <a href=\'https://confluence.dimagi.com/display/commcarepublic/Image+Sizing+with+Multiple+Android+Device+Models\'> the instructions here</a> to determine which value to use.'),
+    gettext_noop('When a value is selected, this feature controls the display size of any user-provided image such that it will be consistent with the size of the original image file, and consistent across devices. Follow <a href=\'https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946731/Images+in+CommCare#CommCare-Developer-Toolkit-Image-Sizing-with-Multiple-Android-Device-Models\'> the instructions here</a> to determine which value to use.'),
     gettext_noop('When auto-sync is enabled CommCare will attempt to submit forms and synchronize the user\'s data after logging in with the frequency chosen.'),
     gettext_noop('When loose media mode is set to yes, CommCare will search for alternative media formats for any media that it cannot play. If CommCare attempts to play a file at jr://file/media/prompt_one.mp3 and mp3 files are not supported, the media directory will be searched for other files named prompt_one with alternative extensions which may be supported, for instance prompt_one.wav, and play that instead.'),
     gettext_noop('When the phone has this number of unsynced forms stored locally CommCare will trigger a warning'),

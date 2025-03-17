@@ -6,17 +6,17 @@ hqDefine("events/js/event_attendees",[
     'jquery.rmi/jquery.rmi',
     'locations/js/widgets',
     "hqwebapp/js/bootstrap3/widgets",
-    "hqwebapp/js/bootstrap3/components.ko", // for pagination
+    "hqwebapp/js/components/pagination",
+    "hqwebapp/js/components/search_box",
+    "commcarehq",
 ], function (
     $,
     ko,
     _,
     initialPageData,
     RMI,
-    locationsWidgets
+    locationsWidgets,
 ) {
-    'use strict';
-
     var STATUS_CSS = {
         NONE: '',
         PENDING: 'pending',
@@ -111,24 +111,24 @@ hqDefine("events/js/event_attendees",[
         return self;
     };
 
-    var mobileWorkerAttendees = function() {
+    var mobileWorkerAttendees = function () {
         self.mobileWorkerAttendeesEnabled = ko.observable(false);
         self.buttonText = ko.observable("");
 
-        self.toggleButtonText = function() {
+        self.toggleButtonText = function () {
             var button = document.getElementById("mobileWorkerAttendeeButton");
-            if(self.mobileWorkerAttendeesEnabled()) {
+            if (self.mobileWorkerAttendeesEnabled()) {
                 button.innerHTML = gettext("Disable Mobile Worker Attendees");
                 // Appending btn-danger will override btn-default
-                button.classList.add("btn-danger")
-            }else{
+                button.classList.add("btn-danger");
+            } else {
                 button.innerHTML = gettext("Enable Mobile Worker Attendees");
                 // Simply removing btn-danger will effectively enable btn-default
-                button.classList.remove("btn-danger")
-            };
+                button.classList.remove("btn-danger");
+            }
         };
 
-        self.loadMobileWorkerAttendeeConfig = function() {
+        self.loadMobileWorkerAttendeeConfig = function () {
             $.ajax({
                 method: 'GET',
                 url: initialPageData.reverse('attendees_config'),
@@ -198,7 +198,7 @@ hqDefine("events/js/event_attendees",[
     $(function () {
         var rmiInvoker = RMI(
             initialPageData.reverse('event_attendees'),
-            $("#csrfTokenContainer").val()
+            $("#csrfTokenContainer").val(),
         );
         rmi = function (remoteMethod, data) {
             return rmiInvoker("", data, {

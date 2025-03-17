@@ -15,7 +15,7 @@ from corehq.apps.reports.filters.base import (
     BaseMultipleOptionFilter,
     BaseSingleOptionFilter,
 )
-from corehq.motech.repeaters.const import State
+from corehq.motech.repeaters.const import State, UCRRestrictionFFStatus
 from corehq.motech.repeaters.models import Repeater
 
 
@@ -144,4 +144,20 @@ class RepeatRecordStateFilter(BaseSingleOptionFilter):
             State.Pending,
             State.Cancelled,
             State.Fail,
+            State.InvalidPayload,
+        ]]
+
+
+class UCRRebuildStatusFilter(BaseSingleOptionFilter):
+    slug = "ucr_rebuild_restriction"
+    label = gettext_lazy("Rebuild restriction feature flag status")
+    default_text = gettext_lazy("Show All")
+
+    @property
+    def options(self):
+        return [(s.name, s.label) for s in [
+            UCRRestrictionFFStatus.Enabled,
+            UCRRestrictionFFStatus.NotEnabled,
+            UCRRestrictionFFStatus.ShouldEnable,
+            UCRRestrictionFFStatus.CanDisable,
         ]]

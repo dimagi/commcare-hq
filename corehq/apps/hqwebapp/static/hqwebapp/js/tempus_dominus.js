@@ -1,4 +1,4 @@
-"use strict";
+
 /**
   * This replaces hqwebapp/js/daterangepicker.config, which is tied to bootstrap3
   *
@@ -14,13 +14,15 @@ hqDefine("hqwebapp/js/tempus_dominus", [
     _,
     Popper,
     tempusDominus,
-    initialPageData
+    initialPageData,
 ) {
     // https://github.com/Eonasdan/tempus-dominus/discussions/2698
-    window.Popper = Popper;
+    if (!window.USE_WEBPACK) {
+        window.Popper = Popper;
+    }
 
     let createDatePicker = function (el, options) {
-        return new tempusDominus.TempusDominus(el, _addDefaultOptions(options, {
+        let picker = new tempusDominus.TempusDominus(el, _addDefaultOptions(options, {
             display: {
                 theme: 'light',
                 components: {
@@ -31,15 +33,31 @@ hqDefine("hqwebapp/js/tempus_dominus", [
                 format: 'yyyy-MM-dd',
             }),
         }));
+
+        if (options.viewDate) {
+            picker.dates.setValue(options.viewDate);
+        }
+
+        // Since picking a date is a single-click action, hide the picker on date selection
+        picker.subscribe("change.td", function () {
+            picker.hide();
+        });
+
+        $(el).on("error.td", function (e) {
+            picker.dates.setValue(null);
+            e.stopPropagation();
+        });
+
+        return picker;
     };
 
     // This replaces createBootstrap3DefaultDateRangePicker in hqwebapp/js/daterangepicker.config
-    let createDefaultDateRangePicker = function (el) {
-        return createDateRangePicker(el, getDateRangeSeparator());
+    let createDefaultDateRangePicker = function (el, start, end) {
+        return createDateRangePicker(el, getDateRangeSeparator(), start, end);
     };
 
     // This replaces createDateRangePicker in hqwebapp/js/daterangepicker.config
-    let createDateRangePicker = function (el, separator) {
+    let createDateRangePicker = function (el, separator, start, end) {
         let picker = new tempusDominus.TempusDominus(
             el, {
                 dateRange: true,
@@ -58,8 +76,14 @@ hqDefine("hqwebapp/js/tempus_dominus", [
                 localization: _.extend(defaultTranslations, {
                     format: 'yyyy-MM-dd',
                 }),
-            }
+            },
         );
+
+        if (start && end) {
+            picker.dates.setValue(new tempusDominus.DateTime(start), 0);
+            picker.dates.setValue(new tempusDominus.DateTime(end), 1);
+        }
+
 
         // Handle single-date ranges
         picker.subscribe("hide.td", function () {
@@ -68,10 +92,12 @@ hqDefine("hqwebapp/js/tempus_dominus", [
                 picker.dates.setValue(picker.dates.picked[0], 1);
             }
         });
+
+        return picker;
     };
 
     let createTimePicker = function (el, options) {
-        return new tempusDominus.TempusDominus(el, _addDefaultOptions(options, {
+        var picker = new tempusDominus.TempusDominus(el, _addDefaultOptions(options, {
             display: {
                 theme: 'light',
                 components: {
@@ -83,6 +109,17 @@ hqDefine("hqwebapp/js/tempus_dominus", [
                 format: 'H:mm',
             }),
         }));
+
+        if (options.viewDate) {
+            picker.dates.setValue(options.viewDate);
+        }
+
+        $(el).on("error.td", function (e) {
+            picker.dates.setValue(null);
+            e.stopPropagation();
+        });
+
+        return picker;
     };
 
     // Combine user-passed TD options with default options.
@@ -109,7 +146,7 @@ hqDefine("hqwebapp/js/tempus_dominus", [
     };
 
     let getDateRangeSeparator = function () {
-        return ' to ';
+        return gettext(' to ');
     };
 
     const defaultTranslations = {
@@ -148,5 +185,6 @@ hqDefine("hqwebapp/js/tempus_dominus", [
         createDefaultDateRangePicker: createDefaultDateRangePicker,
         createTimePicker: createTimePicker,
         getDateRangeSeparator: getDateRangeSeparator,
+        tempusDominus: tempusDominus,
     };
 });

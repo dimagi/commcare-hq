@@ -79,6 +79,22 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         mock_get_timezone.assert_called_once()
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
+    @freeze_time('2023-05-16T13:01:51Z')
+    @flag_enabled('CASE_SEARCH_INDEXED_METADATA')
+    def test_system_datetime_property_comparison(self):
+        parsed = parse_xpath("last_modified < datetime-add(now(), 'weeks', -2)")
+        expected_filter = filters.date_range('modified_on', lt='2023-05-02T13:01:51+00:00')
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    @freeze_time('2023-05-16T13:01:51Z')
+    @flag_enabled('CASE_SEARCH_INDEXED_METADATA')
+    def test_system_datetime_property_match(self):
+        parsed = parse_xpath("last_modified = now()")
+        expected_filter = filters.term('modified_on', '2023-05-16T13:01:51+00:00')
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
     def test_not_filter(self):
         parsed = parse_xpath("not(name = 'farid')")
         expected_filter = filters.NOT(case_property_query('name', 'farid'))
@@ -105,11 +121,18 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         self.checkQuery(expected_filter, query, is_raw_query=True)
 
     @freeze_time('2021-08-02')
-    def test_date_comparison__today(self):
+    def test_date_comparison_today(self):
         parsed = parse_xpath("dob >= today()")
         expected_filter = case_property_date_range('dob', gte='2021-08-02')
         query = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(expected_filter, query, is_raw_query=True)
+
+    @freeze_time('2023-05-16T13:01:51Z')
+    def test_date_property_comparison_now(self):
+        parsed = parse_xpath("dob < datetime-add(now(), 'weeks', -2)")
+        expected_filter = case_property_date_range('dob', lt='2023-05-02T13:01:51+00:00')
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
     def test_numeric_comparison(self):
         parsed = parse_xpath("number <= '100.32'")
@@ -206,16 +229,24 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
             case_property_query("name", "jimmy", fuzzy=True)
         )
 
-    def test_fuzzy_match_with_prefix(self):
+    def test_fuzzy_date(self):
         self._test_xpath_query(
-            "fuzzy-match(name, 'jimmy')",
-            case_property_query("name", "jimmy", fuzzy=True, fuzzy_prefix_length=2),
-            config=CaseSearchConfig(domain="domain", fuzzy_prefix_length=2),
+            "fuzzy-date(dob, '2024-12-03')",
+            case_property_query("dob", [
+                "2024-12-03",
+                "2024-03-12",
+                "2024-03-21",
+                "2024-12-30",
+                "2042-12-03",
+                "2042-03-12",
+                "2042-03-21",
+                "2042-12-30"
+            ], boost_first=True)
         )
 
-    def _test_xpath_query(self, query_string, expected_filter, config=None):
+    def _test_xpath_query(self, query_string, expected_filter):
         helper = QueryHelper("domain")
-        helper.config = config or CaseSearchConfig(domain="domain")
+        helper.config = CaseSearchConfig(domain="domain")
         context = SearchFilterContext("domain", helper=helper)
         parsed = parse_xpath(query_string)
         built_filter = build_filter_from_ast(parsed, context)
@@ -333,9 +364,9 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
             case_search_adapter.index(case, refresh=True)
 
     @classmethod
-    def tearDownClass(self):
+    def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_cases()
-        super(TestFilterDslLookups, self).tearDownClass()
+        super().tearDownClass()
 
     def test_parent_lookups(self):
         parsed = parse_xpath("father/name = 'Mace'")

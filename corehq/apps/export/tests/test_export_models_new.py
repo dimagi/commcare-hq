@@ -1,6 +1,6 @@
+import pytest
 from django.test import TestCase
 from unittest.mock import patch
-from nose.plugins.attrib import attr
 from corehq.apps.es.tests.utils import es_test
 
 import pytz
@@ -13,7 +13,7 @@ from corehq.util.es.elasticsearch import TransportError
 from corehq.apps.export.models.new import CaseExportInstance, FormExportInstance
 
 
-@attr('slow')
+@pytest.mark.slow
 @es_test
 class FormExportInstanceTests(TestCase):
     def setUp(self):
@@ -61,7 +61,7 @@ class FormExportInstanceTests(TestCase):
         self.assertEqual(export.get_count(), 2)
 
 
-@attr('slow')
+@pytest.mark.slow
 @es_test
 class CaseExportInstanceTests(TestCase):
     def setUp(self):

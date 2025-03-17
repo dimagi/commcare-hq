@@ -47,48 +47,6 @@ def use_multiselect(view_func):
     return set_request_flag(view_func, 'use_multiselect')
 
 
-def use_nvd3(view_func):
-    """Use this decorator on the dispatch method of a TemplateView subclass
-    to enable the inclusion of the nvd3 library at the base template
-    level. nvd3 is a library of charts for d3.
-
-    Example:
-
-    @use_nvd3
-    def dispatch(self, request, *args, **kwargs):
-        return super(MyView, self).dispatch(request, *args, **kwargs)
-    """
-    return set_request_flag(view_func, 'use_nvd3')
-
-
-def use_nvd3_v3(view_func):
-    """Use this decorator on the dispatch method of a TemplateView subclass
-    to enable the inclusion of the nvd3 library at the base template
-    level. nvd3 Version 3 is a library of charts for d3.
-
-    Example:
-
-    @use_nvd3
-    def dispatch(self, request, *args, **kwargs):
-        return super(MyView, self).dispatch(request, *args, **kwargs)
-    """
-    return set_request_flag(view_func, 'use_nvd3_v3')
-
-
-def use_timeago(view_func):
-    """Use this decorator on the dispatch method of a TemplateView subclass
-    to enable the inclusion of the timeago library at the base template
-    level.
-
-    Example:
-
-    @use_timeago
-    def dispatch(self, request, *args, **kwargs):
-        return super(MyView, self).dispatch(request, *args, **kwargs)
-    """
-    return set_request_flag(view_func, 'use_timeago')
-
-
 def use_datatables(view_func):
     """Use this decorator on the dispatch method of a TemplateView subclass
     to enable the inclusion of the datatables library at the base template
@@ -103,20 +61,6 @@ def use_datatables(view_func):
     return set_request_flag(view_func, 'use_datatables')
 
 
-def use_typeahead(view_func):
-    """Use this decorator on the dispatch method of a TemplateView subclass
-    to enable the inclusion of the typeahead library at the base template
-    level.
-
-    Example:
-
-    @use_typeahead
-    def dispatch(self, request, *args, **kwargs):
-        return super(MyView, self).dispatch(request, *args, **kwargs)
-    """
-    return set_request_flag(view_func, 'use_typeahead')
-
-
 def use_timepicker(view_func):
     """Use this decorator on the dispatch method of a TemplateView subclass
     to enable the inclusion of the timepicker library at the base template
@@ -129,20 +73,6 @@ def use_timepicker(view_func):
         return super(MyView, self).dispatch(request, *args, **kwargs)
     """
     return set_request_flag(view_func, 'use_timepicker')
-
-
-def use_maps(view_func):
-    """Use this decorator on the dispatch method of a TemplateView subclass
-    to enable the inclusion of the maps (with sync utils) library at the base
-    template level.
-
-    Example:
-
-    @use_maps
-    def dispatch(self, request, *args, **kwargs):
-        return super(MyView, self).dispatch(request, *args, **kwargs)
-    """
-    return set_request_flag(view_func, 'use_maps')
 
 
 def use_ko_validation(view_func):

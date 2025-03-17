@@ -1,24 +1,18 @@
 {% load i18n %}
-<div id="<%- unique_id %>" class="clearfix">
+<div class="clearfix">
   <div class="alert alert-success" style="margin-bottom: 2px; margin-top: 10px;">
     <i class="fa fa-check"></i> <%- file_name %> <strong>[<%- file_size %> MB]</strong>
   </div>
   <div class="hqm-progress">
-    <div class="progress" style="margin-bottom: 5px;">
-      <div class="progress-bar progress-bar-striped active" style="width: 0%;"></div>
-    </div>
     <p class="text-success hqm-begin">
       {% blocktrans %}Ready to upload. Click <strong>Begin Upload</strong> below to start.{% endblocktrans %}
     </p>
     <p class="text-error hqm-error hide">
       <span class="label label-danger">{% trans 'There were errors' %}</span>
     </p>
-    <a href="#" class="btn btn-default btn-xs pull-right hqm-remove">
-      <i class="fa fa-remove"></i> {% trans 'Select another file' %}
-    </a>
     <a href="#" class="btn btn-danger btn-xs pull-right hqm-cancel hide">
       <i class="fa fa-remove"></i> {% trans 'Cancel Upload' %}
     </a>
   </div>
-  <div class="hqm-status"></div>
+  <div class="hqm-errors"></div>
 </div>

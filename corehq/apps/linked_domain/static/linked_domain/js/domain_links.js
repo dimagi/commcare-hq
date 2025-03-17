@@ -6,8 +6,10 @@ hqDefine("linked_domain/js/domain_links", [
     'hqwebapp/js/bootstrap3/alert_user',
     'hqwebapp/js/multiselect_utils',
     'analytix/js/kissmetrix',
-    'hqwebapp/js/bootstrap3/components.ko', // for pagination and search box
+    'hqwebapp/js/components/pagination',
+    'hqwebapp/js/components/search_box',
     'hqwebapp/js/select2_knockout_bindings.ko',     // selects2 for fields
+    'commcarehq',
 ], function (
     RMI,
     initialPageData,
@@ -15,7 +17,7 @@ hqDefine("linked_domain/js/domain_links", [
     ko,
     alertUser,
     multiselectUtils,
-    kissmetrics
+    kissmetrics,
 ) {
     var _private = {};
     _private.RMI = function () {};
@@ -505,7 +507,7 @@ hqDefine("linked_domain/js/domain_links", [
                     self.parent.goToPage(1);
                 } else {
                     var errorMessage = _.template(
-                        gettext('Unable to link project spaces. <%- error %>')
+                        gettext('Unable to link project spaces. <%- error %>'),
                     )({error: response.message});
                     alertUser.alert_user(errorMessage, 'danger');
                 }
@@ -551,11 +553,11 @@ hqDefine("linked_domain/js/domain_links", [
     };
 
     $(function () {
-        var view_data = initialPageData.get('view_data');
+        var viewData = initialPageData.get('view_data');
         var csrfToken = $("#csrfTokenContainer").val();
         setRMI(initialPageData.reverse('linked_domain:domain_link_rmi'), csrfToken);
 
-        var model = DomainLinksViewModel(view_data);
+        var model = DomainLinksViewModel(viewData);
         $("#ko-linked-projects").koApplyBindings(model);
 
         if ($("#new-downstream-domain-modal").length) {

@@ -1,16 +1,17 @@
-'use strict';
 hqDefine('cloudcare/js/markdown', [
     'jquery',
     'DOMPurify/dist/purify.min',
     'markdown-it/dist/markdown-it',
     'hqwebapp/js/initial_page_data',
     'integration/js/hmac_callout',
+    'hqwebapp/js/toggles',
 ], function (
     $,
     DOMPurify,
     markdowner,
     initialPageData,
-    HMACCallout
+    HMACCallout,
+    toggles,
 ) {
 
     function updateTarget(tokens, idx, target) {
@@ -63,7 +64,7 @@ hqDefine('cloudcare/js/markdown', [
                     let url = initialPageData.reverse("dialer_view");
                     anchor.attrs[hIndex][1] = url + "?callout_number=" + callout;
                 },
-                "dialer"
+                "dialer",
             ));
         }
 
@@ -77,7 +78,7 @@ hqDefine('cloudcare/js/markdown', [
                     let url = initialPageData.reverse("gaen_otp_view");
                     anchor.attrs[hIndex][1] = url + params;
                 },
-                "gaen_otp"
+                "gaen_otp",
             ));
             addDelegatedClickDispatch('gaen_otp',
                 function (element) {
@@ -92,7 +93,7 @@ hqDefine('cloudcare/js/markdown', [
                 },
                 function () {
                 },
-                "hmac_callout"
+                "hmac_callout",
             ));
             addDelegatedClickDispatch('hmac_callout',
                 function (element) {
@@ -140,7 +141,21 @@ hqDefine('cloudcare/js/markdown', [
             // lazy init to avoid dependency order issues
             md = initMd();
         }
-        return md.render(DOMPurify.sanitize(text || "").replaceAll("&#10;", "\n"));
+        var rendered = md.render(DOMPurify.sanitize(text || "").replaceAll("&#10;", "\n"));
+        // sub case tile header with a caption
+        if (rendered.includes('<p><strong>') && toggles.toggleEnabled('CASE_LIST_TILE_CUSTOM')) {
+            rendered = appendExtraStyleClass(rendered, '<p>', 'mb-0');
+            rendered = appendExtraStyleClass(rendered, '<h6>', 'mb-0');
+        }
+        return rendered;
+    }
+
+    function appendExtraStyleClass(htmlString, element, styleClass) {
+        if (htmlString.includes(element)) {
+            let styledElement = element.slice(0, -1) + ' class="' + styleClass + '"' + element.slice(-1);
+            return htmlString.replace(element, styledElement);
+        }
+        return htmlString;
     }
 
     /**

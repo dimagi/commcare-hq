@@ -119,6 +119,16 @@ def _get_topic_offsets(topics, latest):
         return offsets
 
 
+def get_all_kafka_partitons_for_topic(topic):
+    """
+    :returns: A set of strings containing topic and the partition numbers for the given topic.
+    For example:
+    {'form-sql-0', 'form-sql-1', 'form-sql-2'}
+    """
+    paritions_and_offsets = _get_topic_offsets([topic], latest=False)
+    return set(f"{topic}-{offset}" for (topic, offset) in paritions_and_offsets.keys())
+
+
 def validate_offsets(expected_offsets):
     """
     Takes in a dictionary of offsets (topics to checkpoint numbers) and ensures they are all available

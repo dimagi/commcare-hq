@@ -254,7 +254,7 @@ def configure_sentry(server_env, dsn, release):
         dsn,
         release=release,
         environment=server_env,
-        request_bodies='never',
+        max_request_body_size='never',
         before_send=_before_send,
         integrations=[
             DjangoIntegration(),
@@ -280,7 +280,7 @@ def get_git_commit(base_dir):
     try:
         out = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=base_dir)
         return out.strip().decode('ascii')
-    except OSError:
+    except (OSError, subprocess.CalledProcessError):
         pass
 
 

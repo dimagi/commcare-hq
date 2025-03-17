@@ -13,7 +13,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
     _,
     bootstrap,
     assertProperties,
-    initialPageData
+    initialPageData,
 ) {
     var log = function (message) {
         console.log("[" + (new Date()).toLocaleTimeString() + "] " + message);  // eslint-disable-line no-console
@@ -114,7 +114,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
         };
 
         var hideWarningModal = function (showLogin) {
-           $warningModal.hide();
+            $warningModal.hide();
             if (showLogin) {
                 loginModal.show();
             }
@@ -134,7 +134,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
             } else {
                 $newVersionModal.find('#incompleteFormWarning').addClass('d-none');
             }
-            if (!isModalOpen($modal)) {
+            if (!isModalOpen($loginModal)) {
                 if (isModalOpen($warningModal)) {
                     warningModal.hide();
                 }
@@ -155,7 +155,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
                 // Parsing the app id out of URL hash will fail on the web apps home page, login as, etc.
                 // where the hash isn't a JSON object but instead a string like "#apps".
                 // In these cases, there's no app to check for a new version.
-                log("Could not parse app id out of " + window.location.hash)
+                log("Could not parse app id out of " + window.location.hash);
                 selectedAppId = null;
             }
             var domain = initialPageData.get('domain');
@@ -213,7 +213,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
                 success: function (data) {
                     log(
                         "ping_login response: " + (data.success ? "User is logged in" : "User is logged out")
-                        + ", " + (data.new_app_version_available ? "new app version available" : "no new app version")
+                        + ", " + (data.new_app_version_available ? "new app version available" : "no new app version"),
                     );
                     $button.enableButton();
                     var error = "";

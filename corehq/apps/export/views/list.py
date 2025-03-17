@@ -22,7 +22,7 @@ from memoized import memoized
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.export.exceptions import ExportTooLargeException
 from corehq.apps.export.views.download import DownloadDETSchemaView
-from couchexport.models import Format, IntegrationFormat
+from couchexport.models import Format
 from couchexport.writers import XlsLengthException
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_exception
@@ -33,7 +33,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.api.resources.v0_5 import ODataCaseResource, ODataFormResource
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
-from corehq.apps.domain.decorators import api_auth, login_and_domain_required
+from corehq.apps.domain.decorators import api_auth_allow_key_as_password_LIMITED_USE, login_and_domain_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.const import (
     CASE_EXPORT,
@@ -68,6 +68,7 @@ from corehq.apps.export.views.utils import (
     ExportsPermissionsManager,
     user_can_view_deid_exports,
 )
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import (
     location_restricted_response,
@@ -123,6 +124,8 @@ class ExportListHelper(object):
                 return DeIdFormExportListHelper(request)
             return FormExportListHelper(request)
         elif form_or_case == 'case':
+            if is_deid:
+                return DeIdCaseExportListHelper(request)
             return CaseExportListHelper(request)
 
         raise ValueError("Could not determine ExportListHelper subclass")
@@ -269,7 +272,7 @@ class ExportListHelper(object):
             'api_dispatch_detail',
             kwargs={
                 'domain': export.domain,
-                'api_name': 'v0.5',
+                'api_name': 'v1',
                 'resource_name': resource_class._meta.resource_name,
                 'pk': pk + '/feed',
             }
@@ -356,8 +359,7 @@ class DailySavedExportListHelper(ExportListHelper):
     def _should_appear_in_list(self, export):
         return (export['is_daily_saved_export']
                 and not export['export_format'] == "html"
-                and not export['is_odata_config']
-                and not IntegrationFormat.is_integration_format(export['export_format']))
+                and not export['is_odata_config'])
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditFormDailySavedExportView, EditCaseDailySavedExportView
@@ -397,8 +399,7 @@ class FormExportListHelper(ExportListHelper):
 
     def _should_appear_in_list(self, export):
         return (not export['is_daily_saved_export']
-            and not export['is_odata_config']
-            and not IntegrationFormat.is_integration_format(export['export_format']))
+            and not export['is_odata_config'])
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditNewCustomFormExportView
@@ -415,8 +416,7 @@ class CaseExportListHelper(ExportListHelper):
 
     def _should_appear_in_list(self, export):
         return (not export['is_daily_saved_export']
-            and not export['is_odata_config']
-            and not IntegrationFormat.is_integration_format(export['export_format']))
+            and not export['is_odata_config'])
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditNewCustomCaseExportView
@@ -448,8 +448,7 @@ class DashboardFeedListHelper(DailySavedExportListHelper):
     def _should_appear_in_list(self, export):
         return (export['is_daily_saved_export']
                 and export['export_format'] == "html"
-                and not export['is_odata_config']
-                and not IntegrationFormat.is_integration_format(export['export_format']))
+                and not export['is_odata_config'])
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditFormFeedView, EditCaseFeedView
@@ -472,6 +471,14 @@ class DashboardFeedListHelper(DailySavedExportListHelper):
 
 
 class DeIdFormExportListHelper(FormExportListHelper):
+    is_deid = True
+
+    @property
+    def create_export_form(self):
+        return None
+
+
+class DeIdCaseExportListHelper(CaseExportListHelper):
     is_deid = True
 
     @property
@@ -506,6 +513,7 @@ class BaseExportListView(BaseProjectDataView):
     page_title = gettext_lazy("Export Form Data")
 
     @method_decorator(login_and_domain_required)
+    @method_decorator(use_bootstrap5)
     def dispatch(self, request, *args, **kwargs):
         self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)
         self.permissions.access_list_exports_or_404(is_deid=self.is_deid, is_odata=self.is_odata)
@@ -721,12 +729,6 @@ class CaseExportListView(BaseExportListView, CaseExportListHelper):
     urlname = 'list_case_exports'
     page_title = gettext_noop("Export Case Data")
 
-    @property
-    def page_name(self):
-        if self.is_deid:
-            return _("Export De-Identified Cases")
-        return self.page_title
-
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         bulk_export_progress = cache.get(f'{BULK_CASE_EXPORT_CACHE}:{request.domain}')
@@ -773,6 +775,11 @@ class DeIdFormExportListView(FormExportListView, DeIdFormExportListHelper):
     urlname = 'list_form_deid_exports'
 
 
+class DeIdCaseExportListView(CaseExportListView, DeIdCaseExportListHelper):
+    page_title = gettext_noop("Export De-Identified Case Data")
+    urlname = 'list_case_deid_exports'
+
+
 @location_safe
 class DeIdDailySavedExportListView(DailySavedExportListView, DeIdDailySavedExportListHelper):
     urlname = 'list_deid_daily_saved_exports'
@@ -799,7 +806,7 @@ def can_download_daily_saved_export(export, domain, couch_user):
 
 @location_safe
 @csrf_exempt
-@api_auth()
+@api_auth_allow_key_as_password_LIMITED_USE()
 @require_GET
 def download_daily_saved_export(req, domain, export_instance_id):
     with CriticalSection(['export-last-accessed-{}'.format(export_instance_id)]):
@@ -866,7 +873,7 @@ def get_app_data_drilldown_values(request, domain):
     permissions = ExportsPermissionsManager(model_type, domain, request.couch_user)
     permissions.access_list_exports_or_404(is_deid=False, is_odata=is_odata)
 
-    rmi_helper = ApplicationDataRMIHelper(domain, request.couch_user)
+    rmi_helper = ApplicationDataRMIHelper(domain, request.project, request.couch_user)
     if model_type == 'form':
         response = rmi_helper.get_form_rmi_response()
     elif model_type == 'case':
@@ -994,7 +1001,7 @@ class ODataFeedListHelper(ExportListHelper):
         form.fields['model_type'].label = _("Feed Type")
 
         model_type_choices = [
-            ('', _("Select field type")),
+            ('', _("Select feed type")),
         ]
         if self.has_case_export_permissions:
             model_type_choices.append(('case', _('Case')))

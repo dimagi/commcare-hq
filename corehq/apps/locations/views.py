@@ -11,11 +11,13 @@ from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods, require_POST
 
 from memoized import memoized
 
 from dimagi.utils.couch import get_redis_lock, release_lock
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
@@ -25,10 +27,10 @@ from corehq import toggles
 from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
-from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.domain.decorators import domain_admin_required, api_auth
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.crispy import make_form_readonly
-from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_jquery_ui, use_multiselect
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_jquery_ui, use_multiselect, waf_allow
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.locations.const import LOCK_LOCATIONS_TIMEOUT
@@ -49,7 +51,7 @@ from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 from .analytics import users_have_locations
 from .const import ROOT_LOCATION_TYPE
 from .dbaccessors import get_users_assigned_to_locations
-from .exceptions import LocationConsistencyError
+from .exceptions import LocationConsistencyError, LocationBulkImportError
 from .forms import (
     LocationFilterForm,
     LocationFormSet,
@@ -66,11 +68,14 @@ from .permissions import (
     user_can_edit_location_types,
 )
 from .tree_utils import assert_no_cycles
-from .util import load_locs_json, location_hierarchy_config
+from .util import does_location_type_have_users, load_locs_json, location_hierarchy_config
 from django.http import JsonResponse, HttpResponseBadRequest
 from corehq.apps.locations.dbaccessors import get_filtered_locations_count
 
 logger = logging.getLogger(__name__)
+
+VALID_LOCATION_TYPE_PROPERTIES = ['name', 'parent_type', 'administrative', 'shares_cases', 'view_descendants',
+                                  'pk', 'expand_view_child_data_to', 'has_users']
 
 
 @location_safe
@@ -105,7 +110,11 @@ def lock_locations(func):
                 # handle delete_location view
                 return json_response({'success': False, 'message': message})
             else:
-                return HttpResponseRedirect(request.META['HTTP_REFERER'])
+                referer = request.META.get('HTTP_REFERER')
+                if referer:
+                    return HttpResponseRedirect(referer)
+                else:
+                    return json_response({'success': False, 'message': message})
 
     return func_wrapper
 
@@ -193,6 +202,7 @@ class LocationsListView(BaseLocationView):
     template_name = 'locations/manage/locations.html'
 
     @use_jquery_ui
+    @method_decorator(use_bootstrap5)
     @method_decorator(check_pending_locations_import())
     @method_decorator(require_can_edit_or_view_locations)
     def dispatch(self, request, *args, **kwargs):
@@ -239,6 +249,7 @@ class LocationsListView(BaseLocationView):
 
 
 @location_safe
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(require_can_edit_or_view_locations, name='dispatch')
 class FilteredLocationDownload(BaseLocationView):
     urlname = 'filter_and_download_locations'
@@ -255,7 +266,10 @@ class FilteredLocationDownload(BaseLocationView):
 
 class LocationOptionsController(EmwfOptionsController):
     namespace_locations = False
-    case_sharing_only = False
+
+    def __init__(self, *args, include_locations_with_no_users=True, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.include_locations_with_no_users = include_locations_with_no_users
 
     @property
     def data_sources(self):
@@ -267,11 +281,13 @@ class LocationOptionsController(EmwfOptionsController):
 @method_decorator(locations_access_required, name='dispatch')
 @location_safe
 class LocationsSearchView(EmwfOptionsView):
+    include_locations_with_no_users = True
 
     @property
     @memoized
     def options_controller(self):
-        return LocationOptionsController(self.request, self.domain, self.search)
+        return LocationOptionsController(self.request, self.domain, self.search,
+            include_locations_with_no_users=self.include_locations_with_no_users)
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -299,6 +315,7 @@ class LocationTypesView(BaseDomainView):
         return reverse(LocationsListView.urlname, args=[self.domain])
 
     @use_jquery_ui
+    @method_decorator(use_bootstrap5)
     @method_decorator(can_edit_location_types)
     @method_decorator(require_can_edit_locations)
     @method_decorator(check_pending_locations_import())
@@ -342,6 +359,8 @@ class LocationTypesView(BaseDomainView):
                                           if loc_type.include_without_expanding_id else None),
             'include_only': list(loc_type.include_only.values_list('pk', flat=True)),
             'expand_view_child_data_to': loc_type.expand_view_child_data_to_id,
+            'has_users_setting': loc_type.has_users,
+            'actually_has_users': does_location_type_have_users(loc_type),
         } for loc_type in LocationType.objects.by_domain(self.domain)]
 
     @method_decorator(lock_locations)
@@ -352,7 +371,7 @@ class LocationTypesView(BaseDomainView):
         def _is_fake_pk(pk):
             return isinstance(pk, str) and pk.startswith("fake-pk-")
 
-        def mk_loctype(name, parent_type, administrative,
+        def _mk_loctype(name, parent_type, administrative,
                        shares_cases, view_descendants, pk, code, **kwargs):
             parent = sql_loc_types[parent_type] if parent_type else None
 
@@ -369,11 +388,12 @@ class LocationTypesView(BaseDomainView):
             loc_type.parent_type = parent
             loc_type.shares_cases = shares_cases
             loc_type.view_descendants = view_descendants
+            loc_type.has_users = kwargs.get('has_users')
             loc_type.code = unicode_slug(code)
             sql_loc_types[pk] = loc_type
             loc_type.save()
 
-        def unique_name_and_code():
+        def _unique_name_and_code():
             current_location_types = LocationType.objects.by_domain(request.domain)
             for location_type in current_location_types:
                 if location_type.pk in payload_loc_type_name_by_pk:
@@ -389,15 +409,26 @@ class LocationTypesView(BaseDomainView):
                         return False
             return True
 
+        def _validate_properties(loc_type):
+            for prop in VALID_LOCATION_TYPE_PROPERTIES:
+                if prop not in loc_type:
+                    raise LocationConsistencyError("Missing an organization level property!")
+
+        def _validate_has_users_config(loc_type_payload, pk):
+            if not loc_type.get('has_users'):
+                if _is_fake_pk(pk):
+                    return
+                if does_location_type_have_users(LocationType.objects.get(pk=pk, domain=self.domain)):
+                    raise LocationConsistencyError(f"Locations of the organization level '{loc_type['name']}' "
+                                                "have users assigned to them. You can't uncheck the "
+                                                "'Has Users' setting for this level!")
+
         loc_types = payload['loc_types']
         pks = []
         payload_loc_type_name_by_pk = {}
         payload_loc_type_code_by_pk = {}
         for loc_type in loc_types:
-            for prop in ['name', 'parent_type', 'administrative',
-                         'shares_cases', 'view_descendants', 'pk', 'expand_view_child_data_to']:
-                if prop not in loc_type:
-                    raise LocationConsistencyError("Missing an organization level property!")
+            _validate_properties(loc_type)
             pk = loc_type['pk']
             if not _is_fake_pk(pk):
                 pks.append(loc_type['pk'])
@@ -405,6 +436,8 @@ class LocationTypesView(BaseDomainView):
             payload_loc_type_name_by_pk[loc_type['pk']] = loc_type['name']
             if loc_type.get('code'):
                 payload_loc_type_code_by_pk[loc_type['pk']] = loc_type['code']
+            if toggles.USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION.enabled(self.domain):
+                _validate_has_users_config(loc_type, pk)
         names = list(payload_loc_type_name_by_pk.values())
         names_are_unique = len(names) == len(set(names))
         codes = list(payload_loc_type_code_by_pk.values())
@@ -412,7 +445,7 @@ class LocationTypesView(BaseDomainView):
         if not names_are_unique or not codes_are_unique:
             raise LocationConsistencyError("'name' and 'code' are supposed to be unique")
 
-        if not unique_name_and_code():
+        if not _unique_name_and_code():
             messages.error(request, LocationConsistencyError(_(
                 "Looks like you are assigning a location name/code to a different location "
                 "in the same request. Please do this in two separate updates by using a "
@@ -426,7 +459,7 @@ class LocationTypesView(BaseDomainView):
 
         for loc_type in hierarchy:
             # make all locations in order
-            mk_loctype(**loc_type)
+            _mk_loctype(**loc_type)
 
         for loc_type in hierarchy:
             # apply sync boundaries (expand_from, expand_to and include_without_expanding) after the
@@ -564,6 +597,7 @@ class LocationTypesView(BaseDomainView):
         return ordered_loc_types
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class BaseEditLocationView(BaseLocationView):
     template_name = 'locations/manage/location.html'
     creates_new_location = True
@@ -689,6 +723,7 @@ def delete_location(request, domain, loc_id):
     })
 
 
+@can_edit_or_view_location
 @location_safe
 def location_lineage(request, domain, loc_id):
     lineage = SQLLocation.objects.get_locations([loc_id])[0].lineage
@@ -787,6 +822,8 @@ class EditLocationView(BaseEditLocationView):
     @memoized
     def users_form(self):
         if not (self.can_edit_commcare_users or self.can_access_all_locations):
+            return None
+        if not self.location.location_type.has_users:
             return None
         form = UsersAtLocationForm(
             request=self.request,
@@ -916,6 +953,7 @@ class LocationImportView(BaseLocationView):
     page_title = gettext_noop('Upload Organization Structure From Excel')
     template_name = 'locations/manage/import.html'
 
+    @method_decorator(use_bootstrap5)
     @method_decorator(require_can_edit_locations)
     @method_decorator(check_pending_locations_import(redirect=True))
     def dispatch(self, request, *args, **kwargs):
@@ -964,7 +1002,7 @@ class LocationImportView(BaseLocationView):
 
         domain = args[0]
 
-        ref = self._cache_file(request, domain, upload)
+        ref = self.cache_file(request, domain, upload)
         if not isinstance(ref, LocationImportView.Ref):
             # ref is HTTP response: lock could not be acquired
             return ref
@@ -980,7 +1018,7 @@ class LocationImportView(BaseLocationView):
 
     @staticmethod
     @lock_locations
-    def _cache_file(request, domain, upload):
+    def cache_file(request, domain, upload):
         """Stash in soil for ten hours to make it easier to pass to celery
 
         :returns: `LocationImportView.Ref` object that can be identified
@@ -1101,6 +1139,7 @@ class DowngradeLocationsView(BaseDomainView):
     section_name = gettext_lazy("Project Settings")
     page_title = gettext_lazy("Project Access")
 
+    @method_decorator(use_bootstrap5)
     def dispatch(self, *args, **kwargs):
         if not users_have_locations(self.domain):  # irrelevant, redirect
             redirect_url = reverse('users_default', args=[self.domain])
@@ -1153,3 +1192,43 @@ def count_locations(request, domain):
     return JsonResponse({
         'count': locations_count
     })
+
+
+@waf_allow('XSS_BODY')
+@csrf_exempt
+@require_POST
+@api_auth()
+def bulk_location_upload_api(request, domain, **kwargs):
+    try:
+        return _bulk_location_upload_api(request, domain)
+    except LocationBulkImportError as e:
+        error, status_code = str(e), 400
+    except Exception as e:
+        notify_exception(None, message=str(e))
+        error, status_code = str(e), 500
+
+    return json_response({'success': False, 'message': error}, status_code=status_code)
+
+
+def _bulk_location_upload_api(request, domain):
+    if len(request.FILES) > 1:
+        raise LocationBulkImportError(_("only one file can be uploaded at a time"))
+
+    upload_file = request.FILES.get("bulk_upload_file")
+    if not upload_file:
+        raise LocationBulkImportError(_("no file uploaded"))
+
+    try:
+        get_workbook(upload_file)
+    except WorkbookJSONError as e:
+        raise LocationBulkImportError(str(e))
+
+    file_ref = LocationImportView.cache_file(request, domain, upload_file)
+    if not isinstance(file_ref, LocationImportView.Ref):
+        return file_ref
+
+    file_ref = file_ref.value
+    task = import_locations_async.delay(domain, file_ref.download_id, request.couch_user.user_id)
+    file_ref.set_task(task)
+
+    return json_response({"success": True})

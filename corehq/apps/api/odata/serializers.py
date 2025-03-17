@@ -41,12 +41,14 @@ class ODataBaseSerializer(Serializer):
         domain = data.pop('domain', None)
         config_id = data.pop('config_id', None)
         api_path = data.pop('api_path', None)
+        api_version = data.pop('api_version', None)
         table_id = data.pop('table_id', None)
 
-        assert all([domain, config_id, api_path]), [domain, config_id, api_path]
+        assert all([domain, config_id, api_path, api_version]), \
+            [domain, config_id, api_path, api_version]
 
         context_urlname = self.metadata_url
-        context_url_args = [domain, config_id]
+        context_url_args = [domain, api_version, config_id]
         if table_id > 0:
             context_urlname = self.table_metadata_url
             context_url_args.append(table_id)

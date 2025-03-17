@@ -21,7 +21,7 @@ from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, Use
 from corehq.apps.receiverwrapper.rate_limiter import report_case_usage, report_submission_usage
 from corehq.const import OPENROSA_VERSION_3
 from corehq.middleware import OPENROSA_VERSION_HEADER
-from corehq.toggles import ASYNC_RESTORE, SUMOLOGIC_LOGS, NAMESPACE_OTHER
+from corehq.toggles import ASYNC_RESTORE, BLOCK_SUMOLOGIC_LOGS, NAMESPACE_OTHER, SUMOLOGIC_LOGS
 from corehq.apps.app_manager.dbaccessors import get_current_app
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.commtrack.exceptions import MissingProductId
@@ -71,7 +71,7 @@ class SubmissionPost(object):
                  location=None, submit_ip=None, openrosa_headers=None,
                  last_sync_token=None, received_on=None, date_header=None,
                  partial_submission=False, case_db=None, force_logs=False,
-                 timing_context=None):
+                 timing_context=None, instance_json=None):
         assert domain, "'domain' is required"
         assert instance, instance
         assert not isinstance(instance, HttpRequest), instance
@@ -86,6 +86,7 @@ class SubmissionPost(object):
         self.last_sync_token = last_sync_token
         self.openrosa_headers = openrosa_headers or {}
         self.instance = instance
+        self.instance_json = instance_json
         self.attachments = attachments or {}
         self.auth_context = auth_context or DefaultAuthContext()
         self.path = path
@@ -253,7 +254,13 @@ class SubmissionPost(object):
             if failure_response:
                 return FormProcessingResult(failure_response, None, [], [], 'known_failures')
 
-            result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
+            result = process_xform_xml(
+                self.domain,
+                self.instance,
+                self.attachments,
+                self.auth_context.to_json(),
+                instance_json=self.instance_json,
+            )
             submitted_form = result.submitted_form
 
             self._post_process_form(submitted_form)
@@ -397,7 +404,8 @@ class SubmissionPost(object):
 
     def _conditionally_send_device_logs_to_sumologic(self, instance):
         url = getattr(settings, 'SUMOLOGIC_URL', None)
-        if url and SUMOLOGIC_LOGS.enabled(instance.form_data.get('device_id'), NAMESPACE_OTHER):
+        if (url and SUMOLOGIC_LOGS.enabled(instance.form_data.get('device_id'), NAMESPACE_OTHER)
+                and not BLOCK_SUMOLOGIC_LOGS.enabled(self.domain)):
             SumoLogicLog(self.domain, instance).send_data(url)
 
     def _invalidate_caches(self, xform):

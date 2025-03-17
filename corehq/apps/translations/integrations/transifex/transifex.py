@@ -75,7 +75,7 @@ class Transifex(object):
         transifex_project = TransifexProject.objects.get(slug=self.project_slug)
         transifex_organization = transifex_project.organization
         return TransifexApiClient(
-            transifex_organization.get_api_token,
+            transifex_organization.plaintext_api_token,
             transifex_organization.slug,
             self.project_slug,
             self.use_version_postfix,

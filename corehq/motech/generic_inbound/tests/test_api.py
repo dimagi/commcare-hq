@@ -30,6 +30,7 @@ from corehq.motech.generic_inbound.utils import (
     revert_api_request_from_form,
 )
 from corehq.util.test_utils import flag_enabled, privilege_enabled
+from corehq.form_processor.tests.utils import create_case
 
 
 class GenericInboundAPIViewBaseTest(TestCase):
@@ -118,11 +119,11 @@ class GenericInboundAPIViewBaseTest(TestCase):
         data, content_type = self._get_post_data()
         response = self.client.post(
             url, data=data, content_type=content_type,
-            HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}",
+            HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.plaintext_key}",
             HTTP_USER_AGENT="user agent string",
         )
         return response
-    
+
     def _get_post_data(self):
         """Return request POST data as a tuple(data, content_type)"""
         raise NotImplementedError
@@ -136,13 +137,14 @@ class GenericInboundAPIViewBaseTest(TestCase):
 @privilege_enabled(privileges.API_ACCESS)
 @flag_enabled('API_THROTTLE_WHITELIST')
 class TestGenericInboundAPIView(GenericInboundAPIViewBaseTest):
+    additional_post_data = {}
 
     def _get_post_data(self):
         return (
-            json.dumps({'name': 'cricket', 'is_team_sport': True}),
+            json.dumps({'name': 'cricket', 'is_team_sport': True, **self.additional_post_data}),
             "application/json"
         )
-    
+
     def test_post_denied(self):
         generic_api = self._make_api({})
         url = reverse('generic_inbound_api', args=[self.domain_name, generic_api.url_key])
@@ -153,7 +155,7 @@ class TestGenericInboundAPIView(GenericInboundAPIViewBaseTest):
         generic_api = self._make_api({})
         url = reverse('generic_inbound_api', args=[self.domain_name, generic_api.url_key])
         response = self.client.post(
-            url, data={}, HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}"
+            url, data={}, HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.plaintext_key}"
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(), {"error": "Payload must be valid JSON"})
@@ -178,7 +180,7 @@ class TestGenericInboundAPIView(GenericInboundAPIViewBaseTest):
         generic_api = self._make_api({})
         url = reverse('generic_inbound_api', args=[self.domain_name, generic_api.url_key])
         response = self.client.post(
-            url, data=data_51_mb, HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}",
+            url, data=data_51_mb, HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.plaintext_key}",
             content_type="text"
         )
         self.assertEqual(response.status_code, 400)
@@ -358,7 +360,7 @@ class TestGenericInboundAPIView(GenericInboundAPIViewBaseTest):
             reverse('generic_inbound_api', args=[self.domain_name, api.url_key]),
             data='This is not JSON!',
             content_type="application/json",
-            HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}",
+            HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.plaintext_key}",
             HTTP_USER_AGENT="user agent string",
         )
         self.assertEqual(response.status_code, 400, response.content)
@@ -404,3 +406,107 @@ class TestGenericInboundAPIView(GenericInboundAPIViewBaseTest):
         revert_api_request_from_form(xform.form_id)
         log.refresh_from_db()
         self.assertEqual(log.status, RequestLog.Status.REVERTED)
+
+    def test_create_duplicate_cases_with_external_id_create(self):
+        case = create_case(self.domain_name, save=True, external_id="external_id")
+
+        self.additional_post_data = {
+            'external_id': case.external_id,
+        }
+
+        expression = UCRExpression.objects.create(
+            name='create_sport',
+            domain=self.domain_name,
+            expression_type=UCR_NAMED_EXPRESSION,
+            definition=self._expression_definition_with_external_id(should_create=True),
+        )
+
+        api = ConfigurableAPI.objects.create(
+            domain=self.domain_name,
+            filter_expression=None,
+            transform_expression=expression,
+            backend=ApiBackendOptions.json,
+        )
+        response = self._call_api_advanced(api, None)
+        new_case = response.json()['cases'][0]
+        self.assertEqual(new_case['external_id'], case.external_id)
+        first_case_id = new_case['case_id']
+
+        response = self._call_api_advanced(api, None)
+        new_case = response.json()['cases'][0]
+        self.assertEqual(new_case['external_id'], case.external_id)
+        self.assertNotEqual(new_case['case_id'], first_case_id)
+
+    def test_create_case_with_external_id_update(self):
+        case = create_case(self.domain_name, save=True, external_id="external_id")
+
+        self.additional_post_data = {
+            'external_id': case.external_id,
+        }
+
+        expression = UCRExpression.objects.create(
+            name='create_sport',
+            domain=self.domain_name,
+            expression_type=UCR_NAMED_EXPRESSION,
+            definition=self._expression_definition_with_external_id(should_create=False),
+        )
+
+        api = ConfigurableAPI.objects.create(
+            domain=self.domain_name,
+            filter_expression=None,
+            transform_expression=expression,
+            backend=ApiBackendOptions.json,
+        )
+        response = self._call_api_advanced(api, None)
+        new_case = response.json()['cases'][0]
+        self.assertEqual(new_case['external_id'], case.external_id)
+
+    def test_does_not_create_duplicate_cases_with_external_id_update(self):
+        case = create_case(self.domain_name, save=True, external_id="external_id")
+
+        self.additional_post_data = {
+            'external_id': case.external_id,
+        }
+
+        expression = UCRExpression.objects.create(
+            name='create_sport',
+            domain=self.domain_name,
+            expression_type=UCR_NAMED_EXPRESSION,
+            definition=self._expression_definition_with_external_id(should_create=False),
+        )
+
+        api = ConfigurableAPI.objects.create(
+            domain=self.domain_name,
+            filter_expression=None,
+            transform_expression=expression,
+            backend=ApiBackendOptions.json,
+        )
+        response = self._call_api_advanced(api, None)
+        new_case = response.json()['cases'][0]
+        self.assertEqual(new_case['external_id'], case.external_id)
+        first_case_id = new_case['case_id']
+
+        response = self._call_api_advanced(api, None)
+        new_case = response.json()['cases'][0]
+        self.assertEqual(new_case['external_id'], case.external_id)
+        self.assertEqual(new_case['case_id'], first_case_id)
+
+    def _expression_definition_with_external_id(self, should_create):
+        property_expressions = {
+            "type": "dict",
+            "name": {
+                "type": "jsonpath",
+                "datatype": "string",
+                "jsonpath": "body.name"
+            },
+        }
+        expression = self._get_ucr_case_expression(property_expressions)
+        expression["properties"].update({
+            "external_id": {
+                "type": "jsonpath",
+                "datatype": "string",
+                "jsonpath": "body.external_id"
+            }
+        })
+        expression["properties"]["create"] = should_create
+        return expression

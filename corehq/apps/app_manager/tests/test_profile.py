@@ -1,9 +1,10 @@
 import uuid
 import xml.etree.cElementTree as ET
 from itertools import combinations
+from unittest.mock import patch
 
 from django.conf import settings
-from django.test import SimpleTestCase, TestCase, override_settings
+from django.test import TestCase, override_settings
 
 from corehq.apps.app_manager.commcare_settings import (
     get_commcare_settings_lookup,
@@ -21,8 +22,7 @@ from corehq.util.test_utils import flag_enabled
 
 
 @flag_enabled('CUSTOM_PROPERTIES')
-@flag_enabled('APP_DEPENDENCIES')
-class ProfileTest(SimpleTestCase, TestXmlMixin):
+class ProfileTest(TestCase, TestXmlMixin):
     file_path = ('data',)
 
     def setUp(self):
@@ -103,7 +103,8 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
             '"force" should always be true for custom properties"{}"'.format(key)
         )
 
-    def test_profile_properties(self):
+    @patch('corehq.apps.app_manager.models.domain_has_privilege', return_value=True)
+    def test_profile_properties(self, *args):
         for setting in get_custom_commcare_settings():
             if setting['id'] == 'users':
                 continue

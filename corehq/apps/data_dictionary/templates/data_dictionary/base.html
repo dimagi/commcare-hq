@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main "data_dictionary/js/data_dictionary" %}
+{% js_entry_b3 "data_dictionary/js/data_dictionary" %}
 
 {% block stylesheets %}{{ block.super }}
   {% compress css %}
@@ -93,7 +93,8 @@
                       {% trans "Description" %}
                   </label>
                   <div class="col-xs-12 col-sm-6 col-md-6 col-lg-8 controls">
-                    <textarea name="description" class="form-control vertical-resize"></textarea>
+                    <textarea name="description"
+                              class="form-control std-height vertical-resize"></textarea>
                   </div>
                 </div>
               </fieldset>
@@ -124,7 +125,7 @@
 {% endblock %}
 
 {% block page_content %}
-  {% registerurl 'data_dictionary_json' domain %}
+  {% registerurl 'data_dictionary_json_case_types' domain %}
   {% registerurl 'update_case_property' domain %}
   {% registerurl 'deprecate_or_restore_case_type' domain '---' %}
   {% registerurl 'delete_case_type' domain '---' %}
@@ -200,10 +201,11 @@
           <div class="table-row table-header">
           <div class="row-item-small"></div>
           <div class="row-item">{% trans "Case Property" %}</div>
+          <div class="row-item">{% trans "Label" %}</div>
           {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
             <div class="row-item">{% trans "Data Type" %}</div>
           {% endif %}
-          <div class="row-item">{% trans "Description" %}</div>
+          <div class="row-item-big">{% trans "Description" %}</div>
           {% if fhir_integration_enabled %}
             <div class="row-item">{% trans "FHIR Resource Property Path" %}</div>
           {% endif %}
@@ -215,12 +217,16 @@
             <div class="row-item-small"></div>
           {% endif %}
           </div>
-          <div data-bind="sortable: { data: caseGroupList, connectClass: 'groups', options: { handle: 'i.sortable-handle' } }">
+          <div data-bind="sortable: {
+                            data: activeCaseTypeData(),
+                            connectClass: 'groups',
+                            options: { handle: 'i.sortable-handle' }
+                          }">
           <div>
           <div class="group-deprecated" data-bind="visible: showGroupPropertyTransferWarning" style="display: none;">
-            <b data-bind="text: name()"></b>
-            {% trans "group's properties will be moved to" %}
-            <b>{% trans "No Group" %}</b>
+            {% blocktrans %}
+            <b data-bind="text: name()"></b> group's properties will be moved to <b>No Group</b>
+            {% endblocktrans %}
           </div>
           <div class="table-row group" data-bind="css: { 'group-deprecated': toBeDeprecated() }, visible: !deprecated || $root.showAll()">
             <div class="row-item-small">
@@ -239,15 +245,17 @@
                             attr: {'placeholder': name}" id="group-name" />
               <!-- /ko -->
             </div>
+            <div class="row-item">
+              &nbsp;{# Empty cell where "Label" is in case property rows #}
+            </div>
             {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
               <div class="row-item">{% trans "Case Property Group" %}</div>
             {% endif %}
-            <div class="row-item">
+            <div class="row-item-big">
               <!-- ko if: name() !== ''-->
-              <textarea class="form-control vertical-resize" data-bind="
-                    value: $data.description,
-                    rows: 1"
-                    placeholder='{% trans "Click here to add a description" %}'></textarea>
+              <textarea class="form-control std-height vertical-resize"
+                        data-bind="value: $data.description, rows: 1"
+                        placeholder='{% trans "Click here to add a description" %}'></textarea>
               <!-- /ko -->
             </div>
             {% if fhir_integration_enabled %}
@@ -278,16 +286,14 @@
               <div class="row-item">
                 <div class="w-100">
                 <span data-bind="text: name"></span>
-                <div class="row mt-3">
-                  <label class="col-xs-2 py-2" for="prop-label">Label </label>
-                  <span class="col-xs-9">
-                    <input class="form-control"
-                          data-bind="value: $data.label, attr: {'placeholder': 'Click here to add Label'}"
-                          id="prop-label"
-                    />
-                  </span>
                 </div>
-                </div>
+              </div>
+              <div class="row-item">
+                <input class="form-control"
+                       id="prop-label"
+                       data-bind="
+                         value: $data.label,
+                         attr: {'placeholder': 'Click here to add a label'}" />
               </div>
               {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
                 <div class="row-item main-form">
@@ -310,11 +316,11 @@
                   </span>
                 </div>
               {% endif %}
-              <div class="row-item main-form">
-                              <textarea class="form-control vertical-resize" data-bind="
-                                value: $data.description,
-                                rows: 1"
-                                placeholder='{% trans "Click here to add a description" %}'></textarea>
+              <div class="row-item-big main-form">
+                <textarea class="form-control std-height vertical-resize"
+                          placeholder="{% trans 'Click here to add a description' %}"
+                          data-bind=" value: $data.description, rows: 1">
+                </textarea>
               </div>
             {% if fhir_integration_enabled %}
               <div class="row-item fhir-path">
@@ -363,26 +369,51 @@
             {% endif %}
             </div>
           </div>
+
+          {% if not request.is_view_only %}
+            <div class="table-row"
+                 data-bind="visible: !deprecated">
+              <div class="row-item">
+                <form class="form-inline"
+                      data-bind="css: {
+                                   'has-error': !$root.newPropertyNameUnique(newPropertyName())
+                                                || !$root.newPropertyNameValid(newPropertyName())
+                                 }">
+                  <input class="form-control"
+                         placeholder="Case Property"
+                         data-bind="value: newPropertyName">
+                  <button class="btn btn-default"
+                          id="gtm-add-case-property"
+                          data-bind="click: newCaseProperty,
+                                     enable: $root.newPropertyNameUnique(newPropertyName())
+                                             && $root.newPropertyNameValid(newPropertyName())">
+                    <i class="fa fa-plus"></i>
+                    {% trans "Add Case Property" %}
+                  </button>
+                  <div class="help-block">
+                    <span class="text-danger"
+                          data-bind="visible: !$root.newPropertyNameUnique(newPropertyName())">
+                      {% blocktrans %}
+                        A case property with this name already exists.
+                        If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated
+                        properties.
+                      {% endblocktrans %}
+                    </span>
+                    <span class="text-danger" data-bind="visible: !$root.newPropertyNameValid(newPropertyName())">
+                      {% trans "Invalid case property name. It should start with a letter, and only contain letters, numbers, '-', and '_'" %}
+                    </span>
+                  </div>
+
+                </form>
+              </div>
+            </div>
+          {% endif %}
+
           </div>
           </div>
         </div>
+
         {% if not request.is_view_only %}
-          <form class="form-inline" data-bind="css: { 'has-error': !newPropertyNameUnique() || !newPropertyNameValid() }">
-            <input class="form-control" placeholder="Case Property" data-bind="value: newPropertyName">
-            <button class="btn btn-default" id="gtm-add-case-property" data-bind="click: $root.newCaseProperty, enable: newPropertyNameUnique() && newPropertyNameValid()">
-              <i class="fa fa-plus"></i>
-              {% trans "Add Case Property" %}
-            </button>
-            <div class="help-block">
-              <span class="text-danger" data-bind="visible: !newPropertyNameUnique()">
-                {% trans "A case property with this name already exists." %}
-              </span>
-              <span class="text-danger" data-bind="visible: !newPropertyNameValid()">
-                {% trans "Invalid case property name. It should start with a letter, and only contain letters, numbers, '-', and '_'" %}
-              </span>
-            </div>
-          </form>
-          <br />
           <form class="form-inline" data-bind="css: {'has-error': !newGroupNameUnique() || !newGroupNameValid()}">
             <input class="form-control" placeholder="Group Name" data-bind="value: newGroupName">
             <button class="btn btn-default" id="gtm-add-case-property-group" data-bind="click: $root.newGroup, enable: newGroupNameUnique() && newGroupNameValid()">
@@ -391,7 +422,11 @@
             </button>
             <div class="help-block">
               <span class="text-danger" data-bind="visible: !newGroupNameUnique()">
-                {% trans "A case property group with this name already exists." %}
+                {% blocktrans %}
+                  A case property group with this name already exists.
+                  If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated
+                  groups.
+                {% endblocktrans %}
               </span>
               <span class="text-danger" data-bind="visible: !newGroupNameValid()">
                 {% trans "Invalid case group name. It should start with a letter, and only contain letters, numbers, '-', and '_'" %}

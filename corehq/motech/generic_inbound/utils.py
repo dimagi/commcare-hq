@@ -1,11 +1,10 @@
-import json
 import uuid
 from base64 import urlsafe_b64encode
 from functools import cached_property
 
 from django.conf import settings
 from django.db import transaction
-from django.http import QueryDict, HttpResponse, JsonResponse
+from django.http import QueryDict, HttpResponse
 from django.utils.translation import gettext as _
 
 import attr
@@ -129,8 +128,9 @@ def make_processing_attempt(response, request_log, is_retry=False):
     )
 
 
-def get_evaluation_context(restore_user, method, query, headers, body):
+def get_evaluation_context(domain, restore_user, method, query, headers, body):
     return EvaluationContext({
+        'domain': domain,
         'request': {
             'method': method,
             'query': query,
@@ -157,9 +157,9 @@ def reprocess_api_request(request_log):
         make_processing_attempt(response, request_log, is_retry=True)
 
 
-def process_api_request(api_model, request_id, get_request_data):
+def process_api_request(configurable_api, request_id, get_request_data):
     try:
-        backend_cls = api_model.backend_class
+        backend_cls = configurable_api.backend_class
     except GenericInboundApiError as e:
         response = ApiResponse(status=500, internal_response={'error': str(e)})
     else:
@@ -168,7 +168,7 @@ def process_api_request(api_model, request_id, get_request_data):
         except GenericInboundUserError as e:
             response = backend_cls.get_basic_error_response(request_id, 400, str(e))
         else:
-            response = backend_cls(api_model, request_data).run()
+            response = backend_cls(configurable_api, request_data).run()
     return response
 
 

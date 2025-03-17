@@ -8,7 +8,6 @@ from django.utils.translation import gettext_lazy
 
 import dateutil
 from crispy_forms import layout as crispy
-from crispy_forms.helper import FormHelper
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms.bootstrap import StrictButton
 
@@ -933,9 +932,6 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
         self.domain_object = domain_object
         super(EmwfFilterFormExport, self).__init__(domain_object, *args, **kwargs)
 
-        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-3'
-
     def get_model_filter(self, mobile_user_and_group_slugs, can_access_all_locations, accessible_location_ids):
         """
         :param mobile_user_and_group_slugs: slug from request like
@@ -989,8 +985,6 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, BaseFilterExportDown
         self.timezone = timezone
         super(FilterCaseESExportDownloadForm, self).__init__(domain_object, *args, **kwargs)
 
-        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-3'
         # update date_range filter's initial values to span the entirety of
         # the domain's submission range
         default_datespan = datespan_from_beginning(self.domain_object, self.timezone)
@@ -1047,8 +1041,6 @@ class FilterSmsESExportDownloadForm(BaseFilterExportDownloadForm):
         self.timezone = timezone
         super(FilterSmsESExportDownloadForm, self).__init__(domain_object, *args, **kwargs)
 
-        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-3'
         # update date_range filter's initial values to span the entirety of
         # the domain's submission range
         default_datespan = datespan_from_beginning(self.domain_object, self.timezone)
@@ -1086,9 +1078,7 @@ class DatasourceExportDownloadForm(forms.Form):
 
     def __init__(self, domain, *args, **kwargs):
         super(DatasourceExportDownloadForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-3'
+        self.helper = HQFormHelper()
 
         self.fields['data_source'].choices = self.domain_datasources(domain)
 
@@ -1111,7 +1101,7 @@ class DatasourceExportDownloadForm(forms.Form):
                     css_class="btn-primary",
                     data_bind="enable: haveDatasources"
                 ),
-            )
+            ),
         )
 
     @staticmethod

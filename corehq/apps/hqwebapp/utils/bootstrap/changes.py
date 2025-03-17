@@ -102,6 +102,18 @@ def make_numbered_css_renames(line, spec):
     )
 
 
+def make_select_form_control_renames(line, spec):
+    if "<select" in line:
+        if re.search(_get_direct_css_regex("form-control"), line):
+            return _do_rename(
+                line,
+                {"form-control": "form-select"},
+                _get_direct_css_regex,
+                lambda x: r"\1form-select\3"
+            )
+    return line, []
+
+
 def make_template_tag_renames(line, spec):
     return _do_rename(
         line,
@@ -115,7 +127,7 @@ def make_data_attribute_renames(line, spec):
     return _do_rename(
         line,
         spec['data_attribute_renames'],
-        lambda x: r"([\n }])(" + x + r")(=[\"\'])",
+        lambda x: r"([\n }\"\'])(" + x + r")([\"\']?[=:]\s*[\"\'])",
         lambda x: r"\1" + spec['data_attribute_renames'][x] + r"\3"
     )
 
@@ -168,8 +180,8 @@ def flag_changed_css_classes(line, spec):
         regex = _get_direct_css_regex(css_class)
         if re.search(regex, line):
             flags.append([
-                f'css:{css_class}',
-                _get_change_guide(css_class)
+                f'css-{css_class}',
+                _get_change_guide(f'css-{css_class}')
             ])
     return flags
 
@@ -181,7 +193,7 @@ def flag_changed_javascript_plugins(line, spec):
         extension_regex = _get_extension_regex(plugin)
         if re.search(plugin_regex, line) or re.search(extension_regex, line):
             flags.append([
-                f'plugin:{plugin}',
+                f'js-{plugin}',
                 _get_change_guide(f"js-{plugin}")
             ])
     return flags
@@ -216,9 +228,16 @@ def check_bootstrap3_references_in_template(line, spec):
                              "It should also use requirejs_main_b5 instead of requirejs_main.")
             if tag == "requirejs_main_b5":
                 issues.append("This template references a bootstrap 3 requirejs file.")
+            if tag == "js_entry_b3":
+                issues.append("This template references a bootstrap 3 webpack entry point. "
+                             "It should also use js_entry instead of js_entry_b3.")
+            if tag == "js_entry":
+                issues.append("This template references a bootstrap 3 webpack entry point.")
         elif re.search(tag_only_regex, line):
             if tag == "requirejs_main":
                 issues.append("This template should use requirejs_main_b5 instead of requirejs_main.")
+            if tag == "js_entry_b3":
+                issues.append("This template should use js_entry instead of js_entry_b3.")
     regex = r"(=[\"\'][\w\/]+)(\/bootstrap3\/)"
     if re.search(regex, line):
         issues.append("This template references a bootstrap 3 file.")
@@ -233,15 +252,24 @@ def check_bootstrap3_references_in_javascript(line):
     return issues
 
 
+def flag_file_inputs(line):
+    flags = []
+    regex = r"\btype\s*=\s*.file"
+    if re.search(regex, line):
+        flags.append([
+            "css-file-inputs",
+            _get_change_guide("css-file-inputs")
+        ])
+    return flags
+
+
 def flag_inline_styles(line):
     flags = []
     regex = r"\bstyle\s*=\s*"
     if re.search(regex, line):
         flags.append([
-            "inline style",
-            "This template uses inline styles. Please revisit this usage.\n\n"
-            "Inline styles can often be replaced with Bootstrap 5's utility classes, "
-            "particularly the spacing utilities: https://getbootstrap.com/docs/5.0/utilities/spacing/"
+            "inline-style",
+            _get_change_guide("inline-style")
         ])
     return flags
 
@@ -251,11 +279,20 @@ def flag_crispy_forms_in_template(line):
     regex = r"\{% crispy"
     if re.search(regex, line):
         flags.append([
-            "check crispy",
-            "This template uses crispy forms. "
-            "Please ensure the form looks good after migration, and refer to "
-            "the updated Style Guide for current best practices, especially with checkbox fields."
+            "crispy",
+            _get_change_guide("crispy")
         ])
+    return flags
+
+
+def flag_selects_without_form_control(line):
+    flags = []
+    if "<select" in line:
+        if "form-select" not in line and "form-control" not in line:
+            flags.append([
+                "css-select-form-control",
+                _get_change_guide("css-select-form-control")
+            ])
     return flags
 
 

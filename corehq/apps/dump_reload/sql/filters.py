@@ -103,7 +103,6 @@ class UserIDFilter(IDFilter):
 class MultimediaBlobMetaFilter(IDFilter):
     """
     BlobMeta for multimedia references the "<shared>" domain which is not the domain being dumped.
-    This borrows from the same logic used in ``run_blob_export`` by the ``ExportMultimedia`` exporter.
     """
     def __init__(self):
         # 'id' is used in query (e.g., ...filter(id__in=blobmeta_ids))
@@ -144,9 +143,10 @@ class MultimediaBlobMetaFilter(IDFilter):
 
 
 class UnfilteredModelIteratorBuilder(object):
-    def __init__(self, model_label):
+    def __init__(self, model_label, use_all_objects=False):
         self.model_label = model_label
         self.domain = self.model_class = self.db_alias = None
+        self.use_all_objects = use_all_objects
 
     def prepare(self, domain, model_class, db_alias):
         self.domain = domain
@@ -156,7 +156,9 @@ class UnfilteredModelIteratorBuilder(object):
 
     def _base_queryset(self):
         assert self.domain and self.model_class and self.db_alias, "Unprepared IteratorBuilder"
-        objects = self.model_class._default_manager
+        objects = (
+            self.model_class.all_objects if self.use_all_objects else self.model_class._default_manager
+        )
         return objects.using(self.db_alias)
 
     def querysets(self):
@@ -170,16 +172,18 @@ class UnfilteredModelIteratorBuilder(object):
             yield queryset_to_iterator(queryset, self.model_class, ignore_ordering=True)
 
     def build(self, domain, model_class, db_alias):
-        return self.__class__(self.model_label).prepare(domain, model_class, db_alias)
+        return self.__class__(self.model_label, self.use_all_objects).prepare(domain, model_class, db_alias)
 
 
 class FilteredModelIteratorBuilder(UnfilteredModelIteratorBuilder):
-    def __init__(self, model_label, filter):
-        super(FilteredModelIteratorBuilder, self).__init__(model_label)
+    def __init__(self, model_label, filter, use_all_objects=False):
+        super(FilteredModelIteratorBuilder, self).__init__(model_label, use_all_objects)
         self.filter = filter
 
     def build(self, domain, model_class, db_alias):
-        return self.__class__(self.model_label, self.filter).prepare(domain, model_class, db_alias)
+        return self.__class__(self.model_label, self.filter, self.use_all_objects).prepare(
+            domain, model_class, db_alias
+        )
 
     def count(self):
         count = self.filter.count(self.domain)

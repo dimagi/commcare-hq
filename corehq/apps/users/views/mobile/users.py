@@ -21,9 +21,8 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop, override
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
-from django.views.generic import TemplateView, View
+from django.views.generic import TemplateView
 
-from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
@@ -32,6 +31,8 @@ from memoized import memoized
 from casexml.apps.phone.models import SyncLogSQL
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
+from dimagi.utils.web import json_response
+from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
@@ -56,6 +57,7 @@ from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
     login_or_basic_ex,
+    api_auth,
 )
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import SMSAccountConfirmationSettings
@@ -70,7 +72,7 @@ from corehq.apps.events.tasks import create_attendee_for_user
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.crispy import make_form_readonly
-from corehq.apps.hqwebapp.decorators import use_multiselect
+from corehq.apps.hqwebapp.decorators import use_multiselect, waf_allow
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import SQLLocation
@@ -84,7 +86,7 @@ from corehq.apps.registration.forms import (
     MobileWorkerAccountConfirmationForm,
 )
 from corehq.apps.sms.api import send_sms
-from corehq.apps.sms.verify import initiate_sms_verification_workflow
+from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
     send_account_confirmation_sms_if_necessary,
@@ -104,7 +106,6 @@ from corehq.apps.users.decorators import (
 )
 from corehq.apps.users.exceptions import InvalidRequestException, ModifyUserStatusException
 from corehq.apps.users.forms import (
-    CommCareAccountForm,
     CommCareUserFormSet,
     CommtrackUserForm,
     ConfirmExtraUserChargesForm,
@@ -163,7 +164,7 @@ from corehq.util.workbook_json.excel import (
 )
 
 from ..utils import log_user_groups_change
-from .custom_data_fields import UserFieldsView
+from .custom_data_fields import CommcareUserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
@@ -313,6 +314,10 @@ class EditCommCareUserView(BaseEditUserView):
             'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
             'show_deactivate_after_date': self.form_user_update.user_form.show_deactivate_after_date,
             'can_create_groups': can_edit_groups and can_access_all_locations,
+            'can_access_all_locations': can_access_all_locations,
+            'editable_user_can_access_all_locations': self.editable_user.has_permission(
+                self.domain, 'access_all_locations'
+            ),
             'needs_to_downgrade_locations': locations_present and not request_has_locations_privilege,
             'demo_restore_date': naturaltime(demo_restore_date_created(self.editable_user)),
             'group_names': [g.name for g in self.groups],
@@ -380,7 +385,7 @@ class EditCommCareUserView(BaseEditUserView):
         if self.request.POST['form_type'] == "add-phonenumber":
             phone_number = self.request.POST['phone_number']
             phone_number = re.sub(r'\s', '', phone_number)
-            if re.match(r'\d+$', phone_number):
+            if phone_number.isdigit():
                 is_new_phone_number = phone_number not in self.editable_user.phone_numbers
                 self.editable_user.add_phone_number(phone_number)
                 self.editable_user.save(spawn_task=True)
@@ -707,10 +712,9 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     @memoized
     def custom_data(self):
         return CustomDataEditor(
-            field_view=UserFieldsView,
+            field_view=CommcareUserFieldsView,
             domain=self.domain,
             post_dict=self.request.POST if self.request.method == "POST" else None,
-            required_only=True,
             ko_model="custom_fields",
             request_user=self.couch_user,
         )
@@ -995,91 +999,6 @@ def paginate_mobile_workers(request, domain):
         'users': users,
         'total': users_data.total,
     })
-
-
-class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
-    template_name = "users/new_mobile_worker_modal.html"
-    urlname = 'new_mobile_worker_modal'
-
-    @method_decorator(require_can_edit_commcare_users)
-    def dispatch(self, request, *args, **kwargs):
-        if not can_add_extra_mobile_workers(request):
-            raise PermissionDenied()
-        return super(CreateCommCareUserModal, self).dispatch(request, *args, **kwargs)
-
-    def render_form(self, status):
-        if domain_has_privilege(self.domain, privileges.APP_USER_PROFILES):
-            return self.render_json_response({
-                "status": "failure",
-                "form_html": "<div class='alert alert-danger'>{}</div>".format(_("""
-                    Cannot add new worker due to usage of user field profiles.
-                    Please add your new worker from the mobile workers page.
-                """)),
-            })
-        return self.render_json_response({
-            "status": status,
-            "form_html": render_to_string(self.template_name, {
-                'form': self.new_commcare_user_form,
-                'data_fields_form': self.custom_data.form,
-            }, request=self.request)
-        })
-
-    def get(self, request, *args, **kwargs):
-        return self.render_form("success")
-
-    @property
-    @memoized
-    def custom_data(self):
-        return CustomDataEditor(
-            field_view=UserFieldsView,
-            domain=self.domain,
-            post_dict=self.request.POST if self.request.method == "POST" else None,
-            request_user=self.request.couch_user,
-        )
-
-    @property
-    @memoized
-    def new_commcare_user_form(self):
-        if self.request.method == "POST":
-            data = self.request.POST.dict()
-            form = CommCareAccountForm(data, domain=self.domain)
-        else:
-            form = CommCareAccountForm(domain=self.domain)
-        return form
-
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    def post(self, request, *args, **kwargs):
-        if self.new_commcare_user_form.is_valid() and self.custom_data.is_valid():
-            username = self.new_commcare_user_form.cleaned_data['username']
-            password = self.new_commcare_user_form.cleaned_data['password_1']
-            phone_number = self.new_commcare_user_form.cleaned_data['phone_number']
-
-            user = CommCareUser.create(
-                self.domain,
-                username,
-                password,
-                created_by=request.couch_user,
-                created_via=USER_CHANGE_VIA_WEB,
-                phone_number=phone_number,
-                device_id="Generated from HQ",
-                user_data=self.custom_data.get_data_to_save(),
-            )
-
-            if 'location_id' in request.GET:
-                try:
-                    loc = SQLLocation.objects.get(domain=self.domain,
-                                                  location_id=request.GET['location_id'])
-                except SQLLocation.DoesNotExist:
-                    raise Http404()
-                user.set_location(loc)
-
-            if phone_number:
-                initiate_sms_verification_workflow(user, phone_number)
-
-            user_json = {'user_id': user._id, 'text': user.username_in_report}
-            return self.render_json_response({"status": "success",
-                                              "user": user_json})
-        return self.render_form("failure")
 
 
 def get_user_upload_context(domain, request_params, download_url, adjective, plural_noun):
@@ -1679,3 +1598,31 @@ def link_connectid_user(request, domain):
         return HttpResponse(status=201)
     else:
         return HttpResponse()
+
+
+@waf_allow('XSS_BODY')
+@csrf_exempt
+@require_POST
+@api_auth()
+def bulk_user_upload_api(request, domain):
+    try:
+        if len(request.FILES) > 1:
+            raise UserUploadError(_("only one file can be uploaded at a time"))
+
+        file = request.FILES.get('bulk_upload_file')
+        if file is None:
+            raise UserUploadError(_('no file uploaded'))
+        workbook = get_workbook(file)
+        user_specs, group_specs = BaseUploadUser.process_workbook(
+            workbook,
+            domain,
+            is_web_upload=False,
+            upload_user=request.couch_user
+        )
+        BaseUploadUser.upload_users(request, user_specs, group_specs, domain, is_web_upload=False)
+        return json_response({'success': True})
+    except (WorkbookJSONError, WorksheetNotFound, UserUploadError) as e:
+        return json_response({'success': False, 'message': _(str(e))}, status_code=400)
+    except Exception as e:
+        notify_exception(None, message=str(e))
+        return json_response({'success': False, 'message': str(e)}, status_code=500)

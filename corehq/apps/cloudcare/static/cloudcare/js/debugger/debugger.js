@@ -1,4 +1,3 @@
-'use strict';
 hqDefine('cloudcare/js/debugger/debugger', [
     'jquery',
     'knockout',
@@ -6,7 +5,7 @@ hqDefine('cloudcare/js/debugger/debugger', [
     'clipboard/dist/clipboard',
     'ace-builds/src-min-noconflict/ace',
     'analytix/js/kissmetrix',
-    'reports/js/bootstrap3/readable_form',
+    'reports/js/bootstrap5/readable_form',
     'hqwebapp/js/atwho',    // $.atwho
     'ace-builds/src-min-noconflict/mode-json',
     'ace-builds/src-min-noconflict/mode-xml',
@@ -18,7 +17,7 @@ hqDefine('cloudcare/js/debugger/debugger', [
     Clipboard,
     ace,
     kissmetrics,
-    readableForm
+    readableForm,
 ) {
     /**
      * These define tabs that are availabe in the debugger.
@@ -79,6 +78,8 @@ hqDefine('cloudcare/js/debugger/debugger', [
             ],
         });
 
+        $('#cloudcare-main').addClass('has-debugger');
+
         self.registeredTabIds = self.options.tabs;
         self.tabs = DebuggerTabs;
 
@@ -121,14 +122,6 @@ hqDefine('cloudcare/js/debugger/debugger', [
                 $('.debugger-content').outerHeight(contentHeight);
             }
         };
-
-        // Called afterRender, ensures that the debugger takes the whole screen
-        self.adjustWidth = function () {
-            var $debug = $('#instance-xml-home'),
-                $body = $('body');
-
-            $debug.width($body.width());
-        };
     };
 
     // By default do nothing when updating the debugger
@@ -169,7 +162,7 @@ hqDefine('cloudcare/js/debugger/debugger', [
                 username: this.options.username,
                 restoreAs: this.options.restoreAs,
                 domain: this.options.domain,
-            }
+            },
         ).done(function (response) {
             this.formattedQuestionsHtml(response.formattedQuestions);
             readableForm.init();
@@ -196,7 +189,7 @@ hqDefine('cloudcare/js/debugger/debugger', [
                 restoreAs: this.options.restoreAs,
                 domain: this.options.domain,
                 app_id: this.options.appId,
-            }
+            },
         ).done(function (response) {
             this.evalXPath.autocomplete(response.autoCompletableItems);
             this.evalXPath.setRecentXPathQueries(response.recentXPathQueries || []);
@@ -376,7 +369,7 @@ hqDefine('cloudcare/js/debugger/debugger', [
                     query_data: self.options.queryData,
                     debugOutput: self.selectedDebugOption().key,
                 },
-                self.options.sessionType
+                self.options.sessionType,
             ).done(function (response) {
                 var xPathQuery = self.newXPathQuery({
                     status: response.status,
@@ -388,7 +381,7 @@ hqDefine('cloudcare/js/debugger/debugger', [
                 self.recentXPathQueries.unshift(xPathQuery);
                 // Ensure at the maximum we only show 6 queries
                 self.recentXPathQueries(
-                    self.recentXPathQueries.slice(0, 6)
+                    self.recentXPathQueries.slice(0, 6),
                 );
             });
             kissmetrics.track.event('[app-preview] User evaluated XPath');

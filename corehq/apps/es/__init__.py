@@ -30,7 +30,7 @@ FormES = forms.FormES
 GroupES = groups.GroupES
 UserES = users.UserES
 CaseSearchES = case_search.CaseSearchES
-CaseSeaarchBhaES = case_search_bha.CaseSearchBhaES
+CaseSearchBhaES = case_search_bha.CaseSearchBhaES
 
 
 app_adapter = apps.app_adapter

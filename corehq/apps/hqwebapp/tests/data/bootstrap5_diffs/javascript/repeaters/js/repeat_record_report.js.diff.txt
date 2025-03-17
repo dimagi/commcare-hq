@@ -1,36 +1,46 @@
 --- 
 +++ 
-@@ -1,5 +1,5 @@
- /* globals ace */
--hqDefine('repeaters/js/bootstrap3/repeat_record_report', function () {
-+hqDefine('repeaters/js/bootstrap5/repeat_record_report', function () {
-     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-         selectAll = document.getElementById('select-all'),
-         cancelAll = document.getElementById('cancel-all'),
-@@ -138,7 +138,7 @@
-         $('#confirm-button').on('click', function () {
-             var itemsToSend = getCheckboxes(), action = getAction(), $btn;
+@@ -1,13 +1,13 @@
+ 
+-hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
++hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
+     'jquery',
+     'hqwebapp/js/initial_page_data',
+     'ace-builds/src-min-noconflict/ace',
+     'ace-builds/src-min-noconflict/mode-json',
+     'ace-builds/src-min-noconflict/mode-xml',
+     'repeaters/js/repeat_record_report_selects',
+-    'reports/js/bootstrap3/base',
+-    'reports/js/bootstrap3/tabular',
++    'reports/js/bootstrap5/base',
++    'reports/js/bootstrap5/tabular',
+     'commcarehq',
+ ], function (
+     $,
+@@ -154,7 +154,7 @@
+                 action = getAction();
+             let $btn;
  
 -            $popUp.modal('hide');
 +            $popUp.modal('hide');  /* todo B5: plugin:modal */
-             if (action == 'resend') {
+             if (action === 'resend') {
                  $btn = $('#resend-all-button');
                  $btn.disableButton();
-@@ -159,7 +159,7 @@
-                 if (isActionPossibleForCheckedItems(action)) {
-                     $('#warning').addClass('hide');
-                     $('#not-allowed').addClass('hide');
+@@ -179,7 +179,7 @@
+                 // leaving as is to preserve behavior
+                 if (isActionPossibleForCheckedItems(action, checkedRecords)) {
+                     hideAllWarnings();
 -                    $popUp.modal('show');
 +                    $popUp.modal('show');  /* todo B5: plugin:modal */
                  } else {
-                     $('#warning').addClass('hide');
-                     $('#not-allowed').removeClass('hide');
-@@ -244,7 +244,7 @@
+                     showWarning('not-allowed');
+                 }
+@@ -252,7 +252,7 @@
                      } else {
                          btn.text(gettext('Failed'));
                          btn.addClass('btn-danger');
 -                        $('#payload-error-modal').modal('show');
 +                        $('#payload-error-modal').modal('show');  /* todo B5: plugin:modal */
-                         $('#payload-error-modal .error-message').text(data.failure_reason);
+                         $('#payload-error-modal .error-message').text(response.failure_reason);
                      }
                  },

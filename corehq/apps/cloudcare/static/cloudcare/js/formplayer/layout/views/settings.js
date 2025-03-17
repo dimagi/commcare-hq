@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/layout/views/settings", [
     'jquery',
     'underscore',
@@ -7,14 +6,13 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
     'cloudcare/js/formplayer/apps/api',
     'cloudcare/js/formplayer/users/models',
     'cloudcare/js/formplayer/utils/utils',
-    'bootstrap-switch/dist/js/bootstrap-switch', // bootstrapSwitch: only when window.USE_BOOTSTRAP5 is false
 ], function (
     $,
     _,
     Marionette,
     FormplayerFrontend,
     AppsAPI,
-    UsersModels
+    UsersModels,
 ) {
     var slugs = {
         SET_LANG: 'lang',
@@ -67,18 +65,15 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
             oneQuestionPerScreen: '.js-one-question-per-screen',
         },
         events: {
-            'switchChange.bootstrapSwitch @ui.oneQuestionPerScreen': 'onChangeOneQuestionPerScreen',
+            'change @ui.oneQuestionPerScreen': 'onChangeOneQuestionPerScreen',
         },
         onRender: function () {
-            if (!window.USE_BOOTSTRAP5) {
-                this.ui.oneQuestionPerScreen.bootstrapSwitch(
-                    'state',
-                    this.currentUser.displayOptions.oneQuestionPerScreen
-                );
+            if (this.currentUser.displayOptions.oneQuestionPerScreen) {
+                this.ui.oneQuestionPerScreen.attr("checked", "checked");
             }
         },
-        onChangeOneQuestionPerScreen: function (e, switchValue) {
-            this.currentUser.displayOptions.oneQuestionPerScreen = switchValue;
+        onChangeOneQuestionPerScreen: function (e) {
+            this.currentUser.displayOptions.oneQuestionPerScreen = e.target.checked;
             UsersModels.saveDisplayOptions(this.currentUser.displayOptions);
         },
     });

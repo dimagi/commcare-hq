@@ -1,9 +1,9 @@
-'use strict';
 hqDefine("cloudcare/js/form_entry/const", [], function () {
     return {
         GROUP_TYPE: 'sub-group',
         QUESTION_TYPE: 'question',
         GROUPED_ELEMENT_TILE_ROW_TYPE: 'grouped-element-tile-row',
+        BROADCAST_FIELD_FILENAME: 'filename',
 
         // Entry types
         STRING: 'str',
@@ -43,7 +43,6 @@ hqDefine("cloudcare/js/form_entry/const", [], function () {
         BUTTON_SELECT: 'button-select',
         SHORT: 'short',
         MEDIUM: 'medium',
-        STRIPE_REPEATS: 'stripe-repeats',
         GROUP_BORDER: 'group-border',
         HINT_AS_PLACEHOLDER: 'hint-as-placeholder',
         RECEIVER_FIELD_INDEXED: 'indexed',
@@ -53,20 +52,21 @@ hqDefine("cloudcare/js/form_entry/const", [], function () {
         NO_ANSWER: null,
 
         // UI
-        LABEL_WIDTH: 'col-sm-4',
-        LABEL_OFFSET: 'col-sm-offset-4',
-        CONTROL_WIDTH: 'col-sm-8',
+        LABEL_WIDTH: 'col-md-4',
+        LABEL_OFFSET: 'offset-md-4',
+        CONTROL_WIDTH: 'col-md-8',
         BLOCK_NONE: 'block-none',
         BLOCK_SUBMIT: 'block-submit',
         BLOCK_ALL: 'block-all',
-        FULL_WIDTH: 'col-sm-12',
-        SHORT_WIDTH: 'col-sm-2',
-        MEDIUM_WIDTH: 'col-sm-4',
+        FULL_WIDTH: 'col-md-12',
+        SHORT_WIDTH: 'col-md-2',
+        MEDIUM_WIDTH: 'col-md-4',
 
         // XForm Navigation
         QUESTIONS_FOR_INDEX: 'questions_for_index',
         NEXT_QUESTION: 'next_index',
         PREV_QUESTION: 'prev_index',
+        SCROLLABLE_CONTENT_CONTAINER: '#content-plus-version-info-container',
 
         // XForm Actions
         NEW_FORM: 'new-form',
@@ -82,6 +82,7 @@ hqDefine("cloudcare/js/form_entry/const", [], function () {
         FORMATTED_QUESTIONS: 'formatted_questions',
         CHANGE_LANG: 'change_lang',
         CHANGE_LOCALE: 'change_locale',
+        DIRTY: 'dirty',
 
         // Control values. See commcare/javarosa/src/main/java/org/javarosa/core/model/Constants.java
         CONTROL_UNTYPED: -1,
@@ -111,7 +112,7 @@ hqDefine("cloudcare/js/form_entry/const", [], function () {
         FLOAT_VALUE_LIMIT: +("9".repeat(14)),
         FILE_PREFIX: "C:\\fakepath\\",
 
-        // Boostrap
+        // Bootstrap
         GRID_COLUMNS: 12,
     };
 });

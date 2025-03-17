@@ -1,16 +1,15 @@
-"use strict";
+
 hqDefine('hqwebapp/js/multiselect_utils', [
     "jquery",
     "knockout",
     "underscore",
     "hqwebapp/js/assert_properties",
     "multiselect/js/jquery.multi-select",
-    "quicksearch/dist/jquery.quicksearch.min",
 ], function (
     $,
     ko,
     _,
-    assertProperties
+    assertProperties,
 ) {
     var self = {};
 
@@ -29,7 +28,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
         var action = _.template(
             '<button class="btn <%-actionButtonClass %> btn-xs <%- floatClass %>" id="<%- actionButtonId %>" <% if (actionDisabled) { %> disabled <% } %>>' +
                 '<i class="<%- actionButtonIcon %>"></i> <%- actionButtonText %>' +
-            '</button>'
+            '</button>',
         );
         return action({
             actionButtonId: buttonId,
@@ -49,7 +48,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                         '<i class="fa fa-search"></i>' +
                     '</span>' +
                     '<input type="search" class="form-control search-input" id="<%- searchInputId %>" autocomplete="off" placeholder="<%- searchInputPlaceholder %>" />' +
-                '</div>'
+                '</div>',
             );
         return input({
             searchInputId: inputId,
@@ -86,12 +85,12 @@ hqDefine('hqwebapp/js/multiselect_utils', [
             selectableHeader: _renderHeader(
                 selectableHeaderTitle,
                 _renderAction(selectAllId, defaultBtnClass, 'fa fa-plus', gettext("Add All"), disableModifyAllActions),
-                _renderSearch(searchSelectableId, searchItemTitle)
+                _renderSearch(searchSelectableId, searchItemTitle),
             ),
             selectionHeader: _renderHeader(
                 selectedHeaderTitle,
                 _renderAction(removeAllId, defaultBtnClass, 'fa fa-remove', gettext("Remove All"), disableModifyAllActions),
-                _renderSearch(searchSelectedId, searchItemTitle)
+                _renderSearch(searchSelectedId, searchItemTitle),
             ),
             afterInit: function () {
                 var that = this,
@@ -100,7 +99,24 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                     selectableSearchString = '#' + that.$container.attr('id') + ' .ms-elem-selectable:not(.ms-selected)',
                     selectionSearchString = '#' + that.$container.attr('id') + ' .ms-elem-selection.ms-selected';
 
-                that.search_left = $selectableSearch.quicksearch(selectableSearchString)
+                const _search = function (query, itemSelector) {
+                    const queries = (query || '').toLowerCase().split(/\s+/);
+                    $(itemSelector).each(function (index, item) {
+                        const $item = $(item),
+                            itemText = $item.text().toLowerCase();
+                        let found = _.every(queries, function (q) {
+                            return !q || itemText.indexOf(q) !== -1;
+                        });
+
+                        if (found) {
+                            $item.removeClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
+                        } else {
+                            $item.addClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
+                        }
+                    });
+                };
+
+                that.search_left = $selectableSearch
                     .on('keydown', function (e) {
                         if (e.which === 40) {  // down arrow, was recommended by loudev docs
                             that.$selectableUl.focus();
@@ -108,7 +124,9 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                         }
                     })
                     .on('keyup change search input', function () {
-                    // disable add all functionality so that user is not confused
+                        _search($selectableSearch.val(), selectableSearchString);
+
+                        // disable add all functionality so that user is not confused
                         if (that.search_left.val().length > 0) {
                             $('#' + selectAllId).addClass('disabled').prop('disabled', true);
                         } else {
@@ -118,7 +136,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                         }
                     });
 
-                that.search_right = $selectionSearch.quicksearch(selectionSearchString)
+                that.search_right = $selectionSearch
                     .on('keydown', function (e) {
                         if (e.which === 40) {  // down arrow, was recommended by loudev docs
                             that.$selectionUl.focus();
@@ -126,7 +144,9 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                         }
                     })
                     .on('keyup change search input', function () {
-                    // disable remove all functionality so that user is not confused
+                        _search($selectionSearch.val(), selectionSearchString);
+
+                        // disable remove all functionality so that user is not confused
                         if (that.search_right.val().length > 0) {
                             $('#' + removeAllId).addClass('disabled').prop('disabled', true);
                         } else if (!disableModifyAllActions) {
@@ -135,22 +155,14 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                     });
             },
             afterSelect: function () {
-                this.search_left.cache();
-                // remove search option so that user doesn't get confused
-                this.search_right.val('').search('');
                 if (!disableModifyAllActions) {
                     $('#' + removeAllId).removeClass('disabled').prop('disabled', false);
                 }
-                this.search_right.cache();
             },
             afterDeselect: function () {
-                // remove search option so that user doesn't get confused
-                this.search_left.val('').search('');
                 if (!disableModifyAllActions) {
                     $('#' + selectAllId).removeClass('disabled').prop('disabled', false);
                 }
-                this.search_left.cache();
-                this.search_right.cache();
             },
         });
 

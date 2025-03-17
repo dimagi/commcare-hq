@@ -235,8 +235,17 @@ class CaseDataView(BaseProjectReportSectionView):
             product_tuples.sort(key=lambda x: x[0])
             ledger_map[section] = product_tuples
 
+        process_repeaters_enabled = toggles.PROCESS_REPEATERS.enabled(
+            self.domain,
+            toggles.NAMESPACE_DOMAIN,
+        )
         repeat_records = [
-            RepeatRecordDisplay(record, timezone, date_format=DATE_FORMAT)
+            RepeatRecordDisplay(
+                record,
+                timezone,
+                date_format=DATE_FORMAT,
+                process_repeaters_enabled=process_repeaters_enabled,
+            )
             for record in RepeatRecord.objects.filter(domain=self.domain, payload_id=self.case_id)
         ]
 
@@ -470,7 +479,8 @@ def case_property_names(request, domain, case_id):
     # We need to look at the export schema in order to remove any case properties that
     # have been deleted from the app. When the data dictionary is fully public, we can use that
     # so that users may deprecate those properties manually
-    export_schema = CaseExportDataSchema.generate_schema_from_builds(domain, None, case.type)
+    export_schema = CaseExportDataSchema.generate_schema_from_builds(domain, None, case.type,
+                                                                     is_identifier_case_type=True)
     property_schema = export_schema.group_schemas[0]
     last_app_ids = get_latest_app_ids_and_versions(domain)
     all_property_names = {
@@ -541,7 +551,7 @@ def resave_case_view(request, domain, case_id):
     resave_case(domain, case)
     messages.success(
         request,
-        _('Case %s was successfully saved. Hopefully it will show up in all reports momentarily.' % case.name),
+        _('Case {} was successfully saved. Please allow a few minutes for the change to be reflected in all reports.').format(case.name),  # noqa: E501
     )
     return HttpResponseRedirect(get_case_url(domain, case_id))
 

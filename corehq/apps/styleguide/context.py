@@ -8,6 +8,7 @@ Color = namedtuple('Color', 'slug hex')
 CrispyFormsDemo = namedtuple('CrispyFormsDemo', 'form code')
 CrispyFormsWithJsDemo = namedtuple('CrispyFormsWithJsDemo', 'form code_python code_js')
 CodeForDisplay = namedtuple('CodeForDisplay', 'code language')
+CodeForDisplayWithPartial = namedtuple('CodeForDisplayWithPartial', 'code language partial')
 ThemeColor = namedtuple('ThemeColor', 'slug hex theme_equivalent')
 
 
@@ -22,6 +23,8 @@ def get_navigation_context(current_page):
                     Page("Code Guidelines", 'styleguide_code_guidelines_b5'),
                     Page("Bootstrap Migration Guide", 'styleguide_migration_guide_b5'),
                     Page("Javascript Guide", 'styleguide_javascript_guide_b5'),
+                    Page("HTML Guide", 'styleguide_html_guide_b5'),
+                    Page("HTMX + Alpine.JS", 'styleguide_htmx_and_alpine_b5'),
                 ],
             ),
             NavigationGroup(
@@ -232,7 +235,7 @@ def get_common_icons():
         {
             'name': 'Common FontAwesome secondary icons',
             'icons': _add_prefix_to_icons('fa-solid', [
-                'fa-cloud-download', 'fa-cloud-upload', 'fa-warning', 'fa-info-circle', 'fa-question-circle',
+                'fa-cloud-arrow-down', 'fa-cloud-arrow-up', 'fa-warning', 'fa-info-circle', 'fa-question-circle',
                 'fa-check', 'fa-external-link',
             ]),
         }

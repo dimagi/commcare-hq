@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.utils.translation import gettext as _
 
 from corehq.apps.registration.models import AsyncSignupRequest
+from corehq.apps.users.util import log_user_change
 from dimagi.utils.web import get_ip
 
 from corehq.apps.analytics.tasks import (
@@ -21,6 +22,7 @@ from corehq.apps.sso.utils.session_helpers import (
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.const import (
+    USER_CHANGE_VIA_REACTIVATION,
     USER_CHANGE_VIA_SSO_INVITE,
     USER_CHANGE_VIA_SSO_NEW_USER,
 )
@@ -84,6 +86,12 @@ class SsoBackend(ModelBackend):
         if not is_new_user and not web_user.is_active:
             web_user.is_active = True
             web_user.save()
+            log_user_change(by_domain=None, for_domain=None,
+                            couch_user=web_user, changed_by_user=web_user,
+                            changed_via=USER_CHANGE_VIA_REACTIVATION,
+                            fields_changed={'is_active': web_user.is_active},
+                            by_domain_required_for_log=False, for_domain_required_for_log=False,)
+            user.refresh_from_db()
             request.sso_new_user_messages['success'].append(
                 _("User account for {} has been re-activated.").format(web_user.username)
             )

@@ -38,7 +38,9 @@ class TasksTest(TestCase):
 
         # Set up domains
         cls.domain = create_domain('test')
+        cls.addClassCleanup(cls.domain.delete)
         cls.mirror_domain = create_domain('mirror')
+        cls.addClassCleanup(cls.mirror_domain.delete)
         create_enterprise_permissions('web@web.com', 'test', ['mirror'])
 
         # Set up user
@@ -49,16 +51,10 @@ class TasksTest(TestCase):
             created_by=None,
             created_via=None,
         )
+        cls.addClassCleanup(cls.web_user.delete, None, None)
 
         cls.today = datetime.today().date()
         cls.last_week = cls.today - timedelta(days=7)
-
-    @classmethod
-    def tearDownClass(cls):
-        delete_all_users()
-        cls.domain.delete()
-        cls.mirror_domain.delete()
-        super().tearDownClass()
 
     def _last_accessed(self, user, domain):
         domain_membership = user.get_domain_membership(domain, allow_enterprise=False)

@@ -4,12 +4,13 @@ hqDefine('hqadmin/js/system_info', [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/bootstrap3/alert_user',
+    'commcarehq',
 ], function (
     $,
     ko,
     _,
     initialPageData,
-    alertUser
+    alertUser,
 ) {
     function formatDate(datestring) {
         //parse and format the date timestamps - seconds since epoch into date object

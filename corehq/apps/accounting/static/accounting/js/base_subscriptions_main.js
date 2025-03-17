@@ -5,6 +5,7 @@ hqDefine('accounting/js/base_subscriptions_main', [
     'accounting/js/widgets',
     'accounting/js/credits_tab',
     'jquery-ui/ui/widgets/datepicker',
+    'commcarehq',
 ], function (
     $,
     ko,
@@ -71,6 +72,8 @@ hqDefine('accounting/js/base_subscriptions_main', [
         // fieldset is not unique enough a css identifier
         // historically this has taken the first one without checking
         // todo: use a more specific identifier to make less brittle
-        $('fieldset').first().koApplyBindings(invoice);
+        if ($('fieldset').length) {
+            $('fieldset').first().koApplyBindings(invoice);
+        }
     });
 });

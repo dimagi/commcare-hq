@@ -1,14 +1,15 @@
-'use strict';
 hqDefine("cloudcare/js/form_entry/form_ui", [
     'jquery',
     'knockout',
     'underscore',
     'DOMPurify/dist/purify.min',
     'hqwebapp/js/toggles',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'cloudcare/js/markdown',
     'cloudcare/js/utils',
     'cloudcare/js/form_entry/const',
     'cloudcare/js/form_entry/entries',
+    'cloudcare/js/formplayer/users/models',
     'cloudcare/js/form_entry/utils',
     'jquery-tiny-pubsub/dist/ba-tiny-pubsub',       // $.pubsub
 ], function (
@@ -17,11 +18,13 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
     _,
     DOMPurify,
     toggles,
+    bootstrap,
     markdown,
     cloudcareUtils,
     constants,
     entries,
-    formEntryUtils
+    UsersModels,
+    formEntryUtils,
 ) {
     var groupNum = 0;
 
@@ -418,12 +421,32 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             parentOfDeletedGroup = parentOfDeletedGroup.children.find(c => c.ix.endsWith(ixParts[i]));
         }
         const siblingsOfDeletedGroup = parentOfDeletedGroup.children;
-        const lastPart = ixParts[ixParts.length - 1];
-        const lastPartPrefix = lastPart.substr(0, lastPart.lastIndexOf("_") + 1);
+
+        const getIxPrefix = (ix) => ix.substr(0, ix.lastIndexOf("_") + 1);
+        const getIxNestedPosition = (ix) => ix.substr(ix.lastIndexOf("_") + 1, ix.lastIndexOf("_") + 2);
+
+        const deletedGroupIxPrefix = getIxPrefix(deletedGroupIx);
         parentOfDeletedGroup.children = siblingsOfDeletedGroup.filter(function (c) {
-            const childIxParts = c.ix.split(",");
-            return !childIxParts[childIxParts.length - 1].startsWith(lastPartPrefix);
+            return !c.ix.startsWith(deletedGroupIxPrefix);
         });
+
+        // Preserve the 'collapsed' state of the group upon rerendering.
+        // This is done by decrementing the ix of siblings that come after the deleted group.
+        let collapsedIx = JSON.parse(sessionStorage.getItem('collapsedIx')) || [];
+        collapsedIx = collapsedIx
+            .filter(ix => !ix.startsWith(deletedGroupIx) && ix !== deletedGroupIx);
+        collapsedIx = collapsedIx.map(ix => {
+            if (ix.startsWith(deletedGroupIxPrefix)) {
+                let IxNestedPosition = getIxNestedPosition(ix);
+                if (IxNestedPosition > getIxNestedPosition(deletedGroupIx)) {
+                    IxNestedPosition--;
+                }
+                return getIxPrefix(ix) + IxNestedPosition;
+            }
+            return ix;
+        });
+        sessionStorage.setItem('collapsedIx', JSON.stringify(collapsedIx));
+
     }
 
     /**
@@ -445,6 +468,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         self.atLastIndex = ko.observable(false);
         self.atFirstIndex = ko.observable(true);
         self.shouldAutoSubmit = json.shouldAutoSubmit;
+        self.fileNameCache = {};
 
         var _updateIndexCallback = function (ix, isAtFirstIndex, isAtLastIndex) {
             self.currentIndex(ix.toString());
@@ -629,12 +653,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             $(document).on("click", ".help-text-trigger", function (event) {
                 event.preventDefault();
                 var container = $(event.currentTarget).closest(".caption");
-                container.find(".modal").modal('show');
+                bootstrap.Modal.getOrCreateInstance(container.find(".modal")).show();
             });
 
             $(document).on("click", ".unsupported-question-type-trigger", function (event) {
                 var container = $(event.currentTarget).closest(".widget");
-                container.find(".modal").modal('show');
+                bootstrap.Modal.getOrCreateInstance(container.find(".modal")).show();
             });
         };
 
@@ -667,6 +691,24 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
 
                 if (element.serverError) {
                     element.serverError(null);
+                }
+
+                const inputControl = [constants.CONTROL_IMAGE_CHOOSE, constants.CONTROL_LABEL,
+                    constants.CONTROL_AUDIO_CAPTURE, constants.CONTROL_VIDEO_CAPTURE];
+
+                let findChildAndSetFilename = function (children) {
+                    for (let child of children) {
+                        if (child.children && child.children.length > 0) {
+                            findChildAndSetFilename(child.children);
+                        } else if (inputControl.includes(child.control) && element.binding() === child.binding &&
+                            element.ix() === child.ix && element.answer()) {
+                            child.filename = element.answer();
+                            return;
+                        }
+                    }
+                };
+                if (_.has(element, 'binding') && _.has(element, 'ix') && !_.isEmpty(allChildren)) {
+                    findChildAndSetFilename(allChildren);
                 }
 
                 response.children = allChildren;
@@ -702,6 +744,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         } else {
             self.showDelete = false;
         }
+        const isRepeatable = ko.utils.unwrapObservable(self.repeatable) === "true";
         let parentForm = getParentForm(self);
         let oneQuestionPerScreen = parentForm.displayOptions.oneQuestionPerScreen !== undefined && parentForm.displayOptions.oneQuestionPerScreen();
 
@@ -710,7 +753,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         });
 
         // Header and captions
-        self.showHeader = oneQuestionPerScreen || ko.utils.unwrapObservable(self.caption) || ko.utils.unwrapObservable(self.caption_markdown);
+        self.showHeader = oneQuestionPerScreen || ko.utils.unwrapObservable(self.caption) || ko.utils.unwrapObservable(self.caption_markdown) || self.showDelete;
 
         if (_.has(json, 'domain_meta') && _.has(json, 'style')) {
             self.domain_meta = parseMeta(json.datatype, json.style);
@@ -723,16 +766,22 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             }
         };
 
+        let collapsedIx = JSON.parse(sessionStorage.getItem('collapsedIx')) || [];
         var styles = _.has(json, 'style') && json.style && json.style.raw ? json.style.raw.split(/\s+/) : [];
-        self.stripeRepeats = _.contains(styles, constants.STRIPE_REPEATS);
-        self.collapsible = _.contains(styles, constants.COLLAPSIBLE);
+        self.collapsible = (_.contains(styles, constants.COLLAPSIBLE) || isRepeatable) && self.showHeader;
         self.groupBorder = _.contains(styles, constants.GROUP_BORDER);
-        self.showChildren = ko.observable(!self.collapsible || _.contains(styles, constants.COLLAPSIBLE_OPEN));
+        self.showChildren = ko.observable(!self.collapsible || _.contains(styles, constants.COLLAPSIBLE_OPEN) || (isRepeatable && !collapsedIx.includes(self.rel_ix())));
         self.toggleChildren = function () {
             if (self.collapsible) {
                 if (self.showChildren()) {
+                    let collapsedIx = JSON.parse(sessionStorage.getItem('collapsedIx')) || [];
+                    collapsedIx.push(self.rel_ix());
+                    sessionStorage.setItem('collapsedIx', JSON.stringify(collapsedIx));
                     self.showChildren(false);
                 } else {
+                    let collapsedIx = JSON.parse(sessionStorage.getItem('collapsedIx')) || [];
+                    collapsedIx = collapsedIx.filter(e => e !== self.rel_ix());
+                    sessionStorage.setItem('collapsedIx', JSON.stringify(collapsedIx));
                     self.showChildren(true);
                 }
             }
@@ -756,13 +805,13 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
 
         self.newRepeat = function () {
             $.publish('formplayer.' + constants.NEW_REPEAT, self);
-            $.publish('formplayer.dirty');
+            $.publish('formplayer.' + constants.DIRTY);
             $('.add').trigger('blur');
         };
 
         self.deleteRepeat = function () {
             $.publish('formplayer.' + constants.DELETE_REPEAT, self);
-            $.publish('formplayer.dirty');
+            $.publish('formplayer.' + constants.DIRTY);
         };
 
         self.hasAnyNestedQuestions = function () {
@@ -795,7 +844,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         };
 
         let columnWidth = GroupedElementTileRow.calculateElementWidth(this.style);
-        this.elementTile = `col-sm-${columnWidth}`;
+        this.elementTile = `col-md-${columnWidth}`;
     }
 
     Group.prototype = Object.create(Container.prototype);
@@ -895,8 +944,10 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             return (self.error() || self.serverError()) && !self.dirty();
         });
 
+        self.isButton = self.datatype() === 'select' && self.stylesContains(constants.BUTTON_SELECT);
+        self.isLabel = self.datatype() === 'info';
         self.hasLabelContent = ko.computed(function () {
-            return (
+            return !self.isButton && (
                 ko.utils.unwrapObservable(self.caption)
                 || ko.utils.unwrapObservable(self.caption_markdown)
                 || ko.utils.unwrapObservable(self.help)
@@ -918,8 +969,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             return self.error() === null && self.serverError() === null;
         };
 
-        self.isButton = self.datatype() === 'select' && self.stylesContains(constants.BUTTON_SELECT);
-        self.isLabel = self.datatype() === 'info';
         self.entry = entries.getEntry(self);
         self.entryTemplate = function () {
             return self.entry.templateType + '-entry-ko-template';
@@ -936,7 +985,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             publishAnswerEvent();
         };
         var publishAnswerEvent = _.throttle(function () {
-            $.publish('formplayer.dirty');
+            $.publish('formplayer.' + constants.DIRTY);
             $.publish('formplayer.' + constants.ANSWER, self);
         }, self.throttle);
         self.onchange = self.triggerAnswer;
@@ -963,8 +1012,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 currentNode = parent;
             }
             var el = $("#" + self.entry.entryId + "-label");
-            $('html, body').animate({
-                scrollTop: $(el).offset().top - 60,
+            const scrollContainer = $(constants.SCROLLABLE_CONTENT_CONTAINER);
+            scrollContainer.animate({
+                scrollTop: scrollContainer.scrollTop() + $(el).offset().top - 80,
             });
             self.form().currentJumpPoint = self;
             el.fadeOut(200).fadeIn(200).fadeOut(200).fadeIn(200);
@@ -1024,14 +1074,19 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         const columnWidth = GroupedElementTileRow.calculateElementWidth(self.style);
 
         if (self.stylesContains(constants.PER_ROW_PATTERN)) {
-            self.controlWidth = constants.FULL_WIDTH;
-            self.labelWidth = constants.FULL_WIDTH;
-            self.questionTileWidth = `col-sm-${columnWidth}`;
+            self.controlWidth = "";
+            self.labelWidth = "";
+            self.questionTileWidth = `col-md-${columnWidth}`;
         } else {
-            self.controlWidth = constants.CONTROL_WIDTH;
-            self.labelWidth = constants.LABEL_WIDTH;
+            if (self.isLabel) {
+                self.controlWidth = "";
+                self.labelWidth = constants.FULL_WIDTH;
+            } else {
+                self.controlWidth = constants.CONTROL_WIDTH;
+                self.labelWidth = constants.LABEL_WIDTH;
+            }
             self.questionTileWidth = constants.FULL_WIDTH;
-            if (!hasLabel) {
+            if (!hasLabel && !self.isLabel) {
                 self.controlWidth += ' ' + constants.LABEL_OFFSET;
             }
         }

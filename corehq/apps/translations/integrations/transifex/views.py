@@ -13,7 +13,11 @@ import openpyxl
 import polib
 from memoized import memoized
 
+from couchexport.models import Format
+
 from corehq import toggles
+from corehq.apps.app_manager.dbaccessors import get_current_app, get_version_build_id
+from corehq.apps.app_manager.exceptions import BuildNotFoundException
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.locations.permissions import location_safe
@@ -69,7 +73,7 @@ class BaseTranslationsView(BaseDomainView):
 class ConvertTranslations(BaseTranslationsView):
     page_title = _('Convert Translations')
     urlname = 'convert_translations'
-    template_name = 'convert_translations.html'
+    template_name = 'translations/convert_translations.html'
 
     @property
     @memoized
@@ -148,14 +152,14 @@ class ConvertTranslations(BaseTranslationsView):
         uploaded_file = self.convert_translation_form.cleaned_data.get('upload_file')
         worksheet = openpyxl.load_workbook(uploaded_file).worksheets[0]
         content = self._generate_po_content(worksheet)
-        response = HttpResponse(content, content_type="text/html; charset=utf-8")
+        response = HttpResponse(content, content_type="text/plain; charset=utf-8")
         response['Content-Disposition'] = safe_filename_header(worksheet.title, 'po')
         return response
 
     def _excel_file_response(self):
         wb = self._generate_excel_file(self.convert_translation_form.cleaned_data.get('upload_file'))
         content = get_file_content_from_workbook(wb)
-        response = HttpResponse(content, content_type="text/html; charset=utf-8")
+        response = HttpResponse(content, content_type=Format.from_format('xlsx').mimetype)
         response['Content-Disposition'] = safe_filename_header(self._uploaded_file_name.split('.po')[0], 'xlsx')
         return response
 
@@ -179,7 +183,7 @@ class ConvertTranslations(BaseTranslationsView):
                 else:
                     assert False, "unexpected filename: {}".format(filename)
         mem_file.seek(0)
-        response = HttpResponse(mem_file, content_type="text/html")
+        response = HttpResponse(mem_file, content_type='application/zip')
         zip_filename = 'Converted-' + uploaded_zipfile.filename.split('.zip')[0]
         response['Content-Disposition'] = safe_filename_header(zip_filename, "zip")
         return response
@@ -209,7 +213,7 @@ class ConvertTranslations(BaseTranslationsView):
 class PullResource(BaseTranslationsView):
     page_title = _('Pull Resource')
     urlname = 'pull_resource'
-    template_name = 'pull_resource.html'
+    template_name = 'translations/pull_resource.html'
 
     def dispatch(self, request, *args, **kwargs):
         return super(PullResource, self).dispatch(request, *args, **kwargs)
@@ -288,10 +292,10 @@ class PullResource(BaseTranslationsView):
         file_response = self._generate_response_file(request.domain, project_slug, resource_slug)
         if isinstance(file_response, openpyxl.Workbook):
             content = get_file_content_from_workbook(file_response)
-            response = HttpResponse(content, content_type="text/html; charset=utf-8")
+            response = HttpResponse(content, content_type=Format.from_format('xlsx').mimetype)
             response['Content-Disposition'] = safe_filename_header(resource_slug, "xlsx")
         else:
-            response = HttpResponse(file_response, content_type="text/html; charset=utf-8")
+            response = HttpResponse(file_response, content_type='application/zip')
             response['Content-Disposition'] = safe_filename_header(project_slug, "zip")
         return response
 
@@ -309,7 +313,7 @@ class PullResource(BaseTranslationsView):
 class BlacklistTranslations(BaseTranslationsView):
     page_title = _('Blacklist Translations')
     urlname = 'blacklist_translations'
-    template_name = 'blacklist_translations.html'
+    template_name = 'translations/blacklist_translations.html'
 
     def section_url(self):
         return self.page_url
@@ -339,7 +343,7 @@ class BlacklistTranslations(BaseTranslationsView):
 class AppTranslations(BaseTranslationsView):
     page_title = gettext_lazy('App Translations')
     urlname = 'app_translations'
-    template_name = 'app_translations.html'
+    template_name = 'translations/app_translations.html'
 
     def dispatch(self, request, *args, **kwargs):
         return super(AppTranslations, self).dispatch(request, *args, **kwargs)
@@ -526,7 +530,7 @@ class DeleteTranslations(AppTranslations):
 class DownloadTranslations(BaseTranslationsView):
     page_title = gettext_lazy('Download Translations')
     urlname = 'download_translations'
-    template_name = 'download_translations.html'
+    template_name = 'translations/download_translations.html'
 
     @property
     def page_context(self):
@@ -543,9 +547,25 @@ class DownloadTranslations(BaseTranslationsView):
             form = DownloadAppTranslationsForm(self.domain, self.request.POST)
             if form.is_valid():
                 form_data = form.cleaned_data
-                email_project_from_hq.delay(request.domain, form_data, request.user.email)
-                messages.success(request, _('Submitted request to download translations. '
-                                            'You should receive an email shortly.'))
+                try:
+                    if not form_data['version']:
+                        app = get_current_app(request.domain, form_data['app_id'])
+                        version = app.version
+                    else:
+                        version = form_data['version']
+                    get_version_build_id(request.domain, form_data['app_id'], version)
+                except BuildNotFoundException:
+                    if not form_data['version']:
+                        messages.error(request, _('Missing current Application Version. This can happen if the '
+                                                  'latest version was deleted without creating a new one. '
+                                                  'Please create a new Application Version before trying again.'))
+                    else:
+                        messages.error(request, _('Missing selected Application Version. Please create a new '
+                                                  'version before trying again.'))
+                else:
+                    email_project_from_hq.delay(request.domain, form_data, request.user.email)
+                    messages.success(request, _('Submitted request to download translations. '
+                                                'You should receive an email shortly.'))
                 return redirect(self.urlname, domain=self.domain)
         return self.get(request, *args, **kwargs)
 
@@ -554,7 +574,7 @@ class DownloadTranslations(BaseTranslationsView):
 class MigrateTransifexProject(BaseTranslationsView):
     page_title = gettext_lazy('Migrate Project')
     urlname = 'migrate_transifex_project'
-    template_name = 'migrate_project.html'
+    template_name = 'translations/migrate_project.html'
 
     def section_url(self):
         return reverse(MigrateTransifexProject.urlname, args=self.args, kwargs=self.kwargs)

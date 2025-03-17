@@ -33,12 +33,10 @@ from corehq.apps.accounting.decorators import (
 )
 from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
-from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_jquery_ui,
-    use_nvd3,
     use_timepicker,
 )
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -113,10 +111,6 @@ class MessagingDashboardView(BaseMessagingSectionView):
     urlname = 'messaging_dashboard'
     page_title = gettext_lazy("Dashboard")
     template_name = 'scheduling/dashboard.html'
-
-    @use_nvd3
-    def dispatch(self, *args, **kwargs):
-        return super(MessagingDashboardView, self).dispatch(*args, **kwargs)
 
     def get_messaging_history_errors_url(self, messaging_history_url):
         url_param_tuples = [
@@ -572,8 +566,8 @@ class EditScheduleView(CreateScheduleView):
         immediate_broadcast_restriction = isinstance(self.broadcast, ImmediateBroadcast)
 
         inbound_sms_restriction = (
-            not self.can_use_inbound_sms and
-            self.schedule.memoized_uses_sms_survey
+            not self.can_use_inbound_sms
+            and self.schedule.memoized_uses_sms_survey
         )
 
         return immediate_broadcast_restriction or inbound_sms_restriction
@@ -638,8 +632,8 @@ class ConditionalAlertListView(ConditionalAlertBaseView):
         # can restart a rule run. Also don't limit it if it's an environment
         # that is a standalone environment.
         return not (
-            self.request.couch_user.is_superuser or
-            settings.SERVER_ENVIRONMENT in settings.UNLIMITED_RULE_RESTART_ENVS
+            self.request.couch_user.is_superuser
+            or settings.SERVER_ENVIRONMENT in settings.UNLIMITED_RULE_RESTART_ENVS
         )
 
     @property
@@ -650,9 +644,9 @@ class ConditionalAlertListView(ConditionalAlertBaseView):
 
     def schedule_is_editable(self, schedule):
         return (
-            (self.can_use_inbound_sms or not schedule.memoized_uses_sms_survey) and
-            not schedule.memoized_uses_ivr_survey and
-            not schedule.memoized_uses_sms_callback
+            (self.can_use_inbound_sms or not schedule.memoized_uses_sms_survey)
+            and not schedule.memoized_uses_ivr_survey
+            and not schedule.memoized_uses_sms_callback
         )
 
     def _format_rule_for_json(self, rule):
@@ -895,8 +889,8 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 
         if basic_info_form_valid and criteria_form_valid and schedule_form_valid:
             if not self.is_system_admin and (
-                self.criteria_form.requires_system_admin_to_save or
-                self.schedule_form.requires_system_admin_to_save
+                self.criteria_form.requires_system_admin_to_save
+                or self.schedule_form.requires_system_admin_to_save
             ):
                 # Don't allow adding custom criteria/actions to rules
                 # unless the user has permission to
@@ -951,23 +945,23 @@ class EditConditionalAlertView(CreateConditionalAlertView):
     @cached_property
     def read_only_mode(self):
         system_admin_restriction = (
-            not self.is_system_admin and
-            (
-                self.criteria_form.requires_system_admin_to_edit or
-                self.schedule_form.requires_system_admin_to_edit
+            not self.is_system_admin
+            and (
+                self.criteria_form.requires_system_admin_to_edit
+                or self.schedule_form.requires_system_admin_to_edit
             )
         )
 
         inbound_sms_restriction = (
-            not self.can_use_inbound_sms and
-            self.schedule.memoized_uses_sms_survey
+            not self.can_use_inbound_sms
+            and self.schedule.memoized_uses_sms_survey
         )
 
         return (
-            system_admin_restriction or
-            inbound_sms_restriction or
-            self.schedule.memoized_uses_ivr_survey or
-            self.schedule.memoized_uses_sms_callback
+            system_admin_restriction
+            or inbound_sms_restriction
+            or self.schedule.memoized_uses_ivr_survey
+            or self.schedule.memoized_uses_sms_callback
         )
 
     @cached_property
@@ -1071,7 +1065,7 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
                 "download_url": reverse("download_conditional_alert", args=(self.domain,)),
                 "adjective": _("SMS alert content"),
                 "plural_noun": _("SMS alert content"),
-                "help_link": "https://confluence.dimagi.com/display/commcarepublic/Bulk+download+and+upload+of+SMS+content+in+conditional+alerts", # noqa
+                "help_link": "https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143956488/Conditional+Alerts#Bulk-download-and-upload-of-SMS-content-in-conditional-alerts",  # noqa: E501
             },
         })
         context.update({
@@ -1148,3 +1142,15 @@ def messaging_image_download_view(request, domain, image_key):
         raise Http404()
 
     return HttpResponse(image_blob, content_type=image_meta.content_type)
+
+
+@requires_privilege_json_response(privileges.REMINDERS_FRAMEWORK)
+@require_permission(HqPermissions.edit_messaging)
+@RICH_TEXT_EMAILS.required_decorator()
+def messaging_image_delete_view(request, domain, image_key):
+    try:
+        image = EmailImage.get_by_key(domain, image_key)
+        image.delete()
+        return JsonResponse({'success': True}, status=200)
+    except (EmailImage.DoesNotExist, NotFound):
+        raise Http404()

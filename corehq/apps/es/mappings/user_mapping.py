@@ -291,12 +291,17 @@ USER_MAPPING = {
             "format": DATE_FORMATS_STRING,
             "type": "date"
         },
+        "last_modified": {
+            "format": DATE_FORMATS_STRING,
+            "type": "date"
+        },
         "last_name": {
             "type": "text"
         },
         "location_id": {
             "type": "keyword"
         },
+        # TODO: Remove password field when creating new mappings for this index.
         "password": {
             "type": "text"
         },

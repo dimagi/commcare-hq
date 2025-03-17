@@ -1,4 +1,3 @@
-'use strict';
 /**
  *  A menu is implemented as a collection of items. Typically, the user
  *  selects one of these items. The query screen is also implemented as
@@ -10,12 +9,16 @@ hqDefine("cloudcare/js/formplayer/menus/collections", [
     'sentry_browser',
     'cloudcare/js/formplayer/app',
     'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/users/models',
+    "cloudcare/js/form_entry/web_form_session",
 ], function (
     _,
     Backbone,
     Sentry,
     FormplayerFrontend,
-    Utils
+    Utils,
+    UsersModels,
+    webFormSession,
 ) {
     function addBreadcrumb(collection, type, data) {
         Sentry.addBreadcrumb({
@@ -42,6 +45,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", [
             'noItemsText',
             'dynamicSearch',
             'metaData',
+            'persistentMenu',
         ],
 
         entityProperties: [
@@ -108,8 +112,12 @@ hqDefine("cloudcare/js/formplayer/menus/collections", [
             }
             let sentryData = _.pick(
                 _.pick(response, ["queryKey", "selections"]),
-                _.identity
+                _.identity,
             );
+            if (response.locales && !response.tree) {
+                this.langs = response.locales.slice(1);
+                webFormSession.applyLangListener();
+            }
             if (response.commands) {
                 _.extend(this, _.pick(response, this.commandProperties));
                 addBreadcrumb(this, "menu", _.extend(sentryData, {

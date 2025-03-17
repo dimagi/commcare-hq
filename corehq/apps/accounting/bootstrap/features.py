@@ -137,10 +137,12 @@ advanced_v0 = pro_v1 + [
     privileges.DATA_DICTIONARY,
     privileges.CASE_COPY,
     privileges.CUSTOM_DOMAIN_ALERTS,
+    privileges.APP_DEPENDENCIES,
 ]
 
 enterprise_v0 = advanced_v0 + [
     privileges.GEOCODER,
     privileges.DEFAULT_EXPORT_SETTINGS,
     privileges.RELEASE_MANAGEMENT,
+    privileges.BULK_DATA_CLEANING,
 ]

@@ -23,8 +23,8 @@ from django.views.generic import View
 from django.views.generic.base import TemplateView
 
 import requests
-import sentry_sdk
 from langcodes import get_name
+from sentry_sdk import Scope
 from text_unidecode import unidecode
 from xml2json.lib import xml2json
 
@@ -44,6 +44,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_current_app_doc,
+    get_build_doc_by_build_id,
 )
 from corehq.apps.cloudcare.const import (
     PREVIEW_APP_ENVIRONMENT,
@@ -74,7 +75,7 @@ from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.decorators import (
     use_bootstrap5,
-    use_daterangepicker,
+    use_tempusdominus,
     waf_allow,
 )
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import can_use_restore_as
@@ -84,7 +85,7 @@ from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import get_complete_username
-from corehq.apps.users.views import BaseUserSettingsView
+from corehq.apps.users.views import BaseUserSettingsView, ListRolesView
 from corehq.util.metrics import metrics_counter, metrics_histogram
 
 
@@ -100,7 +101,8 @@ class FormplayerMain(View):
     urlname = 'formplayer_main'
 
     @xframe_options_sameorigin
-    @use_daterangepicker
+    @use_bootstrap5
+    @use_tempusdominus
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
     def dispatch(self, request, *args, **kwargs):
@@ -109,9 +111,23 @@ class FormplayerMain(View):
     def fetch_app_fn(self):
         return get_latest_build_for_web_apps
 
-    def get_web_apps_for_user(self, domain, user):
+    def make_specific_build_fetcher(self, original_app_id, build_id):
+        def get_build_or_latest(domain, username, app_id):
+            if original_app_id == app_id:
+                return get_build_doc_by_build_id(build_id)
+
+            return self.fetch_app_fn()(domain, username, app_id)
+
+        return get_build_or_latest
+
+    def get_web_apps_for_user(self, domain, user, app_id=None, build_id=None):
+        if app_id and build_id:
+            fetch_app_fn = self.make_specific_build_fetcher(app_id, build_id)
+        else:
+            fetch_app_fn = self.fetch_app_fn()
+
         apps = get_web_apps_available_to_user(
-            domain, user, is_preview=self.preview, fetch_app_fn=self.fetch_app_fn()
+            domain, user, is_preview=self.preview, fetch_app_fn=fetch_app_fn
         )
         apps = [_format_app_doc(app) for app in apps]
         return sorted(apps, key=lambda app: app['name'].lower())
@@ -126,8 +142,17 @@ class FormplayerMain(View):
         if not hasattr(request, 'couch_user'):
             raise Http404()
 
-        def set_cookie(response):  # set_coookie is a noop by default
+        def set_cookie(response):  # set_cookie is a noop by default
             return response
+
+        def _get_login_as_user_query():
+            return login_as_user_query(
+                domain,
+                request.couch_user,
+                search_string='',
+                limit=1,
+                offset=0
+            ).run()
 
         cookie_name = urllib.parse.quote(
             'restoreAs:{}:{}'.format(domain, request.couch_user.username))
@@ -136,21 +161,19 @@ class FormplayerMain(View):
             username = urllib.parse.unquote(username)
             username = get_complete_username(username, domain)
             user = CouchUser.get_by_username(username)
-            if user:
+            if user and request.couch_user.has_permission(domain, "login_as_all_users"):
                 return user, set_cookie
+            elif user and request.couch_user.has_permission(domain, "limited_login_as"):
+                login_as_users = _get_login_as_user_query()
+                if user._id == login_as_users.hits[0]['_id']:
+                    return user, set_cookie
             else:
                 def set_cookie(response):  # overwrite the default noop set_cookie
                     response.delete_cookie(cookie_name)
                     return response
 
         elif request.couch_user.has_permission(domain, 'limited_login_as'):
-            login_as_users = login_as_user_query(
-                domain,
-                request.couch_user,
-                search_string='',
-                limit=1,
-                offset=0
-            ).run()
+            login_as_users = _get_login_as_user_query()
             if login_as_users.total == 1:
                 def set_cookie(response):
                     response.set_cookie(cookie_name, urllib.parse.quote(user.raw_username))
@@ -161,25 +184,29 @@ class FormplayerMain(View):
 
         return request.couch_user, set_cookie
 
-    def get(self, request, domain):
+    def get(self, request, domain, **kwargs):
         mobile_ucr_count = get_mobile_ucr_count(domain)
         if should_restrict_web_apps_usage(domain, mobile_ucr_count):
             return redirect('block_web_apps', domain=domain)
 
+        # These options allow a user to fetch a specific build id while populating apps
+        app_id = kwargs.get('app_id', None)
+        build_id = kwargs.get('build_id', None)
+
         option = request.GET.get('option')
         if option == 'apps':
-            return self.get_option_apps(request, domain)
+            return self.get_option_apps(request, domain, app_id, build_id)
         else:
-            return self.get_main(request, domain)
+            return self.get_main(request, domain, app_id, build_id)
 
-    def get_option_apps(self, request, domain):
+    def get_option_apps(self, request, domain, app_id, build_id):
         restore_as, set_cookie = self.get_restore_as_user(request, domain)
-        apps = self.get_web_apps_for_user(domain, restore_as)
+        apps = self.get_web_apps_for_user(domain, restore_as, app_id, build_id)
         return JsonResponse(apps, safe=False)
 
-    def get_main(self, request, domain):
+    def get_main(self, request, domain, app_id, build_id):
         restore_as, set_cookie = self.get_restore_as_user(request, domain)
-        apps = self.get_web_apps_for_user(domain, restore_as)
+        apps = self.get_web_apps_for_user(domain, restore_as, app_id, build_id)
 
         def _default_lang():
             try:
@@ -214,7 +241,7 @@ class FormplayerMain(View):
         }
 
         return set_cookie(
-            render(request, "cloudcare/bootstrap3/formplayer_home.html", context)
+            render(request, "cloudcare/formplayer_home.html", context)
         )
 
 
@@ -231,17 +258,18 @@ class FormplayerMainPreview(FormplayerMain):
         return get_current_app_doc(domain, app_id)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
+@method_decorator(use_tempusdominus, name='dispatch')
 class PreviewAppView(TemplateView):
-    template_name = 'cloudcare/bootstrap3/preview_app.html'
+    template_name = 'cloudcare/preview_app.html'
     urlname = 'preview_app'
 
-    @use_daterangepicker
     @xframe_options_sameorigin
     def get(self, request, *args, **kwargs):
         mobile_ucr_count = get_mobile_ucr_count(request.domain)
         if should_restrict_web_apps_usage(request.domain, mobile_ucr_count):
             context = BlockWebAppsView.get_context_for_ucr_limit_error(request.domain, mobile_ucr_count)
-            return render(request, 'cloudcare/bootstrap3/block_preview_app.html', context)
+            return render(request, 'cloudcare/block_preview_app.html', context)
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
             'app': _format_app_doc(app.to_json()),
@@ -357,7 +385,7 @@ class ReadableQuestions(View):
         readable_form = readable.get_readable_form_data(form_data_json, pretty_questions)
 
         rendered_readable_form = render_to_string(
-            'reports/form/partials/bootstrap3/readable_form.html',
+            'reports/form/partials/bootstrap5/readable_form.html',
             {'questions': readable_form}
         )
 
@@ -401,12 +429,21 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
         body = json.loads(request.body.decode('utf-8'))
         access = get_application_access_for_domain(self.domain)
         access.restrict = body['restrict']
+        disable_ff = body['disable_feature_flag']
         access.sqlappgroup_set.all().delete()
         access.sqlappgroup_set.set([
             SQLAppGroup(app_id=app_group['app_id'], group_id=app_group.get('group_id'))
             for app_group in body['app_groups']
         ], bulk=False)
         access.save()
+        if disable_ff and not access.restrict:
+            toggles.WEB_APPS_PERMISSIONS_VIA_GROUPS.set(self.domain, False, namespace=toggles.NAMESPACE_DOMAIN)
+            # This view is not accessible after the FF is disabled
+            redirect_url = reverse(ListRolesView.urlname, args=[self.domain])
+            return JsonResponse({
+                'success': 1,
+                'redirect_url': redirect_url,
+            })
         return json_response({'success': 1})
 
 
@@ -417,8 +454,8 @@ def report_formplayer_error(request, domain):
     data = json.loads(request.body)
     error_type = data.get('type')
 
-    with sentry_sdk.configure_scope() as scope:
-        scope.set_tag("cloudcare_error_type", error_type)
+    scope = Scope.get_current_scope()
+    scope.set_tag("cloudcare_error_type", error_type)
 
     if error_type == 'webformsession_request_failure':
         metrics_counter('commcare.formplayer.webformsession_request_failure', tags={
@@ -562,6 +599,7 @@ def session_endpoint(request, domain, app_id, endpoint_id=None):
     return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + "#" + cloudcare_state)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class BlockWebAppsView(BaseDomainView):
 
     urlname = 'block_web_apps'

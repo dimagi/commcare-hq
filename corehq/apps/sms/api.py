@@ -28,6 +28,7 @@ from corehq.apps.sms.messages import (
 )
 from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.models import (
+    ConnectMessage,
     INCOMING,
     OUTGOING,
     SMS,
@@ -127,8 +128,11 @@ def get_location_id_by_verified_number(v):
     return get_location_id_by_contact(v.domain, v.owner)
 
 
-def get_sms_class():
-    return QueuedSMS if settings.SMS_QUEUE_ENABLED else SMS
+def get_message_class(is_sms=True):
+    if is_sms:
+        return QueuedSMS if settings.SMS_QUEUE_ENABLED else SMS
+    else:
+        return ConnectMessage
 
 
 def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent=None):
@@ -141,7 +145,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
         phone_number = str(phone_number)
     phone_number = clean_phone_number(phone_number)
 
-    msg = get_sms_class()(
+    msg = get_message_class()(
         domain=domain,
         phone_number=phone_number,
         direction=OUTGOING,
@@ -174,7 +178,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
     return queue_outgoing_sms(msg)
 
 
-def send_sms_to_verified_number(verified_number, text, metadata=None, logged_subevent=None, events=None):
+def send_message_to_verified_number(verified_number, text, metadata=None, logged_subevent=None, events=None):
     """
     Sends an sms using the given verified phone number entry.
 
@@ -192,7 +196,7 @@ def send_sms_to_verified_number(verified_number, text, metadata=None, logged_sub
             return False
         raise
 
-    msg = get_sms_class()(
+    msg = get_message_class(verified_number.is_sms)(
         couch_recipient_doc_type=verified_number.owner_doc_type,
         couch_recipient=verified_number.owner_id,
         phone_number="+" + str(verified_number.phone_number),
@@ -215,12 +219,15 @@ def send_sms_to_verified_number(verified_number, text, metadata=None, logged_sub
                 msg.custom_metadata[field] = value
     msg.save()
 
-    return queue_outgoing_sms(msg)
+    if verified_number.is_sms:
+        return queue_outgoing_sms(msg)
+    else:
+        return send_connect_message(msg, backend)
 
 
 def send_sms_with_backend(domain, phone_number, text, backend_id, metadata=None):
     phone_number = clean_phone_number(phone_number)
-    msg = get_sms_class()(
+    msg = get_message_class()(
         domain=domain,
         phone_number=phone_number,
         direction=OUTGOING,
@@ -236,7 +243,7 @@ def send_sms_with_backend(domain, phone_number, text, backend_id, metadata=None)
 def send_sms_with_backend_name(domain, phone_number, text, backend_name, metadata=None):
     phone_number = clean_phone_number(phone_number)
     backend = SQLMobileBackend.load_by_name(SQLMobileBackend.SMS, domain, backend_name)
-    msg = get_sms_class()(
+    msg = get_message_class()(
         domain=domain,
         phone_number=phone_number,
         direction=OUTGOING,
@@ -253,7 +260,7 @@ def enqueue_directly(msg):
     try:
         from corehq.apps.sms.management.commands.run_sms_queue import SMSEnqueuingOperation
         SMSEnqueuingOperation().enqueue(msg)
-    except:
+    except:  # noqa: E722
         # If this direct enqueue fails, no problem, it will get picked up
         # shortly.
         pass
@@ -266,7 +273,7 @@ def queue_outgoing_sms(msg):
             msg.datetime_to_process = msg.date
             msg.queued_timestamp = get_utcnow()
             msg.save()
-        except:
+        except:  # noqa: E722
             log_sms_exception(msg)
             return False
 
@@ -325,7 +332,7 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
             metrics_counter("commcare.sms.outbound_message", tags={
                 'domain': msg.domain,
                 'status': 'ok',
-                'backend': _get_backend_tag(backend),
+                **_get_backend_tags(backend)
             })
         else:
             raise BackendAuthorizationException(
@@ -340,7 +347,7 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
         metrics_counter("commcare.sms.outbound_message", tags={
             'domain': msg.domain,
             'status': 'error',
-            'backend': _get_backend_tag(backend),
+            **_get_backend_tags(backend),
         })
         should_log_exception = True
 
@@ -354,7 +361,7 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
 
 
 @quickcache(['backend_id'], skip_arg='backend')
-def _get_backend_tag(backend=None, backend_id=None):
+def _get_backend_tags(backend=None, backend_id=None):
     assert not (backend_id and backend)
     if backend_id:
         try:
@@ -363,11 +370,15 @@ def _get_backend_tag(backend=None, backend_id=None):
             backend = None
 
     if not backend:
-        return 'unknown'
-    elif backend.is_global:
-        return backend.name
+        return {
+            'backend': 'unknown',
+            'backend_hq_api_id': 'unknown',
+        }
     else:
-        return f'{backend.domain}/{backend.name}'
+        return {
+            'backend': backend.name if backend.is_global else f'{backend.domain}/{backend.name}',
+            'backend_hq_api_id': backend.hq_api_id,
+        }
 
 
 def should_log_exception_for_backend(backend, exception):
@@ -384,6 +395,15 @@ def should_log_exception_for_backend(backend, exception):
         client.set(key, 1)
         client.expire(key, 60 * 60)
         return True
+
+
+def send_connect_message(message, backend):
+    try:
+        backend.send(message)
+        return True
+    except Exception:
+        log_sms_exception(message)
+        return False
 
 
 def register_sms_user(
@@ -496,7 +516,7 @@ def process_sms_registration(msg):
     """
     registration_processed = False
     text_words = msg.text.upper().split()
-    keyword1 = text_words[0] if len(text_words) > 0 else ""
+    keyword1 = text_words[0] if len(text_words) > 0 else ""  # noqa: F841
     keyword2 = text_words[1].lower() if len(text_words) > 1 else ""
     keyword3 = text_words[2] if len(text_words) > 2 else ""
     keyword4 = text_words[3] if len(text_words) > 3 else ""
@@ -560,7 +580,7 @@ def incoming(phone_number, text, backend_api, timestamp=None,
     if text is None:
         text = ""
     phone_number = clean_phone_number(phone_number)
-    msg = get_sms_class()(
+    msg = get_message_class()(
         phone_number=phone_number,
         direction=INCOMING,
         date=timestamp or get_utcnow(),
@@ -621,7 +641,7 @@ def load_and_call(sms_handler_names, phone_number, text, sms):
     for sms_handler_name in sms_handler_names:
         try:
             handler = to_function(sms_handler_name)
-        except:
+        except:  # noqa: E722
             notify_exception(None, message=('error loading sms handler: %s' % sms_handler_name))
             continue
 
@@ -685,9 +705,9 @@ def get_inbound_phone_entry(phone_number, backend_id=None):
     )
 
 
-def process_incoming(msg):
+def process_incoming(msg, phone=None):
     try:
-        _process_incoming(msg)
+        _process_incoming(msg, phone)
         status = 'ok'
     except Exception:
         status = 'error'
@@ -699,8 +719,8 @@ def process_incoming(msg):
         # - always report the metric even if it fails
         metrics_counter("commcare.sms.inbound_message", tags={
             'domain': msg.domain,
-            'backend': _get_backend_tag(backend_id=msg.backend_id),
             'status': status,
+            **_get_backend_tags(backend_id=msg.backend_id),
         })
 
 
@@ -715,9 +735,13 @@ def _domain_accepts_inbound(msg):
     return msg.domain and domain_has_privilege(msg.domain, privileges.INBOUND_SMS)
 
 
-def _process_incoming(msg):
+def _process_incoming(msg, phone=None):
     sms_load_counter("inbound", msg.domain)()
-    verified_number, has_domain_two_way_scope = get_inbound_phone_entry_from_sms(msg)
+    if phone is None:
+        verified_number, has_domain_two_way_scope = get_inbound_phone_entry_from_sms(msg)
+    else:
+        verified_number = phone
+        has_domain_two_way_scope = phone.is_two_way
     is_two_way = verified_number is not None and verified_number.is_two_way
 
     if verified_number:
@@ -746,7 +770,7 @@ def _process_incoming(msg):
             metadata = MessageMetadata(ignore_opt_out=True)
             text = get_message(MSG_OPTED_OUT, verified_number, context=(opt_in_keywords[0],))
             if verified_number:
-                send_sms_to_verified_number(verified_number, text, metadata=metadata)
+                send_message_to_verified_number(verified_number, text, metadata=metadata)
             elif msg.backend_id:
                 send_sms_with_backend(msg.domain, msg.phone_number, text, msg.backend_id, metadata=metadata)
             else:
@@ -756,7 +780,7 @@ def _process_incoming(msg):
         if PhoneBlacklist.opt_in_sms(msg.phone_number, domain=domain):
             text = get_message(MSG_OPTED_IN, verified_number, context=(opt_out_keywords[0],))
             if verified_number:
-                send_sms_to_verified_number(verified_number, text)
+                send_message_to_verified_number(verified_number, text)
             elif msg.backend_id:
                 send_sms_with_backend(msg.domain, msg.phone_number, text, msg.backend_id)
             else:
@@ -786,6 +810,7 @@ def _process_incoming(msg):
         not settings.SMS_QUEUE_ENABLED
         and msg.domain
         and domain_has_privilege(msg.domain, privileges.INBOUND_SMS)
+        and not isinstance(msg, ConnectMessage)
     ):
         create_billable_for_sms(msg)
 

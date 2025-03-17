@@ -6,7 +6,7 @@
      'jquery',
      'knockout',
      'underscore',
-@@ -7,11 +7,11 @@
+@@ -6,11 +6,11 @@
      'analytix/js/google',
      'analytix/js/kissmetrix',
      'case/js/case_property_modal',
@@ -20,8 +20,8 @@
 +    'reports/js/bootstrap5/readable_form',
      'bootstrap',    // needed for $.tab
      'jquery-memoized-ajax/jquery.memoized.ajax.min',
- ], function (
-@@ -99,7 +99,7 @@
+     'commcarehq',
+@@ -91,7 +91,7 @@
                      // form data panel uses sticky tabs when it's its own page
                      // but that behavior would be disruptive here
                      $panel.find(".sticky-tabs").removeClass("sticky-tabs");
@@ -30,7 +30,7 @@
  
                      singleForm.initSingleForm({
                          instance_id: data.xform_id,
-@@ -282,7 +282,7 @@
+@@ -274,7 +274,7 @@
          $propertiesModal.koApplyBindings(modalData);
          $casePropertyNames.click(function () {
              modalData.init($(this).data('property-name'));

@@ -4,51 +4,23 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 
-{% block page_sidebar_classes %}sidebar-offcanvas col-sm-12 col-md-3 col-xl-2{% endblock %}
+{% block page_sidebar_classes %}report-sidebar col-sm-12 col-md-3 col-xl-2{% endblock %}
 
-{% block page_row_classes %}row-offcanvas row-offcanvas-left{% endblock %}
+{% block page_row_classes %}report-sidebar-row{% endblock %}
 
 {% block page_content_classes %}col-sm-12 col-md-9 col-xl-10{% endblock %}
 
-{% block js %}{{ block.super }}
-  {% compress js %}
-    <script src="{% static 'hqwebapp/js/select2_knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'reports/js/bootstrap5/config.dataTables.bootstrap.js' %}"></script>
-    <script src="{% static 'reports/js/datepicker.js' %}"></script>
-    <script src="{% static 'reports/js/bootstrap5/hq_report.js' %}"></script>
-    <script src="{% static 'reports/js/reports.util.js' %}"></script>
-    <script src="{% static 'reports/js/bootstrap5/reports.async.js' %}"></script>
-    <script src="{% static 'reports/js/bootstrap5/standard_hq_report.js' %}"></script>
-    <script src="{% static 'userreports/js/report_analytix.js' %}"></script>
-  {% endcompress %}
-  {% include 'reports/partials/bootstrap5/filters_js.html' %}
-  {% include 'reports/partials/graphs/charts_js.html' %}
-
-  <script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
-  {% compress js %}
-    <script src="{% static 'case/js/cheapxml.js' %}"></script>
-    <script src="{% static 'case/js/casexml.js' %}"></script>
-    <script src="{% static 'reports/js/bootstrap5/tabular.js' %}"></script>
-
-    <!-- Scripts that are specific to a single report or interface -->
-    <script src="{% static 'data_interfaces/js/case_management.js' %}"></script>
-    <script src="{% static 'data_interfaces/js/archive_forms.js' %}"></script>
-    <script src="{% static 'reports/js/inspect_data.js' %}"></script>
-    <script src="{% static 'reports/js/bootstrap5/project_health_dashboard.js' %}"></script>
-    <script src="{% static 'reports/js/bootstrap5/aggregate_user_status.js' %}"></script>
-    <script src="{% static 'reports/js/user_history.js' %}"></script>
-    <script src="{% static 'reports/js/case_activity.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/bootstrap5/widgets.js' %}"></script>
-  {% endcompress %}
-{% endblock %}
+{% js_entry "reports/js/bootstrap5/tabular" %}
 
 {% block stylesheets %}
   {{ block.super }}
   {% compress css %}
-    <link type="text/less"
-          rel="stylesheet"
-          media="all"
-          href="{% static 'reports/less/reports.less' %}" />
+    <link
+      type="text/scss"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'reports/scss/reports.scss' %}"
+    />
   {% endcompress %}
   {% include 'reports/partials/filters_css.html' %}
 
@@ -58,22 +30,33 @@
 {% block title %}{{ report.title|default:"Project Reports" }}{% endblock %}
 
 {% block page_breadcrumbs %}
-  <a href="#" class="btn btn-link btn-invisible d-xs-block btn-report-menu" data-bs-toggle="offcanvas"><i class="fa fa-bars"></i> {% trans "Reports Menu" %}</a>
-  <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">  {# todo B5: css:breadcrumb #}
-    <li>
-      <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a>
-    </li>
-    {% if report.breadcrumbs %}
-      {% for crumb in report.breadcrumbs %}
-        <li>
-          <a href="{{ crumb.link }}">{{ crumb.title }}</a>
-        </li>
-      {% endfor %}
-    {% endif %}
-    <li class="active">
-      {% trans report.title|default:"Untitled Report" %}
-    </li>
-  </ol>
+  <a
+    href="#"
+    class="btn btn-link btn-report-menu"
+    data-hq-toggle=".report-sidebar"
+  >
+    <i class="fa fa-bars"></i> {% trans "Reports Menu" %}
+  </a>
+  <nav aria-label="breadcrumb">
+    <ol
+      id="hq-breadcrumbs"
+      class="breadcrumb breadcrumb-hq-section"
+    >
+      <li class="breadcrumb-item">
+        <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a>
+      </li>
+      {% if report.breadcrumbs %}
+        {% for crumb in report.breadcrumbs %}
+          <li class="breadcrumb-item">
+            <a href="{{ crumb.link }}">{{ crumb.title }}</a>
+          </li>
+        {% endfor %}
+      {% endif %}
+      <li class="breadcrumb-item active" aria-current="page">
+        {% trans report.title|default:"Untitled Report" %}
+      </li>
+    </ol>
+  </nav>
 {% endblock %}
 
 {% block page_content %}
@@ -102,15 +85,14 @@
   {% endblock %}
 
   {% if report.is_emailable and request.couch_user.can_download_reports %}
-    <div id="email-report-modal" class="modal fade" tabindex="-1" role="dialog">
+    <div
+      id="email-report-modal"
+      class="modal fade"
+      tabindex="-1" role="dialog"
+    >
       <div class="modal-dialog">
         <div class="modal-content">
-          <div class="modal-header">  {# todo B5: css:modal-header #}
-            <button type="button"
-                    class="btn-close"  {# todo B5: css:close #}
-                    data-bs-dismiss="modal"
-                    aria-label="Close"
-                    data-bind="click: resetModal"><span aria-hidden="true">&times;</span></button>
+          <div class="modal-header">
             <h4 class="modal-title">
               {% trans "Email report:" %}
               {{ datespan.startdate|date:"Y-m-d" }}
@@ -119,6 +101,12 @@
               {% endif %}
               {{ datespan.enddate|date:"Y-m-d" }}
             </h4>
+            <button
+              class="btn-close"
+              aria-label="{% trans "Close" %}" type="button"
+              data-bs-dismiss="modal"
+              data-bind="click: resetModal"
+            ></button>
           </div>
           {% crispy email_form %}  {# todo B5: check crispy #}
         </div>

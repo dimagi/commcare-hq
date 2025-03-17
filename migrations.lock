@@ -115,6 +115,10 @@ accounting
  0093_defaultproductplan_is_annual_plan
  0094_add_annual_softwareplans
  0095_update_softwareplan_visibilities
+ 0096_formsubmittingmobileworkerhistory_and_featuretype_choice
+ 0097_add_form_submitting_mobile_worker_feature
+ 0098_app_dependencies_priv
+ 0099_data_cleaning_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -205,6 +209,10 @@ blobs
  0012_rename_indexes
  0013_drop_icds_cas_index
  0014_alter_deletedblobmeta_id
+campaign
+ 0001_initial
+ 0002_dashboardmap_dashboardreport
+ 0003_add_dashboard_widget_fields
 case_importer
  0001_initial
  0002_auto_20161206_1937
@@ -234,6 +242,7 @@ case_search
  0012_casesearchconfig_sync_cases_on_form_entry
  0013_casesearchconfig_fuzzy_prefix_length
  0014_casesearchconfig_index_name
+ 0015_csqlfixtureexpression_csqlfixtureexpressionlog
 cleanup
  0001_convert_change_feed_checkpoint_to_sql
  0002_convert_mc_checkpoint_to_sql
@@ -251,6 +260,8 @@ cleanup
  0014_deletedcouchdoc
  0015_deletedcouchdoc_unique_id_and_type
  0016_add_deletedsqldoc
+ 0017_delete_oauth_integrations_models
+ 0018_delete_ewsghana_models
 cloudcare
  0001_initial
  0002_sqlapplicationaccess
@@ -290,6 +301,8 @@ custom_data_fields
  0006_auto_20200924_1753
  0007_custom_data_fields_erm_support
  0008_custom_data_fields_upstream_ids
+ 0009_field_required_for
+ 0010_customdatafieldsdefinition_profile_required_for_user_type
 data_analytics
  0001_squashed_0004_auto_20150810_1710
  0002_maltrow_threshold
@@ -301,6 +314,13 @@ data_analytics
  0008_auto_20161114_1903
  0009_remove_girrow_wam
  0010_maltrow_last_run_date
+ 0011_domainmetrics
+ 0012_update_domainmetrics_fields
+data_cleaning
+ 0001_initial
+ 0002_update_fields_and_ordering
+ 0003_column_filter_unique_ids_match_type_updates
+ 0004_alter_bulkeditcolumn_data_type_and_more
 data_dictionary
  0001_squashed_0002_auto_20161116_2209
  0002_auto_20161118_1537
@@ -401,6 +421,7 @@ domain
  0012_operatorcalllimitsettings
  0013_accountconfirmationsettings_squashed_0016_alter_smsaccountconfirmationsettings_project_name (4 squashed migrations)
  0014_appreleasemodesetting
+ 0015_delete_projectlimit
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
@@ -410,6 +431,7 @@ dropbox
 email
  0001_initial
  0002_emailsettings_return_path_email
+ 0003_emailsettings_password_cbc
 enterprise
  0001_initial
  0002_enterprisepermissions_account_unique
@@ -428,6 +450,7 @@ es
  0010_delete_reverted_indices
  0011_add_indices_for_es5_reindex
  0012_add_new_index_for_bha
+ 0013_add_last_modifed
 events
  0001_add_events_model
  0002_attendancetrackingconfig
@@ -439,6 +462,8 @@ events
  0008_alter_event__case_id
  0009_attendeemodel
  0010_event_location
+experiments
+ 0001_initial
 export
  0001_initial
  0002_datafile
@@ -594,6 +619,8 @@ geospatial
  0005_auto_20240202_0807
  0006_geoconfig_max_cases_per_user_and_more
  0007_geoconfig_max_case_distance_and_more
+ 0008_geoconfig_flag_assigned_cases
+ 0009_geoconfig_api_key_cbc_encryption
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
@@ -635,6 +662,13 @@ integration
  0003_hmaccalloutsettings
  0004_gaenotpserversettings
  0005_gaenotpserversettings_server_type
+ 0006_kycconfig
+ 0007_alter_kycconfig_api_field_to_user_data_map
+ 0008_kycconfig_provider_kycconfig_unique_domain_provider
+ 0009_alter_kycconfig_connection_settings
+ 0010_alter_kycconfig_api_field_to_user_data_map
+ 0011_remove_kycconfig_connection_settings
+ 0012_momoconfig
 ivr
  0001_initial
  0002_call_app_id
@@ -706,6 +740,12 @@ motech
  0011_connectionsettings_is_deleted
  0012_alter_connectionsettings_auth_type
  0013_alter_connectionsettings_auth_type
+ 0014_alter_connectionsettings_password
+ 0015_requestlog_duration
+ 0016_connectionsettings_include_client_id_and_more
+ 0017_connectionsettings_use_aes_cbc_encryption
+ 0018_openmrsimporter_use_aes_cbc_encryption
+ 0019_connectionsettings_custom_headers
 notifications
  0001_squashed_0003_auto_20160504_2049 (3 squashed migrations)
  0002_auto_20160505_2058
@@ -723,11 +763,6 @@ oauth2_provider
  0005_auto_20211222_2352
  0006_alter_application_client_secret
  0007_application_post_logout_redirect_uris
-oauth_integrations
- 0001_initial
- 0002_livegooglesheetschedule
- 0003_livegooglesheetrefreshstatus
- 0004_auto_20220304_1139
 ota
  0001_initial
  0002_alter_db_index
@@ -798,12 +833,15 @@ products
 project_limits
  0001_initial
  0002_ratelimitedtwofactorlog
+ 0003_pillowlaggaugedefinition
+ 0004_systemlimit
 registration
  0001_initial
  0002_alter_request_ip
  0003_populate_sqlregistrationrequest
  0004_rename_sqlregistrationrequest
  0005_asyncsignuprequest
+ 0006_selfsignupworkflow
 registry
  0001_initial
  0002_registry_slug_globally_unique
@@ -826,6 +864,12 @@ repeaters
  0009_add_domain_to_indexes
  0010_rm_couch_artifacts
  0011_remove_obsolete_entities
+ 0012_formexpressionrepeater_arcgisformexpressionrepeater
+ 0013_alter_repeatrecord_state_and_more
+ 0014_alter_repeater_request_method
+ 0015_drop_receiverwrapper_couchdb
+ 0016_repeater_max_workers
+ 0017_add_indexes
 reports
  0001_initial
  0002_auto_20171121_1803
@@ -845,6 +889,9 @@ reports
  0016_alter_tableauuser_role
  0017_alter_tableauuser_tableau_user_id
  0018_alter_tableauuser_role
+ 0019_tableauvisualization_location_safe
+ 0020_tableauserver_get_reports_using_role
+ 0021_tableauconnectedapp_use_aes_cbc_encryption
 saved_reports
  0001_initial
  0002_scheduledreportlog
@@ -876,6 +923,8 @@ scheduling
  0025_schedule_and_broadcast_deleted_on
  0026_add_model_fcm_notification_content
  0027_emailcontent_html_message
+ 0028_alertschedule_use_user_case_for_filter_and_more
+ 0029_connectmessagecontent_connectmessagesurveycontent_and_more
 scheduling_partitioned
  0001_initial
  0002_case_schedule_instances
@@ -949,6 +998,8 @@ sms
  0056_backfill_sms_event_date
  0057_fcm_content_type_messaging_events
  0058_email_html_body
+ 0059_remove_unicel_backend
+ 0060_alter_messagingevent_content_type_and_more
 smsbillables
  0001_initial
  0002_bootstrap
@@ -1141,6 +1192,7 @@ translations
  0007_populate_smstranslations
  0008_remove_couch_id
  0009_auto_20200924_1753
+ 0010_transifex_organization_api_token_encryption
 two_factor
  (no migrations)
 user_importer
@@ -1242,6 +1294,13 @@ users
  0068_grant_web_apps_to_default_mobile_worker_role
  0069_alter_invitation_custom_user_data_and_more
  0070_alter_invitation_tableau_role
+ 0071_rm_user_data
+ 0072_remove_invitation_supply_point
+ 0073_rm_location_from_user_data
+ 0074_alter_sqluserdata_profile
+ 0075_hqapikey_encrypted_key
+ 0076_connectiduserlink_messaging_consent_and_more
+ 0077_invitationhistory
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

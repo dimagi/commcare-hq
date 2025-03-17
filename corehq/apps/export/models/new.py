@@ -119,7 +119,10 @@ from corehq.util.global_request import get_request_domain
 from corehq.util.html_utils import strip_tags
 from corehq.util.timezones.utils import get_timezone_for_domain
 from corehq.util.view_utils import absolute_reverse
-from corehq.apps.data_dictionary.util import get_deprecated_fields
+from corehq.apps.data_dictionary.util import (
+    get_case_property_group_name_for_properties,
+    get_deprecated_fields,
+)
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.userreports.util import get_indicator_adapter
 
@@ -1496,6 +1499,7 @@ class ScalarItem(ExportItem):
     """
     A text, numeric, date, etc. question or case property
     """
+    case_property_group_name = StringProperty()
 
 
 class LabelItem(ExportItem):
@@ -1767,6 +1771,7 @@ class ExportDataSchema(Document):
         only_process_current_builds=False,
         task=None,
         for_new_export_instance=False,
+        is_identifier_case_type=False,
     ):
         """
         Builds a schema from Application builds for a given identifier
@@ -1783,6 +1788,7 @@ class ExportDataSchema(Document):
             processed.
         :param task: A celery task to update the progress of the build
         :param for_new_export_instance: Flag to be set if generating schema for a new export instance
+        :param is_identifier_case_type: boolean, if True, some optimizations are applied specific to case type
         :returns: Returns a ExportDataSchema instance
         """
 
@@ -1805,7 +1811,8 @@ class ExportDataSchema(Document):
             )
         app_build_ids.extend(app_ids_for_domain)
         current_schema = cls._process_apps_for_export(domain, current_schema, identifier, app_build_ids, task,
-                                                      for_new_export_instance=for_new_export_instance)
+                                                      for_new_export_instance=for_new_export_instance,
+                                                      is_identifier_case_type=is_identifier_case_type)
 
         inferred_schema = cls._get_inferred_schema(domain, app_id, identifier)
         if inferred_schema:
@@ -1951,7 +1958,7 @@ class ExportDataSchema(Document):
 
     @classmethod
     def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task,
-                                 for_new_export_instance=False):
+                                 for_new_export_instance=False, is_identifier_case_type=False):
         apps_processed = 0
         for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
             doc_type = app_doc.get('doc_type', '')
@@ -1968,6 +1975,9 @@ class ExportDataSchema(Document):
                     f"Bad definition for Application {app_doc['_id']}",
                     exc_info=err,
                 )
+                continue
+
+            if is_identifier_case_type and not app.case_type_exists(identifier):
                 continue
 
             try:
@@ -2309,18 +2319,6 @@ class FormExportDataSchema(ExportDataSchema):
 
         return items
 
-    @classmethod
-    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task,
-                                 for_new_export_instance=False):
-        return super(FormExportDataSchema, cls)._process_apps_for_export(
-            domain,
-            schema,
-            identifier,
-            app_build_ids,
-            task,
-            for_new_export_instance=for_new_export_instance
-        )
-
 
 class CaseExportDataSchema(ExportDataSchema):
 
@@ -2375,11 +2373,19 @@ class CaseExportDataSchema(ExportDataSchema):
 
         parent_types = builder.get_case_relationships_for_case_type(case_type)
         case_schemas = []
+
+        if cls._case_property_groups_to_be_added(app.domain, for_bulk_export):
+            # reset case property group names before setting them through case property mapping
+            # to remove group names for deleted/deprecated properties/groups
+            cls._reset_case_property_group_name(current_schema)
+
         case_schemas.append(cls._generate_schema_from_case_property_mapping(
+            app.domain,
             case_property_mapping,
             parent_types,
             app.origin_id,  # If not copy, must be current app
             app.version,
+            for_bulk_export=for_bulk_export,
         ))
         if any([relationship_tuple[1] in ['parent', 'host'] for relationship_tuple in parent_types]):
             case_schemas.append(cls._generate_schema_for_parent_case(
@@ -2428,8 +2434,21 @@ class CaseExportDataSchema(ExportDataSchema):
 
         return ordered_case_properties
 
+    @staticmethod
+    def _case_property_groups_to_be_added(domain, for_bulk_export):
+        return not for_bulk_export and domain_has_privilege(domain, privileges.DATA_DICTIONARY)
+
+    @staticmethod
+    def _reset_case_property_group_name(schema):
+        for group_schema in schema.group_schemas:
+            if group_schema.path == MAIN_TABLE:
+                for item in group_schema.items:
+                    if isinstance(item, ScalarItem):
+                        item.case_property_group_name = ''
+
     @classmethod
-    def _generate_schema_from_case_property_mapping(cls, case_property_mapping, parent_types, app_id, app_version):
+    def _generate_schema_from_case_property_mapping(cls, domain, case_property_mapping, parent_types, app_id,
+                                                    app_version, for_bulk_export=False):
         """
         Generates the schema for the main Case tab on the export page
         Includes system export properties for the case as well as properties for exporting parent case IDs
@@ -2444,12 +2463,17 @@ class CaseExportDataSchema(ExportDataSchema):
         )
 
         for case_type, case_properties in case_property_mapping.items():
+            if cls._case_property_groups_to_be_added(domain, for_bulk_export):
+                case_group_name_for_property = get_case_property_group_name_for_properties(domain, case_type)
+            else:
+                case_group_name_for_property = {}
 
             for prop in case_properties:
                 group_schema.items.append(ScalarItem(
                     path=[PathNode(name=prop)],
                     label=prop,
                     last_occurrences={app_id: app_version},
+                    case_property_group_name=case_group_name_for_property.get(prop)
                 ))
 
         for case_type, identifier in parent_types:
@@ -2514,7 +2538,7 @@ class CaseExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task,
-                                 for_new_export_instance=False):
+                                 for_new_export_instance=False, is_identifier_case_type=False):
         if identifier == ALL_CASE_TYPE_EXPORT:
             return cls._process_apps_for_bulk_export(domain, schema, app_build_ids, task)
         else:
@@ -2524,7 +2548,8 @@ class CaseExportDataSchema(ExportDataSchema):
                 identifier,
                 app_build_ids,
                 task,
-                for_new_export_instance=for_new_export_instance
+                for_new_export_instance=for_new_export_instance,
+                is_identifier_case_type=is_identifier_case_type
             )
 
     @classmethod
@@ -2592,17 +2617,6 @@ class SMSExportDataSchema(ExportDataSchema):
     @staticmethod
     def get_latest_export_schema(domain, include_metadata, identifier=None):
         return SMSExportDataSchema(domain=domain, include_metadata=include_metadata)
-
-    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task,
-                                 for_new_export_instance=False):
-        return super(SMSExportDataSchema, cls)._process_apps_for_export(
-            domain,
-            schema,
-            identifier,
-            app_build_ids,
-            task,
-            for_new_export_instance=for_new_export_instance
-        )
 
 
 def _string_path_to_list(path):

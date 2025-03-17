@@ -1,0 +1,29 @@
+{% load i18n %}
+
+{% if wizard.steps.prev %}
+  <button name="wizard_goto_step" type="submit"
+          value="{{ wizard.steps.prev }}"
+          class="btn btn-outline-primary btn-lg">{% trans "Back" %}</button>
+{% endif %}
+{% if wizard.steps.current == 'auth' %}
+  {% if enforce_sso_login %}
+    <button type="button"
+            data-bind="visible: showContinueButton,
+                       click: proceedToNextStep,
+                       disable: isContinueDisabled"
+            class="btn btn-primary btn-lg">
+      <i class="fa fa-spinner fa-spin"
+         data-bind="visible:showContinueSpinner"></i>
+      <span data-bind="text:continueButtonText"></span>
+    </button>
+    <button type="submit"
+            data-bind="visible: showSignInButton"
+            class="btn btn-primary btn-lg">
+      {% trans "Sign In" %}
+    </button>
+  {% else %}
+    <button type="submit" class="btn btn-primary btn-lg">{% trans "Sign In" %}</button>
+  {% endif %}
+{% else %}
+  <button type="submit" class="btn btn-primary btn-lg">{% trans "Next" %}</button>
+{% endif %}

@@ -5,6 +5,9 @@
         {% if repeater.white_listed_case_types %}
             <br/>Case Type: {{ repeater.white_listed_case_types|join:", " }}
         {% endif %}
+        {% if repeater.next_attempt_at and request|toggle_enabled:"PROCESS_REPEATERS" and not repeater.is_paused %}
+            <br/>Next attempt at {{ repeater.next_attempt_at|date:"Y-m-d H:i" }}
+        {% endif %}
     </td>
     <td>
         <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.repeater_id }}&amp;record_state=PENDING">
@@ -17,13 +20,18 @@
         </a>
     </td>
     <td>
+        <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.repeater_id }}&amp;record_state=INVALIDPAYLOAD">
+            {{ repeater.count_State.InvalidPayload }}
+        </a>
+    </td>
+    <td>
         <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.repeater_id }}&amp;record_state=CANCELLED">
             {{ repeater.count_State.Cancelled }}
         </a>
     </td>
     <td>
         <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.repeater_id }}&amp;record_state=SUCCESS">
-            {{ repeater.count_State.Success }}
+            {{ repeater.count_State.EmptyOrSuccess }}
         </a>
     </td>
     <td>

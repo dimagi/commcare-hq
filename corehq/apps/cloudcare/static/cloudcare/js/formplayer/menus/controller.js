@@ -1,9 +1,9 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/menus/controller", [
     'jquery',
     'underscore',
     'backbone',
     'DOMPurify/dist/purify.min',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
     'cloudcare/js/markdown',
@@ -16,11 +16,13 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
     'cloudcare/js/formplayer/menus/views/query',
     'cloudcare/js/formplayer/menus/views',
     'cloudcare/js/formplayer/menus/api',    // app:select:menus and entity:get:details
+    'cloudcare/js/gtx',
 ], function (
     $,
     _,
     Backbone,
     DOMPurify,
+    bootstrap,
     initialPageData,
     toggles,
     markdown,
@@ -31,13 +33,17 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
     Collection,
     menusUtils,
     queryView,
-    views
+    views,
+    api,
+    gtx,
 ) {
+
     var selectMenu = function (options) {
 
         options.preview = UsersModels.getCurrentUser().displayOptions.singleAppMode;
 
         var fetchingNextMenu = FormplayerFrontend.getChannel().request("app:select:menus", options);
+        var promise = $.Deferred();
 
         /*
          Determine the next screen to display.  Could be
@@ -46,8 +52,11 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
          */
         $.when(fetchingNextMenu).done(function (menuResponse) {
             if (menuResponse.abort) {
+                promise.reject();
                 return;
             }
+
+            gtx.logNavigateMenu(gtx.extractSelections(menuResponse));
 
             //set title of tab to application name
             if (menuResponse.breadcrumbs) {
@@ -62,6 +71,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
             // If redirect was set, clear and go home.
             if (menuResponse.clearSession) {
                 FormplayerFrontend.trigger("apps:currentApp");
+                promise.reject();
                 return;
             }
 
@@ -92,6 +102,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
                     FormplayerFrontend.trigger('showError', "Response did not contain appId even though it was" +
                         "required. If this persists, please report an issue to CommCare HQ");
                     FormplayerFrontend.trigger("apps:list");
+                    promise.reject();
                     return;
                 }
                 urlObject.appId = menuResponse.appId;
@@ -108,10 +119,13 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
                 menusUtils.handleLocationRequest(options);
             }
             menusUtils.startOrStopLocationWatching(menuResponse.shouldWatchLocation);
+            promise.resolve(menuResponse);
         }).fail(function () {
             //  if it didn't go through, then it displayed an error message.
             // the right thing to do is then to just stay in the same place.
+            promise.reject();
         });
+        return promise;
     };
 
     var selectDetail = function (caseId, detailIndex, isPersistent, isMultiSelect) {
@@ -148,20 +162,44 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
         if (menuResponse.breadcrumbs) {
             menusUtils.showBreadcrumbs(menuResponse.breadcrumbs);
             if (!appPreview) {
-                let isFormEntry = !menuResponse.queryKey;
-                if (isFormEntry) {
-                    menusUtils.showMenuDropdown(menuResponse.langs, initialPageData.get('lang_code_name_mapping'));
-                }
-                if (menuResponse.type === constants.ENTITIES) {
-                    menusUtils.showMenuDropdown();
-                }
+                menusUtils.showMenuDropdown(menuResponse.langs, initialPageData.get('lang_code_name_mapping'));
             }
         } else {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
         }
+
+        if (!appPreview && menuResponse.persistentMenu) {
+            FormplayerFrontend.regions.getRegion('persistentMenu').show(
+                views.PersistentMenuView({
+                    collection: _toMenuCommands(menuResponse.persistentMenu, [], menuResponse.selections),
+                    sidebarEnabled: sidebarEnabled,
+                }).render());
+        } else {
+            FormplayerFrontend.regions.getRegion('persistentMenu').empty();
+        }
+
         if (menuResponse.appVersion) {
             FormplayerFrontend.trigger('setVersionInfo', menuResponse.appVersion);
         }
+    };
+
+    var _toMenuCommands = function (menuCommands, priorSelections, activeSelection) {
+        return new Backbone.Collection(_.map(menuCommands, function (menuCommand) {
+            const command = _.pick(menuCommand, [
+                'index',
+                'displayText',
+                'navigationState',
+                'imageUri',
+                'commands',
+            ]);
+            // Store an array of the commands needed to navigate to each nested menu item
+            command.selections = priorSelections.concat([command.index]);
+            if (JSON.stringify(command.selections) === JSON.stringify(activeSelection)) {
+                command.isActiveSelection = true;
+            }
+            command.commands = _toMenuCommands(command.commands, command.selections, activeSelection);
+            return new Backbone.Model(command);
+        }));
     };
 
     var showSplitScreenQuery = function (menuResponse, menuListView) {
@@ -179,7 +217,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
                     disableDynamicSearch: !sessionStorage.submitPerformed,
                     groupHeaders: queryResponse.groupHeaders,
                     searchOnClear: queryResponse.searchOnClear,
-                }).render()
+                }).render(),
             );
             FormplayerFrontend.regions.getRegion('main').show(menuListView);
         } else if (menuResponse.type === constants.QUERY) {
@@ -193,7 +231,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
                     disableDynamicSearch: true,
                     groupHeaders: menuResponse.groupHeaders,
                     searchOnClear: menuResponse.searchOnClear,
-                }).render()
+                }).render(),
             );
 
             menuData["triggerEmptyCaseList"] = true;
@@ -255,8 +293,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
         $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
         $('#case-detail-modal').find('.js-detail-content').html(contentView.render().el);
         $('#case-detail-modal').find('.js-detail-footer-content').html(detailFooterView.render().el);
-        $('#case-detail-modal').modal('show');
-
+        bootstrap.Modal.getOrCreateInstance($('#case-detail-modal')).show();
     };
 
     var getDetailList = function (detailObject) {

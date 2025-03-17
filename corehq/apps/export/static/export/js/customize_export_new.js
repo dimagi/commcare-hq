@@ -1,17 +1,20 @@
 hqDefine('export/js/customize_export_new', [
     'jquery',
     'knockout',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     'export/js/models',
     'hqwebapp/js/toggles',
     'export/js/const',
+    'commcarehq',
 ], function (
     $,
     ko,
+    bootstrap,
     initialPageData,
     models,
     toggles,
-    constants
+    constants,
 ) {
     $(function () {
         var customExportView = new models.ExportInstance(
@@ -25,13 +28,15 @@ hqDefine('export/js/customize_export_new', [
                 hasOtherOwner: initialPageData.get('has_other_owner'),
                 numberOfAppsToProcess: initialPageData.get('number_of_apps_to_process'),
                 geoProperties: initialPageData.get('geo_properties'),
-            }
+            },
         );
         initialPageData.registerUrl(
-            "build_schema", "/a/---/data/export/build_full_schema/"
+            "build_schema", "/a/---/data/export/build_full_schema/",
         );
         $('#customize-export').koApplyBindings(customExportView);
-        $('.export-tooltip').tooltip();
+        $('.export-tooltip').each(function (index, trigger) {
+            new bootstrap.Tooltip(trigger);
+        });
 
         if (toggles.toggleEnabled('SUPPORT_GEO_JSON_EXPORT')) {
             const exportFormat = initialPageData.get('export_instance').export_format;

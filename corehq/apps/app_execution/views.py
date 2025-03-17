@@ -7,13 +7,13 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from corehq.apps.app_execution import const
-from corehq.apps.app_execution.api import execute_workflow
 from corehq.apps.app_execution.data_model import EXAMPLE_WORKFLOW
 from corehq.apps.app_execution.db_accessors import get_avg_duration_data, get_status_data
-from corehq.apps.app_execution.exceptions import AppExecutionError, FormplayerException
 from corehq.apps.app_execution.forms import AppWorkflowConfigForm
 from corehq.apps.app_execution.har_parser import parse_har_from_string
 from corehq.apps.app_execution.models import AppExecutionLog, AppWorkflowConfig
+from corehq.apps.app_execution.tasks import run_app_workflow
+from corehq.apps.app_execution.workflow_dsl import workflow_to_dsl
 from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -108,7 +108,7 @@ def edit_workflow(request, domain, pk):
     context = _get_context(
         request, _("Edit App Workflow: {name}").format(name=config.name),
         reverse("app_execution:edit_workflow", args=[domain, pk]),
-        add_parent=True, form=form
+        add_parent=True, form=form, workflow=config
     )
     return render(request, "app_execution/workflow_form.html", context)
 
@@ -128,29 +128,19 @@ def _get_form_from_har(har_data_string, request, instance=None):
 
 @require_superuser_or_contractor
 @use_bootstrap5
-def test_workflow(request, domain, pk):
+def run_workflow(request, domain, pk):
     config = get_object_or_404(AppWorkflowConfig, domain=domain, pk=pk)
 
     context = _get_context(
-        request, f"Test App Workflow: {config.name}", reverse("app_execution:test_workflow", args=[domain, pk]),
+        request, f"Test App Workflow: {config.name}", reverse("app_execution:run_workflow", args=[domain, pk]),
         add_parent=True, workflow=config
     )
 
     if request.method == "POST":
-        session = config.get_formplayer_session()
-        try:
-            success = execute_workflow(session, config.workflow)
-        except (AppExecutionError, FormplayerException) as e:
-            context["error"] = str(e)
-            context["success"] = False
-        else:
-            context["success"] = success
+        log = run_app_workflow(config)
+        return redirect("app_execution:workflow_log", domain, log.id)
 
-        context["result"] = True
-        context["output"] = session.get_logs()
-        context["workflow_json"] = config.workflow_json
-
-    return render(request, "app_execution/workflow_test.html", context)
+    return render(request, "app_execution/workflow_run.html", context)
 
 
 def _get_context(request, title, url, add_parent=False, **kwargs):
@@ -242,6 +232,6 @@ def workflow_log(request, domain, pk):
             reverse("app_execution:workflow_log", args=[domain, pk]),
             add_parent=True,
             log=log,
-            workflow_json=log.workflow.workflow_json
+            workflow_json=workflow_to_dsl(log.workflow.workflow)
         )
     )

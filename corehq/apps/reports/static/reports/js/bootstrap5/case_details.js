@@ -2,7 +2,6 @@ hqDefine("reports/js/bootstrap5/case_details", [
     'jquery',
     'knockout',
     'underscore',
-    'clipboard/dist/clipboard',
     'hqwebapp/js/initial_page_data',
     'analytix/js/google',
     'analytix/js/kissmetrix',
@@ -14,17 +13,17 @@ hqDefine("reports/js/bootstrap5/case_details", [
     'reports/js/bootstrap5/readable_form',
     'bootstrap',    // needed for $.tab
     'jquery-memoized-ajax/jquery.memoized.ajax.min',
+    'commcarehq',
 ], function (
     $,
     ko,
     _,
-    Clipboard,
     initialPageData,
     googleAnalytics,
     kissmetrics,
     casePropertyModal,
     dataCorrections,
-    singleForm
+    singleForm,
 ) {
     var xformDataModel = function (data) {
         var self = {};
@@ -72,20 +71,13 @@ hqDefine("reports/js/bootstrap5/case_details", [
 
         self.data_loading = ko.observable(false);
 
-        self.getParameterByName = function (name, url) {
-            if (!url) {
-                url = window.location.href;
+        self.getFormIdFromUrl = function () {
+            var regex = new RegExp("[?&]form_id(=([^&#]*)|&|#|$)"),
+                results = regex.exec(window.location.hash);
+            if (results && results[2]) {
+                return decodeURIComponent(results[2]);
             }
-            name = name.replace(/[[\]]/g, "\\$&");
-            var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
-                results = regex.exec(url);
-            if (!results) {
-                return null;
-            }
-            if (!results[2]) {
-                return '';
-            }
-            return decodeURIComponent(results[2].replace(/\+/g, " "));
+            return null;
         };
 
         self.get_xform_data = function (xformId) {
@@ -124,7 +116,7 @@ hqDefine("reports/js/bootstrap5/case_details", [
         var loadForm = function () {
             var hash = window.location.hash.split('?');
             if (hash[0] === '#history') {
-                var formId = self.getParameterByName('form_id', window.location.hash);
+                var formId = self.getFormIdFromUrl();
                 if (formId) {
                     self.get_xform_data(formId);
                     self.selected_xform_doc_id(formId);

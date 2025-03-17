@@ -1,10 +1,9 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/users/collections", [
     'backbone',
     'cloudcare/js/formplayer/users/models',
 ], function (
     Backbone,
-    Models
+    Models,
 ) {
     /**
      * This collection represents a mobile worker user

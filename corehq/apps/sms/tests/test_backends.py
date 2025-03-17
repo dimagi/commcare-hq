@@ -16,7 +16,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.sms.api import (
     send_sms,
-    send_sms_to_verified_number,
+    send_message_to_verified_number,
     send_sms_with_backend,
     send_sms_with_backend_name,
 )
@@ -56,10 +56,6 @@ from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.messaging.smsbackends.trumpia.models import TrumpiaBackend
 from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
-from corehq.messaging.smsbackends.unicel.models import (
-    InboundParams,
-    SQLUnicelBackend,
-)
 from corehq.messaging.smsbackends.vertex.models import VertexBackend
 from corehq.messaging.smsbackends.yo.models import SQLYoBackend
 from corehq.messaging.smsbackends.infobip.models import InfobipBackend
@@ -80,13 +76,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.domain_obj = Domain.get(cls.domain_obj.get_id)
 
         cls.test_phone_number = '99912345'
-
-        cls.unicel_backend = SQLUnicelBackend(
-            name='UNICEL',
-            is_global=True,
-            hq_api_id=SQLUnicelBackend.get_api_id()
-        )
-        cls.unicel_backend.save()
 
         cls.mach_backend = SQLMachBackend(
             name='MACH',
@@ -234,7 +223,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.teardown_subscriptions()
 
         cls.domain_obj.delete()
-        cls.unicel_backend.delete()
         cls.mach_backend.delete()
         cls.http_backend.delete()
         cls.telerivet_backend.delete()
@@ -331,7 +319,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
 
         self.assertEqual(response.status_code, expected_response_code)
 
-    @patch('corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend.send')
     @patch('corehq.messaging.smsbackends.mach.models.SQLMachBackend.send')
     @patch('corehq.messaging.smsbackends.http.models.SQLHttpBackend.send')
     @patch('corehq.messaging.smsbackends.telerivet.models.SQLTelerivetBackend.send')
@@ -373,9 +360,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
             test_send,
             telerivet_send,
             http_send,
-            mach_send,
-            unicel_send):
-        self._test_outbound_backend(self.unicel_backend, 'unicel test', unicel_send)
+            mach_send):
         self._test_outbound_backend(self.mach_backend, 'mach test', mach_send)
         self._test_outbound_backend(self.http_backend, 'http test', http_send)
         self._test_outbound_backend(self.telerivet_backend, 'telerivet test', telerivet_send)
@@ -396,16 +381,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._test_outbound_backend(self.trumpia_backend, 'trumpia test', trumpia_send)
         self._test_outbound_backend(self.infobip_backend, 'infobip test', infobip_send)
         self._test_outbound_backend(self.pinpoint_backend, 'pinpoint test', pinpoint_send)
-
-    def test_unicel_inbound_sms(self):
-        self._simulate_inbound_request(
-            '/unicel/in/%s/' % self.unicel_backend.inbound_api_key,
-            phone_param=InboundParams.SENDER,
-            msg_param=InboundParams.MESSAGE,
-            msg_text='unicel test'
-        )
-
-        self._verify_inbound_request(self.unicel_backend.get_api_id(), 'unicel test')
 
     def test_telerivet_inbound_sms(self):
         additional_params = {
@@ -837,7 +812,7 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
             'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send',
             autospec=True
         ) as mock_send:
-            self.assertTrue(send_sms_to_verified_number(verified_number, 'Test for BACKEND2'))
+            self.assertTrue(send_message_to_verified_number(verified_number, 'Test for BACKEND2'))
         self.assertEqual(mock_send.call_count, 1)
         self.assertEqual(mock_send.call_args[0][0].pk, self.backend2.pk)
 
@@ -848,7 +823,7 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
             'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send',
             autospec=True
         ) as mock_send:
-            self.assertTrue(send_sms_to_verified_number(verified_number, 'Test for BACKEND5'))
+            self.assertTrue(send_message_to_verified_number(verified_number, 'Test for BACKEND5'))
         self.assertEqual(mock_send.call_count, 1)
         self.assertEqual(mock_send.call_args[0][0].pk, self.backend5.pk)
 
@@ -866,7 +841,7 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
             'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send',
             autospec=True
         ) as mock_send:
-            self.assertTrue(send_sms_to_verified_number(verified_number, 'Test for domain BACKEND'))
+            self.assertTrue(send_message_to_verified_number(verified_number, 'Test for domain BACKEND'))
         self.assertEqual(mock_send.call_count, 1)
         self.assertEqual(mock_send.call_args[0][0].pk, self.backend8.pk)
 
@@ -878,7 +853,7 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
             'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send',
             autospec=True
         ) as mock_send:
-            self.assertTrue(send_sms_to_verified_number(verified_number, 'Test for shared domain BACKEND'))
+            self.assertTrue(send_message_to_verified_number(verified_number, 'Test for shared domain BACKEND'))
         self.assertEqual(mock_send.call_count, 1)
         self.assertEqual(mock_send.call_args[0][0].pk, self.backend9.pk)
 
@@ -890,7 +865,7 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
             'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send',
             autospec=True
         ) as mock_send:
-            self.assertTrue(send_sms_to_verified_number(verified_number, 'Test for global BACKEND'))
+            self.assertTrue(send_message_to_verified_number(verified_number, 'Test for global BACKEND'))
         self.assertEqual(mock_send.call_count, 1)
         self.assertEqual(mock_send.call_args[0][0].pk, self.backend10.pk)
 
@@ -899,7 +874,7 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
         self.backend10.save()
 
         with self.assertRaises(BadSMSConfigException):
-            send_sms_to_verified_number(verified_number, 'Test for unknown BACKEND')
+            send_message_to_verified_number(verified_number, 'Test for unknown BACKEND')
 
     def __test_send_sms_with_backend(self):
         with patch(

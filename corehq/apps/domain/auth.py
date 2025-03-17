@@ -1,5 +1,6 @@
 import base64
 import binascii
+from datetime import datetime, timezone as tz
 import logging
 import requests
 from functools import wraps
@@ -8,7 +9,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.models import User
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.views.decorators.debug import sensitive_variables
 
 from no_exceptions.exceptions import Http400
@@ -156,7 +157,7 @@ def basic_or_api_key(realm=''):
         def wrapper(request, *args, **kwargs):
             username, password = get_username_and_password_from_request(request)
             if username and password:
-                request.check_for_password_as_api_key = True
+                request.check_for_api_key_as_password = True
                 user = authenticate(username=username, password=password, request=request)
                 if user is not None and user.is_active:
                     request.user = user
@@ -211,11 +212,22 @@ def formplayer_as_user_auth(view):
 class ApiKeyFallbackBackend(object):
 
     def authenticate(self, request, username, password):
-        if not getattr(request, 'check_for_password_as_api_key', False):
+        if not getattr(request, 'check_for_api_key_as_password', False):
             return None
 
         try:
-            user = User.objects.get(username=username, api_keys__key=password)
+            is_unexpired_filter = (
+                Q(api_keys__expiration_date__isnull=True) | Q(api_keys__expiration_date__gte=datetime.now(tz.utc))
+            )
+            api_domain_filter = Q(api_keys__domain='')
+            domain = getattr(request, 'domain', '')
+            if domain:
+                api_domain_filter = api_domain_filter | Q(api_keys__domain=domain)
+
+            ip = get_ip(request)
+            api_whitelist_filter = Q(api_keys__ip_allowlist=[]) | Q(api_keys__ip_allowlist__contains=[ip])
+            user = User.objects.get(is_unexpired_filter, api_domain_filter, api_whitelist_filter,
+                username=username, api_keys__key=password, api_keys__is_active=True)
         except (User.DoesNotExist, User.MultipleObjectsReturned):
             return None
         else:
@@ -273,8 +285,13 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
             return False
 
         # ensure API Key exists
+        query = Q(key=api_key)
+        domain = getattr(request, 'domain', '')
+        if domain:
+            domain_accessible = Q(domain='') | Q(domain=domain)
+            query = domain_accessible & query
         try:
-            key = user.api_keys.get(key=api_key)
+            key = user.api_keys.get(query)
         except HQApiKey.DoesNotExist:
             return self._unauthorized()
 
@@ -388,3 +405,20 @@ def user_can_access_domain_specific_pages(request):
         return False
 
     return couch_user.is_member_of(project) or (couch_user.is_superuser and not project.restrict_superusers)
+
+
+def connectid_token_auth(view_func):
+    @wraps(view_func)
+    def _inner(request, *args, **kwargs):
+        auth_header = request.META.get("HTTP_AUTHORIZATION")
+        if not auth_header:
+            return HttpResponseForbidden()
+        _, token = auth_header.split(" ")
+        if not token:
+            return HttpResponseBadRequest("ConnectID Token Required")
+        username = get_connectid_userinfo(token)
+        if username is None:
+            return HttpResponseForbidden()
+        request.connectid_username = username
+        return view_func(request, *args, **kwargs)
+    return _inner

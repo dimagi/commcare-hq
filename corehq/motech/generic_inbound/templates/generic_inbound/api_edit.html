@@ -3,7 +3,7 @@
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 
-{% requirejs_main_b5 "generic_inbound/js/api_edit" %}
+{% js_entry "generic_inbound/js/api_edit" %}
 
 {% block page_title %}{{ page_title }}{% endblock %}
 {% block page_content %}
@@ -13,7 +13,7 @@
 {% registerurl 'ucr_expressions' domain %}
 <div id="edit-api">
   <div class="mb-3">
-    <pre id="api_url">{{ api_model.absolute_url }}</pre>
+    <pre id="api_url">{{ configurable_api.absolute_url }}</pre>
     <a class="btn btn-outline-primary" onclick="copyData('api_url')">
       <i class="fa fa-copy"></i> {% trans "Copy URL" %}
     </a>
@@ -37,7 +37,7 @@
           <tr>
             <td>
               <input type="hidden" data-bind="value: id, attr: {name: `validations-${$index()}-id`}">
-              <input type="hidden" value="{{ api_model.id }}" data-bind="attr: {name: `validations-${$index()}-api`}">
+              <input type="hidden" value="{{ configurable_api.id }}" data-bind="attr: {name: `validations-${$index()}-api`}">
               <input type="text" maxlength="64" class="textinput textInput form-control" required data-bind="
                 value: name, attr: {name: `validations-${$index()}-name`}, css: {'is-invalid': nameError}">
               <span data-bind="visible: nameError, css: {'invalid-feedback': nameError}">

@@ -2,13 +2,14 @@ import datetime
 import doctest
 import json
 import logging
+import re
 from contextlib import contextmanager
 
 from django.test import SimpleTestCase
 
 import pytz
 from unittest.mock import patch
-from nose.tools import assert_raises_regex
+from nose.tools import assert_raises
 from requests.exceptions import ConnectTimeout, ReadTimeout
 
 from corehq.apps.groups.models import Group
@@ -16,7 +17,7 @@ from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.motech.auth import AuthManager
 from corehq.motech.exceptions import ConfigurationError
-from corehq.motech.const import IMPORT_FREQUENCY_MONTHLY
+from corehq.motech.const import IMPORT_FREQUENCY_MONTHLY, ALGO_AES_CBC
 from corehq.motech.openmrs.models import OpenmrsImporter
 from corehq.motech.openmrs.tasks import (
     get_case_properties,
@@ -24,6 +25,7 @@ from corehq.motech.openmrs.tasks import (
     import_patients_with_importer,
 )
 from corehq.motech.requests import Requests
+from corehq.motech.utils import b64_aes_cbc_encrypt
 from corehq.motech.views import ConnectionSettingsListView
 from corehq.util.view_utils import absolute_reverse
 
@@ -36,7 +38,7 @@ def get_importer(column_mapping=None):
         'domain': TEST_DOMAIN,
         'server_url': 'http://www.example.com/openmrs',
         'username': 'admin',
-        'password': 'Admin123',
+        'password': f"${ALGO_AES_CBC}${b64_aes_cbc_encrypt('Admin123')}",
         'notify_addresses_str': 'admin@example.com',
         'location_id': '',
         'import_frequency': IMPORT_FREQUENCY_MONTHLY,
@@ -193,8 +195,7 @@ def test_bad_data_type():
         'property': 'data_proxima_consulta'
     }
     with get_importer(bad_column_mapping) as importer:
-        with assert_raises_regex(
-            ConfigurationError,
+        with assert_raises(ConfigurationError, msg=re.compile(re.escape(
             'Errors importing from <OpenmrsImporter None admin@http://www.example.com/openmrs>:\n'
             'Unable to deserialize value 1551564000000 '
             'in column "data_proxima_consulta" '
@@ -202,7 +203,7 @@ def test_bad_data_type():
             'OpenMRS data type is given as "omrs_datetime". '
             'CommCare data type is given as "cc_date": '
             "argument of type 'int' is not iterable"
-        ):
+        ))):
             get_case_properties(patient, importer)
 
 
@@ -338,7 +339,7 @@ class OwnerTests(LocationHierarchyTestCase):
         self.send_mail_mock = self.send_mail_patcher.start()
         self.import_patcher = patch('corehq.motech.openmrs.tasks.import_patients_of_owner')
         self.import_mock = self.import_patcher.start()
-        self.decrypt_patcher = patch('corehq.motech.openmrs.tasks.b64_aes_decrypt')
+        self.decrypt_patcher = patch('corehq.motech.openmrs.models.b64_aes_cbc_decrypt')
         self.decrypt_patcher.start()
 
     def tearDown(self):

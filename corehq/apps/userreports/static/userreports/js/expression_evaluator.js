@@ -1,4 +1,10 @@
-hqDefine('userreports/js/expression_evaluator', function () {
+hqDefine('userreports/js/expression_evaluator', [
+    'jquery',
+    'knockout',
+], function (
+    $,
+    ko,
+) {
     var expressionModel = function (expressionEditor, docEditor, submitUrl, initialData) {
         var self = {};
         initialData = initialData || {};
@@ -43,7 +49,7 @@ hqDefine('userreports/js/expression_evaluator', function () {
         }, self);
 
         self.hasDocParseError = ko.computed(function () {
-            return self.getDocJSON() === null;
+            return self.docText() && self.getDocJSON() === null;
         }, self);
 
         self.formatJson = function () {

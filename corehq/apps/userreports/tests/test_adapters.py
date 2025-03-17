@@ -46,6 +46,7 @@ class TestIndicatorSqlAdapter(TestCase):
 
         docs = [{'_id': '1'}]
         adapter.build_table()
+        self.addCleanup(adapter.drop_table)
         self.assertTrue(adapter.table_exists)
 
         adapter.bulk_delete(docs)

@@ -1,4 +1,4 @@
-"use strict";
+
 requirejs.config({
     baseUrl: '/static/',
     paths: {
@@ -22,10 +22,11 @@ requirejs.config({
         "sentry_captureconsole": "sentry/js/sentry.captureconsole.7.28.0.min",
         "tempusDominus": "@eonasdan/tempus-dominus/dist/js/tempus-dominus.min",
         "underscore": "underscore/underscore",
-        "nvd3/nv.d3.latest.min": "nvd3-1.8.6/build/nv.d3.min",
+        "stripe": "https://js.stripe.com/v2/?noext",
+        "commcarehq": "hqwebapp/js/requirejs_webpack_fake",
     },
     shim: {
-        "accounting/js/lib/stripe": { exports: 'Stripe' },
+        "stripe": { exports: 'Stripe' },
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
         "ace-builds/src-min-noconflict/mode-json": { deps: ["ace-builds/src-min-noconflict/ace"] },
         "ace-builds/src-min-noconflict/mode-xml": { deps: ["ace-builds/src-min-noconflict/ace"] },
@@ -91,14 +92,6 @@ requirejs.config({
             exports: "L",
         },
         "mapbox.js/dist/mapbox.uncompressed": { exports: "L" },
-        "nvd3/nv.d3.min": {
-            deps: ['d3/d3.min'],
-            exports: 'nv',
-        },
-        "nvd3/nv.d3.latest.min": {
-            deps: ['d3/d3.min'],
-            exports: 'nv',
-        },
         "sentry_browser": { exports: "Sentry" },
     },
     wrapShim: true,

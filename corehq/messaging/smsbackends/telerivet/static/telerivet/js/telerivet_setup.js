@@ -1,9 +1,10 @@
 hqDefine("telerivet/js/telerivet_setup", [
     'knockout',
     'hqwebapp/js/initial_page_data',
+    'commcarehq',
 ], function (
     ko,
-    initialPageData
+    initialPageData,
 ) {
     var telerivetSetupModel = function () {
         var self = {};

@@ -8,12 +8,9 @@ from corehq.apps.celery import periodic_task, task
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.sso.exceptions import EntraVerificationFailed, EntraUnsupportedType
 from corehq.apps.sso.models import (
-    AuthenticatedEmailDomain,
     IdentityProvider,
     IdentityProviderProtocol,
     IdentityProviderType,
-    UserExemptFromSingleSignOn,
-    LoginEnforcementType,
 )
 from corehq.apps.sso.utils.context_helpers import (
     get_api_secret_expiration_email_context,
@@ -21,10 +18,12 @@ from corehq.apps.sso.utils.context_helpers import (
     get_sso_deactivation_skip_email_context,
 )
 from corehq.apps.sso.utils.entra import MSGraphIssue
-from corehq.apps.sso.utils.user_helpers import convert_emails_to_lowercase, get_email_domain_from_username
+from corehq.apps.sso.utils.user_helpers import convert_emails_to_lowercase
 from corehq.apps.users.models import WebUser
 from corehq.apps.users.models import HQApiKey
+from corehq.apps.users.util import SYSTEM_USER_ID, log_user_change
 from django.contrib.auth.models import User
+from corehq.const import USER_CHANGE_VIA_SSO_DEACTIVATION
 from corehq.sql_db.util import paginate_query
 from django.db import router
 from django.db.models import Q
@@ -124,20 +123,19 @@ def send_idp_cert_expires_reminder_emails(num_days):
             )
 
 
-@periodic_task(run_every=crontab(minute=0, hour=2), acks_late=True)
+@periodic_task(run_every=crontab(minute=0, hour='*/4'), acks_late=True)
 def auto_deactivate_removed_sso_users():
     for idp in IdentityProvider.objects.filter(
         enable_user_deactivation=True,
         idp_type=IdentityProviderType.ENTRA_ID,
-        login_enforcement_type=LoginEnforcementType.GLOBAL,
     ).all():
         try:
-            usernames_in_idp = convert_emails_to_lowercase(idp.get_all_usernames_of_the_idp())
+            usernames_in_idp = set(convert_emails_to_lowercase(idp.get_remote_member_usernames()))
         except EntraVerificationFailed as e:
             notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
             send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.VERIFICATION_ERROR,
-                                            error=EntraVerificationFailed.error,
-                                            error_description=EntraVerificationFailed.message)
+                                            error=e.error,
+                                            error_description=e.message)
             continue
         except requests.exceptions.HTTPError as e:
             notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
@@ -158,28 +156,20 @@ def auto_deactivate_removed_sso_users():
             send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.EMPTY_ERROR)
             continue
 
-        usernames_in_account = idp.owner.get_web_user_usernames()
-
-        # Get criteria for exempting usernames and email domains from the deactivation list
-        authenticated_domains = AuthenticatedEmailDomain.objects.filter(identity_provider=idp)
-        exempt_usernames = UserExemptFromSingleSignOn.objects.filter(email_domain__in=authenticated_domains
-                                                                     ).values_list('username', flat=True)
-
-        usernames_to_deactivate = []
-        authenticated_email_domains = authenticated_domains.values_list('email_domain', flat=True)
-
-        for username in usernames_in_account:
-            if username not in usernames_in_idp and username not in exempt_usernames:
-                email_domain = get_email_domain_from_username(username)
-                if email_domain in authenticated_email_domains:
-                    usernames_to_deactivate.append(username)
+        usernames_governed_by_idp = set(idp.get_local_member_usernames())
 
         # Deactivate user that is not returned by Graph Users API
-        for username in usernames_to_deactivate:
-            user = WebUser.get_by_username(username)
-            if user and user.is_active:
-                user.is_active = False
-                user.save()
+        for username in usernames_governed_by_idp:
+            if username not in usernames_in_idp:
+                user = WebUser.get_by_username(username)
+                if user and user.is_active:
+                    user.is_active = False
+                    user.save()
+                    log_user_change(by_domain=None, for_domain=None,
+                            by_domain_required_for_log=False, for_domain_required_for_log=False,
+                            couch_user=user, fields_changed={'is_active': user.is_active},
+                            changed_via=USER_CHANGE_VIA_SSO_DEACTIVATION,
+                            changed_by_user=SYSTEM_USER_ID)
 
 
 def send_deactivation_skipped_email(idp, failure_code, error=None, error_description=None):

@@ -8,7 +8,8 @@ import langcodes
 from langcodes import langs_by_code
 from memoized import memoized
 
-from corehq import toggles
+from corehq import toggles, privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.commcare_settings import (
     get_commcare_settings_lookup,
@@ -20,6 +21,13 @@ from corehq.apps.app_manager.util import (
     module_offers_search,
 )
 from corehq.util.translation import localize
+
+
+# If the language name is not showing up properly in the language menu, you can
+# define those languages here, mapped to their two-letter language codes.
+CUSTOM_LANGUAGE_NAMES = {
+    'km': "ខ្មែរ",
+}
 
 
 def non_empty_only(dct):
@@ -60,8 +68,16 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
             name = langcodes.get_name(lc) or lc
             if not name:
                 continue
-            with localize(convert_to_two_letter_code(lc)):
-                name = gettext(name)
+            letter_code = convert_to_two_letter_code(lc)
+
+            if letter_code in CUSTOM_LANGUAGE_NAMES.keys():
+                # These are languages not installed on our machines, so localize does not understand them.
+                # Though we don't want to install these langauges, we still want to support projects
+                # who want to see the name written properly.
+                name = CUSTOM_LANGUAGE_NAMES[letter_code]
+            else:
+                with localize(letter_code):
+                    name = gettext(name)
             yield lc, name
 
     yield id_strings.current_language(), lang
@@ -155,7 +171,7 @@ def _create_module_details_app_strings(module, langs):
                 clean_trans(column.header, langs)
             )
 
-            if column.format in ('enum', 'conditional-enum', 'enum-image', 'clickable-icon'):
+            if column.format in ('enum', 'conditional-enum', 'enum-image', 'clickable-icon', 'translatable-enum'):
                 for item in column.enum:
                     yield (
                         id_strings.detail_column_enum_variable(
@@ -539,7 +555,7 @@ def _create_case_list_form_app_strings(
 
 def _create_dependencies_app_strings(app):
     dependencies = app.profile.get('features', {}).get('dependencies')
-    if toggles.APP_DEPENDENCIES.enabled(app.domain) and dependencies:
+    if domain_has_privilege(app.domain, privileges.APP_DEPENDENCIES) and dependencies:
         settings = get_commcare_settings_lookup()['features']['dependencies']
         app_id_to_name = {k: v for k, v in zip(
             settings["values"],

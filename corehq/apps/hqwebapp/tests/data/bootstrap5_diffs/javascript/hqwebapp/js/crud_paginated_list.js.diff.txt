@@ -1,34 +1,35 @@
 --- 
 +++ 
-@@ -1,12 +1,14 @@
+@@ -1,13 +1,15 @@
  // side effects: defines knockout bindings that are used in hqwebapp/partials/pagination.html
 -hqDefine("hqwebapp/js/bootstrap3/crud_paginated_list", [
 +hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
      "jquery",
      "knockout",
      "underscore",
+-    "hqwebapp/js/bootstrap3/knockout_bindings.ko",  // fadeVisible
 +    "es6!hqwebapp/js/bootstrap5_loader",
++    'hqwebapp/js/bootstrap5/knockout_bindings.ko',  // fadeVisible
  ], function (
      $,
      ko,
--    _
-+    _,
-+    bootstrap
+     _,
++    bootstrap,
  ) {
      var CRUDPaginatedListModel = function (
          total,
-@@ -197,8 +199,9 @@
+@@ -198,8 +200,9 @@
              self.changePage(1);
          };
  
--        self.deleteItem = function (paginatedItem, event) {
+-        self.deleteItem = function (paginatedItem) {
 +        self.deleteItem = function (paginatedItem, event, button) {
              var pList = self.paginatedList();
 +            $(button).enableButton();
              paginatedItem.dismissModals();
              self.paginatedList(_(pList).without(paginatedItem));
              self.deletedList.push(paginatedItem);
-@@ -222,7 +225,7 @@
+@@ -223,7 +226,7 @@
              });
          };
  
@@ -37,7 +38,7 @@
              $.ajax({
                  url: '',
                  type: 'post',
-@@ -238,6 +241,7 @@
+@@ -239,6 +242,7 @@
                  statusCode: self.handleStatusCode,
                  success: function (data) {
                      self.utils.reloadList(data);
@@ -45,7 +46,7 @@
                  },
              });
          };
-@@ -268,15 +272,9 @@
+@@ -270,15 +274,9 @@
          };
  
          self.dismissModals = function () {

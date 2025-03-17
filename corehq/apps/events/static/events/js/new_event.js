@@ -6,12 +6,13 @@ hqDefine("events/js/new_event", [
     "locations/js/widgets",
     "hqwebapp/js/bootstrap3/widgets",
     "jquery-ui/ui/widgets/datepicker",
+    "commcarehq",
 ], function (
     $,
     ko,
     multiselectUtils,
     initialPageData,
-    locationsWidgets
+    locationsWidgets,
 ) {
     $(function () {
         const ATTENDEE_PROPS = {
@@ -40,7 +41,6 @@ hqDefine("events/js/new_event", [
         multiselectUtils.createFullMultiselectWidget('id_attendance_takers', ATTENDANCE_TAKER_PROPS);
 
         function eventViewModel(initialData) {
-            'use strict';
             var self = {};
 
             // Disable the submit button unless attendance takers are present
@@ -83,7 +83,7 @@ hqDefine("events/js/new_event", [
                     $expectedList.empty();
                     for (const item of data) {
                         $expectedList.append(
-                            `<option value="${item.id}">${item.name}</option>`
+                            `<option value="${item.id}">${item.name}</option>`,
                         );
                     }
                 }

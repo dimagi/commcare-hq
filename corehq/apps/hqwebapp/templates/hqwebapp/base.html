@@ -1,24 +1,12 @@
 {% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
 {% requirejs_main %}
+{% js_entry %}
 <!--[if lt IE 7]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9 lt-ie8 lt-ie7"><![endif]-->
 <!--[if IE 7]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9 lt-ie8"><![endif]-->
 <!--[if IE 8]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9"><![endif]-->
 <!--[if gt IE 8]><!--><html lang="{{ LANGUAGE_CODE }}"><!--<![endif]-->
   <head>
-    {% if ANALYTICS_IDS.GTM_ID %}
-      {# This is fine as an inline script; it's independent of all HQ code and all third-party libraries #}
-      <!-- Google Tag Manager -->
-      <script>
-        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-          new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-          'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-        })(window,document,'script','dataLayer','{{ ANALYTICS_IDS.GTM_ID }}');
-      </script>
-      <!-- End Google Tag Manager -->
-    {% endif %}
-
     {% captureas title_block %}{% block title %}{% endblock title %}{% endcaptureas %}
     {% captureas title_context_block %}{% block title_context %}{% endblock title_context %}{% endcaptureas %}
     <title>
@@ -59,25 +47,12 @@
 
     {% block stylesheets %}{% endblock stylesheets %}
 
-    {% block csrf_token_block %}
-      <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
-    {% endblock %}
-
     {% compress css %}
       <link type="text/css"
             rel="stylesheet"
             media="all"
             href="{% static 'select2/dist/css/select2.min.css' %}" />
     {% endcompress %}
-
-    {% if request.use_nvd3 or request.use_nvd3_v3 %}
-      {% compress css %}
-        <link type="text/css"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'nvd3/src/nv.d3.css' %}" />
-      {% endcompress %}
-    {% endif %}
 
     {% if request.use_daterangepicker and not use_bootstrap5 %}
       {% compress css %}
@@ -150,25 +125,17 @@
       {% endcompress %}
     {% endif %}
 
-
-    {% if request.use_maps %}
-      {% compress css %}
-        <link rel="stylesheet" href="{% static 'leaflet/dist/leaflet.css' %}" />
-        <link rel="stylesheet" href="{% static 'reports/css/maps.css' %}" />
-      {% endcompress %}
-    {% endif %}
-
     <script>
       window.USE_BOOTSTRAP5 = {{ use_bootstrap5|BOOL }};
     </script>
 
-    {% if not requirejs_main %}
+    {% if not use_js_bundler %}
       {% javascript_libraries use_bootstrap5=use_bootstrap5 underscore=True jquery_ui=request.use_jquery_ui ko=True hq=True analytics=True %}
     {% endif %}
 
     {# Up here because if daterangepicker is called from within a form widget, #}
     {# the javascript requiring the config file is run before js-inline #}
-    {% if request.use_daterangepicker and not requirejs_main and not use_bootstrap5 %}
+    {% if request.use_daterangepicker and not use_js_bundler and not use_bootstrap5 %}
       {% compress js %}
         <script src="{% static 'moment/moment.js' %}"></script>
         <script src="{% static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
@@ -176,7 +143,7 @@
       {% endcompress %}
     {% endif %}
 
-    {% if request.use_tempusdominus and not requirejs_main and use_bootstrap5 %}
+    {% if request.use_tempusdominus and not use_js_bundler and use_bootstrap5 %}
       {% compress js %}
         <script src="{% static '@popperjs/core/dist/umd/popper.min.js' %}"></script>
         <script src="{% static '@eonasdan/tempus-dominus/dist/js/tempus-dominus.min.js' %}"></script>
@@ -187,12 +154,10 @@
     {% endblock %}
   </head>
   <body>
-    {% if ANALYTICS_IDS.GTM_ID %}
-      <!-- Google Tag Manager (noscript) -->
-      <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ ANALYTICS_IDS.GTM_ID }}"
-                        height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-      <!-- End Google Tag Manager (noscript) -->
-    {% endif %}
+
+    {% block csrf_token_block %}
+      <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
+    {% endblock %}
 
     {# for setting up page-wide backgrounds #}
     {% block background_content %}{% endblock %}
@@ -291,7 +256,6 @@
 
 
     {# for get demo and get trial forms #}
-    {% initial_page_data 'number_utils_script' 'intl-tel-input/build/js/utils.js'|static %}
     {% initial_page_data 'ace_base_path' 'ace-builds/src-min-noconflict'|static %}
 
     {% if demo_workflow_ab_v2 %}
@@ -332,14 +296,39 @@
       {% endblock %}
     </div>
 
+    {% if is_demo_visible %}
+      {% if use_bootstrap5 %}
+        {% include "hqwebapp/partials/bootstrap5/get_demo_modals.html" %}
+      {% else %}
+        {% include "hqwebapp/partials/bootstrap3/get_demo_modals.html" %}
+      {% endif %}
+    {% endif %}
+
+    {# Knockout component templates #}
+    {% if use_bootstrap5 %}
+      {% include 'hqwebapp/partials/bootstrap5/ko_pagination.html' %}
+      {% include 'hqwebapp/partials/bootstrap5/ko_inline_edit.html' %}
+      {% include 'hqwebapp/partials/bootstrap5/ko_search_box.html' %}
+      {% include 'hqwebapp/partials/bootstrap5/ko_select_toggle.html' %}
+      {% include 'hqwebapp/partials/bootstrap5/ko_feedback.html' %}
+    {% else %}
+      {% include 'hqwebapp/partials/bootstrap3/ko_pagination.html' %}
+      {% include 'hqwebapp/partials/bootstrap3/ko_inline_edit.html' %}
+      {% include 'hqwebapp/partials/bootstrap3/ko_search_box.html' %}
+      {% include 'hqwebapp/partials/bootstrap3/ko_select_toggle.html' %}
+      {% include 'hqwebapp/partials/bootstrap3/ko_feedback.html' %}
+    {% endif %}
+
     {# javascript below this line #}
 
     {% include "hqwebapp/partials/requirejs.html" with BASE_MAIN=True %}
 
     <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
+    {% include "hqwebapp/partials/webpack.html" %} {# must come after statici18n above #}
+
     {# HQ Specific Libraries #}
-    {% if not requirejs_main %}
+    {% if not use_js_bundler %}
       {% if use_bootstrap5 %}
         {% compress js %}
           <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
@@ -367,7 +356,7 @@
 
     {# JavaScript Display Logic Libaries #}
 
-    {% if request.couch_user and not requirejs_main %}
+    {% if request.couch_user and not use_js_bundler %}
       {% if use_bootstrap5 %}
         <script src="{% static 'notifications/js/bootstrap5/notifications_service.js' %}"></script>
         <script src="{% static 'notifications/js/bootstrap5/notifications_service_main.js' %}"></script>
@@ -377,30 +366,13 @@
       {% endif %}
     {% endif %}
 
-    {% if not requirejs_main %}
+    {% if not use_js_bundler %}
       {% compress js %}
         <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
       {% endcompress %}
     {% endif %}
 
-    {% if request.use_nvd3 and not requirejs_main %}
-      {% compress js %}
-        <script src="{% static 'nvd3/lib/d3.v2.js' %}"></script>
-        <script src="{% static 'nvd3/lib/fisheye.js' %}"></script>
-        <script src="{% static 'd3/d3.min.js' %}"></script>
-        <script src="{% static 'nvd3/nv.d3.min.js' %}"></script>
-      {% endcompress %}
-    {% endif %}
-
-    {% if request.use_nvd3_v3 and not requirejs_main %}
-      {% compress js %}
-        <script src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
-        <script src="{% static 'd3/d3.min.js' %}"></script>
-        <script src="{% static 'nvd3/nv.d3.min.js' %}"></script>
-      {% endcompress %}
-    {% endif %}
-
-    {% if request.use_datatables and not requirejs_main %}
+    {% if request.use_datatables and not use_js_bundler %}
       {% if use_bootstrap5 %}
         {% compress js %}
           <script src="{% static 'datatables.net/js/jquery.dataTables.min.js' %}"></script>
@@ -417,47 +389,20 @@
       {% endif %}
     {% endif %}
 
-    {% if request.use_typeahead and not requirejs_main and not use_bootstrap5 %}
-      {% compress js %}
-        <script src="{% static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/bootstrap-multi-typeahead.js' %}"></script>
-      {% endcompress %}
-    {% endif %}
-
-    {% if request.use_timepicker and not requirejs_main and not use_bootstrap5 %}
+    {% if request.use_timepicker and not use_js_bundler and not use_bootstrap5 %}
       {% compress js %}
         <script src="{% static 'bootstrap-timepicker/js/bootstrap-timepicker.js' %}"></script>
       {% endcompress %}
     {% endif %}
 
-    {% if not requirejs_main %}
-      {% if request.use_maps %}
-        {% compress js %}
-          <script src="{% static 'jquery-color/dist/jquery.color.js' %}"></script>
-          <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
-        {% endcompress %}
-      {% endif %}
-    {% endif %}
-
-    {% if request.use_maps and not requirejs_main %}
-      {% compress js %}
-        <script src="{% static 'reports/js/bootstrap3/maps_utils.js' %}"></script>
-      {% endcompress %}
-    {% endif %}
-
-    {% if request.use_timeago and not requirejs_main %}
-      <script src="{% static 'jquery-timeago/jquery.timeago.js' %}"></script>
-    {% endif %}
-
-    {% if request.use_multiselect and not requirejs_main %}
+    {% if request.use_multiselect and not use_js_bundler %}
       {% compress js %}
         <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>
-        <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
         <script src="{% static 'hqwebapp/js/multiselect_utils.js' %}"></script>
       {% endcompress %}
     {% endif %}
 
-    {% if request.use_ko_validation and not requirejs_main %}
+    {% if request.use_ko_validation and not use_js_bundler %}
       <script src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
       {% if use_bootstrap5 %}
         <script src="{% static 'hqwebapp/js/bootstrap5/validators.ko.js' %}"></script>
@@ -466,30 +411,7 @@
       {% endif %}
     {% endif %}
 
-    {% if is_demo_visible %}
-      {% if use_bootstrap5 %}
-        {% include "hqwebapp/partials/bootstrap5/get_demo_modals.html" %}
-      {% else %}
-        {% include "hqwebapp/partials/bootstrap3/get_demo_modals.html" %}
-      {% endif %}
-    {% endif %}
-
-    {# Knockout component templates #}
-    {% if use_bootstrap5 %}
-      {% include 'hqwebapp/partials/bootstrap5/ko_pagination.html' %}
-      {% include 'hqwebapp/partials/bootstrap5/ko_inline_edit.html' %}
-      {% include 'hqwebapp/partials/bootstrap5/ko_search_box.html' %}
-      {% include 'hqwebapp/partials/bootstrap5/ko_select_toggle.html' %}
-      {% include 'hqwebapp/partials/bootstrap5/ko_feedback.html' %}
-    {% else %}
-      {% include 'hqwebapp/partials/bootstrap3/ko_pagination.html' %}
-      {% include 'hqwebapp/partials/bootstrap3/ko_inline_edit.html' %}
-      {% include 'hqwebapp/partials/bootstrap3/ko_search_box.html' %}
-      {% include 'hqwebapp/partials/bootstrap3/ko_select_toggle.html' %}
-      {% include 'hqwebapp/partials/bootstrap3/ko_feedback.html' %}
-    {% endif %}
-
-    {% if show_overdue_invoice_modal and not requirejs_main %}
+    {% if show_overdue_invoice_modal and not use_js_bundler %}
       {% if use_bootstrap5 %}
         <script src="{% static 'hqwebapp/js/bootstrap5/downgrade_modal.js' %}"></script>
       {% else %}
@@ -497,7 +419,7 @@
       {% endif %}
     {% endif %}
 
-    {% if show_prepaid_modal and not requirejs_main %}
+    {% if show_prepaid_modal and not use_js_bundler %}
       {% if use_bootstrap5 %}
         <script src="{% static 'hqwebapp/js/bootstrap5/prepaid_modal.js' %}"></script>
       {% else %}

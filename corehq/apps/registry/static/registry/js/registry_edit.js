@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine("registry/js/registry_edit", [
     'moment',
     'knockout',
@@ -8,11 +8,12 @@ hqDefine("registry/js/registry_edit", [
     'registry/js/registry_actions',
     'registry/js/registry_logs',
     'es6!hqwebapp/js/bootstrap5_loader',
-    'hqwebapp/js/components/inline_edit',
     'hqwebapp/js/select2_knockout_bindings.ko',
     'hqwebapp/js/bootstrap5/knockout_bindings.ko', // openModal
     'hqwebapp/js/bootstrap5/main', // makeHqHelp
     'hqwebapp/js/multiselect_utils',
+    'hqwebapp/js/components/inline_edit',
+    'commcarehq',
 ], function (
     moment,
     ko,
@@ -22,10 +23,7 @@ hqDefine("registry/js/registry_edit", [
     actions,
     auditLogs,
     bootstrap,
-    inlineEdit
 ) {
-    ko.components.register('inline-edit', inlineEdit);
-
     let InvitationModel = function (data) {
         let self = data;
         self.statusText = text.getStatusText(self.status);
@@ -75,7 +73,7 @@ hqDefine("registry/js/registry_edit", [
             return grants.sort(grantSort);
         });
         self.currentDomainGrants = self.grants().filter(
-            (grant) => grant.to_domains.includes(self.current_domain)
+            (grant) => grant.to_domains.includes(self.current_domain),
         ).map((grant) => grant.from_domain).sort();
         self.invitationStatusText = ko.computed(() => text.getStatusText(self.domain_invitation.status()));
         self.invitationStatusClass = ko.computed(() => text.getStatusCssClass(self.domain_invitation.status()));
@@ -229,7 +227,7 @@ hqDefine("registry/js/registry_edit", [
             initialPageData.get("registry"),
             initialPageData.get("availableCaseTypes"),
             initialPageData.get("availableDomains"),
-            initialPageData.get("invitedDomains")
+            initialPageData.get("invitedDomains"),
         ));
     });
 });

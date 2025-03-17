@@ -1,0 +1,117 @@
+{% load i18n %}
+
+<div class="payment-modal modal fade" id="{{ payment_modal_id }}">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="btn-close" data-bs-dismiss="modal"  {# todo B5: css-close #}
+                aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title" data-bind="template: {
+                    data: costItem,
+                    name: '{{ title_template }}',
+                    if: hasCostItem
+                }"></h4>
+      </div>
+      <form method="POST"
+            class="form-horizontal"
+            data-bind="attr: {
+                      id: formId,
+                      action: submitURL,
+                  }">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div data-bind="template: {
+                        data: costItem,
+                        name: '{{ cost_item_template }}',
+                        if: hasCostItem
+                    }, visible: paymentIsNotComplete"></div>
+
+          <p class="alert alert-danger"
+             data-bind="visible: showServerErrorMsg">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span data-bind="text: serverErrorMsg"></span>
+          </p>
+
+          <!-- ko if: paymentMethod() === WIRE -->
+          <fieldset data-bind="visible: paymentIsNotComplete">
+            <legend>{% trans 'Wire Payment Information' %}</legend>
+            <p>
+              {% blocktrans %}
+                Dimagi accepts wire payments via ACH and wire transfer. You will receive an invoice via email with bank information and instructions for wire payment. Please include the Invoice # in the wire payment memo or note field.
+                <a href="https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment" target="_blank">More information...</a>
+              {% endblocktrans %}
+            </p>
+            <div class="form-group">  {# todo B5: css-form-group #}
+              <label class="form-label col-md-3">
+                {% trans 'Invoice Recipients' %}
+              </label>
+              <div class="col-md-9">
+                <input type="text"
+                       data-bind="value: wireEmails"
+                       size="20"
+                       name="emails"
+                       class="form-control"
+                       placeholder="jane@gmail.com john@gmail.com" />
+              </div>
+            </div>
+          </fieldset>
+          <!-- /ko -->
+
+          <!-- ko if: paymentMethod() === CREDIT_CARD -->
+          <div data-bind="template: {
+                        data: newCard,
+                        name: 'select-new-stripe-card-template',
+                        if: mustCreateNewCard
+                    }"></div>
+
+          <div data-bind="template: {
+                        data: $data,
+                        name: 'select-stripe-card-template',
+                        if: canSelectCard
+                    }"></div>
+          <!-- /ko -->
+
+          <div class="alert alert-success" data-bind="visible: paymentIsComplete, template: {
+                        name: '{{ payment_complete_template }}',
+                    }"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button"
+                  data-bind="visible: paymentIsNotComplete"
+                  class="btn btn-outline-primary"
+                  data-bs-dismiss="modal">
+            {% trans "Cancel" %}
+          </button>
+          <!-- ko if: hasAgreedToPrivacy || isSavedCard -->
+          <button type="submit"
+                  data-bind="
+                                visible: paymentIsNotComplete,
+                                disable: isSubmitDisabled,
+                                click: processPayment,
+                                text: submitBtnText"
+                  class="btn btn-primary">
+          </button>
+          <!-- /ko -->
+          <!-- ko ifnot: hasAgreedToPrivacy -->
+          <button type="submit"
+                  class="btn btn-primary disabled"
+                  data-bind="
+                                text: submitBtnText"
+                  disabled="disabled">
+          </button>
+          <span class="badge text-bg-info">{% trans 'Please agree to the Privacy Policy.' %}</span>
+          <!-- /ko -->
+          <button type="button"
+                  data-bind="visible: paymentIsComplete"
+                  class="btn btn-outline-primary"
+                  data-bs-dismiss="modal">
+            {% trans "Close" %}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>

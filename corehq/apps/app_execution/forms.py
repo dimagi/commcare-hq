@@ -5,7 +5,9 @@ from crispy_forms.bootstrap import InlineField
 from django import forms
 from django.utils.translation import gettext as _
 
+from corehq.apps.app_execution.exceptions import AppExecutionError
 from corehq.apps.app_execution.models import AppWorkflowConfig
+from corehq.apps.app_execution.workflow_dsl import dsl_to_workflow, workflow_to_dsl
 from corehq.apps.app_manager.dbaccessors import get_brief_app
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.users.models import CommCareUser
@@ -17,6 +19,11 @@ class AppWorkflowConfigForm(forms.ModelForm):
     username = forms.CharField(max_length=255, label=_("Username"),
                                help_text=_("Username of the user to run the workflow"))
     har_file = forms.FileField(label=_("HAR File"), required=False)
+    workflow_dsl = forms.CharField(
+        label="Workflow",
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 20, "class": "textarea form-control"})
+    )
 
     class Meta:
         model = AppWorkflowConfig
@@ -37,10 +44,19 @@ class AppWorkflowConfigForm(forms.ModelForm):
     def __init__(self, request, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.request = request
+        self.is_raw_mode = request.GET.get("mode", "dsl") == "raw"
+        if self.is_raw_mode:
+            del self.fields["workflow_dsl"]
+        else:
+            del self.fields["workflow"]
+            workflow = self.instance.workflow
+            if not workflow:
+                workflow = self.initial.get("workflow")
+            self.fields["workflow_dsl"].initial = workflow_to_dsl(workflow)
+
         if self.instance.id:
             self.fields["username"].initial = self.instance.django_user.username
         self.helper = hqcrispy.HQFormHelper()
-        self.helper.form_class = "form-horizontal"
 
         fields = [
             "name",
@@ -69,7 +85,7 @@ class AppWorkflowConfigForm(forms.ModelForm):
                     ),
                     crispy.HTML("<p>&nbsp;</p>"),
                     crispy.HTML(f"<p>{_('Workflow:')}</p>"),
-                    InlineField("workflow"),
+                    InlineField("workflow") if self.is_raw_mode else InlineField("workflow_dsl"),
                     css_class="col"
                 ),
                 css_class="row mb-3"
@@ -78,6 +94,15 @@ class AppWorkflowConfigForm(forms.ModelForm):
                 twbscrispy.StrictButton(_("Save"), type='submit', css_class='btn-primary')
             ),
         )
+
+    def clean_workflow_dsl(self):
+        if "workflow_dsl" in self.cleaned_data:
+            dsl = self.cleaned_data["workflow_dsl"]
+            try:
+                dsl_to_workflow(dsl)
+            except AppExecutionError as e:
+                raise forms.ValidationError(str(e))
+            return dsl
 
     def clean_username(self):
         domain = self.request.domain
@@ -103,6 +128,12 @@ class AppWorkflowConfigForm(forms.ModelForm):
             ))
 
         return app_id
+
+    def clean(self):
+        if "workflow_dsl" in self.cleaned_data:
+            workflow = dsl_to_workflow(self.cleaned_data["workflow_dsl"])
+            self.cleaned_data["workflow"] = workflow
+        return self.cleaned_data
 
     def save(self, commit=True):
         self.instance.domain = self.request.domain

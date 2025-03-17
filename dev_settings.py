@@ -12,11 +12,6 @@ LOCAL_APPS = (
     'django_extensions',
 )
 
-# TEST_RUNNER is overridden in testsettings, which is the default settings
-# module for the test command (see manage.py); this has no effect by default.
-# Use ./manage.py test --settings=settings to use this setting.
-TEST_RUNNER = 'testrunner.DevTestRunner'
-
 SKIP_TESTS_REQUIRING_EXTRA_SETUP = True
 
 # touchforms must be running when this is false or not set
@@ -55,8 +50,8 @@ LOCAL_LOGGING_CONFIG = {
             'handlers': ['null'],
             'level': 'WARNING',
         },
-        # The following configuration will print out all queries that are run through sqlalchemy on the command line
-        # Useful for UCR debugging
+        # The following configuration will print out all queries that are run
+        # through sqlalchemy on the command line. Useful for UCR debugging
         # 'sqlalchemy.engine': {
         #     'handlers': ['console'],
         #     'level': 'INFO',
@@ -176,11 +171,6 @@ if settingshelper.is_testing():
         },
     }
 
-# substantially increase the API request limits in dev, in part
-# to prevent AssertionError: 429 != 200  test failures
-CCHQ_API_THROTTLE_REQUESTS = 200  # number of requests allowed per timeframe
-CCHQ_API_THROTTLE_TIMEFRAME = 10  # seconds
-
-### LOG FILES ###
+# LOG FILES
 DJANGO_LOG_FILE = "/tmp/commcare-hq.django.log"
 LOG_FILE = "/tmp/commcare-hq.log"

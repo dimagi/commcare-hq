@@ -1,15 +1,14 @@
+from datetime import datetime
 import uuid
 from unittest.mock import patch, PropertyMock
 
-from django.test import SimpleTestCase, TestCase
+from django.test import TestCase
+from corehq.apps.commtrack.tests.util import make_loc
 
 from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, Field, CustomDataFieldsDefinition
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.management.commands.populate_sql_user_data import (
-    get_users_without_user_data,
-    populate_user_data,
-)
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.user_data import (
     SQLUserData,
@@ -39,7 +38,6 @@ class TestUserData(TestCase):
     def test_user_data_accessor(self):
         user = self.make_commcare_user()
         user_data = user.get_user_data(self.domain)
-        self.assertEqual(user_data['commcare_project'], self.domain)
         user_data.update({
             'cruise': 'control',
             'this': 'road',
@@ -62,59 +60,13 @@ class TestUserData(TestCase):
 
         # Each domain has a separate user_data object
         self.assertEqual(web_user.get_user_data(self.domain).to_dict(), {
-            'commcare_project': self.domain,
             'commcare_profile': '',
             'what_domain_is_it': 'domain 1',
         })
         self.assertEqual(web_user.get_user_data('another_domain').to_dict(), {
-            'commcare_project': 'another_domain',
             'commcare_profile': '',
             'what_domain_is_it': 'domain 2',
         })
-
-    def test_migrate_get_users_without_user_data(self):
-        users_without_data = [
-            self.make_commcare_user(),
-            self.make_commcare_user(),
-            self.make_web_user(),
-            self.make_web_user(),
-        ]
-        users_with_data = [self.make_commcare_user(), self.make_web_user()]
-        for user in users_with_data:
-            ud = user.get_user_data(self.domain)
-            ud['key'] = 'dummy val so this is non-empty'
-            ud.save()
-
-        users_to_migrate = get_users_without_user_data()
-        self.assertItemsEqual(
-            [u.username for u in users_without_data],
-            [u.username for u in users_to_migrate],
-        )
-
-    def test_migrate_commcare_user(self):
-        user = self.make_commcare_user()
-        user['user_data'] = {'favorite_color': 'purple'}
-        user.save()
-        populate_user_data(CommCareUser.get_db().get(user._id), user.get_django_user())
-        sql_data = SQLUserData.objects.get(domain=self.domain, user_id=user.user_id)
-        self.assertEqual(sql_data.data['favorite_color'], 'purple')
-
-    def test_migrate_web_user(self):
-        user = self.make_web_user()
-        # one user data dictionary, gets copied to all domains
-        user['user_data'] = {'favorite_color': 'purple'}
-        user.add_domain_membership('domain2', timezone='UTC')
-        user.save()
-        populate_user_data(WebUser.get_db().get(user._id), user.get_django_user())
-        for domain in [self.domain, 'domain2']:
-            sql_data = SQLUserData.objects.get(domain=domain, user_id=user.user_id)
-            self.assertEqual(sql_data.data['favorite_color'], 'purple')
-
-    def test_migrate_user_no_data(self):
-        user = self.make_commcare_user()
-        populate_user_data(CommCareUser.get_db().get(user._id), user.get_django_user())
-        with self.assertRaises(SQLUserData.DoesNotExist):
-            SQLUserData.objects.get(domain=self.domain, user_id=user.user_id)
 
     def test_prime_user_data_caches(self):
         users = [
@@ -188,8 +140,18 @@ def _get_profile(self, profile_id):
 
 
 @patch('corehq.apps.users.user_data.UserData._get_profile', new=_get_profile)
-class TestUserDataModel(SimpleTestCase):
-    domain = 'test-user-data-model'
+class TestUserDataModel(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestUserDataModel, cls).setUpClass()
+        cls.domain = 'test-user-data-model'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+        cls.loc1 = make_loc('1', 'loc1', cls.domain)
+        cls.loc2 = make_loc('2', 'loc2', cls.domain)
+        cls.loc_ids = [loc.location_id for loc in [cls.loc1, cls.loc2]]
 
     def setUp(self):
         self.user_fields = []
@@ -199,10 +161,20 @@ class TestUserDataModel(SimpleTestCase):
 
         self.addCleanup(field_patcher.stop)
 
+        self.user = CommCareUser.create(
+            domain=self.domain,
+            username='cc1',
+            password='***',
+            created_by=None,
+            created_via=None,
+            last_login=datetime.now()
+        )
+        self.addCleanup(self.user.delete, self.domain, deleted_by=None)
+
     def init_user_data(self, raw_user_data=None, profile_id=None):
         return UserData(
             raw_user_data=raw_user_data or {},
-            couch_user=None,  # This is only used for saving to the db
+            couch_user=self.user,
             domain=self.domain,
             profile_id=profile_id,
         )
@@ -223,14 +195,12 @@ class TestUserDataModel(SimpleTestCase):
         # Custom user data profiles get their data added to metadata automatically for mobile users
         user_data = self.init_user_data({'yearbook_quote': 'Not all who wander are lost.'})
         self.assertEqual(user_data.to_dict(), {
-            'commcare_project': self.domain,
             'commcare_profile': '',
             'yearbook_quote': 'Not all who wander are lost.',
         })
 
         user_data.profile_id = 'blues'
         self.assertEqual(user_data.to_dict(), {
-            'commcare_project': self.domain,
             'commcare_profile': 'blues',
             'favorite_color': 'blue',  # provided by the profile
             'yearbook_quote': 'Not all who wander are lost.',
@@ -239,7 +209,6 @@ class TestUserDataModel(SimpleTestCase):
         # Remove profile should remove it and related fields
         user_data.profile_id = None
         self.assertEqual(user_data.to_dict(), {
-            'commcare_project': self.domain,
             'commcare_profile': '',
             'yearbook_quote': 'Not all who wander are lost.',
         })
@@ -337,3 +306,10 @@ class TestUserDataModel(SimpleTestCase):
         changed = user_data.remove_unrecognized({'a', 'b'})
         self.assertFalse(changed)
         self.assertEqual(user_data.raw, {})
+
+    def test_no_location_info_in_user_data_when_no_location_assigned(self):
+        user_data = self.user.get_user_data(self.domain)
+
+        self.assertEqual(user_data.to_dict(), {
+            'commcare_profile': '',
+        })

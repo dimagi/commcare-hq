@@ -1,4 +1,4 @@
-{% extends "app_manager/managed_app.html" %}
+{% extends "app_manager/apps_base.html" %}
 {% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -15,8 +15,8 @@
   {% include "app_manager/partials/xpathValidator.html" %}
 {% endblock %}
 {% block js-inline %}{{ block.super }}
-  {% include 'hqmedia/partials/multimedia_js.html' %}
   {% compress js %}
+    <script src="{% static 'hqmedia/js/uploaders.js' %}"></script>
     <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
     <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
     <script src="{% static 'app_manager/js/modules/module_view_report.js' %}"></script>
@@ -41,6 +41,7 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-  {% include "app_manager/partials/nav_menu_media_modals.html" %}
+  {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.icon.slug type="image" %}
+  {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.audio.slug type="audio" %}
   {% include 'app_manager/partials/modules/graph_configuration_modal.html' %}
 {% endblock modals %}

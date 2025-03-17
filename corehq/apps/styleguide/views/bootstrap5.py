@@ -14,6 +14,7 @@ from corehq.apps.styleguide.context import (
     get_js_example_context,
     get_gradient_colors,
     CodeForDisplay,
+    CodeForDisplayWithPartial,
 )
 from corehq.apps.styleguide.examples.bootstrap5.checkbox_form import CheckboxDemoForm
 from corehq.apps.styleguide.examples.bootstrap5.crispy_forms_basic import BasicCrispyExampleForm
@@ -55,6 +56,125 @@ def styleguide_migration_guide(request):
 def styleguide_javascript_guide(request):
     return render(request, 'styleguide/bootstrap5/javascript_guide.html',
                   get_navigation_context("styleguide_javascript_guide_b5"))
+
+
+@use_bootstrap5
+def styleguide_html_guide(request):
+    context = get_navigation_context("styleguide_html_guide_b5")
+    context.update({
+        "examples": {
+            'indentation': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/html_guide/indentation.html'),
+                language="Django",
+            ),
+            'block_and_inline': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/html_guide/block_and_inline.html'),
+                language="Django",
+            ),
+            'standard_attributes': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/html_guide/standard_attributes.html'),
+                language="Django",
+            ),
+            'attribute_js': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/html_guide/attribute_js.html'),
+                language="Django",
+            ),
+            'attribute_json': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/html_guide/attribute_json.html'),
+                language="Django",
+            ),
+            'attribute_no_wrap': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/html_guide/attribute_no_wrap.html'),
+                language="Django",
+            ),
+            'attribute_wrap_data': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/html_guide/attribute_wrap_data.html'),
+                language="Django",
+            ),
+            'attribute_wrap_length': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/html_guide/attribute_wrap_length.html'),
+                language="Django",
+            ),
+            'self_closing': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/html_guide/self_closing.html'),
+                language="Django",
+            ),
+            'self_closing_line': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/html_guide/self_closing_line.html'),
+                language="Django",
+            ),
+            'final_example': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/html_guide/final_example.html'),
+                language="Django",
+            ),
+        },
+    })
+    return render(request, 'styleguide/bootstrap5/html_guide.html', context)
+
+
+@use_bootstrap5
+def styleguide_htmx_and_alpine(request):
+    context = get_navigation_context("styleguide_htmx_and_alpine_b5")
+    context.update({
+        "examples": {
+            'htmx_get_started': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/htmx_get_started.html'),
+                language="Django",
+            ),
+            'htmx_alpine_form_views': CodeForDisplay(
+                code=get_python_example_context('htmx_alpine_form_views.py'),
+                language="Python",
+            ),
+            'form_main_template': CodeForDisplay(
+                code=get_example_context('styleguide/htmx_alpine_crispy/main.html'),
+                language="Django",
+            ),
+            'form_partial_template': CodeForDisplay(
+                code=get_example_context('styleguide/htmx_alpine_crispy/partial_form.html'),
+                language="Django",
+            ),
+            'htmx_alpine_form': CodeForDisplay(
+                code=get_python_example_context('htmx_alpine_form_demo.py'),
+                language="Python",
+            ),
+            'htmx_hq_hx_action': CodeForDisplay(
+                code=get_python_example_context('htmx_hq_hx_action.py'),
+                language="Python",
+            ),
+            'htmx_todo_main': CodeForDisplay(
+                code=get_example_context('styleguide/htmx_todo/main.html'),
+                language="Django",
+            ),
+            'htmx_todo_item': CodeForDisplay(
+                code=get_example_context('styleguide/htmx_todo/item.html'),
+                language="Django",
+            ),
+            'htmx_todo_item_done_swap': CodeForDisplay(
+                code=get_example_context('styleguide/htmx_todo/item_done_oob_swap.html'),
+                language="Django",
+            ),
+            'htmx_todo_item_done': CodeForDisplay(
+                code=get_example_context('styleguide/htmx_todo/item_done.html'),
+                language="Django",
+            ),
+            'loading_button': CodeForDisplayWithPartial(
+                code=get_example_context('styleguide/bootstrap5/examples/htmx_loading_button.html'),
+                partial="styleguide/bootstrap5/examples/htmx_loading_button.html",
+                language="Django",
+            ),
+            'loading_checkbox': CodeForDisplayWithPartial(
+                code=get_example_context('styleguide/bootstrap5/examples/htmx_loading_checkbox.html'),
+                partial="styleguide/bootstrap5/examples/htmx_loading_checkbox.html",
+                language="Django",
+            ),
+            'loading_form': CodeForDisplayWithPartial(
+                code=get_example_context('styleguide/bootstrap5/examples/htmx_loading_form.html'),
+                partial="styleguide/bootstrap5/examples/htmx_loading_form.html",
+                language="Django",
+            ),
+        }
+    })
+    return render(request, 'styleguide/bootstrap5/htmx_and_alpine.html', context)
 
 
 @use_bootstrap5
@@ -117,6 +237,9 @@ def styleguide_molecules_selections(request):
                 SelectToggleDemoForm(), get_python_example_context('select_toggle_form.py'),
             ),
             'select2_manual': get_example_context('styleguide/bootstrap5/examples/select2_manual.html'),
+            'select2_manual_allow_clear': get_example_context(
+                'styleguide/bootstrap5/examples/select2_manual_allow_clear.html'
+            ),
             'select2_manual_crispy': CrispyFormsWithJsDemo(
                 form=Select2ManualDemoForm(),
                 code_python=get_python_example_context('select2_manual_form.py'),
@@ -204,6 +327,26 @@ def styleguide_molecules_pagination(request):
     context.update({
         'examples': {
             'pagination': get_example_context('styleguide/bootstrap5/examples/pagination.html'),
+            'htmx_pagination_data': CodeForDisplay(
+                code=get_python_example_context('htmx_pagination_data.py'),
+                language="Python",
+            ),
+            'htmx_pagination_host_view': CodeForDisplay(
+                code=get_python_example_context('htmx_pagination_host_view.py'),
+                language="Python",
+            ),
+            'htmx_pagination_table': CodeForDisplay(
+                code=get_python_example_context('htmx_pagination_table.py'),
+                language="Python",
+            ),
+            'htmx_pagination_table_view': CodeForDisplay(
+                code=get_python_example_context('htmx_pagination_table_view.py'),
+                language="Python",
+            ),
+            'htmx_pagination_template': CodeForDisplay(
+                code=get_example_context('styleguide/bootstrap5/examples/htmx_pagination.html'),
+                language="Django",
+            ),
         }
     })
     return render(request, 'styleguide/bootstrap5/molecules/pagination.html', context)

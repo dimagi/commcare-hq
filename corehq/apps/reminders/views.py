@@ -362,7 +362,7 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             'description': keyword.description,
         }
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         try:
             k = Keyword.objects.get(couch_id=item_id)
         except Keyword.DoesNotExist:

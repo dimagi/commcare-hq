@@ -6,7 +6,8 @@ module.exports = {
 
     // https://eslint.org/docs/4.0.0/user-guide/configuring#specifying-parser-options
     "parserOptions": {
-        "ecmaVersion": 6,
+        "ecmaVersion": "latest",
+        "sourceType": "module",
     },
 
     // http://eslint.org/docs/user-guide/configuring#specifying-environments

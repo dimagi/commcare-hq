@@ -1,7 +1,8 @@
+import re
 from collections import defaultdict
 from itertools import groupby
 from operator import attrgetter
-import re
+from urllib.parse import parse_qsl, urlencode, urlparse
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext
@@ -18,14 +19,18 @@ from corehq.apps.data_dictionary.models import (
     CaseType,
 )
 from corehq.apps.es.aggregations import NestedAggregation, TermsAggregation
-from corehq.apps.es.case_search import CaseSearchES, CASE_PROPERTIES_PATH, PROPERTY_KEY
+from corehq.apps.es.case_search import (
+    CASE_PROPERTIES_PATH,
+    PROPERTY_KEY,
+    CaseSearchES,
+)
 from corehq.motech.fhir.utils import update_fhir_resource_property
 from corehq.util.quickcache import quickcache
 
 
 def generate_data_dictionary(domain):
     properties_by_case_type = _get_properties_by_case_type(domain)
-    _create_properties_for_case_types(domain, properties_by_case_type)
+    create_properties_for_case_types(domain, properties_by_case_type)
     CaseType.objects.filter(domain=domain, name__in=list(properties_by_case_type)).update(fully_generated=True)
     return True
 
@@ -77,11 +82,10 @@ def _get_current_case_types_and_properties(domain):
 
 
 def add_properties_to_data_dictionary(domain, case_type, properties):
-    if properties:
-        _create_properties_for_case_types(domain, {case_type: properties})
+    create_properties_for_case_types(domain, {case_type: properties})
 
 
-def _create_properties_for_case_types(domain, case_type_to_prop):
+def create_properties_for_case_types(domain, case_type_to_prop):
     current_case_types, current_properties = _get_current_case_types_and_properties(domain)
     new_case_properties = []
 
@@ -394,8 +398,8 @@ def is_case_type_or_prop_name_valid(case_prop_name):
     return match_obj is not None
 
 
-@quickcache(vary_on=['domain'], timeout=60 * 10)
-def get_used_props_by_case_type(domain):
+@quickcache(vary_on=['domain', 'case_type'], timeout=60 * 10)
+def get_used_props_by_case_type(domain, case_type=None):
     agg = TermsAggregation('case_types', 'type.exact').aggregation(
         NestedAggregation('case_props', CASE_PROPERTIES_PATH).aggregation(
             TermsAggregation('props', PROPERTY_KEY)
@@ -407,6 +411,8 @@ def get_used_props_by_case_type(domain):
         .size(0)
         .aggregation(agg)
     )
+    if case_type:
+        query = query.case_type(case_type)
     case_type_buckets = query.run().aggregations.case_types.buckets_list
     props_by_case_type = {}
     for case_type_bucket in case_type_buckets:
@@ -416,3 +422,18 @@ def get_used_props_by_case_type(domain):
                 props_by_case_type[case_type_bucket.key] = []
             props_by_case_type[case_type_bucket.key].append(prop_bucket.key)
     return props_by_case_type
+
+
+def get_case_property_group_name_for_properties(domain, case_type_name):
+    return dict(CaseProperty.objects.filter(
+        case_type__name=case_type_name, case_type__domain=domain, deprecated=False, group__deprecated=False
+    ).values_list('name', 'group__name'))
+
+
+def update_url_query_params(url, params):
+    """Adds query params to the url. Overrides the value if param already exists."""
+    parsed_url = urlparse(url)
+    current_params = dict(parse_qsl(parsed_url.query))
+    merged_params = urlencode({**current_params, **params})
+    # Note: _replace is a public method of namedtuple. Starts with _ to avoid conflicts with field names.
+    return parsed_url._replace(query=merged_params).geturl()

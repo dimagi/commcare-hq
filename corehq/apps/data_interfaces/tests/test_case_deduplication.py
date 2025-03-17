@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from itertools import chain
-from unittest.mock import patch
+from unittest.mock import patch, PropertyMock
 
 from django.test import TestCase
 from freezegun import freeze_time
@@ -35,6 +35,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.tasks import tag_cases_as_deleted_and_remove_indices
 from corehq.form_processor.models import CommCareCase
 from corehq.util.test_utils import flag_enabled, set_parent_case
+from corehq.apps.locations.models import SQLLocation, LocationType
 
 
 @es_test(requires=[case_search_adapter])
@@ -77,12 +78,57 @@ class FindingDuplicatesQueryTest(TestCase):
         # Create a filter criteria of cases to consider
         definition = LocationFilterDefinition.objects.create(
             location_id='mustafar_id',
+            include_child_locations=False,
         )
         criteria = CaseRuleCriteria(rule=rule)
         criteria.definition = definition
         criteria.save()
 
         location_id = 'mustafar_id'
+
+        # Only assign location id to first 2 cases, since we want only those two cases to be considered
+        cases[0].owner_id = location_id
+        cases[1].owner_id = location_id
+
+        self._prime_es_index(cases)
+
+        query = _get_es_filtered_case_query(self.domain, cases[0], rule.memoized_criteria)
+        retrieved_cases = query.run().hits
+
+        self.assertEqual(len(retrieved_cases), 2)
+        self.assertTrue(retrieved_cases[0]['owner_id'] == location_id)
+        self.assertTrue(retrieved_cases[1]['owner_id'] == location_id)
+
+    @patch.object(LocationType, 'commtrack_enabled', new_callable=PropertyMock, return_value=False)
+    @patch('corehq.apps.commtrack.models.sync_supply_point')
+    def test_with_child_location(self, sync_supply_mock, mock_commtrack_enabled):
+        loc_type = LocationType.objects.create(domain='test-domain', name='level1')
+        parent_location = SQLLocation.objects.create(
+            domain='test-domain', name='parent', location_type=loc_type, location_id='parent'
+        )
+        SQLLocation.objects.create(
+            domain='test-domain', name='child', location_type=loc_type, parent=parent_location, location_id='child'
+        )
+
+        cases = [
+            self.factory.create_case(case_name=case_name, update={'dob': dob}) for (case_name, dob) in [
+                ("Anakin Skywalker", "1977-03-25"),
+                ("Darth Vadar", "1977-03-25"),
+                ("Wannabe Anakin Skywalker", "1977-03-25"),
+                ("Wannabe Darth Vadar", "1977-03-25"),
+            ]
+        ]
+
+        rule = self.create_rule('test rule', cases[0].type)
+        definition = LocationFilterDefinition.objects.create(
+            location_id='parent',
+            include_child_locations=True,
+        )
+        criteria = CaseRuleCriteria(rule=rule)
+        criteria.definition = definition
+        criteria.save()
+
+        location_id = 'child'
 
         # Only assign location id to first 2 cases, since we want only those two cases to be considered
         cases[0].owner_id = location_id
@@ -277,8 +323,14 @@ class EnsureCaseExistsTest(TestCase):
 
         self.assertTrue(case_exists_in_es(self.domain, updated_case, ['case_name']))
 
-    def _create_case(self, name='Anakin Skywalker'):
-        return self.factory.create_case(case_name=name, update={})
+    def test_when_case_metadata_parameters_match_returns_true(self):
+        case = self._create_case(name='Anakin Skywalker', owner_id='abc123')
+        self._prime_es_index([case])
+
+        self.assertTrue(case_exists_in_es(self.domain, case, ['owner_id']))
+
+    def _create_case(self, name='Anakin Skywalker', owner_id=None):
+        return self.factory.create_case(case_name=name, owner_id=owner_id, update={})
 
 
 @es_test(requires=[case_search_adapter])
@@ -642,16 +694,15 @@ class CaseDeduplicationActionTest(TestCase):
         self.assertEqual(created_duplicates.count(), 0)
 
     @patch("corehq.apps.data_interfaces.models.case_matching_rule_criteria_exists_in_es")
-    def test_raises_error_when_case_not_in_elasticsearch(self, mock_case_exists):
+    def test_returns_error_result_when_case_not_in_elasticsearch(self, mock_case_exists):
         current_time = datetime(year=2024, month=2, day=5, hour=10)
         case = self._create_case()
         case.server_modified_on = current_time - timedelta(hours=1, seconds=1)
         mock_case_exists.return_value = False
 
-        with self.assertRaisesRegex(
-                ValueError, f'Unable to find current ElasticSearch data for: {case.case_id}'):
-            with freeze_time(current_time):
-                self.rule.run_rule(case, datetime.now())
+        result = self.rule.run_rule(case, datetime.now())
+        self.assertEqual(result.num_updates, 0)
+        self.assertEqual(result.num_errors, 1)
 
     @patch("corehq.apps.data_interfaces.models._find_duplicate_case_ids")
     def test_case_no_longer_duplicate(self, find_duplicates_mock):

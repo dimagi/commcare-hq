@@ -1203,7 +1203,7 @@ class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
             'template': 'accounting-admin-new',
         }
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         user = User.objects.get(id=item_id)
         ops_role = Role.objects.get(slug=privileges.OPERATIONS_TEAM)
         grant_to_remove = Grant.objects.filter(
@@ -1246,6 +1246,7 @@ class AccountingSingleOptionResponseView(View, AsyncHandlerMixin):
         return HttpResponseBadRequest("Please check your query.")
 
 
+@method_decorator(ACCOUNTING_TESTING_TOOLS.required_decorator(), name="dispatch")
 class BaseTriggerAccountingTestView(AccountingSectionView, AsyncHandlerMixin):
     template_name = 'accounting/trigger_accounting_tests.html'
     async_handlers = [

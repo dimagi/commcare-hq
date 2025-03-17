@@ -68,6 +68,12 @@
               <pre>{{ log.response_body|pp_json }}</pre>{% else %}&nbsp;
             {% endif %}</td>
           </tr>
+          <tr>
+            <th>{% trans "Request duration (ms)" %}:</th>
+            <td>{% if log.duration %}
+              {{ log.duration }}{% else %}&nbsp;
+            {% endif %}</td>
+          </tr>
         </table>
       </div>
       <p>

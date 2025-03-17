@@ -1,0 +1,37 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<form
+  hx-post="{{ request.path_info }}"
+  hq-hx-action="save_expression"
+  hx-swap="outerHTML"
+  x-data="{ isUnsaved: false }"
+  @change="isUnsaved = true;"
+  @submit="isUnsaved = false;"
+>
+  {% if form.instance.pk %}
+    <input type="hidden" name="pk" value="{{ form.instance.pk }}" />
+  {% endif %}
+  <div class="row pb-3">
+    <div class="col-2">{{ form.name }}</div>
+    <div class="col-8">{{ form.csql }}</div>
+    <div class="col-2">
+      <button
+        type="submit"
+        class="btn btn-outline-primary"
+        x-bind:disabled="!isUnsaved"
+      >
+        <i class="fa-regular fa-save"></i> {% trans "Save" %}
+      </button>
+      <button
+        class="btn btn-outline-danger"
+        hx-post="{{ request.path_info }}"
+        hq-hx-action="delete_expression"
+        hx-swap="delete"
+        hx-target="closest form"
+      >
+        <i class="fa-regular fa-trash-can"></i> {% trans "Delete" %}
+      </button>
+    </div>
+  </div>
+</form>

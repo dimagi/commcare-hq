@@ -1,11 +1,15 @@
-hqDefine("geospatial/js/case_grouping_map",[
+hqDefine("geospatial/js/case_grouping_map", [
     "jquery",
     "knockout",
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/bootstrap3/alert_user',
     'geospatial/js/models',
-    'geospatial/js/utils'
+    'geospatial/js/utils',
+    'mapbox-gl/dist/mapbox-gl',
+    'reports/js/bootstrap3/base',
+    'hqwebapp/js/select2_knockout_bindings.ko',
+    'commcarehq',
 ], function (
     $,
     ko,
@@ -13,7 +17,8 @@ hqDefine("geospatial/js/case_grouping_map",[
     initialPageData,
     alertUser,
     models,
-    utils
+    utils,
+    mapboxgl,
 ) {
 
     const MAPBOX_LAYER_VISIBILITY = {
@@ -27,7 +32,7 @@ hqDefine("geospatial/js/case_grouping_map",[
         groupId: DEFAULT_GROUP_ID,
         name: gettext("No group"),
         color: `rgba(128,128,128,${OBSCURING_OPACITY})`,
-    }
+    };
 
     const MAP_CONTAINER_ID = 'case-grouping-map';
     const clusterStatsInstance = new clusterStatsModel();
@@ -41,7 +46,6 @@ hqDefine("geospatial/js/case_grouping_map",[
     let currentPage = 1;
 
     function clusterStatsModel() {
-        'use strict';
         let self = {};
         self.totalClusters = ko.observable(0);
         self.clusterMinCount = ko.observable(0);
@@ -59,7 +63,7 @@ hqDefine("geospatial/js/case_grouping_map",[
                 return;
             }
             // Only cases with belonging to groups should be exported
-            let exportableCases = self.casesToExport().filter(function(caseItem) {
+            let exportableCases = self.casesToExport().filter(function (caseItem) {
                 return caseItem.groupId !== DEFAULT_GROUP_ID;
             });
 
@@ -68,17 +72,18 @@ hqDefine("geospatial/js/case_grouping_map",[
                 exportableCases = self.casesToExport();
             }
 
-            const casesToExport = _.map(exportableCases, function (caseItem) {
-                return caseItem.toJson();
-            });
-
-            let csvStr = "";
-            let groupNameByID = _.object(_.map(caseGroupsInstance.generatedGroups, function(group) {
-                return [group.groupId, group.name]
+            const groupNameByID = _.object(_.map(caseGroupsInstance.generatedGroups, function (group) {
+                return [group.groupId, group.name];
             }));
 
+            const casesToExport = _.map(exportableCases, function (caseItem) {
+                let caseJson = caseItem.toJson();
+                caseJson.groupName = groupNameByID[caseJson.groupId];
+                return caseJson;
+            });
+
             // Write headers first
-            let headers = [
+            const headers = [
                 gettext('Group ID'),
                 gettext('Group Name'),
                 gettext('Group Center Coordinates'),
@@ -86,67 +91,55 @@ hqDefine("geospatial/js/case_grouping_map",[
                 gettext('Case Owner Name'),
                 gettext('Case Coordinates'),
                 gettext('Case ID'),
-            ]
-            csvStr = (headers).join(",");
-            csvStr += "\n";
+            ];
+            const cols = [
+                'groupId',
+                'groupName',
+                'groupCenterCoordinates',
+                'caseName',
+                'owner_name',
+                'coordinates',
+                'caseId',
+            ];
 
-            _.forEach(casesToExport, function (caseToExport) {
-                csvStr += [
-                    caseToExport.groupId,
-                    groupNameByID[caseToExport.groupId],
-                    caseToExport.groupCenterCoordinates,
-                    caseToExport.caseName,
-                    caseToExport.owner_name,
-                    caseToExport.coordinates,
-                    caseToExport.caseId,
-                ].join(",");
-                csvStr += "\n";
-            });
-
-            // Download CSV file
-            const hiddenElement = document.createElement('a');
-            hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(csvStr);
-            hiddenElement.target = '_blank';
-            hiddenElement.download = `Grouped Cases (${utils.getTodayDate()}).csv`;
-            hiddenElement.click();
-            hiddenElement.remove();
+            utils.downloadCsv(casesToExport, headers, cols, 'Group Export');
         };
 
-        self.addGroupDataToCases = function(caseGroups, groupsData, assignDefaultGroup) {
-            const defaultGroup = groupsData.find((group) => {return group.groupId === DEFAULT_GROUP_ID});
+        self.addGroupDataToCases = function (caseGroups, groupsData, assignDefaultGroup) {
+            const defaultGroup = groupsData.find((group) => {return group.groupId === DEFAULT_GROUP_ID;});
             self.casesToExport().forEach(caseItem => {
                 const groupId = caseGroups[caseItem.itemId];
                 if (groupId !== undefined) {
-                    const group = groupsData.find((group) => {return group.groupId === groupId});
+                    const group = groupsData.find((group) => {return group.groupId === groupId;});
                     self.setItemGroup(caseItem, groupId, group.coordinates);
                 } else if (assignDefaultGroup) {
                     self.setItemGroup(caseItem, defaultGroup.groupId, {});
                 }
             });
-        }
+        };
 
-        self.setItemGroup = function(item, groupId, groupCoordinates) {
+        self.setItemGroup = function (item, groupId, groupCoordinates) {
             item.groupId = groupId;
             item.groupCoordinates = groupCoordinates;
-        }
+        };
 
-        self.updateCaseGroup = function(itemId, groupData) {
-            var item = self.casesToExport().find((caseItem) => {return caseItem.itemId == itemId});
+        self.updateCaseGroup = function (itemId, groupData) {
+            var item = self.casesToExport().find((caseItem) => {return caseItem.itemId === itemId;});
             self.setItemGroup(item, groupData.groupId, groupData.coordinates);
-        }
+        };
 
-        self.clearCaseGroups = function() {
+        self.clearCaseGroups = function () {
             self.casesToExport().forEach(caseItem => {
                 if (caseItem.groupId) {
                     caseItem.groupId = null;
                     caseItem.groupCoordinates = null;
                 }
             });
-        }
+        };
 
-        self.groupsReady = function() {
+        self.groupsReady = function () {
             return groupLockModelInstance.groupsLocked();
-        }
+        };
 
         return self;
     }
@@ -195,7 +188,7 @@ hqDefine("geospatial/js/case_grouping_map",[
         };
 
         _.each(caseList, function (caseWithGPS) {
-            const coordinates = caseWithGPS.itemData.coordinates;
+            const coordinates = caseWithGPS.coordinates;
             if (coordinates && coordinates.lat && coordinates.lng) {
                 caseLocationsGeoJson["features"].push(
                     {
@@ -207,7 +200,7 @@ hqDefine("geospatial/js/case_grouping_map",[
                             "type": "Point",
                             "coordinates": [coordinates.lng, coordinates.lat],
                         },
-                    }
+                    },
                 );
             }
         });
@@ -240,7 +233,6 @@ hqDefine("geospatial/js/case_grouping_map",[
     }
 
     function mapMarkerModel(itemId, itemData, marker, markerColors) {
-        'use strict';
         var self = {};
         self.title = gettext("Select group");
         self.itemId = itemId;
@@ -281,8 +273,8 @@ hqDefine("geospatial/js/case_grouping_map",[
         mapMarkers.forEach((marker) => marker.remove());
         mapMarkers = [];
 
-        let groupColorByID = _.object(_.map(caseGroupsInstance.generatedGroups, function(group) {
-            return [group.groupId, group.color]
+        let groupColorByID = _.object(_.map(caseGroupsInstance.generatedGroups, function (group) {
+            return [group.groupId, group.color];
         }));
 
         exportModelInstance.casesToExport().forEach(function (caseItem) {
@@ -292,8 +284,8 @@ hqDefine("geospatial/js/case_grouping_map",[
             }
             const caseGroupID = caseItem.groupId;
             if (caseGroupsInstance.groupIDInVisibleGroupIds(caseGroupID)) {
-                color = groupColorByID[caseGroupID];
-                const marker = new mapboxgl.Marker({ color: color, draggable: false });  // eslint-disable-line no-undef
+                const color = groupColorByID[caseGroupID];
+                const marker = new mapboxgl.Marker({ color: color, draggable: false });
                 marker.setLngLat([coordinates.lng, coordinates.lat]);
 
                 // Add the marker to the map
@@ -313,7 +305,6 @@ hqDefine("geospatial/js/case_grouping_map",[
     }
 
     function caseGroupSelectModel() {
-        'use strict';
         var self = {};
 
         self.groupsByCase;
@@ -324,63 +315,63 @@ hqDefine("geospatial/js/case_grouping_map",[
         self.visibleGroupIDs = ko.observableArray([]);
         self.casePerGroup = {};
 
-        self.groupIDInVisibleGroupIds = function(groupID) {
+        self.groupIDInVisibleGroupIds = function (groupID) {
             return self.visibleGroupIDs().indexOf(groupID) !== -1;
         };
 
-        self.getGroupByID = function(groupID) {
+        self.getGroupByID = function (groupID) {
             return self.generatedGroups.find((group) => group.groupId === groupID);
         };
 
-        self.updateCaseGroup = function(itemId, newGroupId) {
+        self.updateCaseGroup = function (itemId, newGroupId) {
             self.groupsByCase[itemId] = newGroupId;
         };
 
-        self.loadCaseGroups = function(caseGroups, groups) {
+        self.loadCaseGroups = function (caseGroups, groups) {
             self.groupsByCase = caseGroups;
             self.generatedGroups = groups;
 
             self.showAllGroups();
         };
 
-        self.clear = function() {
+        self.clear = function () {
             self.generatedGroups = [];
             self.caseGroupsForTable([]);
             self.visibleGroupIDs([]);
         };
 
-        self.restoreMarkerOpacity = function() {
-            mapMarkers.forEach(function(marker) {
+        self.restoreMarkerOpacity = function () {
+            mapMarkers.forEach(function (marker) {
                 setMarkerOpacity(marker, DEFAULT_MARKER_OPACITY);
             });
         };
 
-        self.highlightGroup = function(group) {
+        self.highlightGroup = function (group) {
             exportModelInstance.casesToExport().forEach(caseItem => {
-                    let caseIsInGroup = caseItem.groupId === group.groupId;
-                    let opacity = DEFAULT_MARKER_OPACITY
-                    if (!caseIsInGroup) {
-                        opacity = OBSCURING_OPACITY;
-                    }
-                    let marker = mapMarkers.find((marker) => {
-                        let markerCoordinates = marker.getLngLat();
-                        let caseCoordinates = caseItem.itemData.coordinates;
-                        let latEqual = markerCoordinates.lat === caseCoordinates.lat;
-                        let lonEqual = markerCoordinates.lng === caseCoordinates.lng;
-                        return latEqual && lonEqual;
-                    });
-                    if (marker) {
-                        setMarkerOpacity(marker, opacity);
-                    }
+                let caseIsInGroup = caseItem.groupId === group.groupId;
+                let opacity = DEFAULT_MARKER_OPACITY;
+                if (!caseIsInGroup) {
+                    opacity = OBSCURING_OPACITY;
+                }
+                let marker = mapMarkers.find((marker) => {
+                    let markerCoordinates = marker.getLngLat();
+                    let caseCoordinates = caseItem.itemData.coordinates;
+                    let latEqual = markerCoordinates.lat === caseCoordinates.lat;
+                    let lonEqual = markerCoordinates.lng === caseCoordinates.lng;
+                    return latEqual && lonEqual;
+                });
+                if (marker) {
+                    setMarkerOpacity(marker, opacity);
+                }
             });
         };
 
         function setMarkerOpacity(marker, opacity) {
             let element = marker.getElement();
             element.style.opacity = opacity;
-        };
+        }
 
-        self.showSelectedGroups = function() {
+        self.showSelectedGroups = function () {
             if (!self.groupsByCase) {
                 return;
             }
@@ -395,27 +386,27 @@ hqDefine("geospatial/js/case_grouping_map",[
             revealGroupsOnMap();
         };
 
-        self.showAllGroups = function() {
+        self.showAllGroups = function () {
             if (!self.groupsByCase) {
                 return;
             }
-            self.visibleGroupIDs(_.map(self.generatedGroups, function(group) {return group.groupId}));
+            self.visibleGroupIDs(_.map(self.generatedGroups, function (group) {return group.groupId;}));
             revealGroupsOnMap();
             self.setCaseGroupsForTable();
         };
 
-        self.setCaseGroupsForTable = function() {
+        self.setCaseGroupsForTable = function () {
             self.caseGroupsForTable(self.generatedGroups);
-        }
+        };
 
-        self.groupsReady = function() {
+        self.groupsReady = function () {
             return groupLockModelInstance.groupsLocked() && self.caseGroupsForTable().length;
         };
 
         return self;
     }
 
-    async function setCaseGroups() {
+    function setCaseGroups() {
         const sourceFeatures = mapModel.mapInstance.querySourceFeatures('caseWithGPS', {
             sourceLayer: 'clusters',
             filter: ['==', 'cluster', true],
@@ -423,59 +414,61 @@ hqDefine("geospatial/js/case_grouping_map",[
         const clusterSource = mapModel.mapInstance.getSource('caseWithGPS');
         let caseGroups = {};
         let failedClustersCount = 0;
-        processedCluster = {};
+        let processedCluster = {};
 
-        var groupCount = 1;
-        var groups = [DEFAULT_GROUP];
+        let groupCount = 1;
+        let groups = [DEFAULT_GROUP];
 
-        for (const cluster of sourceFeatures) {
+        const clusterPromises = sourceFeatures.map(cluster => {
             const clusterId = cluster.properties.cluster_id;
             if (processedCluster[clusterId] === undefined) {
                 processedCluster[clusterId] = true;
-            }
-            else {
-                continue;
+            } else {
+                return Promise.resolve(); // Skip already processed clusters
             }
 
             const pointCount = cluster.properties.point_count;
+            return getClusterLeavesAsync(clusterSource, clusterId, pointCount)
+                .then(casePoints => {
+                    if (casePoints.length) {
+                        const groupUUID = utils.uuidv4();
+                        const groupName = _.template(gettext("Group <%- pageNumber %>-<%- groupCount %>"))({
+                            groupCount: groupCount,
+                            pageNumber: currentPage,
+                        });
+                        groupCount += 1;
 
-            try {
-                const casePoints = await getClusterLeavesAsync(clusterSource, clusterId, pointCount);
-                const groupUUID =  utils.uuidv4();
-
-                if (casePoints.length) {
-                    groupName = _.template(gettext("Group <%- pageNumber %>-<%- groupCount %>"))({
-                        groupCount: groupCount,
-                        pageNumber: currentPage,
-                    });
-                    groupCount += 1;
-
-                    groups.push({
-                        name: groupName,
-                        groupId: groupUUID,
-                        color: utils.getRandomRGBColor(),
-                        coordinates: {
-                            lng: cluster.geometry.coordinates[0],
-                            lat: cluster.geometry.coordinates[1],
-                        }
-                    });
-                    for (const casePoint of casePoints) {
-                        const caseId = casePoint.properties.id;
-                        caseGroups[caseId] = groupUUID;
+                        groups.push({
+                            name: groupName,
+                            groupId: groupUUID,
+                            color: utils.getRandomRGBColor(),
+                            coordinates: {
+                                lng: cluster.geometry.coordinates[0],
+                                lat: cluster.geometry.coordinates[1],
+                            },
+                        });
+                        casePoints.forEach(casePoint => {
+                            const caseId = casePoint.properties.id;
+                            caseGroups[caseId] = groupUUID;
+                        });
                     }
-                }
-            } catch (error) {
-                failedClustersCount += 1;
+                })
+                .catch(() => {
+                    failedClustersCount += 1;
+                });
+        });
+
+        // Wait for all cluster promises to complete
+        Promise.all(clusterPromises).then(() => {
+            if (failedClustersCount > 0) {
+                const message = _.template(gettext("Something went wrong processing <%- failedClusters %> groups. These groups will not be exported."))({
+                    failedClusters: failedClustersCount,
+                });
+                alertUser.alert_user(message, 'danger');
             }
-        }
-        if (failedClustersCount > 0) {
-            const message = _.template(gettext("Something went wrong processing <%- failedClusters %> groups. These groups will not be exported."))({
-                failedClusters: failedClustersCount,
-            });
-            alertUser.alert_user(message, 'danger');
-        }
-        exportModelInstance.addGroupDataToCases(caseGroups, groups, true);
-        caseGroupsInstance.loadCaseGroups(caseGroups, groups);
+            exportModelInstance.addGroupDataToCases(caseGroups, groups, true);
+            caseGroupsInstance.loadCaseGroups(caseGroups, groups);
+        });
     }
 
     function clearCaseGroups() {
@@ -487,7 +480,6 @@ hqDefine("geospatial/js/case_grouping_map",[
     }
 
     function groupLockModel() {
-        'use strict';
         var self = {};
 
         self.groupsLocked = ko.observable(false);
@@ -496,11 +488,10 @@ hqDefine("geospatial/js/case_grouping_map",[
             // reset the warning banner
             self.groupsLocked(!self.groupsLocked());
             if (self.groupsLocked()) {
-                mapModel.mapInstance.scrollZoom.disable();
                 setCaseGroups();
             } else {
-                mapModel.mapInstance.scrollZoom.enable();
                 clearCaseGroups();
+                mapModel.fitMapBounds(mapModel.caseMapItems());
             }
         };
         return self;
@@ -553,14 +544,14 @@ hqDefine("geospatial/js/case_grouping_map",[
         }
 
         $(document).ajaxComplete(function (event, xhr, settings) {
-            const isAfterReportLoad = settings.url.includes('geospatial/async/case_grouping_map/');
+            const isAfterReportLoad = settings.url.includes('microplanning/async/case_clustering_map/');
             if (isAfterReportLoad) {
                 $("#export-controls").koApplyBindings(exportModelInstance);
                 $("#lock-groups-controls").koApplyBindings(groupLockModelInstance);
                 initMap();
                 $("#clusterStats").koApplyBindings(clusterStatsInstance);
                 mapModel.mapInstance.on('load', () => {
-                    polygonFilterInstance = new models.PolygonFilter(mapModel, true, false);
+                    polygonFilterInstance = new models.PolygonFilter(mapModel, true, false, true);
                     polygonFilterInstance.loadPolygons(initialPageData.get('saved_polygons'));
                     $("#polygon-filters").koApplyBindings(polygonFilterInstance);
                 });
@@ -569,7 +560,7 @@ hqDefine("geospatial/js/case_grouping_map",[
                 return;
             }
 
-            const isAfterDataLoad = settings.url.includes('geospatial/json/case_grouping_map/');
+            const isAfterDataLoad = settings.url.includes('microplanning/json/case_clustering_map/');
             if (!isAfterDataLoad) {
                 return;
             }

@@ -1,17 +1,18 @@
-"use strict";
+
 hqDefine("dashboard/js/dashboard", [
     'jquery',
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/bootstrap5/components.ko',    // pagination widget
+    'hqwebapp/js/components/pagination',
     'hqwebapp/js/bootstrap5/main',     // post-link function
     'hqwebapp/js/bootstrap5/knockout_bindings.ko',  // popover
+    'commcarehq',
 ], function (
     $,
     ko,
     _,
-    initialPageData
+    initialPageData,
 ) {
     var tileModel = function (options) {
         var self = {};

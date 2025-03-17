@@ -1,0 +1,17 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends "hqwebapp/bootstrap3/base_page.html" %}
++{% extends "hqwebapp/bootstrap5/base_page.html" %}
+ {% load i18n %}
+ 
+ {% block page_content %}
+@@ -20,7 +20,7 @@
+ 
+   <p>
+     <a href="{% url "domain_select_redirect" %}"
+-       class="pull-right btn btn-link">{% trans "Go back" %}</a>
++       class="float-end btn btn-link">{% trans "Go back" %}</a>
+     <a href="{% url 'two_factor:setup' %}" class="btn btn-primary">
+       {% trans "Enable Two-Factor Authentication" %}</a>
+   </p>

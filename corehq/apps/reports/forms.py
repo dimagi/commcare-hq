@@ -13,6 +13,7 @@ from crispy_forms.bootstrap import StrictButton
 import langcodes
 from corehq.apps.hqwebapp.crispy import FormActions, HQFormHelper, LinkButton
 from corehq.apps.hqwebapp.fields import MultiEmailField
+from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
 from corehq.apps.hqwebapp.widgets import SelectToggle
 from corehq.apps.reports.models import TableauServer, TableauVisualization
 from corehq.apps.saved_reports.models import (
@@ -243,6 +244,12 @@ class EmailReportForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        if get_bootstrap_version() == BOOTSTRAP_5:
+            self._setup_bootstrap5()
+        else:
+            self._setup_bootstrap3()
+
+    def _setup_bootstrap3(self):
         self.helper = HQFormHelper()
         self.helper.field_class = "col-xs-10"
         self.helper.layout = crispy.Layout(
@@ -250,18 +257,38 @@ class EmailReportForm(forms.Form):
                 crispy.Field('subject', data_bind="value: subject"),
                 crispy.Field('send_to_owner', data_bind="checked: send_to_owner"),
                 crispy.Field('recipient_emails', css_id='email-report-recipient_emails',
-                    data_bind="selectedOptions: recipient_emails"),
+                             data_bind="selectedOptions: recipient_emails"),
                 crispy.Field('notes', data_bind="value: notes"),
                 css_class='modal-body'
             ),
             FormActions(
                 crispy.Div(
                     crispy.Button('close', _('Close'), css_class='btn btn-default cancel-button',
-                        data_bind='click: resetModal', data_dismiss='modal'),
+                                  data_bind='click: resetModal', data_dismiss='modal'),
                     crispy.Submit('submit_btn', _('Send Email'), css_class="btn btn-primary send-button",
-                        data_bind='click: sendEmail', data_loading_text=_('Sending...')),
+                                  data_bind='click: sendEmail', data_loading_text=_('Sending...')),
                     css_class='pull-right',
                 )
+            )
+        )
+
+    def _setup_bootstrap5(self):
+        self.helper = FormHelper()
+        self.helper.layout = crispy.Layout(
+            crispy.Div(
+                crispy.Field('subject', data_bind="value: subject"),
+                crispy.Field('send_to_owner', data_bind="checked: send_to_owner"),
+                crispy.Field('recipient_emails', css_id='email-report-recipient_emails',
+                             data_bind="selectedOptions: recipient_emails"),
+                crispy.Field('notes', data_bind="value: notes"),
+                css_class='modal-body'
+            ),
+            crispy.Div(
+                crispy.Button('close', _('Close'), css_class='btn btn-outline-primary cancel-button',
+                              data_bind='click: resetModal', data_bs_dismiss='modal'),
+                crispy.Submit('submit_btn', _('Send Email'), css_class="btn btn-primary send-button",
+                              data_bind='click: sendEmail', data_loading_text=_('Sending...')),
+                css_class='modal-footer',
             )
         )
 
@@ -317,6 +344,14 @@ class TableauServerForm(forms.Form):
         label=_('Target Site'),
     )
 
+    get_reports_using_role = forms.BooleanField(
+        label=_("Get Tableau reports using role name"),
+        required=False,
+        help_text=_("If checked, CommCareHQ will request embedded reports from Tableau Server using the user's "
+                    "role name instead of the user's username (e.g. \"HQ/Field Implementer\" instead of "
+                    "\"HQ/Leandra@dimagi.com\")")
+    )
+
     tableau_groups_allowed = forms.MultipleChoiceField(
         label=_("Allowed Tableau Groups"),
         choices=[],
@@ -331,6 +366,7 @@ class TableauServerForm(forms.Form):
             'server_name',
             'validate_hostname',
             'target_site',
+            'get_reports_using_role'
             'tableau_groups_allowed'
         ]
 
@@ -354,6 +390,9 @@ class TableauServerForm(forms.Form):
             ),
             crispy.Div(
                 crispy.Field('target_site'),
+            ),
+            crispy.Div(
+                crispy.Field('get_reports_using_role'),
             ),
             FormActions(
                 crispy.Submit('submit_btn', 'Submit')
@@ -395,6 +434,7 @@ class TableauServerForm(forms.Form):
             'server_name': self._existing_config.server_name,
             'validate_hostname': self._existing_config.validate_hostname,
             'target_site': self._existing_config.target_site,
+            'get_reports_using_role': self._existing_config.get_reports_using_role,
             'allowed_tableau_groups': self._existing_config.allowed_tableau_groups,
         }
 
@@ -402,6 +442,7 @@ class TableauServerForm(forms.Form):
         self._existing_config.server_type = self.cleaned_data['server_type']
         self._existing_config.server_name = self.cleaned_data['server_name']
         self._existing_config.validate_hostname = self.cleaned_data['validate_hostname']
+        self._existing_config.get_reports_using_role = self.cleaned_data['get_reports_using_role']
         self._existing_config.target_site = self.cleaned_data['target_site']
         if self.add_allowed_tableau_groups_field:
             self._existing_config.allowed_tableau_groups = [
@@ -413,6 +454,12 @@ class TableauVisualizationForm(forms.ModelForm):
     view_url = forms.CharField(
         label=_('View URL'),
     )
+    location_safe = forms.BooleanField(
+        label=_('Visible to location-restricted users'),
+        help_text=_('If checked, the visualization will be visible to users with roles that do not have '
+                    '"Full Organization Access"'),
+        required=False,
+    )
 
     class Meta:
         model = TableauVisualization
@@ -420,6 +467,7 @@ class TableauVisualizationForm(forms.ModelForm):
             'title',
             'server',
             'view_url',
+            'location_safe',
         ]
 
     def __init__(self, domain, *args, **kwargs):
@@ -435,6 +483,7 @@ class TableauVisualizationForm(forms.ModelForm):
             crispy.Field('title'),
             crispy.Field('server'),
             crispy.Field('view_url'),
+            crispy.Field('location_safe'),
 
             FormActions(
                 StrictButton(
@@ -469,6 +518,7 @@ class UpdateTableauVisualizationForm(TableauVisualizationForm):
             'title',
             'server',
             'view_url',
+            'location_safe',
         ]
 
     @property
@@ -482,6 +532,7 @@ class UpdateTableauVisualizationForm(TableauVisualizationForm):
                 crispy.Field('title'),
                 crispy.Field('server'),
                 crispy.Field('view_url'),
+                crispy.Field('location_safe'),
                 css_class='modal-body',
             ),
             FormActions(

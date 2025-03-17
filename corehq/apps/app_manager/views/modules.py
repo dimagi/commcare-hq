@@ -32,6 +32,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 )
 from corehq.apps.app_manager.const import (
     CASE_LIST_FILTER_LOCATIONS_FIXTURE,
+    FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS,
     MOBILE_UCR_VERSION_1,
     REGISTRY_WORKFLOW_LOAD_CASE,
     REGISTRY_WORKFLOW_SMART_LINK,
@@ -161,6 +162,7 @@ def get_module_view_context(request, app, module, lang=None):
             {'test': assertion.test, 'text': assertion.text.get(lang)}
             for assertion in module.custom_assertions
         ],
+        'formats_supporting_case_list_optimizations': FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS,
     }
     module_brief = {
         'id': module.id,
@@ -685,6 +687,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "case_list_session_endpoint_id": None,
         'custom_assertions': None,
         'lazy_load_case_list_fields': None,
+        'show_case_list_optimization_options': None,
     }
 
     if attr not in attributes:
@@ -843,6 +846,11 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
     if should_edit('lazy_load_case_list_fields'):
         module["lazy_load_case_list_fields"] = request.POST.get("lazy_load_case_list_fields") == 'true'
 
+    if should_edit('show_case_list_optimization_options') and app.supports_case_list_optimizations:
+        module["show_case_list_optimization_options"] = request.POST.get(
+            "show_case_list_optimization_options"
+        ) == 'true'
+
     if should_edit('custom_assertions'):
         module.custom_assertions = validate_custom_assertions(
             request.POST.get('custom_assertions'),
@@ -857,7 +865,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
 
     app.save(resp)
     resp['case_list-show'] = module.requires_case_details()
-    return HttpResponse(json.dumps(resp))
+    return JsonResponse(resp)
 
 
 def _new_advanced_module(request, domain, app, name, lang):

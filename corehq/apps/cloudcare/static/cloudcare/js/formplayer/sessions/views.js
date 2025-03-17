@@ -1,11 +1,9 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/sessions/views", [
     'jquery',
     'underscore',
     'backbone',
     'backbone.marionette',
     'moment',
-    'cloudcare/js/formplayer/constants',
     'cloudcare/js/formplayer/app',
     'cloudcare/js/formplayer/users/models',
     'cloudcare/js/formplayer/utils/utils',
@@ -16,10 +14,9 @@ hqDefine("cloudcare/js/formplayer/sessions/views", [
     Backbone,
     Marionette,
     moment,
-    constants,
     FormplayerFrontend,
     UsersModels,
-    utils
+    utils,
 ) {
     var SessionView = Marionette.View.extend({
         tagName: "tr",
@@ -139,18 +136,17 @@ hqDefine("cloudcare/js/formplayer/sessions/views", [
             }
         },
         templateContext: function () {
-            var user = UsersModels.getCurrentUser(),
-                paginationConfig = utils.paginateOptions(
-                    this.options.pageNumber,
-                    this.options.totalPages,
-                    this.collection.totalSessions
-                );
+            var paginationConfig = utils.paginateOptions(
+                this.options.pageNumber,
+                this.options.totalPages,
+                this.collection.totalSessions,
+            );
             return _.extend(paginationConfig, {
                 total: this.collection.totalSessions,
                 totalPages: this.options.totalPages,
                 currentPage: this.model.get('page') - 1,
                 limit: this.model.get("limit"),
-                isPreviewEnv: user.environment === constants.PREVIEW_APP_ENVIRONMENT,
+                isAppPreview: UsersModels.getCurrentUser().isAppPreview,
             });
         },
     });

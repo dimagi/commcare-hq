@@ -1,4 +1,4 @@
-'use strict';
+
 /**
  *  Knockout Feedback Component
  *
@@ -16,13 +16,17 @@
 hqDefine('hqwebapp/js/components/bootstrap3/feedback', [
     'knockout',
     'jquery',
+    'underscore',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/components.ko',
 ], function (
     ko,
     $,
-    initialPageData
+    _,
+    initialPageData,
+    koComponents,
 ) {
-    return {
+    const component = {
         viewModel: function (params) {
             var self = {};
 
@@ -74,4 +78,8 @@ hqDefine('hqwebapp/js/components/bootstrap3/feedback', [
         },
         template: '<div data-bind="template: { name: \'ko-feedback-template\' }"></div>',
     };
+
+    koComponents.register('feedback', component);
+
+    return component;
 });

@@ -58,7 +58,6 @@ class KnockoutCrispyExampleForm(forms.Form):
                     # instead of crispy.Div, but make sure any HTMl
                     # inserted here is safe
                     crispy.Div(
-                        '',
                         css_class="alert alert-info",
                         # data-bind to display alertText
                         data_bind="text: alertText",

@@ -62,6 +62,15 @@ def ucr_load_counter(engine_id, *args, **kw):
     return load_counter("ucr.{}".format(engine_id), *args, **kw)
 
 
+def dedupe_load_counter(*args, **kw):
+    """Make a deduplication load counter
+
+    This is used to count the number of cases that go through deduplication code.
+    """
+    # grep: commcare.load.dedupe
+    return load_counter("dedupe", *args, **kw)
+
+
 def schedule_load_counter(*args, **kw):
     """Make a schedule load counter function
 

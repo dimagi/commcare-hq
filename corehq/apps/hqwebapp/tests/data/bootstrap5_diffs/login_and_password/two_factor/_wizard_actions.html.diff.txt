@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -3,7 +3,7 @@
+ {% if wizard.steps.prev %}
+   <button name="wizard_goto_step" type="submit"
+           value="{{ wizard.steps.prev }}"
+-          class="btn btn-default btn-lg">{% trans "Back" %}</button>
++          class="btn btn-outline-primary btn-lg">{% trans "Back" %}</button>
+ {% endif %}
+ {% if wizard.steps.current == 'auth' %}
+   {% if enforce_sso_login %}

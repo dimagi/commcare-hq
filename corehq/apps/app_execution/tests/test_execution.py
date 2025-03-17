@@ -29,7 +29,7 @@ class TestExecution(SimpleTestCase):
             steps.EntitySelectStep("123"),
             steps.CommandStep("Followup Case"),
             steps.FormStep(children=[
-                steps.AnswerQuestionStep(question_text='Name', question_id='name', value='str'),
+                steps.AnswerQuestionStep(question_text='Name', value='str'),
                 steps.SubmitFormStep(),
             ])
         ])

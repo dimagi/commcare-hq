@@ -2,17 +2,18 @@ hqDefine("export/js/export_list_main", [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'analytix/js/kissmetrix',
-    'hqwebapp/js/bootstrap3/main',
+    'hqwebapp/js/bootstrap5/main',
     'export/js/create_export',
     'export/js/export_list',
     'hqwebapp/js/select_2_ajax_widget',  // for case owner & user filters in DashboardFeedFilterForm
+    'commcarehq',
 ], function (
     $,
     initialPageData,
     kissmetricsAnalytics,
     utils,
     createModels,
-    listModels
+    listModels,
 ) {
     $(function () {
         var $createExport = $("#create-export"),
@@ -50,11 +51,11 @@ hqDefine("export/js/export_list_main", [
             kissmetricsAnalytics.track.event("[BI Integration] Visited feature page");
             kissmetricsAnalytics.track.outboundLink(
                 '#js-odata-track-learn-more',
-                "[BI Integration] Clicked Learn More-Wiki"
+                "[BI Integration] Clicked Learn More-Wiki",
             );
             kissmetricsAnalytics.track.outboundLink(
                 '#js-odata-track-learn-more-preview',
-                "[BI Integration] Clicked Learn More-Feature Preview"
+                "[BI Integration] Clicked Learn More-Feature Preview",
             );
         }
 

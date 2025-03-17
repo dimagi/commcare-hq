@@ -1920,6 +1920,7 @@ class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedVi
             _("Title"),
             _("Server"),
             _("View URL"),
+            _("Visible to Location-Restricted Users"),
         ]
 
     @property
@@ -1941,13 +1942,14 @@ class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedVi
             'title': tableau_visualization.title,
             'server': tableau_visualization.server.server_name,
             'view_url': tableau_visualization.view_url,
+            'location_safe': tableau_visualization.location_safe,
             'updateForm': self.get_update_form_response(
                 self.get_update_form(tableau_visualization)
             ),
         }
         return data
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         tableau_viz = TableauVisualization.objects.get(
             pk=item_id,
             domain=self.domain,

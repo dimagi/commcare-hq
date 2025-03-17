@@ -1,3 +1,4 @@
+'use strict';
 /**
  * Model for a column in the Display Properties section of case list/detail.
  *
@@ -11,8 +12,11 @@
  * is responsible for creating the tab "columns" and injecting them into itself.
  */
 hqDefine("app_manager/js/details/column", function () {
-    const uiElement = hqImport('hqwebapp/js/bootstrap3/ui-element');
-    const initialPageData = hqImport('hqwebapp/js/initial_page_data').get;
+    const uiElementInput = hqImport('hqwebapp/js/ui_elements/bootstrap3/ui-element-input');
+    const uiElementKeyValueMapping = hqImport('hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping');
+    const uiElementSelect = hqImport('hqwebapp/js/ui_elements/bootstrap3/ui-element-select');
+    const initialPageData = hqImport('hqwebapp/js/initial_page_data');
+    const microCaseImageName = 'cc_case_image';
 
     return function (col, screen) {
         /*
@@ -77,6 +81,31 @@ hqDefine("app_manager/js/details/column", function () {
         });
         self.tileColumnStart = ko.observable(self.original.grid_x + 1 || 1); // converts from 0 to 1-based for UI
         self.tileColumnOptions = _.range(1, self.tileColumnMax());
+
+        let optimizationOptions = [
+            {
+                value: "",
+                label: "---",
+            },
+            {
+                value: "cache",
+                label: gettext('Cache'),
+            },
+            {
+                value: "lazy_load",
+                label: gettext('Lazy Load'),
+            },
+            {
+                value: "cache_and_lazy_load",
+                label: gettext('Cache & Lazy Load'),
+            },
+        ];
+        if (screen.showCaseListOptimizations) {
+            self.optimizationSelectElement = uiElementSelect.new(
+                optimizationOptions,
+            ).val(self.original.optimization || "");
+            self.$optimizationSelectElement = $('<div/>').append(self.optimizationSelectElement.ui);
+        }
         self.tileWidth = ko.observable(self.original.width || self.tileRowMax() - 1);
         self.tileWidthOptions = ko.computed(function () {
             return _.range(1, self.tileColumnMax() + 1 - (self.tileColumnStart() || 1));
@@ -125,7 +154,7 @@ hqDefine("app_manager/js/details/column", function () {
 
         self.screen = screen;
         self.lang = screen.lang;
-        self.model = uiElement.select([{
+        self.model = uiElementSelect.new([{
             label: "Case",
             value: "case",
         }]).val(self.original.model);
@@ -133,11 +162,14 @@ hqDefine("app_manager/js/details/column", function () {
         const icon = Utils.isAttachmentProperty(self.original.field) ? 'fa fa-paperclip' : null;
         self.field = undefined;
         if (self.original.hasAutocomplete) {
-            self.field = uiElement.select();
+            self.field = uiElementSelect.new();
         } else {
-            self.field = uiElement.input(self.original.field);
+            self.field = uiElementInput.new(self.original.field);
         }
         self.field.setIcon(icon);
+        self.getFieldHtml = function (value) {
+            return hqImport('app_manager/js/details/utils').getFieldHtml(value);
+        };
 
         // Make it possible to observe changes to self.field
         // note self observableVal is read only!
@@ -165,14 +197,14 @@ hqDefine("app_manager/js/details/column", function () {
                     }
                 }
             }
-            self.header = uiElement.input().val(invisibleVal);
+            self.header = uiElementInput.new().val(invisibleVal);
             self.header.setVisibleValue(visibleVal);
 
             self.nodeset_extra = hqImport("app_manager/js/details/detail_tab_nodeset")(_.extend({
                 caseTypes: self.screen.childCaseTypes,
             }, _.pick(self.original, ['nodeset', 'nodesetCaseType', 'nodesetFilter'])));
 
-            self.relevant = uiElement.input().val(self.original.relevant);
+            self.relevant = uiElementInput.new().val(self.original.relevant);
             if (self.isTab) {
                 self.header.ui.find("input[type='text']").attr("placeholder", gettext("Tab Name"));
                 self.relevant.ui.find("input[type='text']").attr("placeholder", gettext("Display Condition"));
@@ -197,6 +229,7 @@ hqDefine("app_manager/js/details/column", function () {
 
         self.saveAttempted = ko.observable(false);
         self.useXpathExpression = self.original.useXpathExpression;
+        self.warningText = hqImport('app_manager/js/details/utils').fieldFormatWarningMessage;
         self.showWarning = ko.computed(function () {
             if (self.useXpathExpression) {
                 return false;
@@ -230,9 +263,22 @@ hqDefine("app_manager/js/details/column", function () {
                     }
                 }
             }
+        } else {
+            // Restrict Translatable Text usage to Calculated Properties only
+            menuOptions.splice(-1);
         }
 
-        self.format = uiElement.select(menuOptions).val(self.original.format || null);
+        self.format = uiElementSelect.new(menuOptions).val(self.original.format || null);
+        self.supportsOptimizations = ko.observable(false);
+        self.setSupportOptimizations = function () {
+            let optimizationsSupported = (
+                screen.showCaseListOptimizations &&
+                self.format.val() &&
+                initialPageData.get('formats_supporting_case_list_optimizations').includes(self.format.val())
+            );
+            self.supportsOptimizations(optimizationsSupported);
+        };
+        self.setSupportOptimizations();
 
         (function () {
             const o = {
@@ -244,8 +290,9 @@ hqDefine("app_manager/js/details/column", function () {
                 multimedia: self.screen.config.multimedia,
                 values_are_icons: self.original.format === 'enum-image',
                 keys_are_conditions: self.original.format === 'conditional-enum',
+                values_are_translatable: self.original.format === 'translatable-enum',
             };
-            self.enum_extra = uiElement.key_value_mapping(o);
+            self.enum_extra = uiElementKeyValueMapping.new(o);
         }());
         const graphConfigurationUiElement = hqImport('app_manager/js/details/graph_config').graphConfigurationUiElement;
         self.graph_extra = graphConfigurationUiElement({
@@ -262,7 +309,7 @@ hqDefine("app_manager/js/details/column", function () {
 
         const yyyy = new Date().getFullYear(),
             yy = String(yyyy).substring(2);
-        self.date_extra = uiElement.select([{
+        self.date_extra = uiElementSelect.new([{
             label: '31/10/' + yy,
             value: '%d/%m/%y',
         }, {
@@ -283,7 +330,7 @@ hqDefine("app_manager/js/details/column", function () {
         self.endpointActionLabel = $('<span>Form to submit on click:</span>');
         const formEndpointOptions = [{value: "-1", label: 'Select a form endpoint'}];
         let moduleName = "";
-        const formEndpoints = Object.entries(initialPageData('form_endpoint_options'));
+        const formEndpoints = Object.entries(initialPageData.get('form_endpoint_options'));
         formEndpoints.forEach(([, endpoint]) => {
             if (endpoint.module_name !== moduleName) {
                 moduleName = endpoint.module_name;
@@ -292,20 +339,20 @@ hqDefine("app_manager/js/details/column", function () {
             formEndpointOptions.push({value: endpoint.id, label: endpoint.form_name});
         });
         const selectedValue = self.original.endpoint_action_id ? self.original.endpoint_action_id : "-1";
-        self.action_form_extra = uiElement.select(formEndpointOptions)
+        self.action_form_extra = uiElementSelect.new(formEndpointOptions)
             .val(selectedValue);
 
-        self.late_flag_extra = uiElement.input().val(self.original.late_flag.toString());
+        self.late_flag_extra = uiElementInput.new().val(self.original.late_flag.toString());
         self.late_flag_extra.ui.find('input').css('width', 'auto').css("display", "inline-block");
         self.late_flag_extra.ui.prepend($('<span>' + gettext(' Days late ') + '</span>'));
 
-        self.filter_xpath_extra = uiElement.input().val(self.original.filter_xpath.toString());
+        self.filter_xpath_extra = uiElementInput.new().val(self.original.filter_xpath.toString());
         self.filter_xpath_extra.ui.prepend($('<div/>'));
 
-        self.calc_xpath_extra = uiElement.input().val(self.original.calc_xpath.toString());
+        self.calc_xpath_extra = uiElementInput.new().val(self.original.calc_xpath.toString());
         self.calc_xpath_extra.ui.prepend($('<div/>'));
 
-        self.time_ago_extra = uiElement.select([{
+        self.time_ago_extra = uiElementSelect.new([{
             label: gettext('Years since date'),
             value: Utils.TIME_AGO.year,
         }, {
@@ -350,6 +397,9 @@ hqDefine("app_manager/js/details/column", function () {
         ], function (element) {
             self[element].on('change', fireChange);
         });
+        if (self.optimizationSelectElement) {
+            self.optimizationSelectElement.on('change', fireChange);
+        }
         self.case_tile_field.subscribe(fireChange);
         self.tileRowStart.subscribe(fireChange);
         self.tileColumnStart.subscribe(fireChange);
@@ -364,7 +414,17 @@ hqDefine("app_manager/js/details/column", function () {
         self.$format = $('<div/>').append(self.format.ui);
         self.$format.find("select").css("margin-bottom", "5px");
         self.format.on('change', function () {
+            if (self.field.val() === microCaseImageName && self.format.val() !== 'image') {
+                // The field name input was disabled to enforce using the reserved micro image name.
+                // If the format is no longer an image then the user can edit the field input again
+                self.field.val('');
+                self.field.observableVal('');
+                self.field.ui.find('select').val('').change();
+                self.field.ui.find('select').prop('disabled', false);
+            }
+
             self.coordinatesVisible(!_.contains(['address', 'address-popup', 'invisible'], self.format.val()));
+            self.setSupportOptimizations();
             // Prevent self from running on page load before init
             if (self.format.ui.parent().length > 0) {
                 self.date_extra.ui.detach();
@@ -384,9 +444,11 @@ hqDefine("app_manager/js/details/column", function () {
                         fireChange();
                     });
                     self.date_extra.value = format.val();
-                } else if (this.val() === "enum" || this.val() === "enum-image" || this.val() === 'conditional-enum') {
+                } else if (this.val() === "enum" || this.val() === "enum-image"
+                           || this.val() === 'conditional-enum' || this.val() === 'translatable-enum') {
                     self.enum_extra.values_are_icons(this.val() === 'enum-image');
                     self.enum_extra.keys_are_conditions(this.val() === 'conditional-enum');
+                    self.enum_extra.values_are_translatable(this.val() === 'translatable-enum');
                     self.format.ui.parent().append(self.enum_extra.ui);
                 } else if (this.val() === "clickable-icon") {
                     self.enum_extra.values_are_icons(true);
@@ -426,6 +488,13 @@ hqDefine("app_manager/js/details/column", function () {
                         self.time_ago_extra.value = interval.val();
                         fireChange();
                     });
+                } else if (this.val() === 'image') {
+                    // We are enforcing the reserved field name for the micro image format,
+                    // so don't allow a user to change this
+                    self.field.ui.find('select').val(microCaseImageName).change();
+                    self.field.val(microCaseImageName);
+                    self.field.observableVal(microCaseImageName);
+                    self.field.ui.find('select').prop('disabled', true);
                 }
             }
         }).fire('change');
@@ -441,6 +510,7 @@ hqDefine("app_manager/js/details/column", function () {
             column.field = self.field.val();
             column.header[self.lang] = self.header.val();
             column.format = self.format.val();
+            column.optimization = self.supportsOptimizations() ? self.optimizationSelectElement.val() : null;
             column.date_format = self.date_extra.val();
             column.enum = self.enum_extra.getItems();
             column.endpoint_action_id = self.action_form_extra.val() === "-1" ? null : self.action_form_extra.val();

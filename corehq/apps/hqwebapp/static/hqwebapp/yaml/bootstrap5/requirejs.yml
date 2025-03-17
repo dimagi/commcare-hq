@@ -12,6 +12,8 @@ fileExclusionRegExp: ^\.|\.css$
 paths:
   sentry_browser: "empty:"
   sentry_captureconsole: "empty:"
+  stripe: "empty:"
+  analytix/js/cta_forms: "empty:"
   "tempusDominus": "empty:"
 modules:
   # These two modules are referenced in hqwebapp/base.html, not in a requirejs_main tag,

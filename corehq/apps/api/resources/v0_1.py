@@ -17,6 +17,7 @@ from corehq.apps.es import FormES
 from corehq.apps.groups.models import Group
 from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.apps.users.models import CommCareUser, HqPermissions, WebUser
+from corehq.apps.users.util import user_location_data
 from corehq.const import USER_CHANGE_VIA_API
 
 
@@ -42,7 +43,10 @@ class UserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMix
 
     @staticmethod
     def _get_user_change_logger(bundle):
-        for_domain = bundle.obj.domain if bundle.obj.is_commcare_user() else None
+        if bundle.obj.is_commcare_user():
+            for_domain = bundle.obj.domain
+        else:
+            for_domain = bundle.request.domain
         return UserChangeLogger(
             upload_domain=bundle.request.domain,
             user_domain=for_domain,
@@ -61,7 +65,7 @@ class UserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMix
 
 class CommCareUserResource(UserResource):
     groups = fields.ListField(attribute='get_group_ids')
-    user_data = fields.DictField(attribute='user_data')
+    user_data = fields.DictField()
 
     class Meta(UserResource.Meta):
         authentication = RequirePermissionAuthentication(HqPermissions.edit_commcare_users)
@@ -105,6 +109,14 @@ class CommCareUserResource(UserResource):
 
     def dehydrate_user_data(self, bundle):
         user_data = bundle.obj.get_user_data(bundle.obj.domain).to_dict()
+        if location_id := bundle.obj.get_location_id(bundle.obj.domain):
+            # This is all available in the top level, but add in here for backwards-compatibility
+            user_data['commcare_location_id'] = location_id
+            user_data['commcare_location_ids'] = user_location_data(
+                bundle.obj.get_location_ids(bundle.obj.domain))
+            user_data['commcare_primary_case_sharing_id'] = location_id
+
+        user_data['commcare_project'] = bundle.obj.domain
         if self.determine_format(bundle.request) == 'application/xml':
             # attribute names can't start with digits in xml
             user_data = {k: v for k, v in user_data.items() if not k[0].isdigit()}

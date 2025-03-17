@@ -1,0 +1,94 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+-{% extends 'hqwebapp/bootstrap3/base_paginated_crud.html' %}
++{% extends 'hqwebapp/bootstrap5/base_paginated_crud.html' %}
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ {% load crispy_forms_tags %}
+ 
+-{% js_entry_b3 'data_interfaces/js/bootstrap3/manage_case_groups' %}
++{% js_entry 'data_interfaces/js/bootstrap5/manage_case_groups' %}
+ 
+ {% block pagination_header %}
+   <h3>
+@@ -12,14 +12,14 @@
+       <a href="#" id="toggle-group-name">{{ group_name }} <small><i class="fa fa-edit"></i> Edit</small></a>
+     {% endblocktrans %}
+   </h3>
+-  <div id="edit-group-name" class="hide">
+-    {% crispy update_case_group_form %}
++  <div id="edit-group-name" class="d-none">
++    {% crispy update_case_group_form %}  {# todo B5: crispy #}
+   </div>
+   {% if bulk_upload_id %}
+ 
+     <script type="text/html" id="template-upload-progress">
+       <p>
+-        <%-current%> / <%-total%> {% trans 'cases processed. Please do not refresh or close this page.' %}
++        <%-current%> / <%-total%> {% trans 'cases processed. Please do not refresh or btn-close this page.' %}  {# todo B5: css-close #}
+       </p>
+     </script>
+ 
+@@ -62,15 +62,15 @@
+   {% initial_page_data 'bulk_upload_id' bulk_upload_id %}
+ 
+   <script type="text/html" id="existing-case-template">
+-    <td class="col-sm-5">
++    <td class="col-md-5">
+       <a data-bind="attr: { href: detailsUrl }, text: name" target="_blank"></a>
+     </td>
+-    <td class="col-sm-2" data-bind="text: phoneNumber"></td>
+-    <td class="col-sm-3" data-bind="text: externalId"></td>
+-    <td class="col-sm-2">
++    <td class="col-md-2" data-bind="text: phoneNumber"></td>
++    <td class="col-md-3" data-bind="text: externalId"></td>
++    <td class="col-md-2">
+       <button type="button"
+-              class="btn btn-danger delete-item-confirm"
+-              data-loading-text="{% trans 'Removing...' %}">
++              class="btn btn-outline-danger delete-item-confirm"
++              data-loading-text="{% trans 'Removing...' %}">  {# todo B5: stateful button #}
+         <i class="fa fa-remove"></i> {% trans 'Remove' %}
+       </button>
+     </td>
+@@ -87,7 +87,7 @@
+ 
+   <script type="text/html" id="case-message-template">
+     <td>
+-      ID: <span class="label label-info"
++      ID: <span class="badge text-bg-info"
+                 data-bind="text: identifier"></span>
+     </td>
+     <td colspan="{{ pagination.num_columns|add:'-1' }}"
+@@ -102,24 +102,24 @@
+     <td data-bind="text: phoneNumber"></td>
+     <td data-bind="text: externalId"></td>
+     <td>
+-      <span class="label label-danger">{% trans 'Case Removed' %}</span>
++      <span class="badge text-bg-danger">{% trans 'Case Removed' %}</span>
+     </td>
+   </script>
+ {% endblock %}
+ 
+ {% block pagination_footer %}
+   <hr />
+-  <div class="accordion-group" style="margin-top:5px; margin-bottom: 20px;">
++  <div class="accordion-group" style="margin-top:5px; margin-bottom: 20px;">  {# todo B5: inline-style #}
+     <div class="accordion-heading">
+-      <a class="accordion-toggle btn btn-default" data-toggle="collapse" href="#bulk-upload-accordion">
++      <a class="accordion-toggle btn btn-outline-primary" data-bs-toggle="collapse" href="#bulk-upload-accordion">
+         {% trans 'Bulk upload cases to group' %}
+       </a>
+     </div>
+     <div id="bulk-upload-accordion" class="accordion-body collapse">
+       <div class="accordion-inner">
+-        <div class="panel panel-modern-gray panel-form-only">
+-          <div class="panel-body">
+-            {% include "hqwebapp/partials/bootstrap3/bulk_upload.html" %}
++        <div class="card card-modern-gray card-form-only">  {# todo B5: css-panel #}
++          <div class="card-body">
++            {% include "hqwebapp/partials/bootstrap5/bulk_upload.html" %}
+           </div>
+         </div>
+       </div>

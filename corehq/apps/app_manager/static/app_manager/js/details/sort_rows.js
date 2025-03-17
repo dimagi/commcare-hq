@@ -6,18 +6,19 @@
  * sorting-related attributes like direction.
  */
 hqDefine("app_manager/js/details/sort_rows", function () {
-    var uiElement = hqImport('hqwebapp/js/bootstrap3/ui-element');
+    var uiElementSelect = hqImport('hqwebapp/js/ui_elements/bootstrap3/ui-element-select');
 
     var sortRow = function (params, saveButton) {
         var Utils = hqImport('app_manager/js/details/utils'),
             self = {};
         params = params || {};
 
-        self.selectField = uiElement.select(params.properties).val(typeof params.field !== 'undefined' ? params.field : "");
+        self.selectField = uiElementSelect.new(params.properties).val(typeof params.field !== 'undefined' ? params.field : "");
         Utils.setUpAutocomplete(self.selectField, params.properties);
         self.sortCalculation = ko.observable(typeof params.sortCalculation !== 'undefined' ? params.sortCalculation : "");
 
         self.showWarning = ko.observable(false);
+        self.warningText = hqImport('app_manager/js/details/utils').fieldFormatWarningMessage;
         self.hasValidPropertyName = function () {
             let name = self.selectField.val();
             // changes here should also be made in

@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/form_entry/utils", [
     'jquery',
     'knockout',
@@ -6,6 +5,8 @@ hqDefine("cloudcare/js/form_entry/utils", [
     '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
+    'cloudcare/js/utils',
+    'cloudcare/js/formplayer/users/models',
     'cloudcare/js/form_entry/const',
     'cloudcare/js/form_entry/errors',
     'cloudcare/js/formplayer/constants',
@@ -16,8 +17,10 @@ hqDefine("cloudcare/js/form_entry/utils", [
     MapboxGeocoder,
     initialPageData,
     toggles,
+    cloudcareUtils,
+    UsersModels,
     formEntryConst,
-    errors
+    errors,
 ) {
     var module = {
         resourceMap: undefined,
@@ -53,10 +56,10 @@ hqDefine("cloudcare/js/form_entry/utils", [
      */
     module.initialRender = function (formJSON, resourceMap, $div) {
         var defer = $.Deferred();
-        hqRequire([
-            "cloudcare/js/debugger/debugger",
-            "cloudcare/js/form_entry/form_ui",
-        ], function (Debugger, FormUI) {
+        $.when(
+            import("cloudcare/js/debugger/debugger"),
+            import("cloudcare/js/form_entry/form_ui"),
+        ).done(function (Debugger, FormUI) {
             var form = FormUI.Form(formJSON),
                 $debug = $('#cloudcare-debugger'),
                 CloudCareDebugger = Debugger.CloudCareDebuggerFormEntry,
@@ -65,7 +68,8 @@ hqDefine("cloudcare/js/form_entry/utils", [
             ko.cleanNode($div[0]);
             $div.koApplyBindings(form);
 
-            if ($debug.length) {
+            if ($debug.length && (UsersModels.getCurrentUser().isAppPreview
+                || !cloudcareUtils.smallScreenIsEnabled())) {
                 cloudCareDebugger = new CloudCareDebugger({
                     baseUrl: formJSON.xform_url,
                     formSessionId: formJSON.session_id,

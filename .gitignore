@@ -47,7 +47,7 @@ formplayer.properties
 application.properties
 formplayer.jar
 .vscode/*
-
+/.env
 submodules/formdesigner
 submodules/vellum/Vellum
 
@@ -85,3 +85,9 @@ corehq/apps/hqwebapp/static/hqwebapp/js/lib/modernizr.js
 # direnv
 .envrc
 .direnv
+
+# webpack build related
+/webpack/_build/
+
+# ruff
+ruff.toml

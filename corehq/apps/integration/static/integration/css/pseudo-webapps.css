@@ -1,0 +1,20 @@
+/* These pages need a handful of styles to make them look like webapps */
+
+.widget-container {
+    margin-top: 2rem;
+    background-color: white;
+    box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.1);
+    padding: 0;
+}
+
+.integration-navbar {
+    min-height: 30px;
+    background-color: #002c5f;
+}
+
+.integration-navbar .navbar-brand,
+.integration-navbar li a {
+    height: 30px;
+    padding: 6.5px 15px;
+    color: white;
+}

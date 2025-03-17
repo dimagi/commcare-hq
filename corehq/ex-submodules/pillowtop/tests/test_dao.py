@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from django.test import SimpleTestCase
+from django.utils.functional import classproperty
 from fakecouch import FakeCouchDb
 from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.dao.exceptions import DocumentNotFoundError
@@ -7,6 +8,10 @@ from pillowtop.dao.mock import MockDocumentStore
 
 
 class _AbstractDocumentStoreTestCase(SimpleTestCase):
+
+    @classproperty
+    def __test__(cls):
+        return not getattr(cls.dao.fget, "__isabstractmethod__", False)
 
     @property
     @abstractmethod

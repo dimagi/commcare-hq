@@ -5,6 +5,7 @@ hqDefine("users/js/roles_and_permissions",[
     "hqwebapp/js/initial_page_data",
     'users/js/roles',
     'hqwebapp/js/bootstrap3/knockout_bindings.ko', // for roles modal
+    'commcarehq',
 ], function ($, ko, _, initialPageData, userRoles) {
 
     ko.bindingHandlers.permissionIcon = {
@@ -75,6 +76,7 @@ hqDefine("users/js/roles_and_permissions",[
             dataRegistryChoices: initialPageData.get("data_registry_choices"),
             canEditLinkedData: initialPageData.get("can_edit_linked_data"),
             commcareAnalyticsRoles: initialPageData.get('commcare_analytics_roles'),
+            hasRestrictedApplicationAccess: initialPageData.get('has_restricted_application_access'),
         });
     });
 });

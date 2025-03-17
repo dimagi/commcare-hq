@@ -4,11 +4,12 @@ hqDefine("translations/js/app_translations", [
     "hqwebapp/js/initial_page_data",
     "app_manager/js/widgets",
     "hqwebapp/js/bootstrap3/widgets",   // .hqwebapp-select2
+    "commcarehq",
 ], function (
     $,
     _,
     initialPageData,
-    appManagerWidgets
+    appManagerWidgets,
 ) {
     $(function () {
         // Application version select2: pagination, display comment
@@ -42,7 +43,7 @@ hqDefine("translations/js/app_translations", [
                         $appBuildProfileIdSelect.append(new Option(gettext('Select Profile'), '', true, true));
                         _.each(buildProfilesPerApp[selectedAppId], function (profileDetails, profileId) {
                             $appBuildProfileIdSelect.append(
-                                new Option(profileDetails.name, profileId, false, false)
+                                new Option(profileDetails.name, profileId, false, false),
                             );
                         });
                     }

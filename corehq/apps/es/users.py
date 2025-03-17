@@ -104,6 +104,7 @@ class ElasticUser(ElasticDocumentAdapter):
         user_dict['__group_ids'] = [res.id for res in results]
         user_dict['__group_names'] = [res.name for res in results]
         user_dict['user_data_es'] = []
+        user_dict.pop('password', None)
         if user_dict.get('base_doc') == 'CouchUser' and user_dict['doc_type'] == 'CommCareUser':
             user_obj = self.model_cls.wrap_correctly(user_dict)
             user_data = user_obj.get_user_data(user_obj.domain)
@@ -127,9 +128,9 @@ def domain(domain, allow_enterprise=False):
     domain_list = [domain]
     if allow_enterprise:
         from corehq.apps.enterprise.models import EnterprisePermissions
-        config = EnterprisePermissions.get_by_domain(domain)
-        if config.is_enabled and domain in config.domains:
-            domain_list.append(config.source_domain)
+        source_domain = EnterprisePermissions.get_source_domain(domain)
+        if source_domain:
+            domain_list.append(source_domain)
     return domains(domain_list)
 
 
@@ -179,8 +180,8 @@ def admin_users():
 
 
 def demo_users():
-    """Matches users whose username is demo_user"""
-    return username("demo_user")
+    """Matches users who has is_demo_user set to True"""
+    return filters.term("is_demo_user", True)
 
 
 def created(gt=None, gte=None, lt=None, lte=None):

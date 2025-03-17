@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main "linked_domain/js/domain_links" %}
+{% js_entry_b3 "linked_domain/js/domain_links" %}
 
 {% block additional_initial_page_data %}
 {% initial_analytics_data 'appcues.linked_status' linked_status %}

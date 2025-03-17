@@ -16,6 +16,7 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     UCRExpression,
 )
+from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.tests.utils import (
     get_sample_data_source,
     get_sample_doc_and_indicators,
@@ -93,7 +94,8 @@ class TestDataSourceConfigAllowedExpressionsValidation(TestCase):
         self.assertIsNone(self.config.validate())
 
 
-@patch('corehq.apps.userreports.models.AllowedUCRExpressionSettings.disallowed_ucr_expressions', MagicMock(return_value=[]))
+@patch('corehq.apps.userreports.models.AllowedUCRExpressionSettings.disallowed_ucr_expressions',
+       MagicMock(return_value=[]))
 class DataSourceConfigurationTest(SimpleTestCase):
 
     def setUp(self):
@@ -396,7 +398,8 @@ class DataSourceConfigurationTests(TestCase):
             cls.addClassCleanup(config.delete)
 
 
-@patch('corehq.apps.userreports.models.AllowedUCRExpressionSettings.disallowed_ucr_expressions', MagicMock(return_value=[]))
+@patch('corehq.apps.userreports.models.AllowedUCRExpressionSettings.disallowed_ucr_expressions',
+       MagicMock(return_value=[]))
 class IndicatorNamedExpressionTest(SimpleTestCase):
 
     def setUp(self):
@@ -776,6 +779,115 @@ class TestDBExpressions(TestCase):
             i = 2
             self.assertEqual('laugh_sound', values[i].column.id)
             self.assertEqual(laugh, values[i].value)
+
+    @flag_enabled('UCR_EXPRESSION_REGISTRY')
+    def test_db_named_db_expression(self):
+        """Test that named expressions work in DB expressions"""
+        UCRExpression.objects.create(
+            name='laugh_sound',
+            domain='test',
+            expression_type=UCR_NAMED_EXPRESSION,
+            definition={
+                'type': 'jsonpath',
+                'jsonpath': 'laugh_sound',
+            },
+        )
+
+        reference = UCRExpression.objects.create(
+            name='laugh_sound_db',
+            domain='test',
+            expression_type=UCR_NAMED_EXPRESSION,
+            definition={
+                'type': 'named',
+                'name': 'laugh_sound',
+            },
+        )
+
+        expression = reference.wrapped_definition(FactoryContext.empty(domain='test'))
+        result = expression({
+            'laugh_sound': 'te he he'
+        }, EvaluationContext.empty())
+        self.assertEqual('te he he', result)
+
+    @flag_enabled('UCR_EXPRESSION_REGISTRY')
+    def test_recursive_named_db_expression(self):
+        UCRExpression.objects.create(
+            name='bad',
+            domain='test',
+            expression_type=UCR_NAMED_EXPRESSION,
+            definition={
+                'type': 'named',
+                'name': 'more_bad',
+            },
+        )
+
+        reference = UCRExpression.objects.create(
+            name='more_bad',
+            domain='test',
+            expression_type=UCR_NAMED_EXPRESSION,
+            definition={
+                'type': 'named',
+                'name': 'bad',
+            },
+        )
+
+        with self.assertRaises(BadSpecError):
+            reference.wrapped_definition(FactoryContext.empty(domain='test'))
+
+    @flag_enabled('UCR_EXPRESSION_REGISTRY')
+    def test_db_named_db_filter(self):
+        """Test that named filters work in DB expressions"""
+        UCRExpression.objects.create(
+            name='pregnant',
+            domain='test',
+            expression_type=UCR_NAMED_FILTER,
+            definition={
+                'type': 'property_match',
+                'property_name': 'mother_state',
+                'property_value': 'pregnant',
+            },
+        )
+
+        reference = UCRExpression.objects.create(
+            name='is_pregnant',
+            domain='test',
+            expression_type=UCR_NAMED_FILTER,
+            definition={
+                'type': 'named',
+                'name': 'pregnant',
+            },
+        )
+
+        expression = reference.wrapped_definition(FactoryContext.empty(domain='test'))
+        result = expression({
+            'mother_state': 'not pregnant'
+        }, EvaluationContext.empty())
+        self.assertFalse(result)
+
+    @flag_enabled('UCR_EXPRESSION_REGISTRY')
+    def test_recursive_named_db_filter(self):
+        """Test that named expressions work in DB expressions"""
+        UCRExpression.objects.create(
+            name='rotten',
+            domain='test',
+            expression_type=UCR_NAMED_FILTER,
+            definition={
+                'type': 'named',
+                'name': 'to the core',
+            },
+        )
+
+        reference = UCRExpression.objects.create(
+            name='to the core',
+            domain='test',
+            expression_type=UCR_NAMED_FILTER,
+            definition={
+                'type': 'named',
+                'name': 'rotten',
+            },
+        )
+        with self.assertRaises(BadSpecError):
+            reference.wrapped_definition(FactoryContext.empty(domain='test'))
 
     @flag_enabled('UCR_EXPRESSION_REGISTRY')
     def test_named_db_filter(self):

@@ -27,7 +27,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.util.test_utils import flag_enabled, generate_cases
 
 from ..fixtures import (
@@ -107,7 +107,8 @@ class FixtureHasLocationsMixin(TestXmlMixin):
             generator = flat_location_fixture_generator
         else:
             generator = location_fixture_generator
-        fixture = ElementTree.tostring(call_fixture_generator(generator, self.user)[-1], encoding='utf-8')
+        fixture = ElementTree.tostring(
+            call_fixture_generator(generator, self.user)[-1], encoding='utf-8')
         desired_fixture = self._assemble_expected_fixture(xml_name, desired_locations)
         self.assertXmlEqual(desired_fixture, fixture)
 
@@ -141,7 +142,8 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def test_no_user_locations_returns_empty(self):
         empty_fixture = EMPTY_LOCATION_FIXTURE_TEMPLATE.format(self.user.user_id)
-        fixture = ElementTree.tostring(call_fixture_generator(location_fixture_generator, self.user)[0], encoding='utf-8')
+        fixture = ElementTree.tostring(
+            call_fixture_generator(location_fixture_generator, self.user)[0], encoding='utf-8')
         self.assertXmlEqual(empty_fixture, fixture)
 
     def test_metadata(self):
@@ -401,7 +403,8 @@ class ForkedHierarchiesTest(TestCase, FixtureHasLocationsMixin):
         location_type.include_without_expanding = self.locations['DTO'].location_type
         location_type.save()
 
-        fixture = ElementTree.tostring(call_fixture_generator(flat_location_fixture_generator, self.user)[-1], encoding='utf-8').decode('utf-8')
+        fixture = ElementTree.tostring(call_fixture_generator(
+            flat_location_fixture_generator, self.user)[-1], encoding='utf-8').decode('utf-8')
 
         for location_name in ('CDST1', 'CDST', 'DRTB1', 'DRTB', 'DTO1', 'DTO', 'CTO', 'CTO1', 'CTD'):
             self.assertTrue(location_name in fixture)
@@ -518,7 +521,8 @@ class WebUserLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocations
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def test_no_user_locations_returns_empty(self):
         empty_fixture = EMPTY_LOCATION_FIXTURE_TEMPLATE.format(self.user.user_id)
-        fixture = ElementTree.tostring(call_fixture_generator(location_fixture_generator, self.user)[0], encoding='utf-8')
+        fixture = ElementTree.tostring(
+            call_fixture_generator(location_fixture_generator, self.user)[0], encoding='utf-8')
         self.assertXmlEqual(empty_fixture, fixture)
 
     def test_simple_location_fixture(self):
@@ -639,6 +643,8 @@ class ShouldSyncLocationFixturesTest(TestCase):
         password = "What have I got in my pocket"
         cls.user = CommCareUser.create(cls.domain, cls.username, password, None, None)
         cls.user.save()
+        cls.web_user = WebUser.create(cls.domain, "bob@example.com", "123", None, None)
+        cls.web_user.save()
         cls.location_type.save()
 
     @classmethod
@@ -729,6 +735,36 @@ class ShouldSyncLocationFixturesTest(TestCase):
         restore_state = MockRestoreState(self.user.to_ota_restore_user(self.domain), RestoreParams(app=new_build))
         self.assertTrue(
             should_sync_locations(sync_log_from_old_app, SQLLocation.objects.all(), restore_state)
+        )
+
+    def test_changing_user_assigned_locations_should_sync(self):
+        location = make_location(
+            domain=self.domain,
+            name='winterfell',
+            location_type=self.location_type.name,
+        )
+        location.save()
+        after_save = datetime.utcnow()
+        locations_queryset = SQLLocation.objects.filter(pk=location.pk)
+
+        cc_user_restore_state = MockRestoreState(self.user.to_ota_restore_user(self.domain), RestoreParams())
+        web_user_restore_state = MockRestoreState(self.web_user.to_ota_restore_user(self.domain), RestoreParams())
+
+        self.assertFalse(
+            should_sync_locations(SimplifiedSyncLog(date=after_save), locations_queryset, cc_user_restore_state)
+        )
+        self.assertFalse(
+            should_sync_locations(SimplifiedSyncLog(date=after_save), locations_queryset, web_user_restore_state)
+        )
+
+        self.user.set_location(location)
+        self.web_user.set_location(self.domain, location)
+
+        self.assertTrue(
+            should_sync_locations(SimplifiedSyncLog(date=after_save), locations_queryset, cc_user_restore_state)
+        )
+        self.assertTrue(
+            should_sync_locations(SimplifiedSyncLog(date=after_save), locations_queryset, web_user_restore_state)
         )
 
 

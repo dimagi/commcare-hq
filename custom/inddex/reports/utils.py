@@ -15,11 +15,21 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
     exportable = True
     exportable_all = True
     export_only = False
+    fix_left_col = True
 
     @property
     def data_providers(self):
         # data providers should supply a title, slug, headers, and rows
         return []
+
+    @property
+    def fixed_cols_spec(self):
+        """
+            Override
+            Returns a dict formatted like:
+            dict(num=<num_cols_to_fix>, width=<width_of_total_fixed_cols>)
+        """
+        return dict(num=1, width=130)
 
     @property
     def report_context(self):
@@ -34,10 +44,11 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
                 'rows': list(data_provider.rows),
             }
 
-        context = {
+        context = super().report_context
+        context.update({
             'name': self.name,
             'export_only': self.export_only
-        }
+        })
         if not self.export_only and not self.needs_filters:
             try:
                 context['data_providers'] = list(map(_to_context_dict, self.data_providers))

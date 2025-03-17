@@ -6,7 +6,7 @@ hqDefine('hqwebapp/js/atwho', [
 ],
 function (
     ko,
-    _
+    _,
 ) {
     var _init = function ($input, options, afterInsert, replaceValue) {
         $input.atwho(options).on("inserted.atwho", function () {
@@ -73,7 +73,7 @@ function (
         init: function (element) {
             var $element = $(element);
             if (!$element.atwho) {
-                throw new Error("The typeahead binding requires Atwho.js and Caret.js");
+                throw new Error("The autocompleteAtwho binding requires Atwho.js and Caret.js");
             }
 
             init($element, {

@@ -1,40 +1,38 @@
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from unittest.mock import patch, Mock
+from http import HTTPStatus
+from unittest.mock import Mock, patch
 from uuid import uuid4
-
-from dateutil.parser import isoparse
 
 from django.conf import settings
 from django.db.models.deletion import ProtectedError
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
+from dateutil.parser import isoparse
 from freezegun import freeze_time
-
-from nose.tools import assert_in, assert_raises
+from nose.tools import assert_in
 
 from corehq.motech.models import ConnectionSettings
-from corehq.util.test_utils import _create_case
+from corehq.motech.repeater_helpers import RepeaterResponse
+from corehq.util.test_utils import _create_case, flag_enabled
 
 from ..const import (
     MAX_ATTEMPTS,
     MAX_BACKOFF_ATTEMPTS,
-    MIN_RETRY_WAIT,
-    RECORD_CANCELLED_STATE,
-    RECORD_FAILURE_STATE,
-    RECORD_PENDING_STATE,
-    RECORD_SUCCESS_STATE,
+    RECORD_QUEUED_STATES,
     State,
 )
 from ..models import (
+    HTTP_STATUS_4XX_RETRY,
     FormRepeater,
     Repeater,
     RepeatRecord,
     format_response,
     get_all_repeater_types,
     is_response,
+    is_success_response,
 )
 
 DOMAIN = 'test-domain'
@@ -148,51 +146,83 @@ class TestConnectionSettingsSoftDelete(TestCase):
 class RepeaterManagerTests(RepeaterTestCase):
 
     def test_all_ready_no_repeat_records(self):
-        repeaters = Repeater.objects.all_ready()
-        self.assertEqual(len(repeaters), 0)
+        repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
+        self.assertEqual(len(repeater_ids), 0)
 
     def test_all_ready_pending_repeat_record(self):
-        with make_repeat_record(self.repeater, RECORD_PENDING_STATE):
-            repeaters = Repeater.objects.all_ready()
-            self.assertEqual(len(repeaters), 1)
-            self.assertEqual(repeaters[0].id, self.repeater.id)
+        with make_repeat_record(self.repeater, State.Pending):
+            repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
+            self.assertEqual(
+                dict(repeater_ids),
+                {self.repeater.domain: [self.repeater.repeater_id]}
+            )
 
     def test_all_ready_failed_repeat_record(self):
-        with make_repeat_record(self.repeater, RECORD_FAILURE_STATE):
-            repeaters = Repeater.objects.all_ready()
-            self.assertEqual(len(repeaters), 1)
-            self.assertEqual(repeaters[0].id, self.repeater.id)
+        with make_repeat_record(self.repeater, State.Fail):
+            repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
+            self.assertEqual(
+                dict(repeater_ids),
+                {self.repeater.domain: [self.repeater.repeater_id]}
+            )
 
     def test_all_ready_succeeded_repeat_record(self):
-        with make_repeat_record(self.repeater, RECORD_SUCCESS_STATE):
-            repeaters = Repeater.objects.all_ready()
-            self.assertEqual(len(repeaters), 0)
+        with make_repeat_record(self.repeater, State.Success):
+            repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
+            self.assertEqual(len(repeater_ids), 0)
 
     def test_all_ready_cancelled_repeat_record(self):
-        with make_repeat_record(self.repeater, RECORD_CANCELLED_STATE):
-            repeaters = Repeater.objects.all_ready()
-            self.assertEqual(len(repeaters), 0)
+        with make_repeat_record(self.repeater, State.Cancelled):
+            repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
+            self.assertEqual(len(repeater_ids), 0)
 
     def test_all_ready_paused(self):
-        with make_repeat_record(self.repeater, RECORD_PENDING_STATE), \
-                pause(self.repeater):
-            repeaters = Repeater.objects.all_ready()
-            self.assertEqual(len(repeaters), 0)
+        with (
+            make_repeat_record(self.repeater, State.Pending),
+            pause(self.repeater)
+        ):
+            repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
+            self.assertEqual(len(repeater_ids), 0)
 
     def test_all_ready_next_future(self):
         in_five_mins = timezone.now() + timedelta(minutes=5)
-        with make_repeat_record(self.repeater, RECORD_PENDING_STATE), \
-                set_next_attempt_at(self.repeater, in_five_mins):
-            repeaters = Repeater.objects.all_ready()
-            self.assertEqual(len(repeaters), 0)
+        with (
+            make_repeat_record(self.repeater, State.Pending),
+            set_next_attempt_at(self.repeater, in_five_mins)
+        ):
+            repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
+            self.assertEqual(len(repeater_ids), 0)
 
     def test_all_ready_next_past(self):
         five_mins_ago = timezone.now() - timedelta(minutes=5)
-        with make_repeat_record(self.repeater, RECORD_PENDING_STATE), \
-                set_next_attempt_at(self.repeater, five_mins_ago):
-            repeaters = Repeater.objects.all_ready()
-            self.assertEqual(len(repeaters), 1)
-            self.assertEqual(repeaters[0].id, self.repeater.id)
+        with (
+            make_repeat_record(self.repeater, State.Pending),
+            set_next_attempt_at(self.repeater, five_mins_ago)
+        ):
+            repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
+            self.assertEqual(
+                dict(repeater_ids),
+                {self.repeater.domain: [self.repeater.repeater_id]}
+            )
+
+    def test_all_ready_ids(self):
+        with make_repeat_record(self.repeater, State.Pending):
+            repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
+            self.assertEqual(
+                dict(repeater_ids),
+                {self.repeater.domain: [self.repeater.repeater_id]}
+            )
+
+    def test_distinct(self):
+        with (
+            make_repeat_record(self.repeater, State.Pending),
+            make_repeat_record(self.repeater, State.Pending),
+            make_repeat_record(self.repeater, State.Pending),
+        ):
+            repeater_ids = Repeater.objects.get_all_ready_ids_by_domain()
+            self.assertEqual(
+                dict(repeater_ids),
+                {self.repeater.domain: [self.repeater.repeater_id]}
+            )
 
 
 @contextmanager
@@ -227,38 +257,45 @@ def set_next_attempt_at(repeater, when):
         repeater.save()
 
 
-class ResponseMock:
+class Unknown:
     pass
 
 
 class IsResponseTests(SimpleTestCase):
 
     def test_has_text(self):
-        resp = ResponseMock()
+        resp = Unknown()
         resp.text = '<h1>Hello World</h1>'
         self.assertFalse(is_response(resp))
 
     def test_has_status_code(self):
-        resp = ResponseMock()
+        resp = Unknown()
         resp.status_code = 504
         self.assertFalse(is_response(resp))
 
     def test_has_reason(self):
-        resp = ResponseMock()
+        resp = Unknown()
         resp.reason = 'Gateway Timeout'
         self.assertFalse(is_response(resp))
 
     def test_has_status_code_and_reason(self):
-        resp = ResponseMock()
+        resp = Unknown()
         resp.status_code = 504
         resp.reason = 'Gateway Timeout'
         self.assertTrue(is_response(resp))
 
 
+class ResponseMock:
+    status_code = 0
+    reason = ''
+    text = ''
+    url = ''
+
+
 class FormatResponseTests(SimpleTestCase):
 
     def test_non_response(self):
-        resp = ResponseMock()
+        resp = Unknown()
         self.assertEqual(format_response(resp), '')
 
     def test_no_text(self):
@@ -275,14 +312,19 @@ class FormatResponseTests(SimpleTestCase):
         self.assertEqual(format_response(resp), '200: OK\n'
                                                 '<h1>Hello World</h1>')
 
+    def test_with_url(self):
+        resp = ResponseMock()
+        resp.status_code = 200
+        resp.reason = 'OK'
+        resp.text = '<h1>Hello World</h1>'
+        resp.url = 'https://test.com'
+        self.assertEqual(format_response(resp), 'https://test.com\n200: OK\n<h1>Hello World</h1>')
+
 
 class AttemptsTests(RepeaterTestCase):
 
     def setUp(self):
         super().setUp()
-        self.just_now = timezone.now()
-        self.repeater.next_attempt_at = self.just_now
-        self.repeater.save()
         self.repeat_record = self.repeater.repeat_records.create(
             domain=DOMAIN,
             payload_id='eggs',
@@ -291,11 +333,10 @@ class AttemptsTests(RepeaterTestCase):
 
     def test_add_success_attempt_true(self):
         self.repeat_record.add_success_attempt(response=True)
-        self.assertEqual(self.repeat_record.state, RECORD_SUCCESS_STATE)
-        self.assertIsNone(self.repeater.next_attempt_at)
+        self.assertEqual(self.repeat_record.state, State.Success)
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state,
-                         RECORD_SUCCESS_STATE)
+                         State.Success)
         self.assertEqual(self.repeat_record.attempts[0].message, '')
 
     def test_add_success_attempt_200(self):
@@ -304,41 +345,33 @@ class AttemptsTests(RepeaterTestCase):
         resp.reason = 'OK'
         resp.text = '<h1>Hello World</h1>'
         self.repeat_record.add_success_attempt(response=resp)
-        self.assertEqual(self.repeat_record.state, RECORD_SUCCESS_STATE)
-        self.assertIsNone(self.repeater.next_attempt_at)
+        self.assertEqual(self.repeat_record.state, State.Success)
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state,
-                         RECORD_SUCCESS_STATE)
+                         State.Success)
         self.assertEqual(self.repeat_record.attempts[0].message,
                          format_response(resp))
 
     def test_add_server_failure_attempt_fail(self):
         message = '504: Gateway Timeout'
         self.repeat_record.add_server_failure_attempt(message=message)
-        self.assertEqual(self.repeat_record.state, RECORD_FAILURE_STATE)
-        self.assertGreater(self.repeater.last_attempt_at, self.just_now)
-        self.assertEqual(self.repeater.next_attempt_at,
-                         self.repeater.last_attempt_at + MIN_RETRY_WAIT)
+        self.assertEqual(self.repeat_record.state, State.Fail)
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state,
-                         RECORD_FAILURE_STATE)
+                         State.Fail)
         self.assertEqual(self.repeat_record.attempts[0].message, message)
         self.assertEqual(self.repeat_record.attempts[0].traceback, '')
 
     def test_add_server_failure_attempt_cancel(self):
         message = '504: Gateway Timeout'
-        while self.repeat_record.state != RECORD_CANCELLED_STATE:
+        while self.repeat_record.state != State.Cancelled:
             self.repeat_record.add_server_failure_attempt(message=message)
 
-        self.assertGreater(self.repeater.last_attempt_at, self.just_now)
-        # Interval is MIN_RETRY_WAIT because attempts were very close together
-        self.assertEqual(self.repeater.next_attempt_at,
-                         self.repeater.last_attempt_at + MIN_RETRY_WAIT)
         self.assertEqual(self.repeat_record.num_attempts,
                          MAX_BACKOFF_ATTEMPTS + 1)
         attempts = list(self.repeat_record.attempts)
-        expected_states = ([RECORD_FAILURE_STATE] * MAX_BACKOFF_ATTEMPTS
-                           + [RECORD_CANCELLED_STATE])
+        expected_states = ([State.Fail] * MAX_BACKOFF_ATTEMPTS
+                           + [State.Cancelled])
         self.assertEqual([a.state for a in attempts], expected_states)
         self.assertEqual(attempts[-1].message, message)
         self.assertEqual(attempts[-1].traceback, '')
@@ -346,53 +379,46 @@ class AttemptsTests(RepeaterTestCase):
     def test_add_client_failure_attempt_fail(self):
         message = '409: Conflict'
         self.repeat_record.add_client_failure_attempt(message=message)
-        self.assertEqual(self.repeat_record.state, RECORD_FAILURE_STATE)
-        self.assertIsNone(self.repeater.last_attempt_at)
-        self.assertIsNone(self.repeater.next_attempt_at)
+        self.assertEqual(self.repeat_record.state, State.Fail)
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state,
-                         RECORD_FAILURE_STATE)
+                         State.Fail)
         self.assertEqual(self.repeat_record.attempts[0].message, message)
         self.assertEqual(self.repeat_record.attempts[0].traceback, '')
 
     def test_add_client_failure_attempt_cancel(self):
         message = '409: Conflict'
-        while self.repeat_record.state != RECORD_CANCELLED_STATE:
+        while self.repeat_record.state != State.Cancelled:
             self.repeat_record.add_client_failure_attempt(message=message)
-        self.assertIsNone(self.repeater.last_attempt_at)
-        self.assertIsNone(self.repeater.next_attempt_at)
         self.assertEqual(self.repeat_record.num_attempts,
                          MAX_ATTEMPTS + 1)
         attempts = list(self.repeat_record.attempts)
-        expected_states = ([RECORD_FAILURE_STATE] * MAX_ATTEMPTS
-                           + [RECORD_CANCELLED_STATE])
+        expected_states = ([State.Fail] * MAX_ATTEMPTS
+                           + [State.Cancelled])
         self.assertEqual([a.state for a in attempts], expected_states)
         self.assertEqual(attempts[-1].message, message)
         self.assertEqual(attempts[-1].traceback, '')
 
     def test_add_client_failure_attempt_no_retry(self):
         message = '422: Unprocessable Entity'
-        while self.repeat_record.state != RECORD_CANCELLED_STATE:
+        while self.repeat_record.state != State.Cancelled:
             self.repeat_record.add_client_failure_attempt(message=message, retry=False)
-        self.assertIsNone(self.repeater.last_attempt_at)
-        self.assertIsNone(self.repeater.next_attempt_at)
         self.assertEqual(self.repeat_record.num_attempts, 1)
-        self.assertEqual(self.repeat_record.attempts[0].state, RECORD_CANCELLED_STATE)
+        self.assertEqual(self.repeat_record.attempts[0].state, State.Cancelled)
         self.assertEqual(self.repeat_record.attempts[0].message, message)
         self.assertEqual(self.repeat_record.attempts[0].traceback, '')
 
-    def test_add_payload_exception_attempt(self):
+    def test_add_payload_error_attempt(self):
         message = 'ValueError: Schema validation failed'
         tb_str = 'Traceback ...'
-        self.repeat_record.add_payload_exception_attempt(message=message,
-                                                         tb_str=tb_str)
-        self.assertEqual(self.repeat_record.state, RECORD_CANCELLED_STATE)
+        self.repeat_record.add_payload_error_attempt(message=message,
+                                                     traceback_str=tb_str)
+        self.assertEqual(self.repeat_record.state, State.InvalidPayload)
         # Note: Our payload issues do not affect how we deal with their
         #       server issues:
-        self.assertEqual(self.repeater.next_attempt_at, self.just_now)
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state,
-                         RECORD_CANCELLED_STATE)
+                         State.InvalidPayload)
         self.assertEqual(self.repeat_record.attempts[0].message, message)
         self.assertEqual(self.repeat_record.attempts[0].traceback, tb_str)
 
@@ -412,31 +438,91 @@ class AttemptsTests(RepeaterTestCase):
             self.assertEqual(len(self.repeat_record.attempts), 2)
 
 
+class TestRepeaterHandleResponse(RepeaterTestCase):
+
+    def get_repeat_record(self):
+        return self.repeater.repeat_records.create(
+            domain=DOMAIN,
+            payload_id='cafef00d',
+            registered_at=timezone.now(),
+        )
+
+    def test_handle_response_success(self):
+        resp = RepeaterResponse(
+            status_code=200,
+            reason='OK',
+            text='<h1>Hello World</h1>',
+        )
+        repeat_record = self.get_repeat_record()
+        self.repeater.handle_response(resp, repeat_record)
+        self.assertEqual(repeat_record.state, State.Success)
+
+    def test_handle_response_server_failure(self):
+        resp = RepeaterResponse(
+            status_code=504,
+            reason='Gateway Timeout',
+        )
+        repeat_record = self.get_repeat_record()
+        self.repeater.handle_response(resp, repeat_record)
+        self.assertEqual(repeat_record.state, State.Fail)
+
+    def test_handle_4XX_retry_codes(self):
+        for status_code in HTTP_STATUS_4XX_RETRY:
+            resp = RepeaterResponse(
+                status_code=status_code,
+                reason='Retry',
+            )
+            repeat_record = self.get_repeat_record()
+            self.repeater.handle_response(resp, repeat_record)
+            self.assertEqual(repeat_record.state, State.Fail)
+
+    def test_handle_4XX_invalid_payload(self):
+        for http_status in HTTPStatus:
+            if (
+                400 <= http_status.value < 500
+                and http_status not in HTTP_STATUS_4XX_RETRY
+            ):
+                resp = RepeaterResponse(
+                    status_code=http_status.value,
+                    reason='Invalid Payload',
+                )
+                repeat_record = self.get_repeat_record()
+                self.repeater.handle_response(resp, repeat_record)
+                self.assertEqual(repeat_record.state, State.InvalidPayload)
+
+    def test_handle_5XX_retry(self):
+        for http_status in HTTPStatus:
+            if 500 <= http_status.value < 600:
+                resp = RepeaterResponse(
+                    status_code=http_status.value,
+                    reason='Invalid Payload',
+                )
+                repeat_record = self.get_repeat_record()
+                self.repeater.handle_response(resp, repeat_record)
+                self.assertEqual(repeat_record.state, State.Fail)
+
+
 class TestConnectionSettingsUsedBy(TestCase):
 
     def setUp(self):
         super().setUp()
         url = 'https://www.example.com/api/'
-        self.conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
-        self.repeater = FormRepeater(
+        self.conn = ConnectionSettings.objects.create(
+            domain=DOMAIN,
+            name=url,
+            url=url,
+        )
+
+    def test_connection_settings_used_by_data_forwarding(self):
+        FormRepeater.objects.create(
             domain=DOMAIN,
             connection_settings_id=self.conn.id
         )
-        self.repeater.save()
 
-    def test_connection_settings_used_by(self):
         self.assertEqual(self.conn.used_by, {'Data Forwarding'})
 
     def test_conn_with_no_used_by(self):
-        new_conn = ConnectionSettings.objects.create(
-            url='http://blah-url.com',
-            domain='nice-domain'
-        )
-        self.assertEqual(new_conn.used_by, set())
-
-    def tearDown(self):
-        self.repeater.delete()
-        super().tearDown()
+        self.assertEqual(self.conn.used_by, set())
 
 
 class TestRepeaterConnectionSettings(RepeaterTestCase):
@@ -453,12 +539,6 @@ class TestRepeaterConnectionSettings(RepeaterTestCase):
             ConnectionSettings.all_objects.filter(id=self.conn.id).delete()
 
 
-def test_attempt_forward_now_kwargs():
-    rr = RepeatRecord()
-    with assert_raises(TypeError):
-        rr.attempt_forward_now(True)
-
-
 @patch("corehq.motech.repeaters.tasks.retry_process_repeat_record")
 @patch("corehq.motech.repeaters.tasks.process_repeat_record")
 class TestAttemptForwardNow(RepeaterTestCase):
@@ -471,13 +551,13 @@ class TestAttemptForwardNow(RepeaterTestCase):
         self.assert_not_called(process, retry_process)
 
     def test_success_state(self, process, retry_process):
-        rec = self.new_record(state=RECORD_SUCCESS_STATE, next_check=None)
+        rec = self.new_record(state=State.Success, next_check=None)
         rec.attempt_forward_now()
 
         self.assert_not_called(process, retry_process)
 
     def test_cancelled_state(self, process, retry_process):
-        rec = self.new_record(state=RECORD_CANCELLED_STATE, next_check=None)
+        rec = self.new_record(state=State.Cancelled, next_check=None)
         rec.attempt_forward_now()
 
         self.assert_not_called(process, retry_process)
@@ -490,6 +570,25 @@ class TestAttemptForwardNow(RepeaterTestCase):
         self.assert_not_called(retry_process)
 
     def test_fire_synchronously(self, process, retry_process):
+        rec = self.new_record()
+        rec.attempt_forward_now(fire_synchronously=True)
+
+        process.assert_called_once()
+        self.assert_not_called(retry_process)
+
+    @flag_enabled('PROCESS_REPEATERS')
+    def test_process_repeaters_enabled(self, process, retry_process):
+        rec = self.new_record()
+        rec.attempt_forward_now()
+
+        self.assert_not_called(process, retry_process)
+
+    @flag_enabled('PROCESS_REPEATERS')
+    def test_fire_synchronously_process_repeaters_enabled(
+            self,
+            process,
+            retry_process,
+    ):
         rec = self.new_record()
         rec.attempt_forward_now(fire_synchronously=True)
 
@@ -522,7 +621,7 @@ class TestAttemptForwardNow(RepeaterTestCase):
             except AssertionError as err:
                 raise AssertionError(f"{task} unexpectedly called:\n{err}")
 
-    def new_record(self, next_check=before_now, state=RECORD_PENDING_STATE):
+    def new_record(self, next_check=before_now, state=State.Pending):
         rec = RepeatRecord(
             domain="test",
             repeater_id=self.repeater.repeater_id,
@@ -585,6 +684,11 @@ class TestFormRepeaterAllowedToForward(RepeaterTestCase):
         payload = Mock(xmlns='http://openrosa.org/formdesigner/def456')
         self.assertFalse(self.repeater.allowed_to_forward(payload))
 
+    def test_payload_user_blocked(self):
+        self.repeater.user_blocklist = ['deadbeef']
+        payload = Mock(user_id='deadbeef')
+        self.assertFalse(self.repeater.allowed_to_forward(payload))
+
 
 class TestRepeatRecordManager(RepeaterTestCase):
     before_now = datetime.utcnow() - timedelta(days=1)
@@ -594,7 +698,7 @@ class TestRepeatRecordManager(RepeaterTestCase):
         self.make_records(2, state=State.Fail)
         self.make_records(3, state=State.Cancelled)
         self.make_records(5, state=State.Success)
-        counts = RepeatRecord.objects.count_by_repeater_and_state(domain="test")
+        counts = RepeatRecord.objects.count_by_repeater_and_state(domain=DOMAIN)
 
         rid = self.repeater.id
         self.assertEqual(counts[rid][State.Pending], 1)
@@ -617,6 +721,20 @@ class TestRepeatRecordManager(RepeaterTestCase):
         self.new_record(next_check=None, state=State.Success)
         overdue = RepeatRecord.objects.count_overdue()
         self.assertEqual(overdue, 3)
+
+        with self.pause_repeater():
+            overdue = RepeatRecord.objects.count_overdue()
+            self.assertEqual(overdue, 0)
+
+    @contextmanager
+    def pause_repeater(self):
+        try:
+            self.repeater.is_paused = True
+            self.repeater.save()
+            yield
+        finally:
+            self.repeater.is_paused = False
+            self.repeater.save()
 
     iter_partition = RepeatRecord.objects.iter_partition
 
@@ -665,23 +783,83 @@ class TestRepeatRecordManager(RepeaterTestCase):
             {'alex', 'alice'},
         )
 
-    def new_record(self, next_check=before_now, state=State.Pending, domain="test"):
+    def test_get_repeat_record_ids_for_domain(self):
+        cancelled = self.new_record(state=State.Cancelled, next_check=None)
+        success = self.new_record(state=State.Success, next_check=None)
+        self.new_record(domain="exclude")
+        ids = RepeatRecord.objects.get_repeat_record_ids(DOMAIN)
+        self.assertCountEqual([cancelled.id, success.id], ids)
+
+    def test_get_repeat_record_ids_for_repeater(self):
+        non_default_repeater = FormRepeater.objects.create(
+            domain=DOMAIN,
+            connection_settings=self.conn,
+        )
+
+        actual = self.new_record_for_repeater(non_default_repeater)
+        self.new_record()
+        ids = RepeatRecord.objects.get_repeat_record_ids(DOMAIN, repeater_id=non_default_repeater.id)
+        self.assertCountEqual([actual.id], ids)
+
+    def test_get_repeat_record_ids_for_state(self):
+        cancelled = self.new_record(state=State.Cancelled, next_check=None)
+        self.new_record(state=State.Success, next_check=None)
+        ids = RepeatRecord.objects.get_repeat_record_ids(DOMAIN, state=State.Cancelled)
+        self.assertCountEqual([cancelled.id], ids)
+
+    def test_get_repeat_record_ids_for_payload(self):
+        actual = self.new_record(payload_id="waldo")
+        self.new_record(payload_id="not-waldo")
+        ids = RepeatRecord.objects.get_repeat_record_ids(DOMAIN, payload_id="waldo")
+        self.assertCountEqual([actual.id], ids)
+
+    def test_get_repeat_record_ids_with_all_filters(self):
+        non_default_repeater = FormRepeater.objects.create(
+            domain=DOMAIN,
+            connection_settings=self.conn,
+        )
+        actual = self.new_record_for_repeater(non_default_repeater, state=State.Fail, payload_id="waldo")
+        self.new_record_for_repeater(non_default_repeater, state=State.Pending, payload_id="waldo")
+        self.new_record_for_repeater(non_default_repeater, state=State.Fail, payload_id="not-waldo")
+        self.new_record_for_repeater(self.repeater, state=State.Fail, payload_id="waldo")
+        ids = RepeatRecord.objects.get_repeat_record_ids(
+            DOMAIN, repeater_id=non_default_repeater.id, state=State.Fail, payload_id="waldo"
+        )
+        self.assertCountEqual([actual.id], ids)
+
+    def test_count(self):
+        with (
+            make_repeat_record(self.repeater, State.Pending),
+            make_repeat_record(self.repeater, State.Pending),
+            make_repeat_record(self.repeater, State.Pending),
+        ):
+            count = RepeatRecord.objects.count_all_ready()
+            self.assertEqual(count, 3)
+
+    def new_record(self, next_check=before_now, state=State.Pending, domain=DOMAIN, payload_id="c0ffee"):
+        return self.new_record_for_repeater(
+            self.repeater, next_check=next_check, state=state, domain=domain, payload_id=payload_id
+        )
+
+    def new_record_for_repeater(
+        self, repeater, next_check=before_now, state=State.Pending, domain=DOMAIN, payload_id="c0ffee"
+    ):
         return RepeatRecord.objects.create(
             domain=domain,
-            repeater_id=self.repeater.repeater_id,
-            payload_id="c0ffee",
+            repeater_id=repeater.repeater_id,
+            payload_id=payload_id,
             registered_at=self.before_now,
             next_check=next_check,
             state=state,
         )
 
-    def make_records(self, n, state=State.Pending):
+    def make_records(self, n, domain=DOMAIN, state=State.Pending, payload_id="c0ffee"):
         now = timezone.now() - timedelta(seconds=10)
-        is_pending = state in [State.Pending, State.Fail]
+        is_pending = state in RECORD_QUEUED_STATES
         records = RepeatRecord.objects.bulk_create(RepeatRecord(
-            domain="test",
+            domain=domain,
             repeater=self.repeater,
-            payload_id="c0ffee",
+            payload_id=payload_id,
             registered_at=now,
             next_check=(now if is_pending else None),
             state=state,
@@ -795,8 +973,10 @@ class TestRepeatRecordMethodsNoDB(SimpleTestCase):
             state=State.Fail
         )
 
-        with patch.object(RepeatRecord, "num_attempts", 0), \
-                patch.object(repeat_record, "max_possible_tries", 1):
+        with (
+            patch.object(RepeatRecord, "num_attempts", 0),
+            patch.object(repeat_record, "max_possible_tries", 1)
+        ):
             self.assertFalse(repeat_record.exceeded_max_retries)
 
     def test_exceeded_max_retries_returns_true_if_equal(self):
@@ -807,8 +987,10 @@ class TestRepeatRecordMethodsNoDB(SimpleTestCase):
             state=State.Fail
         )
 
-        with patch.object(RepeatRecord, "num_attempts", 1), \
-                patch.object(repeat_record, "max_possible_tries", 1):
+        with (
+            patch.object(RepeatRecord, "num_attempts", 1),
+            patch.object(repeat_record, "max_possible_tries", 1)
+        ):
             self.assertTrue(repeat_record.exceeded_max_retries)
 
     def test_exceeded_max_retries_returns_true_if_more_tries_than_possible(self):
@@ -819,8 +1001,10 @@ class TestRepeatRecordMethodsNoDB(SimpleTestCase):
             state=State.Fail
         )
 
-        with patch.object(RepeatRecord, "num_attempts", 2), \
-                patch.object(repeat_record, "max_possible_tries", 1):
+        with (
+            patch.object(RepeatRecord, "num_attempts", 2),
+            patch.object(repeat_record, "max_possible_tries", 1)
+        ):
             self.assertTrue(repeat_record.exceeded_max_retries)
 
     def test_exceeded_max_retries_returns_false_if_not_failure_state(
@@ -832,6 +1016,25 @@ class TestRepeatRecordMethodsNoDB(SimpleTestCase):
             state=State.Success,
         )
 
-        with patch.object(RepeatRecord, "num_attempts", 2), \
-                patch.object(repeat_record, "max_possible_tries", 1):
+        with (
+            patch.object(RepeatRecord, "num_attempts", 2),
+            patch.object(repeat_record, "max_possible_tries", 1)
+        ):
             self.assertFalse(repeat_record.exceeded_max_retries)
+
+
+class TestIsSuccessResponse(SimpleTestCase):
+
+    def test_true_response(self):
+        self.assertTrue(is_success_response(True))
+
+    def test_status_201_response(self):
+        response = Mock(status_code=201)
+        self.assertTrue(is_success_response(response))
+
+    def test_status_404_response(self):
+        response = Mock(status_code=404)
+        self.assertFalse(is_success_response(response))
+
+    def test_none_response(self):
+        self.assertFalse(is_success_response(None))

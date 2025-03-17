@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine("hqwebapp/js/bootstrap3/widgets",[
     'jquery',
     'underscore',
@@ -6,10 +6,11 @@ hqDefine("hqwebapp/js/bootstrap3/widgets",[
     'hqwebapp/js/initial_page_data',
     'select2/dist/js/select2.full.min',
     'jquery-ui/ui/widgets/datepicker',
+    "commcarehq",
 ], function ($, _, MapboxGeocoder, initialPageData) {
     var init = function () {
         var MAPBOX_ACCESS_TOKEN = initialPageData.get(
-            "mapbox_access_token"
+            "mapbox_access_token",
         );
         // .hqwebapp-select2 is a basic select2-based dropdown or multiselect
         _.each($(".hqwebapp-select2"), function (element) {

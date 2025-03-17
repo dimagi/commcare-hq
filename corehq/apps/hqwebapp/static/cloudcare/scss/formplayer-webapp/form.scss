@@ -1,11 +1,9 @@
 $form-text-indent: 23px;
 $form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fit
-$group-indent: 15px;
 
 .form-container {
   background-color: white;
   box-shadow: 0 0 10px 2px rgba(0,0,0,.1);
-  margin-bottom: 2rem;
   font-size: $form-text-size;   // Don't overshadow inputs
 
   .page-header h1 {
@@ -13,11 +11,10 @@ $group-indent: 15px;
   }
 
   .controls {
-    padding-right: 25px;
     padding-top: 3px;
   }
 
-  .form-control {
+  .form-control, .form-select {
     font-size: $form-text-size;
   }
 
@@ -33,80 +30,31 @@ $group-indent: 15px;
 
   .sticky-submit {
     position: sticky;
+    bottom: 0;
     /* Puts the anchored submit button in front of form elements that use bootstrap's .form-control,
        which adds z-index of 2 (3 when focused) */
     z-index: $zindex-formplayer-anchored-submit;
   }
 
-  // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.
-  .row {
-    margin-left: 0px;
-    margin-right: 0px;
-  }
   .question-container {
     padding-left: $form-text-indent;
     padding-right: $form-text-indent;
   }
 
-  .form-group {
-    margin-left: 0px;
-    margin-right: 0px;
-    .caption.control-label {
+  .q {
+    .caption {
       display: block;
     }
   }
 
-  .group-body {
-    margin-left: $group-indent;
-    margin-right: $group-indent;
-  }
-
-  .gr.panel {
+  .rep.card {
     border-radius: 0px;
   }
 
-  .rep.panel {
-    border-radius: 0px;
-  }
-
-  .col-sm-12,
-  .col-sm-11,
-  .col-sm-10,
-  .col-sm-9,
-  .col-sm-8,
-  .col-sm-7,
-  .col-sm-6,
-  .col-sm-5,
-  .col-sm-4,
-  .col-sm-3,
-  .col-sm-2,
-  .col-sm-1 {
-    &:first-child {
-      padding-left: 0;
-    }
-    &:last-child {
-      padding-right: 0;
-    }
-  }
-
-  .panel-body {
+  .card-body {
     @include media-breakpoint-down(md) {
       padding-left: 0px;
       padding-right: 0px;
-    }
-  }
-
-  .stripe-repeats {
-    > .row, .panel-body > .children > .row {
-      &:nth-of-type(odd) {
-        background-color: $table-accent-bg;
-      }
-      &:nth-of-type(even) {
-        background-color: white;
-      }
-      &:hover {
-        background-color: $table-hover-bg;
-      }
     }
   }
 
@@ -131,13 +79,28 @@ $group-indent: 15px;
       height: 1em;
       vertical-align: baseline;
     }
+
+    .btn {
+      background-color: white;
+
+      &:hover {
+        background-color: var(--bsbtn-hover-bg);
+      }
+
+    }
   }
 
-  .panel-heading {
+  .card-header {
     border-top-left-radius: 0px;
     border-top-right-radius: 0px;
   }
 
+}
+
+.has-debugger {
+  .sticky-submit {
+    bottom: $minimized-debugger-height;
+  }
 }
 
 .form-group-required-label {
@@ -152,7 +115,7 @@ $group-indent: 15px;
     display: none;
   }
 
-  .form-group.required {
+  .q.required {
     transition: all .5s;
     margin-bottom: 0;
     label:before {
@@ -160,7 +123,7 @@ $group-indent: 15px;
     }
   }
 
-  .form-group.required.on {
+  .q.required.on {
     background-color: $cc-att-neg-hi;
     border: 10px solid $cc-att-neg-mid;
     border-bottom: none;
@@ -197,6 +160,10 @@ $group-indent: 15px;
 }
 
 @media print {
+  #content-container {
+    max-width: none;
+  }
+
   .form-container.print-container {
     margin: 0px;
     .page-header {
@@ -204,14 +171,14 @@ $group-indent: 15px;
     }
   }
 
-  .q.form-group {
+  .q {
     break-inside: avoid;
   }
 
-  .panel.panel-default.last,
-  .panel.panel-default.last *,
-  .q.form-group.last,
-  .q.form-group.last * {
+  .card.last,
+  .card.last *,
+  .q.last,
+  .q.last * {
     margin-bottom: 0px;
     padding-bottom: 0px;
     .widget-container {
@@ -234,23 +201,12 @@ $group-indent: 15px;
 .question-tile-row {
   display: flex;
   align-items: start;
-  * .form-group, * p, * .control-label {
+  * .q, * p, * .caption {
     padding-top: 0px !important;
     padding-bottom: 0px !important;
     margin-top: 0px !important;
     margin-bottom: 0px !important;
   }
-}
-
-.question-tile-row {
-  .gr {
-    padding-right: 0px !important;
-    padding-left: 0px !important;
-  }
-}
-
-.gr-has-no-nested-questions {
-  display: none;
 }
 
 .checkbox, .radio {
@@ -265,4 +221,12 @@ $group-indent: 15px;
 #next-error {
   position: fixed;
   bottom: 35px;
+  z-index: $zindex-next-error;
+}
+
+.my-05em-for-hs {
+    h1, h2, h3, h4, h5, h6 {
+        margin-top: 0.5em !important;
+        margin-bottom: 0.5em !important;
+    }
 }

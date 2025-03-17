@@ -1,11 +1,17 @@
 from django.test import SimpleTestCase, override_settings
+from datetime import datetime
+from freezegun import freeze_time
 from unittest.mock import patch, MagicMock
 
+from corehq.apps.enterprise.exceptions import TooMuchRequestedDataError
 from corehq.apps.export.models.new import FormExportInstance
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.dbaccessors import ODataExportFetcher
-from corehq.apps.enterprise.enterprise import EnterpriseODataReport
+from corehq.apps.enterprise.enterprise import (
+    EnterpriseODataReport,
+    EnterpriseFormReport,
+)
 
 
 @override_settings(BASE_ADDRESS='localhost:8000')
@@ -13,8 +19,7 @@ class EnterpriseODataReportTests(SimpleTestCase):
     def test_headers(self):
         report = self._create_report_for_domains()
         self.assertEqual(report.headers, [
-            'Odata feeds used', 'Odata feeds available', 'Report Names', 'Number of rows',
-            'Project Space Name', 'Project Name', 'Project URL'
+            'Project Space', 'Name', 'Number of Rows',
         ])
 
     def test_total_number_display_odata_reports_across_enterprise(self):
@@ -42,9 +47,8 @@ class EnterpriseODataReportTests(SimpleTestCase):
 
         report = self._create_report_for_domains(domain_one)
         self.assertEqual(report.rows, [
-            [2, 10, None, 12, 'domain_one', None, 'http://localhost:8000/a/domain_one/settings/project/'],
-            [None, None, 'ExportOne', 5],
-            [None, None, 'ExportTwo', 7]
+            ['domain_one', 'ExportOne', 5],
+            ['domain_one', 'ExportTwo', 7]
         ])
 
     def test_full_report_for_multiple_domains(self):
@@ -57,35 +61,30 @@ class EnterpriseODataReportTests(SimpleTestCase):
         report = self._create_report_for_domains(domain_one, domain_two)
 
         self.assertEqual(report.rows, [
-            [1, 25, None, 9, 'domain_one', None, 'http://localhost:8000/a/domain_one/settings/project/'],
-            [None, None, 'ExportOne', 9],
-            [1, 50, None, 15, 'domain_two', None, 'http://localhost:8000/a/domain_two/settings/project/'],
-            [None, None, 'ExportTwo', 15]
+            ['domain_one', 'ExportOne', 9],
+            ['domain_two', 'ExportTwo', 15]
         ])
 
     @patch.object(ODataExportFetcher, 'get_export_count')
-    def test_report_replaces_row_count_with_error_when_too_many_exports(self, mock_export_count):
+    def test_report_includes_error_when_too_many_exports(self, mock_export_count):
         mock_export_count.return_value = 151
         domain_one = self._create_domain(name='domain_one', max_exports=200)
 
         report = self._create_report_for_domains(domain_one)
 
         self.assertEqual(report.rows, [
-            [151, 200, None,
-            'ERROR: Too many exports. Please contact customer service',
-            'domain_one', None, 'http://localhost:8000/a/domain_one/settings/project/']
+            ['domain_one', 'ERROR: Too many exports. Please contact customer service', None]
         ])
 
     @patch.object(ODataExportFetcher, 'get_export_count')
-    def test_no_exports_for_domain_shows_0_rowcount(self, mock_export_count):
+    def test_no_exports_for_domain_includes_no_rows(self, mock_export_count):
         mock_export_count.return_value = 0
         domain_one = self._create_domain(name='domain_one', max_exports=25)
+        self.domain_to_export_map['domain_one'] = []
 
         report = self._create_report_for_domains(domain_one)
 
-        self.assertEqual(report.rows, [
-            [0, 25, None, 0, 'domain_one', None, 'http://localhost:8000/a/domain_one/settings/project/']
-        ])
+        self.assertEqual(report.rows, [])
 
 # setup / helpers
 
@@ -126,3 +125,48 @@ class EnterpriseODataReportTests(SimpleTestCase):
         report = EnterpriseODataReport(self.billing_account, None)
         report.domains = MagicMock(return_value=domains)
         return report
+
+
+@freeze_time(datetime(month=10, day=1, year=2024))
+class EnterpriseFormReportTests(SimpleTestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.billing_account = BillingAccount()
+
+    def test_constructor_with_no_datespan_defaults_to_last_30_days(self):
+        report = EnterpriseFormReport(self.billing_account, None)
+
+        self.assertEqual(report.datespan.startdate, datetime(month=9, day=1, year=2024))
+        self.assertEqual(report.datespan.enddate, datetime(month=10, day=1, year=2024))
+
+    def test_constructor_with_provided_dates_uses_that_datespan(self):
+        start_date = datetime(month=11, day=25, year=2023)
+        end_date = datetime(month=12, day=15, year=2023)
+        report = EnterpriseFormReport(self.billing_account, None, start_date=start_date, end_date=end_date)
+
+        self.assertEqual(report.datespan.startdate, start_date)
+        self.assertEqual(report.datespan.enddate, end_date)
+
+    def test_constructor_with_only_end_date_uses_default_num_days(self):
+        end_date = datetime(month=10, day=1, year=2020)
+        report = EnterpriseFormReport(self.billing_account, None, end_date=end_date)
+
+        self.assertEqual(report.datespan.startdate, datetime(month=9, day=1, year=2020))
+        self.assertEqual(report.datespan.enddate, end_date)
+
+    def test_constructor_with_only_end_date_uses_num_days(self):
+        end_date = datetime(month=10, day=1, year=2020)
+        report = EnterpriseFormReport(self.billing_account, None, end_date=end_date, num_days=10)
+
+        self.assertEqual(report.datespan.startdate, datetime(month=9, day=21, year=2020))
+        self.assertEqual(report.datespan.enddate, end_date)
+
+    def test_specifying_timespan_greater_than_90_days_throws_error(self):
+        end_date = datetime(month=10, day=1, year=2020)
+        with self.assertRaises(TooMuchRequestedDataError):
+            EnterpriseFormReport(self.billing_account, None, end_date=end_date, num_days=91)
+
+    def test_specifying_timespans_up_to_90_days_works(self):
+        end_date = datetime(month=10, day=1, year=2020)
+        EnterpriseFormReport(self.billing_account, None, end_date=end_date, num_days=90)

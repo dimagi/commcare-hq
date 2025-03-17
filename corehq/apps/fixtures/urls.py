@@ -10,7 +10,7 @@ from corehq.apps.fixtures.views import (
     fixture_metadata,
     fixture_upload_job_poll,
     update_tables,
-    upload_fixture_api,
+    upload_fixture_api
 )
 from corehq.apps.hqwebapp.decorators import waf_allow
 

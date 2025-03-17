@@ -169,7 +169,6 @@ class TestInlineEditTransFilter(SimpleTestCase):
         langs=['en'],
         url='test-url',
         saveValueName='saveValue',
-        postSave='postSave',
         containerClass='containerClass',
         iconClass='iconClass',
         readOnlyClass='readOnlyClass',
@@ -180,7 +179,6 @@ class TestInlineEditTransFilter(SimpleTestCase):
             langs,
             url,
             saveValueName,
-            postSave,
             containerClass,
             iconClass,
             readOnlyClass,
@@ -213,7 +211,6 @@ class TestInlineEditTransFilter(SimpleTestCase):
             langs=['en'],
             url='test-url',
             saveValueName='saveValue',
-            postSave='postSave',
             containerClass='containerClass',
             iconClass='iconClass',
             readOnlyClass='readOnlyClass',
@@ -227,7 +224,6 @@ class TestInlineEditTransFilter(SimpleTestCase):
         self.assertEqual(params['containerClass'], "'containerClass'")
         self.assertEqual(params['iconClass'], "'iconClass'")
         self.assertEqual(params['readOnlyClass'], "'readOnlyClass'")
-        self.assertEqual(params['postSave'], 'postSave')
         self.assertEqual(params['disallow_edit'], 'false')
 
     def test_primary_language(self):
@@ -288,18 +284,18 @@ class TestInputTransFilter(SimpleTestCase):
             data_bind=data_bind,
             element_type=element_type)
 
-        return fragment_fromstring(markup)
+        return markup, fragment_fromstring(markup)
 
     def test_creates_input_tag(self):
-        fragment = self.generate_markup_fragment()
+        markup, fragment = self.generate_markup_fragment()
         self.assertEqual(fragment.tag, 'input')
 
     def test_creates_textarea_tag(self):
-        fragment = self.generate_markup_fragment(element_type='textarea')
+        markup, fragment = self.generate_markup_fragment(element_type='textarea')
         self.assertEqual(fragment.tag, 'textarea')
 
     def test_fills_all_attributes(self):
-        fragment = self.generate_markup_fragment(
+        markup, fragment = self.generate_markup_fragment(
             name_dict={'en': 'English Output'},
             langs=['en'],
             input_name='name',
@@ -316,7 +312,7 @@ class TestInputTransFilter(SimpleTestCase):
         self.assertEqual(fragment.attrib['placeholder'], '')
 
     def test_primary_language_populates_value(self):
-        fragment = self.generate_markup_fragment(
+        markup, fragment = self.generate_markup_fragment(
             name_dict={'en': 'English Output'},
             langs=['en']
         )
@@ -325,7 +321,7 @@ class TestInputTransFilter(SimpleTestCase):
         self.assertEqual(fragment.attrib['placeholder'], '')
 
     def test_secondary_language_ignores_value_and_populates_placeholder(self):
-        fragment = self.generate_markup_fragment(
+        markup, fragment = self.generate_markup_fragment(
             name_dict={'por': 'Portuguese Output'},
             langs=['en', 'por']
         )
@@ -334,30 +330,29 @@ class TestInputTransFilter(SimpleTestCase):
         self.assertEqual(fragment.attrib['placeholder'], 'Portuguese Output')
 
     def test_no_id_contains_no_id_attribute(self):
-        fragment = self.generate_markup_fragment(input_name=None)
+        markup, fragment = self.generate_markup_fragment(input_name=None)
 
         self.assertFalse('input_id' in fragment.attrib)
 
     def test_no_data_binding_contains_no_data_binding(self):
-        fragment = self.generate_markup_fragment(data_bind=None)
+        markup, fragment = self.generate_markup_fragment(data_bind=None)
 
         self.assertFalse('data-bind' in fragment.attrib)
 
-    # NOTE: documenting existing behavior -- I think this was a side effect
-    # of the parsing logic also being used elsewhere, and I doubt 'value' is meant to have javascript-escaping
-    def test_escapes_value_using_javascript_notation(self):
-        fragment = self.generate_markup_fragment(
-            name_dict={'en': 'English; Output'},
+    def test_escapes_value_using_html_escape(self):
+        markup, fragment = self.generate_markup_fragment(
+            name_dict={'en': 'English <div>Output</div>'},
             langs=['en']
         )
 
-        self.assertEqual(fragment.attrib['value'], 'English\\u003B Output')
+        self.assertIn('value="English &lt;div&gt;Output&lt;/div&gt;"', markup)
+        self.assertEqual(fragment.attrib['value'], 'English <div>Output</div>')
 
-    # NOTE: documenting existing behavior -- it is unlikely this needs to be javascript-escaped
-    def test_escapes_placeholder_using_javascript_notation(self):
-        fragment = self.generate_markup_fragment(
-            name_dict={'por': 'Portuguese; Output'},
+    def test_escapes_placeholder_using_html_escape(self):
+        markup, fragment = self.generate_markup_fragment(
+            name_dict={'por': 'Portuguese <div>Output</div>'},
             langs=['en', 'por']
         )
 
-        self.assertEqual(fragment.attrib['placeholder'], 'Portuguese\\u003B Output')
+        self.assertIn('placeholder="Portuguese &lt;div&gt;Output&lt;/div&gt;"', markup)
+        self.assertEqual(fragment.attrib['placeholder'], 'Portuguese <div>Output</div>')

@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,13 +1,13 @@
+@@ -1,11 +1,11 @@
 -hqDefine("reports/js/bootstrap3/edit_scheduled_report", [
 +hqDefine("reports/js/bootstrap5/edit_scheduled_report", [
      "jquery",
@@ -12,8 +12,5 @@
 -    "hqwebapp/js/bootstrap3/widgets",  // autocomplete widget for email recipient list
 +    "hqwebapp/js/bootstrap5/widgets",  // autocomplete widget for email recipient list
      "jquery-ui/ui/widgets/datepicker",
--    'hqwebapp/js/bootstrap3/components.ko',    // select toggle widget
-+    'hqwebapp/js/bootstrap5/components.ko',    // select toggle widget
- ], function (
-     $,
-     _,
+     'hqwebapp/js/components/select_toggle',
+     "commcarehq",

@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main 'scheduling/js/dashboard' %}
+{% js_entry_b3 'scheduling/js/dashboard' %}
 
 {% block page_content %}
   {% registerurl 'messaging_dashboard' domain %}

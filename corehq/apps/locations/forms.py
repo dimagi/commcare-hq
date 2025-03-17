@@ -13,6 +13,8 @@ from memoized import memoized
 
 from dimagi.utils.couch.database import iter_docs
 
+from corehq import toggles
+from corehq.feature_previews import USE_LOCATION_DISPLAY_NAME
 from corehq.apps.custom_data_fields.edit_entity import (
     CUSTOM_DATA_FIELD_PREFIX,
     CustomDataEditor,
@@ -29,8 +31,10 @@ from corehq.apps.locations.util import (
     get_location_type
 )
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.util import user_display_string
+from corehq.apps.users.util import log_user_change, user_display_string
+from corehq.const import USER_CHANGE_VIA_LOCATION
 from corehq.util.quickcache import quickcache
+from corehq.util.global_request import get_request_domain
 
 from .models import (
     LocationFixtureConfiguration,
@@ -43,23 +47,29 @@ from crispy_forms.utils import flatatt
 
 
 class LocationSelectWidget(forms.Widget):
-    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, placeholder=None):
+    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, placeholder=None,
+                 for_user_location_selection=False):
         super(LocationSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
         self.multiselect = multiselect
         self.placeholder = placeholder
-        self.query_url = reverse('location_search', args=[self.domain])
+        url_name = 'location_search'
+        if (for_user_location_selection
+                and toggles.USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION.enabled(self.domain)):
+            url_name = 'location_search_has_users_only'
+        self.query_url = reverse(url_name, args=[self.domain])
         self.template = 'locations/manage/partials/autocomplete_select_widget.html'
 
     def render(self, name, value, attrs=None, renderer=None):
         location_ids = to_list(value) if value else []
         locations = list(SQLLocation.active_objects
                          .filter(domain=self.domain, location_id__in=location_ids))
-
+        use_location_display_name = USE_LOCATION_DISPLAY_NAME.enabled(get_request_domain())
         initial_data = [{
             'id': loc.location_id,
-            'text': loc.get_path_display(),
+            'text': loc.display_name if use_location_display_name else loc.get_path_display(),
+            'title': loc.get_path_display() if use_location_display_name else loc.display_name,
         } for loc in locations]
 
         return get_template(self.template).render({
@@ -168,7 +178,7 @@ class LocationForm(forms.Form):
         if not self.location.external_id:
             self.fields['external_id'].widget = forms.HiddenInput()
 
-        self.helper = FormHelper()
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.form_tag = False
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
         self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
@@ -281,6 +291,10 @@ class LocationForm(forms.Form):
             if user:
                 user.is_active = False
                 user.save()
+                log_user_change(by_domain=self.domain, for_domain=user.domain,
+                                couch_user=user, changed_by_user=self.user,
+                                changed_via=USER_CHANGE_VIA_LOCATION,
+                                fields_changed={'is_active': user.is_active})
             self.location.user_id = ''
             self.location.save()
 
@@ -525,7 +539,7 @@ class LocationFilterForm(forms.Form):
         initial=False,
     )
     location_status_active = forms.ChoiceField(
-        label=_('Active / Archived'),
+        label="",
         choices=LOCATION_ACTIVE_STATUS,
         required=False,
         widget=SelectToggle(choices=LOCATION_ACTIVE_STATUS, attrs={"ko_value": "location_status_active"}),
@@ -567,7 +581,7 @@ class LocationFilterForm(forms.Form):
                     css_class="btn btn-primary",
                     data_bind="html: buttonHTML",
                 ),
-            ),
+            )
         )
 
     def clean_location_id(self):

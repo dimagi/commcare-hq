@@ -3,7 +3,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main 'users/js/roles_and_permissions' %}
+{% js_entry_b3 'users/js/roles_and_permissions' %}
 {% block page_content %}
   {% registerurl "post_user_role" domain %}
   {% registerurl "delete_user_role" domain %}
@@ -24,6 +24,7 @@
   {% initial_page_data "data_registry_choices" data_registry_choices %}
   {% initial_page_data "can_edit_linked_data" can_edit_linked_data %}
   {% initial_page_data "commcare_analytics_roles" commcare_analytics_roles %}
+  {% initial_page_data "has_restricted_application_access" has_restricted_application_access %}
 
   <p class="lead">
     {% if can_edit_roles %}
@@ -42,7 +43,7 @@
       <p>
         <i class="fa fa-info-circle"></i>
         {% blocktrans %}
-          <a href="https://confluence.dimagi.com/display/commcarepublic/Roles+and+Permissions"
+          <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143957921/Roles+and+Permissions+Overview"
             target="_blank">Learn more</a> about how roles &amp; permissions are used.
         {% endblocktrans %}
       </p>

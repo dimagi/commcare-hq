@@ -53,6 +53,9 @@ class SlidingWindowRateCounter(AbstractRateCounter):
             memoize_timeout=memoize_timeout
         )
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}(key='{self.key}')"
+
     def get(self, scope, timestamp=None):
         if timestamp is None:
             timestamp = time.time()
@@ -103,6 +106,9 @@ class FixedWindowRateCounter(AbstractRateCounter):
         self.window_offset = window_offset
         self.counter = _CounterCache(memoize_timeout, timeout=keep_windows * window_duration)
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}(key='{self.key}')"
+
     @staticmethod
     def _digest(string):
         return hashlib.sha1(string.encode('utf-8')).hexdigest()
@@ -137,7 +143,7 @@ class CounterCache(object):
 
     def incr(self, key, delta=1):
         value = self.shared_cache.incr(key, delta, ignore_key_check=True)
-        if value == 1:
+        if value == delta:
             self.shared_cache.expire(key, timeout=self.timeout)
         self.local_cache.set(key, value, timeout=self.memoized_timeout)
         return value

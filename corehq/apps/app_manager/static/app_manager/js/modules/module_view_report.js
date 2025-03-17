@@ -17,7 +17,7 @@ hqDefine("app_manager/js/modules/module_view_report", function () {
             navMenuMediaItem.default_file_name
         );
 
-        var saveURL = hqImport("hqwebapp/js/initial_page_data").reverse("edit_report_module");
+        var saveURL = initialPageData.reverse("edit_report_module");
         var staticData = staticFilterDataModel(initialPageData.get('static_data_options'));
         var reportModule = reportModuleModel(_.extend({}, initialPageData.get("report_module_options"), {
             lang: initialPageData.get('lang'),
@@ -72,7 +72,7 @@ hqDefine("app_manager/js/modules/module_view_report", function () {
                 allowClear: true,
                 placeholder: " ",   // allowClear only respected if there is a non empty placeholder
                 ajax: {
-                    url: (hqImport("hqwebapp/js/initial_page_data").reverse("choice_list_api").split('report_id')[0]
+                    url: (initialPageData.reverse("choice_list_api").split('report_id')[0]
                           + element.data("filter-name") + "/"),
                     dataType: 'json',
                     delay: 250,

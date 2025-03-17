@@ -6,13 +6,14 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list',
     'hqwebapp/js/bootstrap5/knockout_bindings.ko',     // needed for sortable and jqueryElement bindings
+    'commcarehq',
 ], function (
     $,
     ko,
     _,
     assertProperties,
     initialPageData,
-    uiElementKeyValueList
+    uiElementKeyValueList,
 ) {
     function Choice(choice) {
         var self = {};
@@ -35,6 +36,16 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         self.slug = ko.observable(options.slug);
         self.label = ko.observable(options.label);
         self.is_required = ko.observable(options.is_required);
+
+        // Compare stringified arrays to match contents, not references.
+        // Direct assignment of the observable to options.required_for won't match requiredForOptions
+        const matchingOption = parent.requiredForOptions.find(option =>
+            JSON.stringify(option.value) === JSON.stringify(options.required_for || []),
+        );
+        const initialRequiredFor = matchingOption ? matchingOption.value :
+            ((parent.requiredForOptions.find(option => option.isDefault) || {}).value || []);
+        self.required_for = ko.observableArray(initialRequiredFor);
+
         self.choices = ko.observableArray(options.choices.map(function (choice) {
             return Choice(choice);
         }));
@@ -104,6 +115,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
                 'slug': self.slug(),
                 'label': self.label(),
                 'is_required': self.is_required(),
+                'required_for': self.required_for(),
                 'choices': choices,
                 'regex': regex,
                 'regex_msg': regexMsg,
@@ -135,7 +147,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
 
         self.fields = uiElementKeyValueList.new(
             String(Math.random()).slice(2),
-            gettext("Edit Profile")
+            gettext("Edit Profile"),
         );
         self.fields.setEdit(self.isEditable());
 
@@ -168,7 +180,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
 
     function CustomDataFieldsModel(options) {
         assertProperties.assertRequired(options,
-            [ 'custom_fields', 'custom_fields_profiles', 'can_edit_linked_data']);
+            [ 'custom_fields', 'custom_fields_profiles', 'can_edit_linked_data', 'required_for_options', 'profile_required_for_options']);
 
         var self = {};
         self.data_fields = ko.observableArray();
@@ -182,6 +194,8 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         self.toggleLinkedLock = function () {
             self.unlockLinkedData(!self.unlockLinkedData());
         };
+
+        self.requiredForOptions = options.required_for_options || [];
 
         self.hasLinkedData = ko.pureComputed(function () {
             const hasLinkedFields = self.data_fields().some(field => field.upstream_id);
@@ -242,6 +256,22 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
                 return profile.serialize();
             });
         };
+        self.profileRequiredForOptions = options.profile_required_for_options || [];
+        let initialRequiredFor;
+        // Check if there is already a user type set as requiring a profile selection and
+        // match to options from UserFieldsView
+        if (options.current_profile_required_for_user_type) {
+            const currentProfileRequiredForList = options.current_profile_required_for_user_type;
+            let profileReqiredForMatch = self.profileRequiredForOptions.find(option =>
+                JSON.stringify(option.value) === JSON.stringify(currentProfileRequiredForList || []),
+            );
+            initialRequiredFor = _.has(profileReqiredForMatch, 'value') ? profileReqiredForMatch.value :
+                (self.profileRequiredForOptions.find(function (option) {return option && option.isDefault;}) || {}).value || [];
+        } else {
+            // If no user type already requires a profile selection set to default
+            initialRequiredFor = (self.profileRequiredForOptions.find(function (option) {return option && option.isDefault;}) || {}).value || [];
+        }
+        self.profile_required_for = ko.observableArray(initialRequiredFor);
 
         self.submitFields = function (fieldsForm) {
             var customDataFieldsForm = $("<form>")
@@ -274,6 +304,11 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
                 .attr('value', $('#custom-fields-form .nav-tabs li:last').hasClass('active'))
                 .appendTo(customDataFieldsForm);
 
+            $('<input type="hidden">')
+                .attr('name', 'require_profile')
+                .attr('value', self.profile_required_for())
+                .appendTo(customDataFieldsForm);
+
             customDataFieldsForm.appendTo("body");
             customDataFieldsForm.submit();
         };
@@ -303,6 +338,9 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
             custom_fields: initialPageData.get('custom_fields'),
             custom_fields_profiles: initialPageData.get('custom_fields_profiles'),
             can_edit_linked_data: initialPageData.get('can_edit_linked_data'),
+            required_for_options: initialPageData.get('required_for_options'),
+            profile_required_for_options: initialPageData.get('profile_required_for_options'),
+            current_profile_required_for_user_type: initialPageData.get('profile_required_for_user_type'),
         });
         customDataFieldsModel.data_fields.subscribe(function () {
             $("#save-custom-fields").prop("disabled", false);

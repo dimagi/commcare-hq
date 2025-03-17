@@ -7,14 +7,14 @@ hqDefine('export/js/utils', [
     $,
     ko,
     _,
-    constants
+    constants,
 ) {
     var getTagCSSClass = function (tag) {
-        var cls = 'label';
+        var cls = 'badge';
         if (tag === constants.TAG_DELETED) {
-            return cls + ' label-warning';
+            return cls + ' text-bg-warning';
         } else {
-            return cls + ' label-default';
+            return cls + ' text-bg-secondary';
         }
     };
 

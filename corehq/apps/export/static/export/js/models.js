@@ -8,24 +8,26 @@ hqDefine('export/js/models', [
     'jquery',
     'knockout',
     'underscore',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
     'analytix/js/google',
     'analytix/js/kissmetrix',
     'export/js/const',
     'export/js/utils',
-    'hqwebapp/js/bootstrap3/validators.ko',        // needed for validation of customPathString
-    'hqwebapp/js/bootstrap3/knockout_bindings.ko', // needed for multirow_sortable binding
+    'hqwebapp/js/bootstrap5/validators.ko',        // needed for validation of customPathString
+    'hqwebapp/js/bootstrap5/knockout_bindings.ko', // needed for multirow_sortable binding
 ], function (
     $,
     ko,
     _,
+    bootstrap,
     initialPageData,
     toggles,
     googleAnalytics,
     kissmetricsAnalytics,
     constants,
-    utils
+    utils,
 ) {
     /**
      * readablePath
@@ -297,7 +299,7 @@ hqDefine('export/js/models', [
                         response.progress.current !== response.progress.total) {
                     window.setTimeout(
                         self.checkBuildSchemaProgress.bind(self, response.download_id, successHandler, errorHandler),
-                        2000
+                        2000,
                     );
                 }
             },
@@ -350,7 +352,7 @@ hqDefine('export/js/models', [
     ExportInstance.prototype.getSharingHelpText = gettext(
         '<strong>Private</strong>: Only you can edit and export.'
         + '<br/> <strong>Export Only</strong>: You can edit and export, other users can only export.'
-        + '<br/> <strong>Edit and Export</strong>: All users can edit and export.'
+        + '<br/> <strong>Edit and Export</strong>: All users can edit and export.',
     );
 
     /**
@@ -451,7 +453,7 @@ hqDefine('export/js/models', [
         table.showDeleted(!table.showDeleted());
 
         if (this.numberOfAppsToProcess > 0 && table.showDeleted()) {
-            $('#export-process-deleted-applications').modal('show');
+            bootstrap.Modal.getOrCreateInstance('#export-process-deleted-applications').show();
         }
     };
 
@@ -576,7 +578,7 @@ hqDefine('export/js/models', [
         const queryString = window.location.search;
         const urlParams = new URLSearchParams(queryString);
         if (urlParams.get('load_deprecated') !== 'True' && table.showDeprecated()) {
-            $('#export-process-deprecated-properties').modal('show');
+            bootstrap.Modal.getOrCreateInstance('#export-process-deprecated-properties').show();
         }
     };
 

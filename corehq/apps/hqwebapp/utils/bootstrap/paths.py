@@ -8,6 +8,7 @@ TRACKED_JS_FOLDERS = ["js", "spec"]
 PARENT_PATHS = {
     "corehq": COREHQ_BASE_DIR,
     "custom": CUSTOM_BASE_DIR,
+    "messaging": COREHQ_BASE_DIR / "messaging",
     "motech": COREHQ_BASE_DIR / "motech",
     "casexml": COREHQ_BASE_DIR / "ex-submodules/casexml/apps",
     "ex-submodules": COREHQ_BASE_DIR / "ex-submodules",
@@ -17,7 +18,6 @@ IGNORED_PATHS_BY_APP = {
     "hqwebapp": [
         "hqwebapp/js/resource_versions.js",
         "hqwebapp/base.html",
-        "hqwebapp/base_mobile.html",
         "hqwebapp/includes/inactivity_modal_data.html",
         "hqwebapp/includes/core_libraries.html",
         "hqwebapp/includes/ui_element_js.html",
@@ -54,6 +54,16 @@ def is_ignored_path(app_name, path):
 
 def is_bootstrap5_path(path):
     return '/bootstrap5/' in str(path)
+
+
+def is_bootstrap3_path(path):
+    if path is None:
+        return False
+    return '/bootstrap3/' in path
+
+
+def is_mocha_path(path):
+    return str(path).endswith('mocha.html')
 
 
 def get_app_name_and_slug(app_name):
@@ -120,3 +130,9 @@ def get_split_folders(paths, include_root=False):
             path.replace(str(COREHQ_BASE_DIR), '') for path in split_folders
         }
     return split_folders
+
+
+def get_bootstrap5_path(bootstrap3_path):
+    if bootstrap3_path is None:
+        return None
+    return bootstrap3_path.replace('/bootstrap3/', '/bootstrap5/')

@@ -6,6 +6,7 @@ hqDefine('dhis2/js/dhis2_entity_config', [
     'hqwebapp/js/bootstrap5/alert_user',
     'hqwebapp/js/base_ace',
     'dhis2/js/json_syntax_parse',
+    'commcarehq',
 ], function (
     $,
     _,
@@ -13,7 +14,7 @@ hqDefine('dhis2/js/dhis2_entity_config', [
     initialPageData,
     alertUser,
     baseAce,
-    jsonParse
+    jsonParse,
 ) {
     var caseConfig = function (data) {
         var self = {};
@@ -80,12 +81,12 @@ hqDefine('dhis2/js/dhis2_entity_config', [
                 {'case_configs': JSON.stringify(self.oCaseConfigs())},
                 function (data) {
                     alertUser.alert_user(data['success'], 'success', true);
-                }
+                },
             ).fail(
                 function (data) {
                     var errors = '<ul><li>' + data.responseJSON['errors'].join('</li><li>') + '</li></ul>';
                     alertUser.alert_user(gettext('Unable to save case configs') + errors, 'danger');
-                }
+                },
             );
         };
 
@@ -94,7 +95,7 @@ hqDefine('dhis2/js/dhis2_entity_config', [
 
     $(function () {
         var viewModel = dhis2EntityConfig(
-            initialPageData.get('case_configs')
+            initialPageData.get('case_configs'),
         );
         viewModel.init();
         $('#dhis2-entity-config').koApplyBindings(viewModel);

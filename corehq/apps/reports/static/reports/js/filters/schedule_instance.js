@@ -1,9 +1,10 @@
 hqDefine("reports/js/filters/schedule_instance", [
     'jquery',
     'knockout',
+    'bootstrap-daterangepicker/daterangepicker',
 ], function (
     $,
-    ko
+    ko,
 ) {
     var model = function (initial, conditionalAlertChoices) {
         var self = {};
@@ -23,7 +24,7 @@ hqDefine("reports/js/filters/schedule_instance", [
                         format: 'YYYY-MM-DD',
                     },
                     singleDatePicker: true,
-                }
+                },
             );
         });
 

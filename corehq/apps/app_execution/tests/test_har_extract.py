@@ -73,7 +73,7 @@ class TestHarExtraction(SimpleTestCase, TestFileMixin):
         config = HarParser().parse(har)
         self.assertEqual(config.workflow.steps, [
             steps.CommandStep(value='Baby Log'),
-            steps.CommandStep(id='action 0')
+            steps.CommandIdStep(value='action 0')
         ])
 
 
@@ -82,8 +82,8 @@ def get_reg_form_steps():
         steps.CommandStep(value='Register'),
         steps.CommandStep(value='Register cat'),
         steps.FormStep(children=[
-            steps.AnswerQuestionStep(question_text='Name', question_id='name', value='fluffy'),
-            steps.AnswerQuestionStep(question_text='Date', question_id='date', value='2024-05-14'),
+            steps.AnswerQuestionIdStep(question_id='name', value='fluffy'),
+            steps.AnswerQuestionIdStep(question_id='date', value='2024-05-14'),
             steps.SubmitFormStep()
         ])
     ]

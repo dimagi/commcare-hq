@@ -1,29 +1,29 @@
-'use strict';
 hqDefine('cloudcare/js/utils', [
     'jquery',
     'underscore',
     'backbone.marionette',
     'moment',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/tempus_dominus',
     "hqwebapp/js/toggles",
     "cloudcare/js/formplayer/constants",
     "cloudcare/js/formplayer/layout/views/progress_bar",
     'nprogress/nprogress',
     'sentry_browser',
     "cloudcare/js/formplayer/users/models",
-    'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min',  // for $.datetimepicker
 ], function (
     $,
     _,
     Marionette,
     moment,
     initialPageData,
+    hqTempusDominus,
     toggles,
     constants,
     ProgressBar,
     NProgress,
     Sentry,
-    UsersModels
+    UsersModels,
 ) {
     if (!String.prototype.startsWith) {
         String.prototype.startsWith = function (searchString, position) {
@@ -36,7 +36,7 @@ hqDefine('cloudcare/js/utils', [
         showSpinner: false,
     });
 
-    var showError = function (message, $el, reportToHq) {
+    var showError = function (message, $el, reportToHq, additionalData) {
         message = getErrorMessage(message);
         // Make message more user friendly since html isn't useful here
         if (message.includes('500') && message.includes('<!DOCTYPE html>')) {
@@ -45,10 +45,10 @@ hqDefine('cloudcare/js/utils', [
         }
         _show(message, $el, null, "alert-danger");
         if (reportToHq === undefined || reportToHq) {
-            reportFormplayerErrorToHQ({
+            reportFormplayerErrorToHQ(Object.assign({
                 type: 'show_error_notification',
                 message: message,
-            });
+            }, (additionalData || {})));
         }
     };
 
@@ -108,17 +108,7 @@ hqDefine('cloudcare/js/utils', [
         // HTML errors may already have an alert dialog
         $alertDialog = $container.hasClass("alert") ? $container : $container.find('.alert');
         try {
-            if (window.USE_BOOTSTRAP5) {
-                $alertDialog.append($("<button />").addClass("btn-close").attr("data-bs-dismiss", "alert").attr("aria-label", gettext("Close")));
-            } else {
-                $alertDialog
-                    .prepend(
-                        $("<a />")
-                            .addClass("close")
-                            .attr("data-dismiss", "alert")
-                            .html("&times;")
-                    );
-            }
+            $alertDialog.append($("<button />").addClass("btn-close").attr("data-bs-dismiss", "alert").attr("aria-label", gettext("Close")));
         } catch (e) {
             // escaping a DOM-related error from running mocha tests using grunt
             // in the command line. This passes just fine in the browser but
@@ -139,7 +129,7 @@ hqDefine('cloudcare/js/utils', [
 
     var getRegionContainer = function () {
         const RegionContainer = Marionette.View.extend({
-            el: "#menu-container",
+            el: "#main-container",
 
             regions: {
                 main: "#menu-region",
@@ -147,7 +137,9 @@ hqDefine('cloudcare/js/utils', [
                 breadcrumb: "#breadcrumb-region",
                 persistentCaseTile: "#persistent-case-tile",
                 restoreAsBanner: '#restore-as-region',
+                mobileRestoreAsBanner: '#mobile-restore-as-region',
                 sidebar: '#sidebar-region',
+                persistentMenu: "#persistent-menu-region",
             },
         });
 
@@ -155,14 +147,11 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var showProminentLoading = function () {
-        hqRequire([
-            "cloudcare/js/formplayer/app",
-            "cloudcare/js/formplayer/layout/views/progress_bar",
-        ], function (FormplayerFrontend, ProgressBar) {
+        import("cloudcare/js/formplayer/app").then(function (FormplayerFrontend) {
             setTimeout(function () {
                 const formplayerQueryInProgress = sessionStorage.formplayerQueryInProgress && JSON.parse(sessionStorage.formplayerQueryInProgress);
                 if (formplayerQueryInProgress) {
-                    const progressView = ProgressBar({
+                    const progressView = new ProgressBar({
                         progressMessage: gettext("Loading..."),
                     });
                     if (!FormplayerFrontend.regions) {
@@ -233,7 +222,7 @@ hqDefine('cloudcare/js/utils', [
         if (isError) {
             showError(
                 gettext('Could not clear user data. Please report an issue if this persists.'),
-                $('#cloudcare-notifications')
+                $('#cloudcare-notifications'),
             );
         } else {
             showSuccess(gettext('User data successfully cleared.'), $('#cloudcare-notifications'), 5000);
@@ -245,7 +234,7 @@ hqDefine('cloudcare/js/utils', [
         if (isError) {
             showError(
                 gettext('Error breaking locks. Please report an issue if this persists.'),
-                $('#cloudcare-notifications')
+                $('#cloudcare-notifications'),
             );
         } else {
             showSuccess(message, $('#cloudcare-notifications'), 5000);
@@ -256,7 +245,7 @@ hqDefine('cloudcare/js/utils', [
         if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
             $('#breadcrumb-region').css('z-index', '');
             clearInterval(sessionStorage.progressIncrementInterval);
-            hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
+            import("cloudcare/js/formplayer/app").then(function (FormplayerFrontend) {
                 const progressView = FormplayerFrontend.regions.getRegion('loadingProgress').currentView;
                 if (progressView) {
                     progressView.setProgress(100, 100, 200);
@@ -314,37 +303,9 @@ hqDefine('cloudcare/js/utils', [
             window.console.error(
                 "reportFormplayerErrorToHQ failed hard and there is nowhere " +
                 "else to report this error: " + JSON.stringify(data),
-                e
+                e,
             );
         }
-    };
-
-    var dateTimePickerTooltips = {     // use default text, but enable translations
-        today: gettext('Go to today'),
-        clear: gettext('Clear selection'),
-        close: gettext('Close the picker'),
-        selectMonth: gettext('Select Month'),
-        prevMonth: gettext('Previous Month'),
-        nextMonth: gettext('Next Month'),
-        selectYear: gettext('Select Year'),
-        prevYear: gettext('Previous Year'),
-        nextYear: gettext('Next Year'),
-        selectDecade: gettext('Select Decade'),
-        prevDecade: gettext('Previous Decade'),
-        nextDecade: gettext('Next Decade'),
-        prevCentury: gettext('Previous Century'),
-        nextCentury: gettext('Next Century'),
-        pickHour: gettext('Pick Hour'),
-        incrementHour: gettext('Increment Hour'),
-        decrementHour: gettext('Decrement Hour'),
-        pickMinute: gettext('Pick Minute'),
-        incrementMinute: gettext('Increment Minute'),
-        decrementMinute: gettext('Decrement Minute'),
-        pickSecond: gettext('Pick Second'),
-        incrementSecond: gettext('Increment Second'),
-        decrementSecond: gettext('Decrement Second'),
-        togglePeriod: gettext('Toggle Period'),
-        selectTime: gettext('Select Time'),
     };
 
     /**
@@ -372,8 +333,17 @@ hqDefine('cloudcare/js/utils', [
         return inputDate;
     };
 
-    var dateFormat = 'MM/DD/YYYY';
-    var dateFormats = ['MM/DD/YYYY', 'YYYY-MM-DD', 'M/D/YYYY', 'M/D/YY', 'M-D-YYYY', 'M-D-YY', moment.defaultFormat];
+    var dateFormat = 'M/D/YYYY';
+    var dateFormats = ['MM/DD/YYYY', 'M/DD/YYYY', 'MM/D/YYYY',  'YYYY-MM-DD', 'M/D/YYYY', 'M/D/YY', 'M-D-YYYY', 'M-D-YY', moment.defaultFormat];
+
+    // Annoyingly, moment and tempus dominus use different formats.
+    // Moment: https://momentjs.com/docs/#/parsing/string-format/
+    // TD: https://getdatepicker.com/6/plugins/customDateFormat.html
+    // TD does have a plugin to integrate with moment, but since other usages of TD in HQ
+    // don't need it, instead of enabling that, hack around this.
+    const _momentFormatToTempusFormat = function (momentFormat) {
+        return momentFormat.replaceAll("D", "d").replaceAll("Y", "y").replaceAll("A", "T");
+    };
 
     /** Coerce an input date string to a moment object */
     var parseInputDate = function (dateString) {
@@ -389,26 +359,28 @@ hqDefine('cloudcare/js/utils', [
             return;
         }
 
-        $el.datetimepicker({
-            date: selectedDate,
-            useCurrent: false,
-            showClear: true,
-            showClose: true,
-            showTodayButton: true,
-            debug: true,
-            format: dateFormat,
-            extraFormats: dateFormats,
-            useStrict: true,
-            icons: {
-                today: 'glyphicon glyphicon-calendar',
+        let options = {
+            display: {
+                buttons: {
+                    clear: true,
+                    close: true,
+                    today: true,
+                },
             },
-            tooltips: dateTimePickerTooltips,
-            parseInputDate: parseInputDate,
-        });
+            localization: {
+                format: _momentFormatToTempusFormat(dateFormat),
+            },
+            useCurrent: false,
+        };
+        if (selectedDate) {
+            options.viewDate = new hqTempusDominus.tempusDominus.DateTime(selectedDate);
+        }
+        let picker = hqTempusDominus.createDatePicker($el.get(0), options);
 
-        $el.on("focusout", $el.data("DateTimePicker").hide);
         $el.attr("placeholder", dateFormat);
-        $el.attr("pattern", "[0-9\-/]+");   // eslint-disable-line no-useless-escape
+        $el.attr("pattern", "[0-9\\-\\/]+");
+
+        return picker;
     };
 
     var initTimePicker = function ($el, selectedTime, timeFormat) {
@@ -417,18 +389,24 @@ hqDefine('cloudcare/js/utils', [
         }
 
         let date = moment(selectedTime, timeFormat);
-        $el.datetimepicker({
-            date: date.isValid() ? date : null,
-            format: timeFormat,
-            useStrict: true,
-            useCurrent: false,
-            showClear: true,
-            showClose: true,
-            debug: true,
-            tooltips: dateTimePickerTooltips,
-        });
-
-        $el.on("focusout", $el.data("DateTimePicker").hide);
+        const tempusTimeFormat = _momentFormatToTempusFormat(timeFormat);
+        let options = {
+            display: {
+                buttons: {
+                    clear: true,
+                    close: true,
+                },
+            },
+            localization: {
+                format: tempusTimeFormat,
+                hourCycle: tempusTimeFormat.indexOf('T') === -1 ? 'h23' : 'h12',
+            },
+            useCurrent: true,
+        };
+        if (date.isValid()) {
+            options.viewDate = new hqTempusDominus.tempusDominus.DateTime(date);
+        }
+        return hqTempusDominus.createTimePicker($el.get(0), options);
     };
 
     var smallScreenIsEnabled = function () {

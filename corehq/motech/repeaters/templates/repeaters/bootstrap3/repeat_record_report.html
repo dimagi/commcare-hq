@@ -4,16 +4,7 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 
-{% block js %}{{ block.super }}
-    {% compress js %}
-        <script src="{% static 'ace-builds/src-min-noconflict/ace.js' %}"></script>
-        <script src="{% static 'ace-builds/src-min-noconflict/mode-json.js' %}"></script>
-        <script src="{% static 'ace-builds/src-min-noconflict/mode-xml.js' %}"></script>
-        <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
-        <script src="{% static 'repeaters/js/bootstrap3/repeat_record_report.js' %}"></script>
-        <script src="{% static 'repeaters/js/repeat_record_report_selects.js' %}"></script>
-    {% endcompress %}
-{% endblock js %}
+{% js_entry_b3 "repeaters/js/bootstrap3/repeat_record_report" %}
 
 {% block filter_panel %} {{ block.super }}
   <div>
@@ -42,22 +33,22 @@
               {% trans 'Requeue' %}
             </button>
             <label class="checkbox" >
-              <input type="checkbox" id="select-all" data-id="{{ form_query_string|urlencode }}">
+              <input type="checkbox" id="select-all">
                 {% blocktrans %}Select all {{ total }} payloads{% endblocktrans %}
             </label>
             <label class="checkbox" >
-              <input type="checkbox" id="cancel-all" data-id="{{ form_query_string_pending|urlencode }}">
+              <input type="checkbox" id="select-pending">
                 {% blocktrans %}Select {{ total_pending }} pending payloads{% endblocktrans %}
             </label>
             <label class="checkbox" >
-              <input type="checkbox" id="requeue-all" data-id="{{ form_query_string_cancelled|urlencode }}">
+              <input type="checkbox" id="select-cancelled">
                 {% blocktrans %}Select {{ total_cancelled }} cancelled payloads{% endblocktrans %}
             </label>
           </div>
         </div>
       {% endif %}
   </div>
-  <div id="warning" class="alert alert-warning hide">
+  <div id="no-selection" class="alert alert-warning hide">
     {% blocktrans %}Please select at least one payload{% endblocktrans %}
   </div>
   <div id="not-allowed" class="alert alert-warning hide">
@@ -91,6 +82,8 @@
     {% registerurl 'repeat_record' domain %}
     {% registerurl 'cancel_repeat_record' domain %}
     {% registerurl 'requeue_repeat_record' domain %}
+    {% initial_page_data 'payload_id' payload_id %}
+    {% initial_page_data 'repeater_id' repeater_id %}
 {% endblock %}
 
 {% block modals %}{{ block.super }}
@@ -115,14 +108,14 @@
         </div>
     </div>
 
-    <!-- Modal for "Resend Payload" errors -->
+    <!-- Modal for error messages from server -->
     <div class="modal fade" id="payload-error-modal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span>
                     </button>
-                    <h4 class="modal-title">{% trans "Payload Error" %}</h4>
+                    <h4 class="modal-title">{% trans "Error" %}</h4>
                 </div>
                 <div class="modal-body">
                     <div class="error-message"></div>

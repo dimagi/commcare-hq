@@ -27,6 +27,7 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
 )
 from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.userreports.tests.utils import cleanup_ucr
 from corehq.apps.users.models import Document, WebUser
 from corehq.form_processor.models import CommCareCase
 from corehq.util.test_utils import flag_enabled
@@ -439,27 +440,25 @@ class TestUCRPaginated(TestCase):
             table_id=uuid.uuid4().hex,
         )
         cls.data_source.save()
-        cls.addClassCleanup(cls.data_source.delete)
         rebuild_indicators(cls.data_source._id)
+        cls.addClassCleanup(cleanup_ucr, cls.data_source)
         cls.client = Client()
+        cls.api_url = reverse("api_get_ucr_data", args=[cls.domain.name, 'v1'])
 
     def test_forbidden_when_feature_flag_not_enabled(self):
-        url = reverse("api_get_ucr_data", args=[self.domain.name])
         self.client.login(username=self.username, password=self.password)
-        response = self.client.get(url)
+        response = self.client.get(self.api_url)
         self.assertEqual(response.status_code, 403)
 
     @flag_enabled("EXPORT_DATA_SOURCE_DATA")
     def test_bad_request_when_data_source_id_not_specified(self):
-        url = reverse("api_get_ucr_data", args=[self.domain.name])
         self.client.login(username=self.username, password=self.password)
-        response = self.client.get(url)
+        response = self.client.get(self.api_url)
         self.assertEqual(response.status_code, 400)
 
     @flag_enabled("EXPORT_DATA_SOURCE_DATA")
     def test_formatted_response(self):
-        url = reverse("api_get_ucr_data", args=[self.domain.name])
-        url = f"{url}?data_source_id={self.data_source._id}"
+        url = f"{self.api_url}?data_source_id={self.data_source._id}"
         self.client.login(username=self.username, password=self.password)
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
@@ -493,9 +492,8 @@ class TestUCRPaginated(TestCase):
                 "val3": None,
             }
         ]
-        url = reverse("api_get_ucr_data", args=[self.domain.name])
         limit = 2
-        url = f"{url}?limit={limit}&data_source_id={self.data_source._id}"
+        url = f"{self.api_url}?limit={limit}&data_source_id={self.data_source._id}"
         self.client.login(username=self.username, password=self.password)
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
@@ -532,9 +530,8 @@ class TestUCRPaginated(TestCase):
                 "val3": None,
             }
         ]
-        url = reverse("api_get_ucr_data", args=[self.domain.name])
         limit = 2
-        url = f"{url}?limit={limit}&data_source_id={self.data_source._id}"
+        url = f"{self.api_url}?limit={limit}&data_source_id={self.data_source._id}"
         self.client.login(username=self.username, password=self.password)
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)

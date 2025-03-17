@@ -1,21 +1,16 @@
 --- 
 +++ 
-@@ -1,4 +1,4 @@
+@@ -1,64 +1,64 @@
 -{% extends "reports/bootstrap3/base_template.html" %}
 +{% extends "reports/bootstrap5/base_template.html" %}
  {% load hq_shared_tags %}
  {% load compress %}
  {% load i18n %}
-@@ -10,7 +10,7 @@
-         <script src="{% static 'ace-builds/src-min-noconflict/mode-json.js' %}"></script>
-         <script src="{% static 'ace-builds/src-min-noconflict/mode-xml.js' %}"></script>
-         <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
--        <script src="{% static 'repeaters/js/bootstrap3/repeat_record_report.js' %}"></script>
-+        <script src="{% static 'repeaters/js/bootstrap5/repeat_record_report.js' %}"></script>
-         <script src="{% static 'repeaters/js/repeat_record_report_selects.js' %}"></script>
-     {% endcompress %}
- {% endblock js %}
-@@ -18,56 +18,56 @@
+ {% load crispy_forms_tags %}
+ 
+-{% js_entry_b3 "repeaters/js/bootstrap3/repeat_record_report" %}
++{% js_entry "repeaters/js/bootstrap5/repeat_record_report" %}
+ 
  {% block filter_panel %} {{ block.super }}
    <div>
        {% if total > 0 %}
@@ -50,29 +45,29 @@
                {% trans 'Requeue' %}
              </button>
 -            <label class="checkbox" >
--              <input type="checkbox" id="select-all" data-id="{{ form_query_string|urlencode }}">
+-              <input type="checkbox" id="select-all">
 +            <label class="checkbox" >  {# todo B5: css:checkbox #}
-+              <input type="checkbox" id="select-all" data-id="{{ form_query_string|urlencode }}">  {# todo B5: css:checkbox #}
++              <input type="checkbox" id="select-all">  {# todo B5: css:checkbox #}
                  {% blocktrans %}Select all {{ total }} payloads{% endblocktrans %}
              </label>
 -            <label class="checkbox" >
--              <input type="checkbox" id="cancel-all" data-id="{{ form_query_string_pending|urlencode }}">
+-              <input type="checkbox" id="select-pending">
 +            <label class="checkbox" >  {# todo B5: css:checkbox #}
-+              <input type="checkbox" id="cancel-all" data-id="{{ form_query_string_pending|urlencode }}">  {# todo B5: css:checkbox #}
++              <input type="checkbox" id="select-pending">  {# todo B5: css:checkbox #}
                  {% blocktrans %}Select {{ total_pending }} pending payloads{% endblocktrans %}
              </label>
 -            <label class="checkbox" >
--              <input type="checkbox" id="requeue-all" data-id="{{ form_query_string_cancelled|urlencode }}">
+-              <input type="checkbox" id="select-cancelled">
 +            <label class="checkbox" >  {# todo B5: css:checkbox #}
-+              <input type="checkbox" id="requeue-all" data-id="{{ form_query_string_cancelled|urlencode }}">  {# todo B5: css:checkbox #}
++              <input type="checkbox" id="select-cancelled">  {# todo B5: css:checkbox #}
                  {% blocktrans %}Select {{ total_cancelled }} cancelled payloads{% endblocktrans %}
              </label>
            </div>
          </div>
        {% endif %}
    </div>
--  <div id="warning" class="alert alert-warning hide">
-+  <div id="warning" class="alert alert-warning d-none">
+-  <div id="no-selection" class="alert alert-warning hide">
++  <div id="no-selection" class="alert alert-warning d-none">
      {% blocktrans %}Please select at least one payload{% endblocktrans %}
    </div>
 -  <div id="not-allowed" class="alert alert-warning hide">
@@ -89,7 +84,7 @@
              <span class="sr-only">{% blocktrans %}Close{% endblocktrans %}</span></button>
            <h4 class="modal-title">{% blocktrans %}Confirmation{% endblocktrans %}</h4>
          </div>
-@@ -75,7 +75,7 @@
+@@ -66,7 +66,7 @@
            {% blocktrans %}Are you sure?{% endblocktrans %}
          </div>
          <div class="modal-footer">
@@ -98,7 +93,7 @@
              {% blocktrans %}No{% endblocktrans %}
            </button>
            <button type="button" id="confirm-button" data-action="" data-flag="" class="btn btn-primary">
-@@ -98,8 +98,8 @@
+@@ -91,8 +91,8 @@
      <div class="modal fade full-screen-modal" id="view-record-payload-modal" tabindex="-1" role="dialog">
          <div class="modal-dialog" role="document">
              <div class="modal-content">
@@ -109,7 +104,7 @@
                      </button>
                      <h4 class="modal-title">{% trans "Payload" %}</h4>
                  </div>
-@@ -107,7 +107,7 @@
+@@ -100,7 +100,7 @@
                      <div class="payload"></div>
                  </div>
                  <div class="modal-footer">
@@ -118,7 +113,7 @@
                      {% trans "Close" %}
                      </button>
                  </div>
-@@ -119,8 +119,8 @@
+@@ -112,8 +112,8 @@
      <div class="modal fade" id="payload-error-modal" tabindex="-1" role="dialog">
          <div class="modal-dialog" role="document">
              <div class="modal-content">
@@ -127,9 +122,9 @@
 +                <div class="modal-header">  {# todo B5: css:modal-header #}
 +                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span>  {# todo B5: css:close #}
                      </button>
-                     <h4 class="modal-title">{% trans "Payload Error" %}</h4>
+                     <h4 class="modal-title">{% trans "Error" %}</h4>
                  </div>
-@@ -128,7 +128,7 @@
+@@ -121,7 +121,7 @@
                      <div class="error-message"></div>
                  </div>
                  <div class="modal-footer">

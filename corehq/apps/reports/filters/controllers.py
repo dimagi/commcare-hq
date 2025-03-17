@@ -45,6 +45,7 @@ class EmwfOptionsController(object):
         self.domain = domain
         self.search = search
         self.case_sharing_only = case_sharing_only
+        self.include_locations_with_no_users = True
 
     @property
     @memoized
@@ -96,6 +97,8 @@ class EmwfOptionsController(object):
 
         if self.case_sharing_only:
             locations = locations.filter(location_type__shares_cases=True)
+        if not self.include_locations_with_no_users:
+            locations = locations.filter(location_type__has_users=True)
         return locations.accessible_to_user(self.domain, self.request.couch_user)
 
     def get_locations_size(self, query):
@@ -195,7 +198,8 @@ class EmwfOptionsController(object):
         )
         results = [
             {'id': entry[0], 'text': entry[1]} if len(entry) == 2 else
-            {'id': entry[0], 'text': entry[1], 'is_active': entry[2]} for entry
+            {'id': entry[0], 'text': entry[1], 'is_active': entry[2]} if len(entry) == 3 else
+            {'id': entry[0], 'text': entry[1], 'is_active': entry[2], 'title': entry[3]} for entry
             in options
         ]
 

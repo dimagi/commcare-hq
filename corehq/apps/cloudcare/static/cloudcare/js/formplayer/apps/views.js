@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/apps/views", [
     'jquery',
     'underscore',
@@ -16,12 +15,12 @@ hqDefine("cloudcare/js/formplayer/apps/views", [
     kissmetrics,
     constants,
     FormplayerFrontend,
-    AppsAPI
+    AppsAPI,
 ) {
     var GridItem = Marionette.View.extend({
         template: _.template($("#row-template").html() || ""),
         tagName: "div",
-        className: "grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request",
+        className: "grid-item col-sm-6 col-md-4 col-xl-3 formplayer-request",
         events: {
             "click": "rowClick",
             "keydown": "rowKeyAction",
@@ -29,7 +28,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", [
 
         rowClick: function (e) {
             e.preventDefault();
-            FormplayerFrontend.trigger("app:select", this.model.get('_id'));
+            FormplayerFrontend.trigger("app:select", this.model.get('copy_of'));
         },
 
         rowKeyAction: function (e) {
@@ -101,14 +100,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", [
     var GridView = Marionette.CollectionView.extend({
         template: _.template($("#grid-template").html() || ""),
         childView: GridItem,
-        childViewContainer: function () {
-            if (window.USE_BOOTSTRAP5) {
-                return ".row";
-            } else {
-                return ".js-application-container";
-            }
-        },
-
+        childViewContainer: ".row",
         events: _.extend(BaseAppView.events),
         incompleteSessionsClick: _.extend(BaseAppView.incompleteSessionsClick),
         syncClick: _.extend(BaseAppView.syncClick),
@@ -119,8 +111,18 @@ hqDefine("cloudcare/js/formplayer/apps/views", [
         restoreAsKeyAction: _.extend(BaseAppView.restoreAsKeyAction),
         settingsKeyAction: _.extend(BaseAppView.settingsKeyAction),
 
+        // Cannot append at the end of the parent because there are
+        // special grid items.
+        attachHtml: function attachHtml(els, $container) {
+            let childElement = $container.find("#put-apps-here");
+            $container[0].insertBefore(els, childElement[0]);
+        },
+
         initialize: function (options) {
             this.shouldShowIncompleteForms = options.shouldShowIncompleteForms;
+            sessionStorage.removeItem('handledDefaultClosed');
+            sessionStorage.removeItem('persistantMenuRegionWidth');
+            $('#persistent-menu-region').css('width', '');
         },
 
         templateContext: function () {
@@ -182,54 +184,12 @@ hqDefine("cloudcare/js/formplayer/apps/views", [
         },
     });
 
-    var LandingPageAppView = Marionette.View.extend({
-        template: _.template($("#landing-page-app-template").html() || ""),
-        className: 'landing-page-app-view',
-
-        events: _.extend({
-            'click .js-start-app': 'startApp',
-            'keydown .js-start-app': 'keyAction',
-        }, BaseAppView.events),
-        incompleteSessionsClick: _.extend(BaseAppView.incompleteSessionsClick),
-        syncClick: _.extend(BaseAppView.syncClick),
-        onClickRestoreAs: _.extend(BaseAppView.onClickRestoreAs),
-        onClickSettings: _.extend(BaseAppView.onClickSettings),
-        incompleteSessionsKeyAction: _.extend(BaseAppView.incompleteSessionsKeyAction),
-        syncKeyAction: _.extend(BaseAppView.syncKeyAction),
-        restoreAsKeyAction: _.extend(BaseAppView.restoreAsKeyAction),
-        settingsKeyAction: _.extend(BaseAppView.settingsKeyAction),
-
-        initialize: function (options) {
-            this.appId = options.appId;
-        },
-        templateContext: function () {
-            var currentApp = AppsAPI.getAppEntity(this.appId),
-                appName = currentApp.get('name'),
-                imageUri = currentApp.get('imageUri');
-            return {
-                appName: appName,
-                imageUrl: imageUri && this.appId ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, this.appId) : "",
-            };
-        },
-        startApp: function () {
-            FormplayerFrontend.trigger("app:select", this.appId);
-        },
-        keyAction: function (e) {
-            if (e.keyCode === 13) {
-                this.startApp();
-            }
-        },
-    });
-
     return {
         GridView: function (options) {
             return new GridView(options);
         },
         SingleAppView: function (options) {
             return new SingleAppView(options);
-        },
-        LandingPageAppView: function (options) {
-            return new LandingPageAppView(options);
         },
     };
 });

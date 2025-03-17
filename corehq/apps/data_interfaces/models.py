@@ -1,5 +1,6 @@
 import csv
 import hashlib
+import operator
 import re
 from collections import defaultdict
 from datetime import date, datetime, time, timedelta
@@ -71,6 +72,7 @@ from corehq.sql_db.util import (
 )
 from corehq import toggles
 from corehq.util.log import with_progress_bar
+from corehq.util.metrics.load_counters import dedupe_load_counter
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
 from corehq.apps.locations.models import SQLLocation
@@ -559,11 +561,11 @@ class CaseRuleCriteriaDefinition(models.Model):
 
 
 class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
-    # True when today < (the date in property_name + property_value days)
-    MATCH_DAYS_BEFORE = 'DAYS_BEFORE'
+    MATCH_DAYS_LESS_THAN = 'DAYS_BEFORE'
+    MATCH_DAYS_LESS_OR_EQUAL = 'DAYS_LTE'
 
-    # True when today >= (the date in property_name + property_value days)
-    MATCH_DAYS_AFTER = 'DAYS'
+    MATCH_DAYS_GREATER_THAN = 'DAYS_GT'
+    MATCH_DAYS_GREATER_OR_EQUAL = 'DAYS'
 
     MATCH_EQUAL = 'EQUAL'
     MATCH_NOT_EQUAL = 'NOT_EQUAL'
@@ -572,8 +574,10 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
     MATCH_REGEX = 'REGEX'
 
     MATCH_CHOICES = (
-        MATCH_DAYS_BEFORE,
-        MATCH_DAYS_AFTER,
+        MATCH_DAYS_LESS_THAN,
+        MATCH_DAYS_LESS_OR_EQUAL,
+        MATCH_DAYS_GREATER_THAN,
+        MATCH_DAYS_GREATER_OR_EQUAL,
         MATCH_EQUAL,
         MATCH_NOT_EQUAL,
         MATCH_HAS_VALUE,
@@ -599,34 +603,32 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
 
         return timestamp
 
-    def check_days_before(self, case, now):
+    def check_days_less_than(self, case, now):
+        return self.check_days(case, now, operator.lt)
+
+    def check_days_less_or_equal(self, case, now):
+        return self.check_days(case, now, operator.le)
+
+    def check_days_greater_than(self, case, now):
+        return self.check_days(case, now, operator.gt)
+
+    def check_days_greater_or_equal(self, case, now):
+        return self.check_days(case, now, operator.ge)
+
+    def check_days(self, case, now, predicate):
         values = self.get_case_values(case)
         for date_to_check in values:
             date_to_check = _try_date_conversion(date_to_check)
+            if isinstance(date_to_check, datetime):
+                date_to_check = date_to_check.date()
 
             if not isinstance(date_to_check, date):
                 continue
 
-            date_to_check = self.clean_datetime(date_to_check)
+            today = now.date() if isinstance(now, datetime) else now
 
             days = int(self.property_value)
-            if now < (date_to_check + timedelta(days=days)):
-                return True
-
-        return False
-
-    def check_days_after(self, case, now):
-        values = self.get_case_values(case)
-        for date_to_check in values:
-            date_to_check = _try_date_conversion(date_to_check)
-
-            if not isinstance(date_to_check, date):
-                continue
-
-            date_to_check = self.clean_datetime(date_to_check)
-
-            days = int(self.property_value)
-            if now >= (date_to_check + timedelta(days=days)):
+            if predicate(today, date_to_check + timedelta(days=days)):
                 return True
 
         return False
@@ -673,8 +675,10 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
 
     def matches(self, case, now):
         return {
-            self.MATCH_DAYS_BEFORE: self.check_days_before,
-            self.MATCH_DAYS_AFTER: self.check_days_after,
+            self.MATCH_DAYS_LESS_THAN: self.check_days_less_than,
+            self.MATCH_DAYS_LESS_OR_EQUAL: self.check_days_less_or_equal,
+            self.MATCH_DAYS_GREATER_OR_EQUAL: self.check_days_greater_or_equal,
+            self.MATCH_DAYS_GREATER_THAN: self.check_days_greater_than,
             self.MATCH_EQUAL: self.check_equal,
             self.MATCH_NOT_EQUAL: self.check_not_equal,
             self.MATCH_HAS_VALUE: self.check_has_value,
@@ -754,6 +758,14 @@ class LocationFilterDefinition(CaseRuleCriteriaDefinition):
     @cached_property
     def location(self):
         return SQLLocation.by_location_id(self.location_id)
+
+    def get_location_ids(self):
+        if self.include_child_locations:
+            location_ids = list(SQLLocation.objects.get_locations_and_children_ids([self.location_id]))
+        else:
+            location_ids = [self.location_id]
+
+        return location_ids
 
     def to_dict(self):
         return {
@@ -1158,7 +1170,14 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
                 # We've decided skipping this record and recording an error is likely the safest way to handle this
                 # Hopefully, these errors allow us to track down the underlying bug or infrastructure issue
                 # and fix the issue at the source
-                raise ValueError(f'Unable to find current ElasticSearch data for: {case.case_id}')
+
+                # TODO: Commenting this line out, as it has caused us to surpass our sentry error quota
+                # we should figure out whether this can be safely handled, or what truly constitutes an error,
+                # but disabling this to avoid further quota issues.
+                # raise ValueError(f'Unable to find current ElasticSearch data for: {case.case_id}')
+                # Ignore this result for now
+                dedupe_load_counter('unknown', case.domain, {'result': 'errored'})()
+                return CaseRuleActionResult(num_errors=1)
             else:
                 # Normal processing can involve latency between when a case is written to the database and when
                 # it arrives in ElasticSearch. If this case was modified within the acceptable latency window,
@@ -1169,8 +1188,11 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
                 # inserts into ElasticSearch are asychronous, we can receive cases here that will not yet be
                 # present in ElasticSearch but will never be processed later. In the short-term, we're avoiding
                 # this by resaving the case, with the intention to use a more stable approach in the future
+                dedupe_load_counter('unknown', case.domain, {'result': 'retried'})()
                 resave_case(rule.domain, case, send_post_save_signal=False)
                 return CaseRuleActionResult(num_updates=0)
+
+        dedupe_load_counter('unknown', case.domain, {'result': 'processed'})()
 
         try:
             existing_duplicate = CaseDuplicateNew.objects.get(case_id=case.case_id, action=self)

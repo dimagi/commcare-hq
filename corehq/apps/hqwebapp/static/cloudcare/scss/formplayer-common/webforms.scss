@@ -66,7 +66,7 @@ input:invalid {
 .required-group .gr-header .caption::before {
   content: '*';
   font-weight: bold;
-  color: #c0392b;
+  color: $danger;
   margin: 0 3px;
   float: left;
 }

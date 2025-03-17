@@ -90,22 +90,18 @@ class ElasticManageAdapter(BaseAdapter):
         """
         self._validate_single_index(index)
         try:
-            if self._es.indices.get(index, feature="_aliases",
-                                    expand_wildcards="none"):
+            if self._es.indices.get(index, expand_wildcards="none"):
                 return True
         except NotFoundError:
             pass
         return False
 
-    def get_indices(self, full_info=False):
+    def get_indices(self):
         """Return the cluster index information of active indices.
 
-        :param full_info: ``bool`` whether to return the full index info
-                          (default ``False``)
         :returns: ``dict``
         """
-        feature = "" if full_info else "_aliases,_settings"
-        return self._es.indices.get("_all", feature=feature)
+        return self._es.indices.get("_all")
 
     def get_aliases(self):
         """Return the cluster aliases information.
@@ -403,7 +399,8 @@ class ElasticManageAdapter(BaseAdapter):
 
     def reindex(
             self, source, dest, wait_for_completion=False,
-            refresh=False, batch_size=1000, requests_per_second=None, copy_doc_ids=True, query=None,
+            refresh=False, batch_size=1000, requests_per_second=None,
+            copy_doc_ids=True, query=None, purge_ids=False
     ):
         """
         Starts the reindex process in elastic search cluster
@@ -420,6 +417,7 @@ class ElasticManageAdapter(BaseAdapter):
                            and can be reduced if you encounter scroll timeouts.
         :param query: ``dict`` optional parameter to include a term query to filter which documents are included in
                       the reindex
+        :param purge_ids: ``bool`` if True, will remove the _id field from the documents
         :returns: None if wait_for_completion is True else would return task_id of reindex task
         """
 
@@ -439,16 +437,35 @@ class ElasticManageAdapter(BaseAdapter):
             "conflicts": "proceed"
         }
 
-        # Should be removed after ES 5-6 migration
-        if copy_doc_ids:
+        if copy_doc_ids or purge_ids:
             reindex_body["script"] = {
                 "lang": "painless",
-                "source": """
-                if (!ctx._source.containsKey('doc_id')) {
-                    ctx._source['doc_id'] = ctx._id;
-                }
-                """
+                "source": ""
             }
+            script_parts = []
+
+            if purge_ids:
+                script_parts.append("""
+                    if (ctx._source.containsKey('_id')) {
+                        ctx._source.remove('_id');
+                    }
+                """)
+
+            if source == const.HQ_USERS_INDEX_NAME:
+                # Remove password field from users index
+                script_parts.append("""
+                    ctx._source.remove('password');
+                """)
+
+            if copy_doc_ids:
+                # Add doc_id field to the documents
+                script_parts.append("""
+                    if (!ctx._source.containsKey('doc_id')) {
+                        ctx._source['doc_id'] = ctx._id;
+                    }
+                """)
+
+            reindex_body["script"]["source"] = " ".join(script_parts)
 
         reindex_kwargs = {
             "wait_for_completion": wait_for_completion,
@@ -646,7 +663,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         try:
             result = self._search(query, **kw)
             self._fix_hits_in_result(result)
-            self._report_and_fail_on_shard_failures(result)
+            self._report_and_fail_on_shard_failures(result, {"index": self.canonical_name})
         except ElasticsearchException as exc:
             raise ESError(exc)
         return result
@@ -687,7 +704,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         # TODO: standardize all result collections returned by this class.
         try:
             for result in self._scroll(query, scroll, size):
-                self._report_and_fail_on_shard_failures(result)
+                self._report_and_fail_on_shard_failures(result, {"index": self.canonical_name})
                 self._fix_hits_in_result(result)
                 for hit in result["hits"]["hits"]:
                     yield hit
@@ -752,7 +769,7 @@ class ElasticDocumentAdapter(BaseAdapter):
                 # resulting in this method fetching a maximum `size * 2`
                 # documents.
                 # see: https://stackoverflow.com/a/63911571
-                result = self._es.scroll(scroll_id, scroll=scroll)
+                result = self._es.scroll(scroll_id=scroll_id, scroll=scroll)
                 scroll_id = result.get("_scroll_id")
                 yield result
                 if scroll_id is None or not result["hits"]["hits"]:
@@ -991,7 +1008,7 @@ class ElasticDocumentAdapter(BaseAdapter):
             self._fix_hit(hit)
 
     @staticmethod
-    def _report_and_fail_on_shard_failures(result):
+    def _report_and_fail_on_shard_failures(result, tags):
         """
         Raise an ESShardFailure if there are shard failures in a search result
         (JSON) and report to datadog.
@@ -1004,7 +1021,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         if not isinstance(result, dict):
             raise ValueError(f"invalid Elastic result object: {result}")
         if result.get("_shards", {}).get("failed"):
-            metrics_counter("commcare.es.partial_results")
+            metrics_counter("commcare.es.partial_results", tags=tags)
             # Example message:
             #   "_shards: {"successful": 4, "failed": 1, "total": 5}"
             shard_info = json.dumps(result["_shards"])
@@ -1110,6 +1127,10 @@ class ElasticMultiplexAdapter(BaseAdapter):
     @property
     def mapping(self):
         return self.primary.mapping
+
+    @property
+    def parent_index_cname(self):
+        return self.primary.parent_index_cname
 
     def export_adapter(self):
         adapter = copy.copy(self)

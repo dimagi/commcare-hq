@@ -1,13 +1,11 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load compress %}
 
 {% block title %}{% trans "Download Files" %}{% endblock %}
 
-
-{% requirejs_main 'export/js/download_data_files' %}
-
+{% js_entry 'export/js/download_data_files' %}
 
 {% block page_content %}
   {% registerurl 'download_data_file' domain '---' '---' %}
@@ -17,7 +15,7 @@
 
     {% if data_files %}
       <div class="row">
-        <div class="col-sm-9 col-md-8 col-lg-8">
+        <div class="col-md-9 col-lg-8 col-xl-8">
           <table class="table table-hover">
             {% for data_file in data_files %}
               <tr id="row_{{ data_file.id }}">
@@ -29,12 +27,12 @@
                 </td>
                 <td>
                   {{ data_file.description }}
-                  <textarea id="url_{{ data_file.id }}" style="display: none">{{ url_base }}{% url 'download_data_file' domain data_file.id data_file.filename %}</textarea>
+                  <textarea id="url_{{ data_file.id }}" class="d-none">{{ url_base }}{% url 'download_data_file' domain data_file.id data_file.filename %}</textarea>
                 </td>
                 <td>
                   {% trans "Available until" %}: {{ data_file.delete_after|to_user_time:request }}
                 </td>
-                <td style="width: 6em; text-align: right;">
+                <td class="text-end" style="width: 6em;">
                   <a href="#"
                      class="copy-data-file"
                      data-id={{ data_file.id }}
@@ -69,47 +67,42 @@
     {% if is_admin %}
       <div class="spacer"></div>
       <div class="row">
-        <div class="col-sm-9 col-md-8 col-lg-8">
+        <div class="col-md-9 col-lg-8 col-xl-8">
           <form action="#" method="POST" enctype="multipart/form-data" class="form form-horizontal">
             {% csrf_token %}
             <fieldset>
               <legend>{% trans "Upload file for transfer" %}</legend>
 
-              <div class="form-group">
-                <label class="control-label col-md-2 requiredField">
+              <div class="mb-3">
+                <label class="form-label requiredField">
                   {% trans "Description" %}<span class="asteriskField">*</span>
                 </label>
-                <div class="controls col-md-6">
-                  <input class="textinput textInput form-control"
-                         name="description"
-                         required=""
-                         type="text" />
-                </div>
+                <input class="form-control"
+                       name="description"
+                       required=""
+                       type="text" />
               </div>
 
-              <div class="form-group">
-                <label class="control-label col-md-2 requiredField">
+              <div class="mb-3">
+                <label class="requiredField form-label">
                   {% trans "File" %}<span class="asteriskField">*</span>
                 </label>
-                <div class="controls col-md-6">
-                  <input name="file"
-                         required=""
-                         type="file" />
-                </div>
+                <input name="file"
+                       class="form-control"
+                       required=""
+                       type="file" />
               </div>
 
-              <div class="form-group">
-                <label class="control-label col-md-2 requiredField">
+              <div class="mb-3">
+                <label class="form-label requiredField">
                   {% trans "Delete after" %}<span class="asteriskField">*</span>
                 </label>
-                <div class="controls col-md-6">
-                  <select name="ttl" class="form-control">
-                    <option value="12">{% trans "12 hours" %}</option>
-                    <option selected="selected" value="24">{% trans "1 day" %}</option>
-                    <option value="48">{% trans "2 days" %}</option>
-                    <option value="72">{% trans "3 days" %}</option>
-                  </select>
-                </div>
+                <select name="ttl" class="form-select">
+                  <option value="12">{% trans "12 hours" %}</option>
+                  <option selected="selected" value="24">{% trans "1 day" %}</option>
+                  <option value="48">{% trans "2 days" %}</option>
+                  <option value="72">{% trans "3 days" %}</option>
+                </select>
               </div>
 
             </fieldset>

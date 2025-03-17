@@ -106,7 +106,7 @@ Not all features have all of these pieces:
 Example: Registration from Case List
 ====================================
 
-As an example, consider `registration from the case list <https://confluence.dimagi.com/display/commcarepublic/Minimize+Duplicates+Method+1%3A+Registration+From+the+Case+List>`_:
+As an example, consider `registration from the case list <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143951603/Case+List+and+Case+Detail+Configuration#Minimize-Duplicates%3A-Registration-From-the-Case-List>`_:
 
 * A CommCare HQ user goes to the module settings page in app builder and turns on the feature, selecting the registration form they want to be accessible from the case list.
 
@@ -241,7 +241,7 @@ This contains logic specific to app preview.
 
 There isn't much here: some initialization code and a plugin that lets you scroll by grabbing and dragging the app preview screen.
 
-The app preview and web apps UIs are largely identical, but a few places do distinguish between them, using the ``environment`` attribute of the current user. Search for the constants ``PREVIEW_APP_ENVIRONMENT`` and ``WEB_APPS_ENVIRONMENT`` for examples.
+The app preview and web apps UIs are largely identical, but a few places do distinguish between them, using the ``environment`` attribute of the current user. Search for the constants ``PREVIEW_APP_ENVIRONMENT`` and ``WEB_APPS_ENVIRONMENT`` for examples.  You may also reference ``user.isAppPreview`` for convenience.
 
 `hq_events.js <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/formplayer/hq_events.js>`_, although not in this directory, is only really relevant to app preview. It controls the ability to communicate with HQ, which is used for the "phone icons" on app preview: back, refresh, and switching between the standard "phone" mode and the larger "tablet" mode.
 
@@ -323,7 +323,7 @@ Marionette `integrates with Backbone.Radio <https://marionettejs.com/docs/master
 
 Although you can namespace channels, web apps uses a single ``formplayer`` channel for all messages, which is accessed using ``FormplayerFrontend.getChannel()``. You'll see calls to get the channel and then call ``request`` to get at a variety of global-esque data, especially the current user. All of these requests are handled by ``reply`` callbacks defined in ``FormplayerFrontend``.
 
-``FormplayerFrontend`` also supports events, which behave similarly. Events are triggered directly on the ``FormplayerFrontend`` object, which defines ``on`` handlers. We tend to use events for navigation and do namespace some of them with ``:``, leading to events like ``menu:select``, ``menu:query``, and ``menu:show:detail``. Some helper events are not namespaced, such as ``showError`` and ``showSuccess``.
+``FormplayerFrontend`` also supports events, which behave similarly. Events are triggered directly on the ``FormplayerFrontend`` object, which defines ``on`` handlers. We tend to use events for navigation and do namespace some of them with ``:``, leading to events like ``menu:select`` and ``menu:show:detail``. Some helper events are not namespaced, such as ``showError`` and ``showSuccess``.
 
 Routing, URLs, and Middleware
 =============================

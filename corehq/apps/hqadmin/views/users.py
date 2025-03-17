@@ -1,9 +1,7 @@
 import csv
 import itertools
-import settings
 import os
 import urllib.parse
-import uuid
 from collections import Counter
 from datetime import datetime, timedelta
 from io import StringIO
@@ -37,6 +35,7 @@ from two_factor.utils import default_device
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.hqadmin.utils import unset_password
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from couchexport.models import Format
 from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.django.email import send_HTML_email
@@ -56,7 +55,7 @@ from corehq.apps.hqadmin.forms import (
     SuperuserManagementForm,
     OffboardingUserListForm,
 )
-from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
+from corehq.apps.hqadmin.views.utils import BaseAdminSectionView, get_breadcrumbs
 from corehq.apps.hqmedia.tasks import create_files_for_ccz
 from corehq.apps.ota.views import get_restore_params, get_restore_response
 from corehq.apps.users.audit.change_messages import UserChangeMessage
@@ -64,6 +63,7 @@ from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.users.util import format_username, log_user_change
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util import reverse
+from corehq.util.bounced_email_utils import get_email_statuses
 from corehq.util.timer import TimingContext
 
 
@@ -457,7 +457,10 @@ class DisableUserView(FormView):
 
     def get_context_data(self, **kwargs):
         context = super(DisableUserView, self).get_context_data(**kwargs)
-        context['verb'] = 'disable' if self.user.is_active else 'enable'
+        verb = 'Disable' if self.user.is_active else 'Enable'
+        context.update(get_breadcrumbs(f'{verb} User Account', 'disable_user'))
+        context['verb'] = verb
+        context['user_is_active'] = self.user.is_active
         context['username'] = self.username
         return context
 
@@ -539,6 +542,7 @@ class DisableTwoFactorView(FormView):
 
     def render_to_response(self, context, **response_kwargs):
         context.update({
+            **get_breadcrumbs('Temporarily Disable Two-factor Authentication', self.urlname),
             'username': self.request.GET.get("q"),
         })
         return super().render_to_response(context, **response_kwargs)
@@ -721,3 +725,27 @@ class OffboardingUserList(UserAdministration):
             messages.success(request, _("Successfully retrieved users to offboard."))
 
         return self.get(request, *args, **kwargs)
+
+
+@use_bootstrap5
+@require_superuser
+def email_status(request):
+    template = "hqadmin/email_status.html"
+    context = {
+        'current_page': {
+            'title': "Check the status of an email",
+            'page_name': "Check the status of an email",
+        },
+        'section': {
+            'page_name': UserAdministration.section_name,
+            'url': reverse("default_admin_report"),
+        },
+    }
+
+    if email := request.GET.get("q", "").lower():
+        result = get_email_statuses([email])
+        statuses = result.get(email)
+        if statuses:
+            context.update({'email': email, 'statuses': statuses})
+
+    return render(request, template, context)

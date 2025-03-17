@@ -5,12 +5,13 @@ hqDefine('toggle_ui/js/edit-flag', [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/bootstrap3/main',
     'hqwebapp/js/bootstrap3/knockout_bindings.ko',     // save button
+    'commcarehq',
 ], function (
     $,
     ko,
     _,
     initialPageData,
-    hqMain
+    hqMain,
 ) {
     var PAD_CHAR = '&nbsp;';
     function toggleViewModel() {
@@ -106,6 +107,9 @@ hqDefine('toggle_ui/js/edit-flag', [
         self.saveButtonBottom = self.createSaveButton();
 
         self.getNamespaceHtml = function (namespace, value) {
+            if (value && value[0] === '!') {
+                value = value.replace(/^!/, '');
+            }
             if (namespace === 'domain') {
                 return '<a href="' + initialPageData.reverse('domain_internal_settings', value) + '">domain <i class="fa fa-external-link"></i></a>';
             } else {

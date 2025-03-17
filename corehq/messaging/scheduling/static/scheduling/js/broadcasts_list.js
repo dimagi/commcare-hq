@@ -1,116 +1,113 @@
-hqDefine("scheduling/js/broadcasts_list", [
-    'jquery',
-    'underscore',
-    'knockout',
-    'hqwebapp/js/assert_properties',
-    'hqwebapp/js/initial_page_data',
-    "hqwebapp/js/bootstrap3/components.ko",     // pagination
-], function (
-    $,
-    _,
-    ko,
-    assertProperties,
-    initialPageData
-) {
-    var broadcast = function (options) {
-        var self = ko.mapping.fromJS(options);
+import "commcarehq";
 
-        self.editUrl = initialPageData.reverse('edit_schedule', self.type(), self.id());
-        self.actionInProgress = ko.observable(false);
+import $ from "jquery";
+import ko from "knockout";
+import _ from "underscore";
 
-        self.activateBroadcast = function (model) {
-            self.broadcastAction('activate_scheduled_broadcast', model);
-        };
+import assertProperties from "hqwebapp/js/assert_properties";
+import initialPageData from "hqwebapp/js/initial_page_data";
 
-        self.deactivateBroadcast = function (model) {
-            self.broadcastAction('deactivate_scheduled_broadcast', model);
-        };
+import "hqwebapp/js/components/pagination";
 
-        self.deleteBroadcast = function (model) {
-            if (confirm(gettext("Are you sure you want to delete this scheduled message?"))) {
-                self.broadcastAction('delete_scheduled_broadcast', model);
-            }
-        };
 
-        self.broadcastAction = function (action, model) {
-            self.actionInProgress(true);
-            $.ajax({
-                url: '',
-                type: 'post',
-                dataType: 'json',
-                data: {
-                    action: action,
-                    broadcast_id: model.id(),
-                },
-                success: function (data) {
-                    ko.mapping.fromJS(data.broadcast, self);
-                },
-            }).always(function () {
-                self.actionInProgress(false);
-            });
-        };
+var broadcast = function (options) {
+    var self = ko.mapping.fromJS(options);
 
-        return self;
+    self.editUrl = initialPageData.reverse('edit_schedule', self.type(), self.id());
+    self.actionInProgress = ko.observable(false);
+
+    self.activateBroadcast = function (model) {
+        self.broadcastAction('activate_scheduled_broadcast', model);
     };
 
-    var broadcastList = function (options) {
-        assertProperties.assert(options, ['listAction', 'type'], []);
+    self.deactivateBroadcast = function (model) {
+        self.broadcastAction('deactivate_scheduled_broadcast', model);
+    };
 
-        var self = {};
-        self.broadcasts = ko.observableArray();
+    self.deleteBroadcast = function (model) {
+        if (confirm(gettext("Are you sure you want to delete this scheduled message?"))) {
+            self.broadcastAction('delete_scheduled_broadcast', model);
+        }
+    };
 
-        self.itemsPerPage = ko.observable();
-        self.totalItems = ko.observable();
-        self.showPaginationSpinner = ko.observable(false);
-
-        self.emptyTable = ko.computed(function () {
-            return self.totalItems() === 0;
+    self.broadcastAction = function (action, model) {
+        self.actionInProgress(true);
+        $.ajax({
+            url: '',
+            type: 'post',
+            dataType: 'json',
+            data: {
+                action: action,
+                broadcast_id: model.id(),
+            },
+            success: function (data) {
+                ko.mapping.fromJS(data.broadcast, self);
+            },
+        }).always(function () {
+            self.actionInProgress(false);
         });
-        self.currentPage = ko.observable(1);
-        self.goToPage = function (page) {
-            self.showPaginationSpinner(true);
-            self.currentPage(page);
-            $.ajax({
-                url: initialPageData.reverse("new_list_broadcasts"),
-                data: {
-                    action: options.listAction,
-                    page: page,
-                    limit: self.itemsPerPage(),
-                },
-                success: function (data) {
-                    self.showPaginationSpinner(false);
-                    self.broadcasts(_.map(data.broadcasts, function (b) {
-                        return broadcast(_.extend(b, {
-                            type: options.type,
-                        }));
-                    }));
-                    self.totalItems(data.total);
-                },
-            });
-        };
-
-        self.onPaginationLoad = function () {
-            self.goToPage(self.currentPage());
-        };
-
-        return self;
     };
 
-    $(function () {
-        var $scheduledList = $("#scheduled-broadcasts");
-        if ($scheduledList.length) {
-            $scheduledList.koApplyBindings(broadcastList({
-                listAction: 'list_scheduled',
-                type: 'scheduled',
-            }));
-        }
+    return self;
+};
 
-        var $immediateList = $("#immediate-broadcasts");
-        if ($immediateList.length) {
-            $immediateList.koApplyBindings(broadcastList({
-                listAction: 'list_immediate',
-                type: 'immediate',
-            }));
-        }
+var broadcastList = function (options) {
+    assertProperties.assert(options, ['listAction', 'type'], []);
+
+    var self = {};
+    self.broadcasts = ko.observableArray();
+
+    self.itemsPerPage = ko.observable();
+    self.totalItems = ko.observable();
+    self.showPaginationSpinner = ko.observable(false);
+
+    self.emptyTable = ko.computed(function () {
+        return self.totalItems() === 0;
     });
+    self.currentPage = ko.observable(1);
+    self.goToPage = function (page) {
+        self.showPaginationSpinner(true);
+        self.currentPage(page);
+        $.ajax({
+            url: initialPageData.reverse("new_list_broadcasts"),
+            data: {
+                action: options.listAction,
+                page: page,
+                limit: self.itemsPerPage(),
+            },
+            success: function (data) {
+                self.showPaginationSpinner(false);
+                self.broadcasts(_.map(data.broadcasts, function (b) {
+                    return broadcast(_.extend(b, {
+                        type: options.type,
+                    }));
+                }));
+                self.totalItems(data.total);
+            },
+        });
+    };
+
+    self.onPaginationLoad = function () {
+        self.goToPage(self.currentPage());
+    };
+
+    return self;
+};
+
+$(function () {
+    var $scheduledList = $("#scheduled-broadcasts");
+    if ($scheduledList.length) {
+        $scheduledList.koApplyBindings(broadcastList({
+            listAction: 'list_scheduled',
+            type: 'scheduled',
+        }));
+    }
+
+    var $immediateList = $("#immediate-broadcasts");
+    if ($immediateList.length) {
+        $immediateList.koApplyBindings(broadcastList({
+            listAction: 'list_immediate',
+            type: 'immediate',
+        }));
+    }
 });

@@ -1,8 +1,6 @@
-import copy
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed import topics
 from corehq.apps.es.users import user_adapter
-from corehq.apps.groups.dbaccessors import get_group_id_name_map_by_user
 from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
@@ -106,8 +104,15 @@ def get_user_pillow_old(pillow_id='UserPillow', num_processes=1, process_num=0, 
     )
 
 
-def get_user_pillow(pillow_id='user-pillow', num_processes=1, dedicated_migration_process=False, process_num=0,
-        skip_ucr=False, processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, **kwargs):
+def get_user_pillow(
+    pillow_id='user-pillow',
+    num_processes=1,
+    dedicated_migration_process=False,
+    process_num=0,
+    skip_ucr=False,
+    processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE,
+    **kwargs,
+):
     """Processes users and sends them to ES and UCRs.
 
     Processors:

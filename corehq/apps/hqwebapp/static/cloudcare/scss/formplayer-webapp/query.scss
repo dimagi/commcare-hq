@@ -5,19 +5,13 @@
   max-width: none;  // clear any max-widths set by bootstrap, such as in .container
 }
 
-.sidebar-push {
-  @include media-breakpoint-up(lg) {
-    margin-left: 310px;
-  }
-}
-
-#sidebar-region {
+// Applies only to split-screen case search
+#sidebar-region #query-list-contents {
   background: transparent;
-  @include media-breakpoint-up(md) {
+  @include media-breakpoint-up(lg) {
     width: 300px;
-    position: absolute;
   }
-  @include media-breakpoint-down(md) {
+  @include media-breakpoint-down(lg) {
     max-width: 600px;
     margin: auto;
   }
@@ -74,14 +68,6 @@
   a:hover {
     color: $cc-brand-low;
   }
-}
-
-.query-caption.required .control-label::before, .search-query-group-header.required .search-query-group-header-label::before {
-  content: '*';
-  font-weight: bold;
-  color: #c0392b;
-  margin: 0 3px;
-  float: left;
 }
 
 .search-query-group-header-label {

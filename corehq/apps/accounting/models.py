@@ -32,6 +32,7 @@ from dimagi.ext.couchdbkit import (
 from dimagi.utils.web import get_site_domain
 
 from corehq.apps.accounting.emails import (
+    send_self_start_subscription_alert,
     send_subscription_change_alert,
     send_subscription_renewal_alert,
 )
@@ -65,6 +66,7 @@ from corehq.apps.accounting.utils import (
     log_accounting_error,
     log_accounting_info,
     quantize_accounting_decimal,
+    self_signup_workflow_in_progress,
 )
 from corehq.apps.domain import UNKNOWN_DOMAIN
 from corehq.apps.domain.models import Domain
@@ -129,12 +131,18 @@ class FeatureType(object):
     USER = "User"
     SMS = "SMS"
     WEB_USER = "Web User"
+    FORM_SUBMITTING_MOBILE_WORKER = "Form-Submitting Mobile Worker"
 
     CHOICES = (
         (USER, USER),
         (SMS, SMS),
-        (WEB_USER, WEB_USER)
+        (WEB_USER, WEB_USER),
+        (FORM_SUBMITTING_MOBILE_WORKER, FORM_SUBMITTING_MOBILE_WORKER),
     )
+    EDITIONED_FEATURES = [
+        USER,
+        SMS,
+    ]
 
 
 class SoftwarePlanEdition(object):
@@ -523,10 +531,11 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
     def get_domains(self):
         return list(Subscription.visible_objects.filter(account_id=self.id, is_active=True).values_list(
-                    'subscriber__domain', flat=True))
+                    'subscriber__domain', flat=True).order_by('subscriber__domain'))
 
     def has_enterprise_admin(self, email):
-        return self.is_customer_billing_account and email in self.enterprise_admin_emails
+        lower_emails = [e.lower() for e in self.enterprise_admin_emails]
+        return self.is_customer_billing_account and email.lower() in lower_emails
 
     def update_autopay_user(self, new_user, domain):
         if self.auto_pay_enabled and new_user != self.auto_pay_user:
@@ -729,7 +738,7 @@ class Feature(models.Model):
     and will be what the FeatureRate references to provide a monthly fee, limit and per-excess fee.
     """
     name = models.CharField(max_length=40, unique=True)
-    feature_type = models.CharField(max_length=10, db_index=True, choices=FeatureType.CHOICES)
+    feature_type = models.CharField(max_length=40, db_index=True, choices=FeatureType.CHOICES)
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta(object):
@@ -822,7 +831,7 @@ class SoftwarePlan(models.Model):
     class Meta(object):
         app_label = 'accounting'
 
-    @quickcache(vary_on=['self.pk'], timeout=10)
+    @quickcache(vary_on=['self.pk'], timeout=10, skip_arg=lambda *a, **k: settings.UNIT_TESTING)
     def get_version(self):
         try:
             return self.softwareplanversion_set.filter(is_active=True).latest('date_created')
@@ -1124,7 +1133,10 @@ class Subscriber(models.Model):
             Subscriber._process_upgrade(self.domain, upgraded_privileges, new_plan_version)
 
         if Subscriber.should_send_subscription_notification(old_subscription, new_subscription):
-            send_subscription_change_alert(self.domain, new_subscription, old_subscription, internal_change)
+            if self_signup_workflow_in_progress(self.domain):
+                send_self_start_subscription_alert(self.domain, new_subscription, old_subscription)
+            else:
+                send_subscription_change_alert(self.domain, new_subscription, old_subscription, internal_change)
 
         subscription_upgrade_or_downgrade.send_robust(None, domain=self.domain)
 
@@ -3391,7 +3403,7 @@ class CreditLine(models.Model):
     account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
     subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT, null=True, blank=True)
     is_product = models.BooleanField(default=False)
-    feature_type = models.CharField(max_length=10, null=True, blank=True,
+    feature_type = models.CharField(max_length=40, null=True, blank=True,
                                     choices=FeatureType.CHOICES)
     date_created = models.DateTimeField(auto_now_add=True)
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
@@ -3958,18 +3970,38 @@ class CreditAdjustment(ValidateModelMixin, models.Model):
             raise ValidationError(_("You can't specify both an invoice and a line item."))
 
 
-class DomainUserHistory(models.Model):
+class DomainUserHistoryBase(models.Model):
     """
-    A record of the number of users in a domain at the record_date.
-    Created by task calculate_users_in_all_domains on the first of every month.
-    Used to bill clients for the appropriate number of users
+    Base record of the number of mobile workers in a domain for a given date.
     """
     domain = models.CharField(max_length=256)
     record_date = models.DateField()
     num_users = models.IntegerField(default=0)
 
     class Meta:
+        abstract = True
         unique_together = ('domain', 'record_date')
+
+
+class DomainUserHistory(DomainUserHistoryBase):
+    """
+    The total number of mobile workers in a domain at the record_date.
+    Created by task calculate_users_in_all_domains on the first of every month.
+    Used to bill clients for the appropriate number of mobile workers.
+    """
+    pass
+
+
+class FormSubmittingMobileWorkerHistory(DomainUserHistoryBase):
+    """
+    The number of mobile workers in a domain who have submitted one or more
+    forms in the month preceeding the record_date. Ex: a record_date of
+    2024-07-09 includes all dates from 2024-06-09 to 2024-07-08, inclusive.
+    Created by task calculate_form_submitting_mobile_workers_in_all_domains
+    on the first of every month. Used to bill clients for the appropriate
+    number of form-submitting mobile workers.
+    """
+    pass
 
 
 class BillingAccountWebUserHistory(models.Model):

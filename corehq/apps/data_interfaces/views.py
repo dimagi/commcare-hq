@@ -168,7 +168,7 @@ class DataInterfaceSection(BaseDomainView):
 
 @location_safe
 class ExploreCaseDataView(BaseDomainView):
-    template_name = "data_interfaces/explore_case_data.html"
+    template_name = "data_interfaces/bootstrap3/explore_case_data.html"
     urlname = "explore_case_data"
     page_title = gettext_lazy("Explore Case Data")
 
@@ -207,7 +207,7 @@ class ExploreCaseDataView(BaseDomainView):
 
 
 class CaseGroupListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
-    template_name = "data_interfaces/list_case_groups.html"
+    template_name = "data_interfaces/bootstrap3/list_case_groups.html"
     urlname = 'case_group_list'
     page_title = gettext_lazy("Case Groups")
 
@@ -281,7 +281,7 @@ class CaseGroupListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             'template': 'new-group-template',
         }
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         case_group = CommCareCaseGroup.get(item_id)
         item_data = self._get_item_data(case_group)
         case_group.soft_delete()
@@ -293,7 +293,7 @@ class CaseGroupListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
 
 @method_decorator(require_permission(HqPermissions.edit_messaging), name="dispatch")
 class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
-    template_name = 'data_interfaces/manage_case_groups.html'
+    template_name = 'data_interfaces/bootstrap3/manage_case_groups.html'
     urlname = 'manage_case_groups'
     page_title = gettext_noop("Manage Case Group")
 
@@ -474,7 +474,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
             'template': 'new-case-template',
         }
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         if not item_id:
             raise PaginatedItemException("The case's ID was blank.")
         current_cases = set(self.case_group.cases)
@@ -702,7 +702,7 @@ def find_by_id(request, domain):
         raise Http403()
 
     name = _("Find Data by ID")
-    return render(request, 'data_interfaces/find_by_id.html', {
+    return render(request, 'data_interfaces/bootstrap3/find_by_id.html', {
         'domain': domain,
         'current_page': {
             'title': name,
@@ -718,7 +718,7 @@ def find_by_id(request, domain):
 
 
 class AutomaticUpdateRuleListView(DataInterfaceSection):
-    template_name = 'data_interfaces/auto_update_rules.html'
+    template_name = 'data_interfaces/bootstrap3/auto_update_rules.html'
     urlname = 'automatic_update_rule_list'
     page_title = gettext_lazy("Automatically Update Cases")
 
@@ -844,7 +844,7 @@ class AutomaticUpdateRuleListView(DataInterfaceSection):
 
 
 class AddCaseRuleView(DataInterfaceSection):
-    template_name = "data_interfaces/case_rule.html"
+    template_name = "data_interfaces/bootstrap3/case_rule.html"
     urlname = 'add_case_rule'
     page_title = gettext_lazy("Add Case Rule")
 
@@ -994,7 +994,7 @@ class ViewCaseRuleView(EditCaseRuleView):
 
 @method_decorator(requires_privilege_with_fallback(privileges.CASE_DEDUPE), name='dispatch')
 class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
-    template_name = 'data_interfaces/list_deduplication_rules.html'
+    template_name = 'data_interfaces/bootstrap3/list_deduplication_rules.html'
     urlname = 'deduplication_rules'
     page_title = gettext_lazy("Deduplicate Cases")
 
@@ -1012,7 +1012,8 @@ class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
         domain_obj = Domain.get_by_name(self.domain)
         hour = domain_obj.auto_case_update_hour
         context.update({
-            'help_site_url': 'https://confluence.dimagi.com/display/commcarepublic/Automatically+Close+Cases',
+            'help_site_url': ('https://dimagi.atlassian.net/wiki/spaces/'
+                              'commcarepublic/pages/2143957601/Automatically+Update+Cases'),
             'time': f"{hour}:00" if hour else _('midnight'),  # noqa: E999
         })
         return context
@@ -1066,10 +1067,10 @@ class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     def deactivate_response(self):
         return self.update_rule()
 
-    def get_deleted_item_data(self, rule_id):
+    def delete_item(self, rule_id):
         (rule, error) = self._get_rule(rule_id)
         if rule is None:
-            return {'success': False, 'error': error}
+            raise PaginatedItemException(error)
 
         rule.soft_delete()
 
@@ -1151,7 +1152,7 @@ class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
 
 @method_decorator(requires_privilege_with_fallback(privileges.CASE_DEDUPE), name='dispatch')
 class DeduplicationRuleCreateView(DataInterfaceSection):
-    template_name = "data_interfaces/edit_deduplication_rule.html"
+    template_name = "data_interfaces/bootstrap3/edit_deduplication_rule.html"
     urlname = 'add_deduplication_rule'
     page_title = gettext_lazy("Create Deduplication Rule")
 

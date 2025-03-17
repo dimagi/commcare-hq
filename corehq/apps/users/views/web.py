@@ -32,7 +32,7 @@ from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.views import BasePageView, logout
 from corehq.apps.locations.permissions import location_restricted_response, location_safe
-from corehq.apps.registration.forms import WebUserInvitationForm
+from corehq.apps.registration.forms import AcceptedWebUserInvitationForm
 from corehq.apps.registration.utils import activate_new_user_via_reg_form
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.decorators import require_can_edit_web_users
@@ -156,7 +156,7 @@ class UserInvitationView(object):
                 idp = IdentityProvider.get_required_identity_provider(invitation.email)
 
             if request.method == "POST":
-                form = WebUserInvitationForm(
+                form = AcceptedWebUserInvitationForm(
                     request.POST,
                     is_sso=idp is not None,
                     allow_invite_email_only=allow_invite_email_only,
@@ -181,10 +181,11 @@ class UserInvitationView(object):
                         created_via=USER_CHANGE_VIA_INVITATION,
                         domain=invitation.domain,
                         is_domain_admin=False,
+                        commit=False
                     )
-                    user.save()
-                    messages.success(request, _("User account for %s created!") % form.cleaned_data["email"])
                     invitation.accept_invitation_and_join_domain(user)
+                    user.log_user_create(invitation.domain, invited_by_user, USER_CHANGE_VIA_INVITATION)
+                    messages.success(request, _("User account for %s created!") % form.cleaned_data["email"])
                     messages.success(
                         self.request,
                         _('You have been added to the "{}" project space.').format(self.domain)
@@ -211,7 +212,7 @@ class UserInvitationView(object):
                         f"?next={accept_invitation_url}"
                         f"&username={invitation.email}"
                     )
-                form = WebUserInvitationForm(
+                form = AcceptedWebUserInvitationForm(
                     initial={
                         'email': invitation.email,
                     },
@@ -282,7 +283,7 @@ def delete_invitation(request, domain):
     invitation = Invitation.objects.get(uuid=uuid)
     if not user_can_access_invite(domain, request.couch_user, invitation):
         return location_restricted_response(request)
-    invitation.delete()
+    invitation.delete(deleted_by=request.couch_user.user_id)
     return JsonResponse({'status': 'ok'})
 
 
