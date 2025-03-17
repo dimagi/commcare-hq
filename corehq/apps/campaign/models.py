@@ -87,6 +87,10 @@ class WidgetType:
     }
 
     @classmethod
+    def get_form_class(cls, widget_type):
+        return cls.FORM_CLASS.get(widget_type)
+
+    @classmethod
     def choices(cls):
         return [
             (cls.MAP, _('Map')),

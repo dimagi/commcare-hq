@@ -25,6 +25,7 @@ from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.views import BaseProjectReportSectionView
 from corehq.form_processor.models import CommCareCase
+from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 from corehq.util.timezones.utils import get_timezone
 
 
@@ -160,3 +161,24 @@ class PaginatedCasesWithGPSView(BaseDomainView, CaseListMixin):
             CommCareCase.objects.get_cases(case_ids_page, self.domain, ordered=True),
             paginator.count,
         )
+
+
+@method_decorator(login_and_domain_required, name='dispatch')
+@method_decorator(toggles.CAMPAIGN_DASHBOARD.required_decorator(), name='dispatch')
+@method_decorator(use_bootstrap5, name='dispatch')
+class DashboardWidgetView(HqHtmxActionMixin, BaseDomainView):
+    urlname = "dashboard_widget"
+    form_template_partial_name = 'campaign/partials/widget_form.html'
+
+    @property
+    def section_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    @hq_hx_action('get')
+    def new_widget(self, request, *args, **kwargs):
+        widget_type = request.GET.get('widget_type')
+        form_class = WidgetType.get_form_class(widget_type)
+        context = {
+            'widget_form': form_class(domain=self.domain),
+        }
+        return self.render_htmx_partial_response(request, self.form_template_partial_name, context)
