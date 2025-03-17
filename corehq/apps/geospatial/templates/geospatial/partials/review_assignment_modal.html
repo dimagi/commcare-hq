@@ -10,8 +10,15 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="reviewAssignmentLabel">{% trans 'Review Assignment Results' %}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <h5 class="modal-title" id="reviewAssignmentLabel">
+          {% trans 'Review Assignment Results' %}
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
       </div>
       <div class="modal-body">
         <p>
@@ -24,10 +31,7 @@
         <div class="row g-3">
           <div class="col-lg-6">
             <label class="form-label"> {% trans 'Assignment Status' %} </label>
-            <select
-              class="form-select"
-              data-bind="value: assignedFilter"
-            >
+            <select class="form-select" data-bind="value: assignedFilter">
               <option value="all">{% trans 'Show All' %}</option>
               <option value="assigned">{% trans 'Assigned Only' %}</option>
               <option value="unassigned">{% trans 'Unassigned Only' %}</option>
@@ -73,7 +77,11 @@
               <tr data-bind="css: { 'table-active': isSelected }">
                 <td>
                   <div class="form-check">
-                    <input type="checkbox" class="form-check-input" data-bind="checked: isSelected" />
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      data-bind="checked: isSelected"
+                    />
                   </div>
                 </td>
                 <td data-bind="text: $data.caseName"></td>
@@ -96,7 +104,12 @@
         <div class="row g-3 align-items-center w-100">
           <div class="col-sm-4">
             <div class="form-check">
-              <input type="checkbox" class="form-check-input" id="relatedCasesCheck" data-bind="checked: includeRelatedCases" />
+              <input
+                type="checkbox"
+                class="form-check-input"
+                id="relatedCasesCheck"
+                data-bind="checked: includeRelatedCases"
+              />
               <label class="form-check-label" for="relatedCasesCheck">
                 {% trans 'Include related cases' %}
               </label>
@@ -114,10 +127,7 @@
                 {% trans 'Unassign Cases' %}
               </span>
             </button>
-            <button
-              class="btn btn-info"
-              data-bind="click: exportAssignments"
-            >
+            <button class="btn btn-info" data-bind="click: exportAssignments">
               {% trans 'Export' %}
             </button>
             <button

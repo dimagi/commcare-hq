@@ -17,9 +17,13 @@
       <div class="alert alert-danger" data-bind="visible: hasErrors()">
         <i class="fa-solid fa-triangle-exclamation"></i>
         {% blocktrans %}
-          <strong>There was an issue retrieving mobile workers from the server.</strong>
+          <strong
+            >There was an issue retrieving mobile workers from the
+            server.</strong
+          >
           If this problem continues, please
-          <a href="#modalReportIssue" data-bs-toggle="modal">report an issue</a>.
+          <a href="#modalReportIssue" data-bs-toggle="modal">report an issue</a
+          >.
         {% endblocktrans %}
       </div>
       <fieldset>
@@ -40,7 +44,9 @@
       </fieldset>
       <fieldset>
         <div class="mb-3 row">
-          <label class="col-sm-2 col-form-label"> {% trans "Location" %} </label>
+          <label class="col-sm-2 col-form-label">
+            {% trans "Location" %}
+          </label>
           <div class="col-sm-4">
             <select
               class="form-select"
@@ -196,12 +202,25 @@
         <span data-bind="text: selectedUsers().length"></span>
         &nbsp;{% trans "Selected Mobile Workers" %}
       </button>
-      <div class="modal fade" id="selected-user-list" tabindex="-1" aria-labelledby="selectedUsersLabel" aria-hidden="true">
+      <div
+        class="modal fade"
+        id="selected-user-list"
+        tabindex="-1"
+        aria-labelledby="selectedUsersLabel"
+        aria-hidden="true"
+      >
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title" id="selectedUsersLabel">{% trans "Selected Mobile Workers" %}</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              <h5 class="modal-title" id="selectedUsersLabel">
+                {% trans "Selected Mobile Workers" %}
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
             </div>
             <div class="modal-body" style="overflow-y: auto; max-height: 50vh">
               <table class="table table-striped">
@@ -228,12 +247,25 @@
         <span data-bind="text: userModels().length"></span>
         &nbsp;{% trans "Mobile Workers on Map" %}
       </button>
-      <div class="modal fade" id="all-user-list" tabindex="-1" aria-labelledby="allUsersLabel" aria-hidden="true">
+      <div
+        class="modal fade"
+        id="all-user-list"
+        tabindex="-1"
+        aria-labelledby="allUsersLabel"
+        aria-hidden="true"
+      >
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title" id="allUsersLabel">{% trans "All Mobile Workers on Map" %}</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              <h5 class="modal-title" id="allUsersLabel">
+                {% trans "All Mobile Workers on Map" %}
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
             </div>
             <div class="modal-body" style="overflow-y: auto; max-height: 50vh">
               <table class="table table-striped">
@@ -263,12 +295,25 @@
         <span data-bind="text: selectedCases().length"></span>
         &nbsp;{% trans "Selected Cases" %}
       </button>
-      <div class="modal fade" id="selected-case-list" tabindex="-1" aria-labelledby="selectedCasesLabel" aria-hidden="true">
+      <div
+        class="modal fade"
+        id="selected-case-list"
+        tabindex="-1"
+        aria-labelledby="selectedCasesLabel"
+        aria-hidden="true"
+      >
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title" id="selectedCasesLabel">{% trans "Selected Cases" %}</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              <h5 class="modal-title" id="selectedCasesLabel">
+                {% trans "Selected Cases" %}
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
             </div>
             <div class="modal-body" style="overflow-y: auto; max-height: 50vh">
               <table class="table table-striped">
@@ -295,12 +340,25 @@
         <span data-bind="text: caseModels().length"></span>
         &nbsp;{% trans "Cases on Map" %}
       </button>
-      <div class="modal fade" id="all-case-list" tabindex="-1" aria-labelledby="allCasesLabel" aria-hidden="true">
+      <div
+        class="modal fade"
+        id="all-case-list"
+        tabindex="-1"
+        aria-labelledby="allCasesLabel"
+        aria-hidden="true"
+      >
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title" id="allCasesLabel">{% trans "All Cases on Map" %}</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              <h5 class="modal-title" id="allCasesLabel">
+                {% trans "All Cases on Map" %}
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
             </div>
             <div class="modal-body" style="overflow-y: auto; max-height: 50vh">
               <table class="table table-striped">

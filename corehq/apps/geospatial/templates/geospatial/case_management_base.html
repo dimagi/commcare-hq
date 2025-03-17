@@ -1,21 +1,20 @@
 {% extends "geospatial/base_template.html" %}
-
 {% load hq_shared_tags %}
 {% load compress %}
 
 {% block page_title %}
-{{ current_page.title }}
+  {{ current_page.title }}
 {% endblock %}
-
 {% js_entry 'geospatial/js/case_management' %}
 
-{% block additional_initial_page_data %}{{ block.super }}
-    {% initial_page_data "saved_polygons" saved_polygons %}
-    {% registerurl 'geo_polygons' domain %}
-    {% registerurl 'geo_polygon' domain '---' %}
-    {% registerurl 'case_disbursement' domain %}
-    {% registerurl 'get_users_with_gps' domain %}
-    {% registerurl 'edit_commcare_user' domain '---' %}
-    {% registerurl 'location_search' domain %}
-    {% registerurl 'reassign_cases' domain %}
+{% block additional_initial_page_data %}
+  {{ block.super }}
+  {% initial_page_data "saved_polygons" saved_polygons %}
+  {% registerurl 'geo_polygons' domain %}
+  {% registerurl 'geo_polygon' domain '---' %}
+  {% registerurl 'case_disbursement' domain %}
+  {% registerurl 'get_users_with_gps' domain %}
+  {% registerurl 'edit_commcare_user' domain '---' %}
+  {% registerurl 'location_search' domain %}
+  {% registerurl 'reassign_cases' domain %}
 {% endblock %}
