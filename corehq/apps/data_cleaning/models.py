@@ -104,7 +104,7 @@ class BulkEditSession(models.Model):
         return round(self.result['percent'])
 
     def add_column_filter(self, prop_id, data_type, match_type, value=None):
-        BulkEditColumnFilter.objects.create(
+        BulkEditFilter.objects.create(
             session=self,
             index=self.column_filters.count(),
             prop_id=prop_id,
@@ -121,7 +121,7 @@ class BulkEditSession(models.Model):
     def reorder_column_filters(self, filter_ids):
         """
         This updates the order of column filters for this session
-        :param filter_ids: list of uuids matching filter_id field of BulkEditColumnFilters
+        :param filter_ids: list of uuids matching filter_id field of BulkEditFilters
         """
         if len(filter_ids) != self.column_filters.count():
             raise ValueError("the lengths of column_ids and available column filters do not match")
@@ -341,7 +341,7 @@ class FilterMatchType:
     )
 
 
-class BulkEditColumnFilter(models.Model):
+class BulkEditFilter(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="column_filters", on_delete=models.CASCADE)
     filter_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
     index = models.IntegerField(default=0)

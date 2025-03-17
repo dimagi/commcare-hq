@@ -13,7 +13,7 @@ from corehq.apps.data_cleaning.exceptions import UnsupportedFilterValueException
 from corehq.apps.data_cleaning.models import (
     DataType,
     FilterMatchType,
-    BulkEditColumnFilter,
+    BulkEditFilter,
 )
 from corehq.apps.data_cleaning.utils.cases import get_case_property_details
 from corehq.apps.hqwebapp.widgets import AlpineSelect
@@ -334,7 +334,7 @@ class AddColumnFilterForm(forms.Form):
         value = self._clean_value_for_match_type('text_value', cleaned_data, match_type)
         if value is not None:
             try:
-                BulkEditColumnFilter.get_quoted_value(value)
+                BulkEditFilter.get_quoted_value(value)
             except UnsupportedFilterValueException:
                 self.add_error('text_value', _("This value cannot contain both single quotes (') "
                                                "and double quotes (\") at the same time."))
@@ -405,7 +405,7 @@ class AddColumnFilterForm(forms.Form):
         cleaned_data['match_type'] = match_type
         cleaned_data['value'] = value
         # one last check
-        if not BulkEditColumnFilter.is_data_and_match_type_valid(
+        if not BulkEditFilter.is_data_and_match_type_valid(
             match_type, data_type
         ):
             self.add_error('data_type', _("Data type '{}' cannot have match type '{}'.").format(

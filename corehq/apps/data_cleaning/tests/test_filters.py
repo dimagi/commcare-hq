@@ -11,7 +11,7 @@ from corehq.apps.data_cleaning.filters import (
     CaseStatusPinnedFilter,
 )
 from corehq.apps.data_cleaning.models import (
-    BulkEditColumnFilter,
+    BulkEditFilter,
     DataType,
     FilterMatchType,
     BulkEditSession,
@@ -93,7 +93,7 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils
 def test_data_and_match_type_validation(category, valid_match_types):
     for data_type in DataType.FILTER_CATEGORY_DATA_TYPES[category]:
         for match_type, _ in FilterMatchType.ALL_CHOICES:
-            is_valid = BulkEditColumnFilter.is_data_and_match_type_valid(
+            is_valid = BulkEditFilter.is_data_and_match_type_valid(
                 match_type, data_type
             )
             if match_type in valid_match_types:
@@ -105,7 +105,7 @@ def test_data_and_match_type_validation(category, valid_match_types):
 
 
 @es_test(requires=[case_search_adapter], setup_class=True)
-class BulkEditColumnFilterQueryTests(TestCase):
+class BulkEditFilterQueryTests(TestCase):
     domain = 'column-test-filters'
 
     @classmethod
@@ -135,7 +135,7 @@ class BulkEditColumnFilterQueryTests(TestCase):
     def test_filter_query_is_empty(self):
         query = CaseSearchES().domain(self.domain)
         for data_type, _ in DataType.CHOICES:
-            column_filter = BulkEditColumnFilter(
+            column_filter = BulkEditFilter(
                 session=self.session,
                 prop_id='soil_contents',
                 data_type=data_type,
@@ -151,7 +151,7 @@ class BulkEditColumnFilterQueryTests(TestCase):
 
     def test_filter_query_is_empty_system_property(self):
         query = CaseSearchES().domain(self.domain)
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             session=self.session,
             prop_id='last_modified',
             data_type=DataType.DATETIME,
@@ -163,7 +163,7 @@ class BulkEditColumnFilterQueryTests(TestCase):
     def test_filter_query_is_not_empty(self):
         query = CaseSearchES().domain(self.domain)
         for data_type, _ in DataType.CHOICES:
-            column_filter = BulkEditColumnFilter(
+            column_filter = BulkEditFilter(
                 session=self.session,
                 prop_id='soil_contents',
                 data_type=data_type,
@@ -179,7 +179,7 @@ class BulkEditColumnFilterQueryTests(TestCase):
 
     def test_filter_query_is_not_empty_system_property(self):
         query = CaseSearchES().domain(self.domain)
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             session=self.session,
             prop_id='last_modified',
             data_type=DataType.DATETIME,
@@ -191,7 +191,7 @@ class BulkEditColumnFilterQueryTests(TestCase):
     def test_filter_query_is_missing(self):
         query = CaseSearchES().domain(self.domain)
         for data_type, _ in DataType.CHOICES:
-            column_filter = BulkEditColumnFilter(
+            column_filter = BulkEditFilter(
                 session=self.session,
                 prop_id='soil_contents',
                 data_type=data_type,
@@ -207,7 +207,7 @@ class BulkEditColumnFilterQueryTests(TestCase):
 
     def test_filter_query_is_missing_system_property(self):
         query = CaseSearchES().domain(self.domain)
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             session=self.session,
             prop_id='last_modified',
             data_type=DataType.DATETIME,
@@ -219,7 +219,7 @@ class BulkEditColumnFilterQueryTests(TestCase):
     def test_filter_query_is_not_missing(self):
         query = CaseSearchES().domain(self.domain)
         for data_type, _ in DataType.CHOICES:
-            column_filter = BulkEditColumnFilter(
+            column_filter = BulkEditFilter(
                 session=self.session,
                 prop_id='soil_contents',
                 data_type=data_type,
@@ -235,7 +235,7 @@ class BulkEditColumnFilterQueryTests(TestCase):
 
     def test_filter_query_is_not_missing_system_property(self):
         query = CaseSearchES().domain(self.domain)
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             session=self.session,
             prop_id='last_modified',
             data_type=DataType.DATETIME,
@@ -250,7 +250,7 @@ class BulkEditColumnFilterQueryTests(TestCase):
             if match_type in dict(FilterMatchType.ALL_DATA_TYPES_CHOICES):
                 continue
             for data_type, _ in DataType.CHOICES:
-                column_filter = BulkEditColumnFilter(
+                column_filter = BulkEditFilter(
                     session=self.session,
                     prop_id='soil_contents',
                     data_type=data_type,
@@ -263,10 +263,10 @@ class BulkEditColumnFilterQueryTests(TestCase):
                 )
 
 
-class BulkEditColumnFilterXpathTest(TestCase):
+class BulkEditFilterXpathTest(TestCase):
 
     def test_exact_text_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='name',
             data_type=DataType.TEXT,
             match_type=FilterMatchType.EXACT,
@@ -278,7 +278,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_single_quote_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='name',
             data_type=DataType.TEXT,
             match_type=FilterMatchType.EXACT,
@@ -294,7 +294,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_double_quote_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='name',
             data_type=DataType.TEXT,
             match_type=FilterMatchType.EXACT,
@@ -310,7 +310,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_mixed_quote_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='name',
             data_type=DataType.TEXT,
             match_type=FilterMatchType.EXACT,
@@ -322,7 +322,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
             column_filter.get_xpath_expression()
 
     def test_exact_number_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='height_cm',
             data_type=DataType.DECIMAL,
             match_type=FilterMatchType.EXACT,
@@ -334,7 +334,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_exact_date_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='watered_on',
             data_type=DataType.DATE,
             match_type=FilterMatchType.EXACT,
@@ -346,7 +346,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_is_not_text_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='phone_num',
             data_type=DataType.PHONE_NUMBER,
             match_type=FilterMatchType.IS_NOT,
@@ -358,7 +358,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_is_not_number_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='num_leaves',
             data_type=DataType.INTEGER,
             match_type=FilterMatchType.IS_NOT,
@@ -370,7 +370,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_less_than_number_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='height_cm',
             data_type=DataType.DECIMAL,
             match_type=FilterMatchType.LESS_THAN,
@@ -382,7 +382,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_less_than_date_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='watered_on',
             data_type=DataType.DATETIME,
             match_type=FilterMatchType.LESS_THAN,
@@ -394,7 +394,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_less_than_equal_number_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='weight_kg',
             data_type=DataType.DECIMAL,
             match_type=FilterMatchType.LESS_THAN_EQUAL,
@@ -406,7 +406,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_less_than_equal_date_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='last_modified',
             data_type=DataType.DATETIME,
             match_type=FilterMatchType.LESS_THAN_EQUAL,
@@ -418,7 +418,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_greater_than_number_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='amount',
             data_type=DataType.INTEGER,
             match_type=FilterMatchType.GREATER_THAN,
@@ -430,7 +430,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_greater_than_date_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='modified_on',
             data_type=DataType.DATE,
             match_type=FilterMatchType.GREATER_THAN,
@@ -442,7 +442,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_greater_than_equal_number_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='num_branches',
             data_type=DataType.INTEGER,
             match_type=FilterMatchType.GREATER_THAN_EQUAL,
@@ -454,7 +454,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_greater_than_equal_date_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='submitted_on',
             data_type=DataType.DATE,
             match_type=FilterMatchType.GREATER_THAN_EQUAL,
@@ -466,7 +466,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_starts_with_text_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='name',
             data_type=DataType.TEXT,
             match_type=FilterMatchType.STARTS,
@@ -478,7 +478,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_starts_with_text_single_quote_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='name',
             data_type=DataType.TEXT,
             match_type=FilterMatchType.STARTS,
@@ -490,7 +490,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_starts_with_text_double_quote_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='name',
             data_type=DataType.TEXT,
             match_type=FilterMatchType.STARTS,
@@ -502,7 +502,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_starts_text_mixed_quote_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='name',
             data_type=DataType.TEXT,
             match_type=FilterMatchType.STARTS,
@@ -512,7 +512,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
             column_filter.get_xpath_expression()
 
     def test_starts_not_text_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='favorite_park',
             data_type=DataType.TEXT,
             match_type=FilterMatchType.STARTS_NOT,
@@ -524,7 +524,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_fuzzy_text_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='pot_type',
             data_type=DataType.TEXT,
             match_type=FilterMatchType.FUZZY,
@@ -536,7 +536,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_fuzzy_not_text_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='pot_type',
             data_type=DataType.TEXT,
             match_type=FilterMatchType.FUZZY_NOT,
@@ -548,7 +548,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_phonetic_text_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='light_level',
             data_type=DataType.TEXT,
             match_type=FilterMatchType.PHONETIC,
@@ -560,7 +560,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_phonetic_not_text_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='light_level',
             data_type=DataType.TEXT,
             match_type=FilterMatchType.PHONETIC_NOT,
@@ -572,7 +572,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_is_any_text_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='health_issues',
             data_type=DataType.MULTIPLE_OPTION,
             match_type=FilterMatchType.IS_ANY,
@@ -584,7 +584,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_is_not_any_text_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='health_issues',
             data_type=DataType.MULTIPLE_OPTION,
             match_type=FilterMatchType.IS_NOT_ANY,
@@ -596,7 +596,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_is_all_text_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='soil_contents',
             data_type=DataType.MULTIPLE_OPTION,
             match_type=FilterMatchType.IS_ALL,
@@ -608,7 +608,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
         )
 
     def test_is_not_all_text_xpath(self):
-        column_filter = BulkEditColumnFilter(
+        column_filter = BulkEditFilter(
             prop_id='soil_contents',
             data_type=DataType.MULTIPLE_OPTION,
             match_type=FilterMatchType.IS_NOT_ALL,
@@ -622,7 +622,7 @@ class BulkEditColumnFilterXpathTest(TestCase):
     def test_value_match_types_return_none_all_data_types_xpath(self):
         for match_type, _ in FilterMatchType.ALL_DATA_TYPES_CHOICES:
             for data_type, _ in DataType.CHOICES:
-                column_filter = BulkEditColumnFilter(
+                column_filter = BulkEditFilter(
                     prop_id='a_property',
                     data_type=data_type,
                     match_type=match_type,
