@@ -2682,6 +2682,11 @@ class WireBillingRecord(BillingRecordBase):
     def is_email_throttled():
         return False
 
+    def email_context(self):
+        context = super().email_context()
+        context.update({'date_due': self.invoice.date_due})
+        return context
+
     def email_subject(self):
         month_name = self.invoice.date_start.strftime("%B")
         return "Your %(month)s Bulk Billing Statement for Project Space %(domain)s" % {
