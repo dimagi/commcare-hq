@@ -4,6 +4,8 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 
+from django_tables2 import RequestConfig
+
 from corehq import toggles
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.views.base import BaseDomainView
@@ -11,12 +13,10 @@ from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.kyc.forms import KycConfigureForm
 from corehq.apps.integration.kyc.models import KycConfig, KycVerificationStatus
-from corehq.apps.integration.kyc.services import (
-    verify_users,
-)
+from corehq.apps.integration.kyc.services import verify_users
 from corehq.apps.integration.kyc.tables import KycVerifyTable
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
-from corehq.util.metrics import metrics_gauge, metrics_counter
+from corehq.util.metrics import metrics_counter, metrics_gauge
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -83,41 +83,35 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
     def kyc_config(self):
         return KycConfig.objects.get(domain=self.request.domain)
 
-    def get_queryset(self):
-        row_objs = self.kyc_config.get_kyc_users()
-        return [self._parse_row(row_obj) for row_obj in row_objs]
+    def get_table(self, **kwargs):
+        table_class = self.get_table_class()
+        table = table_class(
+            data=self.get_table_data(),
+            extra_columns=KycVerifyTable.get_extra_columns(self.kyc_config),
+            **kwargs,
+        )
+        return RequestConfig(
+            self.request,
+            paginate=self.get_table_pagination(table),
+        ).configure(table)
 
-    def _parse_row(self, row_obj):
+    def get_queryset(self):
+        kyc_users = self.kyc_config.get_kyc_users()
+        return [self._parse_row(kyc_user) for kyc_user in kyc_users]
+
+    def _parse_row(self, kyc_user):
         row_data = {
-            'id': row_obj.user_id,
+            'id': kyc_user.user_id,
             'has_invalid_data': False,
+            'kyc_verification_status': kyc_user.get('kyc_verification_status'),
+            'kyc_last_verified_at': kyc_user.get('kyc_verification_status'),
         }
-        user_fields = (
-            'first_name',
-            'last_name',
-            'phone_number',
-            'email',
-            'national_id_number',
-            'street_address',
-            'city',
-            'post_code',
-            'country',
-        )
-        system_fields = (
-            'kyc_verification_status',
-            'kyc_last_verified_at',
-        )
-        for field in (user_fields + system_fields):
-            value = None
-            try:
-                value = row_obj[field]
-            except KeyError:
-                pass
-            finally:
-                if value in ['', None] and field in user_fields:
-                    row_data['has_invalid_data'] = True
-                else:
-                    row_data[field] = value
+        for field in self.kyc_config.api_field_to_user_data_map.values():
+            value = kyc_user.get(field)
+            if not value:
+                row_data['has_invalid_data'] = True
+            else:
+                row_data[field] = value
         return row_data
 
     @hq_hx_action('post')
