@@ -101,7 +101,7 @@ class TestPaymentRequest(TestCase):
             url='http://test-url.com',
         )
         cls.config = MoMoConfig.objects.create(
-            domain='test-domain',
+            domain=cls.domain,
             connection_settings=connection_settings,
             environment='sandbox',
         )
