@@ -73,3 +73,22 @@ class DashboardReport(DashboardWidgetBase):
     @property
     def report_configuration(self):
         return ReportConfiguration.get(self.report_configuration_id)
+
+
+class WidgetType:
+    from corehq.apps.campaign.forms import DashboardMapForm, DashboardReportForm
+
+    MAP = 'map'
+    REPORT = 'report'
+
+    FORM_CLASS = {
+        MAP: DashboardMapForm,
+        REPORT: DashboardReportForm,
+    }
+
+    @classmethod
+    def choices(cls):
+        return [
+            (cls.MAP, _('Map')),
+            (cls.REPORT, _('Report')),
+        ]
