@@ -1,3 +1,4 @@
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq import toggles
 from corehq.apps.reports.dispatcher import (
     ReportDispatcher,
@@ -7,6 +8,7 @@ from django.utils.decorators import method_decorator
 
 
 @method_decorator(toggles.MICROPLANNING.required_decorator(), name='dispatch')
+@method_decorator(use_bootstrap5, name='dispatch')
 class CaseManagementMapDispatcher(ReportDispatcher):
     prefix = 'microplanning'
     map_name = 'GEOSPATIAL_MAP'

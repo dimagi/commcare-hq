@@ -38,7 +38,7 @@ from corehq.apps.geospatial.forms import GeospatialConfigForm
 from corehq.apps.geospatial.reports import CaseManagementMap
 from corehq.apps.geospatial.tasks import geo_cases_reassignment_update_owners
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
-from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui
+from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui, use_bootstrap5
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
@@ -180,6 +180,7 @@ class GeoPolygonDetailView(BaseDomainView):
         })
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class BaseConfigView(BaseGeospatialView):
     section_name = _("Data")
 
@@ -258,6 +259,7 @@ class GeospatialConfigPage(BaseConfigView):
         return context
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class GPSCaptureView(BaseGeospatialView):
     urlname = 'gps_capture'
     template_name = 'geospatial/gps_capture_view.html'

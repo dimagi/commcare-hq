@@ -7,7 +7,7 @@
 {{ current_page.title }}
 {% endblock %}
 
-{% js_entry_b3 'geospatial/js/case_management' %}
+{% js_entry 'geospatial/js/case_management' %}
 
 {% block additional_initial_page_data %}{{ block.super }}
     {% initial_page_data "saved_polygons" saved_polygons %}
