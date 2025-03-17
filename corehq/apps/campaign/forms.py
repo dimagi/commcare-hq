@@ -3,8 +3,9 @@ from crispy_forms.layout import Submit
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-from corehq.apps.campaign.models import DashboardTab, DashboardMap
+from corehq.apps.campaign.models import DashboardTab, DashboardMap, DashboardReport
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
+from corehq.apps.userreports.models import ReportConfiguration
 
 
 class DashboardWidgetBaseForm(forms.ModelForm):
@@ -64,3 +65,33 @@ class DashboardMapForm(DashboardWidgetBaseForm):
     def _get_case_types(self):
         case_types = sorted(get_case_types_for_domain(self.domain))
         return [(case, case) for case in case_types]
+
+
+class DashboardReportForm(DashboardWidgetBaseForm):
+
+    class Meta(DashboardWidgetBaseForm.Meta):
+        model = DashboardReport
+        fields = DashboardWidgetBaseForm.Meta.fields + [
+            'report_configuration_id',
+        ]
+
+    report_configuration_id = forms.ChoiceField(
+        label=_('Report'),
+    )
+
+    def __init__(self, domain, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.domain = domain
+        self.fields['report_configuration_id'].choices = self._get_report_configurations()
+
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.add_input(Submit(_('submit'), 'Submit', css_class='btn btn-primary'))
+
+    def _get_report_configurations(self):
+        report_configs = ReportConfiguration.by_domain(self.domain)
+        return [
+            (report.get_id, report.title)
+            for report in report_configs
+        ]
