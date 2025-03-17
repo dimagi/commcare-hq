@@ -7,7 +7,6 @@ from django.utils.translation import gettext
 
 from corehq.apps.domain.shortcuts import create_domain, create_user
 from corehq.apps.es.client import manager
-from corehq.apps.es.fake.groups_fake import GroupESFake
 from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.groups import group_adapter
@@ -377,7 +376,7 @@ class GroupChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
 
 @mock.patch('corehq.apps.users.analytics.UserES', UserESFake)
 @mock.patch('corehq.apps.userreports.reports.filters.choice_providers.UserES', UserESFake)
-@mock.patch('corehq.apps.userreports.reports.filters.choice_providers.GroupES', GroupESFake)
+@es_test(requires=[group_adapter], setup_class=True)
 class OwnerChoiceProviderTest(LocationHierarchyTestCase, ChoiceProviderTestMixin):
     domain = 'owner-choice-provider'
     location_type_names = ['state']
@@ -388,6 +387,7 @@ class OwnerChoiceProviderTest(LocationHierarchyTestCase, ChoiceProviderTestMixin
         super(OwnerChoiceProviderTest, cls).setUpClass()
         report = ReportConfiguration(domain=cls.domain)
         cls.group = GroupChoiceProviderTest.make_group('Group', domain=cls.domain)
+        manager.index_refresh(group_adapter.index_name)
         cls.mobile_worker = UserChoiceProviderTest.make_mobile_worker('mobile-worker', domain=cls.domain)
         cls.web_user = UserChoiceProviderTest.make_web_user('web-user@example.com', domain=cls.domain)
         cls.location = cls.locations['Massachusetts']
@@ -410,7 +410,6 @@ class OwnerChoiceProviderTest(LocationHierarchyTestCase, ChoiceProviderTestMixin
     @classmethod
     def tearDownClass(cls):
         UserESFake.reset_docs()
-        GroupESFake.reset_docs()
         super(OwnerChoiceProviderTest, cls).tearDownClass()
 
     def test_query_search(self):
