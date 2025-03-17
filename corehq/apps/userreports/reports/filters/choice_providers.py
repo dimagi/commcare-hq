@@ -380,7 +380,7 @@ class GroupChoiceProvider(ChainableChoiceProvider):
         group_es = (
             GroupES().domain(self.domain).is_case_sharing()
             .search_string_query(query_context.query, default_fields=['name'])
-            .size(query_context.limit).start(query_context.offset).sort('name')
+            .size(query_context.limit).start(query_context.offset).sort('name.exact')
         )
         return self.get_choices_from_es_query(group_es)
 
