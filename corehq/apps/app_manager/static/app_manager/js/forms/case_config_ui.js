@@ -38,7 +38,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             self.moduleCaseTypes = params.moduleCaseTypes;
             self.allowUsercase = params.allowUsercase;
 
-            self.trackGoogleEvent = function() {
+            self.trackGoogleEvent = function () {
                 hqImport('analytix/js/google').track.event(...arguments);
             };
 
@@ -180,7 +180,10 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                         $home.on('textchange', 'input', self.change)
                             // all select2's are represented by an input[type="hidden"]
                             .on('change', 'select, input[type="hidden"]', self.change)
-                            .on('click', 'a', self.change);
+                            // help links should not trigger a change.
+                            // I did not see anchor tags that *should* trigger a change, but left in this trigger.
+                            // Ideally, changes should be triggered off something more specific than an anchor tag
+                            .on('click', ':not(.hq-help) > a', self.change);
                         self.forceRefreshTextchangeBinding($home);
                     }
 
