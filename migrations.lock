@@ -321,6 +321,7 @@ data_cleaning
  0002_update_fields_and_ordering
  0003_column_filter_unique_ids_match_type_updates
  0004_alter_bulkeditcolumn_data_type_and_more
+ 0005_rename_bulkeditcolumnfilter_bulkeditfilter
 data_dictionary
  0001_squashed_0002_auto_20161116_2209
  0002_auto_20161118_1537
