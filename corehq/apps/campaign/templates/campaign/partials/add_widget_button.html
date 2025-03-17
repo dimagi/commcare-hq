@@ -14,7 +14,18 @@
     <ul class="dropdown-menu">
       {% for value, label in widget_types %}
         <li>
-          <a class="dropdown-item" href="#"> {{ label }} </a>
+          <a
+            class="dropdown-item"
+            href="#"
+            hx-get="{% url 'dashboard_widget' domain %}?widget_type={{ value }}"
+            hq-hx-action="new_widget"
+            hx-target="#widget-modal-body"
+            hx-swap="innerHTML"
+            data-bs-toggle="modal"
+            data-bs-target="#widget-modal"
+          >
+            {{ label }}
+          </a>
         </li>
       {% endfor %}
     </ul>
