@@ -30,8 +30,9 @@ def request_payments_for_cases(case_ids, config):
     for payment_case in CommCareCase.objects.get_cases(case_ids=case_ids):
         payment_update = request_payment(payment_case, config)
 
+        should_close = False
         payment_updates.append(
-            (payment_case.case_id, payment_update, False)
+            (payment_case.case_id, payment_update, should_close)
         )
         if len(payment_updates) >= CHUNK_SIZE:
             bulk_update_cases(
