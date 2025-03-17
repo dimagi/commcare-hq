@@ -9,6 +9,7 @@ from crispy_forms.helper import FormHelper
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
+from corehq.apps.hqwebapp.utils.translation import format_html_lazy
 from corehq.apps.integration.kyc.models import (
     KycConfig,
     KycProviders,
@@ -47,6 +48,12 @@ class KycConfigureForm(forms.ModelForm):
         label=_('API Field to Recipient Data Map'),
         required=True,
         expected_type=dict,
+        help_text=format_html_lazy(
+            _('Maps API field for the KYC provider to the field used for storing the relevant data.'
+              ' To learn more about this, please have a look at our '
+              '<a href="{}" target="_blank">support documentation</a>.'),
+            'https://commcare-hq.readthedocs.io/integrations/kyc.html#api-field-to-recipient-data-map'
+        ),
     )
 
     def __init__(self, *args, **kwargs):

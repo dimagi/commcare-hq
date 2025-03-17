@@ -19,6 +19,7 @@ from corehq.motech.const import (
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import validate_user_input_url_for_repeaters
 from corehq.motech.utils import api_setting_matches_preset, get_endpoint_url
+from corehq.toggles import MTN_MOBILE_WORKER_VERIFICATION
 from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
 from corehq.apps.userreports.ui.fields import JsonField
@@ -133,8 +134,9 @@ class ConnectionSettingsForm(forms.ModelForm):
                     'plaintext_password': PASSWORD_PLACEHOLDER if password else '',
                     'plaintext_client_secret': PASSWORD_PLACEHOLDER if secret else '',
                     'auth_preset': api_setting_matches_preset(kwargs['instance']),
-                    'plaintext_custom_headers': kwargs['instance'].get_custom_headers_display(),
                 })
+                if self.custom_headers_supported(domain):
+                    kwargs['initial']['plaintext_custom_headers'] = kwargs['instance'].get_custom_headers_display()
             else:
                 kwargs['initial'] = {
                     'plaintext_password': PASSWORD_PLACEHOLDER if password else '',
@@ -148,6 +150,8 @@ class ConnectionSettingsForm(forms.ModelForm):
     @cached_property
     def helper(self):
         from corehq.motech.views import ConnectionSettingsListView
+
+        custom_headers_supported = self.custom_headers_supported(self.domain)
 
         helper = hqcrispy.HQFormHelper()
         helper.layout = crispy.Layout(
@@ -168,7 +172,7 @@ class ConnectionSettingsForm(forms.ModelForm):
                     crispy.Field('pass_credentials_in_header'),
                     crispy.Field('include_client_id'),
                     crispy.Field('scope'),
-                    crispy.Field('plaintext_custom_headers'),
+                    crispy.Field('plaintext_custom_headers') if custom_headers_supported else None,
                 ),
                 id="div_id_oauth_settings",
             ),
@@ -192,6 +196,10 @@ class ConnectionSettingsForm(forms.ModelForm):
         )
 
         return helper
+
+    @staticmethod
+    def custom_headers_supported(domain):
+        return MTN_MOBILE_WORKER_VERIFICATION.enabled(domain)
 
     @property
     def test_connection_button(self):
@@ -269,7 +277,8 @@ class ConnectionSettingsForm(forms.ModelForm):
         self.instance.plaintext_client_secret = self.cleaned_data['plaintext_client_secret']
         self.instance.last_token = None
 
-        self.instance.set_custom_headers(self.cleaned_data['plaintext_custom_headers'])
+        if self.custom_headers_supported(self.domain):
+            self.instance.set_custom_headers(self.cleaned_data['plaintext_custom_headers'])
 
         new_auth_preset = self.cleaned_data['auth_preset'] in AUTH_PRESETS
         url_changed_and_preset_set = (

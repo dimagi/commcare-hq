@@ -38,6 +38,7 @@ from corehq.motech.utils import (
     b64_aes_cbc_decrypt,
     b64_aes_cbc_encrypt,
 )
+from corehq.toggles import MTN_MOBILE_WORKER_VERIFICATION
 from corehq.util import as_json_text, as_text
 
 
@@ -160,6 +161,9 @@ class ConnectionSettings(models.Model):
 
     @property
     def plaintext_custom_headers(self):
+        if not MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain):
+            return {}
+
         def decrypt(value):
             if value.startswith(f'${ALGO_AES_CBC}$'):
                 ciphertext = value.split('$', 2)[2]
@@ -171,6 +175,9 @@ class ConnectionSettings(models.Model):
         """
         Makes sure the header values are encrypted before saving them
         """
+        if not MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain):
+            return
+
         self.custom_headers = self.custom_headers or {}
         for header, value in headers.items():
             if value != PASSWORD_PLACEHOLDER:
@@ -185,6 +192,8 @@ class ConnectionSettings(models.Model):
         }
 
     def get_custom_headers_display(self):
+        if not MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain):
+            return {}
         return {k: PASSWORD_PLACEHOLDER for k, v in self.custom_headers.items()}
 
     @property

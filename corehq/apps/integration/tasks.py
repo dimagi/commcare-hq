@@ -5,7 +5,7 @@ from celery.schedules import crontab
 from corehq.apps.celery import periodic_task
 from corehq.apps.es.case_search import CaseSearchES, case_property_missing, case_property_query
 from corehq.apps.es import filters
-from corehq.apps.integration.kyc.models import KycConfig, KycIsVerifiedChoice
+from corehq.apps.integration.kyc.models import KycConfig, KycVerificationStatus
 from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.apps.integration.payments.services import request_payments_for_cases
 from corehq.toggles import KYC_VERIFICATION, MTN_MOBILE_WORKER_VERIFICATION
@@ -23,9 +23,9 @@ def report_verification_status_count():
         success_count = 0
         failure_count = 0
         for kyc_user in kyc_users:
-            if kyc_user.kyc_is_verified is KycIsVerifiedChoice.TRUE:
+            if kyc_user.kyc_verification_status == KycVerificationStatus.PASSED:
                 success_count += 1
-            elif kyc_user.kyc_is_verified is KycIsVerifiedChoice.FALSE:
+            elif kyc_user.kyc_verification_status == KycVerificationStatus.FAILED:
                 failure_count += 1
 
         metrics_gauge(
