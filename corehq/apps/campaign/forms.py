@@ -34,6 +34,14 @@ class DashboardWidgetBaseForm(forms.ModelForm):
         label=_('Display Order'),
     )
 
+    def __init__(self, domain, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.domain = domain
+
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.add_input(Submit(_('submit'), 'Submit', css_class='btn btn-primary'))
+
 
 class DashboardMapForm(DashboardWidgetBaseForm):
 
@@ -53,14 +61,8 @@ class DashboardMapForm(DashboardWidgetBaseForm):
     )
 
     def __init__(self, domain, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.domain = domain
+        super().__init__(domain, *args, **kwargs)
         self.fields['case_type'].choices = self._get_case_types()
-
-        self.helper = FormHelper()
-        self.helper.form_tag = False
-        self.helper.add_input(Submit(_('submit'), 'Submit', css_class='btn btn-primary'))
 
     def _get_case_types(self):
         case_types = sorted(get_case_types_for_domain(self.domain))
@@ -80,14 +82,8 @@ class DashboardReportForm(DashboardWidgetBaseForm):
     )
 
     def __init__(self, domain, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.domain = domain
+        super().__init__(domain, *args, **kwargs)
         self.fields['report_configuration_id'].choices = self._get_report_configurations()
-
-        self.helper = FormHelper()
-        self.helper.form_tag = False
-        self.helper.add_input(Submit(_('submit'), 'Submit', css_class='btn btn-primary'))
 
     def _get_report_configurations(self):
         report_configs = ReportConfiguration.by_domain(self.domain)
