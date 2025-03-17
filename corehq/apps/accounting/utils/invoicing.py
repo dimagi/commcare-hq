@@ -52,9 +52,9 @@ def _get_domains_over_threshold(invoices, today, get_oldest_invoice_fn):
     for domain in set(invoices.values_list(
         'subscription__subscriber__domain', flat=True
     )):
-        overdue_invoice, total_overdue_to_date = get_oldest_invoice_fn(today, domain)
-        if overdue_invoice:
-            yield domain, overdue_invoice, total_overdue_to_date
+        unpaid_invoice, total_unpaid = get_oldest_invoice_fn(today, domain)
+        if unpaid_invoice:
+            yield domain, unpaid_invoice, total_unpaid
 
 
 def get_oldest_overdue_invoice_over_threshold(today, domain):
@@ -71,13 +71,13 @@ def _get_oldest_invoice_over_threshold(domain, invoices):
     for unpaid_invoice in invoices.filter(
         subscription__subscriber__domain=domain
     ):
-        total_overdue_by_domain_and_invoice_date = _get_all_unpaid_saas_invoices().filter(
+        total_unpaid_by_domain_and_invoice_date = _get_all_unpaid_saas_invoices().filter(
             Q(date_due__lte=unpaid_invoice.date_due)
             | (Q(date_due__isnull=True) & Q(date_end__lte=unpaid_invoice.date_end)),
             subscription__subscriber__domain=domain,
         ).aggregate(Sum('balance'))['balance__sum']
-        if total_overdue_by_domain_and_invoice_date >= UNPAID_INVOICE_THRESHOLD:
-            return unpaid_invoice, total_overdue_by_domain_and_invoice_date
+        if total_unpaid_by_domain_and_invoice_date >= UNPAID_INVOICE_THRESHOLD:
+            return unpaid_invoice, total_unpaid_by_domain_and_invoice_date
     return None, None
 
 
