@@ -1,5 +1,7 @@
+from enum import Enum
 
-class PaymentProperties(object):
+
+class PaymentProperties(str, Enum):
     PAYMENT_VERIFIED = 'payment_verified'
     PAYMENT_VERIFIED_ON_UTC = 'payment_verified_on_utc'
     PAYMENT_VERIFIED_BY = 'payment_verified_by'
