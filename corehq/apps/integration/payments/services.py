@@ -50,7 +50,8 @@ def request_payments_for_cases(case_ids, config):
 def request_payment(payment_case: CommCareCase, config: MoMoConfig):
     payment_update = {
         PaymentProperties.PAYMENT_SUBMITTED: False,
-        PaymentProperties.PAYMENT_TIMESTAMP: datetime.utcnow().isoformat()
+        PaymentProperties.PAYMENT_TIMESTAMP: datetime.utcnow().isoformat(),
+        PaymentProperties.PAYMENT_ERROR: '',
     }
 
     try:
