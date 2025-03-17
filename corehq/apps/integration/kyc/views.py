@@ -4,8 +4,6 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 
-from django_tables2 import RequestConfig
-
 from corehq import toggles
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.views.base import BaseDomainView
@@ -83,17 +81,10 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
     def kyc_config(self):
         return KycConfig.objects.get(domain=self.request.domain)
 
-    def get_table(self, **kwargs):
-        table_class = self.get_table_class()
-        table = table_class(
-            data=self.get_table_data(),
-            extra_columns=KycVerifyTable.get_extra_columns(self.kyc_config),
-            **kwargs,
-        )
-        return RequestConfig(
-            self.request,
-            paginate=self.get_table_pagination(table),
-        ).configure(table)
+    def get_table_kwargs(self):
+        return {
+            'extra_columns': KycVerifyTable.get_extra_columns(self.kyc_config),
+        }
 
     def get_queryset(self):
         kyc_users = self.kyc_config.get_kyc_users()
