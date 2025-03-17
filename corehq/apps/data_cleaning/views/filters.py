@@ -64,6 +64,7 @@ class ColumnFilterFormView(BulkEditSessionViewMixin, BaseFilterFormView):
         context = super().get_context_data(**kwargs)
         context.update({
             'container_id': 'column-filters',
+            'active_filters': self.session.column_filters.all(),
             'add_filter_form': kwargs.pop('filter_form', None) or AddColumnFilterForm(self.session),
         })
         return context
@@ -75,3 +76,13 @@ class ColumnFilterFormView(BulkEditSessionViewMixin, BaseFilterFormView):
             filter_form.create_filter()
             filter_form = None
         return self.get(request, filter_form=filter_form, *args, **kwargs)
+
+    @hq_hx_action('post')
+    def reorder_filters(self, request, *args, **kwargs):
+        # todo
+        return self.get(request, *args, **kwargs)
+
+    @hq_hx_action('post')
+    def delete_filter(self, request, *args, **kwargs):
+        self.session.remove_column_filter(request.POST['delete_id'])
+        return self.get(request, *args, **kwargs)

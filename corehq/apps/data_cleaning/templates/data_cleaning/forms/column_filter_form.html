@@ -5,6 +5,23 @@
   id="{{ container_id }}"
   hx-swap="outerHTML"
 >
+  {% if active_filters %}
+    <div class="mb-3">
+      <form
+        hx-post="{{ request.path_info }}"
+        hx-target="#{{ container_id }}"
+        hx-disabled-elt="find button"
+        hq-hx-action="reorder_filters"
+        hx-trigger="end"
+      >
+        <ul class="list-group">
+          {% for filter in active_filters %}
+            {% include "data_cleaning/filters/property/list_item.html" %}
+          {% endfor %}
+        </ul>
+      </form>
+    </div>
+  {% endif %}
 
   <div class="card mb-3">
     <div class="card-body">
