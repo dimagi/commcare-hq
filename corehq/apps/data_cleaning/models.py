@@ -106,7 +106,7 @@ class BulkEditSession(models.Model):
     def add_column_filter(self, prop_id, data_type, match_type, value=None):
         BulkEditFilter.objects.create(
             session=self,
-            index=self.column_filters.count(),
+            index=self.filters.count(),
             prop_id=prop_id,
             data_type=data_type,
             match_type=match_type,
@@ -114,31 +114,31 @@ class BulkEditSession(models.Model):
         )
 
     def remove_column_filter(self, filter_id):
-        self.column_filters.get(filter_id=filter_id).delete()
-        remaining_ids = self.column_filters.values_list('filter_id', flat=True)
-        self.reorder_column_filters(remaining_ids)
+        self.filters.get(filter_id=filter_id).delete()
+        remaining_ids = self.filters.values_list('filter_id', flat=True)
+        self.reorder_filters(remaining_ids)
 
-    def reorder_column_filters(self, filter_ids):
+    def reorder_filters(self, filter_ids):
         """
         This updates the order of column filters for this session
         :param filter_ids: list of uuids matching filter_id field of BulkEditFilters
         """
-        if len(filter_ids) != self.column_filters.count():
+        if len(filter_ids) != self.filters.count():
             raise ValueError("the lengths of column_ids and available column filters do not match")
         for index, filter_id in enumerate(filter_ids):
-            column_filter = self.column_filters.get(filter_id=filter_id)
+            column_filter = self.filters.get(filter_id=filter_id)
             column_filter.index = index
             column_filter.save()
 
     def get_queryset(self):
         query = CaseSearchES().domain(self.domain).case_type(self.identifier)
-        query = self._apply_column_filters(query)
+        query = self._apply_filters(query)
         query = self._apply_pinned_filters(query)
         return query
 
-    def _apply_column_filters(self, query):
+    def _apply_filters(self, query):
         xpath_expressions = []
-        for column_filter in self.column_filters.all():
+        for column_filter in self.filters.all():
             query = column_filter.filter_query(query)
             column_xpath = column_filter.get_xpath_expression()
             if column_xpath is not None:
@@ -342,7 +342,7 @@ class FilterMatchType:
 
 
 class BulkEditFilter(models.Model):
-    session = models.ForeignKey(BulkEditSession, related_name="column_filters", on_delete=models.CASCADE)
+    session = models.ForeignKey(BulkEditSession, related_name="filters", on_delete=models.CASCADE)
     filter_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
     index = models.IntegerField(default=0)
     prop_id = models.CharField(max_length=255)  # case property or form question_id
