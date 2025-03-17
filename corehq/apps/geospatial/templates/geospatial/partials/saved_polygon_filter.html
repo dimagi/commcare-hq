@@ -1,54 +1,66 @@
 {% load i18n %}
-<div class="panel" id="polygon-filters">
-    <div class="row">
-        <div class="col-sm-8">
-            <div class="row form-horizontal">
-                <label for="saved-polygons" class="control-label col-sm-2">
-                  {% trans "Filter by Saved Area" %}
-                </label>
-                <div class="col-sm-5" style="display:flex">
-                    <select id="saved-polygons"
-                            class="form-control"
-                            data-bind="select2: savedPolygons,value: selectedSavedPolygonId,">
-                    </select>
-                    <button class="btn btn-default" data-bind="click: clearSelectedPolygonFilter, visible: selectedSavedPolygonId">
-                      <i class="fa fa-remove"></i>
-                    </button>
-                </div>
-                <div class="col-sm-5">
-                    <a class="btn btn-default" data-bind="click: exportSelectedPolygonGeoJson, visible: selectedSavedPolygonId">
-                        {% trans 'Export Area' %}
-                    </a>
-                    <button class="btn btn-danger" data-toggle="modal" data-target="#delete-saved-area-modal"
-                            data-bind="visible: selectedSavedPolygonId">
-                        <i class="fa fa-trash"></i>
-                        {% trans 'Delete Area' %}
-                    </button>
+<div class="card mb-3" id="polygon-filters">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="row mb-3">
+                    <label for="saved-polygons" class="col-sm-2 col-form-label">
+                        {% trans "Filter by Saved Area" %}
+                    </label>
+                    <div class="col-sm-5 d-flex">
+                        <select id="saved-polygons"
+                                class="form-select me-2"
+                                data-bind="select2: savedPolygons, value: selectedSavedPolygonId">
+                        </select>
+                        <button class="btn btn-outline-secondary"
+                                data-bind="click: clearSelectedPolygonFilter, visible: selectedSavedPolygonId">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="col-sm-5">
+                        <a class="btn btn-outline-secondary me-2"
+                           data-bind="click: exportSelectedPolygonGeoJson, visible: selectedSavedPolygonId">
+                            {% trans 'Export Area' %}
+                        </a>
+                        <button class="btn btn-danger"
+                                data-bs-toggle="modal"
+                                data-bs-target="#delete-saved-area-modal"
+                                data-bind="visible: selectedSavedPolygonId">
+                            <i class="fa fa-trash"></i>
+                            {% trans 'Delete Area' %}
+                        </button>
+                    </div>
                 </div>
             </div>
+            <div class="col-md-4 text-end">
+                <button id="btnSaveDrawnArea"
+                        class="btn btn-outline-primary me-2"
+                        data-bind="attr: { disabled: btnSaveDisabled }, click: saveGeoPolygon">
+                    {% trans 'Save Area' %}
+                </button>
+                {% if uses_disbursement == 'true' %}
+                    <a id="btnRunDisbursement"
+                       class="btn btn-primary"
+                       data-bind="attr: { disabled: btnRunDisbursementDisabled }">
+                        {% trans 'Run Disbursement' %}
+                    </a>
+                {% endif %}
+            </div>
         </div>
-        <button id="btnSaveDrawnArea" class="btn btn-default" style="float:right; margin-right:1em"
-                data-bind="attr: { disabled: btnSaveDisabled }, click: saveGeoPolygon">
-           {% trans 'Save Area' %}
-       </button>
-       {% include 'geospatial/partials/delete_saved_area_modal.html' %}
-       {% if uses_disbursement == 'true' %}
-           <a id="btnRunDisbursement" class="col-sm-2 btn btn-primary" style="float:right; margin-right:1em" data-bind="attr: { disabled: btnRunDisbursementDisabled }">
-               {% trans 'Run Disbursement' %}
-           </a>
-       {% endif %}
+        {% include 'geospatial/partials/delete_saved_area_modal.html' %}
+
+        <div class="alert alert-info mt-3" data-bind="visible: shouldRefreshPage">
+            {% blocktrans %}
+                Please
+                <a href="">refresh the page</a>
+                to apply the polygon filtering changes.
+            {% endblocktrans %}
+        </div>
+        <div class="alert alert-warning" data-bind="visible: hasUrlError">
+            {% blocktrans %}
+                There are too many polygons on the map. Please remove some before refreshing the page, otherwise the
+                newly added polygons will be lost.
+            {% endblocktrans %}
+        </div>
     </div>
-    <div class="alert alert-info" style="margin-top:10px;" data-bind="visible: shouldRefreshPage">
-        {% blocktrans %}
-          Please
-          <a href="">refresh the page</a>
-          to apply the polygon filtering changes.
-        {% endblocktrans %}
-      </div>
-      <div class="alert alert-warning" data-bind="visible: hasUrlError">
-        {% blocktrans %}
-          There are too many polygons on the map. Please remove some before refreshing the page, otherwise the
-          newly added polygons will be lost.
-        {% endblocktrans %}
-      </div>
 </div>
