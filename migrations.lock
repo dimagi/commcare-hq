@@ -479,6 +479,7 @@ export
  0011_defaultexportsettings_usecouchfiletypes
  0012_defaultexportsettings_remove_duplicates_option
  0013_rm_incrementalexport
+ 0014_deidhash
 fhir
  0001_initial
  0002_fhirresourcetype
