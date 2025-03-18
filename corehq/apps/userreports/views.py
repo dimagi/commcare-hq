@@ -978,7 +978,7 @@ class ExpressionDebuggerView(BaseUserConfigReportsView):
 
 class DataSourceDebuggerView(BaseUserConfigReportsView):
     urlname = 'expression_debugger'
-    template_name = 'userreports/data_source_debugger.html'
+    template_name = 'userreports/bootstrap3/data_source_debugger.html'
     page_title = gettext_lazy("Data Source Debugger")
 
     def dispatch(self, *args, **kwargs):
