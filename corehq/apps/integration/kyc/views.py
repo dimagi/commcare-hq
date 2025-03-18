@@ -10,9 +10,8 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.kyc.forms import KycConfigureForm
-from corehq.apps.integration.kyc.models import KycConfig, KycIsVerifiedChoice
+from corehq.apps.integration.kyc.models import KycConfig, KycVerificationStatus
 from corehq.apps.integration.kyc.services import (
-    get_user_data_for_api,
     verify_users,
 )
 from corehq.apps.integration.kyc.tables import KycVerifyTable
@@ -89,7 +88,6 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         return [self._parse_row(row_obj) for row_obj in row_objs]
 
     def _parse_row(self, row_obj):
-        user_data = get_user_data_for_api(row_obj, self.kyc_config)
         row_data = {
             'id': row_obj.user_id,
             'has_invalid_data': False,
@@ -106,16 +104,20 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
             'country',
         )
         system_fields = (
-            'kyc_is_verified',
+            'kyc_verification_status',
             'kyc_last_verified_at',
         )
-        for field in user_fields:
-            if field not in user_data or user_data[field] in ('', None):
-                row_data['has_invalid_data'] = True
-                continue
-            row_data[field] = user_data[field]
-        for field in system_fields:
-            row_data[field] = user_data.get(field)
+        for field in (user_fields + system_fields):
+            value = None
+            try:
+                value = row_obj[field]
+            except KeyError:
+                pass
+            finally:
+                if value in ['', None] and field in user_fields:
+                    row_data['has_invalid_data'] = True
+                else:
+                    row_data[field] = value
         return row_data
 
     @hq_hx_action('post')
@@ -127,7 +129,7 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
             kyc_users = self.kyc_config.get_kyc_users_by_ids(selected_ids)
         existing_failed_user_ids = self._get_existing_failed_users(kyc_users)
         results = verify_users(kyc_users, self.kyc_config)
-        success_count = sum(1 for result in results.values() if result)
+        success_count = sum(1 for result in results.values() if result == KycVerificationStatus.PASSED)
         failure_count = len(results) - success_count
         context = {
             'success_count': success_count,
@@ -151,7 +153,7 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
     def _get_existing_failed_users(self, kyc_users):
         return [
             kyc_user.user_id for kyc_user in kyc_users
-            if kyc_user.kyc_is_verified is KycIsVerifiedChoice.FALSE
+            if kyc_user.kyc_verification_status == KycVerificationStatus.FAILED
         ]
 
 

@@ -1,13 +1,21 @@
 "use strict";
 /* Behavior for app_view.html, specific to Application documents (i.e., not remote apps) */
-hqDefine("app_manager/js/app_view_application", function () {
+hqDefine("app_manager/js/app_view_application", [
+    'jquery',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'translations/js/translations',
+], function (
+    $,
+    _,
+    initialPageData,
+    translations
+) {
     $(function () {
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data");
-
         // Languages: CommCare Translations
         var $ui = $("#translations_ui");
         if ($ui.length) {
-            hqImport("translations/js/translations").makeTranslationUI({
+            translations.makeTranslationUI({
                 translations: initialPageData.get("translations"),
                 url: initialPageData.reverse("edit_app_ui_translations"),
                 suggestion_url: initialPageData.reverse("get_app_ui_translations"),

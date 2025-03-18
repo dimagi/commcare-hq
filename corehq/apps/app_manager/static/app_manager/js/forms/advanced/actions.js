@@ -1,11 +1,23 @@
-"use strict";
-hqDefine('app_manager/js/forms/advanced/actions', function () {
-    var caseConfigUtils = hqImport('app_manager/js/case_config_utils'),
-        caseProperty = hqImport('app_manager/js/forms/advanced/case_properties').caseProperty,
-        casePreloadProperty = hqImport('app_manager/js/forms/advanced/case_properties').casePreloadProperty,
-        toggles = hqImport("hqwebapp/js/toggles"),
-        privileges = hqImport('hqwebapp/js/privileges');
-
+hqDefine("app_manager/js/forms/advanced/actions", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "app_manager/js/case_config_utils",
+    "app_manager/js/forms/advanced/case_properties",
+    "hqwebapp/js/toggles",
+    "hqwebapp/js/privileges",
+    "hqwebapp/js/bootstrap3/main",
+    "app_manager/js/forms/case_knockout_bindings",  // withPrevious
+], function (
+    $,
+    ko,
+    _,
+    caseConfigUtils,
+    caseProperties,
+    toggles,
+    privileges,
+    main,
+) {
     var caseIndex = {
         mapping: {
             include: ['tag', 'reference_id', 'relationship', 'relationship_question'],
@@ -156,12 +168,12 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 ],
                 preload: {
                     create: function (options) {
-                        return casePreloadProperty.wrap(options.data, self);
+                        return caseProperties.casePreloadProperty.wrap(options.data, self);
                     },
                 },
                 case_properties: {
                     create: function (options) {
-                        return caseProperty.wrap(options.data, self);
+                        return caseProperties.caseProperty.wrap(options.data, self);
                     },
                 },
                 auto_select: {
@@ -228,7 +240,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
 
                     _.defer(function () {
                         $('.hq-help-template').each(function () {
-                            hqImport("hqwebapp/js/bootstrap3/main").transformHelpTemplate($(this), true);
+                            main.transformHelpTemplate($(this), true);
                         });
                     });
                 });
@@ -319,7 +331,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             });
 
             self.addProperty = function () {
-                self.case_properties.push(caseProperty.wrap({
+                self.case_properties.push(caseProperties.caseProperty.wrap({
                     key: '',
                     path: '',
                     required: false,
@@ -332,7 +344,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             };
 
             self.addPreload = function () {
-                self.preload.push(casePreloadProperty.wrap({
+                self.preload.push(caseProperties.casePreloadProperty.wrap({
                     key: '',
                     path: '',
                     required: false,
@@ -490,7 +502,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 ],
                 case_properties: {
                     create: function (options) {
-                        return caseProperty.wrap(options.data, self);
+                        return caseProperties.caseProperty.wrap(options.data, self);
                     },
                 },
                 case_indices: {
@@ -604,7 +616,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             };
 
             self.addProperty = function () {
-                self.case_properties.push(caseProperty.wrap({
+                self.case_properties.push(caseProperties.caseProperty.wrap({
                     key: '',
                     path: '',
                     required: false,

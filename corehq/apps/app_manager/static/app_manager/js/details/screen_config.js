@@ -1,8 +1,36 @@
 /**
  * Model for the entire case list + case detail configuration UI.
  */
-hqDefine('app_manager/js/details/screen_config', function () {
-    return function (spec) {
+hqDefine("app_manager/js/details/screen_config", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "app_manager/js/details/parent_select",
+    "app_manager/js/details/fixture_select",
+    "app_manager/js/details/screen",
+    "hqwebapp/js/toggles",
+    "app_manager/js/details/filter",
+    "app_manager/js/details/sort_rows",
+    "app_manager/js/details/case_list_callout",
+    "app_manager/js/details/case_claim",
+    "app_manager/js/details/case_detail_print",
+    "hqwebapp/js/initial_page_data",
+], function (
+    $,
+    ko,
+    _,
+    parentSelect,
+    fixtureSelect,
+    screenModule,
+    toggles,
+    filterModule,
+    sortRows,
+    caseListCallout,
+    caseClaimModels,
+    printModule,
+    initialPageData,
+) {
+    const module = function (spec) {
         var self = {};
         self.properties = spec.properties;
         self.sortProperties = Array.from(spec.properties);
@@ -13,7 +41,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
         self.multimedia = spec.multimedia || {};
         self.module_id = spec.module_id || '';
         if (_.has(spec, 'parentSelect') && spec.parentSelect) {
-            self.parentSelect = hqImport("app_manager/js/details/parent_select")({
+            self.parentSelect = parentSelect({
                 active: spec.parentSelect.active,
                 moduleId: spec.parentSelect.module_id,
                 relationship: spec.parentSelect.relationship,
@@ -25,7 +53,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
         }
 
         if (_.has(spec, 'fixtureSelect') && spec.fixtureSelect) {
-            self.fixtureSelect = hqImport("app_manager/js/details/fixture_select")({
+            self.fixtureSelect = fixtureSelect({
                 active: spec.fixtureSelect.active,
                 fixtureType: spec.fixtureSelect.fixture_type,
                 displayColumn: spec.fixtureSelect.display_column,
@@ -46,7 +74,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
          */
         function addScreen(pair, columnType) {
 
-            var screen = hqImport("app_manager/js/details/screen")(
+            var screen = screenModule(
                 pair,
                 self, {
                     lang: self.lang,
@@ -59,11 +87,10 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     fixtures: _.keys(spec.fixture_columns_by_type),
                     containsSortConfiguration: columnType === "short",
                     containsParentConfiguration: columnType === "short",
-                    containsFixtureConfiguration: (columnType === "short" && hqImport('hqwebapp/js/toggles').toggleEnabled('FIXTURE_CASE_SELECTION')),
+                    containsFixtureConfiguration: (columnType === "short" && toggles.toggleEnabled('FIXTURE_CASE_SELECTION')),
                     containsFilterConfiguration: columnType === "short",
-                    containsCaseListLookupConfiguration: (columnType === "short" && (hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_LOOKUP') || hqImport('hqwebapp/js/toggles').toggleEnabled('BIOMETRIC_INTEGRATION'))),
-                    // TODO: Check case_search_enabled_for_domain(), not toggle. FB 225343
-                    containsSearchConfiguration: (columnType === "short" && hqImport('hqwebapp/js/toggles').toggleEnabled('SYNC_SEARCH_CASE_CLAIM')),
+                    containsCaseListLookupConfiguration: (columnType === "short" && (toggles.toggleEnabled('CASE_LIST_LOOKUP') || toggles.toggleEnabled('BIOMETRIC_INTEGRATION'))),
+                    containsSearchConfiguration: (columnType === "short" && initialPageData.get('case_search_enabled')),
                     containsCustomXMLConfiguration: columnType === "short",
                     allowsTabs: columnType === 'long',
                     allowsEmptyColumns: columnType === 'long',
@@ -141,9 +168,9 @@ hqDefine('app_manager/js/details/screen_config', function () {
             bindCalculatedPropsWithSortCols();
             // Set up filter
             var filterXpath = spec.state.short.filter;
-            self.filter = hqImport("app_manager/js/details/filter")(filterXpath ? filterXpath : null, self.shortScreen.saveButton);
+            self.filter = filterModule(filterXpath ? filterXpath : null, self.shortScreen.saveButton);
             // Set up sortRows
-            self.sortRows = hqImport("app_manager/js/details/sort_rows")(self.sortProperties, self.shortScreen.saveButton);
+            self.sortRows = sortRows(self.sortProperties, self.shortScreen.saveButton);
             if (spec.sortRows) {
                 for (var j = 0; j < spec.sortRows.length; j++) {
                     self.sortRows.addSortRow(
@@ -158,21 +185,20 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 }
             }
             self.customXMLViewModel = {
-                enabled: hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML'),
+                enabled: toggles.toggleEnabled('CASE_LIST_CUSTOM_XML'),
                 xml: ko.observable(spec.state.short.custom_xml || ""),
             };
             self.customXMLViewModel.xml.subscribe(function () {
                 self.shortScreen.saveButton.fire("change");
             });
             var $caseListLookup = $("#" + spec.state.type + "-list-callout-configuration");
-            self.caseListLookup = hqImport("app_manager/js/details/case_list_callout").caseListLookupViewModel(
+            self.caseListLookup = caseListCallout.caseListLookupViewModel(
                 $caseListLookup,
                 spec.state.short,
                 spec.lang,
                 self.shortScreen.saveButton
             );
             // Set up case search
-            var caseClaimModels = hqImport("app_manager/js/details/case_claim");
             self.search = caseClaimModels.searchViewModel(
                 spec.search_properties || [],
                 spec.default_properties,
@@ -184,14 +210,13 @@ hqDefine('app_manager/js/details/screen_config', function () {
             );
         }
         if (spec.state.long !== undefined) {
-            var printModule = hqImport("app_manager/js/details/case_detail_print"),
-                printRef = printModule.getPrintRef(),
+            var printRef = printModule.getPrintRef(),
                 printTemplateUploader = printModule.getPrintTemplateUploader();
             self.longScreen = addScreen(spec.state, "long");
             self.printTemplateReference = _.extend(printRef, {
                 removePrintTemplate: function () {
                     $.post(
-                        hqImport("hqwebapp/js/initial_page_data").reverse("hqmedia_remove_detail_print_template"), {
+                        initialPageData.reverse("hqmedia_remove_detail_print_template"), {
                             module_unique_id: spec.moduleUniqueId,
                         },
                         function (data, status) {
@@ -209,21 +234,23 @@ hqDefine('app_manager/js/details/screen_config', function () {
         }
         return self;
     };
+
+    ko.bindingHandlers.DetailScreenConfig_notifyShortScreenOnChange = {
+        init: function (element, valueAccessor) {
+            var $root = valueAccessor();
+            setTimeout(function () {
+                $(element).on('change', '*', function () {
+                    $root.shortScreen.fire('change');
+                });
+            }, 0);
+        },
+    };
+
+    ko.bindingHandlers.addSaveButtonListener = {
+        init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+            bindingContext.$parent.initSaveButtonListeners($(element).parent());
+        },
+    };
+
+    return module;
 });
-
-ko.bindingHandlers.DetailScreenConfig_notifyShortScreenOnChange = {
-    init: function (element, valueAccessor) {
-        var $root = valueAccessor();
-        setTimeout(function () {
-            $(element).on('change', '*', function () {
-                $root.shortScreen.fire('change');
-            });
-        }, 0);
-    },
-};
-
-ko.bindingHandlers.addSaveButtonListener = {
-    init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
-        bindingContext.$parent.initSaveButtonListeners($(element).parent());
-    },
-};

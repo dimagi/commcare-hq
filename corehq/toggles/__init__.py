@@ -1995,7 +1995,7 @@ ENABLE_UCR_MIRRORS = StaticToggle(
 LOCATION_COLUMNS_APP_STATUS_REPORT = StaticToggle(
     'location_columns_app_status_report',
     'Enables location columns to app status report',
-    TAG_CUSTOM,
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN]
 )
 
@@ -3007,8 +3007,9 @@ INCLUDE_ALL_LOCATIONS = StaticToggle(
 
 DEVICE_RATE_LIMITER = FeatureRelease(
     slug='device_rate_limiter',
-    label='Limits the number of devices a single user can use in a one minute time window.'
-          'See SystemLimit for DEVICE_LIMIT_PER_USER_KEY to identify the limit.',
+    label='Apply rate limiting to the number of devices a single user can use in a one minute time window.',
+    description='Form submissions, restores, and heartbeat requests count towards usage. View and update in the '
+                'django admin under the SystemLimit table. The key is "device_limit_per_user"',
     tag=TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
     owner='Graham Herceg',
@@ -3031,6 +3032,13 @@ MTN_MOBILE_WORKER_VERIFICATION = StaticToggle(
 ACTIVATE_DATADOG_APM_TRACES = StaticToggle(
     slug='activate_datadog_apm_traces',
     label='USH: Turn on Datadog APM traces for a project.',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+USH_DISABLE_INTERVAL_SYNC = StaticToggle(
+    slug='ush_disable_interval_sync',
+    label='Disable interval sync',
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )

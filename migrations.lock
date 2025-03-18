@@ -212,6 +212,7 @@ blobs
 campaign
  0001_initial
  0002_dashboardmap_dashboardreport
+ 0003_add_dashboard_widget_fields
 case_importer
  0001_initial
  0002_auto_20161206_1937
@@ -667,6 +668,7 @@ integration
  0009_alter_kycconfig_connection_settings
  0010_alter_kycconfig_api_field_to_user_data_map
  0011_remove_kycconfig_connection_settings
+ 0012_momoconfig
 ivr
  0001_initial
  0002_call_app_id
@@ -743,6 +745,7 @@ motech
  0016_connectionsettings_include_client_id_and_more
  0017_connectionsettings_use_aes_cbc_encryption
  0018_openmrsimporter_use_aes_cbc_encryption
+ 0019_connectionsettings_custom_headers
 notifications
  0001_squashed_0003_auto_20160504_2049 (3 squashed migrations)
  0002_auto_20160505_2058

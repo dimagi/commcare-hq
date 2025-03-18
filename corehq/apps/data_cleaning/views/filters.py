@@ -64,13 +64,13 @@ class ColumnFilterFormView(BulkEditSessionViewMixin, BaseFilterFormView):
         context = super().get_context_data(**kwargs)
         context.update({
             'container_id': 'column-filters',
-            'add_filter_form': kwargs.pop('filter_form', AddColumnFilterForm(self.session)),
+            'add_filter_form': kwargs.pop('filter_form', None) or AddColumnFilterForm(self.session),
         })
         return context
 
     @hq_hx_action('post')
     def add_column_filter(self, request, *args, **kwargs):
-        filter_form = AddColumnFilterForm(request.POST)
+        filter_form = AddColumnFilterForm(self.session, request.POST)
         if filter_form.is_valid():
             filter_form = None
         return self.get(request, filter_form=filter_form, *args, **kwargs)

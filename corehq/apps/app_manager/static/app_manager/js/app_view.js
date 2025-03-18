@@ -1,12 +1,43 @@
-/* Behavior for app_view.html, regardless of document type (i.e., applies to both normal and remote apps) */
-hqDefine("app_manager/js/app_view", function () {
+/**
+  *  Entry point for the app settings page.
+  */
+hqDefine("app_manager/js/app_view", [
+    "jquery",
+    "knockout",
+    "hqwebapp/js/initial_page_data",
+    "app_manager/js/settings/commcare_settings",
+    "app_manager/js/supported_languages",
+    "analytix/js/google",
+    "hqwebapp/js/bootstrap3/widgets",
+    "hqwebapp/js/bootstrap3/main",
+    "app_manager/js/app_manager",
+    "app_manager/js/section_changer",
+    "app_manager/js/apps_base",
+    "app_manager/js/app_view_application",   // TODO: combine this with app_manager/js/app_view?
+    "app_manager/js/widgets",   // app version widget when copying an app
+    "app_manager/js/download_async_modal",  // for the "Download ZIP" button on the multimedia tab
+    "hqwebapp/js/bootstrap3/widgets",
+    "app_manager/js/add_ons",
+    "app_manager/js/settings/translations", // TODO: keep models in here and move handlers into this entry point?  Don't love that this has side effects. Same goes for app_manager/js/add_ons and possibly others
+    "app_manager/js/custom_assertions",
+    "app_manager/js/managed_app",
+    "hqwebapp/js/bootstrap3/knockout_bindings.ko",
+], function (
+    $,
+    ko,
+    initialPageData,
+    commcareSettings,
+    supportedLanguages,
+    google,
+    widgets,
+    main,
+    appManager,
+    sectionChanger,
+) {
     $(function () {
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data");
-
         // App name
         $(document).on("inline-edit-save", function (e, data) {
             if (_.has(data.update, '.variable-app_name')) {
-                var appManager = hqImport('app_manager/js/app_manager');
                 appManager.updatePageTitle(data.update['.variable-app_name']);
                 appManager.updateDOM(data.update);
             }
@@ -15,15 +46,13 @@ hqDefine("app_manager/js/app_view", function () {
         // Settings
         var $settingsContainer = $('#commcare-settings');
         if ($settingsContainer.length) {
-            var CommcareSettings = hqImport('app_manager/js/settings/commcare_settings').CommcareSettings;
-            $settingsContainer.koApplyBindings(new CommcareSettings(initialPageData.get("app_view_options")));
+            $settingsContainer.koApplyBindings(new commcareSettings.CommcareSettings(initialPageData.get("app_view_options")));
         }
 
         // Languages
         var $languagesContainer = $("#supported-languages");
         if ($languagesContainer.length) {
-            var SupportedLanguages = hqImport('app_manager/js/supported_languages').SupportedLanguages;
-            $("#supported-languages").koApplyBindings(new SupportedLanguages({
+            $("#supported-languages").koApplyBindings(new supportedLanguages.SupportedLanguages({
                 langs: initialPageData.get("langs"),
                 saveURL: initialPageData.reverse("edit_app_langs"),
                 validate: !initialPageData.get("is_remote_app"),
@@ -63,10 +92,10 @@ hqDefine("app_manager/js/app_view", function () {
 
         // Multimedia analytics
         $(document).on("click", '#download_zip', function () {
-            hqImport('analytix/js/google').track.event('App Builder', 'Download Multimedia');
+            google.track.event('App Builder', 'Download Multimedia');
         });
         $(document).on("click", '#open_checker', function () {
-            hqImport('analytix/js/google').track.event('App Builder', 'Manage Multimedia');
+            google.track.event('App Builder', 'Manage Multimedia');
         });
 
         // Multimedia content
@@ -82,7 +111,7 @@ hqDefine("app_manager/js/app_view", function () {
                         success: function (content) {
                             self.load_state('loaded');
                             self.multimedia_page_html(content);
-                            hqImport("hqwebapp/js/bootstrap3/widgets").init();
+                            widgets.init();
                         },
                         error: function (data) {
                             if (data.hasOwnProperty('responseJSON')) {
@@ -119,7 +148,7 @@ hqDefine("app_manager/js/app_view", function () {
         (function () {
             var $form = $("#custom-assertions-form");
             var $saveContainer = $form.find("#custom-assertions-save-btn");
-            var saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
+            var saveButton = main.initSaveButton({
                 save: function () {
                     saveButton.ajax({
                         url: $form.attr('action'),
@@ -134,7 +163,7 @@ hqDefine("app_manager/js/app_view", function () {
                 saveButton.fire('change');
             });
             saveButton.ui.appendTo($saveContainer);
-            hqImport("app_manager/js/section_changer").attachToForm($saveContainer);
+            sectionChanger.attachToForm($saveContainer);
         })();
 
     });

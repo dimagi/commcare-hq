@@ -1,6 +1,12 @@
-hqDefine("app_manager/js/nav_menu_media_common", function () {
-    const initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        uploadersModule = hqImport("hqmedia/js/uploaders");
+hqDefine("app_manager/js/nav_menu_media_common", [
+    "underscore",
+    "hqwebapp/js/initial_page_data",
+    "hqmedia/js/uploaders",
+], function (
+    _,
+    initialPageData,
+    uploadersModule,
+) {
     let uploaders = {};
 
     _.each(initialPageData.get("multimedia_upload_managers"), function (uploader, type) {
