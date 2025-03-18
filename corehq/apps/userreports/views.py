@@ -965,7 +965,7 @@ def report_source_json(request, domain, report_id):
 
 class ExpressionDebuggerView(BaseUserConfigReportsView):
     urlname = 'expression_debugger'
-    template_name = 'userreports/expression_debugger.html'
+    template_name = 'userreports/bootstrap3/expression_debugger.html'
     page_title = gettext_lazy("Expression Debugger")
 
     @property
