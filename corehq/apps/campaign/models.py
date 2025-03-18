@@ -86,9 +86,18 @@ class WidgetType:
         REPORT: DashboardReportForm,
     }
 
+    MODEL_CLASS = {
+        MAP: DashboardMap,
+        REPORT: DashboardReport,
+    }
+
     @classmethod
     def get_form_class(cls, widget_type):
         return cls.FORM_CLASS.get(widget_type)
+
+    @classmethod
+    def get_model_class(cls, widget_type):
+        return cls.MODEL_CLASS.get(widget_type)
 
     @classmethod
     def choices(cls):
