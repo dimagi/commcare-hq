@@ -36,9 +36,11 @@
                     </div>
                 </div>
             {% endif %}
-            <table class="table table-striped table-responsive"
-                   style="margin-botton: 0;"  {# todo B5: inline-style #}
-                   data-bind="visible: showTable">
+            <table
+              id="users-without-gps-data-table"
+              class="table table-striped table-responsive"
+              data-bind="visible: showTable"
+            >
                 <thead>
                     <tr>
                         <th class="col-sm-3">
@@ -61,13 +63,18 @@
                             </a>
                         </td>
                         <td>
-                            <div data-bind="css: {'has-error': !isLatValid()}">  {# todo B5: css-has-error #}
-                                <input class="form-control"
-                                       type="text"
-                                       name="latInput"
-                                       placeholder="{% trans 'Enter latitude...' %}"
-                                       data-bind="value: lat, event: {change: onValueChanged}" />
-                                <span class="help-block" data-bind="visible: !isLatValid()">
+                            <div>
+                                <input
+                                  class="form-control"
+                                  type="text"
+                                  name="latInput"
+                                  placeholder="{% trans 'Enter latitude...' %}"
+                                  data-bind="
+                                    css: {'is-invalid': !isLatValid()},
+                                    value: lat,
+                                    event: {change: onValueChanged}"
+                                />
+                                <span class="invalid-feedback" data-bind="visible: !isLatValid()">
                                     {% blocktrans %}
                                         The value should be a number between -90 and 90
                                     {% endblocktrans %}
@@ -75,12 +82,17 @@
                             </div>
                         </td>
                         <td>
-                            <div data-bind="css: {'has-error': !isLonValid()}">  {# todo B5: css-has-error #}
-                                <input class="form-control"
-                                       type="text"
-                                       name="lonInput"
-                                       placeholder="{% trans 'Enter longitude...' %}"
-                                       data-bind="value: lon, event: {change: onValueChanged}" />
+                            <div>
+                                <input
+                                  class="form-control"
+                                  type="text"
+                                  name="lonInput"
+                                  placeholder="{% trans 'Enter longitude...' %}"
+                                  data-bind="
+                                    css: {'has-error': !isLonValid()},
+                                    value: lon,
+                                    event: {change: onValueChanged}"
+                                />
                                 <span class="help-block" data-bind="visible: !isLonValid()">
                                     {% blocktrans %}
                                         The value should be a number between -180 and 180
@@ -153,25 +165,41 @@
                 <span data-bind="text: name"></span>
             </h3>
             <div data-bind="visible: $root.isCreatingCase" class="form-row">
-                <div class="col" data-bind="css: { 'has-error': $root.hasCreateCaseError }">  {# todo B5: css-has-error #}
+                <div class="col">
                     <label class="form-label col-md-1 col-lg-1 col-xl-1">
                         {% trans 'Case Name' %}
                     </label>
                     <div class="col-md-2 col-lg-2 col-xl-2" >
-                        <input data-bind="value: name, visible: $root.isCreatingCase" type="text" class="form-control" placeholder="{% trans 'Enter new case name...' %}" />
-                        <span class="help-block" data-bind="visible: $root.hasCreateCaseError">
+                        <input
+                          data-bind="
+                            css: { 'is-invalid': $root.hasCreateCaseError },
+                            value: name,
+                            visible: $root.isCreatingCase"
+                          type="text"
+                          class="form-control"
+                          placeholder="{% trans 'Enter new case name...' %}"
+                        />
+                        <span
+                          class="invalid-feedback"
+                          data-bind="visible: $root.hasCreateCaseError"
+                        >
                             {% trans 'A case name is required' %}
                         </span>
                     </div>
                 </div>
-                <div class="col" data-bind="css: { 'has-error': $root.hasCaseTypeError }">  {# todo B5: css-has-error #}
+                <div class="col">
                     <label class="form-label col-md-1 col-lg-1 col-xl-1">
                         {% trans 'Case Type' %}
                     </label>
                     <div class="col-md-2 col-lg-2 col-xl-2">
-                        <select class="form-select" data-bind="select2: $root.availableCaseTypes, value: $root.selectedCaseType">
-                        </select>
-                        <span class="help-block" data-bind="visible: $root.hasCaseTypeError">
+                        <select
+                          class="form-select"
+                          data-bind="
+                            css: { 'is-invalid': $root.hasCaseTypeError },
+                            select2: $root.availableCaseTypes,
+                            value: $root.selectedCaseType"
+                        ></select>
+                        <span class="invalid-feedback" data-bind="visible: $root.hasCaseTypeError">
                             {% trans 'A case type is required' %}
                         </span>
                     </div>

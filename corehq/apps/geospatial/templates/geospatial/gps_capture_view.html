@@ -10,6 +10,14 @@
  <link rel="stylesheet" href="{% static '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css' %}" type="text/css">
  {% endblock %}
 
+{% block head %}{{ block.super }}
+  <style>
+    #users-without-gps-data-table {  {# Used in geospatial/gps_capture.html #}
+      margin-botton: 0;  /* todo B5: Does this do anything (Note typo) ? Use "mb0" : Drop */
+    }
+  </style>
+{% endblock %}
+
 {% block page_content %}
 {% initial_page_data 'data_type' data_type %}
 {% registerurl 'get_paginated_cases_or_users' domain %}
