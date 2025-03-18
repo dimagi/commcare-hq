@@ -268,7 +268,7 @@ class BaseUserConfigReportsView(BaseDomainView):
 
 class UserConfigReportsHomeView(BaseUserConfigReportsView):
     urlname = 'configurable_reports_home'
-    template_name = 'userreports/configurable_reports_home.html'
+    template_name = 'userreports/bootstrap3/configurable_reports_home.html'
     page_title = gettext_lazy("Reports Home")
 
 
