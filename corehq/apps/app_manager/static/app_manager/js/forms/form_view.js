@@ -48,7 +48,7 @@ hqDefine("app_manager/js/forms/form_view", function () {
         self.isUsercaseInUse = ko.observable(initialPageData.get('is_usercase_in_use'));
         self.usercaseReferenceNotAllowed = ko.computed(function () {
             return !self.isUsercaseInUse() && formFilterMatches(
-                self.formFilter(), patterns.usercase_substring
+                self.formFilter(), patterns.usercase_substring,
             );
         });
 

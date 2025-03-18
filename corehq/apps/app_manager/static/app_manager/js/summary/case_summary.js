@@ -127,7 +127,7 @@ hqDefine('app_manager/js/summary/case_summary',[
         $("#case-summary-header").koApplyBindings(caseSummaryController);
         models.initVersionsBox(
             $("#version-selector"),
-            {id: initialPageData.get("app_id"), text: initialPageData.get("app_version")}
+            {id: initialPageData.get("app_id"), text: initialPageData.get("app_version")},
         );
         models.initMenu([caseSummaryContent], caseSummaryMenu);
         models.initSummary(caseSummaryContent, caseSummaryController, "#case-summary");
