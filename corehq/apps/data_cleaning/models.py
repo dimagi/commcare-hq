@@ -373,6 +373,25 @@ class BulkEditFilter(models.Model):
         property_details = get_case_property_details(self.session.domain, self.session.identifier)
         return property_details.get(self.prop_id, {}).get('is_editable', True)
 
+    @property
+    def human_readable_match_type(self):
+        category = DataType.get_filter_category(self.data_type)
+        match_to_text = {
+            DataType.FILTER_CATEGORY_TEXT: dict(
+                FilterMatchType.TEXT_CHOICES + FilterMatchType.ALL_DATA_TYPES_CHOICES
+            ),
+            DataType.FILTER_CATEGORY_NUMBER: dict(
+                FilterMatchType.NUMBER_CHOICES + FilterMatchType.ALL_DATA_TYPES_CHOICES
+            ),
+            DataType.FILTER_CATEGORY_DATE: dict(
+                FilterMatchType.DATE_CHOICES + FilterMatchType.ALL_DATA_TYPES_CHOICES
+            ),
+            DataType.FILTER_CATEGORY_MULTI_SELECT: dict(
+                FilterMatchType.MULTI_SELECT_CHOICES + FilterMatchType.ALL_DATA_TYPES_CHOICES
+            ),
+        }.get(category, {})
+        return match_to_text.get(self.match_type, _("unknown"))
+
     def filter_query(self, query):
         filter_query_functions = {
             FilterMatchType.IS_EMPTY: lambda q: q.empty(self.prop_id),
