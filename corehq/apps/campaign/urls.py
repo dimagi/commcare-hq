@@ -12,4 +12,3 @@ urlpatterns = [
         name=PaginatedCasesWithGPSView.urlname),
     url(r'dashboard_widget/', DashboardWidgetView.as_view(), name=DashboardWidgetView.urlname),
 ]
-
