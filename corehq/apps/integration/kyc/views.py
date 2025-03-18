@@ -10,7 +10,7 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.kyc.forms import KycConfigureForm
-from corehq.apps.integration.kyc.models import KycConfig, KycVerificationStatus
+from corehq.apps.integration.kyc.models import KycConfig, KycVerificationStatus, KycVerificationFailureCause
 from corehq.apps.integration.kyc.services import (
     verify_users,
 )
@@ -106,19 +106,28 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         system_fields = (
             'kyc_verification_status',
             'kyc_last_verified_at',
+            'kyc_verification_error',
         )
         for field in (user_fields + system_fields):
             value = None
+
             try:
                 value = row_obj[field]
             except KeyError:
                 pass
             finally:
-                if value in ['', None] and field in user_fields:
+                if field in user_fields and self._is_invalid_value(value):
                     row_data['has_invalid_data'] = True
                 else:
-                    row_data[field] = value
+                    if field == 'kyc_verification_error' and value in KycVerificationFailureCause:
+                        row_data[field] = KycVerificationFailureCause(value).label
+                    else:
+                        row_data[field] = value
         return row_data
+
+    @staticmethod
+    def _is_invalid_value(value):
+        return value in ['', None]
 
     @hq_hx_action('post')
     def verify_rows(self, request, *args, **kwargs):
