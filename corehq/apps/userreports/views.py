@@ -520,7 +520,7 @@ class EditReportInBuilder(View):
 class ConfigureReport(ReportBuilderView):
     urlname = 'configure_report'
     page_title = gettext_lazy("Configure Report")
-    template_name = "userreports/reportbuilder/configure_report.html"
+    template_name = "userreports/reportbuilder/bootstrap3/configure_report.html"
     report_title = '{}'
     existing_report = None
 
