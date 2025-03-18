@@ -389,6 +389,10 @@ class BulkEditFilter(models.Model):
         return property_details.get(self.prop_id, {}).get('is_editable', True)
 
     @property
+    def human_readable_data_type(self):
+        return dict(DataType.CASE_CHOICES).get(self.data_type, _("unknown"))
+
+    @property
     def human_readable_match_type(self):
         category = DataType.get_filter_category(self.data_type)
         match_to_text = {
