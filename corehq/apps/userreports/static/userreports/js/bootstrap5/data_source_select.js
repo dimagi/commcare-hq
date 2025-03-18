@@ -1,7 +1,7 @@
-hqDefine("userreports/js/data_source_select", [
+hqDefine("userreports/js/bootstrap5/data_source_select", [
     'jquery',
     'analytix/js/kissmetrix',
-    'hqwebapp/js/bootstrap3/main',
+    'hqwebapp/js/bootstrap5/main',
     'userreports/js/data_source_select_model',
     'userreports/js/report_analytix',
     'commcarehq',
