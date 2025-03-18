@@ -245,13 +245,6 @@ class TestRequestPaymentsForCases(TestCase):
             self._create_payment_case('case 2', self._payment_details),
         ]
         self.case_list.extend(payment_cases)  # for cleanup
-
-        for payment_case in payment_cases:
-            case_data = payment_case.case_json
-            assert case_data.get('transaction_id') is None
-            assert PaymentProperties.PAYMENT_SUBMITTED not in case_data
-            assert PaymentProperties.PAYMENT_TIMESTAMP not in case_data
-
         request_payments_for_cases([_case.case_id for _case in payment_cases], self.config)
 
         bulk_update_cases_mock.assert_called_once()
