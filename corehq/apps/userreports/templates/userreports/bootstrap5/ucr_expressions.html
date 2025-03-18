@@ -1,0 +1,92 @@
+{% extends 'hqwebapp/bootstrap5/base_paginated_crud.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% js_entry "userreports/js/ucr_expressions" %}
+
+{% block pagination_templates %}
+<script type="text/html" id="base-ucr-statement-template">
+    <td data-bind="text: name"></td>
+    <td data-bind="text: type"></td>
+    <td data-bind="text: description"></td>
+    <td>
+      <span data-bind="text: definition_preview"></span>
+      <a data-bs-toggle="modal" data-bind="attr: {'data-bs-target': '#update-expression-' + id}">
+        ({% trans "see more" %})
+      </a>
+      <div class="modal fade" data-bind="attr: {id: 'update-expression-' + id}">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true">&times;</button>  {# todo B5: css-close #}
+                        <h3 data-bind="text: name"></h3>
+                    </div>
+                    <div class="modal-body">
+                        <div><pre data-bind="text: definition"></pre></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </td>
+    <td> <!-- actions -->
+        <a class="btn btn-primary"
+                data-bind="attr: {href: edit_url}">
+            {% trans "Update Expression" %}
+        </a>
+        <button type="button"
+                data-bs-toggle="modal"
+                data-bind="attr: {'data-bs-target': '#delete-expression-' + id}"
+                class="btn btn-outline-danger">
+          <i class="fa fa-remove"></i> {% trans 'Remove' %}
+        </button>
+        <a class="btn btn-primary"
+                href="{% url 'domain_links' domain %}"
+                data-bind="visible: upstream_id">
+            {% trans "Linked Project Spaces" %}
+        </a>
+
+        <div class="modal fade" data-bind="attr: {id: 'delete-expression-' + id}">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true">&times;</button>  {# todo B5: css-close #}
+                <h4 class="modal-title">
+                  {% blocktrans %}
+                    Delete expression <strong data-bind="text: name"></strong>?
+                  {% endblocktrans %}
+                </h4>
+              </div>
+              <div class="modal-body">
+                <p>
+                  {% blocktrans %}
+                    Yes, delete the <strong data-bind="text: name"></strong> expression.
+                  {% endblocktrans %}
+                </p>
+              </div>
+              <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-outline-primary"
+                        data-bs-dismiss="modal">
+                  {% trans 'Cancel' %}
+                </button>
+                <button type="button"
+                        class="btn btn-outline-danger delete-item-confirm"
+                        data-loading-text="{% trans 'Deleting Expression...' %}">  {# todo B5: stateful button #}
+                  <i class="fa fa-remove"></i> {% trans 'Delete Expression' %}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+    </td>
+</script>
+
+<script type="text/html" id="deleted-ucr-statement-template">
+  <td class="col-md-8">
+    <a data-bind="text: name"></a>
+  </td>
+  <td class="col-md-4">
+    <span class="badge text-bg-secondary">{% trans 'Deleted' %}</span>
+  </td>
+</script>
+{% endblock %}

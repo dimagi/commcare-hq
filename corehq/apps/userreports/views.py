@@ -1927,7 +1927,7 @@ class NamedExpressionHighlighter:
 class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
     page_title = _("UCR Expressions")
     urlname = "ucr_expressions"
-    template_name = "userreports/ucr_expressions.html"
+    template_name = "userreports/bootstrap3/ucr_expressions.html"
 
     @property
     def base_query(self):
