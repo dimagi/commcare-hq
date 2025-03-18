@@ -138,9 +138,8 @@ class InvoiceReminder(UnpaidInvoiceAction):
             bcc = [settings.GROWTH_EMAIL]
 
         subject = _(
-            "Your CommCare Billing Statement for {} is due in {} days".format(
-                account_name, DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER
-            ))
+            "Your CommCare Billing Statement for {account_name} is due in {num_days} days"
+        ).format(account_name=account_name, num_days=DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER)
 
         send_html_email_async.delay(
             subject,
