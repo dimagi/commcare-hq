@@ -2012,7 +2012,7 @@ class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
 class UCRExpressionEditView(BaseProjectDataView):
     page_title = _("Edit UCR Expression")
     urlname = "edit_ucr_expression"
-    template_name = "userreports/ucr_expression.html"
+    template_name = "userreports/bootstrap3/ucr_expression.html"
 
     @property
     def expression_id(self):
