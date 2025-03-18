@@ -22,7 +22,11 @@
           </span>
         </div>
         {% if filter.value %}
-          <div class="ps-2">
+          <div
+            class="ps-2"
+            data-bs-title="{{ filter.data_type }}"
+            x-tooltip=""
+          >
             {{ filter|dc_filter_icon }}
           </div>
           <div class="ps-2">
