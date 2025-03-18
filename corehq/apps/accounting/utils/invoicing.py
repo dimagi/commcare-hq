@@ -98,7 +98,7 @@ def _get_accounts_over_threshold_in_daterange(date_start, date_end):
         is_hidden=False,
         date_paid__isnull=True,
     )
-    unpaid_customer_invoices_in_daterange = unpaid_customer_invoices.objects.filter(
+    unpaid_customer_invoices_in_daterange = unpaid_customer_invoices.filter(
         date_due__gte=date_start,
         date_due__lte=date_end,
     ).order_by('date_due').select_related('account')
