@@ -242,6 +242,21 @@ class DataType:
         FILTER_CATEGORY_MULTI_SELECT: (MULTIPLE_OPTION,),
     }
 
+    ICON_CLASSES = {
+        TEXT: 'fcc fcc-fd-text',
+        INTEGER: 'fcc fcc-fd-numeric',
+        PHONE_NUMBER: 'fa fa-signal',
+        DECIMAL: 'fcc fcc-fd-decimal',
+        DATE: 'fa-solid fa-calendar-days',
+        TIME: 'fa-regular fa-clock',
+        DATETIME: 'fcc fcc-fd-datetime',
+        SINGLE_OPTION: 'fcc fcc-fd-single-select',
+        MULTIPLE_OPTION: 'fcc fcc-fd-multi-select',
+        GPS: 'fa-solid fa-location-dot',
+        BARCODE: 'fa fa-barcode',
+        PASSWORD: 'fa fa-key',
+    }
+
     @classmethod
     def get_filter_category(cls, data_type):
         for category, valid_data_types in cls.FILTER_CATEGORY_DATA_TYPES.items():

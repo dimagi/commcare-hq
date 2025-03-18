@@ -23,6 +23,9 @@
         </div>
         {% if filter.value %}
           <div class="ps-2">
+            {{ filter|dc_filter_icon }}
+          </div>
+          <div class="ps-2">
             {{ filter|dc_filter_value }}
           </div>
         {% endif %}

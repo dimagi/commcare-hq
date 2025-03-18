@@ -1,5 +1,6 @@
 from django import template
 from django.template.loader import render_to_string
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
 from corehq.apps.data_cleaning.models import DataType
@@ -25,4 +26,14 @@ def dc_filter_value(dc_filter):
             "data_cleaning/filters/formatted_value.html",
             context
         )
+    )
+
+
+@register.filter
+def dc_filter_icon(dc_filter):
+    icon_class = DataType.ICON_CLASSES.get(
+        dc_filter.data_type, DataType.ICON_CLASSES[DataType.TEXT]
+    )
+    return format_html(
+        '<i class="{}"></i>', icon_class
     )
