@@ -425,7 +425,7 @@ class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
 
 
 class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
-    template_name = "userreports/paywall/activating_subscription.html"
+    template_name = "userreports/paywall/bootstrap3/activating_subscription.html"
     urlname = 'report_builder_paywall_activating_subscription'
 
     def post(self, request, domain, *args, **kwargs):
