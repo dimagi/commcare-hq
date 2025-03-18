@@ -141,7 +141,6 @@ def _get_profile(self, profile_id):
 
 @patch('corehq.apps.users.user_data.UserData._get_profile', new=_get_profile)
 class TestUserDataModel(TestCase):
-
     @classmethod
     def setUpClass(cls):
         super(TestUserDataModel, cls).setUpClass()
@@ -171,11 +170,11 @@ class TestUserDataModel(TestCase):
         )
         self.addCleanup(self.user.delete, self.domain, deleted_by=None)
 
-    def init_user_data(self, raw_user_data=None, profile_id=None):
+    def init_user_data(self, raw_user_data=None, profile_id=None, domain=None):
         return UserData(
             raw_user_data=raw_user_data or {},
             couch_user=self.user,
-            domain=self.domain,
+            domain=domain or self.domain,
             profile_id=profile_id,
         )
 
@@ -313,3 +312,54 @@ class TestUserDataModel(TestCase):
         self.assertEqual(user_data.to_dict(), {
             'commcare_profile': '',
         })
+
+
+class TestUserDataLifecycle(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = create_domain('user-data-lifecycle-test')
+        cls.addClassCleanup(cls.domain.delete)
+
+    def _create_user_data(self, user, domain, raw_user_data, commit=True):
+        user_data = UserData(
+            raw_user_data=raw_user_data,
+            couch_user=user,
+            domain=domain,
+        )
+        if commit:
+            user_data.save()
+
+    def _create_web_user(self, username):
+        user = WebUser.create(self.domain.name, username, 'testpwd', None, None)
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        return user
+
+    def test_user_data_is_removed_when_domain_membership_is_deleted(self):
+        web_user = self._create_web_user('test@example.com')
+        self._create_user_data(web_user, self.domain.name, {'favorite_color': 'purple'})
+        # test that removing this user's domain membership removes the user data
+        self.assertTrue(
+            SQLUserData.objects.filter(django_user=web_user.get_django_user(), domain=self.domain.name).exists()
+        )
+        web_user.delete_domain_membership(self.domain.name)
+        self.assertFalse(
+            SQLUserData.objects.filter(django_user=web_user.get_django_user(), domain=self.domain.name).exists()
+        )
+
+    def test_user_data_for_another_domain_is_not_deleted(self):
+        web_user = self._create_web_user('test@example.com')
+        new_domain_obj = create_domain('new-domain')
+        self.addCleanup(new_domain_obj.delete)
+        web_user.add_domain_membership('new-domain')
+        web_user.save()
+        self._create_user_data(web_user, self.domain.name, {'favorite_color': 'purple'})
+        self._create_user_data(web_user, 'new-domain', {'favorite_color': 'green'})
+
+        self.assertTrue(
+            SQLUserData.objects.filter(django_user=web_user.get_django_user(), domain='new-domain').exists()
+        )
+        web_user.delete_domain_membership(self.domain.name)
+        self.assertTrue(
+            SQLUserData.objects.filter(django_user=web_user.get_django_user(), domain='new-domain').exists()
+        )

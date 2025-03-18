@@ -610,6 +610,9 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 del self.domains[i]
                 break
 
+        # cleanup any user data associated with this domain too
+        SQLUserData.objects.filter(user_id=self.user_id, domain=domain).delete()
+
         if record:
             record.save()
             return record
