@@ -406,7 +406,7 @@ class ReportBuilderPaywallBase(BaseDomainView):
 
 
 class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
-    template_name = "userreports/paywall/pricing.html"
+    template_name = "userreports/paywall/bootstrap3/pricing.html"
     urlname = 'report_builder_paywall_pricing'
     page_title = gettext_lazy('Pricing')
 
