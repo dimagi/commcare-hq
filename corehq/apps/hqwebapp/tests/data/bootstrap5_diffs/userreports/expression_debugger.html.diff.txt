@@ -1,0 +1,136 @@
+--- 
++++ 
+@@ -1,8 +1,8 @@
+-{% extends "userreports/bootstrap3/userreports_base.html" %}
++{% extends "userreports/bootstrap5/userreports_base.html" %}
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ 
+-{% js_entry_b3 'userreports/js/bootstrap3/expression_debugger' %}
++{% js_entry 'userreports/js/bootstrap5/expression_debugger' %}
+ 
+ {% block page_content %}
+   {% registerurl "expression_evaluator" domain %}
+@@ -21,10 +21,10 @@
+   </h1>
+   <p>{% trans "Paste an expression and document information below to see the result of that expression evaluated on the document." %}</p>
+   <form id="expression-debugger" class="form-horizontal ko-template" data-bind="submit: evaluateExpression">
+-    <div class="form-group">
+-      <label for="doc_type" class="col-sm-2 control-label">{% trans "Input Type" %}</label>
+-      <div class="col-sm-3">
+-        <select-toggle data-apply-bindings="false"
++    <div class="form-group">  {# todo B5: css-form-group #}
++      <label for="doc_type" class="col-md-2 form-label">{% trans "Input Type" %}</label>
++      <div class="col-md-3">
++        <select-toggle data-apply-bindings="false"  {# todo B5: css-select-form-control #}
+                        params="
+                          options: [
+                            {
+@@ -42,10 +42,10 @@
+                        "></select-toggle>
+       </div>
+     </div>
+-    <div class="form-group" data-bind="visible: inputType() === 'doc'">
+-      <label for="doc_type" class="col-sm-2 control-label">{% trans "Document Type" %}</label>
+-      <div class="col-sm-3">
+-        <select-toggle data-apply-bindings="false"
++    <div class="form-group" data-bind="visible: inputType() === 'doc'">  {# todo B5: css-form-group #}
++      <label for="doc_type" class="col-md-2 form-label">{% trans "Document Type" %}</label>
++      <div class="col-md-3">
++        <select-toggle data-apply-bindings="false"  {# todo B5: css-select-form-control #}
+                        params="
+                          options: [
+                            {
+@@ -63,15 +63,15 @@
+                        "></select-toggle>
+       </div>
+     </div>
+-    <div class="form-group" data-bind="visible: inputType() === 'doc'">
+-      <label for="doc_id" class="col-sm-2 control-label">{% trans "Document ID" %}</label>
+-      <div class="col-sm-6">
++    <div class="form-group" data-bind="visible: inputType() === 'doc'">  {# todo B5: css-form-group #}
++      <label for="doc_id" class="col-md-2 form-label">{% trans "Document ID" %}</label>
++      <div class="col-md-6">
+         <input type="text" class="form-control" id="doc_id" data-bind="value: documentId">
+       </div>
+     </div>
+-     <div class="form-group" data-bind="visible: inputType() === 'raw', css: {'has-error': hasDocParseError}">
+-      <label for="" class="col-sm-2 control-label">{% trans "Document JSON" %}</label>
+-      <div class="col-sm-10">
++     <div class="form-group" data-bind="visible: inputType() === 'raw', css: {'has-error': hasDocParseError}">  {# todo B5: css-form-group, css-has-error #}
++      <label for="" class="col-md-2 form-label">{% trans "Document JSON" %}</label>
++      <div class="col-md-10">
+         <textarea id="raw_document" class="form-control" ></textarea>
+         <div class="help-block" data-bind="visible: hasDocParseError">
+           {% blocktrans %}
+@@ -82,16 +82,16 @@
+       </div>
+     </div>
+     {% if data_sources %}
+-      <div class="form-group">
+-        <label for="data_source_id" class="col-sm-2 control-label">
++      <div class="form-group">  {# todo B5: css-form-group #}
++        <label for="data_source_id" class="col-md-2 form-label">
+           {% if use_updated_ucr_naming %}
+             {% trans "Custom Web Report Source (optional)" %}
+           {% else %}
+             {% trans "Data Source (optional)" %}
+           {% endif %}
+         </label>
+-        <div class="col-sm-6">
+-          <select class="hqwebapp-select2" data-bind="value: dataSourceId">
++        <div class="col-md-6">
++          <select class="hqwebapp-select2" data-bind="value: dataSourceId">  {# todo B5: css-select-form-control #}
+             <option></option>
+             {% for data_source in data_sources %}
+               <option value="{{ data_source.get_id }}">{{ data_source.display_name }}</option>
+@@ -104,12 +104,12 @@
+       </div>
+     {% endif %}
+     {% if ucr_expressions %}
+-      <div class="form-group">
+-        <label for="ucr_exrepssion_id" class="col-sm-2 control-label">
++      <div class="form-group">  {# todo B5: css-form-group #}
++        <label for="ucr_exrepssion_id" class="col-md-2 form-label">
+           {% trans "Saved expression" %}
+         </label>
+-        <div class="col-sm-6">
+-          <select class="hqwebapp-select2" data-bind="value: ucrExpressionId">
++        <div class="col-md-6">
++          <select class="hqwebapp-select2" data-bind="value: ucrExpressionId">  {# todo B5: css-select-form-control #}
+             <option></option>
+             {% for expression in ucr_expressions %}
+               <option value="{{ expression.id }}">{{ expression.name }}</option>
+@@ -124,9 +124,9 @@
+         </div>
+       </div>
+     {% endif %}
+-    <div class="form-group" data-bind="hidden: ucrExpressionId, css: {'has-error': hasParseError}">
+-      <label for="" class="col-sm-2 control-label">{% trans "Expression JSON" %}</label>
+-      <div class="col-sm-10">
++    <div class="form-group" data-bind="hidden: ucrExpressionId, css: {'has-error': hasParseError}">  {# todo B5: css-form-group, css-has-error #}
++      <label for="" class="col-md-2 form-label">{% trans "Expression JSON" %}</label>
++      <div class="col-md-10">
+         <textarea id="expression" class="form-control"></textarea>
+         <div class="help-block" data-bind="visible: hasParseError">
+           {% blocktrans %}
+@@ -136,8 +136,8 @@
+         </div>
+       </div>
+     </div>
+-    <div class="form-group">
+-      <div class="col-sm-offset-2 col-sm-10">
++    <div class="form-group">  {# todo B5: css-form-group #}
++      <div class="offset-md-2 col-md-10">
+         <button type="submit" class="btn btn-primary" data-bind="disable: isEvaluating">
+           <i class="fa fa-spin fa-refresh" data-bind="visible: isEvaluating"></i>
+           {% trans "Evaluate!" %}
+@@ -147,7 +147,7 @@
+         </button>
+       </div>
+     </div>
+-    <div class="col-sm-offset-2 col-sm-10">
++    <div class="offset-md-2 col-md-10">
+       <div class="alert alert-danger" data-bind="visible: error, html: error"></div>
+       <div class="alert alert-success" data-bind="visible: result">
+         {% trans "Success!" %}
