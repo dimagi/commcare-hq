@@ -573,7 +573,7 @@ zipp==3.21.0
     # via importlib-metadata
 zope-event==5.0
     # via gevent
-zope-interface==6.1
+zope-interface==7.2
     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
