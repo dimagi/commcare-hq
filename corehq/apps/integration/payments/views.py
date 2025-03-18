@@ -1,8 +1,11 @@
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
+from memoized import memoized
 
 from corehq import toggles
+from corehq.util.timezones.utils import get_timezone
+from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.views.base import BaseDomainView
@@ -15,6 +18,7 @@ from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 from corehq.apps.integration.payments.services import verify_payment_cases
 from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.apps.integration.payments.forms import PaymentConfigureForm
+from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -24,6 +28,10 @@ class PaymentsVerificationReportView(BaseDomainView):
     template_name = 'payments/payments_verify_report.html'
     section_name = _('Data')
     page_title = _('Payments Verification Report')
+
+    fields = [
+        'corehq.apps.integration.payments.filters.PaymentVerificationStatusFilter',
+    ]
 
     @property
     def section_url(self):
@@ -35,8 +43,28 @@ class PaymentsVerificationReportView(BaseDomainView):
             'has_config': MoMoConfig.objects.filter(domain=self.domain).exists(),
             'config_url': reverse(
                 'momo_configuration', args=(self.domain,),
-            )
+            ),
+            **self.filters_context(),
         }
+
+    def filters_context(self):
+        return {
+            'report': {
+                'title': self.page_title,
+                'section_name': self.section_name,
+                'show_filters': True,
+            },
+            'report_filters': [
+                dict(field=f.render(), slug=f.slug) for f in self.filter_classes
+            ],
+            'report_filter_form_action_css_class': CSS_ACTION_CLASS,
+        }
+
+    @property
+    @memoized
+    def filter_classes(self):
+        timezone = get_timezone(self.request, self.domain)
+        return get_filter_classes(self.fields, self.request, self.domain, timezone, use_bootstrap5=True)
 
 
 @method_decorator(login_required, name='dispatch')
