@@ -201,7 +201,7 @@ hqDefine("app_manager/js/app_view", function () {
                             hqImport("hqwebapp/js/bootstrap3/widgets").init();
                         },
                         error: function (data) {
-                            if (data.hasOwnProperty('responseJSON')) {
+                            if (_.has(data, 'responseJSON')) {
                                 alert(data.responseJSON.message);
                             } else {
                                 alert(gettext('Oops, there was a problem loading this section. Please try again.'));
