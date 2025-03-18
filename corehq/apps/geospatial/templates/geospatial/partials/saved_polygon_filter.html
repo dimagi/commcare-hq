@@ -6,9 +6,9 @@
                 <label for="saved-polygons" class="form-label col-md-2">
                   {% trans "Filter by Saved Area" %}
                 </label>
-                <div class="col-md-5" style="display:flex">  {# todo B5: inline-style #}
-                    <select id="saved-polygons"  {# todo B5: css-select-form-control #}
-                            class="form-control"
+                <div class="col-md-5 d-flex">
+                    <select id="saved-polygons"
+                            class="form-select"
                             data-bind="select2: savedPolygons,value: selectedSavedPolygonId,">
                     </select>
                     <button class="btn btn-outline-primary" data-bind="click: clearSelectedPolygonFilter, visible: selectedSavedPolygonId">
@@ -27,18 +27,28 @@
                 </div>
             </div>
         </div>
-        <button id="btnSaveDrawnArea" class="btn btn-outline-primary" style="float:right; margin-right:1em"  {# todo B5: inline-style #}
-                data-bind="attr: { disabled: btnSaveDisabled }, click: saveGeoPolygon">
+        <button
+          id="btnSaveDrawnArea"
+          class="btn btn-outline-primary float-end me-3"
+          data-bind="attr: { disabled: btnSaveDisabled }, click: saveGeoPolygon"
+        >
            {% trans 'Save Area' %}
        </button>
        {% include 'geospatial/partials/delete_saved_area_modal.html' %}
        {% if uses_disbursement == 'true' %}
-           <a id="btnRunDisbursement" class="col-md-2 btn btn-primary" style="float:right; margin-right:1em" data-bind="attr: { disabled: btnRunDisbursementDisabled }">  {# todo B5: inline-style #}
+           <a
+             id="btnRunDisbursement"
+             class="col-md-2 btn btn-primary float-end me-3"
+             data-bind="attr: { disabled: btnRunDisbursementDisabled }"
+           >
                {% trans 'Run Disbursement' %}
            </a>
        {% endif %}
     </div>
-    <div class="alert alert-info" style="margin-top:10px;" data-bind="visible: shouldRefreshPage">  {# todo B5: inline-style #}
+    <div
+      class="alert alert-info mt-3"
+      data-bind="visible: shouldRefreshPage"
+    >
         {% blocktrans %}
           Please
           <a href="">refresh the page</a>
