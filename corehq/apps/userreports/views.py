@@ -273,7 +273,7 @@ class UserConfigReportsHomeView(BaseUserConfigReportsView):
 
 
 class BaseEditConfigReportView(BaseUserConfigReportsView):
-    template_name = 'userreports/edit_report_config.html'
+    template_name = 'userreports/bootstrap3/edit_report_config.html'
 
     @use_multiselect
     def dispatch(self, *args, **kwargs):
