@@ -258,5 +258,8 @@ class KycVerificationFailureCause(models.TextChoices):
     USER_INFORMATION_MISMATCH = (
         'user_information_mismatch', _("User information on HQ does not match with KYC provider.")
     )
-    NETWORK_ERROR = ('network_error', _("Network error occurred. Please reach out to support."))
+    NETWORK_ERROR = (
+        'network_error',
+        _("Network error occurred. Please try again, or reach out to support if the issue persists.")
+    )
     API_ERROR = ('api_error', _("API error occurred. Please reach out to support."))
