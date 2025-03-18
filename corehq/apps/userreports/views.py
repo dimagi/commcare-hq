@@ -1535,7 +1535,7 @@ def data_source_json(request, domain, config_id):
 
 class PreviewDataSourceView(BaseUserConfigReportsView):
     urlname = 'preview_configurable_data_source'
-    template_name = "userreports/preview_data.html"
+    template_name = "userreports/bootstrap3/preview_data.html"
     page_title = gettext_lazy("Preview Data Source")
 
     @method_decorator(swallow_programming_errors)
