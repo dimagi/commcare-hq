@@ -10,6 +10,7 @@ hqDefine("app_manager/js/details/utils", [
     "DOMPurify/dist/purify.min",
     "hqwebapp/js/toggles",
     "hqwebapp/js/initial_page_data",
+    "select2/dist/js/select2.full.min",
 ], function (
     $,
     _,
