@@ -144,7 +144,7 @@ def _ucr_view_is_safe(view_fn, *args, **kwargs):
 @conditionally_location_safe(_ucr_view_is_safe)
 class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     section_name = gettext_noop("Reports")
-    template_name = 'userreports/configurable_report.html'
+    template_name = 'userreports/bootstrap3/configurable_report.html'
     slug = "configurable"
     prefix = slug
     is_exportable = True
