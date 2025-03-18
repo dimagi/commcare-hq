@@ -180,5 +180,28 @@ class DashboardWidgetView(HqHtmxActionMixin, BaseDomainView):
         form_class = WidgetType.get_form_class(widget_type)
         context = {
             'widget_form': form_class(domain=self.domain),
+            'widget_type': widget_type,
+        }
+        return self.render_htmx_partial_response(request, self.form_template_partial_name, context)
+
+    @property
+    def dashboard(self):
+        dashboard, _ = Dashboard.objects.get_or_create(domain=self.domain)
+        return dashboard
+
+    @hq_hx_action('post')
+    def save_widget(self, request, *args, **kwargs):
+        widget_type = request.POST.get('widget_type')
+        form_class = WidgetType.get_form_class(widget_type)
+        model_class = WidgetType.get_model_class(widget_type)
+
+        widget = model_class(dashboard=self.dashboard)
+        form = form_class(self.domain, request.POST, instance=widget)
+        if form.is_valid():
+            form.save(commit=True)
+
+        context = {
+            'widget_form': form,
+            'widget_type': widget_type,
         }
         return self.render_htmx_partial_response(request, self.form_template_partial_name, context)

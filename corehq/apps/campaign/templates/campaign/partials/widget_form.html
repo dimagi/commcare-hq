@@ -1,5 +1,13 @@
 {% load crispy_forms_tags %}
 
 <div id="widget-form">
-  <form>{% crispy widget_form %}</form>
+  <form
+    hq-hx-action="save_widget"
+    hx-post="{{ request.path_info }}"
+    hx-target="#widget-form"
+    hx-swap="outerHTML"
+    hx-vals='{"widget_type": "{{ widget_type }}"}'
+  >
+    {% crispy widget_form %}
+  </form>
 </div>
