@@ -2,7 +2,7 @@ hqDefine('userreports/js/bootstrap3/configure_report', [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/multiselect_utils',
-    'userreports/js/report_config',
+    'userreports/js/bootstrap3/report_config',
     'userreports/js/constants',
     'app_manager/js/forms/case_knockout_bindings',
     'hqwebapp/js/bootstrap3/knockout_bindings.ko',      // sortable and sortableList
