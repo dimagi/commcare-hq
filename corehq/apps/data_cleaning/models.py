@@ -124,7 +124,7 @@ class BulkEditSession(models.Model):
         :param filter_ids: list of uuids matching filter_id field of BulkEditFilters
         """
         if len(filter_ids) != self.filters.count():
-            raise ValueError("the lengths of column_ids and available column filters do not match")
+            raise ValueError("the lengths of filter_ids and available filters do not match")
         for index, filter_id in enumerate(filter_ids):
             active_filter = self.filters.get(filter_id=filter_id)
             active_filter.index = index
