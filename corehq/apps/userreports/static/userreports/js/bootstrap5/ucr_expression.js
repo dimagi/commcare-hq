@@ -1,10 +1,10 @@
-hqDefine("userreports/js/ucr_expression", [
+hqDefine("userreports/js/bootstrap5/ucr_expression", [
     'moment',
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/base_ace',
-    'hqwebapp/js/bootstrap3/alert_user',
+    'hqwebapp/js/bootstrap5/alert_user',
     'commcarehq',
 ], function (
     moment,
