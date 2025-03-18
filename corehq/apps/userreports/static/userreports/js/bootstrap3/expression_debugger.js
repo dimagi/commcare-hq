@@ -1,4 +1,4 @@
-hqDefine('userreports/js/expression_debugger', [
+hqDefine('userreports/js/bootstrap3/expression_debugger', [
     "jquery",
     "underscore",
     "hqwebapp/js/base_ace",
