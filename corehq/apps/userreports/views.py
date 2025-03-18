@@ -922,7 +922,7 @@ def undelete_report(request, domain, report_id):
 
 class ImportConfigReportView(BaseUserConfigReportsView):
     page_title = gettext_lazy("Import Report")
-    template_name = "userreports/import_report.html"
+    template_name = "userreports/bootstrap3/import_report.html"
     urlname = 'import_configurable_report'
 
     @property
