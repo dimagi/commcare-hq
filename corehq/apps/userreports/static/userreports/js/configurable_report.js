@@ -8,7 +8,7 @@ hqDefine("userreports/js/configurable_report", [
     'reports/js/bootstrap3/report_config_models',
     'reports/js/bootstrap3/standard_hq_report',
     'userreports/js/report_analytix',
-    'userreports/js/base',
+    'userreports/js/bootstrap3/base',
     'commcarehq',
 ], function (
     $,
