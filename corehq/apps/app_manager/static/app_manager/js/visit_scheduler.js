@@ -19,6 +19,7 @@ hqDefine("app_manager/js/visit_scheduler", [
     uiElement,
     utils,
 ) {
+    self.$ = $;     // make $ available to data bindings, where it's used in sorting elements
     var moduleScheduler = function (params) {
         // Edits the schedule phases on the module setting page
         var self = {};
