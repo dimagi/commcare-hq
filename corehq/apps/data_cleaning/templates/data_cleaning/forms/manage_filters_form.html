@@ -14,11 +14,11 @@
         hq-hx-action="reorder_filters"
         hx-trigger="end"
       >
-        <ul class="list-group">
+        <div class="list-group">
           {% for filter in active_filters %}
             {% include "data_cleaning/filters/list_item.html" %}
           {% endfor %}
-        </ul>
+        </div>
       </form>
     </div>
   {% endif %}
