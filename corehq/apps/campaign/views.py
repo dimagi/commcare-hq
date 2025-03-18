@@ -197,11 +197,13 @@ class DashboardWidgetView(HqHtmxActionMixin, BaseDomainView):
 
         widget = model_class(dashboard=self.dashboard)
         form = form_class(self.domain, request.POST, instance=widget)
+        show_success = False
         if form.is_valid():
             form.save(commit=True)
+            show_success = True
 
         context = {
-            'widget_form': form,
+            'widget_form': form_class(self.domain) if show_success else form,
             'widget_type': widget_type,
         }
         return self.render_htmx_partial_response(request, self.form_template_partial_name, context)
