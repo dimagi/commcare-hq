@@ -40,6 +40,7 @@ hqDefine("app_manager/js/details/column", [
     google,
 ) {
     const microCaseImageName = 'cc_case_image';
+    self.$ = $;     // make $ available to data bindings, where it's used in sorting elements
 
     return function (col, screen) {
         /*
