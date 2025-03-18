@@ -23,7 +23,7 @@ hqDefine("app_manager/js/app_view", [
     "app_manager/js/custom_assertions",
     "app_manager/js/managed_app",
     "hqwebapp/js/bootstrap3/knockout_bindings.ko",
-    "select2/dist/js/select2.full.min",
+    "hqwebapp/js/select2_knockout_bindings.ko",
 ], function (
     $,
     ko,
