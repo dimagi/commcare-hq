@@ -1,4 +1,4 @@
-hqDefine('userreports/js/ucr_expressions', [
+hqDefine('userreports/js/bootstrap3/ucr_expressions', [
     "jquery",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/bootstrap3/crud_paginated_list_init",
