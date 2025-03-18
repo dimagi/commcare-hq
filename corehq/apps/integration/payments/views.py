@@ -29,6 +29,15 @@ class PaymentsVerificationReportView(BaseDomainView):
     def section_url(self):
         return reverse(self.urlname, args=(self.domain,))
 
+    @property
+    def page_context(self):
+        return {
+            'has_config': MoMoConfig.objects.filter(domain=self.domain).exists(),
+            'config_url': reverse(
+                'momo_configuration', args=(self.domain,),
+            )
+        }
+
 
 @method_decorator(login_required, name='dispatch')
 @method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
