@@ -54,7 +54,7 @@
   <div id="reportConfig" class="ko-template">
     <div class="float-end page-actions-toolbar">
       {% if existing_report %}
-        {% include 'userreports/partials/delete_report_button.html' with report_id=existing_report.get_id %}
+        {% include 'userreports/partials/bootstrap5/delete_report_button.html' with report_id=existing_report.get_id %}
         &nbsp;
       {% endif %}
       {% if has_report_builder_access %}

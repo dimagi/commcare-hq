@@ -35,7 +35,7 @@
   {% if can_edit_report %}
     {% include 'userreports/partials/edit_report_button.html' %}
   {% elif can_delete_report %}
-    {% include 'userreports/partials/delete_report_button.html' with report_id=report.report_config_id %}
+    {% include 'userreports/partials/bootstrap3/delete_report_button.html' with report_id=report.report_config_id %}
   {% endif %}
 {% endblock %}
 

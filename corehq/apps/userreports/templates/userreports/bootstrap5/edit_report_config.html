@@ -41,7 +41,7 @@
           </a>
         </div>
         {% if not report.is_static%}
-          {% include 'userreports/partials/delete_report_button.html' with report_id=report.get_id %}
+          {% include 'userreports/partials/bootstrap5/delete_report_button.html' with report_id=report.get_id %}
         {% endif %}
       {% endif %}
     </div>
