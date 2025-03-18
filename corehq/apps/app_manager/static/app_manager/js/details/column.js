@@ -47,6 +47,7 @@ hqDefine("app_manager/js/details/column", [
             column extras: enum, late_flag
         */
         const self = {};
+        self.$ = $;     // make $ available to data bindings, where it's used in sorting elements
         main.eventize(self);
         self.original = JSON.parse(JSON.stringify(col));
 
