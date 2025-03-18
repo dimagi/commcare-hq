@@ -116,11 +116,11 @@ class BulkEditSession(models.Model):
     def remove_filter(self, filter_id):
         self.filters.get(filter_id=filter_id).delete()
         remaining_ids = self.filters.values_list('filter_id', flat=True)
-        self.reorder_filters(remaining_ids)
+        self.update_filter_order(remaining_ids)
 
-    def reorder_filters(self, filter_ids):
+    def update_filter_order(self, filter_ids):
         """
-        This updates the order of column filters for this session
+        This updates the order of filters for this session
         :param filter_ids: list of uuids matching filter_id field of BulkEditFilters
         """
         if len(filter_ids) != self.filters.count():
