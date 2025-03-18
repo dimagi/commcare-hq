@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine('app_manager/js/app_manager_media', function () {
     var appMenuMediaManager = function (o) {
         /* This interfaces the media reference for a form or module menu
@@ -8,12 +8,12 @@ hqDefine('app_manager/js/app_manager_media', function () {
                 isDefaultLanguage: initialPageData.get('current_language') === initialPageData.get('default_language'),
             };
 
-        self.trackGoogleEvent = function() {
+        self.trackGoogleEvent = function () {
             hqImport('analytix/js/google').track.event(...arguments);
         };
 
         self.enabled = ko.observable(
-            o.ref.use_default_media ? self.isDefaultLanguage : true
+            o.ref.use_default_media ? self.isDefaultLanguage : true,
         );
         self.ref = ko.observable(new MenuMediaReference(o.ref));
         self.refHasPath = ko.computed(function () {

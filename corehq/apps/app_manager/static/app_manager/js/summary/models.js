@@ -157,7 +157,7 @@ hqDefine('app_manager/js/summary/models',[
                 }[attribute],
                 content = "<dl>" + _getPopoverText(
                     gettext("Case Property") + " " + loadOrSave + " " + gettext(change['type']),
-                    gettext("Case Property") + " <strong>" + caseProperty + "</strong> " + gettext("of Case Type") + " <strong>" + caseType + "</strong> " + gettext(change['type'])
+                    gettext("Case Property") + " <strong>" + caseProperty + "</strong> " + gettext("of Case Type") + " <strong>" + caseType + "</strong> " + gettext(change['type']),
                 ) + "</dl>";
 
             return _.defaults({
