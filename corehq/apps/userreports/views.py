@@ -1113,7 +1113,7 @@ def evaluate_data_source(request, domain):
 
 class CreateDataSourceFromAppView(BaseUserConfigReportsView):
     urlname = 'create_configurable_data_source_from_app'
-    template_name = "userreports/data_source_from_app.html"
+    template_name = "userreports/bootstrap3/data_source_from_app.html"
     page_title = gettext_lazy("Create Data Source from Application")
 
     @property
