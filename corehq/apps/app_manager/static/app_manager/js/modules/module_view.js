@@ -16,6 +16,7 @@ hqDefine("app_manager/js/modules/module_view", [
     "app_manager/js/xpathValidator",
     "app_manager/js/apps_base",
     "app_manager/js/custom_assertions",
+    "select2/dist/js/select2.full.min",
 ], function (
     $,
     ko,
