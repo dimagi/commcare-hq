@@ -1,3 +1,5 @@
+import uuid
+from unittest.mock import patch
 from uuid import uuid4
 
 from django.test import TestCase
@@ -6,10 +8,13 @@ from django.urls import reverse
 from corehq.apps.campaign.models import (
     Dashboard,
     DashboardMap,
+    DashboardReport,
     DashboardTab,
+    WidgetType,
 )
 from corehq.apps.campaign.views import (
     DashboardView,
+    DashboardWidgetView,
     PaginatedCasesWithGPSView,
 )
 from corehq.apps.domain.shortcuts import create_domain
@@ -52,10 +57,10 @@ class BaseTestCampaignView(TestCase):
     def login_endpoint(self):
         return reverse('domain_login', kwargs={'domain': self.domain})
 
-    def _make_request(self, query_data={}, is_logged_in=True):
+    def _make_request(self, query_data={}, headers=None, is_logged_in=True):
         if is_logged_in:
             self.client.login(username=self.username, password=self.password)
-        return self.client.get(self.endpoint, query_data)
+        return self.client.get(self.endpoint, query_data, headers=headers)
 
 
 class TestDashboardView(BaseTestCampaignView):
@@ -158,3 +163,114 @@ class TestPaginatedCasesWithGPSView(BaseTestCampaignView):
 
         json_data = response.json()
         assert json_data['total'] == 2
+
+
+class TestDashboardWidgetView(BaseTestCampaignView):
+    urlname = DashboardWidgetView.urlname
+
+    def tearDown(self):
+        DashboardMap.objects.all().delete()
+        DashboardReport.objects.all().delete()
+        super().tearDown()
+
+    def test_not_logged_in(self):
+        response = self._make_request(is_logged_in=False)
+        self.assertRedirects(response, f"{self.login_endpoint}?next={self.endpoint}")
+
+    def test_ff_not_enabled(self):
+        response = self._make_request(is_logged_in=True)
+        assert response.status_code == 404
+
+    @flag_enabled('CAMPAIGN_DASHBOARD')
+    @patch('corehq.apps.campaign.forms.DashboardMapForm._get_case_types', return_value=[])
+    def test_new_map_widget(self, *args):
+        response = self._make_request(
+            query_data={'widget_type': WidgetType.MAP},
+            headers={'hq-hx-action': 'new_widget'},
+            is_logged_in=True,
+        )
+
+        self._assert_for_success(response, WidgetType.MAP)
+
+    @flag_enabled('CAMPAIGN_DASHBOARD')
+    @patch('corehq.apps.campaign.forms.DashboardReportForm._get_report_configurations', return_value=[])
+    def test_new_report_widget(self, *args):
+        response = self._make_request(
+            query_data={'widget_type': WidgetType.REPORT},
+            headers={'hq-hx-action': 'new_widget'},
+            is_logged_in=True,
+        )
+
+        self._assert_for_success(response, WidgetType.REPORT)
+
+    @flag_enabled('CAMPAIGN_DASHBOARD')
+    @patch('corehq.apps.campaign.forms.DashboardMapForm._get_case_types')
+    def test_save_map_widget(self, mocked_case_types):
+        mocked_case_types.return_value = [('case-02', 'case-02')]
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={
+                "title": "Map Widget",
+                "description": "Sample widget",
+                "dashboard_tab": DashboardTab.CASES,
+                "display_order": 1,
+                "case_type": "case-02",
+                "geo_case_property": "Test",
+                "submit": "Submit",
+                "widget_type": WidgetType.MAP
+            },
+            headers={'hq-hx-action': 'save_widget'},
+        )
+
+        self._assert_for_success(response, WidgetType.MAP)
+        assert DashboardMap.objects.count() == 1
+
+    @flag_enabled('CAMPAIGN_DASHBOARD')
+    @patch('corehq.apps.campaign.forms.DashboardReportForm._get_report_configurations')
+    def test_save_report_widget(self, mocked_get_report_configurations):
+        report_id = uuid.uuid4().hex
+        mocked_get_report_configurations.return_value = [(report_id, 'Test Report')]
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={
+                "title": "New Report Widget",
+                "description": "Sample widget",
+                "dashboard_tab": DashboardTab.MOBILE_WORKERS,
+                "display_order": 0,
+                "report_configuration_id": report_id,
+                "widget_type": WidgetType.REPORT
+            },
+            headers={'hq-hx-action': 'save_widget'},
+        )
+
+        self._assert_for_success(response, WidgetType.REPORT)
+        assert DashboardReport.objects.count() == 1
+
+    @flag_enabled('CAMPAIGN_DASHBOARD')
+    def test_save_widget_form_error(self):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={
+                "title": "New Report Widget",
+                "description": "Sample widget",
+                "dashboard_tab": DashboardTab.CASES,
+                "display_order": 0,
+                "widget_type": WidgetType.REPORT
+            },
+            headers={'hq-hx-action': 'save_widget'},
+        )
+
+        self._assert_for_success(response, WidgetType.REPORT)
+        assert DashboardReport.objects.count() == 0
+        assert response.context["widget_form"].errors == {'report_configuration_id': ['This field is required.']}
+
+    @staticmethod
+    def _assert_for_success(response, widget_type):
+        assert response.status_code == 200
+        assert response.context['widget_type'] == widget_type
+        assert isinstance(response.context['widget_form'], WidgetType.get_form_class(widget_type))
