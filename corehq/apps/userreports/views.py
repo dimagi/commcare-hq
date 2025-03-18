@@ -1152,7 +1152,7 @@ class CreateDataSourceFromAppView(BaseUserConfigReportsView):
 
 
 class BaseEditDataSourceView(BaseUserConfigReportsView):
-    template_name = 'userreports/edit_data_source.html'
+    template_name = 'userreports/bootstrap3/edit_data_source.html'
 
     @property
     def page_context(self):
