@@ -681,14 +681,28 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
 
         initialize: function (attributes) {
-            if (attributes && attributes.headers && !attributes.headerVisible) {
-                this.set('headerVisible', Array(attributes.headers.length).fill(true));
+            if (attributes) {
+                this.caseListId = attributes.caseListId;
+                if (this.caseListId && localStorage.getItem(this.caseListId)) {
+                    this.set('headerVisible', JSON.parse(localStorage.getItem(this.caseListId)));
+                } else if (attributes && attributes.headers && !attributes.headerVisible) {
+                    this.set('headerVisible', Array(attributes.headers.length).fill(true));
+                }
+
+                this.on('change:headerVisible', this.saveToLocalStorage, this);
             }
+
         },
 
         isVisible: function (index) {
             return this.get('headerVisible')[index];
         },
+
+        saveToLocalStorage: function () {
+            if (this.caseListId) {
+                localStorage.setItem(this.caseListId, JSON.stringify(this.get('headerVisible')));
+            }
+        }
     });
 
     // USH-5319: config view
@@ -752,7 +766,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             self.noItemsText = options.triggerEmptyCaseList ? sidebarNoItemsText : this.options.collection.noItemsText;
             self.selectText = options.collection.selectText;
             self.headers = options.triggerEmptyCaseList ? [] : this.options.headers;
-            self.headerModel = new HeaderModel({headers: self.headers});
+            // needs to include appId, moduleId and userId. Should be hashed
+            const user = UsersModels.getCurrentUser();
+            const urlObject = formplayerUtils.currentUrlToObject();
+            const caseListId = `${urlObject.appId}:${JSON.stringify(urlObject.selections)}:${user.username}`;
+            console.log(caseListId);
+            self.headerModel = new HeaderModel({headers: self.headers, caseListId: caseListId});
             self.redoLast = options.redoLast;
             if (sessionStorage.selectedValues !== undefined) {
                 const parsedSelectedValues = JSON.parse(sessionStorage.selectedValues)[sessionStorage.queryKey];
@@ -760,7 +779,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             } else {
                 self.selectedCaseIds = [];
             }
-            const user = UsersModels.getCurrentUser();
             const displayOptions = user.displayOptions;
             const appPreview = displayOptions.singleAppMode;
             const addressFieldPresent = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
