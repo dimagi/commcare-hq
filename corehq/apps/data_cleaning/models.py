@@ -242,6 +242,12 @@ class DataType:
         FILTER_CATEGORY_MULTI_SELECT: (MULTIPLE_OPTION,),
     }
 
+    @classmethod
+    def get_filter_category(cls, data_type):
+        for category, valid_data_types in cls.FILTER_CATEGORY_DATA_TYPES.items():
+            if data_type in valid_data_types:
+                return category
+
 
 class FilterMatchType:
     EXACT = "exact"
@@ -392,10 +398,9 @@ class BulkEditFilter(models.Model):
             DataType.FILTER_CATEGORY_DATE: dict(FilterMatchType.DATE_CHOICES),
             DataType.FILTER_CATEGORY_MULTI_SELECT: dict(FilterMatchType.MULTI_SELECT_CHOICES),
         }
-        for category, valid_data_types in DataType.FILTER_CATEGORY_DATA_TYPES.items():
-            if data_type in valid_data_types:
-                return match_type in matches_by_category[category]
-
+        category = DataType.get_filter_category(data_type)
+        if category:
+            return match_type in matches_by_category[category]
         return False
 
     @staticmethod
