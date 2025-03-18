@@ -5,7 +5,7 @@ from casexml.apps.case.mock import CaseFactory
 from corehq.apps.data_cleaning.models import (
     BulkEditChange,
     BulkEditColumn,
-    BulkEditColumnFilter,
+    BulkEditFilter,
     BulkEditPinnedFilter,
     BulkEditRecord,
     BulkEditSessionType,
@@ -181,15 +181,15 @@ class CommitCasesTest(TestCase):
 
         BulkEditPinnedFilter.create_default_filters(self.session)
         BulkEditColumn.create_default_columns(self.session)
-        self.session.add_column_filter('play_count', DataType.INTEGER, FilterMatchType.GREATER_THAN, 1)
+        self.session.add_filter('play_count', DataType.INTEGER, FilterMatchType.GREATER_THAN, 1)
         self.session.save()
 
-        self.assertTrue(BulkEditColumnFilter.objects.filter(session=self.session).count() > 0)
+        self.assertTrue(BulkEditFilter.objects.filter(session=self.session).count() > 0)
         self.assertTrue(BulkEditPinnedFilter.objects.filter(session=self.session).count() > 0)
         self.assertTrue(BulkEditColumn.objects.filter(session=self.session).count() > 0)
 
         commit_data_cleaning(self.session.session_id)
 
-        self.assertEqual(BulkEditColumnFilter.objects.filter(session=self.session).count(), 0)
+        self.assertEqual(BulkEditFilter.objects.filter(session=self.session).count(), 0)
         self.assertEqual(BulkEditPinnedFilter.objects.filter(session=self.session).count(), 0)
         self.assertEqual(BulkEditColumn.objects.filter(session=self.session).count(), 0)

@@ -206,7 +206,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('commtrack.StockRestoreConfig', SimpleFilter('commtrack_config__domain')),
     FilteredModelIteratorBuilder('consumption.DefaultConsumption', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('data_cleaning.BulkEditSession', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('data_cleaning.BulkEditColumnFilter', SimpleFilter('session__domain')),
+    FilteredModelIteratorBuilder('data_cleaning.BulkEditFilter', SimpleFilter('session__domain')),
     FilteredModelIteratorBuilder('data_cleaning.BulkEditPinnedFilter', SimpleFilter('session__domain')),
     FilteredModelIteratorBuilder('data_cleaning.BulkEditColumn', SimpleFilter('session__domain')),
     FilteredModelIteratorBuilder('data_cleaning.BulkEditRecord', SimpleFilter('session__domain')),
