@@ -205,5 +205,6 @@ class DashboardWidgetView(HqHtmxActionMixin, BaseDomainView):
         context = {
             'widget_form': form_class(self.domain) if show_success else form,
             'widget_type': widget_type,
+            'show_success': show_success,
         }
         return self.render_htmx_partial_response(request, self.form_template_partial_name, context)
