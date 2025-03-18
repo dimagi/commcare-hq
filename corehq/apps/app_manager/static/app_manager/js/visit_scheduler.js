@@ -22,6 +22,7 @@ hqDefine("app_manager/js/visit_scheduler", [
     var moduleScheduler = function (params) {
         // Edits the schedule phases on the module setting page
         var self = {};
+        self.$ = $;     // make $ available to data bindings, where it's used in sorting elements
         self.home = params.home;
 
         self.init = function () {
