@@ -11,10 +11,10 @@ hqDefine("app_manager/js/app_view", [
     "analytix/js/google",
     "hqwebapp/js/bootstrap3/widgets",
     "hqwebapp/js/bootstrap3/main",
+    'translations/js/translations',
     "app_manager/js/app_manager",
     "app_manager/js/section_changer",
     "app_manager/js/apps_base",
-    "app_manager/js/app_view_application",   // TODO: combine this with app_manager/js/app_view?
     "app_manager/js/widgets",   // app version widget when copying an app
     "app_manager/js/download_async_modal",  // for the "Download ZIP" button on the multimedia tab
     "hqwebapp/js/bootstrap3/widgets",
@@ -23,6 +23,7 @@ hqDefine("app_manager/js/app_view", [
     "app_manager/js/custom_assertions",
     "app_manager/js/managed_app",
     "hqwebapp/js/bootstrap3/knockout_bindings.ko",
+    "select2/dist/js/select2.full.min",
 ], function (
     $,
     ko,
@@ -33,6 +34,7 @@ hqDefine("app_manager/js/app_view", [
     google,
     widgets,
     main,
+    translations,
     appManager,
     sectionChanger,
 ) {
@@ -64,7 +66,7 @@ hqDefine("app_manager/js/app_view", [
         // Languages: CommCare Translations
         var $ui = $("#translations_ui");
         if ($ui.length) {
-            hqImport("translations/js/translations").makeTranslationUI({
+            translations.makeTranslationUI({
                 translations: initialPageData.get("translations"),
                 url: initialPageData.reverse("edit_app_ui_translations"),
                 suggestion_url: initialPageData.reverse("get_app_ui_translations"),
