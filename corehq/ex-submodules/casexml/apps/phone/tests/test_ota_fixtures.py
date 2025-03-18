@@ -52,12 +52,7 @@ class OtaFixtureTest(TestCase):
         self.assertIn('<fixture ', restore)
 
         restore = device.sync(skip_fixtures=True).payload.decode('utf-8')
-        self.assertIn('<fixture ', restore)
-
-        item_lists.ignore_skip_fixtures_flag = False
-        restore = device.sync(skip_fixtures=True).payload.decode('utf-8')
         self.assertNotIn('<fixture ', restore)
-        item_lists.ignore_skip_fixtures_flag = True  # reset
 
     def test_fixture_ownership(self):
         device = MockDevice(self.domain, self.restore_user)
