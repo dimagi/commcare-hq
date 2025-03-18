@@ -16,6 +16,11 @@ $(function () {
         mapWidget.initializeMap();
     }
     $('a[data-bs-toggle="tab"]').on('shown.bs.tab', tabSwitch);
+
+    $('#widget-modal').on('hidden.bs.modal', function () {
+        const loadingText = gettext("Loading...")
+        $('#widget-modal-body').html(`<i class="fa-solid fa-spinner fa-spin"></i> ${loadingText}`);
+    });
 });
 
 function tabSwitch(e) {
