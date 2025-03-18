@@ -1,3 +1,5 @@
+from functools import cached_property
+
 from django.conf import settings
 from django.core.paginator import Paginator
 from django.forms.models import model_to_dict
@@ -176,13 +178,22 @@ class DashboardWidgetView(HqHtmxActionMixin, BaseDomainView):
 
     @hq_hx_action('get')
     def new_widget(self, request, *args, **kwargs):
-        widget_type = request.GET.get('widget_type')
-        form_class = WidgetType.get_form_class(widget_type)
         context = {
-            'widget_form': form_class(domain=self.domain),
-            'widget_type': widget_type,
+            'widget_form': self.form_class(domain=self.domain),
+            'widget_type': self.widget_type,
         }
         return self.render_htmx_partial_response(request, self.form_template_partial_name, context)
+
+    @cached_property
+    def widget_type(self):
+        if self.request.method == "GET":
+            return self.request.GET.get('widget_type')
+        else:
+            return self.request.POST.get('widget_type')
+
+    @cached_property
+    def form_class(self):
+        return WidgetType.get_form_class(self.widget_type)
 
     @property
     def dashboard(self):
@@ -191,20 +202,20 @@ class DashboardWidgetView(HqHtmxActionMixin, BaseDomainView):
 
     @hq_hx_action('post')
     def save_widget(self, request, *args, **kwargs):
-        widget_type = request.POST.get('widget_type')
-        form_class = WidgetType.get_form_class(widget_type)
-        model_class = WidgetType.get_model_class(widget_type)
-
-        widget = model_class(dashboard=self.dashboard)
-        form = form_class(self.domain, request.POST, instance=widget)
+        widget = self.model_class(dashboard=self.dashboard)
+        form = self.form_class(self.domain, request.POST, instance=widget)
         show_success = False
         if form.is_valid():
             form.save(commit=True)
             show_success = True
 
         context = {
-            'widget_form': form_class(self.domain) if show_success else form,
-            'widget_type': widget_type,
+            'widget_form': self.form_class(self.domain) if show_success else form,
+            'widget_type': self.widget_type,
             'show_success': show_success,
         }
         return self.render_htmx_partial_response(request, self.form_template_partial_name, context)
+
+    @property
+    def model_class(self):
+        return WidgetType.get_model_class(self.widget_type)
