@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load data_cleaning_filters %}
 
 <li class="list-group-item d-flex">
   <a class="link p-1 flex-grow-1">
@@ -16,7 +17,7 @@
     </span>
     {% if filter.value %}
       <span class="ps-2">
-        {{ filter.value }}
+        {{ filter|dc_filter_value }}
       </span>
     {% endif %}
   </a>

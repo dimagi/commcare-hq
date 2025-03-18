@@ -1,0 +1,10 @@
+{% if values_list %}
+  {% for value in values_list %}
+    <span class="badge rounded-pill text-bg-primary">
+      {{ value }}
+    </span>
+  {% endfor %}
+{% endif %}
+{% if value %}
+  {{ value }}
+{% endif %}
