@@ -4,6 +4,7 @@ from Crypto.Cipher import AES
 
 from django.conf import settings
 
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import ConnectIDUserLink, CouchUser
 
 
@@ -42,11 +43,14 @@ class ConnectBackend:
         return response.status_code == requests.codes.OK
 
     def create_channel(self, user_link):
+        domain_obj = Domain.get_by_name(user_link.domain)
+        channel_name = domain_obj.connect_messaging_channel_name
         response = requests.post(
             settings.CONNECTID_CHANNEL_URL,
             data={
                 "connectid": user_link.connectid_username,
                 "channel_source": user_link.domain,
+                "channel_name": channel_name
             },
             auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY)
         )
