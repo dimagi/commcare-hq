@@ -590,7 +590,7 @@ class ConfigureReport(ReportBuilderView):
         context.update(self.main_context)
         if report_id:
             context['report_id'] = report_id
-        return render(self.request, 'userreports/report_error.html', context)
+        return render(self.request, 'userreports/bootstrap3/report_error.html', context)
 
     @property
     def page_name(self):

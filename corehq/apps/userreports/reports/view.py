@@ -306,7 +306,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                         'If you believe you are seeing this message in error, please report an issue.'
                     )
                     details = str(e)
-                self.template_name = 'userreports/report_error.html'
+                self.template_name = 'userreports/bootstrap3/report_error.html'
                 allow_delete = (
                     self.report_config_id
                     and not self.is_static
