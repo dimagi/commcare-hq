@@ -188,7 +188,7 @@ hqDefine("reports/js/bootstrap3/hq_report", [
                 // This is necessary for pages that contain multiple filter panels, since we are using CSS IDs.
                 const submitButton = $(e.target).closest('#reportFilters').find(self.filterSubmitSelector);
                 $(submitButton)
-                    .changeButtonState('reset')
+                    .button('reset')
                     .addClass('btn-primary')
                     .removeClass('disabled')
                     .prop('disabled', false);
