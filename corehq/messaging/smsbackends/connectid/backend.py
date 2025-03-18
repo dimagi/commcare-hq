@@ -16,11 +16,6 @@ class ConnectBackend:
         user = CouchUser.get_by_user_id(message.couch_recipient).get_django_user()
         user_link = ConnectIDUserLink.objects.get(commcare_user=user)
 
-        # create channel if it does not yet exist
-        if not user_link.channel_id:
-            self.create_channel(user_link)
-            user_link.refresh_from_db()
-
         raw_key = user_link.messaging_key.key
         key = base64.b64decode(raw_key)
         cipher = AES.new(key, AES.MODE_GCM)
@@ -33,7 +28,7 @@ class ConnectBackend:
         response = requests.post(
             settings.CONNECTID_MESSAGE_URL,
             json={
-                "channel": user_link.channel_id,
+                "channel": user_link.messaging_channel,
                 "content": content,
                 "message_id": str(message.message_id),
             },
