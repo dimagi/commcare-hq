@@ -32,13 +32,20 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import CaseSearchES, UserES
 from corehq.apps.es.users import missing_or_empty_user_data_property
-from corehq.apps.geospatial.exceptions import CaseReassignmentValidationError, GeoPolygonValidationError
+from corehq.apps.geospatial.exceptions import (
+    CaseReassignmentValidationError,
+    GeoPolygonValidationError,
+)
 from corehq.apps.geospatial.filters import GPSDataFilter
 from corehq.apps.geospatial.forms import GeospatialConfigForm
 from corehq.apps.geospatial.reports import CaseManagementMap
 from corehq.apps.geospatial.tasks import geo_cases_reassignment_update_owners
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
-from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui
+from corehq.apps.hqwebapp.decorators import (
+    use_bootstrap5,
+    use_datatables,
+    use_jquery_ui,
+)
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
@@ -48,15 +55,16 @@ from corehq.form_processor.models import CommCareCase
 from corehq.util.timezones.utils import get_timezone
 
 from .const import (
-    GPS_POINT_CASE_PROPERTY,
-    POLYGON_COLLECTION_GEOJSON_SCHEMA,
     ES_INDEX_TASK_HELPER_BASE_KEY,
     ES_REASSIGNMENT_UPDATE_OWNERS_BASE_KEY,
+    GPS_POINT_CASE_PROPERTY,
+    POLYGON_COLLECTION_GEOJSON_SCHEMA,
 )
 from .models import GeoConfig, GeoPolygon
 from .utils import (
     CaseOwnerUpdate,
     create_case_with_gps_property,
+    get_celery_task_tracker,
     get_flag_assigned_cases_config,
     get_geo_case_property,
     get_geo_config,
@@ -65,7 +73,6 @@ from .utils import (
     set_case_gps_property,
     set_user_gps_property,
     update_cases_owner,
-    get_celery_task_tracker,
 )
 
 
@@ -229,6 +236,7 @@ class BaseConfigView(BaseGeospatialView):
         return self.get(request, *args, **kwargs)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class GeospatialConfigPage(BaseConfigView):
     urlname = "geospatial_settings"
     template_name = "geospatial/settings.html"
@@ -258,6 +266,7 @@ class GeospatialConfigPage(BaseConfigView):
         return context
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class GPSCaptureView(BaseGeospatialView):
     urlname = 'gps_capture'
     template_name = 'geospatial/gps_capture_view.html'
