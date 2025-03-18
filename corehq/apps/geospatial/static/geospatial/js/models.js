@@ -5,7 +5,7 @@ hqDefine('geospatial/js/models', [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'geospatial/js/utils',
-    'hqwebapp/js/bootstrap3/alert_user',
+    'hqwebapp/js/bootstrap5/alert_user',
     'mapbox-gl',
     '@mapbox/mapbox-gl-draw',
     '@turf/turf',
