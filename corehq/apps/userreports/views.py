@@ -1831,7 +1831,7 @@ def choice_list_api(request, domain, report_id, filter_id):
 
 class DataSourceSummaryView(BaseUserConfigReportsView):
     urlname = 'summary_configurable_data_source'
-    template_name = "userreports/summary_data_source.html"
+    template_name = "userreports/bootstrap3/summary_data_source.html"
     page_title = gettext_lazy("Data Source Summary")
 
     @property
