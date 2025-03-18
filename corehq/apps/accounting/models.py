@@ -2715,9 +2715,15 @@ class WirePrepaymentBillingRecord(WireBillingRecord):
         else:
             account_or_domain = self.invoice.get_domain()
 
-        subject = f"CommCare Subscription Prepayment Invoice for {account_or_domain}"
         if self.invoice.date_due is not None:
-            subject = subject + " due {date}".format(date=self.invoice.due_date)
+            subject = _(
+                "CommCare Subscription Prepayment Invoice for {account_or_domain} due {due_date}"
+            ).format(account_or_domain=account_or_domain, due_date=self.invoice.date_due)
+        else:
+            subject = _(
+                "CommCare Subscription Prepayment Invoice for {account_or_domain}"
+            ).format(account_or_domain=account_or_domain)
+
         return subject
 
     def can_view_statement(self, web_user):
