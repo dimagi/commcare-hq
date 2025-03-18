@@ -33,7 +33,8 @@
 
 {% js_entry_b3 "" %}
 
-{% block js %}{{ block.super }}
+{% block js %}
+  {{ block.super }}
   <!--
       jQuery UI needs to be included before Bootstrap's JavaScript, otherwise the two
       tooltip widgets conflict. The B3 base template takes care of that when you use the
