@@ -446,7 +446,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
 
 
 class ReportBuilderDataSourceSelect(ReportBuilderView):
-    template_name = 'userreports/reportbuilder/data_source_select.html'
+    template_name = 'userreports/reportbuilder/bootstrap3/data_source_select.html'
     page_title = gettext_lazy('Create Report')
     urlname = 'report_builder_select_source'
 
