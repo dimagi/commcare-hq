@@ -15,6 +15,10 @@
     #users-without-gps-data-table {  {# Used in geospatial/gps_capture.html #}
       margin-botton: 0;  /* todo B5: Does this do anything (Note typo) ? Use "mb0" : Drop */
     }
+
+    #geospatial-map {
+      height: 500px;
+    }
   </style>
 {% endblock %}
 
@@ -29,9 +33,13 @@
 {% initial_page_data 'couch_user_username' couch_user_username %}
 
 {% include 'geospatial/partials/index_alert.html' %}
-<ul id="tabs-list" class="nav nav-tabs">  {# todo B5: css-nav #}
-  <li data-bind="click: onclickAction" class="active"><a data-bs-toggle="tab" href="#tabs-cases">{% trans 'Update Case Data' %}</a></li>
-  <li data-bind="click: onclickAction"><a data-bs-toggle="tab" href="#tabs-users">{% trans 'Update Mobile Worker Data' %}</a></li>
+<ul id="tabs-list" class="nav nav-tabs">
+  <li class="nav-item active" data-bind="click: onclickAction">
+    <a class="nav-link active" data-bs-toggle="tab" href="#tabs-cases">{% trans 'Update Case Data' %}</a>
+  </li>
+  <li class="nav-item" data-bind="click: onclickAction">
+    <a class="nav-link" data-bs-toggle="tab" href="#tabs-users">{% trans 'Update Mobile Worker Data' %}</a>
+  </li>
 </ul>
 
 <div class="tab-content">
@@ -56,5 +64,5 @@
       </div>
   </div>
 </div>
-<div id="geospatial-map" style="height: 500px"></div>  {# todo B5: inline-style #}
+<div id="geospatial-map"></div>
 {% endblock %}
