@@ -30,12 +30,12 @@
                             value: value()[$parent.lang]
                         "/>
           </div>
-          <!-- ko if: $parent.values_are_icons() -->
+          <!-- ko if: $parent.values_are_icons() && iconManagerReady() -->
           <div data-bind="template: {name: 'value_icon_uploader', data: iconManager}">
           </div>
           <!-- /ko -->
           <!-- ko if: !$parent.values_are_icons() -->
-          <div class="col-sm-1 btn" data-bind="visible: !_([$parent.lang, null]).contains($parent.backup(value()).lang)">
+          <div class="col-sm-1 btn" data-bind="visible: ![$parent.lang, null].includes($parent.backup(value()).lang)">
             <a href="#" class="btn btn-info btn-xs lang-text"
                data-bind="
                             text: $parent.backup(value()).lang
@@ -50,7 +50,7 @@
         </div>
         {% if app.supports_alt_text %}
           <div class="row">
-            <!-- ko if: $parent.values_are_icons() -->
+            <!-- ko if: $parent.values_are_icons() && iconManagerReady() -->
             <div data-bind="template: {name: 'icon_alt_text', data: iconManager}"
                 style="margin-top: 3px">
             </div>
@@ -58,7 +58,7 @@
           </div>
         {% endif %}
         <div class="row">
-          <!-- ko if: $parent.values_are_icons() -->
+          <!-- ko if: $parent.values_are_icons() && iconManagerReady() -->
           <div data-bind="template: {name: 'icon_uploader_path', data: iconManager}"
                style="margin-top: 3px">
           </div>
@@ -164,7 +164,7 @@
 </div>
 
 <div id="icon_uploader_path" class="hide">
-  <div class="col-sm-1 btn" data-bind="visible: !_([$parents[1].lang, null]).contains($parents[1].backup($parent.value()).lang)">
+  <div class="col-sm-1 btn" data-bind="visible: ![$parents[1].lang, null].includes($parents[1].backup($parent.value()).lang)">
     <a href="#" class="btn btn-info btn-xs lang-text"
        data-bind="
             text: $parents[1].backup($parent.value()).lang

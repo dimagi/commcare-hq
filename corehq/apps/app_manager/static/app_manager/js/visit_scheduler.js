@@ -1,6 +1,25 @@
-hqDefine('app_manager/js/visit_scheduler', function () {
-    var appManager = hqImport('app_manager/js/app_manager');
-    var caseConfigUtils = hqImport('app_manager/js/case_config_utils');
+hqDefine("app_manager/js/visit_scheduler", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "app_manager/js/app_manager",
+    "app_manager/js/case_config_utils",
+    "hqwebapp/js/bootstrap3/main",
+    "hqwebapp/js/ui_elements/bootstrap3/ui-element-select",
+    "app_manager/js/details/utils",
+    "app_manager/js/forms/case_knockout_bindings",  // numericValue
+    "commcarehq",
+], function (
+    $,
+    ko,
+    _,
+    appManager,
+    caseConfigUtils,
+    main,
+    uiElement,
+    utils,
+) {
+    self.$ = $;     // make $ available to data bindings, where it's used in sorting elements
     var moduleScheduler = function (params) {
         // Edits the schedule phases on the module setting page
         var self = {};
@@ -26,7 +45,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
             self.saveButton.fire('change');
         };
 
-        self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
+        self.saveButton = main.initSaveButton({
             unsavedMessage: "You have unchanged schedule settings",
             save: function () {
                 self.saveButton.ajax({
@@ -47,12 +66,12 @@ hqDefine('app_manager/js/visit_scheduler', function () {
         var phaseModel = function (id, anchor, forms) {
             var self = {};
             self.id = id;
-            self.anchor = hqImport('hqwebapp/js/ui_elements/bootstrap3/ui-element-select').new(params.caseProperties).val(anchor);
+            self.anchor = uiElementSelect.new(params.caseProperties).val(anchor);
             self.anchor.observableVal = ko.observable(self.anchor.val());
             self.anchor.on("change", function () {
                 self.anchor.observableVal(self.anchor.val());
             });
-            hqImport('app_manager/js/details/utils').setUpAutocomplete(self.anchor, params.caseProperties);
+            utils.setUpAutocomplete(self.anchor, params.caseProperties);
             self.forms = ko.observable(forms);
             self.form_abbreviations = ko.computed(function () {
                 return _.map(self.forms(), function (form) {
@@ -106,7 +125,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
         self.questions = params.questions;
         self.save_url = params.save_url;
 
-        self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
+        self.saveButton = main.initSaveButton({
             unsavedMessage: "You have unsaved schedule settings",
             save: function () {
                 var isValid = self.validate();
@@ -392,21 +411,21 @@ hqDefine('app_manager/js/visit_scheduler', function () {
         },
     };
 
+    // Verbatim from http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
+    //control visibility, give element focus, and select the contents (in order)
+    ko.bindingHandlers.visibleAndSelect = {
+        update: function (element, valueAccessor) {
+            ko.bindingHandlers.visible.update(element, valueAccessor);
+            if (valueAccessor()) {
+                _.defer(function () {
+                    $(element).focus().select();
+                });
+            }
+        },
+    };
+
     return {
         schedulerModel: schedulerModel,
         moduleScheduler: moduleScheduler,
     };
 });
-
-// Verbatim from http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
-//control visibility, give element focus, and select the contents (in order)
-ko.bindingHandlers.visibleAndSelect = {
-    update: function (element, valueAccessor) {
-        ko.bindingHandlers.visible.update(element, valueAccessor);
-        if (valueAccessor()) {
-            _.defer(function () {
-                $(element).focus().select();
-            });
-        }
-    },
-};
