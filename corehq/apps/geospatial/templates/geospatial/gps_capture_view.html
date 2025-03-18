@@ -3,7 +3,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% js_entry_b3 "geospatial/js/gps_capture" %}
+{% js_entry "geospatial/js/gps_capture" %}
 
  {% block stylesheets %}
  {{ block.super }}
@@ -29,14 +29,14 @@
 {% initial_page_data 'couch_user_username' couch_user_username %}
 
 {% include 'geospatial/partials/index_alert.html' %}
-<ul id="tabs-list" class="nav nav-tabs">
-  <li data-bind="click: onclickAction" class="active"><a data-toggle="tab" href="#tabs-cases">{% trans 'Update Case Data' %}</a></li>
-  <li data-bind="click: onclickAction"><a data-toggle="tab" href="#tabs-users">{% trans 'Update Mobile Worker Data' %}</a></li>
+<ul id="tabs-list" class="nav nav-tabs">  {# todo B5: css-nav #}
+  <li data-bind="click: onclickAction" class="active"><a data-bs-toggle="tab" href="#tabs-cases">{% trans 'Update Case Data' %}</a></li>
+  <li data-bind="click: onclickAction"><a data-bs-toggle="tab" href="#tabs-users">{% trans 'Update Mobile Worker Data' %}</a></li>
 </ul>
 
 <div class="tab-content">
   <div class="tab-pane fade in active" id="tabs-cases">
-    {% include "reports/standard/partials/bootstrap3/filter_panel.html" %}
+    {% include "reports/standard/partials/bootstrap5/filter_panel.html" %}
     {% include 'geospatial/gps_capture.html' with data_type='case' %}
   </div>
 
@@ -56,5 +56,5 @@
       </div>
   </div>
 </div>
-<div id="geospatial-map" style="height: 500px"></div>
+<div id="geospatial-map" style="height: 500px"></div>  {# todo B5: inline-style #}
 {% endblock %}
