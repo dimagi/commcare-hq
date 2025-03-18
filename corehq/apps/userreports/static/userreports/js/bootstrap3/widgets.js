@@ -1,4 +1,4 @@
-hqDefine("userreports/js/widgets", [
+hqDefine("userreports/js/bootstrap3/widgets", [
     'jquery',
     'hqwebapp/js/base_ace',
     'commcarehq',
