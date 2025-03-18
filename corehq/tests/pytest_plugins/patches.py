@@ -28,7 +28,7 @@ def patch_unittest_TestCase_doClassCleanup():
 
     @classmethod
     def doClassCleanupAndRaiseLastError(cls):
-        doClassCleanups()
+        doClassCleanups(cls)
         errors = cls.tearDown_exceptions
         if errors:
             if len(errors) > 1:
@@ -41,7 +41,7 @@ def patch_unittest_TestCase_doClassCleanup():
     import sys
     from traceback import print_exception
     from unittest.case import TestCase
-    doClassCleanups = TestCase.doClassCleanups
+    doClassCleanups = TestCase.doClassCleanups.__func__
     TestCase.doClassCleanups = doClassCleanupAndRaiseLastError
 
 
