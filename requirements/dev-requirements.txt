@@ -751,7 +751,7 @@ wheel==0.38.1
     # via
     #   -r dev-requirements.in
     #   pip-tools
-wrapt==1.12.1
+wrapt==1.17.2
     # via
     #   ddtrace
     #   deprecated
