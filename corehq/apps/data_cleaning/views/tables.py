@@ -31,6 +31,7 @@ class CleanCasesTableView(BulkEditSessionViewMixin, BaseDataCleaningTableView):
             'record_kwargs': {
                 'session': self.session,
             },
+            'session': self.session,
         }
 
     def get_queryset(self):

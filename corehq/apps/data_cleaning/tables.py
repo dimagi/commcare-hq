@@ -13,6 +13,10 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
     class Meta(BaseHtmxTable.Meta):
         template_name = "data_cleaning/tables/table_with_controls.html"
 
+    def __init__(self, session=None, **kwargs):
+        super().__init__(**kwargs)
+        self.session = session
+
     @classmethod
     def get_columns_from_session(cls, session):
         visible_columns = []
