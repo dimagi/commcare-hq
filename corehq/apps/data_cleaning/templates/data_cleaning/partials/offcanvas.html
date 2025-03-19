@@ -48,7 +48,12 @@
     ></button>
   </div>
   <div class="offcanvas-body">
-    <p>todo</p>
+    <div
+      hx-get="{% url "data_cleaning_manage_columns_form" domain session_id %}"
+      hx-trigger="load"
+    >
+      {% include "data_cleaning/partials/loading_indicator.html" %}
+    </div>
   </div>
 </div>
 

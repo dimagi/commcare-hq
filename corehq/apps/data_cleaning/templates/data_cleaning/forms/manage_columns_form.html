@@ -1,0 +1,25 @@
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+<div
+  id="{{ container_id }}"
+  hx-swap="outerHTML"
+>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <h5 class="mb-3">
+        {% trans "Add Column" %}
+      </h5>
+      <form
+        hx-post="{{ request.path_info }}"
+        hx-target="#{{ container_id }}"
+        hx-disabled-elt="find button"
+        hq-hx-action="add_column"
+      >
+        {% crispy add_column_form %}
+      </form>
+    </div>
+  </div>
+
+</div>
