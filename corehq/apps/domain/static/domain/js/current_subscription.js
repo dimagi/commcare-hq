@@ -4,16 +4,13 @@ hqDefine("domain/js/current_subscription", [
     'hqwebapp/js/initial_page_data',
     'accounting/js/credits',
     'accounting/js/payment_method_handler',
-    'stripe',
 ], function (
     $,
     initialPageData,
     credits,
     paymentMethodHandler,
-    Stripe
 ) {
     $(function () {
-        Stripe.setPublishableKey(initialPageData.get('stripe_public_key'));
         var paymentHandler = paymentMethodHandler.paymentMethodHandler(
             "add-credit-form",
             {
