@@ -103,6 +103,15 @@ class BulkEditSession(models.Model):
             return None
         return round(self.result['percent'])
 
+    @property
+    def has_pinned_values(self):
+        return any(self.pinned_filters.values_list('value', flat=True))
+
+    def reset_pinned_filters(self):
+        for pinned_filter in self.pinned_filters.all():
+            pinned_filter.value = None
+            pinned_filter.save()
+
     def add_filter(self, prop_id, data_type, match_type, value=None):
         BulkEditFilter.objects.create(
             session=self,
