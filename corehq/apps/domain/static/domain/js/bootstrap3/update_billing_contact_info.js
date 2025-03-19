@@ -2,6 +2,7 @@
 hqDefine('domain/js/bootstrap3/update_billing_contact_info', [
     'jquery',
     'hqwebapp/js/initial_page_data',
+    '@stripe/stripe-js',
     'accounting/js/stripe_card_manager',
     'accounting/js/widgets',
     'hqwebapp/js/bootstrap3/knockout_bindings.ko', // openModal
@@ -9,6 +10,7 @@ hqDefine('domain/js/bootstrap3/update_billing_contact_info', [
 ], function (
     $,
     initialPageData,
+    Stripe,
     stripeCardManager,
 ) {
     $(function () {
@@ -17,6 +19,14 @@ hqDefine('domain/js/bootstrap3/update_billing_contact_info', [
             url: initialPageData.reverse("cards_view"),
         });
         $("#card-manager").koApplyBindings(cardManager);
+
+        let stripePromise = Stripe.loadStripe(initialPageData.get("stripe_public_key"));
+        stripePromise.then(function (stripe) {
+            const cardElement = stripe.elements().create('card', {
+                hidePostalCode: true,
+            });
+            cardElement.mount('#jls');
+        });
 
         $("#show_emails").click(function () {
             $('#emails-text').show();

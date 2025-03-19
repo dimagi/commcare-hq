@@ -2,14 +2,18 @@
 hqDefine("accounting/js/stripe_card_manager", [
     'jquery',
     'knockout',
-    'stripe',
+    '@stripe/stripe-js',
+    'hqwebapp/js/initial_page_data',
 ], function (
     $,
     ko,
-    Stripe
+    Stripe,
+    initialPageData,
 ) {
     var newStripeCardModel = function (data, cardManager) {
         var self = {};
+        let stripePromise = Stripe.loadStripe(initialPageData.get("stripe_public_key"));
+
         var mapping = {
             observe: ['number', 'cvc', 'expMonth','expYear', 'isAutopay', 'token'],
         };
@@ -61,18 +65,24 @@ hqDefine("accounting/js/stripe_card_manager", [
             }
         };
 
-        var createStripeToken = function () {
-            Stripe.card.createToken({
+        async function createStripeToken() {
+            //await stripe;
+stripePromise.then(function (stripe) {
+//debugger;
+            const card = stripe.elements().create('card', {
                 number: self.number(),
                 cvc: self.cvc(),
                 exp_month: self.expMonth(),
                 exp_year: self.expYear(),
-            }, handleStripeResponse);
+            });
+            stripe.createToken(card, handleStripeResponse);
+});
         };
 
         self.saveCard = function () {
             self.isProcessing(true);
-            createStripeToken();
+            //createStripeToken();
+            // TODO: What to do here? Call `update` on the cardElement (which is created in a different file)?
         };
 
         return self;
