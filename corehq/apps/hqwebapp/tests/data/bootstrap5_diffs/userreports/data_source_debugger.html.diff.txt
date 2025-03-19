@@ -1,0 +1,56 @@
+--- 
++++ 
+@@ -1,8 +1,8 @@
+-{% extends "userreports/bootstrap3/userreports_base.html" %}
++{% extends "userreports/bootstrap5/userreports_base.html" %}
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ 
+-{% js_entry_b3 'userreports/js/data_source_evaluator' %}
++{% js_entry 'userreports/js/data_source_evaluator' %}
+ 
+ {% block page_content %}
+   {% registerurl "data_source_evaluator" domain %}
+@@ -14,32 +14,32 @@
+     {% endif %}
+   </h1>
+   <form id="data-source-debugger" class="form-horizontal" data-bind="submit: evaluateDataSource">
+-    <div class="form-group">
+-      <label for="data_source_id" class="col-sm-2 control-label">
++    <div class="form-group">  {# todo B5: css-form-group #}
++      <label for="data_source_id" class="col-md-2 form-label">
+         {% if use_updated_ucr_naming %}
+           {% trans "Custom Web Report Source" %}
+         {% else %}
+           {% trans "Data Source" %}
+         {% endif %}
+       </label>
+-      <div class="col-sm-6">
+-        <select class="form-control hqwebapp-select2" id="data_source_id" data-bind="value: dataSourceId">
++      <div class="col-md-6">
++        <select class="form-select hqwebapp-select2" id="data_source_id" data-bind="value: dataSourceId">
+           {% for data_source in data_sources %}
+             <option value="{{ data_source.get_id }}">{{ data_source.display_name }}</option>
+           {% endfor %}
+         </select>
+       </div>
+     </div>
+-    <div class="form-group">
+-      <label for="doc_id" class="col-sm-2 control-label">{% trans "Document IDs" %}</label>
+-      <div class="col-sm-6">
++    <div class="form-group">  {# todo B5: css-form-group #}
++      <label for="doc_id" class="col-md-2 form-label">{% trans "Document IDs" %}</label>
++      <div class="col-md-6">
+         <input type="text" class="form-control" id="doc_id" data-bind="value: documentsId">
+         <p class="help-block">{% trans "Comma separated" %}</p>
+       </div>
+     </div>
+-    <p class="col-sm-offset-2 col-sm-10" data-bind="html: uiFeedback"></p>
+-    <div class="form-group">
+-      <div class="col-sm-offset-2 col-sm-10">
++    <p class="offset-md-2 col-md-10" data-bind="html: uiFeedback"></p>
++    <div class="form-group">  {# todo B5: css-form-group #}
++      <div class="offset-md-2 col-md-10">
+         <button type="submit" class="btn btn-primary" data-bind="disable: loading">{% trans "Submit!" %}</button>
+       </div>
+     </div>

@@ -87,8 +87,7 @@ hqDefine("app_manager/js/app_view", function () {
                         error: function (data) {
                             if (data.hasOwnProperty('responseJSON')) {
                                 alert(data.responseJSON.message);
-                            }
-                            else {
+                            } else {
                                 alert(gettext('Oops, there was a problem loading this section. Please try again.'));
                             }
                             self.load_state('error');

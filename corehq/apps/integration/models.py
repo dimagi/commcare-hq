@@ -7,6 +7,7 @@ from memoized import memoized
 
 from corehq import toggles
 from corehq.apps.integration.kyc.models import KycConfig # noqa
+from corehq.apps.integration.payments.models import MoMoConfig # noqa
 
 
 class DialerSettings(models.Model):

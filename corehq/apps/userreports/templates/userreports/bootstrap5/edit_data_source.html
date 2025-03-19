@@ -1,0 +1,393 @@
+{% extends "userreports/bootstrap5/userreports_base.html" %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% js_entry 'userreports/js/bootstrap5/widgets' %}
+
+{% block page_content %}
+  {% if data_source.meta.build.is_rebuild_in_progress %}
+    <div id="built-warning" class="alert alert-warning">
+      <h4>
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        {% if data_source.rebuild_failed %}
+          {% trans "Populating your report did not complete successfully." %}
+        {% elif data_source.meta.build.is_rebuilding %}
+          {% trans "Please note that this datasource is being rebuilt." %}
+        {% elif data_source.meta.build.is_rebuilding_in_place %}
+          {% trans "Please note that this datasource is being rebuilt in place." %}
+        {% endif %}
+      </h4>
+    </div>
+  {% elif data_source.meta.build.awaiting %}
+    <div class="alert alert-info">
+      {% trans "Please note that this datasource is yet be built / rebuilt by CommCare HQ." %}
+    </div>
+  {% endif %}
+  {% if data_source.get_id %}
+    <div class="btn-toolbar float-end">
+      {% if use_updated_ucr_naming %}
+        <div class="btn-group">
+          <a
+            href="{% url 'preview_configurable_data_source' domain data_source.get_id %}"
+            class="btn btn-outline-primary {% if not data_source_table_exists %}disabled{% endif %}"
+            >{% trans 'Preview Custom Web Report Data' %}</a
+          >
+          {% if not data_source_table_exists %}
+            <span
+              class="hq-help-template"
+              data-title="{% trans_html_attr 'Preview Unavailable' %}"
+              data-content="{% trans_html_attr 'Preview unavailable until the data source table has been created.' %}"
+              data-placement="left"
+            >
+            </span>
+          {% endif %}
+        </div>
+        <div class="btn-group">
+          <a
+            href="{% url 'summary_configurable_data_source' domain data_source.get_id %}"
+            class="btn btn-outline-primary"
+            >{% trans 'Custom Web Report Source Summary' %}</a
+          >
+        </div>
+      {% else %}
+        <div class="btn-group">
+          <a
+            href="{% url 'preview_configurable_data_source' domain data_source.get_id %}"
+            class="btn btn-outline-primary {% if not data_source_table_exists %}disabled{% endif %}"
+            >{% trans 'Preview Data' %}</a
+          >
+          {% if not data_source_table_exists %}
+            <span
+              class="hq-help-template"
+              data-title="{% trans_html_attr 'Preview Unavailable' %}"
+              data-content="{% trans_html_attr 'Preview unavailable until the data source table has been created.' %}"
+              data-placement="left"
+            >
+            </span>
+          {% endif %}
+        </div>
+        <div class="btn-group">
+          <a
+            href="{% url 'summary_configurable_data_source' domain data_source.get_id %}"
+            class="btn btn-outline-primary"
+            >{% trans 'Data Source Summary' %}</a
+          >
+        </div>
+      {% endif %}
+      <div class="btn-group">
+        {% if data_source.disable_destructive_rebuild or data_source.rebuild_awaiting_or_in_progress %}
+          <div>
+            <button
+              id="gtm-rebuild-ds-disabled"
+              class="btn btn-outline-primary"
+              disabled
+            >
+              {% if use_updated_ucr_naming %}
+                {% trans 'Rebuild Custom Web Report Source' %}
+              {% else %}
+                {% trans 'Rebuild Data Source' %}
+              {% endif %}
+            </button>
+            {% if data_source.disable_destructive_rebuild %}
+              {# janky: can't use a tooltip on a disabled button, so instead add a help icon and force extra space (above) so it's clear which button this is for. Todo: After bootstrap 4 upgrade there is a fix https://getbootstrap.com/docs/4.4/components/tooltips/#disabled-elements #}
+              <span
+                class="hq-help-template"
+                data-title="{% trans_html_attr "Rebuild Unavailable" %}"
+                data-content="{% trans_html_attr "Fully rebuilding has been disabled for this data source. Please use the in place rebuild if necessary." %}"
+                data-placement="left"
+              >
+              </span>
+            {% elif data_source.rebuild_awaiting_or_in_progress %}
+              <span
+                class="hq-help-template"
+                data-title="{% trans_html_attr "Rebuild Unavailable" %}"
+                data-content="{% trans_html_attr "Rebuilding is not available until CommCare HQ finishes building / rebuilding." %}"
+                data-placement="left"
+              >
+              </span>
+            {% endif %}
+          </div>
+        {% else %}
+          <div>
+            <a
+              id="gtm-rebuild-ds-btn"
+              class="btn btn-outline-primary"
+              href="#confirm_rebuild"
+              data-bs-toggle="modal"
+            >
+              {% if use_updated_ucr_naming %}
+                {% trans 'Rebuild Custom Web Report Source' %}
+              {% else %}
+                {% trans 'Rebuild Data Source' %}
+              {% endif %}
+            </a>
+          </div>
+        {% endif %}
+      </div>
+      <div class="btn-group">
+        <button
+          type="button"
+          class="btn btn-outline-primary dropdown-toggle"
+          data-bs-toggle="dropdown"  {# todo B5: css-dropdown #}
+          aria-haspopup="true"
+          aria-expanded="false"
+        >
+          {% trans "Advanced" %} <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-right">
+          <li>
+            <a
+              href="{% url 'configurable_data_source_json' domain data_source.get_id %}"
+              class="track-usage-link"
+              data-category="UCR"
+              data-action="View Source"
+              data-label="Data Source"
+            >
+              {% if use_updated_ucr_naming %}
+                {% trans "Custom Web Report Source JSON" %}
+              {% else %}
+                {% trans "Data Source JSON" %}
+              {% endif %}
+            </a>
+          </li>
+          {% if not data_source.is_deactivated %}
+            <li>
+              <a
+                class="submit-dropdown-form
+                {% if not data_source_rebuild_resumable %}btn disabled{% endif %}"
+                href=""
+                data-action="{% url 'resume_build' domain data_source.get_id %}"
+              >
+                {% trans 'Resume Build' %}
+              </a>
+            </li>
+            {% if data_source.rebuild_awaiting_or_in_progress %}
+              <li>
+                <a id="gtm-rebuild-in-place-disabled" class="btn disabled">
+                  {% trans 'Rebuild Table in Place' %}
+                </a>
+              </li>
+            {% else %}
+              <li>
+                <a
+                  id="gtm-rebuild-in-place-btn"
+                  class="submit-dropdown-form"
+                  href=""
+                  data-action="{% url 'build_in_place' domain data_source.get_id %}"
+                >
+                  {% trans 'Rebuild Table in Place' %}
+                </a>
+              </li>
+            {% endif %}
+          {% endif %}
+        </ul>
+        <form method="post" class="d-none" id="dropdown-form">
+          {% csrf_token %}
+        </form>
+      </div>
+      <div class="btn-group">
+        {% if not read_only %}
+          {% if not used_by_reports %}
+            <form
+              method="post"
+              action="{% url 'delete_configurable_data_source' domain data_source.get_id %}"
+            >
+              {% csrf_token %}
+              {% if use_updated_ucr_naming %}
+                <input
+                  type="submit"
+                  value="{% trans 'Delete Custom Web Report Source' %}"
+                  class="btn btn-outline-danger disable-on-submit"
+                />
+              {% else %}
+                <input
+                  type="submit"
+                  value="{% trans 'Delete Data Source' %}"
+                  class="btn btn-outline-danger disable-on-submit"
+                />
+              {% endif %}
+            </form>
+          {% else %}
+            <a
+              href="#confirm_delete"
+              class="btn btn-outline-danger"
+              data-bs-toggle="modal"
+            >
+              {% if use_updated_ucr_naming %}
+                {% trans 'Delete Custom Web Report Source' %}
+              {% else %}
+                {% trans 'Delete Data Source' %}
+              {% endif %}
+            </a>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+    <div class="clearfix"></div>
+  {% endif %}
+
+  <ul class="nav nav-tabs">  {# todo B5: css-nav #}
+    <li class="active">
+      <a data-bs-toggle="tab" href="#tabs-configuration">Configuration</a>
+    </li>
+    <li><a data-bs-toggle="tab" href="#tabs-usage">Usage</a></li>
+  </ul>
+
+  <div class="tab-content">
+    <div class="spacer"></div>
+    <div class="tab-pane fade in active" id="tabs-configuration">
+      {% if read_only %}
+        <div class="alert alert-info">
+          {% trans "This datasource is read only, any changes made can not be saved." %}
+        </div>
+      {% endif %}
+      {% crispy form %}  {# todo B5: crispy #}
+    </div>
+    <div class="tab-pane fade" id="tabs-usage">
+      {% if not used_by_reports %}
+        <div class="alert alert-info">
+          {% trans "Datasource currently unused" %}
+        </div>
+      {% else %}
+        <p>{% trans "Reports dependent on this datasource" %}</p>
+        <ul>
+          {% for report in used_by_reports %}
+            <li>
+              <a
+                href="{% url 'edit_configurable_report' domain report.get_id %}"
+                >{{ report }}</a
+              >
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}
+
+{% block modals %}
+  {{ block.super }}
+  {% if data_source.get_id %}
+    {% if not read_only %}
+      {% if used_by_reports %}
+        <div id="confirm_delete" class="modal fade" tabindex="-1" role="dialog">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button
+                  type="button"
+                  class="btn-close"  {# todo B5: css-close #}
+                  data-bs-dismiss="modal"
+                  aria-label="Close"
+                >
+                  <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">
+                  {% trans 'Are you sure you want to delete this data source?' %}
+                </h4>
+              </div>
+              <div class="modal-body">
+                <p>
+                  {% trans 'Deleting this will break the reports below that refer to the data source' %}
+                </p>
+                <ul>
+                  {% for report in used_by_reports %}
+                    <li>
+                      <a
+                        href="{% url 'edit_configurable_report' domain report.get_id %}"
+                        >{{ report }}</a
+                      >
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
+              <form
+                method="post"
+                action="{% url 'delete_configurable_data_source' domain data_source.get_id %}"
+              >
+                {% csrf_token %}
+                <div class="modal-footer">
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary"
+                    data-bs-dismiss="modal"
+                  >
+                    {% trans "Cancel" %}
+                  </button>
+                  <button
+                    type="submit"
+                    value="{% trans 'Delete Data Source' %}"
+                    class="disable-on-submit btn btn-outline-danger"
+                  >
+                    {% trans 'Delete Data Source' %}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    {% endif %}
+    <div id="confirm_rebuild" class="modal fade" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button
+              type="button"
+              class="btn-close"  {# todo B5: css-close #}
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <h4 class="modal-title">
+              {% if use_updated_ucr_naming %}
+                {% trans 'Are you sure you want to rebuild this custom web report source?' %}
+              {% else %}
+                {% trans 'Are you sure you want to rebuild this data source?' %}
+              {% endif %}
+            </h4>
+          </div>
+          <div class="modal-body">
+            <p>
+              {% if use_updated_ucr_naming %}
+                {% trans "Rebuilding this report source will erase all the existing data in the report source and start populating it again. While the rebuild is happening, reports based on this data source will show incomplete data." %}
+              {% else %}
+                {% trans "Rebuilding this data source will erase all the existing data in the data source and start populating it again. While the rebuild is happening, reports based on this data source will show incomplete data." %}
+              {% endif %}
+            </p>
+            {% blocktrans %}
+              <p>
+                Based on the amount of data to be processed, this can take a
+                considerable amount of time.
+              </p>
+              <p>Please confirm if you want to proceed.</p>
+            {% endblocktrans %}
+          </div>
+          <form
+            method="post"
+            action="{% url 'rebuild_configurable_data_source' domain data_source.get_id %}"
+          >
+            {% csrf_token %}
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                data-bs-dismiss="modal"
+              >
+                {% trans "Cancel" %}
+              </button>
+              <button
+                id="gtm-rebuild-ds-confirm"
+                class="disable-on-submit btn btn-outline-danger"
+                type="submit"
+              >
+                {% trans 'Confirm' %}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}

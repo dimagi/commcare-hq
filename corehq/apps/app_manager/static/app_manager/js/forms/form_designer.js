@@ -55,7 +55,7 @@ hqDefine("app_manager/js/forms/form_designer", function () {
                 // This code takes control of the top-left box with the form name.
                 $('#formdesigner .fd-content-left .fd-head-text').before(
                     // We add an edit button that opens a modal:
-                    $('#fd-hq-edit-formname-button').html()
+                    $('#fd-hq-edit-formname-button').html(),
                 // and we replace the form name Vellum put there
                 // with one that's translated to the app builder's currently selected language:
                 ).text(initialPageData.get('form_name'));
@@ -86,7 +86,7 @@ hqDefine("app_manager/js/forms/form_designer", function () {
                 if (initialPageData.get('days_since_created') === 0) {
                     kissmetrixTrack = function () {
                         hqImport('analytix/js/kissmetrix').track.event(
-                            'Added question in Form Builder within first 24 hours'
+                            'Added question in Form Builder within first 24 hours',
                         );
                     };
                 }
@@ -192,7 +192,7 @@ hqDefine("app_manager/js/forms/form_designer", function () {
                         $('#js-fd-form-actions').html(),
                         0,
                         function () {
-                        }
+                        },
                     );
                 }
 
@@ -200,11 +200,11 @@ hqDefine("app_manager/js/forms/form_designer", function () {
                 hqImport('app_manager/js/app_manager').updatePageTitle(initialPageData.get("form_name"));
                 editDetails.initName(
                     initialPageData.get("form_name"),
-                    initialPageData.reverse("edit_form_attr", "name")
+                    initialPageData.reverse("edit_form_attr", "name"),
                 );
                 editDetails.initComment(
                     initialPageData.get("form_comment").replace(/\\n/g, "\n"),
-                    initialPageData.reverse("edit_form_attr", "comment")
+                    initialPageData.reverse("edit_form_attr", "comment"),
                 );
                 editDetails.setUpdateCallbackFn(function (name) {
                     $('#formdesigner .fd-content-left .fd-head-text').text(name);
