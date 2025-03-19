@@ -9,10 +9,13 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="btn-close" data-bs-dismiss="modal">  {# todo B5: css-close #}
-          <span aria-hidden="true">&times;</span>
-        </button>
         <h4 class="modal-title">{% trans 'Review Assignment Results' %}</h4>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
       </div>
       <div class="modal-body">
         <p>
@@ -23,10 +26,13 @@
           {% endblocktrans %}
         </p>
         <div class="row">
-          <div class="form-group col-xl-6">  {# todo B5: css-form-group #}
-            <label> {% trans 'Assignment Status' %} </label>
-            <select  {# todo B5: css-select-form-control #}
-              class="select form-control"
+          <div class="row mb-3">
+            <label class="field-label" for="assignment-status-select">
+              {% trans 'Assignment Status' %}
+            </label>
+            <select
+              id="assignment-status-select"
+              class="select form-select field-control"
               data-bind="value: assignedFilter"
             >
               <option value="all">{% trans 'Show All' %}</option>
@@ -34,19 +40,19 @@
               <option value="unassigned">{% trans 'Unassigned Only' %}</option>
             </select>
           </div>
-          <div class="form-group col-xl-6">  {# todo B5: css-form-group #}
-            <label>
+          <div class="row mb-3">
+            <label class="field-label" for="user-assignment-select">
               {% trans 'Select mobile worker for case assignment' %}
             </label>
-            <select  {# todo B5: css-select-form-control #}
-              class="select form-control"
-              type="text"
+            <select
               id="user-assignment-select"
+              class="select form-select field-control"
+              type="text"
               data-bind="value: selectedUserId"
             ></select>
           </div>
         </div>
-        <div style="overflow-y: auto; max-height: 40vh">  {# todo B5: inline-style #}
+        <div class="review-assignment-table-div overflow-y-auto">
           <table class="table table-striped table-bordered">
             <thead>
               <tr>
@@ -73,7 +79,11 @@
             <tbody data-bind="foreach: caseDataPage">
               <tr data-bind="css: { active: isSelected }">
                 <td>
-                  <input type="checkbox" data-bind="checked: isSelected" />  {# todo B5: css-checkbox #}
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    data-bind="checked: isSelected"
+                  />
                 </td>
                 <td data-bind="text: $data.caseName"></td>
                 <td data-bind="text: $data.assignedUsername"></td>
@@ -93,10 +103,17 @@
       </div>
       <div class="modal-footer">
         <div class="row form-horizontal">
-          <label class="checkbox col-md-4">  {# todo B5: css-checkbox #}
-            <input type="checkbox" data-bind="checked: includeRelatedCases" />  {# todo B5: css-checkbox #}
-            {% trans 'Include related cases' %}
-          </label>
+          <div class="form-check">
+            <input
+              id="include-related-cases-checkbox"
+              class="form-check-input"
+              type="checkbox"
+              data-bind="checked: includeRelatedCases"
+            />
+            <label class="form-check-label" for="include-related-cases-checkbox">
+              {% trans 'Include related cases' %}
+            </label>
+          </div>
           <div class="col-md-8 float-end">
             <a
               class="btn btn-outline-primary"
