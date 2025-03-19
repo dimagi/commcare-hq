@@ -66,7 +66,7 @@ class DashboardMapForm(DashboardWidgetBaseForm):
 
     def _get_case_types(self):
         case_types = sorted(get_case_types_for_domain(self.domain))
-        return [(case, case) for case in case_types]
+        return [(case_type, case_type) for case_type in case_types]
 
 
 class DashboardReportForm(DashboardWidgetBaseForm):
