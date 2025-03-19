@@ -188,6 +188,10 @@ class KycUser:
         return self.user_data.get('kyc_last_verified_at')
 
     @property
+    def kyc_verification_error(self):
+        return self.user_data.get('kyc_verification_error')
+
+    @property
     def kyc_verification_status(self):
         value = self.user_data.get('kyc_verification_status')
         # value can be '' when field is defined as a custom field in custom user data
@@ -203,14 +207,19 @@ class KycUser:
     def kyc_provider(self):
         return self.user_data.get('kyc_provider')
 
-    def update_verification_status(self, verification_status, device_id=None):
+    def update_verification_status(self, verification_status, device_id=None, error_message=None):
         from corehq.apps.hqcase.utils import update_case
 
-        assert verification_status in [KycVerificationStatus.PASSED, KycVerificationStatus.FAILED]
+        assert verification_status in [
+            KycVerificationStatus.PASSED,
+            KycVerificationStatus.FAILED,
+            KycVerificationStatus.ERROR,
+        ]
         update = {
             'kyc_provider': self.kyc_config.provider,
             'kyc_last_verified_at': datetime.utcnow().isoformat(),  # TODO: UTC or project timezone?
             'kyc_verification_status': verification_status,
+            'kyc_verification_error': error_message if error_message else '',
         }
         if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
             user_data_obj = self._user_or_case_obj.get_user_data(self.kyc_config.domain)
@@ -239,6 +248,7 @@ class KycVerificationStatus:
     # PENDING indicates KYC is yet to be initiated and in that case, verification status is returned as None
     # as case property/field does not exist or is empty.
     PENDING = None
+    ERROR = 'error'
 
 
 class KycVerificationFailureCause(models.TextChoices):
@@ -248,5 +258,8 @@ class KycVerificationFailureCause(models.TextChoices):
     USER_INFORMATION_MISMATCH = (
         'user_information_mismatch', _("User information on HQ does not match with KYC provider.")
     )
-    NETWORK_ERROR = ('network_error', _("Network error occurred. Please reach out to support."))
+    NETWORK_ERROR = (
+        'network_error',
+        _("Network error occurred. Please try again, or reach out to support if the issue persists.")
+    )
     API_ERROR = ('api_error', _("API error occurred. Please reach out to support."))
