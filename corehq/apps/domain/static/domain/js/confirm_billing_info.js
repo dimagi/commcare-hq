@@ -28,6 +28,7 @@ hqDefine("domain/js/confirm_billing_info", [
     var cardManager = stripeCardManager.stripeCardManager({
         cards: initialPageData.get("cards"),
         url: initialPageData.reverse("cards_view"),
+        elementSelector: '#stripe-card-container',
     });
     $(function () {
         $("#card-manager").koApplyBindings(cardManager);
