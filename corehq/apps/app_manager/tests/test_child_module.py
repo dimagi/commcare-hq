@@ -21,7 +21,8 @@ class ModuleAsChildTestBase(SuiteMixin):
     def setUp(self):
         self.factory = AppFactory(build_version='2.20.0', domain=DOMAIN)
         self.module_0, _ = self.factory.new_basic_module('parent', 'gold-fish')
-        self.module_1, _ = self.factory.new_module(self.child_module_class, 'child', 'guppy', parent_module=self.module_0)
+        self.module_1, _ = self.factory.new_module(self.child_module_class, 'child', 'guppy',
+                                                   parent_module=self.module_0)
 
         self.app = self.factory.app
 
@@ -104,7 +105,11 @@ class AdvancedModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
         self.factory.form_requires_case(m1f0, 'gold-fish')
         self.factory.form_requires_case(m1f0, 'guppy', parent_case_type='gold-fish')
 
-        self.assertXmlPartialEqual(self.get_xml('child-module-entry-datums-added-advanced'), self.app.create_suite(), "./entry")
+        self.assertXmlPartialEqual(
+            self.get_xml('child-module-entry-datums-added-advanced'),
+            self.app.create_suite(),
+            "./entry"
+        )
 
     @patch_get_xform_resource_overrides()
     def test_child_module_adjust_session_datums(self, *args):
@@ -168,7 +173,7 @@ class AdvancedModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
             <command id="m1-f0" relevant="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_load_goldfish_renamed_guppy]/age &gt; 33"/>
           </menu>
         </partial>
-        """
+        """  # noqa: E501
         self.assertXmlPartialEqual(XML, factory.app.create_suite(), "./menu[@id='m1']")
 
 
@@ -185,10 +190,18 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
         self.factory.form_requires_case(m1f0, 'gold-fish')
         self.factory.form_requires_case(m1f0, 'guppy', parent_case_type='gold-fish')
 
-        self.assertXmlPartialEqual(self.get_xml('child-module-entry-datums-added-basic'), self.app.create_suite(), "./entry")
+        self.assertXmlPartialEqual(
+            self.get_xml('child-module-entry-datums-added-basic'),
+            self.app.create_suite(),
+            "./entry"
+        )
 
         self.factory.form_workflow(m1f0, WORKFLOW_PREVIOUS)
-        self.assertXmlPartialEqual(self.get_xml('child-module-form-workflow-previous'), self.app.create_suite(), "./entry")
+        self.assertXmlPartialEqual(
+            self.get_xml('child-module-form-workflow-previous'),
+            self.app.create_suite(),
+            "./entry"
+        )
 
     @patch_get_xform_resource_overrides()
     def test_grandparent_as_child_module(self, *args):
@@ -284,7 +297,7 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
             <command id="m1-f0" relevant="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_guppy]/age &gt; 33"/>
           </menu>
         </partial>
-        """
+        """  # noqa: E501
         self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu[@id='m1']")
 
     @patch_get_xform_resource_overrides()
@@ -422,6 +435,30 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
             [('datum', 'case_id')]
         )
 
+    @patch_get_xform_resource_overrides()
+    def test_child_module_case_list_filter_references_parent(self, *args):
+        m0f0 = self.module_0.get_form(0)
+        self.factory.form_requires_case(m0f0)
+
+        m1f0 = self.module_1.get_form(0)
+        self.factory.form_requires_case(m1f0)
+
+        # #parent in filter expression should get replaced
+        filter_expression = "#parent/age > 1"
+        self.module_1.case_details.short.filter = filter_expression
+
+        self.assertXmlPartialEqual(
+            '''
+            <partial>
+              <datum id="case_id_guppy"
+                     nodeset="instance('casedb')/casedb/case[@case_type='guppy'][@status='open'][instance('casedb')/casedb/case[@case_id=current()/index/parent]/age &gt; 1]"
+                     value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
+            </partial>
+            ''',  # noqa: E501
+            self.app.create_suite(),
+            "./entry/command[@id='m1-f0']/../session/datum"
+        )
+
 
 class UsercaseOnlyModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
     """
@@ -507,7 +544,9 @@ class AdvancedSubModuleTests(SimpleTestCase, TestXmlMixin):
         factory.form_opens_case(lab_test_form, 'lab_test', is_subcase=True, is_extension=True)
         factory.form_opens_case(lab_test_form, 'lab_referral', is_subcase=True, parent_tag='open_lab_test')
 
-        lab_update_module, lab_update_form = factory.new_advanced_module('lab_update', 'lab_test', parent_module=lab_test_module)
+        lab_update_module, lab_update_form = factory.new_advanced_module(
+            'lab_update', 'lab_test', parent_module=lab_test_module
+        )
         factory.form_requires_case(lab_update_form, 'episode',
                                    update={'episode_type': '/data/question1'})
         factory.form_requires_case(lab_update_form, 'lab_test', parent_case_type='episode')
@@ -530,10 +569,12 @@ class AdvancedSubModuleTests(SimpleTestCase, TestXmlMixin):
         )
         form_xml = lab_update_form.render_xform().decode('utf-8')
         self.assertTrue(
-            '<bind nodeset="/data/case_load_episode_0/case/@case_id" calculate="instance(\'commcaresession\')/session/data/case_id_new_lab_test_0"/>' not in form_xml
+            '<bind nodeset="/data/case_load_episode_0/case/@case_id" calculate="instance(\'commcaresession\')/session/data/case_id_new_lab_test_0"/>'  # noqa: E501
+            not in form_xml
         )
         self.assertTrue(
-            '<bind nodeset="/data/case_load_episode_0/case/@case_id" calculate="instance(\'commcaresession\')/session/data/case_id_load_episode_0"/>' in form_xml
+            '<bind nodeset="/data/case_load_episode_0/case/@case_id" calculate="instance(\'commcaresession\')/session/data/case_id_load_episode_0"/>'  # noqa: E501
+            in form_xml
         )
 
 

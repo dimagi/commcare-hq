@@ -1,0 +1,68 @@
+name: Build Static Files
+on:
+  push:
+    branches:
+      - autostaging
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install Python Dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements/dev-requirements.txt
+
+      - name: Install JavaScript Dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Install SASS
+        run: |
+          npm install -g sass
+
+      - name: Build Static Files
+        run: |
+          echo "Starting resource_static..."
+          ./manage.py resource_static
+          echo "Starting collectstatic..."
+          ./manage.py collectstatic --noinput -v 0
+          echo "Starting fix_less_imports_collectstatic..."
+          ./manage.py fix_less_imports_collectstatic
+          echo "Starting compilejsi18n..."
+          ./manage.py compilejsi18n
+          echo "Starting build_requirejs..."
+          ./manage.py build_requirejs
+          echo "Starting generate_webpack_settings..."
+          ./manage.py generate_webpack_settings
+          echo "Starting yarn build..."
+          yarn build
+          echo "Starting compress..."
+          ./manage.py compress --force -v 0
+          echo "Starting Copy Required static files..."
+          ./manage.py copy_required_static_files
+
+      - name: Upload Static Files On Push
+        uses: actions/upload-artifact@v4
+        with:
+          name: staticfiles-${{ github.sha }}
+          path: REQUIRED_STATIC_FILES.zip
+          retention-days: 90
+
+      - name: Generate Static URL
+        run: |
+          echo "Static files URL pattern:"
+          echo "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/staticfiles-${{ github.sha }}"

@@ -10,7 +10,7 @@ from django.utils.text import camel_case_to_spaces
 
 import jsonschema
 
-from corehq.apps.integration.kyc.models import KycVerificationFailureCause
+from corehq.apps.integration.kyc.models import KycVerificationFailureCause, KycVerificationStatus
 from corehq.util.metrics import metrics_counter
 
 
@@ -22,10 +22,10 @@ def verify_users(kyc_users, config):
     device_id = f'{__name__}.verify_users'
     errors_with_count = defaultdict(int)
     for kyc_user in kyc_users:
-        is_verified = False
+        verification_status = KycVerificationStatus.PENDING
         try:
-            is_verified = verify_user(kyc_user, config)
-            if not is_verified:
+            verification_status = verify_user(kyc_user, config)
+            if verification_status == KycVerificationStatus.FAILED:
                 errors_with_count[KycVerificationFailureCause.USER_INFORMATION_MISMATCH.value] += 1
         # TODO - Decide on how we want to handle these exceptions for the end user
         except jsonschema.exceptions.ValidationError:
@@ -34,8 +34,12 @@ def verify_users(kyc_users, config):
             errors_with_count[KycVerificationFailureCause.NETWORK_ERROR.value] += 1
         except requests.HTTPError:
             errors_with_count[KycVerificationFailureCause.API_ERROR.value] += 1
-        kyc_user.update_verification_status(is_verified, device_id=device_id)
-        results[kyc_user.user_id] = is_verified
+
+        # Store result only when API successfully returns a verification response
+        if verification_status in (KycVerificationStatus.PASSED, KycVerificationStatus.FAILED):
+            kyc_user.update_verification_status(verification_status, device_id=device_id)
+
+        results[kyc_user.user_id] = verification_status
 
     _report_verification_failure_metric(config.domain, errors_with_count)
     return results
@@ -109,7 +113,7 @@ def verify_user(kyc_user, config):
     }
 
     user_data = get_user_data_for_api(kyc_user, config)
-    _validate_schema('kycVerify/v1', user_data)
+    _validate_schema('kycVerify/v1', user_data)  # See kyc-verify-v1.json
     requests = config.get_connection_settings().get_requests()
     response = requests.post(
         f'/kycVerify/v1/customers/{user_data["phoneNumber"]}',
@@ -117,7 +121,8 @@ def verify_user(kyc_user, config):
     )
     response.raise_for_status()
     field_scores = response.json().get('data', {})
-    return all(v >= required_thresholds[k] for k, v in field_scores.items())
+    verification_successful = all(v >= required_thresholds[k] for k, v in field_scores.items())
+    return KycVerificationStatus.PASSED if verification_successful else KycVerificationStatus.FAILED
 
 
 def get_user_data_for_api(kyc_user, config):
@@ -125,15 +130,11 @@ def get_user_data_for_api(kyc_user, config):
         Returns a dictionary of user data for the API.
         ``source`` is a CommCareUser or a CommCareCase.
     """
-    user_data_for_api = {}
-    for api_field, user_data_property in config.api_field_to_user_data_map.items():
-        try:
-            value = kyc_user[user_data_property]
-        except KeyError:
-            # Conservative approach to skip the API field if data is not available for the user
-            continue
-        user_data_for_api[api_field] = value
-    return user_data_for_api
+    return {
+        api_field: kyc_user.get(user_data_property)
+        for api_field, user_data_property in config.api_field_to_user_data_map.items()
+        if kyc_user.get(user_data_property) is not None
+    }
 
 
 def _validate_schema(endpoint, data):

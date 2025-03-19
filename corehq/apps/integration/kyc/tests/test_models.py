@@ -6,11 +6,10 @@ import pytest
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.integration.kyc.models import KycConfig, UserDataStore, KycUser
+from corehq.apps.integration.kyc.models import KycConfig, UserDataStore, KycUser, KycVerificationStatus
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import create_case
-from corehq.motech.const import OAUTH2_CLIENT
 from corehq.motech.models import ConnectionSettings
 
 DOMAIN = 'test-domain'
@@ -50,23 +49,6 @@ class TestGetConnectionSettings(TestCase):
                   "'invalid'.$",
         ):
             config.get_connection_settings()
-
-    def test_existing_connection_settings(self):
-        connx = ConnectionSettings.objects.create(
-            domain=DOMAIN,
-            name='custom connection',
-            url='https://example.com',
-            auth_type=OAUTH2_CLIENT,
-            client_id='client_id',
-            client_secret='client_secret',
-            token_url='token_url',
-        )
-        config = KycConfig(
-            domain=DOMAIN,
-            user_data_store=UserDataStore.USER_CASE,
-            connection_settings=connx,
-        )
-        assert config.get_connection_settings() == connx
 
 
 class BaseKycUsersSetup(TestCase):
@@ -257,12 +239,12 @@ class TestKycUser(BaseKycUsersSetup):
 
         kyc_user = KycUser(config, self.commcare_user)
 
-        assert kyc_user.kyc_is_verified is None
+        assert kyc_user.kyc_verification_status == KycVerificationStatus.PENDING
         assert kyc_user.kyc_last_verified_at is None
         assert kyc_user.kyc_provider is None
 
     def _assert_for_verification_status(self, kyc_user, expected_status, expected_provider):
-        assert kyc_user.kyc_is_verified is expected_status
+        assert kyc_user.kyc_verification_status == expected_status
         assert kyc_user.kyc_last_verified_at is not None
         assert kyc_user.kyc_provider == expected_provider
 
@@ -273,9 +255,9 @@ class TestKycUser(BaseKycUsersSetup):
         )
 
         kyc_user = KycUser(config, self.commcare_user)
-        kyc_user.update_verification_status(True)
+        kyc_user.update_verification_status(KycVerificationStatus.PASSED)
 
-        self._assert_for_verification_status(kyc_user, True, config.provider)
+        self._assert_for_verification_status(kyc_user, KycVerificationStatus.PASSED, config.provider)
 
     def test_update_verification_status_for_user_case(self):
         config = KycConfig(
@@ -284,9 +266,9 @@ class TestKycUser(BaseKycUsersSetup):
         )
 
         kyc_user = KycUser(config, self.commcare_user)
-        kyc_user.update_verification_status(True)
+        kyc_user.update_verification_status(KycVerificationStatus.PASSED)
 
-        self._assert_for_verification_status(kyc_user, True, config.provider)
+        self._assert_for_verification_status(kyc_user, KycVerificationStatus.PASSED, config.provider)
 
     def test_update_verification_status_for_other_case_type(self):
         config = KycConfig(
@@ -295,6 +277,6 @@ class TestKycUser(BaseKycUsersSetup):
         )
 
         kyc_user = KycUser(config, self.other_case)
-        kyc_user.update_verification_status(True)
+        kyc_user.update_verification_status(KycVerificationStatus.PASSED)
 
-        self._assert_for_verification_status(kyc_user, True, config.provider)
+        self._assert_for_verification_status(kyc_user, KycVerificationStatus.PASSED, config.provider)

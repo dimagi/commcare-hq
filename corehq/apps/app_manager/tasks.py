@@ -1,7 +1,9 @@
+from django.http import Http404
 from django.utils.translation import gettext as _
 
 from corehq.apps.celery import task
 from celery.utils.log import get_task_logger
+from collections import defaultdict
 
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
@@ -14,6 +16,7 @@ from corehq.apps.app_manager.exceptions import (
     SavedAppBuildException,
 )
 from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.toggles import USH_USERCASES_FOR_WEB_USERS
 from corehq.util.decorators import serial_task
 from corehq.util.metrics import metrics_counter
@@ -79,6 +82,31 @@ def prune_auto_generated_builds(domain, app_id):
         app.delete_app()
         logger.info("Pruned build {} from domain {}".format(app.id, domain))
         app.save(increment_version=False)
+
+
+@task(queue='background_queue', ignore_result=True)
+def refresh_data_dictionary_from_app(domain, app_id):
+    try:
+        app = get_app(domain, app_id)
+    except Http404:
+        # If there's no app, trhere's nothing to do
+        return
+
+    from corehq.apps.app_manager.util import actions_use_usercase
+    from corehq.apps.data_dictionary.util import create_properties_for_case_types
+    case_type_to_prop = defaultdict(set)
+    for module in app.get_modules():
+        if not module.is_surveys:
+            for form in module.get_forms():
+                if form.form_type == 'module_form':
+                    case_type_to_prop[module.case_type].update(form.actions.update_case.update)
+                    if actions_use_usercase(form.actions):
+                        case_type_to_prop[USERCASE_TYPE].update(form.actions.usercase_update.update)
+                else:
+                    for action in form.actions.load_update_cases:
+                        case_type_to_prop[action.case_type].update(action.case_properties)
+    if case_type_to_prop:
+        create_properties_for_case_types(domain, case_type_to_prop)
 
 
 @task(queue='background_queue', ignore_result=True)

@@ -1,6 +1,6 @@
+from django.urls import reverse
 from django.utils.decorators import method_decorator
-
-from corehq import toggles
+from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
 from corehq.apps.data_cleaning.models import BulkEditSession
 from corehq.apps.data_cleaning.tables import (
     CleanCaseTable,
@@ -15,7 +15,7 @@ from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 
 @method_decorator([
     use_bootstrap5,
-    toggles.DATA_CLEANING_CASES.required_decorator(),
+    require_bulk_data_cleaning_cases,
 ], name='dispatch')
 class BaseDataCleaningTableView(LoginAndDomainMixin, DomainViewMixin, SelectablePaginatedTableView):
     pass
@@ -42,10 +42,18 @@ class CaseCleaningTasksTableView(BaseDataCleaningTableView):
     table_class = CaseCleaningTasksTable
 
     def get_queryset(self):
-        return [{
-            "status": session.status,
+        return [
+            self._get_record(session)
+            for session in BulkEditSession.get_committed_sessions(self.request.user, self.domain)
+        ]
+
+    def _get_record(self, session):
+        return {
             "committed_on": session.committed_on,
             "completed_on": session.completed_on,
             "case_type": session.identifier,
-            "details": session.result,
-        } for session in BulkEditSession.get_committed_sessions(self.request.user, self.domain)]
+            "case_count": session.records.count(),
+            "percent": session.percent_complete,
+            "form_ids_url": reverse('download_form_ids', args=(session.domain, session.session_id)),
+            "has_form_ids": bool(len(session.form_ids)),
+        }

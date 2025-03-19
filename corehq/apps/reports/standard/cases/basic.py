@@ -46,8 +46,12 @@ class CaseListMixin(ESQueryProfilerMixin, ElasticProjectInspectionReport, Projec
     search_class = case_es.CaseES
 
     def _base_query(self):
+        if getattr(self, 'rendered_as', None) == 'export':
+            search_class = self.search_class(for_export=True)
+        else:
+            search_class = self.search_class()
         return (
-            self.search_class()
+            search_class
             .domain(self.domain)
             .size(self.pagination.count)
             .start(self.pagination.start)
@@ -128,7 +132,9 @@ class CaseListMixin(ESQueryProfilerMixin, ElasticProjectInspectionReport, Projec
     @memoized
     def case_owners(self):
         mobile_user_and_group_slugs = self.get_request_param(EMWF.slug, as_list=True)
-        return get_case_owners(self.request, self.domain, mobile_user_and_group_slugs)
+        return get_case_owners(
+            self.request.can_access_all_locations, self.domain, mobile_user_and_group_slugs
+        )
 
     def get_case(self, row):
         if '_source' in row:

@@ -213,13 +213,14 @@ class privilege_enabled:
     supported, add it to ``self.imports``.
     """
     imports = (
+        'corehq.apps.app_manager.app_strings.domain_has_privilege',
+        'corehq.apps.data_cleaning.decorators.domain_has_privilege',
+        'corehq.apps.export.views.list.domain_has_privilege',
         'corehq.apps.users.landing_pages.domain_has_privilege',
         'corehq.apps.users.permissions.domain_has_privilege',
         'corehq.apps.users.views.mobile.users.domain_has_privilege',
-        'django_prbac.decorators.has_privilege',
-        'corehq.apps.export.views.list.domain_has_privilege',
         'corehq.pillows.case_search.domain_has_privilege',
-        'corehq.apps.app_manager.app_strings.domain_has_privilege',
+        'django_prbac.decorators.has_privilege',
     )
 
     def __init__(self, privilege_slug):

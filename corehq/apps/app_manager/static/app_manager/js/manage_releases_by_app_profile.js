@@ -11,9 +11,8 @@ hqDefine('app_manager/js/manage_releases_by_app_profile', [
     ko,
     _,
     initialPageData,
-    assertProperties
+    assertProperties,
 ) {
-    'use strict';
     $(function () {
         var AppRelease = function (details) {
             var self = {};

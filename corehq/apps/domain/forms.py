@@ -125,6 +125,7 @@ from corehq.apps.registration.utils import project_logo_emails_context
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.toggles import (
+    COMMCARE_CONNECT,
     EXPORTS_APPS_USE_ELASTICSEARCH,
     HIPAA_COMPLIANCE_CHECKBOX,
     MOBILE_UCR,
@@ -493,6 +494,12 @@ class DomainGlobalSettingsForm(forms.Form):
         )
     )
 
+    connect_messaging_channel_name = CharField(
+        label=gettext_lazy("Connect Messaging Channel Nmae"),
+        required=False,
+        help_text=gettext_lazy("Name of the channel created in connect messaging.")
+    )
+
     def __init__(self, *args, **kwargs):
         self.project = kwargs.pop('domain', None)
         self.domain = self.project.name
@@ -522,6 +529,9 @@ class DomainGlobalSettingsForm(forms.Form):
 
         if not MOBILE_UCR.enabled(self.domain):
             del self.fields['mobile_ucr_sync_interval']
+
+        if not COMMCARE_CONNECT.enabled(self.domain):
+            del self.fields['connect_messaging_channel_name']
 
         self._handle_call_limit_visibility()
         self._handle_account_confirmation_by_sms_settings()
@@ -575,6 +585,8 @@ class DomainGlobalSettingsForm(forms.Form):
             extra_fields.append('mobile_ucr_sync_interval')
         if EXPORTS_APPS_USE_ELASTICSEARCH.enabled(self.domain):
             extra_fields.append('exports_use_elasticsearch')
+        if COMMCARE_CONNECT.enabled(self.domain):
+            extra_fields.append('connect_messaging_channel_name')
         return extra_fields
 
     def _handle_account_confirmation_by_sms_settings(self):
@@ -778,6 +790,7 @@ class DomainGlobalSettingsForm(forms.Form):
         domain.project_description = self.cleaned_data['project_description']
         domain.default_mobile_ucr_sync_interval = self.cleaned_data.get('mobile_ucr_sync_interval', None)
         domain.default_geocoder_location = self.cleaned_data.get('default_geocoder_location')
+        domain.connect_messaging_channel_name = self.cleaned_data.get('connect_messaging_channel_name')
         if self.cleaned_data.get("operator_call_limit"):
             setting_obj = OperatorCallLimitSettings.objects.get(domain=self.domain)
             setting_obj.call_limit = self.cleaned_data.get("operator_call_limit")

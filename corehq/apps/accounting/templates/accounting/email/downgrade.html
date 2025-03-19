@@ -8,32 +8,49 @@
 
 <p>
   {% blocktrans %}
-    Your subscription has been paused for the CommCare project space {{ domain }}.
-    You can regain access to your data and project space by re-subscribing to a plan.
+    Your subscription has been paused for the CommCare project space
+    {{ domain }}. You can regain access to your data and project space by
+    re-subscribing to a plan.
   {% endblocktrans %}
 </p>
 
 <p>
-  {% blocktrans %}To see the full list of unpaid invoices you can follow this link: {% endblocktrans %}<a href="{{ statements_url }}">{{ statements_url }}</a>
-<ul>
-  <li>{% blocktrans %}As a reminder, payments can be made via credit card, Electronic Fund Transfer (EFT), or check by following these <a href="https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment">instructions</a>.{% endblocktrans %}</li>
-</ul>
+  {% blocktrans %}
+    To see the full list of unpaid invoices you can follow this link:
+  {% endblocktrans %}<a href="{{ statements_url }}">{{ statements_url }}</a>
 </p>
+<ul>
+  <li>
+    {% blocktrans %}
+      As a reminder, payments can be made via credit card, Electronic Fund
+      Transfer (EFT), or check by following these
+      <a
+        href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143956507/Payment+Methods+Instructions"
+        >instructions</a
+      >.
+    {% endblocktrans %}
+  </li>
+</ul>
 
 <p>
-  {% blocktrans %}After you have paid the unpaid invoices you can re-subscribe to your plan here: {% endblocktrans %}<a href="{{ subscription_url }}">{{ subscription_url }}</a>
+  {% blocktrans %}
+    After you have paid the unpaid invoices you can re-subscribe to your plan
+    here:
+  {% endblocktrans %}<a href="{{ subscription_url }}">{{ subscription_url }}</a>
 </p>
 
 <p>
   {% blocktrans %}
-    If you have any questions, please don’t hesitate to contact <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>. Thank you for using CommCare.
+    If you have any questions, please don’t hesitate to contact
+    <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>. Thank you for
+    using CommCare.
   {% endblocktrans %}
 </p>
 
 <p>
   {% blocktrans %}
     Best regards, <br />
-    The CommCare HQ Team  <br />
+    The CommCare HQ Team <br />
     www.commcarehq.org
   {% endblocktrans %}
 </p>
