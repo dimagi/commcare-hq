@@ -25,6 +25,7 @@ class ManageColumnsFormView(BulkEditSessionViewMixin,
         context = super().get_context_data(**kwargs)
         context.update({
             'container_id': 'manage-columns',
+            'active_columns': self.session.columns.all(),
             'add_column_form': kwargs.pop('column_form', None) or AddColumnForm(self.session),
         })
         return context
@@ -36,3 +37,13 @@ class ManageColumnsFormView(BulkEditSessionViewMixin,
             # todo add column to session
             column_form = None
         return self.get(request, column_form=column_form, *args, **kwargs)
+
+    @hq_hx_action('post')
+    def update_column_order(self, request, *args, **kwargs):
+        # todo
+        return self.get(request, *args, **kwargs)
+
+    @hq_hx_action('post')
+    def remove_column(self, request, *args, **kwargs):
+        # todo
+        return self.get(request, *args, **kwargs)
