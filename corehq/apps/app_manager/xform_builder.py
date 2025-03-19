@@ -60,7 +60,7 @@ GROUP_TYPES = ('group', 'repeatGroup')  # TODO: Support 'questionList'
 
 
 # Supported question parameters
-QUESTION_PARAMS = ('calculate', 'constraint', 'jr:constraintMsg')
+QUESTION_PARAMS = ('calculate', 'constraint', 'required', 'jr:constraintMsg')
 
 
 class XFormBuilder(object):

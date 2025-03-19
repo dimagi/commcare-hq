@@ -116,7 +116,19 @@
                         }
                     ]
                 }
-            ]
+            ],
+            "lastUpdatedByUserInfo": {
+                "uid": "aKQIBMcRlZF",
+                "firstName": "Testy",
+                "surname": "Tester",
+                "username": "testy_tester"
+              },
+            "createdByUserInfo": {
+                "firstName": "LLAA",
+                "surname": "Commcare",
+                "uid": "aKQIBMcRlZF",
+                "username": "hmhb_commcare"
+            }
         }
     ],
     "relationships": [
@@ -183,5 +195,17 @@
             "attribute": "aKQIBMcRlZF",
             "value": "2021-06-03"
         }
-    ]
+    ],
+    "lastUpdatedByUserInfo": {
+        "uid": "aKQIBMcRlZF",
+        "firstName": "Testy",
+        "surname": "Tester",
+        "username": "testy_tester"
+      },
+    "createdByUserInfo": {
+        "firstName": "LLAA",
+        "surname": "Commcare",
+        "uid": "aKQIBMcRlZF",
+        "username": "hmhb_commcare"
+    }
 }

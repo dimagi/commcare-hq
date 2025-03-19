@@ -8,7 +8,8 @@ import langcodes
 from langcodes import langs_by_code
 from memoized import memoized
 
-from corehq import toggles
+from corehq import toggles, privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.commcare_settings import (
     get_commcare_settings_lookup,
@@ -20,6 +21,13 @@ from corehq.apps.app_manager.util import (
     module_offers_search,
 )
 from corehq.util.translation import localize
+
+
+# If the language name is not showing up properly in the language menu, you can
+# define those languages here, mapped to their two-letter language codes.
+CUSTOM_LANGUAGE_NAMES = {
+    'km': "ខ្មែរ",
+}
 
 
 def non_empty_only(dct):
@@ -60,11 +68,25 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
             name = langcodes.get_name(lc) or lc
             if not name:
                 continue
-            with localize(convert_to_two_letter_code(lc)):
-                name = gettext(name)
+            letter_code = convert_to_two_letter_code(lc)
+
+            if letter_code in CUSTOM_LANGUAGE_NAMES.keys():
+                # These are languages not installed on our machines, so localize does not understand them.
+                # Though we don't want to install these langauges, we still want to support projects
+                # who want to see the name written properly.
+                name = CUSTOM_LANGUAGE_NAMES[letter_code]
+            else:
+                with localize(letter_code):
+                    name = gettext(name)
             yield lc, name
 
     yield id_strings.current_language(), lang
+
+    for id, custom_assertion in enumerate(app.custom_assertions):
+        yield (
+            id_strings.custom_assertion_locale(id),
+            clean_trans(custom_assertion.text, langs)
+        )
 
     for module in app.get_modules():
         yield from _create_module_details_app_strings(module, langs)
@@ -73,6 +95,12 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
             id_strings.module_locale(module),
             _maybe_add_index(clean_trans(module.name, langs), app)
         )
+
+        for id, custom_assertion in enumerate(module.custom_assertions):
+            yield (
+                id_strings.custom_assertion_locale(id, module),
+                clean_trans(custom_assertion.text, langs)
+            )
 
         yield from _create_icon_audio_app_strings(
             module,
@@ -130,6 +158,12 @@ def _create_module_details_app_strings(module, langs):
             clean_trans(module.case_details.short.no_items_text, langs)
         )
 
+    if module.get_app().supports_select_text and hasattr(module, 'case_details'):
+        yield (
+            id_strings.select_text_detail(module),
+            clean_trans(module.case_details.short.select_text, langs)
+        )
+
     for detail_type, detail, _ in module.get_details():
         for column in detail.get_columns():
             yield (
@@ -137,7 +171,7 @@ def _create_module_details_app_strings(module, langs):
                 clean_trans(column.header, langs)
             )
 
-            if column.format in ('enum', 'enum-image', 'conditional-enum'):
+            if column.format in ('enum', 'conditional-enum', 'enum-image', 'clickable-icon', 'translatable-enum'):
                 for item in column.enum:
                     yield (
                         id_strings.detail_column_enum_variable(
@@ -148,6 +182,16 @@ def _create_module_details_app_strings(module, langs):
                         ),
                         clean_trans(item.value, langs)
                     )
+                    if module.get_app().supports_alt_text and column.format in ('enum-image', 'clickable-icon'):
+                        yield (
+                            id_strings.detail_column_alt_text_variable(
+                                module,
+                                detail_type,
+                                column,
+                                item.key_as_variable,
+                            ),
+                            clean_trans(item.alt_text, langs)
+                        )
             elif column.format == "graph":
                 for index, item in enumerate(column.graph_configuration.annotations):
                     yield (
@@ -187,7 +231,7 @@ def _create_module_details_app_strings(module, langs):
         # To list app strings for properties used as sorting properties only
         if detail.sort_elements:
             sort_only, sort_columns = get_sort_and_sort_only_columns(
-                detail.get_columns(),
+                list(detail.get_columns()),  # evaluate generator
                 detail.sort_elements,
             )
             for field, sort_element, order in sort_only:
@@ -378,7 +422,7 @@ def _create_case_search_app_strings(
             if audio:
                 yield id_strings.case_search_again_audio_locale(module), audio
         else:
-            yield(
+            yield (
                 id_strings.case_search_title_translation(module),
                 clean_trans(CaseSearch.title_label.default(), langs)
             )
@@ -463,9 +507,13 @@ def _create_forms_app_strings(
 
         for id, custom_assertion in enumerate(form.custom_assertions):
             yield (
-                id_strings.custom_assertion_locale(module, form, id),
+                id_strings.custom_assertion_locale(id, module, form),
                 clean_trans(custom_assertion.text, langs)
             )
+
+        yield id_strings.form_submit_label_locale(form), form.get_submit_label(lang)
+        if form.get_submit_notification_label(lang):
+            yield id_strings.form_submit_notification_label_locale(form), form.get_submit_notification_label(lang)
 
 
 def _create_case_list_form_app_strings(
@@ -507,7 +555,7 @@ def _create_case_list_form_app_strings(
 
 def _create_dependencies_app_strings(app):
     dependencies = app.profile.get('features', {}).get('dependencies')
-    if toggles.APP_DEPENDENCIES.enabled(app.domain) and dependencies:
+    if domain_has_privilege(app.domain, privileges.APP_DEPENDENCIES) and dependencies:
         settings = get_commcare_settings_lookup()['features']['dependencies']
         app_id_to_name = {k: v for k, v in zip(
             settings["values"],
@@ -593,7 +641,7 @@ class AppStringsBase(object):
             messages['case_search.claimed_case.case_missing'] = \
                 'Unable to find the selected case after performing a sync. Please try again.'
 
-        from corehq.apps.app_manager.models import (
+        from corehq.apps.app_manager.const import (
             AUTO_SELECT_CASE,
             AUTO_SELECT_FIXTURE,
             AUTO_SELECT_LOCATION,

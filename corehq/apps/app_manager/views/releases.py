@@ -12,13 +12,12 @@ from django.http.response import Http404, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
-from django.utils.safestring import mark_safe
 from django.views.decorators.cache import cache_control
 from django.views.generic import View
 
-import ghdiff
 from couchdbkit import NoResultFound, ResourceNotFound
 from django_prbac.decorators import requires_privilege
 from django_prbac.utils import has_privilege
@@ -54,7 +53,6 @@ from corehq.apps.app_manager.decorators import (
 from corehq.apps.app_manager.exceptions import (
     AppValidationError,
     BuildConflictException,
-    ModuleIdMissingException,
     PracticeUserException,
     XFormValidationFailed,
 )
@@ -69,8 +67,12 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.tasks import (
     create_build_files_for_all_app_profiles,
+    analyse_new_app_build,
 )
-from corehq.apps.app_manager.util import get_and_assert_practice_user_in_domain
+from corehq.apps.app_manager.util import (
+    get_and_assert_practice_user_in_domain,
+    does_app_have_mobile_ucr_v1_refs,
+)
 from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.settings import PromptSettingsUpdateView
 from corehq.apps.app_manager.views.utils import (
@@ -78,7 +80,6 @@ from corehq.apps.app_manager.views.utils import (
     get_langs,
     report_build_time,
 )
-from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
@@ -96,9 +97,12 @@ from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import cached_user_id_to_user_display
 from corehq.const import USER_DATETIME_FORMAT
 from corehq.toggles import toggles_enabled_for_request
+from corehq.util import ghdiff
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse
+from corehq.apps.app_manager.dbaccessors import get_case_types_for_app_build
+from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
 
 
 def _get_error_counts(domain, app_id, version_numbers):
@@ -205,10 +209,7 @@ def get_releases_context(request, domain, app_id):
         'can_view_cloudcare': has_privilege(request, privileges.CLOUDCARE),
         'has_mobile_workers': get_doc_count_in_domain_by_class(domain, CommCareUser) > 0,
         'latest_released_version': get_latest_released_app_version(domain, app_id),
-        'sms_contacts': (
-            get_sms_autocomplete_context(request, domain)['sms_contacts']
-            if can_send_sms else []
-        ),
+        'sms_contacts': get_sms_autocomplete_context(domain) if can_send_sms else [],
         'build_profile_access': build_profile_access,
         'application_profile_url': reverse(LanguageProfilesView.urlname, args=[domain, app_id]),
         'latest_build_id': get_latest_build_id(domain, app_id),
@@ -217,7 +218,7 @@ def get_releases_context(request, domain, app_id):
         'full_name': request.couch_user.full_name,
         'can_edit_apps': request.couch_user.can_edit_apps(),
         'can_view_app_diff': (domain_has_privilege(domain, privileges.VIEW_APP_DIFF)
-                              or request.user.is_superuser)
+                              or request.user.is_superuser),
     }
     if not app.is_remote_app():
         context.update({
@@ -263,14 +264,20 @@ def current_app_version(request, domain, app_id):
 def release_build(request, domain, app_id, saved_app_id):
     is_released = request.POST.get('is_released') == 'true'
     if not is_released:
-        if (LatestEnabledBuildProfiles.objects.filter(build_id=saved_app_id, active=True).exists() or
-                AppReleaseByLocation.objects.filter(build_id=saved_app_id, active=True).exists()):
+        if (
+            LatestEnabledBuildProfiles.objects.filter(build_id=saved_app_id, active=True).exists()
+            or AppReleaseByLocation.objects.filter(build_id=saved_app_id, active=True).exists()
+        ):
             return json_response({'error': _('Please disable any enabled profiles/location restriction '
                                              'to un-release this build.')})
     ajax = request.POST.get('ajax') == 'true'
     saved_app = get_app(domain, saved_app_id)
     if saved_app.copy_of != app_id:
         raise Http404
+    if is_released:
+        error_message = _check_app_for_mobile_ucr_v1_refs(domain, saved_app)
+        if error_message:
+            return json_response({'error': error_message})
     saved_app.is_released = is_released
     saved_app.last_released = datetime.datetime.utcnow() if is_released else None
     saved_app.is_auto_generated = False
@@ -356,9 +363,21 @@ def save_copy(request, domain, app_id):
         get_timezone_for_user(request.couch_user, domain)
     )
 
+    # Check if build is using any deprecated case types
+    case_types = get_case_types_for_app_build(domain, app_id)
+    deprecated_case_types = get_data_dict_deprecated_case_types(domain)
+    used_deprecated_case_types = case_types.intersection(deprecated_case_types)
+    error_html = ''
+    warning_message = _check_app_for_mobile_ucr_v1_refs(domain, app)
+    if warning_message:
+        error_html = render_to_string("app_manager/partials/mobile_ucr_v1_warning.html", {
+            'warning_message': warning_message,
+        })
+
     return JsonResponse({
         "saved_app": copy_json,
-        "error_html": "",
+        "deprecated_case_types": list(used_deprecated_case_types),
+        "error_html": error_html,
     })
 
 
@@ -369,6 +388,7 @@ def make_app_build(app, comment, user_id):
         user_id=user_id,
     )
     copy.save(increment_version=False)
+    analyse_new_app_build.delay(app.domain, copy._id)
     return copy
 
 
@@ -379,6 +399,29 @@ def _track_build_for_app_preview(domain, couch_user, app_id, message):
         'is_dimagi': couch_user.is_dimagi,
         'preview_app_enabled': True,
     })
+
+
+def _check_app_for_mobile_ucr_v1_refs(domain, app):
+    if not toggles.MOBILE_UCR.enabled(domain):
+        return
+
+    mobile_ucr_doc_url = 'https://commcare-hq.readthedocs.io/ucr/mobile_ucr_v2_migration_guide.html'
+    if app.mobile_ucr_restore_version != '2.0':
+        return mark_safe(_(
+            "The mobile UCR restore version for v%(app_version)s needs to be updated to V2.0. "
+            "Please refer to the <a href='%(url)s'>migration documentation</a> for more details."
+        ) % {
+            "app_version": app.version,
+            "url": mobile_ucr_doc_url,
+        })
+    if does_app_have_mobile_ucr_v1_refs(app):
+        return mark_safe(_(
+            "One or more forms for v%(app_version)s contain V1 Mobile UCR references."
+            "Please refer to the <a href='%(url)s'>migration documentation</a> for more details."
+        ) % {
+            "app_version": app.version,
+            "url": mobile_ucr_doc_url,
+        })
 
 
 @no_conflict_require_POST
@@ -393,6 +436,9 @@ def revert_to_copy(request, domain, app_id):
     copy = get_app(domain, request.POST['build_id'])
     if copy.get_doc_type() == 'LinkedApplication' and app.get_doc_type() == 'Application':
         copy = copy.convert_to_application()
+    warning_message = _check_app_for_mobile_ucr_v1_refs(domain, app=copy)
+    if warning_message:
+        messages.warning(request, warning_message)
     app = app.make_reversion_to_copy(copy)
     app.save()
     messages.success(
@@ -504,12 +550,6 @@ def odk_media_qr_code(request, domain, app_id):
         with_media=True, build_profile_id=profile, download_target_version=download_target_version
     )
     return HttpResponse(qr_code, content_type="image/png")
-
-
-def short_url(request, domain, app_id):
-    build_profile_id = request.GET.get('profile')
-    short_url = get_app(domain, app_id).get_short_url(build_profile_id=build_profile_id)
-    return HttpResponse(short_url)
 
 
 def short_odk_url(request, domain, app_id, with_media=False):
@@ -654,6 +694,7 @@ class LanguageProfilesView(View):
                 id = profile.get('id')
                 if not id:
                     id = uuid.uuid4().hex
+
                 def practice_user_id():
                     if not app.enable_practice_users:
                         return ''

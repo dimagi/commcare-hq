@@ -7,7 +7,6 @@ from django.views.generic import View
 
 from braces.views import JSONResponseMixin
 from memoized import memoized
-
 from dimagi.utils.logging import notify_exception
 from phonelog.models import DeviceReportEntry
 
@@ -23,6 +22,8 @@ from corehq.apps.reports.filters.controllers import (
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.elastic import ESError
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 
 logger = logging.getLogger(__name__)
 
@@ -119,10 +120,16 @@ class CaseListFilterOptions(EmwfOptionsView):
 
 
 @location_safe
-class ReassignCaseOptions(CaseListFilterOptions):
+class CaseListActionOptions(CaseListFilterOptions):
     @property
     @memoized
     def options_controller(self):
+        from corehq.apps.data_interfaces.interfaces import CaseCopyInterface
+        if (
+            self.request.GET.get('action') == CaseCopyInterface.action
+            and domain_has_privilege(self.domain, privileges.CASE_COPY)
+        ):
+            return MobileWorkersOptionsController(self.request, self.domain, self.search)
         return ReassignCaseOptionsController(self.request, self.domain, self.search)
 
 

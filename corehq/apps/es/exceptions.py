@@ -19,3 +19,15 @@ class TaskMissing(TaskError):
 
 class IndexNotMultiplexedException(Exception):
     pass
+
+
+class IndexMultiplexedException(Exception):
+    pass
+
+
+class IndexAlreadySwappedException(Exception):
+    pass
+
+
+class IndexNotSubindexException(Exception):
+    pass

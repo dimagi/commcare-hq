@@ -1,9 +1,9 @@
-{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main "hqwebapp/js/widgets" %}
+{% js_entry "hqwebapp/js/bootstrap5/widgets" %}
 
 {% block page_content %}
   <p class="lead">
@@ -20,9 +20,9 @@
   </p>
 
   {% if is_enabled %}
-    <form class="pull-right" method="POST" action="{% url "disable_enterprise_permissions" domain %}">
+    <form class="float-end" method="POST" action="{% url "disable_enterprise_permissions" domain %}">
       {% csrf_token %}
-      <button class="btn btn-danger" type="submit">
+      <button class="btn btn-outline-danger" type="submit">
         <i class="fa fa-ban"></i>
         {% trans "Disable Enterprise Permissions" %}
       </button>
@@ -38,7 +38,7 @@
   <form method="POST" action="{% url "update_enterprise_permissions_source_domain" domain %}">
     {% csrf_token %}
     <div class="row">
-      <div class="col-sm-3">
+      <div class="col-md-3">
         <select name="source_domain" class="hqwebapp-select2">
           {% if not source_domain %}
             <option value="">{% trans "Select the controlling project space" %}</option>
@@ -48,8 +48,8 @@
           {% endfor %}
         </select>
       </div>
-      <div class="col-sm-3">
-        <button class="btn btn-default" type="submit">
+      <div class="col-md-3">
+        <button class="btn btn-outline-primary" type="submit">
           {% trans "Update" %}
         </button>
       </div>
@@ -58,7 +58,7 @@
 
   <br>
   <div class="row">
-    <div class="col-sm-6">
+    <div class="col-md-6">
       <p class="help-block">
         {% if source_domain %}
           {% blocktrans trimmed %}
@@ -72,7 +72,7 @@
       </p>
       {% include "enterprise/partials/enterprise_permissions_table.html" with DOMAINS=controlled_domains ACTION_ENABLE=False %}
     </div>
-    <div class="col-sm-6">
+    <div class="col-md-6">
       <p class="help-block">
         {% if source_domain %}
           {% blocktrans trimmed %}

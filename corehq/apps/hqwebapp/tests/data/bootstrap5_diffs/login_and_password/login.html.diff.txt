@@ -1,0 +1,31 @@
+--- 
++++ 
+@@ -1,15 +1,16 @@
+-{% extends "hqwebapp/bootstrap3/base_page.html" %}
++{% extends "hqwebapp/bootstrap5/base_page.html" %}
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ {% load compress %}
+ 
+-{% js_entry_b3 'registration/js/login' %}
++{% js_entry 'registration/js/login' %}
+ 
+ {% block title %}{% trans "Log In :: CommCare HQ" %}{% endblock title %}
+ 
+ {% block background_content %}
+   <div class="bg-container">
+-    <div class="bg-full-cover-fixed bg-registration"></div>
++    <div class="bg-full-cover-fixed bg-registration b-lazy"
++         data-src="{% static 'hqwebapp/images/molly.jpg' %}"></div>
+     <div class="bg-overlay"></div>
+   </div>
+ {% endblock %}
+@@ -38,7 +39,7 @@
+          id="user-login-form"
+          class="ko-template"
+          {% endif %}>
+-      {% include "login_and_password/partials/bootstrap3/login_full.html" %}
++      {% include "login_and_password/partials/bootstrap5/login_full.html" %}
+     </div>
+   {% endblock %}
+ {% endblock content %}

@@ -1,12 +1,11 @@
-from datetime import datetime
-
 from django.core.mail import mail_admins
 from django.db import ProgrammingError
 
+from corehq.privileges import DATA_DICTIONARY
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.case_search.const import (
-    INDEXED_ON,
-    SPECIAL_CASE_PROPERTIES_MAP,
-    SYSTEM_PROPERTIES,
+    GEOPOINT_VALUE,
+    INDEXED_METADATA_BY_KEY,
     VALUE,
 )
 from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
@@ -19,26 +18,19 @@ from corehq.apps.change_feed.consumer.feed import (
 from corehq.apps.data_dictionary.util import get_gps_properties
 from corehq.apps.es.case_search import CaseSearchES, case_search_adapter
 from corehq.apps.es.client import manager
+from corehq.apps.geospatial.utils import get_geo_case_property
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
-from corehq.pillows.mappings.case_search_mapping import (
-    CASE_SEARCH_INDEX_INFO,
-    CASE_SEARCH_MAPPING,
-)
-from corehq.toggles import (
-    USH_CASE_CLAIM_UPDATES,
-)
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from corehq.util.log import get_traceback_string
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from couchforms.geopoint import GeoPoint
-from dimagi.utils.parsing import json_format_datetime
 from jsonobject.exceptions import BadValueError
 from pillowtop.checkpoints.manager import (
     get_checkpoint_for_elasticsearch_pillow,
 )
-from pillowtop.es_utils import initialize_index_and_mapping, ElasticsearchIndexInfo
+from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
@@ -69,18 +61,6 @@ def domain_needs_search_index(domain):
     return not DomainsNotInCaseSearchIndex.objects.filter(domain=domain).exists()
 
 
-def transform_case_for_elasticsearch(doc_dict):
-    doc = {
-        desired_property: doc_dict.get(desired_property)
-        for desired_property in CASE_SEARCH_MAPPING['properties'].keys()
-        if desired_property not in SYSTEM_PROPERTIES
-    }
-    doc['_id'] = doc_dict.get('_id')
-    doc[INDEXED_ON] = json_format_datetime(datetime.utcnow())
-    doc['case_properties'] = _get_case_properties(doc_dict)
-    return doc
-
-
 def _format_property(key, value, case_id):
     if not isinstance(value, str):
         value = str(value)
@@ -96,14 +76,13 @@ def _get_case_properties(doc_dict):
     case_id = doc_dict.get('_id')
     assert domain
     base_case_properties = [
-        {'key': base_case_property.key, 'value': base_case_property.value_getter(doc_dict)}
-        for base_case_property in list(SPECIAL_CASE_PROPERTIES_MAP.values())
+        {'key': base_case_property.key, 'value': base_case_property.get_value(doc_dict)}
+        for base_case_property in INDEXED_METADATA_BY_KEY.values()
     ]
     dynamic_properties = [_format_property(key, value, case_id)
                           for key, value in doc_dict['case_json'].items()]
 
-    if USH_CASE_CLAIM_UPDATES.enabled(domain):
-        _add_smart_types(dynamic_properties, domain, doc_dict['type'])
+    _add_smart_types(dynamic_properties, domain, doc_dict['type'])
 
     return base_case_properties + dynamic_properties
 
@@ -111,14 +90,21 @@ def _get_case_properties(doc_dict):
 def _add_smart_types(dynamic_properties, domain, case_type):
     # Properties are stored in a dict like {"key": "dob", "value": "1900-01-01"}
     # `value` is a multi-field property that duck types numeric and date values
-    # We can't do that for geo_points in ES v2, as `ignore_malformed` is broken
-    gps_props = get_gps_properties(domain, case_type)
+    # We can't do that for properties like geo_points in ES v2, as `ignore_malformed` is broken
+    gps_props = set({get_geo_case_property(domain)})
+    if domain_has_privilege(domain, DATA_DICTIONARY):
+        gps_props |= get_gps_properties(domain, case_type)
+    _add_gps_smart_types(dynamic_properties, gps_props)
+
+
+def _add_gps_smart_types(dynamic_properties, gps_props):
     for prop in dynamic_properties:
         if prop['key'] in gps_props:
             try:
-                prop['geopoint_value'] = GeoPoint.from_string(prop['value'], flexible=True).lat_lon
+                geopoint = GeoPoint.from_string(prop[VALUE], flexible=True)
+                prop[GEOPOINT_VALUE] = geopoint.lat_lon
             except BadValueError:
-                prop['geopoint_value'] = None
+                prop[GEOPOINT_VALUE] = None
 
 
 class CaseSearchPillowProcessor(ElasticProcessor):
@@ -191,7 +177,7 @@ class CaseSearchReindexerFactory(ReindexerFactory):
         domain = self.options.pop('domain', None)
 
         limit_db_aliases = [limit_to_db] if limit_to_db else None
-        initialize_index_and_mapping(CASE_SEARCH_INDEX_INFO)
+        initialize_index_and_mapping(case_search_adapter)
         try:
             if domain is not None:
                 if not domain_needs_search_index(domain):
@@ -219,15 +205,6 @@ def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearch
         Processors:
           - :py:class:`corehq.pillows.case_search.CaseSearchPillowProcessor`
     """
-    index_info = CASE_SEARCH_INDEX_INFO
-    if 'index_name' in kwargs and 'index_alias' in kwargs:
-        # Allow overriding index name and alias for the purposes of reindexing.
-        # These can be set in localsettings.LOCAL_PILLOWTOPS
-        raw_info = CASE_SEARCH_INDEX_INFO.to_json()
-        raw_info.pop("meta")
-        index_info = ElasticsearchIndexInfo.wrap(raw_info)
-        index_info.index = kwargs['index_name']
-        index_info.alias = kwargs['index_alias']
 
     checkpoint = get_checkpoint_for_elasticsearch_pillow(
         pillow_id, case_search_adapter.index_name, topics.CASE_TOPICS
@@ -275,7 +252,7 @@ class ResumableCaseSearchReindexerFactory(ReindexerFactory):
             raise CaseSearchNotEnabledException("{} does not have case search enabled".format(domain))
 
         iteration_key = "CaseSearchResumableToElasticsearchPillow_{}_reindexer_{}_{}".format(
-            CASE_SEARCH_INDEX_INFO.index, limit_to_db or 'all', domain or 'all'
+            case_search_adapter.index_name, limit_to_db or 'all', domain or 'all'
         )
         limit_db_aliases = [limit_to_db] if limit_to_db else None
         accessor = CaseReindexAccessor(domain=domain, limit_db_aliases=limit_db_aliases)

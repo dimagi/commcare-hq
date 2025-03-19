@@ -1,0 +1,13 @@
+--- 
++++ 
+@@ -1,8 +1,8 @@
+-hqDefine("reports/js/bootstrap3/aggregate_user_status", [
++hqDefine("reports/js/bootstrap5/aggregate_user_status", [
+     "jquery",
+     "d3/d3.min",
+     "nvd3/nv.d3.min",
+-    "hqwebapp/js/bootstrap3/main",
++    "hqwebapp/js/bootstrap5/main",
+     'nvd3/src/nv.d3.css',
+ ], function (
+     $,

@@ -44,8 +44,7 @@ def get_bulk_app_single_sheet_by_name(app, lang, eligible_for_transifex_only=Fal
             rows.append(get_name_menu_media_row(form, sheet_name, lang))
             for label_name_media in get_form_question_label_name_media([lang], form):
                 if (
-                    eligible_for_transifex_only and
-                    checker.is_label_to_skip(form.unique_id, label_name_media[0])
+                    eligible_for_transifex_only and checker.is_label_to_skip(form.unique_id, label_name_media[0])
                 ):
                     continue
                 rows.append(get_question_row(label_name_media, sheet_name))
@@ -106,8 +105,7 @@ def get_bulk_app_sheets_by_name(app, lang=None, eligible_for_transifex_only=Fals
             rows[form_sheet_name] = []
             for label_name_media in get_form_question_label_name_media(langs, form):
                 if (
-                    eligible_for_transifex_only and
-                    checker.is_label_to_skip(form.unique_id, label_name_media[0])
+                    eligible_for_transifex_only and checker.is_label_to_skip(form.unique_id, label_name_media[0])
                 ):
                     continue
                 rows[form_sheet_name].append(label_name_media)
@@ -125,16 +123,11 @@ def get_name_menu_media_row(module_or_form, sheet_name, lang):
             '',  # case_property
             '',  # list_or_detail
             '',  # label
-        ] +
-        get_menu_row(
-            [module_or_form.name.get(lang)],
-            [module_or_form.icon_by_language(lang)],
-            [module_or_form.audio_by_language(lang)]
-        ) +
-        [
-            '',  # video by language
-            module_or_form.unique_id,
-        ]
+        ] + get_menu_row([module_or_form.name.get(lang)],
+                         [module_or_form.icon_by_language(lang)],
+                         [module_or_form.audio_by_language(lang)]
+                         ) + ['',  # video by language
+                              module_or_form.unique_id, ]
     )
 
 
@@ -162,9 +155,7 @@ def get_question_row(question_label_name_media, sheet_name):
             sheet_name,
             '',  # case_property
             '',  # list_or_detail
-        ] +
-        question_label_name_media +
-        ['']  # unique_id
+        ] + question_label_name_media + ['']  # unique_id
     )
 
 
@@ -197,8 +188,8 @@ def get_module_case_list_form_rows(langs, module):
         return []
 
     return [
-        ('case_list_form_label', 'list') +
-        tuple(module.case_list_form.label.get(lang, '') for lang in langs)
+        ('case_list_form_label', 'list') + tuple(module.case_list_form.label.get(lang, '')
+                                                 for lang in langs)
     ]
 
 
@@ -210,8 +201,8 @@ def get_module_case_list_menu_item_rows(langs, module):
         return []
 
     return [
-        ('case_list_menu_item_label', 'list') +
-        tuple(module.case_list.label.get(lang, '') for lang in langs)
+        ('case_list_menu_item_label', 'list') + tuple(module.case_list.label.get(lang, '')
+                                                      for lang in langs)
     ]
 
 
@@ -219,16 +210,20 @@ def get_module_search_command_rows(langs, module, domain):
     if not module_offers_search(module) or not toggles.USH_CASE_CLAIM_UPDATES.enabled(domain):
         return []
 
-    return [
+    rows = [
         ('search_label', 'list')
         + tuple(module.search_config.search_label.label.get(lang, '') for lang in langs),
-        ('search_again_label', 'list')
-        + tuple(module.search_config.search_again_label.label.get(lang, '') for lang in langs),
         ('title_label', 'list')
         + tuple(module.search_config.title_label.get(lang, '') for lang in langs),
         ('description', 'list')
         + tuple(module.search_config.description.get(lang, '') for lang in langs),
     ]
+    if not toggles.SPLIT_SCREEN_CASE_SEARCH.enabled(domain):
+        rows.append(
+            ('search_again_label', 'list') + tuple(module.search_config.search_again_label.label.get(lang, '')
+                                                   for lang in langs),
+        )
+    return rows
 
 
 def get_case_search_rows(langs, module, domain):
@@ -249,6 +244,7 @@ def get_case_search_rows(langs, module, domain):
 def get_module_detail_rows(langs, module):
     rows = []
     rows += _get_module_detail_no_items_text(langs, module)
+    rows += _get_module_detail_select_text(langs, module)
     for list_or_detail, detail in [
         ("list", module.case_details.short),
         ("detail", module.case_details.long)
@@ -264,15 +260,23 @@ def _get_module_detail_no_items_text(langs, module):
     if not (app.supports_empty_case_list_text):
         return []
     return [
-        ("no_items_text", "list")
-        + tuple(short_detail.no_items_text.get(lang, '') for lang in langs)
+        ("no_items_text", "list") + tuple(short_detail.no_items_text.get(lang, '') for lang in langs)
+    ]
+
+
+def _get_module_detail_select_text(langs, module):
+    app = module.get_app()
+    short_detail = module.case_details.short
+    if not (app.supports_select_text):
+        return []
+    return [
+        ("select_text", "list") + tuple(short_detail.select_text.get(lang, '') for lang in langs)
     ]
 
 
 def get_module_detail_tabs_rows(langs, detail, list_or_detail):
     return [
-        ("Tab {}".format(index), list_or_detail) +
-        tuple(tab.header.get(lang, "") for lang in langs)
+        ("Tab {}".format(index), list_or_detail) + tuple(tab.header.get(lang, "") for lang in langs)
         for index, tab in enumerate(detail.tabs)
     ]
 
@@ -288,14 +292,13 @@ def get_module_detail_fields_rows(langs, detail, list_or_detail):
 
 def get_module_detail_field_row(langs, detail, list_or_detail):
     field_name = detail.field
-    if re.search(r'\benum\b', detail.format):   # enum, conditional-enum, enum-image
+    if re.search(r'\benum\b', detail.format):  # enum, conditional-enum, enum-image
         field_name += " (ID Mapping Text)"
     elif detail.format == "graph":
         field_name += " (graph)"
 
     return (
-        (field_name, list_or_detail) +
-        tuple(detail.header.get(lang, "") for lang in langs)
+        (field_name, list_or_detail) + tuple(detail.header.get(lang, "") for lang in langs)
     )
 
 
@@ -388,6 +391,12 @@ def get_form_question_label_name_media(langs, form):
                         value += part
                 itext_items[text_id][(lang, value_form)] = value
 
+    itext_items['submit_label'] = {}
+    itext_items['submit_notification_label'] = {}
+    for lang in langs:
+        itext_items['submit_label'][(lang, 'default')] = form.get_submit_label(lang)
+        itext_items['submit_notification_label'][(lang, 'default')] = form.get_submit_notification_label(lang)
+
     app = form.get_app()
     for text_id, values in itext_items.items():
         row = [text_id]
@@ -403,6 +412,9 @@ def get_form_question_label_name_media(langs, form):
                 row.append(values.get((lang, value_form), fallback))
         # Don't add empty rows:
         if any(row[1:]):
+            rows.append(row)
+        # allow empty for submit_notification_label row
+        if row[0] == 'submit_notification_label' and not any(row[1:]):
             rows.append(row)
 
     return rows

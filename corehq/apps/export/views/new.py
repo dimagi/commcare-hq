@@ -1,8 +1,6 @@
 import json
-
 from django.conf import settings
 from django.contrib import messages
-from django.core.exceptions import SuspiciousOperation
 from django.http import Http404, HttpResponseRedirect, HttpResponse, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -17,6 +15,8 @@ from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
+from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from dimagi.utils.web import json_response
 
 from corehq import privileges, toggles
@@ -59,8 +59,10 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import WebUser
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, API_ACCESS
+from corehq.apps.data_dictionary.models import CaseProperty
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class BaseExportView(BaseProjectDataView):
     """Base class for all create and edit export views"""
     template_name = 'export/customize_export_new.html'
@@ -101,7 +103,7 @@ class BaseExportView(BaseProjectDataView):
             'help_text': mark_safe(  # nosec: no user input
                 _("""
                 Learn more about exports on our <a
-                href="https://help.commcarehq.org/display/commcarepublic/Data+Export+Overview"
+                href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143954661/Data+Exports"
                 target="_blank">Help Site</a>.
             """)),
             'name_label': _("Export Name"),
@@ -116,11 +118,11 @@ class BaseExportView(BaseProjectDataView):
     def page_context(self):
         owner_id = self.export_instance.owner_id
         number_of_apps_to_process = 0
-        is_all_case_types_export = (
-            isinstance(self.export_instance, CaseExportInstance)
-            and self.export_instance.case_type == ALL_CASE_TYPE_EXPORT
-        )
+        is_all_case_types_export = self._is_bulk_case_export
+        table_count = 0
         if not is_all_case_types_export:
+            # Case History table is not a selectable table, so exclude it from count
+            table_count = len([t for t in self.export_instance.tables if t.label != 'Case History'])
             schema = self.get_export_schema(
                 self.domain,
                 self.request.GET.get('app_id') or getattr(self.export_instance, 'app_id'),
@@ -135,6 +137,17 @@ class BaseExportView(BaseProjectDataView):
 
         allow_deid = has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
 
+        show_deprecated_filter = False
+        if (
+            self.export_instance.type == CASE_EXPORT
+            and domain_has_privilege(self.domain, privileges.DATA_DICTIONARY)
+        ):
+            show_deprecated_filter = CaseProperty.objects.filter(
+                case_type__domain=self.domain,
+                case_type__name=self.export_instance.case_type,
+                deprecated=True,
+            ).exists()
+
         return {
             'export_instance': self.export_instance,
             'export_home_url': self.export_home_url,
@@ -145,12 +158,63 @@ class BaseExportView(BaseProjectDataView):
             'can_edit': self.export_instance.can_edit(self.request.couch_user),
             'has_other_owner': owner_id and owner_id != self.request.couch_user.user_id,
             'owner_name': WebUser.get_by_user_id(owner_id).username if owner_id else None,
-            'format_options': ["xls", "xlsx", "csv"],
+            'format_options': self.format_options,
             'number_of_apps_to_process': number_of_apps_to_process,
             'sharing_options': sharing_options,
             'terminology': self.terminology,
-            'is_all_case_types_export': is_all_case_types_export
+            'is_all_case_types_export': is_all_case_types_export,
+            'disable_table_checkbox': (table_count < 2),
+            'geo_properties': self._possible_geo_properties,
+            'show_deprecated_filter': show_deprecated_filter,
         }
+
+    @property
+    def _possible_geo_properties(self):
+        if not toggles.SUPPORT_GEO_JSON_EXPORT.enabled(self.domain):
+            return []
+        if self._is_bulk_case_export:
+            return []
+
+        if self.export_type == FORM_EXPORT:
+            return self._possible_form_geo_properties
+        elif self.export_type == CASE_EXPORT:
+            return self._possible_case_geo_properties
+        return []
+
+    @property
+    def _possible_form_geo_properties(self):
+        export_table = self.export_instance.tables[0]
+        geo_props = []
+
+        for column in export_table.columns:
+            if column.item.doc_type == 'GeopointItem':
+                # show the path to the geo properties, not the column headers, because the
+                # paths do not change.
+                path_str = '.'.join([f"{node.name}" for node in column.item.path])
+                geo_props.append(path_str)
+
+        return geo_props
+
+    @property
+    def _possible_case_geo_properties(self):
+        return list(CaseProperty.objects.filter(
+            case_type__domain=self.domain,
+            case_type__name=self.export_instance.case_type,
+            data_type=CaseProperty.DataType.GPS,
+        ).values_list('name', flat=True))
+
+    @property
+    def format_options(self):
+        format_options = ["xls", "xlsx", "csv"]
+
+        should_support_geojson = (
+            toggles.SUPPORT_GEO_JSON_EXPORT.enabled(self.domain)
+            and not self._is_bulk_case_export
+        )
+        if should_support_geojson:
+            format_options.append("geojson")
+
+        return format_options
 
     @property
     def parent_pages(self):
@@ -162,9 +226,12 @@ class BaseExportView(BaseProjectDataView):
     def commit(self, request):
         export = self.export_instance_cls.wrap(json.loads(request.body.decode('utf-8')))
 
-        if (self.domain != export.domain
+        if (
+            self.domain != export.domain
                 or (export.export_format == "html" and not domain_has_privilege(self.domain, EXCEL_DASHBOARD))
-                or (export.is_daily_saved_export and not domain_has_privilege(self.domain, DAILY_SAVED_EXPORT))):
+                or (export.is_daily_saved_export and not domain_has_privilege(self.domain, DAILY_SAVED_EXPORT))
+                or (export.export_format == "geojson" and not toggles.SUPPORT_GEO_JSON_EXPORT.enabled(self.domain))
+        ):
             raise BadExportConfiguration()
 
         if not export._rev:
@@ -176,7 +243,7 @@ class BaseExportView(BaseProjectDataView):
                 properties={'domain': self.domain}
             )
 
-            if toggles.EXPORT_OWNERSHIP.enabled(request.domain):
+            if domain_has_privilege(request.domain, privileges.EXPORT_OWNERSHIP):
                 export.owner_id = request.couch_user.user_id
             if getattr(settings, "ENTERPRISE_MODE"):
                 # default auto rebuild to False for enterprise clusters
@@ -260,17 +327,25 @@ class BaseExportView(BaseProjectDataView):
             return HttpResponseRedirect(url)
 
     @memoized
-    def get_export_schema(self, domain, app_id, identifier):
+    def get_export_schema(self, domain, app_id, identifier, for_new_export_instance=False):
         return self.export_schema_cls.generate_schema_from_builds(
             domain,
             app_id,
             identifier,
             only_process_current_builds=True,
+            for_new_export_instance=for_new_export_instance
         )
 
     @memoized
     def get_empty_export_schema(self, domain, identifier):
         return self.export_schema_cls.generate_empty_schema(domain, identifier)
+
+    @property
+    def _is_bulk_case_export(self):
+        return (
+            self.export_type is CASE_EXPORT
+            and self.export_instance.case_type == ALL_CASE_TYPE_EXPORT
+        )
 
 
 @location_safe
@@ -340,6 +415,16 @@ class CreateNewCustomCaseExportView(BaseExportView):
     def get(self, request, *args, **kwargs):
         case_type = request.GET.get('export_tag').strip('"')
 
+        if (
+            case_type not in get_case_types_for_domain(request.domain)
+            and case_type != ALL_CASE_TYPE_EXPORT
+        ):
+            messages.error(
+                request,
+                _("Case type '{case_type}' does not exist for this project.").format(case_type=case_type)
+            )
+            url = self.export_home_url
+            return HttpResponseRedirect(url)
         # First check if project is allowed to do a bulk export and redirect if necessary
         if case_type == ALL_CASE_TYPE_EXPORT and case_type_or_app_limit_exceeded(self.domain):
             messages.error(
@@ -361,7 +446,7 @@ class CreateNewCustomCaseExportView(BaseExportView):
         if case_type == ALL_CASE_TYPE_EXPORT:
             schema = self.get_empty_export_schema(self.domain, case_type)
         else:
-            schema = self.get_export_schema(self.domain, None, case_type)
+            schema = self.get_export_schema(self.domain, None, case_type, for_new_export_instance=True)
 
         export_settings = get_default_export_settings_if_available(self.domain)
         self.export_instance = self.create_new_export_instance(
@@ -528,7 +613,7 @@ class CopyExportView(View):
             messages.error(request, _('You can only copy new exports.'))
         else:
             new_export = export.copy_export()
-            if toggles.EXPORT_OWNERSHIP.enabled(domain):
+            if domain_has_privilege(domain, privileges.EXPORT_OWNERSHIP):
                 new_export.owner_id = request.couch_user.user_id
                 new_export.sharing = SharingOption.PRIVATE
             new_export.save()

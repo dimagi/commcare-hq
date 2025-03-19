@@ -1,0 +1,16 @@
+{% extends 'styleguide/bootstrap3/base.html' %}
+
+{% block content %}
+  <article class="container">
+    <div class="row">
+      <div class="col-md-9">
+        {% for section in sections %}
+          {% include section %}
+        {% endfor %}
+      </div>
+      <div class="col-md-3">
+        {% include navigation %}
+      </div>
+    </div>
+  </article>
+{% endblock content %}

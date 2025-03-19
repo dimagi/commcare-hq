@@ -38,6 +38,11 @@ Formplayer isn't running properly. See [Formplayer](https://github.com/dimagi/co
 
 It happens, try restarting.
 
+> I'm getting TemplateSyntaxErrors related to Webpack.
+
+Please run `yarn dev`. If this build is failing, and you didn't make any changes to JavaScript files on your branch,
+please raise this as an issue.
+
 ## Generating Sample Data
 
 ### SMS
@@ -46,14 +51,14 @@ Check out the `generate_fake_sms_data` command.
 
 ### Applications
 
-If you have an application on commcarehq.org, follow [these instructions](https://confluence.dimagi.com/display/commcarepublic/Copying+an+Application+between+Projects+or+Servers) to copy it to your local environment.
+If you have an application on commcarehq.org, follow [these instructions](https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955454/Copy+or+Delete+an+Application) to copy it to your local environment.
 
 There are also [three template apps](https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/app_manager/static/app_manager/template_apps) checked into the codebase.
 You can run [load_app_from_slug](https://github.com/dimagi/commcare-hq/blob/6021df8639dc0053c8dbdbb8690993be708776c5/corehq/apps/app_manager/views/apps.py#L510) in a django shell to import one of these apps. Note that you may wish to only run the first few lins of `load_app_from_slug` if you don't care about your app having multimedia.
 
 ### Cases
 
-The easiest way to add cases locally is generally to use your local case importer. [Docs](https://confluence.dimagi.com/display/commcarepublic/Importing+Cases+Using+Excel)
+The easiest way to add cases locally is generally to use your local case importer. [Docs](https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946828/Importing+Cases+Using+Excel)
 for this are extensive, but at its most basic, you can just upload a single-column file with a bunch of case names to create cases.
 
 ### Cases + App + Data Dictionary
@@ -75,7 +80,7 @@ Alternatively, you can run `ptop_reindexer_v2` as needed to sync individual inde
 Running it without any arguments will list the available indexes. The indexes you're most likely to use:
 + `sql-form` and `sql-case` populate form-based and case-based reports and exports
 + `user` and `group` may be useful, depending on what you're working on
-+ `case_search` populates the Case list Explorer and Explore Case Data reports, as well as the case search/claim feature. This is relevant only for those domains with the CASE_LIST_EXPLORER, EXPLORE_CASE_DATA or SEARCH_CLAIM feature flags enabled.
++ `case_search` populates the Case list Explorer and Explore Case Data reports, as well as the case search/claim feature. For now, this data stands as a duplicate but different format of the origin `case` index and at some point in the future, features that use the legacy `case` index will move to using `case-search`.
 + `sms` populates messaging reports and SMS exports
 + You do **not** care about `case` or `form`, which are only used on legacy domains that store forms and cases in CouchDB.
 

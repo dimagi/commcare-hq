@@ -25,9 +25,6 @@ from corehq.apps.smsbillables.management.commands.bootstrap_test_gateway import 
 from corehq.apps.smsbillables.management.commands.bootstrap_tropo_gateway import (
     bootstrap_tropo_gateway,
 )
-from corehq.apps.smsbillables.management.commands.bootstrap_unicel_gateway import (
-    bootstrap_unicel_gateway,
-)
 from corehq.apps.smsbillables.management.commands.bootstrap_usage_fees import (
     bootstrap_usage_fees,
 )
@@ -54,7 +51,6 @@ def bootstrap_sms(apps, schema_editor):
     bootstrap_grapevine_gateway(apps)
     bootstrap_mach_gateway(apps)
     bootstrap_tropo_gateway(apps)
-    bootstrap_unicel_gateway(apps)
     bootstrap_usage_fees(apps)
     bootstrap_moz_gateway(apps)
     bootstrap_test_gateway(apps)

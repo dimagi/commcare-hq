@@ -1,0 +1,41 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-hqDefine("reports/js/bootstrap3/case_details", [
++hqDefine("reports/js/bootstrap5/case_details", [
+     'jquery',
+     'knockout',
+     'underscore',
+@@ -6,11 +6,11 @@
+     'analytix/js/google',
+     'analytix/js/kissmetrix',
+     'case/js/case_property_modal',
+-    'reports/js/bootstrap3/data_corrections',
+-    'reports/js/bootstrap3/single_form',
++    'reports/js/bootstrap5/data_corrections',
++    'reports/js/bootstrap5/single_form',
+     'case/js/case_hierarchy',
+     'case/js/repeat_records',
+-    'reports/js/bootstrap3/readable_form',
++    'reports/js/bootstrap5/readable_form',
+     'bootstrap',    // needed for $.tab
+     'jquery-memoized-ajax/jquery.memoized.ajax.min',
+     'commcarehq',
+@@ -91,7 +91,7 @@
+                     // form data panel uses sticky tabs when it's its own page
+                     // but that behavior would be disruptive here
+                     $panel.find(".sticky-tabs").removeClass("sticky-tabs");
+-                    $panel.find(".nav-tabs a[data-toggle='tab']").first().tab('show');
++                    $panel.find(".nav-tabs a[data-toggle='tab']").first().tab('show');  /* todo B5: plugin:tab */
+ 
+                     singleForm.initSingleForm({
+                         instance_id: data.xform_id,
+@@ -274,7 +274,7 @@
+         $propertiesModal.koApplyBindings(modalData);
+         $casePropertyNames.click(function () {
+             modalData.init($(this).data('property-name'));
+-            $propertiesModal.modal();
++            $propertiesModal.modal();  /* todo B5: plugin:modal */
+         });
+ 
+         // Analytics

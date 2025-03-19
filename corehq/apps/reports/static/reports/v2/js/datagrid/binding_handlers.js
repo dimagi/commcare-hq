@@ -11,16 +11,16 @@ hqDefine('reports/v2/js/datagrid/binding_handlers', [
 ], function (
     $,
     ko,
-    _
+    _,
 ) {
-    'use strict';
-
     var _select2Init = function ($select, options, params) {
         var initialValue;
 
         $select.select2(params);
 
-        if (!_.isFunction(options.getInitialValue)) return;
+        if (!_.isFunction(options.getInitialValue)) {
+            return;
+        }
 
         initialValue = options.getInitialValue();
 

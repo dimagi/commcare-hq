@@ -1,0 +1,131 @@
+{% extends "hqwebapp/bootstrap5/two_column.html" %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block page_sidebar_classes %}report-sidebar col-sm-12 col-md-3 col-xl-2{% endblock %}
+
+{% block page_row_classes %}report-sidebar-row{% endblock %}
+
+{% block page_content_classes %}col-sm-12 col-md-9 col-xl-10{% endblock %}
+
+{% js_entry "reports/js/bootstrap5/tabular" %}
+
+{% block stylesheets %}
+  {{ block.super }}
+  {% compress css %}
+    <link
+      type="text/scss"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'reports/scss/reports.scss' %}"
+    />
+  {% endcompress %}
+  {% include 'reports/partials/filters_css.html' %}
+
+  {% block reports-css %}{% endblock %}
+{% endblock %}
+
+{% block title %}{{ report.title|default:"Project Reports" }}{% endblock %}
+
+{% block page_breadcrumbs %}
+  <a
+    href="#"
+    class="btn btn-link btn-report-menu"
+    data-hq-toggle=".report-sidebar"
+  >
+    <i class="fa fa-bars"></i> {% trans "Reports Menu" %}
+  </a>
+  <nav aria-label="breadcrumb">
+    <ol
+      id="hq-breadcrumbs"
+      class="breadcrumb breadcrumb-hq-section"
+    >
+      <li class="breadcrumb-item">
+        <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a>
+      </li>
+      {% if report.breadcrumbs %}
+        {% for crumb in report.breadcrumbs %}
+          <li class="breadcrumb-item">
+            <a href="{{ crumb.link }}">{{ crumb.title }}</a>
+          </li>
+        {% endfor %}
+      {% endif %}
+      <li class="breadcrumb-item active" aria-current="page">
+        {% trans report.title|default:"Untitled Report" %}
+      </li>
+    </ol>
+  </nav>
+{% endblock %}
+
+{% block page_content %}
+  {% initial_page_data 'js_options' report.js_options %}
+  {% initial_page_data 'rendered_as' rendered_as %}
+  {% initial_page_data 'report_table_js_options' report_table_js_options %}
+
+  {# Needed for case reassignment interface #}
+  {% initial_page_data "reassign_cases_enddate" datespan.enddate_param_utc %}
+  {% initial_page_data "web_user_id" request.couch_user.userID %}
+  {% initial_page_data "web_username" request.couch_user.username %}
+  {% initial_page_data 'user_types' user_types %}
+  {% initial_page_data 'action' action %}
+  {% registerurl "case_action_options" domain %}
+  {% registerurl "receiver_secure_post" domain %}
+  {% registerurl "copy_cases" domain %}
+
+  {% if request.datespan %}
+    {% initial_page_data 'startdate' datespan.startdate|date:"Y-m-d" %}
+    {% initial_page_data 'enddate' datespan.enddate|date:"Y-m-d" %}
+  {% endif %}
+  {% initial_page_data 'slug' report.slug %}
+
+  {% block filter_panel %}
+    {% include "reports/standard/partials/bootstrap5/filter_panel.html" %}
+  {% endblock %}
+
+  {% if report.is_emailable and request.couch_user.can_download_reports %}
+    <div
+      id="email-report-modal"
+      class="modal fade"
+      tabindex="-1" role="dialog"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">
+              {% trans "Email report:" %}
+              {{ datespan.startdate|date:"Y-m-d" }}
+              {% if datespan.startdate %}
+                {% trans "to" %}
+              {% endif %}
+              {{ datespan.enddate|date:"Y-m-d" }}
+            </h4>
+            <button
+              class="btn-close"
+              aria-label="{% trans "Close" %}" type="button"
+              data-bs-dismiss="modal"
+              data-bind="click: resetModal"
+            ></button>
+          </div>
+          {% crispy email_form %}  {# todo B5: check crispy #}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if report.special_notice %}
+    <div id="report-special-notice" class="alert alert-info" style="margin-bottom: 2px">  {# todo B5: inline style #}
+      <h4>{% trans 'Notice' %}</h4>
+      <p>{{ report.special_notice }}</p>
+    </div>
+  {% endif %}
+  <div id="report-content">
+    {% if not report.is_async and report.slug %}
+      {% block reportcontent %}
+      {% endblock %}
+    {% else %}
+      {% include "reports/async/bootstrap5/default.html" %}
+    {% endif %}
+  </div>
+{% endblock %}

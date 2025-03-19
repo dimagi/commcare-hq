@@ -1,7 +1,30 @@
-hqDefine('app_manager/js/app_manager', function () {
-    'use strict';
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data");
-    var module = hqImport("hqwebapp/js/main").eventize({});
+
+hqDefine('app_manager/js/app_manager', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
+    'analytix/js/google',
+    'analytix/js/kissmetrix',
+    'hqwebapp/js/bootstrap3/alert_user',
+    'hqwebapp/js/bootstrap3/main',
+    'app_manager/js/menu',
+    'app_manager/js/section_changer',
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+    toggles,
+    google,
+    kissmetrix,
+    alertUser,
+    hqMain,
+    appManagerMenu,
+    sectionChanger,
+) {
+    var module = hqMain.eventize({});
     var _private = {};
     _private.appendedPageTitle = "";
     _private.prependedPageTitle = "";
@@ -73,7 +96,7 @@ hqDefine('app_manager/js/app_manager', function () {
         if (module.fetchAndShowFormValidation) {
             module.fetchAndShowFormValidation();
         }
-        hqImport("hqwebapp/js/main").updateDOM(update);
+        hqMain.updateDOM(update);
     };
 
     module.setupValidation = function (validationUrl) {
@@ -122,9 +145,9 @@ hqDefine('app_manager/js/app_manager', function () {
                 } else {
                     area.find('*').hide();
                     upgradeMessage.append(
-                        $('<i></i>').addClass('fa').addClass('fa-arrow-left')
+                        $('<i></i>').addClass('fa fa-arrow-left'),
                     ).append(
-                        $('<span></span>').text(' Requires CommCare ' + version)
+                        $('<span></span>').text(' Requires CommCare ' + version),
                     ).appendTo(area);
                 }
             });
@@ -164,7 +187,9 @@ hqDefine('app_manager/js/app_manager', function () {
                     stopSubmit = $(e.target).closest('button').data('stopsubmit') === 'yes',
                     $form;
 
-                if (stopSubmit) return;
+                if (stopSubmit) {
+                    return;
+                }
 
                 if (isForm) {
                     var caseAction =  $(e.target).closest('button').data('case-action'),
@@ -189,11 +214,11 @@ hqDefine('app_manager/js/app_manager', function () {
                             $form.data('clicked', 'true');
                             $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
                             if (dataType === "case") {
-                                hqImport('analytix/js/google').track.event("Added Case List Menu");
-                                hqImport('analytix/js/kissmetrix').track.event("Added Case List Menu");
+                                google.track.event("Added Case List Menu");
+                                kissmetrix.track.event("Added Case List Menu");
                             } else if (dataType === "survey") {
-                                hqImport('analytix/js/google').track.event("Added Surveys Menu");
-                                hqImport('analytix/js/kissmetrix').track.event("Added Surveys Menu");
+                                google.track.event("Added Surveys Menu");
+                                kissmetrix.track.event("Added Surveys Menu");
                             }
                             $form.submit();
                         }
@@ -234,7 +259,7 @@ hqDefine('app_manager/js/app_manager', function () {
      */
     var _initMenuItemSorting = function () {
         var MODULE_SELECTOR = ".appmanager-main-menu .module";
-        if (!hqImport('hqwebapp/js/toggles').toggleEnabled('LEGACY_CHILD_MODULES')) {
+        if (!toggles.toggleEnabled('LEGACY_CHILD_MODULES')) {
             nestChildModules();
             initChildModuleUpdateListener();
         }
@@ -249,7 +274,7 @@ hqDefine('app_manager/js/app_manager', function () {
 
         function initDragHandles() {
             var $scope = $(".appmanager-main-menu");
-            $scope.find('.drag_handle').addClass('fa fa-arrows-v');
+            $scope.find('.drag_handle').addClass('fa-solid fa-up-down');
             $scope.find('.js-appnav-drag-module').on('mouseenter', function () {
                 $(this).closest('.js-sorted-li').addClass('appnav-highlight');
             }).on('mouseleave', function () {
@@ -392,13 +417,13 @@ hqDefine('app_manager/js/app_manager', function () {
                 method: 'POST',
                 data: data,
                 success: function () {
-                    hqImport('hqwebapp/js/alert_user').alert_user(gettext("Moved successfully."), "success");
+                    alertUser.alert_user(gettext("Moved successfully."), "success");
                 },
                 error: function (xhr) {
-                    hqImport('hqwebapp/js/alert_user').alert_user(xhr.responseJSON.error, "danger");
+                    alertUser.alert_user(xhr.responseJSON.error, "danger");
                 },
             });
-            hqImport("app_manager/js/menu").setPublishStatus(true);
+            appManagerMenu.setPublishStatus(true);
         }
 
     };
@@ -412,7 +437,7 @@ hqDefine('app_manager/js/app_manager', function () {
         $forms.each(function () {
             var $form = $(this),
                 $buttonHolder = $form.find('.save-button-holder'),
-                button = hqImport("hqwebapp/js/main").initSaveButtonForm($form, {
+                button = hqMain.initSaveButtonForm($form, {
                     unsavedMessage: gettext("You have unsaved changes"),
                     success: function (data) {
                         var key;
@@ -431,7 +456,7 @@ hqDefine('app_manager/js/app_manager', function () {
                 });
             button.ui.appendTo($buttonHolder);
             $buttonHolder.data('button', button);
-            hqImport("app_manager/js/section_changer").attachToForm($form);
+            sectionChanger.attachToForm($form);
         });
     };
 

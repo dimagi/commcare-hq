@@ -1,5 +1,1 @@
-<div {% if formactions.attrs %} {{ formactions.flat_attrs|safe }}{% endif %} class="form-actions">
-    <div class="{{ offsets }} controls {{ field_class }}">
-        {{ fields_output }}
-    </div>
-</div>
+{% if use_bootstrap5 %}{% include 'hqwebapp/crispy/bootstrap5/form_actions.html' %}{% else %}{% include 'hqwebapp/crispy/bootstrap3/form_actions.html' %}{% endif %}

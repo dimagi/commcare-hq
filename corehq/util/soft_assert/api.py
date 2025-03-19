@@ -2,7 +2,6 @@ import logging
 
 from django.conf import settings
 
-from corehq.util.log import get_sanitized_request_repr
 from corehq.util.global_request import get_request
 from corehq.util.soft_assert.core import SoftAssert
 
@@ -10,6 +9,7 @@ logger = logging.getLogger('soft_asserts')
 
 
 def _send_message(info, backend):
+    from corehq.util.log import get_sanitized_request_repr
     request = get_request()
     request_repr = get_sanitized_request_repr(request)
 
@@ -80,7 +80,6 @@ def soft_assert(to=None, notify_admins=False,
             # but not send mail
             subject=settings.EMAIL_SUBJECT_PREFIX + subject,
             message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=to,
         )
 

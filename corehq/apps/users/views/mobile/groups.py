@@ -16,7 +16,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es.users import UserES
 from corehq.apps.groups.models import Group
-from corehq.apps.hqwebapp.decorators import use_multiselect
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_multiselect
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.reports.filters.api import MobileWorkersOptionsView
 from corehq.apps.reports.util import get_simplified_users
@@ -142,19 +142,21 @@ class BaseGroupsView(BaseUserSettingsView):
                 self.request, privileges.CASE_SHARING_GROUPS
             ),
             'needs_to_downgrade_locations': (
-                users_have_locations(self.domain) and
-                not has_privilege(self.request, privileges.LOCATIONS)
+                users_have_locations(self.domain)
+                and not has_privilege(self.request, privileges.LOCATIONS)
             ),
         })
         return context
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class GroupsListView(BaseGroupsView):
     template_name = "groups/all_groups.html"
     page_title = gettext_noop("Groups")
     urlname = 'all_groups'
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class EditGroupMembersView(BaseGroupsView):
     urlname = 'group_members'
     page_title = gettext_noop("Edit Group")
@@ -213,12 +215,12 @@ class EditGroupMembersView(BaseGroupsView):
     @property
     def page_context(self):
         domain_has_reminders_or_keywords = (
-            domain_has_reminders(self.domain) or
-            Keyword.domain_has_keywords(self.domain)
+            domain_has_reminders(self.domain)
+            or Keyword.domain_has_keywords(self.domain)
         )
         bulk_sms_verification_enabled = (
-            domain_has_reminders_or_keywords and
-            domain_has_privilege(self.domain, privileges.INBOUND_SMS)
+            domain_has_reminders_or_keywords
+            and domain_has_privilege(self.domain, privileges.INBOUND_SMS)
         )
         return {
             'group': self.group,

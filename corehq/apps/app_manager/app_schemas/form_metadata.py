@@ -419,7 +419,7 @@ class _AppDiffGenerator(object):
     def _mark_item_removed(self, item, key):
         self._set_contains_changes(item)
         try:
-            old_value = item[key]
+            old_value = stringify(item[key])
         except KeyError:
             old_value = None
         if isinstance(old_value, dict):
@@ -431,7 +431,7 @@ class _AppDiffGenerator(object):
     def _mark_item_added(self, item, key):
         self._set_contains_changes(item)
         try:
-            new_value = item[key]
+            new_value = stringify(item[key])
         except KeyError:
             new_value = None
         if isinstance(new_value, dict):
@@ -447,7 +447,11 @@ class _AppDiffGenerator(object):
             change_class = _TranslationChange
         else:
             change_class = _Change
-        change = change_class(type=CHANGED, old_value=first_item[key], new_value=second_item[key])
+        change = change_class(
+            type=CHANGED,
+            old_value=stringify(first_item[key]),
+            new_value=stringify(second_item[key]),
+        )
         first_item.changes[key] = change
         second_item.changes[key] = change
 
@@ -466,6 +470,10 @@ class _AppDiffGenerator(object):
                         form.changes.contains_changes = True
         except AttributeError:
             pass
+
+
+def stringify(value):
+    return value if value is None or isinstance(value, dict) else str(value)
 
 
 def get_app_diff(app1, app2):

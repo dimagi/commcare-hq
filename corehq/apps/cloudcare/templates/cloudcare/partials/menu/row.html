@@ -1,0 +1,21 @@
+<script type="text/template" id="menu-view-row-template">
+  <td class="module-column module-column-icon">
+    <% if (imageUrl) { %>
+    <div class="module-icon-image badge-container" style="background-image: url('<%- imageUrl %>');">
+      <span id="module-badge" class="badge bg-dark rounded-pill"><%- badgeText %></span>
+    </div>
+    <% } else { %>
+    <div class="module-icon-container badge-container">
+      <% if (navState === "JUMP") { %>
+      <i class="fa fa-pencil module-icon" aria-hidden="true"></i>
+      <% } else { %>
+      <i class="fa fa-folder module-icon" aria-hidden="true"></i>
+      <% } %>
+      <span id="module-badge" class="badge bg-dark rounded-pill"><%- badgeText %></span>
+    </div>
+    <% } %>
+  </td>
+  <td class="module-column module-column-name">
+    <h3><%- displayText ? displayText : "" %></h3>
+  </td>
+</script>

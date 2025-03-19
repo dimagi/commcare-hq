@@ -11,10 +11,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.callcenter.const import CALLCENTER_USER
-from corehq.apps.callcenter.sync_usercase import (
-    sync_call_center_user_case,
-    sync_usercase,
-)
+from corehq.apps.callcenter.sync_usercase import sync_usercases
 from corehq.apps.callcenter.utils import (
     DomainLite,
     get_call_center_cases,
@@ -32,15 +29,18 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.signals import commcare_domain_post_save
 from corehq.apps.es.domains import domain_adapter
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.locations.models import LocationType
+from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.user_importer.importer import (
     create_or_update_commcare_users_and_groups,
 )
 from corehq.apps.user_importer.models import UserUploadRecord
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.context_managers import drop_connected_signals
+from corehq.util.test_utils import flag_enabled
 
 TEST_DOMAIN = 'cc-util-test'
 CASE_TYPE = 'cc-flw'
@@ -69,7 +69,7 @@ class CallCenterUtilsTests(TestCase):
         delete_all_cases()
 
     def test_sync(self):
-        sync_call_center_user_case(self.user, self.domain.name)
+        sync_usercases(self.user, self.domain.name)
         case = self._get_user_case()
         self.assertIsNotNone(case)
         self.assertEqual(case.name, self.user.username)
@@ -82,42 +82,42 @@ class CallCenterUtilsTests(TestCase):
         self.addCleanup(other_user.delete, TEST_DOMAIN, deleted_by=None)
         name = 'Ricky Bowwood'
         other_user.set_full_name(name)
-        sync_call_center_user_case(other_user, self.domain.name)
+        sync_usercases(other_user, self.domain.name)
         case = self._get_user_case(other_user._id)
         self.assertIsNotNone(case)
         self.assertEqual(case.name, name)
 
     def test_sync_inactive(self):
-        sync_call_center_user_case(self.user, self.domain.name)
+        sync_usercases(self.user, self.domain.name)
         case = self._get_user_case()
         self.assertIsNotNone(case)
 
         self.user.is_active = False
-        sync_call_center_user_case(self.user, self.domain.name)
+        sync_usercases(self.user, self.domain.name)
         case = self._get_user_case()
         self.assertTrue(case.closed)
 
     def test_sync_retired(self):
-        sync_call_center_user_case(self.user, self.domain.name)
+        sync_usercases(self.user, self.domain.name)
         case = self._get_user_case()
         self.assertIsNotNone(case)
 
         self.user.base_doc += DELETED_SUFFIX
-        sync_call_center_user_case(self.user, self.domain.name)
+        sync_usercases(self.user, self.domain.name)
         case = self._get_user_case()
         self.assertTrue(case.closed)
 
     def test_sync_update_update(self):
         other_user = CommCareUser.create(TEST_DOMAIN, 'user2', '***', None, None)
         self.addCleanup(other_user.delete, self.domain.name, deleted_by=None)
-        sync_call_center_user_case(other_user, self.domain.name)
+        sync_usercases(other_user, self.domain.name)
         case = self._get_user_case(other_user._id)
         self.assertIsNotNone(case)
         self.assertEqual(case.name, other_user.username)
 
         name = 'Ricky Bowwood'
         other_user.set_full_name(name)
-        sync_call_center_user_case(other_user, self.domain.name)
+        sync_usercases(other_user, self.domain.name)
         case = self._get_user_case(other_user._id)
         self.assertEqual(case.name, name)
 
@@ -135,7 +135,7 @@ class CallCenterUtilsTests(TestCase):
         )
         profile.save()
 
-        self.user.update_metadata({
+        self.user.get_user_data(self.domain.name).update({
             '': 'blank_key',
             'blank_val': '',
             'ok': 'good',
@@ -143,16 +143,18 @@ class CallCenterUtilsTests(TestCase):
             '8starts_with_a_number': '0',
             'xml_starts_with_xml': '0',
             '._starts_with_punctuation': '0',
-            PROFILE_SLUG: profile.id,
-        })
-        sync_call_center_user_case(self.user, self.domain.name)
+        }, profile_id=profile.id)
+        sync_usercases(self.user, self.domain.name)
         case = self._get_user_case()
         self.assertIsNotNone(case)
         self.assertEqual(case.get_case_property('blank_val'), '')
         self.assertEqual(case.get_case_property('ok'), 'good')
         self.assertEqual(case.get_case_property(PROFILE_SLUG), str(profile.id))
         self.assertEqual(case.get_case_property('from_profile'), 'yes')
-        self.user.pop_metadata(PROFILE_SLUG)
+        self.user.get_user_data(TEST_DOMAIN).profile_id = None
+        sync_usercases(self.user, self.domain.name)
+        case = self._get_user_case()
+        self.assertEqual(case.get_case_property(PROFILE_SLUG), '')
         definition.delete()
 
     def test_get_call_center_cases_for_user(self):
@@ -202,12 +204,12 @@ class CallCenterUtilsTests(TestCase):
         cases = factory.create_or_update_cases([
             CaseStructure(attrs={'create': True})
         ])
-        sync_call_center_user_case(self.user, self.domain.name)
+        sync_usercases(self.user, self.domain.name)
         case = self._get_user_case()
         self.assertEqual(case.owner_id, cases[0].owner_id)
 
     def test_opened_by_id_is_system(self):
-        sync_call_center_user_case(self.user, self.domain.name)
+        sync_usercases(self.user, self.domain.name)
         case = self._get_user_case()
         self.assertEqual(case.opened_by, CALLCENTER_USER)
 
@@ -217,6 +219,9 @@ class CallCenterUtilsTests(TestCase):
 
 
 class CallCenterUtilsUsercaseTests(TestCase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -225,7 +230,8 @@ class CallCenterUtilsUsercaseTests(TestCase):
         cls.domain.save()
 
     def setUp(self):
-        self.user = CommCareUser.create(TEST_DOMAIN, 'user1', '***', None, None, commit=False)  # Don't commit yet
+        self.user = CommCareUser.create(TEST_DOMAIN, format_username('user1', TEST_DOMAIN),
+                                        '***', None, None, commit=False)  # Don't commit yet
 
     def tearDown(self):
         self.user.delete(self.domain.name, deleted_by=None)
@@ -236,15 +242,17 @@ class CallCenterUtilsUsercaseTests(TestCase):
         cls.domain.delete()
         super().tearDownClass()
 
+    def _get_user_case(self, user_id=None):
+        return CommCareCase.objects.get_case_by_external_id(
+            TEST_DOMAIN, user_id or self.user._id, USERCASE_TYPE)
+
     def test_sync_usercase_custom_user_data_on_create(self):
         """
         Custom user data should be synced when the user is created
         """
-        self.user.update_metadata({
-            'completed_training': 'yes',
-        })
+        self.user.get_user_data(self.domain.name)['completed_training'] = 'yes'
         self.user.save()
-        case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        case = self._get_user_case()
         self.assertIsNotNone(case)
         self.assertEqual(case.dynamic_case_properties()['completed_training'], 'yes')
 
@@ -252,15 +260,11 @@ class CallCenterUtilsUsercaseTests(TestCase):
         """
         Custom user data should be synced when the user is updated
         """
-        self.user.update_metadata({
-            'completed_training': 'no',
-        })
+        self.user.get_user_data(self.domain.name)['completed_training'] = 'no'
         self.user.save()
-        self.user.update_metadata({
-            'completed_training': 'yes',
-        })
-        sync_usercase(self.user, self.domain.name)
-        case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        self.user.get_user_data(self.domain.name)['completed_training'] = 'yes'
+        self.user.save()
+        case = self._get_user_case()
         self.assertEqual(case.dynamic_case_properties()['completed_training'], 'yes')
         self._check_update_matches(case, {'completed_training': 'yes'})
 
@@ -268,12 +272,12 @@ class CallCenterUtilsUsercaseTests(TestCase):
         """
         Test that setting custom user data for owner_id and case_type don't change the case
         """
-        self.user.update_metadata({
+        self.user.get_user_data(self.domain.name).update({
             'owner_id': 'someone else',
             'case_type': 'bob',
         })
         self.user.save()
-        case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        case = self._get_user_case()
         self.assertEqual(case.owner_id, self.user.get_id)
         self.assertEqual(case.type, USERCASE_TYPE)
         self.assertEqual(1, len(case.xform_ids))
@@ -286,17 +290,17 @@ class CallCenterUtilsUsercaseTests(TestCase):
     def test_reactivate_user(self):
         """Confirm that reactivating a user re-opens its user case."""
         self.user.save()
-        user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        user_case = self._get_user_case()
         self.assertIsNotNone(user_case)
 
         self.user.is_active = False
         self.user.save()
-        user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        user_case = self._get_user_case()
         self.assertTrue(user_case.closed)
 
         self.user.is_active = True
         self.user.save()
-        user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        user_case = self._get_user_case()
         self.assertFalse(user_case.closed)
 
     def test_update_deactivated_user(self):
@@ -304,17 +308,17 @@ class CallCenterUtilsUsercaseTests(TestCase):
         Confirm that updating a deactivated user also updates the user case.
         """
         self.user.save()
-        user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        user_case = self._get_user_case()
         self.assertIsNotNone(user_case)
 
         self.user.is_active = False
         self.user.save()
-        user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        user_case = self._get_user_case()
         self.assertTrue(user_case.closed)
 
-        self.user.update_metadata({'foo': 'bar'})
+        self.user.get_user_data(self.domain.name)['foo'] = 'bar'
         self.user.save()
-        user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        user_case = self._get_user_case()
         self.assertTrue(user_case.closed)
         self.assertEqual(user_case.dynamic_case_properties()['foo'], 'bar')
 
@@ -326,36 +330,33 @@ class CallCenterUtilsUsercaseTests(TestCase):
         Confirm that updating a deactivated user also updates the user case.
         """
         self.user.save()
-        user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        user_case = self._get_user_case()
         self.assertIsNotNone(user_case)
 
         self.user.is_active = False
         self.user.save()
-        user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        user_case = self._get_user_case()
         self.assertTrue(user_case.closed)
 
-        self.user.update_metadata({'foo': 'bar'})
+        self.user.get_user_data(self.domain.name)['foo'] = 'bar'
         self.user.is_active = True
         self.user.save()
-        user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        user_case = self._get_user_case()
         self.assertFalse(user_case.closed)
         self.assertEqual(user_case.dynamic_case_properties()['foo'], 'bar')
 
     def test_update_no_change(self):
-        self.user.update_metadata({
-            'numeric': 123,
-        })
+        self.user.get_user_data(self.domain.name)['numeric'] = 123
         self.user.save()
-        user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        user_case = self._get_user_case()
         self.assertIsNotNone(user_case)
         self.assertEqual(1, len(user_case.xform_ids))
 
         self.user.save()
-        user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        user_case = self._get_user_case()
         self.assertEqual(1, len(user_case.xform_ids))
 
     def test_bulk_upload_usercases(self):
-        self.user.username = format_username('bushy_top', TEST_DOMAIN)
         self.user.save()
 
         upload_record = UserUploadRecord.objects.create(
@@ -390,16 +391,48 @@ class CallCenterUtilsUsercaseTests(TestCase):
             upload_record_id=upload_record.pk,
         )
         self.assertEqual(results['errors'], [])
+        self.assertEqual([r['flag'] for r in results['rows']], ['updated', 'created'])
 
-        old_user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        old_user_case = self._get_user_case()
         self.assertEqual(old_user_case.owner_id, self.user.get_id)
         self.assertEqual(2, len(old_user_case.xform_ids))
 
         new_user = CommCareUser.get_by_username(format_username('the_bunk', TEST_DOMAIN))
         self.addCleanup(new_user.delete, self.domain.name, deleted_by=None)
-        new_user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, new_user._id, USERCASE_TYPE)
+        new_user_case = self._get_user_case(new_user._id)
         self.assertEqual(new_user_case.owner_id, new_user.get_id)
         self.assertEqual(1, len(new_user_case.xform_ids))
+
+    @flag_enabled('USH_USERCASES_FOR_WEB_USERS')
+    def test_web_user_removed(self):
+        self.user.save()
+        web_user = self._make_web_user()
+        self.assertFalse(self._get_user_case(web_user._id).closed)
+
+        web_user.delete_domain_membership(TEST_DOMAIN)
+        web_user.save()
+        self.assertTrue(self._get_user_case(web_user._id).closed)
+
+    @flag_enabled('USH_USERCASES_FOR_WEB_USERS')
+    def test_web_user_location_fields_sync(self):
+        self.user.save()
+        web_user = self._make_web_user()
+        lt = LocationType.objects.create(
+            domain=TEST_DOMAIN, name='lt2'
+        )
+        self.loc1 = make_loc('loc1', type=lt.name, domain=TEST_DOMAIN)
+        self.loc2 = make_loc('loc2', type=lt.name, domain=TEST_DOMAIN)
+        web_user.set_location(TEST_DOMAIN, self.loc1)
+        web_user.add_to_assigned_locations(TEST_DOMAIN, self.loc2)
+        case_json = self._get_user_case(web_user._id).case_json
+        self.assertEqual(case_json['commcare_location_id'], self.loc1.location_id)
+        self.assertEqual(case_json['commcare_location_ids'], self.loc1.location_id + ' ' + self.loc2.location_id)
+        self.assertEqual(case_json['commcare_primary_case_sharing_id'], self.loc1.location_id)
+
+    def _make_web_user(self):
+        web_user = WebUser.create(TEST_DOMAIN, 'user3', '***', None, None)
+        self.addCleanup(web_user.delete, TEST_DOMAIN, deleted_by=None)
+        return web_user
 
 
 class DomainTimezoneTests(SimpleTestCase):

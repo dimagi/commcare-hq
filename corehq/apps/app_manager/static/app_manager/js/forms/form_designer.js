@@ -1,6 +1,6 @@
-/* globals define, require, WS4Redis */
+/* globals require, WS4Redis */
 hqDefine("app_manager/js/forms/form_designer", function () {
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
+    var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         appcues = hqImport('analytix/js/appcues'),
         FORM_TYPES = {
             REGISTRATION: "registration",
@@ -9,16 +9,16 @@ hqDefine("app_manager/js/forms/form_designer", function () {
         },
         trackFormEvent = function (eventType) {
             var formType = FORM_TYPES.FOLLOWUP;
-            if (initialPageData("is_registration_form")) {
+            if (initialPageData.get("is_registration_form")) {
                 formType = FORM_TYPES.REGISTRATION;
-            } else if (initialPageData("is_survey")) {
+            } else if (initialPageData.get("is_survey")) {
                 formType = FORM_TYPES.SURVEY;
             }
             appcues.trackEvent(eventType + " (" + formType + ")");
         };
 
     $(function () {
-        var VELLUM_OPTIONS = _.extend({}, initialPageData("vellum_options"), {
+        var VELLUM_OPTIONS = _.extend({}, initialPageData.get("vellum_options"), {
             itemset: {
                 dataSourcesFilter: function (sources) {
                     return _.filter(sources, function (source) {
@@ -55,10 +55,10 @@ hqDefine("app_manager/js/forms/form_designer", function () {
                 // This code takes control of the top-left box with the form name.
                 $('#formdesigner .fd-content-left .fd-head-text').before(
                     // We add an edit button that opens a modal:
-                    $('#fd-hq-edit-formname-button').html()
+                    $('#fd-hq-edit-formname-button').html(),
                 // and we replace the form name Vellum put there
                 // with one that's translated to the app builder's currently selected language:
-                ).text(initialPageData('form_name'));
+                ).text(initialPageData.get('form_name'));
             },
         });
         VELLUM_OPTIONS.core = _.extend(VELLUM_OPTIONS.core, {
@@ -66,13 +66,13 @@ hqDefine("app_manager/js/forms/form_designer", function () {
                 var appManager = hqImport('app_manager/js/app_manager');
                 appManager.updateDOM(data.update);
                 $('.js-preview-toggle').removeAttr('disabled');
-                if (initialPageData("days_since_created") === 0) {
+                if (initialPageData.get("days_since_created") === 0) {
                     hqImport('analytix/js/kissmetrix').track.event('Saved the Form Builder within first 24 hours');
                 }
                 trackFormEvent(appcues.EVENT_TYPES.FORM_SAVE);
             },
             onReady: function () {
-                if (initialPageData('vellum_debug') === 'dev') {
+                if (initialPageData.get('vellum_debug') === 'dev') {
                     var lessErrorId = "#less-error-message\\:static-style-less-hqstyle-core",
                         lessError = $(lessErrorId);
                     if (lessError.length) {
@@ -83,10 +83,10 @@ hqDefine("app_manager/js/forms/form_designer", function () {
                 }
 
                 var kissmetrixTrack = function () {};
-                if (initialPageData('days_since_created') === 0) {
+                if (initialPageData.get('days_since_created') === 0) {
                     kissmetrixTrack = function () {
                         hqImport('analytix/js/kissmetrix').track.event(
-                            'Added question in Form Builder within first 24 hours'
+                            'Added question in Form Builder within first 24 hours',
                         );
                     };
                 }
@@ -99,7 +99,7 @@ hqDefine("app_manager/js/forms/form_designer", function () {
             },
         });
 
-        CKEDITOR_BASEPATH = initialPageData('CKEDITOR_BASEPATH');     // eslint-disable-line no-unused-vars, no-undef
+        window.CKEDITOR_BASEPATH = initialPageData.get('CKEDITOR_BASEPATH');     // eslint-disable-line no-unused-vars, no-undef
 
         // This unfortunate chain of import callbacks was required because
         // appcues appears to make an attempt to use the same requirejs
@@ -109,7 +109,7 @@ hqDefine("app_manager/js/forms/form_designer", function () {
         // appcues to have completed its init prior to importing requirejs
         // or using it to incorporate vellum, these issues disappear.
         var initFormBuilder = function () {
-            $.getScript(initialPageData("requirejs_static_url"), function () {
+            $.getScript(initialPageData.get("requirejs_static_url"), function () {
                 define("jquery", [], function () { return window.jQuery; });
                 define("jquery.bootstrap", ["jquery"], function () {});
                 define("underscore", [], function () { return window._; });
@@ -140,10 +140,10 @@ hqDefine("app_manager/js/forms/form_designer", function () {
                         * Run make in that directory (requires node.js)
                         * set settings.VELLUM_DEBUG to "dev" or "dev-min"
                     */
-                    baseUrl: initialPageData('requirejs_url'),
+                    baseUrl: initialPageData.get('requirejs_url'),
                     // handle very bad connections
                     waitSeconds: 60,
-                    urlArgs: initialPageData('requirejs_args'),
+                    urlArgs: initialPageData.get('requirejs_args'),
                     paths: {
                         'jquery.vellum': 'main',
                     },
@@ -154,7 +154,7 @@ hqDefine("app_manager/js/forms/form_designer", function () {
                         $("#edit").hide();
                         $('#hq-footer').hide();
                         $('#formdesigner').vellum(VELLUM_OPTIONS);
-                        var notificationOptions = initialPageData("notification_options");
+                        var notificationOptions = initialPageData.get("notification_options");
                         if (notificationOptions) {
                             var notifications = hqImport('app_manager/js/forms/app_notifications'),
                                 vellum = $("#formdesigner").vellum("get");
@@ -172,7 +172,7 @@ hqDefine("app_manager/js/forms/form_designer", function () {
                 hqImport('app_manager/js/app_manager').setPrependedPageTitle("\u270E ", true);
                 hqImport('app_manager/js/app_manager').setAppendedPageTitle(gettext("Edit Form"));
 
-                if (initialPageData('form_uses_cases')) {
+                if (initialPageData.get('form_uses_cases')) {
                     // todo make this a more broadly used util, perhaps? actually add buttons to formplayer?
                     var _prependTemplateToSelector = function (selector, layout, attempts, callback) {
                         attempts = attempts || 0;
@@ -192,20 +192,19 @@ hqDefine("app_manager/js/forms/form_designer", function () {
                         $('#js-fd-form-actions').html(),
                         0,
                         function () {
-                        }
+                        },
                     );
                 }
 
-                var reverse = hqImport("hqwebapp/js/initial_page_data").reverse,
-                    editDetails = hqImport('app_manager/js/forms/edit_form_details');
-                hqImport('app_manager/js/app_manager').updatePageTitle(initialPageData("form_name"));
+                var editDetails = hqImport('app_manager/js/forms/edit_form_details');
+                hqImport('app_manager/js/app_manager').updatePageTitle(initialPageData.get("form_name"));
                 editDetails.initName(
-                    initialPageData("form_name"),
-                    reverse("edit_form_attr", "name")
+                    initialPageData.get("form_name"),
+                    initialPageData.reverse("edit_form_attr", "name"),
                 );
                 editDetails.initComment(
-                    initialPageData("form_comment").replace(/\\n/g, "\n"),
-                    reverse("edit_form_attr", "comment")
+                    initialPageData.get("form_comment").replace(/\\n/g, "\n"),
+                    initialPageData.reverse("edit_form_attr", "comment"),
                 );
                 editDetails.setUpdateCallbackFn(function (name) {
                     $('#formdesigner .fd-content-left .fd-head-text').text(name);

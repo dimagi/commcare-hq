@@ -2,8 +2,15 @@ from unittest.mock import Mock, patch
 
 from testil import eq
 
-from corehq.project_limits.rate_limiter import RateLimiter, RateDefinition, \
-    PerUserRateDefinition
+from corehq.project_limits.rate_counter.presets import (
+    second_rate_counter,
+    week_rate_counter,
+)
+from corehq.project_limits.rate_limiter import (
+    PerUserRateDefinition,
+    RateDefinition,
+    RateLimiter,
+)
 
 
 @patch('corehq.project_limits.rate_limiter.get_n_users_in_domain', lambda domain: 10)
@@ -30,7 +37,7 @@ def test_get_window_of_first_exceeded_limit():
     min_rate_def = RateDefinition(per_second=100)
     per_user_rate_def = PerUserRateDefinition(per_user_rate_def, min_rate_def)
     rate_limiter = RateLimiter('my_feature', per_user_rate_def.get_rate_limits)
-    rate_limiter.iter_rates = Mock(return_value=[('', [('second', 11, 10)])])
+    rate_limiter.iter_rates = Mock(return_value=[('', [(second_rate_counter, 11, 10)])])
     expected_window = 'second'
     actual_window = rate_limiter.get_window_of_first_exceeded_limit('my_domain')
     eq(actual_window, expected_window)
@@ -44,7 +51,7 @@ def test_get_window_of_first_exceeded_limit_none():
     min_rate_def = RateDefinition(per_second=100)
     per_user_rate_def = PerUserRateDefinition(per_user_rate_def, min_rate_def)
     rate_limiter = RateLimiter('my_feature', per_user_rate_def.get_rate_limits)
-    rate_limiter.iter_rates = Mock(return_value=[('', [('second', 9, 10)])])
+    rate_limiter.iter_rates = Mock(return_value=[('', [(second_rate_counter, 9, 10)])])
     expected_window = None
     actual_window = rate_limiter.get_window_of_first_exceeded_limit('my_domain')
     eq(actual_window, expected_window)
@@ -58,7 +65,7 @@ def test_get_window_of_first_exceeded_limit_priority():
     min_rate_def = RateDefinition(per_second=100)
     per_user_rate_def = PerUserRateDefinition(per_user_rate_def, min_rate_def)
     rate_limiter = RateLimiter('my_feature', per_user_rate_def.get_rate_limits)
-    rate_limiter.iter_rates = Mock(return_value=[('', [('week', 11, 10), ('second', 11, 10)])])
+    rate_limiter.iter_rates = Mock(return_value=[('', [(week_rate_counter, 11, 10), ('second', 11, 10)])])
     expected_window = 'week'
     actual_window = rate_limiter.get_window_of_first_exceeded_limit('my_domain')
     eq(actual_window, expected_window)

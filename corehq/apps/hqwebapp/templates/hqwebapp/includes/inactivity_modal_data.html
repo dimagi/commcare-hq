@@ -5,4 +5,9 @@
 {% registerurl 'domain_login_new_window' %}
 {% registerurl 'ping_login' %}
 {% registerurl 'ping_session' %}
-{% include 'hqwebapp/includes/inactivity_modal.html' %}
+
+{% if use_bootstrap5 %}
+  {% include 'hqwebapp/includes/bootstrap5/inactivity_modal.html' %}
+{% else %}
+  {% include 'hqwebapp/includes/bootstrap3/inactivity_modal.html' %}
+{% endif %}

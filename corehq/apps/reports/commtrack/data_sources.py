@@ -6,7 +6,6 @@ from memoized import memoized
 
 from casexml.apps.stock.const import SECTION_TYPE_STOCK
 from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
-from dimagi.utils.couch.loosechange import map_reduce
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product
@@ -34,22 +33,6 @@ def format_decimal(d):
     """
     if d is not None:
         return d.quantize(Decimal(1)) if d == d.to_integral() else d.normalize()
-
-
-def _location_map(location_ids):
-    return {
-        loc.location_id: loc
-        for loc in (SQLLocation.objects
-                    .filter(is_archived=False,
-                            location_id__in=location_ids)
-                    .prefetch_related('location_type'))
-    }
-
-
-def geopoint(location):
-    if None in (location.latitude, location.longitude):
-        return None
-    return '{} {}'.format(location.latitude, location.longitude)
 
 
 class CommtrackDataSourceMixin(object):
@@ -378,31 +361,3 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             })
 
         return values
-
-
-class StockStatusBySupplyPointDataSource(StockStatusDataSource):
-
-    def get_data(self):
-        data = list(super(StockStatusBySupplyPointDataSource, self).get_data())
-
-        products = dict((r['product_id'], r['product_name']) for r in data)
-        product_ids = sorted(products, key=lambda e: products[e])
-
-        by_supply_point = map_reduce(lambda e: [(e['location_id'],)], data=data, include_docs=True)
-        locs = _location_map(list(by_supply_point))
-
-        for loc_id, subcases in by_supply_point.items():
-            if loc_id not in locs:
-                continue  # it's archived, skip
-            loc = locs[loc_id]
-            by_product = dict((c['product_id'], c) for c in subcases)
-
-            rec = {
-                'name': loc.name,
-                'type': loc.location_type.name,
-                'geo': geopoint(loc),
-            }
-            for prod in product_ids:
-                rec.update(dict(('%s-%s' % (prod, key), by_product.get(prod, {}).get(key)) for key in
-                                ('current_stock', 'consumption', 'months_remaining', 'category')))
-            yield rec

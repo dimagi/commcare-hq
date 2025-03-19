@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from random import randint
 from unittest.mock import patch
 
+from django.conf import settings
 from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.app_manager.models import Application
@@ -17,6 +18,7 @@ from corehq.apps.domain.utils import (
 )
 from corehq.apps.users.models import CommCareUser
 from corehq.motech.utils import b64_aes_decrypt
+from corehq.tests.tools import nottest
 from corehq.util.test_utils import generate_cases, unit_testing_only
 
 
@@ -125,6 +127,7 @@ class TestGetSerializableWireInvoiceItem(SimpleTestCase):
         self.assertTrue(serialized_items)
 
 
+@nottest
 @contextmanager
 def test_domain(name="domain", skip_full_delete=False):
     """Context manager for use in tests"""
@@ -214,3 +217,40 @@ class IsDomainInUseTests(SimpleTestCase):
         self.get_by_name_patcher = patch('corehq.apps.domain.utils.Domain.get_by_name')
         self.mock_get_by_name = self.get_by_name_patcher.start()
         self.addCleanup(self.get_by_name_patcher.stop)
+
+
+delete_es_docs_patch = patch('corehq.apps.domain.deletion._delete_es_docs')
+
+
+def patch_domain_deletion():
+    """Do not delete docs in Elasticsearch when deleting a domain
+
+    Without this, every test that deletes a domain would need to be
+    decorated with `@es_test`.
+    """
+    # Use __enter__ and __exit__ to start/stop so patch.stopall() does not stop it.
+    assert settings.UNIT_TESTING
+    delete_es_docs_patch.__enter__()
+
+
+@contextmanager
+def suspend(patch_obj):
+    """Contextmanager/decorator to suspend an active patch
+
+    Usage as decorator:
+
+        @suspend(delete_es_docs_patch)
+        def test_something():
+            ...  # do thing with ES docs deletion
+
+    Usage as context manager:
+
+        with suspend(delete_es_docs_patch):
+            ...  # do thing with ES docs deletion
+    """
+    assert settings.UNIT_TESTING
+    patch_obj.__exit__(None, None, None)
+    try:
+        yield
+    finally:
+        patch_obj.__enter__()

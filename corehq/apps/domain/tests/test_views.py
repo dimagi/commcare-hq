@@ -1,20 +1,34 @@
 from contextlib import contextmanager
+from datetime import datetime
+from unittest.mock import patch
 
+from django.contrib.messages import get_messages
 from django.test import TestCase
 from django.test.client import Client
 from django.urls import reverse
 
 from bs4 import BeautifulSoup
-from unittest.mock import patch
 
-from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq import privileges
+from corehq.apps.accounting.models import (
+    DefaultProductPlan,
+    SoftwarePlanEdition,
+)
+from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.views.settings import (
+    MAX_ACTIVE_ALERTS,
+    EditDomainAlertView,
+    ManageDomainAlertsView,
+)
+from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.users.models import WebUser
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.models import AppStructureRepeater
+from corehq.util.test_utils import privilege_enabled
 
 
 class TestDomainViews(TestCase, DomainSubscriptionMixin):
@@ -109,6 +123,418 @@ class TestPasswordResetFormAutocomplete(BaseAutocompleteTest):
 
     def test_autocomplete_disabled(self):
         self.verify(False, "/accounts/password_reset_email/", "email")
+
+
+class TestBaseDomainAlertView(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.domain_name = 'gotham'
+        cls.domain = Domain(name=cls.domain_name, is_active=True)
+        cls.domain.save()
+        cls.addClassCleanup(cls.domain.delete)
+
+        cls.other_domain_name = 'krypton'
+
+        cls.username = 'batman@gotham.com'
+        cls.password = '*******'
+        cls.user = WebUser.create(cls.domain_name, cls.username, cls.password,
+                                  created_by=None, created_via=None, is_admin=True)
+        cls.addClassCleanup(cls.user.delete, deleted_by_domain=cls.domain_name, deleted_by=None)
+
+        cls.domain_alert = cls._create_alert_for_domain(cls.domain_name, 'Test Alert 1!', cls.username)
+        cls.other_domain_alert = cls._create_alert_for_domain(cls.other_domain_name, 'Test Alert 2!', cls.username)
+
+    @staticmethod
+    def _create_alert_for_domain(domain, alert_text, username):
+        return Alert.objects.create(
+            text=alert_text,
+            domains=[domain],
+            created_by_domain=domain,
+            created_by_user=username
+        )
+
+    def setUp(self):
+        super().setUp()
+        self.client = Client()
+        self.client.login(username=self.username, password=self.password)
+
+    def ensure_valid_access_only(self, use_post=False):
+        if use_post:
+            response = self.client.post(self.url)
+        else:
+            response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 404)
+
+
+class TestManageDomainAlertsView(TestBaseDomainAlertView):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.url = reverse(ManageDomainAlertsView.urlname, kwargs={
+            'domain': cls.domain_name,
+        })
+
+    def test_valid_access_only(self):
+        self.ensure_valid_access_only()
+
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
+    def test_only_domain_alerts_listed(self):
+        alert = self.domain_alert
+
+        response = self.client.get(self.url)
+        self.assertListEqual(
+            response.context['alerts'],
+            [
+                {
+                    'start_time': None, 'end_time': None,
+                    'active': False, 'html': 'Test Alert 1!', 'id': alert.id, 'created_by_user': self.username
+                }
+            ]
+        )
+        self.assertEqual(response.status_code, 200)
+
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
+    def test_creating_new_alert(self):
+        self.assertEqual(Alert.objects.count(), 2)
+
+        response = self.client.post(
+            self.url,
+            data={
+                'text': 'New Alert!',
+            },
+        )
+
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(messages[0].message, 'Alert saved!')
+        self.assertEqual(response.status_code, 302)
+
+        self.assertEqual(Alert.objects.count(), 3)
+
+        new_alert = Alert.objects.order_by('pk').last()
+        self.assertEqual(new_alert.html, "New Alert!")
+        self.assertEqual(new_alert.created_by_domain, self.domain.name)
+        self.assertListEqual(new_alert.domains, [self.domain.name])
+
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
+    def test_creating_new_alert_with_errors(self):
+        self.assertEqual(Alert.objects.count(), 2)
+
+        response = self.client.post(
+            self.url,
+            data={
+                'text': '',
+            },
+        )
+
+        self.assertEqual(Alert.objects.count(), 2)
+
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(messages[0].message, 'There was an error saving your alert. Please try again!')
+        self.assertEqual(response.status_code, 200)
+
+
+class TestUpdateDomainAlertStatusView(TestBaseDomainAlertView):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.url = reverse('update_domain_alert_status', kwargs={
+            'domain': cls.domain_name,
+        })
+
+    def test_valid_access_only(self):
+        self.ensure_valid_access_only(use_post=True)
+
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
+    def test_post_access_only(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 405)
+
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
+    def test_apply_command_with_missing_alert_id(self):
+        with self.assertRaisesMessage(AssertionError, 'Missing alert ID'):
+            self.client.post(
+                self.url,
+                data={
+                    'command': 'activate',
+                },
+            )
+
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
+    def test_apply_command_with_missing_alert(self):
+        response = self.client.post(
+            self.url,
+            data={
+                'command': 'activate',
+                'alert_id': 0,
+            },
+        )
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(messages[0].message, 'Alert not found!')
+        self.assertEqual(response.status_code, 302)
+
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
+    def test_apply_command_with_invalid_command(self):
+        response = self.client.post(
+            self.url,
+            data={
+                'command': 'elevate',
+                'alert_id': self.domain_alert.id,
+            },
+        )
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(messages[0].message, 'Unexpected update received. Alert not updated!')
+        self.assertEqual(response.status_code, 302)
+
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
+    def test_apply_command_with_valid_command(self):
+        alert = self._create_alert_for_domain(self.domain, "New Alert!", self.username)
+
+        self.assertFalse(alert.active)
+
+        response = self.client.post(
+            self.url,
+            data={
+                'command': 'activate',
+                'alert_id': alert.id,
+            },
+        )
+
+        alert.refresh_from_db()
+        self.assertTrue(alert.active)
+
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(messages[0].message, 'Alert updated!')
+        self.assertEqual(response.status_code, 302)
+
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
+    def test_apply_command_with_other_doamin_alert(self):
+        response = self.client.post(
+            self.url,
+            data={
+                'command': 'activate',
+                'alert_id': self.other_domain_alert.id,
+            },
+        )
+
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(messages[0].message, 'Alert not found!')
+        self.assertEqual(response.status_code, 302)
+
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
+    def test_limiting_active_alerts(self):
+        new_alerts = [
+            self._create_alert_for_domain(self.domain_name, 'New Alert 1!', self.username),
+            self._create_alert_for_domain(self.domain_name, 'New Alert 2!', self.username),
+            self._create_alert_for_domain(self.domain_name, 'New Alert 3!', self.username),
+        ]
+        for alert in new_alerts:
+            alert.active = True
+            alert.save()
+
+        self.assertEqual(
+            Alert.objects.filter(created_by_domain=self.domain, active=True).count(),
+            MAX_ACTIVE_ALERTS
+        )
+
+        response = self.client.post(
+            self.url,
+            data={
+                'command': 'activate',
+                'alert_id': self.domain_alert.id,
+            },
+        )
+
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(messages[0].message, 'Alert not activated. Only 3 active alerts allowed.')
+
+
+class TestDeleteDomainAlertView(TestBaseDomainAlertView):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.url = reverse('delete_domain_alert', kwargs={
+            'domain': cls.domain_name,
+        })
+
+    def test_valid_access_only(self):
+        self.ensure_valid_access_only(use_post=True)
+
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
+    def test_post_access_only(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 405)
+
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
+    def test_with_missing_alert_id(self):
+        with self.assertRaisesMessage(AssertionError, 'Missing alert ID'):
+            self.client.post(
+                self.url,
+                data={},
+            )
+
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
+    def test_with_missing_alert(self):
+        response = self.client.post(
+            self.url,
+            data={
+                'alert_id': 0,
+            },
+        )
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(messages[0].message, 'Alert not found!')
+        self.assertEqual(response.status_code, 302)
+
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
+    def test_delete(self):
+        response = self.client.post(
+            self.url,
+            data={
+                'alert_id': self.domain_alert.id,
+            },
+        )
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(messages[0].message, 'Alert was removed!')
+        self.assertEqual(response.status_code, 302)
+
+
+class TestEditDomainAlertView(TestBaseDomainAlertView):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.url = reverse(EditDomainAlertView.urlname, kwargs={
+            'domain': cls.domain_name, 'alert_id': cls.domain_alert.id
+        })
+
+    def test_valid_access_only(self):
+        self.ensure_valid_access_only()
+
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
+    def test_only_domain_alerts_accessible(self):
+        url = reverse(EditDomainAlertView.urlname, kwargs={
+            'domain': self.domain_name, 'alert_id': self.other_domain_alert.id
+        })
+
+        with self.assertRaisesMessage(AssertionError, 'Alert not found'):
+            self.client.get(url)
+
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
+    def test_only_domain_alerts_accessible_for_update(self):
+        url = reverse(EditDomainAlertView.urlname, kwargs={
+            'domain': self.domain_name, 'alert_id': self.other_domain_alert.id
+        })
+        response = self.client.post(url, data={'text': 'Bad text'})
+
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(messages[0].message, 'Alert not found!')
+        self.assertEqual(response.status_code, 302)
+
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
+    def test_updating_alert(self):
+        text = self.domain_alert.text + ". Updated!"
+        response = self.client.post(
+            self.url,
+            data={
+                'text': text,
+            },
+        )
+
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(messages[0].message, 'Alert saved!')
+        self.assertEqual(response.status_code, 302)
+        self.domain_alert.refresh_from_db()
+        self.assertEqual(self.domain_alert.text, 'Test Alert 1!. Updated!')
+
+    @privilege_enabled(privileges.CUSTOM_DOMAIN_ALERTS)
+    def test_updating_alert_with_errors(self):
+        response = self.client.post(
+            self.url,
+            data={
+                'text': '',
+            },
+        )
+
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(messages[0].message, 'There was an error saving your alert. Please try again!')
+        self.assertEqual(response.status_code, 200)
+
+
+class TestSubscriptionRenewalViews(TestCase):
+    def setUp(self):
+        super().setUp()
+        self.domain = generator.arbitrary_domain()
+        self.user = generator.arbitrary_user(self.domain.name, is_webuser=True, is_admin=True)
+        self.account = generator.billing_account(self.user, self.user.name)
+        self.client = Client()
+        self.client.force_login(user=self.user.get_django_user())
+
+    def tearDown(self):
+        self.user.delete(self.domain.name, deleted_by=None)
+        self.domain.delete()
+        clear_plan_version_cache()
+        super().tearDown()
+
+    def _generate_subscription(self, edition, annual_plan=False):
+        plan_version = DefaultProductPlan.get_default_plan_version(edition, is_annual_plan=annual_plan)
+        return generator.generate_domain_subscription(self.account, self.domain, datetime.today(), None,
+                                                      plan_version=plan_version, is_active=True)
+
+    def test_renewal_page_context(self):
+        edition = SoftwarePlanEdition.PRO
+        subscription = self._generate_subscription(edition)
+        response = self.client.get(reverse('domain_subscription_renewal', args=[self.domain.name]))
+
+        self.assertEqual(response.status_code, 200)
+
+        expected_monthly_plan = DefaultProductPlan.get_default_plan_version(edition, is_annual_plan=False)
+        expected_annual_plan = DefaultProductPlan.get_default_plan_version(edition, is_annual_plan=True)
+        expected_renewal_choices = {
+            'monthly_plan': expected_monthly_plan.user_facing_description,
+            'annual_plan': expected_annual_plan.user_facing_description,
+        }
+
+        self.assertEqual(response.context['current_edition'], edition)
+        self.assertEqual(response.context['plan'], subscription.plan_version.user_facing_description)
+        self.assertEqual(response.context['renewal_choices'], expected_renewal_choices)
+        self.assertEqual(response.context['is_annual_plan'], False)
+        self.assertEqual(response.context['is_self_renewable_plan'], True)
+
+    def test_non_paid_edition_raises_404(self):
+        self._generate_subscription(SoftwarePlanEdition.COMMUNITY)
+        response = self.client.get(reverse('domain_subscription_renewal', args=[self.domain.name]))
+
+        self.assertEqual(404, response.status_code)
+
+    def test_non_self_renewable_edition(self):
+        # a billing admin may still view the renewal page even if their plan is not self-renewable
+        self._generate_subscription(SoftwarePlanEdition.ENTERPRISE)
+        response = self.client.get(reverse('domain_subscription_renewal', args=[self.domain.name]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['renewal_choices'], {})
+        self.assertEqual(response.context['is_self_renewable_plan'], False)
+
+    def test_confirm_renewal_page_context(self):
+        edition = SoftwarePlanEdition.PRO
+        annual_plan = True
+        subscription = self._generate_subscription(edition, annual_plan=annual_plan)
+        response = self.client.post(
+            reverse('domain_subscription_renewal_confirmation', args=[self.domain.name]),
+            data={'is_annual_plan': annual_plan, 'plan_edition': edition, 'from_plan_page': True}
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        subscription.refresh_from_db()
+        expected_next_plan = DefaultProductPlan.get_default_plan_version(edition, is_annual_plan=annual_plan)
+        self.assertEqual(response.context['subscription'], subscription)
+        self.assertEqual(response.context['plan'], subscription.plan_version.user_facing_description)
+        self.assertEqual(response.context['next_plan'], expected_next_plan.user_facing_description)
 
 
 @contextmanager

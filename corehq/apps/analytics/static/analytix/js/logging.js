@@ -1,12 +1,11 @@
-/* globals JSON */
+
 hqDefine('analytix/js/logging', [
     'underscore',
     'analytix/js/initial',
 ], function (
     _,
-    initialAnalytics
+    initialAnalytics,
 ) {
-    'use strict';
 
     var _makeLevel = function (name, style) {
         return {

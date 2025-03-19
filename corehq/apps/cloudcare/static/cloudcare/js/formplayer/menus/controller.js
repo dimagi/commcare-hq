@@ -1,18 +1,49 @@
-/*global Backbone, DOMPurify */
+hqDefine("cloudcare/js/formplayer/menus/controller", [
+    'jquery',
+    'underscore',
+    'backbone',
+    'DOMPurify/dist/purify.min',
+    'es6!hqwebapp/js/bootstrap5_loader',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
+    'cloudcare/js/markdown',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/users/models',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/menus/collections',
+    'cloudcare/js/formplayer/menus/utils',
+    'cloudcare/js/formplayer/menus/views/query',
+    'cloudcare/js/formplayer/menus/views',
+    'cloudcare/js/formplayer/menus/api',    // app:select:menus and entity:get:details
+    'cloudcare/js/gtx',
+], function (
+    $,
+    _,
+    Backbone,
+    DOMPurify,
+    bootstrap,
+    initialPageData,
+    toggles,
+    markdown,
+    constants,
+    FormplayerFrontend,
+    UsersModels,
+    formplayerUtils,
+    Collection,
+    menusUtils,
+    queryView,
+    views,
+    api,
+    gtx,
+) {
 
-hqDefine("cloudcare/js/formplayer/menus/controller", function () {
-    var constants = hqImport("cloudcare/js/formplayer/constants"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        menusUtils = hqImport("cloudcare/js/formplayer/menus/utils"),
-        views = hqImport("cloudcare/js/formplayer/menus/views"),
-        toggles = hqImport("hqwebapp/js/toggles"),
-        md = window.markdownit();
     var selectMenu = function (options) {
 
-        options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
+        options.preview = UsersModels.getCurrentUser().displayOptions.singleAppMode;
 
         var fetchingNextMenu = FormplayerFrontend.getChannel().request("app:select:menus", options);
+        var promise = $.Deferred();
 
         /*
          Determine the next screen to display.  Could be
@@ -21,8 +52,11 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
          */
         $.when(fetchingNextMenu).done(function (menuResponse) {
             if (menuResponse.abort) {
+                promise.reject();
                 return;
             }
+
+            gtx.logNavigateMenu(gtx.extractSelections(menuResponse));
 
             //set title of tab to application name
             if (menuResponse.breadcrumbs) {
@@ -37,11 +71,13 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             // If redirect was set, clear and go home.
             if (menuResponse.clearSession) {
                 FormplayerFrontend.trigger("apps:currentApp");
+                promise.reject();
                 return;
             }
 
             var urlObject = formplayerUtils.currentUrlToObject();
             if (urlObject.endpointId) {
+                menuResponse.breadcrumbs = [];
                 urlObject.replaceEndpoint(menuResponse.selections);
                 formplayerUtils.setUrlToObject(urlObject);
             }
@@ -64,8 +100,9 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             if (urlObject.appId === undefined || urlObject.appId === null) {
                 if (menuResponse.appId === null || menuResponse.appId === undefined) {
                     FormplayerFrontend.trigger('showError', "Response did not contain appId even though it was" +
-                        "required. If this persists, please report an issue to CommCareHQ");
+                        "required. If this persists, please report an issue to CommCare HQ");
                     FormplayerFrontend.trigger("apps:list");
+                    promise.reject();
                     return;
                 }
                 urlObject.appId = menuResponse.appId;
@@ -82,10 +119,13 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                 menusUtils.handleLocationRequest(options);
             }
             menusUtils.startOrStopLocationWatching(menuResponse.shouldWatchLocation);
+            promise.resolve(menuResponse);
         }).fail(function () {
             //  if it didn't go through, then it displayed an error message.
             // the right thing to do is then to just stay in the same place.
+            promise.reject();
         });
+        return promise;
     };
 
     var selectDetail = function (caseId, detailIndex, isPersistent, isMultiSelect) {
@@ -93,7 +133,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         if (!isPersistent) {
             urlObject.addSelection(caseId);
         }
-        var fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, isPersistent);
+        var fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, isPersistent, false);
         $.when(fetchingDetails).done(function (detailResponse) {
             showDetail(detailResponse, detailIndex, caseId, isMultiSelect);
         }).fail(function () {
@@ -103,12 +143,15 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
     var showMenu = function (menuResponse) {
         var menuListView = menusUtils.getMenuView(menuResponse);
-        var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
-        var changeFormLanguage = toggles.toggleEnabled('CHANGE_FORM_LANGUAGE');
-        var enablePrintOption = !menuResponse.queryKey;
-
-        if (menuListView) {
+        var appPreview = UsersModels.getCurrentUser().displayOptions.singleAppMode;
+        var sidebarEnabled = !appPreview && menusUtils.isSidebarEnabled(menuResponse);
+        if (menuListView && !sidebarEnabled) {
             FormplayerFrontend.regions.getRegion('main').show(menuListView);
+        }
+        if (sidebarEnabled) {
+            showSplitScreenQuery(menuResponse, menuListView);
+        } else {
+            FormplayerFrontend.regions.getRegion('sidebar').empty();
         }
         if (menuResponse.persistentCaseTile && !appPreview) {
             showPersistentCaseTile(menuResponse.persistentCaseTile);
@@ -118,14 +161,85 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
         if (menuResponse.breadcrumbs) {
             menusUtils.showBreadcrumbs(menuResponse.breadcrumbs);
-            if (!appPreview && ((menuResponse.langs && menuResponse.langs.length > 1 && changeFormLanguage) || enablePrintOption)) {
-                menusUtils.showFormMenu(menuResponse.langs, changeFormLanguage);
+            if (!appPreview) {
+                menusUtils.showMenuDropdown(menuResponse.langs, initialPageData.get('lang_code_name_mapping'));
             }
         } else {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
         }
+
+        if (!appPreview && menuResponse.persistentMenu) {
+            FormplayerFrontend.regions.getRegion('persistentMenu').show(
+                views.PersistentMenuView({
+                    collection: _toMenuCommands(menuResponse.persistentMenu, [], menuResponse.selections),
+                    sidebarEnabled: sidebarEnabled,
+                }).render());
+        } else {
+            FormplayerFrontend.regions.getRegion('persistentMenu').empty();
+        }
+
         if (menuResponse.appVersion) {
             FormplayerFrontend.trigger('setVersionInfo', menuResponse.appVersion);
+        }
+    };
+
+    var _toMenuCommands = function (menuCommands, priorSelections, activeSelection) {
+        return new Backbone.Collection(_.map(menuCommands, function (menuCommand) {
+            const command = _.pick(menuCommand, [
+                'index',
+                'displayText',
+                'navigationState',
+                'imageUri',
+                'commands',
+            ]);
+            // Store an array of the commands needed to navigate to each nested menu item
+            command.selections = priorSelections.concat([command.index]);
+            if (JSON.stringify(command.selections) === JSON.stringify(activeSelection)) {
+                command.isActiveSelection = true;
+            }
+            command.commands = _toMenuCommands(command.commands, command.selections, activeSelection);
+            return new Backbone.Model(command);
+        }));
+    };
+
+    var showSplitScreenQuery = function (menuResponse, menuListView) {
+        var menuData = menusUtils.getMenuData(menuResponse);
+        var queryResponse = menuResponse.queryResponse;
+        if (menuResponse.type === constants.ENTITIES && queryResponse)  {
+            var queryCollection = new Collection(queryResponse.displays);
+            FormplayerFrontend.regions.getRegion('sidebar').show(
+                queryView.queryListView({
+                    collection: queryCollection,
+                    title: menuResponse.title,
+                    description: menuResponse.description,
+                    hasDynamicSearch: queryResponse.dynamicSearch,
+                    sidebarEnabled: true,
+                    disableDynamicSearch: !sessionStorage.submitPerformed,
+                    groupHeaders: queryResponse.groupHeaders,
+                    searchOnClear: queryResponse.searchOnClear,
+                }).render(),
+            );
+            FormplayerFrontend.regions.getRegion('main').show(menuListView);
+        } else if (menuResponse.type === constants.QUERY) {
+            FormplayerFrontend.regions.getRegion('sidebar').show(
+                queryView.queryListView({
+                    collection: menuResponse,
+                    title: menuResponse.title,
+                    description: menuResponse.description,
+                    hasDynamicSearch: menuResponse.dynamicSearch,
+                    sidebarEnabled: true,
+                    disableDynamicSearch: true,
+                    groupHeaders: menuResponse.groupHeaders,
+                    searchOnClear: menuResponse.searchOnClear,
+                }).render(),
+            );
+
+            menuData["triggerEmptyCaseList"] = true;
+            menuData["sidebarEnabled"] = true;
+            menuData["description"] = menuResponse.description;
+
+            var caseListView = menusUtils.getCaseListView(menuResponse);
+            FormplayerFrontend.regions.getRegion('main').show(caseListView(menuData));
         }
     };
 
@@ -135,7 +249,12 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     };
 
     var showDetail = function (model, detailTabIndex, caseId, isMultiSelect) {
-        var detailObjects = model.models;
+        var detailObjects = model.filter(function (d) {
+            const styles = d.get('styles');
+            const visibleStyle = _.find(styles, s => s.displayFormat !== constants.FORMAT_ADDRESS_POPUP);
+            return typeof visibleStyle !== 'undefined';
+        });
+
         // If we have no details, just select the entity
         if (detailObjects === null || detailObjects === undefined || detailObjects.length === 0) {
             if (isMultiSelect) {
@@ -145,14 +264,20 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             }
             return;
         }
-        var detailObject = detailObjects[detailTabIndex];
-        var menuListView = getDetailList(detailObject);
-
         var tabModels = _.map(detailObjects, function (detail, index) {
             return {title: detail.get('title'), id: index, active: index === detailTabIndex};
         });
         var tabCollection = new Backbone.Collection();
         tabCollection.reset(tabModels);
+
+        let contentView;
+        const detailObject = detailObjects[detailTabIndex],
+            usesCaseTiles = detailObject.get('usesCaseTiles');
+        if (usesCaseTiles && !detailObject.get('entities')) {
+            contentView = getCaseTile(detailObject.toJSON());
+        } else {
+            contentView = getDetailList(detailObject);
+        }
 
         var tabListView = views.DetailTabListView({
             collection: tabCollection,
@@ -166,10 +291,9 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             isMultiSelect: isMultiSelect,
         });
         $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
-        $('#case-detail-modal').find('.js-detail-content').html(menuListView.render().el);
+        $('#case-detail-modal').find('.js-detail-content').html(contentView.render().el);
         $('#case-detail-modal').find('.js-detail-footer-content').html(detailFooterView.render().el);
-        $('#case-detail-modal').modal('show');
-
+        bootstrap.Modal.getOrCreateInstance($('#case-detail-modal')).show();
     };
 
     var getDetailList = function (detailObject) {
@@ -191,8 +315,12 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                 collection: listCollection,
                 headers: detailObject.get('headers'),
                 styles: detailObject.get('styles'),
+                tiles: detailObject.get('tiles'),
                 title: detailObject.get('title'),
             };
+            if (detailObject.get('usesCaseTiles')) {
+                return views.CaseTileDetailView(menuData);
+            }
             return views.CaseListDetailView(menuData);
         }
 
@@ -200,6 +328,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var headers = detailObject.get('headers');
         var details = detailObject.get('details');
         var styles = detailObject.get('styles');
+        var altText = detailObject.get('altText');
         var detailModel = [];
         // we need to map the details and headers JSON to a list for a Backbone Collection
         for (i = 0; i < headers.length; i++) {
@@ -207,11 +336,14 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             obj.data = details[i];
             obj.header = headers[i];
             obj.style = styles[i];
+            obj.altText = altText[i];
             obj.id = i;
-            if (obj.style.displayFormat === 'Markdown') {
-                obj.html = DOMPurify.sanitize(md.render(details[i]));
+            if (obj.style.displayFormat === constants.FORMAT_MARKDOWN) {
+                obj.html = markdown.render(details[i]);
             }
-            detailModel.push(obj);
+            if (obj.style.displayFormat !== constants.FORMAT_ADDRESS_POPUP) {
+                detailModel.push(obj);
+            }
         }
         var detailCollection = new Backbone.Collection();
         detailCollection.reset(detailModel);
@@ -220,26 +352,49 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         });
     };
 
-    // return a case tile from a detail object (for persistent case tile)
+    const onlyVisibleColumns = function (detailObject) {
+        const indices = _.chain(detailObject.styles)
+            .map((value, index) => [value, index])
+            .filter(([s]) => s.displayFormat !== constants.FORMAT_ADDRESS_POPUP)
+            .map(([, index]) => index)
+            .value();
+
+        return {
+            styles: _.map(indices, index => detailObject.styles[index]),
+            altText: _.map(indices, index => detailObject.altText[index]),
+            tiles: _.map(indices, index => detailObject.tiles[index]),
+            details: _.map(indices, index => detailObject.details[index]),
+        };
+    };
+
+    // return a case tile from a detail object (for persistent case tile and case tile in case detail)
     var getCaseTile = function (detailObject) {
+        var {
+            styles,
+            altText,
+            tiles,
+            details,
+        } = onlyVisibleColumns(detailObject);
         var detailModel = new Backbone.Model({
-            data: detailObject.details,
+            data: details,
+            altText,
             id: 0,
         });
         var numEntitiesPerRow = detailObject.numEntitiesPerRow || 1;
         var numRows = detailObject.maxHeight;
         var numColumns = detailObject.maxWidth;
         var useUniformUnits = detailObject.useUniformUnits || false;
-        var caseTileStyles = views.buildCaseTileStyles(detailObject.tiles, numRows, numColumns,
-            numEntitiesPerRow, useUniformUnits, 'persistent');
+
+        var caseTileStyles = views.buildCaseTileStyles(tiles, styles, numRows,
+            numColumns, numEntitiesPerRow, useUniformUnits, 'persistent');
         // Style the positioning of the elements within a tile (IE element 1 at grid position 1 / 2 / 4 / 3
-        $("#persistent-cell-layout-style").html(caseTileStyles[0]).data("css-polyfilled", false);
+        $("#persistent-cell-layout-style").html(caseTileStyles.cellLayoutStyle);
         // Style the grid (IE each tile has 6 rows, 12 columns)
-        $("#persistent-cell-grid-style").html(caseTileStyles[1]).data("css-polyfilled", false);
+        $("#persistent-cell-grid-style").html(caseTileStyles.cellGridStyle);
         return views.PersistentCaseTileView({
             model: detailModel,
-            styles: detailObject.styles,
-            tiles: detailObject.tiles,
+            styles: styles,
+            tiles: tiles,
             maxWidth: detailObject.maxWidth,
             maxHeight: detailObject.maxHeight,
             prefix: 'persistent',

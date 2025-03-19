@@ -1,17 +1,22 @@
-hqDefine('cloudcare/js/preview_app/preview_app', function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+import $ from "jquery";
+import FormplayerFrontend from "cloudcare/js/formplayer/app";
 
-    var start = function (options) {
+function start(options) {
 
-        $('#cloudcare-notifications').on('click', 'a', function () {
-            // When opening a link in an iframe, need to ensure we are change the parent page
-            $(this).attr('target', '_parent');
-        });
+    $('#cloudcare-notifications').on('click', 'a', function () {
+        // When opening a link in an iframe, need to ensure we are change the parent page
+        $(this).attr('target', '_parent');
+    });
 
-        FormplayerFrontend.start(options);
-    };
+    FormplayerFrontend.getXSRF(options).then(() => FormplayerFrontend.start(options));
 
-    return {
-        start: start,
-    };
-});
+    if (localStorage.getItem("preview-tablet")) {
+        FormplayerFrontend.trigger('view:tablet');
+    } else {
+        FormplayerFrontend.trigger('view:phone');
+    }
+}
+
+export {
+    start,
+};

@@ -1,11 +1,8 @@
 from django.db import migrations
 
-from corehq.form_processor.models import XFormInstance
 from corehq.sql_db.operations import RawSQLMigration
 
-migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {
-    'FORM_STATE_DELETED': XFormInstance.DELETED
-})
+migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'))
 
 
 class Migration(migrations.Migration):

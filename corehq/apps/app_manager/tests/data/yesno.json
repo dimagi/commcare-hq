@@ -309,7 +309,6 @@
   },
   "name": "Yes / No",
   "phone_model": null,
-  "platform": "nokia/s40",
   "profile": {},
   "recipients": "",
   "short_description": null,
@@ -317,7 +316,6 @@
   "success_message": {
     "en": ""
   },
-  "text_input": "roman",
   "translations": {},
   "use_custom_suite": false,
   "user_registration": {

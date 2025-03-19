@@ -18,17 +18,15 @@ from corehq.apps.case_search.models import (
     criteria_dict_to_criteria_list,
 )
 from corehq.apps.case_search.utils import (
+    QueryHelper,
+    RegistryQueryHelper,
     _get_helper,
     get_case_search_results,
     get_primary_case_search_results,
-    get_and_tag_related_cases,
 )
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.es.case_search import case_search_adapter
-from corehq.apps.es.tests.utils import (
-    case_search_es_setup,
-    es_test,
-)
+from corehq.apps.es.tests.utils import case_search_es_setup, es_test
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.registry.tests.utils import (
     Grant,
@@ -311,8 +309,8 @@ class TestCaseSearchRegistry(TestCase):
     def test_primary_cases_not_included_with_related_cases(self):
         with patch_get_app_cached:
             registry_helper = _get_helper(None, self.domain_1, ["creative_work"], self.registry_slug)
-            primary_cases = get_primary_case_search_results(registry_helper, self.domain_1, ["creative_work"],
-                                                            [SearchCriteria("name", "Jane Eyre")])
+            primary_cases = get_primary_case_search_results(
+                registry_helper, ["creative_work"], [SearchCriteria("name", "Jane Eyre")])
             related_cases = registry_helper.get_all_related_live_cases(primary_cases)
 
             self.assertItemsEqual([
@@ -321,6 +319,7 @@ class TestCaseSearchRegistry(TestCase):
                 (case.name, case.type, case.domain)
                 for case in related_cases
             ])
+
 
 class TestCaseSearchRegistryPermissions(TestCase):
     @classmethod
@@ -342,20 +341,15 @@ class TestCaseSearchRegistryPermissions(TestCase):
         ).slug
 
     def test_user_without_permission_cannot_access_all_domains(self):
-        domains = self._get_registry_visible_domains(HqPermissions(view_data_registry_contents=False))
-        self.assertEqual(domains, {self.domain})
+        helper = self._get_query_helper(HqPermissions(view_data_registry_contents=False))
+        self.assertIsInstance(helper, QueryHelper)
 
     def test_user_with_permission_can_access_all_domains(self):
-        domains = self._get_registry_visible_domains(HqPermissions(view_data_registry_contents=True))
-        self.assertEqual(domains, {self.domain, "A", "B"})
+        helper = self._get_query_helper(HqPermissions(view_data_registry_contents=True))
+        self.assertIsInstance(helper, RegistryQueryHelper)
+        self.assertCountEqual(helper._registry_helper.visible_domains, [self.domain, "A", "B"])
 
-    def _get_registry_visible_domains(self, permissions):
+    def _get_query_helper(self, permissions):
         mock_role = mock.Mock(permissions=permissions)
         mock_user = mock.Mock(get_role=mock.Mock(return_value=mock_role))
-        helper = _get_helper(
-                mock_user,
-                self.domain,
-                ["herb"],
-                self.registry_slug,
-            )
-        return set(helper.query_domains)
+        return _get_helper(mock_user, self.domain, ["herb"], self.registry_slug)

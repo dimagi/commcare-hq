@@ -81,7 +81,7 @@ def validate_suite(suite):
         suite = etree.fromstring(suite)
     if isinstance(suite, etree._Element):
         suite = Suite(suite)
-    assert isinstance(suite, Suite),\
+    assert isinstance(suite, Suite), \
         'Could not convert suite to a Suite XmlObject: %r' % suite
 
     def is_unique_list(things):
@@ -119,3 +119,16 @@ def get_ordered_case_types(case_type, additional_case_types=None):
     additional_case_types = additional_case_types or []
     additional_types = set(additional_case_types) - {case_type}
     return [case_type] + sorted(additional_types)
+
+
+def is_valid_results_instance_name(app, instance_name):
+    # avoid circular import
+    from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
+        RESULTS_INSTANCE,
+        RESULTS_INSTANCE_INLINE,
+    )
+
+    valid_instance_names = {RESULTS_INSTANCE, RESULTS_INSTANCE_INLINE}
+    valid_instance_names.update(module.search_config.get_instance_name()
+                                for module in app.get_modules() if hasattr(module, 'search_config'))
+    return instance_name in valid_instance_names

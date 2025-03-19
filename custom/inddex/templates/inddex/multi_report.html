@@ -1,4 +1,4 @@
-{% extends "reports/tabular.html" %}
+{% extends "reports/bootstrap3/tabular.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -6,12 +6,12 @@
 
 {% block reporttable %}
 {% if report.needs_filters %}
-    {% include 'reports/partials/description.html' %}
+    {% include 'reports/partials/bootstrap3/description.html' %}
 {% else %}
 
     {% if fixture_error %}
     <div class="alert alert-danger">
-        <i class="fa fa-exclamation-triangle"></i> {{ fixture_error }}
+        <i class="fa-solid fa-triangle-exclamation"></i> {{ fixture_error }}
     </div>
     {% endif %}
 

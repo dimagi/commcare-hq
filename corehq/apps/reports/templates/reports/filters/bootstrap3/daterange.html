@@ -1,0 +1,28 @@
+{% extends 'reports/filters/bootstrap3/base.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block filter_content %}
+<link rel="stylesheet" href="{% static 'reports/css/daterange-font-color.css'%}"/>
+  <div class="form-inline">
+    <label for="{{ css_id }}_startdate" class="sub-label">
+      {% trans 'From' %}
+    </label>
+    <input type="text"
+           id="{{ css_id }}_startdate"
+           name="{{ slug }}_startdate"
+           class="date-range form-control"
+           value="{{ datespan.startdate|date:"Y-m-d" }}">
+    <label for="{{ css_id }}_enddate" class="sub-label">
+      {% trans 'To' %}
+    </label>
+    <input type="text"
+           id="{{ css_id }}_enddate"
+           name="{{ slug }}_enddate"
+           class="date-range form-control"
+           value="{{ datespan.enddate|date:"Y-m-d" }}">
+    <span class="alert alert-info alert-small" style="margin-bottom: 0;">
+      {% blocktrans %}Showing {{ datespan }}.{% endblocktrans %}
+    </span>
+  </div>
+{% endblock %}

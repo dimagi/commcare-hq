@@ -1,6 +1,7 @@
 import json
 import os
 import uuid
+from datetime import datetime
 
 from django.test import TestCase
 
@@ -8,7 +9,7 @@ from collections import namedtuple
 from memoized import memoized
 from unittest.mock import patch
 
-from corehq.apps.app_manager.dbaccessors import get_app, get_build_ids
+from corehq.apps.app_manager.decorators import _get_latest_enabled_build
 from corehq.apps.app_manager.models import (
     Application,
     ApplicationBase,
@@ -19,23 +20,20 @@ from corehq.apps.app_manager.models import (
     ReportModule,
     import_app,
 )
-from corehq.apps.app_manager.tasks import (
-    autogenerate_build,
-    prune_auto_generated_builds,
-)
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     TestXmlMixin,
-    add_build,
+    delete_all_multimedia,
     patch_default_builds, get_simple_form, patch_validate_xform,
 )
 from corehq.apps.app_manager.util import add_odk_profile_after_build
 from corehq.apps.app_manager.views.apps import load_app_from_slug
 from corehq.apps.app_manager.views.utils import update_linked_app
-from corehq.apps.builds.models import BuildSpec
+from corehq.apps.cleanup.models import DeletedCouchDoc
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.linked_domain.applications import link_app
 from corehq.apps.userreports.tests.utils import get_sample_report_config
+from corehq.apps.app_manager.views.releases import make_app_build
 
 
 MockRequest = namedtuple('MockRequest', ['status', 'data'])
@@ -55,14 +53,10 @@ class AppManagerTest(TestCase, TestXmlMixin):
     @classmethod
     def setUpClass(cls):
         super(AppManagerTest, cls).setUpClass()
-        cls.build1 = {'version': '1.2.0', 'build_number': 7106}
-        cls.build2 = {'version': '2.7.0', 'build_number': 20655}
-
-        add_build(**cls.build1)
-        add_build(**cls.build2)
 
         cls.domain = 'test-domain'
-        create_domain(cls.domain)
+        domain = create_domain(cls.domain)
+        cls.addClassCleanup(domain.delete)
 
         cls.xform_str = cls.get_xml('very_simple_form').decode('utf-8')
 
@@ -115,6 +109,21 @@ class AppManagerTest(TestCase, TestXmlMixin):
         for module in self.app.get_modules():
             self.assertEqual(len(module.forms), 3)
 
+    def test_undo_delete_app_removes_deleted_couch_doc_record(self):
+        rec = self.app.delete_app()
+        self.app.save()
+        obj = DeletedCouchDoc.objects.create(
+            doc_id=self.app._id,
+            doc_type=self.app.doc_type,
+            deleted_on=datetime.utcnow(),
+        )
+        assert obj.doc_type.endswith("-Deleted"), obj.doc_type
+        params = {'doc_id': rec._id, 'doc_type': rec.doc_type}
+        assert DeletedCouchDoc.objects.get(**params)
+        rec.undo()
+        with self.assertRaises(DeletedCouchDoc.DoesNotExist):
+            DeletedCouchDoc.objects.get(**params)
+
     def testDeleteForm(self):
         self.app.delete_form(self.app.modules[0].unique_id,
                              self.app.modules[0].forms[0].unique_id)
@@ -122,9 +131,27 @@ class AppManagerTest(TestCase, TestXmlMixin):
         for module, i in zip(self.app.get_modules(), [2, 3, 3]):
             self.assertEqual(len(module.forms), i)
 
+    def test_undo_delete_form_removes_deleted_couch_doc_record(self):
+        form = self.app.modules[0].forms[0]
+        rec = self.app.delete_form(self.app.modules[0].unique_id, form.unique_id)
+        params = {'doc_id': rec._id, 'doc_type': rec.doc_type}
+        assert DeletedCouchDoc.objects.get(**params)
+        rec.undo()
+        with self.assertRaises(DeletedCouchDoc.DoesNotExist):
+            DeletedCouchDoc.objects.get(**params)
+
     def testDeleteModule(self):
         self.app.delete_module(self.app.modules[0].unique_id)
         self.assertEqual(len(self.app.modules), 2)
+
+    def test_undo_delete_module_removes_deleted_couch_doc_record(self):
+        module = self.app.modules[0]
+        rec = self.app.delete_module(module.unique_id)
+        params = {'doc_id': rec._id, 'doc_type': rec.doc_type}
+        assert DeletedCouchDoc.objects.get(**params)
+        rec.undo()
+        with self.assertRaises(DeletedCouchDoc.DoesNotExist):
+            DeletedCouchDoc.objects.get(**params)
 
     def assertModuleOrder(self, actual_modules, expected_modules):
         self.assertEqual([m.name['en'] for m in actual_modules],
@@ -253,6 +280,7 @@ class AppManagerTest(TestCase, TestXmlMixin):
 
     @patch('urllib3.PoolManager.request')
     def testBuildTemplateApps(self, request_mock):
+        self.addCleanup(delete_all_multimedia)
         image_path = os.path.join('corehq', 'apps', 'hqwebapp', 'static', 'hqwebapp', 'images',
                                   'commcare-hq-logo.png')
         with open(image_path, 'rb') as f:
@@ -281,48 +309,6 @@ class AppManagerTest(TestCase, TestXmlMixin):
         # ensure that there was no previous version used during the build process
         self.assertEqual(app.get_latest_build.get_cache(app), {})
         self.assertEqual(build2.get_latest_build.get_cache(build2)[()].id, build1.id)
-
-    def testPruneAutoGeneratedBuilds(self):
-        # Build #1, manually generated
-        app = import_app(self._yesno_source, self.domain)
-        for module in app.modules:
-            module.get_or_create_unique_id()
-        app.save()
-        build1 = app.make_build()
-        build1.save()
-        self.assertFalse(build1.is_auto_generated)
-
-        # Build #2, auto-generated
-        app.save()
-        autogenerate_build(app, "username")
-        build_ids = get_build_ids(app.domain, app.id)
-        self.assertEqual(len(build_ids), 2)
-        self.assertEqual(build_ids[1], build1.id)
-        build2 = get_app(app.domain, build_ids[0])
-        self.assertTrue(build2.is_auto_generated)
-
-        # First prune: delete nothing because the auto build is the most recent
-        prune_auto_generated_builds(self.domain, app.id)
-        self.assertEqual(len(get_build_ids(app.domain, app.id)), 2)
-
-        # Build #3, manually generated
-        app.save()
-        build3 = app.make_build()
-        build3.save()
-
-        # Release the auto-generated build and prune again, should still delete nothing
-        build2.is_released = True
-        build2.save()
-        prune_auto_generated_builds(self.domain, app.id)
-        self.assertEqual(len(get_build_ids(app.domain, app.id)), 3)
-
-        # Un-release the auto-generated build and prune again, which should delete it
-        build2.is_released = False
-        build2.save()
-        prune_auto_generated_builds(self.domain, app.id)
-        build_ids = get_build_ids(app.domain, app.id)
-        self.assertEqual(len(build_ids), 2)
-        self.assertNotIn(build2.id, build_ids)
 
     def testRevertToCopy(self):
         old_name = 'old name'
@@ -367,3 +353,25 @@ class AppManagerTest(TestCase, TestXmlMixin):
         unlinked_doc = linked_app.convert_to_application().to_json()
         self.assertEqual(unlinked_doc['doc_type'], 'Application')
         self.assertFalse(hasattr(unlinked_doc, 'linked_app_attrs'))
+
+    def test_get_latest_enabled_build_with_loc_flag(self):
+        build = _get_latest_enabled_build(
+            self.domain,
+            'no-such-user',
+            self.app._id,
+            None,
+            location_flag_enabled=True,
+        )
+        self.assertIsNone(build)
+
+    def test_dependencies_feature_added(self):
+        factory = AppFactory(build_version='2.40.0')
+        m0, f0 = factory.new_basic_module('register', 'case')
+        f0.source = get_simple_form(xmlns=f0.unique_id)
+        factory.app.profile = {'features': {'dependencies': ['coffee']}}
+        factory.app.save()
+        self.addCleanup(factory.app.delete)
+
+        with patch("corehq.apps.app_manager.tasks.metrics_counter") as metric_counter_mock:
+            make_app_build(factory.app, "comment", user_id="user_id")
+            metric_counter_mock.assert_called_with('commcare.app_build.dependencies_added')

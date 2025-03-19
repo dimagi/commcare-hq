@@ -1,15 +1,16 @@
-{% extends 'hqwebapp/bootstrap3/base_navigation.html' %}
+{% extends 'hqwebapp/bootstrap5/base_navigation.html' %}
 {% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% requirejs_main 'dashboard/js/dashboard' %}
+
+{% js_entry 'dashboard/js/dashboard' %}
 
 {% block stylesheets %}
   {% compress css %}
-    <link type="text/less"
+    <link type="text/scss"
           rel="stylesheet"
           media="all"
-          href="{% static 'dashboard/less/dashboard.less' %}" />
+          href="{% static 'dashboard/scss/dashboard.scss' %}" />
   {% endcompress %}
 {% endblock stylesheets %}
 
@@ -18,21 +19,21 @@
   {% registerurl 'dashboard_tile' domain '---' %}
   {% registerurl 'dashboard_tile_total' domain '---' %}
   <div class="container" id="hq-content">
-    <div class="page-header">
-      <h1>
-        {% blocktrans with cc_name=commcare_hq_names.COMMCARE_HQ_NAME %}
-          Welcome Back to {{ cc_name }}
-        {% endblocktrans %}
-      </h1>
-    </div>
+    <h1 class="mb-3 mt-5">
+      {% blocktrans with cc_name=commcare_hq_names.COMMCARE_HQ_NAME %}
+        Welcome Back to {{ cc_name }}
+      {% endblocktrans %}
+    </h1>
     {% if is_paused %}
-      {% include 'hqwebapp/partials/paused_plan_notice.html' %}
+      {% include 'hqwebapp/partials/bootstrap5/paused_plan_notice.html' %}
+    {% elif should_show_pending_notice %}
+      {% include 'hqwebapp/partials/pending_plan_notice.html' %}
     {% endif %}
     <div id="dashboard-tiles">
       <div class="row" data-bind="foreach: tiles">
-        <div class="col-md-3">
-          <div class="panel panel-dashboard panel-dashboard-medium">
-            <div class="panel-heading">
+        <div class="col-lg-3">
+          <div class="card card-dashboard card-dashboard-medium mb-3">
+            <div class="card-header">
               <a data-bind="
                                visible: url,
                                text: title,
@@ -46,10 +47,14 @@
                            "></a>
               <span data-bind="text: title, visible: !url"></span>
             </div>
-            <div class="panel-body">
+            <div class="card-body">
 
               <!-- Icon in a watermark style, displayed under item list -->
-              <i data-bind="css: icon, visible: showBackgroundIcon" class="dashboard-icon dashboard-icon-medium dashboard-icon-bg"></i>
+              <!-- ko ifnot: showIconLink -->
+              <div class="d-flex justify-content-center align-items-center dashboard-icon-bg-container">
+                <i data-bind="css: icon, visible: showBackgroundIcon" class="dashboard-icon"></i>
+              </div>
+              <!-- /ko -->
 
               <!-- Spinner -->
               <i class="fa fa-spinner fa-spin fa-5x" data-bind="visible: showSpinner"></i>
@@ -74,7 +79,7 @@
                             data-bind="visible: totalItems() > itemsPerPage"
                             params="goToPage: goToPage,
                                     perPage: itemsPerPage,
-                                    maxPagesShown: 6,
+                                    maxPagesShown: 5,
                                     totalItems: totalItems,
                                     inlinePageListOnly: true"></pagination>
               </div>
@@ -82,25 +87,28 @@
 
               <!-- No items to show or there's an error, just show an icon that links -->
               <!-- ko if: showIconLink -->
-              <a class="dashboard-link"
-                 data-bind="
-                                   attr: {href: url},
-                                   popover: {
-                                       title: title,
-                                       content: helpText,
-                                       placement: 'top',
-                                       trigger: 'hover',
-                                   },
-                               ">
-                <i class="dashboard-icon dashboard-icon-medium" data-bind="css: icon"></i>
-              </a>
+              <div class="d-flex justify-content-center align-items-center">
+                <a
+                  class="dashboard-link"
+                  data-bind="
+                                attr: {href: url},
+                                popover: {
+                                    title: title,
+                                    content: helpText,
+                                    placement: 'top',
+                                    trigger: 'hover',
+                                },
+                            ">
+                  <i class="dashboard-icon" data-bind="css: icon"></i>
+                </a>
+              </div>
               <!-- /ko -->
 
             </div>
           </div>
         </div>
       </div>
-      <p class="lead text-center" style="margin-bottom: 5em;">
+      <p class="lead text-center mb-5">
         {% if enterprise_mode %}
           {% blocktrans with cc_name=commcare_hq_names.COMMCARE_NAME %}
             Thanks for using {{ cc_name }}!
@@ -110,101 +118,10 @@
             Thanks for using CommCare HQ! If you have questions, suggestions,
             or other thoughts, <br />we invite you to join the discussion on the
             <a href="https://forum.dimagi.com/"
-               target="_blank">CommCare User Forums</a>.
+               target="_blank">CommCare User Forum</a>.
           {% endblocktrans %}
         {% endif %}
       </p>
     </div>
   </div>
 {% endblock content %}
-
-{% block modals %}{{ block.super }}
-  {% if request|ui_notify_enabled:"REPORT_BUILDER_V2" %}
-    <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
-         style="position: absolute; width: 200px;"
-         data-target="#ProjectReportsTab"
-         data-slug="{{ "REPORT_BUILDER_V2"|ui_notify_slug }}"
-         role="alert">
-      {% include 'notifications/partials/report_builder_v2_oct2017.html' %}
-    </div>
-  {% endif %}
-  {% if is_saas_environment and request|ui_notify_enabled:"MESSAGING_DASHBOARD" %}
-    <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
-         style="position: absolute; width: 200px;"
-         data-target="#MessagingTab"
-         data-slug="{{ "MESSAGING_DASHBOARD"|ui_notify_slug }}"
-         role="alert">
-      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-      </button>
-      <p class="lead">
-        {% trans "Check out the new Dashboard for Messaging!" %}
-      </p>
-    </div>
-  {% endif %}
-  {% if request|ui_notify_enabled:"DATA_FIND_BY_ID" %}
-    <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
-         style="position: absolute; width: 200px;"
-         data-target="#ProjectDataTab"
-         data-slug="{{ "DATA_FIND_BY_ID"|ui_notify_slug }}"
-         role="alert">
-      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-      </button>
-      <p class="lead">
-        {% trans 'Have you ever needed to find a form or a case by its ID? Check out the new "Find Data by ID" page!' %}
-      </p>
-    </div>
-  {% endif %}
-  {% if request|ui_notify_enabled:"USERS_PERMISSIONS_UPDATES" %}
-    <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
-         style="position: absolute; width: 200px;"
-         data-target="#ProjectUsersTab"
-         data-slug="{{ "USERS_PERMISSIONS_UPDATES"|ui_notify_slug }}"
-         role="alert">
-      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-      </button>
-      <p class="lead">
-        {% blocktrans %}
-          We have improved our Web User Roles and Permissions to give you more control on your project space. Check it out!
-        {% endblocktrans %}
-      </p>
-    </div>
-  {% endif %}
-  {% if request|ui_notify_enabled:"ECD_PREVIEW_UPDATE" and request|feature_preview_enabled:"EXPLORE_CASE_DATA_PREVIEW" %}
-    <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
-         style="position: absolute; width: 200px;"
-         data-target="#ProjectDataTab"
-         data-slug="{{ "ECD_PREVIEW_UPDATE"|ui_notify_slug }}"
-         role="alert">
-      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-      </button>
-      <p class="lead">
-        {% blocktrans %}
-          Ever wanted to explore your case data right within CommCare?
-          Check out our new feature!
-        {% endblocktrans %}
-      </p>
-    </div>
-  {% endif %}
-  {% if request|ui_notify_enabled:"BI_PREVIEW_UPDATE" and user_can_view_odata_feed %}
-    <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
-         style="position: absolute; width: 200px;"
-         data-target="#ProjectDataTab"
-         data-slug="{{ "BI_PREVIEW_UPDATE"|ui_notify_slug }}"
-         role="alert">
-      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-      </button>
-      <p class="lead">
-        {% blocktrans %}
-          Analyze your data in Power BI and Tableau! Easily connect CommCare
-          to both Power BI and Tableau with the new OData feed integration.
-        {% endblocktrans %}
-      </p>
-    </div>
-  {% endif %}
-{% endblock %}
-

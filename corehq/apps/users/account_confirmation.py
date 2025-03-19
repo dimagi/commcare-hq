@@ -1,9 +1,9 @@
-from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.translation import override, gettext_lazy as _
 from corehq.apps.domain.models import SMSAccountConfirmationSettings
 
 from corehq.apps.domain.utils import encrypt_account_confirmation_info, guess_domain_language_for_sms
+from corehq.apps.registration.utils import project_logo_emails_context
 from corehq.apps.sms.api import send_sms
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.web import get_static_url_prefix
@@ -53,6 +53,7 @@ def send_account_confirmation(commcare_user):
     template_params = _get_account_confirmation_template_params(
         commcare_user, commcare_user.get_id, CommCareUserConfirmAccountView.urlname
     )
+    template_params.update(project_logo_emails_context(commcare_user.domain))
 
     lang = guess_domain_language_for_sms(commcare_user.domain)
     with override(lang):
@@ -63,7 +64,8 @@ def send_account_confirmation(commcare_user):
         subject = _(f'Confirm your CommCare account for {commcare_user.domain}')
     send_html_email_async.delay(subject, commcare_user.email, html_content,
                                 text_content=text_content,
-                                email_from=settings.DEFAULT_FROM_EMAIL)
+                                domain=commcare_user.domain,
+                                use_domain_gateway=True)
 
 
 def send_account_confirmation_sms(commcare_user):

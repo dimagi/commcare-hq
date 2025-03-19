@@ -1,13 +1,14 @@
-from django.conf.urls import re_path as url
+from django.urls import re_path as url
 
 from corehq.apps.hqmedia.views import (
     BulkUploadMultimediaView,
+    BulkUploadMultimediaPollView,
+    BulkUploadMultimediaStatusView,
     DownloadMultimediaZip,
     ManageMultimediaPathsView,
     MultimediaAudioTranslatorFileView,
     MultimediaReferencesView,
     MultimediaTranslationsCoverageView,
-    MultimediaUploadStatusView,
     ProcessAudioFileUploadView,
     ProcessBulkUploadView,
     ProcessDetailPrintTemplateUploadView,
@@ -25,18 +26,22 @@ from corehq.apps.hqwebapp.decorators import waf_allow
 urlpatterns = [
     url(r'^file/(?P<media_type>[\w\-]+)/(?P<doc_id>[\w\-]+)/(.+)?$',
         ViewMultimediaFile.as_view(), name=ViewMultimediaFile.urlname),
-    url(r'^upload_status/$', MultimediaUploadStatusView.as_view(), name=MultimediaUploadStatusView.urlname)
 ]
 
 application_urls = [
     url(r'^upload/$', BulkUploadMultimediaView.as_view(), name=BulkUploadMultimediaView.urlname),
+    url(r'^upload/poll/(?P<processing_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
+        BulkUploadMultimediaPollView.as_view(), name=BulkUploadMultimediaPollView.urlname),
+    url(r'^upload/status/(?P<processing_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
+        BulkUploadMultimediaStatusView.as_view(), name=BulkUploadMultimediaStatusView.urlname),
     url(r'^paths/$', ManageMultimediaPathsView.as_view(), name=ManageMultimediaPathsView.urlname),
     url(r'^paths/download/$', download_multimedia_paths, name='download_multimedia_paths'),
     url(r'^audio_translator_file/$', MultimediaAudioTranslatorFileView.as_view(),
         name=MultimediaAudioTranslatorFileView.urlname),
     url(r'^translations/$', MultimediaTranslationsCoverageView.as_view(),
         name=MultimediaTranslationsCoverageView.urlname),
-    url(r'^uploaded/bulk/$', ProcessBulkUploadView.as_view(), name=ProcessBulkUploadView.urlname),
+    url(r'^uploaded/bulk/$', waf_allow('XSS_BODY')(ProcessBulkUploadView.as_view()),
+        name=ProcessBulkUploadView.urlname),
     url(r'^uploaded/image/$', waf_allow('XSS_BODY')(ProcessImageFileUploadView.as_view()),
         name=ProcessImageFileUploadView.urlname),
     url(r'^uploaded/app_logo/(?P<logo_name>[\w\-]+)/$', waf_allow('XSS_BODY')(ProcessLogoFileUploadView.as_view()),

@@ -1,5 +1,6 @@
 import warnings
 from datetime import datetime
+from functools import wraps
 
 from django.core.cache import cache
 from django.urls import reverse
@@ -7,6 +8,7 @@ from django.utils.translation import gettext_noop
 
 import dateutil
 from memoized import memoized
+from corehq.apps.reports.forms import EmailReportForm
 
 from dimagi.utils.dates import DateSpan
 
@@ -24,12 +26,13 @@ from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.users.models import CommCareUser
 from corehq.util.timezones.conversions import ServerTime
+from corehq.apps.es.profiling import ESQueryProfiler
 
 
 class ProjectReport(GenericReportView):
     # overriding properties from GenericReportView
     section_name = gettext_noop("Project Reports")
-    base_template = 'reports/base_template.html'
+    base_template = 'reports/bootstrap3/base_template.html'
     dispatcher = ProjectReportDispatcher
     asynchronous = True
 
@@ -40,7 +43,10 @@ class ProjectReport(GenericReportView):
     @property
     def template_context(self):
         context = super().template_context
-        context.update({'user_types': HQUserType.human_readable})
+        context.update({
+            'user_types': HQUserType.human_readable,
+            'email_form': EmailReportForm()
+        })
         return context
 
 
@@ -113,7 +119,7 @@ class ProjectReportParametersMixin(object):
 
     @property
     def group_id(self):
-        return self.request.GET.get('group', '')
+        return self.get_request_param('group', '')
 
     @property
     @memoized
@@ -126,12 +132,12 @@ class ProjectReportParametersMixin(object):
             todo: remember this: if self.individual and self.users:
             self.name = "%s for %s" % (self.name, self.users[0].raw_username)
         """
-        return self.request_params.get('individual', '')
+        return self.get_request_param('individual', '', from_json=True)
 
     @property
     def mobile_worker_ids(self):
-        ids = self.request.GET.getlist('select_mw')
-        if '_all' in ids or self.request.GET.get('all_mws', 'off') == 'on':
+        ids = self.get_request_param('select_mw', as_list=True)
+        if '_all' in ids or self.get_request_param('all_mws', 'off') == 'on':
             cache_str = "mw_ids:%s" % self.domain
             ids = cache.get(cache_str)
             if not ids:
@@ -139,7 +145,7 @@ class ProjectReportParametersMixin(object):
                 if self.include_inactive:
                     cc_users += CommCareUser.by_domain(self.domain, is_active=False)
                 ids = [ccu._id for ccu in cc_users]
-                cache.set(cache_str, ids, 24*60*60)
+                cache.set(cache_str, ids, 24 * 60 * 60)
         return ids
 
     @property
@@ -170,7 +176,7 @@ class ProjectReportParametersMixin(object):
 
     @property
     def history(self):
-        history = self.request_params.get('history', '')
+        history = self.get_request_param('history', '', from_json=True)
         if history:
             try:
                 return dateutil.parser.parse(history)
@@ -179,16 +185,20 @@ class ProjectReportParametersMixin(object):
 
     @property
     def case_type(self):
-        return self.default_case_type or self.request_params.get('case_type', '')
+        return self.default_case_type or self.get_request_param('case_type', '', from_json=True)
+
+    @property
+    def case_types(self):
+        return [_f for _f in self.get_request_param('case_type', as_list=True) if _f]
 
     @property
     def case_status(self):
         from corehq.apps.reports.filters.select import SelectOpenCloseFilter
-        return self.request_params.get(SelectOpenCloseFilter.slug, '')
+        return self.get_request_param(SelectOpenCloseFilter.slug, '', from_json=True)
 
     @property
     def case_group_ids(self):
-        return [_f for _f in self.request.GET.getlist('case_group') if _f]
+        return [_f for _f in self.get_request_param('case_group', as_list=True) if _f]
 
     @property
     @memoized
@@ -284,14 +294,88 @@ class MonthYearMixin(object):
 
     @property
     def month(self):
-        if 'month' in self.request_params:
-            return int(self.request_params['month'])
+        value = self.get_request_param('month', from_json=True)
+        if value is not None:
+            return int(value)
         else:
             return datetime.utcnow().month
 
     @property
     def year(self):
-        if 'year' in self.request_params:
-            return int(self.request_params['year'])
+        value = self.get_request_param('year', from_json=True)
+        if value is not None:
+            return int(value)
         else:
             return datetime.utcnow().year
+
+
+class ESQueryProfilerMixin(object):
+    """Mixin for profiling Elasticsearch queries.
+
+    This mixin provides timing and profiling capabilities methods in report classes.
+
+    Attributes:
+        profiler_enabled (bool): Must be set to True to enable profiling
+        profiler_name (str): Name of the report to be used in profiling output
+
+    Usage:
+        There are two ways to capture timing information:
+
+        1. Using the decorator:
+            >>> from corehq.apps.reports.standard import profile
+            >>> class MyReport(...):
+            ...     @profile('Method Name')
+            ...     def my_method(self):
+            ...         pass
+
+        2. Using the context manager:
+            >>> def my_method(self):
+            ...     with self.profiler.timing_context('Method Name'):
+            ...         pass
+
+    Notes:
+        The appropriate report class must have profiler_enabled and profiler_name
+        attributes set for the profiling functionality to work.
+    """
+    profiler_enabled = False
+    profiler_name = 'Case List'
+    search_class = None
+    _profiler = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.profiler_enabled:
+            self._profiler = ESQueryProfiler(
+                name=self.profiler_name,
+                search_class=self._get_search_class(),
+            )
+            self.search_class = self.profiler.get_search_class(slug=self.__class__.__name__)
+
+    @property
+    def profiler(self):
+        return self._profiler
+
+    @property
+    def should_profile(self):
+        return self.profiler_enabled and self.profiler
+
+    def _get_search_class(self):
+        if not self.search_class:
+            raise NotImplementedError("You must define a search_class attribute.")
+        return self.search_class
+
+
+def profile(name=None):
+    """
+    This decorator wraps the given function with a timing context. The results will
+    be labeled by `name`.
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(obj, *args, **kwargs):
+            if obj.should_profile:
+                with obj.profiler.timing_context(name):
+                    return func(obj, *args, **kwargs)
+            return func(obj, *args, **kwargs)
+        return wrapper
+    return decorator

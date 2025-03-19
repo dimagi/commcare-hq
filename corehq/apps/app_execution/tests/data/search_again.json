@@ -1,0 +1,118 @@
+{
+  "log": {
+    "entries": [
+      {
+        "request": {
+          "method": "POST",
+          "url": "https://www.commcarehq.org/formplayer/navigate_menu_start",
+          "postData": {
+            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"ush-envelope-testing\",\"app_id\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"locale\":\"en\",\"offset\":null,\"cases_per_page\":10,\"preview\":false,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
+          }
+        },
+        "response": {
+          "content": {
+            "text": "{\"shouldRequestLocation\":false,\"shouldWatchLocation\":false,\"notification\":null,\"title\":\"Case Search Baseline App\",\"clearSession\":false,\"shouldAutoSubmit\":false,\"appId\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"appVersion\":\"Formplayer Version: 2.53, App Version: 66\",\"selections\":null,\"translations\":null,\"smartLinkRedirect\":null,\"dynamicSearch\":false,\"metaData\":{\"attemptRestore\":false,\"appInstall\":false},\"locales\":[\"default\",\"en\"],\"breadcrumbs\":[\"Case Search Baseline App\"],\"persistentCaseTile\":null,\"queryKey\":null,\"commands\":[{\"index\":0,\"displayText\":\"Subcase-exists search\",\"navigationState\":\"NEXT\",\"badgeText\":\"\"},{\"index\":1,\"displayText\":\"Subcase-count search\",\"navigationState\":\"NEXT\",\"badgeText\":\"\"},{\"index\":2,\"displayText\":\"Fuzzy Match Search\",\"navigationState\":\"NEXT\",\"badgeText\":\"\"},{\"index\":3,\"displayText\":\"Phonetic Match Search\",\"navigationState\":\"NEXT\",\"badgeText\":\"\"},{\"index\":4,\"displayText\":\"Baseline Case Search\",\"navigationState\":\"NEXT\",\"badgeText\":\"\"},{\"index\":5,\"displayText\":\"Include Related Cases\",\"navigationState\":\"NEXT\",\"badgeText\":\"\"}],\"type\":\"commands\",\"layoutStyle\":null}"
+          }
+        }
+      },
+      {
+        "request": {
+          "method": "POST",
+          "url": "https://www.commcarehq.org/formplayer/navigate_menu",
+          "postData": {
+            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"ush-envelope-testing\",\"app_id\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"locale\":\"en\",\"selections\":[\"5\"],\"offset\":0,\"search_text\":null,\"query_data\":{},\"cases_per_page\":10,\"preview\":false,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
+          }
+        },
+        "response": {
+          "content": {
+            "text": "{\"shouldRequestLocation\":false,\"shouldWatchLocation\":false,\"notification\":null,\"title\":\"Search All Cases\",\"clearSession\":false,\"shouldAutoSubmit\":false,\"appId\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"appVersion\":\"Formplayer Version: 2.53, App Version: 66\",\"selections\":[\"5\"],\"translations\":null,\"smartLinkRedirect\":null,\"dynamicSearch\":false,\"metaData\":{\"attemptRestore\":false,\"appInstall\":false},\"locales\":[\"default\",\"en\"],\"breadcrumbs\":[\"Case Search Baseline App\",\"Include Related Cases\"],\"persistentCaseTile\":null,\"queryKey\":\"search_command.m5_results\",\"entities\":[{\"id\":\"d58917e568e74f9c9ae564ec823010f1\",\"data\":[\"Abdiel Munoz\",\"d58917e568e74f9c9ae564ec823010f1\"],\"groupKey\":null,\"altText\":[null,null]},{\"id\":\"37ca1b7c771f4b96b67ff90933cc8c5c\",\"data\":[\"Ace Whitaker\",\"37ca1b7c771f4b96b67ff90933cc8c5c\"],\"groupKey\":null,\"altText\":[null,null]},{\"id\":\"471b51187cce4e138bc63a4630dd6a67\",\"data\":[\"Adler Meyers\",\"471b51187cce4e138bc63a4630dd6a67\"],\"groupKey\":null,\"altText\":[null,null]},{\"id\":\"3a077d1e80d644f18f5590b462da8382\",\"data\":[\"Agustin House\",\"3a077d1e80d644f18f5590b462da8382\"],\"groupKey\":null,\"altText\":[null,null]},{\"id\":\"041bb34bc12e4437bc5b541c33bde258\",\"data\":[\"Ahmad Duran\",\"041bb34bc12e4437bc5b541c33bde258\"],\"groupKey\":null,\"altText\":[null,null]},{\"id\":\"fbdbc9558a7e4958ac25f07b6ca3401a\",\"data\":[\"Ahmad Garrison\",\"fbdbc9558a7e4958ac25f07b6ca3401a\"],\"groupKey\":null,\"altText\":[null,null]},{\"id\":\"5c3bd68da16a4a7c9c632d1a722f8b8d\",\"data\":[\"Alan Harrell\",\"5c3bd68da16a4a7c9c632d1a722f8b8d\"],\"groupKey\":null,\"altText\":[null,null]},{\"id\":\"3baa2919b6f845aba9e99cfdf709bcbd\",\"data\":[\"Albert Little\",\"3baa2919b6f845aba9e99cfdf709bcbd\"],\"groupKey\":null,\"altText\":[null,null]},{\"id\":\"7c618a2715934badac384f1b57c2e925\",\"data\":[\"Alberto Gates\",\"7c618a2715934badac384f1b57c2e925\"],\"groupKey\":null,\"altText\":[null,null]},{\"id\":\"e55bfc3e69354a7092e5fa818ac10a90\",\"data\":[\"Alberto Gutierrez\",\"e55bfc3e69354a7092e5fa818ac10a90\"],\"groupKey\":null,\"altText\":[null,null]}],\"actions\":[{\"text\":\"Search Again\",\"id\":null,\"input\":null,\"value\":null,\"receive\":null,\"hidden\":null,\"itemsetChoices\":null,\"itemsetChoicesKey\":null,\"hint\":null,\"error\":null,\"groupKey\":null,\"audio_uri\":null,\"image_uri\":null,\"allow_blank_value\":false,\"required\":false,\"required_msg\":null}],\"redoLast\":\"action 0\",\"styles\":[{\"fontSize\":0,\"widthHint\":-1,\"horizontalAlign\":null,\"verticalAlign\":null,\"showBorder\":false,\"showShading\":false,\"displayFormat\":null},{\"fontSize\":0,\"widthHint\":-1,\"horizontalAlign\":null,\"verticalAlign\":null,\"showBorder\":false,\"showShading\":false,\"displayFormat\":null}],\"endpointActions\":[null,null],\"headers\":[\"Name\",\"Case ID\"],\"tiles\":null,\"widthHints\":[50,50],\"numEntitiesPerRow\":0,\"useUniformUnits\":false,\"sortIndices\":[0],\"noItemsText\":null,\"selectText\":\"Continue\",\"pageCount\":50,\"currentPage\":0,\"type\":\"entities\",\"usesCaseTiles\":false,\"maxWidth\":0,\"maxHeight\":0,\"maxSelectValue\":-1,\"hasDetails\":true,\"queryResponse\":null,\"groupHeaderRows\":-1,\"multiSelect\":false}"
+          }
+        }
+      },
+      {
+        "request": {
+          "method": "POST",
+          "url": "https://www.commcarehq.org/formplayer/navigate_menu",
+          "postData": {
+            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"ush-envelope-testing\",\"app_id\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"locale\":\"en\",\"selections\":[\"5\"],\"offset\":0,\"search_text\":null,\"query_data\":{\"search_command.m5_results\":{\"execute\":false,\"force_manual_search\":true,\"selections\":[\"5\"],\"inputs\":null}},\"cases_per_page\":10,\"preview\":false,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
+          }
+        },
+        "response": {
+          "content": {
+            "text": "{\"shouldRequestLocation\":false,\"shouldWatchLocation\":false,\"notification\":null,\"title\":\"\u00a0\",\"clearSession\":false,\"shouldAutoSubmit\":false,\"appId\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"appVersion\":\"Formplayer Version: 2.53, App Version: 66\",\"selections\":[\"5\"],\"translations\":null,\"smartLinkRedirect\":null,\"dynamicSearch\":false,\"metaData\":{\"attemptRestore\":false,\"appInstall\":false},\"locales\":[\"default\",\"en\"],\"breadcrumbs\":[\"Case Search Baseline App\",\"Include Related Cases\"],\"persistentCaseTile\":null,\"queryKey\":\"search_command.m5_results\",\"displays\":[{\"text\":\"First Name\",\"id\":\"first_name\",\"input\":null,\"value\":null,\"receive\":null,\"hidden\":null,\"itemsetChoices\":null,\"itemsetChoicesKey\":null,\"hint\":null,\"error\":null,\"groupKey\":null,\"audio_uri\":null,\"image_uri\":null,\"allow_blank_value\":false,\"required\":false,\"required_msg\":\"Sorry, this response is required!\"},{\"text\":\"Last Name\",\"id\":\"last_name\",\"input\":null,\"value\":null,\"receive\":null,\"hidden\":null,\"itemsetChoices\":null,\"itemsetChoicesKey\":null,\"hint\":null,\"error\":null,\"groupKey\":null,\"audio_uri\":null,\"image_uri\":null,\"allow_blank_value\":false,\"required\":false,\"required_msg\":\"Sorry, this response is required!\"}],\"type\":\"query\",\"description\":\"\u00a0\",\"groupHeaders\":{},\"searchOnClear\":false}"
+          }
+        }
+      },
+      {
+        "request": {
+          "method": "POST",
+          "url": "https://www.commcarehq.org/formplayer/navigate_menu",
+          "postData": {
+            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"ush-envelope-testing\",\"app_id\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"locale\":\"en\",\"selections\":[\"5\"],\"offset\":0,\"search_text\":null,\"query_data\":{\"search_command.m5_results\":{\"inputs\":{\"first_name\":\"Lucca\"},\"execute\":false,\"force_manual_search\":true,\"selections\":[\"5\"]}},\"cases_per_page\":10,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\",\"requestInitiatedByTag\":\"field_change\"}"
+          }
+        },
+        "response": {
+          "content": {
+            "text": "{\"shouldRequestLocation\":false,\"shouldWatchLocation\":false,\"notification\":null,\"title\":\"\u00a0\",\"clearSession\":false,\"shouldAutoSubmit\":false,\"appId\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"appVersion\":\"Formplayer Version: 2.53, App Version: 66\",\"selections\":[\"5\"],\"translations\":null,\"smartLinkRedirect\":null,\"dynamicSearch\":false,\"metaData\":{\"attemptRestore\":false,\"appInstall\":false},\"locales\":[\"default\",\"en\"],\"breadcrumbs\":[\"Case Search Baseline App\",\"Include Related Cases\"],\"persistentCaseTile\":null,\"queryKey\":\"search_command.m5_results\",\"displays\":[{\"text\":\"First Name\",\"id\":\"first_name\",\"input\":null,\"value\":\"Lucca\",\"receive\":null,\"hidden\":null,\"itemsetChoices\":null,\"itemsetChoicesKey\":null,\"hint\":null,\"error\":null,\"groupKey\":null,\"audio_uri\":null,\"image_uri\":null,\"allow_blank_value\":false,\"required\":false,\"required_msg\":\"Sorry, this response is required!\"},{\"text\":\"Last Name\",\"id\":\"last_name\",\"input\":null,\"value\":null,\"receive\":null,\"hidden\":null,\"itemsetChoices\":null,\"itemsetChoicesKey\":null,\"hint\":null,\"error\":null,\"groupKey\":null,\"audio_uri\":null,\"image_uri\":null,\"allow_blank_value\":false,\"required\":false,\"required_msg\":\"Sorry, this response is required!\"}],\"type\":\"query\",\"description\":\"\u00a0\",\"groupHeaders\":{},\"searchOnClear\":false}"
+          }
+        }
+      },
+      {
+        "request": {
+          "method": "POST",
+          "url": "https://www.commcarehq.org/formplayer/navigate_menu",
+          "postData": {
+            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"ush-envelope-testing\",\"app_id\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"locale\":\"en\",\"selections\":[\"5\"],\"offset\":0,\"search_text\":null,\"query_data\":{\"search_command.m5_results\":{\"inputs\":{\"first_name\":\"Lucca\",\"last_name\":\"Mcpherson\"},\"execute\":false,\"force_manual_search\":true,\"selections\":[\"5\"]}},\"cases_per_page\":10,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\",\"requestInitiatedByTag\":\"field_change\"}"
+          }
+        },
+        "response": {
+          "content": {
+            "text": "{\"shouldRequestLocation\":false,\"shouldWatchLocation\":false,\"notification\":null,\"title\":\"\u00a0\",\"clearSession\":false,\"shouldAutoSubmit\":false,\"appId\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"appVersion\":\"Formplayer Version: 2.53, App Version: 66\",\"selections\":[\"5\"],\"translations\":null,\"smartLinkRedirect\":null,\"dynamicSearch\":false,\"metaData\":{\"attemptRestore\":false,\"appInstall\":false},\"locales\":[\"default\",\"en\"],\"breadcrumbs\":[\"Case Search Baseline App\",\"Include Related Cases\"],\"persistentCaseTile\":null,\"queryKey\":\"search_command.m5_results\",\"displays\":[{\"text\":\"First Name\",\"id\":\"first_name\",\"input\":null,\"value\":\"Lucca\",\"receive\":null,\"hidden\":null,\"itemsetChoices\":null,\"itemsetChoicesKey\":null,\"hint\":null,\"error\":null,\"groupKey\":null,\"audio_uri\":null,\"image_uri\":null,\"allow_blank_value\":false,\"required\":false,\"required_msg\":\"Sorry, this response is required!\"},{\"text\":\"Last Name\",\"id\":\"last_name\",\"input\":null,\"value\":\"Mcpherson\",\"receive\":null,\"hidden\":null,\"itemsetChoices\":null,\"itemsetChoicesKey\":null,\"hint\":null,\"error\":null,\"groupKey\":null,\"audio_uri\":null,\"image_uri\":null,\"allow_blank_value\":false,\"required\":false,\"required_msg\":\"Sorry, this response is required!\"}],\"type\":\"query\",\"description\":\"\u00a0\",\"groupHeaders\":{},\"searchOnClear\":false}"
+          }
+        }
+      },
+      {
+        "request": {
+          "method": "POST",
+          "url": "https://www.commcarehq.org/formplayer/navigate_menu",
+          "postData": {
+            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"ush-envelope-testing\",\"app_id\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"locale\":\"en\",\"selections\":[\"5\"],\"offset\":0,\"search_text\":null,\"query_data\":{\"search_command.m5_results\":{\"execute\":true,\"force_manual_search\":true,\"selections\":[\"5\"],\"inputs\":{\"first_name\":\"Lucca\",\"last_name\":\"Mcpherson\"}}},\"cases_per_page\":10,\"preview\":false,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
+          }
+        },
+        "response": {
+          "content": {
+            "text": "{\"shouldRequestLocation\":false,\"shouldWatchLocation\":false,\"notification\":null,\"title\":\"Search All Cases\",\"clearSession\":false,\"shouldAutoSubmit\":false,\"appId\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"appVersion\":\"Formplayer Version: 2.53, App Version: 66\",\"selections\":[\"5\"],\"translations\":null,\"smartLinkRedirect\":null,\"dynamicSearch\":false,\"metaData\":{\"attemptRestore\":false,\"appInstall\":false},\"locales\":[\"default\",\"en\"],\"breadcrumbs\":[\"Case Search Baseline App\",\"Include Related Cases\"],\"persistentCaseTile\":null,\"queryKey\":\"search_command.m5_results\",\"entities\":[{\"id\":\"18e434037dae4d87b98e77687a2aeff4\",\"data\":[\"Lucca Mcpherson\",\"18e434037dae4d87b98e77687a2aeff4\"],\"groupKey\":null,\"altText\":[null,null]}],\"actions\":[{\"text\":\"Search Again\",\"id\":null,\"input\":null,\"value\":null,\"receive\":null,\"hidden\":null,\"itemsetChoices\":null,\"itemsetChoicesKey\":null,\"hint\":null,\"error\":null,\"groupKey\":null,\"audio_uri\":null,\"image_uri\":null,\"allow_blank_value\":false,\"required\":false,\"required_msg\":null}],\"redoLast\":\"action 0\",\"styles\":[{\"fontSize\":0,\"widthHint\":-1,\"horizontalAlign\":null,\"verticalAlign\":null,\"showBorder\":false,\"showShading\":false,\"displayFormat\":null},{\"fontSize\":0,\"widthHint\":-1,\"horizontalAlign\":null,\"verticalAlign\":null,\"showBorder\":false,\"showShading\":false,\"displayFormat\":null}],\"endpointActions\":[null,null],\"headers\":[\"Name\",\"Case ID\"],\"tiles\":null,\"widthHints\":[50,50],\"numEntitiesPerRow\":0,\"useUniformUnits\":false,\"sortIndices\":[0],\"noItemsText\":null,\"selectText\":\"Continue\",\"pageCount\":0,\"currentPage\":0,\"type\":\"entities\",\"usesCaseTiles\":false,\"maxWidth\":0,\"maxHeight\":0,\"maxSelectValue\":-1,\"hasDetails\":true,\"queryResponse\":null,\"groupHeaderRows\":-1,\"multiSelect\":false}"
+          }
+        }
+      },
+      {
+        "request": {
+          "method": "POST",
+          "url": "https://www.commcarehq.org/formplayer/get_details",
+          "postData": {
+            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"ush-envelope-testing\",\"app_id\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"locale\":\"en\",\"selections\":[\"5\",\"18e434037dae4d87b98e77687a2aeff4\"],\"offset\":0,\"search_text\":null,\"query_data\":{\"search_command.m5_results\":{\"execute\":true,\"force_manual_search\":true,\"selections\":[\"5\"],\"inputs\":{\"first_name\":\"Lucca\",\"last_name\":\"Mcpherson\"}}},\"cases_per_page\":10,\"preview\":false,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\",\"isShortDetail\":false}"
+          }
+        },
+        "response": {
+          "content": {
+            "text": "{\"shouldRequestLocation\":false,\"shouldWatchLocation\":false,\"details\":[{\"details\":[\"Lucca Mcpherson\"],\"entities\":null,\"styles\":[{\"fontSize\":0,\"widthHint\":-1,\"horizontalAlign\":null,\"verticalAlign\":null,\"showBorder\":false,\"showShading\":false,\"displayFormat\":null}],\"headers\":[\"Name\"],\"altText\":[null],\"title\":\"Case\",\"usesCaseTiles\":false,\"maxWidth\":0,\"maxHeight\":0,\"numEntitiesPerRow\":0,\"tiles\":null,\"useUniformUnits\":false,\"hasInlineTile\":false,\"useNodeset\":false}],\"isPersistentDetail\":false}"
+          }
+        }
+      },
+      {
+        "request": {
+          "method": "POST",
+          "url": "https://www.commcarehq.org/formplayer/navigate_menu",
+          "postData": {
+            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"ush-envelope-testing\",\"app_id\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"locale\":\"en\",\"selections\":[\"5\",\"18e434037dae4d87b98e77687a2aeff4\"],\"offset\":0,\"search_text\":null,\"query_data\":{\"search_command.m5_results\":{\"execute\":true,\"force_manual_search\":true,\"selections\":[\"5\"],\"inputs\":{\"first_name\":\"Lucca\",\"last_name\":\"Mcpherson\"}}},\"cases_per_page\":10,\"preview\":false,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
+          }
+        },
+        "response": {
+          "content": {
+            "text": "{\"shouldRequestLocation\":false,\"shouldWatchLocation\":false,\"notification\":null,\"title\":\"Followup\",\"clearSession\":false,\"shouldAutoSubmit\":false,\"appId\":\"08ed729aa0fc402cbdcc8b6ba5d3b6b1\",\"appVersion\":\"Formplayer Version: 2.53, App Version: 66\",\"selections\":[\"5\",\"18e434037dae4d87b98e77687a2aeff4\"],\"translations\":{\"forms.m5f0.submit_label\":\"Submit\"},\"smartLinkRedirect\":null,\"dynamicSearch\":false,\"metaData\":{\"attemptRestore\":true,\"appInstall\":false},\"instanceXml\":{\"output\":\"<?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\"?><data xmlns=\\\"http://openrosa.org/formdesigner/D097829E-0F21-46D2-B36D-C0FFF05C2CEE\\\" uiVersion=\\\"1\\\" version=\\\"65\\\" name=\\\"Followup\\\" xmlns:jrm=\\\"http://dev.commcarehq.org/jr/xforms\\\">\\n  <test/>\\n  <n0:case xmlns:n0=\\\"http://commcarehq.org/case/transaction/v2\\\" case_id=\\\"18e434037dae4d87b98e77687a2aeff4\\\" date_modified=\\\"\\\" user_id=\\\"655a8581da22f05fb953b19d8561b079\\\"/>\\n  <n1:meta xmlns:n1=\\\"http://openrosa.org/jr/xforms\\\">\\n    <n1:deviceID>Formplayer</n1:deviceID>\\n    <n1:timeStart>2024-05-17T10:35:36.603+02</n1:timeStart>\\n    <n1:timeEnd/>\\n    <n1:username>skelly@dimagi.com</n1:username>\\n    <n1:userID>655a8581da22f05fb953b19d8561b079</n1:userID>\\n    <n1:instanceID>b902640e-65b7-4d96-b0c5-b9d1bc0dd063</n1:instanceID>\\n    <n2:appVersion xmlns:n2=\\\"http://commcarehq.org/xforms\\\">Formplayer Version: 2.53</n2:appVersion>\\n    <n1:drift/>\\n  </n1:meta>\\n</data>\\n\"},\"tree\":[{\"caption_audio\":null,\"caption_video\":null,\"caption_image\":null,\"caption_markdown\":null,\"caption\":\"test\",\"binding\":\"/data/test\",\"question_id\":\"test\",\"required\":0,\"relevant\":0,\"answer\":null,\"datatype\":\"str\",\"style\":null,\"type\":\"question\",\"ix\":\"0\",\"choices\":null,\"repeatable\":null,\"exists\":null,\"header\":null,\"control\":1,\"help\":null,\"help_image\":null,\"help_audio\":null,\"help_video\":null,\"hint\":null,\"output\":null,\"add-choice\":null}],\"langs\":[\"en\"],\"breadcrumbs\":[\"Case Search Baseline App\",\"Include Related Cases\",\"Lucca Mcpherson\"],\"persistentCaseTile\":null,\"event\":null,\"session_id\":\"a66abec1-d0d1-4944-9334-6af8ec3cb1ac\",\"seq_id\":0}"
+          }
+        }
+      }
+    ]
+  }
+}

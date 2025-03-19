@@ -52,9 +52,47 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
   - **Linux**:
 
     In Ubuntu you will also need to install the modules for `python-dev`, `pip`, and `venv` explicitly.
-    ```sh
-    sudo apt install python3.9-dev python3-pip python3-venv
-    ```
+
+    The [deadsnakes PPA](https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa)
+    allows you to use multiple versions of Python on your own machine as we do
+    in production environments. The deadsnakes PPA supports Ubuntu LTS
+    releases, but you can use their Python versions on interim Ubuntu releases
+    as follows:
+
+    1. Find the name of your Ubuntu release if you don't already know it:
+       ```shell
+       $ cat /etc/lsb-release
+       DISTRIB_ID=Ubuntu
+       DISTRIB_RELEASE=23.04
+       DISTRIB_CODENAME=lunar  # <-- This is the name you want
+       DISTRIB_DESCRIPTION="Ubuntu 23.04"
+       ```
+
+    2. Pin your release's package priority to 1001 so that deadsnakes packages
+       can't replace official packages, even if they are newer:
+       ```shell
+       $ cat << EOF | sudo tee /etc/apt/preferences.d/99lunar
+       Package: *
+       Pin: release lunar
+       Pin-Priority: 1001
+       EOF
+       ```
+       but change "lunar" to the name of the release you are using.
+
+    3. Add the deadsnakes PPA, and install the Python version that CommCare HQ
+       requires:
+       ```shell
+       $ sudo add-apt-repository ppa:deadsnakes/ppa
+       ```
+       This will create a file in `/etc/apt/sources.list.d/` with the name of your
+       release. Change the filename, and the name inside the file, to the latest
+       LTS release instead (e.g. "jammy").
+
+    4. Install the version of Python that CommCare HQ requires.
+       ```shell
+       $ sudo apt update
+       $ sudo apt install python3.9 python3.9-dev python3-pip python3.9-venv
+       ```
 
   - **Mac**:
 
@@ -84,13 +122,13 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
     brew install libmagic libxmlsec1 libxml2 libxslt openssl readline sqlite3 xz zlib tcl-tk
     ```
 
-- Java (JDK 8)
+- Java (JDK 17)
 
   - **Linux**:
 
-    install `default-jre` via apt:
+    install `openjdk-17-jre` via apt:
     ```sh
-    sudo apt install default-jre
+    sudo apt install openjdk-17-jre
     ```
 
   - **macOS**:
@@ -125,12 +163,15 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
 
     If you have an M1 chip and are using a Rosetta-based install of Postgres and run into problems with psycopg2, see [this solution](https://github.com/psycopg/psycopg2/issues/1216#issuecomment-767892042).
 
-##### A note on `xmlsec`
+##### Notes on `xmlsec`
 
 `xmlsec` is a `pip` dependency that will require some non-`pip`-installable
 packages. The above notes should have covered these requirements for linux and
 macOS, but if you are on a different platform or still experiencing issues,
 please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
+
+If you encounter issues installing `xmlsec` on a M1 mac, you can try following a workaround
+outlined in the Mac setup [Supplementary Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md).
 
 
 ## Downloading & Running CommCare HQ
@@ -235,6 +276,29 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
     python3 -m pip install --upgrade pip
     ```
 
+#### Option C: With standard Python venv
+
+Virtual environments were introduced as a standard in Python 3.3 [with PEP 405](https://peps.python.org/pep-0405/).
+
+By convention, virtual environments use a ".venv" or "venv" directory in the
+root of the codebase. Once you have cloned the CommCare HQ repo in "Step 2"
+below, create a Python 3.9 virtual environment in the root of the codebase
+with:
+```shell
+$ python3.9 -m venv .venv
+```
+
+For convenience, you can create an alias to activate virtual environments in
+".venv" and "venv" directories. To do that, add the following to your
+`.bashrc` or `.zshrc` file:
+```shell
+alias venv='if [[ -d .venv ]] ; then source .venv/bin/activate ; elif [[ -d venv ]] ; then source venv/bin/activate ; fi'
+```
+Then you can activate virtual environments with
+```shell
+$ venv
+```
+
 
 ### Step 2: Clone this repo and install requirements
 
@@ -338,10 +402,11 @@ needs of most developers.
     source $WORKON_HOME/hq/bin/activate
     ```
 
-3. Install the `docker-compose` python library
-
+3. Install `docker compose`
+  - **Mac**: comes with Docker Desktop
+  - **Linux**:
     ```sh
-    pip install docker-compose
+    sudo apt install docker-compose-plugin
     ```
 
 4. Ensure the elasticsearch config files are world-readable (their containers
@@ -359,7 +424,7 @@ needs of most developers.
     ```sh
     ./scripts/docker up -d
     # Optionally, start only specific containers.
-    ./scripts/docker up -d postgres couch redis elasticsearch2 zookeeper kafka minio formplayer
+    ./scripts/docker up -d postgres couch redis elasticsearch5 zookeeper kafka minio formplayer
     ```
 
    **Mac OS:** Note that you will encounter many issues at this stage.
@@ -436,17 +501,66 @@ Before running any of the commands below, you should have all of the following
 running: Postgres, CouchDB, Redis, and Elasticsearch.
 The easiest way to do this is using the Docker instructions above.
 
+If you want to use a partitioned database, change
+`USE_PARTITIONED_DATABASE = False` to `True` in `localsettings.py`.
+
+You will also need to create the additional databases manually:
+
+```sh
+$ psql -h localhost -p 5432 -U commcarehq
+```
+
+(assuming that "commcarehq" is the username in `DATABASES` in
+`localsettings.py`). When prompted, use the password associated with the
+username, of course.
+
+```sh
+commcarehq=# CREATE DATABASE commcarehq_proxy;
+CREATE DATABASE
+commcarehq=# CREATE DATABASE commcarehq_p1;
+CREATE DATABASE
+commcarehq=# CREATE DATABASE commcarehq_p2;
+CREATE DATABASE
+commcarehq=# \q
+```
+
 Populate your database:
 
 ```sh
-./manage.py sync_couch_views
-./manage.py create_kafka_topics
-env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
+$ ./manage.py sync_couch_views
+$ ./manage.py create_kafka_topics
+$ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
+```
+
+If you are using a partitioned database, populate the additional
+databases too, and configure PL/Proxy:
+
+```sh
+$ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate_multi --noinput
+$ ./manage.py configure_pl_proxy_cluster --create_only
 ```
 
 You should run `./manage.py migrate` frequently, but only use the environment
 variable CCHQ_IS_FRESH_INSTALL during your initial setup.  It is used to skip a
 few tricky migrations that aren't necessary for new installs.
+
+#### Troubleshooting errors from the CouchDB Docker container
+
+If you are seeing errors from the CouchDB Docker container that include
+`database_does_not_exist` ... `"_users"`, it could be because CouchDB
+is missing its three system databases, `_users`, `_replicator` and
+`_global_changes`. The `_global_changes` database is not necessary if
+you do not expect to be using the global changes feed. You can use
+`curl` to create the databases:
+
+```sh
+$ curl -X PUT http://username:password@127.0.0.1:5984/_users
+$ curl -X PUT http://username:password@127.0.0.1:5984/_replicator
+```
+
+where "username" and "password" are the values of "COUCH_USERNAME"
+and "COUCH_PASSWORD" given in `COUCH_DATABASES` set in
+`dev_settings.py`.
 
 #### Troubleshooting Issues with `sync_couch_views`
 
@@ -510,12 +624,6 @@ To set up elasticsearch indexes run the following:
 This will create all the elasticsearch indexes (that don't already exist) and
 populate them with any data that's in the database.
 
-Next, set the aliases of the elastic indices. These can be set by a management
-command that sets the stored index names to the aliases.
-
-```sh
-./manage.py ptop_es_manage --flip_all_aliases
-```
 
 ### Step 7: Installing JavaScript and Front-End Requirements
 
@@ -568,29 +676,45 @@ for these packages.
 
 ```sh
 $ npm --version
-8.19.3
+10.2.4
 $ node --version
-v16.19.1
+v20.11.1
 ```
 
-On a clean Ubuntu 18.04 LTS install, the packaged nodejs version is v8. The
-easiest way to get onto the current nodejs v14 is
+On a clean Ubuntu 22.04 LTS install, the packaged nodejs version is expected to be v12. The
+easiest way to get onto the current nodejs v16 is
 
 ```sh
-curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
 sudo apt install -y nodejs
 ```
 
-### Step 8: Configure LESS CSS (2 Options)
+### Step 8: Configure CSS Precompilers (2 Options)
 
-#### Option 1: Let Client Side Javascript (less.js) handle it for you
+#### Requirements: Install Dart Sass
+
+At present, we are undergoing a migration from Bootstrap 3 to 5. Bootstrap 3 uses LESS
+as its CSS precompiler, and Bootstrap 5 using SASS / SCSS. You will need both installed.
+
+LESS is already taken care of by `package.json` when you run `yarn install`. In order to
+compile SASS, we need Dart Sass. There is a `sass` npm package that can be installed globally with
+`npm install -g sass`, however this installs the pure javascript version without a binary. For speed in a
+development environment, it is recommended to install `sass` with homebrew:
+
+```shell
+brew install sass/sass/sass
+```
+
+You can also view [alternative installation instructions](https://sass-lang.com/install/) if homebrew doesn't work for you.
+
+#### Option 1: Compile CSS on page-load without compression
 
 This is the setup most developers use. If you don't know which option to use,
 use this one. It's the simplest to set up and the least painful way to develop:
 just make sure your `localsettings.py` does not contain `COMPRESS_ENABLED` or
 `COMPRESS_OFFLINE` settings (or has them both set to `False`).
 
-The disadvantage is that this is a different setup than production, where LESS
+The disadvantage is that this is a different setup than production, where LESS/SASS
 files are compressed.
 
 #### Option 2: Compress OFFLINE, just like production
@@ -607,7 +731,7 @@ COMPRESS_ENABLED = True
 COMPRESS_OFFLINE = True
 ```
 
-For all STATICFILES changes (primarily LESS and JavaScript), run:
+For all STATICFILES changes (primarily LESS, SASS, and JavaScript), run:
 
 ```sh
 ./manage.py collectstatic
@@ -638,7 +762,23 @@ This can also be used to promote a user created by signing up to a superuser.
 Note that promoting a user to superuser status using this command will also give them the
 ability to assign other users as superuser in the in-app Superuser Management page.
 
-### Step 11: Running CommCare HQ
+### Step 11: Running `yarn dev`
+
+In order to build JavaScript bundles with Webpack, you will need to have `yarn dev`
+running in the background. It will watch any existing Webpack Entry Point, aka modules
+included on a page using the `js_entry` template tag.
+
+When you add a new entry point (`js_entry` tag), please remember to restart `yarn dev` so
+that it can identify the new entry point it needs to watch.
+
+To build Webpack bundles like it's done in production environments, pleas use `yarn build`.
+This command does not have a watch functionality, so it needs to be re-run every time you make
+changes to javascript files bundled by Webpack.
+
+For more information about JavaScript and Static Files, please see the
+[Dimagi JavaScript Guide](https://commcare-hq.readthedocs.io/js-guide/README.html) on Read the Docs.
+
+### Step 12: Running CommCare HQ
 
 Make sure the required services are running (PostgreSQL, Redis, CouchDB, Kafka,
 Elasticsearch).
@@ -669,6 +809,9 @@ yarn install --frozen-lockfile
 ./manage.py compilejsi18n
 ./manage.py fix_less_imports_collectstatic
 ```
+
+See the [Dimagi JavaScript Guide](https://commcare-hq.readthedocs.io/js-guide/README.html) for additional
+useful background and tips.
 
 ## Running Formplayer and submitting data with Web Apps
 
@@ -833,7 +976,7 @@ files from Vellum directly, do the following.
 To run the standard tests for CommCare HQ, run
 
 ```sh
-./manage.py test
+pytest
 ```
 
 These may not all pass in a local environment. It's often more practical, and
@@ -842,23 +985,18 @@ faster, to just run tests for the django app where you're working.
 To run a particular test or subset of tests:
 
 ```sh
-./manage.py test <test.module.path>[:<TestClass>[.<test_name>]]
+pytest <test/file/path.py>[::<TestClass>[::<test_name>]]
 
 # examples
-./manage.py test corehq.apps.app_manager
-./manage.py test corehq.apps.app_manager.tests.test_suite:SuiteTest
-./manage.py test corehq.apps.app_manager.tests.test_suite:SuiteTest.test_picture_format
-
-# alternate: file system path
-./manage.py test corehq/apps/app_manager
-./manage.py test corehq/apps/app_manager/tests/test_suite.py:SuiteTest
-./manage.py test corehq/apps/app_manager/tests/test_suite.py:SuiteTest.test_picture_format
+pytest corehq/apps/app_manager
+pytest corehq/apps/app_manager/tests/test_suite.py::SuiteTest
+pytest corehq/apps/app_manager/tests/test_suite.py::SuiteTest::test_printing
 ```
 
 To use the `pdb` debugger in tests, include the `s` flag:
 
 ```sh
-./manage.py test -s <test.module.path>[:<TestClass>[.<test_name>]]
+pytest -s <test/file/path.py>[::<TestClass>[::<test_name>]]
 ```
 
 If database tests are failing because of a `permission denied` error, give your
@@ -886,17 +1024,17 @@ To avoid having to run the database setup for each test run you can specify the
 exists:
 
 ```sh
-REUSE_DB=1 ./manage.py test corehq.apps.app_manager
+REUSE_DB=1 pytest corehq/apps/app_manager
 ```
 
 Or, to drop the current test DB and create a fresh one
 
 ```sh
-./manage.py test corehq.apps.app_manager --reusedb=reset
+pytest corehq/apps/app_manager --reusedb=reset
 ```
 
-See `corehq.tests.nose.HqdbContext` ([source](corehq/tests/nose.py)) for full
-description of `REUSE_DB` and `--reusedb`.
+See `corehq.tests.pytest_plugins.reusedb` ([source](corehq/tests/pytest_plugins/reusedb.py))
+for full description of `REUSE_DB` and `--reusedb`.
 
 
 ### Accessing the test shell and database
@@ -959,36 +1097,36 @@ ignore:unclosed:ResourceWarning'
 Personal whitelist items may also be added in localsettings.py.
 
 
-### Running tests by tag
+### Running tests by marker
 
-You can run all tests with a certain tag as follows:
+You can run all tests with a certain marker as follows:
 
 ```sh
-./manage.py test --attr=tag
+pytest -m MARKER
 ```
 
-Available tags:
+Available markers:
 
 - slow: especially slow tests
 - sharded: tests that should get run on the sharded test runner
 - es_test: Elasticsearch tests
 
-See http://nose.readthedocs.io/en/latest/plugins/attrib.html for more details.
+See https://docs.pytest.org/en/stable/example/markers.html for more details.
 
 
 ### Running on DB tests or Non-DB tests
 
 ```sh
 # only run tests that extend TestCase
-./manage.py test --db=only
+pytest --db=only
 
 # skip all tests that extend TestCase but run everything else
-./manage.py test --db=skip
+pytest --db=skip
 ```
 
 ### Running only failed tests
 
-See https://github.com/nose-devs/nose/blob/master/nose/plugins/testid.py
+See https://docs.pytest.org/en/stable/how-to/cache.html
 
 
 ## Javascript tests
@@ -1059,52 +1197,16 @@ For example:
 http://localhost:8000/mocha/app_manager/b3
 ```
 
-## Sniffer
+### Measuring test coverage
 
-You can also use sniffer to auto run the Python tests.
-
-When running, sniffer auto-runs the specified tests whenever you save a file.
-
-For example, you are working on the `retire` method of `CommCareUser`. You are
-writing a `RetireUserTestCase`, which you want to run every time you make a
-small change to the `retire` method, or to the `testCase`. Sniffer to the
-rescue!
-
-
-### Sniffer Usage
+To generate a JavaScript test coverage report, ensure the development server is
+active on port 8000 and run:
 
 ```sh
-sniffer -x <test.module.path>[:<TestClass>[.<test_name>]]
+./scripts/coverage-js.sh
 ```
 
-In our example, we would run
-
-```sh
-sniffer -x corehq.apps.users.tests.retire:RetireUserTestCase`
-```
-
-You can also add the regular `nose` environment variables, like:
-
-```sh
-REUSE_DB=1 sniffer -x <test>
-```
-
-For JavaScript tests, you can add `--js-` before the JavaScript app test name,
-for example:
-
-```sh
-sniffer -x --js-app_manager
-```
-
-You can combine the two to run the JavaScript tests when saving js files, and
-run the Python tests when saving py files as follows:
-
-```sh
-sniffer -x --js-app_manager -x corehq.apps.app_manager:AppManagerViewTest
-```
-
-### Sniffer Installation instructions
-
-<https://github.com/jeffh/sniffer/> (recommended to install `pywatchman` or
-`macfsevents` for this to actually be worthwhile otherwise it takes a long time
-to see the change).
+This script goes through the steps to prepare a report for test coverage of
+JavaScript files _that are touched by tests_, i.e., apps and files with 0% test
+coverage will not be shown. A coverage summary is output to the terminal and a
+detailed html report is generated at ``coverage-js/index.html``.

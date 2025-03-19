@@ -1,11 +1,18 @@
 from collections import OrderedDict
+from unittest.mock import patch
 
 from django.test import TestCase
 
 from corehq.apps.case_search.const import CASE_SEARCH_MAX_RESULTS
-from corehq.apps.case_search.models import CaseSearchConfig, IgnorePatterns
+from corehq.apps.case_search.models import (
+    CaseSearchConfig,
+    IgnorePatterns,
+    _parse_commcare_sort_properties,
+)
 from corehq.apps.case_search.tests.utils import get_case_search_query
+from corehq.apps.case_search.utils import QueryHelper
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
+from corehq.util.test_utils import flag_enabled
 
 DOMAIN = 'mighty-search'
 
@@ -13,8 +20,8 @@ DOMAIN = 'mighty-search'
 @es_test
 class CaseSearchTests(ElasticTestMixin, TestCase):
     def setUp(self):
-        super(CaseSearchTests, self).setUp()
-        self.config, created = CaseSearchConfig.objects.get_or_create(pk=DOMAIN, enabled=True)
+        super().setUp()
+        self.config, _ = CaseSearchConfig.objects.get_or_create(pk=DOMAIN, enabled=True)
 
     def test_add_blacklisted_ids(self):
         criteria = {
@@ -24,7 +31,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             "query": {
                 "bool": {
                     "filter": [
-                        {'terms': {'domain.exact': [DOMAIN]}},
+                        {'term': {'domain.exact': DOMAIN}},
                         {"terms": {"type.exact": ["case_type"]}},
                         {"term": {"closed": False}},
                         {
@@ -106,7 +113,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             "query": {
                 "bool": {
                     "filter": [
-                        {'terms': {'domain.exact': [DOMAIN]}},
+                        {'term': {'domain.exact': DOMAIN}},
                         {"terms": {"type.exact": ["case_type"]}},
                         {"term": {"closed": False}},
                         {"match_all": {}}
@@ -190,7 +197,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
                                                                 },
                                                                 {
                                                                     "term": {
-                                                                        "case_properties.value.exact": "this should be"
+                                                                        "case_properties.value.exact": "this should be"  # noqa: E501
                                                                     }
                                                                 }
                                                             ]
@@ -220,7 +227,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
                                                                 },
                                                                 {
                                                                     "term": {
-                                                                        "case_properties.value.exact": "this word should not be gone"
+                                                                        "case_properties.value.exact": "this word should not be gone"  # noqa: E501
                                                                     }
                                                                 }
                                                             ]
@@ -251,92 +258,50 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             validate_query=False
         )
 
+    @flag_enabled('CASE_SEARCH_INDEXED_METADATA')
     def test_multi_xpath_query(self):
         criteria = OrderedDict([
             ('_xpath_query', ["name='Frodo Baggins'", "home='Hobbiton'"]),
         ])
         expected = {
-                    "query": {
-                        "bool": {
-                            "filter": [
-                                {"terms": {"domain.exact": [DOMAIN]}},
-                                {"terms": {"type.exact": ["case_type"]}},
-                                {"term": {"closed": False}},
-                                {
-                                    "nested": {
-                                        "path": "case_properties",
-                                        "query": {
-                                            "bool": {
-                                                "filter": [
-                                                    {
-                                                        "bool": {
-                                                            "filter": [
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.key.exact": "name"
-                                                                    }
-                                                                },
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.value.exact": "Frodo Baggins"
-                                                                    }
-                                                                }
-                                                            ]
-                                                        }
-                                                    }
-                                                ],
-                                                "must": {
-                                                    "match_all": {}
+            "query": {
+                "bool": {
+                    "filter": [
+                        {"term": {"domain.exact": DOMAIN}},
+                        {"terms": {"type.exact": ["case_type"]}},
+                        {"term": {"closed": False}},
+                        {"term": {"name.exact": "Frodo Baggins"}},
+                        {
+                            "nested": {
+                                "path": "case_properties",
+                                "query": {
+                                    "bool": {
+                                        "filter": [
+                                            {
+                                                "bool": {
+                                                    "filter": [
+                                                        {"term": {"case_properties.key.exact": "home"}},
+                                                        {"term": {"case_properties.value.exact": "Hobbiton"}}
+                                                    ]
                                                 }
                                             }
-                                        }
+                                        ],
+                                        "must": {"match_all": {}}
                                     }
-                                },
-                                {
-                                    "nested": {
-                                        "path": "case_properties",
-                                        "query": {
-                                            "bool": {
-                                                "filter": [
-                                                    {
-                                                        "bool": {
-                                                            "filter": [
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.key.exact": "home"
-                                                                    }
-                                                                },
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.value.exact": "Hobbiton"
-                                                                    }
-                                                                }
-                                                            ]
-                                                        }
-                                                    }
-                                                ],
-                                                "must": {
-                                                    "match_all": {}
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
-                                {
-                                    "match_all": {}
                                 }
-                            ],
-                            "must": {
-                                "match_all": {}
                             }
-                        }
-                    },
-                    "sort": [
-                        "_score",
-                        "_doc"
+                        },
+                        {"match_all": {}}
                     ],
-                    "size": CASE_SEARCH_MAX_RESULTS
+                    "must": {"match_all": {}}
                 }
+            },
+            "sort": [
+                "_score",
+                "_doc"
+            ],
+            "size": CASE_SEARCH_MAX_RESULTS
+        }
         self.checkQuery(
             get_case_search_query(DOMAIN, ['case_type'], criteria),
             expected,
@@ -351,7 +316,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             "query": {
                 "bool": {
                     "filter": [
-                        {'terms': {'domain.exact': [DOMAIN]}},
+                        {'term': {'domain.exact': DOMAIN}},
                         {"terms": {"type.exact": ["case_type"]}},
                         {"term": {"closed": False}},
                         {"match_all": {}}
@@ -408,3 +373,62 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             expected,
             validate_query=False
         )
+
+    def test_add_custom_sort_properties(self):
+        criteria = {}
+        commcare_sort = _parse_commcare_sort_properties(["name,-date_of_birth:date"])
+        expected = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {"term": {"domain.exact": DOMAIN}},
+                        {"terms": {"type.exact": ["case_type"]}},
+                        {"term": {"closed": False}},
+                        {"match_all": {}}
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
+                }
+            },
+            "sort": [
+                {
+                    "case_properties.value.exact": {
+                        "missing": "_first",
+                        "order": "asc",
+                        "nested_path": "case_properties",
+                        "nested_filter": {
+                            "term": {
+                                "case_properties.key.exact": "name"
+                            }
+                        }
+                    }
+                },
+                {
+                    "case_properties.value.date": {
+                        "missing": "_last",
+                        "order": "desc",
+                        "nested_path": "case_properties",
+                        "nested_filter": {
+                            "term": {
+                                "case_properties.key.exact": "date_of_birth"
+                            }
+                        }
+                    }
+                }
+            ],
+            "size": CASE_SEARCH_MAX_RESULTS
+        }
+
+        self.checkQuery(
+            get_case_search_query(DOMAIN, ['case_type'], criteria, commcare_sort=commcare_sort),
+            expected
+        )
+
+
+def test_use_custom_index():
+    helper = QueryHelper(DOMAIN)
+    helper.config = CaseSearchConfig(domain=DOMAIN, index_name="my_test_index")
+    with patch('corehq.apps.es.es_query.doc_adapter_from_cname') as get_adapter:
+        helper.get_base_queryset()
+    get_adapter.assert_called_once_with('my_test_index', for_export=False)

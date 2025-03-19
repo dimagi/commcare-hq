@@ -1,0 +1,22 @@
+{
+    "slug": "icon_text_grid",
+    "filename": "icon_text_grid.xml",
+    "has_map": false,
+    "fields": ["top_left_image", "top_left_text", "top_right_image", "top_right_text",
+      "middle_left_image", "middle_left_text", "middle_right_image", "middle_right_text",
+      "bottom_left_image", "bottom_left_text"],
+    "grid": {
+        "top_left_image": {"x": 0, "y": 0, "width": 1, "height": 1, "horz-align": "center", "vert-align": "top"},
+        "top_left_text": {"x": 1, "y": 0, "width": 5, "height": 1, "horz-align": "left", "vert-align": "center"},
+        "top_right_image": {"x": 6, "y": 0, "width": 1, "height": 1, "horz-align": "center", "vert-align": "top"},
+        "top_right_text": {"x": 7, "y": 0, "width": 5, "height": 1, "horz-align": "left", "vert-align": "center"},
+
+        "middle_left_image": {"x": 0, "y": 1, "width": 1, "height": 1, "horz-align": "center", "vert-align": "top"},
+        "middle_left_text": {"x": 1, "y": 1, "width": 5, "height": 1, "horz-align": "left", "vert-align": "center"},
+        "middle_right_image": {"x": 6, "y": 1, "width": 1, "height": 1, "horz-align": "center", "vert-align": "top"},
+        "middle_right_text": {"x": 7, "y": 1, "width": 5, "height": 1, "horz-align": "left", "vert-align": "center"},
+
+        "bottom_left_image": {"x": 0, "y": 2, "width": 1, "height": 1, "horz-align": "center", "vert-align": "top"},
+        "bottom_left_text": {"x": 1, "y": 2, "width": 5, "height": 1, "horz-align": "left", "vert-align": "center"}
+    }
+}

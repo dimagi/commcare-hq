@@ -6,23 +6,34 @@ from couchforms.const import DEVICE_LOG_XMLNS
 
 from corehq.apps import es
 from corehq.apps.es import aggregations
+from corehq.apps.experiments import Experiment, RM_HQCASES
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
+experiment = Experiment(
+    campaign=RM_HQCASES,
+    old_args={},
+    new_args={"escls": es.CaseSearchES},
+)
 
-def get_es_counts_by_doc_type(domain, es_indices=None, extra_filters=None):
-    es_indices = es_indices or (es.CaseES, es.FormES, es.UserES, es.AppES, es.GroupES)
+
+@experiment
+def get_es_counts_by_doc_type(domain, es_indices=None, extra_filters=None, escls=es.CaseES):
+    if es_indices and escls is not es.CaseES:
+        es_indices = [(escls if x is es.CaseES else x) for x in es_indices]
+    es_indices = es_indices or (escls, es.FormES, es.UserES, es.AppES, es.GroupES)
     counter = Counter()
     for es_query in es_indices:
-        counter += get_index_counts_by_domain_doc_type(es_query, domain, extra_filters)
+        counter += _get_index_counts_by_domain_doc_type(es_query, domain, extra_filters)
 
     return counter
 
 
-def get_es_case_counts(domain, doc_type, gte, lt):
+@experiment(is_equal=lambda a, b: abs(a - b) < 5)
+def get_es_case_counts(domain, doc_type, gte, lt, escls=es.CaseES):
     ex = es.cases.server_modified_range(gte=gte, lt=lt)
-    return es.cases.CaseES().domain(domain).filter(ex).filter(
+    return escls().domain(domain).filter(ex).filter(
         es.filters.OR(
             es.filters.doc_type(doc_type),
             es.filters.doc_type(doc_type.lower()),
@@ -30,9 +41,10 @@ def get_es_case_counts(domain, doc_type, gte, lt):
     ).count()
 
 
-def get_es_case_range(domain):
+@experiment
+def get_es_case_range(domain, escls=es.CaseES):
     def descending_query(order):
-        result = es.CaseES().domain(domain).sort(
+        result = escls().domain(domain).sort(
             'server_modified_on', desc=order).size(1).run().raw_hits
         if len(result) == 0:
             return None
@@ -44,7 +56,7 @@ def get_es_case_range(domain):
     )
 
 
-def get_index_counts_by_domain_doc_type(es_query_class, domain, extra_filters=None):
+def _get_index_counts_by_domain_doc_type(es_query_class, domain, extra_filters=None):
     """
     :param es_query_class: Subclass of ``HQESQuery``
     :param domain: Domain name to filter on
@@ -100,7 +112,7 @@ def get_primary_db_form_counts(domain, startdate=None, enddate=None):
         for doc_type, state in doc_type_to_state.items():
             counter[doc_type] += queryset.filter(state=state).count()
 
-        where_clause = 'state & {0} = {0}'.format(XFormInstance.DELETED)
+        where_clause = 'deleted_on IS NOT NULL'
         counter['XFormInstance-Deleted'] += queryset.extra(where=[where_clause]).count()
 
     return counter
@@ -155,11 +167,12 @@ def get_primary_db_form_ids(domain, doc_type, startdate, enddate):
     return sql_ids
 
 
-def get_es_case_ids(domain, doc_type, startdate, enddate):
+@experiment
+def get_es_case_ids(domain, doc_type, startdate, enddate, escls=es.CaseES):
     datefilter = None
     if startdate or enddate:
         datefilter = es.cases.server_modified_range(gte=startdate, lt=enddate)
-    return _get_es_doc_ids(es.CaseES, domain, doc_type, datefilter)
+    return _get_es_doc_ids(escls, domain, doc_type, datefilter)
 
 
 def get_es_form_ids(domain, doc_type, startdate, enddate):

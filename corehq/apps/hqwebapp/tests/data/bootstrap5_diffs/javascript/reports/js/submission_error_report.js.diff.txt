@@ -1,0 +1,21 @@
+--- 
++++ 
+@@ -1,7 +1,7 @@
+-hqDefine("reports/js/bootstrap3/submission_error_report", [
++hqDefine("reports/js/bootstrap5/submission_error_report", [
+     'jquery',
+     'hqwebapp/js/initial_page_data',
+-    'reports/js/bootstrap3/base',
++    'reports/js/bootstrap5/base',
+     'commcarehq',
+ ], function (
+     $,
+@@ -24,7 +24,7 @@
+                     } else {
+                         $btn.text(gettext('Failed'));
+                         $btn.addClass('btn-danger');
+-                        $('#processing-error-modal').modal('show');
++                        $('#processing-error-modal').modal('show');  /* todo B5: plugin:modal */
+                         $('#processing-error-modal .error-message').text(data.failure_reason);
+                     }
+                 },

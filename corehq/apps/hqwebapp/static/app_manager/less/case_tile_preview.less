@@ -1,0 +1,50 @@
+#case-tile-preview {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr) min-content 5px;
+    grid-template-rows: repeat(9, auto) min-content 5px;
+    width: 100%;
+
+    .cell {
+        display: grid;
+        margin: 2px;
+        border: 1px @cc-brand-mid dotted;
+        position: relative;
+
+        // TODO: to be truly adorable, add transitions on changes to grid style, this doesn't work
+        transition: 2s;
+
+        &.odd-tab {
+            background-color: @cc-bg;
+        }
+
+        .content {
+            padding: 5px;
+        }
+
+        .controls {
+            visibility: hidden;
+            opacity: 0.7;
+            background-color: white;
+            text-align: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        &:hover {
+            .content {
+                position: relative;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+            }
+
+            .controls {
+                visibility: visible;
+            }
+        }
+    }
+}

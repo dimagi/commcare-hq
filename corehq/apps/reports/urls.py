@@ -1,4 +1,4 @@
-from django.conf.urls import include, re_path as url
+from django.urls import include, re_path as url
 
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.reports.standard.forms.reports import ReprocessXFormErrorView
@@ -17,7 +17,7 @@ from corehq.apps.reports.standard.cases.case_data import (
     resave_case_view,
     undo_close_case_view,
 )
-from corehq.apps.reports.standard.tableau import TableauView, tableau_visualization_ajax
+from corehq.apps.reports.standard.tableau import TableauView, get_tableau_server_ticket
 from corehq.apps.userreports.reports.view import (
     ConfigurableReportView,
     CustomConfigurableReportDispatcher,
@@ -46,11 +46,13 @@ from .views import (
     archive_form,
     case_form_data,
     delete_config,
+    soft_delete_form,
     delete_scheduled_report,
     download_form,
     edit_form,
     email_report,
     export_report,
+    get_or_create_filter_hash,
     project_health_user_details,
     reports_home,
     resave_form_view,
@@ -59,6 +61,7 @@ from .views import (
     unarchive_form,
     view_form_attachment,
     view_scheduled_report,
+    copy_cases,
 )
 
 custom_report_urls = [
@@ -76,6 +79,7 @@ release_management_urls = [
 urlpatterns = [
     ConfigurableReportView.url_pattern(),
     CustomConfigurableReportDispatcher.url_pattern(),
+    url(r'^copy_cases/$', copy_cases, name='copy_cases'),
 
     # Report Builder
     url(r'^builder/select_source/$', ReportBuilderDataSourceSelect.as_view(),
@@ -118,6 +122,7 @@ urlpatterns = [
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/correct_data/$', edit_form, name='edit_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/archive/$', archive_form, name='archive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/unarchive/$', unarchive_form, name='unarchive_form'),
+    url(r'^form_data/(?P<instance_id>[\w\-:]+)/delete/$', soft_delete_form, name='soft_delete_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/rebuild/$', resave_form_view, name='resave_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/attachment/(?P<attachment_id>.*)$', view_form_attachment),
 
@@ -152,7 +157,7 @@ urlpatterns = [
     url(r'^v2/', include('corehq.apps.reports.v2.urls')),
 
     url(r'^tableau/(?P<viz_id>[\d]+)/$', TableauView.as_view(), name=TableauView.urlname),
-    url(r'^tableau/visualization/$', tableau_visualization_ajax, name='tableau_visualization_ajax'),
+    url(r'^tableau/ticket/$', get_tableau_server_ticket, name='get_tableau_server_ticket'),
 
     # Internal Use
     url(r'^reprocess_error_form/$', ReprocessXFormErrorView.as_view(),
@@ -163,6 +168,7 @@ urlpatterns = [
     ProjectReportDispatcher.url_pattern(),
     url(r'^user_management/', include(user_management_urls)),
     url(r'^release_management/', include(release_management_urls)),
+    url(r'^get_or_create_hash/', get_or_create_filter_hash, name='get_or_create_filter_hash'),
 ]
 
 # Exporting Case List Explorer reports with the word " on*" at the end of the search query

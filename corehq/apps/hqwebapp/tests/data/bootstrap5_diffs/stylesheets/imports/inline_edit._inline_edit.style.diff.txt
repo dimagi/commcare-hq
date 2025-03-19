@@ -10,20 +10,36 @@
          &:hover {
              cursor: pointer;
 -            background-color: @cc-bg;
-+            background-color: $cc-bg;
++            background-color: $light;
              border-radius: 4px;
          }
  
          i {
 -            color: @cc-neutral-hi;
-+            color: $cc-neutral-hi;
++            color: $secondary;
              display: inline-block;
              margin-left: 5px;
              margin-top: 2px;
-@@ -49,5 +49,5 @@
+@@ -34,20 +34,11 @@
+             white-space: pre-wrap;
+         }
+     }
+-
+     .read-write {
+-        .form-group {
+-            margin-left: 0;
+-            margin-right: 0;
+-        }
+-        .langcode-container.has-lang {
+-            input, textarea {
+-                padding-right: 45px;
+-            }
+-        }
++        min-width: 350px;
+     }
  }
  
  table .ko-inline-edit .read-only:hover {
 -    background-color: @cc-neutral-hi;
-+    background-color: $cc-neutral-hi;
++    background-color: $light;
  }

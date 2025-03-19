@@ -1,0 +1,24 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div class="modal fade" id="push-warning-dialog" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label='{% trans_html_attr "Close" %}'><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">{% trans 'Push & Overwrite Matches?' %}</h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                {% blocktrans trimmed %}
+                If any of the selected downstream project spaces have unlinked configurations that match with the configurations being pushed, continuing will overwrite them and establish them as linked configurations. <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Learn More</a>
+                {% endblocktrans %}
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
+                <button type="button" class="btn btn-primary" data-bind="click: pushAndOverwrite" data-dismiss="modal">{% trans 'Push & Overwrite Matches' %}</button>
+            </div>
+        </div>
+    </div>
+</div>

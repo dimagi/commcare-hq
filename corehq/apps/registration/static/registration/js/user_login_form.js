@@ -5,17 +5,15 @@ hqDefine('registration/js/user_login_form', [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/utils/email',
-    'hqwebapp/js/knockout_bindings.ko',
+    'hqwebapp/js/bootstrap3/knockout_bindings.ko',
 ], function (
     $,
     _,
     ko,
     initialPageData,
     assertProperties,
-    emailUtils
+    emailUtils,
 ) {
-    'use strict';
-
     var loginController = function (options) {
         assertProperties.assertRequired(options, [
             'initialUsername',
@@ -74,12 +72,12 @@ hqDefine('registration/js/user_login_form', [
                     }
                 } else {
                     self.continueButtonText(self.defaultContinueText);
-                    if (expandPasswordField) self.continueToPasswordLogin();
+                    if (expandPasswordField) {self.continueToPasswordLogin();}
                 }
             })
                 .fail(function () {
                     self.continueButtonText(self.defaultContinueText);
-                    if (expandPasswordField) self.continueToPasswordLogin();
+                    if (expandPasswordField) {self.continueToPasswordLogin();}
                 });
         };
 
@@ -88,7 +86,7 @@ hqDefine('registration/js/user_login_form', [
          * "Continue <etc>" button.
          */
         self.resetLoginState = function () {
-            self.passwordFormGroup.slideUp('fast', function() {
+            self.passwordFormGroup.slideUp('fast', function () {
                 self.showContinueButton(true);
                 self.showSignInButton(false);
             });
@@ -123,7 +121,7 @@ hqDefine('registration/js/user_login_form', [
          * the continue button then re-focus on the password field if needed.
          */
         self.continueOnEnter = function () {
-            if (self.isContinueDisabled()) return;
+            if (self.isContinueDisabled()) {return;}
             self.proceedToNextStep();
         };
 
@@ -134,7 +132,7 @@ hqDefine('registration/js/user_login_form', [
             }
             if (self.isSessionExpiration) {
                 // the reason why we do this for the session expiration popup
-                // is that Azure AD does not load in cross origin iframes.
+                // is that Entra ID does not load in cross origin iframes.
                 window.open(ssoUrl);
                 window.location = self.sessionExpirationSsoIframeUrl;
             } else {
@@ -143,7 +141,7 @@ hqDefine('registration/js/user_login_form', [
         };
 
         self.continueToPasswordLogin = function () {
-            self.passwordFormGroup.slideDown('fast', function() {
+            self.passwordFormGroup.slideDown('fast', function () {
                 self.showContinueButton(false);
                 self.showSignInButton(true);
                 self.passwordField.focus();
@@ -163,5 +161,5 @@ hqDefine('registration/js/user_login_form', [
 
     return {
         loginController: loginController,
-    }
+    };
 });

@@ -3,6 +3,7 @@ from collections import namedtuple
 from dimagi.utils.couch.database import iter_bulk_delete, iter_docs
 
 from corehq.apps.es import UserES
+from corehq.apps.es.users import web_users, mobile_users
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser, CouchUser, Invitation, UserRole
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
@@ -41,7 +42,7 @@ def get_display_name_for_user_id(domain, user_id, default=None):
 def get_user_id_and_doc_type_by_domain(domain):
     key = ['active', domain]
     return [
-        {"id": u['id'], "doc_type":u['key'][2]}
+        {"id": u['id'], "doc_type": u['key'][2]}
         for u in CouchUser.view(
             'users/by_domain',
             reduce=False,
@@ -192,6 +193,10 @@ def _get_invitations_by_filters(domain, user_filters, count_only=False):
         filters["role"] = role.get_qualified_id()
 
     invitations = Invitation.by_domain(domain, **filters)
+    if 'web_user_assigned_location_ids' in user_filters.keys():
+        locations_accessible_to_user = SQLLocation.objects.get_locations_and_children(
+            user_filters['web_user_assigned_location_ids'])
+        invitations = invitations.filter(assigned_locations__in=locations_accessible_to_user)
     if count_only:
         return invitations.count()
     return invitations
@@ -218,6 +223,10 @@ def get_all_user_id_username_pairs_by_domain(domain, include_web_users=True, inc
         include_web_users=include_web_users,
         include_mobile_users=include_mobile_users
     ))
+
+
+def get_active_web_usernames_by_domain(domain):
+    return (row['key'][3] for row in get_all_user_rows(domain, include_mobile_users=False, include_inactive=False))
 
 
 def get_web_user_count(domain, include_inactive=True):
@@ -391,3 +400,14 @@ def get_practice_mode_mobile_workers(domain):
         .fields(['_id', 'username'])
         .run().hits
     )
+
+
+def get_all_user_search_query(search_string):
+    query = (UserES()
+             .remove_default_filters()
+             .OR(web_users(), mobile_users()))
+    if search_string:
+        fields = ['username', 'first_name', 'last_name', 'phone_numbers',
+                  'domain_membership.domain', 'domain_memberships.domain']
+        query = query.search_string_query(search_string, fields)
+    return query

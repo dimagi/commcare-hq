@@ -13,6 +13,7 @@ from crispy_forms.bootstrap import StrictButton
 import langcodes
 from corehq.apps.hqwebapp.crispy import FormActions, HQFormHelper, LinkButton
 from corehq.apps.hqwebapp.fields import MultiEmailField
+from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
 from corehq.apps.hqwebapp.widgets import SelectToggle
 from corehq.apps.reports.models import TableauServer, TableauVisualization
 from corehq.apps.saved_reports.models import (
@@ -235,22 +236,86 @@ class ScheduledReportForm(forms.Form):
 
 
 class EmailReportForm(forms.Form):
-    subject = forms.CharField(required=False)
-    send_to_owner = forms.BooleanField(required=False)
-    attach_excel = forms.BooleanField(required=False)
-    recipient_emails = MultiEmailField(required=False)
-    notes = forms.CharField(required=False)
+    subject = forms.CharField(required=False, label=_('Subject'))
+    send_to_owner = forms.BooleanField(required=False, label=_('Send to me'))
+    recipient_emails = MultiEmailField(required=False, label=_('Additional Recipients'))
+    notes = forms.CharField(required=False, label=_('Report notes'), widget=forms.Textarea(attrs={"rows": 3}))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if get_bootstrap_version() == BOOTSTRAP_5:
+            self._setup_bootstrap5()
+        else:
+            self._setup_bootstrap3()
+
+    def _setup_bootstrap3(self):
+        self.helper = HQFormHelper()
+        self.helper.field_class = "col-xs-10"
+        self.helper.layout = crispy.Layout(
+            crispy.Div(
+                crispy.Field('subject', data_bind="value: subject"),
+                crispy.Field('send_to_owner', data_bind="checked: send_to_owner"),
+                crispy.Field('recipient_emails', css_id='email-report-recipient_emails',
+                             data_bind="selectedOptions: recipient_emails"),
+                crispy.Field('notes', data_bind="value: notes"),
+                css_class='modal-body'
+            ),
+            FormActions(
+                crispy.Div(
+                    crispy.Button('close', _('Close'), css_class='btn btn-default cancel-button',
+                                  data_bind='click: resetModal', data_dismiss='modal'),
+                    crispy.Submit('submit_btn', _('Send Email'), css_class="btn btn-primary send-button",
+                                  data_bind='click: sendEmail', data_loading_text=_('Sending...')),
+                    css_class='pull-right',
+                )
+            )
+        )
+
+    def _setup_bootstrap5(self):
+        self.helper = FormHelper()
+        self.helper.layout = crispy.Layout(
+            crispy.Div(
+                crispy.Field('subject', data_bind="value: subject"),
+                crispy.Field('send_to_owner', data_bind="checked: send_to_owner"),
+                crispy.Field('recipient_emails', css_id='email-report-recipient_emails',
+                             data_bind="selectedOptions: recipient_emails"),
+                crispy.Field('notes', data_bind="value: notes"),
+                css_class='modal-body'
+            ),
+            crispy.Div(
+                crispy.Button('close', _('Close'), css_class='btn btn-outline-primary cancel-button',
+                              data_bind='click: resetModal', data_bs_dismiss='modal'),
+                crispy.Submit('submit_btn', _('Send Email'), css_class="btn btn-primary send-button",
+                              data_bind='click: sendEmail', data_loading_text=_('Sending...')),
+                css_class='modal-footer',
+            )
+        )
 
     def clean(self):
-        cleaned_data = super(EmailReportForm, self).clean()
+        cleaned_data = super().clean()
         _verify_email(cleaned_data)
         return cleaned_data
+
+    def get_readable_errors(self):
+        errors = []
+
+        if not self.errors:
+            return errors
+
+        for field in self.errors:
+            field_name = self.fields[field].label if field in self.fields else ''
+            for error in self.errors.get_json_data(escape_html=True)[field]:
+                prefix = f'{field_name}: ' if field_name else ''
+                errors.append(f'{prefix}{error["message"]}')
+
+        return errors
 
 
 def _verify_email(cleaned_data):
     if ('recipient_emails' in cleaned_data
-        and not (cleaned_data['recipient_emails'] or
-                     cleaned_data['send_to_owner'])):
+        and not (cleaned_data['recipient_emails']
+            or cleaned_data['send_to_owner'])):
         raise forms.ValidationError("You must specify at least one "
                                     "valid recipient")
 
@@ -279,6 +344,21 @@ class TableauServerForm(forms.Form):
         label=_('Target Site'),
     )
 
+    get_reports_using_role = forms.BooleanField(
+        label=_("Get Tableau reports using role name"),
+        required=False,
+        help_text=_("If checked, CommCareHQ will request embedded reports from Tableau Server using the user's "
+                    "role name instead of the user's username (e.g. \"HQ/Field Implementer\" instead of "
+                    "\"HQ/Leandra@dimagi.com\")")
+    )
+
+    tableau_groups_allowed = forms.MultipleChoiceField(
+        label=_("Allowed Tableau Groups"),
+        choices=[],
+        required=False,
+        widget=forms.CheckboxSelectMultiple()
+    )
+
     class Meta:
         model = TableauServer
         fields = [
@@ -286,12 +366,15 @@ class TableauServerForm(forms.Form):
             'server_name',
             'validate_hostname',
             'target_site',
+            'get_reports_using_role'
+            'tableau_groups_allowed'
         ]
 
-    def __init__(self, data, *args, **kwargs):
+    def __init__(self, data, user_syncing_config={}, *args, **kwargs):
         self.domain = kwargs.pop('domain')
         kwargs['initial'] = self.initial_data
         super(TableauServerForm, self).__init__(data, *args, **kwargs)
+        self.fields['tableau_groups_allowed'].choices = []
 
         self.helper = HQFormHelper()
         self.helper.form_method = 'POST'
@@ -308,10 +391,33 @@ class TableauServerForm(forms.Form):
             crispy.Div(
                 crispy.Field('target_site'),
             ),
+            crispy.Div(
+                crispy.Field('get_reports_using_role'),
+            ),
             FormActions(
                 crispy.Submit('submit_btn', 'Submit')
             )
         )
+
+        if user_syncing_config['user_syncing_enabled'] and user_syncing_config.get('server_reachable'):
+            self._setup_tableau_groups_allowed_field(kwargs, user_syncing_config)
+            self.add_allowed_tableau_groups_field = bool(self.fields['tableau_groups_allowed'].choices)
+            if self.add_allowed_tableau_groups_field:
+                self.helper.layout.insert(
+                    -1,
+                    'tableau_groups_allowed',
+                )
+        else:
+            self.add_allowed_tableau_groups_field = False
+
+    def _setup_tableau_groups_allowed_field(self, kwargs, user_syncing_config):
+        self.all_tableau_groups = user_syncing_config['all_tableau_groups']
+        allowed_tableau_groups_initial = kwargs['initial']['allowed_tableau_groups']
+        self.fields['tableau_groups_allowed'].initial = []
+        for i, group in enumerate(self.all_tableau_groups):
+            self.fields['tableau_groups_allowed'].choices.append((i, group.name))
+            if allowed_tableau_groups_initial and group.name in allowed_tableau_groups_initial:
+                self.fields['tableau_groups_allowed'].initial.append(i)
 
     @property
     @memoized
@@ -328,19 +434,31 @@ class TableauServerForm(forms.Form):
             'server_name': self._existing_config.server_name,
             'validate_hostname': self._existing_config.validate_hostname,
             'target_site': self._existing_config.target_site,
+            'get_reports_using_role': self._existing_config.get_reports_using_role,
+            'allowed_tableau_groups': self._existing_config.allowed_tableau_groups,
         }
 
     def save(self):
         self._existing_config.server_type = self.cleaned_data['server_type']
         self._existing_config.server_name = self.cleaned_data['server_name']
         self._existing_config.validate_hostname = self.cleaned_data['validate_hostname']
+        self._existing_config.get_reports_using_role = self.cleaned_data['get_reports_using_role']
         self._existing_config.target_site = self.cleaned_data['target_site']
+        if self.add_allowed_tableau_groups_field:
+            self._existing_config.allowed_tableau_groups = [
+                self.all_tableau_groups[int(i)].name for i in self.cleaned_data['tableau_groups_allowed']]
         self._existing_config.save()
 
 
 class TableauVisualizationForm(forms.ModelForm):
     view_url = forms.CharField(
         label=_('View URL'),
+    )
+    location_safe = forms.BooleanField(
+        label=_('Visible to location-restricted users'),
+        help_text=_('If checked, the visualization will be visible to users with roles that do not have '
+                    '"Full Organization Access"'),
+        required=False,
     )
 
     class Meta:
@@ -349,6 +467,7 @@ class TableauVisualizationForm(forms.ModelForm):
             'title',
             'server',
             'view_url',
+            'location_safe',
         ]
 
     def __init__(self, domain, *args, **kwargs):
@@ -364,6 +483,7 @@ class TableauVisualizationForm(forms.ModelForm):
             crispy.Field('title'),
             crispy.Field('server'),
             crispy.Field('view_url'),
+            crispy.Field('location_safe'),
 
             FormActions(
                 StrictButton(
@@ -398,6 +518,7 @@ class UpdateTableauVisualizationForm(TableauVisualizationForm):
             'title',
             'server',
             'view_url',
+            'location_safe',
         ]
 
     @property
@@ -411,6 +532,7 @@ class UpdateTableauVisualizationForm(TableauVisualizationForm):
                 crispy.Field('title'),
                 crispy.Field('server'),
                 crispy.Field('view_url'),
+                crispy.Field('location_safe'),
                 css_class='modal-body',
             ),
             FormActions(

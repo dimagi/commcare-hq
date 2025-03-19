@@ -1,5 +1,14 @@
-/* globals hqDefine, hqImport, ko */
-hqDefine('app_manager/js/releases/language_profiles', function () {
+hqDefine("app_manager/js/releases/language_profiles", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "hqwebapp/js/bootstrap3/main",
+], function (
+    $,
+    ko,
+    _,
+    main,
+) {
     var _p = {};
     _p.profileUrl = 'profiles/';
 
@@ -25,7 +34,7 @@ hqDefine('app_manager/js/releases/language_profiles', function () {
         self.app_langs = appLangs;
         self.enable_practice_users = enablePracticeUsers;
         self.practice_users = [{'id': '', 'text': ''}].concat(practiceUsers);
-        self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+        self.saveButton = main.initSaveButton({
             unsavedMessage: gettext("You have unsaved changes to your application profiles"),
             save: function () {
                 var postProfiles = [];

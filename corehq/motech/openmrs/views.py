@@ -15,9 +15,10 @@ from dimagi.utils.web import json_response
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq.motech.const import PASSWORD_PLACEHOLDER
+from corehq.motech.const import PASSWORD_PLACEHOLDER, ALGO_AES_CBC
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.forms import (
     OpenmrsConfigForm,
@@ -37,9 +38,10 @@ from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.openmrs.tasks import import_patients_to_domain
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.views import AddCaseRepeaterView, EditRepeaterView
-from corehq.motech.utils import b64_aes_encrypt
+from corehq.motech.utils import b64_aes_cbc_encrypt
 
 
+@use_bootstrap5
 @login_and_domain_required
 @require_http_methods(["GET", "POST"])
 def config_openmrs_repeater(request, domain, repeater_id):
@@ -82,7 +84,7 @@ class OpenmrsModelListViewHelper(object):
     @property
     @memoized
     def repeater(self):
-        repeater = OpenmrsRepeater.objects.get(repeater_id=self.repeater_id)
+        repeater = OpenmrsRepeater.objects.get(id=self.repeater_id)
         assert repeater.domain == self.domain
         return repeater
 
@@ -114,7 +116,7 @@ def openmrs_person_attribute_types(request, domain, repeater_id):
 def openmrs_raw_api(request, domain, repeater_id, rest_uri):
     get_params = dict(request.GET)
     no_links = get_params.pop('links', None) is None
-    repeater = OpenmrsRepeater.objects.get(repeater_id=repeater_id)
+    repeater = OpenmrsRepeater.objects.get(id=repeater_id)
     assert repeater.domain == domain
     raw_json = repeater.requests.get('/ws/rest/v1' + rest_uri, get_params).json()
     if no_links:
@@ -124,14 +126,12 @@ def openmrs_raw_api(request, domain, repeater_id, rest_uri):
 
 @login_and_domain_required
 def openmrs_test_fire(request, domain, repeater_id, record_id):
-    repeater = OpenmrsRepeater.objects.get(repeater_id=repeater_id)
-    record = RepeatRecord.get(record_id)
-    assert repeater.domain == domain
-    assert record.domain == domain
-    assert record.repeater_id == repeater.repeater_id
+    repeater = OpenmrsRepeater.objects.get(domain=domain, id=repeater_id)
+    record = RepeatRecord.objects.get(domain=domain, id=record_id)
+    assert record.repeater_id == repeater.id
 
-    attempt = repeater.fire_for_record(record)
-    return JsonResponse(attempt.to_json())
+    repeater.fire_for_record(record)
+    return JsonResponse({'status': 'OK'}, status=200)
 
 
 @login_and_domain_required
@@ -141,6 +141,7 @@ def openmrs_import_now(request, domain):
     return JsonResponse({'status': 'Accepted'}, status=202)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(require_permission(HqPermissions.edit_motech), name='dispatch')
 @method_decorator(toggles.OPENMRS_INTEGRATION.required_decorator(), name='dispatch')
 class OpenmrsImporterView(BaseProjectSettingsView):
@@ -154,7 +155,7 @@ class OpenmrsImporterView(BaseProjectSettingsView):
                 if value == PASSWORD_PLACEHOLDER:
                     continue  # Skip updating the password if it hasn't been changed.
                 else:
-                    value = b64_aes_encrypt(value)
+                    value = f'${ALGO_AES_CBC}${b64_aes_cbc_encrypt(value)}'
             elif key == 'report_params':
                 value = json.loads(value)
             elif key == 'column_map':
@@ -196,9 +197,9 @@ class OpenmrsImporterView(BaseProjectSettingsView):
             dict_['column_map'] = json.dumps([
                 {k: v for k, v in dict(m).items() if not (
                     # Drop '"doc_type": ColumnMapping' from each column mapping.
-                    k == 'doc_type' or
+                    k == 'doc_type'
                     # Drop "data_type" if it's not specified
-                    (k == 'data_type' and v is None)
+                    or (k == 'data_type' and v is None)
                 )}
                 for m in dict_['column_map']
             ], indent=2)

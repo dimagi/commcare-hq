@@ -1,5 +1,4 @@
 import uuid
-from collections import defaultdict
 from datetime import datetime
 from functools import partial
 
@@ -88,6 +87,7 @@ class LocationType(models.Model):
     administrative = models.BooleanField(default=False)
     shares_cases = models.BooleanField(default=False)
     view_descendants = models.BooleanField(default=False)
+    has_users = models.BooleanField(default=True)
 
     # Sync optimization controls
     _expand_from = models.ForeignKey(
@@ -95,10 +95,21 @@ class LocationType(models.Model):
         null=True,
         related_name='+',
         db_column='expand_from',
-        on_delete=models.CASCADE,
+        on_delete=models.RESTRICT,
     )  # levels below this location type that we start expanding from
     _expand_from_root = models.BooleanField(default=False, db_column='expand_from_root')
-    expand_to = models.ForeignKey('self', null=True, related_name='+', on_delete=models.CASCADE)  # levels above this type that are synced
+    expand_to = models.ForeignKey(
+        "self",
+        null=True,
+        related_name="+",
+        on_delete=models.RESTRICT,
+    )  # levels above this type that are synced
+    expand_view_child_data_to = models.ForeignKey(
+        "self",
+        null=True,
+        related_name="+",
+        on_delete=models.RESTRICT,
+    )
     include_without_expanding = models.ForeignKey(
         'self',
         null=True,
@@ -153,23 +164,30 @@ class LocationType(models.Model):
     def commtrack_enabled(self):
         return Domain.get_by_name(self.domain).commtrack_enabled
 
-    def _populate_stock_levels(self, config):
+    def _populate_stock_levels(self, config, update_fields=None):
         self.emergency_level = config.emergency_level
         self.understock_threshold = config.understock_threshold
         self.overstock_threshold = config.overstock_threshold
+        if update_fields is not None:
+            update_fields.extend(['emergency_level', 'understock_threshold', 'overstock_threshold'])
 
     def save(self, *args, **kwargs):
+        additional_update_fields = []
         if not self.code:
             from corehq.apps.commtrack.util import unicode_slug
             self.code = unicode_slug(self.name)
+            additional_update_fields.append('code')
         if not self.commtrack_enabled:
             self.administrative = True
+            additional_update_fields.append('administrative')
 
         config = stock_level_config_for_domain(self.domain, self.commtrack_enabled)
         if config:
-            self._populate_stock_levels(config)
+            self._populate_stock_levels(config, update_fields=additional_update_fields)
 
         is_not_first_save = self.pk is not None
+        if 'update_fields' in kwargs:
+            kwargs['update_fields'].extend(additional_update_fields)
         super(LocationType, self).save(*args, **kwargs)
 
         if is_not_first_save:
@@ -390,12 +408,16 @@ class SQLLocation(AdjListModel):
         from corehq.apps.commtrack.models import sync_supply_point
         from .document_store import publish_location_saved
 
+        additional_update_fields = []
         if not self.location_id:
             self.location_id = uuid.uuid4().hex
+            additional_update_fields.append('location_id')
 
         with transaction.atomic():
-            set_site_code_if_needed(self)
-            sync_supply_point(self)
+            set_site_code_if_needed(self, update_fields=additional_update_fields)
+            sync_supply_point(self, update_fields=additional_update_fields)
+            if 'update_fields' in kwargs:
+                kwargs['update_fields'].extend(additional_update_fields)
             super(SQLLocation, self).save(*args, **kwargs)
 
         publish_location_saved(self.domain, self.location_id)
@@ -523,8 +545,7 @@ class SQLLocation(AdjListModel):
     def products(self, value):
         # this will set stocks_all_products to true if the user
         # has added all products in the domain to this location
-        self.stocks_all_products = (set(value) ==
-                                    set(SQLProduct.by_domain(self.domain)))
+        self.stocks_all_products = set(value) == set(SQLProduct.by_domain(self.domain))
 
         self._products.set(value)
 
@@ -695,10 +716,6 @@ class SQLLocation(AdjListModel):
         return self.parent.location_id if self.parent else None
 
     @property
-    def location_type_object(self):
-        return self.location_type
-
-    @property
     def location_type_name(self):
         return self.location_type.name
 
@@ -750,7 +767,7 @@ def get_location(location_id, domain=None):
         return SQLLocation.objects.get(location_id=location_id)
 
 
-def set_site_code_if_needed(location):
+def set_site_code_if_needed(location, update_fields=None):
     from corehq.apps.commtrack.util import generate_code
     if not location.site_code:
         all_codes = [
@@ -760,6 +777,8 @@ def set_site_code_if_needed(location):
                                 .values_list('site_code', flat=True))
         ]
         location.site_code = generate_code(location.name, all_codes)
+        if update_fields is not None:
+            update_fields.append('site_code')
 
 
 class LocationFixtureConfiguration(models.Model):
@@ -778,24 +797,6 @@ class LocationFixtureConfiguration(models.Model):
             return cls.objects.get(domain=domain)
         except cls.DoesNotExist:
             return cls(domain=domain)
-
-
-def get_case_sharing_groups_for_locations(locations, for_user_id=None):
-    # safety check to make sure all locations belong to same domain
-    assert len(set([l.domain for l in locations])) < 2
-
-    for location in locations:
-        if location.location_type.shares_cases:
-            yield location.case_sharing_group_object(for_user_id)
-
-    location_ids = [l.pk for l in locations if l.location_type.view_descendants]
-    descendants = []
-    if location_ids:
-        where = Q(domain=locations[0].domain, parent_id__in=location_ids)
-        descendants = SQLLocation.objects.get_queryset_descendants(where).filter(
-            location_type__shares_cases=True, is_archived=False)
-    for loc in descendants:
-        yield loc.case_sharing_group_object(for_user_id)
 
 
 def get_domain_locations(domain):

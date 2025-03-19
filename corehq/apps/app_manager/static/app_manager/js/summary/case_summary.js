@@ -6,8 +6,9 @@ hqDefine('app_manager/js/summary/case_summary',[
     'hqwebapp/js/assert_properties',
     'app_manager/js/summary/models',
     'app_manager/js/menu',  // enable lang switcher and "Updates to publish" banner
-    'hqwebapp/js/knockout_bindings.ko', // popover
-    'hqwebapp/js/components.ko',    // search box
+    'hqwebapp/js/bootstrap3/knockout_bindings.ko', // popover
+    'hqwebapp/js/components/search_box',
+    'commcarehq',
 ], function ($, _, ko, initialPageData, assertProperties, models) {
 
     var caseTypeModel = function (caseType) {
@@ -126,7 +127,7 @@ hqDefine('app_manager/js/summary/case_summary',[
         $("#case-summary-header").koApplyBindings(caseSummaryController);
         models.initVersionsBox(
             $("#version-selector"),
-            {id: initialPageData.get("app_id"), text: initialPageData.get("app_version")}
+            {id: initialPageData.get("app_id"), text: initialPageData.get("app_version")},
         );
         models.initMenu([caseSummaryContent], caseSummaryMenu);
         models.initSummary(caseSummaryContent, caseSummaryController, "#case-summary");

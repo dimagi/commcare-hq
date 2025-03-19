@@ -71,8 +71,12 @@
       <div class="form-actions">
         <div class="col-sm-offset-3 col-md-offset-2 controls col-sm-9 col-md-8 col-lg-6">
           <button type="button" class="btn btn-primary" data-bind="click: pushContent, enable: enablePushButton">
-            <i class="fa fa-refresh fa-spin icon-refresh icon-spin" data-bind="visible: pushInProgress"></i>
+            <i class="fa fa-refresh fa-spin icon-refresh icon-spin" data-bind="visible: pushType() === PUSH_TYPE_NORMAL"></i>
             {% trans "Push Content" %}
+          </button>
+          <button type="button" class="btn btn-default" id="overwrite-btn" data-toggle="modal" data-target="#push-warning-dialog" data-bind="enable: enablePushButton">
+            <i class="fa fa-refresh fa-spin icon-refresh icon-spin" data-bind="visible: pushType() === PUSH_TYPE_OVERWRITE"></i>
+            {% trans "Push & Overwrite Matches" %}
           </button>
         </div>
       </div>
@@ -86,4 +90,5 @@
       {% endblocktrans %}
     </p>
   </div>
+  {% include 'linked_domain/partials/push_warning_dialog.html' %}
 </div>

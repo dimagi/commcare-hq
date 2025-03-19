@@ -1,4 +1,4 @@
-from django.conf.urls import include, re_path as url
+from django.urls import include, re_path as url
 
 from corehq.apps.api.urls import CommCareHqApi
 from corehq.apps.zapier.api.v0_5 import (

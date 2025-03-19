@@ -1,4 +1,4 @@
-from django.conf.urls import include, re_path as url
+from django.urls import include, re_path as url
 
 from corehq.apps.app_manager.views import (
     AppCaseSummaryView,
@@ -74,7 +74,6 @@ from corehq.apps.app_manager.views import (
     revert_to_copy,
     save_copy,
     short_odk_url,
-    short_url,
     toggle_build_profile,
     undo_delete_app,
     undo_delete_form,
@@ -104,10 +103,13 @@ from ..hqwebapp.decorators import waf_allow
 
 app_urls = [
     url(r'^languages/$', view_app, name='app_languages'),
-    url(r'^languages/translations/download/$', download_bulk_ui_translations, name='download_bulk_ui_translations'),
+    url(r'^languages/translations/download/$', download_bulk_ui_translations,
+        name='download_bulk_ui_translations'),
     url(r'^languages/translations/upload/$', upload_bulk_ui_translations, name='upload_bulk_ui_translations'),
-    url(r'^languages/bulk_app_translations/download/$', download_bulk_app_translations, name='download_bulk_app_translations'),
-    url(r'^languages/bulk_app_translations/upload/$', upload_bulk_app_translations, name='upload_bulk_app_translations'),
+    url(r'^languages/bulk_app_translations/download/$', download_bulk_app_translations,
+        name='download_bulk_app_translations'),
+    url(r'^languages/bulk_app_translations/upload/$', upload_bulk_app_translations,
+        name='upload_bulk_app_translations'),
     url(r'^multimedia_ajax/$', multimedia_ajax, name='app_multimedia_ajax'),
     url(r'^multimedia_sizes/$', get_multimedia_sizes, name='get_multimedia_sizes'),
     url(r'^multimedia_sizes/(?P<build_profile_id>[\w-]+)/$', get_multimedia_sizes,
@@ -249,7 +251,6 @@ urlpatterns = [
     url(r'^odk/(?P<app_id>[\w-]+)/install/$', odk_install, name="odk_install"),
     url(r'^odk/(?P<app_id>[\w-]+)/media_install/$', odk_install, {'with_media': True}, name="odk_media_install"),
 
-    url(r'^odk/(?P<app_id>[\w-]+)/short_url/$', short_url, name='short_url'),
     url(r'^odk/(?P<app_id>[\w-]+)/short_odk_media_url/$', short_odk_url, {'with_media': True}),
     url(r'^odk/(?P<app_id>[\w-]+)/short_odk_url/$', short_odk_url),
 
@@ -271,7 +272,8 @@ urlpatterns = [
     url(r'^download/(?P<app_id>[\w-]+)/',
         include('corehq.apps.app_manager.download_urls')),
 
-    url(r'^diff/(?P<first_app_id>[\w-]+)/(?P<second_app_id>[\w-]+)/$', AppDiffView.as_view(), name=AppDiffView.urlname),
+    url(r'^diff/(?P<first_app_id>[\w-]+)/(?P<second_app_id>[\w-]+)/$', AppDiffView.as_view(),
+        name=AppDiffView.urlname),
     url(r'existing_case_types', ExistingCaseTypesView.as_view(), name=ExistingCaseTypesView.urlname),
 
     url(r'^', include('custom.ucla.urls')),

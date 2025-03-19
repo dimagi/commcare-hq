@@ -57,4 +57,4 @@ class Command(BaseCommand):
             bounced_email__email=bounced_email
         ).all().delete()
         BouncedEmail.objects.filter(email=bounced_email).all().delete()
-        self.stdout.write(f'\nDone.\n\n')
+        self.stdout.write('\nDone.\n\n')

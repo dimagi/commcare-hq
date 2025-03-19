@@ -1,4 +1,4 @@
-/* globals Array, window */
+
 /**
  *  Handles communication with the google analytics API. gtag is the replacement
  *  for Google's old analytics.js (ga).
@@ -14,9 +14,8 @@ hqDefine('analytix/js/google', [
     _,
     initialAnalytics,
     logging,
-    utils
+    utils,
 ) {
-    'use strict';
     var _get = initialAnalytics.getFn('google'),
         _logger = logging.getLoggerForApi('Google Analytics'),
         _ready = $.Deferred();
@@ -123,7 +122,7 @@ hqDefine('analytix/js/google', [
                 element,
                 function (callbackFn) {
                     trackEvent(eventCategory, eventAction, eventLabel, eventValue, eventParameters, callbackFn);
-                }
+                },
             );
             _logger.debug.log(_logger.fmt.labelArgs(["Element", "Category", "Action", "Label", "Value", "Parameters"], originalArgs), "Added Click Tracker");
         });

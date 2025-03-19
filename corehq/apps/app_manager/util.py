@@ -21,11 +21,15 @@ from dimagi.utils.couch import CriticalSection
 from corehq import toggles
 from corehq.apps.app_manager.const import (
     AUTO_SELECT_USERCASE,
+    CALCULATED_SORT_FIELD_RX,
     REGISTRY_WORKFLOW_LOAD_CASE,
     REGISTRY_WORKFLOW_SMART_LINK,
     USERCASE_ID,
     USERCASE_PREFIX,
     USERCASE_TYPE,
+    MOBILE_UCR_V1_FIXTURE_IDENTIFIER,
+    MOBILE_UCR_V1_ALL_REFERENCES,
+    MOBILE_UCR_V1_CASE_LIST_REFERENCES_PATTERN,
 )
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
 from corehq.apps.app_manager.exceptions import (
@@ -196,12 +200,16 @@ def save_xform(app, form, xml):
 
     return xml
 
+
 CASE_TYPE_REGEX = r'^[\w-]+$'
 _case_type_regex = re.compile(CASE_TYPE_REGEX)
 
 
 def is_valid_case_type(case_type, module):
     """
+    Returns ``True`` if ``case_type`` is valid for ``module``
+
+    >>> from corehq.apps.app_manager.const import USERCASE_TYPE
     >>> from corehq.apps.app_manager.models import Module, AdvancedModule
     >>> is_valid_case_type('foo', Module())
     True
@@ -213,9 +221,9 @@ def is_valid_case_type(case_type, module):
     False
     >>> is_valid_case_type(None, Module())
     False
-    >>> is_valid_case_type('commcare-user', Module())
+    >>> is_valid_case_type(USERCASE_TYPE, Module())
     False
-    >>> is_valid_case_type('commcare-user', AdvancedModule())
+    >>> is_valid_case_type(USERCASE_TYPE, AdvancedModule())
     True
     """
     from corehq.apps.app_manager.models import AdvancedModule
@@ -308,9 +316,9 @@ def languages_mapping():
     if not mapping:
         with open('submodules/langcodes/langs.json', encoding='utf-8') as langs_file:
             lang_data = json.load(langs_file)
-            mapping = dict([(l["two"], l["names"]) for l in lang_data])
+            mapping = dict([(lang["two"], lang["names"]) for lang in lang_data])
         mapping["default"] = ["Default Language"]
-        cache.set('__languages_mapping', mapping, 12*60*60)
+        cache.set('__languages_mapping', mapping, 12 * 60 * 60)
     return mapping
 
 
@@ -356,8 +364,8 @@ def get_commcare_builds(request_user):
 
 
 def actions_use_usercase(actions):
-    return (('usercase_update' in actions and actions['usercase_update'].update) or
-            ('usercase_preload' in actions and actions['usercase_preload'].preload))
+    return (('usercase_update' in actions and actions['usercase_update'].update)
+            or ('usercase_preload' in actions and actions['usercase_preload'].preload))
 
 
 def advanced_actions_use_usercase(actions):
@@ -405,10 +413,10 @@ def module_offers_search(module):
     from corehq.apps.app_manager.models import AdvancedModule, Module, ShadowModule
 
     return (
-        isinstance(module, (Module, AdvancedModule, ShadowModule)) and
-        module.search_config and
-        (module.search_config.properties or
-         module.search_config.default_properties)
+        isinstance(module, (Module, AdvancedModule, ShadowModule))
+        and module.search_config
+        and (module.search_config.properties
+        or module.search_config.default_properties)
     )
 
 
@@ -419,6 +427,15 @@ def module_uses_inline_search(module):
         module_offers_search(module)
         and module.search_config.inline_search
         and module.search_config.auto_launch
+    )
+
+
+def module_uses_inline_search_with_parent_relationship_parent_select(module):
+    return (
+        module_uses_inline_search(module)
+        and hasattr(module, 'parent_select')
+        and module.parent_select.active
+        and module.parent_select.relationship == 'parent'
     )
 
 
@@ -521,6 +538,13 @@ def _app_callout_templates():
         data = []
     while True:
         yield data
+
+
+@quickcache([], timeout=60 * 60 * 24 * 7)  # 1 week
+def app_callout_templates_ids():
+    return {t['id'] for t in next(_app_callout_templates())}
+
+
 app_callout_templates = _app_callout_templates()
 
 
@@ -564,6 +588,22 @@ def get_sort_and_sort_only_columns(detail_columns, sort_elements):
         sort_element, order = sort_elements.pop(column.field, (None, None))
         if sort_element:
             sort_columns[column.field] = (sort_element, order)
+
+    # pull out sort elements that refer to calculated columns
+    for field in list(sort_elements):
+        match = re.match(CALCULATED_SORT_FIELD_RX, field)
+        if match:
+            element, element_order = sort_elements.pop(field)
+            column_index = int(match.group(1))
+            try:
+                column = detail_columns[column_index]
+            except IndexError:
+                raise AppManagerException(f"Sort column references an unknown column at index: {column_index}")
+            if not column.useXpathExpression:
+                raise AppManagerException(
+                    f"Calculation sort column references an incorrect column: {column.field}"
+                )
+            sort_columns[column.field] = (element, element_order)
 
     sort_only_elements = [
         SortOnlyElement(field, element, element_order)
@@ -645,7 +685,11 @@ def get_latest_app_release_by_location(domain, location_id, app_id):
     Child location's setting takes precedence over parent
     """
     from corehq.apps.app_manager.models import AppReleaseByLocation
-    location = SQLLocation.active_objects.get(location_id=location_id)
+
+    try:
+        location = SQLLocation.active_objects.get(location_id=location_id)
+    except SQLLocation.DoesNotExist:
+        return None
     location_and_ancestor_ids = location.get_ancestors(include_self=True).values_list(
         'location_id', flat=True).reverse()
     # get all active enabled releases and order by version desc to get one with the highest version in the end
@@ -718,3 +762,21 @@ def extract_instance_id_from_nodeset_ref(nodeset):
     if nodeset:
         matches = re.findall(r"instance\('(.*?)'\)", nodeset)
         return matches[0] if matches else None
+
+
+def does_app_have_mobile_ucr_v1_refs(app):
+    suite = app.create_suite()
+    re_mobile_ucr_v1_case_list_references_pattern = re.compile(MOBILE_UCR_V1_CASE_LIST_REFERENCES_PATTERN)
+    if re.search(re_mobile_ucr_v1_case_list_references_pattern, suite.decode()):
+        return True
+
+    re_mobile_ucr_v1_all_refs = re.compile(MOBILE_UCR_V1_ALL_REFERENCES)
+    for form in app.get_forms():
+        # The second condition should always be False if the first one is
+        # but just as a precaution we'll check for it
+        if (
+            MOBILE_UCR_V1_FIXTURE_IDENTIFIER in form.source
+            or re_mobile_ucr_v1_all_refs.search(form.source)
+        ):
+            return True
+    return False

@@ -44,32 +44,59 @@
  
              // These styles, along with the body/header/footer ones below,
              // allow the body to scroll vertically while the header and footer stay fixed
-@@ -54,11 +54,11 @@
+@@ -54,23 +54,7 @@
  }
  
  .full-screen-modal {
 -    .absolute-center-modal(20px);
+-}
+-
+-.full-screen-no-background-modal {
+-    .absolute-center-modal(0);
+-
+-    .modal-dialog {
+-        .modal-content {
+-            border-radius: 0;
+-            border: 0;
+-
+-            .modal-body .video-container {
+-                margin: 15px auto;
+-                float: none;
+-            }
+-        }
+-    }
 +    @include absolute-center-modal(20px);
  }
  
- .full-screen-no-background-modal {
--    .absolute-center-modal(0);
-+    @include absolute-center-modal(0);
- 
-     .modal-dialog {
-         .modal-content {
-@@ -100,12 +100,12 @@
+ // Modal that has some kind of control (pagination, search box, etc.) in header or footer
+@@ -100,12 +84,12 @@
  
  .modal-primary {
      .modal-header {
 -        border-bottom: 4px solid @cc-brand-low;
-+        border-bottom: 4px solid $cc-brand-low;
++        border-bottom: 4px solid $primary-border-subtle-dark;
      }
  
      .modal-content {
          color: white;
 -        background-color: @cc-brand-mid;
-+        background-color: $cc-brand-mid;
++        background-color: $primary;
      }
  
      .close {
+@@ -113,15 +97,3 @@
+         opacity: 1.0;
+     }
+ }
+-
+-.modal-force-show {
+-    display: block;
+-    opacity: 1.0;
+-
+-    .modal-dialog {
+-        -webkit-transform: translate(0, 0) !important;
+-        -ms-transform: translate(0, 0) !important;
+-        -o-transform: translate(0, 0) !important;
+-        transform: translate(0, 0) !important;
+-    }
+-}

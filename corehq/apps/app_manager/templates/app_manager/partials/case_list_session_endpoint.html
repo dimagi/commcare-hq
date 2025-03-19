@@ -1,0 +1,22 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+            <div class="form-group">
+              <label class="control-label {% css_label_class %}">
+                {% trans 'Case List Session Endpoint ID' %}
+                <span class="hq-help-template"
+                      data-title="{% trans 'Case List Session Endpoint ID' %}"
+                      data-content="{% blocktrans %}A session endpoint ID to navigate to this
+                                    case list without doing selection on the case list.{% endblocktrans %}"></span>
+              </label>
+              <div id="case-list-session-endpoint-id"
+                   class="{% css_field_class %} commcare-feature"
+                   data-since-version="2.51"
+                   class="{% css_field_class %}">
+                <input class="code form-control"
+                       type="text"
+                       id="case_list_session_endpoint_id"
+                       name="case_list_session_endpoint_id"
+                       value="{{ module.case_list_session_endpoint_id|default:'' }}" />
+              </div>
+            </div>

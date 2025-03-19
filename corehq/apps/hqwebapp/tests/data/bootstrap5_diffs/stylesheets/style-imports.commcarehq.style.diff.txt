@@ -1,11 +1,12 @@
 --- 
 +++ 
-@@ -1,42 +1,92 @@
+@@ -1,44 +1,96 @@
 -@import "_hq/includes/variables.less";
 -@import "_hq/includes/mixins.less";
  
 -@import "_hq/alerts.less";
 -@import "_hq/appcues.less";
+-@import "_hq/ace_cle.less";
 -@import "_hq/backgrounds.less";
 -@import "_hq/breadcrumbs.less";
 -@import "_hq/buttons.less";
@@ -32,7 +33,7 @@
 -@import "_hq/notifications.less";
 -@import "_hq/pagination.less";
 -@import "_hq/panels.less";
--@import "_hq/paused.less";
+-@import "_hq/plan_notice.less";
 -@import "_hq/popovers.less";
 -@import "_hq/report.less";
 -@import "_hq/radio_select.less";
@@ -43,10 +44,12 @@
 -@import "_hq/typography.less";
 -@import "_hq/svg.less";
 -@import "_hq/utils.less";
+-@import "_hq/bootstrap5-temp.less";
 +// Configuration
 +@import "functions";
 +@import "commcarehq/variables";  // This comes before Bootstrap 5 variables to override the defaults
 +@import "variables";
++@import "variables-dark";
 +@import "commcarehq/variables_bootstrap3";  // Variables specific to B3-era Stylesheet
 +@import "maps";
 +@import "mixins";
@@ -58,6 +61,7 @@
 +@import "reboot";
 +@import "type";
 +@import "commcarehq/type";
++@import "commcarehq/print";
 +@import "images";
 +@import "containers";
 +@import "commcarehq/containers";
@@ -107,6 +111,7 @@
 +@import "commcarehq/utils";
 +
 +// Custom Widgets
++@import "commcarehq/ace_cle";
 +@import "commcarehq/appcues";
 +@import "commcarehq/backgrounds";
 +@import "commcarehq/datagrid";
@@ -118,6 +123,7 @@
 +@import "commcarehq/form_steps";
 +@import "commcarehq/helpbubble";
 +@import "commcarehq/hubspot";
++@import "commcarehq/htmx";
 +@import "commcarehq/icons";
 +@import "commcarehq/inline_edit";
 +@import "commcarehq/label";
@@ -127,7 +133,7 @@
 +@import "commcarehq/notifications";
 +@import "commcarehq/pagination";
 +@import "commcarehq/panels";
-+@import "commcarehq/paused";
++@import "commcarehq/plan_notice";
 +@import "commcarehq/radio_select";
 +@import "commcarehq/readable_forms";
 +@import "commcarehq/report";

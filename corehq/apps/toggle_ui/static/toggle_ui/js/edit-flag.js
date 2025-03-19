@@ -3,14 +3,15 @@ hqDefine('toggle_ui/js/edit-flag', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/main',
-    'hqwebapp/js/knockout_bindings.ko',     // save button
+    'hqwebapp/js/bootstrap3/main',
+    'hqwebapp/js/bootstrap3/knockout_bindings.ko',     // save button
+    'commcarehq',
 ], function (
     $,
     ko,
     _,
     initialPageData,
-    hqMain
+    hqMain,
 ) {
     var PAD_CHAR = '&nbsp;';
     function toggleViewModel() {
@@ -20,9 +21,9 @@ hqDefine('toggle_ui/js/edit-flag', [
 
         self.init = function (config) {
             self.padded_ns = {};
-            var max_ns_len = Math.max.apply(Math, _.map(config.namespaces, function (ns) { return ns.length; }));
+            var maxLength = Math.max.apply(Math, _.map(config.namespaces, function (ns) { return ns.length; }));
             _(config.namespaces).each(function (namespace) {
-                var diff = max_ns_len - namespace.length,
+                var diff = maxLength - namespace.length,
                     pad = new Array(diff + 1).join(PAD_CHAR);
                 self.padded_ns[namespace] = namespace + pad;
             });
@@ -32,21 +33,22 @@ hqDefine('toggle_ui/js/edit-flag', [
         };
 
         self.init_items = function (config) {
-            var items = config.items,
-                last_used = config.last_used || {},
-                service_type = config.service_type || {};
-            self.items.removeAll();
-            _.each(_.sortBy(items), function (item) {
-                var fields = item.split(':'),
-                    namespace = fields.length > 1 ? fields[0] : 'user',
-                    value = fields.length > 1 ? fields[1] : fields[0];
-                self.items.push({
-                    namespace: ko.observable(self.padded_ns[namespace]),
-                    value: ko.observable(value),
-                    last_used: ko.observable(last_used[value]),
-                    service_type: ko.observable(service_type[value]),
+            const lastUsed = config.last_used || {},
+                serviceType = config.service_type || {},
+                items = _.map(config.items, function (item) {
+                    var fields = item.split(':'),
+                        namespace = fields.length > 1 ? fields[0] : 'user',
+                        value = fields.length > 1 ? fields[1] : fields[0];
+                    return {
+                        namespace: ko.observable(self.padded_ns[namespace]),
+                        value: ko.observable(value),
+                        last_used: ko.observable(lastUsed[value]),
+                        service_type: ko.observable(serviceType[value]),
+                    };
                 });
-            });
+            self.items(_.sortBy(items, function (item) {
+                return [item.last_used(), item.value()];
+            }));
         };
 
         self.addItem = function (namespace) {
@@ -65,41 +67,53 @@ hqDefine('toggle_ui/js/edit-flag', [
         };
 
         self.change = function () {
-            self.saveButton.fire('change');
+            self.saveButtonTop.fire('change');
+            self.saveButtonBottom.fire('change');
         };
 
-        self.saveButton = hqMain.initSaveButton({
-            unsavedMessage: "You have unsaved changes",
-            save: function () {
-                var items = _.map(_.filter(self.items(), function (item) {
-                    return item.value();
-                }), function (item) {
-                    var ns_raw = item.namespace().replace(new RegExp(PAD_CHAR, 'g'), ''),
-                        namespace = ns_raw === 'user' ? null : ns_raw,
-                        value = namespace === null ? item.value() : namespace + ':' + item.value();
-                    return value;
-                });
-                self.saveButton.ajax({
-                    type: 'post',
-                    url: initialPageData.reverse('edit_toggle') + location.search,
-                    data: {
-                        item_list: JSON.stringify(items),
-                        randomness: self.randomness(),
-                    },
-                    dataType: 'json',
-                    success: function (data) {
-                        self.init_items(data);
-                    },
-                });
-            },
-        });
+        self.createSaveButton = function () {
+            return hqMain.initSaveButton({
+                unsavedMessage: "You have unsaved changes",
+                save: function () {
+                    var items = _.map(_.filter(self.items(), function (item) {
+                        return item.value();
+                    }), function (item) {
+                        var nsRaw = item.namespace().replace(new RegExp(PAD_CHAR, 'g'), ''),
+                            namespace = nsRaw === 'user' ? null : nsRaw,
+                            value = namespace === null ? item.value() : namespace + ':' + item.value();
+                        return value;
+                    });
+                    self.saveButtonTop.ajax({
+                        type: 'post',
+                        url: initialPageData.reverse('edit_toggle') + location.search,
+                        data: {
+                            item_list: JSON.stringify(items),
+                            randomness: self.randomness(),
+                        },
+                        dataType: 'json',
+                        success: function (data) {
+                            self.init_items(data);
+                            self.saveButtonBottom.ajax({
+                                success: function () {},
+                            });
+                        },
+                    });
 
-        var projectInfoUrl = '<a href="' + initialPageData.reverse('domain_internal_settings') + '">domain</a>';
+                },
+            });
+        };
+
+        self.saveButtonTop = self.createSaveButton();
+        self.saveButtonBottom = self.createSaveButton();
+
         self.getNamespaceHtml = function (namespace, value) {
+            if (value && value[0] === '!') {
+                value = value.replace(/^!/, '');
+            }
             if (namespace === 'domain') {
-                return projectInfoUrl.replace('___', value);
+                return '<a href="' + initialPageData.reverse('domain_internal_settings', value) + '">domain <i class="fa fa-external-link"></i></a>';
             } else {
-                return namespace;
+                return "<i class='fa fa-user'></i> " + namespace;
             }
         };
 

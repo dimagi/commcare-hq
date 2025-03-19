@@ -1,18 +1,17 @@
 hqDefine("translations/js/translations", [
     'jquery',
     'underscore',
-    'hqwebapp/js/main',
-    'hqwebapp/js/ui_elements/ui-element-input',
-    'hqwebapp/js/ui_elements/ui-element-select',
+    'hqwebapp/js/bootstrap3/main',
+    'hqwebapp/js/ui_elements/bootstrap3/ui-element-input',
+    'hqwebapp/js/ui_elements/bootstrap3/ui-element-select',
 ], function (
     $,
     _,
     hqMain,
     UIInput,
-    UISelect
+    UISelect,
 ) {
     var mk_translation_ui = function (spec) {
-        "use strict";
         var translation_ui = {
                 translations: {},
                 $home: spec.$home,
@@ -175,7 +174,8 @@ hqDefine("translations/js/translations", [
         };
 
         translation_ui.save = function () {
-            var key, data = {};
+            var key,
+                data = {};
             var error = false;
             for (key in translation_ui.translations) {
                 if (translation_ui.translations.hasOwnProperty(key)) {

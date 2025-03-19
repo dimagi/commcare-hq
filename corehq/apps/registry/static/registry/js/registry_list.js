@@ -1,61 +1,61 @@
+
 hqDefine("registry/js/registry_list", [
     'jquery',
     'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/alert_user',
     'registry/js/registry_text',
     'registry/js/registry_actions',
-    'hqwebapp/js/knockout_bindings.ko', // openModal
+    'hqwebapp/js/bootstrap5/knockout_bindings.ko', // openModal
     'hqwebapp/js/select2_knockout_bindings.ko',
+    'commcarehq',
 ], function (
     $,
     _,
     ko,
     initialPageData,
-    alertUser,
     text,
-    actions
+    actions,
 ) {
 
     let OwnedDataRegistry = function (registry) {
         let self = ko.mapping.fromJS(registry);
-        self.acceptedText = ko.computed(function() {
+        self.acceptedText = ko.computed(function () {
             return text.getAcceptedBadgeText(self);
         });
-        self.pendingText = ko.computed(function() {
+        self.pendingText = ko.computed(function () {
             return text.getPendingBadgeText(self);
         });
-        self.rejectedText = ko.computed(function() {
+        self.rejectedText = ko.computed(function () {
             return text.getRejectedBadgeText(self);
         });
-        self.manageUrl = initialPageData.reverse('manage_registry', self.slug())
+        self.manageUrl = initialPageData.reverse('manage_registry', self.slug());
 
         return self;
     };
 
     let InvitedDataRegistry = function (registry) {
         let self = ko.mapping.fromJS(registry);
-        self.participatorCountText = ko.computed(function() {
+        self.participatorCountText = ko.computed(function () {
             return text.getParticipatorCountBadgeText(self);
         });
-        self.statusText = ko.computed(function() {
+        self.statusText = ko.computed(function () {
             return text.getStatusText(self.invitation.status());
         });
 
-        self.manageUrl = initialPageData.reverse('manage_registry', self.slug())
+        self.manageUrl = initialPageData.reverse('manage_registry', self.slug());
 
-        self.acceptInvitation = function() {
+        self.acceptInvitation = function () {
             actions.acceptInvitation(self.slug, (data) => {
                 ko.mapping.fromJS(data, self);
             });
-        }
+        };
 
-        self.rejectInvitation = function() {
+        self.rejectInvitation = function () {
             actions.rejectInvitation(self.slug, (data) => {
                 ko.mapping.fromJS(data, self);
             });
-        }
+        };
         return self;
     };
 
@@ -68,7 +68,7 @@ hqDefine("registry/js/registry_list", [
 
         // CREATE workflow
         self.name = ko.observable("").extend({
-            rateLimit: { method: "notifyWhenChangesStop", timeout: 400, }
+            rateLimit: { method: "notifyWhenChangesStop", timeout: 400 },
         });
 
         self.validatingPending = ko.observable(false);
@@ -91,7 +91,7 @@ hqDefine("registry/js/registry_list", [
             return true;
         };
         return self;
-    }
+    };
     $(function () {
         $("#data-registry-list").koApplyBindings(dataRegistryList({
             ownedRegistries: initialPageData.get("owned_registries"),

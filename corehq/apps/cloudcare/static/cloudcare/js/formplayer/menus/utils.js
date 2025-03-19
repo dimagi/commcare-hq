@@ -1,14 +1,30 @@
-/*global Backbone */
-
-hqDefine("cloudcare/js/formplayer/menus/utils", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        kissmetrics = hqImport("analytix/js/kissmetrix"),
-        ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar"),
-        QueryView = hqImport("cloudcare/js/formplayer/menus/views/query"),
-        toggles = hqImport("hqwebapp/js/toggles"),
-        utils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        views = hqImport("cloudcare/js/formplayer/menus/views");
-
+hqDefine("cloudcare/js/formplayer/menus/utils", [
+    'underscore',
+    'backbone',
+    'hqwebapp/js/toggles',
+    'analytix/js/kissmetrix',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/layout/views/progress_bar',
+    'cloudcare/js/formplayer/menus/views/query',
+    'cloudcare/js/formplayer/users/models',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/menus/views',
+    'cloudcare/js/gtx',
+], function (
+    _,
+    Backbone,
+    toggles,
+    kissmetrics,
+    FormplayerFrontend,
+    constants,
+    ProgressBar,
+    view,
+    UsersModels,
+    utils,
+    views,
+    gtx,
+) {
     var recordPosition = function (position) {
         sessionStorage.locationLat = position.coords.latitude;
         sessionStorage.locationLon = position.coords.longitude;
@@ -18,7 +34,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
 
     var handleLocationRequest = function (optionsFromLastRequest) {
         var success = function (position) {
-            hqRequire(["cloudcare/js/formplayer/menus/controller"], function (MenusController) {
+            import("cloudcare/js/formplayer/menus/controller").then(function (MenusController) {
                 FormplayerFrontend.regions.getRegion('loadingProgress').empty();
                 recordPosition(position);
                 MenusController.selectMenu(optionsFromLastRequest);
@@ -30,7 +46,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             FormplayerFrontend.trigger('showError',
                 getErrorMessage(err) +
                 "Without access to your location, computations that rely on the here() function will show up blank.",
-                false, false
+                false, false,
             );
         };
 
@@ -79,37 +95,44 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         });
 
         detailCollection = new Backbone.Collection(breadcrumbModels);
+        if (detailCollection.length) {
+            detailCollection.last().set('ariaCurrentPage', true);
+        }
         var breadcrumbView = views.BreadcrumbListView({
             collection: detailCollection,
         });
         FormplayerFrontend.regions.getRegion('breadcrumb').show(breadcrumbView);
     };
 
-    var showFormMenu = function (langs, enableLanguageMenu) {
-        var langModels,
+    var showMenuDropdown = function (langs, langCodeNameMapping) {
+        let langModels,
             langCollection;
 
         FormplayerFrontend.regions.addRegions({
-            formMenu: "#form-menu",
+            breadcrumbMenuDropdown: "#navbar-menu-region",
         });
-        if (langs && enableLanguageMenu) {
+
+        if (langs && langs.length > 1) {
             langModels = _.map(langs, function (lang) {
+                let matchingLanguage = langCodeNameMapping[lang];
                 return {
-                    lang: lang,
+                    lang_code: lang,
+                    lang_label: matchingLanguage ? matchingLanguage : lang,
                 };
             });
             langCollection = new Backbone.Collection(langModels);
         } else {
             langCollection = null;
         }
-        var formMenuView = views.FormMenuView({
+        let menuDropdownView = views.MenuDropdownView({
             collection: langCollection,
         });
-        FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
+        FormplayerFrontend.regions.getRegion('breadcrumbMenuDropdown').show(menuDropdownView);
     };
 
-    var getMenuView = function (menuResponse) {
-        var menuData = {                    // TODO: make this more concise
+
+    var getMenuData = function (menuResponse) {
+        return {                    // TODO: make this more concise
             collection: menuResponse,
             title: menuResponse.title,
             headers: menuResponse.headers,
@@ -130,63 +153,97 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             sortIndices: menuResponse.sortIndices,
             isMultiSelect: menuResponse.multiSelect,
             multiSelectMaxSelectValue: menuResponse.maxSelectValue,
+            dynamicSearch: menuResponse.dynamicSearch,
+            endpointActions: menuResponse.endpointActions,
+            groupHeaders: menuResponse.groupHeaders,
         };
+    };
+
+    var getCaseListView = function (menuResponse) {
+        if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
+            if (menuResponse.multiSelect) {
+                return views.MultiSelectCaseListView;
+            } else {
+                return views.CaseListView;
+            }
+        } else {
+            if (menuResponse.groupHeaderRows >= 0) {
+                return views.CaseTileGroupedListView;
+            } else {
+                return views.CaseTileListView;
+            }
+        }
+    };
+
+    var isSidebarEnabled = function (menuResponse) {
+        const splitScreenCaseSearchEnabled = toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH');
+        if (menuResponse.type === constants.QUERY) {
+            return splitScreenCaseSearchEnabled && menuResponse.models && menuResponse.models.length > 0;
+        } else if (menuResponse.type === constants.ENTITIES) {
+            return splitScreenCaseSearchEnabled && menuResponse.queryResponse && menuResponse.queryResponse.displays.length > 0;
+        }
+    };
+
+    var getMenuView = function (menuResponse) {
+        var menuData = getMenuData(menuResponse);
         var urlObject = utils.currentUrlToObject();
 
         sessionStorage.queryKey = menuResponse.queryKey;
         if (menuResponse.type === "commands") {
             return views.MenuListView(menuData);
-        } else if (menuResponse.type === "query") {
+        } else if (menuResponse.type === constants.QUERY) {
             var props = {
-                domain: FormplayerFrontend.getChannel().request('currentUser').domain,
+                domain: UsersModels.getCurrentUser().domain,
             };
             if (menuResponse.breadcrumbs && menuResponse.breadcrumbs.length) {
                 props.name = menuResponse.breadcrumbs[menuResponse.breadcrumbs.length - 1];
             }
             kissmetrics.track.event('Case Search', props);
-            urlObject.setQueryData({}, false, false);
-            return QueryView(menuData);
-        } else if (menuResponse.type === "entities") {
-            var searchText = urlObject.search;
-            var event = "Viewed Case List";
-            if (searchText) {
-                event = "Searched Case List";
+            urlObject.setQueryData({
+                inputs: {},
+                execute: false,
+                forceManualSearch: false,
+            });
+            return view.queryListView(menuData);
+        } else if (menuResponse.type === constants.ENTITIES) {
+
+            if (isSidebarEnabled(menuResponse)) {
+                menuData.sidebarEnabled = true;
             }
-            var eventData = {
-                domain: FormplayerFrontend.getChannel().request("currentUser").domain,
-                name: menuResponse.title,
-            };
+            var eventData = {};
             var fields = _.pick(utils.getCurrentQueryInputs(), function (v) { return !!v; });
             if (!_.isEmpty(fields)) {
                 eventData.searchFields = _.sortBy(_.keys(fields)).join(",");
             }
-            kissmetrics.track.event(event, eventData);
+
+            var kissmetricsEventData = _.extend(eventData, {
+                domain: UsersModels.getCurrentUser().domain,
+                name: menuResponse.title,
+            });
+            var gtxEventData = _.extend(eventData, {
+                moduleName: menuResponse.title,
+            });
+            kissmetrics.track.event("Viewed Case List", kissmetricsEventData);
+            gtx.logCaseList(gtx.extractSelections(menuResponse), gtxEventData);
+
             if (/search_command\.m\d+/.test(menuResponse.queryKey) && menuResponse.currentPage === 0) {
                 kissmetrics.track.event('Started Case Search', {
                     'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 });
             }
-            if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
-                if (menuData.isMultiSelect) {
-                    return views.MultiSelectCaseListView(menuData);
-                } else {
-                    return views.CaseListView(menuData);
-                }
-            } else {
-                if (menuResponse.numEntitiesPerRow > 1) {
-                    return views.GridCaseTileListView(menuData);
-                } else {
-                    return views.CaseTileListView(menuData);
-                }
-            }
+            var caseListView = getCaseListView(menuResponse);
+            return caseListView(menuData);
         }
     };
 
     return {
         getMenuView: getMenuView,
+        getMenuData: getMenuData,
+        getCaseListView: getCaseListView,
         handleLocationRequest: handleLocationRequest,
         showBreadcrumbs: showBreadcrumbs,
-        showFormMenu: showFormMenu,
+        showMenuDropdown: showMenuDropdown,
         startOrStopLocationWatching: startOrStopLocationWatching,
+        isSidebarEnabled: isSidebarEnabled,
     };
 });

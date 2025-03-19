@@ -209,8 +209,8 @@ def location_safe(view):
 
 
 # Use this decorator for views that need to be marked location safe but do not actually
-# apply location restrictions to the data they return e.g. case search. This is generally only applicable to endpoints
-# whose client is expected to be the application engine (mobile / web apps).
+# apply location restrictions to the data they return e.g. case search. This is generally only applicable to
+# endpoints whose client is expected to be the application engine (mobile / web apps).
 location_safe_bypass = location_safe
 
 
@@ -287,6 +287,17 @@ def user_can_access_any_location_id(domain, user, location_ids):
             .exists())
 
 
+def user_can_change_locations(domain, couch_user, current_loc_ids, loc_ids_being_assigned):
+    from corehq.apps.locations.models import SQLLocation
+    locs_accessible_to_user = set(SQLLocation.objects.accessible_to_user(
+        domain, couch_user).values_list('location_id', flat=True))
+    # symmetric_difference = XOR, represents the locations that are being added/removed. All of these locations
+    # must be accessible to user
+    problem_location_ids = (set(current_loc_ids).symmetric_difference(set(loc_ids_being_assigned))
+                            - locs_accessible_to_user)
+    return list(problem_location_ids)
+
+
 def user_can_access_other_user(domain, user, other_user):
     if user.has_permission(domain, 'access_all_locations'):
         return True
@@ -297,12 +308,16 @@ def user_can_access_other_user(domain, user, other_user):
             .exists())
 
 
-def user_can_access_case(domain, user, case):
-    from corehq.apps.reports.standard.cases.data_sources import CaseDisplaySQL
+def user_can_access_case(domain, user, case, es_case=False):
+    from corehq.apps.reports.standard.cases.data_sources import CaseDisplaySQL, CaseDisplayES
     if user.has_permission(domain, 'access_all_locations'):
         return True
 
-    info = CaseDisplaySQL(case)
+    if es_case:
+        info = CaseDisplayES(case)
+    else:
+        info = CaseDisplaySQL(case)
+
     if info.owner_type == 'location':
         return user_can_access_location_id(domain, user, info.owner_id)
     elif info.owner_type == 'user':
@@ -338,3 +353,12 @@ def can_edit_or_view_location(view_fn):
         return location_restricted_response(request)
 
     return require_can_edit_or_view_locations(_inner)
+
+
+def can_edit_workers_location(web_user, mobile_worker):
+    if web_user.has_permission(mobile_worker.domain, 'access_all_locations'):
+        return True
+    loc_id = mobile_worker.location_id
+    if not loc_id:
+        return False
+    return user_can_access_location_id(mobile_worker.domain, web_user, loc_id)

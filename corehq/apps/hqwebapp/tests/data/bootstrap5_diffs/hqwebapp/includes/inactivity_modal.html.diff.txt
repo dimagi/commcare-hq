@@ -1,0 +1,29 @@
+--- 
++++ 
+@@ -1,14 +1,14 @@
+ {% load i18n %}
+ 
+-<div class="modal fade full-screen-modal" id="inactivityModal">
+-  <div class="modal-dialog modal-lg">
++<div class="modal fade" id="inactivityModal" data-bs-backdrop="static" data-bs-keyboard="false">
++  <div class="modal-dialog modal-fullscreen">
+     <!-- No .modal-header, this is a weird modal -->
+     <div class="modal-content">
+       <div class="modal-body">
+         <!-- javascript will put content here -->
+       </div>
+       <div class="modal-footer">
+-        <button class="btn btn-default dismiss-button">{% trans 'Done' %}</button>
++        <button class="btn btn-outline-primary dismiss-button" data-bs-dismiss="modal">{% trans 'Done' %}</button>
+       </div>
+     </div>
+   </div>
+@@ -27,7 +27,7 @@
+         {% endblocktrans %}
+       </div>
+       <div class="modal-footer">
+-        <button class="btn btn-primary dismiss-button">{% trans 'Extend session' %}</button>
++        <button class="btn btn-primary dismiss-button" data-bs-dismiss="modal">{% trans 'Extend session' %}</button>
+       </div>
+     </div>
+   </div>

@@ -11,6 +11,7 @@ from corehq.apps.es.aggregations import (
     ExtendedStatsAggregation,
     FilterAggregation,
     FiltersAggregation,
+    GeohashGridAggregation,
     MissingAggregation,
     NestedAggregation,
     RangeAggregation,
@@ -18,6 +19,7 @@ from corehq.apps.es.aggregations import (
     TermsAggregation,
     TopHitsAggregation,
 )
+from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es.const import SIZE_LIMIT
 from corehq.apps.es.es_query import ESQuerySet, HQESQuery
 from corehq.apps.es.tests.utils import (
@@ -80,8 +82,8 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                 FilterAggregation('closed', filters.term('closed', True))
             ),
             FiltersAggregation('total_by_status')
-                .add_filter('closed', filters.term('closed', True))
-                .add_filter('open', filters.term('closed', False))
+            .add_filter('closed', filters.term('closed', True))
+            .add_filter('open', filters.term('closed', False))
         ])
         self.checkQuery(query, json_output)
 
@@ -383,8 +385,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                     "buckets": [{
                         "key": 1454284800000,
                         "doc_count": 8
-                    },
-                    {
+                    }, {
                         "key": 1464284800000,
                         "doc_count": 3
                     }]
@@ -458,6 +459,51 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
         }
         query = HQESQuery('cases').aggregation(
             TermsAggregation('name', 'name').order('sort_field')
+        )
+        self.checkQuery(query, json_output)
+
+    def test_terms_aggregation_does_not_accept_zero_size(self):
+        error_message = "Aggregation size must be greater than 0"
+        with self.assertRaisesMessage(AssertionError, error_message):
+            HQESQuery('cases').aggregation(
+                TermsAggregation('name', 'name').order('sort_field').size(0)
+            )
+        with self.assertRaisesMessage(AssertionError, error_message):
+            HQESQuery('cases').aggregation(
+                TermsAggregation('name', 'name', 0).order('sort_field')
+            )
+
+    def test_geohash_grid_aggregation(self):
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
+                            "term": {
+                                "domain.exact": "test-domain"
+                            }
+                        },
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
+                }
+            },
+            "size": 0,
+            "aggs": {
+                "name": {
+                    "geohash_grid": {
+                        "field": "case_location",
+                        "precision": 6
+                    }
+                }
+            }
+        }
+        query = CaseSearchES().domain('test-domain').aggregation(
+            GeohashGridAggregation('name', 'case_location', 6)
         )
         self.checkQuery(query, json_output)
 

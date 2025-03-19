@@ -2,21 +2,21 @@ import re
 from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime
-
-from looseversion import LooseVersion
 from unittest import skip
-import uuid
+from unittest.mock import Mock, patch
 
 from django.test import SimpleTestCase, TestCase
 
-from unittest.mock import Mock, patch
+from looseversion import LooseVersion
 from nose.tools import assert_equal, assert_true
 
-from corehq.motech.dhis2.const import DHIS2_MAX_KNOWN_GOOD_VERSION as KNOWN_GOOD
-from corehq.motech.dhis2.exceptions import Dhis2Exception
-from corehq.motech.dhis2.repeaters import Dhis2Repeater
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import Requests
+
+from ..const import DHIS2_MAX_KNOWN_GOOD_VERSION as KNOWN_GOOD
+from ..const import XMLNS_DHIS2
+from ..exceptions import Dhis2Exception
+from ..repeaters import Dhis2EntityRepeater, Dhis2Repeater
 
 dhis2_version = "2.32.2"
 api_version = re.match(r'2\.(\d+)', dhis2_version).group(1)
@@ -217,12 +217,11 @@ class SlowApiVersionTest(TestCase):
         self.repeater = Dhis2Repeater(
             domain="test-domain",
             connection_settings=self.conn,
-            repeater_id=uuid.uuid4().hex
         )
 
     def test_none_fetches_metadata(self):
         self.assertIsNone(self.repeater.dhis2_version)
-        with patch('corehq.motech.dhis2.repeaters.fetch_metadata') as mock_fetch:
+        with patch('corehq.motech.dhis2.repeaters.fetch_system_metadata') as mock_fetch:
             mock_fetch.return_value = {"system": {"version": "2.31.6"}}
             self.assertEqual(self.repeater.get_api_version(), 31)
             mock_fetch.assert_called()
@@ -231,9 +230,41 @@ class SlowApiVersionTest(TestCase):
         major_ver, max_api_ver, patch_ver = LooseVersion(KNOWN_GOOD).version
         bigly_api_version = max_api_ver + 1
         bigly_dhis2_version = f"{major_ver}.{bigly_api_version}.{patch_ver}"
-        with patch('corehq.motech.dhis2.repeaters.fetch_metadata') as mock_fetch, \
+        with patch('corehq.motech.dhis2.repeaters.fetch_system_metadata') as mock_fetch, \
                 patch.object(Requests, 'notify_error') as mock_notify:
             mock_fetch.return_value = {"system": {"version": bigly_dhis2_version}}
 
             self.assertEqual(self.repeater.get_api_version(), bigly_api_version)
             mock_notify.assert_called()
+
+
+class TestAllowedToForward(SimpleTestCase):
+
+    def test_entity_repeater_dhis2_form(self):
+        repeater = Dhis2EntityRepeater()
+        form = Mock(xmlns=XMLNS_DHIS2)
+        self.assertFalse(repeater.allowed_to_forward(form))
+
+    def test_event_repeater_dhis2_form(self):
+        repeater = Dhis2Repeater()
+        form = Mock(xmlns=XMLNS_DHIS2)
+        self.assertFalse(repeater.allowed_to_forward(form))
+
+    def test_event_repeater_whitelist_blocked(self):
+        repeater = Dhis2Repeater(
+            white_listed_form_xmlns=['http://example.com/forward-me/']
+        )
+        form = Mock(xmlns='http://example.com/dont-forward-me/')
+        self.assertFalse(repeater.allowed_to_forward(form))
+
+    def test_event_repeater_whitelist_ok(self):
+        repeater = Dhis2Repeater(
+            white_listed_form_xmlns=['http://example.com/forward-me/']
+        )
+        form = Mock(xmlns='http://example.com/forward-me/')
+        self.assertTrue(repeater.allowed_to_forward(form))
+
+    def test_event_repeater_ok(self):
+        repeater = Dhis2Repeater()
+        form = Mock(xmlns='http://example.com/forward-me/')
+        self.assertTrue(repeater.allowed_to_forward(form))

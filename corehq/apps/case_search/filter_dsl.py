@@ -1,5 +1,6 @@
 import re
 from dataclasses import dataclass
+from typing import Union
 
 from django.utils.translation import gettext as _
 from eulxml.xpath import parse as parse_xpath
@@ -9,6 +10,7 @@ from eulxml.xpath.ast import (
     serialize,
 )
 
+import corehq
 from corehq.apps.case_search.const import OPERATOR_MAPPING, COMPARISON_OPERATORS, ALL_OPERATORS
 from corehq.apps.case_search.exceptions import (
     CaseFilterError,
@@ -26,6 +28,17 @@ from corehq.apps.case_search.xpath_functions.comparison import property_comparis
 class SearchFilterContext:
     domain: str
     fuzzy: bool = False
+    helper: Union[
+        'corehq.apps.case_search.utils.QueryHelper',
+        'corehq.apps.case_search.utils.RegistryQueryHelper',
+    ] = None
+    profiler: 'corehq.apps.case_search.utils.CaseSearchProfiler' = None
+
+    def __post_init__(self):
+        from corehq.apps.case_search.utils import QueryHelper
+        if self.helper is None:
+            self.helper = QueryHelper(self.domain)
+        self.profiler = self.helper.profiler
 
 
 def print_ast(node):
@@ -114,7 +127,7 @@ def build_filter_from_ast(node, context):
     return visit(node)
 
 
-def build_filter_from_xpath(domain, xpath, fuzzy=False):
+def build_filter_from_xpath(xpath, *, domain=None, context=None):
     """Given an xpath expression this function will generate an Elasticsearch
     filter"""
     error_message = _(
@@ -122,8 +135,10 @@ def build_filter_from_xpath(domain, xpath, fuzzy=False):
         "Please try reformatting your query. "
         "The operators we accept are: {}"
     )
-
-    context = SearchFilterContext(domain, fuzzy)
+    if bool(context) == bool(domain):
+        raise TypeError("build_filter_from_xpath takes either a context or a domain, but not both")
+    if not context:
+        context = SearchFilterContext(domain)
     try:
         return build_filter_from_ast(parse_xpath(xpath), context)
     except TypeError as e:
@@ -134,6 +149,10 @@ def build_filter_from_xpath(domain, xpath, fuzzy=False):
             raise CaseFilterError(error_message.format(bad_part, ", ".join(ALL_OPERATORS)), bad_part)
         raise CaseFilterError(_("Malformed search query"), None)
     except RuntimeError as e:
+        # eulxml doesn't appear to clean up after this type of failure
+        # properly, so throw in an extra 'parse' to reset it
+        parse_xpath("thisisdumb")
+
         # eulxml passes us string errors from YACC
         lex_token_error = re.search(r"LexToken\((\w+),\w?'(.+)'", str(e))
         if lex_token_error:

@@ -1,3 +1,4 @@
+from functools import cached_property
 from uuid import uuid4
 
 from django.contrib.postgres.fields import ArrayField
@@ -12,21 +13,32 @@ from memoized import memoized
 
 from corehq.apps.userreports.models import UCRExpression
 from corehq.apps.userreports.specs import FactoryContext
+from corehq.motech.generic_inbound.exceptions import GenericInboundApiError
 from corehq.util import reverse
+
+
+class ApiBackendOptions(models.TextChoices):
+    json = "json", _("JSON")
+    hl7 = "hl7", _("HL7 v2")
 
 
 @audit_fields("domain", "url_key", "name", "transform_expression", audit_special_queryset_writes=True)
 class ConfigurableAPI(models.Model):
+
     domain = models.CharField(max_length=255)
     url_key = models.CharField(max_length=32, validators=[validate_slug])
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
+    # UCR Expression to filter incoming requests before they are processed
     filter_expression = models.ForeignKey(
         UCRExpression, on_delete=models.PROTECT, related_name="api_filter", null=True, blank=True)
+    # UCR Expression to transform the incoming data to be processed
     transform_expression = models.ForeignKey(
         UCRExpression, on_delete=models.PROTECT, related_name="api_expression")
+    # type of data backend like JSON, HL7 etc
+    backend = models.CharField(max_length=100, default=ApiBackendOptions.json)
 
     objects = AuditingManager()
 
@@ -48,6 +60,8 @@ class ConfigurableAPI(models.Model):
             if self.url_key:
                 raise FieldError("'url_key' is auto-assigned")
             self.url_key = make_url_key()
+            if 'update_fields' in kwargs:
+                kwargs['update_fields'].append('url_key')
             self.__original_url_key = self.url_key
         elif self.url_key != self.__original_url_key:
             raise FieldError("'url_key' can not be changed")
@@ -56,14 +70,24 @@ class ConfigurableAPI(models.Model):
     @property
     @memoized
     def parsed_expression(self):
-        return self.transform_expression.wrapped_definition(FactoryContext.empty())
+        return self.transform_expression.wrapped_definition(FactoryContext.empty(domain=self.domain))
 
     @property
     @memoized
     def parsed_filter(self):
         if not self.filter_expression:
             return None
-        return self.filter_expression.wrapped_definition(FactoryContext.empty())
+        return self.filter_expression.wrapped_definition(FactoryContext.empty(domain=self.domain))
+
+    @cached_property
+    def backend_class(self):
+        from corehq.motech.generic_inbound.backend.json import JsonBackend
+        from corehq.motech.generic_inbound.backend.hl7 import Hl7Backend
+        if self.backend == ApiBackendOptions.json:
+            return JsonBackend
+        elif self.backend == ApiBackendOptions.hl7:
+            return Hl7Backend
+        raise GenericInboundApiError(f"Unknown backend type: {self.backend}")
 
     @property
     @memoized
@@ -86,7 +110,7 @@ class ConfigurableApiValidation(models.Model):
     @property
     @memoized
     def parsed_expression(self):
-        return self.expression.wrapped_definition(FactoryContext.empty())
+        return self.expression.wrapped_definition(FactoryContext.empty(domain=self.api.domain))
 
     def get_error_context(self):
         return {
@@ -159,6 +183,7 @@ class ProcessingAttempt(models.Model):
     is_retry = models.BooleanField(default=False)
     response_status = models.PositiveSmallIntegerField(db_index=True)
     raw_response = models.JSONField(default=dict)
+    external_response = models.TextField(null=True)
 
     xform_id = models.CharField(max_length=36, db_index=True, null=True, blank=True)
     case_ids = ArrayField(models.CharField(max_length=36), null=True, blank=True)

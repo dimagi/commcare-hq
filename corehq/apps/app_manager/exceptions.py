@@ -1,5 +1,3 @@
-import couchdbkit
-
 from corehq.apps.app_manager.const import APP_V2
 
 
@@ -79,7 +77,8 @@ class XFormValidationError(XFormException):
             return msg
         # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
         #
-        # ... and if possible split the third line that looks like e.g. "org.javarosa.xform.parse.XFormParseException: Select question has no choices"
+        # ... and if possible split the third line that looks like
+        # e.g. "org.javarosa.xform.parse.XFormParseException: Select question has no choices"
         # and just return the undecorated string
         #
         # ... unless the first line says
@@ -190,3 +189,18 @@ class AppValidationError(AppManagerException):
 
 class DangerousXmlException(Exception):
     pass
+
+
+class AppMisconfigurationError(AppManagerException):
+    """Errors in app configuration that are the user's responsibility"""
+
+
+class CannotRestoreException(Exception):
+    """Errors that inherit from this exception will always fail hard in restores"""
+
+
+class MobileUCRTooLargeException(CannotRestoreException):
+
+    def __init__(self, message, row_count):
+        super().__init__(message)
+        self.row_count = row_count

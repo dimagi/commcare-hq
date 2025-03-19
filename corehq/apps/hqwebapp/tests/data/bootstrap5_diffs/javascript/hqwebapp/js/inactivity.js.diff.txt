@@ -1,0 +1,200 @@
+--- 
++++ 
+@@ -2,14 +2,16 @@
+  *  Handles inactvitiy timeout UI: a modal containing an iframe with the login screen,
+  *  allowing users to re-login without leaving the page and losing their work.
+  */
+-hqDefine('hqwebapp/js/bootstrap3/inactivity', [
++hqDefine('hqwebapp/js/bootstrap5/inactivity', [
+     'jquery',
+     'underscore',
++    'es6!hqwebapp/js/bootstrap5_loader',
+     'hqwebapp/js/assert_properties',
+     'hqwebapp/js/initial_page_data',
+ ], function (
+     $,
+     _,
++    bootstrap,
+     assertProperties,
+     initialPageData,
+ ) {
+@@ -57,7 +59,7 @@
+     };
+ 
+     $(function () {
+-        var $modal = $("#inactivityModal"),     // won't be present on app preview or pages without a domain
++        var $loginModal = $("#inactivityModal"),     // won't be present on app preview or pages without a domain
+             $warningModal = $("#inactivityWarningModal"),
+             $newVersionModal = $('#newAppVersionModal');
+ 
+@@ -71,11 +73,15 @@
+             sessionExpiry = initialPageData.get('session_expiry');
+ 
+         log("Page loaded, session expires at " + sessionExpiry);
+-        if (!$modal.length) {
+-            log("Could not find modal, returning");
++        if (!$loginModal.length) {
++            log("Could not find login modal, returning");
+             return;
+         }
++        const loginModal = new bootstrap.Modal($loginModal.get(0)),
++            warningModal = new bootstrap.Modal($warningModal.get(0));
++        let newVersionModal;
+         if ($newVersionModal.length) {
++            newVersionModal = new bootstrap.Modal($newVersionModal.get(0));
+             $('#refreshApp').click(function () {
+                 document.location = document.location.origin + document.location.pathname;
+             });
+@@ -102,15 +108,15 @@
+                 shouldShowWarning = false;
+                 // Don't show if the new version modal is already showing
+                 if (!isModalOpen($newVersionModal)) {
+-                    $warningModal.modal('show');
++                    warningModal.show();
+                 }
+             }
+         };
+ 
+         var hideWarningModal = function (showLogin) {
+-            $warningModal.modal('hide');
++            $warningModal.hide();
+             if (showLogin) {
+-                $modal.modal({backdrop: 'static', keyboard: false});
++                loginModal.show();
+             }
+             // This flag should already have been turned off when the warning modal was shown,
+             // but just in case, make sure it's really off. Wait until the modal is fully hidden
+@@ -118,22 +124,21 @@
+             shouldShowWarning = false;
+         };
+ 
+-        var isModalOpen = function (element) {
+-            // https://stackoverflow.com/questions/19506672/how-to-check-if-bootstrap-modal-is-open-so-i-can-use-jquery-validate
+-            return (element.data('bs.modal') || {}).isShown;
++        var isModalOpen = function ($element) {
++            return $element.is(":visible");
+         };
+ 
+         var showPageRefreshModal = function () {
+             if ($('.webforms-nav-container').is(':visible')) {
+-                $newVersionModal.find('#incompleteFormWarning').show();
++                $newVersionModal.find('#incompleteFormWarning').removeClass('d-none');
+             } else {
+-                $newVersionModal.find('#incompleteFormWarning').hide();
+-            }
+-            if (!isModalOpen($modal)) {
++                $newVersionModal.find('#incompleteFormWarning').addClass('d-none');
++            }
++            if (!isModalOpen($loginModal)) {
+                 if (isModalOpen($warningModal)) {
+-                    $warningModal.modal('hide');
++                    warningModal.hide();
+                 }
+-                $newVersionModal.modal('show');
++                newVersionModal.show();
+             }
+         };
+ 
+@@ -147,8 +152,11 @@
+                     selectedAppId = urlParams.appId;
+                 }
+             } catch (error) {
++                // Parsing the app id out of URL hash will fail on the web apps home page, login as, etc.
++                // where the hash isn't a JSON object but instead a string like "#apps".
++                // In these cases, there's no app to check for a new version.
+                 log("Could not parse app id out of " + window.location.hash);
+-                return;
++                selectedAppId = null;
+             }
+             var domain = initialPageData.get('domain');
+             $.ajax({
+@@ -159,22 +167,20 @@
+                     domain: domain,
+                 },
+                 success: function (data) {
+-                    log(
+-                        "ping_login response: " + (data.success ? "User is logged in" : "User is logged out")
+-                        + ", " + (data.new_app_version_available ? "new app version available" : "no new app version"),
+-                    );
+                     if (!data.success) {
+                         _.each($(".select2-hidden-accessible"), function (el) {
+                             $(el).select2('close');
+                         });
+                         // Close the New version modal before showing login iframe
+-                        $newVersionModal.modal('hide');
++                        if (newVersionModal) {
++                            newVersionModal.hide();
++                        }
+                         log("ping_login failed, showing login modal");
+-                        var $body = $modal.find(".modal-body");
++                        var $body = $loginModal.find(".modal-body");
+                         var src = initialPageData.reverse('iframe_domain_login');
+                         src += "?next=" + initialPageData.reverse('domain_login_new_window');
+                         src += "&username=" + initialPageData.get('secure_timeout_username');
+-                        $modal.on('shown.bs.modal', function () {
++                        $loginModal.on('shown.bs.modal', function () {
+                             var content = _.template('<iframe src="<%- src %>" height="<%- height %>" width="<%- width %>" style="border: none;"></iframe>')({
+                                 src: src,
+                                 width: $body.width(),
+@@ -183,7 +189,7 @@
+                             $body.html(content);
+                             $body.find("iframe").on("load", pollToHideModal);
+                         });
+-                        $body.html('<h1 class="text-center"><i class="fa fa-spinner fa-spin"></i></h1>');
++                        $body.html('<h1 class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i></h1>');
+                         hideWarningModal(true);
+                     } else {
+                         _.delay(pollToShowModal, getDelayAndWarnIfNeeded(data.session_expiry));
+@@ -205,6 +211,10 @@
+                 url: initialPageData.reverse('ping_login'),
+                 type: 'GET',
+                 success: function (data) {
++                    log(
++                        "ping_login response: " + (data.success ? "User is logged in" : "User is logged out")
++                        + ", " + (data.new_app_version_available ? "new app version available" : "no new app version"),
++                    );
+                     $button.enableButton();
+                     var error = "";
+                     if (data.success) {
+@@ -218,7 +228,7 @@
+                     }
+ 
+                     if (error) {
+-                        $button.removeClass("btn-default").addClass("btn-danger");
++                        $button.removeClass("btn-default").addClass("btn-outline-danger");
+                         $button.text(error);
+                     } else {
+                         // Keeps the input value in the outer window in sync with newest token generated in
+@@ -230,12 +240,12 @@
+                             iframeInputValue = iframe.getElementsByTagName('input')[0].value;
+                             outerCSRFInput.val(iframeInputValue);
+                         } catch (err) {
+-                            $button.removeClass("btn-default").addClass("btn-danger");
++                            $button.removeClass("btn-default").addClass("btn-outline-danger");
+                             error = gettext("There was a problem, please refresh and try again");
+                             $button.text(error);
+                             return null;
+                         }
+-                        $modal.modal('hide');
++                        $loginModal.hide();
+                         $button.text(gettext("Done"));
+                         _.delay(pollToShowModal, getDelayAndWarnIfNeeded(data.session_expiry));
+                     }
+@@ -262,7 +272,7 @@
+             });
+         };
+ 
+-        $modal.find(".modal-footer .dismiss-button").click(pollToHideModal);
++        $loginModal.find(".modal-footer .dismiss-button").click(pollToHideModal);
+         $warningModal.find(".modal-footer .dismiss-button").click(function (e) {
+             extendSession($(e.currentTarget));
+         });
+@@ -312,7 +322,7 @@
+             if (message.isLoggedIn) {
+                 log("session successfully extended via Single Sign On in external tab");
+                 hideWarningModal();
+-                $modal.modal('hide');
++                loginModal.hide();
+                 localStorage.removeItem('ssoInactivityMessage');
+             }
+         };

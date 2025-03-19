@@ -60,10 +60,7 @@ Updating a SQL function
 
 4. Make changes to the function as required.
 5. Update callers of the function in code to point to the new function.
-
-If the function signature is changing:
-
-6. Repeat steps 1-4 above for the pl_proxy function (file in `corehq/sql_proxy_accessors`)
+6. Repeat steps 1-3 above for the pl_proxy function (file in `corehq/sql_proxy_accessors`)
 
 Make a separate PR to drop the old function (to be merged later) following [this
 example](https://github.com/dimagi/commcare-hq/pull/19195):

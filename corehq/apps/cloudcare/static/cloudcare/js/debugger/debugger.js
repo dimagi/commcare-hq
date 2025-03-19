@@ -1,8 +1,24 @@
-/* globals ace, Clipboard */
-hqDefine('cloudcare/js/debugger/debugger', function () {
-    var kissmetrics = hqImport("analytix/js/kissmetrix"),
-        readableForm = hqImport("reports/js/readable_form");
-
+hqDefine('cloudcare/js/debugger/debugger', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'clipboard/dist/clipboard',
+    'ace-builds/src-min-noconflict/ace',
+    'analytix/js/kissmetrix',
+    'reports/js/bootstrap5/readable_form',
+    'hqwebapp/js/atwho',    // $.atwho
+    'ace-builds/src-min-noconflict/mode-json',
+    'ace-builds/src-min-noconflict/mode-xml',
+    'ace-builds/src-min-noconflict/ext-searchbox',
+], function (
+    $,
+    ko,
+    _,
+    Clipboard,
+    ace,
+    kissmetrics,
+    readableForm,
+) {
     /**
      * These define tabs that are availabe in the debugger.
      * {
@@ -62,6 +78,8 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             ],
         });
 
+        $('#cloudcare-main').addClass('has-debugger');
+
         self.registeredTabIds = self.options.tabs;
         self.tabs = DebuggerTabs;
 
@@ -104,14 +122,6 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                 $('.debugger-content').outerHeight(contentHeight);
             }
         };
-
-        // Called afterRender, ensures that the debugger takes the whole screen
-        self.adjustWidth = function () {
-            var $debug = $('#instance-xml-home'),
-                $body = $('body');
-
-            $debug.width($body.width());
-        };
     };
 
     // By default do nothing when updating the debugger
@@ -152,7 +162,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                 username: this.options.username,
                 restoreAs: this.options.restoreAs,
                 domain: this.options.domain,
-            }
+            },
         ).done(function (response) {
             this.formattedQuestionsHtml(response.formattedQuestions);
             readableForm.init();
@@ -174,12 +184,12 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             this.options.baseUrl,
             {
                 selections: this.options.selections,
-                query_data: self.options.queryData,
+                query_data: this.options.queryData,
                 username: this.options.username,
                 restoreAs: this.options.restoreAs,
                 domain: this.options.domain,
                 app_id: this.options.appId,
-            }
+            },
         ).done(function (response) {
             this.evalXPath.autocomplete(response.autoCompletableItems);
             this.evalXPath.setRecentXPathQueries(response.recentXPathQueries || []);
@@ -208,7 +218,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         });
 
         RegExp.escape = function (s) {
-            return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            return s.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
         };
 
         self.debugTraceOptions = ko.observableArray([
@@ -359,7 +369,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                     query_data: self.options.queryData,
                     debugOutput: self.selectedDebugOption().key,
                 },
-                self.options.sessionType
+                self.options.sessionType,
             ).done(function (response) {
                 var xPathQuery = self.newXPathQuery({
                     status: response.status,
@@ -371,7 +381,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                 self.recentXPathQueries.unshift(xPathQuery);
                 // Ensure at the maximum we only show 6 queries
                 self.recentXPathQueries(
-                    self.recentXPathQueries.slice(0, 6)
+                    self.recentXPathQueries.slice(0, 6),
                 );
             });
             kissmetrics.track.event('[app-preview] User evaluated XPath');
@@ -445,11 +455,11 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             'Image': 'fa fa-camera',
             'Video': 'fa fa-video-camera',
             'Signature': 'fcc fcc-fd-signature',
-            'Geopoint': 'fa fa-map-marker',
+            'Geopoint': 'fa-solid fa-location-dot',
             'Barcode Scan': 'fa fa-barcode',
-            'Date': 'fa fa-calendar',
+            'Date': 'fa-solid fa-calendar-days',
             'Date and Time': 'fcc fcc-fd-datetime',
-            'Time': 'fcc fcc-fa-clock-o',
+            'Time': 'fa-regular fa-clock',
             'Select': 'fcc fcc-fd-single-select',
             'Double': 'fcc fcc-fd-decimal',
             'Label': 'fa fa-tag',

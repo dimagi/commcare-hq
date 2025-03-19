@@ -27,9 +27,32 @@ considered for review or re-review
 - Any automated feedback (label bot, lint bot, etc) is addressed
 - Any previous developer feedback is addressed
 
-Before submitting a PR, review our `Guide to Authoring Pull Requests`_.  
+
+
+When opening a PR, please review our `Guide to Authoring Pull Requests`_.  
 You may also be interested in the `Developers category`_ of the `CommCare Forum`_ 
 if you have questions or need feedback.
+
+Useful Tools
+------------
+Here are some tools widely used by CommCare HQ developers
+
+flake8
+    Flake8 is run on all PRs automatically. You can run it locally to ensure your
+    code meets those standards before opening a PR.
+
+pylint
+    It requires some configuration, but this is the most comprehensive python linter
+    out there and can provide some useful feedback.
+
+isort
+    This will organize the imports in the file you're editing according to the
+    ``.isort.cfg`` in the root of the repository.  See how to run this from within
+    your editor `here <https://github.com/pycqa/isort/wiki/isort-Plugins>`_
+
+./manage.py show_urls
+    Provided by ``django-extensions``, this outputs a list of all URL paths used in the
+    project. Pipe the output to ``grep`` to easily find what view handles a particular URL.
 
 CommCare Enhancement Proposals
 ------------------------------
@@ -71,10 +94,10 @@ to see how that works.
 
 .. _Dimagi: http://www.dimagi.com/
 .. _issue tracker: https://github.com/dimagi/commcare-hq/issues
-.. _bug reports: https://confluence.dimagi.com/display/commcarepublic/Bug+Reports
+.. _bug reports: https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143956931/Submit+a+Support+Request
 .. _Standards and Best Practices: STANDARDS.rst
 .. _Style Guide: https://www.commcarehq.org/styleguide/
-.. _Javascript Guide: docs/js-guide/README.md
+.. _Javascript Guide: docs/js-guide/README.rst
 .. _Guide to Authoring Pull Requests: https://github.com/dimagi/open-source/blob/master/docs/Writing_PRs.md
 .. _Developers category: https://forum.dimagi.com/c/developers
 .. _CommCare Forum: https://forum.dimagi.com/
@@ -163,3 +186,26 @@ PRs that are not ready to be merged can be labeled with one of the following lab
 - Open for review: do not merge
 
 As long as either of these labels are present on the PR it will have a pending status.
+
+Reviews with CodeRabbit
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. note:: CodeRabbit is being evaluated as a code review tool for CommCare HQ.
+
+CodeRabbit is an AI-powered code reviewer that delivers context-aware feedback on pull requests within
+minutes. It provides a fresh perspective and catches issues that are often missed, enhancing the
+overall review quality. A clean CodeRabbit review does not constitute approval allowing the PR to be merged.
+
+Although not required, it's recommended that you use CodeRabbit to review your PRs, ideally before any human-reviewers
+do so. A good way to do this is creating a draft PR first, let CodeRabbit review, address the feedback, then
+convert it to a regular PR.
+
+CodeRabbit specifies a `list of commands <https://docs.coderabbit.ai/guides/commands/>`_ for managing
+the bot’s review workflow. It’s recommended that you read through the page at least once to gain some
+perspective on how CodeRabbit functions, but the main commands you’ll probably want to know about are
+the following:
+
+- `@coderabbitai review` - Triggers a review from CodeRabbit. This command will do an incremental review of the PR, meaning that CodeRabbit will only review each commit once. This command is suited for most use-cases.
+- `@coderabbitai full review` - Triggers a full review again. This command is useful for when major changes require a fresh perspective.
+- `@coderabbitai resolve` - This resolves all CodeRabbit comments and is useful for when you want to clean up
+the CodeRabbit comments.

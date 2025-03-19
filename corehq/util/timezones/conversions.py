@@ -1,5 +1,6 @@
 from django.utils.encoding import smart_str
 import pytz
+from zoneinfo import ZoneInfo
 
 from corehq.const import USER_DATETIME_FORMAT, SERVER_DATETIME_FORMAT
 from corehq.util.soft_assert import soft_assert
@@ -82,12 +83,16 @@ class PhoneTime(_HQTZTime):
 def _soft_assert_tz_not_string(tz):
     _assert = soft_assert(to=['droberts@dimagi.com'], skip_frames=1)
 
-    if not _assert(hasattr(tz, "localize"),
+    if not _assert(_is_timezone_object(tz),
                    'Timezone should be a tzinfo object, not a string'):
         # tz is a string, or at least string-like
         return pytz.timezone(smart_str(tz))
     else:
         return tz
+
+
+def _is_timezone_object(tz):
+    return hasattr(tz, 'localize') or isinstance(tz, ZoneInfo)
 
 
 def _adjust_datetime_to_utc(value, from_tz):

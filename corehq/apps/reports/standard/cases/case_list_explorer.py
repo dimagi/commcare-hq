@@ -5,10 +5,12 @@ from memoized import memoized
 
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.case_search.const import (
-    CASE_COMPUTED_METADATA,
-    SPECIAL_CASE_PROPERTIES_MAP,
+    COMPUTED_METADATA,
+    INDEXED_METADATA_BY_KEY,
+    DOCS_LINK_CASE_LIST_EXPLORER,
 )
 from corehq.apps.case_search.exceptions import CaseFilterError
+from corehq.apps.case_search.utils import get_case_id_sort_block
 from corehq.apps.es.case_search import CaseSearchES, wrap_case_search_hit
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -18,6 +20,7 @@ from corehq.apps.reports.filters.select import (
     CaseTypeFilter,
     SelectOpenCloseFilter,
 )
+from corehq.apps.reports.standard import profile
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import SafeCaseDisplay
 from corehq.apps.reports.standard.cases.filters import (
@@ -27,11 +30,41 @@ from corehq.apps.reports.standard.cases.filters import (
 from corehq.util.metrics import metrics_histogram_timer
 
 
+class XpathCaseSearchFilterMixin(object):
+    """
+    To be mixed in views using XPathCaseSearchFilter to apply the filter
+    """
+    def apply_xpath_case_search_filter(self, query):
+        xpath = XPathCaseSearchFilter.get_value(self.request, self.domain)
+        if xpath:
+            try:
+                query = query.xpath_query(self.domain, xpath)
+            except CaseFilterError as e:
+                track_workflow(self.request.couch_user.username, f"{self.name}: Query Error")
+
+                error = "<p>{}.</p>".format(escape(e))
+                bad_part = "<p>{} <strong>{}</strong></p>".format(
+                    _("The part of your search query that caused this error is: "),
+                    escape(e.filter_part)
+                ) if e.filter_part else ""
+                raise BadRequestError("{}{}".format(error, bad_part))
+
+            if '/' in xpath:
+                track_workflow(self.request.couch_user.username, f"{self.name}: Related case search")
+        return query
+
+
 @location_safe
-class CaseListExplorer(CaseListReport):
+class CaseListExplorer(CaseListReport, XpathCaseSearchFilterMixin):
     name = _('Case List Explorer')
     slug = 'case_list_explorer'
     search_class = CaseSearchES
+    description = _("Use Case List Explorer to run deep searches on your cases by case properties.  ")
+    documentation_link = DOCS_LINK_CASE_LIST_EXPLORER
+    use_bootstrap5 = False
+
+    profiler_enabled = True
+    profiler_name = "Case List Explorer"
 
     exportable = True
     exportable_all = True
@@ -64,25 +97,10 @@ class CaseListExplorer(CaseListReport):
     def _build_query(self, sort=True):
         query = super(CaseListExplorer, self)._build_query()
         query = self._populate_sort(query, sort)
-        xpath = XPathCaseSearchFilter.get_value(self.request, self.domain)
-        if xpath:
-            try:
-                query = query.xpath_query(self.domain, xpath)
-            except CaseFilterError as e:
-                track_workflow(self.request.couch_user.username, f"{self.name}: Query Error")
-
-                error = "<p>{}.</p>".format(escape(e))
-                bad_part = "<p>{} <strong>{}</strong></p>".format(
-                    _("The part of your search query that caused this error is: "),
-                    escape(e.filter_part)
-                ) if e.filter_part else ""
-                raise BadRequestError("{}{}".format(error, bad_part))
-
-            if '/' in xpath:
-                track_workflow(self.request.couch_user.username, f"{self.name}: Related case search")
-
+        query = self._apply_xpath_case_search_filter(query)
         return query
 
+    @profile("Populate sort")
     def _populate_sort(self, query, sort):
         if not sort:
             # Don't sort on export
@@ -95,11 +113,20 @@ class CaseListExplorer(CaseListReport):
             column_id = int(self.request.GET["iSortCol_{}".format(col_num)])
             column = self.headers.header[column_id]
             try:
-                special_property = SPECIAL_CASE_PROPERTIES_MAP[column.prop_name]
-                query = query.sort(special_property.sort_property, desc=descending)
+                meta_property = INDEXED_METADATA_BY_KEY[column.prop_name]
+                if meta_property.key == '@case_id':
+                    # This condition is added because ES 5 does not allow sorting on _id.
+                    #  When we will have case_id in root of the document, this should be removed.
+                    query.es_query['sort'] = get_case_id_sort_block(descending)
+                    return query
+                query = query.sort(meta_property.es_field_name, desc=descending)
             except KeyError:
                 query = query.sort_by_case_property(column.prop_name, desc=descending)
         return query
+
+    @profile("Apply Xpath case filter")
+    def _apply_xpath_case_search_filter(self, query):
+        return self.apply_xpath_case_search_filter(query)
 
     @property
     def columns(self):
@@ -134,7 +161,7 @@ class CaseListExplorer(CaseListReport):
             DataTablesColumn(
                 column["label"],
                 prop_name=column["name"],
-                sortable=column not in CASE_COMPUTED_METADATA,
+                sortable=column not in COMPUTED_METADATA,
             )
             for column in CaseListExplorerColumns.get_value(self.request, self.domain)
         ]
@@ -153,10 +180,23 @@ class CaseListExplorer(CaseListReport):
         return headers
 
     @property
+    @profile("Retrieving rows")
     def rows(self):
-        track_workflow(self.request.couch_user.username, f"{self.name}: Search Performed")
+        self.track_search()
         data = (wrap_case_search_hit(row) for row in self.es_results['hits'].get('hits', []))
         return self._get_rows(data)
+
+    def track_search(self):
+        track_workflow(
+            self.request.couch_user.username,
+            f"{self.name}: Search Performed",
+            self.get_tracked_search_properties()
+        )
+
+    def get_tracked_search_properties(self):
+        return {
+            'domain': self.domain,
+        }
 
     @property
     def get_all_rows(self):
@@ -164,6 +204,7 @@ class CaseListExplorer(CaseListReport):
         data = (wrap_case_search_hit(r) for r in query.scroll_ids_to_disk_and_iter_docs())
         return self._get_rows(data)
 
+    @profile("Preparing data for display")
     def _get_rows(self, data):
         timer = metrics_histogram_timer(
             'commcare.case_list_explorer_query.row_fetch_timings',

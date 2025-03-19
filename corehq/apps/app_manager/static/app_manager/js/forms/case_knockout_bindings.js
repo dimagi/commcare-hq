@@ -1,4 +1,14 @@
-(function () {
+hqDefine("app_manager/js/forms/case_knockout_bindings", [
+    'jquery',
+    'knockout',
+    'underscore',
+    'DOMPurify/dist/purify.min',
+], function (
+    $,
+    ko,
+    _,
+    DOMPurify,
+) {
     var utils = {
         _getIcon: function (question) {
             if (question.tag === 'upload') {
@@ -20,8 +30,8 @@
         },
         _truncateLabel: function (label, suffix, MAXLEN) {
             suffix = suffix || "";
-            var MAXLEN = MAXLEN || 40,
-                maxlen = MAXLEN - suffix.length;
+            MAXLEN = MAXLEN || 40;
+            const maxlen = MAXLEN - suffix.length;
             return ((label.length <= maxlen) ? (label) : (label.slice(0, maxlen) + "...")) + suffix;
         },
         _truncateValue: function (value, MAXLEN) {
@@ -71,7 +81,7 @@
                 var $warning = $('<div class="help-block"></div>').text(gettext(
                     'We cannot find this question in the allowed questions for this field. ' +
                     'It is likely that you deleted or renamed the question. ' +
-                    'Please choose a valid question from the dropdown.'
+                    'Please choose a valid question from the dropdown.',
                 ));
                 $(element).after($warning);
                 $(element).parent().addClass('has-error');
@@ -85,8 +95,7 @@
                     var paperclip = '<i class="fa fa-paperclip"></i> ';
                     if (m.includes(paperclip)) {
                         m = m.replace(paperclip, '');
-                    }
-                    else {
+                    } else {
                         paperclip = '';
                     }
                     return paperclip + DOMPurify.sanitize(m).replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -143,67 +152,67 @@
             $element.trigger('change.select2');
         },
     };
-}());
 
-ko.bindingHandlers.casePropertyAutocomplete = {
-    /*
-     * Strip "attachment:" prefix and show icon for attachment properties.
-     * Replace any spaces in free text with underscores.
-     */
-    init: function (element, valueAccessor) {
-        $(element).on('textchange', function () {
-            var $el = $(this);
-            if ($el.val().match(/\s/)) {
-                var pos = $el.caret('pos');
-                $el.val($el.val().replace(/\s/g, '_'));
-                $el.caret('pos', pos);
-            }
-        });
-        ko.bindingHandlers.autocompleteAtwho.init(element, valueAccessor);
-    },
-    update: function (element, valueAccessor, allBindingsAccessor) {
-        function wrappedValueAccessor() {
-            return _.map(ko.unwrap(valueAccessor()), function (value) {
-                if (value.indexOf("attachment:") === 0) {
-                    var text = value.substring(11),
-                        html = '<i class="fa fa-paperclip"></i> ' + text;
-                    return {name: text, content: html};
+    ko.bindingHandlers.casePropertyAutocomplete = {
+        /*
+         * Strip "attachment:" prefix and show icon for attachment properties.
+         * Replace any spaces in free text with underscores.
+         */
+        init: function (element, valueAccessor) {
+            $(element).on('textchange', function () {
+                var $el = $(this);
+                if ($el.val().match(/\s/)) {
+                    var pos = $el.caret('pos');
+                    $el.val($el.val().replace(/\s/g, '_'));
+                    $el.caret('pos', pos);
                 }
-                return {name: value, content: value};
             });
-        }
-        ko.bindingHandlers.autocompleteAtwho.update(element, wrappedValueAccessor, allBindingsAccessor);
-    },
-};
+            ko.bindingHandlers.autocompleteAtwho.init(element, valueAccessor);
+        },
+        update: function (element, valueAccessor, allBindingsAccessor) {
+            function wrappedValueAccessor() {
+                return _.map(ko.unwrap(valueAccessor()), function (value) {
+                    if (value.indexOf("attachment:") === 0) {
+                        var text = value.substring(11),
+                            html = '<i class="fa fa-paperclip"></i> ' + text;
+                        return {name: text, content: html};
+                    }
+                    return {name: value, content: value};
+                });
+            }
+            ko.bindingHandlers.autocompleteAtwho.update(element, wrappedValueAccessor, allBindingsAccessor);
+        },
+    };
 
-// Originally from http://stackoverflow.com/a/17998880
-ko.extenders.withPrevious = function (target) {
-    // Define new properties for previous value and whether it's changed
-    target.previous = ko.observable();
+    // Originally from http://stackoverflow.com/a/17998880
+    ko.extenders.withPrevious = function (target) {
+        // Define new properties for previous value and whether it's changed
+        target.previous = ko.observable();
 
-    // Subscribe to observable to update previous, before change.
-    target.subscribe(function (v) {
-        target.previous(v);
-    }, null, 'beforeChange');
+        // Subscribe to observable to update previous, before change.
+        target.subscribe(function (v) {
+            target.previous(v);
+        }, null, 'beforeChange');
 
-    // Return modified observable
-    return target;
-};
+        // Return modified observable
+        return target;
+    };
 
-ko.bindingHandlers.numericValue = {
-    init: function (element, valueAccessor, allBindingsAccessor) {
-        var underlyingObservable = valueAccessor();
-        var interceptor = ko.dependentObservable({
-            read: underlyingObservable,
-            write: function (value) {
-                if ($.isNumeric(value)) {
-                    underlyingObservable(parseFloat(value));
-                } else if (value === '') {
-                    underlyingObservable(null);
-                }
-            },
-        });
-        ko.bindingHandlers.value.init(element, function () { return interceptor; }, allBindingsAccessor);
-    },
-    update: ko.bindingHandlers.value.update,
-};
+    ko.bindingHandlers.numericValue = {
+        init: function (element, valueAccessor, allBindingsAccessor) {
+            var underlyingObservable = valueAccessor();
+            var interceptor = ko.dependentObservable({
+                read: underlyingObservable,
+                write: function (value) {
+                    if ($.isNumeric(value)) {
+                        underlyingObservable(parseFloat(value));
+                    } else if (value === '') {
+                        underlyingObservable(null);
+                    }
+                },
+            });
+            ko.bindingHandlers.value.init(element, function () { return interceptor; }, allBindingsAccessor);
+        },
+        update: ko.bindingHandlers.value.update,
+    };
+});

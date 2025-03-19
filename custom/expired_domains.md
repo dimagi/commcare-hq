@@ -22,3 +22,5 @@ in which the custom code was deleted.
 * intrahealth cca1567108dd9fad3510f508f9f3d66f7a9611e1
 * succeed 877f0ffe9c64201ce0b9a7b49ae48622c93f6635
 * m4change 7dedfb673e34123646e782d7b2bcaa83d9c95aac
+* champ bf2d4e76f4aab9ae09e9198c8b9fc00a2ca35e36
+* up_nrhm 0bf8203537319cd1b50207e828e08b6de468503f

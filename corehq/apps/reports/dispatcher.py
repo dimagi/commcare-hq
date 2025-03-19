@@ -24,6 +24,8 @@ from corehq.apps.reports.exceptions import BadRequestError
 from corehq.util.quickcache import quickcache
 
 from .lookup import ReportLookup
+from ..hqwebapp.utils.bootstrap import set_bootstrap_version5
+from ..hqwebapp.utils.bootstrap.reports.debug import reports_bootstrap5_template_debugger
 
 datespan_default = datespan_in_request(
     from_param="startdate",
@@ -151,6 +153,10 @@ class ReportDispatcher(View):
                 report.decorator_dispatcher(
                     request, domain=domain, report_slug=report_slug, *args, **kwargs
                 )
+                if report.use_bootstrap5:
+                    set_bootstrap_version5()
+                if report.debug_bootstrap5:
+                    reports_bootstrap5_template_debugger(report)
                 return getattr(report, '%s_response' % render_as)
             except BadRequestError as e:
                 return HttpResponseBadRequest(e)
@@ -227,7 +233,7 @@ class ReportDispatcher(View):
 
     @classmethod
     def url_pattern(cls):
-        from django.conf.urls import re_path as url
+        from django.urls import re_path as url
         return url(cls.pattern(), cls.as_view(), name=cls.name())
 
 

@@ -1,0 +1,29 @@
+{% load hq_shared_tags %}
+{% initial_analytics_data 'gtm.apiId' ANALYTICS_IDS.GTM_ID %}
+{% if request.couch_user %}
+  {% initial_analytics_data 'gtm.userId' request.couch_user.userID %}
+  {% initial_analytics_data 'gtm.userIsDimagi' request.couch_user.is_dimagi %}
+  {% initial_analytics_data 'gtm.userIsCommCareUser' request.couch_user.is_commcare_user %}
+  {% initial_analytics_data 'gtm.isNewUser' request.couch_user|is_new_user %}
+{% endif %}
+{% if request.domain or domain %}
+  {% firstof request.domain domain as metrics_domain %}
+  {% initial_analytics_data 'gtm.domain' metrics_domain %}
+{% endif %}
+{% if ANALYTICS_CONFIG.HQ_INSTANCE %}
+  {% initial_analytics_data 'gtm.hqInstance' ANALYTICS_CONFIG.HQ_INSTANCE %}
+{% endif %}
+{% if request.project and ANALYTICS_IDS.GTM_ID %}
+  {% initial_analytics_data 'gtm.projectGAOptOut' request.project.ga_opt_out|yesno:"yes,no,none" %}
+  {% if request.project.is_test == 'true' %}
+    {% initial_analytics_data 'gtm.isTestDomain' 'yes' %}
+  {% elif request.project.is_test == 'false' %}
+    {% initial_analytics_data 'gtm.isTestDomain' 'no' %}
+  {% endif %}
+  {% initial_analytics_data 'gtm.isDomainActive' request.project.recent_submissions %}
+{% endif %}
+{% if request.subscription %}
+  {% initial_analytics_data 'gtm.domainSubscription' request.subscription.plan_version.plan.name %}
+  {% initial_analytics_data 'gtm.domainSubscriptionEdition' request.subscription.plan_version.plan.edition %}
+  {% initial_analytics_data 'gtm.domainSubscriptionServiceType' request.subscription.service_type %}
+{% endif %}

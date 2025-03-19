@@ -10,7 +10,6 @@ from django.db.models.expressions import RawSQL
 from corehq.apps.groups.models import Group
 from corehq.sql_db.fields import CharIdField
 from corehq.util.jsonattrs import AttrsDict, AttrsList, list_of
-
 from .exceptions import FixtureVersionError
 
 FIXTURE_BUCKET = 'domain-fixtures'
@@ -83,6 +82,7 @@ class LookupTable(models.Model):
     fields = AttrsList(TypeField, default=list)
     item_attributes = models.JSONField(default=list)
     description = models.CharField(max_length=255, default="")
+    is_synced = models.BooleanField(default=False)
 
     class Meta:
         app_label = 'fixtures'

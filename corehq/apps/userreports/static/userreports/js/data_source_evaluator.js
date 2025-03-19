@@ -1,5 +1,13 @@
-/* globals hqDefine */
-hqDefine('userreports/js/data_source_evaluator', function () {
+hqDefine('userreports/js/data_source_evaluator', [
+    'jquery',
+    'knockout',
+    'hqwebapp/js/initial_page_data',
+    'commcarehq',
+], function (
+    $,
+    ko,
+    initialPageData,
+) {
     var dataSourceModel = function (submitUrl) {
         var self = {};
         self.submitUrl = submitUrl;
@@ -16,8 +24,7 @@ hqDefine('userreports/js/data_source_evaluator', function () {
             self.uiFeedback("");
             if (!self.documentsId()) {
                 self.uiFeedback("Please enter a document ID.");
-            }
-            else {
+            } else {
                 self.loading(true);
                 $.post({
                     url: self.submitUrl,
@@ -60,10 +67,10 @@ hqDefine('userreports/js/data_source_evaluator', function () {
     };
 
     $(function () {
-        var submitUrl = hqImport("hqwebapp/js/initial_page_data").reverse("data_source_evaluator");
+        var submitUrl = initialPageData.reverse("data_source_evaluator");
         ko.applyBindings(
             dataSourceModel(submitUrl),
-            document.getElementById('data-source-debugger')
+            document.getElementById('data-source-debugger'),
         );
     });
 });

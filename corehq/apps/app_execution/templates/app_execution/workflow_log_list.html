@@ -1,0 +1,79 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load hq_shared_tags %}
+{% load compress %}
+{% load i18n %}
+
+{% block stylesheets %}{{ block.super }}
+{% compress css %}
+    <link type="text/css"
+              rel="stylesheet"
+              media="screen"
+              href="{% static "@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css" %}" />
+  {% endcompress %}
+{% endblock %}
+
+{% js_entry 'app_execution/js/workflow_logs' %}
+
+{% block page_content %}
+  {% initial_page_data 'total_items' total %}
+  {% registerurl "app_execution:logs_json" request.domain workflow.id %}
+  {% blocktranslate asvar title_text with name=workflow.name %}Logs for workflow "{{ name }}"{% endblocktranslate %}
+  {% include "app_execution/components/title_bar.html" with workflow_id=workflow.id show_logs=False title_text=title_text %}
+  <div class="row row-cols-lg-1 row-cols-xl-2">
+    <div id="timing_linechart" class="col">
+      <h4 class="text-center">{% translate "Average Timings" %}</h4>
+      <svg height="300px"></svg>
+    </div>
+    <div id="status_barchart" class="col">
+      <h4 class="text-center">{% translate "Log Status" %}</h4>
+      <svg height="300px"></svg>
+    </div>
+  </div>
+  <div id="workflow-logs">
+    <div class="row my-3">
+      <label for="status" class="col-sm-1 col-form-label">{% translate 'Filter' %}</label>
+      <div class="col col-sm-3">
+        <select class="form-select" name="status" data-bind="value: statusFilter">
+          <option value="">{% translate 'All Status' %}</option>
+          <option value="success">{% translate 'Success' %}</option>
+          <option value="error">{% translate 'Error' %}</option>
+        </select>
+      </div>
+      <div class="col col-sm-3">
+        <input type="text" name="date_range" class="form-control" id="id_date_range" data-bind="value: dateRange">
+      </div>
+    </div>
+    <table class="table table-striped table-hover">
+    <thead>
+    <tr>
+      <th>{% translate 'Status' %}</th>
+      <th>{% translate 'Started' %}</th>
+      <th>{% translate 'Duration' %}</th>
+      <th></th>
+    </tr>
+    </thead>
+    <tbody data-bind="foreach: items">
+    <tr>
+      <td><span class="badge"
+                data-bind="
+                  text: success ? 'success' : 'error',
+                  css: {'text-bg-success': success, 'text-bg-danger': !success}
+                ">
+      </span></td>
+      <td data-bind="text: started"></td>
+      <td data-bind="text: duration"></td>
+      <td><a class="btn btn-primary" data-bind="attr: {href: url}">{% translate 'Details' %}</a></td>
+    </tr>
+    </tbody>
+    </table>
+    <pagination data-apply-bindings="false"
+                params="goToPage: goToPage, totalItems: totalItems, perPage: perPage, onLoad: onLoad"></pagination>
+</div>
+{{ chart_data|json_script:"chart_data" }}
+<script id="timingSeries" type="application/json">
+  [
+    {"label": "- {% translate 'Avg Timings' %}", "key": "avg_duration"},
+    {"label": "- {% translate 'Max Timings' %}", "key": "max_duration"}
+  ]
+</script>
+{% endblock %}

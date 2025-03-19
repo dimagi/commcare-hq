@@ -1,0 +1,83 @@
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% if phonenumbers %}
+  {% block phonenumber_list %}
+    <div id="phone-numbers-list" class="form">
+      <fieldset>
+        <legend>{% blocktrans %}Registered Phone Numbers{% endblocktrans %}</legend>
+        {% for phone in phonenumbers %}
+          <div class="row mb-2">
+            <div class="col-md-4 col-xl-2">
+              <span class="mr-3">+{{ phone.number }}</span>
+              {% if user_type == "mobile" %}
+
+                {% if phone.status == "verified" %}
+                  <span class="badge text-bg-success">{% trans 'VERIFIED' %}</span>
+                {% elif phone.status == "pending" %}
+                  <span class="badge text-bg-secondary">{% trans 'VERIFICATION PENDING' %}</span>
+                {% elif phone.status == "duplicate" %}
+                  {% if phone.dup_url %}<a href="{{ phone.dup_url }}">{% endif %}
+                    <span class="badge text-bg-warning">{% trans 'ALREADY IN USE' %}</span>
+                  {% if phone.dup_url %}</a>{% endif %}
+                {% elif phone.status == "invalid" %}
+                  <span class="badge text-bg-secondary">{% trans 'INVALID FORMAT' %}</span>
+                {% endif %}
+
+              {% endif %}
+            </div>
+            <div class="col-md-8 col-xl-10">
+              {% if user_type == "mobile" and can_use_inbound_sms %}
+                {% if phone.status == "unverified" %}
+                  <form class="d-inline" method="post" action="{% url "verify_phone_number" domain couch_user.couch_id %}?phone_number={{phone.number|urlencode}}">
+                    {% csrf_token %}
+                    <button type="submit"
+                            data-html="true"
+                            data-title="<div class='alert alert-warning'><i class='fa-solid fa-triangle-exclamation'></i> <strong>{% trans 'SMS charges will incur.' %}</strong></div>{% trans 'Send a verification SMS to this phone. When the user replies to this SMS, the phone number will be verified.' %}"
+                            class="btn btn-primary mx-1 verify-button"><i class="fa fa-signal"></i> {% trans 'Verify' %}
+                    </button>
+                  </form>
+                {% elif phone.status == "duplicate" %}
+                  <button data-title="You cannot verify this phone because it is already being used elsewhere"
+                          class="btn btn-primary mx-1 disabled verify-button">
+                    <i class="fa fa-signal"></i> {% trans 'Verify' %}
+                  </button>
+                {% elif phone.status == "pending" %}
+                  <button data-title="Re-send the verification SMS to this phone"
+                          class="btn btn-primary mx-1 verify-button"
+                          data-bs-toggle="modal"
+                          href="#reverify_{{phone.number|urlencode}}">
+                    <i class="fa fa-signal"></i> {% trans 'Verify (retry)' %}
+                  </button>
+                {% endif %}
+              {% endif %}
+
+              <a class="btn btn-outline-danger mx-1"
+                 data-bs-toggle="modal"
+                 href="#delete_phonenumber_{{ forloop.counter }}">
+                <i class="fa fa-remove"></i> {% trans 'Delete' %}
+              </a>
+
+              {% if not forloop.first %}
+                <form class="d-inline" name="make_phone_number_default"
+                  {% if user_type == "mobile" %}
+                      action="{% url "make_phone_number_default" domain couch_user.couch_id %}"
+                  {% endif %}
+                      method="POST">
+                  {% csrf_token %}
+                  <input type="hidden" name="form_type" value="make-phone-number-default"/>
+                  <input type="hidden" name="phone_number" value="{{ phone.number }}"/>
+                  <button type="submit" class="btn btn-outline-primary mx-1">
+                    {% blocktrans %}Mark as primary{% endblocktrans %}
+                  </button>
+                </form>
+              {% endif %}
+            </div><!-- .col-md-8 -->
+          </div><!-- .row -->
+        {% endfor %}
+      </fieldset>
+    </div>
+  {% endblock %}
+{% endif %}
+
+{% crispy add_phone_number_form %}

@@ -1,0 +1,60 @@
+{% extends 'styleguide/bootstrap3/example.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block demo %}
+  {% crispy basic_crispy_form %}
+{% endblock demo %}
+
+{% block code %}
+  <p>Located in <code>corehq.apps.styleguide.example_forms</code></p>
+
+  <pre>from django import forms
+from django.utils.translation import gettext_lazy, gettext as _
+from crispy_forms import layout as crispy
+from crispy_forms import bootstrap as twbscrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
+
+
+class BasicCrispyForm(forms.Form):
+    first_name = forms.CharField(
+        label=gettext_lazy("First Name"),
+    )
+    favorite_color = forms.ChoiceField(
+        label=gettext_lazy("Pick a Favorite Color"),
+        choices=(
+            ('red', gettext_lazy("Red")),
+            ('green', gettext_lazy("Green")),
+            ('blue', gettext_lazy("Blue")),
+            ('purple', gettext_lazy("Purple")),
+        ),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(BasicCrispyForm, self).__init__(*args, **kwargs)
+        self.helper = hqcrispy.HQFormHelper()
+
+        self.helper.form_method = 'POST'
+        self.helper.form_action = '#'
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Basic Information"),
+                crispy.Field('first_name'),
+                crispy.Field('favorite_color'),
+            ),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Save"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                ),
+                hqcrispy.LinkButton(
+                    _("Cancel"),
+                    '#',
+                    css_class="btn btn-default",
+                ),
+            ),
+        )
+    </pre>
+{% endblock code %}

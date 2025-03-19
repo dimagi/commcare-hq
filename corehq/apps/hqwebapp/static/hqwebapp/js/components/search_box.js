@@ -1,3 +1,4 @@
+
 /*
  * Component for displaying a search box. Almost certainly included within a a larger knockout template.
  *
@@ -14,12 +15,14 @@ hqDefine('hqwebapp/js/components/search_box', [
     'jquery',
     'knockout',
     'underscore',
+    'hqwebapp/js/components.ko',
 ], function (
     $,
     ko,
-    _
+    _,
+    koComponents,
 ) {
-    return {
+    const component = {
         viewModel: function (params) {
             var self = {};
 
@@ -52,4 +55,8 @@ hqDefine('hqwebapp/js/components/search_box', [
         },
         template: '<div data-bind="template: { name: \'ko-search-box-template\' }"></div>',
     };
+
+    koComponents.register('search-box', component);
+
+    return component;
 });

@@ -1,5 +1,3 @@
-import hashlib
-import logging
 import os
 import simplejson
 from memoized import memoized
@@ -127,8 +125,19 @@ class CachedImageMeta(CachedObjectMeta):
     width = 0
     meta_type = "image"
 
-    def __init__(self, size_key=OBJECT_ORIGINAL, width=0, height=0, content_length=0, content_type='application/octet-stream'):
-        super(CachedImageMeta, self).__init__(size_key=size_key, content_length=content_length, content_type=content_type)
+    def __init__(
+        self,
+        size_key=OBJECT_ORIGINAL,
+        width=0,
+        height=0,
+        content_length=0,
+        content_type='application/octet-stream',
+    ):
+        super().__init__(
+            size_key=size_key,
+            content_length=content_length,
+            content_type=content_type,
+        )
         self.width = width
         self.height = height
 
@@ -174,8 +183,11 @@ class CachedImageMeta(CachedObjectMeta):
 class CachedObject(object):
     def __init__(self, cache_key):
         """
-        cache_key is the supposedly unique cache key you will want to create for keeping track of your cacheable assets.
-        like cache.set(key, value) - it's the implementor's responsibility to make sure to have a universally unique cache key for the assets you want to cache.
+        ``cache_key`` is the supposedly unique cache key you will want
+        to create for keeping track of your cacheable assets. Like
+        ``cache.set(key, value)`` - it's the implementor's
+        responsibility to make sure to have a universally unique cache
+        key for the assets you want to cache.
         """
         self.cache_key = cache_key
 
@@ -326,7 +338,9 @@ class CachedImage(CachedObject):
         """
         rcache = self.rcache
         if not self.has_size(size_key):
-            #make size from the next available largest size (so if there's a small_320 and you want small, generate it from next size up
+            # make size from the next available largest size (so if
+            # there's a small_320 and you want small, generate it from
+            # next size up)
             size_seq = IMAGE_SIZE_ORDERING.index(size_key)
             source_key = OBJECT_ORIGINAL
             target_size = (OBJECT_SIZE_MAP[size_key]['width'], OBJECT_SIZE_MAP[size_key]['height'])
@@ -351,7 +365,11 @@ class CachedImage(CachedObject):
                 target_handle = io.BytesIO()
                 target_image_obj.save(target_handle, mime_ext)
                 target_handle.seek(0)
-                target_meta = CachedImageMeta.make_meta(target_handle, size_key, metadata={'content_type': source_meta.content_type})
+                target_meta = CachedImageMeta.make_meta(
+                    target_handle,
+                    size_key,
+                    metadata={'content_type': source_meta.content_type}
+                )
 
                 rcache.set(self.stream_key(size_key), target_handle.read())
                 rcache.set(self.meta_key(size_key), simplejson.dumps(target_meta.to_json()))

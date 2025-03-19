@@ -1,4 +1,12 @@
-hqDefine("data_interfaces/js/archive_forms", function () {
+hqDefine("data_interfaces/js/archive_forms", [
+    'jquery',
+    'knockout',
+    'analytix/js/google',
+], function (
+    $,
+    ko,
+    googleAnalytics,
+) {
     var managementSelector = '#data-interfaces-archive-forms',
         allFormsButtonSelector = managementSelector + ' input[name="select_all"]',
         checkboxesSelector = managementSelector + ' input.xform-checkbox',
@@ -13,8 +21,7 @@ hqDefine("data_interfaces/js/archive_forms", function () {
     function toggleButton(count) {
         if (count) {
             $("#submitForms").prop('disabled', false);
-        }
-        else {
+        } else {
             $("#submitForms").prop('disabled', true);
         }
     }
@@ -55,8 +62,7 @@ hqDefine("data_interfaces/js/archive_forms", function () {
                 $(checkboxesSelector).prop('checked', true).change();
                 $(indicatorSelector).hide();
                 toggleButton(1);
-            }
-            else {
+            } else {
                 $(indicatorSelector).show();
                 $(".selectedCount").text(0);
                 $(managementSelector + ' a.select-none').click();
@@ -70,9 +76,9 @@ hqDefine("data_interfaces/js/archive_forms", function () {
 
         $(document).on('click', '#submitForms', function () {
             if ($(allFormsButtonSelector)[0].checked) {
-                hqImport('analytix/js/google').track.event('Bulk Archive', 'All', 'Checkbox');
+                googleAnalytics.track.event('Bulk Archive', 'All', 'Checkbox');
             } else {
-                hqImport('analytix/js/google').track.event('Bulk Archive', 'All', 'Selected Forms');
+                googleAnalytics.track.event('Bulk Archive', 'All', 'Selected Forms');
             }
         });
     });

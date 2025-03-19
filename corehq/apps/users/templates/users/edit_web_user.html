@@ -4,9 +4,18 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main "locations/js/widgets" %}
+{% js_entry_b3 'users/js/edit_web_user' %}
 
 {% block page_content %}
+  {% initial_page_data 'can_edit_original_profile' can_edit_original_profile %}
+  {% initial_page_data 'custom_fields_slugs' custom_fields_slugs %}
+  {% initial_page_data 'custom_fields_profiles' custom_fields_profiles %}
+  {% initial_page_data 'custom_fields_profile_slug' custom_fields_profile_slug %}
+  {% initial_page_data "user_data" user_data %}
+  {% initial_page_data "request_user_domain_memberships" request.couch_user.domain_memberships %}
+  {% initial_page_data "domain" request.domain %}
+  {% initial_page_data "can_access_all_locations" can_access_all_locations %}
+  {% initial_page_data "editable_user_can_access_all_locations" editable_user_can_access_all_locations %}
   {% if has_untrusted_identity_provider %}
     <div class="alert alert-setting">
       <p class="lead">
@@ -56,10 +65,6 @@
             </ul>
           </dd>
         {% endif %}
-        {% if token %}
-          <dt>{% trans 'Backup Token' %}</dt>
-          <dd>{{ token }}</dd>
-        {% endif %}
       </dl>
     </fieldset>
   </div>
@@ -69,11 +74,14 @@
       <input type="hidden" name="form_type" value="update-user" />
       <fieldset>
         <legend>{% blocktrans with couch_user.human_friendly_name as friendly_name %}Change {{ friendly_name }}'s Role{% endblocktrans %}</legend>
-        {% crispy form_user_update %}
+        {% crispy form_user_update.user_form %}
 
+        {% if form_user_update.custom_data.form.fields or form_user_update.custom_data.form.data %}
+          {% crispy form_user_update.custom_data.form %}
+        {% endif %}
         <div class="form-actions">
           <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
-            <button type="submit" class="btn btn-primary">{% trans 'Update Role' %}</button>
+            <button type="submit" class="btn btn-primary">{% trans 'Update Information' %}</button>
           </div>
         </div>
       </fieldset>
@@ -90,6 +98,7 @@
         {% crispy update_form %}
       </fieldset>
       {% if not request.is_view_only %}
+        {% include 'users/partials/location_edit_warnings.html' with request_username=request.couch_user.username user_type="Web User" couch_username=couch_user.username %}
         <div class="form-actions">
           <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
             <button type="submit" class="btn btn-primary">{% trans 'Update Location Settings' %}</button>
@@ -97,18 +106,28 @@
         </div>
       {% endif %}
     </form>
+
+    {% if support_info.locations %}
+      <h4>[Support only] Assigned Locations</h4>
+      <div class="list-group">
+        {% for location in support_info.locations %}
+          <a href="{% url "edit_location" domain location.location_id %}" class="list-group-item">
+            {{ location.get_path_display }} <span class="badge">{{ location.location_type.name }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    {% endif %}
   {% endif %}
 
-  {% if tableau_form %}
+  {% if tableau_form and view_user_tableau_config %}
     <hr />
     <form id="tableau_form" class="form form-horizontal" name="" method="post">
       {% csrf_token %}
       <input type="hidden" name="form_type" value="tableau" />
       <fieldset>
-        <legend>{% trans 'Tableau Configuration' %}</legend>
         {% crispy tableau_form %}
       </fieldset>
-      {% if not request.is_view_only %}
+      {% if not request.is_view_only and edit_user_tableau_config%}
         <div class="form-actions">
           <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
             <button type="submit" class="btn btn-primary">{% trans 'Update Tableau Configuration' %}</button>

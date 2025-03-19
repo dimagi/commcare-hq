@@ -10,6 +10,7 @@ from corehq.apps.translations.generators import (
 from corehq.apps.translations.integrations.transifex.client import (
     TransifexApiClient,
 )
+from corehq.apps.translations.integrations.transifex.exceptions import TransifexApiException
 from corehq.apps.translations.integrations.transifex.parser import (
     TranslationsParser,
 )
@@ -74,7 +75,7 @@ class Transifex(object):
         transifex_project = TransifexProject.objects.get(slug=self.project_slug)
         transifex_organization = transifex_project.organization
         return TransifexApiClient(
-            transifex_organization.get_api_token,
+            transifex_organization.plaintext_api_token,
             transifex_organization.slug,
             self.project_slug,
             self.use_version_postfix,
@@ -82,7 +83,7 @@ class Transifex(object):
 
     @cached_property
     def transifex_project_source_lang(self):
-        return self.client.transifex_lang_code(self.client.get_source_lang())
+        return self.client.transifex_lang_code(self.client.source_lang_code)
 
     def _resource_name_in_project_lang(self, resource_slug, app_trans_generator):
         """
@@ -99,24 +100,32 @@ class Transifex(object):
 
     def _send_files_to_transifex(self, generated_files, app_trans_generator):
         file_uploads = {}
+        current_project_resources = []
         for resource_slug, path_to_file in generated_files:
+            current_project_resources.append(resource_slug)
             resource_name = self._resource_name_in_project_lang(resource_slug, app_trans_generator)
-            if self.is_source_file:
-                response = self.client.upload_resource(
-                    path_to_file,
-                    resource_slug,
-                    resource_name,
-                    self.update_resource
-                )
-            else:
-                response = self.client.upload_translation(
-                    path_to_file, resource_slug,
-                    resource_name, self.source_lang
-                )
-            if response.status_code in [200, 201]:
+            try:
+                if self.is_source_file:
+                    self.client.upload_resource(
+                        path_to_file,
+                        resource_slug,
+                        resource_name,
+                        self.update_resource
+                    )
+                else:
+                    self.client.upload_translation(
+                        path_to_file,
+                        resource_slug,
+                        self.source_lang
+                    )
                 file_uploads[resource_name] = _("Successfully Uploaded")
-            else:
-                file_uploads[resource_name] = "{}: {}".format(response.status_code, response.content)
+            except TransifexApiException as e:
+                file_uploads[resource_name] = "Upload Error: {}".format(e)
+        if self.update_resource:
+            resources_to_delete = self.client.get_resource_slugs_for_deleted_forms(current_project_resources)
+            if resources_to_delete:
+                delete_status = self.delete_resources(resources_to_delete)
+                file_uploads.update(delete_status)
         return file_uploads
 
     @cached_property
@@ -158,7 +167,7 @@ class Transifex(object):
         """
         check_for_lang = None if all_langs else self.source_lang
         for resource_slug in self.resource_slugs:
-            if not self.client.translation_completed(resource_slug, check_for_lang):
+            if not self.client.is_translation_completed(resource_slug, check_for_lang):
                 return resource_slug
 
     def generate_excel_file(self):
@@ -171,12 +180,14 @@ class Transifex(object):
         """
         return self.client.source_lang_is(hq_lang_code)
 
-    def delete_resources(self):
+    def delete_resources(self, resource_slugs=None):
         delete_status = {}
-        for resource_slug in self.resource_slugs:
-            response = self.client.delete_resource(resource_slug)
-            if response.status_code == 204:
+        if resource_slugs is None:
+            resource_slugs = self.resource_slugs
+        for resource_slug in resource_slugs:
+            try:
+                self.client.delete_resource(resource_slug)
                 delete_status[resource_slug] = _("Successfully Removed")
-            else:
-                delete_status[resource_slug] = response.content
+            except TransifexApiException:
+                delete_status[resource_slug] = "Resource {} not found".format(resource_slug)
         return delete_status

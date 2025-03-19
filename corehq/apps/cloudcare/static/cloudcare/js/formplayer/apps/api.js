@@ -1,11 +1,16 @@
+
 /**
  * Backbone model and functions for listing and selecting CommCare apps
  */
-
-hqDefine("cloudcare/js/formplayer/apps/api", function () {
-    var Collections = hqImport("cloudcare/js/formplayer/apps/collections"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
-
+hqDefine("cloudcare/js/formplayer/apps/api", [
+    'jquery',
+    'cloudcare/js/formplayer/apps/collections',
+    'cloudcare/js/formplayer/users/models',
+], function (
+    $,
+    Collections,
+    UsersModels,
+) {
     var appsPromiseByRestoreAs = {};
     var appsByRestoreAs = {};
     var predefinedAppsPromise;
@@ -33,8 +38,8 @@ hqDefine("cloudcare/js/formplayer/apps/api", function () {
         },
         getAppEntities: function () {
             var appsPromise,
-                restoreAs = FormplayerFrontend.getChannel().request('currentUser').restoreAs,
-                singleAppMode = FormplayerFrontend.getChannel().request('currentUser').displayOptions.singleAppMode;
+                restoreAs = UsersModels.getCurrentUser().restoreAs,
+                singleAppMode = UsersModels.getCurrentUser().displayOptions.singleAppMode;
             if (singleAppMode) {
                 appsPromise = fetchPredefinedApps();
             } else {
@@ -46,7 +51,7 @@ hqDefine("cloudcare/js/formplayer/apps/api", function () {
             });
         },
         getAppEntity: function (id) {
-            var restoreAs = FormplayerFrontend.getChannel().request('currentUser').restoreAs;
+            var restoreAs = UsersModels.getCurrentUser().restoreAs;
             var apps = appsByRestoreAs[restoreAs];
             if (!apps) {
                 console.warn("getAppEntity is returning null. If the app_id is correct, " +
@@ -54,17 +59,14 @@ hqDefine("cloudcare/js/formplayer/apps/api", function () {
                 return null;
             }
             var appCollection = Collections(apps);
-            return appCollection.get(id);
+            let fetchedApp = appCollection.get(id);
+            if (!fetchedApp) {
+                fetchedApp = appCollection.models.find(currApp => currApp.get("copy_of") === id);
+            }
+
+            return fetchedApp;
         },
     };
-
-    FormplayerFrontend.getChannel().reply("appselect:apps", function () {
-        return API.getAppEntities();
-    });
-
-    FormplayerFrontend.getChannel().reply("appselect:getApp", function (id) {
-        return API.getAppEntity(id);
-    });
 
     return API;
 });

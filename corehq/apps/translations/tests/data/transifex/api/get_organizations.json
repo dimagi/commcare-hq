@@ -1,0 +1,34 @@
+{
+    "data": [
+        {
+            "id": "o:test-organization",
+            "type": "organizations",
+            "attributes": {
+                "name": "Test Organization",
+                "slug": "test-organization",
+                "logo_url": null,
+                "private": false
+            },
+            "links": {
+                "self": "https://rest.api.transifex.com/organizations/o:test-organization"
+            },
+            "relationships": {
+                "projects": {
+                    "links": {
+                        "related": "https://rest.api.transifex.com/projects?filter[organization]=o:test-organization"
+                    }
+                },
+                "teams": {
+                    "links": {
+                        "related": "https://rest.api.transifex.com/teams?filter[organization]=o:test-organization"
+                    }
+                }
+            }
+        }
+    ],
+    "links": {
+        "self": "https://rest.api.transifex.com/organizations?filter[slug]=test-organization",
+        "next": null,
+        "previous": null
+    }
+}

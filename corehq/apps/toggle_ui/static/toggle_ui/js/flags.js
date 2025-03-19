@@ -2,15 +2,16 @@ hqDefine('toggle_ui/js/flags', [
     'jquery',
     'knockout',
     'underscore',
-    'hqwebapp/js/alert_user',
-    'reports/js/config.dataTables.bootstrap',
-    'hqwebapp/js/components.ko',    // select toggle widget
+    'hqwebapp/js/bootstrap3/alert_user',
+    'reports/js/bootstrap3/datatables_config',
+    'hqwebapp/js/components/select_toggle',
+    'commcarehq',
 ], function (
     $,
     ko,
     _,
     alertUser,
-    datatablesConfig
+    datatablesConfig,
 ) {
     var dataTableElem = '.datatable';
     let buildViewModel = function () {
@@ -80,7 +81,7 @@ hqDefine('toggle_ui/js/flags', [
 
     let viewModel = buildViewModel();
     $.fn.dataTableExt.afnFiltering.push(
-        function (oSettings, aData, iDataIndex) {
+        function (oSettings, aData) {
             if (viewModel.tagFilter() === 'all') {
                 return true;
             }
@@ -89,7 +90,7 @@ hqDefine('toggle_ui/js/flags', [
                 return true;
             }
             return tag === viewModel.tagFilter();
-        }
+        },
     );
     $('#feature_flags').koApplyBindings(viewModel);
     var table = datatablesConfig.HQReportDataTables({
@@ -99,7 +100,7 @@ hqDefine('toggle_ui/js/flags', [
     });
     table.render();
 
-    viewModel.tagFilter.subscribe(function (value) {
+    viewModel.tagFilter.subscribe(function () {
         table.datatable.fnDraw();
     });
 });

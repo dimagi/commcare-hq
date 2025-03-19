@@ -1,12 +1,18 @@
-hqDefine("app_manager/js/modules/case_list_setting", function () {
+hqDefine("app_manager/js/modules/case_list_setting", [
+    'jquery',
+    'underscore',
+], function (
+    $,
+    _,
+) {
     function getLabel(slug) { return $('.case-list-setting-label[data-slug="' + slug + '"]'); }
     function getShow(slug) { return $('.case-list-setting-show[data-slug="' + slug + '"]'); }
     function getMedia(slug) { return $('.case-list-setting-media[data-slug="' + slug + '"]'); }
 
     function updateCaseListLabelError(slug) {
-        var label_text = getLabel(slug).find('input').val();
+        var labelText = getLabel(slug).find('input').val();
         var show = getShow(slug).val() === 'true';
-        if (!label_text.length && show) {
+        if (!labelText.length && show) {
             getLabel(slug).closest('.form-group').addClass('has-error');
             $('#case_list_label_error').removeClass("hide");
         } else {

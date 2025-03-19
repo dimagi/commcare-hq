@@ -14,6 +14,16 @@
         "airszimbabwe",
         "airsmozambique",
         "kenya-vca",
+        "pmievolve-ethiopia-1",
+        "pmievolve-ghana",
+        "pmievolve-kenya",
+        "pmievolve-madagascar",
+        "pmievolve-malawi",
+        "pmievolve-mozambique",
+        "pmievolve-rwanda",
+        "pmievolve-sierra-leone",
+        "pmievolve-uganda",
+        "pmievolve-zambia",
         "vectorlink-benin",
         "vectorlink-burkina-faso",
         "vectorlink-ethiopia",
@@ -441,6 +451,34 @@
                 "expression": {
                     "datatype": null,
                     "property_name": "responsible_follow_up",
+                    "type": "property_name"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "description",
+                "datatype": "string",
+                "display_name": "description",
+                "expression": {
+                    "datatype": null,
+                    "property_name": "description",
+                    "type": "property_name"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "time_spent",
+                "datatype": "string",
+                "display_name": "time_spent",
+                "expression": {
+                    "datatype": null,
+                    "property_name": "time_spent",
                     "type": "property_name"
                 },
                 "is_nullable": true,

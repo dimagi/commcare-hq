@@ -1,0 +1,12 @@
+<button
+  id="my-offcanvas-button"
+  class="btn btn-outline-primary"
+  type="button"
+  data-bs-toggle="offcanvas"
+  data-bs-target="#configureColumnsOffcanvas"
+  hx-post="{% url 'my_new_view' %}"
+  hq-hx-action="test_button"
+  x-show="isReadyToSubmit"
+>
+  ...
+</button>

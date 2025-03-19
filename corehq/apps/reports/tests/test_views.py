@@ -1,23 +1,30 @@
 import io
 import json
 import unittest
-from urllib.parse import urlencode
+
+from collections import namedtuple
 from couchdbkit import ResourceNotFound
+from django.http import HttpRequest, QueryDict
 from django.http.response import Http404
 from django.core.exceptions import PermissionDenied
 from django.test import TestCase, RequestFactory
+from django.urls.base import reverse
 from unittest.mock import patch
+
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import HqPermissions, UserRole, WebUser
-from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
-from corehq.blobs import get_blob_db
+from corehq.apps.locations.models import LocationType, make_location
+from corehq.apps.reports.models import TableauServer, TableauVisualization
+from corehq.apps.reports.standard.tableau import get_tableau_server_ticket, TableauView
 from corehq.apps.reports.views import (
     MySavedReportsView,
     AddSavedReportConfigView,
     soft_shift_to_domain_timezone,
     soft_shift_to_server_timezone,
 )
-from django.urls.base import reverse
+from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
+from corehq.apps.users.models import HqPermissions, UserRole, WebUser
+from corehq.blobs import get_blob_db
+from corehq.util.test_utils import flag_enabled
 from .. import views
 
 
@@ -39,21 +46,20 @@ class TestEmailReport(TestCase):
 
     @patch.object(views, 'send_email_report')
     def test_email_is_sent_to_recipient_list(self, mock_send_email):
-        # NOTE: It appears the email form is broken and will only accept a single email
-        # so that's all that is being tested here
-        self.request = self._create_request(params={'recipient_emails': 'user1@test.com'})
+        self.request = self._create_request(
+            params=QueryDict('recipient_emails[]=user1@test.com&recipient_emails[]=user2@test.com'))
         self.email_report()
 
         self.assertEqual(
             mock_send_email.delay.call_args[self.ARG_INDEX][self.RECIPIENT_INDEX],
-            {'user1@test.com'}
+            {'user1@test.com', 'user2@test.com'}
         )
 
     @patch.object(views, 'send_email_report')
     def test_owner_flag_adds_owner_email_to_recipient_list(self, mock_send_email):
         # Setup creates a user with email address 'test_user@dimagi.com'
         self.request = self._create_request(params={
-            'recipient_emails': 'user1@test.com',
+            'recipient_emails[]': 'user1@test.com',
             'send_to_owner': True
         })
         self.email_report()
@@ -126,12 +132,16 @@ class TestEmailReport(TestCase):
         if params is None:
             params = {'send_to_owner': True}
 
-        url = f'/a/{self.domain}/emailReport'
-
+        # NOTE: The reason we're constructing an HttpRequest object here, rather than relying on RequestFactory,
+        # is because some of our tests require duplicate keys. RequestFactory doesn't support the QueryDicts
+        # that would be needed to represent those keys.
+        request = HttpRequest()
         if method == 'get':
-            request = RequestFactory().get(url, params)
+            request.GET.update(params)
+            request.method = 'GET'
         else:
-            request = RequestFactory().post(url, params)
+            request.POST.update(params)
+            request.method = 'POST'
 
         request.user = self.user
         return request
@@ -733,7 +743,7 @@ class TestUserConfigsWithShared(TestReportsBase):
         self.assertEqual(configs[0]._id, config._id)
 
     def test_with_other_owner_shared_config(self):
-        _config = self.create_report_config(self.DOMAIN, self.admin_user._id)
+        self.create_report_config(self.DOMAIN, self.admin_user._id)
         config2 = self.create_report_config(self.DOMAIN, self.other_admin_user._id)
         self.create_report_notification([config2], owner_id=self.other_admin_user._id)
 
@@ -773,7 +783,7 @@ class TestMySavedReportsView(TestReportsBase):
     @patch('corehq.apps.reports.views.user_can_view_reports', return_value=True)
     def test_multiple_admins_can_see_shared_reports(self, *args):
         config1 = self.create_report_config(domain=self.DOMAIN, owner_id=self.admin_user._id)
-        _config2 = self.create_report_config(domain=self.DOMAIN, owner_id=self.other_admin_user._id)
+        self.create_report_config(domain=self.DOMAIN, owner_id=self.other_admin_user._id)
 
         # Test scenario when only one admin user create a ReportNotification
         self.create_report_notification([config1], owner_id=self.admin_user._id)
@@ -855,7 +865,7 @@ class TestAddSavedReportConfigView(TestReportsBase):
 
         self.log_user_in(self.other_admin_user.username)
         try:
-            _response = self.client.post(
+            self.client.post(
                 self.URL,
                 json.dumps(post_data),
                 content_type='application/json;charset=UTF-8',
@@ -912,7 +922,7 @@ class TestAddSavedReportConfigView(TestReportsBase):
 
         self.log_user_in(self.non_admin_user.username)
         try:
-            _response = self.client.post(
+            self.client.post(
                 self.URL,
                 json.dumps(post_data),
                 content_type='application/json;charset=UTF-8',
@@ -975,3 +985,94 @@ class TestTimezoneConversion(TestCase):
 
         self.assertEqual(report_notification.hour, 22)
         self.assertEqual(report_notification.stop_hour, 6)
+
+
+@flag_enabled('EMBEDDED_TABLEAU')
+class TestTableauView(TestReportsBase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestTableauView, cls).setUpClass()
+        cls.server = TableauServer.objects.create(
+            domain=cls.DOMAIN,
+            server_type='server',
+            server_name='a_server',
+            target_site='a_site',
+            validate_hostname='',
+        )
+        cls.viz_1 = TableauVisualization.objects.create(
+            domain=cls.DOMAIN,
+            server=cls.server,
+            view_url='a_url',
+            location_safe=False
+        )
+        cls.viz_2 = TableauVisualization.objects.create(
+            domain=cls.DOMAIN,
+            server=cls.server,
+            view_url='a_url2',
+            location_safe=True
+        )
+        cls.role = UserRole.create(cls.DOMAIN, 'Full Tab Access', HqPermissions(
+            access_all_locations=False, view_tableau=True
+        ))
+        cls.non_admin_user.set_role(cls.DOMAIN, cls.role.get_qualified_id())
+        LocationType.objects.get_or_create(
+            domain=cls.DOMAIN,
+            name='loc_type',
+        )
+        # Need at least one location to access any view
+        location = make_location(domain=cls.DOMAIN, name='loc', parent=None, location_type='loc_type')
+        location.save()
+        cls.non_admin_user.set_location(cls.DOMAIN, location)
+        cls.non_admin_user.save()
+
+    def _get_tableau_view_response(self, viz):
+        self.log_user_in(self.non_admin_user.username)
+        response = self.client.get(reverse(TableauView.urlname, args=[self.DOMAIN, viz.id]))
+        return response
+
+    def test_location_restricted_user_cant_access_location_unsafe_report(self):
+        response = self._get_tableau_view_response(self.viz_1)
+        self.assertEqual(response.status_code, 403)
+
+    def test_no_permission_to_tableau_report(self):
+        self.role.set_permissions(HqPermissions(
+            access_all_locations=False, view_tableau=False, view_tableau_list=[str(self.viz_1.id)]).to_list())
+        response = self._get_tableau_view_response(self.viz_2)
+        self.assertEqual(response.status_code, 403)
+
+    def test_location_restricted_user_can_access_location_safe_report(self):
+        self.role.set_permissions(HqPermissions(
+            access_all_locations=False, view_tableau=False, view_tableau_list=[str(self.viz_2.id)]).to_list())
+        response = self._get_tableau_view_response(self.viz_2)
+        self.assertEqual(response.status_code, 200)
+
+    def _get_ticket_view_response(self, viz):
+        self.log_user_in(self.non_admin_user.username)
+        request_data = {
+            'viz_id': [viz.id]
+        }
+        response = self.client.post(reverse(get_tableau_server_ticket, args=[self.DOMAIN]), request_data)
+        return response
+
+    def test_ticket_view_location_restricted_user_cant_access_location_unsafe_report(self):
+        self.role.set_permissions(HqPermissions(
+            access_all_locations=False, view_tableau=True).to_list())
+        response = self._get_ticket_view_response(self.viz_1)
+        self.assertEqual(response.status_code, 403)
+
+    def test_ticket_view_no_permission_to_tableau_report(self):
+        self.role.set_permissions(HqPermissions(
+            access_all_locations=False, view_tableau=False, view_tableau_list=[str(self.viz_1.id)]).to_list())
+        response = self._get_ticket_view_response(self.viz_2)
+        self.assertEqual(response.status_code, 403)
+
+    @patch('corehq.apps.reports.standard.tableau.requests.Session')
+    def test_ticket_view_location_restricted_user_can_access_location_safe_report(self, mock_session):
+        mock_request = mock_session.return_value
+        MockResponse = namedtuple('MockResponse', ['status_code', 'content'])
+        mock_request.post.return_value = MockResponse(status_code=200, content='1234'.encode('utf-8'))
+        self.role.set_permissions(HqPermissions(
+            access_all_locations=False, view_tableau=False, view_tableau_list=[str(self.viz_2.id)]).to_list())
+        response = self._get_ticket_view_response(self.viz_2)
+        self.assertEqual(response.status_code, 200)

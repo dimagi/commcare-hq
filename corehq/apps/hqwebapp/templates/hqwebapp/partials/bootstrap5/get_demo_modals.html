@@ -1,0 +1,40 @@
+{% load i18n %}
+
+<div class="modal fade"
+     tabindex="-1"
+     aria-labelledby="requestDemoModal"
+     aria-hidden="true"
+     id="cta-form-get-demo">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="requestDemoModal">
+          {% if not request.user.is_authenticated %}
+            {% trans "Request a CommCare Demo" %}
+          {% else %}
+            {% trans "Get a Tour of CommCare" %}
+          {% endif %}
+        </h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      {# Hubspot Form #}
+      <div id="get-demo-cta-form-content">
+        {% include "analytics/forms/bootstrap5/hubspot_cta_form.html" %}
+      </div>
+
+      <div id="get-demo-cta-success" style="display: none;">
+        <div class="modal-body">
+          <p>
+            {% blocktrans %}
+              Thank you! A member of our team will be in touch to schedule a time with you.
+            {% endblocktrans %}
+          </p>
+        </div>
+        <div class="modal-footer">
+          <a href="#" data-bs-dismiss="modal" class="btn btn-outline-primary">{% trans "Done" %}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

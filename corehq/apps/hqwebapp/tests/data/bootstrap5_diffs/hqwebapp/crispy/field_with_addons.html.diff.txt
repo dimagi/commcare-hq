@@ -1,0 +1,23 @@
+--- 
++++ 
+@@ -5,7 +5,7 @@
+ {% else %}
+     <div
+         id="div_{{ field.auto_id }}"
+-        class="form-group{% if wrapper_class %} {{ wrapper_class }}{% endif %}{% if form_show_errors%}{% if field.errors %} error has-error{% endif %}{% endif %}{% if field.css_classes %} {{ field.css_classes }}{% endif %}"
++        class="mb-3{% if 'form-horizontal' in form_class %} row{% endif %}{% if wrapper_class %} {{ wrapper_class }}{% endif %}{% if form_show_errors%}{% if field.errors %} error has-error{% endif %}{% endif %}{% if field.css_classes %} {{ field.css_classes }}{% endif %}"
+     >
+         {% if field.label and form_show_labels %}
+             <div class="control-label {{ label_class }} {% if field.field.required %}requiredField{% endif %}">
+@@ -17,9 +17,9 @@
+ 
+         <div class="controls {{ field_class }}">
+           {% if pre_addon or post_addon %}<div class="input-group">{% endif %}
+-            {% if pre_addon %}<div class="input-group-addon">{{ pre_addon }}</div>{% endif %}
++            {% if pre_addon %}<span class="input-group-text">{{ pre_addon }}</span>{% endif %}
+             {% crispy_field field 'class' 'form-control' %}
+-            {% if post_addon %}<div class="input-group-addon">{{ post_addon }}</div>{% endif %}
++            {% if post_addon %}<span class="input-group-text">{{ post_addon }}</span>{% endif %}
+           {% if pre_addon or post_addon %}</div>{% endif %}
+           {% include 'bootstrap3to5/layout/help_text_and_errors.html' %}
+         </div>

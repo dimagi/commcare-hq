@@ -1,0 +1,38 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+<table class="table table-striped datatable" width="100%">
+  <thead>
+  <tr>
+    <th></th>
+    <th colspan="2">{% trans "Change in Forms Submitted" %}</th>
+  </tr>
+  <tr>
+    <th>{% trans "Username" %}</th>
+    <th>{% trans "Last Month" %}</th>
+    <th>{% trans "This Month" %}</th>
+  </tr>
+  </thead>
+  {% for user in user_list %}
+    <tr>
+      <td><a class="user-popover"
+             data-url="{% url 'project_health_user_details' domain user.user_id %}"
+             tabindex="0" role="button" data-trigger="focus" data-bs-toggle="popover"
+             title="{% trans 'User Information' %}" >
+        {{ user.username }}
+      </a>
+      </td>
+      <td title="{% trans 'Change in Forms Submitted Since Two Months Ago' %}">
+        {% chevron user.delta_forms %} {{ user.delta_forms }} &nbsp;&nbsp;
+        <small class="text-body-secondary" title="{% trans 'Number of Forms Submitted Last Month' %}">
+          {{ user.num_forms_submitted }}
+        </small>
+      </td>
+      <td title="{% trans 'Change in Forms Submitted Since Last Month' %}">
+        {% chevron user.delta_forms_next_month %} {{ user.delta_forms_next_month }} &nbsp;&nbsp;
+        <small class="text-body-secondary" title="{% trans 'Number of Forms Submitted This Month' %}">
+          {{ user.num_forms_submitted_next_month }}
+        </small>
+      </td>
+    </tr>
+  {% endfor %}
+</table>

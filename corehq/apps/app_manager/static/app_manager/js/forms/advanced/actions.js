@@ -1,8 +1,10 @@
+
 hqDefine('app_manager/js/forms/advanced/actions', function () {
     var caseConfigUtils = hqImport('app_manager/js/case_config_utils'),
         caseProperty = hqImport('app_manager/js/forms/advanced/case_properties').caseProperty,
         casePreloadProperty = hqImport('app_manager/js/forms/advanced/case_properties').casePreloadProperty,
-        toggles = hqImport("hqwebapp/js/toggles");
+        toggles = hqImport("hqwebapp/js/toggles"),
+        privileges = hqImport('hqwebapp/js/privileges');
 
     var caseIndex = {
         mapping: {
@@ -226,7 +228,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
 
                     _.defer(function () {
                         $('.hq-help-template').each(function () {
-                            hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);
+                            hqImport("hqwebapp/js/bootstrap3/main").transformHelpTemplate($(this), true);
                         });
                     });
                 });
@@ -447,6 +449,17 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             });
             self.saveOnlyEditedFormFieldsEnabled = toggles.toggleEnabled("SAVE_ONLY_EDITED_FORM_FIELDS");
 
+            self.hasDeprecatedProperties = ko.computed(function () {
+                if (privileges.hasPrivilege('data_dictionary')) {
+                    for (const p of self.case_properties()) {
+                        if (p.isDeprecated()) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            });
+
             return self;
         },
         unwrap: function (self) {
@@ -512,7 +525,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             self.suggestedProperties = ko.computed(function () {
                 return caseConfigUtils.filteredSuggestedProperties(
                     actionBase.suggestedProperties(self, false),
-                    self.case_properties()
+                    self.case_properties(),
                 );
             });
 
@@ -655,6 +668,17 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 return self.case_properties();
             });
             self.saveOnlyEditedFormFieldsEnabled = toggles.toggleEnabled("SAVE_ONLY_EDITED_FORM_FIELDS");
+
+            self.hasDeprecatedProperties = ko.computed(function () {
+                if (privileges.hasPrivilege('data_dictionary')) {
+                    for (const p of self.case_properties()) {
+                        if (p.isDeprecated()) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            });
 
             return self;
         },

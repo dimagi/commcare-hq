@@ -5,6 +5,7 @@ hqDefine('app_manager/js/manage_releases_by_app_profile', [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/assert_properties',
     'translations/js/app_translations',
+    'commcarehq',
 ], function (
     $,
     ko,
@@ -12,7 +13,6 @@ hqDefine('app_manager/js/manage_releases_by_app_profile', [
     initialPageData,
     assertProperties,
 ) {
-    'use strict';
     $(function () {
         var AppRelease = function (details) {
             var self = {};

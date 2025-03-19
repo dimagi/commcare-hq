@@ -1,9 +1,9 @@
 import copy
 import csv
 import io
+import re
 from collections import defaultdict
 from datetime import datetime
-from functools import partial
 
 from django.contrib import messages
 from django.http import (
@@ -39,10 +39,12 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.web import json_response
 
 from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_latest_app_ids_and_versions
 from corehq.apps.data_dictionary.models import CaseProperty
+from corehq.apps.data_dictionary.util import is_case_type_deprecated
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
 from corehq.apps.export.models import CaseExportDataSchema
@@ -79,15 +81,13 @@ from corehq.form_processor.models import (
     UserRequestedRebuild,
     XFormInstance,
 )
-from corehq.motech.repeaters.dbaccessors import (
-    get_repeat_records_by_payload_id,
-)
+from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.views.repeat_record_display import (
     RepeatRecordDisplay,
 )
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
-from corehq.util.view_utils import absolute_reverse, get_case_or_404, reverse
+from corehq.util.view_utils import get_case_or_404, reverse
 
 from .basic import CaseListReport
 from .utils import get_user_type
@@ -126,7 +126,7 @@ def safely_get_case(request, domain, case_id):
 @location_safe
 class CaseDataView(BaseProjectReportSectionView):
     urlname = 'case_data'
-    template_name = "reports/reportdata/case_data.html"
+    template_name = "reports/reportdata/bootstrap3/case_data.html"
     page_title = gettext_lazy("Case Data")
     http_method_names = ['get']
 
@@ -189,10 +189,6 @@ class CaseDataView(BaseProjectReportSectionView):
         # Get correct timezone for the current date: https://github.com/dimagi/commcare-hq/pull/5324
         timezone = timezone.localize(datetime.utcnow()).tzinfo
         show_transaction_export = toggles.COMMTRACK.enabled(self.request.user.username)
-
-        def _get_case_url(case_id):
-            return absolute_reverse(self.urlname, args=[self.domain, case_id])
-
         data = copy.deepcopy(wrapped_case.to_full_dict())
         display = wrapped_case.get_display_config()
         default_properties = get_table_as_rows(data, display, timezone)
@@ -219,9 +215,18 @@ class CaseDataView(BaseProjectReportSectionView):
             product_tuples.sort(key=lambda x: x[0])
             ledger_map[section] = product_tuples
 
+        process_repeaters_enabled = toggles.PROCESS_REPEATERS.enabled(
+            self.domain,
+            toggles.NAMESPACE_DOMAIN,
+        )
         repeat_records = [
-            RepeatRecordDisplay(record, timezone, date_format=DATE_FORMAT)
-            for record in get_repeat_records_by_payload_id(self.domain, self.case_id)
+            RepeatRecordDisplay(
+                record,
+                timezone,
+                date_format=DATE_FORMAT,
+                process_repeaters_enabled=process_repeaters_enabled,
+            )
+            for record in RepeatRecord.objects.filter(domain=self.domain, payload_id=self.case_id)
         ]
 
         can_edit_data = self.request.couch_user.can_edit_data
@@ -236,6 +241,7 @@ class CaseDataView(BaseProjectReportSectionView):
             "show_case_rebuild": toggles.SUPPORT.enabled(self.request.user.username),
             "can_edit_data": can_edit_data,
             "is_usercase": self.case_instance.type == USERCASE_TYPE,
+            "is_case_type_deprecated": is_case_type_deprecated(self.domain, self.case_instance.type),
 
             "default_properties_as_table": default_properties,
             "dynamic_properties": dynamic_data,
@@ -248,35 +254,32 @@ class CaseDataView(BaseProjectReportSectionView):
             "repeat_records": repeat_records,
         }
         if dynamic_data:
-            if toggles.DD_CASE_DATA.enabled_for_request(self.request):
-                context['dd_properties_tables'] = _get_dd_tables(
-                    self.domain, self.case_instance.type, dynamic_data, timezone)
-            else:
-                definition = {
-                    "layout": list(chunked([
-                        DisplayConfig(expr=prop, has_history=True)
-                        for prop in sorted(dynamic_data.keys())
-                    ], DYNAMIC_CASE_PROPERTIES_COLUMNS))
-                }
-                context['dynamic_properties_table'] = get_table_as_rows(dynamic_data, definition, timezone)
-        context.update(case_hierarchy_context(self.case_instance, _get_case_url, timezone=timezone))
+            case_property_tables = _get_case_property_tables(
+                self.domain, self.case_instance.type, dynamic_data, timezone)
+            context['case_property_tables'] = case_property_tables
+            context['show_expand_collapse_buttons'] = len(
+                [table.get('name') for table in case_property_tables if table.get('name') is not None]) > 1
+        context.update(case_hierarchy_context(self.case_instance, timezone=timezone))
         return context
 
 
-def _get_dd_tables(domain, case_type, dynamic_data, timezone):
-    dd_props_by_group = list(_get_dd_props_by_group(domain, case_type))
+def _get_case_property_tables(domain, case_type, dynamic_data, timezone):
+    if domain_has_privilege(domain, privileges.DATA_DICTIONARY):
+        dd_props_by_group = list(_get_dd_props_by_group(domain, case_type))
+    else:
+        dd_props_by_group = []
     tables = [
         (group, _table_definition([
             (p.name, p.label, p.description) for p in props
         ]))
         for group, props in dd_props_by_group
     ]
-
     props_in_dd = set(prop.name for _, prop_group in dd_props_by_group
                       for prop in prop_group)
-    unrecognized = set(dynamic_data.keys()) - props_in_dd
+    unrecognized = set(dynamic_data.keys()) - props_in_dd - {'case_name'}
     if unrecognized:
-        tables.append((_('Unrecognized'), _table_definition([
+        header = _('Unrecognized') if tables else None
+        tables.append((header, _table_definition([
             (p, None, None) for p in unrecognized
         ])))
 
@@ -292,15 +295,15 @@ def _get_dd_props_by_group(domain, case_type):
             case_type__domain=domain,
             case_type__name=case_type,
             deprecated=False,
-    ):
-        ret[prop.group].append(prop)
+    ).select_related('group').order_by('group__index', 'index'):
+        ret[prop.group_name or None].append(prop)
 
-    uncategorized = ret.pop('', None)
-    for group, props in sorted(ret.items()):
-        yield (group, props)
+    uncategorized = ret.pop(None, None)
+    for group, props in ret.items():
+        yield group, props
 
     if uncategorized:
-        yield (_('Uncategorized') if ret else None, uncategorized)
+        yield _('Uncategorized') if ret else None, uncategorized
 
 
 def _table_definition(props):
@@ -308,12 +311,17 @@ def _table_definition(props):
         "layout": list(chunked([
             DisplayConfig(
                 expr=prop_name,
-                name=label or prop_name,
+                name=_add_line_break_opportunities(label or prop_name),
                 description=description,
                 has_history=True
-            ) for prop_name, label, description in sorted(props)
+            ) for prop_name, label, description in props
         ], DYNAMIC_CASE_PROPERTIES_COLUMNS))
     }
+
+
+def _add_line_break_opportunities(name):
+    # Add zero-width space after dashes and underscores for better looking word breaks
+    return re.sub(r"([_-])", "\\1\u200B", name)
 
 
 def form_to_json(domain, form, timezone):
@@ -334,7 +342,7 @@ def form_to_json(domain, form, timezone):
             "username": form.metadata.username if form.metadata else '',
         },
         'readable_name': form_name,
-        'user_type': get_user_type(form.metadata, domain) if form.metadata else 'Unknown',
+        'user_type': get_user_type(form, domain),
     }
 
 
@@ -415,7 +423,7 @@ def download_case_history(request, domain, case_id):
 @location_safe
 class CaseAttachmentsView(CaseDataView):
     urlname = 'single_case_attachments'
-    template_name = "reports/reportdata/case_attachments.html"
+    template_name = "reports/reportdata/bootstrap3/case_attachments.html"
     page_title = gettext_lazy("Case Attachments")
     http_method_names = ['get']
 
@@ -451,14 +459,15 @@ def case_property_names(request, domain, case_id):
     # We need to look at the export schema in order to remove any case properties that
     # have been deleted from the app. When the data dictionary is fully public, we can use that
     # so that users may deprecate those properties manually
-    export_schema = CaseExportDataSchema.generate_schema_from_builds(domain, None, case.type)
+    export_schema = CaseExportDataSchema.generate_schema_from_builds(domain, None, case.type,
+                                                                     is_identifier_case_type=True)
     property_schema = export_schema.group_schemas[0]
     last_app_ids = get_latest_app_ids_and_versions(domain)
     all_property_names = {
         item.path[-1].name for item in property_schema.items
         if not is_occurrence_deleted(item.last_occurrences, last_app_ids) and '/' not in item.path[-1].name
     }
-    all_property_names = all_property_names.difference(KNOWN_CASE_PROPERTIES)
+    all_property_names = all_property_names.difference(KNOWN_CASE_PROPERTIES) | {"case_name"}
     # external_id is effectively a dynamic property: see CaseDisplayWrapper.dynamic_properties
     if case.external_id:
         all_property_names.add('external_id')
@@ -522,7 +531,7 @@ def resave_case_view(request, domain, case_id):
     resave_case(domain, case)
     messages.success(
         request,
-        _('Case %s was successfully saved. Hopefully it will show up in all reports momentarily.' % case.name),
+        _('Case {} was successfully saved. Please allow a few minutes for the change to be reflected in all reports.').format(case.name),  # noqa: E501
     )
     return HttpResponseRedirect(reverse('case_data', args=[domain, case_id]))
 

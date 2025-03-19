@@ -1,0 +1,152 @@
+{% load i18n %}
+
+<form class="form form-ko-validation" method="post">
+  {% csrf_token %}
+  <div class="modal-body">
+    <!-- ko if: showErrorMessage -->
+      <div class="alert alert-warning">
+        <p data-bind="text: errorMessage"></p>
+      </div>
+    <!-- /ko -->
+    <div class="row">
+      <div class="col-md-6">
+        <div class="form-group">  {# todo B5: css-form-group #}
+          <label class="form-label">
+            {% trans "First name" %}<span class="asteriskField">*</span>
+          </label>
+          <div class="controls">
+            <input
+              class="form-control"
+              type="text"
+              name="firstname"
+              data-bind="textInput: firstname"
+            />
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="form-group">  {# todo B5: css-form-group #}
+          <label class="form-label">
+            {% trans "Last name" %}<span class="asteriskField">*</span>
+          </label>
+          <div class="controls">
+            <input
+              class="form-control"
+              type="text"
+              name="lastname"
+              data-bind="textInput: lastname"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">  {# todo B5: css-form-group #}
+      <label class="form-label">
+        {% trans "Professional email" %}<span class="asteriskField">*</span>
+      </label>
+      <div class="controls">
+        <input
+          type="email"
+          name="email"
+          data-bind="textInput: email"
+          class="form-control"
+        />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="form-group">  {# todo B5: css-form-group #}
+          <label class="form-label">
+            {% trans "Organization" %}<span class="asteriskField">*</span>
+          </label>
+          <div class="controls">
+            <input
+              class="form-control"
+              type="text"
+              name="company"
+              data-bind="textInput: company"
+            />
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="form-group">  {# todo B5: css-form-group #}
+          <label class="form-label">
+            {% trans "Job title" %}<span class="asteriskField">*</span>
+          </label>
+          <div class="controls">
+            <input
+              class="form-control"
+              type="text"
+              name="jobtitle"
+              data-bind="textInput: jobtitle"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">  {# todo B5: css-form-group #}
+      <label class="form-label">
+        {% trans "Preferred language" %}<span class="asteriskField">*</span>
+      </label>
+      <div class="controls">
+        <select  {# todo B5: css-select-form-control #}
+          class="form-control"
+          name="language"
+          data-bind="value: language"
+        >
+          <option value="">{% trans "Please Select" %}</option>
+          <option value="English">{% trans "English" %}</option>
+          <option value="French">{% trans "French" %}</option>
+          <option value="Spanish">{% trans "Spanish" %}</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">  {# todo B5: css-form-group #}
+      <label class="form-label">
+        {% trans "How did you hear about us?" %}
+      </label>
+      <select  {# todo B5: css-select-form-control #}
+        class="form-control"
+        name="discoverySource"
+        data-bind="value: discoverySource"
+      >
+        <option value="">{% trans "Please Select" %}</option>
+        <option value="Newsletter">{% trans "Newsletter" %}</option>
+        <option value="Podcast">{% trans "Podcast" %}</option>
+        <option value="Social Media">{% trans "Social Media" %}</option>
+        <option value="Web Search">{% trans "Web Search (e.g. Google)" %}</option>
+        <option value="Referral">{% trans "Word of Mouth / Referral" %}</option>
+        <option value="Event / Conference">{% trans "Event / Conference" %}</option>
+        <option value="Other">{% trans "Other" %}</option>
+      </select>
+    </div>
+    <div class="form-group" data-bind="visible: discoverySource() === 'Other'">  {# todo B5: css-form-group #}
+      <label class="form-label">
+        {% trans "We'd love to hear more! Please specify -" %}
+      </label>
+      <div class="controls">
+        <input
+          class="form-control"
+          type="text"
+          name="otherSource"
+          data-bind="textInput: otherSource"
+        />
+      </div>
+    </div>
+    {% blocktrans %}
+      By clicking this button, you agree to Dimagi's
+      <a href="http://www.dimagi.com/terms/latest/tos/" target="_blank">Terms of Service</a> and
+      <a href="http://www.dimagi.com/terms/latest/privacy/" target="_blank">Privacy Policy</a>.
+    {% endblocktrans %}
+  </div>
+  <div class="modal-footer">
+    <button
+      class="btn btn btn-primary"
+      type="button"
+      data-bind="click: submitForm, disable: isSubmitDisabled"
+    >
+      <!-- ko text: nextButtonText --><!-- /ko -->
+    </button>
+  </div>
+</form>

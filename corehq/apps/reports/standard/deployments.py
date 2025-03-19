@@ -23,12 +23,16 @@ from corehq.apps.app_manager.dbaccessors import (
     get_brief_apps_in_domain,
 )
 from corehq.apps.es import UserES, filters
-from corehq.apps.es.aggregations import DateHistogram
-from corehq.apps.hqwebapp.decorators import use_nvd3
+from corehq.apps.es.aggregations import (
+    DateHistogram,
+    FilterAggregation,
+    NestedAggregation,
+)
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.exceptions import BadRequestError
+from corehq.apps.reports.filters.dates import SingleDateFilter
 from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.generic import (
@@ -40,9 +44,14 @@ from corehq.apps.reports.standard import (
     ProjectReport,
     ProjectReportParametersMixin,
 )
-from corehq.apps.reports.util import format_datatables_data
+from corehq.apps.reports.util import (
+    format_datatables_data,
+    get_commcare_version_and_date_from_last_usage,
+)
+from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import user_display_string
 from corehq.const import USER_DATE_FORMAT
+from corehq.util.dates import iso_string_to_date
 from corehq.util.quickcache import quickcache
 
 
@@ -65,6 +74,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         'corehq.apps.reports.filters.select.SelectApplicationFilter'
     ]
     primary_sort_prop = None
+    use_bootstrap5 = True
 
     @property
     def _columns(self):
@@ -74,33 +84,45 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         return [
             DataTablesColumn(_("Username"),
                              prop_name='username.exact',
-                             sql_col='user_dim__username'),
+                             sql_col='user_dim__username',
+                             use_bootstrap5=self.use_bootstrap5),
+            DataTablesColumn(_("Assigned Location(s)"),
+                             help_text=_('Assigned locations for the user, with the primary '
+                                         'location highlighted in bold.'),
+                             sortable=False,
+                             use_bootstrap5=self.use_bootstrap5),
             DataTablesColumn(_("Last Submission"),
                              prop_name='reporting_metadata.last_submissions.submission_date',
                              alt_prop_name='reporting_metadata.last_submission_for_user.submission_date',
-                             sql_col='last_form_submission_date'),
+                             sql_col='last_form_submission_date',
+                             use_bootstrap5=self.use_bootstrap5),
             DataTablesColumn(_("Last Sync"),
                              prop_name='reporting_metadata.last_syncs.sync_date',
                              alt_prop_name='reporting_metadata.last_sync_for_user.sync_date',
-                             sql_col='last_sync_log_date'),
+                             sql_col='last_sync_log_date',
+                             use_bootstrap5=self.use_bootstrap5),
             DataTablesColumn(_("Application"),
                              help_text=_("The name of the application from the user's last request."),
-                             sortable=False),
+                             sortable=False,
+                             use_bootstrap5=self.use_bootstrap5),
             DataTablesColumn(_("Application Version"),
                              help_text=_("The application version from the user's last request."),
                              prop_name='reporting_metadata.last_builds.build_version',
                              alt_prop_name='reporting_metadata.last_build_for_user.build_version',
-                             sql_col='last_form_app_build_version'),
+                             sql_col='last_form_app_build_version',
+                             use_bootstrap5=self.use_bootstrap5),
             DataTablesColumn(_("CommCare Version"),
                              help_text=_("""The CommCare version from the user's last request"""),
                              prop_name='reporting_metadata.last_submissions.commcare_version',
                              alt_prop_name='reporting_metadata.last_submission_for_user.commcare_version',
-                             sql_col='last_form_app_commcare_version'),
+                             sql_col='last_form_app_commcare_version',
+                             use_bootstrap5=self.use_bootstrap5),
             DataTablesColumn(_("Number of unsent forms in user's phone"),
                              help_text=_("The number of unsent forms in users' phones for {app_info}".format(
                                  app_info=selected_app_info
                              )),
-                             sortable=False),
+                             sortable=False,
+                             use_bootstrap5=self.use_bootstrap5),
         ]
 
     @property
@@ -110,10 +132,11 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             columns.append(
                 DataTablesColumn(_("Build Profile"),
                                  help_text=_("The build profile from the user's last hearbeat request."),
-                                 sortable=False)
+                                 sortable=False,
+                                 use_bootstrap5=self.use_bootstrap5)
             )
         headers = DataTablesHeader(*columns)
-        headers.custom_sort = [[1, 'desc']]
+        headers.custom_sort = [[2, 'desc']]
         return headers
 
     @cached_property
@@ -148,46 +171,47 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     def get_sorting_block(self):
         sort_prop_name = 'prop_name' if self.selected_app_id else 'alt_prop_name'
-        res = []
-        #the NUMBER of cols sorting
-        sort_cols = int(self.request.GET.get('iSortingCols', 0))
-        if sort_cols > 0:
-            for x in range(sort_cols):
-                col_key = 'iSortCol_%d' % x
-                sort_dir = self.request.GET['sSortDir_%d' % x]
-                col_id = int(self.request.GET[col_key])
-                col = self.headers.header[col_id]
-                sort_prop = getattr(col, sort_prop_name) or col.prop_name
-                if x == 0:
-                    self.primary_sort_prop = sort_prop
-                if self.selected_app_id:
-                    sort_dict = {
-                        sort_prop: {
-                            "order": sort_dir,
-                            "nested_filter": {
-                                "term": {
-                                    self.sort_filter: self.selected_app_id
-                                }
-                            }
-                        }
+        block = []
+        for col in self.datatables_params.order:
+            col_ind = col['column']
+            sort_dir = col['dir']
+            dt_column_obj = self.headers.header[col_ind]
+            sort_prop = getattr(dt_column_obj, sort_prop_name) or dt_column_obj.prop_name
+            if self.primary_sort_prop is None:
+                # default the primary sort prop to the first column in the params list
+                self.primary_sort_prop = sort_prop
+            if self.selected_app_id:
+                sort_dict = self._get_selected_app_sort_dict(sort_prop, sort_dir)
+            else:
+                sort_dict = {sort_prop: sort_dir}
+            block.append(sort_dict)
+        if len(block) == 0 and self.default_sort is not None:
+            block.append(self.default_sort)
+        return block
+
+    def _get_selected_app_sort_dict(self, sort_prop, sort_dir):
+        sort_dict = {
+            sort_prop: {
+                "order": sort_dir,
+                "nested_filter": {
+                    "term": {
+                        self.sort_filter: self.selected_app_id
                     }
-                    sort_prop_path = sort_prop.split('.')
-                    if sort_prop_path[-1] == 'exact':
-                        sort_prop_path.pop()
-                    sort_prop_path.pop()
-                    if sort_prop_path:
-                        sort_dict[sort_prop]['nested_path'] = '.'.join(sort_prop_path)
-                else:
-                    sort_dict = {sort_prop: sort_dir}
-                res.append(sort_dict)
-        if len(res) == 0 and self.default_sort is not None:
-            res.append(self.default_sort)
-        return res
+                }
+            }
+        }
+        sort_prop_path = sort_prop.split('.')
+        if sort_prop_path[-1] == 'exact':
+            sort_prop_path.pop()
+        sort_prop_path.pop()
+        if sort_prop_path:
+            sort_dict[sort_prop]['nested_path'] = '.'.join(sort_prop_path)
+        return sort_dict
 
     @property
     @memoized
     def selected_app_id(self):
-        return self.request_params.get(SelectApplicationFilter.slug, None)
+        return self.get_request_param(SelectApplicationFilter.slug, None, from_json=True)
 
     @quickcache(['app_id'], timeout=60 * 60)
     def _get_app_details(self, app_id):
@@ -215,8 +239,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     def user_query(self, pagination=True):
         mobile_user_and_group_slugs = set(
             # Cater for old ReportConfigs
-            self.request.GET.getlist('location_restricted_mobile_worker') +
-            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+            self.get_request_param('location_restricted_mobile_worker', as_list=True)
+            + self.get_request_param(ExpandedMobileWorkerFilter.slug, as_list=True)
         )
         user_query = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
@@ -310,6 +334,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             grouped_ancestor_locs = self.get_bulk_ancestors(location_ids)
             self.required_loc_columns = self.get_location_columns(grouped_ancestor_locs)
 
+        loc_names_dict = self._locations_names_dict(users)
         for user in users:
             last_build = last_seen = last_sub = last_sync = last_sync_date = app_name = commcare_version = None
             last_build_profile_name = device = device_app_meta = num_unsent_forms = None
@@ -340,11 +365,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 if last_build.get('app_id') and device and device.get('app_meta'):
                     device_app_meta = self.get_data_for_app(device.get('app_meta'), last_build.get('app_id'))
 
-            if last_sub and last_sub.get('commcare_version'):
-                commcare_version = _get_commcare_version(last_sub.get('commcare_version'))
-            else:
-                if device and device.get('commcare_version', None):
-                    commcare_version = _get_commcare_version(device['commcare_version'])
+            commcare_version, unused = get_commcare_version_and_date_from_last_usage(last_sub, device,
+                                                                                     formatted=True)
+
             if last_sub and last_sub.get('submission_date'):
                 last_seen = string_to_utc_datetime(last_sub['submission_date'])
             if last_sync and last_sync.get('sync_date'):
@@ -367,6 +390,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 user_display_string(user.get('username', ''),
                                     user.get('first_name', ''),
                                     user.get('last_name', '')),
+                self._get_location_column(user, loc_names_dict),
                 _fmt_date(last_seen, fmt_for_export), _fmt_date(last_sync_date, fmt_for_export),
                 app_name or "---", build_version, commcare_version or '---',
                 num_unsent_forms if num_unsent_forms is not None else "---",
@@ -381,6 +405,23 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
             rows.append(row_data)
         return rows
+
+    def _locations_names_dict(self, user_es_docs):
+        """
+        Returns a dict of all assigned location names for given `user_docs`.
+        The dict has the following structure:
+        {
+            'loc_id': 'loc_name'
+        }
+        """
+        all_loc_ids = set()
+        for user_es_doc in user_es_docs:
+            user = CouchUser.wrap_correctly(user_es_doc)
+            for loc_id in user.get_location_ids(self.domain):
+                all_loc_ids.add(loc_id)
+        return dict(SQLLocation.objects.filter(
+            location_id__in=all_loc_ids, domain=self.domain
+        ).values_list('location_id', 'name'))
 
     def process_facts(self, app_status_facts, fmt_for_export=False):
         rows = []
@@ -437,8 +478,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     def get_user_ids(self):
         mobile_user_and_group_slugs = set(
             # Cater for old ReportConfigs
-            self.request.GET.getlist('location_restricted_mobile_worker') +
-            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+            self.get_request_param('location_restricted_mobile_worker', as_list=True)
+            + self.get_request_param(ExpandedMobileWorkerFilter.slug, as_list=True)
         )
         user_ids = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
@@ -471,14 +512,53 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
         for row in table[1:]:
             # Last submission
-            row[len(location_colums) + 1] = _fmt_timestamp(row[len(location_colums) + 1])
-            # Last sync
             row[len(location_colums) + 2] = _fmt_timestamp(row[len(location_colums) + 2])
+            # Last sync
+            row[len(location_colums) + 3] = _fmt_timestamp(row[len(location_colums) + 3])
         result[0][1] = table
         return result
 
+    def _get_location_column(self, user_es_doc, user_loc_dict):
+        user = CouchUser.wrap_correctly(user_es_doc)
+        if not user.get_location_ids(self.domain):
+            return '---'
+        return self._get_formatted_assigned_location_names(user, user_loc_dict)
 
-def _get_commcare_version(app_version_info):
+    def _get_formatted_assigned_location_names(self, user, user_loc_dict):
+        """
+        Create an HTML formatted string of the given assigned location names.
+        The primary location will be highlighted in bold.
+        """
+        assigned_location_ids = user.get_location_ids(self.domain)
+        primary_location_id = user.get_location_id(self.domain)
+        formatted_loc_names = []
+        for loc_id in assigned_location_ids:
+            loc_name = user_loc_dict.get(loc_id)
+            if loc_id == primary_location_id:
+                formatted_loc_names.insert(
+                    0, f'<strong>{loc_name}</strong>'
+                )
+            else:
+                formatted_loc_names.append(loc_name)
+
+        formatted_str = ', '.join(formatted_loc_names[:4])
+        html_nodes = [
+            f'<span class="locations-list">{formatted_str}</span>',
+        ]
+        if len(formatted_loc_names) > 4:
+            all_str = ', '.join(formatted_loc_names)
+            view_controls_html_nodes = [
+                f'<span class="loc-view-control">{_("...See more")}</span>',
+                f'<span class="loc-view-control" style="display:none">{_("...Collapse")}</span>',
+            ]
+            html_nodes += [
+                f'<span class="all-locations-list" style="display:none">{all_str}</span>',
+                f'<a href="#" class="toggle-all-locations">{"".join(view_controls_html_nodes)}</a>',
+            ]
+        return format_html(f'<div>{"".join(html_nodes)}</div>')
+
+
+def format_commcare_version(app_version_info):
     commcare_version = (
         'CommCare {}'.format(app_version_info)
         if app_version_info
@@ -509,7 +589,7 @@ def _fmt_date(date, include_sort_key=True):
         return _bootstrap_class(delta, timedelta(days=7), timedelta(days=3))
 
     if not date:
-        text = format_html('<span class="label label-default">{}</span>', _("Never"))
+        text = format_html('<span class="badge text-bg-secondary">{}</span>', _("Never"))
     else:
         text = format_html(
             '<span class="{cls}">{text}</span>',
@@ -532,11 +612,32 @@ def _bootstrap_class(obj, severe, warn):
     assumes bigger is worse and default is good.
     """
     if obj > severe:
-        return "label label-danger"
+        return "badge text-bg-danger"
     elif obj > warn:
-        return "label label-warning"
+        return "badge text-bg-warning"
     else:
-        return "label label-success"
+        return "badge text-bg-success"
+
+
+def _get_histogram_aggregation_for_app(field_name, date_field_name, app_id):
+    """
+    The histogram aggregation is put inside a nested and filter aggregation to only query
+    the nested documents that match the selected app ID.
+
+    Refer to `TestGetHistogramAggregationForApp` to see the final output.
+    """
+    field_path = f'reporting_metadata.{field_name}'
+    nested_agg = NestedAggregation(field_name, field_path)
+    filter_agg = FilterAggregation(
+        'filtered_agg',
+        filters.term(f'{field_path}.app_id', app_id),
+    )
+    histogram_agg = DateHistogram(
+        'date_histogram',
+        f'{field_path}.{date_field_name}',
+        DateHistogram.Interval.DAY,
+    )
+    return nested_agg.aggregation(filter_agg.aggregation(histogram_agg))
 
 
 class ApplicationErrorReport(GenericTabularReport, ProjectReport):
@@ -560,7 +661,7 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
     def shared_pagination_GET_params(self):
         shared_params = super(ApplicationErrorReport, self).shared_pagination_GET_params
         shared_params.extend([
-            {'name': param, 'value': self.request.GET.get(param, None)}
+            {'name': param, 'value': self.get_request_param(param, None)}
             for model_field, param in self.model_fields_to_url_params
         ])
         return shared_params
@@ -582,7 +683,7 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
     def _queryset(self):
         qs = UserErrorEntry.objects.filter(domain=self.domain)
         for model_field, url_param in self.model_fields_to_url_params:
-            value = self.request.GET.get(url_param, None)
+            value = self.get_request_param(url_param, None)
             if value:
                 qs = qs.filter(**{model_field: value})
         return qs
@@ -634,46 +735,91 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
 
 @location_safe
 class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
+
+    class FromDateFilter(SingleDateFilter):
+        label = gettext_lazy("Start Date")
+        default_date_delta = -59
+        min_date_delta = -364
+        max_date_delta = -1
+        help_text = gettext_lazy("Choose a start date up to 1 year ago."
+                                 " Report displays data from the selected date to today.")
+
     slug = 'aggregate_user_status'
 
-    report_template_path = "reports/async/aggregate_user_status.html"
+    report_template_path = "reports/async/bootstrap3/aggregate_user_status.html"
     name = gettext_lazy("Aggregate User Status")
     description = gettext_lazy("See the last activity of your project's users in aggregate.")
 
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        FromDateFilter,
+        'corehq.apps.reports.filters.select.SelectApplicationFilter',
     ]
     exportable = False
     emailable = False
 
-    @use_nvd3
-    def decorator_dispatcher(self, request, *args, **kwargs):
-        super(AggregateUserStatusReport, self).decorator_dispatcher(request, *args, **kwargs)
+    @property
+    @memoized
+    def selected_app_id(self):
+        return self.get_request_param(SelectApplicationFilter.slug, None, from_json=True)
 
     @memoized
     def user_query(self):
         # partially inspired by ApplicationStatusReport.user_query
         mobile_user_and_group_slugs = set(
-            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+            self.get_request_param(ExpandedMobileWorkerFilter.slug, as_list=True)
         ) or set(['t__0'])  # default to all mobile workers on initial load
         user_query = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
             mobile_user_and_group_slugs,
             self.request.couch_user,
         )
-        user_query = user_query.aggregations([
-            DateHistogram(
+
+        if self.selected_app_id:
+            last_submission_agg = _get_histogram_aggregation_for_app(
+                "last_submissions", "submission_date", self.selected_app_id
+            )
+            last_sync_agg = _get_histogram_aggregation_for_app(
+                "last_syncs", "sync_date", self.selected_app_id
+            )
+        else:
+            last_submission_agg = DateHistogram(
                 'last_submission',
                 'reporting_metadata.last_submission_for_user.submission_date',
                 DateHistogram.Interval.DAY,
-            ),
-            DateHistogram(
+            )
+            last_sync_agg = DateHistogram(
                 'last_sync',
                 'reporting_metadata.last_sync_for_user.sync_date',
                 DateHistogram.Interval.DAY,
             )
+
+        user_query = user_query.aggregations([
+            last_submission_agg,
+            last_sync_agg,
         ])
         return user_query
+
+    def _sanitize_report_from_date(self, from_date):
+        """resets the date to a valid value if out of range"""
+        today = datetime.today().date()
+        from_date_delta = (from_date - today).days
+        if from_date_delta > self.FromDateFilter.max_date_delta:
+            from_date = today + timedelta(days=self.FromDateFilter.max_date_delta)
+        elif from_date_delta < self.FromDateFilter.min_date_delta:
+            from_date = today + timedelta(days=self.FromDateFilter.min_date_delta)
+        return from_date
+
+    @cached_property
+    def report_from_date(self):
+        from_date = self.get_request_param(self.FromDateFilter.slug, from_json=True)
+        if from_date:
+            try:
+                from_date = iso_string_to_date(from_date)
+                return self._sanitize_report_from_date(from_date)
+            except ValueError:
+                pass
+        return datetime.today().date() + timedelta(days=self.FromDateFilter.default_date_delta)
 
     @property
     def template_context(self):
@@ -700,7 +846,6 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
             def get_buckets(self):
                 return self.bucket_series.get_summary_data()
 
-
         class BucketSeries(namedtuple('Bucket', 'data_series total_series total user_count')):
             @property
             @memoized
@@ -718,11 +863,16 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
                 def _readable_pct_from_total(total_series, index):
                     return '{0:.0f}%'.format(total_series[index - 1]['y'])
 
+                total_days = len(self.data_series) - 1
+                intervals = [interval for interval in [3, 7, 30] if interval < total_days]
+                intervals.append(total_days)
+
                 return [
-                    [_readable_pct_from_total(self.percent_series, 3), _('in the last 3 days')],
-                    [_readable_pct_from_total(self.percent_series, 7), _('in the last week')],
-                    [_readable_pct_from_total(self.percent_series, 30), _('in the last 30 days')],
-                    [_readable_pct_from_total(self.percent_series, 60), _('in the last 60 days')],
+                    [
+                        _readable_pct_from_total(self.percent_series, interval),
+                        _('in the last {} days').format(interval)
+                    ]
+                    for interval in intervals
                 ]
 
             @property
@@ -736,20 +886,25 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
         query = self.user_query().run()
 
         aggregations = query.aggregations
-        last_submission_buckets = aggregations[0].normalized_buckets
-        last_sync_buckets = aggregations[1].normalized_buckets
+        if self.selected_app_id:
+            last_submission_buckets = aggregations[0].filtered_agg.date_histogram.normalized_buckets
+            last_sync_buckets = aggregations[1].filtered_agg.date_histogram.normalized_buckets
+        else:
+            last_submission_buckets = aggregations[0].normalized_buckets
+            last_sync_buckets = aggregations[1].normalized_buckets
         total_users = query.total
 
         def _buckets_to_series(buckets, user_count):
             # start with N days of empty data
             # add bucket info to the data series
             # add last bucket
-            days_of_history = 60
+            today = datetime.today().date()
+            # today and report_from_date both are inclusive
+            days_of_history = (today - self.report_from_date).days + 1
             vals = {
                 i: 0 for i in range(days_of_history)
             }
             extra = total = running_total = 0
-            today = datetime.today().date()
             for bucket_val in buckets:
                 bucket_date = date.fromisoformat(bucket_val['key'])
                 delta_days = (today - bucket_date).days
@@ -796,8 +951,6 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
                 }
             )
             return BucketSeries(daily_series, running_total_series, total, user_count)
-
-
 
         submission_series = SeriesData(
             id='submission',

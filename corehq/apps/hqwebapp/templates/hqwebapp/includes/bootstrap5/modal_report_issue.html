@@ -5,7 +5,8 @@
        tabindex="-1"
        aria-labelledby="reportAnIssueModalLabel"
        aria-hidden="true"
-       id="modalReportIssue">
+       id="modalReportIssue"
+       data-bind="event: { 'shown.bs.modal': openModal, 'hidden.bs.modal': resetForm }">
     <div class="modal-dialog modal-lg">
       <form id="hqwebapp-bugReportForm"
             action="{% url "bug_report" %}"
@@ -30,13 +31,14 @@
               <div class="row mb-3">
                 <label for="bug-report-subject"
                        class="col-sm-2 col-form-label">{% trans "Short Description" %} *</label>
-                <div class="col-sm-10">
+                <div class="col-sm-10 has-validation">
                   <input type="text"
                          class="form-control"
                          name="subject"
                          id="bug-report-subject"
-                         placeholder="{% trans 'One Sentence Description of Issue' %}">
-                  <span class="badge badge-danger d-none">
+                         placeholder="{% trans 'One Sentence Description of Issue' %}"
+                         data-bind="value: subjectText, hasfocus: subjectHasFocus, css: { 'is-invalid': hasSubjectError }">
+                  <span class="invalid-feedback">
                     <i class="fa fa-warning"></i> {% trans 'Please give us some information about the issue' %}
                   </span>
                 </div>
@@ -51,30 +53,32 @@
                             class="form-control vertical-resize"
                             id="bug-report-message"
                             rows="3"
-                            placeholder="{% trans "Please describe the issue and list any steps you took to see this issue." %}"></textarea>
+                            placeholder="{% trans "Please describe the issue and list any steps you took to see this issue." %}"
+                            data-bind="value: descriptionText"></textarea>
                 </div>
               </div>
               {% if request.couch_user.is_commcare_user %}
                 <div class="row mb-3"
-                     id="bug-report-email-form-group">
-                    <label for="bug-report-email"
-                           class="col-sm-2 col-form-label" >
-                      {% trans "Email" %}
-                    </label>
-                    <div class="col-sm-10">
-                        <input type="text"
-                               name="email"
-                               class="form-control"
-                               id="bug-report-email">
-                        <p class="help-block">
-                            {% blocktrans %}
-                                Please enter your email here so that we can follow up with you regarding this issue
-                            {% endblocktrans %}
-                            <span class="badge badge-danger hide">
-                                <i class="fa fa-warning"></i> {% trans 'Incorrect Format' %}
-                            </span>
-                        </p>
-                    </div>
+                      id="bug-report-email-form-group">
+                  <label for="bug-report-email"
+                          class="col-sm-2 col-form-label" >
+                    {% trans "Email" %}
+                  </label>
+                  <div class="col-sm-10 has-validation">
+                    <input type="text"
+                            name="email"
+                            class="form-control"
+                            id="bug-report-email"
+                            data-bind="value: emailInput, css: { 'is-invalid': hasEmailInputError }">
+                    <span class="invalid-feedback">
+                      <i class="fa fa-warning"></i> {% trans 'Incorrect Format' %}
+                    </span>
+                    <p class="help-block">
+                      {% blocktrans %}
+                        Please enter your email here so that we can follow up with you regarding this issue
+                      {% endblocktrans %}
+                    </p>
+                  </div>
                 </div>
               {% endif %}
               {% if request.couch_user.is_domain_admin %}
@@ -102,19 +106,21 @@
                        class="col-sm-2 col-form-label">
                   {% trans "Other recipients" %}
                 </label>
-                <div class="col-sm-10">
+                <div class="col-sm-10 has-validation">
                   <input type="text"
                          name="cc"
                          class="form-control"
                          id="bug-report-cc"
-                         placeholder="ex: admin@commcarehq.org, test@commcarehq.org" />
+                         placeholder="ex: admin@commcarehq.org, test@commcarehq.org"
+                         data-bind="value: recipientEmailsText, css: { 'is-invalid': recipientsErrorMessage }" />
+                  <div class="invalid-feedback">
+                    <i class="fa fa-warning"></i>
+                    <span data-bind="text: recipientsErrorMessage"></span>
+                  </div>
                   <p class="help-block">
-                      {% blocktrans %}
-                          Comma-separated email addresses of others you want to notify about this issue.
-                      {% endblocktrans %}
-                      <span class="badge bade-danger hide">
-                          <i class="fa fa-warning"></i> {% trans 'Incorrect Format' %}
-                      </span>
+                    {% blocktrans %}
+                      Comma-separated email addresses of others you want to notify about this issue.
+                    {% endblocktrans %}
                   </p>
                 </div>
               </div>
@@ -143,14 +149,16 @@
           <div class="modal-footer">
               <button type="button"
                       id="bug-report-cancel"
-                      class="btn btn-default"
-                      data-bs-dismiss="modal">{% trans 'Cancel' %}</button>
+                      class="btn btn-outline-secondary"
+                      data-bs-dismiss="modal"
+                      data-bind="enable: cancelBtnEnabled">{% trans 'Cancel' %}</button>
               <button type="submit"
                       class="btn btn-primary"
                       id="bug-report-submit"
                       data-loading-text="{% trans "Submitting Report..." %}"
                       data-error-text="{% trans "Failed. Retry Issue Submission" %}"
-                      data-success-text="{% trans "Success! Back to CommCare HQ" %}">
+                      data-success-text="{% trans "Success! Back to CommCare HQ" %}"
+                      data-bind="css: { 'btn-danger': hasSubmitError, 'btn-primary': !hasSubmitError() }">
                   {% trans "Submit Report" %}
               </button>
           </div>

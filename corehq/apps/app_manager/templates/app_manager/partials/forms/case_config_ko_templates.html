@@ -81,7 +81,7 @@
                        change: function(view, e) {
                          if (e.target.closest('#case-config-ko')) {
                            var action = e.target.closest('.case-preload') ? 'Load' : 'Save';
-                           hqImport('analytix/js/google').track.event('Case Management', 'Form Level', action + ' Property (add/edit)');
+                            $root.trackGoogleEvent('Case Management', 'Form Level', action + ' Property (add/edit)');
                          }
                        }
                      }"></select>
@@ -114,7 +114,7 @@
         id="case-config:case-transaction:case-preload">
   <div class="panel-heading">
     <h4 class="panel-title panel-title-nolink">
-      <i class="fa fa-arrow-right"></i><i class="fa fa-file-o"></i>
+      <i class="fa fa-arrow-right"></i><i class="fa-regular fa-file"></i>
       {% trans "Load the following properties into the form questions" %}
     </h4>
   </div>
@@ -159,7 +159,7 @@
                         visible: validateProperty"></p>
         </td>
         <td class="col-sm-1 text-center">
-          <i class="fa fa-arrow-right"></i><i class="fa fa-file-o"></i>
+          <i class="fa fa-arrow-right"></i><i class="fa-regular fa-file"></i>
         </td>
         <td class="col-sm-5">
           <div class="full-width-select2"
@@ -200,10 +200,23 @@
         </div>
       </div>
       <i class="fa fa-arrow-right"></i><i class="fa fa-save"></i>
-      {% trans "Save Questions to Case Properties" %}
+      {# Location of title is different for regular and advanced forms #}
+      <!-- ko text: $data.title || $root.title --><!-- /ko -->
     </h4>
   </div>
   <div class="panel-body">
+    <div class="alert alert-warning" data-bind="visible: hasDeprecatedProperties" >
+      <p>
+        <i class="fa fa-warning"></i>
+        {% blocktrans %}
+          There are one or more form questions that are being saved to deprecated case properties.
+          Please revise and consider changing these case properties. For more information on deprecated
+          case properties, please refer to
+          <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143958252/Deprecating+Case+Types+and+Case+Properties+using+Data+Dictionary" target="_blank">this documentation</a>
+          .
+        {% endblocktrans %}
+      </p>
+    </div>
     <table class="table table-savecaseprops"
            data-bind="visible: case_properties().length">
       <thead>
@@ -234,7 +247,8 @@
       <tr class="form-group"
           data-bind="css: {
                       'has-error': validate,
-                      warning: (!validate() && required() && !path()) || (!validate() && !required() && !path() && key())
+                      warning: (!validate() && required() && !path()) || (!validate() && !required() && !path() && key()),
+                      'has-warning': !validate() && isDeprecated()
                     }">
         <td class="col-sm-1 text-center"
             data-bind="if: $parent.hasPrivilege">
@@ -264,22 +278,29 @@
              data-bind="html: validate,
                         visible: validate"></p>
           <!-- ko if: $parent.hasPrivilege -->
-          <inline-edit params="value: $data.description,
-                               rows: 3,
-                               cols: 30,
-                               placeholder: '{% trans "Click here to add a description" %}',
-                               url: '{% url "update_property_description" domain %}',
-                               saveParams: {
-                                 'caseType': $data.caseType,
-                                 'name':  $data.key
-                               },
-                               saveValueName: 'description',
-                               errorMessage: '{% trans "Error updating description. Please try again." %}',
-                               readOnlyClass: 'property-description',
-                               readOnlyAttrs: {
-                                 'data-content': $data.description
-                               },
-                               afterRenderFunc: $root.makePopover"></inline-edit>
+          {% if request|request_has_privilege:"DATA_DICTIONARY" %}
+            <p class="help-block"  data-bind="visible: !validate() && isDeprecated()">
+              {% blocktrans %}
+                Property has been deprecated.
+              {% endblocktrans %}
+            </p>
+            <inline-edit params="value: $data.description,
+                                rows: 3,
+                                cols: 30,
+                                placeholder: '{% trans "Click here to add a description" %}',
+                                url: '{% url "update_property_description" domain %}',
+                                saveParams: {
+                                  'caseType': $data.caseType,
+                                  'name':  $data.key
+                                },
+                                saveValueName: 'description',
+                                errorMessage: '{% trans "Error updating description. Please try again." %}',
+                                readOnlyClass: 'property-description',
+                                readOnlyAttrs: {
+                                  'data-content': $data.description
+                                },
+                                afterRenderFunc: $root.makePopover"></inline-edit>
+          {% endif %}
           <!-- /ko -->
           <!-- ko if: $data.description() && !$parent.hasPrivilege -->
             <p data-bind="text: $data.description"></p>
@@ -318,7 +339,7 @@
     <!-- ko if: !case_properties().length && !$parent.hasPrivilege -->
       <p>
         {% blocktrans %}
-          You no longer have permission to save case properties.
+          You no longer have permission to save this section.
         {% endblocktrans %}
       </p>
     <!-- /ko -->

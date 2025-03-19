@@ -1,15 +1,18 @@
+
 hqDefine("dashboard/js/dashboard", [
     'jquery',
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/components.ko',    // pagination widget
-    'hqwebapp/js/main',     // post-link function
+    'hqwebapp/js/components/pagination',
+    'hqwebapp/js/bootstrap5/main',     // post-link function
+    'hqwebapp/js/bootstrap5/knockout_bindings.ko',  // popover
+    'commcarehq',
 ], function (
     $,
     ko,
     _,
-    initialPageData
+    initialPageData,
 ) {
     var tileModel = function (options) {
         var self = {};
@@ -62,7 +65,7 @@ hqDefine("dashboard/js/dashboard", [
                 }, 500);
 
                 // Send request for items on current page
-                var itemRequest = $.ajax({
+                $.ajax({
                     method: "GET",
                     url: initialPageData.reverse('dashboard_tile', self.slug),
                     data: {
@@ -81,7 +84,7 @@ hqDefine("dashboard/js/dashboard", [
                 // Total number of pages is also a separate request, but it only needs to run once
                 // and then self.totalPages() never changes again
                 if (self.totalItems() === undefined) {
-                    var totalPagesRequest = $.ajax({
+                    $.ajax({
                         method: "GET",
                         url: initialPageData.reverse('dashboard_tile_total', self.slug),
                         success: function (data) {

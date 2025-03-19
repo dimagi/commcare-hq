@@ -1,0 +1,180 @@
+{
+  "builds": {
+    "is_complete": true,
+    "templates": [
+      "edit_menu.html"
+    ],
+    "javascript": [
+      "js/edit_builds.js"
+    ]
+  },
+  "case_importer": {
+    "is_complete": true,
+    "templates": [
+      "excel_config.html",
+      "excel_fields.html",
+      "import_cases.html",
+      "partials/excel_field_rows.html",
+      "partials/ko_import_history.html"
+    ],
+    "javascript": [
+      "js/import_history.js",
+      "js/main.js"
+    ]
+  },
+  "case_search": {
+    "is_complete": true,
+    "templates": [
+      "profile_case_search.html",
+      "case_search.html"
+    ],
+    "javascript": [
+      "js/profile_case_search.js",
+      "js/case_search.js"
+    ]
+  },
+  "casexml": {
+    "is_complete": true
+  },
+  "cloudcare": {
+    "is_complete": true
+  },
+  "commtrack": {
+    "is_complete": true
+  },
+  "corehq.tabs": {
+    "in_progress": true
+  },
+  "custom_data_fields": {
+    "is_complete": true
+  },
+  "dashboard": {
+    "is_complete": true
+  },
+  "data_interfaces": {
+    "in_progress": true
+  },
+  "domain": {
+    "in_progress": true,
+    "templates": [
+      "activate_transfer_domain.html",
+      "admin/case_search.html",
+      "admin/commtrack_settings.html",
+      "admin/edit_alert.html",
+      "admin/feature_previews.html",
+      "admin/flags_and_privileges.html",
+      "admin/global_sms_rates.html",
+      "admin/info_basic.html",
+      "admin/location_fixture.html",
+      "admin/manage_alerts.html",
+      "admin/my_project_settings.html",
+      "admin/partials/case_search_templates.html",
+      "admin/partials/commtrack_action_table.html",
+      "admin/project_limits.html",
+      "admin/project_privacy.html",
+      "admin/recovery_measures_history.html",
+      "admin/sms_rates.html",
+      "admin/sms_settings.html",
+      "admin/transfer_domain.html",
+      "admin/transfer_domain_pending.html",
+      "internal_calculations.html",
+      "internal_settings.html"
+    ]
+  },
+  "dropbox": {
+    "is_complete": true
+  },
+  "email": {
+    "is_complete": true
+  },
+  "enterprise": {
+    "is_complete": true
+  },
+  "export": {
+    "is_complete": true
+  },
+  "groups": {
+    "is_complete": true
+  },
+  "hqcase": {
+    "is_complete": true
+  },
+  "hqwebapp": {
+    "in_progress": true,
+    "templates": [
+      "maintenance_alerts.html",
+      "close_window.html",
+      "crispy/field/multifield.html",
+      "includes/create_item_form.html"
+    ]
+  },
+  "integration": {
+    "is_complete": true
+  },
+  "locations": {
+    "is_complete": true
+  },
+  "motech.dhis2": {
+    "is_complete": true
+  },
+  "motech.generic_inbound": {
+    "is_complete": true
+  },
+  "motech.openmrs": {
+    "is_complete": true
+  },
+  "motech.repeaters": {
+    "is_progress": true,
+    "templates": [
+      "add_form_repeater.html",
+      "repeaters.html",
+      "partials/repeater_row.html"
+    ],
+    "javascript": [
+      "js/add_form_repeater.js"
+    ]
+  },
+  "notifications": {
+    "in_progress": true,
+    "templates": [
+      "manage_notifications.html"
+    ]
+  },
+  "ota": {
+    "is_complete": true
+  },
+  "products": {
+    "is_complete": true
+  },
+  "programs": {
+    "is_complete": true
+  },
+  "registry": {
+    "is_complete": true
+  },
+  "reminders": {
+    "is_complete": true
+  },
+  "reports": {
+    "in_progress": true
+  },
+  "reports_core": {
+    "in_progress": true
+  },
+  "settings": {
+    "templates": [
+      "change_my_password.html",
+      "enable_superuser.html",
+      "my_projects.html",
+      "user_api_keys.html",
+      "edit_my_account.html"
+    ],
+    "javascript": [
+      "js/user_api_keys.js"
+    ],
+    "is_complete": true
+  },
+  "user_importer": {
+    "is_complete": true
+  }
+}

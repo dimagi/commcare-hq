@@ -47,7 +47,7 @@ class AuthenticationTestBase(TestCase):
         )
 
     def _construct_api_auth_header(self, username, api_key):
-        return f'ApiKey {username}:{api_key.key}'
+        return f'ApiKey {username}:{api_key.plaintext_key}'
 
     def _construct_basic_auth_header(self, username, password):
         # https://stackoverflow.com/q/5495452/8207
@@ -130,6 +130,17 @@ class LoginAuthenticationTest(AuthenticationTestBase):
         self.assertAuthenticationSuccess(LoginAuthentication(), self._get_request_with_api_key())
         self.api_key.refresh_from_db()
         self.assertIsNotNone(self.api_key.last_used)
+
+    def test_login_with_deactivated_user(self):
+        def reactivate_user():
+            self.user.is_active = True
+            self.user.save()
+        self.user.is_active = False
+        self.user.save()
+        self.addCleanup(reactivate_user)
+        self.assertAuthenticationFail(LoginAuthentication(), self._get_request_with_api_key())
+        self.api_key.refresh_from_db()
+        self.assertIsNone(self.api_key.last_used)
 
 
 class LoginAndDomainAuthenticationTest(AuthenticationTestBase):

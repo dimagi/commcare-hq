@@ -8,6 +8,7 @@ from django.conf import settings
 
 MAIN_DB = None
 FIXTURES_DB = 'fixtures'
+REPEATERS_DB = 'receiverwrapper'
 
 # Doc types for classes we've removed from our code
 # but may still have docs lying around from
@@ -43,4 +44,18 @@ DELETABLE_COUCH_DOC_TYPES = {
     'FixtureDataType': (FIXTURES_DB,),
     'FixtureDataItem': (FIXTURES_DB,),
     'FixtureOwnership': (FIXTURES_DB,),
+    'RepeatRecord': (REPEATERS_DB,),
+    'RepeatRecordAttempt': (REPEATERS_DB,),
+
+    # form and case types
+    'XFormInstance': (MAIN_DB,),
+    'XFormArchived': (MAIN_DB,),
+    'XFormDeprecated': (MAIN_DB,),
+    'XFormDuplicate': (MAIN_DB,),
+    'XFormError': (MAIN_DB,),
+    'SubmissionErrorLog': (MAIN_DB,),
+    'XFormInstance-Deleted': (MAIN_DB,),
+    'HQSubmission': (MAIN_DB,),
+    'CommCareCase': (MAIN_DB,),
+    'CommCareCase-Deleted': (MAIN_DB,),
 }

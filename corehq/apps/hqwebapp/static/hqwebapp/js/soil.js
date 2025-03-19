@@ -1,9 +1,11 @@
+
 hqDefine("hqwebapp/js/soil", [
     "jquery",
     "hqwebapp/js/initial_page_data",
+    "commcarehq",
 ], function (
     $,
-    initialPageData
+    initialPageData,
 ) {
     $(function () {
         var downloadId = initialPageData.get("download_id"),

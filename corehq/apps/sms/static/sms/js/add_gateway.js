@@ -3,6 +3,7 @@ hqDefine('sms/js/add_gateway',[
     "underscore",
     "hqwebapp/js/initial_page_data",
     "sms/js/add_gateway_form_handler",
+    "commcarehq",
 ], function ($, _, initialPageData,addGatewayFormHandler) {
     function addParam($widget, count, nm, val) {
         $widget.append('<tr> \

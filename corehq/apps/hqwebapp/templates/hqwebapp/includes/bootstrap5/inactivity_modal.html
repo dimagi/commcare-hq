@@ -1,0 +1,34 @@
+{% load i18n %}
+
+<div class="modal fade" id="inactivityModal" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-fullscreen">
+    <!-- No .modal-header, this is a weird modal -->
+    <div class="modal-content">
+      <div class="modal-body">
+        <!-- javascript will put content here -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-primary dismiss-button" data-bs-dismiss="modal">{% trans 'Done' %}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="inactivityWarningModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">{% trans "Session expiring soon" %}</h4>
+      </div>
+      <div class="modal-body">
+        {% blocktrans %}
+          You're about to be logged out due to inactivity.
+          Please click below to extend your session.
+        {% endblocktrans %}
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary dismiss-button" data-bs-dismiss="modal">{% trans 'Extend session' %}</button>
+      </div>
+    </div>
+  </div>
+</div>

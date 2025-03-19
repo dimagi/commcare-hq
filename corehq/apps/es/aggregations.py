@@ -215,6 +215,7 @@ class TermsAggregation(Aggregation):
     def __init__(self, name, field, size=None, missing=None):
         assert re.match(r'\w+$', name), \
             "Names must be valid python variable names, was {}".format(name)
+        assert size is None or size > 0, "Aggregation size must be greater than 0"
         self.name = name
         self.body = {
             "field": field,
@@ -237,6 +238,7 @@ class TermsAggregation(Aggregation):
         return query
 
     def size(self, size):
+        assert size is None or size > 0, "Aggregation size must be greater than 0"
         query = deepcopy(self)
         query.body['size'] = size
         return query
@@ -548,6 +550,56 @@ class DateHistogram(Aggregation):
 
         if timezone:
             self.body['time_zone'] = timezone
+
+
+class GeohashGridAggregation(Aggregation):
+    """
+    A multi-bucket aggregation that groups ``geo_point`` and
+    ``geo_shape`` values into buckets that represent a grid.
+
+    More info: `Geohash grid aggregation <https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-aggregations-bucket-geohashgrid-aggregation.html>`_
+    """  # noqa: E501
+    type = 'geohash_grid'
+    result_class = BucketResult
+
+    def __init__(self, name, field, precision):
+        """
+        Initialize a GeohashGridAggregation
+
+        :param name: The name of this aggregation
+        :param field: The case property that stores a geopoint
+        :param precision: A value between 1 and 12
+
+        High precision geohashes have a long string length and represent
+        cells that cover only a small area (similar to long-format ZIP
+        codes like "02139-4075").
+
+        Low precision geohashes have a short string length and represent
+        cells that each cover a large area (similar to short-format ZIP
+        codes like "02139").
+        """
+        assert 1 <= precision <= 12
+        self.name = name
+        self.body = {
+            'field': field,
+            'precision': precision,
+        }
+
+
+class GeoBoundsAggregation(Aggregation):
+    """
+    A metric aggregation that computes the bounding box containing all
+    geo_point values for a field.
+
+    More info: `Geo Bounds Aggregation <https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-aggregations-metrics-geobounds-aggregation.html>`_
+    """  # noqa: E501
+    type = 'geo_bounds'
+
+    def __init__(self, name, field):
+        self.name = name
+        self.body = {
+            'field': field,
+        }
 
 
 class NestedAggregation(Aggregation):

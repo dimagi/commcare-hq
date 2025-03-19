@@ -1,9 +1,8 @@
-/* globals process */
-
-module.exports = function(grunt) {
+/* globals module, process, require */
+module.exports = function (grunt) {
     var headless = require('mocha-headless-chrome'),
         _ = require('lodash'),
-        colors = require('colors');
+        fs = require('fs');
 
     // use localhost unless we're running on travis
     var BASE_ADDRESS = process.env.WEB_TEST_PORT_8000_TCP_ADDR || 'localhost',
@@ -28,23 +27,22 @@ module.exports = function(grunt) {
      */
     var apps = [
         'app_manager',
-        'export/ko',
-        'notifications',
+        'export',
+        'notifications/bootstrap3',
+        'notifications/bootstrap5',
         'reports_core/choiceListUtils',
         'locations',
         'userreports',
         'cloudcare',
         'cloudcare/form_entry',
-        'hqwebapp',
+        'hqwebapp/bootstrap3',
+        'hqwebapp/bootstrap5',
+        'hqwebapp/components',
         'case_importer',
     ];
 
-    var custom = [
-        'champ',
-    ];
-
     var extensions = _.split(process.env.JS_TEST_EXTENSIONS || '', ','),
-        testPaths = _.filter(_.concat(apps, custom, extensions), function (path) { return path !== ''; });
+        testPaths = _.filter(_.concat(apps, extensions), function (path) { return path !== ''; });
 
     var runTest = function (queuedTests, taskPromise, finishedTests, failures) {
         if (finishedTests === undefined) {
@@ -65,32 +63,43 @@ module.exports = function(grunt) {
             currentTestPath = BASE_URL + currentApp,
             testText = "Running Test '" + currentApp + "'",
             reporter = grunt.option('verbose') ? 'spec' : 'dot',
-            runner_options = {
+            runnerOptions = {
                 file: currentTestPath,
                 visible: false,
                 timeout: 120000,
                 reporter: reporter,
             };
 
-        // For running in docker/travis
-        if (process.env.PUPPETEER_SKIP_CHROMIUM_DOWNLOAD) {
-            runner_options.executablePath = 'google-chrome-unstable';
+        // For running in docker
+        if (process.env.PUPPETEER_SKIP_DOWNLOAD) {
+            runnerOptions.executablePath = 'google-chrome-stable';
         }
 
         grunt.log.writeln("\n");
         grunt.log.writeln(testText.bold);
         grunt.log.write(currentTestPath.italic.cyan);
 
-        headless.runner(runner_options).then(function (data) {
+        headless.runner(runnerOptions).then(function (data) {
             if (data.result.failures.length) {
                 failures[currentApp] = data.result.failures;
+            }
+            if (grunt.option('coverage')) {
+                var coverageDir = './coverage-js/',
+                    filePath = coverageDir + currentApp.replace(/\//g, '-') + '.json';
+                if (!fs.existsSync(coverageDir)) {
+                    fs.mkdir(coverageDir, error =>
+                        error && grunt.log.write(error));
+                }
+                fs.writeFile(filePath, JSON.stringify(data.coverage), { flag: 'w+' }, error =>
+                    error && grunt.log.write(error),
+                );
             }
             finishedTests.push(currentApp);
             runTest(
                 _.without(queuedTests, currentApp),
                 taskPromise,
                 finishedTests,
-                failures
+                failures,
             );
         });
     };
@@ -125,10 +134,10 @@ module.exports = function(grunt) {
             var testStatement = "Running tests: " + paths.join(', ');
             grunt.log.writeln(testStatement.bold.green);
             runTest(paths, this.async());
-        }
+        },
     );
 
-    grunt.registerTask('list', 'Lists all available apps to test', function() {
+    grunt.registerTask('list', 'Lists all available apps to test', function () {
         testPaths.forEach(function (app) { console.log('"' + app + '"'); });
     });
 };

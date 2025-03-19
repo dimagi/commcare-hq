@@ -265,14 +265,14 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
                 case_ids.remove(case_id)
         open_ids.update(case_ids)
 
-    def filter_deleted_indices(related):
-        live_related = []
+    def populate_indices(related):
+        # add all indices to `indices` so that they are included in the
+        # restore
         for index in related:
-            # add all indices to `indices` so that they are included in the restore
             indices[index.case_id].append(index)
-            if index.referenced_id:
-                live_related.append(index)
-        return live_related
+
+    def filter_deleted_indices(related):
+        return [index for index in related if index.referenced_id]
 
     IGNORE = object()
     debug = logging.getLogger(__name__).debug
@@ -294,10 +294,11 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
         exclude = set(chain.from_iterable(seen_ix[id] for id in next_ids))
         with timing_context("get_related_indices({} cases, {} seen)".format(len(next_ids), len(exclude))):
             related = get_related_indices(list(next_ids), exclude)
-            related_not_deleted = filter_deleted_indices(related)
             if not related:
                 break
 
+            populate_indices(related)
+            related_not_deleted = filter_deleted_indices(related)
             update_open_and_deleted_ids(related_not_deleted)
             next_ids = {classify(index, next_ids)
                         for index in related_not_deleted

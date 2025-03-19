@@ -3,10 +3,11 @@ hqDefine("sms/js/settings", [
     'knockout',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/select2_handler',
-    'hqwebapp/js/components.ko',    // select toggle widget
+    'hqwebapp/js/components/select_toggle',
     'bootstrap-timepicker/js/bootstrap-timepicker',
-    'hqwebapp/js/widgets', //multi-emails
-], function(
+    'hqwebapp/js/bootstrap3/widgets', //multi-emails
+    'commcarehq',
+], function (
     $,
     ko,
     initialPageData,
@@ -23,7 +24,7 @@ hqDefine("sms/js/settings", [
             self.time_input_relationship_initial = function () {
                 if (self.start_time() === null) {
                     return "BEFORE";
-                } else if(self.end_time() === null) {
+                } else if (self.end_time() === null) {
                     return "AFTER";
                 } else {
                     return "BETWEEN";
@@ -62,23 +63,23 @@ hqDefine("sms/js/settings", [
             self.sms_case_registration_user_id.init();
             self.override_daily_outbound_sms_limit = ko.observable();
 
-            self.showDefaultSMSResponse = ko.computed(function() {
+            self.showDefaultSMSResponse = ko.computed(function () {
                 return self.use_default_sms_response() === "ENABLED";
             });
 
-            self.showCustomCaseUsername = ko.computed(function() {
+            self.showCustomCaseUsername = ko.computed(function () {
                 return self.use_custom_case_username() === "CUSTOM";
             });
 
-            self.showCustomMessageCountThreshold = ko.computed(function() {
+            self.showCustomMessageCountThreshold = ko.computed(function () {
                 return self.use_custom_message_count_threshold() === "CUSTOM";
             });
 
-            self.showRestrictedSMSTimes = ko.computed(function() {
+            self.showRestrictedSMSTimes = ko.computed(function () {
                 return self.use_restricted_sms_times() === "ENABLED";
             });
 
-            self.showRegistrationOptions = ko.computed(function() {
+            self.showRegistrationOptions = ko.computed(function () {
                 return self.sms_case_registration_enabled() === "ENABLED";
             });
 
@@ -86,41 +87,41 @@ hqDefine("sms/js/settings", [
                 return self.sms_mobile_worker_registration_enabled() === "ENABLED";
             });
 
-            self.addRestrictedSMSTime = function() {
+            self.addRestrictedSMSTime = function () {
                 self.restricted_sms_times.push(dayTimeWindow(-1, null, null, null));
                 self.refreshTimePickers();
             };
 
-            self.removeRestrictedSMSTime = function() {
+            self.removeRestrictedSMSTime = function () {
                 self.restricted_sms_times.remove(this);
             };
 
-            self.showSMSConversationTimes = ko.computed(function() {
+            self.showSMSConversationTimes = ko.computed(function () {
                 return self.use_sms_conversation_times() === "ENABLED";
             });
 
-            self.addSMSConversationTime = function() {
+            self.addSMSConversationTime = function () {
                 self.sms_conversation_times.push(dayTimeWindow(-1, null, null, null));
                 self.refreshTimePickers();
             };
 
-            self.removeSMSConversationTime = function() {
+            self.removeSMSConversationTime = function () {
                 self.sms_conversation_times.remove(this);
             };
 
-            self.showCustomChatTemplate = ko.computed(function() {
+            self.showCustomChatTemplate = ko.computed(function () {
                 return self.use_custom_chat_template() === "CUSTOM";
             });
 
-            self.restricted_sms_times_json = ko.computed(function() {
+            self.restricted_sms_times_json = ko.computed(function () {
                 return ko.toJSON(self.restricted_sms_times());
             });
 
-            self.sms_conversation_times_json = ko.computed(function() {
+            self.sms_conversation_times_json = ko.computed(function () {
                 return ko.toJSON(self.sms_conversation_times());
             });
 
-            self.refreshTimePickers = function() {
+            self.refreshTimePickers = function () {
                 $('[data-timeset="true"]').each(function () {
                     $(this).timepicker({
                         showMeridian: false,
@@ -130,7 +131,7 @@ hqDefine("sms/js/settings", [
                 });
             };
 
-            self.init = function() {
+            self.init = function () {
                 self.use_default_sms_response(initial.use_default_sms_response);
                 self.use_restricted_sms_times(initial.use_restricted_sms_times);
                 self.use_custom_case_username(initial.use_custom_case_username);

@@ -105,13 +105,13 @@ class Command(BaseCommand):
         )
 
         self.stdout.write(
-            f'\nEmail\t\t'
-            f'\tNumber Permanent'
-            f'\tLast Recorded on'
-            f'\t\tNumber Complaints'
-            f'\tLast Recorded on'
-            f'\t\tNumber Transient'
-            f'\tLast Recorded on'
+            '\nEmail\t\t'
+            '\tNumber Permanent'
+            '\tLast Recorded on'
+            '\t\tNumber Complaints'
+            '\tLast Recorded on'
+            '\t\tNumber Transient'
+            '\tLast Recorded on'
         )
 
         self.stdout.write(
@@ -161,7 +161,7 @@ class Command(BaseCommand):
                     f'\t{record.timestamp}'
                 )
                 for key, val in record.headers.items():
-                    self.stdout.write(f'\t' * 10 +
+                    self.stdout.write('\t' * 10 +
                                       f'{key}:\t{val}')
             self.stdout.write('\n\nt')
 
@@ -185,9 +185,9 @@ class Command(BaseCommand):
                     f'\t{record.reason}'
                 )
                 for key, val in record.headers.items():
-                    self.stdout.write(f'\t' * 15 +
+                    self.stdout.write('\t' * 15 +
                                       f'{key}:\t{val}')
-                self.stdout.write(f'\t' * 15 +
+                self.stdout.write('\t' * 15 +
                                   f'destination:\t{record.destination}')
             self.stdout.write('\n\n')
 
@@ -209,18 +209,18 @@ class Command(BaseCommand):
                     f'\t{record.created}'
                 )
                 self.stdout.write(
-                    f'\t' * 8 +
+                    '\t' * 8 +
                     f'\t{record.feedback_type}'
                 )
                 self.stdout.write(
-                    f'\t' * 11 +
+                    '\t' * 11 +
                     f'\t{record.sub_type}'
                 )
                 self.stdout.write(
-                    f'\t' * 14 +
+                    '\t' * 14 +
                     f'destination: {record.destination}'
                 )
                 for key, val in record.headers.items():
-                    self.stdout.write(f'\t' * 14 +
+                    self.stdout.write('\t' * 14 +
                                       f'{key}:\t{val}')
             self.stdout.write('\n\n')

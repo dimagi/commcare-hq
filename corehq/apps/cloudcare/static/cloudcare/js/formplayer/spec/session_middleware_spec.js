@@ -1,8 +1,7 @@
-/* eslint-env mocha */
+import sinon from "sinon";
+import Middleware from "cloudcare/js/formplayer/middleware";
 
 describe('SessionMiddle', function () {
-    let Middleware = hqImport("cloudcare/js/formplayer/middleware");
-
     it('Should call middleware and apis with same arguments', function () {
         let middlewareSpy = sinon.spy(),
             result,

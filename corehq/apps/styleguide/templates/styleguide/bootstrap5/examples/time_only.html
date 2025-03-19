@@ -1,0 +1,17 @@
+<input id="js-id-timepicker" class="form-control" type="text" name="timpick" />
+
+<script>
+  new tempusDominus.TempusDominus(
+    document.getElementById('js-id-timepicker'),
+    {
+      display: {
+        theme: 'light',
+        components: {
+          calendar: false,
+        }
+      },
+      localization: {
+        format: 'LT',
+      },
+    });
+</script>

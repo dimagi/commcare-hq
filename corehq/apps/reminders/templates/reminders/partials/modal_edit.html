@@ -1,0 +1,27 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div class="modal fade" id="edit-warning-modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">
+                    <i class="fa fa-link"></i>
+                    {% trans "Unlock Linked Keywords?" %}
+                </h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+            </div>
+            <div class="modal-body">
+                {% blocktrans %}
+                <p>Linked Keywords are keywords that are controlled by a separate project space linked to this project.
+                    Click here to learn more.</p>
+                <p>Changes made to Linked Keywords may be overwritten by the next updates from the linked project space,
+                    and may also affect solutions on this project space.</p>
+                {% endblocktrans %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal" data-bind="click: $root.toggleLinkedLock">{% trans "Unlock" %}</button>
+            </div>
+        </div>
+    </div>
+</div>

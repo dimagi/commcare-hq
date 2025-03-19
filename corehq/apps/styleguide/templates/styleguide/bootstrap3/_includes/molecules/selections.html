@@ -1,0 +1,117 @@
+<section class="hq-styleguide-article">
+  <header class="page-header">
+    <h1 id="molecules-selections">Selections</h1>
+  </header>
+  <p class="lead">
+    HQ has many different interactions for selecting data from a list.
+    The best of these are toggles (for short lists) and select2 (for long lists).
+  </p>
+  <p>
+    For any user-defined data, it's difficult to be certain how many items will be in the list.
+    Even data sets that we might expect to be small - such as the number of forms in a module -
+    might be large for certain projects. It's better to assume that a list will grow large and
+    display it as some kind of dropdown where the options are a click away, rather than to
+    assume it'll stay small and display all options on the page.
+  </p>
+  <h2>Toggles</h2>
+  <p>
+    On the occasions when a list is guaranteed to be short (2-5 items), consider displaying it as a toggle.
+    This shows all options and only takes one click to select.
+  </p>
+  <p>
+    HQ has a custom toggle widget that uses
+    <a href='https://knockoutjs.com/documentation/component-overview.html' target='_blank'>Knockout Components</a>
+    and is conceptually the same as a single-select dropdown.
+    See
+    <a href='https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/components/select_toggle.js' target='_blank'>select_toggle.js</a>
+    for full documentation.
+    There's also a <code>SelectToggle</code> widget for use with Django forms, defined in
+    <a href='https://github.com/dimagi/commcare-hq/blob/ab80b0017c12eb7fddb54bb20b2a186b07e8294f/corehq/apps/hqwebapp/widgets.py#L140-L160' target='_blank'>hqwebapp's widgets.py</a>.
+  </p>
+  <p>
+    A few places in HQ use the same look and feel as the select toggle widget but have unique implementations.
+    They generally use bootstrap's
+    <a href='https://getbootstrap.com/docs/3.3/components/#btn-groups' target='_blank'>button groups</a> and
+    also often include our own <code>.btn-group-separated</code> class,
+    which separates the buttons so they're easier to read and they wrap better.
+  </p>
+  {% include 'styleguide/bootstrap3/example_html.html' with slug='button_group' title='Button group' content=examples.selections.button_group %}
+
+  <h2>Select2</h2>
+  <p>
+    For most lists, select2 is the way to go. It adds behavior to a normal <code>&lt;select&gt;</code> element.
+    It supports either hard-coded static options or dynamic options fetched via ajax. It can support free text
+    options, acting like an autocomplete, or can restrict users to a specific list of options.
+    Beyond these major options, select2 supports many more specific features and styling options; see
+    the <a href='https://select2.org/' target='_blank'>full documentation</a> for details.
+  </p>
+  <p>
+    We instantiate select2 in a number of different ways: directly in javascript, via several different
+    knockout bindings, and by using CSS classes that certain javascript modules search for. We also have a
+    number of sets of select2 options for common behaviors like validating email addresses, displaying form
+    questions. Before you add a new custom set of select2 options, look around and ask
+    around for other parts of HQ that have similar behavior.
+  </p>
+  {% include 'styleguide/bootstrap3/example_html.html' with slug='select2' title='Select2' content=examples.selections.select2 %}
+
+  <h2>Multiselects</h2>
+  <p>
+    This is a custom widget we built. It can be useful in situations where the user is adding/removing
+    items from a list and wants to be able to see both the included and excluded items.
+  </p>
+  <p>
+    It's more complicated than a dropdown and takes up much more space. <strong>Be cautious adding it to new
+    pages</strong> - be sure that the visual weight and potential learning curve is worthwhile for the workflow
+    you're creating.
+  </p>
+  <h4>Optional Properties</h4>
+  <p>
+    In addition to the optional title properties, the following properties can be useful in situations where more
+    control is needed.
+  </p>
+  <p>
+    <dl>
+      <dd>
+        <strong>disableModifyAllActions</strong> - defaults to false, useful when the preferred workflow is to disable
+        the ability to select and remove all items at once
+      </dd>
+      <dd>
+        <strong>willSelectAllListener</strong> - provides an opportunity to execute code prior to all items being
+        selected
+      </dd>
+    </dl>
+  </p>
+  {% include 'styleguide/bootstrap3/example_html.html' with slug='multiselect' title='Multiselect' content=examples.selections.multiselect %}
+
+  <h2>Other selection interactions</h2>
+  <p>
+    There are several other interactions used on HQ to select items from a list. In general, these should be
+    avoided for the following reasons:
+  <dl>
+    <dt>Standard HTML select elements</dt>
+    <dd>
+      There's nothing inherently wrong with these, but since so many dropdowns use select2,
+      select elements without this styling create visual inconsistency. It should typically be trivial to
+      turn a standard select element into a select2. Standard dropdowns do interfere with usability when their
+      list of options gets long - with 15+ items, it becomes difficult to find and select an item - so long lists in
+      particular should be switched to select2.
+    </dd>
+    <dt>Lists of checkboxes</dt>
+    <dd>
+      Like standard HTML select elements, there's nothing inherently wrong with these, but because we
+      don't use them often, they're bad for a consistent user experience.
+    </dd>
+    <dd>
+    </dd>
+    <dt>At.js</dt>
+    <dd>
+      <a href='https://github.com/ichord/At.js/' target='_blank'>At.js</a> is a library for mentioning
+      people in comments. It's the basis for easy references in form builder. Form builder also uses it
+      for autocomplete behavior (form builder doesn't have select2 available). A couple of places in HQ
+      also use it for autocomplete behavior, which is not ideal. It was initially introduced in HQ
+      because it was visually lighter weight than the legacy version of select2. However, as we move away
+      from legacy select2, there isn't a need to use it as an autocomplete.
+    </dd>
+  </dl>
+  </p>
+</section>

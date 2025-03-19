@@ -1,9 +1,9 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 
-{% requirejs_main "generic_inbound/js/api_edit" %}
+{% js_entry "generic_inbound/js/api_edit" %}
 
 {% block page_title %}{{ page_title }}{% endblock %}
 {% block page_content %}
@@ -12,107 +12,94 @@
 {% registerurl 'edit_ucr_expression' domain '---' %}
 {% registerurl 'ucr_expressions' domain %}
 <div id="edit-api">
-  <div class="row">
-    <div class="col-xs-12 col-sm-10 col-md-8 col-lg-8">
-      <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2">
-          {% trans "URL" %}
-        </label>
-        <div class="controls col-xs-12 col-sm-8 col-md-8 col-lg-6">
-          <pre id="api_url">{{ api_model.absolute_url }}</pre>
-          <a class="btn btn-default" onclick="copyData('api_url')">
-            <i class="fa fa-copy"></i> {% trans "Copy URL" %}
-          </a>
-        </div>
-      </div>
-    </div>
+  <div class="mb-3">
+    <pre id="api_url">{{ configurable_api.absolute_url }}</pre>
+    <a class="btn btn-outline-primary" onclick="copyData('api_url')">
+      <i class="fa fa-copy"></i> {% trans "Copy URL" %}
+    </a>
   </div>
   <div class="spacer"></div>
-  <div class="row">
-    <div class="col-xs-12 col-sm-10 col-md-8 col-lg-8">
-      <form class="form-horizontal" method="post" id="edit-api" data-bind="submit: validateForm">
-        {% crispy form %}
-        <fieldset data-bind="with: validations">
-          <legend>{% translate "Validation Expressions" %}</legend>
-        <table class="table table-striped table-hover">
-          <thead>
-            <tr>
-              <th class="col-sm-2">{% translate "Name" %}</th>
-              <th class="col-sm-4">{% translate "Expression" %}</th>
-              <th class="col-sm-4">{% translate "Message" %}</th>
-              <th class="col-sm-2">{% translate "Delete" %}</th>
-            </tr>
-          </thead>
-          <tbody data-bind="foreach: models">
-            <tr>
-              <td data-bind="css: {'has-error': nameError}">
-                <input type="hidden" data-bind="value: id, attr: {name: `validations-${$index()}-id`}">
-                <input type="hidden" value="{{ api_model.id }}" data-bind="attr: {name: `validations-${$index()}-api`}">
-                <input type="text" maxlength="64" class="textinput textInput form-control" required data-bind="
-                  value: name, attr: {name: `validations-${$index()}-name`}">
-                <span class='help-block' data-bind="visible: nameError">
-                  {% translate "Name is required and must be less than 64 characters" %}
+  <div class="mb-3">
+    <form method="post" id="edit-api" data-bind="submit: validateForm">
+      {% crispy form %}
+      <fieldset class="my-3" data-bind="with: validations">
+        <legend>{% translate "Validation Expressions" %}</legend>
+      <table class="table table-striped table-hover">
+        <thead>
+          <tr>
+            <th class="col-md-2">{% translate "Name" %}</th>
+            <th class="col-md-4">{% translate "Expression" %}</th>
+            <th class="col-md-4">{% translate "Message" %}</th>
+            <th class="col-md-2">{% translate "Delete" %}</th>
+          </tr>
+        </thead>
+        <tbody data-bind="foreach: models">
+          <tr>
+            <td>
+              <input type="hidden" data-bind="value: id, attr: {name: `validations-${$index()}-id`}">
+              <input type="hidden" value="{{ configurable_api.id }}" data-bind="attr: {name: `validations-${$index()}-api`}">
+              <input type="text" maxlength="64" class="textinput textInput form-control" required data-bind="
+                value: name, attr: {name: `validations-${$index()}-name`}, css: {'is-invalid': nameError}">
+              <span data-bind="visible: nameError, css: {'invalid-feedback': nameError}">
+                {% translate "Name is required and must be less than 64 characters" %}
+              </span>
+            </td>
+            <td>
+              <div class="input-group" data-bind="css: {'is-invalid': expressionError}">
+                <select class="select form-control" required data-bind="
+                  value: expression_id,
+                  valueAllowUnset: true,
+                  options: $root.filters,
+                  optionsText: 'label',
+                  optionsValue: 'id',
+                  attr: {name: `validations-${$index()}-expression`},
+                  css: {'is-invalid': expressionError},
+                  ">
+                  </select>
+                  <a class="input-group-text" data-bind="attr: {href: editUrl}" target="_blank">
+                    <i class="fa-solid fa-up-right-from-square"></i>
+                  </a>
+              </div>
+                <span data-bind="visible: expressionError, css: {'invalid-feedback': expressionError}">
+                  {% translate "Expression is required" %}
                 </span>
-              </td>
-              <td data-bind="css: {'has-error': expressionError}">
-                <div class="input-group">
-                  <select class="select form-control" required data-bind="
-                    value: expression_id,
-                    valueAllowUnset: true,
-                    options: $root.filters,
-                    optionsText: 'label',
-                    optionsValue: 'id',
-                    attr: {name: `validations-${$index()}-expression`},
-                    ">
-                    </select>
-                    <div class="input-group-addon">
-                      <a data-bind="attr: {href: editUrl}" target="_blank"><i class="fa fa-external-link"></i></a>
-                    </div>
-                </div>
-                  <span class='help-block' data-bind="visible: expressionError">
-                    {% translate "Expression is required" %}
-                  </span>
-              </td>
-              <td data-bind="css: {'has-error': messageError}">
-                <textarea type="text" class="form-control vertical-resize" required data-bind="
-                  value: message, attr: {name: `validations-${$index()}-message`}"></textarea>
-                  <span class='help-block' data-bind="visible: messageError">
-                    {% translate "Message is required" %}
-                  </span>
-              </td>
-              <td>
-                <input type="checkbox" data-bind="
+            </td>
+            <td>
+              <textarea type="text" class="form-control vertical-resize" required data-bind="
+                value: message, attr: {name: `validations-${$index()}-message`}, css: {'is-invalid': messageError}"></textarea>
+                <span data-bind="visible: messageError, css: {'invalid-feedback': messageError}">
+                  {% translate "Message is required" %}
+                </span>
+            </td>
+            <td>
+              <div class="form-check" data-bind="visible: id">
+                <input type="checkbox" class="form-check-input" data-bind="
                   checked: toDelete,
                   attr: {name: `validations-${$index()}-DELETE`},
-                  visible: id
                 ">
-                <button type="btn" data-bind="
-                  click: $parent.remove,
-                  hidden: id
-                "><i class="fa fa-trash"></i></button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <div>
-          <input type="hidden" name="validations-TOTAL_FORMS" data-bind="attr: {value: total}">
-          <input type="hidden" name="validations-INITIAL_FORMS" data-bind="attr: {value: initialCount}">
-          <input type="hidden" name="validations-MIN_NUM_FORMS" value="0">
-          <input type="hidden" name="validations-MAX_NUM_FORMS" value="1000">
-        </div>
-        <button type="button" class="btn btn-primary" data-bind="click: add">
-          <i class="fa fa-plus"></i>
-          {% trans "Add Validation" %}
-        </button>
-        </fieldset>
-        <div class="form-actions">
-          <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6 col-sm-offset-4 col-md-offset-4 col-lg-offset-2 controls">
-            <button class="btn btn-primary" type="submit" id="submit">{% trans "Save" %}</button>
-            <a href="{% url 'configurable_api_list' domain %}" class="btn btn-default">{% trans "Cancel" %}</a>
-          </div>
-        </div>
-      </form>
-    </div>
+              </div>
+              <button type="button" class="btn btn-outline-danger" data-bind="
+                click: $parent.remove,
+                hidden: id
+              "><i class="fa-regular fa-trash-can"></i></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div>
+        <input type="hidden" name="validations-TOTAL_FORMS" data-bind="attr: {value: total}">
+        <input type="hidden" name="validations-INITIAL_FORMS" data-bind="attr: {value: initialCount}">
+        <input type="hidden" name="validations-MIN_NUM_FORMS" value="0">
+        <input type="hidden" name="validations-MAX_NUM_FORMS" value="1000">
+      </div>
+      <button type="button" class="btn btn-outline-primary" data-bind="click: add">
+        <i class="fa fa-plus"></i>
+        {% trans "Add Validation" %}
+      </button>
+      </fieldset>
+      <button class="btn btn-primary" type="submit" id="submit">{% trans "Save" %}</button>
+      <a href="{% url 'configurable_api_list' domain %}" class="btn btn-outline-primary">{% trans "Cancel" %}</a>
+    </form>
   </div>
 </div>
 {% endblock %}

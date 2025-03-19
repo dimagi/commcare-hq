@@ -1,0 +1,14 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+-hqDefine('domain/js/bootstrap3/case_search', [
++hqDefine('domain/js/bootstrap5/case_search', [
+     'jquery',
+     'knockout',
+     'underscore',
+     'hqwebapp/js/initial_page_data',
+-    'hqwebapp/js/bootstrap3/main',
++    'hqwebapp/js/bootstrap5/main',
+ ], function (
+     $,
+     ko,

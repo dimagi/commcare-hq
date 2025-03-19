@@ -2,17 +2,16 @@ hqDefine('users/js/invite_web_user',[
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/toggles',
-    'hqwebapp/js/validators.ko',
+    'users/js/custom_data_fields',
+    'hqwebapp/js/bootstrap3/validators.ko',
     'locations/js/widgets',
+    'commcarehq',
 ], function (
     $,
     ko,
     initialPageData,
-    toggles
+    customDataFields,
 ) {
-    'use strict';
-
     var inviteWebUserFormHandler = function () {
         var self = {},
             emailDefaultValue = $('#id_email').val();
@@ -70,6 +69,16 @@ hqDefine('users/js/invite_web_user',[
                 && self.emailDelayed.isValid()
                 && !self.emailDelayed.isValidating();
         });
+        var $customDataFieldsForm = $(".custom-data-fieldset");
+        if ($customDataFieldsForm.length) {
+            self.custom_fields = customDataFields.customDataFieldsEditor({
+                profiles: initialPageData.get('custom_fields_profiles'),
+                profile_slug: initialPageData.get('custom_fields_profile_slug'),
+                slugs: initialPageData.get('custom_fields_slugs'),
+                can_edit_original_profile: true,
+                user_data: initialPageData.get('user_data'),
+            });
+        }
 
         return self;
     };

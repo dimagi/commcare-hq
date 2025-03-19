@@ -1,16 +1,16 @@
 -r test-requirements.in
 -r docs-requirements.in
 
+dependency-metrics
 django-extensions
 fixture
 git-build-branch
 gnureadline
 ipython  # for nicer django shell experience
 psutil>5.1.3  # for memory profiling
-sniffer
 wheel
 
 # linting/formatting
-flake8
+flake8>=6.0
 isort
 yapf

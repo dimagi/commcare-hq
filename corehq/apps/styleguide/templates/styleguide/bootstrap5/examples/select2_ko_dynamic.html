@@ -1,0 +1,20 @@
+<div id="js-ko-model-dynamic">
+  <select
+    class="form-select"
+    data-bind="
+      select2: letters,
+      value: value
+    "
+  ></select>
+</div>
+
+<script>
+  $(function () {
+    $("#js-ko-model-dynamic").koApplyBindings(function () {
+      return {
+        letters: ['eins', 'zwei', 'drei'],
+        value: ko.observable('eins'),
+      };
+    });
+  });
+</script>

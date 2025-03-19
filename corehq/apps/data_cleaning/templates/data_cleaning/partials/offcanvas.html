@@ -1,0 +1,73 @@
+{% load i18n %}
+
+<div
+  id="offcanvas-filter"
+  class="offcanvas offcanvas-end"
+  tabindex="-1"
+  data-bs-scroll="true"
+>
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">
+      <i class="fa-solid fa-filter"></i> {% trans "Filter Cases" %}
+    </h5>
+    <button
+      class="btn-close" type="button" aria-label="{% trans "Close" %}"
+      data-bs-dismiss="offcanvas"
+    ></button>
+  </div>
+  <div class="offcanvas-body">
+    <div
+      hx-get="{% url "data_cleaning_pinned_filter_form" domain session_id %}"
+      hx-trigger="load"
+    >
+      {% include "data_cleaning/partials/loading_indicator.html" %}
+    </div>
+    <div
+      class="mt-3"
+      hx-get="{% url "data_cleaning_manage_filters" domain session_id %}"
+      hx-trigger="load"
+    >
+      {% include "data_cleaning/partials/loading_indicator.html" %}
+    </div>
+  </div>
+</div>
+
+<div
+  id="offcanvas-configure-columns"
+  class="offcanvas offcanvas-end"
+  tabindex="-1"
+  data-bs-scroll="true"
+>
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">
+      <i class="fa-solid fa-table-columns"></i> {% trans "Configure Columns" %}
+    </h5>
+    <button
+      class="btn-close" type="button" aria-label="{% trans "Close" %}"
+      data-bs-dismiss="offcanvas"
+    ></button>
+  </div>
+  <div class="offcanvas-body">
+    <p>todo</p>
+  </div>
+</div>
+
+<div
+  id="offcanvas-bulk-changes"
+  class="offcanvas offcanvas-end"
+  data-bs-scroll="true"
+  tabindex="-1"
+>
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">
+      <i class="fa-solid fa-shower"></i> {% trans "Clean Selected Cases" %}
+    </h5>
+    <button
+      class="btn-close" type="button" aria-label="{% trans "Close" %}"
+      data-bs-dismiss="offcanvas"
+    ></button>
+  </div>
+  <div class="offcanvas-body">
+    <p>todo</p>
+  </div>
+</div>

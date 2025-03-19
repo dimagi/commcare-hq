@@ -1,3 +1,4 @@
+"use strict";
 hqDefine("accounting/js/software_plan_version_handler", [
     'jquery',
     'knockout',
@@ -25,7 +26,6 @@ hqDefine("accounting/js/software_plan_version_handler", [
     });
 
     var softwarePlanVersionFormHandler = function (role, featureRates, productRates) {
-        'use strict';
         var self = {};
 
         self.role = permissionsManager(role);
@@ -42,7 +42,6 @@ hqDefine("accounting/js/software_plan_version_handler", [
     };
 
     var rateAsyncManager = function (objClass, options) {
-        'use strict';
         var self = {};
 
         self.handlerSlug = options.handlerSlug;
@@ -129,7 +128,6 @@ hqDefine("accounting/js/software_plan_version_handler", [
     };
 
     var permissionsManager = function (options) {
-        'use strict';
         var self = {};
 
         self.existingRoles = ko.observableArray();
@@ -158,8 +156,8 @@ hqDefine("accounting/js/software_plan_version_handler", [
             $('#id_new_role_slug').on('keyup change', function (event) {
                 var c = String.fromCharCode(event.keyCode);
                 if (c.match(/\w/)) {
-                    var orig_val = $(this).val();
-                    $(this).val(orig_val.replace(' ', '_').replace('-','_'));
+                    var original = $(this).val();
+                    $(this).val(original.replace(' ', '_').replace('-','_'));
                 }
             });
             $('#id_role_slug').select2();
@@ -175,7 +173,6 @@ hqDefine("accounting/js/software_plan_version_handler", [
     };
 
     var newRoleManager = function (existingRoles, newPrivileges) {
-        'use strict';
         var self = {};
 
         self.existingRoles = existingRoles;
@@ -212,7 +209,6 @@ hqDefine("accounting/js/software_plan_version_handler", [
 
 
     var existingRoleManager = function (existingRoles, currentRoleSlug) {
-        'use strict';
         var self = {};
 
         self.existingRoles = existingRoles;
@@ -243,7 +239,6 @@ hqDefine("accounting/js/software_plan_version_handler", [
 
     var baseSelect2Handler = select2Handler.baseSelect2Handler;
     var select2RateHandler = function (options, currentValue) {
-        'use strict';
         var self = baseSelect2Handler(options);
 
         self.currentValue = currentValue;
@@ -314,7 +309,6 @@ hqDefine("accounting/js/software_plan_version_handler", [
 
 
     var role = function (data) {
-        'use strict';
         var self = {};
 
         self.privileges = ko.observableArray(_.map(data.privileges, function (priv) {
@@ -335,7 +329,6 @@ hqDefine("accounting/js/software_plan_version_handler", [
 
 
     var privilege = function (data) {
-        'use strict';
         var self = {};
         self.slug = ko.observable(data[0]);
         self.name = ko.observable(data[1]);
@@ -344,7 +337,6 @@ hqDefine("accounting/js/software_plan_version_handler", [
 
 
     var featureRate = function (data) {
-        'use strict';
         var self = {};
 
         self.name = ko.observable(data.name);
@@ -373,7 +365,6 @@ hqDefine("accounting/js/software_plan_version_handler", [
 
 
     var productRate = function (data) {
-        'use strict';
         var self = {};
 
         self.name = ko.observable(data.name);

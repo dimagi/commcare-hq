@@ -7,7 +7,6 @@ from django.http import (
 from memoized import memoized
 
 from tastypie import fields
-from tastypie.authentication import Authentication
 from tastypie.exceptions import BadRequest
 
 from casexml.apps.case.xform import get_case_updates
@@ -57,11 +56,6 @@ from corehq.motech.repeaters.models import CommCareCase
 from corehq.util.view_utils import absolute_reverse
 from no_exceptions.exceptions import Http400
 
-# By the time a test case is running, the resource is already instantiated,
-# so as a hack until this can be remedied, there is a global that
-# can be set to provide a mock.
-MOCK_XFORM_ES = None
-
 
 class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
     """This version of the form resource is built of Elasticsearch data
@@ -76,6 +70,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
     form = fields.DictField(attribute='form_data')
     type = fields.CharField(attribute='type')
     version = fields.CharField(attribute='version')
+    submit_ip = fields.CharField(attribute='submit_ip', blank=True, null=True)
     uiversion = fields.CharField(attribute='uiversion', blank=True, null=True)
     metadata = fields.DictField(attribute='metadata', blank=True, null=True)
     received_on = fields.CharField(attribute="received_on")
@@ -142,7 +137,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
         return self.xform_es(domain).get_document(instance_id)
 
     def xform_es(self, domain):
-        return MOCK_XFORM_ES or FormESView(domain)
+        return FormESView(domain)
 
     def obj_get_list(self, bundle, domain, **kwargs):
         try:
@@ -381,7 +376,7 @@ class ApplicationResource(BaseApplicationResource):
             dehydrated['unique_id'] = module.unique_id
 
             dehydrated['forms'] = []
-            for form in module.forms:
+            for form in module.get_forms():
                 form_unique_id = form.unique_id
                 form_jvalue = {
                     'xmlns': form.xmlns,
@@ -407,7 +402,7 @@ class ApplicationResource(BaseApplicationResource):
 
         # support returning linked applications upon receiving an application list request
         if app.doc_type in [Application._doc_type, LinkedApplication._doc_type]:
-            return [self.dehydrate_module(app, module, app.langs) for module in bundle.obj.modules]
+            return [self.dehydrate_module(app, module, app.langs) for module in bundle.obj.get_modules()]
         elif app.doc_type == RemoteApp._doc_type:
             return []
 

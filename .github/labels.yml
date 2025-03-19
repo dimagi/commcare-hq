@@ -27,7 +27,7 @@ rules:
       - 'corehq/form_processor/**'
       - 'corehq/pillows/mappings/**'
       - 'corehq/apps/hqwebapp/templates/hqwebapp/includes/core_libraries.html'
-      - 'corehq/apps/hqwebapp/static/hqwebapp/js/requirejs_config.js'
+      - 'corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/requirejs_config.js'
       - 'corehq/apps/domain/decorators.py'
 
   - labels: ['Risk: Medium']

@@ -20,6 +20,7 @@ from casexml.apps.case.const import (
 
 from corehq import privileges
 from corehq.apps.callcenter.const import CALLCENTER_USER
+from corehq.apps.users.exceptions import ModifyUserStatusException
 from corehq.const import USER_CHANGE_VIA_AUTO_DEACTIVATE
 from corehq.util.quickcache import quickcache
 
@@ -56,12 +57,12 @@ def generate_mobile_username(username, domain, is_unique=True):
     Example use: generate_mobile_username('username', 'domain') -> 'username@domain.commcarehq.org'
     """
     from .validation import validate_mobile_username
-    username = get_complete_mobile_username(username, domain)
+    username = get_complete_username(username, domain)
     validate_mobile_username(username, domain, is_unique)
     return username
 
 
-def get_complete_mobile_username(username, domain):
+def get_complete_username(username, domain):
     """
     :param username: accepts both incomplete ('example-user') or complete ('example-user@domain.commcarehq.org')
     :param domain: domain associated with the mobile user
@@ -200,17 +201,6 @@ def cached_owner_id_to_display(owner_id):
         return ret
 
 
-def django_user_from_couch_id(id):
-    """
-    From a couch id of a profile object, get the django user
-    """
-    # get the couch doc
-    from corehq.apps.users.models import CouchUser
-    couch_rep = CouchUser.get_db().get(id)
-    django_id = couch_rep["django_user"]["id"]
-    return User.objects.get(id=django_id)
-
-
 def doc_value_wrapper(doc_cls, value_cls):
     """
     Wrap both the doc and the value
@@ -259,7 +249,8 @@ def user_location_data(location_ids):
     return ' '.join(location_ids)
 
 
-def update_device_meta(user, device_id, commcare_version=None, device_app_meta=None, save=True):
+def update_device_meta(user, device_id, commcare_version=None, device_app_meta=None, fcm_token=None,
+                       fcm_token_timestamp=None, save=True):
     from corehq.apps.users.models import CommCareUser
 
     updated = False
@@ -270,6 +261,8 @@ def update_device_meta(user, device_id, commcare_version=None, device_app_meta=N
                 device_id,
                 commcare_version=commcare_version,
                 device_app_meta=device_app_meta,
+                fcm_token=fcm_token,
+                fcm_token_timestamp=fcm_token_timestamp
             )
             if save and updated:
                 user.save(fire_signals=False)
@@ -405,7 +398,7 @@ def log_user_change(by_domain, for_domain, couch_user, changed_by_user, changed_
         changed_by_repr=changed_by_repr,
         user_id=couch_user.get_id,
         changed_by=changed_by_id,
-        changes=_get_changed_details(couch_user, action, fields_changed),
+        changes=_get_changed_details(couch_user, action, fields_changed, for_domain),
         changed_via=changed_via,
         change_messages=change_messages,
         action=action.value,
@@ -413,11 +406,45 @@ def log_user_change(by_domain, for_domain, couch_user, changed_by_user, changed_
     )
 
 
-def _get_changed_details(couch_user, action, fields_changed):
+def log_invitation_change(domain, changed_by, changed_via, action, invite=None, user_id=None, changes=None):
+    """
+    Log changes made to a WebUser invitation.
+
+    :param domain: domain that the invitation is for
+    :param changed_by: user_id of the invitee or the invitation editor
+    :param changed_via: INVITATION_CHANGE_VIA_* const (for now just web or api)
+    :param action: CREATE, UPDATE or DELETE
+    :param invite: the Invitation object itself. defaults to None for DELETE actions
+    :param user_id: id of the user being invited. This defaults to None if the user hasn't made an account yet
+    :param changes: dict of all changes. Combines the "changes" and "change_message" field present in UserHistory
+    """
+    from corehq.apps.users.models import InvitationHistory
+
+    if not changed_by and not settings.UNIT_TESTING:
+        raise ValueError("Missing changed_by")
+    elif not changed_by and settings.UNIT_TESTING:
+        changed_by = SYSTEM_USER_ID
+
+    if not changed_via and settings.UNIT_TESTING:
+        changed_via = "TEST"
+
+    return InvitationHistory.objects.create(
+        domain=domain,
+        user_id=user_id,
+        changed_by=changed_by,
+        changed_via=changed_via,
+        action=action.value,
+        invitation=invite,
+        changes=changes if changes is not None else {}
+    )
+
+
+def _get_changed_details(couch_user, action, fields_changed, for_domain):
     from corehq.apps.users.model_log import UserModelAction
 
     if action in [UserModelAction.CREATE, UserModelAction.DELETE]:
         changed_details = couch_user.to_json()
+        changed_details['user_data'] = couch_user.get_user_data(for_domain).raw if for_domain else {}
     else:
         changed_details = fields_changed.copy()
 
@@ -507,3 +534,21 @@ def is_username_available(username):
 
     exists = user_exists(username)
     return not exists.exists
+
+
+def verify_modify_user_conditions(request, user, is_active) -> None:
+    """
+    Check if the user can modify the user object
+    :param request: request object
+    :param user: user object
+    :param is_active: boolean, True if user is being activated, False if user is being deactivated
+    :return: None
+    """
+    from corehq.apps.locations.permissions import can_edit_workers_location
+
+    if (not can_edit_workers_location(request.couch_user, user)
+            or (is_active and not can_add_extra_mobile_workers(request))):
+        raise ModifyUserStatusException("No Permission.")
+    if not is_active and user.user_location_id:
+        raise ModifyUserStatusException("This is a location user, archive or delete the "
+                                        "corresponding location to deactivate it.")

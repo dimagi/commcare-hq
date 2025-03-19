@@ -16,5 +16,4 @@ class Migration(migrations.Migration):
 
     operations = [
         migrator.get_migration('soft_undelete_cases.sql'),
-        migrator.get_migration('soft_undelete_forms.sql'),
     ]

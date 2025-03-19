@@ -58,7 +58,7 @@ class TestCreateIdentityProviderForm(BaseSSOFormTest):
             'owner': owner,
             'name': name,
             'slug': slug,
-            'idp_type': idp_type or IdentityProviderType.AZURE_AD,
+            'idp_type': idp_type or IdentityProviderType.ENTRA_ID,
             'protocol': protocol or IdentityProviderProtocol.SAML,
         }
 
@@ -85,7 +85,7 @@ class TestCreateIdentityProviderForm(BaseSSOFormTest):
         """
         post_data = self._get_post_data(
             self.account.id,
-            'Azure AD for Vault Wax',
+            'Entra ID for Vault Wax',
             'vaultwax',
             idp_type=IdentityProviderType.ONE_LOGIN
         )
@@ -101,7 +101,7 @@ class TestCreateIdentityProviderForm(BaseSSOFormTest):
         """
         post_data = self._get_post_data(
             self.account.id,
-            'Azure AD for Vault Wax',
+            'Entra ID for Vault Wax',
             'vaultwax',
         )
         create_idp_form = CreateIdentityProviderForm(post_data)
@@ -152,7 +152,7 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         super().setUp()
         self.idp = IdentityProvider.objects.create(
             owner=self.account,
-            name='Azure AD for Vault Wax',
+            name='Entra ID for Vault Wax',
             slug='vaultwax',
             created_by='otheradmin@dimagi.com',
             last_modified_by='otheradmin@dimagi.com',
@@ -211,7 +211,7 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         """
         second_idp = IdentityProvider.objects.create(
             owner=self.account,
-            name='Azure AD for VWX',
+            name='Entra ID for VWX',
             slug='vwx',
             created_by='otheradmin@dimagi.com',
             last_modified_by='otheradmin@dimagi.com',
@@ -397,15 +397,7 @@ class TestSsoSamlEnterpriseSettingsForm(BaseSSOFormTest):
 
     def setUp(self):
         super().setUp()
-        self.idp = IdentityProvider.objects.create(
-            owner=self.account,
-            name='Azure AD for Vault Wax',
-            slug='vaultwax',
-            created_by='otheradmin@dimagi.com',
-            last_modified_by='otheradmin@dimagi.com',
-        )
-        self.idp.is_editable = True
-        self.idp.create_service_provider_certificate()
+        self.idp = self._create_identity_provider()
 
     def tearDown(self):
         UserExemptFromSingleSignOn.objects.all().delete()
@@ -416,8 +408,12 @@ class TestSsoSamlEnterpriseSettingsForm(BaseSSOFormTest):
     @staticmethod
     def _get_post_data(no_entity_id=False, no_login_url=False, no_logout_url=False,
                        is_active=False, login_enforcement_type=None,
-                       require_encrypted_assertions=False, certificate=None):
-        return {
+                       require_encrypted_assertions=False, certificate=None,
+                       always_show_user_api_keys=False,
+                       enforce_user_api_key_expiration=False,
+                       max_days_until_user_api_key_expiration=None,
+                       **kwargs):
+        base = {
             'is_active': is_active,
             'login_enforcement_type': login_enforcement_type or LoginEnforcementType.GLOBAL,
             'entity_id': '' if no_entity_id else 'https://test.org/metadata',
@@ -427,11 +423,47 @@ class TestSsoSamlEnterpriseSettingsForm(BaseSSOFormTest):
             'idp_cert_public': certificate,
         }
 
+        if always_show_user_api_keys:
+            base['always_show_user_api_keys'] = always_show_user_api_keys
+
+        if enforce_user_api_key_expiration:
+            base['enforce_user_api_key_expiration'] = enforce_user_api_key_expiration
+
+        if max_days_until_user_api_key_expiration is not None:
+            base['max_days_until_user_api_key_expiration'] = max_days_until_user_api_key_expiration
+
+        base.update(kwargs)
+        return base
+
     @staticmethod
     def _get_request_files(cert_file):
         return {
             'idp_cert_public': cert_file,
         }
+
+    def _create_identity_provider(
+        self,
+    ):
+        idp = IdentityProvider.objects.create(
+            owner=self.account,
+            name='Entra ID for Vault Wax',
+            slug='vaultwax',
+            created_by='otheradmin@dimagi.com',
+            last_modified_by='otheradmin@dimagi.com',
+        )
+        idp.is_editable = True
+        idp.create_service_provider_certificate()
+
+        return idp
+
+    def _update_identity_provider(
+            self,
+            always_show_user_api_keys=False,
+            max_days_until_user_api_key_expiration=None
+    ):
+        self.idp.always_show_user_api_keys = always_show_user_api_keys
+        self.idp.max_days_until_user_api_key_expiration = max_days_until_user_api_key_expiration
+        self.idp.save()
 
     def test_is_active_triggers_form_validation_errors(self):
         """
@@ -608,6 +640,114 @@ class TestSsoSamlEnterpriseSettingsForm(BaseSSOFormTest):
         edit_sso_idp_form.update_identity_provider(self.accounting_admin)
         self.idp.refresh_from_db()
         self.assertEqual(self.idp.login_enforcement_type, LoginEnforcementType.TEST)
+
+    def test_valid_key_expiration_values(self):
+        post_data = self._get_post_data(
+            enforce_user_api_key_expiration=True,
+            max_days_until_user_api_key_expiration=180
+        )
+        form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
+
+        form.full_clean()
+
+        self.assertTrue(form.cleaned_data['enforce_user_api_key_expiration'])
+        self.assertEqual(form.cleaned_data['max_days_until_user_api_key_expiration'], 180)
+
+    def test_when_enforce_api_key_expiration_is_false_expiration_window_is_null(self):
+        post_data = self._get_post_data(
+            enforce_user_api_key_expiration=False,
+            max_days_until_user_api_key_expiration=180
+        )
+        form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
+
+        form.full_clean()
+
+        self.assertIsNone(form.cleaned_data['max_days_until_user_api_key_expiration'])
+
+    def test_when_enforce_api_key_expiration_is_true_expiration_window_must_be_set(self):
+        post_data = self._get_post_data(
+            enforce_user_api_key_expiration=True,
+            max_days_until_user_api_key_expiration=None
+        )
+        form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
+
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['max_days_until_user_api_key_expiration'], ['Please specify a value.'])
+
+    def test_empty_string_is_not_a_valid_expiration_window(self):
+        post_data = self._get_post_data(
+            enforce_user_api_key_expiration=True,
+            max_days_until_user_api_key_expiration=''
+        )
+        form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
+
+        self.assertFalse(form.is_valid())
+
+    def test_custom_expiration_window_is_invalid(self):
+        post_data = self._get_post_data(
+            enforce_user_api_key_expiration=True,
+            max_days_until_user_api_key_expiration=11
+        )
+        form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
+
+        form.full_clean()
+        self.assertFalse(form.is_valid())
+        self.assertEqual(
+            form.errors['max_days_until_user_api_key_expiration'],
+            ['Select a valid choice. 11 is not one of the available choices.']
+        )
+
+    def test_expiration_window_is_coerced_to_int(self):
+        post_data = self._get_post_data(
+            enforce_user_api_key_expiration=True,
+            max_days_until_user_api_key_expiration='120'
+        )
+        form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
+        form.is_valid()  # Populate cleaned fields
+        self.assertEqual(form.cleaned_data['max_days_until_user_api_key_expiration'], 120)
+
+    def test_form_default_expiration_values_are_empty(self):
+        form = SsoSamlEnterpriseSettingsForm(self.idp)
+        self.assertIsNone(form['enforce_user_api_key_expiration'].value())
+        self.assertIsNone(form['max_days_until_user_api_key_expiration'].value())
+
+    def test_form_is_valid_without_api_expiration_values(self):
+        post_data = self._get_post_data()
+        form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
+        self.assertTrue(form.is_valid())
+
+    def test_always_show_key_management_is_saved(self):
+        self._update_identity_provider(always_show_user_api_keys=False)
+        post_data = self._get_post_data(always_show_user_api_keys='on')
+        form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
+
+        form.update_identity_provider(self.accounting_admin)
+
+        self.idp.refresh_from_db()
+        self.assertTrue(self.idp.always_show_user_api_keys)
+
+    def test_max_days_until_user_api_key_expiration_is_saved(self):
+        self._update_identity_provider(max_days_until_user_api_key_expiration=None)
+        post_data = self._get_post_data(
+            enforce_user_api_key_expiration=True,
+            max_days_until_user_api_key_expiration=60
+        )
+        form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
+
+        form.update_identity_provider(self.accounting_admin)
+
+        self.idp.refresh_from_db()
+        self.assertEqual(self.idp.max_days_until_user_api_key_expiration, 60)
+
+    def test_expiration_enforcement_can_be_removed(self):
+        self._update_identity_provider(max_days_until_user_api_key_expiration=60)
+        post_data = self._get_post_data(enforce_user_api_key_expiration=False)
+        form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
+
+        form.update_identity_provider(self.accounting_admin)
+
+        self.idp.refresh_from_db()
+        self.assertIsNone(self.idp.max_days_until_user_api_key_expiration)
 
 
 class TestSsoOidcEnterpriseSettingsForm(BaseSSOFormTest):

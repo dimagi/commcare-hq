@@ -53,6 +53,9 @@ class SlidingWindowRateCounter(AbstractRateCounter):
             memoize_timeout=memoize_timeout
         )
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}(key='{self.key}')"
+
     def get(self, scope, timestamp=None):
         if timestamp is None:
             timestamp = time.time()
@@ -67,6 +70,13 @@ class SlidingWindowRateCounter(AbstractRateCounter):
         # This is the count from the percentage of the earliest grain that should count
         contribution_from_earliest = earliest_grain_count * (1 - progress_in_current_grain)
         return sum(counts) + contribution_from_earliest
+
+    def retry_after(self):
+        """Calculates the time (in seconds) left in the current grain"""
+        timestamp = time.time()
+        progress_in_current_grain = (timestamp % self.grain_duration) / self.grain_duration
+        progress_left_in_grain = 1 - progress_in_current_grain
+        return progress_left_in_grain * self.grain_duration
 
     def increment(self, scope, delta=1, timestamp=None):
         # this intentionally doesn't return because this is the active grain count,
@@ -95,6 +105,9 @@ class FixedWindowRateCounter(AbstractRateCounter):
         self.window_duration = window_duration
         self.window_offset = window_offset
         self.counter = _CounterCache(memoize_timeout, timeout=keep_windows * window_duration)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(key='{self.key}')"
 
     @staticmethod
     def _digest(string):
@@ -130,7 +143,7 @@ class CounterCache(object):
 
     def incr(self, key, delta=1):
         value = self.shared_cache.incr(key, delta, ignore_key_check=True)
-        if value == 1:
+        if value == delta:
             self.shared_cache.expire(key, timeout=self.timeout)
         self.local_cache.set(key, value, timeout=self.memoized_timeout)
         return value

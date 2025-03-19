@@ -5,14 +5,14 @@ import logging
 from enum import Enum
 from functools import cached_property
 
-from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 from django.conf import settings
 
 from memoized import memoized
-from corehq.apps.es.filters import term
 
 from dimagi.utils.chunked import chunked
 
+from corehq.apps.es import const
+from corehq.apps.es.filters import term
 from corehq.util.es.elasticsearch import (
     BulkIndexError,
     Elasticsearch,
@@ -21,9 +21,16 @@ from corehq.util.es.elasticsearch import (
     TransportError,
     bulk,
 )
-from corehq.util.metrics import metrics_counter
+from corehq.toggles import ES_QUERY_PREFERENCE
+from corehq.util.global_request import get_request_domain
+from corehq.util.metrics import (
+    limit_domains,
+    metrics_counter,
+    metrics_histogram_timer,
+)
 
 from .const import (
+    HQ_CASE_SEARCH_INDEX_CANONICAL_NAME,
     INDEX_CONF_REINDEX,
     INDEX_CONF_STANDARD,
     SCROLL_KEEPALIVE,
@@ -31,7 +38,7 @@ from .const import (
 )
 from .exceptions import ESError, ESShardFailure, TaskError, TaskMissing
 from .index.analysis import DEFAULT_ANALYSIS
-from .utils import ElasticJSONSerializer
+from .utils import ElasticJSONSerializer, index_runtime_name
 
 log = logging.getLogger(__name__)
 
@@ -83,22 +90,18 @@ class ElasticManageAdapter(BaseAdapter):
         """
         self._validate_single_index(index)
         try:
-            if self._es.indices.get(index, feature="_aliases",
-                                    expand_wildcards="none"):
+            if self._es.indices.get(index, expand_wildcards="none"):
                 return True
         except NotFoundError:
             pass
         return False
 
-    def get_indices(self, full_info=False):
-        """Return the cluster index information.
+    def get_indices(self):
+        """Return the cluster index information of active indices.
 
-        :param full_info: ``bool`` whether to return the full index info
-                          (default ``False``)
         :returns: ``dict``
         """
-        feature = "" if full_info else "_aliases,_settings"
-        return self._es.indices.get("_all", feature=feature)
+        return self._es.indices.get("_all")
 
     def get_aliases(self):
         """Return the cluster aliases information.
@@ -106,7 +109,8 @@ class ElasticManageAdapter(BaseAdapter):
         :returns: ``dict`` with format ``{<alias>: [<index>, ...], ...}``
         """
         aliases = {}
-        for index, alias_info in self._es.indices.get_aliases().items():
+        aliases_obj = self._es.indices.get_alias()
+        for index, alias_info in aliases_obj.items():
             for alias in alias_info.get("aliases", {}):
                 aliases.setdefault(alias, []).append(index)
         return aliases
@@ -145,11 +149,14 @@ class ElasticManageAdapter(BaseAdapter):
         :returns: ``dict`` of task details
         :raises: ``TaskError`` or ``TaskMissing`` (subclass of ``TaskError``)
         """
-        # NOTE: elasticsearch5 python library doesn't support `task_id` as a
-        # kwarg for the `tasks.list()` method, and uses `tasks.get()` for that
-        # instead.
-        return self._parse_task_result(self._es.tasks.list(task_id=task_id,
-                                                           detailed=True))
+        try:
+            task_details = self._es.tasks.get(task_id=task_id)
+            task_info = task_details['task']
+            task_info['completed'] = task_details['completed']
+        except NotFoundError as e:
+            # unknown task id provided
+            raise TaskMissing(e)
+        return task_info
 
     def cancel_task(self, task_id):
         """
@@ -230,6 +237,25 @@ class ElasticManageAdapter(BaseAdapter):
             self._validate_single_index(index)
         self._es.indices.refresh(",".join(indices), expand_wildcards="none")
 
+    def indices_info(self):
+        """Retrieve meta information about all the indices in the cluster. This will also return closed indices
+        :returns: ``dict`` A dict with index name in keys and index meta information.
+        """
+        indices_info = self._es.cat.indices(format='json', bytes='b')
+        filtered_indices_info = {}
+        for info in indices_info:
+            if info['index'].startswith('.'):
+                # Elasticsearch system index, ignore
+                continue
+            filtered_indices_info[info['index']] = {
+                'health': info['health'],
+                'primary_shards': info['pri'],
+                'replica_shards': info['rep'],
+                'doc_count': info['docs.count'],
+                'size_on_disk': info['store.size'],  # in bytes
+            }
+        return filtered_indices_info
+
     def index_flush(self, index):
         """Flush an index.
 
@@ -306,7 +332,7 @@ class ElasticManageAdapter(BaseAdapter):
         :param mapping: ``dict`` mapping for the provided doc type
         """
         self._validate_single_index(index)
-        return self._es.indices.put_mapping(type_, mapping, index,
+        return self._es.indices.put_mapping(doc_type=type_, body=mapping, index=index,
                                             expand_wildcards="none")
 
     def index_get_mapping(self, index, type_):
@@ -344,6 +370,11 @@ class ElasticManageAdapter(BaseAdapter):
             return settings
         return {k: settings[k] for k in values}
 
+    def index_validate_query(self, index, query, params={}):
+        """Returns True if passed `query` is valid else will return false"""
+        validation = self._es.indices.validate_query(body=query, index=index, params=params)
+        return validation['valid']
+
     @staticmethod
     def _validate_single_index(index):
         """Verify that the provided index is a valid, single index
@@ -366,7 +397,11 @@ class ElasticManageAdapter(BaseAdapter):
         elif "*" in index:
             raise ValueError(f"refusing to operate with index wildcards: {index}")
 
-    def reindex(self, source, dest, wait_for_completion=False, refresh=False):
+    def reindex(
+            self, source, dest, wait_for_completion=False,
+            refresh=False, batch_size=1000, requests_per_second=None,
+            copy_doc_ids=True, query=None, purge_ids=False
+    ):
         """
         Starts the reindex process in elastic search cluster
 
@@ -374,16 +409,25 @@ class ElasticManageAdapter(BaseAdapter):
         :param dest: ``str`` name of the destination index
         :param wait_for_completion: ``bool`` would block the request until reindex is complete
         :param refresh: ``bool`` refreshes index
-
+        :param requests_per_second: ``int`` throttles rate at which reindex issues batches of
+                            index operations by padding each batch with a wait time.
+        :param batch_size: ``int`` The size of the scroll batch used by the reindex process. larger
+                           batches may process more quickly but risk errors if the documents are too
+                           large. 1000 is the recommended maximum and elasticsearch default,
+                           and can be reduced if you encounter scroll timeouts.
+        :param query: ``dict`` optional parameter to include a term query to filter which documents are included in
+                      the reindex
+        :param purge_ids: ``bool`` if True, will remove the _id field from the documents
         :returns: None if wait_for_completion is True else would return task_id of reindex task
         """
 
         # More info on "op_type" and "version_type"
-        # https://www.elastic.co/guide/en/elasticsearch/reference/2.4/docs-reindex.html
+        # https://www.elastic.co/guide/en/elasticsearch/reference/5.6/docs-reindex.html
 
         reindex_body = {
             "source": {
                 "index": source,
+                "size": batch_size,
             },
             "dest": {
                 "index": dest,
@@ -392,11 +436,49 @@ class ElasticManageAdapter(BaseAdapter):
             },
             "conflicts": "proceed"
         }
-        reindex_info = self._es.reindex(
-            reindex_body,
-            wait_for_completion=wait_for_completion,
-            refresh=refresh
-        )
+
+        if copy_doc_ids or purge_ids:
+            reindex_body["script"] = {
+                "lang": "painless",
+                "source": ""
+            }
+            script_parts = []
+
+            if purge_ids:
+                script_parts.append("""
+                    if (ctx._source.containsKey('_id')) {
+                        ctx._source.remove('_id');
+                    }
+                """)
+
+            if source == const.HQ_USERS_INDEX_NAME:
+                # Remove password field from users index
+                script_parts.append("""
+                    ctx._source.remove('password');
+                """)
+
+            if copy_doc_ids:
+                # Add doc_id field to the documents
+                script_parts.append("""
+                    if (!ctx._source.containsKey('doc_id')) {
+                        ctx._source['doc_id'] = ctx._id;
+                    }
+                """)
+
+            reindex_body["script"]["source"] = " ".join(script_parts)
+
+        reindex_kwargs = {
+            "wait_for_completion": wait_for_completion,
+            "refresh": refresh,
+        }
+
+        if requests_per_second:
+            reindex_kwargs["requests_per_second"] = requests_per_second
+
+        if query:
+            reindex_body["source"]["query"] = {"term": query}
+
+        reindex_info = self._es.reindex(reindex_body, **reindex_kwargs)
         if not wait_for_completion:
             return reindex_info['task']
 
@@ -416,6 +498,13 @@ class ElasticDocumentAdapter(BaseAdapter):
     # Model class whose objects are to be saved in ES.
     # This variable be used in data transformation logic
     model_cls = None
+
+    # Name of the index as referred in HQ world
+    canonical_name = None
+
+    # For adapter of sub indices,
+    # this property is the cname of the parent index
+    parent_index_cname = None
 
     def __init__(self, index_name, type_):
         """A document adapter for a single index.
@@ -456,6 +545,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         """
         Transforms a model dict to a JSON serializable dict suitable for indexing in elasticsearch.
         """
+        model_dict['doc_id'] = model_dict['_id']
         return model_dict.pop('_id'), model_dict
 
     def to_json(self, doc):
@@ -573,7 +663,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         try:
             result = self._search(query, **kw)
             self._fix_hits_in_result(result)
-            self._report_and_fail_on_shard_failures(result)
+            self._report_and_fail_on_shard_failures(result, {"index": self.canonical_name})
         except ElasticsearchException as exc:
             raise ESError(exc)
         return result
@@ -582,7 +672,22 @@ class ElasticDocumentAdapter(BaseAdapter):
         """Perform a "low-level" search and return the raw result. This is
         split into a separate method for ease of testing the result format.
         """
-        return self._es.search(self.index_name, self.type, query, **kw)
+        domain = get_request_domain()
+        if ES_QUERY_PREFERENCE.enabled(domain):
+            # Use domain as key to route to a consistent set of shards.kwargs
+            # See https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-request-preference.html
+            if 'preference' not in kw:
+                kw['preference'] = domain
+
+        with metrics_histogram_timer(
+                'commcare.elasticsearch.search.timing',
+                timing_buckets=(1, 10),
+                tags={
+                    'index': self.canonical_name,
+                    'domain': limit_domains(domain),
+                },
+        ):
+            return self._es.search(self.index_name, self.type, query, **kw)
 
     def scroll(self, query, scroll=SCROLL_KEEPALIVE, size=None):
         """Perfrom a scrolling search, yielding each doc until the entire context
@@ -599,7 +704,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         # TODO: standardize all result collections returned by this class.
         try:
             for result in self._scroll(query, scroll, size):
-                self._report_and_fail_on_shard_failures(result)
+                self._report_and_fail_on_shard_failures(result, {"index": self.canonical_name})
                 self._fix_hits_in_result(result)
                 for hit in result["hits"]["hits"]:
                     yield hit
@@ -664,7 +769,7 @@ class ElasticDocumentAdapter(BaseAdapter):
                 # resulting in this method fetching a maximum `size * 2`
                 # documents.
                 # see: https://stackoverflow.com/a/63911571
-                result = self._es.scroll(scroll_id, scroll=scroll)
+                result = self._es.scroll(scroll_id=scroll_id, scroll=scroll)
                 scroll_id = result.get("_scroll_id")
                 yield result
                 if scroll_id is None or not result["hits"]["hits"]:
@@ -732,10 +837,8 @@ class ElasticDocumentAdapter(BaseAdapter):
         """Perform the low-level (3rd party library) update operation."""
         if return_doc:
             major_version = self.elastic_major_version
-            assert major_version in {2, 5, 6, 7, 8}, self.elastic_version
-            if major_version == 2:
-                kw["fields"] = "_source"
-            elif major_version in {5, 6, 7}:
+            assert major_version in {5, 6, 7, 8}, self.elastic_version
+            if major_version in {5, 6, 7}:
                 # this changed in elasticsearch-py v5.x
                 kw["_source"] = "true"
             else:
@@ -905,7 +1008,7 @@ class ElasticDocumentAdapter(BaseAdapter):
             self._fix_hit(hit)
 
     @staticmethod
-    def _report_and_fail_on_shard_failures(result):
+    def _report_and_fail_on_shard_failures(result, tags):
         """
         Raise an ESShardFailure if there are shard failures in a search result
         (JSON) and report to datadog.
@@ -918,7 +1021,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         if not isinstance(result, dict):
             raise ValueError(f"invalid Elastic result object: {result}")
         if result.get("_shards", {}).get("failed"):
-            metrics_counter("commcare.es.partial_results")
+            metrics_counter("commcare.es.partial_results", tags=tags)
             # Example message:
             #   "_shards: {"successful": 4, "failed": 1, "total": 5}"
             shard_info = json.dumps(result["_shards"])
@@ -1025,6 +1128,10 @@ class ElasticMultiplexAdapter(BaseAdapter):
     def mapping(self):
         return self.primary.mapping
 
+    @property
+    def parent_index_cname(self):
+        return self.primary.parent_index_cname
+
     def export_adapter(self):
         adapter = copy.copy(self)
         adapter.primary = adapter.primary.export_adapter()
@@ -1044,6 +1151,10 @@ class ElasticMultiplexAdapter(BaseAdapter):
     @property
     def settings_key(self):
         return self.primary.settings_key
+
+    @property
+    def canonical_name(self):
+        return self.primary.canonical_name
 
     def to_json(self, doc):
         # TODO: this is a classmethod on the the document adapter, but should
@@ -1071,6 +1182,12 @@ class ElasticMultiplexAdapter(BaseAdapter):
     def search(self, *args, **kw):
         return self.primary.search(*args, **kw)
 
+    def _get_case_search_sub_index_docs(self, action):
+        from corehq.apps.es.case_search import multiplex_to_adapter
+        if self.canonical_name == HQ_CASE_SEARCH_INDEX_CANONICAL_NAME:
+            sub_index_adapter = multiplex_to_adapter(self.primary._get_domain_from_doc(action.doc))
+            return sub_index_adapter._render_bulk_action(action) if sub_index_adapter else None
+
     # Elastic index write methods (multiplexed between both adapters)
     def bulk(self, actions, refresh=False, raise_errors=True):
         """Apply bulk actions on the primary and secondary.
@@ -1091,40 +1208,35 @@ class ElasticMultiplexAdapter(BaseAdapter):
             for action in chunk:
                 # apply the chunk to both indexes in parallel
                 payload.append(self.primary._render_bulk_action(action))
-                payload.append(self.secondary._render_bulk_action(action))
+                if action.is_delete:
+                    # Always create a tombstone on secondary index when delete is issued on primary
+                    if action.doc is None:
+                        doc_id = action.doc_id
+                    else:
+                        doc_id = self.from_python(action.doc)[0]
+                    payload.append(
+                        self.secondary._render_bulk_action(
+                            BulkActionItem.index(Tombstone(doc_id)),
+                            forbid_tombstones=False
+                        )
+                    )
+                else:
+                    payload.append(self.secondary._render_bulk_action(action))
+                    sub_index_docs = self._get_case_search_sub_index_docs(action)
+                    if sub_index_docs:
+                        payload.append(sub_index_docs)
+
             _, chunk_errs = bulk(self._es, payload, chunk_size=len(payload),
                                  refresh=refresh, raise_on_error=False,
                                  raise_on_exception=raise_errors)
             deduped_errs = {}
-            primary_del_fail_ids = set()
-            secondary_del_fails = {}
             for error in chunk_errs:
                 doc_id, index_name = self._parse_bulk_error(error)
-                if index_name == self.primary.index_name:
-                    deduped_errs[doc_id] = error
-                    if self._is_delete_not_found(error):
-                        # don't add tombstones for deletes that failed on the
-                        # primary index
-                        primary_del_fail_ids.add(doc_id)
+                if index_name == self.primary.index_name and self._is_delete_not_found(error):
+                    # Ignore error raised while deleting an non-existent doc on primary
+                    pass
                 else:
-                    if self._is_delete_not_found(error):
-                        secondary_del_fails[doc_id] = error
-                    else:
-                        deduped_errs.setdefault(doc_id, error)
-            tombstone_ids = secondary_del_fails.keys() - primary_del_fail_ids
-            if tombstone_ids:
-                # add tombstones on secondary
-                try:
-                    _, make_tstone_errs = self.secondary._bulk(
-                        self._iter_tombstone_bulk_payload(tombstone_ids),
-                        refresh=False,
-                        raise_errors=raise_errors,
-                    )
-                except BulkIndexError as exc:
-                    make_tstone_errs = exc.errors
-                for error in make_tstone_errs:
-                    doc_id, _ = self._parse_bulk_error(error)
-                    deduped_errs.setdefault(doc_id, secondary_del_fails[doc_id])
+                    deduped_errs.setdefault(doc_id, error)
 
             errors.extend(deduped_errs.values())
             if raise_errors and errors:
@@ -1132,13 +1244,6 @@ class ElasticMultiplexAdapter(BaseAdapter):
                 raise BulkIndexError(f"{len(errors)} document(s) failed to index.", errors)
             success_count += (len(chunk) - len(deduped_errs))
         return success_count, errors
-
-    def _iter_tombstone_bulk_payload(self, doc_ids):
-        for doc_id in doc_ids:
-            yield self.secondary._render_bulk_action(
-                BulkActionItem.index(Tombstone(doc_id)),
-                forbid_tombstones=False,
-            )
 
     @staticmethod
     def _parse_bulk_error(error):
@@ -1322,23 +1427,52 @@ def create_document_adapter(cls, index_name, type_, *, secondary=None):
     """Creates and returns a document adapter instance for the parameters
     provided.
 
+    One thing to note here is that the behaviour of the function can be altered with django settings.
+
+    The function would return multiplexed adapter only if
+    - ES_<app name>_INDEX_MULTIPLEXED is True
+    - Secondary index is provided.
+
+    The indexes would be swapped only if
+    - ES_<app_name>_INDEX_SWAPPED is set to True
+    - secondary index is provided
+
+    If both ES_<app name>_INDEX_MULTIPLEXED and ES_<app_name>_INDEX_SWAPPED are set to True
+    then primary index will act as secondary index and vice versa.
+
     :param cls: an ``ElasticDocumentAdapter`` subclass
     :param index_name: the name of the index that the adapter interacts with
     :param type_: the index ``_type`` for the adapter's mapping.
     :param secondary: the name of the secondary index in a multiplexing
-        configuration. If an index name is provided, the returned adapter will
-        be an instance of ``ElasticMultiplexAdapter``.  If ``None`` (the
-        default), the returned adapter will be an instance of ``cls``.
+        configuration.
+        If an index name is provided and ES_<app name>_INDEX_MULTIPLEXED is set to True,
+        then returned adapter will be an instance of ``ElasticMultiplexAdapter``.
+        If ``None`` (the default), the returned adapter will be an instance of ``cls``.
+        ES_<app name>_INDEX_MULTIPLEXED will be ignored if secondary is None.
     :returns: a document adapter instance.
     """
-    def runtime_name(name):
-        # transform the name if testing
-        return f"{TEST_DATABASE_PREFIX}{name}" if settings.UNIT_TESTING else name
 
-    doc_adapter = cls(runtime_name(index_name), type_)
-    if secondary is not None:
-        secondary_adapter = cls(runtime_name(secondary), type_)
+    def index_multiplexed(cls):
+        key = f"ES_{cls.canonical_name.upper()}_INDEX_MULTIPLEXED"
+        return getattr(const, key)
+
+    def index_swapped(cls):
+        key = f"ES_{cls.canonical_name.upper()}_INDEX_SWAPPED"
+        return getattr(const, key)
+
+    doc_adapter = cls(index_runtime_name(index_name), type_)
+
+    if secondary is None:
+        return doc_adapter
+
+    secondary_adapter = cls(index_runtime_name(secondary), type_)
+
+    if index_multiplexed(cls) and index_swapped(cls):
+        doc_adapter = ElasticMultiplexAdapter(secondary_adapter, doc_adapter)
+    elif index_multiplexed(cls):
         doc_adapter = ElasticMultiplexAdapter(doc_adapter, secondary_adapter)
+    elif index_swapped(cls):
+        doc_adapter = secondary_adapter
 
     return doc_adapter
 

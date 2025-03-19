@@ -105,6 +105,7 @@ class Command(BaseCommand):
         final_dir, orig_name = os.path.split(export_archive_path)
         if not error_pages:
             fd, final_path = tempfile.mkstemp()
+            os.close(fd)
         else:
             final_name = 'INCOMPLETE_{}_{}.zip'.format(orig_name, datetime.utcnow().isoformat())
             final_path = os.path.join(final_dir, final_name)
@@ -161,7 +162,7 @@ class Command(BaseCommand):
             else:
                 raise CommandError('Unexpected page filename: {}'.format(page_filename))
 
-            doc_count = int(sh.wc('-l', page_path).split(' ')[0])
+            doc_count = int(sh.wc('-l', page_path).strip().split(' ')[0])
             total_docs += doc_count
             unprocessed_pages.append((page_path, page_number, doc_count))
 

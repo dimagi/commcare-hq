@@ -29,7 +29,6 @@ from corehq.form_processor.signals import sql_case_post_save
 from corehq.tests.locks import reentrant_redis_locks
 from corehq.toggles import NAMESPACE_DOMAIN, RUN_AUTO_CASE_UPDATES_ON_SAVE
 from corehq.util.context_managers import drop_connected_signals
-from corehq.util.test_utils import flag_enabled
 from corehq.util.test_utils import set_parent_case as set_actual_parent_case
 
 
@@ -280,7 +279,7 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             MatchPropertyDefinition,
             property_name='last_visit_date',
             property_value='-5',
-            match_type=MatchPropertyDefinition.MATCH_DAYS_BEFORE,
+            match_type=MatchPropertyDefinition.MATCH_DAYS_LESS_THAN,
         )
 
         rule2 = _create_empty_rule(self.domain)
@@ -288,7 +287,7 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             MatchPropertyDefinition,
             property_name='last_visit_date',
             property_value='0',
-            match_type=MatchPropertyDefinition.MATCH_DAYS_BEFORE,
+            match_type=MatchPropertyDefinition.MATCH_DAYS_LESS_THAN,
         )
 
         rule3 = _create_empty_rule(self.domain)
@@ -296,7 +295,7 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             MatchPropertyDefinition,
             property_name='last_visit_date',
             property_value='5',
-            match_type=MatchPropertyDefinition.MATCH_DAYS_BEFORE,
+            match_type=MatchPropertyDefinition.MATCH_DAYS_LESS_THAN,
         )
 
         with _with_case(self.domain, 'person', datetime.utcnow()) as case:
@@ -325,7 +324,7 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             MatchPropertyDefinition,
             property_name='last_visit_date',
             property_value='-5',
-            match_type=MatchPropertyDefinition.MATCH_DAYS_AFTER,
+            match_type=MatchPropertyDefinition.MATCH_DAYS_GREATER_OR_EQUAL,
         )
 
         rule2 = _create_empty_rule(self.domain)
@@ -333,7 +332,7 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             MatchPropertyDefinition,
             property_name='last_visit_date',
             property_value='0',
-            match_type=MatchPropertyDefinition.MATCH_DAYS_AFTER,
+            match_type=MatchPropertyDefinition.MATCH_DAYS_GREATER_OR_EQUAL,
         )
 
         rule3 = _create_empty_rule(self.domain)
@@ -341,7 +340,7 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             MatchPropertyDefinition,
             property_name='last_visit_date',
             property_value='5',
-            match_type=MatchPropertyDefinition.MATCH_DAYS_AFTER,
+            match_type=MatchPropertyDefinition.MATCH_DAYS_GREATER_OR_EQUAL,
         )
 
         with _with_case(self.domain, 'person', datetime.utcnow()) as case:
@@ -546,7 +545,7 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             set_case_property_directly(case, 'def', '456x')
             _save_case(self.domain, case)
             case = CommCareCase.objects.get_case(case.case_id, self.domain)
-            self.assertTrue(rule.criteria_match(case, datetime(2022, 4, 15)))  # Notice assert True instead
+            self.assertTrue(rule.criteria_match(case, datetime(2022, 4, 15)))
 
             case.server_modified_on = datetime(2022, 4, 1)
             set_case_property_directly(case, 'abc', '123x')
@@ -556,6 +555,15 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             self.assertTrue(rule.criteria_match(case, datetime(2022, 4, 15)))
 
             case.server_modified_on = datetime(2022, 4, 14)
+            set_case_property_directly(case, 'abc', '123x')
+            set_case_property_directly(case, 'def', '456x')
+            _save_case(self.domain, case)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
+            self.assertFalse(rule.criteria_match(case, datetime(2022, 4, 15)))
+
+            rule.filter_on_server_modified = False
+            rule.server_modified_boundary = None
+            rule.save()
             set_case_property_directly(case, 'abc', '123x')
             set_case_property_directly(case, 'def', '456x')
             _save_case(self.domain, case)
@@ -584,7 +592,8 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
         from corehq.apps.domain.shortcuts import create_domain
         from corehq.apps.locations.models import LocationType, SQLLocation
 
-        create_domain(self.domain)
+        domain_obj = create_domain(self.domain)
+        self.addCleanup(domain_obj.delete)
 
         location_type_provice = LocationType(domain=self.domain, name='Province')
         location_type_provice.save()
@@ -746,29 +755,6 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
         """
         Updating case property "external_id" updates ``case.external_id``
         """
-        rule = _create_empty_rule(self.domain)
-        _, definition = rule.add_action(UpdateCaseDefinition, close_case=False)
-        definition.set_properties_to_update([
-            UpdateCaseDefinition.PropertyDefinition(
-                name='external_id',
-                value_type=UpdateCaseDefinition.VALUE_TYPE_EXACT,
-                value='Bella Ramsay',
-            ),
-        ])
-        definition.save()
-
-        with _with_case(self.domain, 'person', datetime.utcnow()) as case:
-            self.assertActionResult(rule, 0)
-
-            result = rule.run_actions_when_case_matches(case)
-            case = CommCareCase.objects.get_case(case.case_id, self.domain)
-
-            self.assertActionResult(rule, 1, result, CaseRuleActionResult(num_updates=1))
-            self.assertNotIn('external_id', case.case_json)
-            self.assertEqual(case.external_id, 'Bella Ramsay')
-
-    @flag_enabled('USE_CUSTOM_EXTERNAL_ID_CASE_PROPERTY')
-    def test_equivalent_to_feature_flag(self):
         rule = _create_empty_rule(self.domain)
         _, definition = rule.add_action(UpdateCaseDefinition, close_case=False)
         definition.set_properties_to_update([
@@ -1193,11 +1179,7 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
         super(CaseRuleEndToEndTests, cls).setUpClass()
         cls.domain_object = Domain(name=cls.domain)
         cls.domain_object.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.domain_object.delete()
-        super(CaseRuleEndToEndTests, cls).tearDownClass()
+        cls.addClassCleanup(cls.domain_object.delete)
 
     def test_get_rules_from_domain(self):
         rule1 = _create_empty_rule(self.domain, case_type='person-1')

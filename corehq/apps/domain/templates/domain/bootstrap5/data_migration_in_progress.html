@@ -1,0 +1,9 @@
+{% extends "hqwebapp/bootstrap5/base_page.html" %}
+{% load i18n %}
+
+{% block page_content %}
+  <h1>{% block title %}{% trans "Domain Temporarily Unavailable" %}{% endblock %}</h1>
+
+  <p>{% blocktrans %}The page you requested is currently unavailable due to a
+    data migration. Please check back later.{% endblocktrans %}</p>
+{% endblock %}

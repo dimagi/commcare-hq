@@ -25,13 +25,17 @@ of all unknown users, web users, and demo users on a domain.
 
 from . import filters, queries
 from .client import ElasticDocumentAdapter, create_document_adapter
+from .const import (
+    HQ_USERS_INDEX_CANONICAL_NAME,
+    HQ_USERS_INDEX_NAME,
+    HQ_USERS_SECONDARY_INDEX_NAME,
+)
 from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
-from .transient_util import get_adapter_mapping
 
 
 class UserES(HQESQuery):
-    index = 'users'
+    index = HQ_USERS_INDEX_CANONICAL_NAME
     default_filters = {
         'not_deleted': filters.term("base_doc", "couchuser"),
         'active': filters.term("is_active", True),
@@ -46,15 +50,15 @@ class UserES(HQESQuery):
             mobile_users,
             web_users,
             user_ids,
-            primary_location,
             location,
+            login_as_user,
             last_logged_in,
             analytics_enabled,
             is_practice_user,
             role_id,
             is_active,
             username,
-            metadata,
+            missing_or_empty_user_data_property,
         ] + super(UserES, self).builtin_filters
 
     def show_inactive(self):
@@ -69,6 +73,7 @@ class UserES(HQESQuery):
 class ElasticUser(ElasticDocumentAdapter):
 
     settings_key = IndexSettingsKey.USERS
+    canonical_name = HQ_USERS_INDEX_CANONICAL_NAME
 
     @property
     def model_cls(self):
@@ -77,13 +82,12 @@ class ElasticUser(ElasticDocumentAdapter):
 
     @property
     def mapping(self):
-        return get_adapter_mapping(self)
+        from .mappings.user_mapping import USER_MAPPING
+        return USER_MAPPING
 
     def _from_dict(self, user_dict):
         """
         Takes a user dict and applies required transfomation to make it suitable for ES.
-        The function is replica of ``transform_user_for_elasticsearch``.
-        In future all references to  ``transform_user_for_elasticsearch`` will be replaced by `from_python`
 
         :param user: an instance ``dict`` which is result of ``CouchUser.to_json()``
         """
@@ -100,9 +104,11 @@ class ElasticUser(ElasticDocumentAdapter):
         user_dict['__group_ids'] = [res.id for res in results]
         user_dict['__group_names'] = [res.name for res in results]
         user_dict['user_data_es'] = []
-        if 'user_data' in user_dict:
+        user_dict.pop('password', None)
+        if user_dict.get('base_doc') == 'CouchUser' and user_dict['doc_type'] == 'CommCareUser':
             user_obj = self.model_cls.wrap_correctly(user_dict)
-            for key, value in user_obj.metadata.items():
+            user_data = user_obj.get_user_data(user_obj.domain)
+            for key, value in user_data.items():
                 user_dict['user_data_es'].append({
                     'key': key,
                     'value': value,
@@ -112,8 +118,9 @@ class ElasticUser(ElasticDocumentAdapter):
 
 user_adapter = create_document_adapter(
     ElasticUser,
-    "hqusers_2017-09-07",
+    HQ_USERS_INDEX_NAME,
     "user",
+    secondary=HQ_USERS_SECONDARY_INDEX_NAME,
 )
 
 
@@ -121,9 +128,9 @@ def domain(domain, allow_enterprise=False):
     domain_list = [domain]
     if allow_enterprise:
         from corehq.apps.enterprise.models import EnterprisePermissions
-        config = EnterprisePermissions.get_by_domain(domain)
-        if config.is_enabled and domain in config.domains:
-            domain_list.append(config.source_domain)
+        source_domain = EnterprisePermissions.get_source_domain(domain)
+        if source_domain:
+            domain_list.append(source_domain)
     return domains(domain_list)
 
 
@@ -173,8 +180,8 @@ def admin_users():
 
 
 def demo_users():
-    """Matches users whose username is demo_user"""
-    return username("demo_user")
+    """Matches users who has is_demo_user set to True"""
+    return filters.term("is_demo_user", True)
 
 
 def created(gt=None, gte=None, lt=None, lte=None):
@@ -189,22 +196,10 @@ def user_ids(user_ids):
     return filters.term("_id", list(user_ids))
 
 
-def primary_location(location_id):
-    # by primary location
-    return filters.OR(
-        filters.AND(mobile_users(), filters.term('location_id', location_id)),
-        filters.AND(
-            web_users(),
-            filters.term('domain_memberships.location_id', location_id)
-        ),
-    )
-
-
 def location(location_id):
     # by any assigned-location primary or not
     return filters.OR(
         filters.AND(mobile_users(), filters.term('assigned_location_ids', location_id)),
-        # todo; this actually doesn't get applied since the below field is not indexed
         filters.AND(
             web_users(),
             filters.term('domain_memberships.assigned_location_ids', location_id)
@@ -227,14 +222,32 @@ def is_active(active=True):
     return filters.term("is_active", active)
 
 
-def metadata(key, value):
-    # Note that this dict is stored in ES under the `user_data` field, and
-    # transformed into a queryable format (in ES) as `user_data_es`, but it's
-    # referenced in python as `metadata`
+def _user_data(key, filter_):
+    # Note: user data does not exist in ES for web users
     return queries.nested(
         'user_data_es',
         filters.AND(
             filters.term(field='user_data_es.key', value=key),
-            queries.match(field='user_data_es.value', search_string=value),
+            filter_
         )
     )
+
+
+def query_user_data(key, value):
+    return _user_data(key, queries.match(field='user_data_es.value', search_string=value))
+
+
+def login_as_user(value):
+    return _user_data('login_as_user', filters.term('user_data_es.value', value))
+
+
+def missing_or_empty_user_data_property(property_name):
+    """
+    A user_data property doesn't exist, or does exist but has an empty string value.
+    """
+    missing_property = filters.NOT(queries.nested(
+        'user_data_es',
+        filters.term(field='user_data_es.key', value=property_name),
+    ))
+    empty_value = _user_data(property_name, filters.term('user_data_es.value', ''))
+    return filters.OR(missing_property, empty_value)

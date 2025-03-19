@@ -2,6 +2,7 @@
 import hashlib
 from collections import namedtuple
 from datetime import datetime
+from uuid import uuid4
 
 from django.contrib.postgres.fields import ArrayField
 from django.db import IntegrityError, connection, models, transaction
@@ -11,6 +12,7 @@ from django.utils.translation import gettext_lazy, gettext_noop, gettext as _
 import jsonfield
 
 from dimagi.utils.couch import CriticalSection
+from django.utils.functional import cached_property
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.locations.models import SQLLocation
@@ -20,8 +22,9 @@ from corehq.apps.sms.mixin import (
     PhoneNumberInUseException,
     apply_leniency,
 )
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import ConnectIDUserLink, CouchUser
 from corehq.form_processor.models import CommCareCase
+from corehq.messaging.smsbackends.connectid.backend import ConnectBackend
 from corehq.util.mixin import UUIDGeneratorMixin
 from corehq.util.quickcache import quickcache
 
@@ -593,6 +596,44 @@ class PhoneBlacklist(models.Model):
         return True
 
 
+class ConnectMessagingNumber:
+    owner_doc_type = "CommCareUser"
+    is_two_way = True
+    pending_verification = False
+
+    def __init__(self, owner):
+        self.owner = owner
+
+    @property
+    def phone_number(self):
+        return self.messaging_channel
+
+    @cached_property
+    def user_link(self):
+        django_user = self.owner.get_django_user()
+        return ConnectIDUserLink.objects.get(commcare_user=django_user)
+
+    @cached_property
+    def messaging_channel(self):
+        return self.user_link.messaging_channel
+
+    @property
+    def backend(self):
+        return ConnectBackend()
+
+    @property
+    def owner_id(self):
+        return self.owner._id
+
+    @property
+    def domain(self):
+        return self.user_link.domain
+
+    @property
+    def is_sms(self):
+        return False
+
+
 class PhoneNumber(UUIDGeneratorMixin, models.Model):
     UUIDS_TO_GENERATE = ['couch_id']
 
@@ -636,6 +677,10 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
             phone=self.phone_number, domain=self.domain,
             owner=self.owner_id
         )
+
+    @property
+    def is_sms(self):
+        return True
 
     @property
     def backend(self):
@@ -979,6 +1024,9 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     CONTENT_API_SMS = 'API'
     CONTENT_CHAT_SMS = 'CHT'
     CONTENT_EMAIL = 'EML'
+    CONTENT_FCM_Notification = 'FCM'
+    CONTENT_CONNECT = 'CON'
+    CONTENT_CONNECT_SURVEY = 'CSY'
 
     CONTENT_CHOICES = (
         (CONTENT_NONE, gettext_noop('None')),
@@ -991,6 +1039,9 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         (CONTENT_API_SMS, gettext_noop('Message Sent Via API')),
         (CONTENT_CHAT_SMS, gettext_noop('Message Sent Via Chat')),
         (CONTENT_EMAIL, gettext_noop('Email')),
+        (CONTENT_FCM_Notification, gettext_noop('FCM Push Notification')),
+        (CONTENT_CONNECT, gettext_noop('Connect Message')),
+        (CONTENT_CONNECT_SURVEY, gettext_noop('Connect Message Survey')),
     )
 
     CONTENT_TYPE_SLUGS = {
@@ -1004,6 +1055,9 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         CONTENT_API_SMS: "api-sms",
         CONTENT_CHAT_SMS: "chat-sms",
         CONTENT_EMAIL: "email",
+        CONTENT_FCM_Notification: "fcm-notification",
+        CONTENT_CONNECT: "connect",
+        CONTENT_CONNECT_SURVEY: "connect-survey",
     }
 
     RECIPIENT_CASE = 'CAS'
@@ -1060,6 +1114,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_TRIAL_EMAIL_LIMIT_REACHED = 'TRIAL_EMAIL_LIMIT_REACHED'
     ERROR_EMAIL_BOUNCED = 'EMAIL_BOUNCED'
     ERROR_EMAIL_GATEWAY = 'EMAIL_GATEWAY_ERROR'
+    ERROR_NO_FCM_TOKENS = 'NO_FCM_TOKENS'
+    FILTER_MISMATCH = 'FILTER_MISMATCH'
 
     ERROR_MESSAGES = {
         ERROR_NO_RECIPIENT:
@@ -1115,6 +1171,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
                 "sending reminder emails on a Trial plan has been reached."),
         ERROR_EMAIL_BOUNCED: gettext_noop("Email Bounced"),
         ERROR_EMAIL_GATEWAY: gettext_noop("Email Gateway Error"),
+        ERROR_NO_FCM_TOKENS: gettext_noop("No FCM tokens found for recipient."),
+        FILTER_MISMATCH: gettext_noop("Recipient did not match filters:")
     }
 
     domain = models.CharField(max_length=126, null=False, db_index=True)
@@ -1302,7 +1360,10 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             SMSContent,
             SMSSurveyContent,
             EmailContent,
-            CustomContent
+            CustomContent,
+            FCMNotificationContent,
+            ConnectMessageContent,
+            ConnectMessageSurveyContent
         )
 
         if isinstance(content, (SMSContent, CustomContent)):
@@ -1313,6 +1374,14 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             return cls.CONTENT_SMS_SURVEY, content.app_id, content.form_unique_id, form_name
         elif isinstance(content, EmailContent):
             return cls.CONTENT_EMAIL, None, None, None
+        elif isinstance(content, FCMNotificationContent):
+            return cls.CONTENT_FCM_Notification, None, None, None
+        elif isinstance(content, ConnectMessageContent):
+            return cls.CONTENT_CONNECT, None, None, None
+        elif isinstance(content, ConnectMessageSurveyContent):
+            app, module, form, requires_input = content.get_memoized_app_module_form(domain)
+            form_name = form.full_path_name if form else None
+            return cls.CONTENT_CONNECT_SURVEY, content.app_id, content.form_unique_id, form_name
         else:
             return cls.CONTENT_NONE, None, None, None
 
@@ -1895,9 +1964,10 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
             backend = cls.load_default_backend(backend_type, phone_number)
 
         if not backend:
-            raise BadSMSConfigException("No suitable backend found for phone "
-                                        "number and domain %s, %s" %
-                                        (phone_number, domain))
+            raise BadSMSConfigException("No gateway found "
+                                        "for phone number %s and domain %s. "
+                                        "To configure a gateway, please visit the SMS Connectivity Settings."
+                                        % (phone_number, domain))
 
         return backend
 
@@ -2044,7 +2114,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     def get_generic_name(cls):
         """
         This method should return a descriptive name for this backend
-        (such as "Unicel" or "Tropo"), for use in identifying it to an end user.
+        (such as "Tropo"), for use in identifying it to an end user.
         """
         raise NotImplementedError("Please implement this method")
 
@@ -2660,3 +2730,25 @@ class Email(models.Model):
     recipient_address = models.CharField(max_length=255, db_index=True)
     subject = models.TextField(null=True)
     body = models.TextField(null=True)
+    html_body = models.TextField(null=True)
+
+
+class ConnectMessage(Log):
+    date_modified = models.DateTimeField(null=True, db_index=True, auto_now=True)
+    text = models.CharField(max_length=300)
+    received_on = models.DateTimeField(null=True, blank=True)
+    message_id = models.UUIDField(default=uuid4)
+
+    def __init__(self, *args, **kwargs):
+        # set default message id on initialization so it is available before save
+        super(ConnectMessage, self).__init__(*args, **kwargs)
+        if self.message_id is None:
+            self.message_id = uuid4()
+
+    @property
+    def outbound_backend(self):
+        return ConnectBackend()
+
+    @property
+    def domain_scope(self):
+        return self.domain

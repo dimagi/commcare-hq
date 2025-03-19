@@ -1,3 +1,4 @@
+
 hqDefine("hqwebapp/js/select2_knockout_bindings.ko", [
     'jquery',
     'underscore',
@@ -8,7 +9,7 @@ hqDefine("hqwebapp/js/select2_knockout_bindings.ko", [
     $,
     _,
     ko,
-    DOMPurify
+    DOMPurify,
 ) {
     /**
      * Converts the bound element to a select2 widget, using the element's existing

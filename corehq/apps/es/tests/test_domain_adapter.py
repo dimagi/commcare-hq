@@ -2,7 +2,6 @@ from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.domains import domain_adapter
-from corehq.pillows.domain import transform_domain_for_elasticsearch
 
 
 @es_test(requires=[domain_adapter], setup_class=True)
@@ -22,12 +21,6 @@ class TestFromPythonInDomain(TestCase):
 
     def test_from_python_raises_for_other_objects(self):
         self.assertRaises(TypeError, domain_adapter.from_python, set)
-
-    def test_from_python_is_same_as_transform_domain_for_es(self):
-        # this test can be safely removed when transform_domain_for_elasticsearch is removed
-        domain_id, domain = domain_adapter.from_python(self.domain_obj)
-        domain['_id'] = domain_id
-        self.assertEqual(transform_domain_for_elasticsearch(self.domain_obj.to_json()), domain)
 
     def test_index_can_handle_domain_dicts(self):
         domain_dict = self.domain_obj.to_json()

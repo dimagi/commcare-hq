@@ -1,0 +1,193 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+<div id="key_value_mapping_editable_template" class="hide">
+  <form class="form-horizontal hq-enum-editor" action="">
+    <fieldset data-bind="sortable: items">
+      <div class="form-group hq-input-map container-fluid well well-sm"
+           data-bind="css: {'has-error': $parent.keyHasError(ko.utils.unwrapObservable(key))},
+                            attr: {'data-order': _sortableOrder}">
+        <div class="row">
+          <div class="col-sm-1">
+            <i class="sortable-handle fa-solid fa-up-down"></i>
+          </div>
+
+          <div class="col-sm-3">
+            <input type="text"
+                   class="enum-key form-control"
+                   data-bind="value: key, attr: {placeholder: $parent.labels().placeholder}"/>
+            <div class="help-block" data-bind='visible: $parent.isItemDuplicated(ko.utils.unwrapObservable(key)),
+                                                               text: $parent.labels().duplicated'></div>
+            <div class="help-block" data-bind='visible: $parent.hasBadXML(ko.utils.unwrapObservable(key)),
+                                                               text: $parent.labels().badXML'></div>
+          </div>
+
+          <div class="col-sm-1 text-center" style="width: 3px">
+            &rarr;
+          </div>
+          <div class="col-sm-3" data-bind="visible: !$parent.values_are_icons()">
+            <input type="text" class="form-control enum-value" data-bind="
+                            attr: {placeholder: $parent.backup(value()).value},
+                            value: value()[$parent.lang]
+                        "/>
+          </div>
+          <!-- ko if: $parent.values_are_icons() -->
+          <div data-bind="template: {name: 'value_icon_uploader', data: iconManager}">
+          </div>
+          <!-- /ko -->
+          <!-- ko if: !$parent.values_are_icons() -->
+          <div class="col-sm-1 btn" data-bind="visible: !_([$parent.lang, null]).contains($parent.backup(value()).lang)">
+            <a href="#" class="btn btn-info btn-xs lang-text"
+               data-bind="
+                            text: $parent.backup(value()).lang
+                        "></a>
+          </div>
+          <!-- /ko -->
+          <div class="col-sm-1 pull-right">
+            <a href="#" data-bind="click: $parent.removeItem" class="btn btn-danger">
+              <i class="icon-white fa fa-remove"></i>
+            </a>
+          </div>
+        </div>
+        {% if app.supports_alt_text %}
+          <div class="row">
+            <!-- ko if: $parent.values_are_icons() -->
+            <div data-bind="template: {name: 'icon_alt_text', data: iconManager}"
+                style="margin-top: 3px">
+            </div>
+            <!-- /ko -->
+          </div>
+        {% endif %}
+        <div class="row">
+          <!-- ko if: $parent.values_are_icons() -->
+          <div data-bind="template: {name: 'icon_uploader_path', data: iconManager}"
+               style="margin-top: 3px">
+          </div>
+          <!-- /ko -->
+        </div>
+      </div>
+    </fieldset>
+
+    <div class="col-sm-offset-1">
+      <a href="#" class="btn btn-primary"
+         data-bind="click: addItem, text: $data.labels().addButton">
+        <i class="icon-white fa fa-plus"></i>
+        Add Key &rarr; Value Mapping
+      </a>
+    </div>
+  </form>
+</div>
+
+<div id="key_value_mapping_modal" class="hide">
+  <div class="modal fade hq-enum-modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title" data-bind="text: $data.modalTitle"></h4>
+        </div>
+        <div class="modal-body" style="max-height:372px; overflow-y: scroll;"
+             data-bind="template: {name: 'key_value_mapping_editable_template', data: mapList}"></div>
+        <div class="modal-footer">
+          <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" data-dismiss="modal"
+                  data-bind="disable: $data.mapList.hasError(),
+                            text: $data.mapList.hasError() ? 'Fix errors' : 'OK',
+                            click: save"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Single read-only key/value pair -->
+<div id="key_value_mapping_display_template" class="hide">
+  <div data-bind="foreach: items">
+    <div>
+      <strong data-bind="text: key"></strong>
+      &rarr;
+      <span data-bind="visible: value()[$parent.lang], text: value()[$parent.lang]"></span>
+      <span data-bind="visible: !ko.utils.unwrapObservable(value()[$parent.lang])">
+                <i class="fa fa-times-circle"></i>
+            </span>
+    </div>
+  </div>
+</div>
+
+<!-- Read-only version of keys and values, displayed alongside button to pop up modal -->
+<div id="key_value_mapping_template" class="hide">
+  <div data-bind="template: {name: 'key_value_mapping_display_template', if: !$data.values_are_icons() }"></div>
+  <button class="btn btn-default" data-bind="click: openModal, visible: $data.edit">
+    <i class="fa fa-pencil"></i>
+    <span data-bind="text: $data.buttonText"></span>
+  </button>
+</div>
+
+<div id="value_icon_uploader" class="hide">
+  <div class="col-sm-1" style="margin-right: 7px">
+    <a data-bind="if: isMediaMatched, attr: {href: url}" target="_blank" data-bind="visible: url" >
+      <img data-bind="attr: {src: thumbnailUrl}">
+    </a>
+  </div>
+  <div class="col-sm-2" id="$parent.cssId()">
+    <button type="button" class="btn btn-default" data-toggle="modal" data-target="#hqimage" data-bind="
+                           attr: { 'data-hqmediapath': currentPath },
+                           event: {
+                                mediaUploadComplete: uploadComplete,
+                                click: function(){setCustomPath(); passToUploadController()}
+                           }">
+      <i class="fa-solid fa-cloud-arrow-up"></i>
+      <span data-bind="visible: isMediaMatched">{% trans 'Replace' %}</span>
+      <span data-bind="visible: isMediaUnmatched">{% trans 'Upload' %}</span>
+    </button>
+  </div>
+  <div class="col-sm-3">
+    <button type="button" class="btn btn-default pull-right"
+            data-bind="
+                    visible: !$parent.editing(),
+                    click: function(){if (!useCustomPath()) setCustomPath(); $parent.toggleEditMode()}">
+      <i class="fa fa-cog"></i>
+      {% trans 'Set Path' %}
+    </button>
+  </div>
+</div>
+
+<div id="icon_alt_text" class="hide">
+  <label class="control-label col-sm-1">{% trans 'Alt Text' %}</label>
+  <div class="col-sm-4">
+    <input type="text" class="form-control"
+           placeholder="{% trans 'Alternative text description' %}"
+           data-bind="value: altText,
+                      valueUpdate: 'textchange'" />
+  </div>
+</div>
+
+<div id="icon_uploader_path" class="hide">
+  <div class="col-sm-1 btn" data-bind="visible: !_([$parents[1].lang, null]).contains($parents[1].backup($parent.value()).lang)">
+    <a href="#" class="btn btn-info btn-xs lang-text"
+       data-bind="
+            text: $parents[1].backup($parent.value()).lang
+        "></a>
+  </div>
+
+  <div data-bind="visible: $parent.editing">
+    <label class="control-label col-sm-1">Path</label>
+    <div class="col-sm-4">
+      <input type="text" class="form-control"
+             data-bind="value: customPath,
+                              valueUpdate: 'textchange'" />
+      <input type="hidden" class="jr-resource-field"
+             data-bind="value: savedPath" />
+    </div>
+    <div class="col-sm-3">
+      <div class="col-sm-1">
+        <button type="button" class="btn btn-default"
+                data-bind="click: function(){setDefaultPath(); $parent.toggleEditMode()}">
+          <i class="fa fa-remove"></i>
+          {% trans 'Use Default Path' %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

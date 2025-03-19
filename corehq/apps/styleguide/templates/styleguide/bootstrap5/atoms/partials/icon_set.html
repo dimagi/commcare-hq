@@ -1,0 +1,15 @@
+{% for icon_set in icons %}
+  <div class="card text-bg-light mb-3">
+    <div class="card-body">
+      <h4 class="card-title mb-3">
+        {{ icon_set.name }}
+      </h4>
+      {% for icon in icon_set.icons %}
+        <p>
+          <i class="{{ icon }} px-4"></i>
+          <code>&lt;i class="{{ icon }}"&gt;&lt;/i&gt;</code>
+        </p>
+      {% endfor %}
+    </div>
+  </div>
+{% endfor %}

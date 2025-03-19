@@ -1,0 +1,28 @@
+{% load i18n %}
+
+<div class="controls translation-controls">
+  <div class="checkbox">
+    <label>
+      <input
+        type="checkbox"
+        data-bind="checked: translate"
+        class="checkboxinput"
+      />
+      {% trans "Translate this message" %}
+    </label>
+  </div>
+</div>
+
+<div class="controls translation-controls" data-bind="visible: !translate()">
+  {% include "scheduling/partials/rich_text_editor.html" with editableText="nonTranslatedMessage" %}
+</div>
+
+<div data-bind="visible: translate(), foreach: translatedMessages">
+  <div class="controls translation-controls">
+    <label
+      >{% trans "Translation" %} (<span data-bind="text: language_code"></span
+      >):</label
+    >
+    {% include "scheduling/partials/rich_text_editor.html" with editableText="html_message" %}
+  </div>
+</div>

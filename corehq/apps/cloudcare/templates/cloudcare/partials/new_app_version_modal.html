@@ -1,0 +1,37 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div class="modal fade" id="newAppVersionModal" aria-labelledby=="newAppVersionModalTitle" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title" id="newAppVersionModalTitle">{% trans "A new version of this app is available" %}</h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+        </div>
+        <div class="modal-body">
+          <p>
+            {% blocktrans %}
+              CommCare recommends that you get the latest version of this app.
+            {% endblocktrans %}
+          <p>
+          <div id="incompleteFormWarning" class="d-none">
+              <p> {% trans "To keep any unsaved changes -" %} </p>
+              <ol>
+                <li>{% trans 'Click on “Update Later”.' %}</li>
+                <li>{% trans 'Submit your changes.' %}</li>
+                <li>{% trans 'Update by clicking on “Web Apps” at the top left of the browser page.' %}</li>
+              </ol>
+              <p>
+                {% blocktrans %}
+                  If you don’t have any unsaved changes and would like to update, click on “Get Latest App”.
+                {% endblocktrans %}
+              </p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans "Update Later" %}</button>
+          <button id="refreshApp" type="button" class="btn btn-primary">{% trans "Get Latest App" %}</button>
+        </div>
+      </div>
+    </div>
+  </div>

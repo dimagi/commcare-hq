@@ -36,6 +36,8 @@ cloudcare
 domain
    Domains, called "project spaces" in user-facing content, are the core sandboxes of CommCare. Almost
    all features and UIs in CommCare are in the context of a domain.
+experiments
+    Framework for comparing old and new code paths.
 export
    Configurations for exporting project data, typically forms or cases, to an excel download.
 hqmedia
@@ -120,8 +122,6 @@ analytics
    Also contains internal product-focused tools such as AB testing functionality.
 builds
    Models relating to CommCare Mobile builds, so that app builders can control which mobile version their apps use.
-   Some of this app relates to J2ME builds: historically, CommCare mobile supported both J2ME and Android devices.
-   The J2ME functionality is largely deprecated, but most of the related code remains, in both this app and ``app_manager``.
 case_search
    Models and utils related to searching for cases using Elasticsearch. Used for Case Claim and the Case List Explorer. 
 dashboard

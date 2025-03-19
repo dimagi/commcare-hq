@@ -1,13 +1,14 @@
+from decimal import Decimal
 from django.core import mail
 
 from unittest import mock
 from django_prbac.models import Role
-from stripe import Charge
-from stripe.stripe_object import StripeObject
+import stripe
+from stripe import StripeObject
 
 from dimagi.utils.dates import add_months_to_date
 
-from corehq.apps.accounting import tasks, utils
+from corehq.apps.accounting import utils
 from corehq.apps.accounting.models import (
     Invoice,
     PaymentRecord,
@@ -21,49 +22,51 @@ from corehq.apps.accounting.payment_handlers import (
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.generator import (
-    FakeStripeCard,
-    FakeStripeCustomer,
+    FakeStripeCardManager,
+    FakeStripeCustomerManager,
 )
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
+from django.db import transaction
+from corehq.apps.accounting.tests.utils import mocked_stripe_api
 
 
 class TestBillingAutoPay(BaseInvoiceTestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super(TestBillingAutoPay, cls).setUpClass()
-        cls._generate_autopayable_entities()
-        cls._generate_non_autopayable_entities()
-        cls._generate_invoices()
+    def setUp(self):
+        super().setUp()
+        self._generate_autopayable_entities()
+        self._generate_non_autopayable_entities()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.non_autopay_domain.delete()
-        super(TestBillingAutoPay, cls).tearDownClass()
+        # invoice date is 2 months before the end of the subscription (this is arbitrary)
+        invoice_date = utils.months_from_date(self.subscription.date_start, self.subscription_length - 2)
+        self.create_invoices(invoice_date)
 
-    @classmethod
-    def _generate_autopayable_entities(cls):
+    def tearDown(self):
+        self.non_autopay_domain.delete()
+        super().tearDown()
+
+    def _generate_autopayable_entities(self):
         """
         Create account, domain and subscription linked to the autopay user that have autopay enabled
         """
-        cls.autopay_account = cls.account
-        cls.autopay_account.created_by_domain = cls.domain
-        cls.autopay_account.save()
-        cls.autopay_user_email = generator.create_arbitrary_web_user_name()
-        cls.fake_card = FakeStripeCard()
-        cls.fake_stripe_customer = FakeStripeCustomer(cards=[cls.fake_card])
-        cls.autopay_account.update_autopay_user(cls.autopay_user_email, cls.domain)
+        self.autopay_account = self.account
+        self.autopay_account.created_by_domain = self.domain
+        self.autopay_account.save()
+        web_user = generator.arbitrary_user(domain_name=self.domain.name, is_active=True, is_webuser=True)
+        self.autopay_user_email = web_user.email
+        self.fake_card = FakeStripeCardManager.create_card()
+        self.fake_stripe_customer = FakeStripeCustomerManager.create_customer(cards=[self.fake_card])
+        self.autopay_account.update_autopay_user(self.autopay_user_email, self.domain)
 
-    @classmethod
-    def _generate_non_autopayable_entities(cls):
+    def _generate_non_autopayable_entities(self):
         """
         Create account, domain, and subscription linked to the autopay user, but that don't have autopay enabled
         """
-        cls.non_autopay_account = generator.billing_account(
+        self.non_autopay_account = generator.billing_account(
             web_user_creator=generator.create_arbitrary_web_user_name(is_dimagi=True),
-            web_user_contact=cls.autopay_user_email
+            web_user_contact=self.autopay_user_email
         )
-        cls.non_autopay_domain = generator.arbitrary_domain()
+        self.non_autopay_domain = generator.arbitrary_domain()
         # Non-autopay subscription has same parameters as the autopayable subscription
         cheap_plan = SoftwarePlan.objects.create(name='cheap')
         cheap_product_rate = SoftwareProductRate.objects.create(monthly_fee=100, name=cheap_plan.name)
@@ -72,24 +75,15 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
             product_rate=cheap_product_rate,
             role=Role.objects.first(),
         )
-        cls.non_autopay_subscription = generator.generate_domain_subscription(
-            cls.non_autopay_account,
-            cls.non_autopay_domain,
+        self.non_autopay_subscription = generator.generate_domain_subscription(
+            self.non_autopay_account,
+            self.non_autopay_domain,
             plan_version=cheap_plan_version,
-            date_start=cls.subscription.date_start,
-            date_end=add_months_to_date(cls.subscription.date_start, cls.subscription_length),
+            date_start=self.subscription.date_start,
+            date_end=add_months_to_date(self.subscription.date_start, self.subscription_length),
         )
 
-    @classmethod
-    def _generate_invoices(cls):
-        """
-        Create invoices for both autopayable and non-autopayable subscriptions
-        """
-        # invoice date is 2 months before the end of the subscription (this is arbitrary)
-        invoice_date = utils.months_from_date(cls.subscription.date_start, cls.subscription_length - 2)
-        tasks.calculate_users_in_all_domains(invoice_date)
-        tasks.generate_invoices_based_on_date(invoice_date)
-
+    @mocked_stripe_api()
     @mock.patch.object(StripePaymentMethod, 'customer')
     def test_get_autopayable_invoices(self, fake_customer):
         """
@@ -113,7 +107,8 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         self.assertItemsEqual(autopayable_invoices, [])
 
     @mock.patch.object(StripePaymentMethod, 'customer')
-    @mock.patch.object(Charge, 'create')
+    @mock.patch.object(stripe.Charge, 'create')
+    @mocked_stripe_api()
     def test_pay_autopayable_invoices(self, fake_charge, fake_customer):
         self._create_autopay_method(fake_customer)
         fake_charge.return_value = StripeObject(id='transaction_id')
@@ -136,19 +131,28 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         self.payment_method.save()
 
     @mock.patch.object(StripePaymentMethod, 'customer')
-    @mock.patch.object(Charge, 'create')
-    @mock.patch.object(PaymentRecord, 'create_record')
-    def test_when_create_record_fails_stripe_is_not_charged(self, fake_create_record, fake_create, fake_customer):
-        fake_create_record.side_effect = Exception
+    @mock.patch.object(stripe.Charge, 'create')
+    @mocked_stripe_api()
+    def test_double_charge_is_prevented_and_only_one_payment_record_created(self, fake_charge,
+                                                                            fake_customer):
         self._create_autopay_method(fake_customer)
-
         self.original_outbox_length = len(mail.outbox)
+        fake_charge.return_value = StripeObject(id='transaction_id')
         self._run_autopay()
-        self.assertFalse(fake_create.called)
-        self._assert_no_side_effects()
+        # Add balance to the same invoice so it gets paid again
+        invoice = Invoice.objects.get(subscription=self.subscription)
+        invoice.balance = Decimal('1000.0000')
+        invoice.save()
+        # Run autopay again to test no double charge
+        with transaction.atomic(), self.assertLogs(level='ERROR') as log_cm:
+            self._run_autopay()
+            self.assertIn("[BILLING] [Autopay] Attempt to double charge invoice", "\n".join(log_cm.output))
+        self.assertEqual(len(PaymentRecord.objects.all()), 1)
+        self.assertEqual(len(mail.outbox), self.original_outbox_length + 1)
 
     @mock.patch.object(StripePaymentMethod, 'customer')
-    @mock.patch.object(Charge, 'create')
+    @mock.patch.object(stripe.Charge, 'create')
+    @mocked_stripe_api()
     def test_when_stripe_fails_no_payment_record_exists(self, fake_create, fake_customer):
         fake_create.side_effect = Exception
         self._create_autopay_method(fake_customer)

@@ -1,6 +1,5 @@
 import os
 from datetime import datetime
-from looseversion import LooseVersion
 from urllib.parse import unquote
 
 from django.conf import settings
@@ -17,8 +16,11 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
 from couchdbkit import ResourceConflict
+from ddtrace import tracer
 from iso8601 import iso8601
-from tastypie.http import HttpTooManyRequests
+from looseversion import LooseVersion
+from memoized import memoized
+from tastypie.http import HttpNotAcceptable, HttpTooManyRequests
 
 from casexml.apps.case.cleanup import claim_case, get_first_claims
 from casexml.apps.case.fixtures import CaseDBFixture
@@ -43,10 +45,10 @@ from corehq.apps.app_manager.models import GlobalAppConfig
 from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.case_search.const import COMMCARE_PROJECT
 from corehq.apps.case_search.exceptions import CaseSearchUserError
-from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
+from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY, CASE_SEARCH_TAGS_MAPPING
 from corehq.apps.case_search.utils import get_case_search_results_from_request
 from corehq.apps.domain.auth import formplayer_auth
-from corehq.apps.domain.decorators import check_domain_migration
+from corehq.apps.domain.decorators import check_domain_mobile_access
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.permissions import (
     location_safe,
@@ -58,12 +60,14 @@ from corehq.apps.registry.exceptions import (
     RegistryNotFound,
 )
 from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.apps.users.device_rate_limiter import device_rate_limiter, DEVICE_RATE_LIMIT_MESSAGE
 from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
 from corehq.const import ONE_DAY, OPENROSA_VERSION_MAP
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from corehq.middleware import OPENROSA_VERSION_HEADER
+from corehq.util.metrics import limit_domains, metrics_histogram, limit_tags
 from corehq.util.quickcache import quickcache
 
 from .case_restore import get_case_restore_response
@@ -81,10 +85,11 @@ PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_RESTORE_LIMIT')
 PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 
 
+@tracer.wrap(name="ota.restore")
 @location_safe
 @handle_401_response
 @mobile_auth_or_formplayer
-@check_domain_migration
+@check_domain_mobile_access
 def restore(request, domain, app_id=None):
     """
     We override restore because we have to supply our own
@@ -98,19 +103,21 @@ def restore(request, domain, app_id=None):
     return response
 
 
+@tracer.wrap(name="ota.search")
 @location_safe_bypass
 @csrf_exempt
 @mobile_auth
-@check_domain_migration
+@check_domain_mobile_access
 @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
 def search(request, domain):
     return app_aware_search(request, domain, None)
 
 
+@tracer.wrap(name="ota.app_aware_search")
 @location_safe_bypass
 @csrf_exempt
 @mobile_auth
-@check_domain_migration
+@check_domain_mobile_access
 @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
 def app_aware_search(request, domain, app_id):
     """
@@ -120,20 +127,52 @@ def app_aware_search(request, domain, app_id):
 
     Returns results as a fixture with the same structure as a casedb instance.
     """
-    request_dict = request.GET if request.method == 'GET' else request.POST
+    start_time = datetime.now()
+    request_dict = dict((request.GET if request.method == 'GET' else request.POST).lists())
+
     try:
-        cases = get_case_search_results_from_request(domain, app_id, request.couch_user, request_dict)
+        fixtures, profiler = get_case_search_results_from_request(domain, app_id, request.couch_user, request_dict)
     except CaseSearchUserError as e:
         return HttpResponse(str(e), status=400)
-    fixtures = CaseDBFixture(cases).fixture
+    profiler.timing_context.add_to_sentry_breadcrumbs()
+    _log_search_timing(start_time, request_dict, domain, app_id)
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
 
 
+def _log_search_timing(start_time, request_dict, domain, app_id):
+    for key, value in request_dict.items():
+        if isinstance(value, str):
+            request_dict[key] = value.replace('\t', '')
+        elif isinstance(value, list):
+            request_dict[key] = [item.replace('\t', '') for item in value if isinstance(item, str)]
+
+    tags = {
+        tag_name: value[0]
+        for param_name, tag_name in CASE_SEARCH_TAGS_MAPPING.items()
+        if (value := request_dict.pop(param_name, []))
+    }
+    tags.update({'domain': limit_domains(domain)})
+
+    elapsed = (datetime.now() - start_time).total_seconds()
+    metrics_histogram("commcare.app_aware_search.processing_time",
+                      int(elapsed * 1000),
+                      bucket_tag='duration_bucket',
+                      buckets=(500, 1000, 5000),
+                      bucket_unit='ms',
+                      tags=limit_tags(tags, domain))
+    if elapsed >= 10 and limit_domains(domain) != "__other__":
+        notify_exception(None, "LongCaseSearchRequest", details={
+            'request_dict': request_dict,
+            'app_id': app_id,
+        })
+
+
+@tracer.wrap(name="ota.claim")
 @location_safe_bypass
 @csrf_exempt
 @require_POST
 @mobile_auth
-@check_domain_migration
+@check_domain_mobile_access
 @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
 def claim(request, domain):
     """
@@ -161,18 +200,34 @@ def claim(request, domain):
                    host_name=unquote(request.POST.get('case_name', '')),
                    device_id=__name__ + ".claim")
 
-    def phone_holds_all_cases(request):
+    @memoized
+    def get_synclog(sync_token):
         try:
-            synclog = get_properly_wrapped_sync_log(request.last_sync_token)
-            missing_case_ids_on_phone = set(case_ids) - synclog.case_ids_on_phone
-            return not missing_case_ids_on_phone
+            return get_properly_wrapped_sync_log(sync_token)
         except MissingSyncLog:
             return False
 
-    if not case_ids_to_claim and phone_holds_all_cases(request):
-        return HttpResponse(status=204)
+    def phone_holds_all_cases(request):
+        if get_synclog(request.last_sync_token):
+            synclog = get_synclog(request.last_sync_token)
+            missing_case_ids_on_phone = set(case_ids) - synclog.case_ids_on_phone
+            return not missing_case_ids_on_phone
 
-    return HttpResponse(status=201)
+    def cases_have_been_modified_since_last_synclog_date():
+        if get_synclog(request.last_sync_token):
+            synclog = get_synclog(request.last_sync_token)
+            return bool(CommCareCase.objects.get_modified_case_ids(domain, case_ids, synclog))
+
+    if case_ids_to_claim:
+        return HttpResponse(status=201)
+
+    if not phone_holds_all_cases(request):
+        return HttpResponse(status=201)
+
+    if cases_have_been_modified_since_last_synclog_date():
+        return HttpResponse(status=201)
+
+    return HttpResponse(status=204)
 
 
 def get_restore_params(request, domain):
@@ -240,7 +295,6 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         silently.
     :return: Tuple of (http response, timing context or None)
     """
-
     if user_id and user_id != couch_user.user_id:
         # sync with a user that has been deleted but a new
         # user was created with the same username and password
@@ -262,6 +316,12 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     if uses_login_as and not as_user_obj:
         msg = _('Invalid restore as user {}').format(as_user)
         return HttpResponse(msg, status=401), None
+
+    restoring_user_id = as_user_obj._id if uses_login_as else couch_user._id
+    should_limit = device_rate_limiter.rate_limit_device(domain, restoring_user_id, device_id)
+    if should_limit:
+        return HttpNotAcceptable(DEVICE_RATE_LIMIT_MESSAGE)
+
     is_permitted, message = is_permitted_to_restore(
         domain,
         couch_user,
@@ -327,6 +387,12 @@ def heartbeat(request, domain, app_build_id):
         mobile simply needs it to be resent back in the JSON, and doesn't
         need any validation on it. This is pulled from @uniqueid from profile.xml
     """
+    should_limit = device_rate_limiter.rate_limit_device(
+        domain, request.couch_user._id, request.GET.get('device_id')
+    )
+    if should_limit:
+        return HttpNotAcceptable(DEVICE_RATE_LIMIT_MESSAGE)
+
     app_id = request.GET.get('app_id', '')
     build_profile_id = request.GET.get('build_profile_id', '')
     master_app_id = app_id
@@ -353,7 +419,7 @@ def update_user_reporting_data(app_build_id, app_id, build_profile_id, couch_use
     def _safe_int(val):
         try:
             return int(val)
-        except:
+        except Exception:
             pass
 
     app_version = _safe_int(request.GET.get('app_version', ''))
@@ -362,6 +428,9 @@ def update_user_reporting_data(app_build_id, app_id, build_profile_id, couch_use
     num_unsent_forms = _safe_int(request.GET.get('num_unsent_forms', ''))
     num_quarantined_forms = _safe_int(request.GET.get('num_quarantined_forms', ''))
     commcare_version = request.GET.get('cc_version', '')
+    fcm_token = ''
+    if toggles.FCM_NOTIFICATION.enabled(request.domain):
+        fcm_token = request.GET.get('fcm_token', '')
     # if mobile cannot determine app version it sends -1
     if app_version == -1:
         app_version = None
@@ -376,14 +445,14 @@ def update_user_reporting_data(app_build_id, app_id, build_profile_id, couch_use
     if settings.USER_REPORTING_METADATA_BATCH_ENABLED:
         UserReportingMetadataStaging.add_heartbeat(
             request.domain, couch_user._id, app_id, app_build_id, last_sync, device_id,
-            app_version, num_unsent_forms, num_quarantined_forms, commcare_version, build_profile_id
+            app_version, num_unsent_forms, num_quarantined_forms, commcare_version, build_profile_id, fcm_token
         )
     else:
         record = UserReportingMetadataStaging(domain=request.domain, user_id=couch_user._id, app_id=app_id,
             build_id=app_build_id, sync_date=last_sync, device_id=device_id, app_version=app_version,
             num_unsent_forms=num_unsent_forms, num_quarantined_forms=num_quarantined_forms,
             commcare_version=commcare_version, build_profile_id=build_profile_id,
-            last_heartbeat=datetime.utcnow(), modified_on=datetime.utcnow())
+            last_heartbeat=datetime.utcnow(), modified_on=datetime.utcnow(), fcm_token=fcm_token)
         try:
             record.process_record(couch_user)
         except ResourceConflict:
@@ -433,6 +502,7 @@ def recovery_measures(request, domain, build_id):
     return JsonResponse(response)
 
 
+@tracer.wrap(name="ota.case_fixture")
 @location_safe_bypass
 @csrf_exempt
 @mobile_auth
@@ -508,6 +578,7 @@ def _data_registry_case_fixture(request, domain, app_id, case_types, case_ids, r
     return helper.get_multi_domain_case_hierarchy(request.couch_user, cases)
 
 
+@tracer.wrap(name="ota.case_restore")
 @formplayer_auth
 def case_restore(request, domain, case_id):
     """Restore endpoint used for SMS forms where the 'user' is a case.

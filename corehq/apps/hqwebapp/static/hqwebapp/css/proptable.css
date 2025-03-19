@@ -94,3 +94,8 @@
 #case-properties-modal table tbody tr td{
     word-break: break-word;
 }
+
+.case-property-table tbody {
+    word-wrap: break-word;
+    word-break: break-word;
+}

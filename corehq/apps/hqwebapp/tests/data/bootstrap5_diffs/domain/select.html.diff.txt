@@ -1,0 +1,69 @@
+--- 
++++ 
+@@ -1,10 +1,10 @@
+-{% extends "hqwebapp/bootstrap3/base_page.html"  %}
++{% extends "hqwebapp/bootstrap5/base_page.html"  %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ 
+ {% block title %}{% trans "My Projects" %}{% endblock title %}
+ 
+-{% js_entry_b3 'domain/js/select' %}
++{% js_entry 'domain/js/select' %}
+ 
+ {% block page_content %}
+   {% initial_page_data 'invitation_links' invitation_links %}
+@@ -20,16 +20,16 @@
+   </div>
+   <div class="spacer"></div>
+ 
+-  <div class="panel panel-info" data-bind="visible: invitationLinks().length">
+-    <div class="panel-heading ">
+-      <h3 class="panel-title">
++  <div class="card text-bg-info" data-bind="visible: invitationLinks().length">  {# todo B5: css-panel #}
++    <div class="card-header ">
++      <h3 class="card-title">
+         {% trans 'My Invitations' %}
+       </h3>
+     </div>
+-    <div class="panel-body">
++    <div class="card-body">
+       <ul class="list-invitations" data-bind="foreach: invitationLinks">
+         <li>
+-          <a data-bind="attr: {href: url}" class="btn btn-default btn-xs">
++          <a data-bind="attr: {href: url}" class="btn btn-outline-primary btn-sm">
+             <i class='fa fa-envelope'>
+             </i>
+             {% trans "Accept" %}
+@@ -40,15 +40,15 @@
+       </ul>
+     </div>
+   </div>
+-  <div class="panel panel-default">
+-    <div class="panel-heading ">
++  <div class="card ">  {# todo B5: css-panel #}
++    <div class="card-header ">
+       <div class="row">
+-        <div class="col-sm-6">
+-          <h3 class="panel-title" style="padding-top: 7px;">
++        <div class="col-md-6">
++          <h3 class="card-title" style="padding-top: 7px;">  {# todo B5: inline-style #}
+             {% trans 'My Projects' %}
+           </h3>
+         </div>
+-        <div class="col-sm-6">
++        <div class="col-md-6">
+           <search-box data-apply-bindings="false"
+                       params="value: query,
+                               action: search,
+@@ -58,8 +58,8 @@
+         </div>
+       </div>
+     </div>
+-    <div class="panel-body">
+-      <ul class="nav nav-pills nav-stacked" data-bind="foreach: domainLinks">
++    <div class="card-body">
++      <ul class="nav nav-pills nav-stacked" data-bind="foreach: domainLinks">  {# todo B5: css-nav #}
+         <li>
+           <a data-bind="attr: {href: url}, text: display_name"></a>
+         </li>

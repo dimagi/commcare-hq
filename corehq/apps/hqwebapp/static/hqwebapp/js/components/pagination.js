@@ -1,3 +1,4 @@
+
 /**
  *  Knockout Pagination Component
  *
@@ -33,12 +34,14 @@ hqDefine('hqwebapp/js/components/pagination', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/components.ko',
 ], function (
     ko,
     _,
-    initialPageData
+    initialPageData,
+    koComponents,
 ) {
-    return {
+    const component = {
         viewModel: function (params) {
             var self = {};
 
@@ -94,7 +97,7 @@ hqDefine('hqwebapp/js/components/pagination', [
             self.itemsText = ko.computed(function () {
                 var lastItem = Math.min(self.currentPage() * self.perPage(), self.totalItems());
                 return _.template(
-                    params.itemsTextTemplate || gettext('Showing <%- firstItem %> to <%- lastItem %> of <%- maxItems %> entries')
+                    params.itemsTextTemplate || gettext('Showing <%- firstItem %> to <%- lastItem %> of <%- maxItems %> entries'),
                 )({
                     firstItem: self.totalItems() > 0 ? ((self.currentPage() - 1) * self.perPage()) + 1 : 0,
                     lastItem: isNaN(lastItem) ? 1 : lastItem,
@@ -123,4 +126,8 @@ hqDefine('hqwebapp/js/components/pagination', [
         },
         template: '<div data-bind="template: { name: \'ko-pagination-template\' }"></div>',
     };
+
+    koComponents.register('pagination', component);
+
+    return component;
 });

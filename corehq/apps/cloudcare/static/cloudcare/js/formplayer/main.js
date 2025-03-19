@@ -1,58 +1,62 @@
-hqDefine("cloudcare/js/formplayer/main", function () {
-
+hqDefine("cloudcare/js/formplayer/main", [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/sentry',
+    'commcarehq',
+], function (
+    $,
+    initialPageData,
+    FormplayerFrontEnd,
+    sentry,
+) {
     $(function () {
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
-            FormplayerFrontEnd = hqImport("cloudcare/js/formplayer/app"),
-            utils = hqImport("cloudcare/js/utils"),
-            sentry = hqImport("cloudcare/js/sentry");
-
         sentry.initSentry();
 
-        window.MAPBOX_ACCESS_TOKEN = initialPageData('mapbox_access_token'); // maps api is loaded on-demand
+        window.MAPBOX_ACCESS_TOKEN = initialPageData.get('mapbox_access_token'); // maps api is loaded on-demand
         var options = {
-            apps: initialPageData('apps'),
-            language: initialPageData('language'),
-            username: initialPageData('username'),
-            domain: initialPageData('domain'),
-            formplayer_url: initialPageData('formplayer_url'),
-            gridPolyfillPath: initialPageData('grid_polyfill_path'),
-            debuggerEnabled: initialPageData('debugger_enabled'),
-            singleAppMode: initialPageData('single_app_mode'),
-            environment: initialPageData('environment'),
+            apps: initialPageData.get('apps'),
+            language: initialPageData.get('language'),
+            username: initialPageData.get('username'),
+            domain: initialPageData.get('domain'),
+            formplayer_url: initialPageData.get('formplayer_url'),
+            debuggerEnabled: initialPageData.get('debugger_enabled'),
+            singleAppMode: false,
+            environment: initialPageData.get('environment'),
         };
-        FormplayerFrontEnd.start(options);
-
-        utils.injectMarkdownAnchorTransforms();
+        FormplayerFrontEnd.getXSRF(options).then(() =>
+            FormplayerFrontEnd.start(options),
+        );
 
         var $menuToggle = $('#commcare-menu-toggle'),
             $navbar = $('#hq-navigation'),
             $trialBanner = $('#cta-trial-banner');
-        var hideMenu = function () {
+        var hideMainMenu = function () {
             $menuToggle.data('minimized', 'yes');
-            $navbar.hide();
-            $trialBanner.hide();
+            $navbar.addClass("d-none");
+            $trialBanner.addClass("d-none");
             $menuToggle.text(gettext('Show Full Menu'));
         };
-        var showMenu = function () {
+        var showMainMenu = function () {
             $menuToggle.data('minimized', 'no');
-            $navbar.show();
-            $trialBanner.show();
+            $navbar.removeClass("d-none");
+            $trialBanner.removeClass("d-none");
             $navbar.css('margin-top', '');
             $menuToggle.text(gettext('Hide Full Menu'));
         };
 
         // Show the top HQ nav for new users, so they know how to get back to HQ,
         // but hide it for more mature users so it's out of the way
-        if (initialPageData("domain_is_on_trial")) {
-            showMenu();
+        if (initialPageData.get("domain_is_on_trial")) {
+            showMainMenu();
         } else {
-            hideMenu();
+            hideMainMenu();
         }
         $menuToggle.click(function (e) {
             if ($menuToggle.data('minimized') === 'yes') {
-                showMenu();
+                showMainMenu();
             } else {
-                hideMenu();
+                hideMainMenu();
             }
             e.preventDefault();
         });

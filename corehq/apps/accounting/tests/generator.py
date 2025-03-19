@@ -22,7 +22,13 @@ from corehq.apps.accounting.models import (
     BillingContactInfo,
     Currency,
     DefaultProductPlan,
+    Feature,
+    FeatureType,
+    SoftwarePlan,
     SoftwarePlanEdition,
+    SoftwarePlanVersion,
+    SoftwareProductRate,
+    Role,
     Subscriber,
     Subscription,
     SubscriptionType,
@@ -113,8 +119,41 @@ def subscribable_plan_version(edition=SoftwarePlanEdition.STANDARD):
 
 
 @unit_testing_only
+def default_feature_rates(edition=SoftwarePlanEdition.STANDARD):
+    feature_rates = []
+    for feature_type in FeatureType.EDITIONED_FEATURES:
+        feature = Feature.objects.get(
+            feature_type=feature_type,
+            name=f"{feature_type} {edition}"
+        )
+        feature_rates.append(feature.get_rate(default_instance=True))
+    return feature_rates
+
+
+@unit_testing_only
+def custom_plan_version(name='Custom software plan', edition=SoftwarePlanEdition.STANDARD,
+                        role_slug='standard_plan_v0', feature_rates=None):
+    plan = SoftwarePlan.objects.create(name=name, edition=edition)
+    product_rate = SoftwareProductRate.objects.create(name=name)
+    role = Role.objects.get(slug=role_slug)
+    plan_version = SoftwarePlanVersion.objects.create(
+        plan=plan,
+        product_rate=product_rate,
+        role=role
+    )
+    if feature_rates is None:
+        feature_rates = default_feature_rates(edition)
+    for feature_rate in feature_rates:
+        feature_rate.save()
+        plan_version.feature_rates.add(feature_rate)
+    plan_version.save()
+    return plan_version
+
+
+@unit_testing_only
 def generate_domain_subscription(account, domain, date_start, date_end,
-                                 plan_version=None, service_type=SubscriptionType.NOT_SET, is_active=False):
+                                 plan_version=None, service_type=SubscriptionType.NOT_SET,
+                                 is_active=False, do_not_invoice=False):
     subscriber, _ = Subscriber.objects.get_or_create(domain=domain.name)
     subscription = Subscription(
         account=account,
@@ -124,6 +163,7 @@ def generate_domain_subscription(account, domain, date_start, date_end,
         date_end=date_end,
         service_type=service_type,
         is_active=is_active,
+        do_not_invoice=do_not_invoice
     )
     subscription.save()
     return subscription
@@ -140,7 +180,7 @@ def get_start_date():
 @unit_testing_only
 def arbitrary_domain():
     domain = Domain(
-        name=data_gen.arbitrary_unique_name()[:20],
+        name=data_gen.arbitrary_unique_name()[:20].lower(),
         is_active=True,
     )
     domain.save()
@@ -155,15 +195,17 @@ def arbitrary_domain_and_subscriber():
 
 
 @unit_testing_only
-def arbitrary_user(domain, is_active=True, is_webuser=False):
+def arbitrary_user(domain_name, is_active=True, is_webuser=False, **kwargs):
     username = unique_name()
     if is_webuser:
         username = create_arbitrary_web_user_name()
         user_cls = WebUser
+        email = username
     else:
         username = unique_name()
         user_cls = CommCareUser
-    commcare_user = user_cls.create(domain, username, 'test123', None, None)
+        email = None
+    commcare_user = user_cls.create(domain_name, username, 'test123', None, None, email, **kwargs)
     commcare_user.is_active = is_active
     return commcare_user
 
@@ -201,6 +243,7 @@ class FakeStripeCard(mock.MagicMock):
         super(FakeStripeCard, self).__init__()
         self._metadata = {}
         self.last4 = '1234'
+        self.id = uuid.uuid4().hex.lower()[:15]
 
     @property
     def metadata(self):
@@ -222,3 +265,31 @@ class FakeStripeCustomer(mock.MagicMock):
         self.id = uuid.uuid4().hex.lower()[:25]
         self.cards = mock.MagicMock()
         self.cards.data = cards
+
+
+class FakeStripeCardManager:
+    _cards = {}
+
+    @classmethod
+    def create_card(cls):
+        card = FakeStripeCard()
+        cls._cards[card.id] = card
+        return card
+
+    @classmethod
+    def get_card_by_id(cls, card_id):
+        return cls._cards.get(card_id)
+
+
+class FakeStripeCustomerManager:
+    _customers = {}
+
+    @classmethod
+    def create_customer(cls, cards):
+        customer = FakeStripeCustomer(cards)
+        cls._customers[customer.id] = customer
+        return customer
+
+    @classmethod
+    def get_customer_by_id(cls, customer_id):
+        return cls._customers.get(customer_id)

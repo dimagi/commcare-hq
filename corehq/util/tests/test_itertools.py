@@ -30,8 +30,9 @@ def test_zip_with_gaps_key_funcs():
         ('Nick', 'Pellegrino', 'nickpell'),
         ('Simon', 'Kelly', 'snopoke'),
     ]
-    some_first_names = [WithFirstName(u, f) for i, (f, l, u) in enumerate(devs) if i < 4]
-    all_last_names = [WithLastName(u, l) for f, l, u in devs]
+    some_first_names = [WithFirstName(usr, fst) for i, (fst, lst, usr)
+                        in enumerate(devs) if i < 4]
+    all_last_names = [WithLastName(usr, lst) for fst, lst, usr in devs]
 
     zipped = zip_with_gaps(
         sorted(all_last_names, key=get_username),
@@ -39,7 +40,7 @@ def test_zip_with_gaps_key_funcs():
         all_items_key=get_username,
         some_items_key=get_username
     )
-    names = [(f.first_name, l.last_name) for l, f in zipped]
+    names = [(fst.first_name, lst.last_name) for lst, fst in zipped]
     eq(names, [
         ('Biyeun', 'Buczyk'),
         ('Cory', 'Zue'),

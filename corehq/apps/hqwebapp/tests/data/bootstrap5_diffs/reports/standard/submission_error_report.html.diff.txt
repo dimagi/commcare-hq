@@ -1,0 +1,34 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+-{% extends "reports/bootstrap3/base_template.html" %}
++{% extends "reports/bootstrap5/base_template.html" %}
+ {% load hq_shared_tags %}
+ {% load compress %}
+ {% load i18n %}
+ 
+-{% js_entry_b3 "reports/js/bootstrap3/submission_error_report" %}
++{% js_entry "reports/js/bootstrap5/submission_error_report" %}
+ 
+ {% block modals %}{{ block.super }}
+   {% registerurl 'reprocess_xform_errors' domain %}
+@@ -11,8 +11,8 @@
+   <div class="modal fade" id="processing-error-modal" tabindex="-1" role="dialog">
+     <div class="modal-dialog" role="document">
+       <div class="modal-content">
+-        <div class="modal-header">
+-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span>
++        <div class="modal-header">  {# todo B5: css:modal-header #}
++          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span>  {# todo B5: css:close #}
+           </button>
+           <h4 class="modal-title">{% trans "Error re-processing form" %}</h4>
+         </div>
+@@ -20,7 +20,7 @@
+           <div class="error-message"></div>
+         </div>
+         <div class="modal-footer">
+-          <button type="button" class="btn btn-default" data-dismiss="modal">
++          <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
+             {% trans "Close" %}
+           </button>
+         </div>

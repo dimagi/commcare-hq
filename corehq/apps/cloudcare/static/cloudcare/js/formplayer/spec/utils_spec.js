@@ -1,41 +1,51 @@
-/* eslint-env mocha */
-/* global Backbone */
+import _ from "underscore";
+import Backbone from "backbone";
+import sinon from "sinon";
+import initialPageData from "hqwebapp/js/initial_page_data";
+import FormplayerFrontend from "cloudcare/js/formplayer/app";
+import API from "cloudcare/js/formplayer/menus/api";
+import FakeFormplayer from "cloudcare/js/formplayer/spec/fake_formplayer";
+import UsersModels from "cloudcare/js/formplayer/users/models";
+import Utils from "cloudcare/js/formplayer/utils/utils";
+import "cloudcare/js/formplayer/router";  // needed for navigation events, like menu:select
 
 describe('Utils', function () {
-    let API = hqImport("cloudcare/js/formplayer/menus/api"),
-        FakeFormplayer = hqImport("cloudcare/js/formplayer/spec/fake_formplayer"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Utils = hqImport("cloudcare/js/formplayer/utils/utils");
-
     describe('#displayOptions', function () {
         beforeEach(function () {
-            sinon.stub(Utils, 'getDisplayOptionsKey').callsFake(function () { return 'mykey'; });
+            sinon.stub(UsersModels, 'getDisplayOptionsKey').callsFake(function () { return 'mykey'; });
             window.localStorage.clear();
         });
 
         afterEach(function () {
-            Utils.getDisplayOptionsKey.restore();
+            UsersModels.getDisplayOptionsKey.restore();
         });
 
         it('should retrieve saved display options', function () {
             let options = { option: 'yes' };
-            Utils.saveDisplayOptions(options);
-            $.when(Utils.getSavedDisplayOptions(), function (response) {
-                assert.deepEqual(response, options);
-            });
+            UsersModels.saveDisplayOptions(options);
+            assert.deepEqual(UsersModels.getSavedDisplayOptions(), options);
         });
 
         it('should not fail on bad json saved', function () {
-            localStorage.setItem(Utils.getDisplayOptionsKey(), 'bad json');
-            $.when(Utils.getSavedDisplayOptions(), function (response) {
-                assert.deepEqual(response, {});
-            });
+            localStorage.setItem(UsersModels.getDisplayOptionsKey(), 'bad json');
+            assert.deepEqual(UsersModels.getSavedDisplayOptions(), {});
         });
 
     });
 
     describe('CloudcareUrl', function () {
         let stubs = {};
+
+        before(function () {
+            initialPageData.register("toggles_dict", {
+                SPLIT_SCREEN_CASE_SEARCH: false,
+                DYNAMICALLY_UPDATE_SEARCH_RESULTS: false,
+            });
+        });
+
+        after(function () {
+            initialPageData.unregister("toggles_dict");
+        });
 
         beforeEach(function () {
             let currentUrl = new Utils.CloudcareUrl({appId: 'abc123'});
@@ -221,7 +231,7 @@ describe('Utils', function () {
             assert.equal(response.type, "query");
             assert.deepEqual(_.pluck(response.displays, 'id'), ['dob']);
 
-            FormplayerFrontend.trigger("menu:query", {dob: "2010-01-19"});
+            FormplayerFrontend.getChannel().request("menu:query", {dob: "2010-01-19"});
             let url = Utils.currentUrlToObject();
             assert.deepEqual(url.selections, ['1', 'action 0']);
             assert.deepEqual(_.keys(url.queryData), ["search_command.m1"]);

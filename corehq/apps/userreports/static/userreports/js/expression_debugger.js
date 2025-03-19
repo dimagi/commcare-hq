@@ -1,27 +1,39 @@
-/* globals ace */
-hqDefine('userreports/js/expression_debugger', function () {
+hqDefine('userreports/js/expression_debugger', [
+    "jquery",
+    "underscore",
+    "hqwebapp/js/base_ace",
+    "hqwebapp/js/initial_page_data",
+    "userreports/js/expression_evaluator",
+    "hqwebapp/js/bootstrap3/widgets",
+    "hqwebapp/js/components/select_toggle",
+    "commcarehq",
+], function (
+    $,
+    _,
+    baseAce,
+    initialPageData,
+    expressionModel,
+) {
     $(function () {
-        var expressionModel = hqImport('userreports/js/expression_evaluator').expressionModel;
-        var submitUrl = hqImport("hqwebapp/js/initial_page_data").reverse("expression_evaluator");
-        var expressionEditor = ace.edit($('#expression ~pre')[0]);
-        var docEditor = ace.edit($('#raw_document ~pre')[0]);
+        var submitUrl = initialPageData.reverse("expression_evaluator");
+        var expressionEditor = baseAce.initJsonWidget($("#expression"));
+        var docEditor = baseAce.initJsonWidget($("#raw_document"));
         docEditor.getSession().setValue("{}");
         var sampleExpression = {
             "type": "property_name",
             "property_name": "name",
         };
         var sampleText = JSON.stringify(sampleExpression, null, 2);
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
         expressionEditor.getSession().setValue(sampleText);
         var initialData = {
-            inputType: initial_page_data('input_type'),
-            documentType: initial_page_data('document_type'),
-            documentId: initial_page_data('document_id'),
-            dataSourceId: initial_page_data('data_source_id'),
-            ucrExpressionId: initial_page_data('ucr_expression_id'),
+            inputType: initialPageData.get('input_type'),
+            documentType: initialPageData.get('document_type'),
+            documentId: initialPageData.get('document_id'),
+            dataSourceId: initialPageData.get('data_source_id'),
+            ucrExpressionId: initialPageData.get('ucr_expression_id'),
         };
         $('#expression-debugger').koApplyBindings(
-            expressionModel(expressionEditor, docEditor, submitUrl, initialData),
+            expressionModel.expressionModel(expressionEditor, docEditor, submitUrl, initialData),
         );
     });
 });

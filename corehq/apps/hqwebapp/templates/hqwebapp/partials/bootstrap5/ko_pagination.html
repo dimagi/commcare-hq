@@ -1,0 +1,53 @@
+{% load i18n %}
+<!-- used by corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js -->
+<script type="text/html" id="ko-pagination-template">
+  <div class="py-3" data-bind="css: { 'd-flex justify-content-between': !inlinePageListOnly }">
+    <div data-bind="visible: !inlinePageListOnly,
+                    if: !inlinePageListOnly">
+      <div class="input-group">
+        <div class="input-group-text"><!-- ko text: itemsText --><!-- /ko --></div>
+        <select class="form-select"
+                data-bind="value: perPage,
+                           options: [5, 25, 50, 100],
+                           optionsText: perPageOptionsText">
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <nav aria-label="Page navigation example">
+        <ul class="pagination">
+          <li class="page-item">
+            <a href="#"
+               class="page-link"
+               aria-label="Previous"
+               data-bind="click: previousPage">
+              <span aria-hidden="true">{% trans 'Previous' %}</span>
+            </a>
+          </li>
+          <!-- ko foreach: pagesShown -->
+          <li class="page-item"
+              data-bind="css: { active: $data == $parent.currentPage() },
+                         attr: { 'aria-current': ($data == $parent.currentPage()) ? 'page': undefined } ">
+            <a href="#"
+               class="page-link"
+               data-bind="click: $parent.goToPage">
+              <i class="fa fa-spin fa-spinner"
+                 data-bind="visible: $parent.showSpinner() && $data == $parent.currentPage()"></i>
+              <span data-bind="text: $data, visible: !$parent.showSpinner() || $data != $parent.currentPage()"></span>
+            </a>
+          </li>
+          <!-- /ko -->
+          <li class="page-item">
+            <a href="#"
+               class="page-link"
+               aria-label="Next"
+               data-bind="click: nextPage">
+              <span aria-hidden="true">{% trans 'Next' %}</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</script>

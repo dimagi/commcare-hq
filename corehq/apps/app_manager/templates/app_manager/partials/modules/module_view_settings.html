@@ -27,14 +27,12 @@
           <i class="fa fa-check"></i>{% trans "Multimedia" %}
         </a>
       </li>
-      {% if not module.is_surveys %}
-        {% if add_ons.register_from_case_list or add_ons.case_list_menu_item or module.doc_type == "AdvancedModule" %}
-          <li>
-            <a href="#" data-slug="advanced" data-collapse="1">
-              <i class="fa fa-check"></i>{% trans "Advanced" %}
-            </a>
-          </li>
-        {% endif %}
+      {% if show_advanced_settings %}
+        <li>
+          <a href="#" data-slug="advanced" data-collapse="1">
+            <i class="fa fa-check"></i>{% trans "Advanced" %}
+          </a>
+        </li>
       {% endif %}
     </ul>
   </div>
@@ -128,9 +126,9 @@
                   <label class="{% css_label_class %} control-label">
                     {% trans "Include Forms" %}
                   </label>
-                  <div class="{% css_field_class %}"
+                  <table class="{% css_field_class %}"
                        data-bind="template: {name: 'module-forms-template',
-                                                 foreach: sourceForms()}"></div>
+                                                 foreach: sourceForms()}"></table>
                   <div class="hidden">
                     <select name="excl_form_ids"
                             multiple="multiple"
@@ -140,6 +138,11 @@
                                              selectedOptions: excludedFormIds"></select>
                     {# POST a value, even if no forms are excluded #}
                     <input name="excl_form_ids" type="checkbox" value="0" checked="">
+                    {% if session_endpoints_enabled %}
+                      <div data-bind="foreach: formSessionEndpointIds()">
+                        <input type="hidden" name="form_session_endpoints" data-bind="value: $data">
+                      </div>
+                    {% endif %}
                   </div>
                 </div>
               </div>
@@ -215,7 +218,7 @@
         </div>
       </div>
 
-      {% if not module.is_surveys or show_advanced_settings %}
+      {% if show_advanced_settings %}
         <div class="panel panel-appmanager" data-slug="advanced">
           <div class="panel-heading">
             <h4 class="panel-title panel-title-nolink">{% trans "Advanced" %}</h4>
@@ -252,7 +255,32 @@
             {% endif %}
 
             {% if session_endpoints_enabled %}
-              {% include "app_manager/partials/session_endpoints.html" with module_or_form=module %}
+              {% include "app_manager/partials/module_session_endpoint.html" with module=module %}
+              {% if not module.is_surveys %}
+                {% include "app_manager/partials/case_list_session_endpoint.html" with module=module %}
+              {% endif %}
+            {% endif %}
+
+            {% if request|toggle_enabled:'CASE_LIST_LAZY' and app.cloudcare_enabled %}
+              <div class="form-group">
+              {% include "app_manager/partials/modules/case_list_lazy_loading.html" %}
+              </div>
+            {% endif %}
+
+            {% if request|toggle_enabled:'CASE_LIST_OPTIMIZATIONS' and not module.is_surveys %}
+              <div class="form-group">
+                <label class="control-label {% css_label_class %}">
+                  {% trans "Show Case List Optimizations" %}
+                  <span class="hq-help-template"
+                        data-title="{% trans "Case List Optimizations" %}"
+                        data-content="{% blocktrans %}Set caching and lazy loading for case list columns for better performance. Once saved, reload this page to reveal/hide relevant column on case list. {% endblocktrans %}"
+                  ></span>
+                </label>
+                <div id="show_case_list_optimization_options" class="{% css_field_class %} commcare-feature" data-since-version="2.56">
+                  <input id="show_case_list_optimization_options-input" type="checkbox" data-bind="checked: show_case_list_optimization_options" />
+                  <input type="hidden" name="show_case_list_optimization_options" data-bind="value: show_case_list_optimization_options"/>
+                </div>
+              </div>
             {% endif %}
 
             {% if request|toggle_enabled:'USH_EMPTY_CASE_LIST_TEXT' %}
@@ -268,6 +296,11 @@
               </div>
             </div>
             {% endif %}
+
+            {% if app.supports_module_assertions %}
+              {% include "app_manager/partials/forms/custom_assertions.html" %}
+            {% endif %}
+
           </div><!-- end .panel-body -->
         </div><!-- end .panel -->
       {% endif %}

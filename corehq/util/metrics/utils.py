@@ -1,8 +1,6 @@
 import re
 from datetime import timedelta
 
-from django.conf import settings
-
 WILDCARD = '*'
 
 

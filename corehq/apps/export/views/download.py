@@ -20,7 +20,9 @@ from memoized import memoized
 
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.det.exceptions import DETConfigError
-from corehq.apps.export.det.schema_generator import generate_from_export_instance
+from corehq.apps.export.det.schema_generator import (
+    generate_from_export_instance,
+)
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from soil import DownloadBase
@@ -38,7 +40,8 @@ from corehq.apps.export.const import MAX_NORMAL_EXPORT_SIZE, ALL_CASE_TYPE_EXPOR
 from corehq.apps.export.exceptions import (
     ExportAsyncException,
     ExportFormValidationException,
-    CaseTypeOrAppLimitExceeded
+    CaseTypeOrAppLimitExceeded,
+    NoTablesException
 )
 from corehq.apps.export.export import (
     get_export_download,
@@ -49,16 +52,16 @@ from corehq.apps.export.forms import (
     EmwfFilterFormExport,
     FilterCaseESExportDownloadForm,
     FilterSmsESExportDownloadForm,
+    DatasourceExportDownloadForm,
 )
 from corehq.apps.export.models import FormExportInstance
-from corehq.apps.export.models.new import EmailExportWhenDoneRequest
+from corehq.apps.export.models.new import EmailExportWhenDoneRequest, datasource_export_instance
 from corehq.apps.export.utils import get_export
 from corehq.apps.export.views.utils import (
     ExportsPermissionsManager,
-    get_timezone,
     case_type_or_app_limit_exceeded
 )
-from corehq.apps.hqwebapp.decorators import use_daterangepicker
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_tempusdominus
 from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import media_export_is_too_big
@@ -70,7 +73,10 @@ from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import PAGINATED_EXPORTS
+from corehq.util.timezones.utils import get_timezone
 from corehq.util.view_utils import is_ajax
+from corehq.toggles import EXPORT_DATA_SOURCE_DATA
+from corehq.apps.userreports.models import DataSourceConfiguration
 
 
 class DownloadExportViewHelper(object):
@@ -109,7 +115,7 @@ class DownloadExportViewHelper(object):
 
     def get_filter_form(self, filter_form_data):
         domain_object = Domain.get_by_name(self.domain)
-        timezone = get_timezone(self.domain, self.request.couch_user)
+        timezone = get_timezone(self.request, self.domain)
         filter_form = self.filter_form_class(domain_object, timezone, filter_form_data)
 
         if not filter_form.is_valid():
@@ -151,7 +157,8 @@ class BaseDownloadExportView(BaseProjectDataView):
     # To serve filters for export from mobile_user_and_group_slugs
     export_filter_class = None
 
-    @use_daterangepicker
+    @use_bootstrap5
+    @use_tempusdominus
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)
@@ -173,7 +180,7 @@ class BaseDownloadExportView(BaseProjectDataView):
     @property
     @memoized
     def timezone(self):
-        return get_timezone(self.domain, self.request.couch_user)
+        return get_timezone(self.request, self.domain)
 
     @property
     @memoized
@@ -279,6 +286,19 @@ def _check_export_size(domain, export_instances, export_filters):
         )
 
 
+def _validate_case_export_instances(domain, export_instances):
+    limit_exceeded = case_type_or_app_limit_exceeded(domain)
+    for instance in export_instances:
+        if limit_exceeded and instance.case_type == ALL_CASE_TYPE_EXPORT:
+            raise CaseTypeOrAppLimitExceeded()
+        elif not len(instance.tables):
+            raise NoTablesException(
+                _("There are no sheets to export. If this is a bulk case export then "
+                  "the export configuration might still be busy populating its tables. "
+                  "Please try again later.")
+            )
+
+
 def _check_deid_permissions(permissions, export_instances):
     if not permissions.has_deid_view_permissions:
         for instance in export_instances:
@@ -323,11 +343,9 @@ def prepare_custom_export(request, domain):
     try:
         _check_deid_permissions(permissions, export_instances)
         _check_export_size(domain, export_instances, export_filters)
-        if form_or_case == 'case' and case_type_or_app_limit_exceeded(domain):
-            for export_instance in export_instances:
-                if export_instance.case_type == ALL_CASE_TYPE_EXPORT:
-                    raise CaseTypeOrAppLimitExceeded()
-    except (ExportAsyncException, CaseTypeOrAppLimitExceeded) as e:
+        if form_or_case == 'case':
+            _validate_case_export_instances(domain, export_instances)
+    except (ExportAsyncException, CaseTypeOrAppLimitExceeded, NoTablesException) as e:
         return json_response({
             'error': str(e),
         })
@@ -372,6 +390,13 @@ def poll_custom_export_download(request, domain):
     permissions = ExportsPermissionsManager(form_or_case, domain, request.couch_user)
     permissions.access_download_export_or_404()
     download_id = request.GET.get('download_id')
+
+    if not download_id:
+        return JsonResponse({
+            'error': _('Could not find download. Please refresh page and try again.'),
+            'retry': False,
+        })
+
     try:
         context = get_download_context(download_id)
     except TaskFailedError as e:
@@ -379,7 +404,8 @@ def poll_custom_export_download(request, domain):
             return JsonResponse({
                 'error': _(
                     'This file has more than 256 columns, which is not supported by xls. '
-                    'Please change the output type to csv or xlsx to export this file.')
+                    'Please change the output type to csv or xlsx to export this file.'),
+                'retry': False,
             })
         else:
             notify_exception(
@@ -427,6 +453,7 @@ class DownloadNewFormExportView(BaseDownloadExportView):
 
 @require_POST
 @login_and_domain_required
+@location_safe
 def prepare_form_multimedia(request, domain):
     """Gets the download_id for the multimedia zip and sends it to the
     exportDownloadService in download_export.ng.js to begin polling for the
@@ -507,6 +534,43 @@ class DownloadNewCaseExportView(BaseDownloadExportView):
         }]
 
 
+@location_safe
+class DownloadNewDatasourceExportView(BaseProjectDataView):
+    urlname = "data_export_page"
+    page_title = gettext_noop("Export Data Source Data")
+    template_name = 'export/datasource_export_view.html'
+
+    @use_bootstrap5
+    def dispatch(self, *args, **kwargs):
+        if not EXPORT_DATA_SOURCE_DATA.enabled(self.domain):
+            raise Http404()
+        return super(DownloadNewDatasourceExportView, self).dispatch(*args, **kwargs)
+
+    @property
+    def page_context(self):
+        context = super(DownloadNewDatasourceExportView, self).page_context
+        context["form"] = self.form
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = self.form
+        if not form.is_valid():
+            return HttpResponseBadRequest("Please check your query")
+
+        data_source_id = form.cleaned_data.get('data_source')
+        config = DataSourceConfiguration.get(data_source_id)
+        return _render_det_download(
+            filename=config.display_name,
+            export_instance=datasource_export_instance(config),
+        )
+
+    @property
+    def form(self):
+        if self.request.method == 'POST':
+            return DatasourceExportDownloadForm(self.domain, self.request.POST)
+        return DatasourceExportDownloadForm(self.domain)
+
+
 class DownloadNewSmsExportView(BaseDownloadExportView):
     urlname = 'new_export_download_sms'
     page_title = gettext_noop("Export SMS Messages")
@@ -556,16 +620,24 @@ class DownloadDETSchemaView(View):
     def get(self, request, domain, export_instance_id):
         export_instance = get_properly_wrapped_export_instance(export_instance_id)
         assert domain == export_instance.domain
-        output_file = BytesIO()
-        try:
-            generate_from_export_instance(export_instance, output_file)
-        except DETConfigError as e:
-            return HttpResponse(_('Sorry, something went wrong creating that file: {error}').format(error=e))
 
-        output_file.seek(0)
-        response = HttpResponse(
-            output_file,
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        return _render_det_download(
+            filename=export_instance.name,
+            export_instance=export_instance,
         )
-        response['Content-Disposition'] = f'attachment; filename="{export_instance.name}-DET.xlsx"'
-        return response
+
+
+def _render_det_download(filename, export_instance):
+    output_file = BytesIO()
+    try:
+        generate_from_export_instance(export_instance, output_file)
+    except DETConfigError as e:
+        return HttpResponse(_('Sorry, something went wrong creating that file: {error}').format(error=e))
+
+    output_file.seek(0)
+    response = HttpResponse(
+        output_file,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename}-DET.xlsx"'
+    return response

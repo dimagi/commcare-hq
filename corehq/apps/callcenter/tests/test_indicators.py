@@ -1,10 +1,10 @@
+import uuid
 from collections import namedtuple
+from unittest.mock import patch
 
 from django.core import cache
 from django.db import DEFAULT_DB_ALIAS
 from django.test import TestCase
-
-from unittest.mock import patch
 
 from corehq.apps.callcenter.const import (
     DATE_RANGES,
@@ -23,7 +23,6 @@ from corehq.apps.callcenter.models import (
     CallCenterIndicatorConfig,
     TypedIndicator,
 )
-from corehq.apps.callcenter.sync_usercase import sync_call_center_user_case
 from corehq.apps.callcenter.tests.sql_fixture import (
     clear_data,
     load_custom_data,
@@ -48,14 +47,14 @@ def create_domain_and_user(domain_name, username):
     user = CommCareUser.get_by_username(username)
     if user:
         user.delete(domain_name, deleted_by=None)
-    user = CommCareUser.create(domain_name, username, '***', None, None)
 
+    user_id = str(uuid.uuid4())
     domain.call_center_config.enabled = True
-    domain.call_center_config.case_owner_id = user.user_id
+    domain.call_center_config.case_owner_id = user_id
     domain.call_center_config.case_type = CASE_TYPE
     domain.save()
 
-    sync_call_center_user_case(user, domain_name)
+    user = CommCareUser.create(domain_name, username, '***', None, None, uuid=user_id)
     return domain, user
 
 
@@ -454,7 +453,6 @@ class CallCenterSupervisorGroupTest(BaseCCTests):
         self.domain.save()
 
         self.user = CommCareUser.create(self.domain_name, 'user@' + self.domain_name, '***', None, None)
-        sync_call_center_user_case(self.user, self.domain_name)
 
         load_data(self.domain_name, self.user.user_id)
 
@@ -496,7 +494,6 @@ class CallCenterCaseSharingTest(BaseCCTests):
         self.domain.save()
 
         self.user = CommCareUser.create(self.domain_name, 'user@' + self.domain_name, '***', None, None)
-        sync_call_center_user_case(self.user, self.domain_name)
 
         self.group = Group(
             domain=self.domain_name,
@@ -553,7 +550,6 @@ class CallCenterTestOpenedClosed(BaseCCTests):
         self.domain.save()
 
         self.user = CommCareUser.create(self.domain_name, 'user@' + self.domain_name, '***', None, None)
-        sync_call_center_user_case(self.user, self.domain_name)
 
         load_data(self.domain_name, self.user.user_id, case_opened_by='not me', case_closed_by='not me')
 

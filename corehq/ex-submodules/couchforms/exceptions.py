@@ -1,5 +1,5 @@
 from django.conf import settings
-from couchforms.const import MAGIC_PROPERTY
+from couchforms.const import MAGIC_PROPERTY, VALID_ATTACHMENT_FILE_EXTENSIONS
 
 
 class CouchFormException(Exception):
@@ -67,6 +67,16 @@ class InvalidSubmissionFileExtensionError(UnprocessableFormSubmission):
             "If you use multipart/form-data, please use xml file only for "
             "submitting form xml. You may also do a normal (non-multipart) "
             "with the xml submission as the request body instead\n",
+            422
+        )
+
+
+class InvalidAttachmentFileError(UnprocessableFormSubmission):
+    def __init__(self):
+        super().__init__(
+            "If you use multipart/form-data, please use the following "
+            "supported file extensions for attachments: "
+            f"{', '.join(VALID_ATTACHMENT_FILE_EXTENSIONS)}\n",
             422
         )
 

@@ -1,12 +1,10 @@
+import pytest
 from django.test import TestCase
 from unittest.mock import patch
-from nose.plugins.attrib import attr
 from corehq.apps.es.tests.utils import es_test
 
 import pytz
 
-from corehq.pillows.mappings.xform_mapping import XFORM_ALIAS
-from corehq.pillows.mappings.case_mapping import CASE_ES_ALIAS
 from corehq.apps.es.client import manager
 from corehq.apps.es.cases import case_adapter
 from corehq.apps.es.forms import form_adapter
@@ -15,7 +13,7 @@ from corehq.util.es.elasticsearch import TransportError
 from corehq.apps.export.models.new import CaseExportInstance, FormExportInstance
 
 
-@attr('slow')
+@pytest.mark.slow
 @es_test
 class FormExportInstanceTests(TestCase):
     def setUp(self):
@@ -26,7 +24,6 @@ class FormExportInstanceTests(TestCase):
         self._purge_indices()
         manager.index_create(self.forms.index_name)
         manager.index_put_mapping(self.forms.index_name, self.forms.type, self.forms.mapping)
-        manager.index_put_alias(self.forms.index_name, XFORM_ALIAS)
 
     def tearDown(self):
         self._purge_indices()
@@ -64,7 +61,7 @@ class FormExportInstanceTests(TestCase):
         self.assertEqual(export.get_count(), 2)
 
 
-@attr('slow')
+@pytest.mark.slow
 @es_test
 class CaseExportInstanceTests(TestCase):
     def setUp(self):
@@ -74,7 +71,6 @@ class CaseExportInstanceTests(TestCase):
         self._purge_indices()
         manager.index_create(self.cases.index_name)
         manager.index_put_mapping(self.cases.index_name, self.cases.type, self.cases.mapping)
-        manager.index_put_alias(self.cases.index_name, CASE_ES_ALIAS)
 
         filter_patcher = patch.object(CaseExportInstance, 'get_filters', lambda self: [])
         filter_patcher.start()

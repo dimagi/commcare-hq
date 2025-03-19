@@ -1,0 +1,103 @@
+.full-width {
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+  max-width: none;  // clear any max-widths set by bootstrap, such as in .container
+}
+
+// Applies only to split-screen case search
+#sidebar-region #query-list-contents {
+  background: transparent;
+  @include media-breakpoint-up(lg) {
+    width: 300px;
+  }
+  @include media-breakpoint-down(lg) {
+    max-width: 600px;
+    margin: auto;
+  }
+
+  table {
+    table-layout: fixed;
+    background: white;
+  }
+
+  .query-input-group {
+    margin-right: 18px;
+    margin-bottom: 10px;
+    margin-left: 18px;
+  }
+  .query-caption {
+    margin-top: 8px;
+    margin-right: 10px;
+    margin-left: 8px;
+  }
+
+  .query-caption > div {
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+
+  .mapboxgl-ctrl-geocoder {
+    min-width: 100%;
+    font-size: 1em;
+    > .mapboxgl-ctrl-geocoder--input {
+      height: inherit;
+    }
+  }
+  .select2-container .select2-selection--multiple {
+    min-height: inherit;
+  }
+}
+
+.query-field > .checkbox {
+  &:first-of-type {
+    margin-top: 0;
+  }
+  &:last-of-type {
+    margin-bottom: 0;
+  }
+  input[type="checkbox"] {
+    margin-top: 2.5px;
+  }
+}
+
+.query-description {
+  a {
+    color: $cc-brand-mid;
+  }
+  a:hover {
+    color: $cc-brand-low;
+  }
+}
+
+.search-query-group-header-label {
+  font-size: larger;
+}
+
+.table .search-query-group {   // .table needed for specificity, to override .table stylings
+  background-color: $cc-bg;
+  border: none;
+}
+
+#query-group-content > tr {
+  background-color: white;
+
+  td {
+    border: none;
+  }
+}
+
+#query-properties {
+  > tr:nth-of-type(odd) > :not(.search-query-group) {
+    background-color: $light;
+  }
+
+  td {
+    --bstable-bg-type: none;
+    border-top: 0px;
+  }
+}
+
+.search-query-group .table {
+  border-collapse: separate; margin-bottom: 0px;
+}

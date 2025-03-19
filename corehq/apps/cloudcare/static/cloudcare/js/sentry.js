@@ -1,10 +1,12 @@
-/* global Sentry */
 hqDefine('cloudcare/js/sentry', [
     'hqwebapp/js/initial_page_data',
+    'sentry_browser',
+    'sentry_captureconsole',    // needed for Sentry.Integrations.CaptureConsole
 ], function (
     initialPageData,
+    Sentry,
+    SentryCaptureConsole,
 ) {
-
     let initSentry = function () {
         const sentryConfig = initialPageData.get('sentry');
 
@@ -24,17 +26,17 @@ hqDefine('cloudcare/js/sentry', [
                         dom: false,
                         console: false,
                     }),
-                    new Sentry.Integrations.CaptureConsole({
-                        levels: ["error"]
+                    new SentryCaptureConsole.Integrations.CaptureConsole({
+                        levels: ["error"],
                     }),
                 ],
                 tunnel: initialPageData.reverse('report_sentry_error'),
-                autoSessionTracking: false
+                autoSessionTracking: false,
             });
         }
     };
 
     return {
-        initSentry: initSentry
+        initSentry: initSentry,
     };
 });

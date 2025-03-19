@@ -1,31 +1,30 @@
+
 hqDefine("registry/js/registry_edit", [
     'moment',
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/alert_user',
     'registry/js/registry_text',
     'registry/js/registry_actions',
     'registry/js/registry_logs',
-    'hqwebapp/js/components/inline_edit',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/select2_knockout_bindings.ko',
-    'hqwebapp/js/knockout_bindings.ko', // openModal
-    'hqwebapp/js/main', // makeHqHelp
+    'hqwebapp/js/bootstrap5/knockout_bindings.ko', // openModal
+    'hqwebapp/js/bootstrap5/main', // makeHqHelp
     'hqwebapp/js/multiselect_utils',
+    'hqwebapp/js/components/inline_edit',
+    'commcarehq',
 ], function (
     moment,
     ko,
     _,
     initialPageData,
-    alertUser,
     text,
     actions,
     auditLogs,
-    inlineEdit
+    bootstrap,
 ) {
-    ko.components.register('inline-edit', inlineEdit);
-
-    let InvitationModel = function(data) {
+    let InvitationModel = function (data) {
         let self = data;
         self.statusText = text.getStatusText(self.status);
         self.cssIcon = text.getStatusIcon(self.status);
@@ -37,22 +36,22 @@ hqDefine("registry/js/registry_edit", [
             self.responseDate = moment(self.modified_on).format("D MMM YYYY");
         }
         return self;
-    }
-    let GrantModel = function(currentDomain, data) {
+    };
+    let GrantModel = function (currentDomain, data) {
         let self = data;
         self.canDelete = self.from_domain === currentDomain;
         return self;
-    }
-    let EditModel = function(data, availableCaseTypes, availableDomains, invitedDomains) {
+    };
+    let EditModel = function (data, availableCaseTypes, availableDomains, invitedDomains) {
         const mapping = {
             'copy': ["domain", "current_domain", "is_owner", "slug", "description"],
             'observe': ["name", "is_active", "schema", "invitations", "grants", "domain_invitation"],
             invitations: {
-                create: (options) => InvitationModel(options.data)
+                create: (options) => InvitationModel(options.data),
             },
             grants: {
-                create: (options) => GrantModel(data.current_domain, options.data)
-            }
+                create: (options) => GrantModel(data.current_domain, options.data),
+            },
         };
         const grantSort = (a, b) => {
             // show grants for current domain at the top
@@ -74,7 +73,7 @@ hqDefine("registry/js/registry_edit", [
             return grants.sort(grantSort);
         });
         self.currentDomainGrants = self.grants().filter(
-            (grant) => grant.to_domains.includes(self.current_domain)
+            (grant) => grant.to_domains.includes(self.current_domain),
         ).map((grant) => grant.from_domain).sort();
         self.invitationStatusText = ko.computed(() => text.getStatusText(self.domain_invitation.status()));
         self.invitationStatusClass = ko.computed(() => text.getStatusCssClass(self.domain_invitation.status()));
@@ -94,7 +93,7 @@ hqDefine("registry/js/registry_edit", [
             if (self.domain_invitation.status() !== 'accepted') {
                 allInvitations.delete(self.current_domain);
             }
-           return Array.from(allInvitations);
+            return Array.from(allInvitations);
         });
         self.availableGrantDomains = ko.computed(() => {
             let availableDomains = new Set(self.participatingDomains()),
@@ -107,17 +106,17 @@ hqDefine("registry/js/registry_edit", [
         });
 
         self.savingActiveState = ko.observable(false);
-        self.toggleActiveState = function() {
+        self.toggleActiveState = function () {
             self.savingActiveState(true);
             actions.editAttr(self.slug, "is_active", {"value": !self.is_active()}, (data) => {
                 self.is_active(data.is_active);
             }).always(() => {
                 self.savingActiveState(false);
             });
-        }
+        };
 
         self.inviteDomains = ko.observable([]);
-        self.removeDomain = function (toRemove){
+        self.removeDomain = function (toRemove) {
             self.modalSaving(true);
             actions.removeInvitation(self.slug, toRemove.id, toRemove.domain, () => {
                 self.invitations(self.invitations().filter((invite) => {
@@ -125,22 +124,22 @@ hqDefine("registry/js/registry_edit", [
                 }));
             }).always(() => {
                 self.modalSaving(false);
-                $(".modal").modal('hide');
+                bootstrap.Modal.getOrCreateInstance($(".modal:visible")).hide();
             });
-        }
+        };
 
         self.addDomain = function () {
             self.modalSaving(true);
             actions.addInvitations(self.slug, self.inviteDomains(), (data) => {
                 _.each(data.invitations, (invite) => {
-                   self.invitations.unshift(InvitationModel(invite));
+                    self.invitations.unshift(InvitationModel(invite));
                 });
                 self.inviteDomains([]);
             }).always(() => {
                 self.modalSaving(false);
-                $(".modal").modal('hide');
+                bootstrap.Modal.getOrCreateInstance($(".modal:visible")).hide();
             });
-        }
+        };
 
         self.editedSchema = ko.observable(self.schema());
         self.modalSaving = ko.observable(false);
@@ -150,28 +149,28 @@ hqDefine("registry/js/registry_edit", [
                 self.schema(self.editedSchema());
             }).always(() => {
                 self.modalSaving(false);
-                $(".modal").modal('hide');
+                bootstrap.Modal.getOrCreateInstance($(".modal:visible")).hide();
             });
-        }
+        };
 
         self.grantDomains = ko.observable([]);
         self.cancelGrantEdit = function () {
             self.grantDomains([]);
         };
-        self.createGrant = function() {
+        self.createGrant = function () {
             self.modalSaving(true);
             actions.createGrant(self.slug, self.grantDomains(), (data) => {
                 _.each(data.grants, (grant) => {
-                   self.grants.unshift(GrantModel(self.current_domain, grant));
+                    self.grants.unshift(GrantModel(self.current_domain, grant));
                 });
                 self.grantDomains([]);
             }).always(() => {
                 self.modalSaving(false);
-                $(".modal").modal('hide');
+                bootstrap.Modal.getOrCreateInstance($(".modal:visible")).hide();
             });
-        }
+        };
 
-        self.removeGrant = function(toRemove) {
+        self.removeGrant = function (toRemove) {
             self.modalSaving(true);
             actions.removeGrant(self.slug, toRemove.id, () => {
                 self.grants(self.grants().filter((grant) => {
@@ -179,28 +178,28 @@ hqDefine("registry/js/registry_edit", [
                 }));
             }).always(() => {
                 self.modalSaving(false);
-                $(".modal").modal('hide');
+                bootstrap.Modal.getOrCreateInstance($(".modal:visible")).hide();
             });
-        }
+        };
 
         self.savingInvitation = ko.observable(false);
-        self.acceptInvitation = function() {
+        self.acceptInvitation = function () {
             self.savingInvitation(true);
             actions.acceptInvitation(self.slug, (data) => {
                 ko.mapping.fromJS({"domain_invitation": data.invitation}, self);
             }).always(() => {
                 self.savingInvitation(false);
             });
-        }
+        };
 
-        self.rejectInvitation = function() {
+        self.rejectInvitation = function () {
             self.savingInvitation(true);
             actions.rejectInvitation(self.slug, (data) => {
                 ko.mapping.fromJS({"domain_invitation": data.invitation}, self);
             }).always(() => {
                 self.savingInvitation(false);
             });
-        }
+        };
 
         // DELETE workflow
         self.formDeleteRegistrySent = ko.observable(false);
@@ -221,7 +220,7 @@ hqDefine("registry/js/registry_edit", [
         });
 
         return self;
-    }
+    };
 
     $(function () {
         $("#edit-registry").koApplyBindings(EditModel(

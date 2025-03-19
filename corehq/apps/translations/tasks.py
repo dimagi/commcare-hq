@@ -4,12 +4,12 @@ from zipfile import ZipFile
 
 from django.conf import settings
 from django.core.files.temp import NamedTemporaryFile
-from django.core.mail.message import EmailMessage
 from django.template.defaultfilters import linebreaksbr
 
 import six
 
 from corehq.apps.celery import task
+from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.translations.generators import AppTranslationsGenerator
 from corehq.apps.translations.integrations.transifex.parser import (
     TranslationsParser,
@@ -33,15 +33,17 @@ def delete_resources_on_transifex(domain, data, email):
     result_note = "Hi,\nThe request to delete resources for app {app_id}(version {version}), " \
                   "was completed on project {transifex_project_slug} on transifex. " \
                   "The result is as follows:\n".format(**data)
-    email = EmailMessage(
-        subject='[{}] - Transifex removed translations'.format(settings.SERVER_ENVIRONMENT),
-        body=(result_note +
-              "\n".join([' '.join([sheet_name, result]) for sheet_name, result in delete_status.items()])
-              ),
-        to=[email],
-        from_email=settings.DEFAULT_FROM_EMAIL
+
+    subject = '[{}] - Transifex removed translations'.format(settings.SERVER_ENVIRONMENT)
+    body = (result_note
+            + "\n".join([' '.join([sheet_name, result])for sheet_name, result in delete_status.items()])
+            )
+    send_mail_async.delay(
+        subject, body,
+        recipient_list=[email],
+        domain=domain,
+        use_domain_gateway=True,
     )
-    email.send()
 
 
 @task
@@ -64,7 +66,8 @@ def push_translation_files_to_transifex(domain, data, email):
                                   data.get('transifex_project_slug'),
                                   data.get('version'),
                                   use_version_postfix='yes' in data['use_version_postfix'],
-                                  update_resource=(data['action'] == 'update')
+                                  update_resource=('update_existing_resource' in data
+                                                   and 'yes' in data['update_existing_resource'])
                                   ).send_translation_files()
     data['language'] = data.get('target_lang') or data.get('source_lang')
     if upload_status:
@@ -72,29 +75,34 @@ def push_translation_files_to_transifex(domain, data, email):
                       "for language '{language}' " \
                       "was completed on project {transifex_project_slug} on transifex. " \
                       "The result is as follows:\n".format(**data)
-        email = EmailMessage(
-            subject='[{}] - Transifex pushed translations'.format(settings.SERVER_ENVIRONMENT),
-            body=(result_note +
-                  "\n".join([' '.join([sheet_name, result]) for sheet_name, result in upload_status.items()])
-                  ),
-            to=[email],
-            from_email=settings.DEFAULT_FROM_EMAIL
+
+        subject = '[{}] - Transifex pushed translations'.format(settings.SERVER_ENVIRONMENT)
+        body = (result_note
+                + "\n".join([' '.join([sheet_name, result]) for sheet_name, result in upload_status.items()])
+                )
+        send_mail_async.delay(
+            subject, body,
+            recipient_list=[email],
+            domain=domain,
+            use_domain_gateway=True,
         )
-        email.send()
 
 
 @task
 def pull_translation_files_from_transifex(domain, data, user_email=None):
     def notify_error(error):
-        email = EmailMessage(
-            subject='[{}] - Transifex pulled translations'.format(settings.SERVER_ENVIRONMENT),
-            body="The request could not be completed. Something went wrong with the download. "
-                 "Error raised : {}. "
-                 "If you see this repeatedly and need support, please report an issue. ".format(error),
-            to=[user_email],
-            from_email=settings.DEFAULT_FROM_EMAIL
+        subject = '[{}] - Transifex pulled translations'.format(settings.SERVER_ENVIRONMENT)
+        body = (
+            "The request could not be completed. Something went wrong with the download. "
+            "Error raised: {}. "
+            "If you see this repeatedly and need support, please report an issue.".format(error)
         )
-        email.send()
+        send_mail_async.delay(
+            subject, body,
+            recipient_list=[user_email],
+            domain=domain,
+            use_domain_gateway=True,
+        )
     version = data.get('version')
     transifex = Transifex(domain,
                           data.get('app_id'),
@@ -107,14 +115,15 @@ def pull_translation_files_from_transifex(domain, data, user_email=None):
     try:
         translation_file, filename = transifex.generate_excel_file()
         with open(translation_file.name, 'rb') as file_obj:
-            email = EmailMessage(
+            send_mail_async(
                 subject='[{}] - Transifex pulled translations'.format(settings.SERVER_ENVIRONMENT),
-                body="PFA Translations pulled from transifex.",
-                to=[user_email],
-                from_email=settings.DEFAULT_FROM_EMAIL
+                message="PFA Translations pulled from transifex.",
+                recipient_list=[user_email],
+                filename=filename,
+                content=file_obj.read(),
+                domain=domain,
+                use_domain_gateway=True,
             )
-            email.attach(filename=filename, content=file_obj.read())
-            email.send()
     except Exception as e:
         notify_error(e)
         six.reraise(*sys.exc_info())
@@ -132,8 +141,8 @@ def backup_project_from_transifex(domain, data, email):
                           data.get('transifex_project_slug'),
                           version,
                           use_version_postfix='yes' in data['use_version_postfix'])
-    project_details = transifex.client.project_details().json()
-    target_lang_codes = project_details.get('teams')
+    project_name = transifex.client.project_name
+    target_lang_codes = transifex.client.get_project_langcodes()
     with NamedTemporaryFile(mode='w+b', suffix='.zip') as tmp:
         with ZipFile(tmp, 'w') as zipfile:
             for target_lang in target_lang_codes:
@@ -148,15 +157,15 @@ def backup_project_from_transifex(domain, data, email):
                     zipfile.writestr(filename, file_obj.read())
                 os.remove(translation_file.name)
         tmp.seek(0)
-        email = EmailMessage(
+        send_mail_async(
             subject='[{}] - Transifex backup translations'.format(settings.SERVER_ENVIRONMENT),
-            body="PFA Translations backup from transifex.",
-            to=[email],
-            from_email=settings.DEFAULT_FROM_EMAIL
+            message="PFA Translations backup from transifex.",
+            recipient_list=[email],
+            filename="%s-TransifexBackup.zip" % project_name,
+            content=tmp.read(),
+            domain=domain,
+            use_domain_gateway=True,
         )
-        filename = "%s-TransifexBackup.zip" % project_details.get('name')
-        email.attach(filename=filename, content=tmp.read())
-        email.send()
 
 
 @task
@@ -173,14 +182,15 @@ def email_project_from_hq(domain, data, email):
     try:
         translation_file, __ = parser.generate_excel_file()
         with open(translation_file.name, 'rb') as file_obj:
-            email = EmailMessage(
+            send_mail_async(
                 subject='[{}] - HQ translation download'.format(settings.SERVER_ENVIRONMENT),
-                body="Translations from HQ",
-                to=[email],
-                from_email=settings.DEFAULT_FROM_EMAIL)
-            filename = "{project}-{lang}-translations.xls".format(project=project_slug, lang=lang)
-            email.attach(filename=filename, content=file_obj.read())
-            email.send()
+                message="Translations from HQ",
+                recipient_list=[email],
+                filename="{project}-{lang}-translations.xls".format(project=project_slug, lang=lang),
+                content=file_obj.read(),
+                domain=domain,
+                use_domain_gateway=True,
+            )
     finally:
         try:
             os.remove(translation_file.name)
@@ -192,14 +202,12 @@ def email_project_from_hq(domain, data, email):
 def migrate_project_on_transifex(domain, transifex_project_slug, source_app_id, target_app_id, mappings, email):
     def consolidate_errors_messages():
         error_messages = []
-        for old_id, response in slug_update_responses.items():
-            if response.status_code != 200:
-                error_messages.append("Slug update failed for %s with message %s" % (old_id, response.content))
-        for lang_code, response in menus_and_forms_sheet_update_responses.items():
-            if response.status_code != 200:
-                error_messages.append(
-                    "Menus and forms sheet update failed for lang %s with message %s" % (
-                        lang_code, response.content))
+        for old_id, response in slug_update_errors.items():
+            error_messages.append("Slug update failed for %s with message %s" % (old_id, response))
+        for lang_code, response in menus_and_forms_sheet_update_errors.items():
+            error_messages.append(
+                "Menus and forms sheet update failed for lang %s with message %s" % (
+                    lang_code, response))
         return error_messages
 
     def generate_email_body():
@@ -211,16 +219,17 @@ def migrate_project_on_transifex(domain, transifex_project_slug, source_app_id, 
                 email_body += error_message + "\n"
         return email_body
 
-    slug_update_responses, menus_and_forms_sheet_update_responses = ProjectMigrator(
+    slug_update_errors, menus_and_forms_sheet_update_errors = ProjectMigrator(
         domain,
         transifex_project_slug,
         source_app_id, target_app_id,
         mappings
     ).migrate()
 
-    email = EmailMessage(
+    send_mail_async(
         subject='[{}] - Transifex Project Migration Status'.format(settings.SERVER_ENVIRONMENT),
-        body=linebreaksbr(generate_email_body()),
-        to=[email],
-        from_email=settings.DEFAULT_FROM_EMAIL)
-    email.send()
+        message=linebreaksbr(generate_email_body()),
+        recipient_list=[email],
+        domain=domain,
+        use_domain_gateway=True,
+    )

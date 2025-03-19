@@ -24,7 +24,9 @@ class TestESSort(SimpleTestCase):
 
         expected = [{
             "case_properties.value": {
+                "missing": None,
                 "order": "asc",
+                "nested_path": path,
                 "nested_filter": sort_filter
             }
         }]

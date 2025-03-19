@@ -35,7 +35,6 @@ from corehq.motech.openmrs.exceptions import (
 )
 from corehq.motech.openmrs.repeaters import AtomFeedStatus, OpenmrsRepeater
 from corehq.motech.openmrs.tasks import poll_openmrs_atom_feeds
-from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
 from ...repeaters.tests.data.repeaters import ENCOUNTER_FEED_XML, PATIENT_FEED_XML
 from corehq.motech.requests import Requests
 from corehq.util.test_utils import TestFileMixin
@@ -301,7 +300,6 @@ class ImportEncounterTest(TestCase, TestFileMixin):
     def get_repeater_dict(self, observations, diagnoses):
         return {
             "domain": "test_domain",
-            "repeater_id": "123456",
             "connection_settings": self.connx,
             "white_listed_case_types": ['patient'],
             "openmrs_config": {
@@ -349,11 +347,11 @@ class ImportEncounterTest(TestCase, TestFileMixin):
                     <last_visit_date>2018-01-18</last_visit_date>
                   </update>
                 </case>"""
-            case_block_re = ''.join((l.strip() for l in case_block_re.split('\n'))).replace('»', '')
+            case_block_re = ''.join((x.strip() for x in case_block_re.split('\n'))).replace('»', '')
             ([case_block], domain), kwargs = submit_case_blocks_patch.call_args
             self.assertRegex(case_block, case_block_re)
             self.assertEqual(domain, 'test_domain')
-            self.assertEqual(kwargs['device_id'], 'openmrs-atomfeed-123456')
+            self.assertEqual(kwargs['device_id'], f'openmrs-atomfeed-{self.repeater.id.hex}')
             self.assertEqual(kwargs['xmlns'], 'http://commcarehq.org/openmrs-integration')
 
     def test_get_case_block_kwargs_from_observations(self):
@@ -414,7 +412,7 @@ class ImportEncounterTest(TestCase, TestFileMixin):
                 <parent case_type="patient" relationship="extension">test-case-id</parent>
               </index>
             </case>"""
-        case_block = ''.join((l.strip() for l in case_block.split('\n'))).replace('»', '')
+        case_block = ''.join((x.strip() for x in case_block.split('\n'))).replace('»', '')
         self.assertEqual(case_blocks[0].as_text(), case_block)
 
     def test_get_case_blocks_from_bahmni_diagnoses(self):
@@ -447,7 +445,7 @@ class ImportEncounterTest(TestCase, TestFileMixin):
                 <parent case_type="patient" relationship="extension">test-case-id</parent>
               </index>
             </case>"""
-        case_block = ''.join((l.strip() for l in case_block.split('\n'))).replace('»', '')
+        case_block = ''.join((x.strip() for x in case_block.split('\n'))).replace('»', '')
         self.assertEqual(case_blocks[0].as_text(), case_block)
 
 
@@ -593,13 +591,14 @@ class TestPollOpenmrsAtomFeeds(TestCase, TestFileMixin):
     root = os.path.dirname(__file__)
 
     def setUp(self):
+        from corehq.motech.repeaters.tests.data.repeaters import openmrs_repeater
         super().setUp()
         self.conn = ConnectionSettings.objects.create(
             id=1,
             url="http://abc.com",
-            name="http://abc.com"
+            name="http://abc.com",
+            domain=openmrs_repeater["domain"],
         )
-        from corehq.motech.repeaters.tests.data.repeaters import openmrs_repeater
         self.repeater = OpenmrsRepeater(**openmrs_repeater).save()
 
         self.encounter_feed_xml = inspect.cleandoc(ENCOUNTER_FEED_XML)
@@ -607,10 +606,6 @@ class TestPollOpenmrsAtomFeeds(TestCase, TestFileMixin):
 
         self.patient_feed_xml = inspect.cleandoc(PATIENT_FEED_XML)
         self.patient_feed_elem = etree.XML(self.patient_feed_xml.encode('utf-8'))
-
-    def tearDown(self):
-        delete_all_repeaters()
-        return super().tearDown()
 
     @patch('corehq.motech.openmrs.atom_feed.get_feed_xml')
     @patch('corehq.motech.openmrs.atom_feed.get_patient_by_uuid')

@@ -4,7 +4,6 @@ from django.db import migrations
 
 import jsonfield.fields
 
-import corehq.apps.reports.models
 
 
 class Migration(migrations.Migration):

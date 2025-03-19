@@ -9,8 +9,9 @@ hqDefine('app_manager/js/summary/form_diff',[
     'app_manager/js/summary/utils',
     'hqwebapp/js/layout',
     'app_manager/js/menu',  // enable lang switcher and "Updates to publish" banner
-    'hqwebapp/js/knockout_bindings.ko', // popover
-    'hqwebapp/js/components.ko',    // search box
+    'hqwebapp/js/bootstrap3/knockout_bindings.ko', // popover
+    'hqwebapp/js/components/search_box',
+    'commcarehq',
 ], function ($, _, ko, initialPageData, assertProperties, models, formModels, utils, layout) {
 
     $(function () {
@@ -104,11 +105,11 @@ hqDefine('app_manager/js/summary/form_diff',[
         $("#form-summary-header").koApplyBindings(formSummaryController);
         models.initVersionsBox(
             $("#first-version-selector"),
-            {id: initialPageData.get("first.app_id"), text: initialPageData.get("first.app_version")}
+            {id: initialPageData.get("first.app_id"), text: initialPageData.get("first.app_version")},
         );
         models.initVersionsBox(
             $("#second-version-selector"),
-            {id: initialPageData.get("second.app_id"), text: initialPageData.get("second.app_version")}
+            {id: initialPageData.get("second.app_id"), text: initialPageData.get("second.app_version")},
         );
 
         models.initMenu([firstFormSummaryContent, secondFormSummaryContent], formSummaryMenu);

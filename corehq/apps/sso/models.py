@@ -1,21 +1,27 @@
+import logging
+
 from django.db import models
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.urls import reverse
+from django.utils.translation import gettext_lazy
 
 from corehq.apps.accounting.models import BillingAccount, Subscription
 from corehq.apps.sso import certificates
 from corehq.apps.sso.exceptions import ServiceProviderCertificateError
+from corehq.apps.sso.utils.entra import get_all_usernames_of_the_idp_from_entra
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from corehq.util.quickcache import quickcache
 
+log = logging.getLogger(__name__)
+
 
 class IdentityProviderType:
-    AZURE_AD = 'azure_ad'
+    ENTRA_ID = 'azure_ad'  # Microsoft renamed Entra ID to Azure ID after implementing this feature
     ONE_LOGIN = 'one_login'
     OKTA = 'okta'
     CHOICES = (
-        (AZURE_AD, "Azure AD"),
+        (ENTRA_ID, "Entra ID"),
         (ONE_LOGIN, "One Login"),
         (OKTA, "Okta"),
     )
@@ -33,7 +39,7 @@ class IdentityProviderProtocol:
     def get_supported_types(cls):
         return {
             cls.SAML: (
-                (IdentityProviderType.AZURE_AD, "Azure AD"),
+                (IdentityProviderType.ENTRA_ID, "Entra ID"),
             ),
             cls.OIDC: (
                 (IdentityProviderType.ONE_LOGIN, "One Login"),
@@ -68,18 +74,26 @@ class ServiceProviderCertificate:
         self.date_expires = certificates.get_expiration_date(cert)
 
 
+VALID_API_EXPIRATION_OPTIONS = [
+    (365, gettext_lazy('1 Year')),
+    (180, gettext_lazy('180 Days')),
+    (120, gettext_lazy('120 Days')),
+    (60, gettext_lazy('60 Days')),
+    (30, gettext_lazy('30 Days'))
+]
+
+
 class IdentityProvider(models.Model):
     """
     This stores the information necessary to make a SAML request to an external
-    IdP. Right now this process supports Azure AD and the plan is to add
-    support for other identity provider types in the future.
+    IdP.
     """
     # these three fields must only ever be editable by Accounting admins
     name = models.CharField(max_length=128)
     slug = models.CharField(max_length=256, db_index=True, unique=True)
     idp_type = models.CharField(
         max_length=50,
-        default=IdentityProviderType.AZURE_AD,
+        default=IdentityProviderType.ENTRA_ID,
         choices=IdentityProviderType.CHOICES,
     )
     protocol = models.CharField(
@@ -122,7 +136,7 @@ class IdentityProvider(models.Model):
     date_idp_cert_expiration = models.DateTimeField(blank=True, null=True)
 
     # Requires that <saml:Assertion> elements received by the SP are encrypted.
-    # In Azure AD this requires that Token Encryption is enabled, a premium feature
+    # In Entra ID this requires that Token Encryption is enabled, a premium feature
     require_encrypted_assertions = models.BooleanField(default=False)
 
     # as the service provider, this will store our x509 certificates and
@@ -142,6 +156,18 @@ class IdentityProvider(models.Model):
     created_by = models.EmailField()
     last_modified = models.DateTimeField(auto_now=True)
     last_modified_by = models.EmailField()
+
+    # for auto-deactivation web user purposes
+    enable_user_deactivation = models.BooleanField(default=False)
+    api_host = models.TextField(default="")  # tenant id
+    api_id = models.TextField(default="")  # application (client) id in Entra ID
+    api_secret = models.TextField(default="")
+    date_api_secret_expiration = models.DateField(blank=True, null=True)
+
+    always_show_user_api_keys = models.BooleanField(default=False)
+    max_days_until_user_api_key_expiration = models.IntegerField(
+        default=None, null=True, blank=True, choices=VALID_API_EXPIRATION_OPTIONS
+    )
 
     class Meta:
         app_label = 'sso'
@@ -289,10 +315,26 @@ class IdentityProvider(models.Model):
         for domain in self.get_active_projects():
             self.clear_domain_caches(domain)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__original_max_api_expiration = self.max_days_until_user_api_key_expiration
+
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         self.clear_all_email_domain_caches()
         self.clear_all_domain_subscriber_caches()
+
+        if self._api_expiration_date_has_become_more_restrictive():
+            from corehq.apps.sso.tasks import update_sso_user_api_key_expiration_dates
+            update_sso_user_api_key_expiration_dates.delay(self.id)
+
+    def _api_expiration_date_has_become_more_restrictive(self):
+        if self.max_days_until_user_api_key_expiration is None or \
+                self.max_days_until_user_api_key_expiration == self.__original_max_api_expiration:
+            return False
+
+        return self.__original_max_api_expiration is None or \
+            self.max_days_until_user_api_key_expiration < self.__original_max_api_expiration
 
     def create_trust_with_domain(self, domain, username):
         """
@@ -396,6 +438,40 @@ class IdentityProvider(models.Model):
                 and SsoTestUser.objects.filter(username=username).exists()):
             return idp
         return None
+
+    def get_remote_member_usernames(self):
+        '''
+        return a list of member emails in the Identity Provider
+        '''
+        if self.idp_type == IdentityProviderType.ENTRA_ID:
+            return get_all_usernames_of_the_idp_from_entra(self)
+        else:
+            raise NotImplementedError("Not implemented")
+
+    def get_local_member_usernames(self):
+        '''
+        returns a list of WebUser usernames that is governed by the idp
+        '''
+        usernames_in_account = set(self.owner.get_web_user_usernames())
+
+        if self.login_enforcement_type == LoginEnforcementType.GLOBAL:
+            authenticated_domains = AuthenticatedEmailDomain.objects.filter(identity_provider=self)
+            exempt_usernames = UserExemptFromSingleSignOn.objects.filter(email_domain__in=authenticated_domains
+                                                                         ).values_list('username', flat=True)
+            authenticated_email_domains = authenticated_domains.values_list('email_domain', flat=True)
+
+            usernames = []
+
+            for username in usernames_in_account:
+                if username not in exempt_usernames and (get_email_domain_from_username(username)
+                                                         in authenticated_email_domains):
+                    usernames.append(username)
+            return usernames
+
+        if self.login_enforcement_type == LoginEnforcementType.TEST:
+            test_usernames = set(SsoTestUser.objects.filter(email_domain__identity_provider__slug=self.slug
+                                                            ).values_list('username', flat=True))
+            return list(test_usernames.intersection(usernames_in_account))
 
 
 @receiver(post_save, sender=Subscription)

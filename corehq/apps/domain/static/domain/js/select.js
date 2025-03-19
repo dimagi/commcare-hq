@@ -4,7 +4,8 @@ hqDefine("domain/js/select", [
     'knockout',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/components.ko',    // search box
+    'hqwebapp/js/components/search_box',
+    'commcarehq',
 ], function (
     $,
     _,

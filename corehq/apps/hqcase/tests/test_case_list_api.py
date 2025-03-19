@@ -16,6 +16,7 @@ from corehq.apps.es.tests.utils import (
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.util.test_utils import generate_cases, privilege_enabled
+from corehq.apps.data_dictionary.models import CaseType
 
 from ..api.core import UserError
 from ..api.get_list import MAX_PAGE_SIZE, get_list
@@ -34,6 +35,8 @@ class TestCaseListAPI(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         case_search_es_setup(cls.domain, cls._get_case_blocks())
+        cls.case_type_obj = CaseType(domain=cls.domain, name='person')
+        cls.case_type_obj.save()
 
     @staticmethod
     def _get_case_blocks():
@@ -75,6 +78,7 @@ class TestCaseListAPI(TestCase):
     @classmethod
     def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_cases()
+        cls.case_type_obj.delete()
         super().tearDownClass()
 
     def test_pagination(self):
@@ -101,6 +105,23 @@ class TestCaseListAPI(TestCase):
             [c['external_id'] for c in res['cases']]
         )
         self.assertNotIn('next', res)  # No pages after this one
+
+    def test_deprecated_case_type(self):
+        self.case_type_obj.is_deprecated = True
+        self.case_type_obj.save()
+
+        query_dict = QueryDict('')
+        res = get_list(self.domain, self.couch_user, query_dict)
+        self.assertEqual(res['matching_records'], 7)
+        self.assertNotIn('next', res)
+
+        query_dict = QueryDict('include_deprecated=True')
+        res = get_list(self.domain, self.couch_user, query_dict)
+        self.assertEqual(res['matching_records'], 7)
+
+        query_dict = QueryDict('include_deprecated=False')
+        res = get_list(self.domain, self.couch_user, query_dict)
+        self.assertEqual(res['matching_records'], 2)
 
 
 @generate_cases([

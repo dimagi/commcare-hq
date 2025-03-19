@@ -1,9 +1,9 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main 'custom_data_fields/js/custom_data_fields' %}
+{% js_entry 'custom_data_fields/js/custom_data_fields' %}
 
 {% block stylesheets %}
   {{ block.super }}
@@ -20,7 +20,55 @@
 {% block page_content %}
   {% initial_page_data 'custom_fields' custom_fields %}
   {% initial_page_data 'custom_fields_profiles' custom_fields_profiles %}
+  {% initial_page_data 'can_edit_linked_data' can_edit_linked_data %}
   {% initial_page_data 'can_view_regex_field_validation' can_view_regex_field_validation %}
+  {% initial_page_data 'required_for_options' required_for_options %}
+  {% initial_page_data 'profile_required_for_options' profile_required_for_options %}
+  {% initial_page_data 'profile_required_for_user_type' profile_required_for_user_type %}
+    <p class="float-end ko-template" id="lock-container" data-bind="if: hasLinkedData">
+      <span data-bind="ifnot: unlockLinkedData">
+        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#edit-warning-modal">
+          <i class="fa fa-link"></i>
+          {% trans 'Unlock Linked Fields For Me' %}
+        </button>
+      </span>
+      <span data-bind="if: unlockLinkedData">
+        <button class="btn btn-outline-primary" data-bind="click: toggleLinkedLock">
+          <i class="fa fa-link"></i>
+          {% trans 'Lock Linked Fields For Me' %}
+        </button>
+      </span>
+
+    <p class="float-end ko-template" id="lock-container" data-bind="if: hasLinkedData">
+      <!-- ko if: allowEdit -->
+        <!-- ko ifnot: unlockLinkedData -->
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#edit-warning-modal">
+            <i class="fa fa-link"></i>
+            {% trans 'Unlock Linked Fields For Me' %}
+          </button>
+        <!-- /ko -->
+        <!-- ko if: unlockLinkedData -->
+          <button class="btn btn-primary" data-bind="click: toggleLinkedLock">
+            <i class="fa fa-link"></i>
+            {% trans 'Lock Linked Fields For Me' %}
+          </button>
+        <!-- /ko -->
+      <!-- /ko -->
+      <!-- ko ifnot: allowEdit -->
+        <i class="fa fa-link"></i>
+        Contains Linked Roles
+      <!-- /ko -->
+      <span class="hq-help-template"
+          data-placement="left"
+          data-title="{% trans 'Linked Configurations' %}"
+          data-content="
+            {% blocktrans %}
+              Linked configurations are controlled from a separate, linked project space.
+                <a href='https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management' target='_blank'>Learn more</a>.
+            {% endblocktrans %}">
+      </span>
+    </p>
+
   <form id="custom-fields-form"
         action="."
         method="POST"
@@ -33,42 +81,45 @@
     {% if custom_fields_form.errors %}
       {% for field, errors in custom_fields_form.errors.items %}
         {% for error in errors %}
-          <div class="alert alert-danger">
+          <div class="alert alert-dismissible alert-danger">
             {{ error }}
-            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% trans_html_attr "Close" %}"></button>
           </div>
         {% endfor %}
       {% endfor %}
     {% endif %}
 
     {% if show_profiles %}
-      <ul class="nav nav-tabs">
-        <li {% if not profiles_active %}class="active"{% endif %}><a data-toggle="tab" href="#tabs-fields">{% trans "Fields" %}</a></li>
-        <li {% if profiles_active %}class="active"{% endif %}><a data-toggle="tab" href="#tabs-profiles">{% trans "Profiles" %}</a></li>
+      <ul class="nav nav-tabs" role="tablist">
+        <li role="presentation" class="nav-item">
+          <a class="nav-link{% if not profiles_active %} active{% endif %}" role="tab" data-bs-toggle="tab" href="#tabs-fields">{% trans "Fields" %}</a>
+        </li>
+        <li role="presentation" class="nav-item {% if profiles_active %} active{% endif %}">
+          <a class="nav-link" role="tab" data-bs-toggle="tab" href="#tabs-profiles">{% trans "Profiles" %}</a>
+        </li>
       </ul>
       <div class="spacer"></div>
     {% endif %}
 
     <div class="tab-content">
-      <div class="tab-pane fade{% if not show_profiles or not profiles_active %} in active{% endif %}" id="tabs-fields">
+      <div class="tab-pane{% if not show_profiles or not profiles_active %} active{% endif %}" role="tabpanel" id="tabs-fields">
         {% include 'custom_data_fields/partials/fields_tab.html' %}
         {% if show_purge_existing %}
           {% include 'custom_data_fields/partials/purge_existing_fields.html' %}
         {% endif %}
       </div>
-      <div class="tab-pane fade{% if show_profiles and profiles_active %} in active{% endif %}" id="tabs-profiles">
+      <div class="tab-pane{% if show_profiles and profiles_active %} active{% endif %}" role="tabpanel" id="tabs-profiles">
         {% include 'custom_data_fields/partials/profiles_tab.html' %}
       </div>
     </div>
 
-    <div class="form-actions">
-      <div class="col-sm-12">
-        <button id="save-custom-fields" class="btn btn-primary disable-on-submit" type="submit"{% if disable_save %} disabled{% endif %}>
-            {% trans "Save" %}
-        </button>
-      </div>
+    <div class="col-md-12">
+      <button id="save-custom-fields" class="btn btn-primary disable-on-submit" type="submit"{% if disable_save %} disabled{% endif %}>
+          {% trans "Save" %}
+      </button>
     </div>
 
     {% include 'custom_data_fields/partials/modal_delete.html' %}
+    {% include 'custom_data_fields/partials/modal_edit.html' %}
   </form>
 {% endblock %}

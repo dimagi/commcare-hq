@@ -10,7 +10,6 @@ from corehq.util.view_utils import absolute_reverse
 
 from datetime import datetime, timedelta
 
-from django.conf import settings
 from django.template.loader import render_to_string
 
 import pytz
@@ -35,7 +34,8 @@ def notify_about_to_expire_api_keys():
         .filter(is_active=True) \
         .exclude(expiration_date=None) \
         .exclude(expiration_date__lt=datetime.now()) \
-        .exclude(expiration_date__gt=datetime.today() + timedelta(days=5))
+        .exclude(expiration_date__gt=datetime.today() + timedelta(days=5)) \
+        .filter(user__is_active=True)
 
     url = absolute_reverse(ApiKeyView.urlname)
 
@@ -53,4 +53,5 @@ def notify_about_to_expire_api_keys():
 
         send_html_email_async.delay(subject, key.user.email, html_content,
                                     text_content=text_content,
-                                    email_from=settings.DEFAULT_FROM_EMAIL)
+                                    domain=key.domain,
+                                    use_domain_gateway=True)

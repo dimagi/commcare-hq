@@ -8,24 +8,26 @@ hqDefine('export/js/models', [
     'jquery',
     'knockout',
     'underscore',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
     'analytix/js/google',
     'analytix/js/kissmetrix',
     'export/js/const',
     'export/js/utils',
-    'hqwebapp/js/validators.ko',        // needed for validation of customPathString
-    'hqwebapp/js/knockout_bindings.ko', // needed for multirow_sortable binding
+    'hqwebapp/js/bootstrap5/validators.ko',        // needed for validation of customPathString
+    'hqwebapp/js/bootstrap5/knockout_bindings.ko', // needed for multirow_sortable binding
 ], function (
     $,
     ko,
     _,
+    bootstrap,
     initialPageData,
     toggles,
     googleAnalytics,
     kissmetricsAnalytics,
     constants,
-    utils
+    utils,
 ) {
     /**
      * readablePath
@@ -80,6 +82,7 @@ hqDefine('export/js/models', [
         var self = this;
         ko.mapping.fromJS(instanceJSON, ExportInstance.mapping, self);
 
+        self.geoProperties = options.geoProperties;
         self.buildSchemaProgress = ko.observable(0);
         self.showBuildSchemaProgressBar = ko.observable(false);
         self.errorOnBuildSchema = ko.observable(false);
@@ -221,7 +224,10 @@ hqDefine('export/js/models', [
 
         // We've already built the schema and now the user is clicking the button to refresh the page
         if (this.buildSchemaProgress() === 100) {
-            window.location.reload(false);
+            // This param will let us know to automatically enable the filter after the page refreshes
+            let pageUrl = new URL(window.location.href);
+            pageUrl.searchParams.append('delete_filter_enabled', 'True');
+            window.location.href = pageUrl;
             return;
         }
 
@@ -293,7 +299,7 @@ hqDefine('export/js/models', [
                         response.progress.current !== response.progress.total) {
                     window.setTimeout(
                         self.checkBuildSchemaProgress.bind(self, response.download_id, successHandler, errorHandler),
-                        2000
+                        2000,
                     );
                 }
             },
@@ -322,6 +328,8 @@ hqDefine('export/js/models', [
             return gettext('Excel (older versions)');
         } else if (format === constants.EXPORT_FORMATS.XLSX) {
             return gettext('Excel 2007+');
+        } else if (format === constants.EXPORT_FORMATS.GEOJSON) {
+            return gettext('GeoJSON');
         }
     };
 
@@ -344,7 +352,7 @@ hqDefine('export/js/models', [
     ExportInstance.prototype.getSharingHelpText = gettext(
         '<strong>Private</strong>: Only you can edit and export.'
         + '<br/> <strong>Export Only</strong>: You can edit and export, other users can only export.'
-        + '<br/> <strong>Edit and Export</strong>: All users can edit and export.'
+        + '<br/> <strong>Edit and Export</strong>: All users can edit and export.',
     );
 
     /**
@@ -445,7 +453,7 @@ hqDefine('export/js/models', [
         table.showDeleted(!table.showDeleted());
 
         if (this.numberOfAppsToProcess > 0 && table.showDeleted()) {
-            $('#export-process-deleted-applications').modal('show');
+            bootstrap.Modal.getOrCreateInstance('#export-process-deleted-applications').show();
         }
     };
 
@@ -524,6 +532,7 @@ hqDefine('export/js/models', [
             'xmlns',
             'is_daily_saved_export',
             'show_det_config_download',
+            'selected_geo_property',
         ],
         tables: {
             create: function (options) {
@@ -545,10 +554,12 @@ hqDefine('export/js/models', [
      */
     var TableConfiguration = function (tableJSON) {
         var self = this;
+        const urlParams = new URLSearchParams(window.location.search);
         // Whether or not to show advanced columns in the UI
         self.showAdvanced = ko.observable(false);
-        self.showDeleted = ko.observable(false);
-        self.showDeprecated = ko.observable(false);
+        self.showDeleted = ko.observable(urlParams.get('delete_filter_enabled') === 'True');
+
+        self.showDeprecated = ko.observable(urlParams.get('load_deprecated') === 'True');
         ko.mapping.fromJS(tableJSON, TableConfiguration.mapping, self);
     };
 
@@ -567,7 +578,7 @@ hqDefine('export/js/models', [
         const queryString = window.location.search;
         const urlParams = new URLSearchParams(queryString);
         if (urlParams.get('load_deprecated') !== 'True' && table.showDeprecated()) {
-            $('#export-process-deprecated-properties').modal('show');
+            bootstrap.Modal.getOrCreateInstance('#export-process-deprecated-properties').show();
         }
     };
 

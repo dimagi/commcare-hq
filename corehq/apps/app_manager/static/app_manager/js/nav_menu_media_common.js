@@ -1,15 +1,13 @@
-/* globals HQMediaFileUploadController */
 hqDefine("app_manager/js/nav_menu_media_common", function () {
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
-        uploaders = {};
+    const initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+        uploadersModule = hqImport("hqmedia/js/uploaders");
+    let uploaders = {};
 
-    _.each(initial_page_data("multimedia_upload_managers"), function (uploader, type) {
-        uploaders[type] = new HQMediaFileUploadController(
+    _.each(initialPageData.get("multimedia_upload_managers"), function (uploader, type) {
+        uploaders[type] = uploadersModule.uploader(
             uploader.slug,
-            uploader.media_type,
-            uploader.options
+            uploader.options,
         );
-        uploaders[type].init();
     });
 
     return {

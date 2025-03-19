@@ -1,11 +1,24 @@
-/*global Backbone, Marionette */
-
-hqDefine("cloudcare/js/formplayer/users/views", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        Toggles = hqImport("hqwebapp/js/toggles"),
-        usersUtils = hqImport("cloudcare/js/formplayer/users/utils");
-
+hqDefine("cloudcare/js/formplayer/users/views", [
+    'jquery',
+    'underscore',
+    'backbone',
+    'backbone.marionette',
+    'hqwebapp/js/toggles',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/users/models',
+    'cloudcare/js/formplayer/users/utils',
+], function (
+    $,
+    _,
+    Backbone,
+    Marionette,
+    toggles,
+    FormplayerFrontend,
+    formplayerUtils,
+    usersModels,
+    usersUtils,
+) {
     /**
      * RestoreAsBanner
      *
@@ -13,31 +26,36 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
      * currently logged in (or restoring) as.
      */
     var RestoreAsBanner = Marionette.View.extend({
-        template: _.template($("#restore-as-banner-template").html() || ""),
-        className: 'restore-as-banner-container',
         ui: {
             clear: '.js-clear-user',
         },
         events: {
             'click @ui.clear': 'onClickClearUser',
         },
+        getTemplate: function () {
+            if (this.model.restoreAs) {
+                const templateId = this.options.smallScreen || usersModels.getCurrentUser().isAppPreview ?
+                    "#restore-as-banner-template" :
+                    "#restore-as-pill-template";
+                return _.template($(templateId).html() || "");
+            } else {
+                return _.template("");
+            }
+        },
         templateContext: function () {
             var template = "";
-            if (Toggles.toggleEnabled('WEB_APPS_DOMAIN_BANNER')) {
+            if (toggles.toggleEnabled('WEB_APPS_DOMAIN_BANNER')) {
                 template = gettext("Working as <b><%- restoreAs %></b> in <b><%- domain %></b>.");
             } else {
                 template = gettext("Working as <b><%- restoreAs %></b>.");
             }
             template += " <a class='js-clear-user'>" + gettext("Use <%- username %>.") + "</a>";
-
-            var message = _.template(template)({
-                restoreAs: this.model.restoreAs,
-                username: this.model.getDisplayUsername(),
-                domain: FormplayerFrontend.getChannel().request('currentUser').domain,
-            });
             return {
-                message: message,
-                restoreAs: this.model.restoreAs,
+                message: _.template(template)({
+                    restoreAs: this.model.restoreAs,
+                    username: this.model.getDisplayUsername(),
+                    domain: usersModels.getCurrentUser().domain,
+                }),
             };
         },
         onClickClearUser: function () {
@@ -67,22 +85,18 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
         },
         onClickUser: function () {
             formplayerUtils.confirmationModal({
-                title: _.template(gettext('Log in as <%= username %>?'))({username: this.model.get('username')}),
+                title: _.template(gettext('Log in as <%- username %>?'))({username: this.model.get('username')}),
                 message: _.template($('#user-data-template').html())(
-                    { user: this.model.toJSON() }
+                    { user: this.model.toJSON() },
                 ),
-                confirmText: gettext('Yes, log in as this user'),
+                confirmText: gettext('Log in'),
                 onConfirm: function () {
                     usersUtils.Users.logInAsUser(this.model.get('username'));
-                    FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
-                        new RestoreAsBanner({
-                            model: FormplayerFrontend.getChannel().request('currentUser'),
-                        })
-                    );
+                    FormplayerFrontend.showRestoreAs(usersModels.getCurrentUser());
                     var loginAsNextOptions = FormplayerFrontend.getChannel().request('getLoginAsNextOptions');
                     if (loginAsNextOptions) {
                         FormplayerFrontend.trigger("clearLoginAsNextOptions");
-                        hqRequire(["cloudcare/js/formplayer/menus/controller"], function (MenusController) {
+                        import("cloudcare/js/formplayer/menus/controller").then(function (MenusController) {
                             MenusController.selectMenu(loginAsNextOptions);
                         });
                     } else {
@@ -139,24 +153,24 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
         },
         templateContext: function () {
-            var paginationOptions = formplayerUtils.paginateOptions(this.model.get('page') - 1, this.totalPages());
-            return {
+            const paginationOptions = formplayerUtils.paginateOptions(
+                this.model.get('page') - 1,
+                this.totalPages(),
+                this.collection.total,
+            );
+            return _.extend(paginationOptions, {
+                isAppPreview: usersModels.getCurrentUser().isAppPreview,
                 total: this.collection.total,
                 totalPages: this.totalPages(),
                 limit: this.limit,
-                rowRange: [10, 25, 50, 100],
-                startPage: paginationOptions.startPage,
-                endPage: paginationOptions.endPage,
-                pageCount: paginationOptions.pageCount,
                 currentPage: this.model.get('page') - 1,
-                pageNumLabel: _.template(gettext("Page <%- num %>")),
-            };
+            });
         },
         navigate: function () {
-            FormplayerFrontend.navigate(
+            formplayerUtils.navigate(
                 '/restore_as/' +
                 this.model.get('page') + '/' +
-                this.model.get('query')
+                this.model.get('query'),
             );
         },
         totalPages: function () {

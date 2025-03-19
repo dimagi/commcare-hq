@@ -4,11 +4,10 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
     'knockout',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/base_ace',  // ace editor for UCR filter
-    'hqwebapp/js/components.ko',    // select toggle widget
+    'hqwebapp/js/components/select_toggle',
 ], function ($, _, ko, initialPageData, baseAce) {
 
     var CaseRuleCriteria = function (initial, constants, caseTypeObservable) {
-        'use strict';
         var self = {};
 
         self.constants = constants;
@@ -76,18 +75,18 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
                         match_type: value.match_type() || '',
                     });
                 } else if (value.koTemplateId === 'advanced-date-case-property-filter') {
-                    var property_value = value.property_value();
-                    if ($.isNumeric(property_value) && value.plus_minus() === '-') {
+                    var propertyValue = value.property_value();
+                    if ($.isNumeric(propertyValue) && value.plus_minus() === '-') {
                         // The value of plus_minus tells us if we should negate the number
                         // given in property_value(). We only attempt to do this if it
                         // actually represents a number. If it doesn't, let the django
                         // validation catch it.
-                        property_value = -1 * Number.parseInt(property_value);
-                        property_value = property_value.toString();
+                        propertyValue = -1 * Number.parseInt(propertyValue);
+                        propertyValue = propertyValue.toString();
                     }
                     result.push({
                         property_name: value.property_name() || '',
-                        property_value: property_value || '',
+                        property_value: propertyValue || '',
                         match_type: value.match_type() || '',
                     });
                 }
@@ -106,13 +105,14 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
         });
 
         self.locationFilterDefinition = ko.computed(function () {
-            var result = [];
+            var result = undefined;
             $.each(self.criteria(), function (index, value) {
                 if (value.koTemplateId === 'locations-filter') {
-                    result.push({
+                    result = {
                         location_id: value.location_id() || '',
                         include_child_locations: value.include_child_locations() || '',
-                    });
+                    };
+                    return false;  // break -- only a single location is supported
                 }
             });
             return JSON.stringify(result);
@@ -198,8 +198,10 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
                     obj.match_type(value.match_type);
                     self.criteria.push(obj);
                 } else if (
-                    value.match_type === constants.MATCH_DAYS_BEFORE ||
-                    value.match_type === constants.MATCH_DAYS_AFTER
+                    value.match_type === constants.MATCH_DAYS_LESS_THAN ||
+                    value.match_type === constants.MATCH_DAYS_LESS_OR_EQUAL ||
+                    value.match_type === constants.MATCH_DAYS_GREATER_THAN ||
+                    value.match_type === constants.MATCH_DAYS_GREATER_OR_EQUAL
                 ) {
                     var days = Number.parseInt(value.property_value);
                     if (days === 0) {
@@ -258,7 +260,6 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
         };
 
         var notModifiedSinceDefinition = function (koTemplateId) {
-            'use strict';
             var self = {};
             self.koTemplateId = koTemplateId;
 
@@ -268,7 +269,6 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
         };
 
         var matchPropertyDefinition = function (koTemplateId) {
-            'use strict';
             var self = {};
             self.koTemplateId = koTemplateId;
             self.plus_minus = ko.observable();
@@ -288,7 +288,6 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
         };
 
         var customMatchDefinition = function (koTemplateId) {
-            'use strict';
             var self = {};
             self.koTemplateId = koTemplateId;
 
@@ -298,7 +297,6 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
         };
 
         var closedParentDefinition = function (koTemplateId) {
-            'use strict';
             var self = {};
             self.koTemplateId = koTemplateId;
 
@@ -307,7 +305,6 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
         };
 
         var locationDefinition = function (koTemplateId) {
-            'use strict';
             var self = {};
             self.koTemplateId = koTemplateId;
 
@@ -319,7 +316,6 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
         };
 
         var ucrFilterDefinition = function (koTemplateId) {
-            'use strict';
             var self = {};
             self.koTemplateId = koTemplateId;
             self.configured_filter = ko.observable();

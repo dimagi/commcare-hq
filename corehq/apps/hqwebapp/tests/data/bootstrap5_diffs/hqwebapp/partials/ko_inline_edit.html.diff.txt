@@ -1,0 +1,92 @@
+--- 
++++ 
+@@ -1,52 +1,57 @@
+ <script type="text/html" id="ko-inline-edit-template">
+-  <div class="ko-inline-edit inline" data-bind="css: {'has-error': hasError()}">
+-    <div class="read-only" data-bind="visible: !isEditing(), click: edit, attr: readOnlyAttrs, style: {cursor: disallow_edit ? 'default' : 'pointer'}">
+-            <span data-bind="visible: isSaving()" class="pull-right">
+-                <i class="fa fa-spin fa-spinner"></i>
+-            </span>
++  <div class="ko-inline-edit inline"
++       data-bind="css: {'has-error': hasError()}">
++    <div class="read-only"
++         data-bind="visible: !isEditing(), click: edit, attr: readOnlyAttrs, style: {cursor: disallow_edit ? 'default' : 'pointer'}">
++      <span data-bind="visible: isSaving()" class="float-end">
++        <i class="fa fa-spin fa-spinner"></i>
++      </span>
+       <!-- ko if: iconClass -->
+-      <span class="prefixed-icon" data-bind="css: containerClass">
+-                <i data-bind="css: iconClass"></i>
+-            </span>
++        <span class="prefixed-icon" data-bind="css: containerClass">
++          <i data-bind="css: iconClass"></i>
++        </span>
+       <!-- /ko -->
+       <!-- ko if: lang -->
+-      <span class="btn btn-xs btn-info btn-langcode-preprocessed" data-bind="text: lang, visible: !value()"></span>
++        <span class="btn btn-sm btn-info btn-langcode-preprocessed" data-bind="text: lang, visible: !value()"></span>
+       <!-- /ko -->
+       <span data-bind="text: value, visible: value, attr: {'class': containerClass + ' ' + readOnlyClass + ' text'}"></span>
+-      <span class="placeholder text-muted" data-bind="text: placeholder, css: containerClass, visible: !value()"></span>
+-      <span class="inline-edit-icon" data-bind="css: containerClass, visible: !disallow_edit"><i class="fa fa-pencil"></i></span>
++      <span class="text-secondary"
++            data-bind="text: placeholder, css: containerClass, visible: !value()"></span>
++      <span class="inline-edit-icon"
++            data-bind="css: containerClass, visible: !disallow_edit">
++        <i class="fa fa-pencil"></i>
++      </span>
+     </div>
+-    <div class="read-write form-inline" data-bind="visible: isEditing(), css: containerClass">
+-      <div class="form-group langcode-container" data-bind="css: {'has-lang': lang}">
+-        <!-- ko if: nodeName === "textarea" -->
+-        <textarea class="form-control vertical-resize" data-bind="
+-                        attr: {name: name, id: id, placeholder: placeholder, rows: rows, cols: cols},
+-                        value: value,
+-                        hasFocus: isEditing(),
+-                    "></textarea>
+-        <!-- /ko -->
+-        <!-- ko if: nodeName === "input" -->
+-        <input type="text" class="form-control" data-bind="
+-                        attr: {name: name, id: id, placeholder: placeholder, rows: rows, cols: cols},
+-                        value: value,
+-                        hasFocus: isEditing(),
+-                    " />
+-        <!-- /ko -->
++    <div class="read-write"
++         data-bind="visible: isEditing(), css: containerClass">
++      <div class="input-group langcode-container"
++           data-bind="css: {'has-lang': lang}">
+         <!-- ko if: lang -->
+-        <span class="btn btn-xs btn-info btn-langcode-preprocessed langcode-input pull-right"
++        <span class="btn-langcode-preprocessed langcode-input input-group-text text-bg-info"
+               data-bind="text: lang, visible: !value()"
+         ></span>
+         <!-- /ko -->
+-      </div>
+-      <div class="help-block" data-bind="text: errorMessage, visible: hasError()"></div>
+-      <div class="form-group">
++        <!-- ko if: nodeName === "textarea" -->
++          <textarea class="form-control vertical-resize"
++                    data-bind="attr: {name: name, id: id, placeholder: placeholder, rows: rows, cols: cols},
++                               value: value,
++                               hasFocus: isEditing(),"></textarea>
++        <!-- /ko -->
++        <!-- ko if: nodeName === "input" -->
++          <input type="text"
++                 class="form-control"
++                 data-bind="attr: {name: name, id: id, placeholder: placeholder, rows: rows, cols: cols},
++                            value: value,
++                            hasFocus: isEditing()," />
++        <!-- /ko -->
+         <button class="btn btn-primary" data-bind="click: save, hasFocus: saveHasFocus, visible: !isSaving()">
+           <i class="fa fa-check"></i>
+         </button>
+-        <button class="btn btn-danger" data-bind="click: cancel, hasFocus: cancelHasFocus, visible: !isSaving()">
++        <button class="btn btn-outline-danger" data-bind="click: cancel, hasFocus: cancelHasFocus, visible: !isSaving()">
+           <i class="fa fa-remove"></i>
+         </button>
+       </div>
++      <div class="help-block" data-bind="text: errorMessage, visible: hasError()"></div>
+     </div>
+   </div><!-- ko runOnInit: afterRenderFunc --><!-- /ko -->
+ </script>

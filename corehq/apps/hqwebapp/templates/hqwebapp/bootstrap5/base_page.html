@@ -1,0 +1,30 @@
+{% extends 'hqwebapp/bootstrap5/base_navigation.html' %}
+{% load hq_shared_tags %}
+
+{% block title %}{{ section.page_name }}{% if current_page.title %}: {{ current_page.title }}{% endif %}{% endblock %}
+
+{% block content %}
+  {% block page_breadcrumbs %}
+    {% if current_page.parents %}
+      <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
+        {% for parent in current_page.parents %}
+          <li>
+            <a href="{{ parent.url }}">{{ parent.title }}</a>
+          </li>
+        {% endfor %}
+        {% if current_page.page_name %}
+          <li class="active">
+            <a href="{{ current_page.url }}">{{ current_page.page_name }}</a>
+          </li>
+        {% endif %}
+      </ol>
+    {% endif %}
+  {% endblock page_breadcrumbs %}
+  <div class="container">
+    <div class="border-bottom pb-1 my-4">
+      <h1>{% block page_name %}{{ current_page.page_name }}{% endblock %}</h1>
+    </div>
+    {% block page_content %}
+    {% endblock %}
+  </div>
+{% endblock %}

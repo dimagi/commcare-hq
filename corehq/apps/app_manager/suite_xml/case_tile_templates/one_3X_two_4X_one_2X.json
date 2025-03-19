@@ -1,0 +1,22 @@
+{
+    "slug": "one_3X_two_4X_one_2X",
+    "filename": "one_3X_two_4X_one_2X.xml",
+    "has_map": true,
+    "fields": ["header", "top", "middle0", "middle1_left_img", "middle1_right", "middle2_left_img", "middle2_right", "middle3_left_img",
+        "middle3_right", "middle4_left_img", "middle4_right", "middle5", "bottom", "map"],
+    "grid": {
+        "header": {"x": 0, "y": 0, "width": 12, "height": 1, "horz-align": "left", "vert-align": "center"},
+        "top": {"x": 0, "y": 1, "width": 12, "height": 1, "horz-align": "left", "vert-align": "center"},
+        "middle0": {"x": 0, "y": 2, "width": 12, "height": 1, "horz-align": "left", "vert-align": "center"},
+        "middle1_left_img": {"x": 0, "y": 3, "width": 1, "height": 1, "horz-align": "center", "vert-align": "top"},
+        "middle1_right": {"x": 1, "y": 3, "width": 11, "height": 1, "horz-align": "left", "vert-align": "top"},
+        "middle2_left_img": {"x": 0, "y": 4, "width": 1, "height": 1, "horz-align": "center", "vert-align": "top"},
+        "middle2_right": {"x": 1, "y": 4, "width": 11, "height": 1, "horz-align": "left", "vert-align": "top"},
+        "middle3_left_img": {"x": 0, "y": 5, "width": 1, "height": 1, "horz-align": "center", "vert-align": "top"},
+        "middle3_right": {"x": 1, "y": 5, "width": 11, "height": 1, "horz-align": "left", "vert-align": "top"},
+        "middle4_left_img": {"x": 0, "y": 6, "width": 1, "height": 1, "horz-align": "center", "vert-align": "top"},
+        "middle4_right": {"x": 1, "y": 6, "width": 11, "height": 1, "horz-align": "left", "vert-align": "top"},
+        "middle5": {"x": 0, "y": 7, "width": 12, "height": 1, "horz-align": "center", "vert-align": "center"},
+        "bottom": {"x": 0, "y": 8, "width": 12, "height": 1, "horz-align": "center", "vert-align": "center"}
+        }
+}

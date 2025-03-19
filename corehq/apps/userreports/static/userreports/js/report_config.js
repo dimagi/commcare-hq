@@ -1,14 +1,38 @@
-hqDefine('userreports/js/report_config', function () {
+hqDefine('userreports/js/report_config', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'analytix/js/kissmetrix',
+    'hqwebapp/js/bootstrap3/main',
+    'reports_core/js/charts',
+    'reports_core/js/bootstrap3/maps',
+    'userreports/js/builder_view_models',
+    'userreports/js/constants',
+    'userreports/js/report_analytix',
+    'userreports/js/utils',
+    'hqwebapp/js/select2_knockout_bindings.ko',
+], function (
+    $,
+    ko,
+    _,
+    kissmetrics,
+    hqMain,
+    charts,
+    maps,
+    builderViewModels,
+    constants,
+    analytics,
+    utils,
+) {
     return {
         reportBuilder: function () {
             var self = this;
 
-            var propertyList = hqImport('userreports/js/builder_view_models').propertyList;
-            var propertyListItem = hqImport('userreports/js/builder_view_models').propertyListItem;
-            var constants = hqImport('userreports/js/constants');
+            var propertyList = builderViewModels.propertyList;
+            var propertyListItem = builderViewModels.propertyListItem;
 
-            var _kmq_track_click = function (action) {
-                hqImport('analytix/js/kissmetrix').track.event("RBv2 - " + action);
+            var _kmqTrackClick = function (action) {
+                kissmetrics.track.event("RBv2 - " + action);
             };
 
             var columnProperty = function (getDefaultDisplayText, getPropertyObject, reorderColumns, hasDisplayText) {
@@ -37,7 +61,7 @@ hqDefine('userreports/js/report_config', function () {
                         self.getDefaultDisplayText.bind(self),
                         self.getPropertyObject.bind(self),
                         self.reorderColumns.bind(self),
-                        self.hasDisplayCol
+                        self.hasDisplayCol,
                     );
                 };
                 self.buttonHandler = function () {
@@ -118,6 +142,10 @@ hqDefine('userreports/js/report_config', function () {
                 self.reportPreviewUrl = config["reportPreviewUrl"];  // Fetch the preview data asynchronously.
                 self.previewDatasourceId = config["previewDatasourceId"];
 
+                // Dropdown options for User Filters
+                self.formatOptions = config["formatOptions"];
+                self.defaultFilterFormatOptions = config["defaultFilterFormatOptions"];
+
                 self.reportTypeListLabel = (
                     (config['sourceType'] === "case") ? "Case List" :
                         (config['sourceType'] === "form") ? "Form List" : "List");
@@ -126,13 +154,13 @@ hqDefine('userreports/js/report_config', function () {
                         (config['sourceType'] === "form") ? "Form Summary" : "Summary");
                 self.reportType = ko.observable(config['existingReportType'] || constants.REPORT_TYPE_LIST);
                 self.reportType.subscribe(function (newValue) {
-                    _ga_track_config_change('Change Report Type', newValue);
+                    _gaTrackConfigChange('Change Report Type', newValue);
                     self._suspendPreviewRefresh = true;
                     var wasAggregationEnabled = self.isAggregationEnabled();
                     self.isAggregationEnabled(newValue === constants.REPORT_TYPE_TABLE);
                     self.previewChart(newValue === constants.REPORT_TYPE_TABLE && self.selectedChart() !== "none");
                     if (self.reportType() === constants.REPORT_TYPE_LIST) {
-                        self.columnList.columns().forEach(function (val, index) {
+                        self.columnList.columns().forEach(function (val) {
                             val.calculation(constants.GROUP_BY);
                         });
                     }
@@ -158,7 +186,7 @@ hqDefine('userreports/js/report_config', function () {
                         self.previewChart(false);
                     } else {
                         if (self.previewChart()) {
-                            hqImport('userreports/js/report_analytix').track.event('Change Chart Type', hqImport('hqwebapp/js/main').capitalize(newValue));
+                            analytics.track.event('Change Chart Type', hqMain.capitalize(newValue));
                         }
                         self.previewChart(true);
                         self.refreshPreview();
@@ -176,12 +204,12 @@ hqDefine('userreports/js/report_config', function () {
                 };
                 self.addChart = function () {
                     self.selectedChart('bar');
-                    hqImport('userreports/js/report_analytix').track.event('Add Chart');
-                    _kmq_track_click('Add Chart');
+                    analytics.track.event('Add Chart');
+                    _kmqTrackClick('Add Chart');
                 };
                 self.removeChart = function () {
                     self.selectedChart('none');
-                    hqImport('userreports/js/report_analytix').track.event('Remove Chart');
+                    analytics.track.event('Remove Chart');
                 };
 
                 self.previewChart = ko.observable(false);
@@ -203,34 +231,32 @@ hqDefine('userreports/js/report_config', function () {
                  * @private
                  */
                 var _getSelectableProperties = function (dataSourceIndicators) {
-                    var utils = hqImport('userreports/js/utils');
                     if (self._optionsContainQuestions(dataSourceIndicators)) {
                         return _.compact(_.map(
-                            dataSourceIndicators, utils.convertDataSourcePropertyToQuestionsSelectFormat
+                            dataSourceIndicators, utils.convertDataSourcePropertyToQuestionsSelectFormat,
                         ));
                     } else {
                         return _.compact(_.map(
-                            dataSourceIndicators, utils.convertDataSourcePropertyToSelect2Format
+                            dataSourceIndicators, utils.convertDataSourcePropertyToSelect2Format,
                         ));
                     }
                 };
 
                 var _getSelectableReportColumnOptions = function (reportColumnOptions, dataSourceIndicators) {
-                    var utils = hqImport('userreports/js/utils');
                     if (self._optionsContainQuestions(dataSourceIndicators)) {
                         return _.compact(_.map(
-                            reportColumnOptions, utils.convertReportColumnOptionToQuestionsSelectFormat
+                            reportColumnOptions, utils.convertReportColumnOptionToQuestionsSelectFormat,
                         ));
                     } else {
                         return _.compact(_.map(
-                            reportColumnOptions, utils.convertReportColumnOptionToSelect2Format
+                            reportColumnOptions, utils.convertReportColumnOptionToSelect2Format,
                         ));
                     }
                 };
 
-                var _ga_track_config_change = function (analyticsAction, optReportType) {
-                    var analyticsLabel = hqImport('hqwebapp/js/main').capitalize(self._sourceType) + "-" + hqImport('hqwebapp/js/main').capitalize(optReportType || self.reportType());
-                    hqImport('userreports/js/report_analytix').track.event(analyticsAction, analyticsLabel);
+                var _gaTrackConfigChange = function (analyticsAction, optReportType) {
+                    var analyticsLabel = hqMain.capitalize(self._sourceType) + "-" + hqMain.capitalize(optReportType || self.reportType());
+                    analytics.track.event(analyticsAction, analyticsLabel);
                 };
 
                 /**
@@ -247,7 +273,7 @@ hqDefine('userreports/js/report_config', function () {
 
                 self.location_field = ko.observable(config['initialLocation']);
                 self.location_field.subscribe(function () {
-                    _kmq_track_click('Select Location (map)');
+                    _kmqTrackClick('Select Location (map)');
                     self.refreshPreview();
                 });
 
@@ -263,19 +289,19 @@ hqDefine('userreports/js/report_config', function () {
                     propertyOptions: self.columnOptions,
                     selectablePropertyOptions: self.selectableReportColumnOptions,
                     addItemCallback: function () {
-                        _ga_track_config_change('Add Column');
-                        _kmq_track_click('Add Column');
+                        _gaTrackConfigChange('Add Column');
+                        _kmqTrackClick('Add Column');
                     },
                     removeItemCallback: function () {
-                        _ga_track_config_change('Remove Column');
-                        _kmq_track_click('Delete Column');
+                        _gaTrackConfigChange('Remove Column');
+                        _kmqTrackClick('Delete Column');
                     },
                     reorderItemCallback: function () {
-                        _ga_track_config_change('Reorder Column');
+                        _gaTrackConfigChange('Reorder Column');
                     },
                     afterRenderCallback: function (elem, col) {
                         col.inputBoundCalculation.subscribe(function (val) {
-                            hqImport('userreports/js/report_analytix').track.event('Change Format', val);
+                            analytics.track.event('Change Format', val);
                         });
                     },
                 });
@@ -292,15 +318,15 @@ hqDefine('userreports/js/report_config', function () {
                     initialCols: config['initialUserFilters'],
                     buttonText: 'Add User Filter',
                     addItemCallback: function () {
-                        _ga_track_config_change('Add User Filter');
-                        _kmq_track_click('Add User Filter');
+                        _gaTrackConfigChange('Add User Filter');
+                        _kmqTrackClick('Add User Filter');
                     },
                     removeItemCallback: function () {
-                        _ga_track_config_change('Remove User Filter');
-                        _kmq_track_click('Delete User Filter');
+                        _gaTrackConfigChange('Remove User Filter');
+                        _kmqTrackClick('Delete User Filter');
                     },
                     reorderItemCallback: function () {
-                        _ga_track_config_change('Reorder User Filter');
+                        _gaTrackConfigChange('Reorder User Filter');
                     },
                     propertyHelpText: gettext('Choose the property you would like to add as a filter to this report.'),
                     displayHelpText: gettext('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
@@ -320,15 +346,15 @@ hqDefine('userreports/js/report_config', function () {
                     initialCols: config['initialDefaultFilters'],
                     buttonText: 'Add Default Filter',
                     addItemCallback: function () {
-                        _ga_track_config_change('Add Default Filter');
-                        _kmq_track_click('Add Default Filter');
+                        _gaTrackConfigChange('Add Default Filter');
+                        _kmqTrackClick('Add Default Filter');
                     },
                     removeItemCallback: function () {
-                        _ga_track_config_change('Remove Default Filter');
-                        _kmq_track_click('Delete Default Filter');
+                        _gaTrackConfigChange('Remove Default Filter');
+                        _kmqTrackClick('Delete Default Filter');
                     },
                     reorderItemCallback: function () {
-                        _ga_track_config_change('Reorder Default Filter');
+                        _gaTrackConfigChange('Reorder Default Filter');
                     },
                     propertyHelpText: gettext('Choose the property you would like to add as a filter to this report.'),
                     formatHelpText: gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: Select this to filter the property by a date range.<br/><strong>Value</strong>: Select this to filter the property by a single value.'),
@@ -370,7 +396,7 @@ hqDefine('userreports/js/report_config', function () {
                                     'source_type': self._sourceType,
                                     'source_id': self._sourceId,
                                     'registry_slug': self._registrySlug,
-                                }
+                                },
                             )),
                             dataType: 'json',
                             success: function (data) {
@@ -415,15 +441,13 @@ hqDefine('userreports/js/report_config', function () {
                     if (self.reportType() === "map" && mapSpec) {
                         self.displayMapPreview(true);
                         mapSpec.mapboxAccessToken = self._mapboxAccessToken;
-                        var render = hqImport('reports_core/js/maps').render;
-                        render(mapSpec, aaData, $("#map-preview-container"));
+                        maps.render(mapSpec, aaData, $("#map-preview-container"));
                     } else {
                         self.displayMapPreview(false);
                     }
                 };
 
                 self._renderChartPreview = function (chartSpecs, aaData) {
-                    var charts = hqImport('reports_core/js/charts');
                     if (chartSpecs !== null && chartSpecs.length > 0) {
                         if (aaData.length > 25) {
                             self.tooManyChartCategoriesWarning(true);
@@ -475,15 +499,15 @@ hqDefine('userreports/js/report_config', function () {
 
                 self.serialize = function () {
                     // Clear invalid defaullt filters
-                    var default_filters = JSON.parse(self.defaultFilterList.serializedProperties());
-                    default_filters = _.filter(
-                        default_filters,
+                    var defaultFilters = JSON.parse(self.defaultFilterList.serializedProperties());
+                    defaultFilters = _.filter(
+                        defaultFilters,
                         function (c) {
                             return c.property && (
                                 c.pre_value || c.pre_operator ||
                                 c.format === "Is Empty" || c.format === "Exists"
                             );
-                        }
+                        },
                     );
                     return {
                         "existing_report": self.existingReportId,
@@ -494,18 +518,18 @@ hqDefine('userreports/js/report_config', function () {
                         "chart": self.selectedChart(),
                         "columns": JSON.parse(self.columnList.serializedProperties()),
                         "location": self.location_field(),
-                        "default_filters": default_filters,
+                        "default_filters": defaultFilters,
                         "user_filters": JSON.parse(self.filterList.serializedProperties()),
                     };
                 };
 
-                var button = hqImport("hqwebapp/js/main").SaveButton;
+                var button = hqMain.SaveButton;
                 self.saveButton = button.init({
                     unsavedMessage: "You have unsaved settings.",
                     save: function () {
                         var isValid = self.validate();
-                        _ga_track_config_change('Save Report');
-                        _kmq_track_click('Save Report');
+                        _gaTrackConfigChange('Save Report');
+                        _kmqTrackClick('Save Report');
                         if (isValid) {
                             self.saveButton.ajax({
                                 url: window.location.href,  // POST here; keep URL params
@@ -531,14 +555,14 @@ hqDefine('userreports/js/report_config', function () {
 
                     var isValid = self.validate();
                     if (isValid) {
-                        _ga_track_config_change('Save and View Report');
-                        _kmq_track_click('Save and View Report');
+                        _gaTrackConfigChange('Save and View Report');
+                        _kmqTrackClick('Save and View Report');
                         $.ajax({
                             url: window.location.href,
                             type: "POST",
                             data: JSON.stringify(Object.assign(
                                 self.serialize(),
-                                {'delete_temp_data_source': true, 'preview_data_source_id': self.previewDatasourceId}
+                                {'delete_temp_data_source': true, 'preview_data_source_id': self.previewDatasourceId},
                             )),
                             success: function (data) {
                                 // Redirect to the newly-saved report
@@ -555,8 +579,8 @@ hqDefine('userreports/js/report_config', function () {
                 });
 
                 $('#deleteReport').click(function () {
-                    _ga_track_config_change('Delete Report');
-                    _kmq_track_click('Delete Report');
+                    _gaTrackConfigChange('Delete Report');
+                    _kmqTrackClick('Delete Report');
                 });
 
                 if (!self.existingReportId) {

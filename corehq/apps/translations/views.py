@@ -137,7 +137,7 @@ def upload_bulk_app_translations(request, domain, app_id):
             else:
                 try:
                     msgs = validate_bulk_app_translation_upload(
-                        app, workbook, request.user.get_email(), lang, file
+                        app, workbook, request.couch_user.get_email(), lang, file
                     )
                 except BulkAppTranslationsException as e:
                     msgs = [(messages.error, str(e))]

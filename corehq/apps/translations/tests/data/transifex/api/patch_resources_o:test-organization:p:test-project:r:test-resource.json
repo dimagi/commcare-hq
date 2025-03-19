@@ -1,0 +1,45 @@
+{
+    "data": {
+        "id": "o:test-organization:p:test-project:r:test-resource",
+        "type": "resources",
+        "attributes": {
+            "slug": "test-resource",
+            "name": "Test Resource",
+            "priority": "normal",
+            "i18n_type": "PO",
+            "i18n_version": 2,
+            "accept_translations": false,
+            "string_count": 3,
+            "word_count": 6,
+            "datetime_created": "2024-03-04T22:36:44Z",
+            "datetime_modified": "2024-03-20T21:59:39Z",
+            "categories": [],
+            "i18n_options": {},
+            "mp4_url": null,
+            "ogg_url": null,
+            "youtube_url": null,
+            "webm_url": null
+        },
+        "relationships": {
+            "project": {
+                "links": {
+                    "related": "https://rest.api.transifex.com/projects/o:test-organization:p:test-project"
+                },
+                "data": {
+                    "type": "projects",
+                    "id": "o:test-organization:p:test-project"
+                }
+            },
+            "i18n_format": {
+                "data": {
+                    "type": "i18n_formats",
+                    "id": "PO"
+                }
+            },
+            "base": null
+        },
+        "links": {
+            "self": "https://rest.api.transifex.com/resources/o:test-organization:p:test-project:r:test-resource"
+        }
+    }
+}

@@ -34,7 +34,7 @@
       float: right;
       line-height: 13px;
       display: block;
-      .fa {
+      [class*='fa-'] {
         font-size: 18px;
       }
     }
@@ -75,4 +75,96 @@
 }
 .table-editprops-filterval {
   min-width: 115px;
+}
+
+.table thead tr th.orderable {
+  position: relative;
+  padding: 0;
+
+  a {
+    display: block;
+    background-color: $blue-800;
+    color: $white;
+    padding: 0.5rem 0.5rem;
+  }
+  &:nth-child(odd) a {
+    background-color: $blue-700;
+  }
+
+  &::before,
+  &::after {
+    position: absolute;
+    display: block;
+    right: 10px;
+    line-height: 9px;
+    font-size: .8em;
+    color: $white;
+    opacity: 0.3;
+  }
+
+  &::before {
+    bottom: 50%;
+    content: "▲" / "";
+  }
+
+  &::after {
+    top: 50%;
+    content: "▼" / "";
+  }
+
+  &.asc::before {
+    opacity: 1.0;
+  }
+  &.desc::after {
+    opacity: 1.0;
+  }
+}
+
+.table thead tr th.select-header {
+  width: 28px;
+  background-color: $blue-800;
+
+  &:nth-child(odd) {
+    background-color: $blue-700;
+  }
+}
+
+.table-container {
+  position: relative;
+
+  .table-loading-indicator {
+    z-index: 1000;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: rgba(255, 255, 255, 0.25);
+    display: none;
+
+    &.is-loading {
+      display: block;
+    }
+
+    .spinner-border {
+      position: absolute;
+      border-width: $table-loading-spinner-border-width;
+      color: rgba(0, 0, 0, 0.25);
+      width: $table-loading-spinner-size;
+      height: $table-loading-spinner-size;
+      $_offset: $table-loading-spinner-size / 2;
+      left: calc(50% - $_offset);
+      top: calc(50% - $_offset);
+    }
+
+    .table-loading-progress {
+      z-index: 1000;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background-color: $white;
+      font-weight: bold;
+    }
+  }
 }

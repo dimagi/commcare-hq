@@ -8,7 +8,7 @@ import uuid
 
 from datetime import datetime, timedelta
 
-from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
@@ -19,7 +19,11 @@ from dimagi.ext.couchdbkit import IntegerProperty
 
 from corehq.apps.reports.const import TABLEAU_ROLES
 from corehq.apps.users.models import CommCareUser
-from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
+from corehq.motech.const import ALGO_AES_CBC
+from corehq.motech.utils import (
+    b64_aes_cbc_encrypt,
+    b64_aes_cbc_decrypt
+)
 
 
 class HQUserType(object):
@@ -30,7 +34,7 @@ class HQUserType(object):
     COMMTRACK = 4
     DEACTIVATED = 5
     WEB = 6
-    human_readable = [settings.COMMCARE_USER_TERM,
+    human_readable = [gettext_noop("Active Mobile Workers"),
                       gettext_noop("demo_user"),
                       gettext_noop("admin"),
                       gettext_noop("Unknown Users"),
@@ -44,12 +48,6 @@ class HQUserType(object):
     @classmethod
     def use_defaults(cls):
         return cls._get_manual_filterset(cls.included_defaults, cls.toggle_defaults)
-
-    @classmethod
-    def all_but_users(cls):
-        no_users = [True] * cls.count
-        no_users[cls.ACTIVE] = False
-        return cls._get_manual_filterset(cls.included_defaults, no_users)
 
     @classmethod
     def commtrack_defaults(cls):
@@ -161,6 +159,8 @@ class TableauServer(models.Model):
     server_name = models.CharField(max_length=128)
     validate_hostname = models.CharField(max_length=128, default='', blank=True)
     target_site = models.CharField(max_length=64, default='Default')
+    allowed_tableau_groups = ArrayField(models.CharField(max_length=255), null=True, blank=True, default=list)
+    get_reports_using_role = models.BooleanField(default=False)
 
     def __str__(self):
         return '{domain} {server} {server_type} {site}'.format(domain=self.domain,
@@ -175,6 +175,7 @@ class TableauVisualization(models.Model):
     server = models.ForeignKey(TableauServer, on_delete=models.CASCADE)
     view_url = models.CharField(max_length=256)
     upstream_id = models.CharField(max_length=32, null=True)
+    location_safe = models.BooleanField(default=False)
 
     @property
     def name(self):
@@ -190,7 +191,7 @@ class TableauVisualization(models.Model):
         items = [
             viz
             for viz in TableauVisualization.objects.filter(domain=domain)
-            if couch_user.can_view_tableau_viz(domain, f"{viz.id}")
+            if couch_user.can_view_tableau_viz(domain, viz)
         ]
         return sorted(items, key=lambda v: v.name.lower())
 
@@ -198,7 +199,7 @@ class TableauVisualization(models.Model):
 class TableauConnectedApp(models.Model):
     app_client_id = models.CharField(max_length=64)
     secret_id = models.CharField(max_length=64)
-    encrypted_secret_value = models.CharField(max_length=64)
+    encrypted_secret_value = models.CharField(max_length=128)
     server = models.OneToOneField(TableauServer, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -207,11 +208,15 @@ class TableauConnectedApp(models.Model):
 
     @property
     def plaintext_secret_value(self):
-        return b64_aes_decrypt(self.encrypted_secret_value)
+        if self.encrypted_secret_value == '':
+            return ''
+        ciphertext = self.encrypted_secret_value.split('$', 2)[2]
+        return b64_aes_cbc_decrypt(ciphertext)
 
     @plaintext_secret_value.setter
     def plaintext_secret_value(self, plaintext):
-        self.encrypted_secret_value = b64_aes_encrypt(plaintext)
+        ciphertext = b64_aes_cbc_encrypt(plaintext)
+        self.encrypted_secret_value = f'${ALGO_AES_CBC}${ciphertext}'
 
     def create_jwt(self):
         connected_app_permissions = ["tableau:users:read", "tableau:users:create", "tableau:users:update",
@@ -235,12 +240,26 @@ class TableauConnectedApp(models.Model):
         )
         return token
 
+    @classmethod
+    def get_server(cls, domain):
+        """Gets the server for a domain, while checking whether a related server and connected app exist."""
+        try:
+            server = TableauServer.objects.get(domain=domain)
+        except TableauServer.DoesNotExist:
+            return None
+        try:
+            if server.server_name and cls.objects.get(server=server):
+                return server
+        except TableauConnectedApp.DoesNotExist:
+            pass
+        return None
+
 
 class TableauUser(models.Model):
     server = models.ForeignKey(TableauServer, on_delete=models.CASCADE)
     username = models.CharField(max_length=255)
     role = models.CharField(max_length=32, choices=TABLEAU_ROLES)
-    tableau_user_id = models.CharField(max_length=64)
+    tableau_user_id = models.CharField(max_length=64, blank=True)
     last_synced = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -252,6 +271,10 @@ class TableauUser(models.Model):
         SITE_ADMINISTRATOR_EXPLORER = 'SiteAdministratorExplorer', 'Site Administrator (Explorer)'
         VIEWER = 'Viewer', 'Viewer'
         UNLICENSED = 'Unlicensed', 'Unlicensed'
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 
 logger = logging.getLogger('tableau_api')

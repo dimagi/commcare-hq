@@ -1,13 +1,15 @@
 import base64
 import binascii
+from datetime import datetime, timezone as tz
 import logging
-import re
+import requests
 from functools import wraps
 
+from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.models import User
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.views.decorators.debug import sensitive_variables
 
 from no_exceptions.exceptions import Http400
@@ -19,14 +21,13 @@ from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.web import get_ip
 
 from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
-from corehq.apps.users.models import CouchUser, HQApiKey
-from corehq.toggles import API_THROTTLE_WHITELIST, TWO_STAGE_USER_PROVISIONING
+from corehq.apps.users.models import CouchUser, HQApiKey, ConnectIDUserLink
+from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 from corehq.util.hmac_request import validate_request_hmac
 from corehq.util.metrics import metrics_counter
 
 auth_logger = logging.getLogger("commcare_auth")
 
-J2ME = 'j2me'
 ANDROID = 'android'
 
 BASIC = 'basic'
@@ -94,15 +95,7 @@ def determine_authtype_from_request(request, default=DIGEST):
     if request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
         return NOAUTH
 
-    user_agent = request.META.get('HTTP_USER_AGENT')
-    if is_probably_j2me(user_agent):
-        return DIGEST
     return determine_authtype_from_header(request, default)
-
-
-def is_probably_j2me(user_agent):
-    j2me_pattern = '[Nn]okia|NOKIA|CLDC|cldc|MIDP|midp|Series60|Series40|[Ss]ymbian|SymbOS|[Mm]aemo'
-    return user_agent and re.search(j2me_pattern, user_agent)
 
 
 @sensitive_variables('auth', 'password')
@@ -164,7 +157,7 @@ def basic_or_api_key(realm=''):
         def wrapper(request, *args, **kwargs):
             username, password = get_username_and_password_from_request(request)
             if username and password:
-                request.check_for_password_as_api_key = True
+                request.check_for_api_key_as_password = True
                 user = authenticate(username=username, password=password, request=request)
                 if user is not None and user.is_active:
                     request.user = user
@@ -219,11 +212,22 @@ def formplayer_as_user_auth(view):
 class ApiKeyFallbackBackend(object):
 
     def authenticate(self, request, username, password):
-        if not getattr(request, 'check_for_password_as_api_key', False):
+        if not getattr(request, 'check_for_api_key_as_password', False):
             return None
 
         try:
-            user = User.objects.get(username=username, api_keys__key=password)
+            is_unexpired_filter = (
+                Q(api_keys__expiration_date__isnull=True) | Q(api_keys__expiration_date__gte=datetime.now(tz.utc))
+            )
+            api_domain_filter = Q(api_keys__domain='')
+            domain = getattr(request, 'domain', '')
+            if domain:
+                api_domain_filter = api_domain_filter | Q(api_keys__domain=domain)
+
+            ip = get_ip(request)
+            api_whitelist_filter = Q(api_keys__ip_allowlist=[]) | Q(api_keys__ip_allowlist__contains=[ip])
+            user = User.objects.get(is_unexpired_filter, api_domain_filter, api_whitelist_filter,
+                username=username, api_keys__key=password, api_keys__is_active=True)
         except (User.DoesNotExist, User.MultipleObjectsReturned):
             return None
         else:
@@ -281,8 +285,13 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
             return False
 
         # ensure API Key exists
+        query = Q(key=api_key)
+        domain = getattr(request, 'domain', '')
+        if domain:
+            domain_accessible = Q(domain='') | Q(domain=domain)
+            query = domain_accessible & query
         try:
-            key = user.api_keys.get(key=api_key)
+            key = user.api_keys.get(query)
         except HQApiKey.DoesNotExist:
             return self._unauthorized()
 
@@ -333,3 +342,83 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
             username, api_key = data.split(':', 1)
 
         return username, api_key
+
+
+def get_connectid_userinfo(token):
+    user_info = f"{settings.CONNECTID_USERINFO_URL}"
+    user = requests.get(user_info, headers={"AUTHORIZATION": f"Bearer {token}"})
+    connect_username = user.json().get("sub")
+    return connect_username
+
+
+class ConnectIDAuthBackend:
+
+    def authenticate(self, request, username, password):
+        """
+        Django authentication backend for requests that authenticate with tokens from ConnectID
+        This is currently only allowed for the oauth token view, and is used to generate an oauth token
+        in HQ, given a ConnectID token.
+
+        username: the username of an HQ mobile worker that has already been linked to a ConnectID user
+        password: an oauth access token issued by ConnectID
+        """
+        # Only allow for the token backend, for now
+        if not request or not request.path == '/oauth/token/':
+            return None
+        couch_user = CouchUser.get_by_username(username)
+        if couch_user is None:
+            return None
+        connect_username = get_connectid_userinfo(password)
+        if connect_username is None:
+            return None
+        link = ConnectIDUserLink.objects.get(
+            connectid_username=connect_username,
+            domain=couch_user.domain,
+            commcare_user__username=couch_user.username
+        )
+
+        return link.commcare_user
+
+
+def user_can_access_domain_specific_pages(request):
+    """
+        An active logged-in user can access domain specific pages if
+        domain is active &
+        they are a member of the domain or
+        a superuser and domain does not restrict superusers from access
+    """
+    from corehq.apps.domain.decorators import (
+        _ensure_request_couch_user,
+        _ensure_request_project,
+        active_user_logged_in,
+    )
+
+    if not active_user_logged_in(request):
+        return False
+
+    project = _ensure_request_project(request)
+    if not (project and project.is_active):
+        return False
+
+    couch_user = _ensure_request_couch_user(request)
+    if not couch_user:
+        return False
+
+    return couch_user.is_member_of(project) or (couch_user.is_superuser and not project.restrict_superusers)
+
+
+def connectid_token_auth(view_func):
+    @wraps(view_func)
+    def _inner(request, *args, **kwargs):
+        auth_header = request.META.get("HTTP_AUTHORIZATION")
+        if not auth_header:
+            return HttpResponseForbidden()
+        _, token = auth_header.split(" ")
+        if not token:
+            return HttpResponseBadRequest("ConnectID Token Required")
+        username = get_connectid_userinfo(token)
+        if username is None:
+            return HttpResponseForbidden()
+        request.connectid_username = username
+        return view_func(request, *args, **kwargs)
+    return _inner

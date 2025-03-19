@@ -1,4 +1,4 @@
-from django.conf.urls import re_path as url
+from django.urls import re_path as url
 
 from corehq.apps.export.views.download import (
     BulkDownloadNewFormExportView,
@@ -6,6 +6,7 @@ from corehq.apps.export.views.download import (
     DownloadNewCaseExportView,
     DownloadNewFormExportView,
     DownloadNewSmsExportView,
+    DownloadNewDatasourceExportView,
     add_export_email_request,
     has_multimedia,
     poll_custom_export_download,
@@ -31,6 +32,7 @@ from corehq.apps.export.views.list import (
     DeIdDailySavedExportListView,
     DeIdDashboardFeedListView,
     DeIdFormExportListView,
+    DeIdCaseExportListView,
     FormExportListView,
     ODataFeedListView,
     CommCareAnalyticsListView,
@@ -72,6 +74,9 @@ urlpatterns = [
     url(r"^custom/form_deid/$",
         DeIdFormExportListView.as_view(),
         name=DeIdFormExportListView.urlname),
+    url(r"^custom/case_deid/$",
+        DeIdCaseExportListView.as_view(),
+        name=DeIdCaseExportListView.urlname),
     url(r"^custom/daily_saved_deid/$",
         DeIdDailySavedExportListView.as_view(),
         name=DeIdDailySavedExportListView.urlname),
@@ -142,6 +147,9 @@ urlpatterns = [
     url(r"^custom/new/sms/download/$",
         DownloadNewSmsExportView.as_view(),
         name=DownloadNewSmsExportView.urlname),
+    url(r"^custom/new/datasource/download/$",
+        DownloadNewDatasourceExportView.as_view(),
+        name=DownloadNewDatasourceExportView.urlname),
 
     # Schema Download views
     url(r"^custom/schema/det/download/(?P<export_instance_id>[\w\-]+)/$",

@@ -1,3 +1,4 @@
+
 hqDefine('locations/js/location_types', [
     'jquery',
     'knockout',
@@ -5,14 +6,15 @@ hqDefine('locations/js/location_types', [
     'hqwebapp/js/initial_page_data',
     'analytix/js/google',
     'select2/dist/js/select2.full.min',
+    'hqwebapp/js/bootstrap5/hq.helpers',
+    'commcarehq',
 ], function (
     $,
     ko,
     _,
     initialPageData,
-    googleAnalytics
+    googleAnalytics,
 ) {
-    'use strict';
     var ROOT_LOCATION_ID = -1;
 
     function locationSettingsViewModel(locTypes, commtrackEnabled) {
@@ -203,6 +205,9 @@ hqDefine('locations/js/location_types', [
         self.code = ko.observable(locType.code || '');
         self.expand_from = ko.observable(locType.expand_from_root ? ROOT_LOCATION_ID : locType.expand_from);
         self.expand_to = ko.observable(locType.expand_to);
+        self.expand_view_child_data_to = ko.observable(locType.expand_view_child_data_to);
+        self.has_users_setting = ko.observable(locType.has_users_setting || locType.has_users_setting === undefined); // new loc types default to true
+        self.actually_has_users = ko.observable(locType.actually_has_users);
         self.include_without_expanding = ko.observable(locType.include_without_expanding);
         self.include_only = ko.observableArray(locType.include_only || []);
 
@@ -225,13 +230,14 @@ hqDefine('locations/js/location_types', [
             var allChildren = [self],
                 toCheck = [self];
             if (!self.view.has_cycles()) {
+                const locTypesByParent = self.view.loc_types_by_parent();
                 while (toCheck.length > 0) {
                     var currentLoc = toCheck.pop(),
-                        children = self.view.loc_types_by_parent()[currentLoc.pk];
+                        children = locTypesByParent[currentLoc.pk];
                     if (children) {
                         children.forEach(function (child) {
                             allChildren.push(child);
-                            if (self.view.loc_types_by_parent()[child.pk]) {
+                            if (locTypesByParent[child.pk]) {
                                 toCheck.push(child);
                             }
                         }, self);
@@ -283,7 +289,7 @@ hqDefine('locations/js/location_types', [
             // traverse all locations upwards, include a root option
             var rootType = locationTypeModel(
                     {name: "root", pk: ROOT_LOCATION_ID},
-                    commtrackEnabled, self
+                    commtrackEnabled, self,
                 ),
                 parents = self.parents();
             parents.push(rootType);
@@ -292,27 +298,40 @@ hqDefine('locations/js/location_types', [
 
         self.expand_to_options = function () {
             // display all locations with the same index as being on the same level
-            var locsToReturn = [],
-                locs = self.children();
+            let locs = self.children();
             if (self.expand_from() && self.expand_from() !== ROOT_LOCATION_ID) {
                 locs = self.view.loc_types_by_id()[self.expand_from()].children();
             }
             if (self.expand_from() && self.expand_from() === ROOT_LOCATION_ID) {
                 locs = self.view.loc_types();
             }
-            var locsSameLevels = self.view.types_by_index(locs);
-            for (var level in locsSameLevels) {
+            const levels = self.getLevels(locs);
+            return {
+                children: levels.slice(0, levels.length - 1),
+                leaf: levels[levels.length - 1],
+            };
+        };
+
+        self.child_loc_types = function () {
+            const locs = self.children();
+            const levels = self.getLevels(locs);
+            levels.shift(); // not self
+            return levels;
+        };
+
+        self.getLevels = function (locs) {
+            const locsSameLevels = self.view.types_by_index(locs);
+            const locsToReturn = [];
+            for (const level in locsSameLevels) {
                 // Only display a single child at each level
-                var childToAdd = locsSameLevels[level][0];
+                const childToAdd = locsSameLevels[level][0];
                 locsToReturn.push(locationTypeModel({
                     name: childToAdd.compiled_name(),
                     pk: childToAdd.pk,
                 }, false, self.view));
             }
-            return {
-                children: locsToReturn.slice(0, locsToReturn.length - 1),
-                leaf: locsToReturn[locsToReturn.length - 1],
-            };
+            return locsToReturn;
+
         };
 
         self.include_without_expanding_options = function () {
@@ -349,6 +368,8 @@ hqDefine('locations/js/location_types', [
                 expand_from: (self.expand_from() !== -1 ? self.expand_from() : null) || null,
                 expand_from_root: self.expand_from() === ROOT_LOCATION_ID,
                 expand_to: self.expand_to() || null,
+                expand_view_child_data_to: self.expand_view_child_data_to() || null,
+                has_users: self.has_users_setting() === true,
                 include_without_expanding: self.include_without_expanding() || null,
                 include_only: self.include_only() || [],
             };
@@ -379,12 +400,12 @@ hqDefine('locations/js/location_types', [
         }
 
         $("form#settings").on("change input", function () {
-            $(this).find(":submit").addClass("btn-primary").enable();
+            $(this).find(":submit").addClass("btn-primary").enableButton();
             window.onbeforeunload = warnBeforeUnload;
         });
 
         $("form#settings button").on("click", function () {
-            $("form#settings").find(":submit").enable();
+            $("form#settings").find(":submit").enableButton();
             window.onbeforeunload = warnBeforeUnload;
         });
 

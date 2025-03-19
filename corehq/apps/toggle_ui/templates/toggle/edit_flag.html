@@ -1,10 +1,9 @@
-{% extends 'hqwebapp/base_page.html' %}
+{% extends 'hqwebapp/bootstrap3/base_page.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
-{% load timezone_tags %}
 {% load compress %}
 
-{% requirejs_main 'toggle_ui/js/edit-flag' %}
+{% js_entry_b3 'toggle_ui/js/edit-flag' %}
 
 {% block title %}{% trans "Edit Feature Flag: " %}{{ static_toggle.label }}{% endblock %}
 
@@ -15,12 +14,6 @@
       margin-bottom: 5px;
     }
 
-    .btn-danger {
-      display: inline;
-      border-radius: 4px !important;
-      margin-right: 10px !important;
-    }
-
     .label-release {
       background-color: #c22eff !important;
     }
@@ -29,178 +22,174 @@
 
 {% block page_content %}
   {% registerurl 'edit_toggle' toggle.slug %}
-  {% registerurl 'domain_internal_settings' '___' %}
+  {% registerurl 'domain_internal_settings' '---' %}
   {% initial_page_data 'items' toggle.enabled_users %}
   {% initial_page_data 'namespaces' namespaces %}
   {% initial_page_data 'last_used' last_used %}
   {% initial_page_data 'service_type' service_type %}
   {% initial_page_data 'is_random_editable' is_random_editable %}
   {% initial_page_data 'randomness' static_toggle.randomness %}
-  <div class="row" style="margin-bottom: 50px;">
-    <div class="col-sm-12">
-      <span class="pull-right">
-      {% if not usage_info %}
-        <a href="{{ page_url }}?usage_info=true">
-          <i class="icon-white icon-info-sign"></i>
-          {% trans "Show usage" %}
-        </a> |
-      {% endif %}
-        <a href="{{ page_url }}?show_service_type=true">
-          <i class="icon-white icon-info-sign"></i>
-          {% trans "Show account service type" %}
-        </a>
-      </span>
-      {% if static_toggle.description %}
-        <p>{{ static_toggle.description }}</p>
-      {% endif %}
-      <p>
-        <span class="label label-{{ static_toggle.tag.css_class }}">{{ static_toggle.tag.name }}</span>
-        {% if is_random %}
-          <span class="label label-info">Random: {{ static_toggle.randomness }}</span>
-        {% endif %}
-      </p>
-      <p>{{ static_toggle.tag.description }}</p>
-      {% if is_feature_release %}
-        <div class="alert alert-warning" role="alert">
-          {% blocktrans trimmed with owner=static_toggle.owner %}
-            Please confirm with {{ owner }} before using it.
-          {% endblocktrans %}
-        </div>
-      {% endif %}
-      {% if static_toggle.help_link %}
-        <p><a href="{{ static_toggle.help_link }}" target="_blank">{% trans "More information" %}</a></p>
-      {% endif %}
-
-      {% if by_service %}
-        {% for service, domains in by_service.items %}
-          <table class="table table-striped table-hover">
-            <thead>
-            <tr>
-              <th class="col-sm-4">Subscription Type</th>
-              <th class="col-sm-8">List of Domains</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-              <td>{{ service }}</td>
-              <td>{{ domains | join:", " }}</td>
-            </tr>
-            </tbody>
-        {% endfor %}
-        </table>
-      {% endif %}
-
-      {% if static_toggle.relevant_environments %}
-        {% if debug or server_environment in static_toggle.relevant_environments %}
-          <div class="alert alert-warning" role="alert">
-            {% blocktrans %}
-              <strong>Please Note:</strong> This feature flag is available on this server environment, but not on others.
-            {% endblocktrans %}
-          </div>
-        {% else %}
-          <div class="alert alert-danger" role="alert">
-            {% blocktrans %}
-              <strong>CAUTION:</strong> This feature flag is not available on the current server environment.
-            {% endblocktrans %}
-          </div>
-        {% endif %}
-      {% endif %}
-
-      {% if static_toggle.always_enabled %}
-        <div class="alert alert-info">
-          <i class="fa fa-info-circle"></i>
-          {% blocktrans %}
-            This feature flag is <strong>always enabled</strong> for the following domains:
-          {% endblocktrans %}
-          <ul>
-            {% for domain in static_toggle.always_enabled %}
-              <li>{{ domain }}</li>
-            {% endfor %}
-          </ul>
-        </div>
-      {% endif %}
-
-      {% if static_toggle.always_disabled %}
-        <div class="alert alert-info">
-          <i class="fa fa-info-circle"></i>
-          {% blocktrans %}
-            This feature flag is <strong>always disabled</strong> for the following domains:
-          {% endblocktrans %}
-          <ul>
-            {% for domain in static_toggle.always_disabled %}
-              <li>{{ domain }}</li>
-            {% endfor %}
-          </ul>
-        </div>
-      {% endif %}
-
-      {% if static_toggle.parent_toggles %}
-        <div class="alert alert-info">
-          <p><i class="fa fa-info-circle"></i>
-          {% blocktrans %}
-            This feature flag also requires the following flags to be enabled:
-          {% endblocktrans %}
-          <ul>
-            {% for dependency in static_toggle.parent_toggles %}
-              <li><a href="{% url "edit_toggle" dependency.slug %}" target="_blank">{{ dependency.label }}</a></li>
-            {% endfor %}
-          </ul></p>
-          <p>{% blocktrans %}
-            Enabling this feature flag will automatically enable the flags listed above.
-          {% endblocktrans %}</p>
-        </div>
-      {% endif %}
-
-      <hr/>
-      <div id="toggle_editing_ko">
-        <div data-bind="saveButton: saveButton"></div>
-        {% if is_random_editable %}
-          <div class="input-group">
-            <label for="randomness-edit">Randomness Level: </label>
-            <span data-bind="makeHqHelp: {
-              description: '{% trans "Randomness ranges from 0-1.<br/>0=disabled for all<br/>1=enable for all" %}'}">
-            </span>
-            <input id="randomness-edit" class="input-medium form-control" type="number" step="0.01" min="0" max="1" data-bind="value: randomness">
-          </div>
-        {% endif %}
-        {% if allows_items %}
-          <h4>
-            {% trans "Enabled toggle items" %}
-            {% if is_random %}
-            <span data-bind="makeHqHelp: {
-                description: '{% trans "Items added here will be enabled regardless of the randomness" %}'}"></span>
-            {% endif %}
-          </h4>
-          <hr/>
-          <div class="row" data-bind="visible: latest_use().name">
-            <div class="col-sm-6">
-              Most recently updated: <strong data-bind="text:latest_use().name"></strong>: <span data-bind="text:latest_use().date"></span>
-            </div>
-          </div>
-          <!-- ko foreach: items -->
-          <div class="row margin-vertical-sm">
-            <div class="col-sm-4">
-              <div class="input-group">
-                <div class="input-group-btn">
-                  <a href="#" class="btn btn-danger" data-bind="click: $parent.removeItem"><i class="fa fa-trash"></i></a>
-                </div>
-                <input class="input-medium form-control" type="text" data-bind="value: value">
-                <span class="input-group-addon"
-                      data-bind="html: $parent.getNamespaceHtml(namespace(), value())"
-                      style="font-family:monospace;"></span>
-                <span data-bind="text: last_used, visible: last_used" class="input-group-addon"></span>
-                <span data-bind="text: service_type" class="input-group-addon"></span>
-              </div>
-            </div>
-          </div>
-          <!-- /ko -->
-          {% for namespace in namespaces %}
-            <button class="btn btn-primary" data-bind="click: function (){ addItem('{{ namespace }}') }">
-              <i class="fa fa-plus"></i> {% trans "Add " %}{{ namespace }}
-            </button>
-          {% endfor %}
-        {% endif %}
-      </div>
+  {% if not usage_info %}
+    <a href="{{ page_url }}?usage_info=true" class="pull-right">
+      <button class="btn btn-info">
+        <i class="icon-white icon-info-sign"></i>
+        {% trans "Show usage" %}
+      </button>
+    </a>
+  {% endif %}
+  {% if static_toggle.description %}
+    <p>{{ static_toggle.description }}</p>
+  {% endif %}
+  <p>
+    <span class="label label-{{ static_toggle.tag.css_class }}">{{ static_toggle.tag.name }}</span>
+    {% if is_random %}
+      <span class="label label-info">Random: {{ static_toggle.randomness }}</span>
+    {% endif %}
+  </p>
+  <p>{{ static_toggle.tag.description }}</p>
+  {% if is_feature_release %}
+    <div class="alert alert-warning" role="alert">
+      {% blocktrans trimmed with owner=static_toggle.owner %}
+        Please confirm with {{ owner }} before using it.
+      {% endblocktrans %}
     </div>
+  {% endif %}
+  {% if static_toggle.help_link %}
+    <p><a href="{{ static_toggle.help_link }}" target="_blank">{% trans "More information" %}</a></p>
+  {% endif %}
+
+  {% if by_service %}
+    {% for service, domains in by_service.items %}
+      <table class="table table-striped table-hover">
+        <thead>
+        <tr>
+          <th class="col-sm-4">Subscription Type</th>
+          <th class="col-sm-8">List of Domains</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+          <td>{{ service }}</td>
+          <td>{{ domains | join:", " }}</td>
+        </tr>
+        </tbody>
+    {% endfor %}
+    </table>
+  {% endif %}
+
+  {% if static_toggle.relevant_environments %}
+    {% if debug or server_environment in static_toggle.relevant_environments %}
+      <div class="alert alert-warning" role="alert">
+        {% blocktrans %}
+          <strong>Please Note:</strong> This feature flag is available on this server environment, but not on others.
+        {% endblocktrans %}
+      </div>
+    {% else %}
+      <div class="alert alert-danger" role="alert">
+        {% blocktrans %}
+          <strong>CAUTION:</strong> This feature flag is not available on the current server environment.
+        {% endblocktrans %}
+      </div>
+    {% endif %}
+  {% endif %}
+
+  {% if static_toggle.always_enabled %}
+    <div class="alert alert-info">
+      <i class="fa fa-info-circle"></i>
+      {% blocktrans %}
+        This feature flag is <strong>always enabled</strong> for the following domains:
+      {% endblocktrans %}
+      <ul>
+        {% for domain in static_toggle.always_enabled %}
+          <li>{{ domain }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  {% if static_toggle.always_disabled %}
+    <div class="alert alert-info">
+      <i class="fa fa-info-circle"></i>
+      {% blocktrans %}
+        This feature flag is <strong>always disabled</strong> for the following domains:
+      {% endblocktrans %}
+      <ul>
+        {% for domain in static_toggle.always_disabled %}
+          <li>{{ domain }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  {% if static_toggle.parent_toggles %}
+    <div class="alert alert-info">
+      <p><i class="fa fa-info-circle"></i>
+      {% blocktrans %}
+        This feature flag also requires the following flags to be enabled:
+      {% endblocktrans %}
+      <ul>
+        {% for dependency in static_toggle.parent_toggles %}
+          <li><a href="{% url "edit_toggle" dependency.slug %}" target="_blank">{{ dependency.label }}</a></li>
+        {% endfor %}
+      </ul></p>
+      <p>{% blocktrans %}
+        Enabling this feature flag will automatically enable the flags listed above.
+      {% endblocktrans %}</p>
+    </div>
+  {% endif %}
+
+  <hr/>
+  <div id="toggle_editing_ko">
+    <div data-bind="saveButton: saveButtonTop"></div>
+    {% if is_random_editable %}
+      <div class="input-group">
+        <label for="randomness-edit">Randomness Level: </label>
+        <span data-bind="makeHqHelp: {
+          description: '{% trans "Randomness ranges from 0-1.<br/>0=disabled for all<br/>1=enable for all" %}'}">
+        </span>
+        <input id="randomness-edit" class="input-medium form-control" type="number" step="0.01" min="0" max="1" data-bind="value: randomness">
+      </div>
+    {% endif %}
+    {% if allows_items %}
+      <h4>
+        {% trans "Enabled toggle items" %}
+        {% if is_random %}
+        <span data-bind="makeHqHelp: {
+            description: '{% trans "Items added here will be enabled regardless of the randomness (or disabled if preceded by `!`)" %}'}"></span>
+        {% endif %}
+      </h4>
+      <table class="table table-condensed"><!-- B5: add table-borderless and remove `border: none` inline styles on table cells -->
+        <tbody data-bind="foreach: items">
+          <tr>
+            <td class="col-sm-4" style="border: 0">
+              <div class="input-group">
+                <span class="input-group-btn">
+                  <button class="btn btn-default" data-bind="click: $parent.removeItem">
+                    <i class="text-danger fa-regular fa-trash-can"></i>
+                  </button>
+                </span>
+                <input class="form-control" type="text" data-bind="value: value">
+                <!-- ko if: value() && value()[0] == '!' -->
+                <span class="input-group-addon"><i class="fa fa-circle-xmark"></i></span>
+                <!-- /ko -->
+                <!-- ko ifnot: value() && value()[0] == '!' -->
+                <span class="input-group-addon"><i class="fa fa-check"></i></span>
+                <!-- /ko -->
+              </div>
+            </td>
+            <!-- B5: replace inline styles with vertical alignment class: https://getbootstrap.com/docs/5.3/utilities/vertical-align/#css -->
+            <td class="col-sm-2" style="border: 0; vertical-align: middle" data-bind="html: $parent.getNamespaceHtml(namespace(), value())"></td>
+            <td class="col-sm-2" style="border: 0; vertical-align: middle" data-bind="text: last_used"></td>
+            <td class="col-sm-4" style="border: 0; vertical-align: middle" data-bind="text: service_type"></td>
+          </tr>
+        </tbody>
+      </table>
+      {% for namespace in namespaces %}
+        <button class="btn btn-primary" data-bind="click: function (){ addItem('{{ namespace }}') }">
+          <i class="fa fa-plus"></i> {% trans "Add " %}{{ namespace }}
+        </button>
+      {% endfor %}
+    {% endif %}
+    <div data-bind="saveButton: saveButtonBottom"></div>
   </div>
 {% endblock %}

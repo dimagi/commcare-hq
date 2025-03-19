@@ -9,7 +9,6 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 from corehq.sql_db.connections import Session
 from corehq.util.dates import iso_string_to_date
-from corehq.util.test_utils import softer_assert
 
 from .sql_fixture import load_data
 from .sql_reports import RegionTestReport, UserTestReport, test_report

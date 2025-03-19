@@ -1,4 +1,4 @@
-from django.conf.urls import include, re_path as url
+from django.urls import include, re_path as url
 
 from corehq.apps.domain.utils import grandfathered_domain_re
 from corehq.apps.reports.dispatcher import UserManagementReportDispatcher
@@ -6,7 +6,6 @@ from corehq.apps.reports.dispatcher import UserManagementReportDispatcher
 from .views import (
     DefaultProjectUserSettingsView,
     EditWebUserView,
-    EnterpriseUsersView,
     InviteWebUserView,
     UploadWebUsers,
     WebUserUploadStatusView,
@@ -49,7 +48,6 @@ from .views.mobile.users import (
     CommCareUsersLookup,
     ConfirmBillingAccountForExtraUsersView,
     ConfirmTurnOffDemoModeView,
-    CreateCommCareUserModal,
     DemoRestoreStatusView,
     DeleteCommCareUsers,
     DownloadUsersStatusView,
@@ -78,6 +76,8 @@ from .views.mobile.users import (
     send_confirmation_sms,
     CommcareUserUploadJobPollView,
     ClearCommCareUsers,
+    link_connectid_user,
+    bulk_user_upload_api,
 )
 from ..hqwebapp.decorators import waf_allow
 
@@ -107,6 +107,7 @@ urlpatterns = [
     url(r'^web/remove/(?P<couch_user_id>[ \w-]+)/$', remove_web_user, name='remove_web_user'),
     url(r'^web/undo_remove/(?P<record_id>[ \w-]+)/$', undo_remove_web_user, name='undo_remove_web_user'),
     url(r'^web/invite/$', InviteWebUserView.as_view(), name=InviteWebUserView.urlname),
+    url(r'^web/invite/edit/(?P<invitation_id>[ \w-]+)/$', InviteWebUserView.as_view(), name='edit_invitation'),
     url(r'^web/reinvite/$', reinvite_web_user, name='reinvite_web_user'),
     url(r'^web/request/$', DomainRequestView.as_view(), name=DomainRequestView.urlname),
     url(r'^web/delete_invitation/$', delete_invitation, name='delete_invitation'),
@@ -133,7 +134,6 @@ urlpatterns = [
         WebUserUploadJobPollView.as_view(),
         name=WebUserUploadJobPollView.urlname
     ),
-    url(r'^enterprise/$', EnterpriseUsersView.as_view(), name=EnterpriseUsersView.urlname),
     url(r'^enterprise/json/$', paginate_enterprise_users, name='paginate_enterprise_users'),
     url(r'^join/(?P<uuid>[ \w-]+)/$', accept_invitation, name='domain_accept_invitation'),
     url(r'^roles/$', ListRolesView.as_view(), name=ListRolesView.urlname),
@@ -148,7 +148,7 @@ urlpatterns = [
 ] + [
     url(r'^commcare/$', MobileWorkerListView.as_view(), name=MobileWorkerListView.urlname),
     url(r'^commcare/json/$', paginate_mobile_workers, name='paginate_mobile_workers'),
-    url(r'^commcare/fields/$', waf_allow('XSS_BODY')(UserFieldsView.as_view()), name=UserFieldsView.urlname),
+    url(r'^user_data/$', waf_allow('XSS_BODY')(UserFieldsView.as_view()), name=UserFieldsView.urlname),
     url(
         r'^commcare/account/(?P<couch_user_id>[ \w-]+)/$',
         EditCommCareUserView.as_view(),
@@ -195,6 +195,11 @@ urlpatterns = [
         name=UploadCommCareUsers.urlname
     ),
     url(
+        r'^commcare/upload/bulk_user_upload_api/$',
+        bulk_user_upload_api,
+        name='bulk_user_upload_api'
+    ),
+    url(
         r'^commcare/upload/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         UserUploadStatusView.as_view(),
         name=UserUploadStatusView.urlname
@@ -222,11 +227,6 @@ urlpatterns = [
         name='user_download_job_poll'
     ),
     url(
-        r'^commcare/new_mobile_worker_modal/$',
-        CreateCommCareUserModal.as_view(),
-        name=CreateCommCareUserModal.urlname
-    ),
-    url(
         r'^commcare/confirm_charges/$',
         ConfirmBillingAccountForExtraUsersView.as_view(),
         name=ConfirmBillingAccountForExtraUsersView.urlname
@@ -245,6 +245,11 @@ urlpatterns = [
         r'^commcare/confirm_account_sms/(?P<user_invite_hash>[\S-]+)/$',
         CommCareUserConfirmAccountBySMSView.as_view(),
         name=CommCareUserConfirmAccountBySMSView.urlname
+    ),
+    url(
+        r'^commcare/link_connectid_user/$',
+        link_connectid_user,
+        name='link_connectid_user'
     ),
 ] + [
     url(r'^groups/$', GroupsListView.as_view(), name=GroupsListView.urlname),

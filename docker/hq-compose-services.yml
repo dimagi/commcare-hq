@@ -1,5 +1,3 @@
-version: '2.3'
-
 services:
   formplayer:
     extends:
@@ -25,7 +23,6 @@ services:
     extends:
       file: hq-compose.yml
       service: couch
-    command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
     ports:
       - "5984:5984"
 
@@ -36,17 +33,6 @@ services:
     ports:
       - "6379:6379"
 
-  elasticsearch2:
-    extends:
-      file: hq-compose.yml
-      service: elasticsearch2
-    command: elasticsearch --cluster.name=${ES_CLUSTER_NAME}
-    environment:
-      ES_CLUSTER_NAME: ES_CLUSTER_NAME
-      ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
-    ports:
-      - "9200:9200"
-
   elasticsearch5:
     extends:
       file: hq-compose.yml
@@ -54,9 +40,8 @@ services:
     command: elasticsearch
     environment:
       ES_CLUSTER_NAME: ${ES_CLUSTER_NAME}
-      ES_JAVA_OPTS: "-Xms750m -Xmx750m -Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
     ports:
-      - "9205:9200"
+      - "9200:9200"
 
   kafka:
     extends:

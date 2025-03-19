@@ -4,7 +4,11 @@
  *
  * All task functions are expected to return a promise.
  */
-hqDefine("cloudcare/js/form_entry/task_queue", function () {
+hqDefine("cloudcare/js/form_entry/task_queue", [
+    'underscore',
+], function (
+    _,
+) {
     var TaskQueue = function () {
         var self = {};
 
@@ -12,8 +16,7 @@ hqDefine("cloudcare/js/form_entry/task_queue", function () {
         self.inProgress = undefined;
 
         self.execute = function () {
-            var task,
-                idx;
+            var task;
             task = self.queue.shift();
             if (!task) {
                 self.inProgress = undefined;

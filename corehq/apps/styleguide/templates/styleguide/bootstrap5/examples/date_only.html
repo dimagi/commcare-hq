@@ -1,0 +1,18 @@
+<input id="js-dateonly" class="form-control" type="text" name="dateonly" />
+
+<script>
+  new tempusDominus.TempusDominus(
+    document.getElementById('js-dateonly'),
+    {
+      display: {
+        theme: 'light',
+        components: {
+          clock: false,
+        }
+      },
+      localization: {
+        format: 'L',
+      },
+    }
+    );
+</script>

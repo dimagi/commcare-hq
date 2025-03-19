@@ -1,7 +1,8 @@
-from django.utils.translation import gettext_lazy, gettext_noop
+from django.utils.translation import gettext, gettext_lazy, gettext_noop
 
 import xlrd
 
+from corehq.apps.case_importer.const import MAX_CASE_IMPORTER_ROWS
 from corehq.form_processor.models import STANDARD_CHARFIELD_LENGTH
 
 
@@ -32,6 +33,19 @@ class ImporterExcelError(ImporterError, xlrd.XLRDError):
 
 class ImporterExcelFileEncrypted(ImporterExcelError):
     """Raised when a file cannot be open because it is encrypted (password-protected)"""
+
+
+class ImporterExcelTooManyRows(ImporterError):
+    """Raised when case import exceeds MAX_CASE_IMPORTER_ROWS"""
+
+    def __init__(self, row_count):
+        self.row_count = row_count
+
+    def __str__(self):
+        return gettext(
+            f"Case imports can contain a maximum of {MAX_CASE_IMPORTER_ROWS} rows. "
+            f"The uploaded file contains {self.row_count} rows."
+        )
 
 
 class InvalidCustomFieldNameException(ImporterError):
@@ -173,4 +187,4 @@ class ExternalIdTooLong(CaseRowError):
 
 class UnexpectedError(CaseRowError):
     title = gettext_noop('Unexpected error')
-    message = gettext_lazy('Could not process case. If this persists, Please report an issue to CommCareHQ')
+    message = gettext_lazy('Could not process case. If this persists, please report an issue to CommCare HQ')

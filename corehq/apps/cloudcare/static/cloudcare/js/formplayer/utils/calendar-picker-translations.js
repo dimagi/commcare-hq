@@ -1,4 +1,16 @@
-(function ($) {
+hqDefine('cloudcare/js/formplayer/utils/calendar-picker-translations', [
+    'jquery',
+    'calendars/dist/js/jquery.plugin',
+    'calendars/dist/js/jquery.calendars',
+    'calendars/dist/js/jquery.calendars.picker',
+    'calendars/dist/js/jquery.calendars.ethiopian',
+    'calendars/dist/js/jquery.calendars.plus',
+    'calendars/dist/js/jquery.calendars-am',
+    'calendars/dist/js/jquery.calendars.picker-am',
+    'calendars/dist/js/jquery.calendars.ethiopian-am',
+], function (
+    $,
+) {
     // English
     $.calendarsPicker.regionalOptions[''] = { // Default regional settings - English/US
         renderer: $.calendarsPicker.regionalOptions[''].renderer, // this.defaultRenderer
@@ -32,9 +44,9 @@
         name: 'Ethiopian',
         epochs: ['BEE', 'EE'],
         monthNames: ['Meskerem', 'Tikemet', 'Hidar', 'Tahesas', 'Tir', 'Yekatit',
-                     'Megabit', 'Miazia', 'Genbot', 'Sene', 'Hamle', 'Nehase', 'Pagume'],
+            'Megabit', 'Miazia', 'Genbot', 'Sene', 'Hamle', 'Nehase', 'Pagume'],
         monthNamesShort: ['Mes', 'Tik', 'Hid', 'Tah', 'Tir', 'Yek',
-                          'Meg', 'Mia', 'Gen', 'Sen', 'Ham', 'Neh', 'Pag'],
+            'Meg', 'Mia', 'Gen', 'Sen', 'Ham', 'Neh', 'Pag'],
         dayNames: ['Ehud', 'Segno', 'Maksegno', 'Irob', 'Hamus', 'Arb', 'Kidame'],
         dayNamesShort: ['Ehu', 'Seg', 'Mak', 'Iro', 'Ham', 'Arb', 'Kid'],
         dayNamesMin: ['Eh', 'Se', 'Ma', 'Ir', 'Ha', 'Ar', 'Ki'],
@@ -330,4 +342,4 @@
         firstDay: 0,
         isRTL: false,
     };
-})(window.jQuery);
+});

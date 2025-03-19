@@ -1,3 +1,4 @@
+
 /*
  * Component for displaying a selection as a set of buttons.
  * Creates an invisible <select> element to store the value and a set of buttons for the user to interact with.
@@ -21,19 +22,24 @@ hqDefine('hqwebapp/js/components/select_toggle', [
     'jquery',
     'knockout',
     'underscore',
+    'hqwebapp/js/components.ko',
+    "hqwebapp/js/initial_page_data",
 ], function (
     $,
     ko,
-    _
+    _,
+    koComponents,
+    initialPageData,
 ) {
-    return {
+    const component = {
         viewModel: function (params) {
             var self = this;
 
             // Attributes passed on to the input
             self.name = params.name || '';
             self.id = params.id || '';
-            self.disabled = params.disabled || false;
+            const readOnlyMode = initialPageData.get("read_only_mode");
+            self.disabled = params.disabled || readOnlyMode;
             self.htmlAttrs = {};
             if (self.name) {
                 self.htmlAttrs.name = self.name;
@@ -45,7 +51,7 @@ hqDefine('hqwebapp/js/components/select_toggle', [
             // Data
             self.value = ko.isObservable(params.value) ? params.value : ko.observable(params.value);
             var optionsData = ko.computed(function () {
-                return ko.isObservable(params.options) ? params.options() : params.options
+                return ko.isObservable(params.options) ? params.options() : params.options;
             });
             self.options = ko.computed(function () {
                 return ko.observableArray(_.map(optionsData(), function (o) {
@@ -72,4 +78,8 @@ hqDefine('hqwebapp/js/components/select_toggle', [
         },
         template: '<div data-bind="template: { name: \'ko-select-toggle\' }"></div>',
     };
+
+    koComponents.register('select-toggle', component);
+
+    return component;
 });

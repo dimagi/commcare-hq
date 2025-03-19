@@ -5,10 +5,10 @@ from decimal import Decimal
 from django.test import SimpleTestCase, TestCase
 
 import requests
-from unittest.mock import Mock, patch
+from unittest.mock import ANY, Mock, patch
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pp_json
-from corehq.motech.const import ALGO_AES, PASSWORD_PLACEHOLDER
+from corehq.motech.const import ALGO_AES_CBC, PASSWORD_PLACEHOLDER
 from corehq.motech.models import (
     ConnectionSettings,
     RequestLog,
@@ -16,6 +16,7 @@ from corehq.motech.models import (
 )
 from corehq.motech.requests import get_basic_requests
 from corehq.util import as_json_text, as_text
+from corehq.util.test_utils import flag_enabled
 
 TEST_API_URL = 'http://example.com:9080/api/'
 TEST_API_USERNAME = 'admin'
@@ -80,6 +81,7 @@ class UnpackRequestArgsTests(SimpleTestCase):
             response_body=as_text(self.content_json),
             response_status=self.status_code,
             response_headers=self.response_headers,
+            duration=ANY,
         )
 
     def test_post_with_no_args(self):
@@ -162,15 +164,26 @@ class ConnectionSettingsPropertiesTests(SimpleTestCase):
         cs.plaintext_client_secret = PASSWORD_PLACEHOLDER
         self.assertEqual(cs.client_secret, '')
 
+    def test_last_token_setter_none(self):
+        cs = ConnectionSettings()
+        cs.last_token = None
+        self.assertEqual(cs.last_token_aes, '')
+
     def test_password_setter(self):
         cs = ConnectionSettings()
         cs.plaintext_password = 'secret'
-        self.assertTrue(cs.password.startswith(f'${ALGO_AES}$'))
+        self.assertTrue(cs.password.startswith(f'${ALGO_AES_CBC}$'))
 
     def test_client_secret_setter(self):
         cs = ConnectionSettings()
         cs.plaintext_client_secret = 'secret'
-        self.assertTrue(cs.client_secret.startswith(f'${ALGO_AES}$'))
+        self.assertTrue(cs.client_secret.startswith(f'${ALGO_AES_CBC}$'))
+
+    def test_last_token_setter(self):
+        cs = ConnectionSettings()
+        token = {'key': 'value'}
+        cs.last_token = token
+        self.assertTrue(cs.last_token_aes.startswith(f'${ALGO_AES_CBC}$'))
 
     def test_password_getter_decrypts(self):
         cs = ConnectionSettings()
@@ -182,6 +195,12 @@ class ConnectionSettingsPropertiesTests(SimpleTestCase):
         cs.plaintext_client_secret = 'secret'
         self.assertEqual(cs.plaintext_client_secret, 'secret')
 
+    def test_last_token_getter_decrypts_cbc(self):
+        cs = ConnectionSettings()
+        token = {'key': 'value'}
+        cs.last_token = token
+        self.assertEqual(cs.last_token, token)
+
     def test_password_getter_returns(self):
         cs = ConnectionSettings()
         cs.password = 'secret'
@@ -191,6 +210,59 @@ class ConnectionSettingsPropertiesTests(SimpleTestCase):
         cs = ConnectionSettings()
         cs.client_secret = 'secret'
         self.assertEqual(cs.plaintext_client_secret, 'secret')
+
+    def test_last_token_getter_returns(self):
+        cs = ConnectionSettings()
+        cs.last_token_aes = ''
+        self.assertIsNone(cs.last_token)
+
+    def test_set_custom_headers_encrypts_no_ff(self):
+        cs = ConnectionSettings()
+        cs.set_custom_headers({"secret-header": "top secret"})
+        self.assertIsNone(cs.custom_headers)
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_set_custom_headers_encrypts(self):
+        cs = ConnectionSettings()
+        cs.set_custom_headers({"secret-header": "top secret"})
+        self.assertTrue(cs.custom_headers["secret-header"].startswith(f'${ALGO_AES_CBC}$'))
+
+    def test_get_custom_headers_decrypts_no_ff(self):
+        cs = ConnectionSettings()
+        cs.set_custom_headers({"secret-header": "top secret"})
+        self.assertEqual(cs.plaintext_custom_headers, {})
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_get_custom_headers_decrypts(self):
+        cs = ConnectionSettings()
+        cs.set_custom_headers({"secret-header": "top secret"})
+        self.assertEqual(cs.plaintext_custom_headers, {"secret-header": "top secret"})
+
+    def test_get_custom_header_display_hides_header_values_no_ff(self):
+        cs = ConnectionSettings()
+        cs.set_custom_headers({"secret-header": "top secret"})
+        self.assertEqual(cs.get_custom_headers_display(), {})
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_get_custom_header_display_hides_header_values(self):
+        cs = ConnectionSettings()
+        cs.set_custom_headers({"secret-header": "top secret"})
+        self.assertEqual(cs.get_custom_headers_display(), {"secret-header": PASSWORD_PLACEHOLDER})
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_remove_a_custom_header(self):
+        cs = ConnectionSettings()
+        cs.set_custom_headers({"secret-header": "top secret", "secret-header-2": "top secret 2"})
+        self.assertEqual(
+            cs.plaintext_custom_headers,
+            {"secret-header": "top secret", "secret-header-2": "top secret 2"}
+        )
+
+        cs.set_custom_headers({"secret-header": "top secret", "secret-header-3": "top secret 3"})
+        self.assertEqual(
+            cs.plaintext_custom_headers,
+            {"secret-header": "top secret", "secret-header-3": "top secret 3"}
+        )
 
 
 class NotifyAddressesTests(SimpleTestCase):
@@ -278,4 +350,5 @@ class TestRequestLogFormatting(TestCase):
             response_status=200,
             response_headers={},
             response_body='OK',
+            duration=0,
         )

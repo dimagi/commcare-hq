@@ -42,12 +42,10 @@ from corehq.apps.fixtures.exceptions import (
     FixtureDownloadError,
     FixtureUploadError,
 )
+from corehq.apps.fixtures.upload.failure_messages import INVALID_NAME_ERROR
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
-from corehq.apps.fixtures.models import (
-    LookupTableRow,
-    LookupTable,
-    TypeField,
-)
+from corehq.apps.fixtures.models import (LookupTable, LookupTableRow,
+    TypeField)
 from corehq.apps.fixtures.tasks import (
     async_fixture_download,
     fixture_upload_async,
@@ -128,10 +126,7 @@ def update_tables(request, domain, data_type_id=None):
                 field_name = options['update']
             if is_identifier_invalid(field_name) and 'remove' not in method:
                 validation_errors.append(field_name)
-        validation_errors = [_(
-            "\"%s\" cannot include special characters, begin or end with a space, "
-            "or begin with \"xml\" or a number") % e for e in validation_errors
-        ]
+        validation_errors = [_(INVALID_NAME_ERROR) % repr(e) for e in validation_errors]
         if len(data_tag) < 1 or len(data_tag) > 31:
             validation_errors.append(_("Table ID must be between 1 and 31 characters."))
 
@@ -161,7 +156,7 @@ def table_json(table):
         '_id': table.id.hex,
         'fields': [asdict(f) for f in table.fields],
     }
-    for key in ['description', 'is_global', 'item_attributes', 'tag']:
+    for key in ['description', 'is_global', 'item_attributes', 'tag', 'is_synced']:
         data[key] = getattr(table, key)
     return data
 
@@ -361,7 +356,7 @@ class FixtureUploadStatusView(FixtureViewMixIn, BaseDomainView):
             'next_url': reverse('edit_lookup_tables', args=[self.domain]),
             'next_url_text': _("Return to manage lookup tables"),
         })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        return render(request, 'hqwebapp/bootstrap3/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)

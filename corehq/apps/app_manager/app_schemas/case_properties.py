@@ -3,7 +3,6 @@ from collections import defaultdict, deque, namedtuple
 
 from memoized import memoized
 
-from corehq import toggles
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain,
@@ -11,6 +10,8 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.util import is_remote_app, is_usercase_in_use
 from corehq.util.quickcache import quickcache
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq import privileges
 
 logger = logging.getLogger(__name__)
 
@@ -378,7 +379,7 @@ class ParentCasePropertyBuilder(object):
         Data sources for this are (limited to):
         - the app given
         - all other case sharing apps if app.case_sharing
-        - the Data Dictionary case properties if toggles.DATA_DICTIONARY
+        - the Data Dictionary case properties if domain has DATA_DICTIONARY privilege
         - the `defaults` passed in to the class
         - the `per_type_defaults` for usercases and call center cases, if applicable
 
@@ -398,7 +399,7 @@ class ParentCasePropertyBuilder(object):
 
         _zip_update(case_properties_by_case_type, get_per_type_defaults(self.domain))
 
-        if toggles.DATA_DICTIONARY.enabled(self.domain):
+        if domain_has_privilege(self.domain, privileges.DATA_DICTIONARY):
             _zip_update(case_properties_by_case_type,
                         get_data_dict_props_by_case_type(self.domain, self.exclude_deprecated_properties))
 
@@ -507,6 +508,7 @@ def get_usercase_properties(app):
     return {USERCASE_TYPE: []}
 
 
+@quickcache(vary_on=['domain', 'include_parent_properties', 'exclude_deprecated_properties'])
 def all_case_properties_by_domain(domain, include_parent_properties=True, exclude_deprecated_properties=True):
     builder = ParentCasePropertyBuilder.for_domain(
         domain, include_parent_properties=include_parent_properties,
@@ -541,3 +543,15 @@ def _get_usercase_default_properties(domain):
 
     fields_def = CustomDataFieldsDefinition.get_or_create(domain, CUSTOM_USER_DATA_FIELD_TYPE)
     return [f.slug for f in fields_def.get_fields()]
+
+
+def expire_case_properties_caches(domain):
+    # expire all possible combinations of arguments
+    all_case_properties_by_domain.clear(domain=domain,
+                                        include_parent_properties=True, exclude_deprecated_properties=True)
+    all_case_properties_by_domain.clear(domain=domain,
+                                        include_parent_properties=True, exclude_deprecated_properties=False)
+    all_case_properties_by_domain.clear(domain=domain,
+                                        include_parent_properties=False, exclude_deprecated_properties=True)
+    all_case_properties_by_domain.clear(domain=domain,
+                                        include_parent_properties=False, exclude_deprecated_properties=False)

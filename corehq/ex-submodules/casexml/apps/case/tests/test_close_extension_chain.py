@@ -6,8 +6,6 @@ from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from casexml.apps.case.xform import (
     get_all_extensions_to_close,
-    get_extensions_to_close,
-    get_ush_extension_cases_to_close,
 )
 from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.domain.models import Domain
@@ -30,6 +28,7 @@ class AutoCloseExtensionsTest(TestCase):
         cls.factory = CaseFactory(domain=cls.domain)
         cls.extension_ids = ['1', '2', '3']
         cls.host_id = 'host-{}'.format(uuid.uuid4().hex)
+        cls.host_2_id = 'host_2-{}'.format(uuid.uuid4().hex)
         cls.parent_id = 'parent-{}'.format(uuid.uuid4().hex)
 
     def tearDown(self):
@@ -109,6 +108,27 @@ class AutoCloseExtensionsTest(TestCase):
         )
         return self.factory.create_or_update_cases([extension_2])
 
+    def _create_two_host_extension(self):
+        host = CaseStructure(case_id=self.host_id, attrs={'create': True})
+        host_2 = CaseStructure(case_id=self.host_2_id, attrs={'create': True})
+        extension = CaseStructure(
+            case_id=self.extension_ids[0],
+            indices=[
+                CaseIndex(
+                    identifier='host',
+                    related_structure=host,
+                    relationship="extension",
+                ),
+                CaseIndex(
+                    identifier='host_2',
+                    related_structure=host_2,
+                    relationship="extension",
+                ),
+            ],
+            attrs={'create': True}
+        )
+        return self.factory.create_or_update_cases([extension])
+
     def test_get_extension_chain_simple(self):
         host = CaseStructure(case_id=self.host_id, attrs={'create': True})
         extension = CaseStructure(
@@ -123,53 +143,6 @@ class AutoCloseExtensionsTest(TestCase):
         self.assertEqual(
             set(self.extension_ids[0]),
             CommCareCaseIndex.objects.get_extension_chain(self.domain, [self.host_id])
-        )
-
-    @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
-    @flag_enabled('USH_DONT_CLOSE_PATIENT_EXTENSIONS')
-    def test_get_ush_custom_extension_chain(self):
-        # test USH specific tree of where only extension(2) should be included
-        #       patient (host)
-        #     /        \
-        #  contact(id=1)   extension(id=2)
-        #   /
-        # extension(id=3)
-        host = CaseStructure(case_id=self.host_id, attrs={'create': True, 'case_type': 'patient'})
-        contact_extension = CaseStructure(
-            case_id=self.extension_ids[0],
-            indices=[CaseIndex(
-                related_structure=host,
-                relationship="extension",
-            )],
-            attrs={'create': True, 'case_type': 'contact'}
-        )
-        extensions_1 = CaseStructure(
-            case_id=self.extension_ids[1],
-            indices=[CaseIndex(
-                related_structure=host,
-                relationship="extension",
-            )],
-            attrs={'create': True}
-        )
-        ext_of_contact = CaseStructure(
-            case_id=self.extension_ids[2],
-            indices=[CaseIndex(
-                related_structure=contact_extension,
-                relationship="extension",
-            )],
-            attrs={'create': True}
-        )
-        created_cases = self.factory.create_or_update_cases([ext_of_contact])
-        self.factory.create_or_update_cases([extensions_1])
-        created_cases[-1].closed = True
-        self.assertEqual(
-            set(self.extension_ids),
-            get_extensions_to_close(self.domain, [created_cases[-1]])
-        )
-        # contact and its extensions shouldn't be included in USH case
-        self.assertEqual(
-            {self.extension_ids[1]},
-            get_ush_extension_cases_to_close(self.domain, [created_cases[-1]])
         )
 
     def test_get_extension_chain_multiple(self):
@@ -268,6 +241,34 @@ class AutoCloseExtensionsTest(TestCase):
         self.assertEqual(1, len(cases[self.extension_ids[0]].get_closing_transactions()))
         self.assertEqual(1, len(cases[self.extension_ids[1]].get_closing_transactions()))
         self.assertEqual(1, len(cases[self.extension_ids[2]].get_closing_transactions()))
+
+    @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
+    def test_closing_one_host_closes_extension(self):
+        """Closing any host should close a shared extension."""
+        self._create_two_host_extension()
+        cases = CommCareCase.objects.get_cases(
+            [self.host_id, self.host_2_id, self.extension_ids[0]],
+            self.domain,
+        )
+        self.assertFalse(cases[0].closed)
+        self.assertFalse(cases[1].closed)
+        self.assertFalse(cases[2].closed)
+
+        self.factory.create_or_update_case(CaseStructure(
+            case_id=self.host_id,
+            attrs={'close': True}
+        ))
+
+        cases = {
+            case.case_id: case
+            for case in CommCareCase.objects.get_cases(
+                [self.host_id, self.host_2_id, self.extension_ids[0]],
+                self.domain,
+            )
+        }
+        self.assertTrue(cases[self.host_id].closed)
+        self.assertFalse(cases[self.host_2_id].closed)
+        self.assertTrue(cases[self.extension_ids[0]].closed)
 
     @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
     def test_close_cases_child(self):

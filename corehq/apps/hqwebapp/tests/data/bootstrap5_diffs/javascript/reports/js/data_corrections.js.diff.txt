@@ -1,0 +1,20 @@
+--- 
++++ 
+@@ -28,7 +28,7 @@
+  *              Property is the data, plucked from the properties array. Name is displayed in the menu that lets
+  *              user toggle between display properties.
+  */
+-hqDefine("reports/js/bootstrap3/data_corrections", [
++hqDefine("reports/js/bootstrap5/data_corrections", [
+     "jquery",
+     "knockout",
+     "underscore",
+@@ -345,7 +345,7 @@
+             model = DataCorrectionsModel(options);
+             $modal.koApplyBindings(model);
+             $trigger.click(function () {
+-                $modal.modal();
++                $modal.modal();  /* todo B5: plugin:modal */
+                 setupSelect2($modal);
+ 
+             });

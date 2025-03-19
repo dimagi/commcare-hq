@@ -1,18 +1,17 @@
 hqDefine("fixtures/js/view-table", [
     "jquery",
-    "hqwebapp/js/django",
     "hqwebapp/js/initial_page_data",
-    "reports/js/standard_hq_report",
-    "reports/js/config.dataTables.bootstrap",
-    "reports/js/filters/main",
+    "reports/js/bootstrap3/standard_hq_report",
+    "reports/js/bootstrap3/datatables_config",
+    "reports/js/filters/bootstrap3/main",
     "datatables.fixedColumns",
+    "commcarehq",
 ], function (
     $,
-    django,
     initialPageData,
     standardHQReportModule,
     datatablesConfig,
-    filters
+    filters,
 ) {
     if (initialPageData.get('renderReportTables')) {
         var reportTables = datatablesConfig.HQReportDataTables(initialPageData.get('dataTablesOptions')),

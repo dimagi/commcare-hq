@@ -2,11 +2,40 @@ import json
 from datetime import date
 
 from attrs import asdict, define, field
+from attrs.exceptions import NotAnAttrsClassError
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.forms import modelform_factory
 from testil import assert_raises, eq
 
-from ..jsonattrs import AttrsDict, AttrsList, dict_of, list_of
+from ..jsonattrs import AttrsDict, AttrsList, AttrsObject, dict_of, list_of
 from ..test_utils import unregistered_django_model
+
+
+def test_attrsobject():
+    @unregistered_django_model
+    class Check(models.Model):
+        point = AttrsObject(Point)
+
+    point = {}
+    check = Check(point=point)
+    assert check.point is point, (check.point, point)
+
+    check.point = xy = Point(0, 1)
+    eq(get_json_value(check, "point"), {"x": 0, "y": 1})
+
+    set_json_value(check, "point", {"x": 0, "y": 1})
+    assert check.point is not xy, xy
+    eq(check.point, Point(0, 1))
+
+    with assert_raises(ValidationError, msg=(
+        '["'
+        "'point' field value has an invalid format: "
+        "Cannot construct Point with {} -> "
+        "TypeError: __init__() missing 2 required positional arguments: 'x' and 'y'"
+        '"]'
+    )):
+        set_json_value(check, "point", {})
 
 
 def test_attrsdict():
@@ -24,6 +53,15 @@ def test_attrsdict():
     set_json_value(check, "points", {"north": {"x": 0, "y": 1}})
     assert check.points is not xydict, xydict
     eq(check.points, {"north": Point(0, 1)})
+
+    with assert_raises(ValidationError, msg=(
+        '["'
+        "'points' field value has an invalid format: "
+        "Cannot construct Point with {} -> "
+        "TypeError: __init__() missing 2 required positional arguments: 'x' and 'y'"
+        '"]'
+    )):
+        set_json_value(check, "points", {"north": {}})
 
 
 def test_attrsdict_list_of():
@@ -46,6 +84,15 @@ def test_attrsdict_list_of():
     with assert_raises(ValueError, msg="expected list of Point, got None"):
         get_json_value(check, "point_lists")
 
+    with assert_raises(ValidationError, msg=(
+        '["'
+        "'point_lists' field value has an invalid format: "
+        "Cannot construct list_of(Point) with 500 -> "
+        "TypeError: 'int' object is not iterable"
+        '"]'
+    )):
+        set_json_value(check, "point_lists", {"north": 500})
+
 
 def test_attrslist():
     @unregistered_django_model
@@ -62,6 +109,16 @@ def test_attrslist():
     set_json_value(check, "values", [{"name": "abby"}])
     assert check.values is not abbylist, abbylist
     eq(check.values, [Value("abby")])
+
+    with assert_raises(ValidationError, msg=(
+        '["'
+        "'values' field value has an invalid format: "
+        "Cannot construct Value with 'bad value' -> "
+        "TypeError: corehq.util.tests.test_jsonattrs.Value() "
+        "argument after ** must be a mapping, not str"
+        '"]'
+    )):
+        set_json_value(check, "values", ["bad value"])
 
 
 def test_attrslist_dict_of():
@@ -83,6 +140,15 @@ def test_attrslist_dict_of():
     check.value_items = [None]
     with assert_raises(ValueError, msg="expected dict with Value values, got None"):
         get_json_value(check, "value_items")
+
+    with assert_raises(ValidationError, msg=(
+        '["'
+        "'value_items' field value has an invalid format: "
+        "Cannot construct dict_of(Value) with 'bad' -> "
+        "AttributeError: 'str' object has no attribute 'items'"
+        '"]'
+    )):
+        set_json_value(check, "value_items", {"bad": "value"})
 
 
 def test_jsonattrs_to_json():
@@ -116,6 +182,100 @@ def test_value_to_string_returns_json_serializable():
     )
 
 
+def test_invalid_value_does_not_save():
+    @unregistered_django_model
+    class Check(models.Model):
+        events = AttrsList(Event)
+
+    check = Check(events=[{"monday": "2022-07-20"}])
+    with assert_raises(NotAnAttrsClassError, msg=(
+        "<class 'dict'> is not an attrs-decorated class."
+    )):
+        get_json_value(check, "events")
+
+
+def test_jsonattrs_formfield__attrdict():
+    @unregistered_django_model
+    class Check(models.Model):
+        points = AttrsDict(Point)
+
+    _check_jsonattrs_formfield(
+        Check,
+        field_name="points",
+        raw_value='{"north": {"x": 0, "y": 1}}',
+        empty_value={},
+        expected={"north": Point(0, 1)}
+    )
+
+
+def test_jsonattrs_formfield__attrdict_list_of():
+    @unregistered_django_model
+    class Check(models.Model):
+        points = AttrsDict(list_of(Point))
+
+    _check_jsonattrs_formfield(
+        Check,
+        field_name="points",
+        raw_value='{"north": [{"x": 0, "y": 1}]}',
+        empty_value={},
+        expected={"north": [Point(0, 1)]}
+    )
+
+
+def test_jsonattrs_formfield__attrslist():
+    @unregistered_django_model
+    class Check(models.Model):
+        points = AttrsList(Point)
+
+    _check_jsonattrs_formfield(
+        Check,
+        field_name="points",
+        raw_value='[{"x": 0, "y": 1}]',
+        empty_value=[],
+        expected=[Point(0, 1)]
+    )
+
+
+def test_jsonattrs_formfield__attrslist_dict_of():
+    @unregistered_django_model
+    class Check(models.Model):
+        points = AttrsList(dict_of(Point))
+
+    _check_jsonattrs_formfield(
+        Check,
+        field_name="points",
+        raw_value='[{"north": {"x": 0, "y": 1}}]',
+        empty_value=[],
+        expected=[{"north": Point(0, 1)}]
+    )
+
+
+def test_jsonattrs_formfield__attrsobject():
+    @unregistered_django_model
+    class Check(models.Model):
+        points = AttrsObject(Point)
+
+    _check_jsonattrs_formfield(
+        Check,
+        field_name="points",
+        raw_value='{"x": 0, "y": 1}',
+        empty_value=None,
+        expected=Point(0, 1)
+    )
+
+
+def _check_jsonattrs_formfield(model, field_name, raw_value, empty_value, expected):
+    obj = model(**{field_name: empty_value})
+    form_cls = modelform_factory(model, fields=[field_name])
+    form = form_cls({field_name: empty_value}, instance=obj)
+    assert not form.is_valid()
+    assert form.has_error(field_name, "required")
+
+    form = form_cls({field_name: raw_value}, instance=obj)
+    assert form.is_valid(), form.errors.as_data()
+    eq(getattr(form.instance, field_name), expected)
+
+
 def get_json_value(model, field_name):
     """Get the JSON value of a field as it would be stored in the database
 
@@ -123,7 +283,8 @@ def get_json_value(model, field_name):
     """
     field = model._meta.get_field(field_name)
     value = field.pre_save(model, False)
-    return json.loads(field.get_db_prep_save(value, None))
+    # load as json obj to ensure it serializes properly
+    return json.loads(json.dumps(field.get_prep_value(value)))
 
 
 def set_json_value(model, field_name, value):

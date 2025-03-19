@@ -1,0 +1,32 @@
+--- 
++++ 
+@@ -1,16 +1,16 @@
+-hqDefine("reports/js/filters/bootstrap3/main", [
++hqDefine("reports/js/filters/bootstrap5/main", [
+     'jquery',
+     'underscore',
+     'knockout',
+-    'hqwebapp/js/bootstrap3/main',
+-    'reports/js/bootstrap3/standard_hq_report',
++    'hqwebapp/js/bootstrap5/main',
++    'reports/js/bootstrap5/standard_hq_report',
+     'reports/js/filters/select2s',
+     'reports/js/filters/phone_number',
+     'reports/js/filters/button_group',
+     'reports/js/filters/schedule_instance',
+     'locations/js/location_drilldown',
+     'reports/js/filters/advanced_forms_options',
+-    'reports/js/filters/bootstrap3/drilldown_options',
++    'reports/js/filters/bootstrap5/drilldown_options',
+     'reports_core/js/choice_list_utils',
+     'reports/js/filters/case_list_explorer',
+     'select2/dist/js/select2.full.min',
+@@ -41,7 +41,7 @@
+                 var reportLabels = $filterRange.data('reportLabels');
+                 var standardHQReport = standardHQReportModule.getStandardHQReport();
+ 
+-                $filterRange.createDateRangePicker(
++                $filterRange.createDateRangePicker(/* todo B5: plugin:createDateRangePicker */
+                     reportLabels, separator,
+                     $filterRange.data('startDate'),
+                     $filterRange.data('endDate'),

@@ -18,7 +18,9 @@ def convert_to_bytestring_if_unicode(shared_key):
 
 
 def get_hmac_digest(shared_key, data):
-    hm = hmac.new(convert_to_bytestring_if_unicode(shared_key), convert_to_bytestring_if_unicode(data), hashlib.sha256)
+    shared_key_bytes = convert_to_bytestring_if_unicode(shared_key)
+    data_bytes = convert_to_bytestring_if_unicode(data)
+    hm = hmac.new(shared_key_bytes, data_bytes, hashlib.sha256)
     digest = base64.b64encode(hm.digest())
     return digest.decode('utf-8')
 
@@ -63,7 +65,6 @@ def validate_request_hmac(setting_name, audit_user='system'):
                 return HttpResponse(status=401)
 
             digest = get_hmac_digest(shared_key, data)
-
             if expected_digest != digest:
                 auth_logger.info(
                     "Request rejected reason=%s request=%s",

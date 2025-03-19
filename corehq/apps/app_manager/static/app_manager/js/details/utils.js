@@ -1,11 +1,22 @@
-/* globals DOMPurify */
 /**
  * Contains a few UI utilities for the Display Properties
  * section of case list/detail configuration.
  *
  * Depends on `add_ons` being available in initial page data
  */
-hqDefine("app_manager/js/details/utils", function () {
+hqDefine("app_manager/js/details/utils", [
+    "jquery",
+    "underscore",
+    "DOMPurify/dist/purify.min",
+    "hqwebapp/js/toggles",
+    "hqwebapp/js/initial_page_data",
+], function (
+    $,
+    _,
+    DOMPurify,
+    toggles,
+    initialPageData,
+) {
     var module = {};
 
     module.fieldFormatWarningMessage = gettext("Must begin with a letter and contain only letters, numbers, '-', and '_'");
@@ -38,9 +49,26 @@ hqDefine("app_manager/js/details/utils", function () {
         }, {
             value: "distance",
             label: gettext('Distance from current location'),
+        }, {
+            value: "markdown",
+            label: gettext('Markdown'),
         }];
 
-        if (hqImport('hqwebapp/js/toggles').toggleEnabled('MM_CASE_PROPERTIES')) {
+        if (toggles.toggleEnabled('CASE_LIST_MAP')) {
+            formats.push({
+                value: "address-popup",
+                label: gettext('Address Popup (Web Apps only)'),
+            });
+        }
+
+        if (toggles.toggleEnabled('CASE_LIST_CLICKABLE_ICON')) {
+            formats.push({
+                value: "clickable-icon",
+                label: gettext('Clickable Icon (Web Apps only)'),
+            });
+        }
+
+        if (toggles.toggleEnabled('MM_CASE_PROPERTIES')) {
             formats.push({
                 value: "picture",
                 label: gettext('Picture'),
@@ -50,7 +78,7 @@ hqDefine("app_manager/js/details/utils", function () {
             });
         }
 
-        var addOns = hqImport("hqwebapp/js/initial_page_data").get("add_ons");
+        var addOns = initialPageData.get("add_ons");
         if (addOns.enum_image) {
             formats.push({
                 value: "enum-image",
@@ -61,6 +89,19 @@ hqDefine("app_manager/js/details/utils", function () {
             formats.push({
                 value: "conditional-enum",
                 label: gettext('Conditional ID Mapping'),
+            });
+        }
+        if (addOns.calc_xpaths) {
+            formats.push({
+                value: "translatable-enum",
+                label: gettext('Translatable Text'),
+            });
+        }
+
+        if (toggles.toggleEnabled('VELLUM_CASE_MICRO_IMAGE')) {
+            formats.push({
+                value: "image",
+                label: gettext('Image'),
             });
         }
 
@@ -94,9 +135,7 @@ hqDefine("app_manager/js/details/utils", function () {
 
     module.isValidPropertyName = function (name) {
         var word = '[a-zA-Z][\\w_-]*';
-        var regex = new RegExp(
-            '^(' + word + ':)*(' + word + '\\/)*#?' + word + '$'
-        );
+        var regex = new RegExp('^(' + word + ':)*(' + word + '\\/)*#?' + word + '$');
         return regex.test(name);
     };
 
@@ -134,7 +173,7 @@ hqDefine("app_manager/js/details/utils", function () {
                 return DOMPurify.sanitize(m);
             },
             templateResult: function (result) {
-                var formatted = result.id;
+                var formatted = result.text;
                 if (module.isAttachmentProperty(result.id)) {
                     formatted = (
                         '<i class="fa fa-paperclip"></i> ' +

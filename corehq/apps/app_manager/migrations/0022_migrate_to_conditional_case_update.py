@@ -1,12 +1,6 @@
-from django.core.management import call_command
 from django.db import migrations
 
-from corehq.util.django_migrations import skip_on_fresh_install
-
-
-@skip_on_fresh_install
-def _migrate_to_conditional_case_update(apps, schema_editor):
-    call_command('migrate_to_conditional_case_update')
+from corehq.util.django_migrations import prompt_for_historical_migration, get_migration_name
 
 
 class Migration(migrations.Migration):
@@ -15,8 +9,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(
-            _migrate_to_conditional_case_update,
-            reverse_code=migrations.RunPython.noop,
-        ),
+        prompt_for_historical_migration(
+            "app_manager", get_migration_name(__file__), "3c47a08dad06c20f376b25ce2bcd4f307ff5f6e6")
     ]

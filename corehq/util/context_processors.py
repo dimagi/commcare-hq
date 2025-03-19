@@ -7,8 +7,8 @@ from django_prbac.utils import has_privilege
 from ws4redis.context_processors import default
 
 from corehq import feature_previews, privileges, toggles
-from corehq.apps.accounting.models import BillingAccount, SubscriptionType
-from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.accounting.models import BillingAccount, Subscription, SubscriptionType
+from corehq.apps.accounting.utils import domain_has_privilege, get_privileges
 from corehq.apps.analytics.utils.hubspot import is_hubspot_js_allowed_for_request
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 from corehq.apps.hqwebapp.utils import bootstrap
@@ -105,8 +105,13 @@ def js_api_keys(request):
         'ANALYTICS_IDS': settings.ANALYTICS_IDS.copy(),
         'ANALYTICS_CONFIG': settings.ANALYTICS_CONFIG.copy(),
         'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
+        'IS_ANALYTICS_ENVIRONMENT': settings.SERVER_ENVIRONMENT in ('production', 'staging', 'india'),
     }
-    if getattr(request, 'project', None) and request.project.ga_opt_out and api_keys['ANALYTICS_IDS'].get('GOOGLE_ANALYTICS_API_ID'):
+    if (
+        getattr(request, 'project', None)
+        and request.project.ga_opt_out
+        and api_keys['ANALYTICS_IDS'].get('GOOGLE_ANALYTICS_API_ID')
+    ):
         del api_keys['ANALYTICS_IDS']['GOOGLE_ANALYTICS_API_ID']
 
     if (api_keys['ANALYTICS_IDS'].get('HUBSPOT_API_ID')
@@ -138,6 +143,22 @@ def js_toggles(request):
     }
 
 
+def js_privileges(request):
+    domain = None
+    if getattr(request, 'project', None):
+        domain = request.project.name
+    elif getattr(request, 'domain', None):
+        domain = request.domain
+
+    if not domain:
+        return {}
+
+    plan_version = Subscription.get_subscribed_plan_by_domain(domain)
+    return {
+        'privileges': list(get_privileges(plan_version)),
+    }
+
+
 def websockets_override(request):
     # for some reason our proxy setup doesn't properly detect these things, so manually override them
     try:
@@ -156,6 +177,7 @@ def enterprise_mode(request):
     return {
         'enterprise_mode': settings.ENTERPRISE_MODE,
         'is_saas_environment': settings.IS_SAAS_ENVIRONMENT,
+        'is_dimagi_environment': settings.IS_DIMAGI_ENVIRONMENT,
     }
 
 
@@ -207,16 +229,16 @@ def _get_cc_name(request, var):
 def mobile_experience(request):
     show_mobile_ux_warning = False
     mobile_ux_cookie_name = ''
-    if (hasattr(request, 'couch_user') and
-            hasattr(request, 'user_agent') and
-            settings.SERVER_ENVIRONMENT in ['production', 'staging', settings.LOCAL_SERVER_ENVIRONMENT]):
+    if (hasattr(request, 'couch_user')
+            and hasattr(request, 'user_agent')
+            and settings.SERVER_ENVIRONMENT in ['production', 'staging', settings.LOCAL_SERVER_ENVIRONMENT]):
         mobile_ux_cookie_name = '{}-has-seen-mobile-ux-warning'.format(request.couch_user.get_id)
         show_mobile_ux_warning = (
-            not request.COOKIES.get(mobile_ux_cookie_name) and
-            request.user_agent.is_mobile and
-            request.user.is_authenticated and
-            request.user.is_active and
-            not mobile_experience_hidden_by_toggle(request)
+            not request.COOKIES.get(mobile_ux_cookie_name)
+            and request.user_agent.is_mobile
+            and request.user.is_authenticated
+            and request.user.is_active
+            and not mobile_experience_hidden_by_toggle(request)
         )
     return {
         'show_mobile_ux_warning': show_mobile_ux_warning,

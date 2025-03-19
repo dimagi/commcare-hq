@@ -34,7 +34,6 @@ from corehq.apps.translations.models import (
     TransifexBlacklist,
     TransifexProject,
 )
-from corehq.motech.utils import b64_aes_decrypt
 from corehq.util.workbook_json.excel import WorkbookJSONReader
 
 
@@ -189,11 +188,11 @@ class AppTranslationsForm(forms.Form):
 
     def form_fields(self):
         return [
-            hqcrispy.Field('app_id', css_class="hqwebapp-select2"),
-            hqcrispy.Field('version'),
-            hqcrispy.Field('use_version_postfix'),
-            hqcrispy.Field('transifex_project_slug', css_class="hqwebapp-select2"),
-            hqcrispy.Field('action')
+            crispy.Field('app_id', css_class="hqwebapp-select2"),
+            'version',
+            'use_version_postfix',
+            crispy.Field('transifex_project_slug', css_class="hqwebapp-select2"),
+            'action',
         ]
 
     def clean(self):
@@ -206,17 +205,12 @@ class AppTranslationsForm(forms.Form):
             available_versions = get_available_versions_for_app(self.domain, app_id)
             if version not in available_versions:
                 self.add_error('version', gettext_lazy('Version not available for app'))
-        if (not cleaned_data['target_lang']
-                and (cleaned_data['action'] == "pull" and cleaned_data['perform_translated_check'])):
-            self.add_error('target_lang', gettext_lazy('Target lang required to confirm translation completion'))
         return cleaned_data
 
     @classmethod
     def form_for(cls, form_action):
-        if form_action == 'create':
-            return CreateAppTranslationsForm
-        elif form_action == 'update':
-            return UpdateAppTranslationsForm
+        if form_action == 'create_or_update':
+            return CreateUpdateAppTranslationsForm
         elif form_action == 'push':
             return PushAppTranslationsForm
         elif form_action == 'pull':
@@ -227,49 +221,71 @@ class AppTranslationsForm(forms.Form):
             return DeleteAppTranslationsForm
 
 
-class CreateAppTranslationsForm(AppTranslationsForm):
-    form_action = 'create'
+class CreateUpdateAppTranslationsForm(AppTranslationsForm):
+    form_action = 'create_or_update'
+    update_existing_resource = forms.MultipleChoiceField(
+        choices=[
+            ('yes', 'Update existing resources'),
+        ],
+        widget=forms.CheckboxSelectMultiple(),
+        required=False,
+        initial='no',
+        help_text=gettext_lazy("Check this if you want to update an existing resource, instead of "
+                               "creating new ones. If you submit this form without this check, "
+                               "duplicate resources may be created.")
+    )
     source_lang = forms.ChoiceField(label=gettext_lazy("Source Language on Transifex"),
                                     choices=langcodes.get_all_langs_for_select(),
                                     initial="en"
                                     )
 
     def form_fields(self):
-        form_fields = super(CreateAppTranslationsForm, self).form_fields()
-        form_fields.append(hqcrispy.Field('source_lang', css_class="hqwebapp-select2"))
+        form_fields = super(CreateUpdateAppTranslationsForm, self).form_fields()
+        if self.form_action == 'create_or_update':
+            form_fields.append('update_existing_resource')
+        form_fields.append(crispy.Field('source_lang', css_class="hqwebapp-select2"))
         return form_fields
-
-
-class UpdateAppTranslationsForm(CreateAppTranslationsForm):
-    form_action = 'update'
 
 
 class PushAppTranslationsForm(AppTranslationsForm):
     form_action = 'push'
+    target_lang = forms.ChoiceField(label=gettext_lazy("Translated Language"),
+                                    choices=([(None, gettext_lazy('Select Translated Language'))]
+                                             + langcodes.get_all_langs_for_select()),
+                                    required=True,
+                                    )
 
     def form_fields(self):
         form_fields = super(PushAppTranslationsForm, self).form_fields()
-        form_fields.append(hqcrispy.Field('target_lang', css_class="hqwebapp-select2"))
+        form_fields.append(crispy.Field('target_lang', css_class="hqwebapp-select2"))
         return form_fields
 
 
 class PullAppTranslationsForm(AppTranslationsForm):
     form_action = 'pull'
-    lock_translations = forms.BooleanField(label=gettext_lazy("Lock translations for resources that are being "
-                                                              "pulled"),
-                                           help_text=gettext_lazy("Please note that this will lock the resource"
-                                                                  " for all languages"),
-                                           required=False,
-                                           initial=False)
+    target_lang = forms.ChoiceField(label=gettext_lazy("Translated Language"),
+                                    choices=([(None, gettext_lazy('Select Translated Language'))]
+                                             + langcodes.get_all_langs_for_select()),
+                                    required=True,
+                                    )
+    lock_translations = forms.BooleanField(
+        label=gettext_lazy("Lock translations for resources that are being pulled"),
+        help_text=gettext_lazy("Please note that this will lock the resource for all languages"),
+        required=False,
+        initial=False)
 
     def form_fields(self):
         form_fields = super(PullAppTranslationsForm, self).form_fields()
         form_fields.extend([
-            hqcrispy.Field('target_lang', css_class="hqwebapp-select2"),
-            hqcrispy.Field('lock_translations'),
-            hqcrispy.Field('perform_translated_check'),
+            crispy.Field('target_lang', css_class="hqwebapp-select2"),
+            'lock_translations',
+            'perform_translated_check',
         ])
         return form_fields
+
+
+class BackUpAppTranslationsForm(AppTranslationsForm):
+    form_action = 'backup'
 
 
 class DeleteAppTranslationsForm(AppTranslationsForm):
@@ -277,24 +293,20 @@ class DeleteAppTranslationsForm(AppTranslationsForm):
 
     def form_fields(self):
         form_fields = super(DeleteAppTranslationsForm, self).form_fields()
-        form_fields.append(hqcrispy.Field('perform_translated_check'))
+        form_fields.append('perform_translated_check')
         return form_fields
 
 
-class DownloadAppTranslationsForm(CreateAppTranslationsForm):
+class DownloadAppTranslationsForm(CreateUpdateAppTranslationsForm):
     """Used to download the files that are being uploaded to Transifex."""
 
     form_action = 'download'
 
 
-class BackUpAppTranslationsForm(AppTranslationsForm):
-    form_action = 'backup'
-
-
 class TransifexOrganizationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(TransifexOrganizationForm, self).__init__(*args, **kwargs)
-        self.initial['api_token'] = b64_aes_decrypt(self.instance.api_token)
+        self.initial['api_token'] = self.instance.plaintext_api_token
 
 
 class AddTransifexBlacklistForm(forms.ModelForm):
@@ -308,13 +320,13 @@ class AddTransifexBlacklistForm(forms.ModelForm):
 
         self.fields['app_id'].choices = tuple((app.id, app.name) for app in get_brief_apps_in_domain(domain))
         form_fields = [
-            hqcrispy.Field('app_id'),
-            hqcrispy.Field('module_id'),
-            hqcrispy.Field('field_type'),
-            hqcrispy.Field('field_name'),
-            hqcrispy.Field('display_text'),
-            hqcrispy.Field('domain'),
-            hqcrispy.Field('action'),
+            'app_id',
+            'module_id',
+            'field_type',
+            'field_name',
+            'display_text',
+            'domain',
+            'action',
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
                     gettext_lazy("Add"),
@@ -387,10 +399,10 @@ class MigrateTransifexProjectForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 "Migrate Project",
-                hqcrispy.Field('from_app_id', css_class="hqwebapp-select2"),
-                hqcrispy.Field('to_app_id', css_class="hqwebapp-select2"),
-                hqcrispy.Field('transifex_project_slug'),
-                hqcrispy.Field('mapping_file')
+                crispy.Field('from_app_id', css_class="hqwebapp-select2"),
+                crispy.Field('to_app_id', css_class="hqwebapp-select2"),
+                crispy.Field('transifex_project_slug'),
+                crispy.Field('mapping_file'),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(

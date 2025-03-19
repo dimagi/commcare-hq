@@ -1,17 +1,19 @@
+
+
 hqDefine('case_search/js/case_search', [
     'jquery',
     'underscore',
     'knockout',
-    'hqwebapp/js/alert_user',
+    'hqwebapp/js/bootstrap5/alert_user',
     'hqwebapp/js/initial_page_data',
+    'commcarehq',
 ], function (
     $,
     _,
     ko,
     alertUser,
-    initialPageData
+    initialPageData,
 ) {
-    'use strict';
     var caseSearchModel = function (caseDataUrl) {
         var self = {};
         self.type = ko.observable();
@@ -23,8 +25,8 @@ hqDefine('case_search/js/case_search', [
         self.query = ko.observable();
         self.profile = ko.observable();
         self.case_data_url = caseDataUrl;
-        self.xpath = ko.observable();
         self.parameters = ko.observableArray();
+        self.xpath_expressions = ko.observableArray();
 
         self.addParameter = function () {
             self.parameters.push({
@@ -39,12 +41,19 @@ hqDefine('case_search/js/case_search', [
             self.parameters.remove(this);
         };
 
+        self.addXPath = function () {
+            self.xpath_expressions.push({xpath: ""});
+        };
+        self.removeXPath = function () {
+            self.xpath_expressions.remove(this);
+        };
+
         self.showResults = ko.computed(function () {
             return !_.isUndefined(self.count()) && !_.isNaN(parseInt(self.count()));
         });
 
         self.searchButtonIcon = ko.observable("fa fa-search");
-        self.profileButtonIcon = ko.observable("fa fa-clock-o");
+        self.profileButtonIcon = ko.observable("fa-regular fa-clock");
 
         self._submit = function (postData) {
             postData = postData || {};
@@ -62,8 +71,8 @@ hqDefine('case_search/js/case_search', [
                     owner_id: self.owner_id(),
                     parameters: self.parameters(),
                     customQueryAddition: self.customQueryAddition(),
-                    xpath: self.xpath(),
-                }
+                    xpath_expressions: _.pluck(self.xpath_expressions(), 'xpath'),
+                },
                 )}),
                 success: function (data) {
                     self.results(data.values);
@@ -74,7 +83,7 @@ hqDefine('case_search/js/case_search', [
                         self.profile(data.profile);
                     }
                     self.searchButtonIcon("fa fa-search");
-                    self.profileButtonIcon("fa fa-clock-o");
+                    self.profileButtonIcon("fa-regular fa-clock");
                 },
                 error: function (response) {
                     alertUser.alert_user(response.responseJSON.message, 'danger');

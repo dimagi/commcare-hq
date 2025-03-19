@@ -1,0 +1,14 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+<label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2">
+  {% trans "Lazy load Case List fields" %}
+  <span class="hq-help-template"
+        data-title="{% trans "Incrementally load case list fields" %}"
+        data-content="{% blocktrans %}Case list only calculates display properties for a case if the user sees it on the page{% endblocktrans %}"
+  ></span>
+</label>
+<div id="lazy-load-case-list-fields" class="col-sm-8 commcare-feature" data-since-version="2.54">
+    <input type="checkbox" value="true"
+           data-bind="checked: lazy_load_case_list_fields"/>
+  <input type="hidden" name="lazy_load_case_list_fields" data-bind="value: lazy_load_case_list_fields"/>
+</div>

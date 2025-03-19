@@ -1,6 +1,5 @@
 from django.utils.translation import gettext as _
 
-import ghdiff
 from memoized import memoized
 
 from corehq.apps.translations.app_translations.download import (
@@ -25,6 +24,7 @@ from corehq.apps.translations.generators import (
     AppTranslationsGenerator,
     Unique_ID,
 )
+from corehq.util import ghdiff
 
 COLUMNS_TO_COMPARE = {
     'module_and_form': ['Type', 'menu_or_form'],
@@ -82,7 +82,8 @@ class UploadedTranslationsValidator(object):
                 lang=lang,
                 eligible_for_transifex_only=True,
                 single_sheet=self.single_sheet,
-        )}
+            )
+        }
         if self.single_sheet:
             # single sheet supports only single language
             self.current_rows = get_bulk_app_single_sheet_by_name(

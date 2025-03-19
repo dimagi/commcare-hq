@@ -1,7 +1,6 @@
 import re
 
 from django import forms
-from django.db.models import Q
 from django.template.loader import get_template
 from django.urls import reverse
 from django.utils.translation import gettext as _
@@ -14,7 +13,8 @@ from memoized import memoized
 
 from dimagi.utils.couch.database import iter_docs
 
-from corehq.apps.commtrack.util import generate_code
+from corehq import toggles
+from corehq.feature_previews import USE_LOCATION_DISPLAY_NAME
 from corehq.apps.custom_data_fields.edit_entity import (
     CUSTOM_DATA_FIELD_PREFIX,
     CustomDataEditor,
@@ -24,10 +24,17 @@ from corehq.apps.es import UserES
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import Select2Ajax, SelectToggle
 from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
-from corehq.apps.locations.util import valid_location_site_code
+from corehq.apps.locations.util import (
+    validate_site_code,
+    generate_site_code,
+    has_siblings_with_name,
+    get_location_type
+)
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.util import user_display_string
+from corehq.apps.users.util import log_user_change, user_display_string
+from corehq.const import USER_CHANGE_VIA_LOCATION
 from corehq.util.quickcache import quickcache
+from corehq.util.global_request import get_request_domain
 
 from .models import (
     LocationFixtureConfiguration,
@@ -40,23 +47,29 @@ from crispy_forms.utils import flatatt
 
 
 class LocationSelectWidget(forms.Widget):
-    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, placeholder=None):
+    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, placeholder=None,
+                 for_user_location_selection=False):
         super(LocationSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
         self.multiselect = multiselect
         self.placeholder = placeholder
-        self.query_url = reverse('location_search', args=[self.domain])
+        url_name = 'location_search'
+        if (for_user_location_selection
+                and toggles.USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION.enabled(self.domain)):
+            url_name = 'location_search_has_users_only'
+        self.query_url = reverse(url_name, args=[self.domain])
         self.template = 'locations/manage/partials/autocomplete_select_widget.html'
 
     def render(self, name, value, attrs=None, renderer=None):
         location_ids = to_list(value) if value else []
         locations = list(SQLLocation.active_objects
                          .filter(domain=self.domain, location_id__in=location_ids))
-
+        use_location_display_name = USE_LOCATION_DISPLAY_NAME.enabled(get_request_domain())
         initial_data = [{
             'id': loc.location_id,
-            'text': loc.get_path_display(),
+            'text': loc.display_name if use_location_display_name else loc.get_path_display(),
+            'title': loc.get_path_display() if use_location_display_name else loc.display_name,
         } for loc in locations]
 
         return get_template(self.template).render({
@@ -165,7 +178,7 @@ class LocationForm(forms.Form):
         if not self.location.external_id:
             self.fields['external_id'].widget = forms.HiddenInput()
 
-        self.helper = FormHelper()
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.form_tag = False
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
         self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
@@ -216,16 +229,6 @@ class LocationForm(forms.Form):
         return parent_id
 
     def clean_name(self):
-        def has_siblings_with_name(location, name, parent_location_id):
-            qs = SQLLocation.objects.filter(domain=location.domain,
-                                            name=name)
-            if parent_location_id:
-                qs = qs.filter(parent__location_id=parent_location_id)
-            else:  # Top level
-                qs = qs.filter(parent=None)
-            return (qs.exclude(location_id=self.location.location_id)
-                      .exists())
-
         name = self.cleaned_data['name']
         parent_location_id = self.cleaned_data.get('parent_id', None)
 
@@ -239,32 +242,13 @@ class LocationForm(forms.Form):
 
     def clean_site_code(self):
         site_code = self.cleaned_data['site_code']
-
         if site_code:
-            site_code = site_code.lower()
-            if not valid_location_site_code(site_code):
-                raise forms.ValidationError(_(
-                    'The site code cannot contain spaces or special characters.'
-                ))
-            if (SQLLocation.objects
-                    .filter(domain=self.domain,
-                            site_code__iexact=site_code)
-                    .exclude(location_id=self.location.location_id)
-                    .exists()):
-                raise forms.ValidationError(_(
-                    'another location already uses this site code'
-                ))
-            return site_code
+            return validate_site_code(self.domain, self.location.location_id, site_code, forms.ValidationError)
 
     def clean(self):
         if 'name' in self.cleaned_data and not self.cleaned_data.get('site_code', None):
-            all_codes = [
-                code.lower() for code in
-                (SQLLocation.objects.exclude(location_id=self.location.location_id)
-                                    .filter(domain=self.domain)
-                                    .values_list('site_code', flat=True))
-            ]
-            self.cleaned_data['site_code'] = generate_code(self.cleaned_data['name'], all_codes)
+            self.cleaned_data['site_code'] = generate_site_code(
+                self.domain, self.location.location_id, self.cleaned_data['name'])
 
     @staticmethod
     def get_allowed_types(domain, parent):
@@ -275,34 +259,9 @@ class LocationForm(forms.Form):
                     .all())
 
     def clean_location_type(self):
-        loc_type = self.cleaned_data['location_type']
-        allowed_types = self.get_allowed_types(self.domain, self.cleaned_data.get('parent'))
-        if not allowed_types:
-            raise forms.ValidationError(_('The selected parent location cannot have child locations!'))
-
-        if not loc_type:
-            if len(allowed_types) == 1:
-                loc_type_obj = allowed_types[0]
-            else:
-                raise forms.ValidationError(_('You must select a location type'))
-        else:
-            try:
-                loc_type_obj = (LocationType.objects
-                                .filter(domain=self.domain)
-                                .get(Q(code=loc_type) | Q(name=loc_type)))
-            except LocationType.DoesNotExist:
-                raise forms.ValidationError(_("LocationType '{}' not found").format(loc_type))
-            else:
-                if loc_type_obj not in allowed_types:
-                    raise forms.ValidationError(_('Location type not valid for the selected parent.'))
-
-        _can_change_location_type = (self.is_new_location
-                                     or not self.location.get_descendants().exists())
-        if not _can_change_location_type and loc_type_obj.pk != self.location.location_type.pk:
-            raise forms.ValidationError(_(
-                'You cannot change the location type of a location with children'
-            ))
-
+        loc_type_obj = get_location_type(self.domain, self.location, self.cleaned_data.get('parent'),
+                                         self.cleaned_data['location_type'], forms.ValidationError,
+                                         self.is_new_location)
         self.cleaned_data['location_type_object'] = loc_type_obj
         return loc_type_obj.name
 
@@ -332,6 +291,10 @@ class LocationForm(forms.Form):
             if user:
                 user.is_active = False
                 user.save()
+                log_user_change(by_domain=self.domain, for_domain=user.domain,
+                                couch_user=user, changed_by_user=self.user,
+                                changed_via=USER_CHANGE_VIA_LOCATION,
+                                fields_changed={'is_active': user.is_active})
             self.location.user_id = ''
             self.location.save()
 
@@ -576,7 +539,7 @@ class LocationFilterForm(forms.Form):
         initial=False,
     )
     location_status_active = forms.ChoiceField(
-        label=_('Active / Archived'),
+        label="",
         choices=LOCATION_ACTIVE_STATUS,
         required=False,
         widget=SelectToggle(choices=LOCATION_ACTIVE_STATUS, attrs={"ko_value": "location_status_active"}),
@@ -618,7 +581,7 @@ class LocationFilterForm(forms.Form):
                     css_class="btn btn-primary",
                     data_bind="html: buttonHTML",
                 ),
-            ),
+            )
         )
 
     def clean_location_id(self):

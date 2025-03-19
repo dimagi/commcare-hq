@@ -1,0 +1,61 @@
+{% load i18n %}
+{# Use with HTMX and Alpine.js #}
+{# To be included on pages using the showHtmxErrorModal utility from hqwebapp/js/htmx_utils/error  #}
+{# Extend this template for better formatting of modal_content and better modal_title #}
+
+<div
+    id="htmxRequestErrorModal"
+    class="modal fade"
+    x-data="{
+      errorCode: '',
+      errorText: '',
+      updateError(evt) {
+        this.errorCode = evt.detail.errorCode;
+        this.errorText = evt.detail.errorText;
+      },
+    }"
+    @update-htmx-request-error-modal.camel.window="updateError"
+    data-bs-backdrop="static"
+    data-bs-keyboard="false"
+    aria-labelledby="htmxRequestErrorModalTitle"
+    tabindex="-1"
+>
+
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5
+            class="modal-title"
+            id="htmxRequestErrorModalTitle"
+        >
+
+          {% block modal_title %}
+            {% trans "Server Error Encountered" %}
+          {% endblock %}
+
+        </h5>
+        <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+
+        {% block modal_content %}
+          <p x-text="errorCode"></p>
+          <p x-text="errorText"></p>
+        {% endblock %}
+
+      </div>
+      <div class="modal-footer">
+        <button
+            type="button"
+            class="btn btn-outline-primary"
+            data-bs-dismiss="modal"
+        >{% trans "Close" %}</button>
+      </div>
+    </div>
+  </div>
+</div>

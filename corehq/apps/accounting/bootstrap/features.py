@@ -107,6 +107,9 @@ pro_v1 = standard_v1 + [
     privileges.DATA_FILE_DOWNLOAD,
     privileges.ATTENDANCE_TRACKING,
     privileges.REGEX_FIELD_VALIDATION,
+    privileges.EXPORT_OWNERSHIP,
+    privileges.CASE_LIST_EXPLORER,
+    privileges.CASE_DEDUPE,
 ]
 
 
@@ -130,10 +133,16 @@ advanced_v0 = pro_v1 + [
     privileges.APP_USER_PROFILES,
     privileges.VIEW_APP_DIFF,
     privileges.LOCATION_SAFE_CASE_IMPORTS,
+    privileges.FILTERED_BULK_USER_DOWNLOAD,
+    privileges.DATA_DICTIONARY,
+    privileges.CASE_COPY,
+    privileges.CUSTOM_DOMAIN_ALERTS,
+    privileges.APP_DEPENDENCIES,
 ]
 
 enterprise_v0 = advanced_v0 + [
     privileges.GEOCODER,
     privileges.DEFAULT_EXPORT_SETTINGS,
     privileges.RELEASE_MANAGEMENT,
+    privileges.BULK_DATA_CLEANING,
 ]

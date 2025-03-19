@@ -1,8 +1,9 @@
 from unittest import expectedFailure
 
 from django.utils.safestring import mark_safe
-from django.test import SimpleTestCase
+from django.test import RequestFactory, SimpleTestCase
 
+from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.generic import GenericTabularReport
 
 from ..generic import _sanitize_rows
@@ -42,6 +43,21 @@ class GenericTabularReportTests(SimpleTestCase):
         value = '1 < 8 > 2'
         value = GenericTabularReport._strip_tags(value)
         self.assertEqual(value, '1 < 8 > 2')
+
+    def test_pagination_exceeds_max_rows(self):
+        class Report(GenericTabularReport):
+            name = slug = "report"
+            section_name = "reports"
+            dispatcher = "fake"
+
+            def _update_initial_context(self):
+                """override to avoid database hit in test"""
+
+        request = RequestFactory().get("/report", {"iDisplayLength": 1001})
+        report = Report(request)
+        with self.assertRaises(BadRequestError) as res:
+            report.pagination
+        self.assertEqual(str(res.exception), "Row count is too large")
 
 
 class SanitizeRowTests(SimpleTestCase):

@@ -1,11 +1,13 @@
+
 hqDefine("motech/js/connection_settings_detail", [
     'jquery',
     'underscore',
     'hqwebapp/js/initial_page_data',
+    'commcarehq',
 ], function (
     $,
     _,
-    initialPageData
+    initialPageData,
 ) {
     $(function () {
         var $authTypeSelect = $('#id_auth_type'),
@@ -19,74 +21,80 @@ hqDefine("motech/js/connection_settings_detail", [
                     'token_url',
                     'refresh_url',
                     'pass_credentials_in_header',
+                    'include_client_id',
+                    'scope',
+                    'plaintext_custom_headers',
                 ];
             if (authPreset === 'CUSTOM') {
                 _.each(customAuthPresetFields, function (field) {
-                    $('#div_id_' + field).show();
+                    $('#div_id_' + field).removeClass("d-none");
                 });
             } else {
                 _.each(customAuthPresetFields, function (field) {
-                    $('#div_id_' + field).hide();
+                    $('#div_id_' + field).addClass("d-none");
                 });
             }
 
         });
 
-        $authTypeSelect.change(function () {
-            var visible = [],
-                hidden = [],
-                allFields = [
-                    'username',
-                    'plaintext_password',
-                    'client_id',
-                    'plaintext_client_secret',
-                    'oauth_settings',
-                ];
+        $authTypeSelect.change(function (e, fromInitial) {
+            let visible = {},
+                allFields = {
+                    'username': gettext("Username"),
+                    'plaintext_password': gettext("Password"),
+                    'client_id': gettext("Client ID"),
+                    'plaintext_client_secret': gettext("Client Secret"),
+                    'oauth_settings': null,
+                },
+                placeholders = {
+                };
             switch ($(this).val()) {
                 case '':  // Auth type is "None"
-                    hidden = allFields;
                     break;
                 case 'oauth1':
-                    visible = [
-                        'username',
-                        'plaintext_password',
-                    ];
-                    hidden = [
-                        'client_id',
-                        'auth_settings',
-                    ];
+                    visible = {
+                        'username': null,
+                        'plaintext_password': null,
+                    };
                     break;
                 case 'oauth2_pwd':
                     visible = allFields;
-                    hidden = [];
                     break;
                 case 'oauth2_client':
-                    visible = [
-                        'client_id',
-                        'plaintext_client_secret',
-                        'oauth_settings',
-                    ];
-                    hidden = [
-                        'username',
-                        'plaintext_password',
-                    ];
+                    visible = {
+                        'client_id': null,
+                        'plaintext_client_secret': null,
+                        'oauth_settings': null,
+                    };
+                    break;
+                case 'api_key':
+                    visible = {
+                        'username': gettext("HTTP Header Name"),
+                        'plaintext_password': gettext("API Key"),
+                    };
+                    placeholders['username'] = 'Authorization';
                     break;
                 default:
-                    visible = [
-                        'username',
-                        'plaintext_password',
-                    ];
-                    hidden = [
-                        'client_id',
-                        'plaintext_client_secret',
-                        'oauth_settings',
-                    ];
+                    visible = {
+                        'username': null,
+                        'plaintext_password': null,
+                    };
             }
-            _.each(visible, function (field) {
-                $('#div_id_' + field).show();
-            });
-            _.each(hidden, function (field) {
-                $('#div_id_' + field).hide();
+            _.each(_.keys(allFields), function (field) {
+                let div = $('#div_id_' + field);
+                if (field in visible) {
+                    div.removeClass("d-none");
+                    let label = visible[field] || allFields[field];
+                    let labelElement = div.find('label');
+                    if (!fromInitial && label && labelElement.length > 0 && labelElement.text() !== label) {
+                        labelElement.text(label);
+                        let fieldElement = $('#id_' + field);
+                        fieldElement.val('');  // clear current value
+                        fieldElement.attr('placeholder', placeholders[field] || '');
+                    }
+                } else {
+                    div.addClass("d-none");
+                }
             });
         });
 
@@ -98,7 +106,7 @@ hqDefine("motech/js/connection_settings_detail", [
          */
         var handleSuccess = function (resp) {
             var message;
-            $testResult.removeClass("hide text-danger text-success");
+            $testResult.removeClass("d-none text-danger text-success");
             $testConnectionButton.enableButton();
 
             if (resp.status) {
@@ -119,10 +127,10 @@ hqDefine("motech/js/connection_settings_detail", [
         var handleFailure = function (resp) {
             $testConnectionButton.enableButton();
             $testResult
-                .removeClass("hide text-success")
+                .removeClass("d-none text-success")
                 .addClass("text-danger");
             $testResult.text(gettext(
-                'CommCare HQ was unable to make the request: '
+                'CommCare HQ was unable to make the request: ',
             ) + resp.statusText);
         };
 
@@ -137,7 +145,13 @@ hqDefine("motech/js/connection_settings_detail", [
                 plaintext_password: $('#id_plaintext_password').val(),
                 client_id: $('#id_client_id').val(),
                 plaintext_client_secret: $('#id_plaintext_client_secret').val(),
+                pass_credentials_in_header: $('#id_pass_credentials_in_header').prop('checked'),
+                include_client_id: $('#id_include_client_id').prop('checked'),
+                scope: $('#id_scope').val(),
+                token_url: $('#id_token_url').val(),
+                auth_preset: $('#id_auth_preset').val(),
                 skip_cert_verify: $('#id_skip_cert_verify').prop('checked'),
+                plaintext_custom_headers: $('#id_plaintext_custom_headers').val(),
             };
             $testConnectionButton.disableButton();
 
@@ -158,7 +172,7 @@ hqDefine("motech/js/connection_settings_detail", [
         });
 
         // Set initial state
-        $authTypeSelect.trigger('change');
+        $authTypeSelect.trigger('change', [true]);
         $authPreset.trigger('change');
         $('#id_url').trigger('change');
     });

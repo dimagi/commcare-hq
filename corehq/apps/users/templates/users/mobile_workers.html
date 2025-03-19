@@ -4,31 +4,14 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% requirejs_main 'users/js/mobile_workers' %}
-
-{% block page_navigation %}{{ block.super }}
-  {% if request|ui_notify_enabled:"APP_USER_PROFILES_UPDATE"  %}
-    <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-no-arrow fade in"
-         data-slug="{{ 'APP_USER_PROFILES_UPDATE'|ui_notify_slug }}"
-         role="alert">
-      <button type="button" class="close" data-dismiss="alert" aria-label='{% trans_html_attr "Close" %}'>
-        <span aria-hidden="true">&times;</span>
-      </button>
-      <p class="lead">{% trans 'New feature: App User Profiles' %}</p>
-      <p>
-        {% blocktrans %}
-          Save time when creating and updating users by creating App User Profiles! Eliminate the need
-                  to set every individual field for a user! Available through our Enterprise Subscription
-        {% endblocktrans %}
-      </p>
-    </div>
-  {% endif %}
-{% endblock %}
+{% js_entry_b3 'users/js/mobile_workers' %}
 
 {% block page_content %}
   {% initial_page_data 'can_access_all_locations' can_access_all_locations %}
+  {% initial_page_data 'can_edit_original_profile' can_edit_original_profile %}
   {% initial_page_data 'custom_fields_slugs' custom_fields_slugs %}
   {% initial_page_data 'custom_fields_profiles' custom_fields_profiles %}
+  {% initial_page_data 'required_custom_fields_slugs' required_custom_fields_slugs %}
   {% initial_page_data 'custom_fields_profile_slug' custom_fields_profile_slug %}
   {% initial_page_data 'skip_standard_password_validations' skip_standard_password_validations %}
   {% initial_page_data 'pagination_limit_cookie_name' pagination_limit_cookie_name %}
@@ -60,22 +43,6 @@
             <a href="https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers" target="_blank">Help Site</a>.
           {% endblocktrans %}
         </p>
-        {% if request|ui_notify_enabled:"MULTI_DOMAIN_DOWNLOAD_MOBILE_WORKERS" and request|toggle_enabled:"FILTERED_BULK_USER_DOWNLOAD" and request|toggle_enabled:"DOMAIN_PERMISSIONS_MIRROR" %}
-          <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-no-arrow fade in"
-               data-slug="{{ 'MULTI_DOMAIN_DOWNLOAD_MOBILE_WORKERS'|ui_notify_slug }}"
-               role="alert">
-            <button type="button" class="close" data-dismiss="alert" aria-label='{% trans_html_attr "Close" %}'>
-              <span aria-hidden="true">&times;</span>
-            </button>
-            <p class="lead">{% trans 'New feature: Project Spaces filter on Filtered Download' %}</p>
-            <p>
-              {% blocktrans %}
-                Download mobile workers from all or a select number of project spaces
-                using the 'Project Spaces' filter on the 'Filter and Download Mobile Workers' page!
-              {% endblocktrans %}
-            </p>
-          </div>
-        {% endif %}
         <div class="btn-toolbar" style="margin-bottom: 20px;">
           {% if not request.is_view_only %}
             <button type="button"
@@ -89,19 +56,13 @@
           {% endif %}
 
           <a id="bulk_download" class="btn btn-info" href="{{ bulk_download_url }}">
-            <i class="fa fa-cloud-download"></i> {% trans "Download Mobile Workers" %}
+            <i class="fa-solid fa-cloud-arrow-down"></i> {% trans "Download Mobile Workers" %}
           </a>
 
           {% if not request.is_view_only %}
-            {% if can_bulk_edit_users and can_access_all_locations %}
+            {% if can_bulk_edit_users %}
               <a id="bulk_upload" class="btn btn-default" href="{% url "upload_commcare_users" domain %}">
-                <i class="fa fa-cloud-upload"></i> {% trans "Bulk Upload" %}
-              </a>
-            {% endif %}
-            {% if can_add_extra_users and can_access_all_locations %}
-              <a class="btn btn-default" href="{% url "user_fields_view" domain %}" id="btn-edit_user_fields">
-                <i class="fa fa-edit"></i>
-                {% trans "Edit User Fields" %}
+                <i class="fa-solid fa-cloud-arrow-up"></i> {% trans "Bulk Upload" %}
               </a>
             {% endif %}
             {% if request|toggle_enabled:"CLEAR_MOBILE_WORKER_DATA" %}
@@ -110,14 +71,14 @@
                 {% trans "Bulk Clear Data" %}
               </a>
             {% endif %}
-            {% if request|toggle_enabled:"FILTERED_BULK_USER_DOWNLOAD" %}
+            {% if request|request_has_privilege:"FILTERED_BULK_USER_DOWNLOAD" %}
               <a class="btn btn-danger" href="{% url "delete_commcare_users" domain %}">
-                <i class="fa fa-trash"></i>
-                {% trans "Bulk Delete Users" %}
+                <i class="fa-regular fa-trash-can"></i>
+                {% trans "Bulk Delete Mobile Workers" %}
               </a>
               <a class="btn btn-default" href="{% url "commcare_users_lookup" domain %}">
                 <i class="fa fa-search"></i>
-                {% trans "Bulk Lookup of Users" %}
+                {% trans "Bulk Lookup of Mobile Workers" %}
               </a>
             {% endif %}
           {% endif %}
@@ -242,7 +203,7 @@
             <td data-bind="attr: {class: creation_status}, text: last_name"></td>
             <td data-bind="attr: {class: creation_status}">
               <div data-bind="visible: creation_status() === $root.STATUS.PENDING">
-                <i class="fa fa-circle-o-notch fa-spin"></i>
+                <i class="fa fa-circle-notch fa-spin"></i>
                 {% trans 'Pending...' %}
               </div>
               <div data-bind="visible: creation_status() === $root.STATUS.SUCCESS">
@@ -252,7 +213,7 @@
               </div>
               <div data-bind="visible: creation_status() === $root.STATUS.ERROR">
                   <span class="text-danger">
-                    <i class="fa fa-exclamation-triangle"></i>
+                    <i class="fa-solid fa-triangle-exclamation"></i>
                     {% trans "ERROR" %}
                     <!-- ko text: creation_error --><!--/ko-->
                   </span>
@@ -354,7 +315,7 @@
                     {% trans "Reactivate" %}
                   </button>
                   <p data-bind="visible: action_error">
-                    <i class="fa fa-exclamation-triangle"></i>
+                    <i class="fa-solid fa-triangle-exclamation"></i>
                     <span data-bind="text: action_error"></span>
                   </p>
                 </div>
@@ -371,7 +332,7 @@
                   </button>
                   {% endif %}
                   <p data-bind="visible: action_error">
-                    <i class="fa fa-exclamation-triangle"></i>
+                    <i class="fa-solid fa-triangle-exclamation"></i>
                     <span data-bind="text: action_error"></span>
                   </p>
                 </div>
@@ -382,7 +343,7 @@
                     {% trans "Reactivate" %}
                   </button>
                   <p data-bind="visible: action_error">
-                    <i class="fa fa-exclamation-triangle"></i>
+                    <i class="fa-solid fa-triangle-exclamation"></i>
                     <span data-bind="text: action_error"></span>
                   </p>
                 </div>
@@ -393,7 +354,7 @@
                     {% trans "Deactivate" %}
                   </button>
                   <p data-bind="visible: action_error">
-                    <i class="fa fa-exclamation-triangle"></i>
+                    <i class="fa-solid fa-triangle-exclamation"></i>
                     <span data-bind="text: action_error"></span>
                   </p>
                 </div>

@@ -1,0 +1,98 @@
+$card-dashboard-border: darken($navbar-default-bg, 5);
+$card-dashboard-header-bg: $navbar-default-bg;
+$dashboard-card-body-height: 197px;
+$dashboard-icon-size: 100px;
+
+.dashboard-icon {
+  font-size: $dashboard-icon-size;
+}
+
+.dashboard-icon-bg-container {
+  position: absolute;
+  width: calc(100% - 32px);
+  height: $dashboard-card-body-height;
+  .dashboard-icon {
+    color: #e7e7e7;
+  }
+}
+
+.dashboard-link {
+  $y-padding: calc(($dashboard-card-body-height - $dashboard-icon-size) / 2);
+  $x-padding: calc((100% - $dashboard-icon-size) / 2);
+  padding: $y-padding $x-padding;
+  &:hover,
+  &:focus {
+    text-decoration: none;
+    outline: none;
+  }
+  i.dashboard-icon::before{
+    padding: 7px 0;
+  }
+}
+
+.card-dashboard {
+  .card-header {
+    text-align: center;
+    font-size: $font-size-base * 1.5;
+  }
+}
+
+.card-dashboard-medium {
+  height: 22.9167 * $font-size-base;
+  position: relative;
+
+  .list-group {
+    margin-bottom: 10px;
+    .list-group-item {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding: 7px 10px;
+      background-color: rgba(255, 255, 255, 0.4);
+      position: relative;
+      &:hover {
+        background-color: rgba(244, 244, 244, 0.9);
+
+        .list-group-item-icon {
+          visibility: visible;
+        }
+      }
+      .list-group-item-icon {
+        position: absolute;
+        right: 5px;
+        top: 3px;
+        padding: 5px;
+        background-color: $cc-bg;
+        visibility: hidden;
+      }
+    }
+  }
+
+  .pagination {
+    margin: 0;
+    position: absolute;
+    bottom: 18px;
+    > li > a {
+      padding: 3px 7px;
+      background-color: rgba(255, 255, 255, 0.4);
+      &:hover {
+        background-color: rgba(244, 244, 244, 0.9);
+      }
+    }
+    li.active a {
+      background-color: rgba(21, 87, 162, 0.9);
+    }
+  }
+
+  .popover {
+    width: 300px;
+  }
+
+  .fa-spin {
+    position: absolute;
+    top: 100px;
+    left: 50%;
+    margin-left: -28px;
+    z-index: $zindexDashboardSpinner;
+  }
+}

@@ -58,13 +58,12 @@ from corehq.apps.app_manager.models import (
     ApplicationBase,
     DeleteApplicationRecord,
     ExchangeApplication,
-    Form,
     Module,
     ModuleNotFoundException,
     app_template_dir,
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
-from corehq.apps.app_manager.models import load_app_template
+from corehq.apps.app_manager.models import load_app_template, LinkedApplication
 from corehq.apps.app_manager.tasks import update_linked_app_and_notify_task
 from corehq.apps.app_manager.util import (
     app_doc_types,
@@ -77,12 +76,13 @@ from corehq.apps.app_manager.util import (
 from corehq.apps.app_manager.util import enable_usercase as enable_usercase_util
 from corehq.apps.app_manager.views.utils import (
     back_to_main,
+    capture_user_errors,
     clear_xmlns_app_id_cache,
     get_langs,
+    validate_custom_assertions,
     update_linked_app,
     validate_langs,
 )
-from corehq.apps.app_manager.xform import XFormException
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig
 from corehq.apps.cloudcare.views import FormplayerMain
 from corehq.apps.dashboard.views import DomainDashboardView
@@ -97,7 +97,6 @@ from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.linked_domain.applications import create_linked_app
-from corehq.apps.linked_domain.dbaccessors import is_active_upstream_domain
 from corehq.apps.linked_domain.exceptions import RemoteRequestError
 from corehq.apps.translations.models import Translation
 from corehq.apps.users.dbaccessors import (
@@ -105,7 +104,7 @@ from corehq.apps.users.dbaccessors import (
 )
 from corehq.elastic import ESError
 from corehq.tabs.tabclasses import ApplicationsTab
-from corehq.toggles.shortcuts import set_toggle
+from corehq.toggles.shortcuts import set_toggles
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_util
@@ -180,6 +179,7 @@ def get_app_view_context(request, app):
     commcare-setting defined in commcare-app-settings.yml or commcare-profile-settings.yml
     """
     context = {}
+    lang = request.COOKIES.get('lang', app.langs[0])
 
     settings_layout = copy.deepcopy(
         get_commcare_settings_layout(app)
@@ -223,7 +223,8 @@ def get_app_view_context(request, app):
     if (app.get_doc_type() == 'Application'
             and toggles.CUSTOM_PROPERTIES.enabled(request.domain)
             and 'custom_properties' in getattr(app, 'profile', {})):
-        custom_properties_array = [{'key': p[0], 'value': p[1]} for p in app.profile.get('custom_properties').items()]
+        custom_properties_array = [{'key': p[0], 'value': p[1]} for p in
+                                   app.profile.get('custom_properties').items()]
         app_view_options.update({'customProperties': custom_properties_array})
     context.update({
         'app_view_options': app_view_options,
@@ -246,10 +247,8 @@ def get_app_view_context(request, app):
         # get setting dict from settings_layout
         if not settings_layout:
             return None
-        matched = [x for x in [
-                setting for section in settings_layout
-                for setting in section['settings']
-            ] if x['type'] == setting_type and x['id'] == setting_id]
+        matched = [x for x in [setting for section in settings_layout for setting in section['settings']]
+                   if x['type'] == setting_type and x['id'] == setting_id]
         if matched:
             return matched[0]
         else:
@@ -309,6 +308,12 @@ def get_app_view_context(request, app):
         'is_linked_app': is_linked_app(app),
         'is_remote_app': is_remote_app(app),
     })
+    if isinstance(app, Application):
+        context.update({'custom_assertions': [
+            {'test': assertion.test, 'text': assertion.text.get(lang)}
+            for assertion in app.custom_assertions
+        ]})
+
     if is_linked_app(app):
         try:
             upstream_versions_by_id = app.get_latest_master_releases_versions()
@@ -371,11 +376,14 @@ def get_apps_base_context(request, domain, app):
     else:
         timezone = None
 
+    linked_name = app.get_master_name() if isinstance(app, LinkedApplication) else ''
+
     context = {
         'lang': lang,
         'langs': langs,
         'domain': domain,
         'app': app,
+        'linked_name': linked_name,
         'app_subset': {
             'commcare_minor_release': app.commcare_minor_release,
             'doc_type': app.get_doc_type(),
@@ -444,8 +452,8 @@ def copy_app(request, domain):
         clear_app_cache(request, to_domain)
 
         if data['toggles']:
-            for slug in data['toggles'].split(","):
-                set_toggle(slug, to_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
+            toggle_slugs = data['toggles'].split(",")
+            set_toggles(toggle_slugs, to_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
 
         linked = data.get('linked')
         if linked:
@@ -555,7 +563,6 @@ def _build_sample_app(app):
     return copy
 
 
-
 @require_can_edit_apps
 def app_exchange(request, domain):
     template = "app_manager/app_exchange.html"
@@ -644,7 +651,7 @@ def import_app(request, domain):
         if not valid_request:
             return render(request, template, {'domain': domain})
 
-        assert(source is not None)
+        assert (source is not None)
         app = import_app_util(source, domain, {'name': name}, request=request)
 
         return back_to_main(request, domain, app_id=app._id)
@@ -667,8 +674,8 @@ def import_app(request, domain):
 
         if app_id:
             app = get_app(None, app_id)
-            assert(app.get_doc_type() in ('Application', 'RemoteApp'))
-            assert(request.couch_user.is_member_of(app.domain))
+            assert (app.get_doc_type() in ('Application', 'RemoteApp'))
+            assert (request.couch_user.is_member_of(app.domain))
         else:
             app = None
 
@@ -804,12 +811,14 @@ def get_app_ui_translations(request, domain):
 @no_conflict_require_POST
 @require_can_edit_apps
 @track_domain_request(calculated_prop='cp_n_saved_app_changes')
+@capture_user_errors
 def edit_app_attr(request, domain, app_id, attr):
     """
     Called to edit any (supported) app attribute, given by attr
 
     """
     app = get_app(domain, app_id)
+    lang = request.COOKIES.get('lang', app.langs[0])
 
     try:
         hq_settings = json.loads(request.body.decode('utf-8'))['hq']
@@ -821,11 +830,10 @@ def edit_app_attr(request, domain, app_id, attr):
     attributes = [
         'all',
         'recipients', 'name',
-        'text_input', 'platform', 'build_spec',
+        'build_spec',
         'use_custom_suite', 'custom_suite',
         'admin_password',
         'comment',
-        'use_j2me_endpoint',
         # Application only
         'cloudcare_enabled',
         'case_sharing',
@@ -835,6 +843,7 @@ def edit_app_attr(request, domain, app_id, attr):
         'profile_url',
         'manage_urls',
         'mobile_ucr_restore_version',
+        'custom_assertions',
     ]
     if attr not in attributes:
         return HttpResponseBadRequest()
@@ -861,9 +870,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('cloudcare_enabled', None, _always_allowed),
         ('manage_urls', None, _always_allowed),
         ('name', None, _always_allowed),
-        ('platform', None, _always_allowed),
         ('recipients', None, _always_allowed),
-        ('text_input', None, _always_allowed),
         ('use_custom_suite', None, _always_allowed),
         ('secure_submissions', None, _always_allowed),
         ('translation_strategy', None, _always_allowed),
@@ -873,9 +880,11 @@ def edit_app_attr(request, domain, app_id, attr):
         ('target_commcare_flavor', None, _always_allowed),
         ('comment', None, _always_allowed),
         ('custom_base_url', None, _always_allowed),
-        ('use_j2me_endpoint', None, _always_allowed),
         ('mobile_ucr_restore_version', None, _always_allowed),
         ('location_fixture_restore', None, _always_allowed),
+        ('split_screen_dynamic_search', None, _always_allowed),
+        ('persistent_menu', None, _always_allowed),
+        ('show_breadcrumbs', None, _always_allowed)
     )
     for attribute, transformation, can_set_attr in easy_attrs:
         if should_edit(attribute):
@@ -919,6 +928,9 @@ def edit_app_attr(request, domain, app_id, attr):
         if not has_privilege(request, privileges.CLOUDCARE):
             app.cloudcare_enabled = False
 
+    if should_edit('custom_assertions'):
+        app.custom_assertions = validate_custom_assertions(hq_settings[attr], app.custom_assertions, lang)
+
     def require_remote_app():
         if not is_remote_app(app):
             raise Exception("App type %s does not support profile url" % app.get_doc_type())
@@ -935,7 +947,7 @@ def edit_app_attr(request, domain, app_id, attr):
     if should_edit("custom_suite"):
         app.set_custom_suite(hq_settings['custom_suite'])
 
-    return HttpResponse(json.dumps(resp))
+    return JsonResponse(resp)
 
 
 @no_conflict_require_POST
@@ -947,7 +959,7 @@ def edit_add_ons(request, domain, app_id):
         if slug in current:
             app.add_ons[slug] = value == 'on'
     app.save()
-    return HttpResponse(json.dumps({'success': True}))
+    return JsonResponse({'success': True})
 
 
 @no_conflict_require_POST
@@ -991,7 +1003,7 @@ def rearrange(request, domain, app_id, key):
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
     app.save(resp)
     if ajax:
-        return HttpResponse(json.dumps(resp))
+        return JsonResponse(resp)
     else:
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
 

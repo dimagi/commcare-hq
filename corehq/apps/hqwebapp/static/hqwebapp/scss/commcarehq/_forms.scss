@@ -1,3 +1,23 @@
+.field-label {
+  @extend .col-form-label, .col-12, .col-sm-4, .col-md-3, .col-lg-2;
+}
+
+.field-label + .field-control {
+  @extend .col-12, .col-sm-8, .col-md-9, .col-lg-10;
+}
+
+:not(.field-label) + .field-control,
+.row > .field-control:first-child {
+  @extend .offset-sm-4, .offset-md-3, .offset-lg-2;
+  flex-shrink: initial;
+}
+
+.row > div > .form-check:first-child,
+.row > div > .input-group > .form-check:first-child {
+  padding-top: add($input-padding-y, $input-border-width);
+  margin-bottom: 0;
+}
+
 .form-hide-actions .form-actions {
   display: none;
 }
@@ -17,4 +37,31 @@ p.help-block {
   margin-top: 5px;
   margin-bottom: 10px;
   color: lighten($cc-text, 25%);
+}
+
+legend {
+  border-bottom: 1px solid $border-color;
+  padding-bottom: $spacer * .25;
+  margin-bottom: $spacer * 1.25;
+}
+
+.form-actions {
+  border-top: 1px solid $border-color;
+  background-color: $light;
+  border-bottom-left-radius: $border-radius;
+  border-bottom-right-radius: $border-radius;
+  padding: $spacer 0;
+  margin: 0 0 $spacer 0;
+
+  .field-control:first-child {
+    padding-left: ($grid-gutter-width - $spacer) / 2;
+  }
+
+  > * {
+    flex-shrink: initial;
+  }
+}
+
+.ms-header .btn {
+  margin-top: -3px;
 }

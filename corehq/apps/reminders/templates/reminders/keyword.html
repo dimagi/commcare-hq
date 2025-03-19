@@ -1,9 +1,9 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% requirejs_main 'reminders/js/reminders.keywords.ko' %}
+{% js_entry 'reminders/js/keyword' %}
 
 {% block page_content %}
   {% initial_page_data 'current_values' form.current_values %}
@@ -12,7 +12,7 @@
   </div>
 
   <script type="text/html" id="ko-template-named-args">
-    <table class="table table-bordered table-striped col-md-6 col-lg-6">
+    <table class="table table-bordered table-striped col-lg-6 col-xl-6">
       <thead>
       <tr>
         <th>{% trans "Name" %}</th>
@@ -37,13 +37,13 @@
                               attr: {name : ('named_args.' + $index() + '.xpath')}
                               " /></td>
         <td><button type="button"
-                    class="btn btn-danger"
+                    class="btn btn-outline-danger"
                     data-bind="click: $parent.removeNamedArg">
           <i class="fa fa-remove"></i> {% trans "Remove" %}</button></td>
       </tr>
       </tbody>
     </table>
-    <button class="btn btn-primary pull-left"
+    <button class="btn btn-outline-primary"
             type="button"
             data-bind="click: addNamedArg">
       <i class="fa fa-plus"></i> {% trans 'Add Named Answer' %}

@@ -1,20 +1,25 @@
+
 hqDefine("groups/js/group_members", [
     "jquery",
     "underscore",
     "analytix/js/google",
+    "es6!hqwebapp/js/bootstrap5_loader",
     "hqwebapp/js/initial_page_data",
-    "hqwebapp/js/ui_elements/ui-element-key-val-list",
+    "hqwebapp/js/bootstrap5/alert_user",
+    "hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list",
     "hqwebapp/js/select_2_ajax_widget",     // "Group Membership" select2
-    "hqwebapp/js/components.ko",            // select toggle for "Edit Setings" popup
+    "hqwebapp/js/components/select_toggle",            // select toggle for "Edit Setings" popup
+    "commcarehq",
 ], function (
     $,
     _,
     googleAnalytics,
+    bootstrap,
     initialPageData,
-    uiMapList
+    alertUser,
+    uiMapList,
 ) {
     $(function () {
-        // custom data
         var customDataEditor = uiMapList.new(initialPageData.get("group_id"), gettext("Edit Group Information"));
         customDataEditor.val(initialPageData.get("group_metadata"));
         customDataEditor.on("change", function () {
@@ -51,7 +56,7 @@ hqDefine("groups/js/group_members", [
             var ret = gettext("The following changes will not be saved: ");
 
             for (var key in unsavedChanges) {
-                if (unsavedChanges.hasOwnProperty(key) && unsavedChanges[key]) {
+                if (_.has(unsavedChanges, key) && unsavedChanges[key]) {
                     ret += "\n" + key;
                     someUnsavedChanges = true;
                 }
@@ -66,19 +71,16 @@ hqDefine("groups/js/group_members", [
 
         function outcome(isSuccess, name, id, gaEventLabel, additionalCallback) {
             return function () {
-                var alertClass, message;
+                var message;
                 if (isSuccess) {
-                    alertClass = 'alert-success';
                     message = gettext('Successfully saved ') + name.toLowerCase() + '.';
                     unsavedChanges[name] = false;
                 } else {
-                    alertClass = 'alert-danger';
                     message = gettext('Failed to save ') + name.toLowerCase() + '.';
                 }
                 $(id).find(':button').enableButton();
-                $('#save-alert').removeClass('alert-danger alert-success alert-info').addClass(alertClass);
-                $('#save-alert').html(message).show();
-                $('#editGroupSettings').modal('hide');
+                alertUser.alert_user(message, isSuccess ? 'success' : 'danger');
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('editGroupSettings')).hide();
 
                 if (_.isFunction(additionalCallback)) {
                     additionalCallback();
@@ -100,15 +102,24 @@ hqDefine("groups/js/group_members", [
             $('#edit_membership').submit(function () {
                 var _showMembershipUpdating = function () {
                         $('#edit_membership').fadeOut();
-                        $('#membership_updating').fadeIn();
+                        $('#membership_updating').removeClass("d-none");
                     },
                     _hideMembershipUpdating = function () {
                         $('#edit_membership').fadeIn();
-                        $('#membership_updating').fadeOut();
+                        $('#membership_updating').addClass("d-none");
                     };
                 _showMembershipUpdating();
                 $(this).find(':button').prop('disabled', true);
-                $(this).ajaxSubmit({
+
+                const formData = new FormData(this);
+                let ajaxData = Object.fromEntries(formData);
+                // Object.fromEntries uses get, but selected_ids has multiple values and needs getAll
+                ajaxData.selected_ids = formData.getAll("selected_ids");
+
+                $.ajax({
+                    url: $(this).attr("action"),
+                    method: "POST",
+                    data: ajaxData,
                     success: outcome(true, "Group membership", "#edit_membership", "Edit Group Membership", _hideMembershipUpdating),
                     error: outcome(false, "Group membership", "#edit_membership", _hideMembershipUpdating),
                 });
@@ -116,7 +127,10 @@ hqDefine("groups/js/group_members", [
             });
             $('#edit-group-settings').submit(function () {
                 $(this).find('.modal-footer :button').disableButton();
-                $(this).ajaxSubmit({
+                $.ajax({
+                    url: $(this).attr("action"),
+                    method: "POST",
+                    data: Object.fromEntries(new FormData(this)),
                     success: outcome(true, "Group settings", "#edit-group-settings", "Edit Settings"),
                     error: outcome(false, "Group settings", "#edit-group-settings"),
                 });
@@ -131,7 +145,10 @@ hqDefine("groups/js/group_members", [
             });
             $('#group-data-form').submit(function () {
                 $(this).find(':button').prop('disabled', true);
-                $(this).ajaxSubmit({
+                $.ajax({
+                    url: $(this).attr("action"),
+                    method: "POST",
+                    data: Object.fromEntries(new FormData(this)),
                     success: outcome(true, "Group data", "#group-data-form", "Edit Group Data"),
                     error: outcome(false, "Group data", "#group-data-form"),
                 });

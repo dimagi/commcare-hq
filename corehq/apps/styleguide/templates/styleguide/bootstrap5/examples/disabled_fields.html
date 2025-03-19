@@ -1,0 +1,96 @@
+<fieldset>
+  <legend>
+    Examples of Disabled Fields
+  </legend>
+  <div class="row mb-3">
+    <label for="id-first-name-disabled" class="field-label">
+      First Name
+    </label>
+    <div class="field-control">
+      <input
+        id="id-first-name-disabled"
+        class="form-control"
+        type="text"
+        name="first_name_dis"
+        value="Jon"
+        autocomplete="off"
+        disabled
+      />
+      <!-- ^^ notice the disabled attribute above -->
+    </div>
+  </div>
+  <div class="row mb-3">
+    <label for="id-favorite-color-disabled" class="field-label">
+      Favorite Color
+    </label>
+    <div class="field-control">
+      <select
+        id="id-favorite-color-disabled"
+        class="form-select hqwebapp-select2"
+        name="favorite_color_dis"
+        disabled
+      >
+        <!-- ^^ notice the disabled attribute above -->
+        <option value="red">Red</option>
+        <option value="green">Green</option>
+        <option value="blue">Blue</option>
+      </select>
+    </div>
+  </div>
+  <div class="row mb-3">
+    <label for="id-hopes-disabled" class="field-label">
+      Hopes and Dreams
+    </label>
+    <div class="field-control">
+      <textarea
+        id="id-hopes-disabled"
+        class="form-control vertical-resize"
+        name="hopes_dis"
+        disabled
+      >
+        <!-- ^^ notice the disabled attribute above -->
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce in
+        facilisis lectus. Cras accumsan ante vel massa sagittis faucibus.
+      </textarea>
+    </div>
+  </div>
+</fieldset>
+<fieldset>
+  <legend>
+    Examples of Readonly Fields
+  </legend>
+  <div class="row mb-3">
+    <label for="id-first-name-ro" class="field-label">
+      First Name
+    </label>
+    <div class="field-control">
+      <input
+        id="id-first-name-ro"
+        class="form-control-plaintext"
+        type="text"
+        name="first_name_ro"
+        value="Jon"
+        autocomplete="off"
+        readonly
+      />
+      <!-- ^^ notice the readonly attribute and form-control-plaintext css class above -->
+    </div>
+  </div>
+  <div class="row mb-3">
+    <label for="id-hopes-ro" class="field-label">
+      Hopes and Dreams
+    </label>
+    <div class="field-control">
+      <textarea
+        id="id-hopes-ro"
+        class="form-control-plaintext"
+        name="hopes_ro"
+        readonly
+      >
+        <!-- ^^ notice the readonly attribute and form-control-plaintext css class above -->
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce in facilisis lectus.
+        Cras accumsan ante vel massa sagittis faucibus.
+      </textarea>
+    </div>
+  </div>
+</fieldset>

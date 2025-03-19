@@ -1,5 +1,5 @@
 import uuid
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from django.test import TestCase
 from django.urls import reverse
@@ -25,6 +25,7 @@ from ..utils import submit_case_blocks
 @privilege_enabled(privileges.API_ACCESS)
 @flag_enabled('CASE_API_V0_6')
 @flag_enabled('API_THROTTLE_WHITELIST')
+@patch('corehq.apps.hqcase.api.updates.validate_update_permission', MagicMock())
 class TestCaseAPI(TestCase):
     domain = 'test-update-cases'
     maxDiff = None
@@ -138,6 +139,16 @@ class TestCaseAPI(TestCase):
         })
         self.assertEqual(res.status_code, 400)
         self.assertEqual(res.json()['error'], "'bad_property' is not a valid field.")
+
+    def test_empty_case_type(self):
+        res = self._create_case({
+            'case_type': '',
+            'case_name': 'Elizabeth Harmon',
+            'owner_id': 'methuen_home',
+        }).json()
+        case = CommCareCase.objects.get_case(res['case']['case_id'], self.domain)
+        self.assertEqual(case.name, 'Elizabeth Harmon')
+        self.assertEqual(case.type, '')
 
     def test_no_required_updates(self):
         case = self._make_case()
@@ -670,6 +681,7 @@ class TestCaseAPI(TestCase):
         self.assertEqual(res.status_code, 200)
         case = CommCareCase.objects.get_case(case.case_id, self.domain)
         self.assertEqual(case.external_id, '1')
+
 
     def test_urls_without_trailing_slash(self):
         case_id = self._make_case().case_id

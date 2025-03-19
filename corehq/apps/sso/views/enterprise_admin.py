@@ -8,6 +8,7 @@ from django.utils.translation import gettext as _, gettext_lazy
 
 from corehq.apps.enterprise.views import BaseEnterpriseAdminView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.sso.async_handlers import SSOExemptUsersAdminAsyncHandler, SsoTestUserAdminAsyncHandler
 from corehq.apps.sso.certificates import get_certificate_response
 from corehq.apps.sso.forms import (
@@ -41,6 +42,10 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
         SsoTestUserAdminAsyncHandler,
     ]
 
+    @use_jquery_ui  # for datepicker
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
     @property
     def page_url(self):
         return reverse(self.urlname, args=(self.domain, self.idp_slug))
@@ -64,10 +69,7 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
         return {
             'edit_idp_form': self.edit_enterprise_idp_form,
             'idp_slug': self.idp_slug,
-            'toggle_client_secret': (
-                self.identity_provider.protocol == IdentityProviderProtocol.OIDC
-                and self.identity_provider.client_secret
-            ),
+            'is_oidc': self.identity_provider.protocol == IdentityProviderProtocol.OIDC,
         }
 
     @property
@@ -105,11 +107,17 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
             SsoSamlEnterpriseSettingsForm if self.identity_provider.protocol == IdentityProviderProtocol.SAML
             else SsoOidcEnterpriseSettingsForm
         )
+
         if self.request.method == 'POST':
             return form_class(
-                self.identity_provider, self.request.POST, self.request.FILES
+                self.identity_provider,
+                self.request.POST,
+                self.request.FILES,
             )
-        return form_class(self.identity_provider)
+
+        return form_class(
+            self.identity_provider,
+        )
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:

@@ -4,7 +4,9 @@
         <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="CommCare">
             <EntityType Name="feed" >
                 <Key>
-                    <PropertyRef Name="{{ primary_key }}" />
+                    {% for field in primary_keys %}
+                    <PropertyRef Name="{{ field }}" />
+                    {% endfor %}
                 </Key>
                 {% for field in fields %}
                 <Property Name="{{ field.name }}" Type="{{ field.odata_type }}" />

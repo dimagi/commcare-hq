@@ -18,16 +18,23 @@
      }
      > a:hover {
        background-color: #dbdbdb;
-@@ -24,7 +24,7 @@
+@@ -26,9 +26,12 @@
+       width: 16px;
+     }
    }
-   &.nav li.active {
-     > a, > a:link, > a:visited, > a:hover {
+-  &.nav li.active {
+-    > a, > a:link, > a:visited, > a:hover {
 -      background-color: @brand-primary;
++  &.nav li {
++    > a.active,
++    > a.active:link,
++    > a.active:visited,
++    > a.active:hover {
 +      background-color: $brand-primary;
        color: #ffffff;
      }
    }
-@@ -36,7 +36,7 @@
+@@ -40,7 +43,7 @@
      margin: 8px 10px;
      overflow: hidden;
      background-color: white;
@@ -36,7 +43,15 @@
    }
    .nav-input {
      padding: 3px 20px;
-@@ -68,7 +68,7 @@
+@@ -58,6 +61,7 @@
+ .nav-main-icon {
+   font-size: 1.7em;
+   line-height: 0.7em;
++  color: $gray-light;
+ }
+ 
+ .text-hq-nav-header {
+@@ -72,7 +76,7 @@
  }
  
  .nav > li > a {

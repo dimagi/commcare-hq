@@ -1,0 +1,33 @@
+{% extends 'reports/filters/bootstrap5/base.html' %}
+{% load hq_shared_tags %}
+{% block filter_content %}
+  {% if pagination.enabled %}
+    <select
+      id="{{ css_id }}"
+      class="input form-select report-filter-single-option-paginated w-100"
+      name="{{ slug }}"
+      data-handler="{{ pagination.handler }}"
+      data-url="{{ pagination.url }}"
+      data-action="{{ pagination.action }}"
+      data-placeholder="{{ select.default_text }}"
+      data-selected="{{ select.selected|default:'' }}"
+    ></select>
+  {% else %}
+    <select
+      id="{{ css_id }}"
+      class="form-select report-filter-single-option w-100"
+      name="{{ slug }}"
+      data-select-options="{% html_attr select.options %}"
+      data-selected="{{ select.selected|default:'' }}"
+      data-bind="
+        options: select_params,
+        optionsText: 'text',
+        optionsValue: 'val',
+        {% if select.default_text %}
+          optionsCaption: '{{ select.default_text|escapejs }}',
+        {% endif %}
+        value: current_selection
+      "
+    ></select>
+  {% endif %}
+{% endblock %}

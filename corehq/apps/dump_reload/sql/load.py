@@ -23,7 +23,7 @@ from corehq.sql_db.routers import HINT_PARTITION_VALUE
 logger = logging.getLogger("load_sql")
 
 CHUNK_SIZE = 200
-ENQUEUE_TIMEOUT = 10
+ENQUEUE_TIMEOUT = 300
 
 
 class SqlDataLoader(DataLoader):

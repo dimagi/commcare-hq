@@ -1,0 +1,22 @@
+--- 
++++ 
+@@ -1,8 +1,8 @@
+-hqDefine('reports/js/filters/bootstrap3/drilldown_options', [
++hqDefine('reports/js/filters/bootstrap5/drilldown_options', [
+     'jquery',
+     'knockout',
+     'underscore',
+-    'hqwebapp/js/bootstrap3/knockout_bindings.ko',  // fadeVisible
++    'hqwebapp/js/bootstrap5/knockout_bindings.ko',  // fadeVisible
+ ], function (
+     $,
+     ko,
+@@ -62,7 +62,7 @@
+ 
+         self.changeMessage = function (key) {
+             self.message(self.notifications[key]);
+-            $('.drilldown-notification-tooltip').tooltip();
++            $('.drilldown-notification-tooltip').tooltip();  /* todo B5: plugin:tooltip */
+         };
+         return self;
+     };

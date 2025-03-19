@@ -16,8 +16,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrator.get_migration('soft_delete_cases.sql'),
-        migrator.get_migration('soft_delete_forms.sql'),
-        migrator.get_migration('get_form_ids_for_user.sql'),
         migrations.RunSQL(
             "DROP FUNCTION IF EXISTS update_form_state(TEXT, INTEGER)",
             "SELECT 1"

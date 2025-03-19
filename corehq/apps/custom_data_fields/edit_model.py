@@ -15,8 +15,9 @@ from corehq import privileges
 from memoized import memoized
 from corehq.apps.callcenter.tasks import bulk_sync_usercases_if_applicable
 
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_jquery_ui
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
+from corehq.apps.users.models import SQLUserData, CouchUser
 
 from .models import (
     CustomDataFieldsDefinition,
@@ -35,6 +36,7 @@ class CustomDataFieldsForm(forms.Form):
     data_fields = forms.CharField(widget=forms.HiddenInput)
     purge_existing = forms.BooleanField(widget=forms.HiddenInput, required=False, initial=False)
     profiles = forms.CharField(widget=forms.HiddenInput)
+    require_profile = forms.CharField(widget=forms.HiddenInput, required=False)
 
     @classmethod
     def verify_no_duplicates(cls, data_fields):
@@ -78,6 +80,20 @@ class CustomDataFieldsForm(forms.Form):
                 if field not in slugs:
                     errors.add(_("Profile '{}' contains '{}' which is not a known field.").format(
                         profile['name'], field
+                    ))
+        return errors
+
+    @classmethod
+    def verify_no_empty_profile_fields(cls, data_fields, profiles):
+        errors = set()
+
+        required_field_names = {field['slug'] for field in data_fields if field['is_required']}
+        for profile in profiles:
+            profile_fields = json.loads(profile.get('fields', '{}'))
+            for slug, value in profile_fields.items():
+                if slug in required_field_names and not value:
+                    errors.add(_("Profile '{}' does not assign a value for required field '{}'").format(
+                        profile['name'], slug
                     ))
         return errors
 
@@ -141,15 +157,25 @@ class CustomDataFieldsForm(forms.Form):
 
         return profiles
 
+    def clean_require_profile(self):
+        require_profile = self.cleaned_data['require_profile']
+        if not require_profile:
+            require_profile = []
+        else:
+            require_profile = require_profile.split(',')
+        return require_profile
+
     def clean(self):
         cleaned_data = super().clean()
-        data_fields = self.cleaned_data.get('data_fields', [])
+        data_fields = self.cleaned_data.get('data_fields')
         profiles = self.cleaned_data.get('profiles', [])
 
         errors = set()
         errors.update(self.verify_no_duplicate_profiles(profiles))
-        errors.update(self.verify_no_profiles_missing_fields(data_fields, profiles))
-        errors.update(self.verify_profiles_validate(data_fields, profiles))
+        if data_fields is not None:
+            errors.update(self.verify_no_profiles_missing_fields(data_fields, profiles))
+            errors.update(self.verify_profiles_validate(data_fields, profiles))
+            errors.update(self.verify_no_empty_profile_fields(data_fields, profiles))
 
         if errors:
             separator = mark_safe('<br/>')  # nosec: no user input
@@ -184,18 +210,24 @@ class CustomDataFieldForm(forms.Form):
         }
     )
     is_required = forms.BooleanField(required=False)
+    required_for = forms.CharField(widget=forms.HiddenInput, required=False)
     choices = forms.CharField(widget=forms.HiddenInput, required=False)
     regex = forms.CharField(required=False)
     regex_msg = forms.CharField(required=False)
+    upstream_id = forms.CharField(required=False, empty_value=None)
 
     def __init__(self, raw, *args, **kwargs):
         # Pull the raw_choices out here, because Django incorrectly
         # serializes the list and you can't get it
         self._raw_choices = [_f for _f in raw.get('choices', []) if _f]
+        self._raw_required_for = [_f for _f in raw.get('required_for', []) if _f]
         super(CustomDataFieldForm, self).__init__(raw, *args, **kwargs)
 
     def clean_choices(self):
         return self._raw_choices
+
+    def clean_required_for(self):
+        return self._raw_required_for
 
     def clean_regex(self):
         regex = self.cleaned_data.get('regex')
@@ -243,7 +275,10 @@ class CustomDataModelMixin(object):
     _show_profiles = False
     show_purge_existing = False
     entity_string = None  # User, Group, Location, Product...
+    required_for_options = []
+    profile_required_for_options = []
 
+    @use_bootstrap5
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(CustomDataModelMixin, self).dispatch(request, *args, **kwargs)
@@ -251,7 +286,7 @@ class CustomDataModelMixin(object):
     @classmethod
     def get_validator(cls, domain):
         data_model = CustomDataFieldsDefinition.get_or_create(domain, cls.field_type)
-        return data_model.get_validator()
+        return data_model.get_validator(cls)
 
     @classmethod
     def page_name(cls):
@@ -265,19 +300,76 @@ class CustomDataModelMixin(object):
     def get_definition(self):
         return CustomDataFieldsDefinition.get_or_create(self.domain, self.field_type)
 
+    def get_profile_required_for_user_type(self):
+        definition = self.get_definition()
+        return definition.profile_required_for_user_type
+
+    def update_profile_required(self, profile_required_for_user_type):
+        fields_definition = self.get_definition()
+        current_require_for = fields_definition.profile_required_for_user_type
+        if current_require_for != profile_required_for_user_type:
+            fields_definition.profile_required_for_user_type = profile_required_for_user_type
+            fields_definition.save()
+
     @memoized
     def get_profiles(self):
         return self.get_definition().get_profiles()
 
+    @classmethod
+    @memoized
+    def get_definition_for_domain(cls, domain):
+        return CustomDataFieldsDefinition.get_or_create(domain, cls.field_type)
+
+    @classmethod
+    def is_field_required(cls, field):
+        return field.is_required
+
+    @classmethod
+    def validate_incoming_fields(cls, existing_fields, new_fields, can_edit_linked_data=False):
+        existing_synced_fields = {field.upstream_id: field for field in existing_fields if field.upstream_id}
+
+        errors = []
+        for new_field in new_fields:
+            if not new_field.upstream_id:
+                continue  # Only deal with synced data
+
+            matching_field = existing_synced_fields.pop(new_field.upstream_id, None)
+
+            # check that any upstream_ids were already present. If not, the submitter is trying to
+            # create new synced data, which is not allowed
+            if not matching_field:
+                errors.append(
+                    _("Could not update '{}'. Synced data cannot be created this way").format(new_field.slug))
+            elif not can_edit_linked_data:
+                # Ensure no changes were done to this field
+                if new_field.to_dict() != matching_field.to_dict():
+                    errors.append(
+                        _("Could not update '{}'. You do not have the appropriate role").format(new_field.slug))
+
+        # Any remaining items in the existing_synced_fields will be deleted.
+        # Ensure the user has permission to do this
+        if existing_synced_fields and not can_edit_linked_data:
+            errors.append(_("Unable to remove synced fields. You do not have the appropriate role"))
+
+        return errors
+
     def save_custom_fields(self):
         definition = self.get_definition()
+
+        incoming_fields = [self.get_field(field) for field in self.form.cleaned_data['data_fields']]
+
+        field_errors = self.validate_incoming_fields(
+            definition.get_fields(), incoming_fields, can_edit_linked_data=self.can_edit_linked_data())
+
+        if field_errors:
+            return field_errors
+
         definition.field_type = self.field_type
         definition.domain = self.domain
-        definition.set_fields([
-            self.get_field(field)
-            for field in self.form.cleaned_data['data_fields']
-        ])
+        definition.set_fields(incoming_fields)
         definition.save()
+
+        return []  # no errors
 
     def save_profiles(self):
         if not self.show_profiles:
@@ -295,16 +387,23 @@ class CustomDataModelMixin(object):
             )
             if not created and obj.has_users_assigned:
                 refresh_es_for_profile_users.delay(self.domain, obj.id)
-                bulk_sync_usercases_if_applicable(obj.definition.domain, obj.user_ids_assigned())
+                bulk_sync_usercases_if_applicable(obj.definition.domain, list(obj.user_ids_assigned()))
             seen.add(obj.id)
 
+        return self.delete_eligible_profiles(self.get_profiles(), seen)
+
+    def delete_eligible_profiles(self, all_profiles, updated_profile_list):
         errors = []
-        for profile in self.get_profiles():
-            if profile.id not in seen:
-                if profile.has_users_assigned:
-                    errors.append(_("Could not delete profile '{}' because it has users "
-                                    "assigned.").format(profile.name))
-                else:
+        for profile in all_profiles:
+            if profile.id not in updated_profile_list:
+                user_data = SQLUserData.objects.filter(profile=profile)
+                for ud in user_data:
+                    user = CouchUser.get_by_user_id(ud.user_id)
+                    if user.is_active and self.domain in user.domains:
+                        errors.append(_("Could not delete profile '{}' because it has users "
+                                        "assigned.").format(profile.name))
+                        break
+                if not errors:
                     profile.delete()
 
         return errors
@@ -321,10 +420,12 @@ class CustomDataModelMixin(object):
         return Field(
             slug=field.get('slug'),
             is_required=field.get('is_required'),
+            required_for=field.get('required_for'),
             label=field.get('label'),
             choices=choices,
             regex=regex,
             regex_msg=regex_msg,
+            upstream_id=field.get('upstream_id')
         )
 
     @property
@@ -338,7 +439,9 @@ class CustomDataModelMixin(object):
             "can_view_regex_field_validation": (
                 domain_has_privilege(self.domain, privileges.REGEX_FIELD_VALIDATION)
                 or self.request.user.is_superuser
-            )
+            ),
+            "is_managed_by_upstream_domain": self.is_managed_by_upstream_domain(),
+            "can_edit_linked_data": self.can_edit_linked_data(),
         }
         if self.show_profiles:
             profiles = json.loads(self.form.data['profiles'])
@@ -346,6 +449,15 @@ class CustomDataModelMixin(object):
                 "show_profiles": True,
                 "custom_fields_profiles": sorted(profiles, key=lambda x: x['name'].lower()),
                 "custom_fields_profile_slug": PROFILE_SLUG,
+            })
+        if self.required_for_options:
+            context.update({
+                "required_for_options": self.required_for_options
+            })
+        if self.profile_required_for_options:
+            context.update({
+                "profile_required_for_options": self.profile_required_for_options,
+                "profile_required_for_user_type": self.get_profile_required_for_user_type()
             })
         return context
 
@@ -357,14 +469,8 @@ class CustomDataModelMixin(object):
         else:
             return CustomDataFieldsForm({
                 'data_fields': json.dumps([
-                    {
-                        'slug': field.slug,
-                        'is_required': field.is_required,
-                        'label': field.label,
-                        'choices': field.choices,
-                        'regex': field.regex,
-                        'regex_msg': field.regex_msg,
-                    } for field in self.get_definition().get_fields()
+                    field.to_dict()
+                    for field in self.get_definition().get_fields()
                 ]),
                 'profiles': json.dumps([
                     profile.to_json()
@@ -372,15 +478,33 @@ class CustomDataModelMixin(object):
                 ]),
             })
 
+    def is_managed_by_upstream_domain(self):
+        fields = self.get_definition().get_fields()
+        return any(f.upstream_id for f in fields)
+
+    def can_edit_linked_data(self):
+        return self.request.couch_user.can_edit_linked_data(self.domain)
+
     def post(self, request, *args, **kwargs):
+        self.save_data(request)
+        return self.get(request, *args, **kwargs)
+
+    def save_data(self, request):
         if self.form.is_valid():
-            self.save_custom_fields()
-            errors = self.save_profiles()
-            for error in errors:
+            field_errors = self.save_custom_fields()
+            if field_errors:
+                for error in field_errors:
+                    messages.error(request, error)
+                return
+
+            profile_errors = self.save_profiles()
+            for error in profile_errors:
                 messages.error(request, error)
 
             if self.show_purge_existing and self.form.cleaned_data['purge_existing']:
                 self.update_existing_models()
+            if self.form.cleaned_data['require_profile'] is not None:
+                self.update_profile_required(self.form.cleaned_data['require_profile'])
             if self.show_profiles:
                 msg = _("{} fields and profiles saved successfully.").format(self.entity_string)
             else:
@@ -394,7 +518,6 @@ class CustomDataModelMixin(object):
             else:
                 msg = _("Unable to save {} fields, see errors below.").format(self.entity_string.lower())
             messages.error(request, msg)
-        return self.get(request, *args, **kwargs)
 
     def update_existing_models(self):
         """

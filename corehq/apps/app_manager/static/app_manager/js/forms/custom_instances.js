@@ -1,7 +1,8 @@
-/* globals ko */
-hqDefine('app_manager/js/forms/custom_instances', function () {
-    'use strict';
-
+hqDefine("app_manager/js/forms/custom_instances", [
+    "knockout",
+], function (
+    ko,
+) {
     var customInstance = function (instanceId, instancePath) {
         var self = {};
         self.instanceId = ko.observable(instanceId || '');
@@ -32,7 +33,7 @@ hqDefine('app_manager/js/forms/custom_instances', function () {
         self.addInstance = function (instance) {
             instance = instance || {instanceId: null, instancePath: null};
             self.customInstances.push(
-                customInstance(instance.instanceId, instance.instancePath)
+                customInstance(instance.instanceId, instance.instancePath),
             );
         };
 

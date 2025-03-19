@@ -1,13 +1,17 @@
 alembic
 architect
 attrs>=21.4
+beautifulsoup4  # USH - used for rich text messaging emails, and some tests
+bleach  # USH - used for rich text messaging emails
+bleach[css]  # USH - used for rich text messaging emails
 boto3
 celery
 CommcareTranslationChecker>=0.9.7
+cryptography>=43.0.1
 csiphash
 datadog
-ddtrace
-decorator==4.0.11  # required by django-digest
+ddtrace>=2.21.0
+decorator==5.1.1  # required by django-digest
 defusedxml
 diff-match-patch
 dimagi-memoized
@@ -18,10 +22,10 @@ django-celery-results
 django-compressor
 django-countries
 django-crispy-forms
+crispy-bootstrap3to5 @ git+https://github.com/dimagi/crispy-bootstrap3to5.git@775b93b8cd8e5312cab4a367409a95b66ce18165
 django-cte
 django-field-audit
 django-formtools
-django-logentry-admin
 django-oauth-toolkit
 django-otp
 django-phonenumber-field
@@ -30,52 +34,48 @@ django-redis-sessions
 django-redis
 django-recaptcha
 django-statici18n
+django-tables2
 django-tastypie
 django-transfer
-django-two-factor-auth
+django-two-factor-auth @ git+https://github.com/jazzband/django-two-factor-auth.git@16f688bf329526d897a33594ab598bcd3fc8eaae  # waiting for next release after 1.16.0
 django-user-agents
 django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl
-django>=3.2.18,<4.0
+django>=4.2.16,<5.0
 djangorestframework
 dropbox
-elasticsearch2>=2.0.0,<3.0.0  # we will be deprecating support for ES2 soon
-elasticsearch5>=5.0.0,<6.0.0  # ES5 support is currently in development
+elasticsearch5>=5.0.0,<6.0.0
+elasticsearch6>=6.0.0,<7.0.0
 ethiopian-date-converter
 eulxml
-gevent
-ghdiff
-google-api-python-client==2.32.0
-google-auth-httplib2==0.1.0
-google-auth-oauthlib==0.4.6
+gevent>=24.11.1
 greenlet
 gunicorn
+haversine  # SolTech - Used in Geospatial features
 hiredis
 httpagentparser
 iso8601
 Jinja2
-json-delta
 jsonfield
 jsonobject-couchdbkit
-jsonobject>=2.0.0
+jsonobject>=2.3.1
 # jsonpath-ng with support for "wherenot" operator, and building documents
 # Upgrade when changes merged upstream
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
 jsonschema
 kafka-python
-laboratory
 looseversion
 lxml
 markdown
 oic
+pulp  # Used in Geospatial features to solve routing problems - SolTech
 openpyxl
 packaging
 phonenumberslite
-pickle5  # For Pythons pre 3.8.3. Can be removed when no environment will ever revert to < 3.8
 Pillow
 polib
 prometheus-client
 psycogreen
-psycopg2>=2.8.4  # Python 3.8 support
+psycopg2>=2.9.10
 py-KISSmetrics
 pycryptodome>=3.6.6  # security update
 PyGithub
@@ -83,13 +83,15 @@ python-dateutil
 python-imap
 pyphonetics
 python-magic
+pytz
 pyjwt
-PyYAML
+PyYAML>=6.0.2
+hl7apy
 pyzxcvbn
 qrcode
 quickcache
 redis
-reportlab
+reportlab==4.3.0
 requests_oauthlib
 requests_toolbelt
 requests
@@ -107,6 +109,7 @@ stripe
 suds-py3
 text-unidecode
 toposort
+transifex-python
 tropo-webapi-python
 turn-python
 twilio

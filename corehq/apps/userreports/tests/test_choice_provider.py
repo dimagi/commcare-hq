@@ -6,11 +6,11 @@ from django.test import SimpleTestCase, TestCase
 from django.utils.translation import gettext
 
 from corehq.apps.domain.shortcuts import create_domain, create_user
-from corehq.apps.es.fake.groups_fake import GroupESFake
-from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.es.client import manager
-from corehq.apps.es.users import user_adapter
+from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.groups import group_adapter
+from corehq.apps.es.users import user_adapter
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.registry.tests.utils import (
@@ -43,6 +43,7 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.apps.users.models_role import UserRole
+from corehq.apps.users.tests.util import patch_user_data_db_layer
 from corehq.apps.users.util import normalize_username
 from corehq.util.es.testing import sync_users_to_es
 from corehq.util.test_utils import flag_disabled, flag_enabled
@@ -262,6 +263,7 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
     domain = 'user-choice-provider'
 
     @classmethod
+    @patch_user_data_db_layer()
     def make_mobile_worker(cls, username, domain=None):
         domain = domain or cls.domain
         user = CommCareUser(username=normalize_username(username, domain),
@@ -326,21 +328,24 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
         )
 
 
-@mock.patch('corehq.apps.userreports.reports.filters.choice_providers.GroupES', GroupESFake)
-class GroupChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
+@es_test(requires=[group_adapter], setup_class=True)
+class GroupChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
     domain = 'group-choice-provider'
 
     @classmethod
     def make_group(cls, name, domain=None):
         domain = domain or cls.domain
         group = Group(name=name, domain=domain, case_sharing=True)
-        GroupESFake.save_doc(group._doc)
+        # need it for the _id
+        group.save()
+        cls.addClassCleanup(group.delete)
+
+        group_adapter.index(group._doc)
         return group
 
     @classmethod
-    @mock.patch('corehq.apps.groups.dbaccessors.get_group_id_name_map_by_user', mock.Mock(return_value=[]))
     def setUpClass(cls):
-        super(GroupChoiceProviderTest, cls).setUpClass()
+        super().setUpClass()
         report = ReportConfiguration(domain=cls.domain)
 
         cls.groups = [
@@ -350,6 +355,7 @@ class GroupChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
             cls.make_group('Team E yes'),
             cls.make_group('Team A yes'),
         ]
+        manager.index_refresh(group_adapter.index_name)
         choices = [
             SearchableChoice(group.get_id, group.name, searchable_text=[group.name])
             for group in cls.groups if group.domain == cls.domain]
@@ -357,11 +363,6 @@ class GroupChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
         cls.choice_provider = GroupChoiceProvider(report, None)
         cls.static_choice_provider = StaticChoiceProvider(choices)
         cls.web_user = UserChoiceProviderTest.make_web_user('web-user@example.com', domain=cls.domain)
-
-    @classmethod
-    def tearDownClass(cls):
-        GroupESFake.reset_docs()
-        super(GroupChoiceProviderTest, cls).tearDownClass()
 
     def test_query_search(self):
         self._test_query(ChoiceQueryContext('yes', limit=10, page=0))
@@ -375,7 +376,7 @@ class GroupChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
 
 @mock.patch('corehq.apps.users.analytics.UserES', UserESFake)
 @mock.patch('corehq.apps.userreports.reports.filters.choice_providers.UserES', UserESFake)
-@mock.patch('corehq.apps.userreports.reports.filters.choice_providers.GroupES', GroupESFake)
+@es_test(requires=[group_adapter], setup_class=True)
 class OwnerChoiceProviderTest(LocationHierarchyTestCase, ChoiceProviderTestMixin):
     domain = 'owner-choice-provider'
     location_type_names = ['state']
@@ -386,6 +387,7 @@ class OwnerChoiceProviderTest(LocationHierarchyTestCase, ChoiceProviderTestMixin
         super(OwnerChoiceProviderTest, cls).setUpClass()
         report = ReportConfiguration(domain=cls.domain)
         cls.group = GroupChoiceProviderTest.make_group('Group', domain=cls.domain)
+        manager.index_refresh(group_adapter.index_name)
         cls.mobile_worker = UserChoiceProviderTest.make_mobile_worker('mobile-worker', domain=cls.domain)
         cls.web_user = UserChoiceProviderTest.make_web_user('web-user@example.com', domain=cls.domain)
         cls.location = cls.locations['Massachusetts']
@@ -408,7 +410,6 @@ class OwnerChoiceProviderTest(LocationHierarchyTestCase, ChoiceProviderTestMixin
     @classmethod
     def tearDownClass(cls):
         UserESFake.reset_docs()
-        GroupESFake.reset_docs()
         super(OwnerChoiceProviderTest, cls).tearDownClass()
 
     def test_query_search(self):
@@ -426,11 +427,11 @@ class OwnerChoiceProviderTest(LocationHierarchyTestCase, ChoiceProviderTestMixin
 
 
 @es_test(requires=[user_adapter], setup_class=True)
-class UserMetadataChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
+class UserUserDataChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
     domain = 'user-meta-choice-provider'
 
     @classmethod
-    def make_web_user(cls, email, domain=None, metadata=None):
+    def make_web_user(cls, email, domain=None, user_data=None):
         domain = domain or cls.domain
         user = WebUser.create(
             domain=domain,
@@ -438,13 +439,13 @@ class UserMetadataChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
             password="*****",
             created_by=None,
             created_via=None,
-            metadata=metadata,
+            user_data=user_data,
         )
         return user
 
     @classmethod
     def setUpClass(cls):
-        super(UserMetadataChoiceProviderTest, cls).setUpClass()
+        super().setUpClass()
         report = ReportConfiguration(domain=cls.domain)
         cls.domain_obj = create_domain(cls.domain)
 
@@ -452,12 +453,12 @@ class UserMetadataChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
             cls.web_user = cls.make_web_user('ned@stark.com')
             cls.users = [
                 cls.make_mobile_worker('stark',
-                    metadata={'sigil': 'direwolf', 'seat': 'Winterfell', 'login_as_user': 'arya@faceless.com'}),
+                    user_data={'sigil': 'direwolf', 'seat': 'Winterfell', 'login_as_user': 'arya@faceless.com'}),
                 cls.web_user,
-                cls.make_mobile_worker('lannister', metadata={'sigil': 'lion', 'seat': 'Casterly Rock'}),
-                cls.make_mobile_worker('targaryen', metadata={'sigil': 'dragon', 'false_sigil': 'direwolf'}),
+                cls.make_mobile_worker('lannister', user_data={'sigil': 'lion', 'seat': 'Casterly Rock'}),
+                cls.make_mobile_worker('targaryen', user_data={'sigil': 'dragon', 'false_sigil': 'direwolf'}),
                 # test that docs in other domains are filtered out
-                cls.make_mobile_worker('Sauron', metadata={'sigil': 'eye',
+                cls.make_mobile_worker('Sauron', user_data={'sigil': 'eye',
                                        'seat': 'Mordor'}, domain='some-other-domain-lotr'),
             ]
         manager.index_refresh(user_adapter.index_name)
@@ -466,22 +467,24 @@ class UserMetadataChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
             SearchableChoice(
                 user.get_id, user.raw_username,
                 searchable_text=[
-                    user.username, user.last_name, user.first_name, user.metadata.get('login_as_user')])
-            for user in cls.users if user.is_member_of(cls.domain)
+                    user.username, user.last_name, user.first_name,
+                    user.get_user_data(cls.domain).get('login_as_user')
+                ]
+            ) for user in cls.users if user.is_member_of(cls.domain)
         ]
         choices.sort(key=lambda choice: choice.display)
         cls.choice_provider = UserChoiceProvider(report, None)
         cls.static_choice_provider = StaticChoiceProvider(choices)
 
     @classmethod
-    def make_mobile_worker(cls, username, domain=None, metadata=None):
+    def make_mobile_worker(cls, username, domain=None, user_data=None):
         user = CommCareUser.create(
             domain=domain or cls.domain,
             username=normalize_username(username),
             password="*****",
             created_by=None,
             created_via=None,
-            metadata=metadata,
+            user_data=user_data,
         )
         return user
 
@@ -603,7 +606,9 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
                           Choice(value='B', display='B'),
                           Choice(value='C', display='C')],
                          self.choice_provider.query(ChoiceQueryContext(query='', offset=0, user=self.web_user)))
-        self.assertEqual([], self.choice_provider.query(ChoiceQueryContext(query='D', offset=0, user=self.web_user)))
+        self.assertEqual([], self.choice_provider.query(
+            ChoiceQueryContext(query='D', offset=0, user=self.web_user)
+        ))
 
     def test_query_no_registry_access(self):
         self.assertEqual([Choice(value='A', display='A')],

@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.http import (
     Http404,
+    HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
     JsonResponse,
@@ -13,6 +14,7 @@ from django.http import (
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
+from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
@@ -25,17 +27,16 @@ from dimagi.utils.couch import CriticalSection
 from dimagi.utils.parsing import json_format_date
 
 from corehq import privileges
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
-from corehq.apps.data_interfaces.models import (
-    AutomaticUpdateRule,
+from corehq.apps.accounting.decorators import (
+    requires_privilege_json_response,
+    requires_privilege_with_fallback,
 )
-from django.utils.html import format_html
+from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_jquery_ui,
-    use_nvd3,
     use_timepicker,
 )
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -49,10 +50,17 @@ from corehq.apps.sms.models import (
 )
 from corehq.apps.sms.tasks import OutboundDailyCounter, time_within_windows
 from corehq.apps.sms.views import BaseMessagingSectionView
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import HqPermissions
+from corehq.blobs.exceptions import NotFound
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.messaging.scheduling.async_handlers import (
     ConditionalAlertAsyncHandler,
     MessagingRecipientHandler,
+)
+from corehq.messaging.scheduling.const import (
+    MAX_IMAGE_UPLOAD_SIZE,
+    VALID_EMAIL_IMAGE_MIMETYPES,
 )
 from corehq.messaging.scheduling.forms import (
     BroadcastForm,
@@ -66,6 +74,7 @@ from corehq.messaging.scheduling.models import (
     ScheduledBroadcast,
     TimedSchedule,
 )
+from corehq.messaging.scheduling.models.content import EmailImage
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_count_of_active_schedule_instances_due,
 )
@@ -83,8 +92,10 @@ from corehq.messaging.scheduling.view_helpers import (
 )
 from corehq.messaging.tasks import initiate_messaging_rule_run
 from corehq.messaging.util import MessagingRuleProgressHelper
+from corehq.toggles import RICH_TEXT_EMAILS
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
+from corehq.util.view_utils import absolute_reverse
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 
 
@@ -100,10 +111,6 @@ class MessagingDashboardView(BaseMessagingSectionView):
     urlname = 'messaging_dashboard'
     page_title = gettext_lazy("Dashboard")
     template_name = 'scheduling/dashboard.html'
-
-    @use_nvd3
-    def dispatch(self, *args, **kwargs):
-        return super(MessagingDashboardView, self).dispatch(*args, **kwargs)
 
     def get_messaging_history_errors_url(self, messaging_history_url):
         url_param_tuples = [
@@ -559,8 +566,8 @@ class EditScheduleView(CreateScheduleView):
         immediate_broadcast_restriction = isinstance(self.broadcast, ImmediateBroadcast)
 
         inbound_sms_restriction = (
-            not self.can_use_inbound_sms and
-            self.schedule.memoized_uses_sms_survey
+            not self.can_use_inbound_sms
+            and self.schedule.memoized_uses_sms_survey
         )
 
         return immediate_broadcast_restriction or inbound_sms_restriction
@@ -625,8 +632,8 @@ class ConditionalAlertListView(ConditionalAlertBaseView):
         # can restart a rule run. Also don't limit it if it's an environment
         # that is a standalone environment.
         return not (
-            self.request.couch_user.is_superuser or
-            settings.SERVER_ENVIRONMENT in settings.UNLIMITED_RULE_RESTART_ENVS
+            self.request.couch_user.is_superuser
+            or settings.SERVER_ENVIRONMENT in settings.UNLIMITED_RULE_RESTART_ENVS
         )
 
     @property
@@ -637,9 +644,9 @@ class ConditionalAlertListView(ConditionalAlertBaseView):
 
     def schedule_is_editable(self, schedule):
         return (
-            (self.can_use_inbound_sms or not schedule.memoized_uses_sms_survey) and
-            not schedule.memoized_uses_ivr_survey and
-            not schedule.memoized_uses_sms_callback
+            (self.can_use_inbound_sms or not schedule.memoized_uses_sms_survey)
+            and not schedule.memoized_uses_ivr_survey
+            and not schedule.memoized_uses_sms_callback
         )
 
     def _format_rule_for_json(self, rule):
@@ -882,8 +889,8 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 
         if basic_info_form_valid and criteria_form_valid and schedule_form_valid:
             if not self.is_system_admin and (
-                self.criteria_form.requires_system_admin_to_save or
-                self.schedule_form.requires_system_admin_to_save
+                self.criteria_form.requires_system_admin_to_save
+                or self.schedule_form.requires_system_admin_to_save
             ):
                 # Don't allow adding custom criteria/actions to rules
                 # unless the user has permission to
@@ -938,23 +945,23 @@ class EditConditionalAlertView(CreateConditionalAlertView):
     @cached_property
     def read_only_mode(self):
         system_admin_restriction = (
-            not self.is_system_admin and
-            (
-                self.criteria_form.requires_system_admin_to_edit or
-                self.schedule_form.requires_system_admin_to_edit
+            not self.is_system_admin
+            and (
+                self.criteria_form.requires_system_admin_to_edit
+                or self.schedule_form.requires_system_admin_to_edit
             )
         )
 
         inbound_sms_restriction = (
-            not self.can_use_inbound_sms and
-            self.schedule.memoized_uses_sms_survey
+            not self.can_use_inbound_sms
+            and self.schedule.memoized_uses_sms_survey
         )
 
         return (
-            system_admin_restriction or
-            inbound_sms_restriction or
-            self.schedule.memoized_uses_ivr_survey or
-            self.schedule.memoized_uses_sms_callback
+            system_admin_restriction
+            or inbound_sms_restriction
+            or self.schedule.memoized_uses_ivr_survey
+            or self.schedule.memoized_uses_sms_callback
         )
 
     @cached_property
@@ -1044,7 +1051,7 @@ class DownloadConditionalAlertView(ConditionalAlertBaseView):
 class UploadConditionalAlertView(BaseMessagingSectionView):
     urlname = 'upload_conditional_alert'
     page_title = gettext_lazy("Upload SMS Alert Content")
-    template_name = 'hqwebapp/bulk_upload.html'
+    template_name = 'hqwebapp/bootstrap3/bulk_upload.html'
 
     @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
     def dispatch(self, *args, **kwargs):
@@ -1058,7 +1065,7 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
                 "download_url": reverse("download_conditional_alert", args=(self.domain,)),
                 "adjective": _("SMS alert content"),
                 "plural_noun": _("SMS alert content"),
-                "help_link": "https://confluence.dimagi.com/display/commcarepublic/Bulk+download+and+upload+of+SMS+content+in+conditional+alerts", # noqa
+                "help_link": "https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143956488/Conditional+Alerts#Bulk-download-and-upload-of-SMS-content-in-conditional-alerts",  # noqa: E501
             },
         })
         context.update({
@@ -1085,3 +1092,65 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
             msg[0](request, msg[1])
 
         return self.get(request, *args, **kwargs)
+
+
+@requires_privilege_json_response(privileges.REMINDERS_FRAMEWORK)
+@require_permission(HqPermissions.edit_messaging)
+@RICH_TEXT_EMAILS.required_decorator()
+def messaging_image_upload_view(request, domain):
+    if request.method == 'POST' and request.FILES.get('upload'):
+        image_file = request.FILES['upload']
+
+        if image_file.size > MAX_IMAGE_UPLOAD_SIZE:
+            return JsonResponse({
+                'error': {
+                    "message": _('Image file is too large. Images must be smaller than 1MB'),
+                }
+            }, status=400)
+
+        if image_file.content_type not in VALID_EMAIL_IMAGE_MIMETYPES:
+            image_extensions = [mimetype.split("/")[1] for mimetype in VALID_EMAIL_IMAGE_MIMETYPES]
+            return JsonResponse({
+                'error': {
+                    "message": _('You can only upload {image_extensions} images').format(
+                        image_extensions=", ".join(image_extensions))
+                },
+            }, status=400)
+
+        image = EmailImage.save_blob(
+            image_file,
+            domain=request.domain,
+            filename=image_file.name,
+            content_type=image_file.content_type,
+        )
+        return JsonResponse({
+            'url': absolute_reverse("download_messaging_image", args=[domain, image.blob_id])
+        }, status=201)
+    return JsonResponse({'error': {"message": _('Invalid request')}}, status=400)
+
+
+def messaging_image_download_view(request, domain, image_key):
+    """This view is intentionally left unauthenticated, as it returns images
+    that are sent in rich-text email messages.
+
+    """
+    try:
+        image_meta = EmailImage.get_by_key(domain, image_key)
+        image_blob = image_meta.get_blob()
+    except (EmailImage.DoesNotExist, NotFound):
+        # We could instead serve a placeholder image here
+        raise Http404()
+
+    return HttpResponse(image_blob, content_type=image_meta.content_type)
+
+
+@requires_privilege_json_response(privileges.REMINDERS_FRAMEWORK)
+@require_permission(HqPermissions.edit_messaging)
+@RICH_TEXT_EMAILS.required_decorator()
+def messaging_image_delete_view(request, domain, image_key):
+    try:
+        image = EmailImage.get_by_key(domain, image_key)
+        image.delete()
+        return JsonResponse({'success': True}, status=200)
+    except (EmailImage.DoesNotExist, NotFound):
+        raise Http404()

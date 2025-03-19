@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/bootstrap3/base_navigation.html' %}
+{% extends 'hqwebapp/bootstrap5/base_navigation.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load compress %}
@@ -15,61 +15,49 @@
   <style id="persistent-cell-grid-style"></style>
   <style id="list-cell-layout-style"></style>
   <style id="list-cell-grid-style"></style>
+  <style id="list-cell-wrapper-style"></style>
   <style id="list-cell-container-style"></style>
 {% endblock %}
-
-{% block navigation %}{{ block.super }}
-  <div class="navbar navbar-inverse navbar-cloudcare navbar-static-top">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="{{ home_url }}"><i class="fcc fcc-flower"></i> Web Apps</a>
-      <ul class="nav navbar-nav navbar-right" >
-        <li><a href="#" id="commcare-menu-toggle">{% trans 'Show Full Menu' %}</a></li>
-      </ul>
-    </div>
-  </div>
-{% endblock navigation %}
 
 {% block stylesheets %}
   {% compress css %}
     <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
     <link rel="stylesheet" href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}">
-    <link rel="stylesheet" href="{% static 'cloudcare/css/webforms.css' %}">
-    <link rel="stylesheet" href="{% static 'bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css' %}"/>
   {% endcompress %}
   {% compress css %}
-    <link type="text/less"
+    <link type="text/scss"
           rel="stylesheet"
           media="all"
-          href="{% static 'cloudcare/less/font-formplayer.less' %}" />
-    <link type="text/less"
+          href="{% static 'cloudcare/scss/font-formplayer.scss' %}" />
+    <link type="text/scss"
           rel="stylesheet"
           media="all"
-          href="{% static 'cloudcare/less/formplayer-common.less' %}"/>
-    <link type="text/less"
+          href="{% static 'cloudcare/scss/formplayer-common.scss' %}"/>
+    <link type="text/scss"
           rel="stylesheet"
           media="all"
-          href="{% static 'cloudcare/less/formplayer-webapp.less' %}"/>
+          href="{% static 'cloudcare/scss/formplayer-webapp.scss' %}"/>
   {% endcompress %}
 {% endblock %}
 
+{% js_entry "cloudcare/js/formplayer/main" %}
+
 {% block js %} {{ block.super }}
-  {% include "formplayer/dependencies.html" %}
-  <script src="{% static "cloudcare/js/formplayer/main.js" %}"></script>
+  {% include "cloudcare/partials/dependencies.html" %}
 {% endblock %}
 
 {% block content %}
 
   {% initial_page_data 'apps' apps %}
+  {% initial_page_data 'daterangepicker-show-clear' 'true' %}
   {% initial_page_data 'domain_is_on_trial' domain_is_on_trial %}
   {% initial_page_data 'debugger_enabled' request.couch_user.can_edit_data %}
   {% initial_page_data 'domain' domain %}
   {% initial_page_data 'environment' environment %}
   {% initial_page_data 'formplayer_url' formplayer_url %}
-  {% initial_page_data 'grid_polyfill_path' 'css-grid-polyfill-binaries/css-polyfills.js'|static %}
   {% initial_page_data 'language' language %}
   {% initial_page_data 'mapbox_access_token' mapbox_access_token %}
   {% initial_page_data 'default_geocoder_location' default_geocoder_location %}
-  {% initial_page_data 'single_app_mode' single_app_mode %}
   {% initial_page_data 'username' username %}
   {% initial_page_data 'has_geocoder_privs' has_geocoder_privs %}
   {% initial_page_data 'dialer_enabled' integrations.dialer_enabled %}
@@ -78,6 +66,8 @@
   {% initial_page_data 'hmac_api_key' integrations.hmac_api_key %}
   {% initial_page_data 'hmac_hashed_secret' integrations.hmac_hashed_secret %}
   {% initial_page_data 'sentry' sentry %}
+  {% initial_page_data 'valid_multimedia_extensions_map' valid_multimedia_extensions_map %}
+  {% initial_page_data 'lang_code_name_mapping' lang_code_name_mapping %}
   {% registerurl 'list_case_exports' request.domain %}
   {% registerurl 'list_form_exports' request.domain %}
   {% registerurl 'case_data' request.domain '---' %}
@@ -85,57 +75,71 @@
   {% registerurl 'report_formplayer_error' request.domain %}
   {% registerurl 'report_sentry_error' request.domain %}
   {% registerurl 'dialer_view' request.domain %}
+  {% registerurl 'api_histogram_metrics' request.domain %}
   {% if integrations.gaen_otp_enabled %}
     {% registerurl 'gaen_otp_view' request.domain %}
   {% endif %}
 
-  <!-- For now we won't touch this since the form entry code is coupled with it  -->
-
   <div id="cloudcare-main" class="cloudcare-home-content">
-    <section id="case-crumbs" style="width: 800px"></section>
     <section id="cases"></section>
-    <div id="menu-container">
+    <div id="main-container" class="d-lg-flex flex-column">
       <section id="formplayer-progress-container"></section>
-      <div id="restore-as-region"></div>
+      <nav class="navbar navbar-cloudcare">
+        <div class="d-flex container-fluid">
+          <div class="flex-grow-1">
+            <a class="navbar-brand" href="{{ home_url }}"><i class="fcc fcc-flower"></i> {% trans "Web Apps" %}</a>
+          </div>
+          <div class="flex-grow-1 d-none d-lg-inline">
+            <div id="restore-as-region"></div>
+          </div>
+          <ul class="nav navbar-nav navbar-right">
+            <li class="nav-item"><a href="#" class="nav-link" id="commcare-menu-toggle">{% trans 'Show Full Menu' %}</a></li>
+          </ul>
+          <div id="navbar-menu-region">
+          </div>
+        </div>
+      </nav>
+      <div class="d-lg-none">
+        <div id="mobile-restore-as-region"></div>
+      </div>
       <div id="breadcrumb-region" class="print-container"></div>
       <section id="cloudcare-notifications" class="container notifications-container"></section>
-      <div class="container case-tile-container">
-        <div id="persistent-case-tile" class="print-container"></div>
-      </div>
-      <div id="menu-region" class="container print-container"></div>
-      <section id="webforms" data-bind="
+      <div id="content-plus-persistent-menu-container" class="flex-grow-1 d-lg-flex">
+        <div id="persistent-menu-region" class="d-print-none d-none position-relative"></div>
+        <div id="content-plus-version-info-container" class="h-100 flex-grow-1 overflow-scroll d-lg-flex-column">
+          <div id="sidebar-and-content" class="d-lg-flex justify-content-center m-3">
+            <div id="sidebar-region" class="noprint-sub-container me-3"></div>
+            <div id="content-container" class="mx-0 flex-grow-1">
+              <div class="container case-tile-container">
+                <div id="persistent-case-tile" class="print-container"></div>
+              </div>
+              <div id="menu-region" class="print-container"></div>
+              <section id="webforms" data-bind="
                 template: {
-                    name: 'form-fullform-ko-template',
-                    afterRender: afterRender
+                name: 'form-fullform-ko-template',
+                afterRender: afterRender
                 }">
-      </section>
+              </section>
+            </div>
+          </div>
+          <small id="version-info" class="pb-5"></small>
+          {% if request.couch_user.can_edit_data %}
+            <div class="pb-4"></div>
+          {% endif %}
+        </div>
+      </div>
     </div>
     <div role="region" id="sr-notification-region" class="sr-only" aria-live="assertive" aria-relevant="all"></div>
-    <small id="version-info"></small>
     {% if request.couch_user.can_edit_data %}
-      <section id="cloudcare-debugger" data-bind="
-          template: {
-              name: 'instance-viewer-ko-template',
-              afterRender: adjustWidth
-          }
-        "></section>
+      <section data-bind="template: { name: 'instance-viewer-ko-template' }"
+               id="cloudcare-debugger"></section>
     {% endif %}
   </div>
   {% if not request.session.secure_session %}
     {% include 'hqwebapp/includes/inactivity_modal_data.html' %}
   {% endif %}
-  {% include 'form_entry/templates.html' %}
-  {% include 'formplayer/debugger.html' %}
-  {% include 'formplayer/grid_view.html' %}
-  {% include 'formplayer/settings_view.html' %}
-  {% include 'formplayer/case_detail.html' %}
-  {% include 'formplayer/case_list.html' %}
-  {% include 'formplayer/menu_list.html' %}
-  {% include 'formplayer/users.html' %}
-  {% include 'formplayer/session_list.html' %}
-  {% include 'formplayer/query_view.html' %}
-  {% include 'formplayer/confirmation_modal.html' %}
-  {% include 'formplayer/progress.html' %}
-  {% include 'cloudcare/new_app_version_modal.html' %}
+  {% include 'cloudcare/partials/confirmation_modal.html' %}
+  {% include 'cloudcare/partials/new_app_version_modal.html' %}
+  {% include 'cloudcare/partials/all_templates.html' %}
 
 {% endblock %}

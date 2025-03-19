@@ -1,11 +1,30 @@
-hqDefine("cloudcare/js/form_entry/web_form_session", function () {
-    var cloudcareUtils = hqImport("cloudcare/js/utils"),
-        constants = hqImport("cloudcare/js/form_entry/const"),
-        errors = hqImport("cloudcare/js/form_entry/errors"),
-        taskQueue = hqImport("cloudcare/js/form_entry/task_queue"),
-        formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
-        formUI = hqImport("cloudcare/js/form_entry/form_ui");
-
+hqDefine("cloudcare/js/form_entry/web_form_session", [
+    'jquery',
+    'knockout',
+    'underscore',
+    'cloudcare/js/utils',
+    'cloudcare/js/form_entry/const',
+    'cloudcare/js/form_entry/errors',
+    'cloudcare/js/form_entry/task_queue',
+    'cloudcare/js/form_entry/utils',
+    'cloudcare/js/form_entry/form_ui',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/users/models',
+    'cloudcare/js/gtx',
+], function (
+    $,
+    ko,
+    _,
+    cloudcareUtils,
+    constants,
+    errors,
+    taskQueue,
+    formEntryUtils,
+    formUI,
+    utils,
+    UsersModels,
+    gtx,
+) {
     function WebFormSession(params) {
         var self = {};
 
@@ -90,6 +109,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
          * @param {function} errorResponseCallback - function to be called on a "success" response with .status = 'error'
          *      this function should return true to also run default behavior afterwards, or false to prevent it
          */
+        // eslint-disable-next-line no-unused-vars
         self.serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {
             if (self.blockingStatus === constants.BLOCK_ALL) {
                 return;
@@ -132,7 +152,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                 // use a blob here so that we can set the content type
                 let answerData = new Blob(
                     [JSON.stringify(_.omit(requestParams, "file"))],
-                    {type: 'application/json'}
+                    {type: 'application/json'},
                 );
                 newData.append("answer", answerData);
 
@@ -213,7 +233,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                 errorMessage = errors.NO_INTERNET_ERROR;
                 if (action === constants.SUBMIT) {
                     $('.submit').prop('disabled', false);
-                    $('.form-control').prop('disabled', false);
+                    $('.form-control, .form-select').prop('disabled', false);
                 }
             } else if (_.has(resp, 'responseJSON') && resp.responseJSON !== undefined) {
                 errorMessage = formEntryUtils.touchformsError(resp.responseJSON.message);
@@ -249,6 +269,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
             var self = this;
             $.unsubscribe([
                 'formplayer.' + constants.ANSWER,
+                'formplayer.' + constants.CLEAR_ANSWER,
                 'formplayer.' + constants.DELETE_REPEAT,
                 'formplayer.' + constants.NEW_REPEAT,
                 'formplayer.' + constants.EVALUATE_XPATH,
@@ -257,12 +278,14 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                 'formplayer.' + constants.PREV_QUESTION,
                 'formplayer.' + constants.QUESTIONS_FOR_INDEX,
                 'formplayer.' + constants.FORMATTED_QUESTIONS,
-                'formplayer.' + constants.CHANGE_LANG,
             ].join(' '));
             $.subscribe('formplayer.' + constants.SUBMIT, function (e, form) {
                 self.submitForm(form);
             });
             $.subscribe('formplayer.' + constants.ANSWER, function (e, question) {
+                self.answerQuestion(question);
+            });
+            $.subscribe('formplayer.' + constants.CLEAR_ANSWER, function (e, question) {
                 self.answerQuestion(question);
             });
             $.subscribe('formplayer.' + constants.DELETE_REPEAT, function (e, group) {
@@ -286,9 +309,12 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
             $.subscribe('formplayer.' + constants.FORMATTED_QUESTIONS, function (e, callback) {
                 self.getFormattedQuestions(callback);
             });
-            $.subscribe('formplayer.' + constants.CHANGE_LANG, function (e, lang) {
-                self.changeLang(lang);
+            $.subscribe('formplayer.' + constants.DIRTY, function () {
+                import("cloudcare/js/formplayer/app").then(function (FormplayerFrontend) {
+                    FormplayerFrontend.trigger('setUnsavedFormInProgress');
+                });
             });
+            applyLangListener(self);
         };
 
         self.loadForm = function ($form, initLang) {
@@ -320,13 +346,13 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
         self.answerQuestion = function (q) {
             var self = this;
             var ix = formUI.getIx(q);
-            var answer = q.answer();
+            var answer = q.entry.xformAction === constants.CLEAR_ANSWER ? constants.NO_ANSWER : q.answer();
             var oneQuestionPerScreen = self.isOneQuestionPerScreen();
             var form = q.form();
 
             // We revalidate any errored labels while answering any of the questions
             var erroredLabels = form.erroredLabels();
-
+            sessionStorage.answerQuestionInProgress = true;
             this.serverRequest(
                 _.extend({
                     'action': q.entry.xformAction,
@@ -336,7 +362,11 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                     'oneQuestionPerScreen': oneQuestionPerScreen,
                 }, q.entry.xformParams()),
                 function (resp) {
-                    q.formplayerProcessed = true;
+                    sessionStorage.answerQuestionInProgress = false;
+                    self.updateXformAction(q);
+                    if (q.formplayerMediaRequest) {
+                        q.formplayerMediaRequest.resolve();
+                    }
                     $.publish('session.reconcile', [resp, q]);
                     if (self.answerCallback !== undefined) {
                         self.answerCallback(self.session_id);
@@ -347,11 +377,21 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                 },
                 constants.BLOCK_SUBMIT,
                 function () {
-                    q.formplayerProcessed = false;
+                    self.updateXformAction(q);
+                    if (q.formplayerMediaRequest) {
+                        q.formplayerMediaRequest.reject();
+                    }
                     q.serverError(
                         gettext("We were unable to save this answer. Please try again later."));
                     q.pendingAnswer(constants.NO_PENDING_ANSWER);
                 });
+        };
+
+        self.updateXformAction = function (q) {
+            if (q.entry.xformAction === constants.CLEAR_ANSWER) {
+                q.entry.xformAction = (q.entry.templateType === "file" || q.entry.templateType === "signature")
+                    ? constants.ANSWER_MEDIA : constants.ANSWER;
+            }
         };
 
         self.nextQuestion = function (opts) {
@@ -423,22 +463,24 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
         };
 
         self.deleteRepeat = function (repetition) {
-            var juncture = formUI.getIx(repetition.parent);
-            var repIx = +(repetition.rel_ix().replace(/_/g, ':').split(":").slice(-1)[0]);
+            const juncture = formUI.getIx(repetition);
+            const options = {
+                deletedGroup: juncture,
+            };
             this.serverRequest(
                 {
                     'action': constants.DELETE_REPEAT,
-                    'ix': repIx,
-                    'form_ix': juncture,
+                    'ix': juncture,
                 },
                 function (resp) {
-                    $.publish('session.reconcile', [resp, repetition]);
+                    $.publish('session.reconcile', [resp, repetition, options]);
                 },
                 constants.BLOCK_ALL);
         };
 
         self.changeLang = function (lang) {
-            this.serverRequest(
+            updateDisplayOptionLang(lang);
+            self.serverRequest(
                 {
                     'action': constants.CHANGE_LOCALE,
                     'locale': lang,
@@ -503,6 +545,11 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                         function (resp) {
                             form.isSubmitting(false);
                             if (resp.status === 'success') {
+                                const gtxEventData = {
+                                    title: form.title(),
+                                    breadcrumbs: form.breadcrumbs() ? form.breadcrumbs().join(">") : "",
+                                };
+                                gtx.logFormSubmit(gtxEventData);
                                 self.onsubmit(resp);
                             } else {
                                 $.each(resp.errors, function (ix, error) {
@@ -524,7 +571,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                         function () {
                             form.isSubmitting(false);
                             return true;
-                        }
+                        },
                     );
                 }, 250);
         };
@@ -569,7 +616,32 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
         return self;
     }
 
+    function applyLangListener(session) {
+        $.unsubscribe('formplayer.' + constants.CHANGE_LANG);
+        const fn = session ? session.changeLang : changeLang;
+        $.subscribe('formplayer.' + constants.CHANGE_LANG, function (e, lang) {
+            fn(lang);
+        });
+
+    }
+
+    function changeLang(lang) {
+        import("cloudcare/js/formplayer/menus/controller").then(function (menusController) {
+            var urlObject = utils.currentUrlToObject();
+            urlObject.changeLang = lang;
+            menusController.selectMenu(urlObject);
+            updateDisplayOptionLang(lang);
+        });
+    }
+
+    function updateDisplayOptionLang(lang) {
+        var displayOptions = UsersModels.getCurrentUser().displayOptions;
+        displayOptions.language = lang;
+        UsersModels.saveDisplayOptions(displayOptions);
+    }
+
     return {
         WebFormSession: WebFormSession,
+        applyLangListener: applyLangListener,
     };
 });

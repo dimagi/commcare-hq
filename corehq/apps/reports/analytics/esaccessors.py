@@ -1,12 +1,13 @@
 from collections import defaultdict, namedtuple
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from django.conf import settings
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_datetime
 
-from corehq.apps.data_dictionary.util import get_data_dict_case_types
+from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.data_dictionary.util import get_data_dict_case_types, get_data_dict_deprecated_case_types
 from corehq.apps.es import (
     CaseES,
     CaseSearchES,
@@ -87,7 +88,7 @@ def _get_case_case_counts_by_owner(domain, datespan, case_types, is_total=False,
     if case_types:
         case_query = case_query.filter({"terms": {"type.exact": case_types}})
     else:
-        case_query = case_query.filter(filters.NOT(case_type_filter('commcare-user')))
+        case_query = case_query.filter(filters.NOT(case_type_filter(USERCASE_TYPE)))
 
     if not is_total:
         case_query = case_query.active_in_range(
@@ -113,7 +114,8 @@ def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True, 
     date_field = 'opened_on' if is_opened else 'closed_on'
     user_field = 'opened_by' if is_opened else 'closed_by'
 
-    case_query = (CaseES(for_export=export)
+    case_query = (
+        CaseES(for_export=export)
         .domain(domain)
         .filter(
             filters.date_range(
@@ -123,12 +125,13 @@ def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True, 
             )
         )
         .terms_aggregation(user_field, 'by_user')
-        .size(0))
+        .size(0)
+    )
 
     if case_types:
         case_query = case_query.case_type(case_types)
     else:
-        case_query = case_query.filter(filters.NOT(case_type_filter('commcare-user')))
+        case_query = case_query.filter(filters.NOT(case_type_filter(USERCASE_TYPE)))
 
     if user_ids:
         case_query = case_query.filter(filters.term(user_field, user_ids))
@@ -142,7 +145,10 @@ def get_paged_forms_by_type(
         sort_col=None,
         desc=True,
         start=0,
-        size=10):
+        size=10,
+        user_ids=None,
+        app_ids=None,
+        xmlns=None):
     sort_col = sort_col or "received_on"
     query = (
         FormES()
@@ -154,6 +160,13 @@ def get_paged_forms_by_type(
         .start(start)
         .size(size)
     )
+    if user_ids:
+        query = query.user_id(user_ids)
+    # Even if we have form xmlns we still filter by app_id since xmlns may not be unique (e.g. copied apps)
+    if app_ids:
+        query = query.app(app_ids)
+    if xmlns:
+        query = query.xmlns(xmlns)
     result = query.run()
     return PagedResult(total=result.total, hits=result.hits)
 
@@ -203,8 +216,8 @@ def get_last_forms_by_app(user_id):
     """
     query = (
         FormES()
-            .user_id(user_id)
-            .aggregation(
+        .user_id(user_id)
+        .aggregation(
             TermsAggregation('app_id', 'app_id').aggregation(
                 TopHitsAggregation(
                     'top_hits_last_form_submissions',
@@ -355,17 +368,18 @@ def _chunked_get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=
     missing_users = False
 
     date_filter_fn = submitted_filter if by_submission_time else completed_filter
-    query = (FormES(for_export=export)
-             .domain(domain)
-             .filter(date_filter_fn(gte=startdate, lt=enddate))
-             .aggregation(
-                 TermsAggregation('user_id', 'form.meta.userID').aggregation(
-                     TermsAggregation('app_id', 'app_id').aggregation(
-                         TermsAggregation('xmlns', 'xmlns.exact')
-                     )
-                 )
-             )
-             .size(0)
+    query = (
+        FormES(for_export=export)
+        .domain(domain)
+        .filter(date_filter_fn(gte=startdate, lt=enddate))
+        .aggregation(
+            TermsAggregation('user_id', 'form.meta.userID').aggregation(
+                TermsAggregation('app_id', 'app_id').aggregation(
+                    TermsAggregation('xmlns', 'xmlns.exact')
+                )
+            )
+        )
+        .size(0)
     )
 
     if user_ids:
@@ -403,7 +417,13 @@ def _chunked_get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=
 
 
 def _duration_script():
-    return "doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value"
+    # ES 5 returns long where as ES 6 returns a JodaCompatibleZonedDateTime
+    # This class can't use - operator directly
+    from corehq.apps.es.client import manager
+    script = "doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value"
+    if manager.elastic_major_version >= 6:
+        script = "doc['form.meta.timeEnd'].value.getMillis() - doc['form.meta.timeStart'].value.getMillis()"
+    return script
 
 
 def get_form_duration_stats_by_user(
@@ -633,7 +653,7 @@ def get_case_search_types_for_domain_es(domain):
     return get_case_types_for_domain_es(domain, True)
 
 
-def get_case_types_for_domain(domain):
+def get_case_types_for_domain(domain, include_deprecated=False):
     """
     Returns case types for which there is at least one existing case and any
     defined in the data dictionary, which includes those referenced in an app
@@ -641,4 +661,8 @@ def get_case_types_for_domain(domain):
     """
     es_types = get_case_types_for_domain_es(domain)
     data_dict_types = get_data_dict_case_types(domain)
-    return es_types | data_dict_types
+    all_case_types = es_types | data_dict_types
+    if not include_deprecated:
+        deprecated_case_types = get_data_dict_deprecated_case_types(domain)
+        all_case_types -= deprecated_case_types
+    return all_case_types

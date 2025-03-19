@@ -1,0 +1,17 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-hqDefine("reports/js/bootstrap3/project_health_dashboard", [
++hqDefine("reports/js/bootstrap5/project_health_dashboard", [
+     'jquery',
+     'underscore',
+     'd3/d3.min',
+@@ -120,7 +120,7 @@
+     // User Information PopOver, when clicked on username
+     function setupPopovers() {
+         // ajax popover: http://stackoverflow.com/a/14560039/8207
+-        $('a.user-popover').popover({
++        $('a.user-popover').popover({  /* todo B5: plugin:popover */
+             "html": true,
+             "content": function () {
+                 var divId =  "tmp-id-" + $.now();

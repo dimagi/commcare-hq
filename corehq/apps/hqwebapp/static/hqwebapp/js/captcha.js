@@ -1,13 +1,14 @@
+
 hqDefine("hqwebapp/js/captcha", [
     'jquery',
 ],function (
-    $
+    $,
 ) {
     $(function () {
         // http://stackoverflow.com/a/20371801
         $('img.captcha').after(
             $('<span> <button class="captcha-refresh">' +
-              '<i class="fa fa-refresh icon icon-refresh"></i></button></span>')
+              '<i class="fa fa-refresh icon icon-refresh"></i></button></span>'),
         );
         $('.captcha-refresh').click(function () {
             var $form = $(this).parent().closest('form');

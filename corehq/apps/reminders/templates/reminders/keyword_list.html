@@ -1,8 +1,8 @@
-{% extends 'hqwebapp/base_paginated_crud.html' %}
+{% extends 'hqwebapp/bootstrap5/base_paginated_crud.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main "reminders/js/keywords_list" %}
+{% js_entry "reminders/js/keywords_list" %}
 
 {% block pagination_header %}
   <h2>{% trans 'Manage Keywords' %}</h2>
@@ -17,35 +17,71 @@
       <i class="fa fa-plus"></i>
       {% trans 'Add Keyword' %}
     </a>
-    <a href="{% url 'add_structured_keyword' domain %}" class="btn btn-primary">
+    <a href="{% url 'add_structured_keyword' domain %}" class="btn btn-primary mx-3">
       <i class="fa fa-plus"></i>
       {% trans 'Add Structured Keyword' %}
     </a>
+
+    <p class="float-end ko-template" id="lock-container" data-bind="if: hasLinkedModels">
+      <!-- ko if: allowEdit -->
+        <!-- ko ifnot: unlockLinkedData -->
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#edit-warning-modal">
+            <i class="fa fa-link"></i>
+            {% trans 'Unlock Linked Keywords For Me' %}
+          </button>
+        <!-- /ko -->
+        <!-- ko if: unlockLinkedData -->
+          <button class="btn btn-primary" data-bind="click: toggleLinkedLock">
+            <i class="fa fa-link"></i>
+            {% trans "Lock Linked Keywords For Me" %}
+          </button>
+        <!-- /ko -->
+      <!-- /ko -->
+      <!-- ko ifnot: allowEdit -->
+        <i class="fa fa-link"></i>
+        Contains Linked Roles
+      <!-- /ko -->
+      <span class="hq-help-template"
+          data-placement="left"
+          data-title="{% trans 'Linked Configurations' %}"
+          data-content="
+            {% blocktrans %}
+              Linked configurations are controlled from a separate, linked project space.
+                <a href='https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management' target='_blank'>Learn more</a>.
+            {% endblocktrans %}">
+      </span>
+    </p>
 
   </div>
 {% endblock %}
 
 {% block pagination_templates %}
   <script type="text/html" id="keyword-row-template">
-    <td class="col-md-5">
-      <a data-bind="attr: { href: editUrl }, text: keyword"></a>
+    <td class="col-lg-5">
+      <span data-bind="ifnot: !upstream_id || $root.unlockLinkedData()">
+        <a data-bind="attr: { href: viewUrl }, text: keyword"></a>
+      </span>
+      <span data-bind="if: !upstream_id || $root.unlockLinkedData()">
+        <a data-bind="attr: { href: editUrl }, text: keyword"></a>
+      </span>
     </td>
-    <td class="col-md-5" data-bind="text: description"></td>
-    <td class="col-md-2">
+    <td class="col-lg-5" data-bind="text: description"></td>
+    <td class="col-lg-2">
 
-      <a data-bind="attr: {href: '#' + deleteModalId }"
-         class="btn btn-danger"
-         data-toggle="modal"><i class="fa fa-remove"></i> {% trans 'Delete' %}</a>
+      <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal"
+        data-bind="enable: !upstream_id || $root.unlockLinkedData(), attr: {'data-bs-target': '#' + deleteModalId}">
+         <i class="fa fa-remove"></i> {% trans 'Delete' %}</a>
+      </button>
       <div class="modal fade" data-bind="attr: {id: deleteModalId}">
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
-              <a class="close" data-dismiss="modal">&times;</a>
               <h4>
                 {% blocktrans %}
                   Delete the keyword '<span data-bind="text: keyword"></span>'.
                 {% endblocktrans %}
               </h4>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
             </div>
             <div class="modal-body">
               <p>
@@ -55,21 +91,34 @@
               </p>
             </div>
             <div class="modal-footer">
-              <a href="#" class="btn btn-danger delete-item-confirm">
+              <a href="#" class="btn btn-outline-danger delete-item-confirm">
                 <i class="fa fa-remove"></i> {% trans "Delete" %}
               </a>
-              <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</a>
+              <a href="#" data-bs-dismiss="modal" class="btn btn-outline-primary">{% trans "Cancel" %}</a>
             </div>
           </div>
         </div>
       </div>
     </td>
+    {% if has_linked_data %}
+    <td data-bind="if: upstream_id">
+      <i class="fa fa-link"></i>
+    </td>
+    {% endif %}
   </script>
   <script type="text/html" id="keyword-deleted-template">
-    <td class="col-md-5">
+    <td class="col-lg-5">
       <a data-bind="text: keyword"></a>
     </td>
-    <td class="col-md-5" data-bind="text: description"></td>
-    <td class="col-md-2"><span class="label label-inverse">{% trans 'DELETED' %}</span></td>
+    <td class="col-lg-5" data-bind="text: description"></td>
+    <td class="col-lg-2"><span class="badge label-inverse">{% trans 'DELETED' %}</span></td>
   </script>
+{% endblock %}
+
+{% block page_content %}
+{{ block.super }}
+{% initial_page_data 'has_linked_data' has_linked_data %}
+{% initial_page_data 'can_edit_linked_data' can_edit_linked_data %}
+
+{% include 'reminders/partials/modal_edit.html' %}
 {% endblock %}

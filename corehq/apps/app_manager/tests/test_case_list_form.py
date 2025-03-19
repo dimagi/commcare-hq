@@ -25,7 +25,6 @@ from corehq.util.test_utils import flag_enabled
 
 
 @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
-@patch('corehq.apps.builds.models.BuildSpec.supports_j2me', return_value=False)
 @patch_get_xform_resource_overrides()
 class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'case_list_form')
@@ -37,6 +36,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         factory = self._prep_case_list_form_app()
         app = factory.app
         case_module = app.get_module(0)
+        AppFactory.add_module_case_detail_column(case_module, 'short', 'dob', 'birthday')
         case_module.case_list_form.set_icon('en', 'jr://file/commcare/image/new_case.png')
         case_module.case_list_form.set_audio('en', 'jr://file/commcare/audio/new_case.mp3')
         self.assertXmlEqual(self.get_xml('case-list-form-suite'), app.create_suite())

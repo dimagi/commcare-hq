@@ -4,6 +4,10 @@ import time
 
 from django.conf import settings
 
+from dimagi.utils.logging import notify_error
+
+from corehq.apps.es.case_search import multiplex_to_adapter
+from corehq.apps.es.const import HQ_CASE_SEARCH_INDEX_CANONICAL_NAME
 from pillowtop.exceptions import BulkDocException, PillowtopIndexingError
 from pillowtop.logger import pillow_logging
 from pillowtop.utils import (
@@ -15,7 +19,6 @@ from pillowtop.utils import (
     get_errors_with_ids,
 )
 
-from corehq.apps.es.transient_util import doc_adapter_from_alias
 from corehq.util.es.elasticsearch import (
     ConflictError,
     ConnectionError,
@@ -69,12 +72,16 @@ class ElasticProcessor(PillowProcessor):
 
         if change.deleted and change.id:
             doc = change.get_document()
+            domain = doc.get('domain') if doc else None
+            if not domain:
+                meta = getattr(change, 'metadata', None)
+                domain = meta.domain if meta else None
             if doc and doc.get('doc_type'):
                 logger.info(
                     f'[process_change] Attempting to delete doc {change.id}')
                 current_meta = get_doc_meta_object_from_document(doc)
                 if current_meta.is_deletion:
-                    self._delete_doc_if_exists(change.id)
+                    self._delete_doc_if_exists(change.id, domain=domain)
                     logger.info(
                         f"[process_change] Deleted doc {change.id}")
                 else:
@@ -82,7 +89,7 @@ class ElasticProcessor(PillowProcessor):
                         f"[process_change] Not deleting doc {change.id} "
                         "because current_meta.is_deletion is false")
             else:
-                self._delete_doc_if_exists(change.id)
+                self._delete_doc_if_exists(change.id, domain=domain)
                 logger.info(
                     f"[process_change] Deleted doc {change.id}")
             return
@@ -98,7 +105,7 @@ class ElasticProcessor(PillowProcessor):
                 return
 
             if doc.get('doc_type') is not None and doc['doc_type'].endswith("-Deleted"):
-                self._delete_doc_if_exists(change.id)
+                self._delete_doc_if_exists(change.id, domain=doc.get('domain'))
                 return
 
         # send it across
@@ -110,7 +117,18 @@ class ElasticProcessor(PillowProcessor):
                 data=doc,
             )
 
-    def _delete_doc_if_exists(self, doc_id):
+    def _delete_doc_if_exists(self, doc_id, domain=None):
+        if self.adapter.canonical_name == HQ_CASE_SEARCH_INDEX_CANONICAL_NAME:
+            if domain:
+                sub_index_adapter = multiplex_to_adapter(domain)
+                if sub_index_adapter:
+                    send_to_elasticsearch(
+                        doc_id=doc_id, adapter=sub_index_adapter,
+                        name='ElasticProcessor', delete=True
+                    )
+            else:
+                notify_error(f"Domain not specified when deleting case {doc_id} from case search index")
+
         send_to_elasticsearch(
             doc_id=doc_id,
             adapter=self.adapter,

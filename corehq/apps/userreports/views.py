@@ -2,9 +2,9 @@ import datetime
 import functools
 import json
 import os
-import re
 import tempfile
 from collections import OrderedDict, namedtuple
+from urllib.parse import unquote, urlparse
 
 from django.conf import settings
 from django.contrib import messages
@@ -13,18 +13,17 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.http.response import Http404, JsonResponse
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
+from django.utils.html import format_html
 from django.utils.http import urlencode
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic import View
-from django.utils.html import format_html
 
-import six.moves.urllib.error
-import six.moves.urllib.parse
-import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
 from memoized import memoized
+from no_exceptions.exceptions import HttpException
 from sqlalchemy import exc, types
 from sqlalchemy.exc import ProgrammingError
 
@@ -40,7 +39,6 @@ from dimagi.utils.couch.undo import (
 )
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
-from no_exceptions.exceptions import HttpException
 from pillowtop.dao.exceptions import DocumentNotFoundError
 
 from corehq import toggles
@@ -52,28 +50,26 @@ from corehq.apps.analytics.tasks import (
     update_hubspot_properties,
 )
 from corehq.apps.api.decorators import api_throttle
+from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.change_feed.data_sources import (
     get_document_store_for_doc_type,
 )
-from corehq.apps.domain.decorators import (
-    api_auth,
-    login_and_domain_required,
-)
+from corehq.apps.domain.decorators import api_auth, login_and_domain_required
 from corehq.apps.domain.models import AllowedUCRExpressionSettings, Domain
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.es import CaseSearchES, FormES
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_daterangepicker,
     use_jquery_ui,
     use_multiselect,
-    use_nvd3,
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.hqwebapp.utils.html import safe_replace
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.registry.helper import DataRegistryHelper
@@ -93,6 +89,8 @@ from corehq.apps.userreports.app_manager.helpers import (
 from corehq.apps.userreports.const import (
     DATA_SOURCE_MISSING_APP_ERROR_MESSAGE,
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE,
+    DATA_SOURCE_REBUILD_RESTRICTED_AT,
+    FORM_NOT_FOUND_ERROR_MESSAGE,
     NAMED_EXPRESSION_PREFIX,
     NAMED_FILTER_PREFIX,
     REPORT_BUILDER_EVENTS_KEY,
@@ -100,7 +98,7 @@ from corehq.apps.userreports.const import (
 )
 from corehq.apps.userreports.dbaccessors import (
     get_datasources_for_domain,
-    get_report_and_registry_report_configs_for_domain
+    get_report_and_registry_report_configs_for_domain,
 )
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
@@ -109,6 +107,7 @@ from corehq.apps.userreports.exceptions import (
     ReportConfigurationNotFoundError,
     TableNotFoundWarning,
     UserQueryError,
+    UserReportsError,
     translate_programming_error,
 )
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
@@ -161,6 +160,7 @@ from corehq.apps.userreports.ui.forms import (
 from corehq.apps.userreports.util import (
     add_event,
     allowed_report_builder_reports,
+    get_configurable_and_static_reports_for_data_source,
     get_indicator_adapter,
     get_referring_apps,
     has_report_builder_access,
@@ -173,9 +173,13 @@ from corehq.apps.users.decorators import (
     require_permission,
 )
 from corehq.apps.users.models import HqPermissions
+from corehq.motech.const import OAUTH2_CLIENT
+from corehq.motech.models import ConnectionSettings
+from corehq.motech.repeaters.models import DataSourceRepeater
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util import reverse
 from corehq.util.couch import get_document_or_404
+from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 
@@ -205,10 +209,14 @@ def swallow_programming_errors(fn):
             messages.error(
                 request,
                 _('There was a problem processing your request. '
-                  'If you have recently modified your report data source please try again in a few minutes.'
-                  '<br><br>Technical details:<br>{}'.format(e)),
-                extra_tags='html',
+                  'If you have recently modified your report data source please try again in a few minutes.'),
             )
+            if request.couch_user.is_superuser:
+                messages.error(
+                    request,
+                    _('Technical details:<br>{}').format(e),
+                    extra_tags='html'
+                )
             return HttpResponseRedirect(reverse('configurable_reports_home', args=[domain]))
     return decorated
 
@@ -431,7 +439,6 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
                 domain,
                 self.plan_name
             ),
-            settings.DEFAULT_FROM_EMAIL,
             [settings.SALES_EMAIL],
         )
         update_hubspot_properties.delay(request.couch_user.get_id, {'report_builder_subscription_request': 'yes'})
@@ -519,7 +526,6 @@ class ConfigureReport(ReportBuilderView):
 
     @use_jquery_ui
     @use_datatables
-    @use_nvd3
     @use_multiselect
     def dispatch(self, request, *args, **kwargs):
         if self.existing_report:
@@ -559,11 +565,19 @@ class ConfigureReport(ReportBuilderView):
             )
         except ResourceNotFound:
             return self.render_error_response(DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE)
+        except FormNotFoundException:
+            return self.render_error_response(
+                FORM_NOT_FOUND_ERROR_MESSAGE,
+                allow_delete=True,
+                # when this error is thrown, the report_id in the template context is still not set
+                # this ensures the correct id is set so that the delete action is functional
+                report_id=self.existing_report.get_id
+            )
 
         self._populate_data_source_properties_from_interface(data_source_interface)
         return super(ConfigureReport, self).dispatch(request, *args, **kwargs)
 
-    def render_error_response(self, message, allow_delete=None):
+    def render_error_response(self, message, allow_delete=None, report_id=None):
         if self.existing_report:
             context = {
                 'allow_delete': self.existing_report.get_id and not self.existing_report.is_static
@@ -574,6 +588,8 @@ class ConfigureReport(ReportBuilderView):
             context['allow_delete'] = allow_delete
         context['error_message'] = message
         context.update(self.main_context)
+        if report_id:
+            context['report_id'] = report_id
         return render(self.request, 'userreports/report_error.html', context)
 
     @property
@@ -605,12 +621,7 @@ class ConfigureReport(ReportBuilderView):
 
     def _get_existing_report_type(self):
         if self.existing_report:
-            type_ = "list"
-            if self.existing_report.aggregation_columns != ["doc_id"]:
-                type_ = "table"
-            if self.existing_report.map_config:
-                type_ = "map"
-            return type_
+            return self.existing_report.report_type
 
     def _get_property_id_by_indicator_id(self, indicator_column_id):
         """
@@ -653,7 +664,8 @@ class ConfigureReport(ReportBuilderView):
     def page_context(self):
         form_type = _get_form_type(self._get_existing_report_type())
         report_form = form_type(
-            self.domain, self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report, self.registry_slug,
+            self.domain, self.page_name, self.app_id, self.source_type, self.source_id,
+            self.existing_report, self.registry_slug,
         )
         temp_ds_id = report_form.create_temp_data_source_if_necessary(self.request.user.username)
         return {
@@ -748,8 +760,8 @@ class ConfigureReport(ReportBuilderView):
         is necessary in case they navigated directly to this view either
         maliciously or with a bookmark perhaps.
         """
-        if (number_of_report_builder_reports(self.domain) >=
-                allowed_report_builder_reports(self.request)):
+        if (number_of_report_builder_reports(self.domain)
+                >= allowed_report_builder_reports(self.request)):
             raise Http404()
 
 
@@ -787,7 +799,7 @@ class ReportPreview(BaseDomainView):
     urlname = 'report_preview'
 
     def post(self, request, domain, data_source):
-        report_data = json.loads(six.moves.urllib.parse.unquote(request.body.decode('utf-8')))
+        report_data = json.loads(unquote(request.body.decode('utf-8')))
         form_class = _get_form_type(report_data['report_type'])
 
         # ignore user filters
@@ -813,7 +825,14 @@ class ReportPreview(BaseDomainView):
                     return json_response(response_data)
             except BadBuilderConfigError as e:
                 return json_response({'status': 'error', 'message': str(e)}, status_code=400)
-
+            except UserReportsError as err:
+                notify_exception(request, str(err), details={'domain': self.domain})
+                # Empty message -> generic error in the template.
+                return json_response({'status': 'error', 'message': ''}, status_code=400)
+            return json_response({
+                'status': 'error',
+                'message': 'Report preview returned no response',
+            }, status_code=400)
         else:
             return json_response({
                 'status': 'error',
@@ -890,6 +909,8 @@ def undelete_report(request, domain, report_id):
     ])
     if config and is_deleted(config):
         undo_delete(config)
+        indicator_adapter = get_indicator_adapter(config.config)
+        indicator_adapter.adapter.rebuild_table(initiated_by=request.user.username)
         messages.success(
             request,
             _('Successfully restored report "{name}"').format(name=config.title)
@@ -986,7 +1007,7 @@ def evaluate_expression(request, domain):
         result = parsed_expression(doc, EvaluationContext(doc))
         return JsonResponse({"result": result})
     except HttpException as e:
-        return JsonResponse({'message': e.message}, status=e.status)
+        return JsonResponse({'error': e.message}, status=e.status)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
@@ -1186,10 +1207,15 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
                 messages.success(request, _('Data source "{}" saved!').format(
                     config.display_name
                 ))
+                messages.success(request, _(
+                    'This data source will be built / rebuilt automatically by CommCare HQ.'
+                ))
                 if self.config_id is None:
                     return HttpResponseRedirect(reverse(
                         EditDataSourceView.urlname, args=[self.domain, config._id])
                     )
+            else:
+                messages.error(request, _('Data source not saved. Please check the form for errors.'))
         except BadSpecError as e:
             messages.error(request, str(e))
         return self.get(request, *args, **kwargs)
@@ -1235,6 +1261,15 @@ class EditDataSourceView(BaseEditDataSourceView):
     @property
     def page_name(self):
         return "Edit {}".format(self.config.display_name)
+
+    @property
+    def page_context(self):
+        page_context = super().page_context
+        adapter = get_indicator_adapter(self.config)
+        page_context['data_source_table_exists'] = adapter.table_exists
+        if not self.config.is_deactivated:
+            page_context['data_source_rebuild_resumable'] = DataSourceResumeHelper(self.config).has_resume_info()
+        return page_context
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
@@ -1295,9 +1330,23 @@ def undelete_data_source(request, domain, config_id):
 @require_POST
 def rebuild_data_source(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
-    if config.is_deactivated:
-        config.is_deactivated = False
-        config.save()
+
+    response = _redirect_response_if_build_awaiting(request, domain, config)
+    if response:
+        return response
+
+    if not config.asynchronous and toggles.RESTRICT_DATA_SOURCE_REBUILD.enabled(domain):
+        number_of_records = number_of_records_to_be_processed(datasource_configuration=config)
+        if number_of_records and number_of_records > DATA_SOURCE_REBUILD_RESTRICTED_AT:
+            messages.error(
+                request,
+                _error_message_for_restricting_rebuild(number_of_records)
+            )
+            return HttpResponseRedirect(reverse(
+                EditDataSourceView.urlname, args=[domain, config_id]
+            ))
+
+    _prep_data_source_for_rebuild(config, is_static)
 
     messages.success(
         request,
@@ -1306,10 +1355,105 @@ def rebuild_data_source(request, domain, config_id):
         )
     )
 
-    rebuild_indicators.delay(config_id, request.user.username, domain=domain)
+    rebuild_indicators.delay(config_id, request.user.username, domain=domain, source='edit_data_source_rebuild')
+    _report_ucr_rebuild_metrics(domain, config, 'rebuild_datasource')
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
+
+
+def _redirect_response_if_build_awaiting(request, domain, config):
+    if config.meta.build.awaiting:
+        messages.error(
+            request,
+            _('Rebuilding is not available until CommCare HQ finishes building / rebuilding.')
+        )
+        return HttpResponseRedirect(reverse(
+            EditDataSourceView.urlname, args=[domain, config.get_id]
+        ))
+
+
+def _prep_data_source_for_rebuild(data_source_config, is_static):
+    save_config = False
+    if not is_static:
+        data_source_config.meta.build.awaiting = True
+        save_config = True
+    if data_source_config.is_deactivated:
+        data_source_config.is_deactivated = False
+        save_config = True
+
+    if save_config:
+        data_source_config.save()
+
+
+def _report_ucr_rebuild_metrics(domain, config, action):
+    metrics_counter(
+        f'commcare.ucr.{action}.count',
+        tags={
+            'domain': domain,
+            'datasource_id': config.get_id,
+        }
+    )
+    metrics_gauge(
+        f'commcare.ucr.{action}.columns.count',
+        len(config.get_columns()),
+        tags={'domain': domain}
+    )
+    _report_metric_report_counts_by_datasource(domain, config.get_id, action)
+
+
+def _report_metric_report_counts_by_datasource(domain, data_source_id, action):
+    try:
+        reports = get_configurable_and_static_reports_for_data_source(domain, data_source_id)
+    except Exception:
+        pass
+    else:
+        metrics_gauge(
+            f'commcare.ucr.{action}.reports_per_datasource.count',
+            len(reports),
+            tags={'domain': domain}
+        )
+
+
+def number_of_records_to_be_processed(datasource_configuration):
+    if datasource_configuration.referenced_doc_type == 'CommCareCase':
+        es_query = CaseSearchES().domain(datasource_configuration.domain)
+        case_types = [
+            case_type
+            for case_type in datasource_configuration.get_case_type_or_xmlns_filter()
+            if case_type is not None
+        ]
+        if case_types:
+            es_query = es_query.case_type(case_types)
+        count_of_records = es_query.count()
+    elif datasource_configuration.referenced_doc_type == 'XFormInstance':
+        es_query = FormES().domain(datasource_configuration.domain)
+        xmlnses = [
+            xmlns
+            for xmlns in datasource_configuration.get_case_type_or_xmlns_filter()
+            if xmlns is not None
+        ]
+        if xmlnses:
+            es_query = es_query.xmlns(xmlnses)
+        count_of_records = es_query.count()
+    else:
+        # DataSourceConfiguration.referenced_doc_type is neither
+        # 'CommCareCase' nor 'XFormInstance'
+        count_of_records = None
+
+    return count_of_records
+
+
+def _error_message_for_restricting_rebuild(number_of_records_to_be_iterated):
+    return _(
+        'Rebuilt was not initiated due to high number of records this data source is expected to '
+        'iterate during a rebuild. Expected records to be processed is currently {number_of_records} '
+        'which is above the limit of {rebuild_limit}. '
+        'Please update the data source to have asynchronous processing.'
+    ).format(
+        number_of_records=number_of_records_to_be_iterated,
+        rebuild_limit=f"{DATA_SOURCE_REBUILD_RESTRICTED_AT:,}"
+    )
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
@@ -1332,6 +1476,9 @@ def resume_building_data_source(request, domain, config_id):
             )
         )
     else:
+        if not is_static:
+            config.meta.build.awaiting = True
+            config.save()
         messages.success(
             request,
             _('Resuming rebuilding table "{}".').format(config.display_name)
@@ -1346,9 +1493,12 @@ def resume_building_data_source(request, domain, config_id):
 @require_POST
 def build_data_source_in_place(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
-    if config.is_deactivated:
-        config.is_deactivated = False
-        config.save()
+
+    response = _redirect_response_if_build_awaiting(request, domain, config)
+    if response:
+        return response
+
+    _prep_data_source_for_rebuild(config, is_static)
 
     messages.success(
         request,
@@ -1356,9 +1506,13 @@ def build_data_source_in_place(request, domain, config_id):
             config.display_name
         )
     )
-    rebuild_indicators_in_place.delay(config_id, request.user.username,
-                                      source='edit_data_source_build_in_place',
-                                      domain=config.domain)
+    rebuild_indicators_in_place.delay(
+        config_id,
+        request.user.username,
+        source='edit_data_source_build_in_place',
+        domain=config.domain,
+    )
+    _report_ucr_rebuild_metrics(domain, config, 'rebuild_datasource_in_place')
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
@@ -1401,11 +1555,23 @@ class PreviewDataSourceView(BaseUserConfigReportsView):
         config, is_static = get_datasource_config_or_404(self.config_id, self.domain)
         adapter = get_indicator_adapter(config)
         q = adapter.get_query_object()
+        if adapter.table_exists:
+            data = [list(row) for row in q[:20]]
+        else:
+            data = []
+            messages.error(
+                self.request,
+                _('Data source table not found!'
+                  '<br/>If you have recently added the data source, please wait for it to be created.'
+                  '<br/>If you see this repeatedly please report an issue.'),
+                extra_tags='html',
+            )
+
         return {
             'data_source': config,
             'columns': q.column_descriptions,
-            'data': [list(row) for row in q[:20]],
-            'total_rows': q.count(),
+            'data': data,
+            'total_rows': q.count() if data else 0,
         }
 
 
@@ -1536,6 +1702,99 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
             )
             return HttpResponse(msg, status=400)
         return export_response(Temp(path), params.format, adapter.display_name)
+
+
+@csrf_exempt
+@require_POST
+@api_auth()
+@require_permission(HqPermissions.view_reports)
+@toggles.SUPERSET_ANALYTICS.required_decorator()
+@api_throttle
+def subscribe_to_data_source_changes(request, domain, config_id):
+    reqd_params = {'webhook_url', 'client_id', 'client_secret', 'token_url'}
+    missing_params = reqd_params - set(request.POST)
+    if missing_params:
+        return HttpResponse(
+            status=422,
+            content=f"Missing parameters: {', '.join(sorted(missing_params))}",
+        )
+
+    webhook_url = request.POST['webhook_url']
+    client_hostname = urlparse(webhook_url).hostname
+    conn_name = gettext_lazy('CommCare Analytics on {server}').format(
+        server=client_hostname,
+    )
+    conn_settings, __ = ConnectionSettings.objects.update_or_create(
+        client_id=request.POST['client_id'],
+        defaults={
+            'domain': domain,
+            'name': conn_name,
+            'auth_type': OAUTH2_CLIENT,
+            'client_secret': request.POST['client_secret'],
+            'url': webhook_url,
+            'token_url': request.POST['token_url'],
+        }
+    )
+
+    repeater_name = gettext_lazy('Data source {ds} on {server}').format(
+        ds=config_id,
+        server=client_hostname,
+    )
+
+    datasource_query = DataSourceRepeater.objects.filter(
+        domain=domain,
+        connection_settings_id=conn_settings.id,
+        options={"data_source_id": config_id},
+    )
+    if not datasource_query.exists():
+        DataSourceRepeater.objects.create(
+            name=repeater_name,
+            domain=domain,
+            data_source_id=config_id,
+            connection_settings_id=conn_settings.id,
+        )
+    return HttpResponse(status=201)
+
+
+@csrf_exempt
+@require_POST
+@api_auth()
+@require_permission(HqPermissions.view_reports)
+@toggles.SUPERSET_ANALYTICS.required_decorator()
+@api_throttle
+def unsubscribe_from_data_source(request, domain, config_id):
+    if 'client_id' not in request.POST:
+        return HttpResponse(
+            status=422,
+            content="The client_id parameter is required",
+        )
+    client_id = request.POST['client_id']
+
+    try:
+        conn_settings = ConnectionSettings.objects.get(client_id=client_id)
+    except ConnectionSettings.DoesNotExist:
+        return HttpResponse(
+            status=422,
+            content="Invalid client_id"
+        )
+
+    repeater = DataSourceRepeater.objects.filter(
+        domain=domain,
+        connection_settings_id=conn_settings.id,
+        options={"data_source_id": config_id},
+    )
+    if not repeater.exists():
+        return HttpResponse(
+            status=422,
+            content="Invalid data source ID"
+        )
+    repeater.delete()
+    conn_settings.clear_caches()
+
+    if not conn_settings.used_by:
+        conn_settings.delete()
+
+    return HttpResponse(status=200)
 
 
 def _get_report_filter(domain, report_id, filter_id):
@@ -1697,7 +1956,7 @@ class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
 
     @property
     def paginated_list(self):
-        for expression in self.base_query.all():
+        for expression in self.base_query[self.skip:self.skip + self.limit]:
             yield {
                 "itemData": self._item_data(expression),
                 "template": "base-ucr-statement-template",
@@ -1736,6 +1995,16 @@ class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
         return {
             "itemData": self._item_data(new_expression),
             "template": "base-ucr-statement-template",
+        }
+
+    def delete_item(self, item_id):
+        deleted_expression = self.base_query.get(id=item_id)
+        deleted_expression.delete()
+        return {
+            'itemData': {
+                'name': deleted_expression.name,
+            },
+            'template': 'deleted-ucr-statement-template',
         }
 
 
@@ -1785,7 +2054,7 @@ class UCRExpressionEditView(BaseProjectDataView):
         if form.is_valid():
             form.save()
             try:
-                self.expression.wrapped_definition(EvaluationContext({}))
+                self.expression.wrapped_definition(FactoryContext.empty(domain=self.domain))
             except BadSpecError as e:
                 return JsonResponse({"warning": _("Problem with expression: {}").format(e)})
             return JsonResponse({})

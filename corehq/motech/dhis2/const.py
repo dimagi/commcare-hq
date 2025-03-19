@@ -64,7 +64,7 @@ DHIS2_UID_MESSAGE = _('A DHIS2 "UID" is exactly 11 alpha-numeric characters '
 # (Used for updating cases with their tracked entity instance ID.)
 XMLNS_DHIS2 = 'http://commcarehq.org/dhis2-integration'
 
-DHIS2_MAX_KNOWN_GOOD_VERSION = "2.39.0"
+DHIS2_MAX_KNOWN_GOOD_VERSION = "2.41.0"
 
 COMPLETE_DATE_EMPTY = "complete_date_empty"
 COMPLETE_DATE_COLUMN = "complete_date_column"
@@ -77,3 +77,25 @@ COMPLETE_DATE_CHOICES = [
     (COMPLETE_DATE_ON_PERIOD_END, _('Use last day of period')),
     (COMPLETE_DATE_ON_SEND, _('Use date that dataValues are sent')),
 ]
+
+ERROR_DIAGNOSIS = {
+    '504 Gateway Time-out': _(
+        "It could be that CommCare HQ is sending data faster than DHIS2 can "
+        "handle. If possible, try increasing the resources on your DHIS2 instance. "
+        "The ability to send data from CommCare HQ slower is coming soon."
+    ),
+    'Event.programStage does not point to a valid programStage: null': _(
+        "This Event’s Program has multiple stages. You will need to update the configuration "
+        "to specify which program stage the Event’s data belongs to. "
+        "(See the “programStage” property in the data forwarder’s configuration.)"
+    ),
+    'Program stage is not repeatable and an event already exists': _(
+        "An event for this program stage has already been submitted. It could be that the new "
+        "event is for a different program stage. You will need to update the configuration to "
+        "specify the correct program stage for this submission. (See the “programStage” property "
+        "in the data forwarder’s configuration.)"
+    ),
+    '502 Bad Gateway': _(
+        "The DHIS2 server is currently not accepting connections."
+    )
+}

@@ -12,11 +12,11 @@ def default(request):
 
 class FormsSimpleCrispyFormExampleView(BaseSimpleCrispyFormSectionView):
     urlname = 'ex_simple_crispy_form_doc_forms'
-    template_name = 'styleguide/docs/simple_crispy_form/forms.html'
+    template_name = 'styleguide/bootstrap3/docs/simple_crispy_form/forms.html'
     page_title = gettext_noop("forms.py")
 
 
 class ViewsSimpleCrispyFormExampleView(BaseSimpleCrispyFormSectionView):
     urlname = 'ex_simple_crispy_form_doc_views'
-    template_name = 'styleguide/docs/simple_crispy_form/views.html'
+    template_name = 'styleguide/bootstrap3/docs/simple_crispy_form/views.html'
     page_title = gettext_noop("views.py")

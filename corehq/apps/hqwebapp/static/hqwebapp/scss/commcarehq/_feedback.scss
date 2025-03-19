@@ -18,34 +18,34 @@ feedback {
     }
   }
 
-  .fa {
+  [class*='fa-'] {
     font-size: 100px;
     display: block;
   }
 
   .rate-bad {
-    color: $cc-att-neg-mid;
+    color: $danger;
 
     &.selected {
-      background-color: $cc-att-neg-mid;
+      background-color: $danger;
       color: white;
     }
   }
 
   .rate-ok {
-    color: $cc-dark-warm-accent-mid;
+    color: $warning;
 
     &.selected {
-      background-color: $cc-dark-warm-accent-mid;
+      background-color: $warning;
       color: white;
     }
   }
 
   .rate-good {
-    color: $cc-att-pos-mid;
+    color: $success;
 
     &.selected {
-      background-color: $cc-att-pos-mid;
+      background-color: $success;
       color: white;
     }
   }

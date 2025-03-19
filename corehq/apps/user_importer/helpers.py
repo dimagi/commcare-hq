@@ -1,11 +1,12 @@
-from corehq.apps.users.models import DeactivateMobileWorkerTrigger
+from django.utils.translation import gettext as _
+
 from dimagi.utils.parsing import string_to_boolean
 
 from corehq.apps.custom_data_fields.models import PROFILE_SLUG
 from corehq.apps.user_importer.exceptions import UserUploadError
-
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.model_log import UserModelAction
+from corehq.apps.users.models import DeactivateMobileWorkerTrigger
 from corehq.apps.users.util import log_user_change
 
 
@@ -48,7 +49,7 @@ class UserChangeLogger(object):
 
         self._save = False  # flag to check if log needs to be saved for updates
 
-    def add_changes(self, changes):
+    def add_changes(self, changes, skip_confirmation=False):
         """
         Add changes to user properties.
         Ignored for new user since the whole user doc is logged for a new user
@@ -57,7 +58,7 @@ class UserChangeLogger(object):
         if self.is_new_user:
             return
         for name, new_value in changes.items():
-            if self.original_user_doc[name] != new_value:
+            if skip_confirmation or self.original_user_doc[name] != new_value:
                 self.fields_changed[name] = new_value
                 self._save = True
 
@@ -75,7 +76,7 @@ class UserChangeLogger(object):
     def _update_change_messages(self, change_messages):
         for slug in change_messages:
             if slug in self.change_messages:
-                raise UserUploadError(f"Double Entry for {slug}")
+                raise UserUploadError(_("Double Entry for {}").format(slug))
         self.change_messages.update(change_messages)
 
     def add_info(self, change_message):
@@ -150,25 +151,41 @@ class BaseUserImporter(object):
         if self.role_updated:
             self.user.set_role(self.user_domain, role_qualified_id)
 
+    def update_user_data(self, data, uncategorized_data, profile_name, profiles_by_name):
+        from corehq.apps.users.user_data import UserDataError
+        user_data = self.user.get_user_data(self.user_domain)
+        old_profile_id = user_data.profile_id
+        old_user_data = user_data.raw
+
+        if PROFILE_SLUG in data:
+            raise UserUploadError(_("You cannot set {} directly").format(PROFILE_SLUG))
+        if profile_name:
+            profile_id = profiles_by_name[profile_name].pk
+        elif profile_name == '':
+            profile_id = None
+        else:
+            profile_id = ...
+
+        try:
+            user_data.update(data, profile_id=profile_id)
+            user_data.update(uncategorized_data)
+        except UserDataError as e:
+            raise UserUploadError(str(e))
+        if user_data.profile_id and user_data.profile_id != old_profile_id:
+            self.logger.add_info(UserChangeMessage.profile_info(user_data.profile_id, profile_name))
+
+        if old_user_data != user_data.raw:
+            self.logger.add_changes({'user_data': user_data.raw}, skip_confirmation=True)
+
     def save_log(self):
         # Tracking for role is done post save to have role setup correctly on save
         if self.role_updated:
             new_role = self.user.get_role(domain=self.user_domain)
             self.logger.add_info(UserChangeMessage.role_change(new_role))
-
-        self._include_user_data_changes()
         return self.logger.save()
-
-    def _include_user_data_changes(self):
-        # ToDo: consider putting just the diff
-        if self.logger.original_user_doc and self.logger.original_user_doc['user_data'] != self.user.user_data:
-            self.logger.add_changes({'user_data': self.user.user_data})
 
 
 class CommCareUserImporter(BaseUserImporter):
-    def update_password(self, password):
-        self.user.set_password(password)
-        self.logger.add_change_message(UserChangeMessage.password_reset())
 
     def update_phone_numbers(self, phone_numbers):
         """
@@ -188,36 +205,6 @@ class CommCareUserImporter(BaseUserImporter):
         self.user.set_full_name(str(name))
         self.logger.add_changes({'first_name': self.user.first_name, 'last_name': self.user.last_name})
 
-    def update_user_data(self, data, uncategorized_data, profile, domain_info):
-        # Add in existing data. Don't use metadata - we don't want to add profile-controlled fields.
-        current_profile_id = self.user.user_data.get(PROFILE_SLUG)
-
-        for key, value in self.user.user_data.items():
-            if key not in data:
-                data[key] = value
-        if profile:
-            profile_obj = domain_info.profiles_by_name[profile]
-            data[PROFILE_SLUG] = profile_obj.id
-            for key in profile_obj.fields.keys():
-                self.user.pop_metadata(key)
-        try:
-            self.user.update_metadata(data)
-        except ValueError as e:
-            raise UserUploadError(str(e))
-        if uncategorized_data:
-            self.user.update_metadata(uncategorized_data)
-
-        # Clear blank user data so that it can be purged by remove_unused_custom_fields_from_users_task
-        for key in dict(data, **uncategorized_data):
-            value = self.user.metadata[key]
-            if value is None or value == '':
-                self.user.pop_metadata(key)
-
-        new_profile_id = self.user.user_data.get(PROFILE_SLUG)
-        if new_profile_id and new_profile_id != current_profile_id:
-            profile_name = domain_info.profile_name_by_id[new_profile_id]
-            self.logger.add_info(UserChangeMessage.profile_info(new_profile_id, profile_name))
-
     def update_language(self, language):
         self.user.language = language
         self.logger.add_changes({'language': language})
@@ -234,7 +221,7 @@ class CommCareUserImporter(BaseUserImporter):
         from corehq.apps.user_importer.importer import (
             check_modified_user_loc,
             find_location_id,
-            get_location_from_site_code
+            get_location_from_site_code,
         )
 
         location_ids = find_location_id(location_codes, domain_info.location_cache)
@@ -321,13 +308,21 @@ def _fmt_phone(phone_number):
 
 
 class WebUserImporter(BaseUserImporter):
-    def add_to_domain(self, role_qualified_id, location_id):
-        self.user.add_as_web_user(self.user_domain, role=role_qualified_id, location_id=location_id)
+    def add_to_domain(self, role_qualified_id, primary_location_id, assigned_location_ids,
+                      tableau_role, tableau_group_ids, profile):
+        self.user.add_as_web_user(self.user_domain, role=role_qualified_id,
+                                primary_location_id=primary_location_id,
+                                assigned_location_ids=assigned_location_ids,
+                                tableau_role=tableau_role, tableau_group_ids=tableau_group_ids,
+                                profile=profile)
         self.role_updated = bool(role_qualified_id)
 
         self.logger.add_info(UserChangeMessage.added_as_web_user(self.user_domain))
-        if location_id:
+        if primary_location_id:
             self._log_primary_location_info()
+        if assigned_location_ids:
+            assigned_locations = self.user.get_sql_locations(self.user_domain)
+            self.logger.add_info(UserChangeMessage.assigned_locations_info(assigned_locations))
 
     def _log_primary_location_info(self):
         primary_location = self.user.get_sql_location(self.user_domain)
@@ -349,7 +344,7 @@ class WebUserImporter(BaseUserImporter):
         from corehq.apps.user_importer.importer import (
             check_modified_user_loc,
             find_location_id,
-            get_location_from_site_code
+            get_location_from_site_code,
         )
 
         location_ids = find_location_id(location_codes, domain_info.location_cache)

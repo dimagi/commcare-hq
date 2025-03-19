@@ -1,12 +1,11 @@
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
 from dateutil.relativedelta import relativedelta
 
-from corehq.apps.users.role_utils import get_custom_roles_for_domain
 from couchforms.analytics import (
     domain_has_submission_in_last_30_days,
     get_first_form_submission_received,
@@ -15,8 +14,10 @@ from couchforms.analytics import (
 )
 from dimagi.utils.parsing import json_format_datetime
 
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.data_analytics.esaccessors import get_mobile_users
+from corehq.apps.data_analytics.models import DOMAIN_METRICS_TO_PROPERTIES_MAP
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.cases import CaseES
 from corehq.apps.es.forms import FormES
@@ -42,6 +43,7 @@ from corehq.apps.users.dbaccessors import (
     get_web_user_count,
 )
 from corehq.apps.users.models import CouchUser, UserRole
+from corehq.apps.users.role_utils import get_custom_roles_for_domain
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.messaging.scheduling.util import domain_has_reminders
 from corehq.motech.repeaters.models import Repeater
@@ -60,13 +62,20 @@ def num_mobile_users(domain, *args):
 DISPLAY_DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
 
 
-def active_mobile_users(domain, *args):
+def active_mobile_users(domain, days=30):
+    return _mobile_users(domain, int(days), inactive=False)
+
+
+def inactive_mobile_users(domain, days=30):
+    return _mobile_users(domain, int(days), inactive=True)
+
+
+def _mobile_users(domain, days=30, inactive=False):
     """
-    Returns the number of mobile users who have submitted a form or SMS in the
-    last 30 days
+    Returns the number of mobile users who have submitted a form or SMS
     """
     now = datetime.utcnow()
-    then = (now - timedelta(days=30))
+    then = (now - timedelta(days=days))
 
     user_ids = get_mobile_users(domain)
 
@@ -94,7 +103,7 @@ def active_mobile_users(domain, *args):
     )
 
     num_users = len(form_users | sms_users)
-    return num_users if 'inactive' not in args else len(user_ids) - num_users
+    return num_users if not inactive else len(user_ids) - num_users
 
 
 def cases(domain, *args):
@@ -135,18 +144,6 @@ def forms_in_last(domain, days):
     """
     then = datetime.utcnow() - timedelta(days=int(days))
     return FormES().domain(domain).submitted(gte=then).count()
-
-
-def j2me_forms_in_last(domain, days):
-    """
-    Returns the number of forms submitted by j2me in the last given number of days
-    """
-    then = datetime.utcnow() - timedelta(days=int(days))
-    return FormES().domain(domain).j2me_submissions(gte=then).count()
-
-
-def j2me_forms_in_last_bool(domain, days):
-    return j2me_forms_in_last(domain, days) > 0
 
 
 def get_sms_count(domain, direction=None, days=None):
@@ -253,16 +250,16 @@ def uses_reminders(domain, *args):
 def not_implemented(domain, *args):
     return '<p class="text-danger">not implemented</p>'
 
+
 CALC_ORDER = [
     'num_web_users', 'num_mobile_users', 'forms', 'cases',
-    'mobile_users--active', 'mobile_users--inactive', 'active_cases',
-    'cases_in_last--30', 'cases_in_last--60', 'cases_in_last--90',
-    'cases_in_last--120', 'active', 'first_form_submission',
-    'last_form_submission', 'has_app', 'web_users', 'active_apps',
-    'uses_reminders', 'sms--I', 'sms--O', 'sms_in_last', 'sms_in_last--30',
-    'sms_in_last_bool', 'sms_in_last_bool--30', 'sms_in_in_last--30',
-    'sms_out_in_last--30', 'j2me_forms_in_last--30', 'j2me_forms_in_last--60',
-    'j2me_forms_in_last--90', 'j2me_forms_in_last_bool--90',
+    'active_mobile_users', 'inactive_mobile_users', 'active_mobile_users--365',
+    'active_cases', 'cases_in_last--30', 'cases_in_last--60',
+    'cases_in_last--90', 'cases_in_last--120', 'active',
+    'first_form_submission', 'last_form_submission', 'has_app', 'web_users',
+    'active_apps', 'uses_reminders', 'sms--I', 'sms--O', 'sms_in_last',
+    'sms_in_last--30', 'sms_in_last_bool', 'sms_in_last_bool--30',
+    'sms_in_in_last--30', 'sms_out_in_last--30',
 ]
 
 CALCS = {
@@ -278,8 +275,9 @@ CALCS = {
     'sms_in_in_last--30': "# incoming SMS in last 30 days",
     'sms_out_in_last--30': "# outgoing SMS in last 30 days",
     'cases': "# cases",
-    'mobile_users--active': "# active mobile users",
-    'mobile_users--inactive': "# inactive mobile users",
+    'active_mobile_users': "# active mobile users in last 30 days",
+    'inactive_mobile_users': "# inactive mobile users in last 30 days",
+    'active_mobile_users--365': "# active mobile users in last 365 days",
     'active_cases': "# active cases",
     'cases_in_last--30': "# cases seen last 30 days",
     'cases_in_last--60': "# cases seen last 60 days",
@@ -292,10 +290,6 @@ CALCS = {
     'web_users': "list of web users",
     'active_apps': "list of active apps",
     'uses_reminders': "uses reminders",
-    'j2me_forms_in_last--30': "# j2me forms in last 30 days",
-    'j2me_forms_in_last--60': "# j2me forms in last 60 days",
-    'j2me_forms_in_last--90': "# j2me forms in last 90 days",
-    'j2me_forms_in_last_bool--90': "j2me forms in last 90 days",
 }
 
 CALC_FNS = {
@@ -310,7 +304,8 @@ CALC_FNS = {
     "sms_in_in_last": sms_in_in_last,
     "sms_out_in_last": sms_out_in_last,
     "cases": cases,
-    "mobile_users": active_mobile_users,
+    "active_mobile_users": active_mobile_users,
+    "inactive_mobile_users": inactive_mobile_users,
     "active_cases": not_implemented,
     "cases_in_last": cases_in_last,
     "inactive_cases_in_last": inactive_cases_in_last,
@@ -321,8 +316,6 @@ CALC_FNS = {
     "web_users": not_implemented,
     "active_apps": app_list,
     'uses_reminders': uses_reminders,
-    'j2me_forms_in_last': j2me_forms_in_last,
-    'j2me_forms_in_last_bool': j2me_forms_in_last_bool,
     '300th_form_submission': get_300th_form_submission_received
 }
 
@@ -356,12 +349,29 @@ def all_domain_stats():
     }
 
 
+def domain_metrics(domain_obj, id, all_stats):
+    props = calced_props(domain_obj, id, all_stats)
+    metrics_dict = {
+        metrics_attr: props.get(props_key)
+        for metrics_attr, props_key in DOMAIN_METRICS_TO_PROPERTIES_MAP.items()
+    }
+    metrics_dict['domain'] = domain_obj.name
+    metrics_dict['last_modified'] = datetime.now(tz=timezone.utc)
+
+    # these are calculated fields on the Django model, so don't try to write them
+    for key in ['has_app', 'has_used_sms', 'has_used_sms_in_last_30_days']:
+        del metrics_dict[key]
+
+    return metrics_dict
+
+
 def calced_props(domain_obj, id, all_stats):
     dom = domain_obj.name
     return {
         "_id": id,
         "cp_n_web_users": int(all_stats["web_users"].get(dom, 0)),
-        "cp_n_active_cc_users": int(CALC_FNS["mobile_users"](dom)),
+        "cp_n_active_cc_users": int(CALC_FNS["active_mobile_users"](dom)),
+        "cp_n_active_cc_users_365_days": int(CALC_FNS["active_mobile_users"](dom, 365)),
         "cp_n_cc_users": int(all_stats["commcare_users"].get(dom, 0)),
         "cp_n_active_cases": int(CALC_FNS["cases_in_last"](dom, 120)),
         "cp_n_users_submitted_form": total_distinct_users(dom),
@@ -394,12 +404,8 @@ def calced_props(domain_obj, id, all_stats):
         "cp_n_sms_out_30_d": int(CALC_FNS["sms_out_in_last"](dom, 30)),
         "cp_n_sms_out_60_d": int(CALC_FNS["sms_out_in_last"](dom, 60)),
         "cp_n_sms_out_90_d": int(CALC_FNS["sms_out_in_last"](dom, 90)),
-        "cp_n_j2me_30_d": int(CALC_FNS["j2me_forms_in_last"](dom, 30)),
-        "cp_n_j2me_60_d": int(CALC_FNS["j2me_forms_in_last"](dom, 60)),
-        "cp_n_j2me_90_d": int(CALC_FNS["j2me_forms_in_last"](dom, 90)),
-        "cp_j2me_90_d_bool": CALC_FNS["j2me_forms_in_last_bool"](dom, 90),
         "cp_300th_form": CALC_FNS["300th_form_submission"](dom),
-        "cp_n_30_day_user_cases": cases_in_last(dom, 30, case_type="commcare-user"),
+        "cp_n_30_day_user_cases": cases_in_last(dom, 30, case_type=USERCASE_TYPE),
         "cp_n_trivet_backends": num_telerivet_backends(dom),
         "cp_use_domain_security": use_domain_security_settings(domain_obj),
         "cp_n_custom_roles": num_custom_roles(dom),
@@ -459,7 +465,7 @@ def num_location_restricted_roles(domain):
 
 
 def num_case_sharing_loc_types(domain):
-    loc_types = [l for l in LocationType.objects.by_domain(domain) if l.shares_cases]
+    loc_types = [l_type for l_type in LocationType.objects.by_domain(domain) if l_type.shares_cases]
     return len(loc_types)
 
 

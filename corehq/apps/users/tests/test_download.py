@@ -65,7 +65,7 @@ class TestDownloadMobileWorkers(TestCase):
             first_name='Edith',
             last_name='Wharton',
             phone_number='27786541239',
-            metadata={'born': 1862}
+            user_data={'born': 1862}
         )
         cls.user1.set_location(cls.location)
         cls.user2 = CommCareUser.create(
@@ -76,7 +76,7 @@ class TestDownloadMobileWorkers(TestCase):
             None,
             first_name='George',
             last_name='Eliot',
-            metadata={'born': 1849, PROFILE_SLUG: cls.profile.id},
+            user_data={'born': 1849, PROFILE_SLUG: cls.profile.id},
         )
         cls.user2.set_location(cls.location)
         cls.user3 = CommCareUser.create(

@@ -1,4 +1,4 @@
-from django.conf.urls import re_path as url
+from django.urls import re_path as url
 from django.views.generic import RedirectView
 
 from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
@@ -10,7 +10,7 @@ from corehq.apps.fixtures.views import (
     fixture_metadata,
     fixture_upload_job_poll,
     update_tables,
-    upload_fixture_api,
+    upload_fixture_api
 )
 from corehq.apps.hqwebapp.decorators import waf_allow
 

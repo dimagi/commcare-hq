@@ -1,6 +1,18 @@
-hqDefine('app_manager/js/forms/form_workflow', function () {
-    'use strict';
-
+hqDefine("app_manager/js/forms/form_workflow", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list",
+    "hqwebapp/js/initial_page_data",
+    "hqwebapp/js/toggles",
+], function (
+    $,
+    ko,
+    _,
+    uiElementKeyValueList,
+    initialPageData,
+    toggles,
+) {
     var FormWorkflow = function (options) {
         var self = this;
 
@@ -16,7 +28,7 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
         self.hasError = ko.observable(self.workflow() === FormWorkflow.Values.ERROR);
         self.hasWarning = ko.computed(function () {
             return !self.hasError()
-                && hqImport("hqwebapp/js/initial_page_data").get("is_case_list_form")
+                && initialPageData.get("is_case_list_form")
                 && self.workflow() !== FormWorkflow.Values.DEFAULT;
         });
 
@@ -47,7 +59,7 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
                 link.xpath,
                 link.uniqueId,
                 self,
-                link.datums
+                link.datums,
             );
         }));
     };
@@ -82,8 +94,8 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
 
     FormWorkflow.prototype.workflowFallbackOptions = function () {
         // allow all options as fallback except the one for form linking
-        var fallback_options = _.omit(this.labels, function (key, value) { return value === FormWorkflow.Values.FORM; });
-        var options = _.map(fallback_options, function (label, value) {
+        var fallbackOptions = _.omit(this.labels, function (key, value) { return value === FormWorkflow.Values.FORM; });
+        var options = _.map(fallbackOptions, function (label, value) {
             return {
                 value: value,
                 label: (value === FormWorkflow.Values.DEFAULT ? '* ' + label : label),
@@ -98,14 +110,14 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
         return options;
     };
 
-    FormWorkflow.prototype.onAddFormLink = function (workflow, event) {
+    FormWorkflow.prototype.onAddFormLink = function (workflow) {
         // Default to linking to first form that can be auto linked
-        var default_choice = _.find(workflow.forms, function (form) { return form.autoLink; }),
-            formId = default_choice ? default_choice.uniqueId : null;
+        var defaultChoice = _.find(workflow.forms, function (form) { return form.autoLink; }),
+            formId = defaultChoice ? defaultChoice.uniqueId : null;
         this.formLinks.push(new FormWorkflow.FormLink('', formId, workflow));
     };
 
-    FormWorkflow.prototype.onDestroyFormLink = function (formLink, event) {
+    FormWorkflow.prototype.onDestroyFormLink = function (formLink) {
         var workflow = this;
 
         workflow.formLinks.remove(formLink);
@@ -143,6 +155,7 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
         self.formId = ko.observable(formId);
         self.autoLink = ko.observable();
         self.allowManualLinking = ko.observable();
+        self.advancedMode = toggles.toggleEnabled('FORM_LINK_ADVANCED_MODE');
         self.forms = workflow.forms || [];
         self.datums = ko.observableArray();
         self.manualDatums = ko.observable(false);
@@ -150,8 +163,8 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
         self.datumsError = ko.observable(false);
         self.serializedDatums = ko.observable('');
 
-        self.get_form_by_id = function (form_id) {
-            return _.find(self.forms, function (form) { return form.uniqueId === form_id; });
+        self.get_form_by_id = function (formId) {
+            return _.find(self.forms, function (form) { return form.uniqueId === formId; });
         };
 
         self.serializeDatums = function () {
@@ -192,8 +205,28 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
             return (!self.autoLink() || self.manualDatums());
         });
 
-        self.formId.subscribe(function (form_id) {
-            let form = self.get_form_by_id(form_id);
+        if (self.advancedMode) {
+            self.advancedModeDatumsElement = uiElementKeyValueList.new(
+                String(Math.random()).slice(2),  // random id
+                gettext("Manual Linking Datums"),
+                gettext("Set datums required to navigate to the selected form or menu"),
+                {key: gettext("Datum ID"), value: gettext("XPath Expression")},  // placeholders
+            );
+            const datumsDict = {};
+            _.each(datums, function (datum) {
+                datumsDict[datum.name] = datum.xpath;
+            });
+            self.advancedModeDatumsElement.val(datumsDict);
+            self.advancedModeDatumsElement.on("change", function () {
+                self.serializedDatums(JSON.stringify(_.map(this.val(), function (xpath, name) {
+                    return {name: name, xpath: xpath};
+                })));
+                workflow.$changeEl.trigger('change'); // Manually trigger change so Save button activates
+            });
+        }
+
+        self.formId.subscribe(function (formId) {
+            let form = self.get_form_by_id(formId);
             self.autoLink(form ? form.autoLink : false);
             self.allowManualLinking(form ? form.allowManualLinking : false);
             self.datumsFetched(false);
@@ -208,7 +241,7 @@ hqDefine('app_manager/js/forms/form_workflow', function () {
                 function (data) {
                     self.datums(self.wrap_datums(data));
                 },
-                "json"
+                "json",
             ).fail(function () {
                 self.datumsFetched(false);
                 self.datumsError(true);

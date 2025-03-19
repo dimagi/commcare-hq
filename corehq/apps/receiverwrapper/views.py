@@ -4,11 +4,13 @@ import logging
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from django.core.cache import cache
 
 import couchforms
 from casexml.apps.case.xform import get_case_updates, is_device_report
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.device_rate_limiter import device_rate_limiter, DEVICE_RATE_LIMIT_MESSAGE
 from corehq.apps.users.models import HqPermissions
 from couchforms import openrosa_response
 from couchforms.const import MAGIC_PROPERTY
@@ -23,17 +25,20 @@ from corehq.apps.domain.auth import (
     DIGEST,
     NOAUTH,
     API_KEY,
+    OAUTH2,
     determine_authtype_from_request,
 )
 from corehq.apps.domain.decorators import (
     api_auth,
-    check_domain_migration,
+    check_domain_mobile_access,
     login_or_basic_ex,
     login_or_digest_ex,
     login_or_api_key_ex,
+    login_or_oauth2_ex,
     two_factor_exempt,
 )
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.ota.decorators import is_from_formplayer
 from corehq.apps.ota.utils import handle_401_response
 from corehq.apps.receiverwrapper.auth import (
     AuthContext,
@@ -54,16 +59,38 @@ from corehq.form_processor.utils import convert_xform_to_json
 from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.timer import TimingContext, set_request_duration_reporting_threshold
 from couchdbkit import ResourceNotFound
-from tastypie.http import HttpTooManyRequests
+from tastypie.http import HttpNotAcceptable, HttpTooManyRequests
 
 PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_SUBMISSION_PROBABILITY', 0))
 PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_SUBMISSION_LIMIT')
 PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
+CACHE_EXPIRY_7_DAYS_IN_SECS = 7 * 24 * 60 * 60
+
+
+# This mirrors the logic of require_mobile_access, but with a whitelist exempted
+def _has_mobile_access(domain, user_id, request):
+    """Unless going through formplayer or the API, users need access_mobile_endpoints"""
+    if (is_from_formplayer(request)
+            or request.couch_user.has_permission(domain, 'access_mobile_endpoints')):
+        return True
+
+    if toggles.OPEN_SUBMISSION_ENDPOINT.enabled(domain):
+        # log incorrect access at most once every 7 days to ease transition off flag
+        cache_key = f"form_submission_permissions_audit_v2:{user_id}"
+        if not cache.get(cache_key):
+            cache.set(cache_key, True, CACHE_EXPIRY_7_DAYS_IN_SECS)
+            message = f"NoMobileEndpointsAccess: invalid request by {user_id} on {domain}"
+            notify_exception(request, message=message)
+        return True
+
+    return False
 
 
 @profile_dump('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
 def _process_form(request, domain, app_id, user_id, authenticated,
-                  auth_cls=AuthContext):
+                  auth_cls=AuthContext, is_api=False):
+    if authenticated and not is_api and not _has_mobile_access(domain, user_id, request):
+        return HttpResponseForbidden()
 
     if rate_limit_submission(domain):
         return HttpTooManyRequests()
@@ -111,10 +138,24 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         _record_metrics(metric_tags, 'blacklisted', response)
         return response
 
+    instance_json = None
+    try:
+        instance_json = convert_xform_to_json(instance)
+    except couchforms.XMLSyntaxError:
+        # let normal response handle invalid xml
+        pass
+    else:
+        device_id = instance_json.get('meta', {}).get('deviceID')
+        submitting_user_id = instance_json.get('meta', {}).get('userID')
+        should_limit = device_rate_limiter.rate_limit_device(domain, submitting_user_id, device_id)
+        if should_limit:
+            return HttpNotAcceptable(DEVICE_RATE_LIMIT_MESSAGE)
+
     with TimingContext() as timer:
         app_id, build_id = get_app_and_build_ids(domain, app_id)
         submission_post = SubmissionPost(
             instance=instance,
+            instance_json=instance_json,
             attachments=attachments,
             domain=domain,
             app_id=app_id,
@@ -212,7 +253,7 @@ def _record_metrics(tags, submission_type, response, timer=None, xform=None):
 @require_permission(HqPermissions.edit_data)
 @require_permission(HqPermissions.access_api)
 @require_POST
-@check_domain_migration
+@check_domain_mobile_access
 @set_request_duration_reporting_threshold(60)
 def post_api(request, domain):
     return _process_form(
@@ -221,6 +262,7 @@ def post_api(request, domain):
         app_id=None,
         user_id=request.couch_user.get_id,
         authenticated=True,
+        is_api=True,
     )
 
 
@@ -228,7 +270,7 @@ def post_api(request, domain):
 @location_safe
 @csrf_exempt
 @require_POST
-@check_domain_migration
+@check_domain_mobile_access
 @set_request_duration_reporting_threshold(60)
 def post(request, domain, app_id=None):
     try:
@@ -347,6 +389,21 @@ def _secure_post_basic(request, domain, app_id=None):
     )
 
 
+@handle_401_response
+@login_or_oauth2_ex(allow_cc_users=True, oauth_scopes=['sync'])
+@two_factor_exempt
+@set_request_duration_reporting_threshold(60)
+def _secure_post_oauth2(request, domain, app_id=None):
+    """only ever called from secure post"""
+    return _process_form(
+        request=request,
+        domain=domain,
+        app_id=app_id,
+        user_id=request.couch_user.get_id,
+        authenticated=True,
+    )
+
+
 @login_or_api_key_ex()
 @require_permission(HqPermissions.edit_data)
 @require_permission(HqPermissions.access_api)
@@ -366,7 +423,7 @@ def _secure_post_api_key(request, domain, app_id=None):
 @location_safe
 @csrf_exempt
 @require_POST
-@check_domain_migration
+@check_domain_mobile_access
 @set_request_duration_reporting_threshold(60)
 def secure_post(request, domain, app_id=None):
     authtype_map = {
@@ -374,6 +431,7 @@ def secure_post(request, domain, app_id=None):
         BASIC: _secure_post_basic,
         NOAUTH: _noauth_post,
         API_KEY: _secure_post_api_key,
+        OAUTH2: _secure_post_oauth2,
     }
 
     if request.GET.get('authtype'):

@@ -1,0 +1,227 @@
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+
+<section class="hq-styleguide-article">
+  <h1 id="organisms-forms">Forms on CommCare HQ</h1>
+  <p class="lead">
+    Forms in HQ are a mix of bespoke HTML and
+    <a href="http://django-crispy-forms.readthedocs.org/en/latest/">Crispy Forms</a>.
+    Different parts of HQ use these two different approaches; both are supported.
+  </p>
+  <h2>HTML forms</h2>
+  <p>
+    HQ uses styles provided
+    by <a href="http://getbootstrap.com/css/#forms" target='_blank'>Bootstrap 3 Forms</a>,
+    with the majority of forms using the <code>form-horizontal</code>
+    style.
+  </p>
+  <p>
+    Notes on the example below:
+  <ul>
+    <li>
+      Forms also need to include a <code>{% verbatim %}{% csrf_token %}{% endverbatim %}</code> tag to protect against <a
+      href='https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)' target='_blank'>CSRF
+      attacks</a>. HQ will reject forms that do not contain this token.
+    </li>
+    <li>
+      The sets of grid classes (<code>col-sm-*</code>, etc.) can be replaced by
+      {% verbatim %}<code>{% css_field_class %}</code>, <code>{% css_label_class %}</code>, and
+      <code>{% css_action_class %}</code>{% endverbatim %}, which will fill in HQ's standard form
+      proportions.
+    </li>
+    <li>
+      The dropdown here (and throughout this section) should use a select2, as discussed in
+      <a href='{% url 'styleguide_molecules' %}#molecules-selections' target='_blank'>selections</a>.
+    </li>
+    <li>
+      The textarea uses the <code>vertical-resize</code> class to allow for long input.
+      Inputs that accept XPath expressions are especially likely to have very long input.
+      The text area does not support horizontal resizing, which can allow the user to expand a
+      textarea so that it overlaps with other elements or otherwise disrupts the page's layout.
+    </li>
+    <li>
+      The <code>autocomplete</code> attribute controls the browser's form autofill. Most forms in HQ
+      are unique to HQ and should set turn off autocomplete to prevent unexpected automatic input.
+      Exceptions would be forms that include information like a user's name and address.
+    </li>
+    <li>
+      This example does not show translations, but all user-facing text should be translated.
+    </li>
+  </ul>
+  </p>
+  {% include 'styleguide/bootstrap3/example_html.html' with slug='html_form' title='Simple HTML form' content=examples.html_form %}
+  <h2>Form states and error messaging</h2>
+  <p>
+    Good error messages are specific, actionable, visually near the affected input. They occur as soon as a
+    problem is detected. They help the user figure out how to address the situation: "Sorry, this isn't
+    supported. Try XXX." Without any cues, the user is stuck in the same frustrating situation.
+  </p>
+  <p>
+    Errors in forms should be displayed near the relevant input using the <code>.has-error</code> class. Note
+    that <code>.has-error</code> is applied to the input's <strong>parent container</strong>, while any error
+    message should have be marked with <code>.help-block</code>. There are <code>.has-warning</code> and
+    <code>.has-success</code> classes similar to <code>.has-error</code>, though we don't use them often.
+  </p>
+  <p>
+    For form-level or page-level errors, use django's standard <a
+    href='https://docs.djangoproject.com/en/2.1/ref/contrib/messages/' target='_blank'>messages framework</a>:
+    <code>messages.error</code>, etc. In javascript, our <a
+    href='https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/alert_user.js'
+    target='_blank'>alert_user</a> module provides similar functionality.
+  </p>
+  {% include 'styleguide/bootstrap3/example_html.html' with slug='error_form' title='Form with errors' content=examples.error_form %}
+  <h2>Glossary of HTML form elements and classes</h2>
+  <p>
+    <dl class="dl-horizontal">
+      <dt>Fieldset</dt>
+      <dd>
+        A grouping of form fields.
+        <pre>&lt;fieldset&gt;
+    ...
+&lt;/fieldset&gt;</pre>
+      </dd>
+      <dt>Fieldset Legend</dt>
+      <dd>
+        A title that describes the group of fields succinctly.
+        Always present as the first tag inside a
+        <code>&lt;fieldset /&gt;</code>
+        <pre>&lt;fieldset&gt;
+    <strong>&lt;legend&gt;Basic Information&lt;/legend&gt;</strong>
+    ...
+&lt;/fieldset&gt;</pre>
+      </dd>
+      <dt>Form Group</dt>
+      <dd>
+        An item that provides one bit of functionality or collects one subset of
+        data for the form. It contains <code>controls</code> and its <code>control-label</code>
+        and is present inside the <code>&lt;fieldset&gt;</code>
+        after the <code>&lt;legend&gt;</code>.
+        Sometimes the control group might have one label for a set
+        of related fields (multi field) or a modifiable table of objects.
+        <pre>&lt;fieldset&gt;
+    &lt;legend&gt;Basic Information&lt;/legend&gt;
+    <strong>&lt;div class="form-group"&gt;</strong>
+        &lt;label for="emailInput" class="col-lg-2 control-label"&gtEmail&lt;/label&gt
+        &lt;div class="col-lg-10 controls"&gt
+            &lt;input id="emailInput" ...&gt
+        &lt;/div&gt
+    <strong>&lt;/div&gt;</strong>
+    ...
+&lt;/fieldset&gt;</pre>
+      </dd>
+      <dt>Control Label</dt>
+      <dd>
+        A descriptive label that is visually aligned to the left of its controls.
+        <pre>&lt;div class="form-group"&gt;
+    <strong>&lt;label for="emailInput" class="col-lg-2 control-label"&gtEmail&lt;/label&gt</strong>
+    &lt;div class="col-lg-10 controls"&gt
+        &lt;input id="emailInput" ...&gt
+    &lt;/div&gt
+&lt;/div&gt;</pre>
+        <div class="alert alert-info">
+          <strong>Note that the <code>for</code> attribute</strong> refers to
+          the <code>id</code> attribute of the input. Clicking on the label
+          will focus on the input that has the <code>id</code> specified in
+          <code>for</code>.
+        </div>
+      </dd>
+      <dt>Controls</dt>
+      <dd>
+  <p>A functional unit / input in the form.</p>
+  </dd>
+  <dt>Form Actions</dt>
+  <dd>
+    A group of buttons that affect the processing or navigation for
+    the entire form and is present before the closing <code>&lt;/form&gt;</code> tag.
+    <pre>&lt;div class="form-group form-actions"&gt;
+    ...
+&lt;/div&gt;</pre>
+  </dd>
+  <dt>Submit Action</dt>
+  <dd>
+    <p>
+      It is always the first button specified in Form Actions and appears
+      as the left-most button. It has the following visual appearance,
+      using the <code>btn-primary</code> class:
+    </p>
+    <p><button type="button" class="btn btn-primary">Submit Action</button></p>
+    <p>It submits the form and triggers its processing.</p>
+  </dd>
+  <dt>Secondary Action</dt>
+  <dd>
+    <p>In Form Actions, it is the button with the following visual appearance,
+      using the <code>btn-default</code> class:</p>
+    <p><button type="button" class="btn btn-default">Secondary Action</button></p>
+    <p>Typically, this is the cancel button. It does some other action that
+      causes you to navigate away from the form, but not save.</p>
+  </dd>
+  </dl>
+  </p>
+  <h2>Crispy Forms</h2>
+  <a class='btn btn-primary pull-right' href="{% url 'ex_simple_crispy_forms' %}" target="_blank">
+    <i class='fa-solid fa-up-right-from-square'></i>
+    Example with annotated source
+  </a>
+  <p>
+    <a href="http://django-crispy-forms.readthedocs.org/en/latest/">Crispy Forms</a>
+    generates HTML for forms based on python form
+    definitions. Using it contributes to consistency in design and reduces boilerplate HTML writing.
+    Crispy does not control the form's logic, processing, validation, or anything having to do with form data.
+    It can be used specify <em>hooks</em> for the display logic.
+  </p>
+  <p>
+    Notes on the example below:
+  <ul>
+    <li>
+      The <code>form_method</code> and <code>form_action</code> are
+      the keys to how and where the form is submitted.
+    </li>
+    <li>
+      <code>self.helper</code> controls the label and field widths. Best practice is to inherit from a
+      class like <code>HQFormHelper</code> or <code>HQModalFormHelper</code> (both defined in
+      <a href='https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/crispy.py' target='_blank'>hqwebapp.crispy</a>) to get the standard form proportions.
+      If necessary, custom classes can be set using <code>self.helper.label_class</code> and
+      <code>self.helper.field_class</code>. The form's <code>.form-horizontal</code> is also
+      automatically set by <code>HQFormHelper</code> and similar classes, but it can be overridden with
+      <code>self.helper.form_class</code>
+    </li>
+    <li>
+      Resize this window to see the form responsiveness in action. <code>HQFormHelper</code> uses
+      <code>.col-xs-12.col-sm-4.col-md-4.col-lg-2</code> for labels and
+      <code>.col-xs-12.col-sm-8.col-md-8.col-lg-6</code> for fields. On a laptop or monitor, you likely
+      see 1:4 or 1:3 proportions, but if you shrink the browser window enough, you'll see the label and
+      field eventually stack on top of each other. See
+      <a href='ihttps://getbootstrap.com/docs/3.4/css/#grid' target='_blank'>bootstrap grid documentation</a>
+      for a more thorough understanding of the responsive grid system.
+    </li>
+    <li>
+      All layout objects accept the attribute <code>css_class</code> to specify custom css-classes to the
+      field, like so:
+      <pre>hqcrispy.LinkButton(
+    _("Cancel"),
+    '#',
+    css_class="btn btn-default",
+)</pre>
+    </li>
+    <li>
+      Other attributes, for example a <code>data-bind=""</code>, can be added like so:
+      <pre>crispy.Field(
+    'first_name',
+    data_bind="value: firstName",
+)</pre>
+      All underscores (<code>_</code>) in the attributes in Python turn into
+      hyphens (<code>-</code>) in HTML, e.g., <code>data_bind="foo"</code> becomes
+      <code>data-bind="foo"</code>.
+    </li>
+  </ul>
+  </p>
+  {% include 'styleguide/bootstrap3/_includes/organisms/forms/basic_crispy.html' with slug='basic-crispy' title='Basic Crispy Form' %}
+
+  <script>
+    $(function () {
+      $('.styleguide-example form').submit(function (e) {
+        e.preventDefault();
+      });
+    });
+  </script>
+</section>

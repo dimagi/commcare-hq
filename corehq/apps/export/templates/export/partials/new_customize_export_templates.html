@@ -8,21 +8,21 @@
                        visible: table.label() !== 'Case History'">
       <span>
         <input type="checkbox"
-               data-bind="checked: table.selected" />
+               data-bind="checked: table.selected, attr: { disabled: {{ disable_table_checkbox|JSON }} }" />
       </span>
       <span>
         <span data-bind="text: table.label()" />
       </span>
       <span>
-        <span class="label label-warning"
+        <span class="badge text-bg-warning"
               data-bind="visible: table.is_deleted">
           {% trans "deleted" %}
         </span>
       </span>
 
       <!-- ko if: table.is_user_defined -->
-      <div class="remove-user-defined-table pull-right">
-        <button class="btn btn-danger btn-xs"
+      <div class="remove-user-defined-table float-end">
+        <button class="btn btn-outline-danger btn-sm"
                 data-bind="click: function() {
                              $parent.tables.remove(table)
                            }">
@@ -31,32 +31,42 @@
       </div>
       <!-- /ko -->
     </legend>
-    <div class="col-sm-12"
+    <div class="col-md-12"
          data-bind="slideVisible: table.selected">
       {% if not export_instance.is_odata_config %}
-        <div class="form-group">
-          <label class="col-sm-4 col-md-3 col-lg-2 control-label">
+        <div class="mb-3">
+          <label class="form-label">
             {% trans "Sheet Name" %}
           </label>
-          <div class="col-sm-9 col-md-8 col-lg-6">
-            <input type="text"
-                   class="form-control"
-                   data-bind="value: table.label" />
-          </div>
+          <input type="text"
+                 class="form-control"
+                 data-bind="value: table.label" />
         </div>
       {% endif %}
       <!-- ko if: table.is_user_defined -->
-      <div class="form-group">
-        <label class="col-sm-4 col-md-3 col-lg-2 control-label">
+      <div class="mb-3">
+        <label class="form-label">
           {% trans "Custom Path" %}
         </label>
-        <div class="col-sm-4 col-md-3 col-lg-2">
-          <input type="text"
-                 class="form-control"
-                 data-bind="value: table.customPathString" />
-        </div>
+        <input type="text"
+               class="form-control"
+               data-bind="value: table.customPathString" />
       </div>
       <!-- /ko -->
+
+      {% if request|toggle_enabled:"SUPPORT_GEO_JSON_EXPORT" %}
+      <div id="select-geo-property" class="mb-3" hidden>
+        <label class="form-label" for="geo-property-select">
+          {% trans 'Select geo property' %}
+        </label>
+        <select
+          id="geo-property-select"
+          class="control form-control"
+          data-bind="options: $parent.geoProperties, value: table.selected_geo_property">
+        </select>
+      </div>
+      {% endif %}
+
       <h4>{{ terminology.choose_fields_label }}</h4>
       <div class="help-block">
         {% if request|request_has_privilege:"EXPORT_MULTISORT" %}
@@ -111,13 +121,13 @@
              id="field-select">
         <thead>
           <tr class="nodrag nodrop">
-            <th class="col-sm-1">
+            <th class="col-md-1">
               {% trans "Include?" %}<br />
-              <a class="btn btn-xs btn-primary"
+              <a class="btn btn-sm btn-primary"
                  data-bind="click: table.selectAll">
                 {% trans "Select All" %}
               </a>
-              <a class="btn btn-xs btn-default"
+              <a class="btn btn-sm btn-outline-primary"
                  data-bind="click: table.selectNone">
                 {% trans "Select None" %}
               </a>
@@ -142,7 +152,7 @@
 
               <!-- Advanced Button -->
               <button type="button"
-                      class="btn btn-default btn-xs"
+                      class="btn btn-outline-primary btn-sm"
                       data-bind="click: table.toggleShowAdvanced,
                                  css: {
                                    active: table.showAdvanced
@@ -156,7 +166,7 @@
               </button>
 
               <!-- Deleted Button -->
-              <button class="btn btn-default btn-xs"
+              <button class="btn btn-outline-primary btn-sm"
                       data-bind="click: $root.toggleShowDeleted.bind($root),
                                  css: {
                                    active: table.showDeleted
@@ -179,9 +189,9 @@
               </button>
 
               <!-- Deprecated Button -->
-              {% if export_instance.type == 'case' %}
+              {% if show_deprecated_filter %}
                 <button type="button"
-                        class="btn btn-default btn-xs"
+                        class="btn btn-outline-primary btn-sm"
                         data-bind="click: table.toggleShowDeprecated,
                                   css: {
                                     active: table.showDeprecated
@@ -198,18 +208,18 @@
             <th data-bind="attr: { 'class': $root.displayColumnClass }">
               {% trans "Display" %}<br />
               {% if export_instance.type == 'form' %}
-                <a class="btn btn-xs btn-default"
+                <a class="btn btn-sm btn-outline-primary"
                    data-bind="click: table.useLabels">
                   {% trans "Use question labels" %}
                 </a>
-                <a class="btn btn-xs btn-default"
+                <a class="btn btn-sm btn-outline-primary"
                    data-bind="click: table.useIds">
                   {% trans "Use question ids" %}
                 </a>
               {% endif %}
             </th>
             {% if export_instance.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
-              <th class="col-sm-2">
+              <th class="col-md-2">
                 {% trans "Type" %}
                 <span data-bind="makeHqHelp: {
                                    name: '{% trans "Split multi-select data" %}',
@@ -218,7 +228,7 @@
               </th>
             {% endif %}
             {% if allow_deid %}
-              <th class="col-sm-2 deid-column"
+              <th class="col-md-2 deid-column"
                   data-bind="visible: $root.isDeidColumnVisible()">
                 {% trans "Sensitivity" %}
               </th>
@@ -230,7 +240,7 @@
           <tfoot>
             <tr>
               <td colspan="100%">
-                <button class="btn btn-default btn-sm"
+                <button class="btn btn-outline-primary btn-sm"
                         data-bind="click: table.addUserDefinedExportColumn">
                   {% trans "Add custom export property" %}
                 </button>
@@ -260,22 +270,22 @@
                            success: column.selectedForSort,
                            'selected-for-sort': column.selectedForSort
                          }"
-              {% if request|request_has_privilege:"EXPORT_MULTISORT" %}style="cursor:pointer"{% endif %}>
+              {% if request|request_has_privilege:"EXPORT_MULTISORT" %}class="clickable"{% endif %}>
             <td class="text-center">
               <span class="sortable-handle">
-                <i class="fa fa-arrows-v"></i>
+                <i class="fa-solid fa-up-down"></i>
               </span>
               &nbsp;&nbsp;&nbsp;
               <!--ko if: ($root.is_deidentified() && column.item.isCaseName()) -->
               <input type="checkbox"
                      class="field-include"
-                     disabled="disabled" />
+                     disabled="disabled" />aaa
               <!--/ko-->
               <!--ko if: $root.isReservedOdataColumn(column, $parentContext.$index()) -->
               <input type="checkbox"
                      class="field-include"
                      checked="checked"
-                     disabled="disabled" />
+                     disabled="disabled" />bbb
               <!--/ko-->
               <!--ko ifnot: ($root.is_deidentified() && column.item.isCaseName()) || $root.isReservedOdataColumn(column, $parentContext.$index()) -->
               <input type="checkbox"
@@ -283,8 +293,8 @@
                      data-bind="checked: column.selected" />
               <!--/ko-->
               <!-- ko if: column.isEditable() -->
-              <div class="remove-user-defined-column pull-right">
-                <button class="btn btn-danger btn-xs"
+              <div class="remove-user-defined-column float-end">
+                <button class="btn btn-outline-danger btn-sm"
                         data-bind="click: function() {
                                      $parent.columns.remove(column)
                                    }">
@@ -296,14 +306,14 @@
           {% if request|request_has_privilege:"EXPORT_MULTISORT" %}
             <td class="text-center">
               <span class="send-to-bottom">
-                <button class="btn btn-default btn-sm">
+                <button class="btn btn-outline-primary btn-sm">
                   <i class="fa fa-angle-double-down"></i>
                 </button>
               </span>
             </td>
             <td class="text-center">
               <span class="send-to-top">
-                <button class="btn btn-default btn-sm">
+                <button class="btn btn-outline-primary btn-sm">
                   <i class="fa fa-angle-double-up"></i>
                 </button>
               </span>
@@ -317,10 +327,14 @@
                                 <span data-bind="text: tag,
                                  attr: { class: $root.getTagCSSClass(tag) }"></span>
               </span>
-
+              <span
+                data-bind="text: column.item.case_property_group_name"
+                class="badge text-bg-secondary"
+              ></span>
               <!-- ko if: !column.isEditable() -->
-              <code data-toggle="tooltip"
+              <span data-bs-toggle="tooltip"
                     data-placement="top"
+                    class="font-monospace"
                     data-bind="text: column.formatProperty(),
                                attr: {
                                  'data-original-title': column.help_text,
@@ -329,7 +343,7 @@
                                css: {
                                  'export-tooltip': column.translatedHelp(),
                                  'break-all-words': 1,
-                               }"></code>
+                               }"></span>
               <!-- /ko -->
               <!-- ko if: column.isEditable() -->
               <input type="text"
@@ -337,7 +351,7 @@
                      data-bind="value: column.customPathString"/>
               <!-- /ko -->
               <!-- ko if: $root.isReservedOdataColumn(column, $parentContext.$index()) -->
-              <span class="label label-info">
+              <span class="badge text-bg-info">
                 {% trans "Required for OData" %}
               </span>
               <!-- /ko -->
@@ -350,57 +364,48 @@
             </td>
           {% if export_instance.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
             <td>
-              <div class="form-horizontal col-xs-12"
+              <div class="form-horizontal col-sm-12"
                     data-bind="if: column.doc_type() === 'SplitUserDefinedExportColumn',
                                submit: column.addUserDefinedOption">
-                <div class="form-group">
-                  <select style="width:200px"
-                          class="form-control"
-                          data-bind="options: $root.splitTypes.userDefined,
-                                     value: column.split_type"></select>
-                </div>
+                <select style="width:200px"
+                        class="form-select"
+                        data-bind="options: $root.splitTypes.userDefined,
+                                   value: column.split_type"></select>
                 <!-- ko if: column.split_type() === $root.splitTypes.multiselect -->
-                <div class="form-group">
-                  <button class="btn btn-default btn-xs"
-                          data-bind="visible: !column.showOptions(),
-                                     click: function() {
-                                       column.showOptions(true);
-                                     }">
-                    {% trans "Show Options" %}
-                  </button>
+                <button class="btn btn-outline-primary btn-sm my-2"
+                        data-bind="visible: !column.showOptions(),
+                                   click: function() {
+                                     column.showOptions(true);
+                                   }">
+                  {% trans "Show Options" %}
+                </button>
 
-                  <button class="btn btn-default btn-xs"
-                          data-bind="visible: column.showOptions(),
-                                     click: function() {
-                                       column.showOptions(false);
-                                     }">
-                    {% trans "Hide Options" %}
-                  </button>
-                </div>
+                <button class="btn btn-outline-primary btn-sm"
+                        data-bind="visible: column.showOptions(),
+                                   click: function() {
+                                     column.showOptions(false);
+                                   }">
+                  {% trans "Hide Options" %}
+                </button>
                 <div data-bind="visible: column.showOptions()">
                   <ul class="list-group"
                       data-bind="foreach: column.user_defined_options">
                     <li class="list-group-item">
                       <span data-bind="text: $data"></span>
-                      <i style="cursor: pointer"
-                         class="text-danger fa fa-trash pull-right"
+                      <i class="clickable text-danger fa-regular fa-trash-can float-end"
                          data-bind="click: column.removeUserDefinedOption.bind(column)"></i>
                     </li>
                   </ul>
-                  <div class="form-group">
-                    <div style="max-width: 200px"
-                         class="input-group">
-                      <input class="form-control input-sm"
-                             type="text"
-                             data-bind="value: column.userDefinedOptionToAdd"/>
-                      <span class="input-group-btn">
-                        <button type="submit"
-                                class="btn btn-default btn-sm"
-                                data-bind="click: column.addUserDefinedOption">
-                          {% trans "Add" %}
-                        </button>
-                      </span>
-                    </div>
+                  <div style="max-width: 200px"
+                       class="input-group">
+                    <input class="form-control input-sm"
+                           type="text"
+                           data-bind="value: column.userDefinedOptionToAdd"/>
+                    <button type="submit"
+                            class="btn btn-outline-primary btn-sm"
+                            data-bind="click: column.addUserDefinedOption">
+                      {% trans "Add" %}
+                    </button>
                   </div>
                 </div>
                 <!-- /ko -->

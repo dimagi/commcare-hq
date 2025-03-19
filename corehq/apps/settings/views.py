@@ -4,7 +4,7 @@ from base64 import b64encode
 from io import BytesIO
 from datetime import datetime
 
-import pytz
+from zoneinfo import ZoneInfo
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -13,29 +13,33 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
+from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.debug import sensitive_post_parameters
 
 import langcodes
 import qrcode
+from django_otp import devices_for_user
 from memoized import memoized
-from two_factor.models import PhoneDevice
-from two_factor.utils import backup_phones, default_device
+from two_factor.plugins.phonenumber.utils import backup_phones
 from two_factor.views import (
     BackupTokensView,
     DisableView,
-    PhoneDeleteView,
-    PhoneSetupView,
     ProfileView,
     SetupCompleteView,
     SetupView,
+)
+from two_factor.plugins.phonenumber.views import (
+    PhoneDeleteView,
+    PhoneSetupView
 )
 
 from dimagi.utils.web import json_response
 
 from corehq import toggles
 from corehq.apps.domain.decorators import (
+    active_domains_required,
     login_and_domain_required,
     login_required,
     require_superuser,
@@ -45,8 +49,9 @@ from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_tempusdominus
 from corehq.apps.hqwebapp.utils import sign
+from corehq.apps.hqwebapp.utils.two_factor import user_can_use_phone
 from corehq.apps.hqwebapp.views import (
     BaseSectionPageView,
     CRUDPaginatedViewMixin,
@@ -58,9 +63,7 @@ from corehq.apps.settings.forms import (
     HQDeviceValidationForm,
     HQEmptyForm,
     HQPasswordChangeForm,
-    HQPhoneNumberForm,
     HQPhoneNumberMethodForm,
-    HQTOTPDeviceForm,
     HQTwoFactorMethodForm,
 )
 from corehq.apps.sso.models import IdentityProvider
@@ -144,6 +147,7 @@ class MyAccountSettingsView(BaseMyAccountView):
     page_title = gettext_lazy("My Information")
     template_name = 'settings/edit_my_account.html'
 
+    @use_bootstrap5
     @two_factor_exempt
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -271,6 +275,7 @@ class MyProjectsList(BaseMyAccountView):
     page_title = gettext_lazy("My Projects")
     template_name = 'settings/my_projects.html'
 
+    @use_bootstrap5
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         if not request.couch_user.is_web_user():
@@ -320,6 +325,7 @@ class ChangeMyPasswordView(BaseMyAccountView):
     template_name = 'settings/change_my_password.html'
     page_title = gettext_lazy("Change My Password")
 
+    @use_bootstrap5
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
@@ -360,18 +366,12 @@ class ChangeMyPasswordView(BaseMyAccountView):
         return self.get(request, *args, **kwargs)
 
 
-def _user_can_use_phone(user):
-    if not settings.ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE:
-        return False
-
-    return user.belongs_to_messaging_domain()
-
-
 class TwoFactorProfileView(BaseMyAccountView, ProfileView):
     urlname = 'two_factor_settings'
-    template_name = 'two_factor/profile/profile.html'
+    template_name = 'two_factor/profile/bootstrap3/profile.html'
     page_title = gettext_lazy("Two Factor Authentication")
 
+    @method_decorator(active_domains_required)
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
@@ -392,7 +392,7 @@ class TwoFactorProfileView(BaseMyAccountView, ProfileView):
             # Default device means the user has 2FA already enabled
             has_existing_backup_phones = bool(context.get('backup_phones'))
             context.update({
-                'allow_phone_2fa': has_existing_backup_phones or _user_can_use_phone(self.request.couch_user),
+                'allow_phone_2fa': has_existing_backup_phones or user_can_use_phone(self.request.couch_user),
             })
 
         return context
@@ -400,34 +400,41 @@ class TwoFactorProfileView(BaseMyAccountView, ProfileView):
 
 class TwoFactorSetupView(BaseMyAccountView, SetupView):
     urlname = 'two_factor_setup'
-    template_name = 'two_factor/core/setup.html'
+    template_name = 'two_factor/core/bootstrap3/setup.html'
     page_title = gettext_lazy("Two Factor Authentication Setup")
 
     form_list = (
-        ('welcome_setup', HQEmptyForm),
+        ('welcome', HQEmptyForm),
         ('method', HQTwoFactorMethodForm),
-        ('generator', HQTOTPDeviceForm),
-        ('sms', HQPhoneNumberForm),
-        ('call', HQPhoneNumberForm),
-        ('validation', HQDeviceValidationForm),
+        # other forms are registered on startup in corehq.apps.hqwebapp.apps.HqWebAppConfig
     )
 
+    @method_decorator(active_domains_required)
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        # this is only here to add the login_required decorator
+        # this is only here to add decorators
         return super(TwoFactorSetupView, self).dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self, step=None):
         kwargs = super().get_form_kwargs(step)
         if step == 'method':
-            kwargs.setdefault('allow_phone_2fa', _user_can_use_phone(self.request.couch_user))
+            kwargs['allow_phone_2fa'] = user_can_use_phone(self.request.couch_user)
 
         return kwargs
+
+    def get_form_list(self):
+        # It would be cool if we could specify our custom validation form in the form_list property
+        # but SetupView.get_form_list hard codes the default validation form for 'sms' and 'call' methods.
+        # https://github.com/jazzband/django-two-factor-auth/blob/1.15.5/two_factor/views/core.py#L510-L511
+        form_list = super().get_form_list()
+        if {'sms', 'call'} & set(form_list.keys()):
+            form_list['validation'] = HQDeviceValidationForm
+        return form_list
 
 
 class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
     urlname = 'two_factor_setup_complete'
-    template_name = 'two_factor/core/setup_complete.html'
+    template_name = 'two_factor/core/bootstrap3/setup_complete.html'
     page_title = gettext_lazy("Two Factor Authentication Setup Complete")
 
     @method_decorator(login_required)
@@ -444,7 +451,7 @@ class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
 
 class TwoFactorBackupTokensView(BaseMyAccountView, BackupTokensView):
     urlname = 'two_factor_backup_tokens'
-    template_name = 'two_factor/core/backup_tokens.html'
+    template_name = 'two_factor/core/bootstrap3/backup_tokens.html'
     page_title = gettext_lazy("Two Factor Authentication Backup Tokens")
 
     @method_decorator(login_required)
@@ -471,7 +478,7 @@ def _show_link_to_webapps(user):
 
 class TwoFactorDisableView(BaseMyAccountView, DisableView):
     urlname = 'two_factor_disable'
-    template_name = 'two_factor/profile/disable.html'
+    template_name = 'two_factor/profile/bootstrap3/disable.html'
     page_title = gettext_lazy("Remove Two-Factor Authentication")
 
     @method_decorator(login_required)
@@ -485,18 +492,18 @@ class TwoFactorDisableView(BaseMyAccountView, DisableView):
 
 class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
     urlname = 'two_factor_phone_setup'
-    template_name = 'two_factor/core/phone_register.html'
+    template_name = 'two_factor/core/bootstrap3/phone_register.html'
     page_title = gettext_lazy("Two Factor Authentication Phone Setup")
 
     form_list = (
-        ('method', HQPhoneNumberMethodForm),
+        ('setup', HQPhoneNumberMethodForm),
         ('validation', HQDeviceValidationForm),
     )
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         has_backup_phones = bool(backup_phones(self.request.user))
-        if not (has_backup_phones or _user_can_use_phone(request.couch_user)):
+        if not (has_backup_phones or user_can_use_phone(request.couch_user)):
             # NOTE: this behavior could be seen as un-intuitive. If a domain is not authorized to use phone/sms,
             # we are still allowing full functionality if they have an existing backup phone. The primary reason
             # is so that a user can delete a backup number if needed. The ability to add in a new number is still
@@ -512,15 +519,6 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
         self.get_device(user=self.request.user, name='backup').save()
         messages.add_message(self.request, messages.SUCCESS, _("Phone number added."))
         return redirect(reverse(TwoFactorProfileView.urlname))
-
-    def get_device(self, **kwargs):
-        """
-        Uses the data from the setup step and generated key to recreate device, gets the 'method' step
-        in the form_list.
-        """
-        kwargs = kwargs or {}
-        kwargs.update(self.storage.validated_step_data.get('method', {}))
-        return PhoneDevice(key=self.get_key(), **kwargs)
 
 
 class TwoFactorPhoneDeleteView(BaseMyAccountView, PhoneDeleteView):
@@ -538,17 +536,14 @@ class TwoFactorPhoneDeleteView(BaseMyAccountView, PhoneDeleteView):
 class TwoFactorResetView(TwoFactorSetupView):
     urlname = 'reset'
 
-    form_list = (
-        ('welcome_reset', HQEmptyForm),
-        ('method', HQTwoFactorMethodForm),
-        ('generator', HQTOTPDeviceForm),
-        ('sms', HQPhoneNumberForm),
-        ('call', HQPhoneNumberForm),
-        ('validation', HQDeviceValidationForm),
-    )
-
     def get(self, request, *args, **kwargs):
-        default_device(request.user).delete()
+        # avoid using django-two-factor-auth default_devices method because it adds a dynamic attribute
+        # to the user object that we then have to cleanup before calling super
+        # https://github.com/jazzband/django-two-factor-auth/blob/1.15.5/two_factor/utils.py#L9-L17
+        for device in devices_for_user(request.user):
+            if device.name == 'default':
+                device.delete()
+                break
         return super(TwoFactorResetView, self).get(request, *args, **kwargs)
 
 
@@ -576,6 +571,7 @@ class EnableMobilePrivilegesView(BaseMyAccountView):
     page_title = gettext_lazy("Enable Privileges on Mobile")
     template_name = 'settings/enable_superuser.html'
 
+    @use_bootstrap5
     def dispatch(self, request, *args, **kwargs):
         # raises a 404 if a user tries to access this page without the right authorizations
         if hasattr(request, 'couch_user') and self.is_user_authorized(request.couch_user):
@@ -625,7 +621,8 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
 
     template_name = "settings/user_api_keys.html"
 
-    @use_jquery_ui  # for datepicker
+    @use_bootstrap5
+    @use_tempusdominus
     def dispatch(self, request, *args, **kwargs):
         return super(ApiKeyView, self).dispatch(request, *args, **kwargs)
 
@@ -679,13 +676,35 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
 
     def _to_user_time(self, value):
         return (ServerTime(value)
-                .user_time(pytz.timezone(self.request.couch_user.get_time_zone()))
+                .user_time(self.get_user_timezone())
                 .done()
                 .strftime(USER_DATETIME_FORMAT)) if value else '-'
 
     @property
     def page_context(self):
-        return self.pagination_context
+        pagination_context = self.pagination_context
+        context = {
+            'always_show_user_api_keys': self.allow_viewable_API_keys,
+            'maximum_key_expiration_window': self.maximum_key_expiration_window,
+        }
+        context.update(pagination_context)
+
+        return context
+
+    @property
+    def allow_viewable_API_keys(self):
+        return self.managing_idp.always_show_user_api_keys if self.managing_idp else False
+
+    @property
+    def maximum_key_expiration_window(self):
+        if not self.managing_idp:
+            return None
+
+        return self.managing_idp.max_days_until_user_api_key_expiration
+
+    @cached_property
+    def managing_idp(self):
+        return IdentityProvider.get_active_identity_provider_by_username(self.request.user.username)
 
     @property
     def paginated_list(self):
@@ -697,10 +716,15 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
 
     def _to_json(self, api_key, redacted=True):
         if redacted:
-            key = f"{api_key.key[0:4]}…{api_key.key[-4:]}"
+            key = f"{api_key.plaintext_key[0:4]}…{api_key.plaintext_key[-4:]}"
+            full_key = api_key.plaintext_key
         else:
-            copy_msg = _("Copy this in a secure place. It will not be shown again.")
-            key = f"{api_key.key} ({copy_msg})",
+            if self.allow_viewable_API_keys:
+                key = api_key.plaintext_key
+            else:
+                copy_msg = _("Copy this in a secure place. It will not be shown again.")
+                key = f"{api_key.plaintext_key} ({copy_msg})",
+            full_key = api_key.plaintext_key
 
         if api_key.expiration_date and api_key.expiration_date < datetime.now():
             status = "expired"
@@ -708,7 +732,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             status = "active"
         else:
             status = "inactive"
-        return {
+        key_json = {
             "id": api_key.id,
             "name": api_key.name,
             "key": key,
@@ -725,15 +749,39 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             "is_active": api_key.is_active,
         }
 
+        if self.allow_viewable_API_keys:
+            key_json['full_key'] = full_key
+
+        return key_json
+
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
 
-    create_item_form_class = "form form-horizontal"
+    create_item_form_class = "form"
+
+    def get_user_timezone(self):
+        return ZoneInfo(self.request.couch_user.get_time_zone() or 'UTC')
 
     def get_create_form(self, is_blank=False):
+        if self.managing_idp:
+            max_expiration_window = self.managing_idp.max_days_until_user_api_key_expiration
+        else:
+            max_expiration_window = None
+
+        user_domains = self.request.couch_user.get_domains()
+
         if self.request.method == 'POST' and not is_blank:
-            return HQApiKeyForm(self.request.POST, couch_user=self.request.couch_user)
-        return HQApiKeyForm(couch_user=self.request.couch_user)
+            return HQApiKeyForm(
+                self.request.POST,
+                user_domains=user_domains,
+                max_allowed_expiration_days=max_expiration_window,
+                timezone=self.get_user_timezone(),
+            )
+        return HQApiKeyForm(
+            user_domains=user_domains,
+            max_allowed_expiration_days=max_expiration_window,
+            timezone=self.get_user_timezone(),
+        )
 
     def get_create_item_data(self, create_form):
         try:
@@ -745,7 +793,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             'template': 'new-user-api-key-template',
         }
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         deleted_key = self.base_query.get(id=item_id)
         deleted_key.delete()
         return {

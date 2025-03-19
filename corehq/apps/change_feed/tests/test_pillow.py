@@ -5,7 +5,6 @@ from django.test import SimpleTestCase, TestCase
 
 from fakecouch import FakeCouchDb
 from kafka import KafkaConsumer
-from kafka.common import KafkaUnavailableError
 from unittest.mock import patch
 
 from pillowtop.dao.exceptions import DocumentMismatchError
@@ -17,10 +16,10 @@ from corehq.apps.change_feed.consumer.feed import (
 )
 from corehq.apps.change_feed.data_sources import SOURCE_COUCH
 from corehq.apps.change_feed.pillow import get_change_feed_pillow_for_db
+from corehq.apps.cleanup.models import DeletedCouchDoc
 from corehq.pillows.case import get_case_pillow
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
+from corehq.apps.es.cases import case_adapter
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import trap_extra_setup
 
 
 class ChangeFeedPillowTest(SimpleTestCase):
@@ -112,7 +111,7 @@ class TestElasticProcessorPillows(TestCase):
             self.pillow = get_case_pillow(skip_ucr=True)
 
     def tearDown(self):
-        ensure_index_deleted(CASE_INDEX_INFO.index)
+        ensure_index_deleted(case_adapter.index_name)
 
     def test_mismatched_rev(self):
         """
@@ -195,3 +194,25 @@ class TestElasticProcessorPillows(TestCase):
             )
         except DocumentMismatchError:
             self.fail('Incorectly raise a DocumentMismatchError for matching revs')
+
+
+class TestKafkaProcessor(TestCase):
+
+    def setUp(self):
+        self._fake_couch = FakeCouchDb()
+        self._fake_couch.dbname = 'test_commcarehq'
+        self.pillow = get_change_feed_pillow_for_db('fake-changefeed-pillow-id', self._fake_couch)
+
+    def test_deleted_couch_doc(self):
+        doc = {
+            '_id': '980023a6852643a19b87f2142b0c3ce1',
+            '_rev': 'v3-980023a6852643a19b87f2142b0c3ce1',
+            'doc_type': 'Group-Deleted',
+            'domain': 'test',
+        }
+        with self.assertRaises(DeletedCouchDoc.DoesNotExist):
+            DeletedCouchDoc.objects.get(doc_id=doc["_id"])
+
+        change = Change(doc["_id"], "24066c14d2154fbfb3b89407075809aa", doc)
+        self.pillow.process_change(change)
+        DeletedCouchDoc.objects.get(doc_id=doc["_id"])  # should not raise

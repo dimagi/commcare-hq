@@ -2,9 +2,11 @@ import attr
 import pytz
 import sys
 import uuid
+
+from corehq import toggles
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.dbaccessors import get_all_users_by_location
+from corehq.apps.locations.dbaccessors import get_all_users_by_location, user_ids_at_locations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
@@ -24,6 +26,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from datetime import timedelta, date, datetime, time
 from memoized import memoized
 from dimagi.utils.couch import get_redis_lock
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.modules import to_function
 from django.db import models
 from django.conf import settings
@@ -191,7 +194,14 @@ class ScheduleInstance(PartitionedModel):
     def expand_location_ids(domain, location_ids):
         user_ids = set()
         for location_id in location_ids:
-            for user in get_all_users_by_location(domain, location_id):
+            if toggles.INCLUDE_ALL_LOCATIONS.enabled(domain):
+                user_ids_at_this_location = user_ids_at_locations([location_id])
+                users = (CouchUser.wrap_correctly(u)
+                         for u in iter_docs(CouchUser.get_db(), user_ids_at_this_location))
+            else:
+                users = get_all_users_by_location(domain, location_id)
+
+            for user in users:
                 if user.is_active and user.get_id not in user_ids:
                     user_ids.add(user.get_id)
                     yield user
@@ -241,26 +251,40 @@ class ScheduleInstance(PartitionedModel):
 
         return set([value])
 
-    def passes_user_data_filter(self, contact):
+    def _get_filter_value(self, filter_value_or_property_name):
+        if filter_value_or_property_name.startswith('{') and filter_value_or_property_name.endswith('}'):
+            property_name = filter_value_or_property_name[1:-1].strip()
+            return self.case.case_json[property_name]
+        else:
+            return filter_value_or_property_name
+
+    def _passes_user_data_filter(self, contact):
         if not isinstance(contact, CouchUser):
-            return True
+            return True, ""
 
         if not self.memoized_schedule.user_data_filter:
-            return True
+            return True, ""
 
-        for key, value in self.memoized_schedule.user_data_filter.items():
-            if key not in contact.metadata:
-                return False
-
-            allowed_values_set = self.convert_to_set(value)
-            actual_values_set = self.convert_to_set(contact.metadata[key])
+        if self.memoized_schedule.use_user_case_for_filter:
+            user_case = contact.get_usercase_by_domain(self.domain)
+            if user_case:
+                user_data = user_case.case_json
+            else:
+                return False, "No user case to filter on"
+        else:
+            user_data = contact.get_user_data(self.domain)
+        for key, value_or_property_name in self.memoized_schedule.user_data_filter.items():
+            allowed_values_set = {self._get_filter_value(v) for v in self.convert_to_set(value_or_property_name)}
+            actual_values_set = self.convert_to_set(user_data.get(key, ""))
 
             if actual_values_set.isdisjoint(allowed_values_set):
-                return False
+                return False, (f"{key}: "
+                               f"allowed: ({','.join(allowed_values_set)}), "
+                               f"found: ({','.join(actual_values_set)})")
 
-        return True
+        return True, ""
 
-    def expand_recipients(self):
+    def expand_recipients(self, handle_filtered_recipient=None):
         """
         Can be used as a generator to iterate over all individual contacts who
         are the recipients of this ScheduleInstance.
@@ -271,8 +295,11 @@ class ScheduleInstance(PartitionedModel):
 
         for member in recipient_list:
             for contact in self._expand_recipient(member):
-                if self.passes_user_data_filter(contact):
+                passed, filter_reason = self._passes_user_data_filter(contact)
+                if passed:
                     yield contact
+                elif handle_filtered_recipient is not None:
+                    handle_filtered_recipient(contact, filter_reason)
 
     def get_content_send_lock(self, recipient):
         if is_commcarecase(recipient):
@@ -312,8 +339,15 @@ class ScheduleInstance(PartitionedModel):
 
         logged_event = MessagingEvent.create_from_schedule_instance(self, content)
 
+        def log_filtered_recipient(filtered_recipient, reason):
+            sub_event = logged_event.create_subevent_from_contact_and_content(
+                filtered_recipient,
+                content,
+            )
+            sub_event.error(MessagingEvent.FILTER_MISMATCH, reason, MessagingEvent.STATUS_COMPLETED)
+
         recipient_count = 0
-        for recipient in self.expand_recipients():
+        for recipient in self.expand_recipients(log_filtered_recipient):
             recipient_count += 1
 
             #   The framework will retry sending a non-processed schedule instance
@@ -557,7 +591,8 @@ class CaseScheduleInstanceMixin(object):
     RECIPIENT_TYPE_PARENT_CASE = 'ParentCase'
     RECIPIENT_TYPE_ALL_CHILD_CASES = 'AllChildCases'
     RECIPIENT_TYPE_CUSTOM = 'CustomRecipient'
-    RECIPIENT_TYPE_CASE_PROPERTY_USER = 'CasePropertyUser'
+    RECIPIENT_TYPE_CASE_PROPERTY_USERNAME = 'CasePropertyUser'
+    RECIPIENT_TYPE_CASE_PROPERTY_USER_ID = 'CasePropertyUserId'
     RECIPIENT_TYPE_CASE_PROPERTY_EMAIL = 'CasePropertyEmail'
 
     @property
@@ -633,10 +668,14 @@ class CaseScheduleInstanceMixin(object):
                 settings.AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS[self.recipient_id][0]
             )
             return custom_function(self)
-        elif self.recipient_type == self.RECIPIENT_TYPE_CASE_PROPERTY_USER:
+        elif self.recipient_type == self.RECIPIENT_TYPE_CASE_PROPERTY_USERNAME:
             username = self.case.get_case_property(self.recipient_id)
-            full_username = format_username(username, self.domain)
-            return CommCareUser.get_by_username(full_username)
+            if username:
+                return CouchUser.get_by_username(format_username(username, self.domain))
+        elif self.recipient_type == self.RECIPIENT_TYPE_CASE_PROPERTY_USER_ID:
+            user_id = self.case.get_case_property(self.recipient_id)
+            if user_id:
+                return CouchUser.get_by_user_id(user_id)
         elif self.recipient_type == self.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL:
             return EmailAddressRecipient(self.case, self.recipient_id)
         else:

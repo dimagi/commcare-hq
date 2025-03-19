@@ -6,21 +6,20 @@ from django.utils.translation import gettext as _
 
 from jsonobject.exceptions import BadValueError
 
-from corehq.apps.userreports.specs import FactoryContext
 from dimagi.utils.parsing import json_format_date, json_format_datetime
 from dimagi.utils.web import json_handler
 
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.date_specs import (
     AddDaysExpressionSpec,
+    AddHoursExpressionSpec,
     AddMonthsExpressionSpec,
     DiffDaysExpressionSpec,
     EthiopianDateToGregorianDateSpec,
     GregorianDateToEthiopianDateSpec,
     MonthEndDateExpressionSpec,
     MonthStartDateExpressionSpec,
-    AddHoursExpressionSpec,
-    UTCNow
+    UTCNow,
 )
 from corehq.apps.userreports.expressions.list_specs import (
     FilterItemsExpressionSpec,
@@ -46,6 +45,7 @@ from corehq.apps.userreports.expressions.specs import (
     NestedExpressionSpec,
     PropertyNameGetterSpec,
     PropertyPathGetterSpec,
+    RelatedCaseExpressionSpec,
     RelatedDocExpressionSpec,
     ReportingGroupsExpressionSpec,
     RootDocExpressionSpec,
@@ -53,6 +53,7 @@ from corehq.apps.userreports.expressions.specs import (
     SubcasesExpressionSpec,
     SwitchExpressionSpec,
 )
+from corehq.apps.userreports.specs import FactoryContext
 
 
 def _make_filter(spec, factory_context):
@@ -68,7 +69,6 @@ def _simple_expression_generator(wrapper_class, spec, factory_context):
 
 _identity_expression = functools.partial(_simple_expression_generator, IdentityExpressionSpec)
 _constant_expression = functools.partial(_simple_expression_generator, ConstantGetterSpec)
-_property_name_expression = functools.partial(_simple_expression_generator, PropertyNameGetterSpec)
 _property_path_expression = functools.partial(_simple_expression_generator, PropertyPathGetterSpec)
 _iteration_number_expression = functools.partial(_simple_expression_generator, IterationNumberExpressionSpec)
 _jsonpath_expression = functools.partial(_simple_expression_generator, JsonpathExpressionSpec)
@@ -130,6 +130,26 @@ def _related_doc_expression(spec, factory_context):
         doc_id_expression=ExpressionFactory.from_spec(wrapped.doc_id_expression, factory_context),
         value_expression=ExpressionFactory.from_spec(wrapped.value_expression, factory_context),
     )
+    return wrapped
+
+
+def _related_case_expression(spec, factory_context):
+    wrapped = RelatedCaseExpressionSpec.wrap(spec)
+    kwargs = {'value_expression': ExpressionFactory.from_spec(
+        wrapped.value_expression,
+        factory_context
+    )}
+    if getattr(wrapped, 'case_id_expression', None):
+        kwargs['case_id_expression'] = ExpressionFactory.from_spec(
+            wrapped.case_id_expression,
+            factory_context
+        )
+    if getattr(wrapped, 'external_id_expression', None):
+        kwargs['external_id_expression'] = ExpressionFactory.from_spec(
+            wrapped.external_id_expression,
+            factory_context,
+        )
+    wrapped.configure(**kwargs)
     return wrapped
 
 
@@ -231,10 +251,7 @@ def _ethiopian_date_to_gregorian_date(spec, factory_context):
 
 def _evaluator_expression(spec, factory_context):
     wrapped = EvalExpressionSpec.wrap(spec)
-    wrapped.configure(
-        context_variables={slug: ExpressionFactory.from_spec(expression, factory_context)
-                           for slug, expression in wrapped.context_variables.items()}
-    )
+    wrapped.configure(factory_context)
     return wrapped
 
 
@@ -363,6 +380,7 @@ class ExpressionFactory(object):
         'property_name': _property_name_expression,
         'property_path': _property_path_expression,
         'reduce_items': _reduce_items_expression,
+        'related_case': _related_case_expression,
         'related_doc': _related_doc_expression,
         'root_doc': _root_doc_expression,
         'sort_items': _sort_items_expression,

@@ -67,7 +67,6 @@ def _load_commcare_settings_layout(app):
         layout = yaml.safe_load(f)
 
     doc_type = app.get_doc_type()
-    j2me_section_ids = ['app-settings-j2me-properties', 'app-settings-j2me-ui']
     for section in layout:
         # i18n; not statically analyzable
         section['title'] = gettext_noop(section['title'])
@@ -91,9 +90,6 @@ def _load_commcare_settings_layout(app):
             for prop in LAYOUT_SETTINGS_TO_TRANSLATE:
                 if prop in setting:
                     setting[prop] = _translate_setting(setting, prop)
-
-        if not app.build_spec.supports_j2me() and section['id'] in j2me_section_ids:
-            section['always_show'] = False
 
     if settings:
         raise Exception(

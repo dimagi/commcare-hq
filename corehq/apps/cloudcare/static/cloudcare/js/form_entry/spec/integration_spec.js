@@ -1,10 +1,21 @@
-/* eslint-env mocha */
+import _ from "underscore";
+import initialPageData from "hqwebapp/js/initial_page_data";
+import sinon from "sinon";
+import constants from "cloudcare/js/form_entry/const";
+import formUI from "cloudcare/js/form_entry/form_ui";
+
 describe('Integration', function () {
-    var constants = hqImport("cloudcare/js/form_entry/const"),
-        formUI = hqImport("cloudcare/js/form_entry/form_ui"),
-        formJSON,
+    var formJSON,
         questionJSONMulti,
         questionJSONString;
+
+    before(function () {
+        initialPageData.register("toggles_dict", { WEB_APPS_ANCHORED_SUBMIT: false });
+    });
+
+    after(function () {
+        initialPageData.unregister("toggles_dict");
+    });
 
     beforeEach(function () {
         questionJSONMulti = {
@@ -18,6 +29,9 @@ describe('Integration', function () {
             "ix": "0",
             "relevant": 1,
             "help": null,
+            "help_image": null,
+            "help_audio": null,
+            "help_video": null,
             "answer": null,
             "datatype": constants.MULTI_SELECT,
             "style": {},
@@ -38,6 +52,9 @@ describe('Integration', function () {
             "ix": "1",
             "relevant": 1,
             "help": null,
+            "help_image": null,
+            "help_audio": null,
+            "help_video": null,
             "answer": null,
             "datatype": constants.STRING,
             "style": {},
@@ -58,7 +75,6 @@ describe('Integration', function () {
         this.clock.restore();
     });
 
-
     it('Should reconcile questions answered at the same time for strings', function () {
         var questionJSONString2 = {};
         $.extend(questionJSONString2, questionJSONString);
@@ -67,8 +83,8 @@ describe('Integration', function () {
         formJSON.tree = [questionJSONString, questionJSONString2];
         var form = formUI.Form(_.clone(formJSON));
 
-        var stringQ1 = form.children()[0];
-        var stringQ2 = form.children()[1];
+        var stringQ1 = form.children()[0].children()[0];
+        var stringQ2 = form.children()[1].children()[0];
 
         var response1 = {};
         $.extend(response1, formJSON);
@@ -112,8 +128,8 @@ describe('Integration', function () {
 
     it('Should reconcile questions answered at the same time for multi', function () {
         var form = formUI.Form(_.clone(formJSON));
-        var multiQ = form.children()[0];
-        var stringQ = form.children()[1];
+        var multiQ = form.children()[0].children()[0];
+        var stringQ = form.children()[1].children()[0];
 
         var response1 = {};
         $.extend(response1, formJSON);
@@ -173,6 +189,9 @@ describe('Integration', function () {
                 "ix": "0",
                 "relevant": 1,
                 "help": null,
+                "help_image": null,
+                "help_audio": null,
+                "help_video": null,
                 "answer": null,
                 "datatype": "geo",
                 "style": {},
@@ -194,6 +213,9 @@ describe('Integration', function () {
                 "ix": "0",
                 "relevant": 1,
                 "help": null,
+                "help_image": null,
+                "help_audio": null,
+                "help_video": null,
                 "answer": [
                     30.000000000000018, -2.109375,
                 ],
@@ -204,7 +226,7 @@ describe('Integration', function () {
         };
 
         var f = formUI.Form(json1);
-        var child = f.children()[0];
+        var child = f.children()[0].children()[0];
         $.publish('session.reconcile', [json2, child]);
         assert.equal(child.answer()[0], 30.000000000000018);
 

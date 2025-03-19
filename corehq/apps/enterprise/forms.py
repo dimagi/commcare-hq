@@ -1,12 +1,12 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import PrependedText, StrictButton
-from crispy_forms.helper import FormHelper
 
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -19,13 +19,21 @@ class EnterpriseSettingsForm(forms.Form):
     restrict_domain_creation = forms.BooleanField(
         label=gettext_lazy("Restrict Project Space Creation"),
         required=False,
-        help_text=gettext_lazy("Do not allow current web users, other than enterprise admins, "
-                               "to create new project spaces."),
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_lazy(
+                "Do not allow current web users, other than enterprise admins, "
+                "to create new project spaces."
+            ),
+        ),
     )
     restrict_signup = forms.BooleanField(
         label=gettext_lazy("Restrict User Signups"),
         required=False,
-        help_text=gettext_lazy("<span data-bind='html: restrictSignupHelp'></span>"),
+        widget=BootstrapCheckboxInput(
+            inline_label=mark_safe(gettext_lazy(
+                "<span data-bind='html: restrictSignupHelp'></span>"
+            )),
+        ),
     )
     restrict_signup_message = forms.CharField(
         label="Signup Restriction Message",
@@ -123,18 +131,15 @@ class EnterpriseSettingsForm(forms.Form):
             kwargs['initial'].update(self.export_settings.as_dict())
 
         super(EnterpriseSettingsForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
+        self.helper = hqcrispy.HQFormHelper(self)
         self.helper.form_id = 'enterprise-settings-form'
-        self.helper.form_class = 'form-horizontal'
         self.helper.form_action = reverse("edit_enterprise_settings", args=[self.domain])
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Edit Enterprise Settings"),
-                PrependedText('restrict_domain_creation', ''),
+                hqcrispy.CheckboxField('restrict_domain_creation'),
                 crispy.Div(
-                    PrependedText('restrict_signup', '', data_bind='checked: restrictSignup'),
+                    hqcrispy.CheckboxField('restrict_signup', data_bind='checked: restrictSignup'),
                 ),
                 crispy.Div(
                     crispy.Field('restrict_signup_message'),
@@ -151,20 +156,20 @@ class EnterpriseSettingsForm(forms.Form):
                         crispy.Div(
                             crispy.Field('forms_filetype'),
                         ),
-                        PrependedText('forms_auto_convert', ''),
-                        PrependedText('forms_auto_format_cells', ''),
-                        PrependedText('forms_expand_checkbox', ''),
+                        hqcrispy.CheckboxField('forms_auto_convert'),
+                        hqcrispy.CheckboxField('forms_auto_format_cells'),
+                        hqcrispy.CheckboxField('forms_expand_checkbox'),
                     ),
                     crispy.Fieldset(
                         _("Edit Default Case Export Settings"),
                         crispy.Div(
                             crispy.Field('cases_filetype')
                         ),
-                        PrependedText('cases_auto_convert', ''),
+                        hqcrispy.CheckboxField('cases_auto_convert'),
                     ),
                     crispy.Fieldset(
                         _("Edit Default OData Export Settings"),
-                        PrependedText('odata_expand_checkbox', ''),
+                        hqcrispy.CheckboxField('odata_expand_checkbox'),
                     ),
                 )
             )
@@ -249,6 +254,7 @@ class EnterpriseManageMobileWorkersForm(forms.Form):
             (120, gettext_lazy("120 days")),
             (150, gettext_lazy("150 days")),
             (180, gettext_lazy("180 days")),
+            (365, gettext_lazy("365 days")),
         ),
         help_text=gettext_lazy(
             "Mobile workers who have not submitted a form after these many "
@@ -281,11 +287,8 @@ class EnterpriseManageMobileWorkersForm(forms.Form):
         }
 
         super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
+        self.helper = hqcrispy.HQFormHelper(self)
         self.helper.form_id = 'emw-settings-form'
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Manage Mobile Workers"),

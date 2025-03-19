@@ -3,6 +3,7 @@ from collections import Counter
 
 from couchdbkit.exceptions import ResourceNotFound
 
+from corehq.apps.app_manager.models import Application, LinkedApplication, RemoteApp
 from corehq.apps.dump_reload.exceptions import DataExistsException
 from corehq.apps.dump_reload.interface import DataLoader
 from corehq.util.couch import (
@@ -48,15 +49,23 @@ class CouchDataLoader(DataLoader):
         return not self.object_filter or self.object_filter.findall(doc_type)
 
     def _get_db_for_doc_type(self, doc_type):
-        if doc_type not in self._dbs:
-            couch_db = get_db_by_doc_type(doc_type)
-            if couch_db is None:
-                raise DocumentClassNotFound('No Document class with name "{}" could be found.'.format(doc_type))
-            callback = LoaderCallback(self._success_counter, self.stdout)
-            db = IterDB(couch_db, new_edits=False, callback=callback)
-            db.__enter__()
+        db = self._dbs.get(doc_type)
+        if not db:
+            db = self._create_db_for_doc_type(doc_type)
             self._dbs[doc_type] = db
-        return self._dbs[doc_type]
+        return db
+
+    def _create_db_for_doc_type(self, doc_type):
+        couch_db = get_db_by_doc_type(doc_type)
+        if couch_db is None:
+            raise DocumentClassNotFound('No Document class with name "{}" could be found.'.format(doc_type))
+        callback = LoaderCallback(self._success_counter, self.stdout)
+        large_doc_types = [Application._doc_type, LinkedApplication._doc_type, RemoteApp._doc_type]
+        chunksize = 1 if doc_type in large_doc_types else self.chunksize
+        throttle_secs = 0.25 if self.should_throttle else None
+        db = IterDB(couch_db, new_edits=False, callback=callback, chunksize=chunksize, throttle_secs=throttle_secs)
+        db.__enter__()
+        return db
 
 
 class LoaderCallback(IterDBCallback):

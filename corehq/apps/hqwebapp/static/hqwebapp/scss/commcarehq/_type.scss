@@ -82,11 +82,10 @@ code {
   }
 }
 
-.mobile-ux-lead {
-  font-size: 1.8em;
-  line-height: 1.2em;
-}
-
 a {
     cursor: pointer;
+}
+
+button {
+  font-weight: bold !important; // to meet WCAG AA guidelines
 }

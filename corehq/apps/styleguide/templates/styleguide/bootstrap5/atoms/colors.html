@@ -1,0 +1,163 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">Colors</h1>
+  <p class="sg-lead">
+    Use color for <strong>communication</strong> over <strong>decoration</strong>.
+    Use of color should be purposeful, accessible, and help focus attention to what matters most.
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li>
+        <a href="#color-communication">Colors for Communication</a>
+        <ul>
+          <li><a href="#interaction-attention">Interaction and Attention</a></li>
+          <li><a href="#neutral">Neutral, Text and Backgrounds</a></li>
+        </ul>
+      </li>
+      <li>
+        <a href="#color-design">Colors for Design</a>
+        <ul>
+          <li><a href="#color-design-blue">CommCare Blue</a></li>
+          <li><a href="#color-design-gray">Gray</a></li>
+          <li><a href="#color-dimagi-gradient">Dimagi Gradient</a>
+            <ul>
+              <li><a href="#color-dimagi-gradient-shades">Shades</a></li>
+            </ul>
+          </li>
+          <li><a href="#dimagi-colors">Dimagi Palette</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <h2 id="color-communication">
+    Colors for Communication
+  </h2>
+  <p>
+    We strive to establish recognizable patterns to guide users through the UI.
+    CommCare uses similar palettes on both the mobile and server side.
+  </p>
+  <p>
+    When combining colors, use light text on a dark or medium background
+    and dark text on a light background. We make use of Bootstrap 5's
+    <code>$min-contrast-ratio</code> setting at a value of
+    3 to automatically determine when to show dark or light text on a background when using
+    the <code>text-bg-<$color></code> class on an element.
+  </p>
+  <p>
+    As described in <a href="{% url 'styleguide_atoms_accessibility_b5' %}">Accessibility</a>,
+    many people are affected by various types of <strong>color blindness</strong>.
+    It is important to make sure that colors are <em>never</em> the source
+    of critical information. Also, when colors are used to compare information
+    (legend of a bar or line chart) it is important that the colors used
+    can be differentiated by people with each type of color blindness, and when color separation is
+    not easily possible, distinguishable patterns are used in their place.
+  </p>
+
+  <h3 id="interaction-attention" class="pt-4">
+    Interaction and Attention
+  </h3>
+  <p>
+    Note: The subtle shades provided are present so that hex values of "subtle" colors are easily accessible
+    for design purposes. These lighter subtle colors are intended to be coupled with
+    darker text on top and are used as default backgrounds for Molecules like Alerts.
+  </p>
+  <div class="row">
+    {% for swatch in interaction %}
+      {% include 'styleguide/bootstrap5/atoms/partials/swatch.html' %}
+    {% endfor %}
+  </div>
+
+  <h3 id="neutral" class="pt-4">
+    Neutral Colors, Text and Backgrounds
+  </h3>
+  <div class="row">
+    {% for swatch in neutral %}
+      {% include 'styleguide/bootstrap5/atoms/partials/swatch.html' %}
+    {% endfor %}
+  </div>
+
+  <h2 id="color-design" class="pt-4">
+    Colors for Design
+  </h2>
+  <p>
+    Sometimes there is a need for additional colors when designing a new component which don't fall into any
+    of the communication categories above. The simple requirement is a color that meets our branding requirements.
+    For this we have several theme colors accessible through <code>SCSS</code> variables that follow
+    the Dimagi brand guidelines and Bootstrap 5 shading rules.
+  </p>
+  <div class="alert alert-primary">
+    <strong>Important:</strong> These colors should not be applied to HQ without sign-off from senior developers
+    and a design review. The colors appear here for reference of what options are available for use.
+  </div>
+
+  <h3 id="color-design-blue" class="pt-4">
+    CommCare Blue aka Blue
+  </h3>
+  <p>
+    The CommCare "cornflower blue" is what's applied to the <code>$primary</code>, and therefore <code>$blue</code>
+    or <code>$blue-500</code> shade. Below are approved gradations from light to dark based on this color.
+  </p>
+  {% include 'styleguide/bootstrap5/atoms/partials/gradient.html' with gradient=gradient.blue %}
+
+  <h3 id="color-design-gray" class="pt-4">
+    Gray
+  </h3>
+  <p>
+    While <code>$dark</code>, <code>$secondary</code>, and <code>$light</code> are the preferred shades
+    of gray for the theme, it is also possible to choose additional shades listed below.
+  </p>
+  {% include 'styleguide/bootstrap5/atoms/partials/gradient.html' with gradient=gradient.gray %}
+
+  <h3 id="color-dimagi-gradient" class="pt-4">
+    Dimagi Gradient
+  </h3>
+  <p>
+    Dimagi's branding has a gradient of color going from <code>$dimagi-indigo</code> (aka <code>$indigo</code>)
+    to <code>$dimagi-mango</code> (aka <code>$orange</code>).
+    We sliced this gradient into 25% intervals due to a decent contrast ratio of colors between intervals.
+    However, since <code>$orange</code> often has an emotional conection between danger and warning, we leave that
+    out of the usable "design" colors, preferring to include shades from <code>$indigo</code> to <code>$salmon</code>.
+  </p>
+  {% include 'styleguide/bootstrap5/atoms/partials/gradient.html' with gradient=gradient.slices %}
+
+  <h4 id="color-dimagi-gradient-shades" class="pt-4">
+    Gradient Shades
+  </h4>
+  <p>
+    Below are the above four design-friendly gradient colors divided further into Bootstrap 5 interval shades,
+    where the <code>$*-500</code> color is equivalent to the main color listed above.
+  </p>
+  <div class="row">
+    <div class="col-sm-6">
+      {% include 'styleguide/bootstrap5/atoms/partials/gradient.html' with gradient=gradient.indigo %}
+    </div>
+    <div class="col-sm-6">
+      {% include 'styleguide/bootstrap5/atoms/partials/gradient.html' with gradient=gradient.purple %}
+    </div>
+    <div class="col-sm-6">
+      {% include 'styleguide/bootstrap5/atoms/partials/gradient.html' with gradient=gradient.pink %}
+    </div>
+    <div class="col-sm-6">
+      {% include 'styleguide/bootstrap5/atoms/partials/gradient.html' with gradient=gradient.salmon %}
+    </div>
+  </div>
+
+  <h3 id="dimagi-colors" class="pt-4">
+    Dimagi Palette
+  </h3>
+  <p>
+    Below are the six colors named in the Dimagi color palette. The ones in use by our theme are marked.
+    However, since <code>$dimagi-deep-purple</code> feels very similar to <code>$indigo-800</code> and
+    <code>$dimagi-sky</code> similar to <code>$blue-400</code>, we prefer to avoid use of those colors.
+  </p>
+  {% include 'styleguide/bootstrap5/atoms/partials/gradient.html' with gradient=gradient.dimagi %}
+{% endblock content %}

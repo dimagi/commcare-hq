@@ -6,12 +6,12 @@ from corehq.apps.case_search.exceptions import (
     CaseFilterError,
     XPathFunctionException,
 )
-from corehq.apps.case_search.xpath_functions import XPATH_VALUE_FUNCTIONS
 
 
 def unwrap_value(value, context):
     """Returns the value of the node if it is wrapped in a function, otherwise just returns the node
     """
+    from corehq.apps.case_search.xpath_functions import XPATH_VALUE_FUNCTIONS
     if isinstance(value, Step):
         raise CaseFilterError(
             _("You cannot reference a case property on the right side "

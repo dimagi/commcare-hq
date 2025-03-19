@@ -1,6 +1,4 @@
-{% extends "reports/standard/base_template.html" %}
+{% extends "reports/standard/bootstrap3/base_template.html" %}
 {% load hq_shared_tags %}
 
-{% block js %}{{ block.super }}
-  <script src="{% static 'mc/js/main.js' %}"></script>
-{% endblock %}
+{% js_entry_b3 "mc/js/main" %}

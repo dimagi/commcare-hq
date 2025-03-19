@@ -57,4 +57,6 @@ def _send_registry_email(for_domain, subject, template, context):
     send_html_email_async.delay(
         subject, recipients, email_html,
         text_content=email_plaintext,
+        domain=for_domain,
+        use_domain_gateway=True,
     )

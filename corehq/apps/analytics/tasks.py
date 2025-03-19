@@ -59,11 +59,11 @@ from corehq.apps.es.users import UserES
 from corehq.apps.users.dbaccessors import get_all_user_rows
 from corehq.apps.users.models import WebUser
 from corehq.toggles import deterministic_random
-from corehq.util.dates import unix_time
+from corehq.util.dates import unix_time, unix_time_in_micros
 from corehq.util.decorators import analytics_task
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_LIVESUM, MPM_MAX
-from corehq.util.soft_assert import soft_assert
+from dimagi.utils.logging import notify_error
 
 logger = logging.getLogger('analytics')
 logger.setLevel('DEBUG')
@@ -374,7 +374,7 @@ def send_hubspot_form(form_id, request, user=None, extra_fields=None):
 
 @analytics_task()
 def send_hubspot_form_task(form_id, web_user_id, hubspot_cookie, meta,
-                              extra_fields=None):
+                           extra_fields=None):
     web_user = WebUser.get_by_user_id(web_user_id)
     _send_form_to_hubspot(form_id, web_user, hubspot_cookie, meta,
                           extra_fields=extra_fields)
@@ -442,7 +442,8 @@ def _track_workflow_task(email, event, properties=None, timestamp=0):
         res = km.record(
             email,
             event,
-            {_no_nonascii_unicode(k): _no_nonascii_unicode(v) for k, v in properties.items()} if properties else {},
+            {_no_nonascii_unicode(k): _no_nonascii_unicode(v) for k, v in properties.items()}
+            if properties else {},
             timestamp
         )
         log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)
@@ -678,11 +679,8 @@ def submit_data_to_hub_and_kiss(submit_json):
         try:
             dispatcher(submit_json)
         except requests.exceptions.HTTPError as e:
-            soft_assert(to=settings.SAAS_OPS_EMAIL, send_to_ops=False)(
-                False,
-                'Error submitting periodic analytics data to Hubspot or Kissmetrics',
-                {'response': e.response.content.decode('utf-8')}
-            )
+            notify_error("Error submitting periodic analytics data to Hubspot or Kissmetrics",
+                         details=e.response.content.decode('utf-8'))
         except Exception as e:
             notify_exception(None, "{msg}: {exc}".format(msg=error_message, exc=e))
 
@@ -777,10 +775,10 @@ def get_subscription_properties_by_user(couch_user):
             ProBonoStatus.YES,
             ProBonoStatus.DISCOUNTED,
         ]
-        return (plan_version.plan.visibility != SoftwarePlanVisibility.TRIAL and
-                subscription.service_type not in NON_PAYING_SERVICE_TYPES and
-                subscription.pro_bono_status not in NON_PAYING_PRO_BONO_STATUSES and
-                plan_version.plan.edition != SoftwarePlanEdition.COMMUNITY)
+        return (plan_version.plan.visibility != SoftwarePlanVisibility.TRIAL
+                and subscription.service_type not in NON_PAYING_SERVICE_TYPES
+                and subscription.pro_bono_status not in NON_PAYING_PRO_BONO_STATUSES
+                and plan_version.plan.edition != SoftwarePlanEdition.COMMUNITY)
 
     # Note: using "yes" and "no" instead of True and False because spec calls
     # for using these values. (True is just converted to "True" in KISSmetrics)
@@ -875,3 +873,51 @@ def generate_partner_reports():
         task_time.seconds,
         multiprocess_mode=MPM_LIVESUM
     )
+
+
+def record_event(event_name, couch_user, event_properties=None):
+    """
+    Record an event in Google Analytics.
+    """
+    if not couch_user.analytics_enabled:
+        return
+
+    event_properties = event_properties or {}
+
+    timestamp = unix_time_in_micros(datetime.utcnow())   # Dimagi KISSmetrics account uses UTC
+
+    event_body = {
+        # The client_id is meant to represent a unique user/device pairing, but we don't have access to that
+        # from the backend. Using the user ID as a placeholder, but the important identifying information
+        # is making sure the user ID is assigned correctly, as that needs to match between the frontend
+        # and backend to trace metrics
+        'client_id': couch_user.userID,
+        'user_id': couch_user.userID,
+        'timestamp_micros': timestamp,
+        'events': [{
+            'name': event_name,
+            'params': event_properties,
+        }]
+    }
+
+    _record_event_task.delay(json.dumps(event_body))
+
+
+@analytics_task()
+def _record_event_task(event_json):
+    ga_secret = settings.ANALYTICS_IDS.get('GOOGLE_ANALYTICS_SECRET', None)
+    ga_measurement_id = settings.ANALYTICS_IDS.get('GOOGLE_ANALYTICS_MEASUREMENT_ID', None)
+
+    if not (ga_secret and ga_measurement_id):
+        return
+
+    res = requests.post(
+        'https://www.google-analytics.com/mp/collect',
+        headers={'Content-Type': 'application/json'},
+        params={
+            'api_secret': ga_secret,
+            'measurement_id': ga_measurement_id,
+        },
+        data=event_json
+    )
+    res.raise_for_status()

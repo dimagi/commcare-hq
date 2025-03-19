@@ -1,0 +1,87 @@
+--- 
++++ 
+@@ -1,13 +1,15 @@
+ // side effects: defines knockout bindings that are used in hqwebapp/partials/pagination.html
+-hqDefine("hqwebapp/js/bootstrap3/crud_paginated_list", [
++hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list", [
+     "jquery",
+     "knockout",
+     "underscore",
+-    "hqwebapp/js/bootstrap3/knockout_bindings.ko",  // fadeVisible
++    "es6!hqwebapp/js/bootstrap5_loader",
++    'hqwebapp/js/bootstrap5/knockout_bindings.ko',  // fadeVisible
+ ], function (
+     $,
+     ko,
+     _,
++    bootstrap,
+ ) {
+     var CRUDPaginatedListModel = function (
+         total,
+@@ -198,8 +200,9 @@
+             self.changePage(1);
+         };
+ 
+-        self.deleteItem = function (paginatedItem) {
++        self.deleteItem = function (paginatedItem, event, button) {
+             var pList = self.paginatedList();
++            $(button).enableButton();
+             paginatedItem.dismissModals();
+             self.paginatedList(_(pList).without(paginatedItem));
+             self.deletedList.push(paginatedItem);
+@@ -223,7 +226,7 @@
+             });
+         };
+ 
+-        self.refreshList = function (paginatedItem) {
++        self.refreshList = function (paginatedItem, button) {
+             $.ajax({
+                 url: '',
+                 type: 'post',
+@@ -239,6 +242,7 @@
+                 statusCode: self.handleStatusCode,
+                 success: function (data) {
+                     self.utils.reloadList(data);
++                    $(button).enableButton();
+                 },
+             });
+         };
+@@ -270,15 +274,9 @@
+         };
+ 
+         self.dismissModals = function () {
+-            var $modals = self.getItemRow().find('.modal');
+-            if ($modals) {
+-                $modals.modal('hide');
+-                //  fix for b3
+-                $('body').removeClass('modal-open');
+-                var $modalBackdrop = $('.modal-backdrop');
+-                if ($modalBackdrop) {
+-                    $modalBackdrop.remove();
+-                }
++            var $modal = self.getItemRow().find('.modal');
++            if ($modal) {
++                bootstrap.Modal.getOrCreateInstance($modal).hide();
+             }
+         };
+ 
+@@ -321,15 +319,15 @@
+             var $deleteButton = $(elems).find('.delete-item-confirm');
+             if ($deleteButton) {
+                 $deleteButton.click(function () {
+-                    $(this).button('loading');
+-                    self.getItemRow().trigger('deleteItem');
++                    $(this).disableButton();
++                    self.getItemRow().trigger('deleteItem', this);
+                 });
+             }
+             var $refreshButton = $(elems).find('.refresh-list-confirm');
+             if ($refreshButton) {
+                 $refreshButton.click(function () {
+-                    $(this).button('loading');
+-                    self.getItemRow().trigger('refreshList');
++                    $(this).disableButton();
++                    self.getItemRow().trigger('refreshList', this);
+                 });
+             }
+             self.initRow(elems, self);

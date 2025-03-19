@@ -2,7 +2,8 @@ import os
 import re
 import warnings
 
-from django.utils.deprecation import RemovedInDjango41Warning
+from django.utils.deprecation import RemovedInDjango50Warning, RemovedInDjango51Warning
+
 from sqlalchemy.exc import SAWarning
 
 
@@ -18,26 +19,13 @@ WHITELIST = [
     # (module_path, message_substring_or_regex, optional_warning_class, override_action)
 
     # warnings that may be resolved with a library upgrade
-    ("captcha.fields", "ugettext_lazy() is deprecated"),
-    ("compressor.filters.base", "smart_text() is deprecated"),
-    ("compressor.signals", "The providing_args argument is deprecated."),
+    ("bs4.builder", "option of HTMLParser() has never done anything"),
     ("couchdbkit.schema.properties", "'collections.abc'"),
-    ("django.apps", re.compile(r"'(" + "|".join(re.escape(app) for app in [
-        "captcha",
-        "django_celery_results",
-        "oauth2_provider",
-        "statici18n",
-        "two_factor",
-    ]) + ")' defines default_app_config"), RemovedInDjango41Warning),
-    ("django_celery_results", "ugettext_lazy() is deprecated"),
-    ("logentry_admin.admin", "ugettext_lazy() is deprecated"),
-    ("nose.importer", "the imp module is deprecated"),
-    ("nose.util", "inspect.getargspec() is deprecated"),
+    ("ddtrace.internal.module", "pkg_resources is deprecated as an API"),
+    ("eulxml", "pkg_resources is deprecated as an API"),
     ("pkg_resources", "pkg_resources.declare_namespace"),
-    ("tastypie", "django.conf.urls.url() is deprecated"),
-    ("tastypie", "request.is_ajax() is deprecated"),
-    ("nose.suite", "'collections.abc'"),
-    ("nose.plugins.collect", "'collections.abc'"),
+    ("", "", RemovedInDjango50Warning),
+    ("", "", RemovedInDjango51Warning),
 
     # warnings that can be resolved with HQ code changes
     ("", "json_response is deprecated.  Use django.http.JsonResponse instead."),
@@ -52,6 +40,18 @@ WHITELIST = [
         re.compile(r"Invalid index settings key .+, expected one of \["),
         UserWarning,
     ),
+    (
+        # Should be removed if fixed after upgrading to ES 6.x
+        "elasticsearch5.connection.http_urllib3",
+        "HTTPResponse.getheaders() is deprecated and will be removed in urllib3 v2.1.0."
+    ),
+    (
+        # This should be tested on a newer version(>2.5) of ES.Should be removed if fixed
+        "elasticsearch6.connection.http_urllib3",
+        "HTTPResponse.getheaders() is deprecated and will be removed in urllib3 v2.1.0."
+    ),
+    # Open files are leaked all over the place, it will probably take a long time to fix all of them
+    ("", "unclosed file", ResourceWarning),
 
     # other, resolution not obvious
     ("IPython.core.interactiveshell", "install IPython inside the virtualenv.", UserWarning),
@@ -65,10 +65,13 @@ WHITELIST = [
     # warnings that should not be ignored
     # note: override_action "default" causes warning to be printed on stderr
     ("django.db.backends.postgresql.base", "unable to create a connection", RuntimeWarning, "default"),
+    # This is an internal stripe-python warning that is not actionable as of now
+    # It might get resolved in the future, but for now, it is not actionable
+    ("stripe", "For internal stripe-python use only. The public interface will be removed in a future version"),
 ]
 
 
-def configure_warnings(is_testing):
+def configure_warnings(is_testing=False):
     strict = is_testing or os.environ.get("CCHQ_STRICT_WARNINGS")
     if strict:
         augment_warning_messages()

@@ -15,7 +15,7 @@ OWNER_TYPE_CHOICES = [
     (OWNER_TYPE_USER, _('User')),
 ]
 
-# See https://www.hl7.org/fhir/valueset-bundle-type.html
+# See https://hl7.org/fhir/R4/valueset-bundle-type.html
 FHIR_BUNDLE_TYPES = {
     'document',
     'message',
@@ -35,10 +35,12 @@ FHIR_BUNDLE_TYPES = {
 XMLNS_FHIR = 'http://commcarehq.org/x/fhir/engine-read'
 
 # The URI to identify CommCare as the system responsible for allocating
-# case IDs. See https://www.hl7.org/fhir/datatypes.html#Identifier
+# case IDs. See https://hl7.org/fhir/R4/datatypes.html#Identifier
 SYSTEM_URI_CASE_ID = 'http://commcarehq.org/x/fhir/case-id'
 
 FHIR_DATA_TYPE_LIST_OF_STRING = 'fhir_list_of_string'
 FHIR_DATA_TYPES = (
     FHIR_DATA_TYPE_LIST_OF_STRING,
 )
+
+HQ_ACCEPTABLE_FHIR_MIME_TYPES = ['application/json', 'application/fhir+json']

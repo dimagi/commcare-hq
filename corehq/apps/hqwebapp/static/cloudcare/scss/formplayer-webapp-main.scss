@@ -1,0 +1,28 @@
+@import "../../hqwebapp/scss/commcarehq/variables";
+@import "../../hqwebapp/scss/commcarehq/mixins";
+
+/**
+These are all the styles relevant to the full-screen version of formplayer which
+might interfere with the app preview formplayer. Making changes here should not
+affect app preview.
+
+If you want to make changes relevant for BOTH app preview and the main
+formplayer, please make changes to the cloudcare styles.
+**/
+
+$breadcrumb-height: 36px;
+$cloudcare-nav-height: 30px;
+$minimized-debugger-height: 30px;
+
+@import "formplayer-webapp/content";
+@import "formplayer-webapp/navbar";
+@import "formplayer-webapp/breadcrumbs";
+@import "formplayer-webapp/query";
+@import "formplayer-webapp/menu";
+@import "formplayer-webapp/module";
+@import "formplayer-webapp/form";
+@import "formplayer-webapp/formnav";
+@import "formplayer-webapp/version";
+@import "formplayer-webapp/print-general";
+@import "formplayer-webapp/case-tile";
+@import "formplayer-webapp/leaflet";

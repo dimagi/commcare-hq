@@ -1,21 +1,18 @@
+
 hqDefine("registry/js/registry_logs", [
     'moment',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/alert_user',
     'registry/js/registry_actions',
+    'hqwebapp/js/tempus_dominus',
     'hqwebapp/js/components/pagination',
-    'hqwebapp/js/daterangepicker.config',
 ], function (
     moment,
     ko,
     initialPageData,
-    alertUser,
     actions,
-    pagination
+    hqTempusDominus,
 ) {
-    ko.components.register('pagination', pagination);
-
     const allDatesText = gettext("Show All Dates"),
         allDomainsText = gettext("All Project Spaces"),
         allActionsText = gettext("All Actions");
@@ -58,10 +55,10 @@ hqDefine("registry/js/registry_logs", [
                 'limit': self.perPage(),
             };
             if (self.dateRange() && self.dateRange() !== allDatesText) {
-                const separator = $().getDateRangeSeparator(),
+                const separator = hqTempusDominus.getDateRangeSeparator(),
                     dates = self.dateRange().split(separator);
                 requestData.startDate = dates[0];
-                requestData.endDate = dates[1];
+                requestData.endDate = dates[1] || dates[0];
             }
             if (self.selectedProjectSpace() && self.selectedProjectSpace() !== allDomainsText) {
                 requestData.domain = self.selectedProjectSpace();
@@ -84,7 +81,7 @@ hqDefine("registry/js/registry_logs", [
 
     $(function () {
         $('.report-filter-datespan-filter').each(function (i, el) {
-            $(el).createBootstrap3DefaultDateRangePicker();
+            hqTempusDominus.createDefaultDateRangePicker(el);
         });
     });
     return {

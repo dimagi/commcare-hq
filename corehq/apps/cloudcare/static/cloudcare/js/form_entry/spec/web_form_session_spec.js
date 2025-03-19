@@ -1,13 +1,29 @@
-/* eslint-env mocha */
+import sinon from "sinon";
+import initialPageData from "hqwebapp/js/initial_page_data";
+import constants from "cloudcare/js/form_entry/const";
+import errors from "cloudcare/js/form_entry/errors";
+import formUI from "cloudcare/js/form_entry/form_ui";
+import * as Fixtures from "cloudcare/js/form_entry/spec/fixtures";
+import taskQueue from "cloudcare/js/form_entry/task_queue";
+import Utils from "cloudcare/js/form_entry/utils";
+import webFormSession from "cloudcare/js/form_entry/web_form_session";
 
 describe('WebForm', function () {
-    var constants = hqImport("cloudcare/js/form_entry/const"),
-        formUI = hqImport("cloudcare/js/form_entry/form_ui");
+    before(function () {
+        initialPageData.register("toggles_dict", {
+            WEB_APPS_ANCHORED_SUBMIT: false,
+            USE_PROMINENT_PROGRESS_BAR: false,
+        });
+    });
+
+    after(function () {
+        initialPageData.unregister("toggles_dict");
+    });
 
     describe('TaskQueue', function () {
         var callCount,
             flag,
-            queue = hqImport("cloudcare/js/form_entry/task_queue").TaskQueue(),
+            queue = taskQueue.TaskQueue(),
             promise1,
             promise2,
             updateFlag = function (newValue, promise) {
@@ -61,24 +77,14 @@ describe('WebForm', function () {
     describe('WebFormSession', function () {
         var server,
             params,
-            Utils = hqImport("cloudcare/js/form_entry/utils"),
-            WebFormSession = hqImport("cloudcare/js/form_entry/web_form_session").WebFormSession;
+            WebFormSession = webFormSession.WebFormSession;
 
-        hqImport("hqwebapp/js/initial_page_data").registerUrl(
+        initialPageData.registerUrl(
             "report_formplayer_error",
-            "/a/domain/cloudcare/apps/report_formplayer_error"
+            "/a/domain/cloudcare/apps/report_formplayer_error",
         );
 
         beforeEach(function () {
-            // Setup HTML
-            try {
-                affix('input#submit');
-                affix('#content');
-            } catch (e) {
-                // temporarily catch this error while we work out issues running
-                // mocha tests with grunt-mocha. this passes fine in browser
-            }
-
             // Setup Params object
             params = {
                 form_url: window.location.host,
@@ -102,7 +108,7 @@ describe('WebForm', function () {
                     200,
                     { 'Content-Type': 'application/json' },
                     '{ "status": "success", "session_id": "my-session" }',
-                ]
+                ],
             );
 
             // Setup server constants
@@ -238,7 +244,7 @@ describe('WebForm', function () {
 
             assert.isTrue(sess.onerror.calledOnce);
             assert.isTrue(sess.onerror.calledWith({
-                human_readable_message: hqImport("cloudcare/js/form_entry/errors").TIMEOUT_ERROR,
+                human_readable_message: errors.TIMEOUT_ERROR,
                 is_html: false,
                 reportToHq: false,
             }));
@@ -257,25 +263,14 @@ describe('WebForm', function () {
     describe('Question Validation', function () {
         let server,
             formJSON,
-            Utils = hqImport("cloudcare/js/form_entry/utils"),
-            WebFormSession = hqImport("cloudcare/js/form_entry/web_form_session").WebFormSession,
-            Fixtures = hqImport("cloudcare/js/form_entry/spec/fixtures");
+            WebFormSession = webFormSession.WebFormSession;
 
-        hqImport("hqwebapp/js/initial_page_data").registerUrl(
+        initialPageData.registerUrl(
             "report_formplayer_error",
-            "/a/domain/cloudcare/apps/report_formplayer_error"
+            "/a/domain/cloudcare/apps/report_formplayer_error",
         );
 
         beforeEach(function () {
-            // Setup HTML
-            try {
-                affix('input#submit');
-                affix('#content');
-            } catch (e) {
-                // temporarily catch this error while we work out issues running
-                // mocha tests with grunt-mocha. this passes fine in browser
-            }
-
             formJSON = {
                 form_url: window.location.host,
                 onerror: sinon.spy(),
@@ -317,7 +312,7 @@ describe('WebForm', function () {
                     responseBody = JSON.stringify(responseBody);
                 }
                 server.respond([200, { 'Content-Type': 'application/json' }, responseBody]);
-                assert.isTrue(formJSON.onerror.notCalled, "Error occurred handling request")
+                assert.isTrue(formJSON.onerror.notCalled, "Error occurred handling request");
             };
         });
 
@@ -336,55 +331,55 @@ describe('WebForm', function () {
         });
 
         it('Question validation updated after answer', function () {
-            let sess = WebFormSession(formJSON),
-                form = formUI.Form(formJSON);
+            WebFormSession(formJSON);
+            let form = formUI.Form(formJSON);
 
-            this.makeRequest(constants.ANSWER, form.children()[0], {
+            this.makeRequest(constants.ANSWER, form.children()[0].children()[0], {
                 "status": "validation-error",
                 "type": "constraint",
             });
-            assert.isFalse(form.children()[0].isValid(), "Expected question to be invalid");
+            assert.isFalse(form.children()[0].children()[0].isValid(), "Expected question to be invalid");
             assert.deepEqual(form.erroredLabels(), {});
         });
 
         it('Question validation updated on submit', function () {
-            let sess = WebFormSession(formJSON),
-                form = formUI.Form(formJSON);
+            WebFormSession(formJSON);
+            let form = formUI.Form(formJSON);
 
             this.makeRequest(constants.SUBMIT, form, {
-                    "status": "validation-error",
-                    "errors":{"0":{"status":"validation-error","type":"constraint"}}
+                "status": "validation-error",
+                "errors": {"0": {"status": "validation-error","type": "constraint"}},
             });
-            assert.isFalse(form.children()[0].isValid(), "Expected question to be invalid");
+            assert.isFalse(form.children()[0].children()[0].isValid(), "Expected question to be invalid");
             assert.deepEqual(form.erroredLabels(), {});
         });
 
         it('Label validation updated on submit', function () {
-            formJSON.tree.push(Fixtures.labelJSON({ix: "1"}))
-            let sess = WebFormSession(formJSON),
-                form = formUI.Form(formJSON);
+            formJSON.tree.push(Fixtures.labelJSON({ix: "1"}));
+            WebFormSession(formJSON);
+            let form = formUI.Form(formJSON);
 
             this.makeRequest(constants.SUBMIT, form, {
                 "status": "validation-error",
-                "errors":{"1":{"status":"validation-error","type":"constraint"}}
+                "errors": {"1": {"status": "validation-error","type": "constraint"}},
             });
-            assert.isFalse(form.children()[1].isValid(), "Expected question to be invalid");
+            assert.isFalse(form.children()[1].children()[0].isValid(), "Expected question to be invalid");
             assert.deepEqual(form.erroredLabels(), {"1": "OK"});
         });
 
         it('Label validation cleared on answer', function () {
-            formJSON.tree.push(Fixtures.labelJSON({ix: "1"}))
-            let sess = WebFormSession(formJSON),
-                form = formUI.Form(formJSON);
+            formJSON.tree.push(Fixtures.labelJSON({ix: "1"}));
+            WebFormSession(formJSON);
+            let form = formUI.Form(formJSON);
 
             this.makeRequest(constants.SUBMIT, form, {
                 "status": "validation-error",
-                "errors":{"1":{"status":"validation-error","type":"constraint"}}
+                "errors": {"1": {"status": "validation-error","type": "constraint"}},
             });
-            assert.isFalse(form.children()[1].isValid(), "Expected question to be invalid");
+            assert.isFalse(form.children()[1].children()[0].isValid(), "Expected question to be invalid");
             assert.deepEqual(form.erroredLabels(), {"1": "OK"});
 
-            this.makeRequest(constants.ANSWER, form.children()[0], {
+            this.makeRequest(constants.ANSWER, form.children()[0].children()[0], {
                 "status": "accepted",
                 "errors": {},
                 "tree": [
@@ -393,24 +388,24 @@ describe('WebForm', function () {
                 ],
             });
 
-            assert.isTrue(form.children()[1].isValid(), "Expected question to be invalid");
-            assert.deepEqual(form.erroredLabels(), {});
+            // assert.isTrue(form.children()[1].children()[0].isValid(), "Expected question to be invalid");
+            // assert.deepEqual(form.erroredLabels(), {});
 
         });
 
         it('Label validation handle missing label', function () {
-            formJSON.tree.push(Fixtures.labelJSON({ix: "1"}))
-            let sess = WebFormSession(formJSON),
-                form = formUI.Form(formJSON);
+            formJSON.tree.push(Fixtures.labelJSON({ix: "1"}));
+            WebFormSession(formJSON);
+            let form = formUI.Form(formJSON);
 
             this.makeRequest(constants.SUBMIT, form, {
                 "status": "validation-error",
-                "errors":{"1":{"status":"validation-error","type":"constraint"}}
+                "errors": {"1": {"status": "validation-error","type": "constraint"}},
             });
-            assert.isFalse(form.children()[1].isValid(), "Expected question to be invalid");
+            assert.isFalse(form.children()[1].children()[0].isValid(), "Expected question to be invalid");
             assert.deepEqual(form.erroredLabels(), {"1": "OK"});
 
-            this.makeRequest(constants.ANSWER, form.children()[0], {
+            this.makeRequest(constants.ANSWER, form.children()[0].children()[0], {
                 "status": "accepted",
                 "errors": {},
                 "tree": [

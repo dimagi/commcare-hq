@@ -1,16 +1,17 @@
 import uuid
 
-import attr
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models, transaction
+
+import attr
 from field_audit import audit_fields
 from field_audit.models import AuditAction, AuditingManager
 
-from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
-from corehq.util.models import ForeignValue, foreign_value_init
-from corehq.util.quickcache import quickcache
 from dimagi.utils.logging import notify_error
+
+from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
+from corehq.util.models import ForeignValue, foreign_init
 
 
 @attr.s(frozen=True)
@@ -162,7 +163,12 @@ class UserRole(models.Model):
     def set_permissions(self, permission_infos):
         def _clear_query_cache():
             try:
-                self.refresh_from_db(fields=["rolepermission_set"])
+                # There is a bug in refresh_from_db when specifying fields that results in this error:
+                # RuntimeError: Set changed size during iteration
+                # Once on a version of Django that includes the change made for
+                # https://code.djangoproject.com/ticket/35044, we can specify fields again.
+                # self.refresh_from_db(fields=["rolepermission_set"])
+                self.refresh_from_db()
             except FieldDoesNotExist:
                 pass
 
@@ -192,7 +198,13 @@ class UserRole(models.Model):
         _clear_query_cache()
 
     def get_permission_infos(self):
-        return [rp.as_permission_info() for rp in self.rolepermission_set.all()]
+        try:
+            role_permission_set = self.rolepermission_set.all()
+        except ValueError:
+            # A ValueError is raised if this instance hasn't been saved yet when attempting to access the reverse
+            # foreign key relationship. Return an empty list in this scenario.
+            return []
+        return [rp.as_permission_info() for rp in role_permission_set]
 
     @property
     def permissions(self):
@@ -209,7 +221,12 @@ class UserRole(models.Model):
     def set_assignable_by(self, role_ids):
         def _clear_query_cache():
             try:
-                self.refresh_from_db(fields=["roleassignableby_set"])
+                # There is a bug in refresh_from_db when specifying fields that results in this error:
+                # RuntimeError: Set changed size during iteration
+                # Once on a version of Django that includes the change made for
+                # https://code.djangoproject.com/ticket/35044, we can specify fields again.
+                # self.refresh_from_db(fields=["roleassignableby_set"])
+                self.refresh_from_db()
             except FieldDoesNotExist:
                 pass
 
@@ -240,9 +257,7 @@ class UserRole(models.Model):
 
     @property
     def assignable_by_couch(self):
-        return list(
-            self.roleassignableby_set.values_list('assignable_by_role__couch_id', flat=True)
-        )
+        return list(self.roleassignableby_set.values_list("assignable_by_role__couch_id", flat=True))
 
     @property
     def assignable_by(self):
@@ -255,7 +270,7 @@ class UserRole(models.Model):
 
 @audit_fields("role", "permission_fk", "allow_all", "allowed_items",
               audit_special_queryset_writes=True)
-@foreign_value_init
+@foreign_init
 class RolePermission(models.Model):
     role = models.ForeignKey("UserRole", on_delete=models.CASCADE)
     permission_fk = models.ForeignKey("Permission", on_delete=models.CASCADE)
@@ -296,11 +311,18 @@ class RolePermission(models.Model):
         return PermissionInfo(self.permission, allow=allow)
 
 
+class PermissionManager(AuditingManager):
+
+    def get_by_natural_key(self, value):
+        # Useful when serializing data that foreign keys to this table for a migration (e.g., RolePermission)
+        return self.get(value=value)
+
+
 @audit_fields("value", audit_special_queryset_writes=True)
 class Permission(models.Model):
     value = models.CharField(max_length=255, unique=True)
 
-    objects = AuditingManager()
+    objects = PermissionManager()
 
     class Meta:
         db_table = "users_permission"
@@ -313,6 +335,10 @@ class Permission(models.Model):
         from corehq.apps.users.models import HqPermissions
         for name in HqPermissions.permission_names():
             Permission.objects.get_or_create(value=name)
+
+    def natural_key(self):
+        # Useful when serializing data that foreign keys to this table for a migration (e.g., RolePermission)
+        return (self.value,)
 
 
 @audit_fields("role", "assignable_by_role", audit_special_queryset_writes=True)

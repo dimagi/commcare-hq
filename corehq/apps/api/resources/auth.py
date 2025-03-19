@@ -1,8 +1,7 @@
-import json
 from functools import wraps
 
 from django.core.exceptions import PermissionDenied
-from django.http import Http404, HttpResponse, HttpResponseForbidden
+from django.http import Http404, HttpResponseForbidden, JsonResponse
 
 from attrs import define, field
 from tastypie.authentication import Authentication
@@ -18,7 +17,7 @@ from corehq.apps.users.decorators import (
     require_api_permission,
     require_permission_raw,
 )
-from corehq.toggles import API_THROTTLE_WHITELIST, IS_CONTRACTOR
+from corehq.toggles import IS_CONTRACTOR
 
 
 def wrap_4xx_errors_for_apis(view_func):
@@ -28,11 +27,9 @@ def wrap_4xx_errors_for_apis(view_func):
             return view_func(req, *args, **kwargs)
         except Http404 as e:
             if str(e):
-                return HttpResponse(json.dumps({"error": str(e)}),
-                                content_type="application/json",
-                                status=404)
-            return HttpResponse(json.dumps({"error": "not authorized"}),
-                                content_type="application/json",
+                return JsonResponse({"error": str(e)},
+                                    status=404)
+            return JsonResponse({"error": "not authorized"},
                                 status=401)
     return _inner
 
@@ -192,7 +189,7 @@ class ODataAuthentication(LoginAndDomainAuthentication):
 class DomainAdminAuthentication(LoginAndDomainAuthentication):
 
     def is_authenticated(self, request, **kwargs):
-        permission_check = lambda couch_user, domain: couch_user.is_domain_admin(domain)
+        permission_check = lambda couch_user, domain: couch_user.is_domain_admin(domain)  # noqa: E731
         wrappers = [
             require_permission_raw(permission_check, login_decorator=self._get_auth_decorator(request)),
             wrap_4xx_errors_for_apis,
@@ -205,8 +202,7 @@ class AdminAuthentication(LoginAndDomainAuthentication):
     @staticmethod
     def _permission_check(couch_user, domain):
         return (
-            couch_user.is_superuser or
-            IS_CONTRACTOR.enabled(couch_user.username)
+            couch_user.is_superuser or IS_CONTRACTOR.enabled(couch_user.username)
         )
 
     def is_authenticated(self, request, **kwargs):

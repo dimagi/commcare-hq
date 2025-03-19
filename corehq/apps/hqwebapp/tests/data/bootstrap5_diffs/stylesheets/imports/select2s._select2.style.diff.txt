@@ -1,58 +1,118 @@
 --- 
 +++ 
-@@ -14,20 +14,20 @@
+@@ -1,5 +1,6 @@
+ .controls-multiple {
+-  .select2, .select2-container {
++  .select2,
++  .select2-container {
+     margin-left: 10px;
+     margin-bottom: 3px;
+   }
+@@ -14,74 +15,185 @@
  }
  
  // Static width for select2 widgets, which otherwise grow too large on form view's case management tab
 -.case-config-select2s(@width) {
-+@mixin case-config-select2s($width) {
-     .select2-container {
+-    .select2-container {
 -        width: @width;
-+        width: $width;
-     }
+-    }
++@mixin case-config-select2s($width) {
++  .select2-container {
++    width: $width;
++  }
  
-     // This needs a static width so that text-overflow: ellipsis will work in Firefox.
-     // Unusually specific selector to override select2's width: auto rule.
-     > .select2-choice > .select2-chosen {
+-    // This needs a static width so that text-overflow: ellipsis will work in Firefox.
+-    // Unusually specific selector to override select2's width: auto rule.
+-    > .select2-choice > .select2-chosen {
 -        width: @width - 35px;
-+        width: $width - 35px;
-     }
+-    }
++  // This needs a static width so that text-overflow: ellipsis will work in Firefox.
++  // Unusually specific selector to override select2's width: auto rule.
++  > .select2-choice > .select2-chosen {
++    width: $width - 35px;
++  }
  }
  
 -.property-descriptions(@width) {
 -    width: @width;
+-    white-space: nowrap;
+-    overflow: hidden;
+-    text-overflow: ellipsis;
+-    display: inline-block;
 +@mixin property-descriptions($width) {
-+    width: $width;
-     white-space: nowrap;
-     overflow: hidden;
-     text-overflow: ellipsis;
-@@ -35,19 +35,19 @@
++  width: $width;
++  white-space: nowrap;
++  overflow: hidden;
++  text-overflow: ellipsis;
++  display: inline-block;
  }
  
- #case-config-ko, #usercase-config-ko {
+-#case-config-ko, #usercase-config-ko {
 -    @select2Width: 210px;
-+    $select2Width: 210px;
++#case-config-ko,
++#usercase-config-ko {
++  $select2Width: 210px;
  
 -    .case-config-select2s(@select2Width);
-+    @include case-config-select2s($select2Width);
++  @include case-config-select2s($select2Width);
  
++  .property-description {
++    @include property-descriptions($select2Width);
++  }
++
++  .wide-select2s {
++    $wideWidth: $select2Width * 1.5;
++    @include case-config-select2s($wideWidth);
      .property-description {
 -      .property-descriptions(@select2Width);
-+       @include property-descriptions($select2Width);
++      @include property-descriptions($wideWidth);
      }
- 
-     .wide-select2s {
+-
+-    .wide-select2s {
 -      @wideWidth: @select2Width * 1.5;
 -      .case-config-select2s(@wideWidth);
-+      $wideWidth: $select2Width * 1.5;
-+       @include case-config-select2s($wideWidth);
-       .property-description {
+-      .property-description {
 -        .property-descriptions(@wideWidth);
-+         @include property-descriptions($wideWidth);
-       }
-     }
+-      }
+-    }
++  }
  }
-@@ -67,9 +67,9 @@
+ 
+ // hack to fix issues with placeholder not showing up fully
+ // !important is necessary because this is overriding an inline style set by select2 javascript
+ .select2-container {
++  width: 100% !important;
++
++  .select2-search-field {
+     width: 100% !important;
++  }
+ 
+-    .select2-selection.select2-selection--single {
+-        height: @input-height-base;
+-    }
++  .select2-input {
++    width: 100% !important;
++  }
++}
+ 
+-    .select2-selection.select2-selection--multiple {
+-        min-height: @input-height-base;
+-    }
+-
+-    .select2-search-field {
+-        width: 100% !important;
+-    }
+-
+-    .select2-input {
+-        width: 100% !important;
+-    }
+-
+-    textarea.select2-search__field {    // Placeholder for multi-select
+-        line-height: 21px;
+-    }
++.select2-search__field::placeholder {
++  font-size: $font-size-base;
++  font-family: $font-family-base;
  }
  
  .select2-container.select2-container-active > .select2-choice {
@@ -64,3 +124,120 @@
 -  color: @gray-base !important;
 +  color: $gray-base !important;
  }
++
++.select2-container--default .select2-selection--single,
++.select2-container--default .select2-selection--multiple {
++  border-color: $border-color !important;
++  min-height: 32px !important;
++  border-radius: $input-border-radius !important;
++}
++
++.select2-container--default .select2-selection--single {
++  --#{$prefix}form-select2-bg-img: #{escape-svg($form-select-indicator)};
++
++  .select2-selection__rendered {
++    padding-left: $input-padding-x !important;
++    padding-right: 36px !important;
++    padding-top: 1px !important;
++  }
++  .select2-selection__arrow b {
++    border: none !important;
++    background-image: var(--#{$prefix}form-select2-bg-img),
++      var(--#{$prefix}form-select-bg-icon, none);
++    background-repeat: no-repeat;
++    margin-top: 0 !important;
++    width: 12px !important;
++    height: 12px !important;
++    top: 9px !important;
++    right: 14px !important;
++    left: auto !important;
++  }
++}
++
++.select2-container--default
++  .select2-selection--single.select2-selection--clearable {
++  .select2-selection__clear {
++    font-size: 1.5em;
++  }
++}
++
++.select2-container--default.is-invalid,
++.select2-container--default.is-valid {
++  .select2-selection--single .select2-selection__rendered {
++    padding-right: 66px !important;
++  }
++  .select2-selection--single::before {
++    content: " ";
++    background-repeat: no-repeat;
++    background-size: 100%;
++    background-position: 0 7px;
++    width: 16px;
++    position: absolute;
++    display: block;
++    top: 1px;
++    right: 35px;
++    height: 30px;
++  }
++  .select2-selection--single.select2-selection--clearable::before {
++    right: 49px;
++  }
++
++  &.select2-container--focus {
++    .select2-selection--single,
++    .select2-selection--multiple {
++      outline: 0;
++    }
++  }
++}
++
++.select2-container--default.is-invalid {
++  .select2-selection--single,
++  .select2-selection--multiple {
++    border-color: $form-feedback-icon-invalid-color !important;
++  }
++  .select2-selection--single::before {
++    background-image: escape-svg($form-feedback-icon-invalid);
++  }
++}
++
++.select2-container--default.is-valid {
++  .select2-selection--single,
++  .select2-selection--multiple {
++    border-color: $form-feedback-icon-valid-color !important;
++  }
++  .select2-selection--single::before {
++    background-image: escape-svg($form-feedback-icon-valid);
++  }
++}
++
++.select2-container--default.is-invalid.select2-container--focus {
++  .select2-selection--single,
++  .select2-selection--multiple {
++    box-shadow: 0 0 $input-btn-focus-blur $input-focus-width
++      rgba(var(--#{$prefix}danger-rgb), $input-btn-focus-color-opacity);
++  }
++}
++
++.select2-container--default.is-valid.select2-container--focus {
++  .select2-selection--single,
++  .select2-selection--multiple {
++    box-shadow: 0 0 $input-btn-focus-blur $input-focus-width
++      rgba(var(--#{$prefix}success-rgb), $input-btn-focus-color-opacity);
++    outline: 0;
++  }
++}
++
++.select2-container--default {
++  .select2-selection--single .select2-selection__clear {
++    margin-right: 30px !important;
++  }
++}
++
++.select2-container--default.select2-container--disabled .select2-selection--single {
++  border-color: $input-disabled-bg !important;
++  background-color: $input-disabled-bg !important;
++}
++
++.select2-container--open .select2-dropdown {
++  z-index: $zindex-select2-results;
++}

@@ -1,14 +1,19 @@
 from contextlib import contextmanager
-from zipfile import BadZipfile
 from datetime import datetime, time
+from zipfile import BadZipfile
 
-from memoized import memoized
 import openpyxl
-from openpyxl.utils.datetime import from_excel
+from memoized import memoized
 from openpyxl.utils.exceptions import InvalidFileException
 
-from corehq.util.workbook_reading import Worksheet, Cell, Workbook, \
-    SpreadsheetFileNotFound, SpreadsheetFileInvalidError, SpreadsheetFileEncrypted
+from corehq.util.workbook_reading import (
+    Cell,
+    SpreadsheetFileEncrypted,
+    SpreadsheetFileInvalidError,
+    SpreadsheetFileNotFound,
+    Workbook,
+    Worksheet,
+)
 
 # Got this from running hexdump and then googling
 # which matched something on https://en.wikipedia.org/wiki/List_of_file_signatures:

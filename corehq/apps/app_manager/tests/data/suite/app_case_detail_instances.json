@@ -6,7 +6,6 @@
   "_rev": "2-d58483fed91873382ebd99ac03669b2f",
   "deployment_date": null,
   "user_type": null,
-  "text_input": "roman",
   "secure_submissions": true,
   "build_broken": false,
   "has_submissions": false,
@@ -54,7 +53,7 @@
           "print_template": {},
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "short"
         },
@@ -81,7 +80,7 @@
           "print_template": {},
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "long"
         }
@@ -509,7 +508,7 @@
           "print_template": {},
           "lookup_responses": [],
           "lookup_autolaunch": false,
-          "use_case_tiles": false,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "short"
         },
@@ -580,7 +579,7 @@
           "print_template": {},
           "lookup_responses": [],
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "long"
         }
@@ -647,7 +646,7 @@
           "print_template": {},
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "short"
         },
@@ -674,7 +673,7 @@
           "print_template": {},
           "lookup_name": null,
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "long"
         }
@@ -1165,7 +1164,7 @@
           "print_template": {},
           "lookup_responses": [],
           "lookup_autolaunch": false,
-          "use_case_tiles": true,
+          "case_tile_template": "person_simple",
           "lookup_action": null,
           "display": "short"
         },
@@ -1236,7 +1235,7 @@
           "print_template": {},
           "lookup_responses": [],
           "lookup_autolaunch": false,
-          "use_case_tiles": null,
+          "case_tile_template": null,
           "lookup_action": null,
           "display": "long"
         }
@@ -1271,11 +1270,8 @@
   "media_form_errors": false,
   "application_version": "2.0",
   "auto_gps_capture": false,
-  "use_j2me_endpoint": false,
   "vellum_case_management": true,
-  "platform": "nokia/s40",
   "version": 18,
-  "admin_password": null,
   "build_spec": {
     "doc_type": "BuildSpec",
     "version": "2.36.1",

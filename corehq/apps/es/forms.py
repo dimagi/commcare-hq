@@ -5,8 +5,6 @@ FormES
 from copy import copy
 from datetime import datetime
 
-from django.conf import settings
-
 from jsonobject.exceptions import BadValueError
 
 from casexml.apps.case.exceptions import PhoneDateValueError
@@ -15,19 +13,23 @@ from casexml.apps.case.xml.parser import (
     case_update_from_block,
 )
 from couchforms.geopoint import GeoPoint
-
-from corehq.pillows.mappings.const import NULL_VALUE
 from dimagi.utils.parsing import json_format_datetime
+
+from corehq.apps.es.mappings.const import NULL_VALUE
 
 from . import filters
 from .client import ElasticDocumentAdapter, create_document_adapter
+from .const import (
+    HQ_FORMS_INDEX_CANONICAL_NAME,
+    HQ_FORMS_INDEX_NAME,
+    HQ_FORMS_SECONDARY_INDEX_NAME,
+)
 from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
-from .transient_util import get_adapter_mapping
 
 
 class FormES(HQESQuery):
-    index = 'forms'
+    index = HQ_FORMS_INDEX_CANONICAL_NAME
     default_filters = {
         'is_xform_instance': filters.term("doc_type", "xforminstance"),
         'has_xmlns': filters.exists("xmlns"),
@@ -41,12 +43,12 @@ class FormES(HQESQuery):
             form_ids,
             xmlns,
             app,
+            inserted,
             submitted,
             completed,
             user_id,
             user_type,
             user_ids_handle_unknown,
-            j2me_submissions,
             updating_cases,
         ] + super(FormES, self).builtin_filters
 
@@ -65,10 +67,12 @@ class FormES(HQESQuery):
 class ElasticForm(ElasticDocumentAdapter):
 
     settings_key = IndexSettingsKey.FORMS
+    canonical_name = HQ_FORMS_INDEX_CANONICAL_NAME
 
     @property
     def mapping(self):
-        return get_adapter_mapping(self)
+        from .mappings.xform_mapping import XFORM_MAPPING
+        return XFORM_MAPPING
 
     @property
     def model_cls(self):
@@ -78,8 +82,6 @@ class ElasticForm(ElasticDocumentAdapter):
     def _from_dict(cls, xform_dict):
         """
         Takes in a xform dict and applies required transformation to make it suitable for ES.
-        The function is replica of ``transform_form_for_elasticsearch``
-        and will be replaced by `from_python` in future
 
         :param xform: an instance of ``dict`` which is ``XFormInstance.to_json()``
         """
@@ -163,8 +165,9 @@ class ElasticForm(ElasticDocumentAdapter):
 
 form_adapter = create_document_adapter(
     ElasticForm,
-    getattr(settings, "ES_XFORM_INDEX_NAME", "xforms_2016-07-07"),
+    HQ_FORMS_INDEX_NAME,
     "xform",
+    secondary=HQ_FORMS_SECONDARY_INDEX_NAME,
 )
 
 
@@ -182,6 +185,10 @@ def app(app_ids):
 
 def submitted(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range('received_on', gt, gte, lt, lte)
+
+
+def inserted(gt=None, gte=None, lt=None, lte=None):
+    return filters.date_range('inserted_at', gt, gte, lt, lte)
 
 
 def completed(gt=None, gte=None, lt=None, lte=None):
@@ -216,13 +223,6 @@ def user_ids_handle_unknown(user_ids):
     else:
         user_filter = filters.missing('form.meta.userID')
     return user_filter
-
-
-def j2me_submissions(gt=None, gte=None, lt=None, lte=None):
-    return filters.AND(
-        filters.regexp("form.meta.appVersion", "v2+.[0-9]+.*"),
-        submitted(gt, gte, lt, lte)
-    )
 
 
 def updating_cases(case_ids):

@@ -1,4 +1,5 @@
 from datetime import datetime
+from casexml.apps.phone.models import OTARestoreWebUser
 from casexml.apps.case.xml.generator import date_to_xml_string
 
 DUMMY_ID = "foo"
@@ -13,45 +14,35 @@ def dummy_user_xml(user=None):
     user_id = user.user_id if user else DUMMY_ID
     date_joined = user.date_joined if user else datetime.utcnow()
     project = user.domain if user else DUMMY_PROJECT
+    user_type = 'web' if isinstance(user, OTARestoreWebUser) else 'commcare'
 
-    return """
+    return f"""
     <Registration xmlns="http://openrosa.org/user/registration">
-        <username>{}</username>
-        <password>{}</password>
-        <uuid>{}</uuid>
-        <date>{}</date>
+        <username>{username}</username>
+        <password>{password}</password>
+        <uuid>{user_id}</uuid>
+        <date>{date_to_xml_string(date_joined)}</date>
         <user_data>
             <data key="commcare_first_name"/>
             <data key="commcare_last_name"/>
             <data key="commcare_phone_number"/>
-            <data key="commcare_project">{}</data>
+            <data key="commcare_profile"/>
+            <data key="commcare_project">{project}</data>
+            <data key="commcare_user_type">{user_type}</data>
             <data key="something">arbitrary</data>
         </user_data>
-    </Registration>""".format(
-        username,
-        password,
-        user_id,
-        date_to_xml_string(date_joined),
-        project
-    )
-
-DUMMY_RESTORE_XML_TEMPLATE = ("""
-<OpenRosaResponse xmlns="http://openrosa.org/http/response"%(items_xml)s>
-    <message nature="ota_restore_success">%(message)s</message>
-    <Sync xmlns="http://commcarehq.org/sync">
-        <restore_id>%(restore_id)s</restore_id>
-    </Sync>
-    %(user_xml)s
-    %(case_xml)s
-</OpenRosaResponse>
-""")
+    </Registration>"""
 
 
 def dummy_restore_xml(restore_id, case_xml="", items=None, user=None):
-    return DUMMY_RESTORE_XML_TEMPLATE % {
-        "restore_id": restore_id,
-        "items_xml": '' if items is None else (' items="%s"' % items),
-        "user_xml": dummy_user_xml(user),
-        "case_xml": case_xml,
-        "message": "Successfully restored account mclovin!"
-    }
+    items_xml = '' if items is None else f' items="{items}"'
+    return f"""
+    <OpenRosaResponse xmlns="http://openrosa.org/http/response"{items_xml}>
+        <message nature="ota_restore_success">Successfully restored account mclovin!</message>
+        <Sync xmlns="http://commcarehq.org/sync">
+            <restore_id>{restore_id}</restore_id>
+        </Sync>
+        {dummy_user_xml(user)}
+        {case_xml}
+    </OpenRosaResponse>
+    """

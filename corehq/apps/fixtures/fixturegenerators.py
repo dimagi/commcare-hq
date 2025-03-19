@@ -104,6 +104,7 @@ def get_global_items_by_domain(domain, case_id):
 
 class ItemListsProvider(FixtureProvider):
     id = 'item-list'
+    ignore_skip_fixtures_flag = True
 
     def __call__(self, restore_state):
         restore_user = restore_state.restore_user

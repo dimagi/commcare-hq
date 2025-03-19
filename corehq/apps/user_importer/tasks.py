@@ -5,11 +5,13 @@ from django.db import DEFAULT_DB_ALIAS
 from celery.exceptions import TimeoutError
 
 from dimagi.utils.chunked import chunked
+from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 from soil.progress import get_task_progress
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.celery import task
+from corehq.apps.reports.exceptions import TableauAPIError
 from corehq.apps.reports.util import import_tableau_users
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.users.models import WebUser, check_and_send_limit_email
@@ -116,7 +118,13 @@ def import_users(domain, user_specs, group_specs, upload_user_id, upload_record_
             update_progress=functools.partial(_update_progress, start=len(group_specs))
         )
         if TABLEAU_USER_SYNCING.enabled(domain):
-            import_tableau_users(domain, user_specs)
+            try:
+                import_tableau_users(domain, user_specs)
+            except TableauAPIError as e:
+                notify_exception(None, str(e), details={
+                    'domain': domain
+                })
+                user_results['errors'].append(str(e))
     else:
         user_results = create_or_update_commcare_users_and_groups(
             domain,

@@ -5,8 +5,9 @@ from django.test import TestCase
 from testil import eq
 
 from corehq.apps.hqwebapp.models import UserAccessLog, UserAgent
+from corehq.motech.repeaters.models import Repeater, ConnectionSettings
 
-from .. models import ForeignValue
+from .. models import ForeignObject, ForeignValue
 
 
 def test_foreign_value_class_attribute():
@@ -163,3 +164,93 @@ def foreign_value_lru_cache_disabled(cached_func):
             yield
     finally:
         reset_cached_property()
+
+
+def test_foreign_object_names():
+    class Base:
+        f0 = ForeignObject(None, None)
+
+    class Sub1(Base):
+        f1 = ForeignObject(None, None)
+
+    class Sub2(Base):
+        f2 = ForeignObject(None, None)
+
+    eq(ForeignObject.get_names(Base), ["f0"])
+    eq(ForeignObject.get_names(Sub1), ["f0", "f1"])
+    eq(ForeignObject.get_names(Sub2), ["f0", "f2"])
+
+
+def test_foreign_object_class_attribute():
+    prop = Repeater.connection_settings
+    assert isinstance(prop, ForeignObject), prop
+
+
+def test_foreign_object_init():
+    # not a method of TestForeignObject because this test should not hit the database
+    cs = ConnectionSettings(id=42)
+    obj = Repeater(connection_settings=cs)
+    assert obj.connection_settings is cs, (obj.connection_settings, cs)
+    eq(obj.connection_settings_id, 42)
+
+
+def test_set_foreign_object():
+    # not a method of TestForeignObject because this test should not hit the database
+    obj = Repeater()
+    obj.connection_settings = cs = ConnectionSettings(id=42)
+    assert obj.connection_settings is cs, (obj.connection_settings, cs)
+    eq(obj.connection_settings_id, 42)
+
+
+class TestForeignObject(TestCase):
+
+    def setUp(self):
+        self.obj = Repeater()
+
+    def test_foreign_object_default_does_not_exist(self):
+        with self.assertRaises(ConnectionSettings.DoesNotExist):
+            Repeater().connection_settings
+
+    def test_set_foreign_object_to_none(self):
+        self.obj.connection_settings = ConnectionSettings(id=42)
+        self.obj.connection_settings = None
+        with self.assertRaises(ConnectionSettings.DoesNotExist):
+            self.obj.connection_settings
+        self.assertEqual(self.obj.connection_settings_id, None)
+
+    def test_get_foreign_object_after_save(self):
+        cs = ConnectionSettings(id=42)
+        cs.save()
+        self.obj.connection_settings = cs
+        self.obj.save()
+        obj2 = Repeater.objects.get(id=self.obj.id)
+        self.assertIsNot(self.obj, obj2)
+        self.assertIsNot(obj2.connection_settings, cs)
+        self.assertEqual(obj2.connection_settings.id, 42)
+
+    def test_get_foreign_object_after_set_id_field(self):
+        self.obj.connection_settings = ConnectionSettings(id=42)
+        cs = ConnectionSettings(id=84)
+        cs.save()
+        self.obj.connection_settings_id = 84
+        self.assertEqual(self.obj.connection_settings.id, cs.id)
+        self.assertEqual(self.obj.connection_settings_id, 84)
+
+    def test_get_foreign_object_after_set_id_field_to_none(self):
+        self.obj.connection_settings = ConnectionSettings(id=42)
+        cs = ConnectionSettings(id=84)
+        cs.save()
+        self.obj.connection_settings_id = None
+        with self.assertRaises(ConnectionSettings.DoesNotExist):
+            self.obj.connection_settings
+        self.assertEqual(self.obj.connection_settings_id, None)
+
+    def test_delete_foreign_object(self):
+        self.obj.connection_settings = ConnectionSettings(id=42)
+        del self.obj.connection_settings
+        with self.assertRaises(ConnectionSettings.DoesNotExist):
+            self.obj.connection_settings
+        self.assertEqual(self.obj.connection_settings_id, None)
+
+        with self.assertRaises(AttributeError):
+            del self.obj.connection_settings

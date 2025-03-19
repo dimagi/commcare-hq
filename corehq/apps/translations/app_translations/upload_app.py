@@ -4,7 +4,6 @@ from django.contrib import messages
 from django.template.defaultfilters import linebreaksbr
 from django.utils.translation import gettext as _
 
-import ghdiff
 from CommcareTranslationChecker import validate_workbook
 from CommcareTranslationChecker.exceptions import FatalError
 
@@ -19,6 +18,7 @@ from corehq.apps.translations.app_translations.upload_form import (
 from corehq.apps.translations.app_translations.upload_module import (
     BulkAppTranslationModuleUpdater,
 )
+from corehq.util import ghdiff
 from corehq.apps.translations.app_translations.utils import (
     BulkAppTranslationUpdater,
     get_bulk_app_sheet_headers,
@@ -48,7 +48,7 @@ def validate_bulk_app_translation_upload(app, workbook, email, lang_to_compare, 
     msgs = UploadedTranslationsValidator(app, workbook, lang_to_compare).compare()
     checker_messages, result_wb = run_translation_checker(file_obj)
     if msgs or checker_messages:
-        _email_app_translations_discrepancies(msgs, checker_messages, email, app.name, result_wb)
+        _email_app_translations_discrepancies(msgs, checker_messages, email, app.name, result_wb, app.domain)
         return [(messages.error, _("Issues found. You should receive an email shortly."))]
     else:
         return [(messages.success, _("No issues found."))]
@@ -65,13 +65,14 @@ def run_translation_checker(file_obj):
     return translation_checker_messages, result_wb
 
 
-def _email_app_translations_discrepancies(msgs, checker_messages, email, app_name, result_wb):
+def _email_app_translations_discrepancies(msgs, checker_messages, email, app_name, result_wb, domain):
     """
     :param msgs: messages for app translation discrepancies
     :param checker_messages: messages for issues found by translation checker
     :param email: email to
     :param app_name: name of the application
     :param result_wb: result wb of translation checker to attach with the email
+    :param domain: name of domain the application belongs to
     """
     def form_email_content(msgs, checker_messages):
         if msgs:
@@ -101,7 +102,8 @@ def _email_app_translations_discrepancies(msgs, checker_messages, email, app_nam
         attachments.append(attachment("{} TranslationChecker.xlsx".format(app_name),
                            io.BytesIO(read_workbook_content_as_file(result_wb)), result_wb.mime_type))
 
-    send_html_email_async.delay(subject, email, linebreaksbr(text_content), file_attachments=attachments)
+    send_html_email_async.delay(subject, email, linebreaksbr(text_content), file_attachments=attachments,
+                                domain=domain, use_domain_gateway=True)
 
 
 def process_bulk_app_translation_upload(app, workbook, sheet_name_to_unique_id, lang=None):

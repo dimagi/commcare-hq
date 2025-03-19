@@ -12,14 +12,22 @@ from django.views.decorators.http import require_POST
 from dimagi.utils.logging import notify_error
 from dimagi.utils.web import json_response
 
+from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.app_manager.helpers.validators import validate_property
 from corehq.apps.case_importer import base
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.base import location_safe_case_imports_enabled
-from corehq.apps.case_importer.const import MAX_CASE_IMPORTER_COLUMNS, ALL_CASE_TYPE_IMPORT
+from corehq.apps.case_importer.const import (
+    ALL_CASE_TYPE_IMPORT,
+    MAX_CASE_IMPORTER_COLUMNS,
+    MAX_CASE_IMPORTER_ROWS,
+    MOMO_REQUIRED_PAYMENT_FIELDS,
+    MOMO_PAYMENT_CASE_TYPE,
+)
 from corehq.apps.case_importer.exceptions import (
     CustomImporterError,
     ImporterError,
+    ImporterExcelTooManyRows,
     ImporterFileNotFound,
     ImporterRawError,
 )
@@ -28,27 +36,33 @@ from corehq.apps.case_importer.extension_points import (
 )
 from corehq.apps.case_importer.suggested_fields import (
     get_suggested_case_fields,
+    get_non_discoverable_system_properties,
 )
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
-from corehq.apps.case_importer.util import get_importer_error_message, RESERVED_FIELDS
+from corehq.apps.case_importer.util import (
+    RESERVED_FIELDS,
+    get_importer_error_message,
+)
+from corehq.apps.data_dictionary.util import (
+    get_data_dict_case_types,
+    get_data_dict_deprecated_case_types,
+)
 from corehq.apps.domain.decorators import api_auth
-from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, waf_allow
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
+from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR, MTN_MOBILE_WORKER_VERIFICATION
 from corehq.util.view_utils import absolute_reverse
 from corehq.util.workbook_reading import (
     SpreadsheetFileExtError,
     SpreadsheetFileInvalidError,
+    open_any_workbook,
     valid_extensions,
 )
-from corehq.util.workbook_reading import open_any_workbook
-from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
-from corehq.apps.data_dictionary.util import get_data_dict_case_types
 
 require_can_edit_data = require_permission(HqPermissions.edit_data)
 
@@ -70,7 +84,7 @@ def validate_column_names(column_names, invalid_column_names):
 
 
 # Cobble together the context needed to render breadcrumbs that class-based views get from BasePageView
-# For use by function-based views that extend hqwebapp/bootstrap3/base_section.html
+# For use by function-based views that extend hqwebapp/bootstrap5/base_section.html
 def _case_importer_breadcrumb_context(page_name, domain):
     return {
         'current_page': {
@@ -85,6 +99,7 @@ def _case_importer_breadcrumb_context(page_name, domain):
 @waf_allow('XSS_BODY')
 @require_can_edit_data
 @conditionally_location_safe(location_safe_case_imports_enabled)
+@use_bootstrap5
 def excel_config(request, domain):
     """
     Step one of three.
@@ -110,6 +125,8 @@ def excel_config(request, domain):
         return render_error(request, domain, get_importer_error_message(e))
     except SpreadsheetFileExtError:
         return render_error(request, domain, _("Please upload file with extension .xls or .xlsx"))
+    except ImporterExcelTooManyRows as e:
+        return render_error(request, domain, str(e))
 
     context.update(_case_importer_breadcrumb_context(_('Case Options'), domain))
     return render(request, "case_importer/excel_config.html", context)
@@ -162,6 +179,18 @@ def _process_single_sheet(case_upload):
         return _process_spreadsheet_columns(spreadsheet, MAX_CASE_IMPORTER_COLUMNS)
 
 
+def _is_bulk_import(domain, case_types_from_apps, unrecognized_case_types, worksheet_titles):
+    '''
+    It is a bulk import if every sheet name is a case type in the project space.
+    This does introduce the limitation that new cases for new case types cannot be bulk imported
+    unless they are first added to an application or the Data Dictionary.
+    '''
+    data_dict_case_types = get_data_dict_case_types(domain)
+    all_case_types = set(case_types_from_apps + unrecognized_case_types) | data_dict_case_types
+    is_bulk_import = len(set(worksheet_titles) - all_case_types) == 0
+    return is_bulk_import
+
+
 def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_columns=None):
     extension = os.path.splitext(uploaded_file_handle.name)[1][1:].strip().lower()
 
@@ -185,17 +214,26 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
 
     case_upload.check_file()
 
+    row_count = 0
     worksheet_titles = _get_workbook_sheet_names(case_upload)
+    for i in range(len(worksheet_titles)):
+        with case_upload.get_spreadsheet(i) as spreadsheet:
+            row_count += spreadsheet.max_row - 1
+
+    if row_count > MAX_CASE_IMPORTER_ROWS:
+        raise ImporterExcelTooManyRows(row_count)
+
     case_types_from_apps = sorted(get_case_types_from_apps(domain))
     unrecognized_case_types = sorted([t for t in get_case_types_for_domain_es(domain)
                                       if t not in case_types_from_apps])
 
-    # It is a bulk import if every sheet name is a case type in the project space.
-    # This does introduce the limitation that new cases for new case types cannot be bulk imported
-    # unless they are first added to an application or the Data Dictionary
-    data_dict_case_types = get_data_dict_case_types(domain)
-    all_case_types = set(case_types_from_apps + unrecognized_case_types) | data_dict_case_types
-    is_bulk_import = len(set(worksheet_titles) - all_case_types) == 0
+    if len(case_types_from_apps) == 0 and len(unrecognized_case_types) == 0:
+        raise ImporterError(_(
+            'Your project does not use cases yet. To import cases from Excel, '
+            'you must first create an application with a case list.'
+        ))
+
+    is_bulk_import = _is_bulk_import(domain, case_types_from_apps, unrecognized_case_types, worksheet_titles)
     columns = []
     try:
         if is_bulk_import:
@@ -207,11 +245,15 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
     except ImporterError as e:
         raise ImporterError(e) from e
 
-    if len(case_types_from_apps) == 0 and len(unrecognized_case_types) == 0:
-        raise ImporterError(_(
-            'Your project does not use cases yet. To import cases from Excel, '
-            'you must first create an application with a case list.'
-        ))
+    data_dict_deprecated_case_types = get_data_dict_deprecated_case_types(domain)
+    deprecated_case_types_used = []
+    if is_bulk_import:
+        deprecated_case_types_used = set(worksheet_titles).intersection(data_dict_deprecated_case_types)
+    else:
+        # Remove deprecated case types as options. We only do that here as we don't want to remove
+        # deprecated case types when determing if the import is a bulk case import
+        case_types_from_apps = set(case_types_from_apps) - data_dict_deprecated_case_types
+        unrecognized_case_types = set(unrecognized_case_types) - data_dict_deprecated_case_types
 
     error_messages = custom_case_upload_file_operations(domain=domain, case_upload=case_upload)
     if error_messages:
@@ -219,12 +261,12 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
 
     context = {
         'columns': columns,
-        'unrecognized_case_types': unrecognized_case_types,
-        'case_types_from_apps': case_types_from_apps,
+        'unrecognized_case_types': [] if is_bulk_import else unrecognized_case_types,
+        'case_types_from_apps': [ALL_CASE_TYPE_IMPORT] if is_bulk_import else case_types_from_apps,
         'domain': domain,
         'slug': base.ImportCases.slug,
         'is_bulk_import': is_bulk_import,
-        'bulk_import_case_type': ALL_CASE_TYPE_IMPORT
+        'deprecated_case_types_used': deprecated_case_types_used,
     }
     return case_upload, context
 
@@ -251,14 +293,24 @@ def _process_excel_mapping(domain, spreadsheet, search_column):
 def _create_bulk_configs(domain, request, case_upload):
     all_configs = []
     worksheet_titles = _get_workbook_sheet_names(case_upload)
+    mtn_mobile_worker_verification_ff_enabled = MTN_MOBILE_WORKER_VERIFICATION.enabled(domain)
+    errors = []
     for index, title in enumerate(worksheet_titles):
         with case_upload.get_spreadsheet(index) as spreadsheet:
-            _, excel_fields, _ = _process_excel_mapping(
+            __, excel_fields, __ = _process_excel_mapping(
                 domain,
                 spreadsheet,
                 request.POST['search_field']
             )
             excel_fields = list(set(excel_fields) - set(RESERVED_FIELDS))
+            if mtn_mobile_worker_verification_ff_enabled and title == MOMO_PAYMENT_CASE_TYPE:
+                missing_fields = _get_missing_payment_fields(excel_fields)
+                if missing_fields:
+                    errors.append(_(
+                        'Sheet with case type "{}" is missing one or more required '
+                        'fields: {}'
+                    ).format(title, ', '.join(missing_fields)))
+                    break
             config = importer_util.ImporterConfig.from_dict({
                 'couch_user_id': request.couch_user._id,
                 'excel_fields': excel_fields,
@@ -270,12 +322,13 @@ def _create_bulk_configs(domain, request, case_upload):
                 'create_new_cases': request.POST['create_new_cases'] == 'True',
             })
             all_configs.append(config)
-    return all_configs
+    return all_configs, errors
 
 
 @require_POST
 @require_can_edit_data
 @conditionally_location_safe(location_safe_case_imports_enabled)
+@use_bootstrap5
 def excel_fields(request, domain):
     """
     Step two of three.
@@ -336,6 +389,16 @@ def excel_fields(request, domain):
 
     case_field_specs = [field_spec.to_json() for field_spec in field_specs]
 
+    if MTN_MOBILE_WORKER_VERIFICATION.enabled(domain) and case_type == MOMO_PAYMENT_CASE_TYPE:
+        missing_fields = _get_missing_payment_fields(columns)
+        if any(missing_fields):
+            return render_error(
+                request,
+                domain,
+                _('The Excel file is missing the following required fields for the "{}" case type: {}').format(
+                    MOMO_PAYMENT_CASE_TYPE, ', '.join(missing_fields)
+                )
+            )
     context = {
         'case_type': case_type,
         'search_column': search_column,
@@ -344,6 +407,7 @@ def excel_fields(request, domain):
         'columns': columns,
         'excel_fields': excel_fields,
         'case_field_specs': case_field_specs,
+        'system_fields': get_non_discoverable_system_properties(),
         'domain': domain,
         'mirroring_enabled': mirroring_enabled,
         'is_bulk_import': request.POST.get('is_bulk_import', 'False') == 'True',
@@ -379,7 +443,9 @@ def excel_commit(request, domain):
     case_type = request.POST['case_type']
     all_configs = []
     if case_type == ALL_CASE_TYPE_IMPORT:
-        all_configs = _create_bulk_configs(domain, request, case_upload)
+        all_configs, errors = _create_bulk_configs(domain, request, case_upload)
+        if any(errors):
+            return render_error(request, domain, ', '.join(errors))
     else:
         config = importer_util.ImporterConfig.from_request(request)
         all_configs = [config]
@@ -441,7 +507,9 @@ def _bulk_case_upload_api(request, domain):
 
     all_configs = []
     if context['is_bulk_import']:
-        all_configs = _create_bulk_configs(domain, request, case_upload)
+        all_configs, errors = _create_bulk_configs(domain, request, case_upload)
+        if any(errors):
+            raise ImporterError(', '.join(errors))
     else:
         with case_upload.get_spreadsheet() as spreadsheet:
             _, excel_fields, _ = _process_excel_mapping(domain, spreadsheet, search_column)
@@ -475,3 +543,7 @@ def _bulk_case_upload_api(request, domain):
     status_url = absolute_reverse('case_importer_upload_status', args=(domain, upload_id))
 
     return json_response({"code": 200, "message": "success", "status_url": status_url})
+
+
+def _get_missing_payment_fields(columns):
+    return set(MOMO_REQUIRED_PAYMENT_FIELDS) - set(columns)

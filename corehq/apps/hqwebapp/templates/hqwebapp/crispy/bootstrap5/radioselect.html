@@ -1,0 +1,36 @@
+{% load crispy_forms_filters %}
+{% load l10n %}
+<div class="form-group">
+{% include 'bootstrap3to5/layout/field_errors_block.html' %}
+<ul class="form-control radio-select {{ css_class }}">
+  <li>
+    <input class="radio-select_close" type="radio" name="{{ field.html_name }}" id="id_{{ field.html_name }}_close" value=""/>
+    <span class="radio-select_label radio-select_label-placeholder">
+      {{ field.label }}
+    </span>
+  </li>
+  <li class="radio-select_items">
+    <input class="radio-select_expand" type="radio" name="{{ field.html_name }}" id="id_{{ field.html_name }}_opener" />
+    <label class="radio-select_closeLabel" for="id_{{ field.html_name }}_close"></label>
+
+    <ul class="radio-select_options">
+    {% for choice in field.field.choices %}
+      <li class="radio-select_option">
+        <input class="radio-select_input"
+               type="radio"{% if choice.0|stringformat:"s" == field.value|stringformat:"s" %}
+               checked="checked"{% endif %}
+               name="{{ field.html_name }}"
+               id="id_{{ field.html_name }}_{{ forloop.counter }}"
+               value="{{ choice.0|unlocalize }}" {% if flat_attrs %} {{ flat_attrs|safe }}{% endif %} />
+        <label class="radio-select_label" for="id_{{ field.html_name }}_{{ forloop.counter }}">
+          {{ choice.1|unlocalize }}
+        </label>
+      </li>
+    {% endfor %}
+    </ul>
+
+    <label class="radio-select_expandLabel" for="id_{{ field.html_name }}_opener"></label>
+  </li>
+</ul>
+{% include 'bootstrap3to5/layout/help_text.html' %}
+</div>

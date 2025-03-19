@@ -1,8 +1,6 @@
 {% load xforms_extras %}
 {% load url_extras %}
-{% load timezone_tags %}
 {% load hq_shared_tags %}
-{% load timezone_tags %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 
@@ -23,26 +21,6 @@
     {% endblocktrans %}
   </div>
 {% else %}
-
-  {% if request|ui_notify_enabled:"APP_BUILDER_PUBLISH" %}
-    <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-primary helpbubble-bottom-left fade in"
-         data-slug="{{ "APP_BUILDER_PUBLISH"|ui_notify_slug }}"
-         role="alert">
-      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-      </button>
-      <p class="lead">{% trans 'Updates to Publishing Apps' %}</p>
-      <p class="alert alert-info">
-        <i class="fa fa-info-circle"></i>
-        {% blocktrans %}
-          Instead of starring versions of your app, you can now mark them
-          as "Released" or "In Test." "Released" has the same effect as
-          starring a version.  Any version you do not mark as "Released"
-          will default to "In Test."
-        {% endblocktrans %}
-      </p>
-    </div>
-  {% endif %}
 
   {% if not build_profile_access and not enable_update_prompts %}
     {% include 'app_manager/partials/releases/releases_table.html' %}
@@ -89,6 +67,5 @@
 
 {% endif %}<!-- intro_only condition -->
 
-{% include 'app_manager/partials/releases/app_diff_modal.html' %}
 <!-- Async Download Modals -->
 {% include 'app_manager/partials/download_async_modal.html' with element_id='download-zip-modal' %}

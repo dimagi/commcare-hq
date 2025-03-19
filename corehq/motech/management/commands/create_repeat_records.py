@@ -5,9 +5,6 @@ from django.core.management import CommandError
 from django.core.management.base import BaseCommand
 
 from corehq.form_processor.models import CommCareCase, XFormInstance
-from corehq.motech.repeaters.management.commands.find_missing_repeat_records import (
-    get_repeaters_for_type_in_domain,
-)
 from corehq.motech.repeaters.models import Repeater, get_all_repeater_types
 from corehq.util.log import with_progress_bar
 from dimagi.utils.chunked import chunked
@@ -40,7 +37,7 @@ class Command(BaseCommand):
             repeater_name_re = re.compile(options['repeater_name'])
 
         if repeater_id:
-            repeater = Repeater.objects.get(repeater_id=repeater_id)
+            repeater = Repeater.objects.get(id=repeater_id)
             if repeater_type and repeater_type != repeater.repeater_type:
                 raise CommandError(f"Repeater type does not match: {repeater_type} != {repeater.repeater_type}")
             if repeater_name_re and not repeater_name_re.match(repeater.name):
@@ -92,3 +89,15 @@ class Command(BaseCommand):
                         repeater.register(doc)
                     except Exception:
                         logger.exception(f"Unable to create records for doc '{doc.get_id}'")
+
+
+def get_repeaters_for_type_in_domain(domain, repeater_types):
+    """
+    :param domain: domain to search in
+    :param repeater_types: a tuple of repeater class types
+    """
+    repeaters = Repeater.objects.filter(
+        domain=domain,
+        repeater_type__in=repeater_types
+    )
+    return list(repeaters)

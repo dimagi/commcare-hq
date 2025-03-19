@@ -1,5 +1,4 @@
 import datetime
-import hashlib
 import logging
 
 from django.urls import reverse
@@ -9,7 +8,6 @@ from django.utils.translation import gettext_noop as _
 from jsonobject.exceptions import BadValueError
 
 import phonelog.reports as phonelog
-from dimagi.utils.modules import to_function
 
 from corehq import privileges
 from corehq.apps.accounting.interface import (
@@ -27,6 +25,7 @@ from corehq.apps.case_importer.base import ImportCases
 from corehq.apps.data_interfaces.interfaces import (
     BulkFormManagementInterface,
     CaseReassignmentInterface,
+    CaseCopyInterface,
 )
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
 from corehq.apps.fixtures.interface import (
@@ -36,9 +35,9 @@ from corehq.apps.fixtures.interface import (
 from corehq.apps.hqadmin.reports import (
     AdminPhoneNumberReport,
     DeployHistoryReport,
-    DeviceLogSoftAssertReport,
     UserAuditReport,
     UserListReport,
+    UCRDataLoadReport,
 )
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports import commtrack
@@ -52,7 +51,6 @@ from corehq.apps.reports.standard.cases.duplicate_cases import (
 from corehq.apps.reports.standard.forms import reports as receiverwrapper
 from corehq.apps.reports.standard.project_health import ProjectHealthDashboard
 from corehq.apps.reports.standard.users.reports import UserHistoryReport
-from corehq.apps.reports.standard.web_user_activity import WebUserActivityReport
 from corehq.apps.smsbillables.interface import (
     SMSBillablesInterface,
     SMSGatewayFeeCriteriaInterface,
@@ -70,9 +68,10 @@ from corehq.apps.userreports.reports.view import (
 )
 from corehq.apps.userreports.const import TEMP_REPORT_PREFIX
 from corehq.motech.generic_inbound.reports import ApiRequestLogReport
-from corehq.motech.repeaters.views import (
-    DomainForwardingRepeatRecords,
-    SQLRepeatRecordReport,
+from corehq.motech.repeaters.views import DomainForwardingRepeatRecords
+from corehq.apps.geospatial.reports import (
+    CaseManagementMap,
+    CaseGroupingReport,
 )
 
 from . import toggles
@@ -86,7 +85,6 @@ def REPORTS(project):
     reports.extend(_get_configurable_reports(project))
 
     monitoring_reports = (
-        WebUserActivityReport,
         monitoring.WorkerActivityReport,
         monitoring.DailyFormStatsReport,
         monitoring.SubmissionsByFormReport,
@@ -98,10 +96,14 @@ def REPORTS(project):
     inspect_reports = [
         inspect.SubmitHistory, CaseListReport,
     ]
-    if toggles.CASE_LIST_EXPLORER.enabled(project.name):
+
+    from corehq.apps.accounting.utils import domain_has_privilege
+
+    domain_can_access_case_list_explorer = domain_has_privilege(project.name, privileges.CASE_LIST_EXPLORER)
+    if toggles.CASE_LIST_EXPLORER.enabled(project.name) or domain_can_access_case_list_explorer:
         inspect_reports.append(CaseListExplorer)
 
-    if toggles.CASE_DEDUPE.enabled(project.name):
+    if domain_has_privilege(project.name, privileges.CASE_DEDUPE):
         inspect_reports.append(DuplicateCasesExplorer)
 
     deployments_reports = (
@@ -123,13 +125,11 @@ def REPORTS(project):
             commtrack.SimplifiedInventoryReport,
             commtrack.InventoryReport,
             commtrack.CurrentStockStatusReport,
-            commtrack.StockStatusMapReport,
         )
         reports.insert(0, (gettext_lazy("CommCare Supply"), supply_reports))
 
     reports = list(_get_report_builder_reports(project)) + reports
 
-    from corehq.apps.accounting.utils import domain_has_privilege
     messaging_reports = []
 
     project_can_use_sms = domain_has_privilege(project.name, privileges.OUTBOUND_SMS)
@@ -268,13 +268,22 @@ def get_report_builder_count(domain):
     return len(report_builder_reports)
 
 
-EDIT_DATA_INTERFACES = (
-    (gettext_lazy('Edit Data'), (
-        CaseReassignmentInterface,
-        ImportCases,
-        BulkFormManagementInterface,
-    )),
-)
+def EDIT_DATA_INTERFACES(domain_obj):
+    from corehq.apps.accounting.utils import domain_has_privilege
+    reports = [CaseReassignmentInterface]
+
+    if (
+        toggles.COPY_CASES.enabled(domain_obj.name)
+        and domain_has_privilege(domain_obj.name, privileges.CASE_COPY)
+    ):
+        reports.append(CaseCopyInterface)
+
+    reports.extend([ImportCases, BulkFormManagementInterface])
+
+    return (
+        (gettext_lazy('Edit Data'), reports),
+    )
+
 
 FIXTURE_INTERFACES = (
     (_('Lookup Tables'), (
@@ -316,17 +325,16 @@ ENTERPRISE_INTERFACES = (
 ADMIN_REPORTS = (
     (_('Domain Stats'), (
         UserListReport,
-        DeviceLogSoftAssertReport,
         AdminPhoneNumberReport,
         UserAuditReport,
         DeployHistoryReport,
+        UCRDataLoadReport,
     )),
 )
 
 DOMAIN_REPORTS = (
     (_('Project Settings'), (
         DomainForwardingRepeatRecords,
-        SQLRepeatRecordReport,
         DomainLinkHistoryReport,
         ApiRequestLogReport,
     )),
@@ -336,5 +344,12 @@ DOMAIN_REPORTS = (
 USER_MANAGEMENT_REPORTS = (
     (_("User Management"), (
         UserHistoryReport,
+    )),
+)
+
+GEOSPATIAL_MAP = (
+    (_("Microplanning"), (
+        CaseManagementMap,
+        CaseGroupingReport,
     )),
 )

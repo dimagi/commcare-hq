@@ -1,0 +1,377 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+{% load hq_shared_tags %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">Icons</h1>
+  <p class="sg-lead">
+    Visual communication can be essential in scanning and understanding for populations whose first language
+    may not be English.  Please be sympathetic with the goal of cohesion and don’t use an icon for a purpose it
+    was not intended for.
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#custom-icons">Custom Icons</a></li>
+      <li>
+        <a href="#creating-new-icons">Creating New Icons</a>
+        <ul>
+          <li><a href="#creating-an-icon">Creating an Icon</a></li>
+          <li><a href="#adding-new-glyph">Adding a New Glyph</a></li>
+          <li><a href="#saving-edited-glyphs">Saving the Edited Glyphs File</a></li>
+          <li><a href="#prepping-cross-browser">Prepping for Cross Browser Compatibility</a></li>
+          <li><a href="#adding-glyph-to-stylesheet">Adding to the Stylesheet</a></li>
+          <li><a href="#example-commit">Example Commit</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <h2 id="overview">
+    Overview
+  </h2>
+  <p>
+    Consistent iconography in any user interface is critical to creating
+    a product that is highly accessible across all different levels of
+    literacy. Icons may need to be localized for different cultures and languages.
+  </p>
+  <p>
+    Good icons use <strong>simple, graphic shapes</strong> so they can be understood even at a small size.
+    They have little detail. They are as <strong>universal</strong> as possible, consistent with other
+    platforms.
+  </p>
+  <h2 id="primary-vs-secondary" class="pt-4">
+    Primary vs Secondary Icons
+  </h2>
+  <p>
+    Primary icons are used for <strong>navigation</strong> or <strong>interaction</strong>.
+    Primary icons are interactive, they change the surround environment or data. They likely don’t need to be coupled with text.
+  </p>
+  <p>
+    Secondary icons <strong>provide clarity</strong>.
+    Secondary icons are used <strong>before</strong> text to communicate topical information.
+  </p>
+  <p>
+    Most of HQ's icons come from
+    <a href="https://fontawesome.com/">FontAwesome</a>.
+    All icons in FontAwesome are already built into HQ.
+    Other icons have been custom created for HQ.
+  </p>
+  {% include 'styleguide/bootstrap5/atoms/partials/icon_set.html' with icons=common_icons %}
+
+  <h2 id="custom-icons" class="pt-4">
+    Custom Icons
+  </h2>
+  <p>
+    HQ has its own set of icons custom created to communicate HQ-specific concepts. The majority of these icons
+    are found in App Builder and Form Designer.
+  </p>
+  {% include 'styleguide/bootstrap5/atoms/partials/icon_set.html' with icons=custom_icons %}
+
+  <h2 id="creating-new-icons" class="pt-4">
+    Creating New Icons
+  </h2>
+  <p>
+    If a suitable icon doesn't exist in FontAwesome or HQ's custom set, it might be necessary to create one and add it
+    to our custom set of icons.
+  </p>
+  <p>
+    The instructions below assume you have a Mac. If you are running a different operating system, consider reaching out
+    to someone with a Mac to help you&mdash;unless you are adventurous and want to add to this documentation. If you
+    are not comfortable with vector graphics, please reach out to someone who is.
+  </p>
+
+  <h3 id="creating-an-icon" class="pt-2">
+    Creating an Icon
+  </h3>
+  <p>
+    Before you modify the CommCare HQ font, you first need to make sure you have a vector icon ready to copy-paste the
+    vector data into the Glyphs file.
+  <p>
+    You can create a new icon from scratch, or you can start from an existing vector icon, like the ones found in
+    <a href="http://thenounproject.com/" target="_blank">The Noun Project</a>.
+  </p>
+  <p>
+    You can open vector files (ie <code>.svg</code>, <code>.eps</code>, <code>.ai</code>) in either Adobe Illustrator,
+    Inkscape, or similar vector graphics editor. Once open, edit the graphic as necessary to make the icon fit the
+    style of the other icons available to the CommCare HQ Font.
+  </p>
+  <p>
+    When you have finished preparing the icon, ensure that you keep the file open while you follow the next steps to
+    add a new glyph to the CommCare HQ font.
+  </p>
+
+  <h3 id="adding-new-glyph" class="pt-2">
+    Adding a New Glyph
+  </h3>
+
+  <p>
+    First, open
+    <a href="https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/_fonts/commcarehq_font" target="_blank"><code>CommCareHQFont.glyphs</code></a>
+    in Glyphs Mini. <a href="https://apps.apple.com/us/app/glyphs-mini-2/id1175857180?mt=12" target="_blank">Glyphs Mini</a> is a less expensive, reduced
+    version of <a href="http://www.glyphsapp.com/" target="_blank">Glyphs</a> you can find in the App Store.
+  </p>
+
+  <div class="alert alert-primary">
+    <strong>Note:</strong> If you don't already have Glyphs Mini and someone else on the team does, reach out to them for help
+    with the following steps. Glyphs / Glyphs Mini are not free apps, and this process hasn't been successfully tested
+    in any of the free font editing apps.
+  </div>
+
+  <p>
+    If you scroll down in the window, you will see a section of glyphs called "Private Use". This is where we will
+    want the new icon/glyph to eventually live.
+  </p>
+
+  <div class="card text-bg-light mb-4">
+    <div class="card-body text-center">
+      <img src="{% static 'styleguide/images/font_docs/font-step-001.png' %}" width="600" />
+    </div>
+  </div>
+
+  <p>
+    The fastest way to add a new glyph is to select the last glyph in the list and go to <strong>Glyph &gt; Duplicate</strong>
+    in the menu.
+  </p>
+
+  <div class="card text-bg-light mb-4">
+    <div class="card-body text-center">
+      <div class="d-flex">
+        <div class="p-2 align-self-center">
+          <img src="{% static 'styleguide/images/font_docs/font-step-002.png' %}" width="400" />
+        </div>
+        <div class="p-2 align-self-center">
+          <img src="{% static 'styleguide/images/font_docs/font-step-003.png' %}" width="250" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p>
+    Next, you can double-click to open the duplicated glyph. From here, rename the glyph to a memorable slug to describe
+    the glyph (it's helpful if you use the same name when adding it to HQ). After that you can select and delete the old
+    vector data from the duplicated glyph. From there, you can paste the new vector information for the new glyph (from an
+    opened SVG or other vector image file), and resize to fit.
+  </p>
+
+  <div class="card text-bg-light mb-4">
+    <div class="card-body text-center">
+      <div class="d-flex">
+        <div class="p-2 align-self-center">
+          <h4>Rename</h4>
+          <a href="{% static 'styleguide/images/font_docs/font-step-004.gif' %}" target="_blank">
+            <img src="{% static 'styleguide/images/font_docs/font-step-004.gif' %}" width="200" />
+          </a>
+        </div>
+        <div class="p-2 align-self-center">
+          <h4>Delete Old</h4>
+          <a href="{% static 'styleguide/images/font_docs/font-step-005.gif' %}" target="_blank">
+            <img src="{% static 'styleguide/images/font_docs/font-step-005.gif' %}" width="200" />
+          </a>
+        </div>
+        <div class="p-2 align-self-center">
+          <h4>Paste, Resize New</h4>
+          <a href="{% static 'styleguide/images/font_docs/font-step-006.gif' %}" target="_blank">
+            <img src="{% static 'styleguide/images/font_docs/font-step-006.gif' %}" width="200" />
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p>
+    Then, you can resize the canvas of the new glyph to fit the new vector image. It's a good idea to use other
+    similarly shaped glyphs in the font as a sizing reference. Then you can horizontally position the glyph as
+    seen in the gif below. Note that the number being entered in to center the glyph is half the value of the
+    width of the glyph canvas.
+  </p>
+
+  <div class="card text-bg-light mb-4">
+    <div class="card-body text-center">
+      <div class="d-flex">
+        <div class="p-2 align-self-center">
+          <h4>Resize Canvas</h4>
+          <a href="{% static 'styleguide/images/font_docs/font-step-007.gif' %}" target="_blank">
+            <img src="{% static 'styleguide/images/font_docs/font-step-007.gif' %}" width="250" />
+          </a>
+        </div>
+        <div class="p-2 align-self-center">
+          <h4>Center Horizontally</h4>
+          <a href="{% static 'styleguide/images/font_docs/font-step-008.gif' %}" target="_blank">
+            <img src="{% static 'styleguide/images/font_docs/font-step-008.gif' %}" width="375" />
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p>
+    Finally, vertically center the font as shown below. Again, now is a good time to reference values set for other
+    similarly shaped and sized glyphs.
+  </p>
+
+  <div class="card text-bg-light mb-4">
+    <div class="card-body text-center">
+      <h4>Center Vertically</h4>
+      <a href="{% static 'styleguide/images/font_docs/font-step-009.gif' %}" target="_blank">
+        <img src="{% static 'styleguide/images/font_docs/font-step-009.gif' %}" width="600" />
+      </a>
+    </div>
+  </div>
+
+  <p>
+    When you are done editing the glyph and return to the main window, you will now see your new icon created.
+    However, it is now appearing in the "Other" section rather than "Private Use". This is because you need to set the
+    unicode value for this new glyph. Setting the unicode value is also very important so that we can reference
+    it in the font stylesheet later.
+  </p>
+
+  <div class="card text-bg-light mb-4">
+    <div class="card-body text-center">
+      <a href="{% static 'styleguide/images/font_docs/font-step-010.png' %}" target="_blank">
+        <img src="{% static 'styleguide/images/font_docs/font-step-010.png' %}" width="600" />
+      </a>
+    </div>
+  </div>
+
+  <p>
+    Unfortunately, Glyphs Mini doesn't let you edit the unicode value for a glyph directly (you need the more expensive
+    full version for this). However, there is a workaround. If you close Glyphs Mini and open the <code>.glyphs</code>
+    file in a text editor you can add the unicode value after the new glyph definition.
+  </p>
+
+  <p>
+    First, find the glyph right before your new glyph, and copy the line with the unicode value, then paste it at the end
+    of the new glyph definition and increment the hexadecimal value by one. Finally, add the slug for the new glyph in
+    the list of glyphs. The images below illustrate each step, but you can also view this
+    <a href="https://github.com/dimagi/commcare-hq/commit/6f1dddad83e5f9538948a19902578724d30ae533" target="_blank">example commit</a>
+    as a template for how your changes should look.
+  </p>
+
+  <div class="card text-bg-light mb-4">
+    <div class="card-body text-center">
+      <div class="d-flex">
+        <div class="p-2">
+          <h4>Copy Previous</h4>
+          <a href="{% static 'styleguide/images/font_docs/font-step-011.png' %}" target="_blank">
+            <img src="{% static 'styleguide/images/font_docs/font-step-011.png' %}" width="200" />
+          </a>
+        </div>
+        <div class="p-2">
+          <h4>Paste &amp; Increment</h4>
+          <a href="{% static 'styleguide/images/font_docs/font-step-012.png' %}" target="_blank">
+            <img src="{% static 'styleguide/images/font_docs/font-step-012.png' %}" width="200" />
+          </a>
+        </div>
+        <div class="p-2">
+          <h4>Add to List</h4>
+          <a href="{% static 'styleguide/images/font_docs/font-step-013.png' %}" target="_blank">
+            <img src="{% static 'styleguide/images/font_docs/font-step-013.png' %}" width="200" />
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p>
+    When you are done editing the <code>.glyphs</code> file directly, you can open it again in Glyphs Mini. The new
+    icon should now appear at the end of the "Private Use" list. You can also double-click to view the new glyph
+    and verify that the new unicode value is shown next to the name/slug.
+  </p>
+
+  <div class="card text-bg-light mb-4">
+    <div class="card-body text-center">
+      <div class="d-flex">
+        <div class="p-2">
+          <h4>Final List</h4>
+          <a href="{% static 'styleguide/images/font_docs/font-step-014.png' %}" target="_blank">
+            <img src="{% static 'styleguide/images/font_docs/font-step-014.png' %}" width="350" />
+          </a>
+        </div>
+        <div class="p-2 flex-fill">
+          <h4>Verify Unicode</h4>
+          <a href="{% static 'styleguide/images/font_docs/font-step-015.png' %}" target="_blank">
+            <img src="{% static 'styleguide/images/font_docs/font-step-015.png' %}" width="250" />
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3 id="saving-edited-glyphs" class="pt-2">
+    Saving the Edited Glyphs File
+  </h3>
+
+  <p>
+    After the new glyph is properly added to
+    <a href="https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/_fonts/commcarehq_font" target="_blank"><code>CommCareHQFont.glyphs</code></a>,
+    it must be exported as an Open Type (<code>.otf</code>) font file.
+  </p>
+
+  <p>
+    The image below shows the settings in Glyphs Mini after going to File > Export. Save the final <code>*.otf</code> font to
+    <code>corehq/apps/hqwebapp/static/hqwebapp/font/CommCareHQFont-Regular.otf</code>.
+  </p>
+
+  <div class="card text-bg-light mb-4">
+    <div class="card-body text-center">
+      <a href="{% static 'styleguide/images/font_docs/font-step-016.png' %}" target="_blank">
+        <img src="{% static 'styleguide/images/font_docs/font-step-016.png' %}" width="600" />
+      </a>
+    </div>
+  </div>
+
+  <h3 id="prepping-cross-browser" class="pt-2">
+    Prepping for Cross Browser Compatibility
+  </h3>
+  <p>
+    To make the font universally readable across most browsers, you'll need
+    to have an <code>eot</code>, <code>svg</code>, <code>ttf</code>,
+    and <code>woff</code> version of it. Use the
+    <a href="http://www.fontsquirrel.com/tools/webfont-generator" target="_blank">Font Squirrel Webfont Generator</a>
+    to do this.
+  </p>
+  <p>
+    You will need to use the generator in "Expert Mode" with the following settings:
+  </p>
+  <div class="card text-bg-light mb-4">
+    <div class="card-body text-center">
+      <p>
+        Click to enlarge this image:
+      </p>
+      <a href="{% static 'styleguide/images/font_docs/font-step-017.png' %}" target="_blank">
+        <img src="{% static 'styleguide/images/font_docs/font-step-017.png' %}" width="600" />
+      </a>
+    </div>
+  </div>
+
+  <h3 id="adding-glyph-to-stylesheet" class="pt-2">
+    Adding the New Glyph to the Stylesheet
+  </h3>
+  <p>
+    First, add a reference to the icon's font unicode value as a variable in
+    <code>corehq/apps/style/static/hqwebapp/less/font-commcare/variables.less</code>.
+  </p>
+  <p>
+    Then, add the <code>:before</code> styling for the class of the icon in
+    <code>corehq/apps/style/static/hqwebapp/less/font-commcare/icons.less</code>.
+  </p>
+  <p>
+    Update the list of icons in this document to show the new icon.
+  </p>
+
+  <h3 id="example-commit" class="pt-2">
+    Example Commit
+  </h3>
+
+  <p>
+    <a href="https://github.com/dimagi/commcare-hq/commit/6f1dddad83e5f9538948a19902578724d30ae533" target="_blank">Here is an example</a>
+    of what a commit would look like when adding a new icon to our CommCare HQ font.
+  </p>
+{% endblock content %}

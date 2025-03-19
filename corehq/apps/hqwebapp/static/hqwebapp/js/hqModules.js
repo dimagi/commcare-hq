@@ -1,4 +1,11 @@
 /*
+    This file does a number of manipulations of global variables that are typically bad practice.
+    It does not use strict because it's included everywhere, and strictness is not fully tested.
+*/
+/* eslint no-implicit-globals: 0 */
+/* eslint no-redeclare: 0 */
+/* eslint strict: 0 */
+/*
  * hqModules provides a poor man's module system for js. It is not a module *loader*,
  * only a module *referencer*: "importing" a module doesn't automatically load it as
  * a script to the page; it must already have been loaded with an explict script tag.
@@ -50,7 +57,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
     }
 
     (function (factory) {
-        if (typeof define === 'function' && define.amd && window.USE_REQUIREJS) {
+        if (typeof define === 'function' && define.amd && (window.USE_REQUIREJS || window.USE_WEBPACK)) {
             // HQ's requirejs build process (build_requirejs.py) replaces hqDefine calls with
             // define calls, so it's important that this do nothing but pass through to require
             define(path, dependencies, factory);
@@ -59,7 +66,8 @@ function hqDefine(path, dependencies, moduleAccessor) {
                 'jquery': '$',
                 'knockout': 'ko',
                 'underscore': '_',
-                'clipboard/dist/clipboard': 'Clipboard',
+                'clipboard/dist/clipboard': 'ClipboardJS',
+                'd3/d3.min': 'd3',
                 'ace-builds/src-min-noconflict/ace': 'ace',
                 'chai/chai': 'chai',
                 'DOMPurify/dist/purify.min': 'DOMPurify',
@@ -67,31 +75,33 @@ function hqDefine(path, dependencies, moduleAccessor) {
                 'moment/moment': 'moment',
                 'crypto-js/crypto-js': 'CryptoJS',
                 'hqwebapp/js/lib/modernizr': 'Modernizr',
-                'sinon/pkg/sinon': 'sinon',
             };
+            if (window.USE_BOOTSTRAP5) {
+                thirdPartyGlobals['es6!hqwebapp/js/bootstrap5_loader'] = 'bootstrap';
+                thirdPartyGlobals['tempusDominus'] = 'tempusDominus';
+            }
             var args = [];
             for (var i = 0; i < dependencies.length; i++) {
                 var dependency = dependencies[i];
-                if (COMMCAREHQ_MODULES.hasOwnProperty(dependency)) {
+                if (Object.hasOwn(COMMCAREHQ_MODULES, dependency)) {
                     args[i] = hqImport(dependency);
-                } else if (thirdPartyGlobals.hasOwnProperty(dependency)) {
+                } else if (Object.hasOwn(thirdPartyGlobals, dependency)) {
                     args[i] = window[thirdPartyGlobals[dependency]];
                 }
             }
-            if (!COMMCAREHQ_MODULES.hasOwnProperty(path)) {
+            if (!Object.hasOwn(COMMCAREHQ_MODULES, path)) {
                 if (path.match(/\.js$/)) {
                     throw new Error("Error in '" + path + "': module names should not end in .js.");
                 }
                 COMMCAREHQ_MODULES[path] = factory.apply(undefined, args);
-            }
-            else {
+            } else {
                 throw new Error("The module '" + path + "' has already been defined elsewhere.");
             }
         }
     }(moduleAccessor));
 }
 if (typeof define === 'undefined') {
-    define = hqDefine;
+    define = hqDefine;      // eslint-disable-line no-global-assign
 }
 
 // For use only with modules that are never used in a requirejs context.
@@ -106,11 +116,11 @@ function hqImport(path) {
 // Support require calls within a module. Best practice is to require all dependencies
 // at module definition time, but this function can be used when doing so would
 // introduce a circular dependency.
-function hqRequire(paths, callback) {
-    if (typeof define === 'function' && define.amd && window.USE_REQUIREJS) {
+function hqRequire(paths, callback) {       // eslint-disable-line no-unused-vars
+    if (typeof define === 'function' && define.amd && (window.USE_REQUIREJS || window.USE_WEBPACK)) {
         // HQ's requirejs build process (build_requirejs.py) replaces hqRequire calls with
         // require calls, so it's important that this do nothing but pass through to require
-        require(paths, callback);
+        require(paths, callback);   // eslint-disable-line no-undef
     } else {
         var args = [];
         for (var i = 0; i < paths.length; i++) {

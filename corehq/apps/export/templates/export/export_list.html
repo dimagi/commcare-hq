@@ -1,10 +1,10 @@
-{%  extends 'hqwebapp/bootstrap3/base_section.html' %}
+{%  extends 'hqwebapp/bootstrap5/base_section.html' %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load compress %}
 
-{% requirejs_main 'export/js/export_list_main' %}
+{% js_entry 'export/js/export_list_main' %}
 
 {% block page_title %}
   {{ current_page.title }}
@@ -23,6 +23,7 @@
   {% initial_page_data 'shared_export_type' shared_export_type %}
   {% initial_page_data 'static_model_type' static_model_type %}
   {% initial_page_data 'domain' domain %}
+  {% initial_page_data 'export_ownership_enabled' export_ownership_enabled %}
   {% registerurl 'commit_filters' domain %}
   {% registerurl 'get_app_data_drilldown_values' domain %}
   {% registerurl 'get_exports_page' domain %}
@@ -34,26 +35,10 @@
   <p>{{ lead_text }}</p>
 
   {% if is_odata %}
-    <div class="pull-right">
+    <div class="float-end">
       <feedback params="featureName: '{% trans_html_attr 'PowerBI / Tableau Integration' %}'"></feedback>
     </div>
   {% endif %}
 
   {% include 'export/partials/export_list_controller.html' with is_daily_saved_export=is_daily_saved_export %}
-{% endblock %}
-
-{% block modals %}{{ block.super }}
-  {% if request|ui_notify_enabled:"FORMS_CASES_URL_IN_EXPORTS" %}
-    <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
-         style="position: absolute; width: 200px;"
-         data-target="#create-export"
-         data-slug="{{ "FORMS_CASES_URL_IN_EXPORTS"|ui_notify_slug }}" role="alert">
-      <button type="button" class="close" data-dismiss="alert" aria-label="Close" id="alert-export-deep-links">
-        <span aria-hidden="true">&times;</span>
-      </button>
-      <p class="lead">
-        {% trans 'Now access forms and cases directly from your exports. Check out the new "form_link" and "case_link" fields in your export settings!' %}
-      </p>
-    </div>
-  {% endif %}
 {% endblock %}

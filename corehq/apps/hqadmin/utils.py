@@ -1,17 +1,20 @@
 import os
+import uuid
 from importlib import import_module
 from itertools import groupby
 
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY, get_user_model
-from django.utils.safestring import mark_safe
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 import requests
 
 from pillowtop.utils import force_seq_int
 
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
+from corehq.blobs import CODES, get_blob_db
+from corehq.util.view_utils import reverse
 
 EPSILON = 10000000
 
@@ -175,3 +178,22 @@ def unset_password(user):
     # 128 bits / 8 (bits/byte) = 16 bytes
     random_key = os.urandom(16).hex()
     user.set_password(random_key)
+
+
+def get_download_url(content, name, content_type=None, timeout=24 * 60):
+    """Upload file to blob storage for subsequent download"""
+    if timeout > 60 * 24 * 90:  # 90 days
+        # change/remove me if you need to exceed this limit
+        raise AssertionError(f"{timeout // 60 // 24} days seems like a long time")
+    unique_id = str(uuid.uuid4())
+    get_blob_db().put(
+        content,
+        domain='__system__',
+        parent_id=unique_id,
+        type_code=CODES.tempfile,
+        key=unique_id,
+        name=name,
+        content_type=content_type,  # optional
+        timeout=timeout,  # minutes
+    )
+    return reverse('download_blob', params={'key': unique_id}, absolute=True)

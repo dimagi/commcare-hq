@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -57,7 +57,7 @@
+         <p>
+           {% trans "Upload your updated file." %}
+         </p>
+-        {% crispy bulk_upload_form %}
++        {% crispy bulk_upload_form %}  {# todo B5: check crispy #}
+       </li>
+     {% endif %}
+   </ol>

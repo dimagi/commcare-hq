@@ -19,12 +19,15 @@ from corehq.apps.translations.integrations.transifex.const import (
 )
 from corehq.apps.translations.integrations.transifex.exceptions import (
     InvalidProjectMigration,
-    ResourceMissing,
+    TransifexApiException,
 )
 from corehq.apps.translations.models import TransifexProject
 
 
 class ProjectMigrator(object):
+    # TODO: rework ProjectMigrator to be compatible with Transifex API v3, or remove this functionality
+    # v3 makes 'slug' an immutable attribute
+    # meaning we can no longer simply change the path to a resource while retaining its history
     def __init__(self, domain, project_slug, source_app_id, target_app_id, resource_ids_mapping):
         """
         Migrate a transifex project from one app to another by
@@ -35,7 +38,7 @@ class ProjectMigrator(object):
         self.domain = domain
         self.project_slug = project_slug
         self.project = TransifexProject.objects.get(slug=project_slug)
-        self.client = TransifexApiClient(self.project.organization.get_api_token, self.project.organization,
+        self.client = TransifexApiClient(self.project.organization.plaintext_api_token, self.project.organization,
                                          project_slug)
         self.source_app_id = source_app_id
         self.target_app_id = target_app_id
@@ -46,20 +49,23 @@ class ProjectMigrator(object):
         ProjectMigrationValidator(self).validate()
 
     def migrate(self):
-        slug_update_responses = self._update_slugs()
-        menus_and_forms_sheet_update_responses = self._update_menus_and_forms_sheet()
-        return slug_update_responses, menus_and_forms_sheet_update_responses
+        slug_update_errors = self._update_slugs()
+        menus_and_forms_sheet_update_errors = self._update_menus_and_forms_sheet()
+        return slug_update_errors, menus_and_forms_sheet_update_errors
 
     def _update_slugs(self):
-        responses = {}
+        errors = {}
         for resource_type, old_id, new_id in self.resource_ids_mapping:
             slug_prefix = self._get_slug_prefix(resource_type)
             if not slug_prefix:
                 continue
             resource_slug = "%s_%s" % (slug_prefix, old_id)
             new_resource_slug = "%s_%s" % (slug_prefix, new_id)
-            responses[old_id] = self.client.update_resource_slug(resource_slug, new_resource_slug)
-        return responses
+            try:
+                self.client.update_resource_slug(resource_slug, new_resource_slug)
+            except TransifexApiException as e:
+                errors[old_id] = e
+        return errors
 
     @memoized
     def _get_slug_prefix(self, resource_type):
@@ -71,7 +77,7 @@ class ProjectMigrator(object):
         for lang in langs:
             try:
                 translations[lang] = self.client.get_translation("Menus_and_forms", lang, lock_resource=False)
-            except ResourceMissing:
+            except TransifexApiException:
                 # Probably a lang in app not present on Transifex, so skip
                 pass
         self._update_context(translations)
@@ -106,7 +112,10 @@ class ProjectMigrator(object):
         # HQ keeps the default lang on top and hence it should be the first one here
         assert list(translations.keys())[0] == self.target_app_default_lang
         for lang_code in translations:
-            responses[lang_code] = self._upload_translation(translations[lang_code], lang_code)
+            try:
+                self._upload_translation(translations[lang_code], lang_code)
+            except TransifexApiException as e:
+                responses[lang_code] = e
         return responses
 
     def _upload_translation(self, translations, lang_code):
@@ -118,11 +127,9 @@ class ProjectMigrator(object):
             po.save(temp_file.name)
             temp_file.seek(0)
             if lang_code == self.target_app_default_lang:
-                return self.client.upload_resource(temp_file.name, "Menus_and_forms", "Menus_and_forms",
-                                                   update_resource=True)
+                self.client.upload_resource(temp_file.name, "Menus_and_forms", "Menus_and_forms", True)
             else:
-                return self.client.upload_translation(temp_file.name, "Menus_and_forms", "Menus_and_forms",
-                                                      lang_code)
+                self.client.upload_translation(temp_file.name, "Menus_and_forms", lang_code)
 
     def get_metadata(self):
         now = str(datetime.datetime.now())
@@ -144,7 +151,7 @@ class ProjectMigrator(object):
 
     @cached_property
     def get_project_source_lang(self):
-        return self.client.project_details().json()['source_language_code']
+        return self.client.source_lang_code
 
     @cached_property
     def source_app_default_lang(self):

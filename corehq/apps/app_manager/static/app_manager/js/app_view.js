@@ -1,15 +1,22 @@
-/* globals hqDefine, hqImport */
 /* Behavior for app_view.html, regardless of document type (i.e., applies to both normal and remote apps) */
 hqDefine("app_manager/js/app_view", function () {
     $(function () {
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
-            reverse = hqImport("hqwebapp/js/initial_page_data").reverse;
+        var initialPageData = hqImport("hqwebapp/js/initial_page_data");
+
+        // App name
+        $(document).on("inline-edit-save", function (e, data) {
+            if (_.has(data.update, '.variable-app_name')) {
+                var appManager = hqImport('app_manager/js/app_manager');
+                appManager.updatePageTitle(data.update['.variable-app_name']);
+                appManager.updateDOM(data.update);
+            }
+        });
 
         // Settings
         var $settingsContainer = $('#commcare-settings');
         if ($settingsContainer.length) {
             var CommcareSettings = hqImport('app_manager/js/settings/commcare_settings').CommcareSettings;
-            $settingsContainer.koApplyBindings(new CommcareSettings(initial_page_data("app_view_options")));
+            $settingsContainer.koApplyBindings(new CommcareSettings(initialPageData.get("app_view_options")));
         }
 
         // Languages
@@ -17,19 +24,19 @@ hqDefine("app_manager/js/app_view", function () {
         if ($languagesContainer.length) {
             var SupportedLanguages = hqImport('app_manager/js/supported_languages').SupportedLanguages;
             $("#supported-languages").koApplyBindings(new SupportedLanguages({
-                langs: initial_page_data("langs"),
-                saveURL: reverse("edit_app_langs"),
-                validate: !initial_page_data("is_remote_app"),
+                langs: initialPageData.get("langs"),
+                saveURL: initialPageData.reverse("edit_app_langs"),
+                validate: !initialPageData.get("is_remote_app"),
             }));
         }
 
-        var CopyAppViewModel = function (data) {
+        var CopyAppViewModel = function () {
             var self = {};
             // Set up typeahead for domain names when copying app
             // prepend with blank so placeholder works
-            self.domainNames = [''].concat(data("domain_names"));
-            self.linkableDomains = data("linkable_domains");
-            self.shouldLimitToLinkedDomains = data("limit_to_linked_domains");
+            self.domainNames = [''].concat(initialPageData.get("domain_names"));
+            self.linkableDomains = initialPageData.get("linkable_domains");
+            self.shouldLimitToLinkedDomains = initialPageData.get("limit_to_linked_domains");
 
             self.isChecked = ko.observable(false);
             self.shouldEnableLinkedAppOption = ko.observable(true);
@@ -51,7 +58,7 @@ hqDefine("app_manager/js/app_view", function () {
 
         var $domainContainer = $("#copy-app-form");
         if ($domainContainer.length) {
-            $domainContainer.koApplyBindings(CopyAppViewModel(initial_page_data));
+            $domainContainer.koApplyBindings(CopyAppViewModel());
         }
 
         // Multimedia analytics
@@ -71,17 +78,16 @@ hqDefine("app_manager/js/app_view", function () {
                 if (!self.load_state() || self.load_state() === 'error') {
                     self.load_state('loading');
                     $.ajax({
-                        url: hqImport("hqwebapp/js/initial_page_data").reverse("app_multimedia_ajax"),
+                        url: initialPageData.reverse("app_multimedia_ajax"),
                         success: function (content) {
                             self.load_state('loaded');
                             self.multimedia_page_html(content);
-                            hqImport("hqwebapp/js/widgets").init();
+                            hqImport("hqwebapp/js/bootstrap3/widgets").init();
                         },
                         error: function (data) {
                             if (data.hasOwnProperty('responseJSON')) {
                                 alert(data.responseJSON.message);
-                            }
-                            else {
+                            } else {
                                 alert(gettext('Oops, there was a problem loading this section. Please try again.'));
                             }
                             self.load_state('error');
@@ -107,5 +113,28 @@ hqDefine("app_manager/js/app_view", function () {
                 initializeMultimediaTab();
             });
         }
+
+        // Custom Assertions
+        (function () {
+            var $form = $("#custom-assertions-form");
+            var $saveContainer = $form.find("#custom-assertions-save-btn");
+            var saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
+                save: function () {
+                    saveButton.ajax({
+                        url: $form.attr('action'),
+                        data: {
+                            custom_assertions: $form.find('input[name="custom_assertions"]').val(),
+                        },
+                        type: 'POST',
+                    });
+                },
+            });
+            $form.on('change', function () {
+                saveButton.fire('change');
+            });
+            saveButton.ui.appendTo($saveContainer);
+            hqImport("app_manager/js/section_changer").attachToForm($saveContainer);
+        })();
+
     });
 });

@@ -1,0 +1,147 @@
+--- 
++++ 
+@@ -1,24 +1,26 @@
+-{% extends "hqwebapp/bootstrap3/two_column.html" %}
++{% extends "hqwebapp/bootstrap5/two_column.html" %}
+ {% load compress %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ {% load crispy_forms_tags %}
+ 
+-{% block page_sidebar_classes %}sidebar-offcanvas col-xs-12 col-sm-3 col-lg-2{% endblock %}
++{% block page_sidebar_classes %}report-sidebar col-sm-12 col-md-3 col-xl-2{% endblock %}
+ 
+-{% block page_row_classes %}row-offcanvas row-offcanvas-left{% endblock %}
++{% block page_row_classes %}report-sidebar-row{% endblock %}
+ 
+-{% block page_content_classes %}col-xs-12 col-sm-9 col-lg-10{% endblock %}
++{% block page_content_classes %}col-sm-12 col-md-9 col-xl-10{% endblock %}
+ 
+-{% js_entry_b3 "reports/js/bootstrap3/tabular" %}
++{% js_entry "reports/js/bootstrap5/tabular" %}
+ 
+ {% block stylesheets %}
+   {{ block.super }}
+   {% compress css %}
+-    <link type="text/less"
+-          rel="stylesheet"
+-          media="all"
+-          href="{% static 'reports/less/reports.less' %}" />
++    <link
++      type="text/scss"
++      rel="stylesheet"
++      media="all"
++      href="{% static 'reports/scss/reports.scss' %}"
++    />
+   {% endcompress %}
+   {% include 'reports/partials/filters_css.html' %}
+ 
+@@ -28,22 +30,33 @@
+ {% block title %}{{ report.title|default:"Project Reports" }}{% endblock %}
+ 
+ {% block page_breadcrumbs %}
+-  <a href="#" class="btn btn-link btn-invisible visible-xs btn-report-menu" data-toggle="offcanvas"><i class="fa fa-bars"></i> {% trans "Reports Menu" %}</a>
+-  <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
+-    <li>
+-      <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a>
+-    </li>
+-    {% if report.breadcrumbs %}
+-      {% for crumb in report.breadcrumbs %}
+-        <li>
+-          <a href="{{ crumb.link }}">{{ crumb.title }}</a>
+-        </li>
+-      {% endfor %}
+-    {% endif %}
+-    <li class="active">
+-      {% trans report.title|default:"Untitled Report" %}
+-    </li>
+-  </ol>
++  <a
++    href="#"
++    class="btn btn-link btn-report-menu"
++    data-hq-toggle=".report-sidebar"
++  >
++    <i class="fa fa-bars"></i> {% trans "Reports Menu" %}
++  </a>
++  <nav aria-label="breadcrumb">
++    <ol
++      id="hq-breadcrumbs"
++      class="breadcrumb breadcrumb-hq-section"
++    >
++      <li class="breadcrumb-item">
++        <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a>
++      </li>
++      {% if report.breadcrumbs %}
++        {% for crumb in report.breadcrumbs %}
++          <li class="breadcrumb-item">
++            <a href="{{ crumb.link }}">{{ crumb.title }}</a>
++          </li>
++        {% endfor %}
++      {% endif %}
++      <li class="breadcrumb-item active" aria-current="page">
++        {% trans report.title|default:"Untitled Report" %}
++      </li>
++    </ol>
++  </nav>
+ {% endblock %}
+ 
+ {% block page_content %}
+@@ -68,19 +81,18 @@
+   {% initial_page_data 'slug' report.slug %}
+ 
+   {% block filter_panel %}
+-    {% include "reports/standard/partials/bootstrap3/filter_panel.html" %}
++    {% include "reports/standard/partials/bootstrap5/filter_panel.html" %}
+   {% endblock %}
+ 
+   {% if report.is_emailable and request.couch_user.can_download_reports %}
+-    <div id="email-report-modal" class="modal fade" tabindex="-1" role="dialog">
++    <div
++      id="email-report-modal"
++      class="modal fade"
++      tabindex="-1" role="dialog"
++    >
+       <div class="modal-dialog">
+         <div class="modal-content">
+           <div class="modal-header">
+-            <button type="button"
+-                    class="close"
+-                    data-dismiss="modal"
+-                    aria-label="Close"
+-                    data-bind="click: resetModal"><span aria-hidden="true">&times;</span></button>
+             <h4 class="modal-title">
+               {% trans "Email report:" %}
+               {{ datespan.startdate|date:"Y-m-d" }}
+@@ -89,15 +101,21 @@
+               {% endif %}
+               {{ datespan.enddate|date:"Y-m-d" }}
+             </h4>
++            <button
++              class="btn-close"
++              aria-label="{% trans "Close" %}" type="button"
++              data-bs-dismiss="modal"
++              data-bind="click: resetModal"
++            ></button>
+           </div>
+-          {% crispy email_form %}
++          {% crispy email_form %}  {# todo B5: check crispy #}
+         </div>
+       </div>
+     </div>
+   {% endif %}
+ 
+   {% if report.special_notice %}
+-    <div id="report-special-notice" class="alert alert-info" style="margin-bottom: 2px">
++    <div id="report-special-notice" class="alert alert-info" style="margin-bottom: 2px">  {# todo B5: inline style #}
+       <h4>{% trans 'Notice' %}</h4>
+       <p>{{ report.special_notice }}</p>
+     </div>
+@@ -107,7 +125,7 @@
+       {% block reportcontent %}
+       {% endblock %}
+     {% else %}
+-      {% include "reports/async/bootstrap3/default.html" %}
++      {% include "reports/async/bootstrap5/default.html" %}
+     {% endif %}
+   </div>
+ {% endblock %}

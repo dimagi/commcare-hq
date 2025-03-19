@@ -1,0 +1,107 @@
+--- 
++++ 
+@@ -9,9 +9,9 @@
+       </div>
+     <!-- /ko -->
+     <div class="row">
+-      <div class="col-sm-6">
+-        <div class="form-group">
+-          <label class="control-label">
++      <div class="col-md-6">
++        <div class="form-group">  {# todo B5: css-form-group #}
++          <label class="form-label">
+             {% trans "First name" %}<span class="asteriskField">*</span>
+           </label>
+           <div class="controls">
+@@ -24,9 +24,9 @@
+           </div>
+         </div>
+       </div>
+-      <div class="col-sm-6">
+-        <div class="form-group">
+-          <label class="control-label">
++      <div class="col-md-6">
++        <div class="form-group">  {# todo B5: css-form-group #}
++          <label class="form-label">
+             {% trans "Last name" %}<span class="asteriskField">*</span>
+           </label>
+           <div class="controls">
+@@ -40,8 +40,8 @@
+         </div>
+       </div>
+     </div>
+-    <div class="form-group">
+-      <label class="control-label">
++    <div class="form-group">  {# todo B5: css-form-group #}
++      <label class="form-label">
+         {% trans "Professional email" %}<span class="asteriskField">*</span>
+       </label>
+       <div class="controls">
+@@ -54,9 +54,9 @@
+       </div>
+     </div>
+     <div class="row">
+-      <div class="col-sm-6">
+-        <div class="form-group">
+-          <label class="control-label">
++      <div class="col-md-6">
++        <div class="form-group">  {# todo B5: css-form-group #}
++          <label class="form-label">
+             {% trans "Organization" %}<span class="asteriskField">*</span>
+           </label>
+           <div class="controls">
+@@ -69,9 +69,9 @@
+           </div>
+         </div>
+       </div>
+-      <div class="col-sm-6">
+-        <div class="form-group">
+-          <label class="control-label">
++      <div class="col-md-6">
++        <div class="form-group">  {# todo B5: css-form-group #}
++          <label class="form-label">
+             {% trans "Job title" %}<span class="asteriskField">*</span>
+           </label>
+           <div class="controls">
+@@ -85,12 +85,12 @@
+         </div>
+       </div>
+     </div>
+-    <div class="form-group">
+-      <label class="control-label">
++    <div class="form-group">  {# todo B5: css-form-group #}
++      <label class="form-label">
+         {% trans "Preferred language" %}<span class="asteriskField">*</span>
+       </label>
+       <div class="controls">
+-        <select
++        <select  {# todo B5: css-select-form-control #}
+           class="form-control"
+           name="language"
+           data-bind="value: language"
+@@ -102,11 +102,11 @@
+         </select>
+       </div>
+     </div>
+-    <div class="form-group">
+-      <label class="control-label">
++    <div class="form-group">  {# todo B5: css-form-group #}
++      <label class="form-label">
+         {% trans "How did you hear about us?" %}
+       </label>
+-      <select
++      <select  {# todo B5: css-select-form-control #}
+         class="form-control"
+         name="discoverySource"
+         data-bind="value: discoverySource"
+@@ -121,8 +121,8 @@
+         <option value="Other">{% trans "Other" %}</option>
+       </select>
+     </div>
+-    <div class="form-group" data-bind="visible: discoverySource() === 'Other'">
+-      <label class="control-label">
++    <div class="form-group" data-bind="visible: discoverySource() === 'Other'">  {# todo B5: css-form-group #}
++      <label class="form-label">
+         {% trans "We'd love to hear more! Please specify -" %}
+       </label>
+       <div class="controls">

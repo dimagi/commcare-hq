@@ -1,9 +1,19 @@
 {% load i18n %}
-{% if not data_source_config.is_static and data_source_config.meta.build.is_rebuild_in_progress  %}
+{% if not data_source_config.is_static %}
+  {% if data_source_config.rebuild_failed %}
       <div id="built-warning" class="alert alert-warning">
-        <h4><i class="fa fa-exclamation-triangle"></i> {% trans "Your report is still being populated." %}</h4>
+        <h4>
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          {% trans "Populating your report did not complete successfully." %}
+        </h4>
+        {% trans 'You can try clicking "Advanced" and choosing "Resume Build".' %}
+      </div>
+  {% elif data_source_config.meta.build.is_rebuild_in_progress %}
+      <div id="built-warning" class="alert alert-warning">
+        <h4><i class="fa-solid fa-triangle-exclamation"></i> {% trans "Your report is still being populated." %}</h4>
         {% blocktrans %}
           What you are seeing now is just a preview, and contains some or none of your data.
         {% endblocktrans %}
       </div>
+  {% endif %}
 {% endif %}

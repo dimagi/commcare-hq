@@ -1,7 +1,16 @@
-hqDefine("cloudcare/js/formplayer/users/utils", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data");
-
+hqDefine("cloudcare/js/formplayer/users/utils", [
+    'jquery',
+    'sentry_browser',
+    'hqwebapp/js/initial_page_data',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/users/models',
+], function (
+    $,
+    Sentry,
+    initialPageData,
+    FormplayerFrontend,
+    UsersModels,
+) {
     var self = {};
     self.Users = {
         /**
@@ -12,17 +21,17 @@ hqDefine("cloudcare/js/formplayer/users/utils", function () {
          * setting it in a cookie
          */
         logInAsUser: function (restoreAsUsername) {
-            var currentUser = FormplayerFrontend.getChannel().request('currentUser');
+            var currentUser = UsersModels.getCurrentUser();
             currentUser.restoreAs = restoreAsUsername;
             Sentry.setTag("loginAsUser", restoreAsUsername);
 
             $.cookie(
                 self.Users.restoreAsKey(
                     currentUser.domain,
-                    currentUser.username
+                    currentUser.username,
                 ),
                 currentUser.restoreAs,
-                { secure: initialPageData.get('secure_cookies') }
+                { secure: initialPageData.get('secure_cookies') },
             );
         },
         restoreAsKey: function (domain, username) {
@@ -57,7 +66,7 @@ hqDefine("cloudcare/js/formplayer/users/utils", function () {
     FormplayerFrontend.getChannel().reply('restoreAsUser', function (domain, username) {
         return self.Users.getRestoreAsUser(
             domain,
-            username
+            username,
         );
     });
 
@@ -69,20 +78,13 @@ hqDefine("cloudcare/js/formplayer/users/utils", function () {
      * navigates you to the main page.
      */
     FormplayerFrontend.on('clearRestoreAsUser', function () {
-        var user = FormplayerFrontend.getChannel().request('currentUser');
+        var user = UsersModels.getCurrentUser();
         self.Users.clearRestoreAsUser(
             user.domain,
-            user.username
+            user.username,
         );
         user.restoreAs = null;
-        hqRequire(["cloudcare/js/formplayer/users/views"], function (UsersViews) {
-            FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
-                UsersViews.RestoreAsBanner({
-                    model: user,
-                })
-            );
-        });
-
+        FormplayerFrontend.showRestoreAs(user);
         FormplayerFrontend.trigger('navigateHome');
     });
 

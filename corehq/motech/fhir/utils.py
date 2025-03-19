@@ -1,8 +1,8 @@
 import os
-
+from functools import wraps
 from memoized import memoized
 
-from corehq.motech.fhir.const import FHIR_VERSION_4_0_1
+from corehq.motech.fhir.const import FHIR_VERSION_4_0_1, HQ_ACCEPTABLE_FHIR_MIME_TYPES
 from corehq.motech.fhir.models import (
     FHIRResourceProperty,
     FHIRResourceType,
@@ -10,24 +10,30 @@ from corehq.motech.fhir.models import (
 )
 from corehq.util.view_utils import absolute_reverse
 
+from django.http import JsonResponse
+
 
 def resource_url(domain, fhir_version_name, resource_type, case_id):
     from corehq.motech.fhir.views import get_view
     return absolute_reverse(get_view, args=(domain, fhir_version_name, resource_type, case_id))
 
 
-def load_fhir_resource_mappings(domain):
+def load_fhir_case_type_mapping(domain):
     fhir_resource_types = FHIRResourceType.objects.select_related('case_type').filter(domain=domain)
-    fhir_resource_type_name_by_case_type = {
+    return {
         ft.case_type: ft.name
         for ft in fhir_resource_types
     }
-    fhir_resource_prop_by_case_prop = {
+
+
+def load_fhir_case_properties_mapping(domain):
+    fhir_resource_properties = FHIRResourceProperty.objects.select_related('case_property').filter(
+        resource_type__domain=domain
+    )
+    return {
         fr.case_property: fr.jsonpath
-        for fr in FHIRResourceProperty.objects.select_related('case_property').filter(
-            resource_type__in=fhir_resource_types)
+        for fr in fhir_resource_properties
     }
-    return fhir_resource_type_name_by_case_type, fhir_resource_prop_by_case_prop
 
 
 def update_fhir_resource_type(domain, case_type, fhir_resource_type):
@@ -75,3 +81,36 @@ def load_fhir_resource_types(fhir_version=FHIR_VERSION_4_0_1, exclude_resource_t
             resource_types.remove(schema)
     resource_types.sort()
     return resource_types
+
+
+def validate_accept_header_and_format_param(view_func):
+    @wraps(view_func)
+    def _inner(request, *args, **kwargs):
+        def _get_format_param(request):
+            if request.META.get('REQUEST_METHOD') == 'POST':
+                return request.POST.get('_format')
+            elif request.META.get('REQUEST_METHOD') == 'GET':
+                return request.GET.get('_format')
+            else:
+                return None
+        _format_param = _get_format_param(request)
+        if _format_param and _format_param not in HQ_ACCEPTABLE_FHIR_MIME_TYPES + ['json']:
+            return JsonResponse(status=406,
+                                data={'message': "Requested format in '_format' param not acceptable."})
+        else:
+            accept_header = request.META.get('HTTP_ACCEPT')
+            if accept_header and accept_header not in HQ_ACCEPTABLE_FHIR_MIME_TYPES + ['*/*']:
+                return JsonResponse(status=406, data={'message': "Not Acceptable"})
+        return view_func(request, *args, **kwargs)
+
+    return _inner
+
+
+def require_fhir_json_content_type_headers(view_func):
+    @wraps(view_func)
+    def _inner(request, *args, **kwargs):
+        if request.content_type not in HQ_ACCEPTABLE_FHIR_MIME_TYPES:
+            return JsonResponse(status=415, data={'message': "Unsupported Media Type"})
+        return view_func(request, *args, **kwargs)
+
+    return _inner

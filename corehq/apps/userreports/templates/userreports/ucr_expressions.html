@@ -1,8 +1,8 @@
-{% extends 'hqwebapp/base_paginated_crud.html' %}
+{% extends 'hqwebapp/bootstrap3/base_paginated_crud.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main "userreports/js/ucr_expressions" %}
+{% js_entry_b3 "userreports/js/ucr_expressions" %}
 
 {% block pagination_templates %}
 <script type="text/html" id="base-ucr-statement-template">
@@ -33,11 +33,60 @@
                 data-bind="attr: {href: edit_url}">
             {% trans "Update Expression" %}
         </a>
+        <button type="button"
+                data-toggle="modal"
+                data-bind="attr: {'data-target': '#delete-expression-' + id}"
+                class="btn btn-danger">
+          <i class="fa fa-remove"></i> {% trans 'Remove' %}
+        </button>
         <a class="btn btn-primary"
                 href="{% url 'domain_links' domain %}"
                 data-bind="visible: upstream_id">
             {% trans "Linked Project Spaces" %}
         </a>
+
+        <div class="modal fade" data-bind="attr: {id: 'delete-expression-' + id}">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title">
+                  {% blocktrans %}
+                    Delete expression <strong data-bind="text: name"></strong>?
+                  {% endblocktrans %}
+                </h4>
+              </div>
+              <div class="modal-body">
+                <p>
+                  {% blocktrans %}
+                    Yes, delete the <strong data-bind="text: name"></strong> expression.
+                  {% endblocktrans %}
+                </p>
+              </div>
+              <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-default"
+                        data-dismiss="modal">
+                  {% trans 'Cancel' %}
+                </button>
+                <button type="button"
+                        class="btn btn-danger delete-item-confirm"
+                        data-loading-text="{% trans 'Deleting Expression...' %}">
+                  <i class="fa fa-remove"></i> {% trans 'Delete Expression' %}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
     </td>
+</script>
+
+<script type="text/html" id="deleted-ucr-statement-template">
+  <td class="col-sm-8">
+    <a data-bind="text: name"></a>
+  </td>
+  <td class="col-sm-4">
+    <span class="label label-default">{% trans 'Deleted' %}</span>
+  </td>
 </script>
 {% endblock %}

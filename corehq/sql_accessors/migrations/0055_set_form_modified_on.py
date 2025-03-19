@@ -6,7 +6,6 @@ from corehq.form_processor.models import XFormInstance, XFormOperation
 from corehq.sql_db.operations import RawSQLMigration
 
 migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {
-    'FORM_STATE_DELETED': XFormInstance.DELETED,
     'FORM_STATE_ARCHIVED': XFormInstance.ARCHIVED,
     'FORM_STATE_NORMAL': XFormInstance.NORMAL,
     'FORM_OPERATION_ARCHIVE': XFormOperation.ARCHIVE,
@@ -22,6 +21,4 @@ class Migration(migrations.Migration):
 
     operations = [
         migrator.get_migration('archive_unarchive_form2.sql'),
-        migrator.get_migration('soft_delete_forms2.sql'),
-        migrator.get_migration('soft_undelete_forms2.sql'),
     ]

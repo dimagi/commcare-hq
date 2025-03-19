@@ -73,3 +73,43 @@ class CaseBlockTest(SimpleTestCase):
             '</case>'
         )
         self.assertEqual(actual, expected)
+
+    def test_owner_id_is_none(self):
+        case_block = CaseBlock(
+            case_id=self.CASE_ID,
+            owner_id=None,
+        )
+        self.assertEqual(case_block.owner_id, ...)
+
+    def test_date_opened_default(self):
+        case_block = CaseBlock(
+            case_id=self.CASE_ID,
+        )
+        self.assertEqual(case_block.date_opened, ...)
+
+    def test_date_opened_given(self):
+        day_one = datetime(year=1970, month=1, day=1)
+        case_block = CaseBlock(
+            case_id=self.CASE_ID,
+            date_opened=day_one,
+        )
+        self.assertEqual(case_block.date_opened, day_one)
+
+    def test_date_opened_deprecated_given(self):
+        day_one = datetime(year=1970, month=1, day=1)
+        case_block = CaseBlock(
+            case_id=self.CASE_ID,
+            date_opened=day_one,
+            create=True,
+            date_opened_deprecated_behavior=True,
+        )
+        self.assertEqual(case_block.date_opened, day_one)
+
+    def test_date_opened_deprecated_now(self):
+        now = datetime.utcnow().date()
+        case_block = CaseBlock(
+            case_id=self.CASE_ID,
+            create=True,
+            date_opened_deprecated_behavior=True,
+        )
+        self.assertEqual(case_block.date_opened, now)

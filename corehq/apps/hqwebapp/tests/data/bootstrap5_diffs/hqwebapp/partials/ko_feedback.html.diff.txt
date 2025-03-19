@@ -1,0 +1,98 @@
+--- 
++++ 
+@@ -1,42 +1,39 @@
+ {% load i18n %}
+ {% load hq_shared_tags %}
+-<!-- used by corehq/apps/hqwebapp/static/hqwebapp/js/components/bootstrap3/feedback.js -->
++<!-- used by corehq/apps/hqwebapp/static/hqwebapp/js/components/bootstrap5/feedback.js -->
+ <script type="text/html" id="ko-feedback-template">
+   <a class="btn btn-link"
+      href="#modal-feedback-form-widget"
+-     data-toggle="modal">
++     data-bs-toggle="modal">
+     {% trans "Give Feedback" %}
+     <i class="fa fa-thumbs-up"></i>
+   </a>
+ 
+-  <div class="modal fade"
++  <div class="modal fade modal-lg"
+        id="modal-feedback-form-widget"
+-       role="dialog">
++       tabindex="-1"
++       aria-labelledby="feedbackFormModalTitle"
++       aria-hidden="true">
+     <div class="modal-dialog">
+       <div class="modal-content">
+         <div class="modal-header">
+-          <button type="button" class="close" data-dismiss="modal">
+-            <span aria-hidden="true">&times;</span>
+-            <span class="sr-only">
+-              {% trans "Close" %}
+-            </span>
+-          </button>
+-          <h4 class="modal-title">
++          <h4 class="modal-title" id="feedbackFormModalTitle">
+             {% blocktrans %}
+               We would love to get your feedback
+             {% endblocktrans %}
+           </h4>
++          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+         </div>
+-        <div class="modal-body form"
++        <div class="modal-body"
+              data-bind="visible: !showSuccess()">
+-          <div class="form-group">
+-            <label class="control-label">
++          <div class="mb-3">
++            <label class="form-label">
+               {% blocktrans %}
+                 How would you rate this feature?
+               {% endblocktrans %}
+             </label>
+-            <div class="row feedback-smiles">
+-              <div class="col-xs-4">
++            <div class="row mb-3 feedback-smiles">
++              <div class="col-sm-4">
+                 <button type="button"
+                         data-bind="click: rateBad, css: { selected: rating() === 1 }"
+                         class="btn btn-link rate-bad">
+@@ -44,7 +41,7 @@
+                   {% trans "Don't Like It / Not Useful" %}
+                 </button>
+               </div>
+-              <div class="col-xs-4">
++              <div class="col-sm-4">
+                 <button type="button"
+                         data-bind="click: rateOk, css: { selected: rating() === 2 }"
+                         class="btn btn-link rate-ok">
+@@ -52,7 +49,7 @@
+                   {% trans "Not Sure / Confusing" %}
+                 </button>
+               </div>
+-              <div class="col-xs-4">
++              <div class="col-sm-4">
+                 <button type="button"
+                         data-bind="click: rateGood, css: { selected: rating() === 3 }"
+                         class="btn btn-link rate-good">
+@@ -62,8 +59,8 @@
+               </div>
+             </div>
+           </div>
+-          <div class="form-group">
+-            <label class="control-label">
++          <div class="mb-3">
++            <label class="form-label">
+               {% trans "Any other comments?" %}
+             </label>
+             <textarea data-bind="value: additionalFeedback"
+@@ -80,8 +77,8 @@
+         </div>
+         <div class="modal-footer">
+           <button type="button"
+-                  class="btn btn-default"
+-                  data-dismiss="modal">{% trans "Close" %}</button>
++                  class="btn btn-outline-primary"
++                  data-bs-dismiss="modal">{% trans "Close" %}</button>
+           <button type="button"
+                   class="btn btn-primary"
+                   data-bind="click: submit, visible: !!rating() && !showSuccess()">

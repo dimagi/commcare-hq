@@ -8,6 +8,8 @@ from django.utils.translation import gettext_lazy as _
 
 from memoized import memoized
 
+from corehq.apps.locations.permissions import user_can_access_location_id
+from corehq.apps.userreports.reports.filters.values import LocationDrilldownFilterValue
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.locations.models import SQLLocation
@@ -110,7 +112,7 @@ class BaseFilter(object):
 
 
 class DatespanFilter(BaseFilter):
-    template = 'reports_core/filters/datespan_filter.html'
+    template = 'reports_core/filters/bootstrap3/datespan_filter.html'
 
     def __init__(self, name, label='Datespan Filter', css_id=None, compare_as_string=False):
         self.label = label
@@ -165,7 +167,7 @@ class DatespanFilter(BaseFilter):
 
 
 class QuarterFilter(BaseFilter):
-    template = 'reports_core/filters/quarter_filter.html'
+    template = 'reports_core/filters/bootstrap3/quarter_filter.html'
 
     def __init__(self, name, label=_('Quarter'), css_id=None, show_all=False):
         self.label = label
@@ -231,7 +233,7 @@ class QuarterFilter(BaseFilter):
 
 
 class NumericFilter(BaseFilter):
-    template = "reports_core/filters/numeric_filter.html"
+    template = "reports_core/filters/bootstrap3/numeric_filter.html"
 
     def __init__(self, name, label=_('Numeric Filter'), css_id=None):
         self.label = label
@@ -313,7 +315,7 @@ class ChoiceListFilter(BaseFilter):
     """
     Filter for a list of choices. Each choice should be a Choice object as per above.
     """
-    template = 'reports_core/filters/choice_list_filter.html'
+    template = 'reports_core/filters/bootstrap3/choice_list_filter.html'
 
     def __init__(self, name, field, datatype, label='Choice List Filter',
                  css_id=None, choices=None):
@@ -351,7 +353,7 @@ class DynamicChoiceListFilter(BaseFilter):
 
     The choices are generated dynamically based on the database.
     """
-    template = 'reports_core/filters/dynamic_choice_list.html'
+    template = 'reports_core/filters/bootstrap3/dynamic_choice_list.html'
 
     def __init__(self, name, field, datatype, label, show_all, url_generator, choice_provider,
                  ancestor_expression=None, css_id=None):
@@ -416,7 +418,7 @@ class MultiFieldDynamicChoiceListFilter(DynamicChoiceListFilter):
 
 
 class LocationDrilldownFilter(BaseFilter):
-    template = 'reports_core/filters/location_async.html'
+    template = 'reports_core/filters/bootstrap3/location_async.html'
     location_filter = True
 
     def __init__(self, name, field, datatype, label, domain, include_descendants,
@@ -465,16 +467,19 @@ class LocationDrilldownFilter(BaseFilter):
 
     def value(self, **kwargs):
         selected_loc_id = kwargs.get(self.name, None)
+        request_user = kwargs.get(REQUEST_USER_KEY, None)
         if selected_loc_id:
-            return self.valid_location_ids(selected_loc_id)
+            if request_user and user_can_access_location_id(self.domain, request_user, selected_loc_id):
+                return self.valid_location_ids(selected_loc_id)
+            else:
+                return LocationDrilldownFilterValue.SHOW_NONE
         else:
-            return self.default_value(kwargs.get(REQUEST_USER_KEY, None))
+            return self.default_value(request_user)
 
     def default_value(self, request_user=None):
         # Returns list of visible locations for the user if user is assigned to a location
         #   or special value of SHOW_ALL or SHOW_NONE depending whether
         #   user can access all locations or not respectively
-        from corehq.apps.userreports.reports.filters.values import LocationDrilldownFilterValue
         if request_user:
             user_location_id = self.user_location_id(request_user)
             if request_user.has_permission(self.domain, 'access_all_locations'):

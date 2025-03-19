@@ -1,50 +1,108 @@
-/* global Sentry */
 /**
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
  */
-
-hqDefine("cloudcare/js/formplayer/menus/api", function () {
-    var Collections = hqImport("cloudcare/js/formplayer/menus/collections"),
-        constants = hqImport("cloudcare/js/formplayer/constants"),
-        errors = hqImport("cloudcare/js/form_entry/errors"),
-        formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar");
+hqDefine("cloudcare/js/formplayer/menus/api", [
+    'jquery',
+    'underscore',
+    'sentry_browser',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
+    'cloudcare/js/formplayer/menus/collections',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/form_entry/errors',
+    'cloudcare/js/form_entry/utils',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/apps/api',
+    'cloudcare/js/formplayer/users/models',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/layout/views/progress_bar',
+    'cloudcare/js/utils',
+], function (
+    $,
+    _,
+    Sentry,
+    initialPageData,
+    toggles,
+    Collections,
+    constants,
+    errors,
+    formEntryUtils,
+    FormplayerFrontend,
+    AppsAPI,
+    UsersModels,
+    formplayerUtils,
+    ProgressBar,
+    cloudcareUtils,
+) {
+    let currentSelections = null,
+        ongoingRequests = [];
 
     var API = {
         queryFormplayer: function (params, route) {
-            var user = FormplayerFrontend.getChannel().request('currentUser'),
+            var user = UsersModels.getCurrentUser(),
                 lastRecordedLocation = FormplayerFrontend.getChannel().request('lastRecordedLocation'),
                 timezoneOffsetMillis = (new Date()).getTimezoneOffset() * 60 * 1000 * -1,
                 tzFromBrowser = Intl.DateTimeFormat().resolvedOptions().timeZone,
+                windowWidth = String(window.innerWidth),
+                keepAPMTraces = toggles.toggleEnabled('ACTIVATE_DATADOG_APM_TRACES'),
                 formplayerUrl = user.formplayer_url,
                 displayOptions = user.displayOptions || {},
                 defer = $.Deferred(),
                 options,
                 menus;
 
-            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (appCollection) {
+            $.when(AppsAPI.getAppEntities()).done(function (appCollection) {
+                var appIdType;
+                const app = appCollection.find(function (app) {
+                    const currPrimaryAppId = app.get('copy_of');
+                    // Prevents breaking if a web apps session spans pre and post deploy. Can remove post deploy.
+                    if (app.id && app.id === params.appId) {
+                        appIdType = 'build';
+                        return app;
+                    }
+                    if (currPrimaryAppId && currPrimaryAppId === params.appId) {
+                        appIdType = 'canonical';
+                        return app;
+                    }
+                    if (currPrimaryAppId && (currPrimaryAppId === params.copyOf)) {
+                        appIdType = 'copyOf';
+                        return app;
+                    }
+                });
+                const additionalSentryData = {
+                    appIdType: appIdType,
+                    appIDsFromURL: params.appId + ' / ' + params.copyOf,
+                    appCollection: appCollection.models.map(
+                        appItem => appItem.attributes._id + ' / ' + appItem.attributes.copy_of),
+                };
+                var errorMsg = 'The application could not be found.';
+                if (params.appId) {
+                    // Likely due to a link followed from an old build.
+                    errorMsg = errorMsg + ' If you clicked on a link, that link may be outdated.';
+                }
                 if (!params.preview) {
                     // Make sure the user has access to the app
-                    if (!appCollection.find(function (app) {
-                        if (app.id && app.id === params.appId) {
-                            return true;
-                        }
-                        if (app.get('copy_of') && app.get('copy_of') === params.copyOf) {
-                            return true;
-                        }
-                    })) {
+                    if (!app) {
                         FormplayerFrontend.trigger(
                             'showError',
-                            gettext('The application could not be found')
+                            gettext(errorMsg),
+                            false,
+                            true,
+                            additionalSentryData,
                         );
                         FormplayerFrontend.trigger('navigateHome');
                         defer.reject();
                         return;
                     }
                 }
-
+                let appId = params.appId;
+                if (!params.preview) {
+                    const copyOf = app.get('copy_of');
+                    if (copyOf && copyOf === params.appId) {
+                        appId = app.id;
+                    }
+                }
+                FormplayerFrontend.permitIntervalSync = true;
                 options = {
                     success: function (parsedMenus, response) {
                         if (response.status === 'retry') {
@@ -54,25 +112,29 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                             }, gettext('Waiting for server progress'));
                         } else if (_.has(response, 'exception')) {
                             FormplayerFrontend.trigger('clearProgress');
-                            FormplayerFrontend.trigger(
-                                'showError',
-                                response.exception,
-                                response.type === 'html'
-                            );
-
-                            var currentUrl = FormplayerFrontend.getCurrentRoute();
-                            if (FormplayerFrontend.lastError === currentUrl) {
-                                FormplayerFrontend.lastError = null;
-                                FormplayerFrontend.trigger('navigateHome');
+                            if (params.clickedIcon && response.statusCode === 404) {
+                                parsedMenus.removeCaseRow = true;
+                                defer.resolve(parsedMenus);
                             } else {
-                                FormplayerFrontend.lastError = currentUrl;
-                                FormplayerFrontend.trigger('navigation:back');
-                            }
-                            defer.reject();
+                                FormplayerFrontend.trigger(
+                                    'showError',
+                                    response.exception,
+                                    response.type === 'html',
+                                );
 
+                                var currentUrl = FormplayerFrontend.getCurrentRoute();
+                                if (FormplayerFrontend.lastError === currentUrl) {
+                                    FormplayerFrontend.lastError = null;
+                                    FormplayerFrontend.trigger('navigateHome');
+                                } else {
+                                    FormplayerFrontend.lastError = currentUrl;
+                                    FormplayerFrontend.trigger('navigation:back');
+                                }
+                                defer.reject();
+                            }
                         } else {
                             if (response.smartLinkRedirect) {
-                                if (user.environment === constants.PREVIEW_APP_ENVIRONMENT) {
+                                if (user.isAppPreview) {
                                     FormplayerFrontend.trigger('showSuccess', gettext("You have selected a case in a different domain. App Preview does not support this feature.", 5000));
                                     FormplayerFrontend.trigger('navigateHome');
                                     return;
@@ -88,10 +150,17 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 return;
                             }
 
+                            let attemptRestore = undefined;
+                            if (parsedMenus.metaData) {
+                                attemptRestore = parsedMenus.metaData.attemptRestore;
+                            }
+                            formplayerUtils.setSyncInterval(params.appId, attemptRestore);
+                            sessionStorage.setItem("lastUserActivityTime",  Date.now());
                             FormplayerFrontend.trigger('clearProgress');
                             defer.resolve(parsedMenus);
                             // Only configure menu debugger if we didn't get a form entry response
-                            if (!(response.session_id)) {
+                            if (!(response.session_id) && (UsersModels.getCurrentUser().isAppPreview
+                                    || !cloudcareUtils.smallScreenIsEnabled())) {
                                 FormplayerFrontend.trigger('configureDebugger');
                             }
                         }
@@ -100,19 +169,21 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                         if (response.status === 423) {
                             FormplayerFrontend.trigger(
                                 'showError',
-                                errors.LOCK_TIMEOUT_ERROR
+                                errors.LOCK_TIMEOUT_ERROR,
                             );
                         } else if (response.status === 401) {
                             FormplayerFrontend.trigger(
                                 'showError',
                                 formEntryUtils.reloginErrorHtml(),
-                                true
+                                true,
                             );
+                        } else if (response.statusText === 'abort') {
+                            // do nothing
                         } else {
                             FormplayerFrontend.trigger(
                                 'showError',
                                 gettext('Unable to connect to form playing service. ' +
-                                        'Please report an issue if you continue to see this message.')
+                                        'Please report an issue if you continue to see this message.'),
                             );
                         }
                         var urlObject = formplayerUtils.currentUrlToObject();
@@ -123,15 +194,16 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                         defer.reject();
                     },
                 };
-                var casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
+                var casesPerPage = parseInt($.cookie("cases-per-page-limit"))
+                    || (window.innerWidth <= constants.SMALL_SCREEN_WIDTH_PX ? 5 : 10);
                 const data = {
                     "username": user.username,
                     "restoreAs": user.restoreAs,
                     "domain": user.domain,
-                    "app_id": params.appId,
+                    "app_id": appId,
                     "endpoint_id": params.endpointId,
                     "endpoint_args": params.endpointArgs,
-                    "locale": displayOptions.language,
+                    "locale": params.changeLang || displayOptions.language,
                     "selections": params.selections,
                     "offset": params.page * casesPerPage,
                     "search_text": params.search,
@@ -146,6 +218,11 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "tz_offset_millis": timezoneOffsetMillis,
                     "tz_from_browser": tzFromBrowser,
                     "selected_values": params.selectedValues,
+                    "isShortDetail": params.isShortDetail,
+                    "isRefreshCaseSearch": params.isRefreshCaseSearch,
+                    "requestInitiatedByTag": params.requestInitiatedByTag,
+                    "windowWidth": windowWidth,
+                    "keepAPMTraces": keepAPMTraces,
                 };
                 options.data = JSON.stringify(data);
                 options.url = formplayerUrl + '/' + route;
@@ -161,7 +238,37 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     message: "[request] " + route,
                     data: _.pick(sentryData, _.identity),
                 });
-                menus.fetch($.extend(true, {}, options));
+
+                var callStartTime = performance.now();
+                const updateRequest = menus.fetch($.extend(true, {}, options));
+
+                if (route.startsWith("navigate_menu")) {
+                    if (!_.isEqual(params.selections, currentSelections)) {
+                        currentSelections = params.selections;
+                        while (ongoingRequests.length > 0) {
+                            const ongoingRequest = ongoingRequests.pop();
+                            if (ongoingRequest.readyState !== 4) {
+                                ongoingRequest.abort();
+                            }
+                        }
+                    }
+                    ongoingRequests.push(updateRequest);
+                }
+
+
+                updateRequest.always(function () {
+                    if (data.requestInitiatedByTag && data.requestInitiatedByTag === constants.requestInitiatedByTagsMapping.DYNAMIC_SEARCH) {
+                        var callEndTime = performance.now();
+                        var callResponseTime = callEndTime - callStartTime;
+                        $.ajax(initialPageData.reverse('api_histogram_metrics'), {
+                            method: 'POST',
+                            data: {responseTime: callResponseTime, metrics: "commcare.dynamic_search.response_time"},
+                            error: function () {
+                                console.log("API call failed to record metrics");
+                            },
+                        });
+                    }
+                });
             });
 
             return defer.promise();
@@ -178,11 +285,11 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         }
 
         var progressView = ProgressBar({
-            progressMessage: gettext("Switching project spaces..."),
+            progressMessage: gettext("Loading..."),
         });
         FormplayerFrontend.regions.getRegion('loadingProgress').show(progressView);
 
-        var user = FormplayerFrontend.getChannel().request('currentUser');
+        var user = UsersModels.getCurrentUser();
         if (options.forceLoginAs && !user.restoreAs) {
             // Workflow requires a mobile user, likely because we're trying to access
             // a session endpoint as a web user. If user isn't logged in as, send them
@@ -198,9 +305,15 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         return API.queryFormplayer(options, "get_endpoint");
     });
 
-    FormplayerFrontend.getChannel().reply("entity:get:details", function (options, isPersistent) {
+    FormplayerFrontend.getChannel().reply("icon:click", function (options) {
+        return API.queryFormplayer(options, "get_endpoint");
+    });
+
+    FormplayerFrontend.getChannel().reply("entity:get:details", function (options, isPersistent, isShortDetail, isRefreshCaseSearch) {
         options.isPersistent = isPersistent;
-        options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
+        options.preview = UsersModels.getCurrentUser().displayOptions.singleAppMode;
+        options.isShortDetail = isShortDetail;
+        options.isRefreshCaseSearch = isRefreshCaseSearch;
         return API.queryFormplayer(options, 'get_details');
     });
 

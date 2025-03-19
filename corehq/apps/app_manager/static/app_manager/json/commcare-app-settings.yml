@@ -18,36 +18,6 @@
   # the build_spec widget depends on application_version coming before it in
   # this file
 
-- id: use_j2me_endpoint
-  name: "Send Data Over HTTP"
-  description: "When you select this box, your data will no longer be encrypted.  Because of changes regarding Java phone security certificates, it will be necessary to send data over HTTP to continue sending data to CommCare."
-  default: false
-  widget: "bool"
-  force: true
-
-- id: platform
-  name: "Java Phone Platform"
-  description: "The kind of Java phone you want to run the application on"
-  values:
-    - ['nokia/s40', 'Nokia S40 (default)']
-    - ['nokia/s60', 'Nokia S60']
-    - ['winmo', 'WinMo']
-    - ['generic', 'Generic']
-  default: 'nokia/s40'
-
-- id: text_input
-  name: "Text Input"
-  description: "What characters to allow users to input"
-  widget: text_input
-  values:
-    - ['roman', 'Roman']
-    - ['native', 'Native (International)']
-    - ['custom-keys', 'Custom Keys']
-    - ['qwerty', 'Full Keyboard']
-  default: roman
-  since: {qwerty: '2.6', 'custom-keys': '1.3'}
-  requires: "{hq.platform}='nokia/s40'||{hq.platform}='nokia/s60'"
-
 - id: practice_mobile_worker_id
   name: 'Practice Mobile Worker'
   widget: select
@@ -120,12 +90,6 @@
   requires: "{$parent.doc_type}='Application'"
   disabled: true
 
-- id: admin_password
-  name: "Admin Password"
-  description: Must correspond to the password format specified below.
-  widget: password
-  hide_if_not_enabled: true
-
 - id: secure_submissions
   name: "Use Secure Submissions"
   widget: bool
@@ -190,10 +154,11 @@
   description: Version of mobile UCRs to use. Read more on the  <a target="_blank" href="https://help.commcarehq.org/display/saas/Moving+to+Mobile+UCR+V2">Help Site</a>
   toggle: MOBILE_UCR
   values:
-    - ['1.0', '1.0']
-    - ['1.5', '1.5']
     - ['2.0', '2.0']
-  default: '1.0'
+  default: '2.0'
+  disabled: true
+  disabled_txt: This setting has been discontinued. We recommend you change this setting to Version 2. Upon doing so this setting will no longer appear on this page.
+
 
 - id: location_fixture_restore
   name: App Aware Location Fixture Format
@@ -205,3 +170,28 @@
     - ['only_flat_fixture', 'Only Flat Fixture']
     - ['only_hierarchical_fixture', 'Only Hierarchical Fixture']
   default: 'project_default'
+
+
+- id: split_screen_dynamic_search
+  name: Dynamic Search for Split Screen Case Search
+  description: Enable searching as input values change after initial Split Screen Case Search
+  toggle: DYNAMICALLY_UPDATE_SEARCH_RESULTS
+  widget: bool
+  default: false
+  since: '2.54'
+
+- id: persistent_menu
+  name: Show Persistent Menu
+  description: Show the persistent menu on the side of the web app.
+  toggle: PERSISTENT_MENU_SETTING
+  widget: bool
+  default: false
+  since: '2.54'
+
+- id: show_breadcrumbs
+  name: Show Breadcrumbs
+  description: Show the breadcrumbs on top of the web app.
+  toggle: PERSISTENT_MENU_SETTING
+  widget: bool
+  default: false
+  since: '2.54'

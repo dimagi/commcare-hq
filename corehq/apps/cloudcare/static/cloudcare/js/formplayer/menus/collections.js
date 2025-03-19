@@ -1,14 +1,25 @@
-/*global Backbone, Sentry */
-
 /**
  *  A menu is implemented as a collection of items. Typically, the user
  *  selects one of these items. The query screen is also implemented as
  *  a menu, where each search field is an item.
  */
-hqDefine("cloudcare/js/formplayer/menus/collections", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Utils = hqImport("cloudcare/js/formplayer/utils/utils");
-
+hqDefine("cloudcare/js/formplayer/menus/collections", [
+    'underscore',
+    'backbone',
+    'sentry_browser',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/users/models',
+    "cloudcare/js/form_entry/web_form_session",
+], function (
+    _,
+    Backbone,
+    Sentry,
+    FormplayerFrontend,
+    Utils,
+    UsersModels,
+    webFormSession,
+) {
     function addBreadcrumb(collection, type, data) {
         Sentry.addBreadcrumb({
             category: "formplayer",
@@ -32,6 +43,9 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'title',
             'type',
             'noItemsText',
+            'dynamicSearch',
+            'metaData',
+            'persistentMenu',
         ],
 
         entityProperties: [
@@ -53,6 +67,11 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'widthHints',
             'multiSelect',
             'maxSelectValue',
+            'hasDetails',
+            'groupHeaderRows',
+            'queryResponse',
+            'endpointActions',
+            'selectText',
         ],
 
         commandProperties: [
@@ -65,7 +84,12 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
 
         formProperties: [
             'langs',
-            'session_id'
+            'session_id',
+        ],
+
+        queryProperties: [
+            'groupHeaders',
+            'searchOnClear',
         ],
 
         parse: function (response) {
@@ -88,8 +112,12 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             }
             let sentryData = _.pick(
                 _.pick(response, ["queryKey", "selections"]),
-                _.identity
+                _.identity,
             );
+            if (response.locales && !response.tree) {
+                this.langs = response.locales.slice(1);
+                webFormSession.applyLangListener();
+            }
             if (response.commands) {
                 _.extend(this, _.pick(response, this.commandProperties));
                 addBreadcrumb(this, "menu", _.extend(sentryData, {
@@ -101,10 +129,13 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
                     length: response.entities.length,
                     multiSelect: response.multiSelect,
                 }));
+                // backwards compatibility - remove after FP deploy of #1374
+                _.defaults(response, {"hasDetails": true});
                 _.extend(this, _.pick(response, this.entityProperties));
                 return response.entities;
             } else if (response.type === "query") {
                 addBreadcrumb(this, "query", sentryData);
+                _.extend(this, _.pick(response, this.queryProperties));
                 return response.displays;
             } else if (response.details) {
                 addBreadcrumb(this, "details", sentryData);
@@ -128,4 +159,3 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
         return new MenuSelect(response, options);
     };
 });
-

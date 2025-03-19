@@ -36,7 +36,14 @@ function setup {
         install -dm0755 -o cchq -g cchq ./artifacts
     fi
 
-    pip-sync requirements/test-requirements.txt
+    # uv check, pip-sync, and symlink can be removed after the commcarehq_base
+    # Docker image containing uv has been published for use by Github Actions.
+    if which uv &> /dev/null; then
+        uv pip sync requirements/test-requirements.txt
+    else
+        pip-sync --user requirements/test-requirements.txt
+        ln -s /usr/bin/google-chrome-unstable /usr/bin/google-chrome-stable
+    fi
     pip check  # make sure there are no incompatibilities in test-requirements.txt
     python_preheat  # preheat the python libs
 
@@ -132,6 +139,12 @@ function run_tests {
 
         send_timing_metric_to_datadog "setup" $delta
 
+        if [ "$TEST" == "python-sharded-and-javascript" ]; then
+            logmsg INFO "Building Webpack"
+            chown -R cchq:cchq ./webpack
+            su cchq -c "yarn test"
+        fi
+
         log_group_begin "Django test suite: $TEST"
         now=$(date +%s)
         argv_str=$(printf ' %q' "$TEST" "$@")
@@ -142,7 +155,6 @@ function run_tests {
             scripts/test-make-requirements.sh
             scripts/test-serializer-pickle-files.sh
             su cchq -c scripts/test-django-migrations.sh
-            scripts/track-dependency-status.sh
         fi
         delta=$(($(date +%s) - $now))
 
@@ -174,29 +186,29 @@ function _run_tests {
         python-sharded*)
             export USE_PARTITIONED_DATABASE=yes
             # TODO make it possible to run a subset of python-sharded tests
-            py_test_args+=("--attr=sharded")
+            py_test_args+=("-msharded")
             ;;
         python-elasticsearch-v5)
             export ELASTICSEARCH_HOST='elasticsearch5'
             export ELASTICSEARCH_PORT=9205
             export ELASTICSEARCH_MAJOR_VERSION=5
-            py_test_args+=("--attr=es_test")
+            py_test_args+=("-mes_test")
             ;;
     esac
 
     function _test_python {
         ./manage.py create_kafka_topics
         if [ -n "$CI" ]; then
-            logmsg INFO "coverage run manage.py test ${py_test_args[*]}"
+            logmsg INFO "coverage run $(which pytest) ${py_test_args[*]}"
             # `coverage` generates a file that's then sent to codecov
-            coverage run manage.py test "${py_test_args[@]}"
+            coverage run $(which pytest) "${py_test_args[@]}"
             coverage xml
             if [ -n "$TRAVIS" ]; then
                 bash <(curl -s https://codecov.io/bash)
             fi
         else
-            logmsg INFO "./manage.py test ${py_test_args[*]}"
-            ./manage.py test "${py_test_args[@]}"
+            logmsg INFO "pytest ${py_test_args[*]}"
+            pytest "${py_test_args[@]}"
         fi
     }
 
@@ -212,7 +224,7 @@ function _run_tests {
     }
 
     function _test_javascript {
-        ./manage.py migrate --noinput
+        SKIP_GEVENT_PATCHING=1 ./manage.py migrate --noinput
         ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
         _wait_for_runserver
         logmsg INFO "grunt test ${js_test_args[*]}"

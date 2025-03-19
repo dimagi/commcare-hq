@@ -38,6 +38,7 @@ INBOUND_SMS = 'inbound_sms'
 
 BULK_CASE_MANAGEMENT = 'bulk_case_management'
 BULK_USER_MANAGEMENT = 'bulk_user_management'
+BULK_DATA_CLEANING = 'bulk_data_cleaning'
 
 DEIDENTIFIED_DATA = 'deidentified_data'
 
@@ -105,6 +106,24 @@ FORM_CASE_IDS_CASE_IMPORTER = 'form_case_ids_case_importer'
 
 EXPORT_MULTISORT = 'export_multisort'
 
+EXPORT_OWNERSHIP = 'export_ownership'
+
+FILTERED_BULK_USER_DOWNLOAD = 'filtered_bulk_user_download'
+
+APPLICATION_ERROR_REPORT = 'application_error_report'
+
+DATA_DICTIONARY = 'data_dictionary'
+
+SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = 'show_owner_location_property_in_report_builder'
+
+CASE_LIST_EXPLORER = 'case_list_explorer'
+
+CASE_COPY = 'case_copy'
+
+CASE_DEDUPE = 'case_deduplicate'
+CUSTOM_DOMAIN_ALERTS = 'custom_domain_alerts'
+APP_DEPENDENCIES = 'app_dependencies'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -160,7 +179,16 @@ MAX_PRIVILEGES = [
     REGEX_FIELD_VALIDATION,
     LOCATION_SAFE_CASE_IMPORTS,
     FORM_CASE_IDS_CASE_IMPORTER,
-    EXPORT_MULTISORT
+    EXPORT_MULTISORT,
+    EXPORT_OWNERSHIP,
+    FILTERED_BULK_USER_DOWNLOAD,
+    DATA_DICTIONARY,
+    CASE_LIST_EXPLORER,
+    CASE_COPY,
+    CASE_DEDUPE,
+    CUSTOM_DOMAIN_ALERTS,
+    APP_DEPENDENCIES,
+    BULK_DATA_CLEANING,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -192,6 +220,7 @@ class Titles(object):
             CUSTOM_SMS_GATEWAY: _("Custom Android Gateway"),
             BULK_CASE_MANAGEMENT: _("Bulk Case Management"),
             BULK_USER_MANAGEMENT: _("Bulk User Management"),
+            BULK_DATA_CLEANING: _("Bulk Data Cleaning"),
             ALLOW_EXCESS_USERS: _("Add Mobile Workers Above Limit"),
             DEIDENTIFIED_DATA: _("De-Identified Data"),
             HIPAA_COMPLIANCE_ASSURANCE: _("HIPAA Compliance Assurance"),
@@ -231,5 +260,13 @@ class Titles(object):
             REGEX_FIELD_VALIDATION: _("Regular Expression Validation for Custom Data Fields"),
             LOCATION_SAFE_CASE_IMPORTS: _("Location Safe Case Imports"),
             FORM_CASE_IDS_CASE_IMPORTER: _("Download buttons for Form- and Case IDs on Case Importer"),
-            EXPORT_MULTISORT: _("Sort multiple rows in exports simultaneously")
+            EXPORT_MULTISORT: _("Sort multiple rows in exports simultaneously"),
+            EXPORT_OWNERSHIP: _("Allow exports to have ownership"),
+            FILTERED_BULK_USER_DOWNLOAD: _("Bulk user management features"),
+            DATA_DICTIONARY: _("Project level data dictionary of cases"),
+            CASE_LIST_EXPLORER: _("Case List Explorer"),
+            CASE_COPY: _("Allow case copy from one user to another"),
+            CASE_DEDUPE: _("Deduplication Rules"),
+            CUSTOM_DOMAIN_ALERTS: _("Custom domain banners"),
+            APP_DEPENDENCIES: _("App Dependencies"),
         }.get(privilege, privilege)

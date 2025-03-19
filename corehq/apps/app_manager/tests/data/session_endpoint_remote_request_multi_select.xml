@@ -1,0 +1,20 @@
+<partial>
+  <remote-request>
+   <post url="https://www.example.com/a/test-domain/phone/claim-case/"
+         relevant="$case_id != ''">
+     <data key="case_id" ref="." nodeset="instance('selected_cases')/results/value" exclude="count(instance('casedb')/casedb/case[@case_id=current()/.]) = 1"/>
+   </post>
+   <command id="claim_command.{endpoint_id}.{datum_id}">
+     <display>
+       <text/>
+     </display>
+   </command>
+   <instance id="casedb" src="jr://instance/casedb"/>
+   <instance id="commcaresession" src="jr://instance/session"/>
+   <instance id="selected_cases" src="jr://instance/selected-entities/selected_cases"/>
+   <session>
+     <datum id="{datum_id}" function="instance('commcaresession')/session/data/{datum_id}"/>
+   </session>
+   <stack/>
+  </remote-request>
+</partial>

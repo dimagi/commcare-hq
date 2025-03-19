@@ -1,0 +1,36 @@
+{% load hq_shared_tags %}
+
+<script type="text/html" id="file-entry-ko-template">
+  <div class="d-flex align-items-center">
+    <input
+      type="file"
+      class="d-none"
+      data-bind="
+          value: $data.rawAnswer,
+          attr: {
+              id: entryId,
+              'aria-required': $parent.required() ? 'true' : 'false',
+              accept: accept,
+          },
+      "
+    />
+    <button
+      id="input-button-alt"
+      class="btn btn-outline-primary"
+      data-bind="
+          click: uploadFile,
+          css: { 'is-invalid': $parent.hasError() },
+      "
+    >
+      Browse...
+    </button>
+    <p data-bind="text: fileNameDisplay" class="text-break ms-2 me-auto"></p>
+    <button
+      class="btn btn-outline-primary btn-sm"
+      data-bind="
+      click: onClear,
+      text: $root.getTranslation('upload.clear.title', '{% trans_html_attr 'Clear' %}'),
+    "
+    ></button>
+  </div>
+</script>

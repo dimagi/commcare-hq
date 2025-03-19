@@ -151,6 +151,7 @@ def _build_inserted_at(spec, factory_context):
             datatype="datetime",
             is_nullable=False,
             is_primary_key=False,
+            create_index=True,
         ),
         getter=lambda doc, ctx: ctx.inserted_timestamp,
         wrapped_spec=None,

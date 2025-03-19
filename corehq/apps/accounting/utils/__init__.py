@@ -10,7 +10,6 @@ from django.utils.translation import gettext_lazy as _
 from django_prbac.models import Grant, Role, UserRole
 
 from corehq.const import USER_DATE_FORMAT
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import add_months
 
 from corehq import privileges
@@ -19,6 +18,7 @@ from corehq.apps.accounting.exceptions import (
     ProductPlanNotFoundError,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.forms import FormES
 from corehq.toggles import domain_has_privilege_from_toggle
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
@@ -142,6 +142,13 @@ def domain_has_privilege(domain, privilege_slug, **assignment):
     return False
 
 
+def get_domains_with_privilege(privilege_slug):
+    return [
+        domain for domain in Domain.get_all_names()
+        if domain_has_privilege(domain, privilege_slug.slug)
+    ]
+
+
 @quickcache(['domain_name'], timeout=15 * 60)
 def domain_is_on_trial(domain_name):
     from corehq.apps.accounting.models import Subscription
@@ -210,28 +217,6 @@ def quantize_accounting_decimal(decimal_value):
 
 def fmt_dollar_amount(decimal_value):
     return _("USD %s") % quantize_accounting_decimal(decimal_value)
-
-
-def get_customer_cards(username, domain):
-    from corehq.apps.accounting.models import (
-        StripePaymentMethod, PaymentMethodType,
-    )
-    import stripe
-    try:
-        payment_method = StripePaymentMethod.objects.get(
-            web_user=username,
-            method_type=PaymentMethodType.STRIPE
-        )
-        stripe_customer = payment_method.customer
-        return dict(stripe_customer.cards)
-    except StripePaymentMethod.DoesNotExist:
-        pass
-    except stripe.error.AuthenticationError:
-        if not settings.STRIPE_PRIVATE_KEY:
-            log_accounting_info("Private key is not defined in settings")
-        else:
-            raise
-    return None
 
 
 def is_accounting_admin(user):
@@ -486,3 +471,43 @@ def get_paused_plan_context(request, domain):
         'change_plan_url': reverse(SelectPlanView.urlname, args=[domain]),
         'can_edit_billing_info': request.couch_user.is_domain_admin(domain),
     }
+
+
+def get_pending_plan_context(request, domain):
+    from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
+    from corehq.apps.domain.views import SelectPlanView
+    from corehq.apps.registration.models import SelfSignupWorkflow
+
+    current_sub = Subscription.get_active_subscription_by_domain(domain)
+    if (not current_sub
+            or not current_sub.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY
+            or not request.couch_user.can_edit_billing()
+            or not SelfSignupWorkflow.get_in_progress_for_domain(domain)):
+        return {}
+
+    return {
+        'should_show_pending_notice': True,
+        'change_plan_url': reverse(SelectPlanView.urlname, args=[domain]),
+    }
+
+
+def count_form_submitting_mobile_workers(domain, start, end):
+    """
+    Returns the count of mobile workers who have submitted a form in the time specified.
+    """
+    form_counts_by_worker = (
+        FormES(for_export=True)
+        .domain(domain)
+        .submitted(gte=start, lt=end)
+        .user_type('mobile')
+        .user_aggregation()
+        .size(0)
+        .run()
+        .aggregations.user.normalized_buckets
+    )
+    return len(form_counts_by_worker)
+
+
+def self_signup_workflow_in_progress(domain):
+    from corehq.apps.registration.models import SelfSignupWorkflow
+    return SelfSignupWorkflow.get_in_progress_for_domain(domain)

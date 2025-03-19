@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main "scheduling/js/conditional_alert_list" %}
+{% js_entry_b3 "scheduling/js/conditional_alert_list" %}
 
 {% block stylesheets %}{{ block.super }}
   <style>
@@ -37,7 +37,7 @@
           </a>
 
           <a href="{% url 'upload_conditional_alert' domain %}" class="btn btn-info">
-            <i class="fa fa-cloud-upload"></i>
+            <i class="fa-solid fa-cloud-arrow-up"></i>
             {% trans "Bulk Upload SMS Alert Content" %}
           </a>
         </div>

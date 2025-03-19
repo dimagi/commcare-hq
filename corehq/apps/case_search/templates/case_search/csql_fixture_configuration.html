@@ -1,0 +1,39 @@
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% js_entry "hqwebapp/js/htmx_and_alpine" %}
+
+{% block page_title %}
+  {% trans 'CSQL Fixture Configuration' %}
+{% endblock %}
+
+{% block page_content %}
+  <p>
+    Please see
+    <a href="https://dimagi.atlassian.net/wiki/spaces/USH/pages/2884206593/CSQL+Fixtures">
+      the documentation
+    </a>
+    for this feature.
+  </p>
+
+  <div id="csql-fixture-rows">
+    {% for form in csql_fixture_forms %}
+      {{ form }}
+    {% endfor %}
+  </div>
+  <button
+    type="button"
+    class="btn btn-default"
+    hx-post="{{ request.path_info }}"
+    hq-hx-action="new_expression"
+    hx-target="#csql-fixture-rows"
+    hx-swap="beforeend"
+  >
+    <i class="fa fa-plus"></i> {% trans "Add Expression" %}
+  </button>
+{% endblock %}
+
+{% block modals %}
+  {% include "hqwebapp/htmx/error_modal.html" %}
+  {{ block.super }}
+{% endblock modals %}

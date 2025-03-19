@@ -1,6 +1,7 @@
 import json
 import logging
 import traceback
+from datetime import datetime
 from functools import wraps
 
 from django import http
@@ -10,7 +11,9 @@ from django.http import Http404
 from django.urls import reverse as _reverse
 from django.utils.http import urlencode
 
+from corehq.util.timezones.conversions import UserTime
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.parsing import ISO_DATE_FORMAT
 from dimagi.utils.web import get_url_base
 
 from corehq.util import global_request
@@ -193,3 +196,12 @@ def is_ajax(request):
     https://docs.djangoproject.com/en/4.0/releases/3.1/#id2
     """
     return request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+
+def get_date_param(request, param_name, timezone=None):
+    param = request.GET.get(param_name) or None
+    if param:
+        value = datetime.strptime(param, ISO_DATE_FORMAT)
+        if timezone:
+            value = UserTime(value, tzinfo=timezone).server_time().done()
+        return value

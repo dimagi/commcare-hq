@@ -1,7 +1,8 @@
 {% load compress %}
 {% load hq_shared_tags %}
 {% load statici18n %}
-{% requirejs_main %}
+{% requirejs_main %} {# todo, figure out webpack hooks for js tests #}
+{% js_entry %}
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
   <head>
@@ -11,14 +12,9 @@
     <!-- Mocha and test-only dependencies -->
     <link href="{% static 'mocha/mocha.css' %}" type="text/css" rel="stylesheet"/>
 
-    <style type="text/css">
-      /* Override bootstrap's .progress styles for the Mocha progress widget. */
-      #mocha-stats .progress {
-        height: auto;
-        background-color: transparent;
-        box-shadow: none;
-      }
-    </style>
+    <script>
+      window.USE_BOOTSTRAP5 = {{ use_bootstrap5|BOOL }};
+    </script>
 
     {% block stylesheets %}{% endblock %}
 
@@ -26,14 +22,14 @@
 
     <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
-    {% if not requirejs_main %}
+    {% if not use_js_bundler %}
       <script src="{% static 'mocha/mocha.js' %}"></script>
       <script src="{% static 'chai/chai.js' %}"></script>
       <script src="{% static 'sinon/pkg/sinon.js' %}"></script>
     {% endif %}
 
     <!-- Core Libraries -->
-    {% if not requirejs_main %}
+    {% if not use_js_bundler %}
       {% block core_libraries %}
         {% javascript_libraries underscore=True ko=True hq=True analytics=True %}
       {% endblock %}
@@ -46,6 +42,14 @@
 
   </head>
   <body>
+
+    {% registerurl 'notifications_service' %}
+    <div class="commcarehq-urls hide">
+      {% block registered_urls %}
+        {# do not override this block, use registerurl template tag to populate #}
+      {% endblock %}
+    </div>
+
     <div class="initial-analytics-data hide"></div>
     <div class="analytics-ab-tests hide"></div>
     <!-- HTML Fixtures -->
@@ -56,10 +60,12 @@
     <div id="mocha-sandbox"></div>
     {% block mocha_tests %}{% endblock %}
 
-    {% if not requirejs_main %}
+    {% if not use_js_bundler %}
       <script charset="utf-8">
         hqImport("mocha/js/main").run();
       </script>
     {% endif %}
+
+    {% include "hqwebapp/partials/webpack.html" %}
   </body>
 </html>

@@ -1,7 +1,6 @@
 from corehq.apps.case_search.const import (
-    CASE_COMPUTED_METADATA,
-    SPECIAL_CASE_PROPERTIES,
-    SPECIAL_CASE_PROPERTIES_MAP,
+    INDEXED_METADATA_BY_KEY,
+    METADATA_IN_REPORTS,
 )
 from corehq.apps.es.case_search import wrap_case_search_hit
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplaySQL
@@ -26,7 +25,7 @@ class CaseDataFormatter(CaseDisplaySQL):
     @property
     def _case_info_context(self):
         context = {}
-        for prop in SPECIAL_CASE_PROPERTIES + CASE_COMPUTED_METADATA:
+        for prop in METADATA_IN_REPORTS:
             context[prop] = self._get_case_info_prop(prop)
         return context
 
@@ -34,10 +33,6 @@ class CaseDataFormatter(CaseDisplaySQL):
         fmt_prop = prop.replace('@', '')
         if hasattr(self, fmt_prop):
             return getattr(self, fmt_prop)
-        elif prop in SPECIAL_CASE_PROPERTIES:
-            return self._get_special_property(prop)
-        raise NotImplementedError(
-            "CaseDataFormatter.{} not found".format(prop))
-
-    def _get_special_property(self, prop):
-        return SPECIAL_CASE_PROPERTIES_MAP[prop].value_getter(self.raw_data)
+        elif prop in INDEXED_METADATA_BY_KEY:
+            return INDEXED_METADATA_BY_KEY[prop].get_value(self.raw_data)
+        raise NotImplementedError("CaseDataFormatter.{} not found".format(prop))

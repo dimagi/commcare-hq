@@ -3,7 +3,7 @@
 {% load field_tags %}
 {% load hq_shared_tags %}
 
-{% requirejs_main 'users/js/accept_invite' %}
+{% js_entry_b3 'users/js/accept_invite' %}
 
 {% block title %}{% trans "Invitation to join the " %}{{ invite_to }} {{ invite_type }}{% endblock title %}
 

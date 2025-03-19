@@ -1,3 +1,4 @@
+
 /**
  *  Fetches all the initialization data needed for the different analytics platforms.
  *  Note that all of this initialization data is undefined until the document is ready.
@@ -9,9 +10,8 @@ hqDefine('analytix/js/initial', [
 ], function (
     $,
     _,
-    initialPageData
+    initialPageData,
 ) {
-    'use strict';
     var _selector = '.initial-analytics-data',
         _gather =  initialPageData.gather,
         _initData = {},
@@ -44,6 +44,24 @@ hqDefine('analytix/js/initial', [
             _initData = _gather(_selector, _initData);
         }
         return _initData[slug];
+    };
+
+    var getNamespacedProperties = function (apiName) {
+        if (_.isEmpty(_initData)) {
+            _initData = _gather(_selector, _initData);
+        }
+
+        const prefix = `${apiName}.`;
+        const filteredValues = _.pick(_initData, function (value, key) {
+            return key.startsWith(prefix);
+        });
+
+        const namespacedValues = {};
+        _.each(filteredValues, function (value, key) {
+            namespacedValues[key.substring(prefix.length)] = value;
+        });
+
+        return namespacedValues;
     };
 
     /**
@@ -97,6 +115,7 @@ hqDefine('analytix/js/initial', [
 
     return {
         getFn: getFn,
+        getNamespacedProperties: getNamespacedProperties,
         getAbTests: getAbTests,
     };
 });

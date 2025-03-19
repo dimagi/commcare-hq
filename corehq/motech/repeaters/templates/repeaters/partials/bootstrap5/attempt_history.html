@@ -1,0 +1,67 @@
+{% load i18n %}
+
+<tr class='attempt-row' id="{{ record_id }}">
+    <td colspan="10">
+        <table style="width:100%;">  {# todo B5: inline style #}
+            {% if not has_attempts %}
+                <tr>
+                    <td>
+                        <div>
+                            {% trans 'No attempts exist for this record.' %}
+                        </div>
+                    </td>
+                </tr>
+            {% endif %}
+            {% for attempt_number, attempt in record.get_numbered_attempts %}
+                <tr>
+                    <td>
+                        <div>
+                            <strong>Attempt #{{ attempt_number }}</strong> -
+                            {% if attempt.state == 'SUCCESS' or attempt.state == 'EMPTY' %}
+                                <br/><i class="fa fa-check"></i>
+                            {% elif attempt.state == 'FAIL' or attempt.state == 'CANCELLED' %}
+                                <br/><i class="fa-solid fa-triangle-exclamation"></i>
+                            {% elif attempt.state == 'PENDING' %}
+                                <br/><i class="fa fa-spinner"></i>
+                            {% endif %}
+                            {% if attempt.state == 'PENDING' %}
+                            {% elif attempt.state == 'EMPTY' %}({{ attempt.created_at }})
+                            {% else %}{{ attempt.created_at }}
+                            {% endif %}
+                            {% if attempt.message %}
+                                <div class="card record-attempt" style="font-family: monospace;">  {# todo B5: css:well, inline style #}
+                                    {{ attempt.message|escape|linebreaksbr }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+
+            <!-- Visual separation between attempts and DHIS2 errors -->
+            {% if has_dhis2_errors %}
+                <tr>
+                    <td>
+                        <hr/>
+                    </td>
+                </tr>
+            {% endif %}
+
+            <!-- DHIS2 specific errors -->
+            {% for error, diagnosis in dhis2_errors %}
+                <tr>
+                    <td>
+                        <div>
+                            <strong>DHIS2 Error #{{ forloop.counter }}</strong>
+                            <div class="card" style="font-family: monospace;">  {# todo B5: css:well, inline style #}
+                                {{ error }}<br/><br/>
+                                <strong>{% trans 'Diagnosis:' %}</strong>
+                                {{ diagnosis }}
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </td>
+</tr>

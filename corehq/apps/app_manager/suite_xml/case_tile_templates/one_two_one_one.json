@@ -1,0 +1,13 @@
+{
+    "slug": "one_two_one_one",
+    "filename": "one_two_one_one.xml",
+    "has_map": true,
+    "fields": ["header", "map", "top_left", "top_right", "middle", "bottom"],
+    "grid": {
+        "header": {"x": 0, "y": 0, "width": 12, "height": 1, "horz-align": "left", "vert-align": "center"},
+        "top_left": {"x": 0, "y": 1, "width": 7, "height": 1, "horz-align": "left", "vert-align": "center"},
+        "top_right": {"x": 8, "y": 1, "width": 4, "height": 1, "horz-align": "left", "vert-align": "center"},
+        "middle": {"x": 0, "y": 2, "width": 12, "height": 1, "horz-align": "left", "vert-align": "center"},
+        "bottom": {"x": 0, "y": 3, "width": 12, "height": 1, "horz-align": "left", "vert-align": "center"}
+    }
+}

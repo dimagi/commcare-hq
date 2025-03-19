@@ -1,3 +1,4 @@
+import hashlib
 import random
 import re
 import uuid
@@ -437,3 +438,16 @@ def primary_to_standbys_mapping():
         if master:
             mapping[master].add(db)
     return mapping
+
+
+def create_unique_index_name(app, table, fields):
+    assert all([app, table, fields]), "app, table, and fields must be specified"
+    assert type(fields) == list, "fields must be a list"
+
+    max_length = 30  # enforced by Django
+    index_name = f"{app}_{table}_{'_'.join(fields)}_idx"
+    if len(index_name) > max_length:
+        # hash the index name and take the first 9 characters
+        hashed = hashlib.sha1(index_name.encode("UTF-8")).hexdigest()[:8]
+        index_name = f"{index_name[:17]}_{hashed}_idx"
+    return index_name

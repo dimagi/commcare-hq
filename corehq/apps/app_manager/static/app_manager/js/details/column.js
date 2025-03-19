@@ -1,3 +1,4 @@
+
 /**
  * Model for a column in the Display Properties section of case list/detail.
  *
@@ -11,20 +12,24 @@
  * is responsible for creating the tab "columns" and injecting them into itself.
  */
 hqDefine("app_manager/js/details/column", function () {
-    var uiElement = hqImport('hqwebapp/js/ui-element');
+    const uiElementInput = hqImport('hqwebapp/js/ui_elements/bootstrap3/ui-element-input');
+    const uiElementKeyValueMapping = hqImport('hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping');
+    const uiElementSelect = hqImport('hqwebapp/js/ui_elements/bootstrap3/ui-element-select');
+    const initialPageData = hqImport('hqwebapp/js/initial_page_data');
+    const microCaseImageName = 'cc_case_image';
 
     return function (col, screen) {
         /*
             column properties: model, field, header, format
             column extras: enum, late_flag
         */
-        var self = {};
-        hqImport("hqwebapp/js/main").eventize(self);
+        const self = {};
+        hqImport("hqwebapp/js/bootstrap3/main").eventize(self);
         self.original = JSON.parse(JSON.stringify(col));
 
         // Set defaults for normal (non-tab) column attributes
-        var Utils = hqImport('app_manager/js/details/utils');
-        var defaults = {
+        const Utils = hqImport('app_manager/js/details/utils');
+        const defaults = {
             calc_xpath: ".",
             enum: [],
             field: "",
@@ -36,17 +41,19 @@ hqDefine("app_manager/js/details/column", function () {
             model: screen.model,
             date_format: "",
             time_ago_interval: Utils.TIME_AGO.year,
+            horizontal_align: "left",
+            vertical_align: "start",
+            font_size: "medium",
+            show_border: false,
+            show_shading: false,
         };
         _.each(_.keys(defaults), function (key) {
             self.original[key] = self.original[key] || defaults[key];
         });
         self.original.late_flag = _.isNumber(self.original.late_flag) ? self.original.late_flag : 30;
 
-        self.original.case_tile_field = ko.utils.unwrapObservable(self.original.case_tile_field) || "";
-        self.case_tile_field = ko.observable(self.original.case_tile_field);
-
         // Set up tab defaults
-        var tabDefaults = {
+        const tabDefaults = {
             isTab: false,
             hasNodeset: false,
             nodeset: "",
@@ -62,21 +69,107 @@ hqDefine("app_manager/js/details/column", function () {
         }
         _.extend(self, _.pick(self.original, _.keys(tabDefaults)));
 
+        self.original.case_tile_field = ko.utils.unwrapObservable(self.original.case_tile_field) || "";
+        self.case_tile_field = ko.observable(self.original.case_tile_field);
+
+        self.coordinatesVisible = ko.observable(true);
+        self.tileRowMax = ko.observable(7); // set dynamically by screen
+        self.tileColumnMax = ko.observable(13);
+        self.tileRowStart = ko.observable(self.original.grid_y + 1 || 1); // converts from 0 to 1-based for UI
+        self.tileRowOptions = ko.computed(function () {
+            return _.range(1, self.tileRowMax());
+        });
+        self.tileColumnStart = ko.observable(self.original.grid_x + 1 || 1); // converts from 0 to 1-based for UI
+        self.tileColumnOptions = _.range(1, self.tileColumnMax());
+
+        let optimizationOptions = [
+            {
+                value: "",
+                label: "---",
+            },
+            {
+                value: "cache",
+                label: gettext('Cache'),
+            },
+            {
+                value: "lazy_load",
+                label: gettext('Lazy Load'),
+            },
+            {
+                value: "cache_and_lazy_load",
+                label: gettext('Cache & Lazy Load'),
+            },
+        ];
+        if (screen.showCaseListOptimizations) {
+            self.optimizationSelectElement = uiElementSelect.new(
+                optimizationOptions,
+            ).val(self.original.optimization || "");
+            self.$optimizationSelectElement = $('<div/>').append(self.optimizationSelectElement.ui);
+        }
+        self.tileWidth = ko.observable(self.original.width || self.tileRowMax() - 1);
+        self.tileWidthOptions = ko.computed(function () {
+            return _.range(1, self.tileColumnMax() + 1 - (self.tileColumnStart() || 1));
+        });
+        self.tileHeight = ko.observable(self.original.height || 1);
+        self.tileHeightOptions = ko.computed(function () {
+            return _.range(1, self.tileRowMax() + 1 - (self.tileRowStart() || 1));
+        });
+        self.horizontalAlign = ko.observable(self.original.horizontal_align || 'left');
+        self.horizontalAlignOptions = ['left', 'center', 'right'];
+
+        self.verticalAlign = ko.observable(self.original.vertical_align || 'start');
+        self.verticalAlignOptions = ['start', 'center', 'end'];
+
+        self.fontSize = ko.observable(self.original.font_size || 'medium');
+        self.fontSizeOptions = ['small', 'medium', 'large'];
+
+        self.showBorder = ko.observable(self.original.show_border || false);
+        self.showShading = ko.observable(self.original.show_shading || false);
+
+        self.openStyleModal = function () {
+            const $modalDiv = $(document.createElement("div"));
+            $modalDiv.attr("data-bind", "template: 'style_configuration_modal'");
+            $modalDiv.koApplyBindings(self);
+            const $modal = $modalDiv.find('.modal');
+            $modal.appendTo('body');
+            $modal.modal('show');
+            $modal.on('hidden.bs.modal', function () {
+                $modal.remove();
+            });
+        };
+
+        self.tileRowEnd = ko.computed(function () {
+            return Number(self.tileRowStart()) + Number(self.tileHeight());
+        });
+        self.tileColumnEnd = ko.computed(function () {
+            return Number(self.tileColumnStart()) + Number(self.tileWidth());
+        });
+        self.showInTilePreview = ko.computed(function () {
+            return !self.isTab && self.coordinatesVisible() && self.tileRowStart() && self.tileColumnStart() && self.tileWidth() && self.tileHeight();
+        });
+        self.tileContent = ko.observable();
+        self.setTileContent = function () {
+            self.tileContent(self.header.val());
+        };
+
         self.screen = screen;
         self.lang = screen.lang;
-        self.model = uiElement.select([{
+        self.model = uiElementSelect.new([{
             label: "Case",
             value: "case",
         }]).val(self.original.model);
 
-        var icon = Utils.isAttachmentProperty(self.original.field) ? 'fa fa-paperclip' : null;
+        const icon = Utils.isAttachmentProperty(self.original.field) ? 'fa fa-paperclip' : null;
         self.field = undefined;
         if (self.original.hasAutocomplete) {
-            self.field = uiElement.select();
+            self.field = uiElementSelect.new();
         } else {
-            self.field = uiElement.input(self.original.field);
+            self.field = uiElementInput.new(self.original.field);
         }
         self.field.setIcon(icon);
+        self.getFieldHtml = function (value) {
+            return hqImport('app_manager/js/details/utils').getFieldHtml(value);
+        };
 
         // Make it possible to observe changes to self.field
         // note self observableVal is read only!
@@ -87,7 +180,7 @@ hqDefine("app_manager/js/details/column", function () {
         });
 
         (function () {
-            var i,
+            let i,
                 lang,
                 visibleVal = "",
                 invisibleVal = "";
@@ -104,14 +197,14 @@ hqDefine("app_manager/js/details/column", function () {
                     }
                 }
             }
-            self.header = uiElement.input().val(invisibleVal);
+            self.header = uiElementInput.new().val(invisibleVal);
             self.header.setVisibleValue(visibleVal);
 
             self.nodeset_extra = hqImport("app_manager/js/details/detail_tab_nodeset")(_.extend({
                 caseTypes: self.screen.childCaseTypes,
             }, _.pick(self.original, ['nodeset', 'nodesetCaseType', 'nodesetFilter'])));
 
-            self.relevant = uiElement.input().val(self.original.relevant);
+            self.relevant = uiElementInput.new().val(self.original.relevant);
             if (self.isTab) {
                 self.header.ui.find("input[type='text']").attr("placeholder", gettext("Tab Name"));
                 self.relevant.ui.find("input[type='text']").attr("placeholder", gettext("Display Condition"));
@@ -125,8 +218,18 @@ hqDefine("app_manager/js/details/column", function () {
             }
         }());
 
+        // TODO: use self.field.observableVal instead, and do something similar for header?
+        self.header.on("change", function () {
+            self.setTileContent();
+        });
+        self.field.on("change", function () {
+            self.setTileContent();
+        });
+        self.setTileContent();
+
         self.saveAttempted = ko.observable(false);
         self.useXpathExpression = self.original.useXpathExpression;
+        self.warningText = hqImport('app_manager/js/details/utils').fieldFormatWarningMessage;
         self.showWarning = ko.computed(function () {
             if (self.useXpathExpression) {
                 return false;
@@ -140,24 +243,18 @@ hqDefine("app_manager/js/details/column", function () {
         }, self);
 
         // Add the graphing option if self is a graph so self we can set the value to graph
-        var menuOptions = Utils.getFieldFormats();
+        let menuOptions = Utils.getFieldFormats();
         if (self.original.format === "graph") {
             menuOptions = menuOptions.concat([{
                 value: "graph",
                 label: "",
             }]);
         }
-        if (self.screen.columnKey === "long") {
-            menuOptions = menuOptions.concat([{
-                value: "markdown",
-                label: gettext('Markdown'),
-            }]);
-        }
 
         if (self.useXpathExpression) {
-            var menuOptionsToRemove = ['picture', 'audio'];
-            for (var i = 0; i < menuOptionsToRemove.length; i++) {
-                for (var j = 0; j < menuOptions.length; j++) {
+            const menuOptionsToRemove = ['picture', 'audio'];
+            for (let i = 0; i < menuOptionsToRemove.length; i++) {
+                for (let j = 0; j < menuOptions.length; j++) {
                     if (
                         menuOptions[j].value !== self.original.format
                         && menuOptions[j].value === menuOptionsToRemove[i]
@@ -166,24 +263,38 @@ hqDefine("app_manager/js/details/column", function () {
                     }
                 }
             }
+        } else {
+            // Restrict Translatable Text usage to Calculated Properties only
+            menuOptions.splice(-1);
         }
 
-        self.format = uiElement.select(menuOptions).val(self.original.format || null);
+        self.format = uiElementSelect.new(menuOptions).val(self.original.format || null);
+        self.supportsOptimizations = ko.observable(false);
+        self.setSupportOptimizations = function () {
+            let optimizationsSupported = (
+                screen.showCaseListOptimizations &&
+                self.format.val() &&
+                initialPageData.get('formats_supporting_case_list_optimizations').includes(self.format.val())
+            );
+            self.supportsOptimizations(optimizationsSupported);
+        };
+        self.setSupportOptimizations();
 
         (function () {
-            var o = {
+            const o = {
                 lang: self.lang,
                 langs: self.screen.langs,
                 module_id: self.screen.config.module_id,
                 items: self.original['enum'],
-                property_name: self.field,
+                property_name: self.header,
                 multimedia: self.screen.config.multimedia,
                 values_are_icons: self.original.format === 'enum-image',
                 keys_are_conditions: self.original.format === 'conditional-enum',
+                values_are_translatable: self.original.format === 'translatable-enum',
             };
-            self.enum_extra = uiElement.key_value_mapping(o);
+            self.enum_extra = uiElementKeyValueMapping.new(o);
         }());
-        var graphConfigurationUiElement = hqImport('app_manager/js/details/graph_config').graphConfigurationUiElement;
+        const graphConfigurationUiElement = hqImport('app_manager/js/details/graph_config').graphConfigurationUiElement;
         self.graph_extra = graphConfigurationUiElement({
             childCaseTypes: self.screen.childCaseTypes,
             fixtures: self.screen.fixtures,
@@ -196,9 +307,9 @@ hqDefine("app_manager/js/details/column", function () {
             self.graph_extra.setName(self.header.val());
         });
 
-        var yyyy = new Date().getFullYear(),
+        const yyyy = new Date().getFullYear(),
             yy = String(yyyy).substring(2);
-        self.date_extra = uiElement.select([{
+        self.date_extra = uiElementSelect.new([{
             label: '31/10/' + yy,
             value: '%d/%m/%y',
         }, {
@@ -216,17 +327,32 @@ hqDefine("app_manager/js/details/column", function () {
         }]).val(self.original.date_format);
         self.date_extra.ui.prepend($('<div/>').text(gettext(' Format ')));
 
-        self.late_flag_extra = uiElement.input().val(self.original.late_flag.toString());
+        self.endpointActionLabel = $('<span>Form to submit on click:</span>');
+        const formEndpointOptions = [{value: "-1", label: 'Select a form endpoint'}];
+        let moduleName = "";
+        const formEndpoints = Object.entries(initialPageData.get('form_endpoint_options'));
+        formEndpoints.forEach(([, endpoint]) => {
+            if (endpoint.module_name !== moduleName) {
+                moduleName = endpoint.module_name;
+                formEndpointOptions.push({groupName: `${moduleName} (${endpoint.module_case_type})`});
+            }
+            formEndpointOptions.push({value: endpoint.id, label: endpoint.form_name});
+        });
+        const selectedValue = self.original.endpoint_action_id ? self.original.endpoint_action_id : "-1";
+        self.action_form_extra = uiElementSelect.new(formEndpointOptions)
+            .val(selectedValue);
+
+        self.late_flag_extra = uiElementInput.new().val(self.original.late_flag.toString());
         self.late_flag_extra.ui.find('input').css('width', 'auto').css("display", "inline-block");
         self.late_flag_extra.ui.prepend($('<span>' + gettext(' Days late ') + '</span>'));
 
-        self.filter_xpath_extra = uiElement.input().val(self.original.filter_xpath.toString());
+        self.filter_xpath_extra = uiElementInput.new().val(self.original.filter_xpath.toString());
         self.filter_xpath_extra.ui.prepend($('<div/>'));
 
-        self.calc_xpath_extra = uiElement.input().val(self.original.calc_xpath.toString());
+        self.calc_xpath_extra = uiElementInput.new().val(self.original.calc_xpath.toString());
         self.calc_xpath_extra.ui.prepend($('<div/>'));
 
-        self.time_ago_extra = uiElement.select([{
+        self.time_ago_extra = uiElementSelect.new([{
             label: gettext('Years since date'),
             value: Utils.TIME_AGO.year,
         }, {
@@ -262,6 +388,7 @@ hqDefine("app_manager/js/details/column", function () {
             'format',
             'date_extra',
             'enum_extra',
+            'action_form_extra',
             'graph_extra',
             'late_flag_extra',
             'filter_xpath_extra',
@@ -270,15 +397,40 @@ hqDefine("app_manager/js/details/column", function () {
         ], function (element) {
             self[element].on('change', fireChange);
         });
+        if (self.optimizationSelectElement) {
+            self.optimizationSelectElement.on('change', fireChange);
+        }
         self.case_tile_field.subscribe(fireChange);
+        self.tileRowStart.subscribe(fireChange);
+        self.tileColumnStart.subscribe(fireChange);
+        self.tileWidth.subscribe(fireChange);
+        self.tileHeight.subscribe(fireChange);
+        self.horizontalAlign.subscribe(fireChange);
+        self.verticalAlign.subscribe(fireChange);
+        self.fontSize.subscribe(fireChange);
+        self.showBorder.subscribe(fireChange);
+        self.showShading.subscribe(fireChange);
 
         self.$format = $('<div/>').append(self.format.ui);
         self.$format.find("select").css("margin-bottom", "5px");
         self.format.on('change', function () {
+            if (self.field.val() === microCaseImageName && self.format.val() !== 'image') {
+                // The field name input was disabled to enforce using the reserved micro image name.
+                // If the format is no longer an image then the user can edit the field input again
+                self.field.val('');
+                self.field.observableVal('');
+                self.field.ui.find('select').val('').change();
+                self.field.ui.find('select').prop('disabled', false);
+            }
+
+            self.coordinatesVisible(!_.contains(['address', 'address-popup', 'invisible'], self.format.val()));
+            self.setSupportOptimizations();
             // Prevent self from running on page load before init
             if (self.format.ui.parent().length > 0) {
                 self.date_extra.ui.detach();
                 self.enum_extra.ui.detach();
+                self.endpointActionLabel.detach();
+                self.action_form_extra.ui.detach();
                 self.graph_extra.ui.detach();
                 self.late_flag_extra.ui.detach();
                 self.filter_xpath_extra.ui.detach();
@@ -292,10 +444,24 @@ hqDefine("app_manager/js/details/column", function () {
                         fireChange();
                     });
                     self.date_extra.value = format.val();
-                } else if (this.val() === "enum" || this.val() === "enum-image" || this.val() === 'conditional-enum') {
+                } else if (this.val() === "enum" || this.val() === "enum-image"
+                           || this.val() === 'conditional-enum' || this.val() === 'translatable-enum') {
                     self.enum_extra.values_are_icons(this.val() === 'enum-image');
                     self.enum_extra.keys_are_conditions(this.val() === 'conditional-enum');
+                    self.enum_extra.values_are_translatable(this.val() === 'translatable-enum');
                     self.format.ui.parent().append(self.enum_extra.ui);
+                } else if (this.val() === "clickable-icon") {
+                    self.enum_extra.values_are_icons(true);
+                    self.enum_extra.keys_are_conditions(true);
+                    self.format.ui.parent().append(self.enum_extra.ui);
+                    self.format.ui.parent().append(self.endpointActionLabel);
+                    self.format.ui.parent().append(self.action_form_extra.ui);
+                    const actionForm = self.action_form_extra.ui.find('select');
+                    actionForm.change(function () {
+                        self.action_form_extra.value = actionForm.val();
+                        fireChange();
+                    });
+                    self.action_form_extra.value = actionForm.val();
                 } else if (this.val() === "graph") {
                     // Replace format select with edit button
                     var parent = self.format.ui.parent();
@@ -322,6 +488,13 @@ hqDefine("app_manager/js/details/column", function () {
                         self.time_ago_extra.value = interval.val();
                         fireChange();
                     });
+                } else if (this.val() === 'image') {
+                    // We are enforcing the reserved field name for the micro image format,
+                    // so don't allow a user to change this
+                    self.field.ui.find('select').val(microCaseImageName).change();
+                    self.field.val(microCaseImageName);
+                    self.field.observableVal(microCaseImageName);
+                    self.field.ui.find('select').prop('disabled', true);
                 }
             }
         }).fire('change');
@@ -333,12 +506,23 @@ hqDefine("app_manager/js/details/column", function () {
             hqImport('analytix/js/google').track.event('Case List Config', 'Display Format', event.target.value);
         });
         self.serialize = function () {
-            var column = self.original;
+            const column = self.original;
             column.field = self.field.val();
             column.header[self.lang] = self.header.val();
             column.format = self.format.val();
+            column.optimization = self.supportsOptimizations() ? self.optimizationSelectElement.val() : null;
             column.date_format = self.date_extra.val();
             column.enum = self.enum_extra.getItems();
+            column.endpoint_action_id = self.action_form_extra.val() === "-1" ? null : self.action_form_extra.val();
+            column.grid_x = self.tileColumnStart() - 1;
+            column.grid_y = self.tileRowStart() - 1;
+            column.height = self.tileHeight();
+            column.width = self.tileWidth();
+            column.horizontal_align = self.horizontalAlign();
+            column.vertical_align = self.verticalAlign();
+            column.font_size = self.fontSize();
+            column.show_border = self.showBorder();
+            column.show_shading = self.showShading();
             column.graph_configuration = self.format.val() === "graph" ? self.graph_extra.val() : null;
             column.late_flag = parseInt(self.late_flag_extra.val(), 10);
             column.time_ago_interval = parseFloat(self.time_ago_extra.val());
@@ -347,7 +531,7 @@ hqDefine("app_manager/js/details/column", function () {
             column.case_tile_field = self.case_tile_field();
             if (self.isTab) {
                 // Note: starting_index is added by screenModel.serialize
-                var tab = {
+                let tab = {
                     header: column.header,
                     isTab: true,
                     starting_index: self.starting_index,
@@ -369,7 +553,7 @@ hqDefine("app_manager/js/details/column", function () {
             self.grip = grip;
         };
         self.copyCallback = function () {
-            var column = self.serialize();
+            const column = self.serialize();
             // add a marker self self is copied for self purpose
             return JSON.stringify({
                 type: 'detail-screen-config:Column',

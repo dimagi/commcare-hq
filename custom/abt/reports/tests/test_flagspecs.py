@@ -1,16 +1,15 @@
-from glob import glob
+from pathlib import Path
 
+import pytest
 from yaml import load, Loader, parser
 
-
-def test_yaml_formatting():
-    for filename in glob('custom/abt/reports/*.yaml'):
-        yield check_yaml_file, filename
+REPORTS_DIR = Path(__file__).parent.parent
 
 
-def check_yaml_file(filename):
-    with open(filename, 'r') as f:
+@pytest.mark.parametrize("filename", [p.name for p in REPORTS_DIR.glob('*.yml')])
+def test_yaml_formatting(filename):
+    with open(REPORTS_DIR / filename, 'r') as f:
         try:
             load(f.read(), Loader=Loader)
         except parser.ParserError:
-            assert False  # nose will tell us which file, and what went wrong.
+            assert False  # the test runner will tell us which file, and what went wrong.

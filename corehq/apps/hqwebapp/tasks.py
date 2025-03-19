@@ -1,9 +1,15 @@
+import csv
+from io import StringIO
+
 from smtplib import SMTPDataError
+from urllib.parse import urlencode, urljoin
 
 from django.conf import settings
 from django.core.mail import mail_admins
 from django.core.mail.message import EmailMessage
 from django.core.management import call_command
+from django.urls import reverse
+from django.template.defaultfilters import linebreaksbr
 from django.utils.translation import gettext as _
 
 from celery.exceptions import MaxRetriesExceededError
@@ -12,15 +18,18 @@ from celery.schedules import crontab
 from dimagi.utils.django.email import (
     COMMCARE_MESSAGE_ID_HEADER,
     SES_CONFIGURATION_SET_HEADER,
+    get_email_configuration,
 )
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import get_url_base
 
 from corehq.apps.celery import periodic_task, task
+from corehq.apps.es.exceptions import ESError
+from corehq.motech.repeaters.const import UCRRestrictionFFStatus
 from corehq.util.bounced_email_manager import BouncedEmailManager
 from corehq.util.email_event_utils import get_bounced_system_emails
 from corehq.util.log import send_HTML_email
-from corehq.util.metrics import metrics_gauge_task, metrics_track_errors
-from corehq.util.metrics.const import MPM_MAX
+from corehq.util.metrics import metrics_track_errors
 from corehq.util.models import TransientBounceEmail
 
 
@@ -43,8 +52,9 @@ def mark_subevent_gateway_error(messaging_event_id, error, retrying=False):
 
 @task(serializer='pickle', queue="email_queue",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
-def send_mail_async(self, subject, message, from_email, recipient_list,
-                    messaging_event_id=None, domain=None):
+def send_mail_async(self, subject, message, recipient_list, from_email=settings.DEFAULT_FROM_EMAIL,
+                    messaging_event_id=None, filename: str = None, content=None, domain: str = None,
+                    use_domain_gateway=False, is_conditional_alert=False):
     """ Call with send_mail_async.delay(*args, **kwargs)
     - sends emails in the main celery queue
     - if sending fails, retry in 15 min
@@ -61,6 +71,7 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
         }
     )
 
+    configuration = get_email_configuration(domain, use_domain_gateway, from_email)
     recipient_list = [_f for _f in recipient_list if _f]
 
     # todo deal with recipients marked as bounced
@@ -68,7 +79,7 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
         get_valid_recipients,
         mark_local_bounced_email,
     )
-    filtered_recipient_list = get_valid_recipients(recipient_list, domain)
+    filtered_recipient_list = get_valid_recipients(recipient_list, domain, is_conditional_alert)
     bounced_recipients = list(set(recipient_list) - set(filtered_recipient_list))
     if bounced_recipients and messaging_event_id:
         mark_local_bounced_email(bounced_recipients, messaging_event_id)
@@ -78,22 +89,25 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
 
     headers = {}
 
-    if settings.RETURN_PATH_EMAIL:
-        headers['Return-Path'] = settings.RETURN_PATH_EMAIL
+    if configuration.return_path_email:
+        headers['Return-Path'] = configuration.return_path_email
 
     if messaging_event_id is not None:
         headers[COMMCARE_MESSAGE_ID_HEADER] = messaging_event_id
-    if settings.SES_CONFIGURATION_SET is not None:
-        headers[SES_CONFIGURATION_SET_HEADER] = settings.SES_CONFIGURATION_SET
+    if configuration.SES_configuration_set is not None:
+        headers[SES_CONFIGURATION_SET_HEADER] = configuration.SES_configuration_set
 
     try:
         message = EmailMessage(
             subject=subject,
             body=message,
-            from_email=from_email,
+            from_email=configuration.from_email,
             to=filtered_recipient_list,
             headers=headers,
+            connection=configuration.connection
         )
+        if filename and content:
+            message.attach(filename=filename, content=content)
         return message.send()
     except SMTPDataError as e:
         # If the SES configuration has not been properly set up, resend the message
@@ -134,7 +148,9 @@ def send_html_email_async(self, subject, recipient, html_content,
                           file_attachments=None, bcc=None,
                           smtp_exception_skip_list=None,
                           messaging_event_id=None,
-                          domain=None):
+                          domain=None,
+                          use_domain_gateway=False,
+                          is_conditional_alert=False):
     """ Call with send_HTML_email_async.delay(*args, **kwargs)
     - sends emails in the main celery queue
     - if sending fails, retry in 15 min
@@ -152,7 +168,9 @@ def send_html_email_async(self, subject, recipient, html_content,
             bcc=bcc,
             smtp_exception_skip_list=smtp_exception_skip_list,
             messaging_event_id=messaging_event_id,
-            domain=domain
+            domain=domain,
+            use_domain_gateway=use_domain_gateway,
+            is_conditional_alert=is_conditional_alert
         )
     except Exception as e:
         recipient = list(recipient) if not isinstance(recipient, str) else [recipient]
@@ -242,16 +260,107 @@ def clean_expired_transient_emails():
         )
 
 
-def get_maintenance_alert_active():
-    from corehq.apps.hqwebapp.models import MaintenanceAlert
-    return 1 if MaintenanceAlert.get_active_alerts() else 0
-
-
-metrics_gauge_task('commcare.maintenance_alerts.active', get_maintenance_alert_active,
-                   run_every=crontab(minute=1), multiprocess_mode=MPM_MAX)
-
-
 @periodic_task(run_every=crontab(minute=0, hour=4))
 def clear_expired_oauth_tokens():
     # https://django-oauth-toolkit.readthedocs.io/en/latest/management_commands.html#cleartokens
     call_command('cleartokens')
+
+
+@periodic_task(run_every=crontab(minute=0, hour=1, day_of_week='mon'))
+def send_domain_ucr_data_info_to_admins():
+    from corehq.apps.hqadmin.reports import (
+        UCRDataLoadReport,
+        UCRRebuildRestrictionTable,
+    )
+    from corehq.apps.reports.dispatcher import AdminReportDispatcher
+    from corehq.apps.reports.filters.select import UCRRebuildStatusFilter
+
+    if not settings.SOLUTIONS_AES_EMAIL:
+        return
+
+    table = UCRRebuildRestrictionTable(
+        restriction_ff_status=UCRRestrictionFFStatus.ShouldEnable.name,
+    )
+    num_projects = len(table.rows)
+    subject = f"Weekly report: {num_projects} projects for UCR Restriction"
+    if num_projects:
+        first_few = min(num_projects, 12)
+        domain_names = '\n'.join([row[0] for row in table.rows[:first_few]])
+        if first_few < num_projects:
+            domain_names += '\n...'
+
+        endpoint = reverse(AdminReportDispatcher.name(), args=(UCRDataLoadReport.slug,))
+        params = {
+            UCRRebuildStatusFilter.slug: UCRRestrictionFFStatus.ShouldEnable.name,
+        }
+        report_url = urljoin(get_url_base(), endpoint) + '?' + urlencode(params)
+
+        message = f"""
+We have identified {num_projects} projects that require the
+RESTRICT_DATA_SOURCE_REBUILD feature flag to be enabled.
+
+{domain_names}
+
+Please see the detailed report: {report_url}
+"""
+    else:
+        message = """
+No projects were found that require the RESTRICT_DATA_SOURCE_REBUILD
+feature flag to be enabled.
+"""
+
+    send_mail_async.delay(
+        subject, message, [settings.SOLUTIONS_AES_EMAIL]
+    )
+
+
+@periodic_task(run_every=crontab(minute=0, hour=1, day_of_month=1))
+def send_stale_case_data_info_to_admins():
+    from corehq.apps.hqadmin.reports import StaleCasesTable
+    from corehq.apps.hqwebapp.tasks import send_html_email_async
+
+    if not settings.SOLUTIONS_AES_EMAIL or settings.SERVER_ENVIRONMENT != 'production':
+        return
+
+    table = StaleCasesTable()
+    has_error = False
+    try:
+        num_domains = len(table.rows)
+    except ESError:
+        has_error = True
+    subject = (
+        f'Monthly report: {num_domains} domains containing stale '
+        f'case data (older than {table.STALE_DATE_THRESHOLD_DAYS} days)'
+    )
+    csv_file = None
+    if num_domains:
+        message = (
+            f'We have identified {num_domains} domains containing stale '
+            f'case data older than {table.STALE_DATE_THRESHOLD_DAYS} days.\n'
+            'Please see detailed CSV report attached to this email.'
+        )
+        if has_error:
+            message += (
+                '\nPlease note that an error occurred while compiling the report '
+                'and so the data given may only be partial.'
+            )
+        csv_file = StringIO()
+        writer = csv.writer(csv_file)
+        writer.writerow(table.headers)
+        writer.writerows(table.rows)
+    elif has_error:
+        message = (
+            '\nPlease note that an error occurred while compiling the report '
+            'and so there may be missing data that was not compiled.'
+        )
+    else:
+        message = (
+            'No domains were found containing case data older than '
+            f'{table.STALE_DATE_THRESHOLD_DAYS} days.'
+        )
+    send_html_email_async.delay(
+        subject,
+        recipient=settings.SOLUTIONS_AES_EMAIL,
+        html_content=linebreaksbr(message),
+        file_attachments=[csv_file]
+    )

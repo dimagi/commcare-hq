@@ -4,12 +4,11 @@ from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
 from django.core.management.base import CommandError
+from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 
 from corehq.apps.es.exceptions import TaskError, TaskMissing
 from corehq.util.es.elasticsearch import SerializationError
 from corehq.util.json import CommCareJSONEncoder
-from corehq.util.metrics import metrics_counter
-
 
 TASK_POLL_DELAY = 10  # number of seconds to sleep between polling for task info
 
@@ -66,20 +65,10 @@ def flatten_field_dict(results, fields_property='fields'):
     field_dict = results.get(fields_property, {})
     for key, val in field_dict.items():
         new_val = val
-        if type(val) == list and len(val) == 1:
+        if type(val) is list and len(val) == 1:
             new_val = val[0]
         field_dict[key] = new_val
     return field_dict
-
-
-def track_es_report_load(domain, report_slug, owner_count):
-    # Intended mainly for ICDs to track load of user filter counts when hitting ES
-    if hasattr(settings, 'TRACK_ES_REPORT_LOAD'):
-        metrics_counter(
-            'commcare.es.user_filter_count',
-            owner_count,
-            tags={'report_slug': report_slug, 'domain': domain}
-        )
 
 
 def es_format_datetime(val):
@@ -112,7 +101,7 @@ def check_task_progress(task_id, just_once=False):
             task_details = manager.get_task(task_id=task_id)
         except TaskMissing:
             if not just_once:
-                return  # task completed
+                return  # task completed ES 2
             raise CommandError(f"Task with id {task_id} not found")
         except TaskError as err:
             raise CommandError(f"Fetching task failed: {err}")
@@ -120,8 +109,9 @@ def check_task_progress(task_id, just_once=False):
         status = task_details["status"]
         total = status["total"]
         if total:  # total can be 0 initially
-            created, updated, deleted = status["created"], status["updated"], status["deleted"]
-            progress = created + updated + deleted
+            created, updated = status["created"], status["updated"]
+            deleted, conflicts = status["deleted"], status["version_conflicts"]
+            progress = created + updated + deleted + conflicts
             progress_percent = progress / total * 100
 
             running_time_nanos = task_details["running_time_in_nanos"]
@@ -155,9 +145,12 @@ def check_task_progress(task_id, just_once=False):
                   f"Elapsed time: {_format_timedelta(run_time)}. "
                   f"Estimated remaining time: "
                   f"(average since start = {_format_timedelta(remaining_time_absolute)}) "
-                  f"(recent average = {_format_timedelta(remaining_time_relative)})")
+                  f"(recent average = {_format_timedelta(remaining_time_relative)})  "
+                  f"Task ID: {task_id}")
         if just_once:
             return
+        if task_details.get("completed"):
+            return  # task completed ES 5
         time.sleep(TASK_POLL_DELAY)
 
 
@@ -181,3 +174,22 @@ def sorted_mapping(mapping):
 def mapping_sort_key(item):
     key, value = item
     return 1 if key == "properties" else 0, key, value
+
+
+def index_runtime_name(name):
+    # transform the name if testing
+    return f"{TEST_DATABASE_PREFIX}{name}" if settings.UNIT_TESTING else name
+
+
+def get_es_reindex_setting_value(name, default):
+    """
+    :name: name of the multiplex or swap setting like ES_APPS_INDEX_MULTIPLEXED/ES_APPS_INDEX_SWAPPED
+    :default: default value if the setting is not set in localsettings.py. Should be True or False
+    Returns the default value of multiplexed/swapped settings if
+    `ES_MULTIPLEX_TO_VERSION` is not set or is not set to desired version.
+    """
+    from corehq.apps.es.const import ES_REINDEX_LOG
+
+    if ES_REINDEX_LOG[-1] != getattr(settings, 'ES_MULTIPLEX_TO_VERSION', None):
+        return default
+    return getattr(settings, name, default)

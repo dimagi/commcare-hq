@@ -5,6 +5,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
     return function (spec) {
         var self = {};
         self.properties = spec.properties;
+        self.sortProperties = Array.from(spec.properties);
         self.screens = [];
         self.model = spec.model || 'case';
         self.lang = spec.lang;
@@ -52,6 +53,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     langs: self.langs,
                     properties: self.properties,
                     saveUrl: self.saveUrl,
+                    moduleId: self.module_id,
                     columnKey: columnType,
                     childCaseTypes: spec.childCaseTypes,
                     fixtures: _.keys(spec.fixture_columns_by_type),
@@ -60,24 +62,87 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     containsFixtureConfiguration: (columnType === "short" && hqImport('hqwebapp/js/toggles').toggleEnabled('FIXTURE_CASE_SELECTION')),
                     containsFilterConfiguration: columnType === "short",
                     containsCaseListLookupConfiguration: (columnType === "short" && (hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_LOOKUP') || hqImport('hqwebapp/js/toggles').toggleEnabled('BIOMETRIC_INTEGRATION'))),
-                    // TODO: Check case_search_enabled_for_domain(), not toggle. FB 225343
-                    containsSearchConfiguration: (columnType === "short" && hqImport('hqwebapp/js/toggles').toggleEnabled('SYNC_SEARCH_CASE_CLAIM')),
+                    containsSearchConfiguration: (columnType === "short" && hqImport('hqwebapp/js/initial_page_data').get('case_search_enabled')),
                     containsCustomXMLConfiguration: columnType === "short",
                     allowsTabs: columnType === 'long',
                     allowsEmptyColumns: columnType === 'long',
-                }
+                    caseTileTemplateOptions: spec.caseTileTemplateOptions,
+                    caseTileTemplateConfigs: spec.caseTileTemplateConfigs,
+                },
             );
             self.screens.push(screen);
             return screen;
         }
 
+        const calculatedColName = (index) => `_cc_calculated_${index}`;
+        const calculatedColLabel = (index, col) => {
+            return _.template(gettext('<%- name %> (Calculated Property #<%- index %>)'))({
+                name: col.header.val(), index: index + 1,
+            });
+        };
+
+        function bindCalculatedPropsWithSortCols() {
+            // This links the calculated properties in the case list with the options available for sorting.
+            // Updates to the calculated properties are propagated to the sort rows.
+
+            // update the available sort properties with existing calculated properties
+            let calculatedCols = self.shortScreen.columns()
+                .filter(col => col.useXpathExpression)
+                .map(col => {
+                    let index = self.shortScreen.columns.indexOf(col),
+                        label = calculatedColLabel(index, col);
+                    return {value: calculatedColName(index), label: label};
+                });
+            self.sortProperties.push(...calculatedCols);
+
+            // propagate changes in calculated columns to the sort properties
+            self.shortScreen.on("columnChange", changes => {
+                let sortProps = [...self.sortProperties];
+                let valueMapping = {};  // used to handle value changes and deletions
+                changes.forEach(change => {
+                    if (!change.value.useXpathExpression) {
+                        return;
+                    }
+                    const colValue = calculatedColName(change.index);
+                    const colLabel = calculatedColLabel(change.index, change.value);
+                    if (change.status === "edited") {
+                        let prop = sortProps.find(p => {
+                            return p.value === colValue;
+                        });
+                        if (prop) {
+                            prop.label = colLabel;
+                        }
+                    } else if (change.status === "added" && change.moved !== undefined) {
+                        // re-order
+                        const oldValue = calculatedColName(change.moved);
+                        let prop = sortProps.find(p => p.value === oldValue);
+                        if (prop) {
+                            prop.value = colValue;
+                            prop.label = colLabel;
+                        }
+                        valueMapping[oldValue] = colValue;
+                    } else if (change.status === "added") {
+                        sortProps.push({value: colValue, label: colLabel});
+                    } else if (change.status === "deleted") {
+                        sortProps = sortProps.filter(p => p.value !== colValue);
+                        valueMapping[colValue] = "";  // set selection to blank
+                    }
+                });
+
+                // update values for next time and for new sort-cols
+                self.sortProperties = sortProps;
+                self.sortRows.updateSortProperties(self.sortProperties, valueMapping);
+            });
+        }
+
         if (spec.state.short !== undefined) {
             self.shortScreen = addScreen(spec.state, "short");
+            bindCalculatedPropsWithSortCols();
             // Set up filter
             var filterXpath = spec.state.short.filter;
             self.filter = hqImport("app_manager/js/details/filter")(filterXpath ? filterXpath : null, self.shortScreen.saveButton);
             // Set up sortRows
-            self.sortRows = hqImport("app_manager/js/details/sort_rows")(self.properties, self.shortScreen.saveButton);
+            self.sortRows = hqImport("app_manager/js/details/sort_rows")(self.sortProperties, self.shortScreen.saveButton);
             if (spec.sortRows) {
                 for (var j = 0; j < spec.sortRows.length; j++) {
                     self.sortRows.addSortRow(
@@ -87,7 +152,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         spec.sortRows[j].blanks,
                         spec.sortRows[j].display[self.lang],
                         false,
-                        spec.sortRows[j].sort_calculation
+                        spec.sortRows[j].sort_calculation,
                     );
                 }
             }
@@ -103,17 +168,18 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 $caseListLookup,
                 spec.state.short,
                 spec.lang,
-                self.shortScreen.saveButton
+                self.shortScreen.saveButton,
             );
             // Set up case search
             var caseClaimModels = hqImport("app_manager/js/details/case_claim");
             self.search = caseClaimModels.searchViewModel(
                 spec.search_properties || [],
                 spec.default_properties,
+                spec.custom_sort_properties,
                 _.pick(spec, caseClaimModels.searchConfigKeys),
                 spec.lang,
                 self.shortScreen.saveButton,
-                self.filter.filterText
+                self.filter.filterText,
             );
         }
         if (spec.state.long !== undefined) {
@@ -135,7 +201,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                                 printRef.is_matched(false);
                                 printTemplateUploader.updateUploadFormUI();
                             }
-                        }
+                        },
                     );
                 },
             });

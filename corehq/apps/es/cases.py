@@ -21,13 +21,17 @@ from dimagi.utils.parsing import json_format_datetime
 
 from . import aggregations, filters
 from .client import ElasticDocumentAdapter, create_document_adapter
+from .const import (
+    HQ_CASES_INDEX_CANONICAL_NAME,
+    HQ_CASES_INDEX_NAME,
+    HQ_CASES_SECONDARY_INDEX_NAME,
+)
 from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
-from .transient_util import get_adapter_mapping
 
 
 class CaseES(HQESQuery):
-    index = 'cases'
+    index = HQ_CASES_INDEX_CANONICAL_NAME
 
     @property
     def builtin_filters(self):
@@ -52,10 +56,12 @@ class CaseES(HQESQuery):
 class ElasticCase(ElasticDocumentAdapter):
 
     settings_key = IndexSettingsKey.CASES
+    canonical_name = HQ_CASES_INDEX_CANONICAL_NAME
 
     @property
     def mapping(self):
-        return get_adapter_mapping(self)
+        from .mappings.case_mapping import CASE_MAPPING
+        return CASE_MAPPING
 
     @property
     def model_cls(self):
@@ -65,8 +71,6 @@ class ElasticCase(ElasticDocumentAdapter):
     def _from_dict(self, case):
         """
         Takes in case dict and applies required transformation to make it suitable for ES.
-        The function is replica of ``transform_case_for_elasticsearch``
-        In future all references to  ``transform_case_for_elasticsearch`` will be replaced by `from_python`
 
         :param case: an instance of ``dict`` which is ``CommcareCase.to_json()``
         """
@@ -87,8 +91,9 @@ class ElasticCase(ElasticDocumentAdapter):
 
 case_adapter = create_document_adapter(
     ElasticCase,
-    "hqcases_2016-03-04",
+    HQ_CASES_INDEX_NAME,
     "case",
+    secondary=HQ_CASES_SECONDARY_INDEX_NAME,
 )
 
 

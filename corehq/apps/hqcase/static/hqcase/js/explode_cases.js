@@ -3,10 +3,11 @@ hqDefine('hqcase/js/explode_cases', [
     'knockout',
     'hqwebapp/js/initial_page_data',
     'select2/dist/js/select2.full.min',
+    'commcarehq',
 ], function (
     $,
     ko,
-    initialPageData
+    initialPageData,
 ) {
     $(function () {
         $('#explode').koApplyBindings({

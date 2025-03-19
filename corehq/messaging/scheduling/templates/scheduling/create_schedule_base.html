@@ -35,10 +35,12 @@
 {% block page_content %}
   {% initial_page_data 'current_values' schedule_form.current_values %}
   {% initial_page_data 'language_list' schedule_form.language_list %}
+  {% initial_page_data 'html_message_template' schedule_form.html_message_template %}
   {% initial_page_data 'current_select2_user_recipients' schedule_form.current_select2_user_recipients %}
   {% initial_page_data 'current_select2_user_group_recipients' schedule_form.current_select2_user_group_recipients %}
   {% initial_page_data 'current_select2_user_organization_recipients' schedule_form.current_select2_user_organization_recipients %}
   {% initial_page_data 'current_select2_location_types' schedule_form.current_select2_location_types %}
   {% initial_page_data 'current_select2_case_group_recipients' schedule_form.current_select2_case_group_recipients %}
   {% initial_page_data 'current_visit_scheduler_form' schedule_form.current_visit_scheduler_form %}
+  {% registerurl 'upload_messaging_image' domain %}
 {% endblock %}

@@ -1,5 +1,6 @@
 import json
 import logging
+from looseversion import LooseVersion
 
 from django.conf import settings
 from django.contrib import messages
@@ -131,11 +132,6 @@ def _get_form_designer_view(request, domain, app, module, form):
 
     send_hubspot_form(HUBSPOT_FORM_BUILDER_FORM_ID, request)
 
-    def _form_too_large(_app, _form):
-        # form less than 0.1MB, anything larger starts to have
-        # performance issues with fullstory
-        return _app.blobs['{}.xml'.format(_form.unique_id)]['content_length'] > 102400
-
     context = get_apps_base_context(request, domain, app)
     context.update(locals())
 
@@ -150,14 +146,12 @@ def _get_form_designer_view(request, domain, app, module, form):
         'nav_form': form,
         'formdesigner': True,
 
-        'include_fullstory': not _form_too_large(app, form),
         'CKEDITOR_BASEPATH': "app_manager/js/vellum/lib/ckeditor/",
         'show_live_preview': should_show_preview_app(
             request,
             app,
             request.couch_user.username,
         ),
-        'show_ui_notification_to_hide_translations': (len(app.langs) > 2),
     })
     context.update(_get_requirejs_context())
 
@@ -205,7 +199,7 @@ def get_form_data_schema(request, domain, app_id, form_unique_id):
     kw = {}
     if "pretty" in request.GET:
         kw["indent"] = 2
-    return HttpResponse(json.dumps(data, **kw))
+    return HttpResponse(json.dumps(data, **kw), content_type='application/json')
 
 
 @require_GET
@@ -294,6 +288,8 @@ def _get_vellum_plugins(domain, form, module):
         vellum_plugins.append("commtrack")
     if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
         vellum_plugins.append("saveToCase")
+    if toggles.COMMCARE_CONNECT.enabled(domain):
+        vellum_plugins.append("commcareConnect")
 
     form_uses_case = (
         (module and module.case_type and form.requires_case())
@@ -325,6 +321,7 @@ def _get_vellum_features(request, domain, app):
         'sorted_itemsets': app.enable_sorted_itemsets,
         'advanced_itemsets': add_ons.show("advanced_itemsets", request, app),
         'markdown_tables': app.enable_markdown_tables,
+        'use_custom_repeat_button_text': app.build_version >= LooseVersion('2.55'),
     })
     return vellum_features
 
@@ -348,7 +345,7 @@ def _get_core_context_help_text_context(form):
         form_icon_class = 'fcc fcc-app-updateform'
     else:
         default_help_text_template_id = '#fd-hq-helptext-survey'
-        form_icon_class = 'fa fa-file-o'
+        form_icon_class = 'fa-regular fa-file'
     return {
         'defaultHelpTextTemplateId': default_help_text_template_id,
         'formIconClass': form_icon_class,

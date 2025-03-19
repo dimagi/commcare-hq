@@ -50,9 +50,9 @@ class AdminReportDispatcherTests(SimpleTestCase):
         self.assertEqual(report_names, {
             'user_list_report',
             'user_audit_report',
-            'device_log_soft_asserts',
             'deploy_history_report',
-            'phone_number_report'
+            'phone_number_report',
+            'ucr_data_load',
         })
 
 
@@ -65,8 +65,7 @@ class DomainReportDispatcherTests(SimpleTestCase):
         self.assertEqual(name, 'Project Settings')
         report_names = {report.slug for report in project_settings_reports}
         self.assertEqual(report_names, {
-            'couch_repeat_record_report',
-            'project_link_report',
             'repeat_record_report',
+            'project_link_report',
             'api_request_log_report'
         })

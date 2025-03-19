@@ -1,0 +1,10 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+<div class="row mb-3">
+  <fieldset id="{{ filter.css_id }}">
+    <label class="field-label dont-break-out">{{ context_.label }}</label>
+    <div class="field-control">
+      {% block filter-controls %}{% endblock %}
+    </div>
+  </fieldset>
+</div>

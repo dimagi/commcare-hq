@@ -3,6 +3,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.http import Http404
 
+from corehq import toggles
 from dimagi.utils.parsing import string_to_utc_datetime
 
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -65,6 +66,9 @@ class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
 
         user_id = doc.get('form', {}).get('meta', {}).get('userID')
         if user_id in WEIRD_USER_IDS:
+            return
+
+        if toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
             return
 
         try:

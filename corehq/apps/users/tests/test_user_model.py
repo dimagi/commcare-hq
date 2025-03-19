@@ -1,24 +1,22 @@
 from datetime import datetime, timedelta
+from unittest.mock import patch
 
 from django.test import SimpleTestCase, TestCase
 
-from corehq.apps.custom_data_fields.models import (
-    CustomDataFieldsDefinition,
-    CustomDataFieldsProfile,
-    Field,
-    PROFILE_SLUG,
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.users.models import (
+    CommCareUser,
+    CouchUser,
+    DeviceAppMeta,
+    WebUser,
 )
 from corehq.apps.users.models_role import UserRole
-from corehq.apps.users.role_utils import UserRolePresets
-from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import CommCareUser, DeviceAppMeta, WebUser, CouchUser
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import (
     TestFormMetadata,
     get_simple_wrapped_form,
 )
-from corehq.util.test_utils import softer_assert
+from corehq.util.test_utils import softer_assert, flag_enabled
 
 
 class UserModelTest(TestCase):
@@ -35,11 +33,11 @@ class UserModelTest(TestCase):
             created_via=None,
         )
 
-        self.metadata = TestFormMetadata(
+        metadata = TestFormMetadata(
             domain=self.user.domain,
             user_id=self.user._id,
         )
-        get_simple_wrapped_form('123', metadata=self.metadata)
+        get_simple_wrapped_form('123', metadata=metadata)
 
     def tearDown(self):
         CommCareUser.get_db().delete_doc(self.user._id)
@@ -79,100 +77,6 @@ class UserModelTest(TestCase):
         CommCareUser.bulk_save([self.user])
         user = CommCareUser.get(self.user._id)
         self.assertGreater(user.last_modified, lm)
-
-    def test_user_data_not_allowed_in_create(self):
-        message = "Do not access user_data directly, pass metadata argument to create."
-        with self.assertRaisesMessage(ValueError, message):
-            CommCareUser.create(self.domain, 'martha', 'bmfa', None, None, user_data={'country': 'Canada'})
-
-    def test_metadata(self):
-        metadata = self.user.metadata
-        self.assertEqual(metadata, {'commcare_project': 'my-domain'})
-        metadata.update({
-            'cruise': 'control',
-            'this': 'road',
-        })
-        self.user.update_metadata(metadata)
-        self.assertEqual(self.user.metadata, {
-            'commcare_project': 'my-domain',
-            'cruise': 'control',
-            'this': 'road',
-        })
-        self.user.pop_metadata('cruise')
-        self.assertEqual(self.user.metadata, {
-            'commcare_project': 'my-domain',
-            'this': 'road',
-        })
-        self.user.update_metadata({'this': 'field'})
-        self.assertEqual(self.user.metadata, {
-            'commcare_project': 'my-domain',
-            'this': 'field',
-        })
-
-    def test_metadata_with_profile(self):
-        definition = CustomDataFieldsDefinition(domain='my-domain', field_type=UserFieldsView.field_type)
-        definition.save()
-        definition.set_fields([Field(slug='start')])
-        definition.save()
-        profile = CustomDataFieldsProfile(
-            name='low',
-            fields={'start': 'sometimes'},
-            definition=definition,
-        )
-        profile.save()
-        conflict_message = "metadata properties conflict with profile: start"
-
-        # Custom user data profiles get their data added to metadata automatically for mobile users
-        self.user.update_metadata({PROFILE_SLUG: profile.id})
-        self.assertEqual(self.user.metadata, {
-            'commcare_project': 'my-domain',
-            PROFILE_SLUG: profile.id,
-            'start': 'sometimes',
-        })
-
-        # Remove profile should remove it and related fields
-        self.user.pop_metadata(PROFILE_SLUG)
-        self.assertEqual(self.user.metadata, {
-            'commcare_project': 'my-domain',
-        })
-
-        # Can't add profile that conflicts with existing data
-        self.user.update_metadata({
-            'start': 'never',
-            'end': 'yesterday',
-        })
-        with self.assertRaisesMessage(ValueError, conflict_message):
-            self.user.update_metadata({
-                PROFILE_SLUG: profile.id,
-            })
-
-        # Can't add data that conflicts with existing profile
-        self.user.pop_metadata('start')
-        self.user.update_metadata({PROFILE_SLUG: profile.id})
-        with self.assertRaisesMessage(ValueError, conflict_message):
-            self.user.update_metadata({'start': 'never'})
-
-        # Can't add both a profile and conflicting data
-        self.user.pop_metadata(PROFILE_SLUG)
-        with self.assertRaisesMessage(ValueError, conflict_message):
-            self.user.update_metadata({
-                PROFILE_SLUG: profile.id,
-                'start': 'never',
-            })
-
-        # Custom user data profiles don't get populated for web users
-        web_user = WebUser.create(None, "imogen", "*****", None, None)
-        self.assertEqual(web_user.metadata, {
-            'commcare_project': None,
-        })
-        web_user.update_metadata({PROFILE_SLUG: profile.id})
-        self.assertEqual(web_user.metadata, {
-            'commcare_project': None,
-            PROFILE_SLUG: profile.id,
-        })
-
-        definition.delete()
-        web_user.delete(self.domain, deleted_by=None)
 
     def test_commcare_user_lockout_limits(self):
         commcare_user = self.create_user('test_user', is_web_user=False)
@@ -275,19 +179,42 @@ class UserDeviceTest(SimpleTestCase):
         self.assertIsNotNone(app_meta)
 
 
-class TestCommCareUserRoles(TestCase):
-    user_class = CommCareUser
+class BaseCommCareUserTestSetup(TestCase):
 
     @classmethod
-    def setUpClass(cls):
-        super(TestCommCareUserRoles, cls).setUpClass()
-        cls.domain = 'test-user-role'
+    def setUpClass(cls, domain):
+        super(BaseCommCareUserTestSetup, cls).setUpClass()
+        cls.domain = domain
         cls.domain_obj = create_domain(cls.domain)
         cls.addClassCleanup(cls.domain_obj.get_db().delete_doc, cls.domain_obj)
 
         cls.role1 = UserRole.create(domain=cls.domain, name="role1")
         cls.role2 = UserRole.create(domain=cls.domain, name="role2")
         cls.mobile_worker_default_role = UserRole.commcare_user_default(cls.domain)
+
+    def _create_user(self, username, role_id=None, include_domain_membership=True):
+        if include_domain_membership:
+            domain = self.domain
+        else:
+            domain = None
+        user = self.user_class.create(
+            domain=domain,
+            username=username,
+            password='***',
+            created_by=None,
+            created_via=None,
+            role_id=role_id
+        )
+        self.addCleanup(user.delete, None, None)
+        return user
+
+
+class TestCommCareUserRoles(BaseCommCareUserTestSetup):
+    user_class = CommCareUser
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestCommCareUserRoles, cls).setUpClass(domain='test-user-role')
 
     def test_create_user_without_role(self):
         user = self._create_user('scotch game')
@@ -340,18 +267,6 @@ class TestCommCareUserRoles(TestCase):
         self.assertIsNotNone(role)
         self.assertEqual(role.get_qualified_id(), expected.get_qualified_id())
 
-    def _create_user(self, username, role_id=None):
-        user = self.user_class.create(
-            domain=self.domain,
-            username=username,
-            password='***',
-            created_by=None,
-            created_via=None,
-            role_id=role_id
-        )
-        self.addCleanup(user.delete, None, None)
-        return user
-
 
 class TestWebUserRoles(TestCommCareUserRoles):
     user_class = WebUser
@@ -376,3 +291,30 @@ class TestWebUserRoles(TestCommCareUserRoles):
 
         self.check_role(user, self.role1, self.domain)
         self.check_role(user, self.role2, self.domain2)
+
+
+class TestWebUserTableauIntegration(BaseCommCareUserTestSetup):
+    user_class = WebUser
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestWebUserTableauIntegration, cls).setUpClass(domain="test-web-user-tableau-integration")
+
+    @flag_enabled('TABLEAU_USER_SYNCING')
+    @patch('corehq.apps.reports.util.add_tableau_user')
+    @patch('corehq.apps.reports.util.update_tableau_user')
+    @patch('corehq.apps.reports.util.get_tableau_groups_by_ids')
+    def test_add_as_web_user_with_tableau_params(self, mock_get_tableau_groups_by_ids, mock_update_tableau_user,
+                                                 mock_add_tableau_user):
+        user = self._create_user("test_user", include_domain_membership=False)
+
+        from corehq.apps.reports.util import TableauGroupTuple
+        groups = [TableauGroupTuple(name='group5', id='u908e'),
+                TableauGroupTuple(name='group1', id='1a2b3')]
+        mock_get_tableau_groups_by_ids.return_value = groups
+
+        user.add_as_web_user(self.domain, self.role1.get_qualified_id(),
+                            tableau_role="Viewer", tableau_group_ids=["u908e", "1a2b3"])
+        mock_add_tableau_user.assert_called_once_with(self.domain, user.username)
+        mock_update_tableau_user.assert_called_once_with(domain=self.domain, username=user.username,
+                                                        role="Viewer", groups=groups, blocking_exception=False)

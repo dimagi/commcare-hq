@@ -1,11 +1,23 @@
-/*global Backbone, Marionette, moment */
-
-hqDefine("cloudcare/js/formplayer/sessions/views", function () {
-    var constants = hqImport("cloudcare/js/formplayer/constants"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        FormplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        utils = hqImport("cloudcare/js/formplayer/utils/utils");
-
+hqDefine("cloudcare/js/formplayer/sessions/views", [
+    'jquery',
+    'underscore',
+    'backbone',
+    'backbone.marionette',
+    'moment',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/users/models',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/sessions/api',     // deleteSession
+], function (
+    $,
+    _,
+    Backbone,
+    Marionette,
+    moment,
+    FormplayerFrontend,
+    UsersModels,
+    utils,
+) {
     var SessionView = Marionette.View.extend({
         tagName: "tr",
         className: "formplayer-request",
@@ -42,7 +54,9 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
             e.stopPropagation();
             utils.confirmationModal({
                 title: gettext('Delete incomplete form?'),
-                message: gettext("Are you sure you want to delete '" + self.model.get('title') + "'"),
+                message: _.template(gettext("Are you sure you want to delete '<%- title %>'?"))({
+                    title: self.model.get('title'),
+                }),
                 confirmText: gettext('Yes'),
                 cancelText: gettext('No'),
                 onConfirm: function () {
@@ -99,7 +113,7 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
             var sessionsPerPage = this.ui.sessionsPerPageLimit.val();
             this.model.set("limit", Number(sessionsPerPage));
             this.model.set("page", 1);
-            FormplayerUtils.savePerPageLimitCookie("sessions", this.model.get("limit"));
+            utils.savePerPageLimitCookie("sessions", this.model.get("limit"));
         },
         paginationGoAction: function (e) {
             e.preventDefault();
@@ -122,20 +136,18 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
             }
         },
         templateContext: function () {
-            var user = FormplayerFrontend.getChannel().request('currentUser');
-            var paginationConfig = utils.paginateOptions(this.options.pageNumber, this.options.totalPages);
-            return {
+            var paginationConfig = utils.paginateOptions(
+                this.options.pageNumber,
+                this.options.totalPages,
+                this.collection.totalSessions,
+            );
+            return _.extend(paginationConfig, {
                 total: this.collection.totalSessions,
                 totalPages: this.options.totalPages,
                 currentPage: this.model.get('page') - 1,
-                startPage: paginationConfig.startPage,
-                endPage: paginationConfig.endPage,
-                pageCount: paginationConfig.pageCount,
-                rowRange: [10, 25, 50, 100],
                 limit: this.model.get("limit"),
-                pageNumLabel: _.template(gettext("Page <%-num%>")),
-                isPreviewEnv: user.environment === constants.PREVIEW_APP_ENVIRONMENT,
-            };
+                isAppPreview: UsersModels.getCurrentUser().isAppPreview,
+            });
         },
     });
 

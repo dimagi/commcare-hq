@@ -1,5 +1,18 @@
-hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', 'underscore', 'knockout', 'hqwebapp/js/atwho', 'ace-builds/src-min-noconflict/ace'], function ($, _, ko, atwho, ace) {
-
+hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/atwho',
+    'ace-builds/src-min-noconflict/ace',
+    'ace-builds/src-min-noconflict/mode-xquery',
+    'ace-builds/src-min-noconflict/ext-language_tools',
+], function (
+    $,
+    ko,
+    _,
+    atwho,
+    ace,
+) {
     ko.bindingHandlers.xPathAutocomplete = {
         init: function (element, valueAccessor, allBindings, viewModel) {
             var $element = $(element),
@@ -15,10 +28,11 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', '
                         highlightActiveLine: false,
                         maxLines: 30,
                         minLines: 3,
-                        fontSize: 14,
+                        fontSize: 13,
                         wrap: true,
+                        indentedSoftWrap: false,
                         useWorker: false, // enable the worker to show syntax errors
-                    }
+                    },
                 );
             editor.session.setMode('ace/mode/xquery'); // does reasonable syntax highlighting for XPath
 
@@ -55,6 +69,8 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', '
             var casePropertyAutocomplete = {
                 getCompletions: function (editor, session, pos, prefix, callback) {
                     var currentValue = editor.getValue(),
+                        newPopupWidth = 0,
+                        popup = editor.completer.getPopup(),
                         leftQuotesSingle = (currentValue.substr(0, pos.column).match(/'/g) || []).length,
                         leftQuotesDouble = (currentValue.substr(0, pos.column).match(/"/g) || []).length,
                         insideQuote = leftQuotesSingle && (leftQuotesSingle % 2 !== 0) || leftQuotesDouble && (leftQuotesDouble % 2 !== 0);
@@ -63,12 +79,21 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', '
                         return;
                     }
                     callback(null, _.map(caseProperties, function (suggestion) {
+                        var currentLabelLength = suggestion.name.length,
+                            metaText = suggestion.case_type || suggestion.meta_type,
+                            currentMetaLength = metaText ? metaText.length : 0,
+                            minPopupWidth = currentLabelLength * 6.5 + currentMetaLength * 5.2;
+                        if (minPopupWidth > newPopupWidth) {
+                            newPopupWidth = minPopupWidth;
+                        }
                         return {
                             name: suggestion.name,
                             value: suggestion.name,
                             meta: suggestion.case_type || suggestion.meta_type,
                         };
                     }));
+                    popup.container.style.width = Math.ceil(newPopupWidth) + "px";
+                    popup.resize();
                 },
             };
             ace.require("ace/ext/language_tools").setCompleters([casePropertyAutocomplete]);
@@ -79,7 +104,7 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', '
         init: function (element) {
             var $element = $(element);
             if (!$element.atwho) {
-                throw new Error("The typeahead binding requires Atwho.js and Caret.js");
+                throw new Error("The explorerColumnsAutocomplete binding requires Atwho.js and Caret.js");
             }
 
             atwho.init($element, {

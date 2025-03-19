@@ -88,6 +88,7 @@ Language
 import json
 from collections import namedtuple
 from copy import deepcopy
+import textwrap
 
 from memoized import memoized
 
@@ -289,8 +290,9 @@ class ESQuery(object):
         return es
 
     def enable_profiling(self):
-        self.es_query['profile'] = True
-        return self
+        query = self.clone()
+        query.es_query['profile'] = True
+        return query
 
     def add_query(self, new_query, clause):
         """
@@ -328,11 +330,6 @@ class ESQuery(object):
             """
         self._legacy_fields = True
         return self.source(fields)
-
-    def ids_query(self, doc_ids):
-        return self.set_query(
-            queries.ids_query(doc_ids)
-        )
 
     def source(self, include, exclude=None):
         """
@@ -382,7 +379,7 @@ class ESQuery(object):
         elif self._source is not None:
             self.es_query['_source'] = self._source
         if self.uses_aggregations():
-            self.es_query['size'] = 0
+            self.es_query['size'] = 0  # Just return the aggs, not the hits
             self.es_query['aggs'] = {
                 agg.name: agg.assemble()
                 for agg in self._aggregations
@@ -410,18 +407,21 @@ class ESQuery(object):
 
     def sort(self, field, desc=False, reset_sort=True):
         """Order the results by field."""
+        assert field != '_id', "Cannot sort on reserved _id field"
         sort_field = {
             field: {'order': 'desc' if desc else 'asc'}
         }
         return self._sort(sort_field, reset_sort)
 
-    def nested_sort(self, path, field_name, nested_filter, desc=False, reset_sort=True):
+    def nested_sort(self, path, field_name, nested_filter, desc=False, reset_sort=True, sort_missing=None):
         """Order results by the value of a nested field
         """
         sort_field = {
             '{}.{}'.format(path, field_name): {
                 'order': 'desc' if desc else 'asc',
+                'nested_path': path,
                 'nested_filter': nested_filter,
+                'missing': sort_missing,
             }
         }
         return self._sort(sort_field, reset_sort)
@@ -532,12 +532,12 @@ class ESQuerySet(object):
 
     def __init__(self, raw, query):
         if 'error' in raw:
-            msg = ("ElasticSearch Error\n{error}\nIndex: {index}"
-                   "\nQuery: {query}").format(
-                       error=raw['error'],
-                       index=query.index,
-                       query=query.dumps(pretty=True),
-                    )
+            msg = textwrap.dedent(f"""
+                ElasticSearch Error
+                {raw['error']}
+                Index: {query.index}
+                Query: {query.dumps(pretty=True)}""").lstrip()
+
             raise ESError(msg)
         self.raw = raw
         self.query = query
@@ -591,7 +591,7 @@ class ESQuerySet(object):
 
 class HQESQuery(ESQuery):
     """
-    Query logic specific to CommCareHQ
+    Query logic specific to CommCare HQ
     """
     @property
     def builtin_filters(self):

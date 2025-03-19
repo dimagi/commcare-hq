@@ -4,6 +4,7 @@ import json
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
+from corehq.apps.reports.util import DatatablesServerSideParams
 from dimagi.utils.dates import DateSpan, add_months
 
 from corehq.apps.reports.filters.base import BaseReportFilter
@@ -16,7 +17,7 @@ class DatespanFilter(BaseReportFilter):
         This is the standard datespan filter that gets pulled into request with the decorator
         @datespan_in_request
     """
-    template = "reports/filters/datespan.html"
+    template = "reports/filters/bootstrap3/datespan.html"
     label = gettext_lazy("Date Range")
     slug = "datespan"
     inclusive = True
@@ -59,7 +60,7 @@ class HiddenLastMonthDateFilter(DatespanFilter):
     A filter that returns last month as datespan
     but is hidden since datespan should be fixed to last month
     """
-    template = "reports/filters/month_datespan.html"
+    template = "reports/filters/bootstrap3/month_datespan.html"
     label = gettext_lazy("Date Range")
     slug = "datespan"
     inclusive = True
@@ -79,23 +80,39 @@ class SingleDateFilter(BaseReportFilter):
     """
     A filter that returns a single date
     """
-    template = "reports/filters/date_selector.html"
+    template = "reports/filters/bootstrap3/date_selector.html"
     label = gettext_lazy("Date")
     slug = "date"
+    # below delta should be in days from today's date
+    default_date_delta = 0
+    min_date_delta = None
+    max_date_delta = None
 
     @property
     def date(self):
-        from_req = self.request.GET.get('date')
+        from_req = DatatablesServerSideParams.get_value_from_request(self.request, self.slug)
         if from_req:
             try:
                 return iso_string_to_date(from_req)
             except ValueError:
                 pass
 
-        return datetime.date.today()
+        return datetime.date.today() + datetime.timedelta(days=self.default_date_delta)
+
+    @property
+    def min_date(self):
+        if self.min_date_delta:
+            return datetime.date.today() + datetime.timedelta(days=self.min_date_delta)
+
+    @property
+    def max_date(self):
+        if self.max_date_delta:
+            return datetime.date.today() + datetime.timedelta(days=self.max_date_delta)
 
     @property
     def filter_context(self):
         return {
             'date': self.date,
+            'min_date': self.min_date,
+            'max_date': self.max_date
         }

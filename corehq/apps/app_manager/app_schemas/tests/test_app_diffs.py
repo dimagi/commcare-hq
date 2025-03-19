@@ -145,6 +145,18 @@ class TestAppDiffs(_BaseTestAppDiffs, SimpleTestCase):
         self.assertEqual(first[0]['forms'][0]['questions'][0]['changes']['label']['type'], CHANGED)
         self.assertEqual(second[0]['forms'][0]['questions'][0]['changes']['label']['type'], CHANGED)
 
+    def test_change_question_to_be_required(self):
+        self._add_question(self.app1.modules[0].forms[0], {'name': 'foo'})
+        self._add_question(self.app2.modules[0].forms[0], {'name': 'foo', 'required': 'true()'})
+        first, second = get_app_diff(self.app1, self.app2)
+        self.assertEqual(first[0]['forms'][0]['questions'][0]['changes']['required']['type'], CHANGED)
+
+    def test_change_question_to_be_not_required(self):
+        self._add_question(self.app1.modules[0].forms[0], {'name': 'foo', 'required': 'true()'})
+        self._add_question(self.app2.modules[0].forms[0], {'name': 'foo'})
+        first, second = get_app_diff(self.app1, self.app2)
+        self.assertEqual(second[0]['forms'][0]['questions'][0]['changes']['required']['type'], CHANGED)
+
     def test_add_question_translation(self):
         self.app1.langs = ['en', 'it']
         self.app2.langs = ['en', 'it']

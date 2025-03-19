@@ -1,18 +1,21 @@
+
+
 hqDefine('users/js/edit_commcare_user', [
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/alert_user',
+    'hqwebapp/js/bootstrap3/alert_user',
     'analytix/js/google',
     'hqwebapp/js/multiselect_utils',
     'users/js/custom_data_fields',
     'locations/js/widgets',
     'jquery-textchange/jquery.textchange',
-    'hqwebapp/js/knockout_bindings.ko',
-    'hqwebapp/js/widgets',
-    'registration/js/password',
+    'hqwebapp/js/bootstrap3/knockout_bindings.ko',
+    'hqwebapp/js/bootstrap3/widgets',
+    'registration/js/bootstrap3/password',
     'select2/dist/js/select2.full.min',
     'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min',
+    'commcarehq',
 ], function (
     $,
     ko,
@@ -20,7 +23,7 @@ hqDefine('users/js/edit_commcare_user', [
     alertUser,
     googleAnalytics,
     multiselectUtils,
-    customDataFields
+    customDataFields,
 ) {
     var couchUserId = initialPageData.get('couch_user_id');
 
@@ -30,18 +33,18 @@ hqDefine('users/js/edit_commcare_user', [
     });
 
     $('#add_phone_number').submit(function () {
-        googleAnalytics.track.event('Edit Mobile Worker', 'Update phone number', couchUserId, '', {}, function () {
-            document.getElementById('add_phone_number').submit();
-        });
+        document.getElementById('add_phone_number').submit();
+        googleAnalytics.track.event('Edit Mobile Worker', 'Update phone number', couchUserId, '', {}, function () {});
         return false;
     });
 
     $('#reset-password-form').submit(function () {
-        $(this).ajaxSubmit({
+        $.ajax({
             url: $(this).attr('action'),
-            type: 'POST',
+            method: $(this).attr('method'),
             dataType: 'json',
-            success: function (response, status, xhr, form) {
+            data: Object.fromEntries(new FormData(this)),
+            success: function (response) {
                 if (response.status === "OK") {
                     alertUser.alert_user(gettext("Password changed successfully."), 'success');
                     googleAnalytics.track.event("Edit Mobile Worker", "Reset password", couchUserId);
@@ -148,10 +151,11 @@ hqDefine('users/js/edit_commcare_user', [
         $customDataFieldsForm.koApplyBindings(function () {
             return {
                 custom_fields: customDataFields.customDataFieldsEditor({
-                    metadata: initialPageData.get('metadata'),
+                    user_data: initialPageData.get('user_data'),
                     profiles: initialPageData.get('custom_fields_profiles'),
                     profile_slug: initialPageData.get('custom_fields_profile_slug'),
                     slugs: initialPageData.get('custom_fields_slugs'),
+                    can_edit_original_profile: initialPageData.get('can_edit_original_profile'),
                 }),
             };
         });
@@ -165,9 +169,8 @@ hqDefine('users/js/edit_commcare_user', [
 
     // Analytics
     $("button:submit", $userInformationForm).on("click", function () {
-        googleAnalytics.track.event("Edit Mobile Worker", "Updated user info", couchUserId, "", {}, function () {
-            $userInformationForm.submit();
-        });
+        $userInformationForm.submit();
+        googleAnalytics.track.event("Edit Mobile Worker", "Updated user info", couchUserId, "", {});
         return false;
     });
 });

@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -1,7 +1,7 @@
+ {% load i18n %}
+ {{ wizard.management_form }}
+ {% for field in wizard.form %}
+-  <div class="form-group has-feedback{% if field.errors %} has-error{% endif %}">
++  <div class="form-group has-feedback{% if field.errors %} has-error{% endif %}">  {# todo B5: css-form-group, css-has-error #}
+     <label>{{ field.label }}</label>
+     <div>
+       {{ field }}

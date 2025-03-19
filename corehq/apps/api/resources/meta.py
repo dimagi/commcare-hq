@@ -1,5 +1,3 @@
-from django.conf import settings
-
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.throttle import BaseThrottle
 
@@ -30,10 +28,7 @@ api_rate_limiter = RateLimiter(
 
 
 def get_hq_throttle():
-    return HQThrottle(
-        throttle_at=getattr(settings, 'CCHQ_API_THROTTLE_REQUESTS', 25),
-        timeframe=getattr(settings, 'CCHQ_API_THROTTLE_TIMEFRAME', 15)
-    )
+    return HQThrottle()
 
 
 class HQThrottle(BaseThrottle):
@@ -44,6 +39,8 @@ class HQThrottle(BaseThrottle):
 
         return not api_rate_limiter.allow_usage(identifier.domain)
 
+    def retry_after(self, identifier):
+        return api_rate_limiter.get_retry_after(scope=identifier.domain)
 
     def accessed(self, identifier, **kwargs):
         """

@@ -55,6 +55,8 @@ class CaseDisplayWrapper(object):
         if self.case.location_id:
             dynamic_data['location_id'] = self.case.location_id
 
+        dynamic_data['case_name'] = self.case.name
+
         return dynamic_data
 
     @property
@@ -66,10 +68,6 @@ class CaseDisplayWrapper(object):
             DisplayConfig(name=_('Date Opened'), expr='opened_on', process="date", is_phone_time=True),
             DisplayConfig(name=_('Date Modified'), expr='modified_on', process="date", is_phone_time=True),
         ]
-
-    @property
-    def related_type_info(self):
-        return None
 
 
 class SupplyPointDisplayWrapper(CaseDisplayWrapper):

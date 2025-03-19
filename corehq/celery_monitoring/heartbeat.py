@@ -117,6 +117,7 @@ class Heartbeat(object):
             try:
                 self.get_and_report_blockage_duration()
                 self.set_time_to_start(heartbeat.request.id)
+                self.get_and_report_time_to_start()
             except HeartbeatNeverRecorded:
                 pass
             self.mark_seen()

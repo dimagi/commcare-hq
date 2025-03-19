@@ -1,0 +1,62 @@
+{% extends 'hqwebapp/bootstrap3/two_column.html' %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% js_entry_b3 "translations/js/app_translations" %}
+
+
+{% block page_content %}
+  {% registerurl "paginate_releases" domain '---' %}
+
+  {% if not transifex_details_available %}
+    <p class="text-error">
+      <span class="label label-danger">
+          {% trans 'Transifex integration not set for this domain' %}
+      </span>
+    </p>
+  {% else %}
+    <div>
+      <form class="form form-horizontal" name="product" method="post">
+        {% if page_action == 'create_update' %}
+          <legend>{% trans "Set Up or Update Resource" %}</legend>
+          <p>
+            {% blocktrans %}
+              Create a new resource or update an existing one in Transifex.
+            {% endblocktrans %}
+          </p>
+        {% elif page_action == 'push' %}
+          <legend>{% trans "Push Target Language" %}</legend>
+          <p>
+            {% blocktrans %}
+              Push translations for a target language to Transifex.
+            {% endblocktrans %}
+          </p>
+        {% elif page_action == 'pull' %}
+          <legend>{% trans "Pull App Translations" %}</legend>
+          <p>
+            {% blocktrans %}
+              Pull all translations for a selected language, which will be emailed to you as an Excel file.
+            {% endblocktrans %}
+          </p>
+        {% elif page_action == 'backup' %}
+          <legend>{% trans "Backup App Translations" %}</legend>
+          <p>
+            {% blocktrans %}
+              Pull all translations for all languages in the project, which will be emailed to you as a zip file.
+            {% endblocktrans %}
+          </p>
+        {% elif page_action == 'delete' %}
+          <legend>{% trans "Delete Project Resources" %}</legend>
+            <p>
+              {% blocktrans %}
+                Delete all resources for the selected project. Use caution!
+              {% endblocktrans %}
+            </p>
+        {% endif %}
+        </br>
+        {% crispy trans_form %}
+      </form>
+    </div>
+  {% endif %}
+{% endblock %}

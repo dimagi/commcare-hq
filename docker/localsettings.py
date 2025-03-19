@@ -1,4 +1,4 @@
-####### Configuration for CommCareHQ Running in docker #######
+"""####### Configuration for CommCareHQ Running in docker #######"""
 
 
 import os
@@ -71,8 +71,8 @@ COUCH_DATABASES = {
         # for production this ought to be set to true on your configured couch instance
         'COUCH_HTTPS': False,
         'COUCH_SERVER_ROOT': 'couch:5984',  # 6984 for https couch
-        'COUCH_USERNAME': '',
-        'COUCH_PASSWORD': '',
+        'COUCH_USERNAME': 'admin',
+        'COUCH_PASSWORD': 'commcarehq',
         'COUCH_DATABASE_NAME': 'commcarehq'
     }
 }
@@ -100,12 +100,9 @@ WS4REDIS_CONNECTION = {
     'host': redis_host,
 }
 
-ELASTICSEARCH_HOST = 'elasticsearch2'
-ELASTICSEARCH_PORT = 9200  # ES 2 port
-ELASTICSEARCH_MAJOR_VERSION = 2
-
-if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
-    ELASTICSEARCH_MAJOR_VERSION = int(os.environ.get('ELASTICSEARCH_MAJOR_VERSION'))
+ELASTICSEARCH_HOST = 'elasticsearch5'
+ELASTICSEARCH_PORT = 9200  # ES 5 port
+ELASTICSEARCH_MAJOR_VERSION = 5
 
 S3_BLOB_DB_SETTINGS = {
     "url": "http://minio:9980/",
@@ -133,7 +130,8 @@ SHARED_DRIVE_ROOT = '/sharedfiles'
 
 BASE_ADDRESS = '{}:8000'.format(os.environ.get('HQ_PORT_8000_TCP_ADDR', 'localhost'))
 
-######## Email setup ########
+
+"""######## Email setup ########"""
 # email settings: these ones are the custom hq ones
 EMAIL_LOGIN = "notifications@dimagi.com"
 EMAIL_PASSWORD = "******"
@@ -141,20 +139,10 @@ EMAIL_SMTP_HOST = "smtp.gmail.com"
 EMAIL_SMTP_PORT = 587
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-####### Bitly ########
+"""####### Bitly ########"""
 
 BITLY_OAUTH_TOKEN = None
 
-####### Jar signing config ########
-
-_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-JAR_SIGN = {
-    "jad_tool": os.path.join(_ROOT_DIR, "corehq", "apps", "app_manager", "JadTool.jar"),
-    "key_store": os.path.join(_ROOT_DIR, "InsecureTestingKeyStore"),
-    "key_alias": "javarosakey",
-    "store_pass": "onetwothreefourfive",
-    "key_pass": "onetwothreefourfive",
-}
 
 SECRET_KEY = 'secrettravis'
 
@@ -215,9 +203,6 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
 
     FORMPLAYER_URL = 'http://formplayer:8080'
     FORMPLAYER_URL_WEBAPPS = 'http://localhost:8080'
-
-    CCHQ_API_THROTTLE_REQUESTS = 200
-    CCHQ_API_THROTTLE_TIMEFRAME = 10
 
     RESTORE_PAYLOAD_DIR_NAME = 'restore'
     SHARED_TEMP_DIR_NAME = 'temp'

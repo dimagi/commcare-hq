@@ -1,9 +1,9 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% requirejs_main "motech/js/connection_settings_detail" %}
+{% js_entry "motech/js/connection_settings_detail" %}
 
 {% block page_content %}
   {% registerurl "test_connection_settings" domain %}
@@ -12,12 +12,5 @@
   <div class="spacer"></div>
 
   {% crispy form %}
-
-  {# crispy.CSS_ACTION_CLASS to match the "Test Connection" button #}
-  <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6
-              col-sm-offset-4 col-md-offset-4 col-lg-offset-2">
-    <div id="test-connection-result"
-         class="text-success hide"></div>
-  </div>
 
 {% endblock %}

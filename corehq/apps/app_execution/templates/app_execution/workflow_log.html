@@ -1,0 +1,20 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load i18n %}
+{% block page_content %}
+  {% blocktrans asvar title_text with workflow_name=log.config.name date=log.started|date %}
+    Workflow Execution Log for {{ workflow_name }}: {{ date }}
+  {% endblocktrans %}
+  {% include "app_execution/components/title_bar.html" with workflow_id=log.workflow_id title_text=title_text%}
+  <h3>{% translate 'Details' %}</h3>
+  <p>
+  <ul>
+    <li>{% blocktrans with date_started=log.started|date:"DATETIME_FORMAT" %}Started: {{ date_started }}{% endblocktrans %}</li>
+    <li>{% blocktrans with date_ended=log.completed|date:"DATETIME_FORMAT" %}Ended: {{ date_ended }}{% endblocktrans %}</li>
+    <li>{% blocktrans with duration=log.duration %}Duration: {{ duration }}{% endblocktrans %}</li>
+    <li>{% translate 'Status:' %} <span class="badge {% if log.success %}text-bg-success{% else %}text-bg-danger{% endif %}">
+      {% if log.success %}{% translate 'Success' %}{% else %}{% translate 'Error' %}{% endif %}
+    </span></li>
+  </ul>
+  </p>
+  {% include "app_execution/components/logs.html" with log=log %}
+{% endblock page_content %}

@@ -1,6 +1,6 @@
 from datetime import datetime
 from dimagi.utils.parsing import json_format_datetime
-from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES
+from corehq.apps.case_search.const import INDEXED_METADATA_BY_KEY
 
 
 def serialize_case(case):
@@ -54,7 +54,7 @@ def serialize_es_case(case_doc):
         "properties": {
             prop['key']: prop['value']
             for prop in case_doc['case_properties']
-            if prop['key'] not in SPECIAL_CASE_PROPERTIES
+            if prop['key'] not in INDEXED_METADATA_BY_KEY
         },
         "indices": {
             index['identifier']: {

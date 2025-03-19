@@ -1,12 +1,13 @@
+import uuid
+
 from django.contrib import messages
-from django.http import Http404, HttpResponse, JsonResponse
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-
 from memoized import memoized
 
 from corehq import privileges, toggles
@@ -14,12 +15,11 @@ from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.api.decorators import allow_cors, api_throttle
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.views import BaseProjectSettingsView
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.userreports.models import UCRExpression
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq.motech.generic_inbound.core import execute_generic_api
-from corehq.motech.generic_inbound.exceptions import GenericInboundUserError
 from corehq.motech.generic_inbound.forms import (
     ApiValidationFormSet,
     ConfigurableAPICreateForm,
@@ -32,12 +32,10 @@ from corehq.motech.generic_inbound.models import (
 from corehq.motech.generic_inbound.reports import ApiLogDetailView
 from corehq.motech.generic_inbound.utils import (
     ApiRequest,
-    ApiResponse,
     archive_api_request,
-    make_processing_attempt,
     reprocess_api_request,
-    get_headers_for_api_context,
-    log_api_request
+    log_api_request,
+    process_api_request
 )
 from corehq.util import reverse
 from corehq.util.view_utils import json_error
@@ -49,6 +47,7 @@ def can_administer_generic_inbound(view_fn):
     )
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(can_administer_generic_inbound, name='dispatch')
 class ConfigurableAPIListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
     page_title = gettext_lazy("Inbound API Configurations")
@@ -110,6 +109,7 @@ class ConfigurableAPIListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
         }
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(can_administer_generic_inbound, name='dispatch')
 class ConfigurableAPIEditView(BaseProjectSettingsView):
     page_title = gettext_lazy("Edit API Configuration")
@@ -122,7 +122,7 @@ class ConfigurableAPIEditView(BaseProjectSettingsView):
 
     @property
     @memoized
-    def api(self):
+    def configurable_api(self):
         try:
             return ConfigurableAPI.objects.get(domain=self.domain, id=self.api_id)
         except ConfigurableAPI.DoesNotExist:
@@ -134,8 +134,8 @@ class ConfigurableAPIEditView(BaseProjectSettingsView):
 
     def get_form(self):
         if self.request.method == 'POST':
-            return ConfigurableAPIUpdateForm(self.request, self.request.POST, instance=self.api)
-        return ConfigurableAPIUpdateForm(self.request, instance=self.api)
+            return ConfigurableAPIUpdateForm(self.request, self.request.POST, instance=self.configurable_api)
+        return ConfigurableAPIUpdateForm(self.request, instance=self.configurable_api)
 
     @property
     def main_context(self):
@@ -147,11 +147,11 @@ class ConfigurableAPIEditView(BaseProjectSettingsView):
         ]
         main_context.update({
             "form": self.get_form(),
-            "api_model": self.api,
+            "configurable_api": self.configurable_api,
             "filter_expressions": filter_expressions,
             "validations": [
                 validation.to_json()
-                for validation in self.api.validations.all()
+                for validation in self.configurable_api.validations.all()
             ],
             "page_title": self.page_title
         })
@@ -159,7 +159,7 @@ class ConfigurableAPIEditView(BaseProjectSettingsView):
 
     def post(self, request, domain, **kwargs):
         form = self.get_form()
-        validation_formset = ApiValidationFormSet(self.request.POST, instance=self.api)
+        validation_formset = ApiValidationFormSet(self.request.POST, instance=self.configurable_api)
         if form.is_valid() and validation_formset.is_valid():
             form.save()
             validation_formset.save()
@@ -186,17 +186,15 @@ def generic_inbound_api(request, domain, api_id):
     except ConfigurableAPI.DoesNotExist:
         raise Http404
 
-    try:
-        request_data = ApiRequest.from_request(request)
-    except GenericInboundUserError as e:
-        response = ApiResponse(status=400, data={'error': str(e)})
-    else:
-        response = execute_generic_api(api, request_data)
-    log_api_request(api, request, response)
+    request_id = uuid.uuid4().hex
 
-    if response.status == 204:
-        return HttpResponse(status=204)  # no body for 204 (RFC 7230)
-    return JsonResponse(response.data, status=response.status)
+    def get_request_data():
+        return ApiRequest.from_request(request, request_id=request_id)
+
+    response = process_api_request(api, request_id, get_request_data)
+
+    log_api_request(request_id, api, request, response)
+    return response.get_http_response()
 
 
 @can_administer_generic_inbound

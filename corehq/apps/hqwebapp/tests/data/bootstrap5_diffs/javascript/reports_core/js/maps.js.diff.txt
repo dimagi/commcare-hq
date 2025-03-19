@@ -1,0 +1,12 @@
+--- 
++++ 
+@@ -1,7 +1,7 @@
+-hqDefine('reports_core/js/bootstrap3/maps', [
++hqDefine('reports_core/js/bootstrap5/maps', [
+     'jquery',
+     'underscore',
+-    'reports/js/bootstrap3/maps_utils',
++    'reports/js/bootstrap5/maps_utils',
+     'leaflet',
+ ], function (
+     $,

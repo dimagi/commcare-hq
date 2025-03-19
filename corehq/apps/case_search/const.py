@@ -1,10 +1,12 @@
-from collections import namedtuple
+from dataclasses import dataclass
+from typing import Callable
 
 from corehq.apps.es import filters
 
 # Case properties nested documents
 CASE_PROPERTIES_PATH = 'case_properties'
 VALUE = 'value'
+GEOPOINT_VALUE = 'geopoint_value'
 
 # Case indices nested documents
 INDICES_PATH = 'indices'
@@ -24,41 +26,85 @@ EXCLUDE_RELATED_CASES_FILTER = "[not(commcare_is_related_case=true())]"
 # Added to each case on the index for debugging when a case was added to ES
 INDEXED_ON = '@indexed_on'
 
-# Properties added to the case search mapping to provide extra information
-SYSTEM_PROPERTIES = [
-    CASE_PROPERTIES_PATH,
-    INDEXED_ON,
-]
 
-# Properties that are inconsistent between case models stored in HQ and casedb
-# expressions. We store these as case properties in the case search index so
-# they are easily searchable, then remove them when pulling the case source
-# from ES
-SpecialCaseProperty = namedtuple('SpecialCaseProperty', 'key value_getter sort_property')
-SPECIAL_CASE_PROPERTIES_MAP = {
-    '@case_id': SpecialCaseProperty('@case_id', lambda doc: doc.get('_id'), '_id'),
-    '@case_type': SpecialCaseProperty('@case_type', lambda doc: doc.get('type'), 'type.exact'),
+@dataclass(frozen=True)
+class _INDEXED_METADATA:
+    key: str  # The user-facing property name
+    system_name: str  # The CommCareCase field name
+    is_datetime: bool = False
+    _es_field_name: str = None  # Path to use for ES logic, if not system_name
+    _value_getter: Callable = None
 
-    '@owner_id': SpecialCaseProperty('@owner_id', lambda doc: doc.get('owner_id'), 'owner_id'),
+    def get_value(self, doc):
+        if self._value_getter:
+            return self._value_getter(doc)
+        return doc.get(self.system_name)
 
-    '@status': SpecialCaseProperty('@status', lambda doc: 'closed' if doc.get('closed') else 'open', 'closed'),
+    @property
+    def es_field_name(self):
+        return self._es_field_name or self.system_name
 
-    'name': SpecialCaseProperty('name', lambda doc: doc.get('name'), 'name.exact'),
-    'case_name': SpecialCaseProperty('case_name', lambda doc: doc.get('name'), 'name.exact'),
 
-    'external_id': SpecialCaseProperty('external_id', lambda doc: doc.get('external_id', ''), 'external_id'),
-
-    'date_opened': SpecialCaseProperty('date_opened', lambda doc: doc.get('opened_on'), 'opened_on'),
-    'closed_on': SpecialCaseProperty('closed_on', lambda doc: doc.get('closed_on'), 'closed_on'),
-    'last_modified': SpecialCaseProperty('last_modified', lambda doc: doc.get('modified_on'), 'modified_on'),
-}
-SPECIAL_CASE_PROPERTIES = list(SPECIAL_CASE_PROPERTIES_MAP.keys())
-
+# These are top level, schema'd properties on CommCareCase that are made
+# available to the user in interactions with the case search Elasticsearch
+# index.
+# These are stored along with dynamic case properties in the case search index
+# to be easily searchable, then removed when pulling the case source from ES.
+INDEXED_METADATA_BY_KEY = {prop.key: prop for prop in [
+    _INDEXED_METADATA(
+        key='@case_id',
+        system_name='_id',
+    ),
+    _INDEXED_METADATA(
+        key='@case_type',
+        system_name='type',
+        _es_field_name='type.exact',
+    ),
+    _INDEXED_METADATA(
+        key='@owner_id',
+        system_name='owner_id',
+    ),
+    _INDEXED_METADATA(
+        key='@status',
+        system_name='closed',
+        _value_getter=lambda doc: 'closed' if doc.get('closed') else 'open',
+    ),
+    _INDEXED_METADATA(
+        key='name',
+        system_name='name',
+        _es_field_name='name.exact',
+    ),
+    _INDEXED_METADATA(
+        key='case_name',
+        system_name='name',
+        _es_field_name='name.exact',
+    ),
+    _INDEXED_METADATA(
+        key='external_id',
+        system_name='external_id',
+        _value_getter=lambda doc: doc.get('external_id', ''),
+    ),
+    _INDEXED_METADATA(
+        key='date_opened',
+        system_name='opened_on',
+        is_datetime=True,
+    ),
+    _INDEXED_METADATA(
+        key='closed_on',
+        system_name='closed_on',
+        is_datetime=True,
+    ),
+    _INDEXED_METADATA(
+        key='last_modified',
+        system_name='modified_on',
+        is_datetime=True,
+    ),
+]}
 
 # Properties that can be shown in the report but are not stored on the case or in the case index
 # These properties are computed in `SafeCaseDisplay` when each case is displayed
 # Hence, they cannot be sorted on
-CASE_COMPUTED_METADATA = [
+COMPUTED_METADATA = [
     'closed_by_username',
     'last_modified_by_user_username',
     'opened_by_username',
@@ -67,6 +113,7 @@ CASE_COMPUTED_METADATA = [
     'opened_by_user_id',
     'server_last_modified_date',
 ]
+METADATA_IN_REPORTS = list(INDEXED_METADATA_BY_KEY) + COMPUTED_METADATA
 
 MAX_RELATED_CASES = 500000  # Limit each related case lookup to return 500,000 cases to prevent timeouts
 OPERATOR_MAPPING = {
@@ -83,3 +130,5 @@ EQ = "="
 NEQ = "!="
 COMPARISON_OPERATORS = [EQ, NEQ] + list(RANGE_OP_MAPPING.keys())
 ALL_OPERATORS = COMPARISON_OPERATORS + list(OPERATOR_MAPPING.keys())
+
+DOCS_LINK_CASE_LIST_EXPLORER = "https://confluence.dimagi.com/display/commcarepublic/Case+List+Explorer"

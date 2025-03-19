@@ -2,45 +2,46 @@
 
 <script type="text/html" id="importer_template">
     <fieldset>
-        <legend>{% trans "OpenMRS Importer" %}</legend>
-
-        <div class="col-sm-8">&nbsp;</div>
-        <div class="col-sm-4">
+        <legend>
             <button type="button"
-                    class="btn btn-danger"
-                    data-bind="click: $root.removeOpenmrsImporter">{% trans "Remove" %}</button>
-        </div>
+                    class="btn btn-outline-danger float-end"
+                    data-bind="click: $root.removeOpenmrsImporter">
+              <i class="fa fa-remove"></i>
+              {% trans "Remove" %}
+            </button>
+            {% trans "OpenMRS Importer" %}
+        </legend>
 
         {% for field in form %}
-        <div class="form-group">
-            <label class="control-label col-sm-3 col-md-2{% if field.field.required %} requiredField{% endif %}">
+        <div class="mb-3 row">
+            <label class="form-label field-label {% if field.field.required %} requiredField{% endif %}">
                 {{ field.label }}{% if field.field.required %}<span class="asteriskField">*</span>{% endif %}
             </label>
-            <div class="controls col-sm-9 col-md-8 col-lg-6">
-                {% if field.field.widget.input_type == 'select' %}
+            <div class="field-control">
+            {% if field.field.widget.input_type == 'select' %}
                 <select name="{{ field.html_name }}"
                         class="select form-control"
                         data-bind="options: {{ field.html_name }}_options,
                                    optionsText: 'text',
                                    optionsValue: 'value',
                                    value: {{ field.html_name }}"></select>
-                {% elif 'textarea' in field.field.widget.template_name %}
+            {% elif 'textarea' in field.field.widget.template_name %}
                 <textarea name="{{ field.html_name }}"
                           class="jsonwidget form-control"
                           {% if field.field.required %}required=""{% endif %}
                           rows="10"
                           cols="40"
                           data-bind="value: {{ field.html_name }}"></textarea>
-                {% else %}
+            {% else %}
                 <input name="{{ field.html_name }}"
                        class="textinput textInput form-control"
                        {% if field.field.required %}required=""{% endif %}
                        type="{% if field.field.widget.input_type == 'password' %}password{% else %}text{% endif %}"
                        data-bind="value: {{ field.html_name }}" />
-                {% endif %}
-                {% if field.help_text %}
+            {% endif %}
+            {% if field.help_text %}
                 <p class="help-block">{{ field.help_text }}</p>
-                {% endif %}
+            {% endif %}
             </div>
         </div>
         {% endfor %}

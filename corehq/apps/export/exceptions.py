@@ -47,3 +47,7 @@ class CaseTypeOrAppLimitExceeded(Exception):
         if msg:
             self.message = msg
         super().__init__(self.message, *args, **kwargs)
+
+
+class NoTablesException(Exception):
+    """ExportInstance does not have any tables to export"""

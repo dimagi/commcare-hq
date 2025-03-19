@@ -1,25 +1,32 @@
-/* eslint-env mocha */
-/* globals moment */
+import _ from "underscore";
+import sinon from "sinon";
+import moment from "moment";
+import initialPageData from "hqwebapp/js/initial_page_data";
+import constants from "cloudcare/js/form_entry/const";
+import entries from "cloudcare/js/form_entry/entries";
+import formUI from "cloudcare/js/form_entry/form_ui";
+import utils from "cloudcare/js/utils";
 
 describe('Entries', function () {
-    var constants = hqImport("cloudcare/js/form_entry/const"),
-        entries = hqImport("cloudcare/js/form_entry/entries"),
-        formUI = hqImport("cloudcare/js/form_entry/form_ui"),
-        utils = hqImport("cloudcare/js/utils"),
-        questionJSON,
+    var questionJSON,
         spy;
 
     before(function () {
-        hqImport("hqwebapp/js/initial_page_data").register(
+        initialPageData.register(
             "has_geocoder_privs",
-            true
+            true,
         );
-        hqImport("hqwebapp/js/initial_page_data").register(
+        initialPageData.register(
             "toggles_dict",
             {
                 WEB_APPS_UPLOAD_QUESTIONS: true,
-            }
+                WEB_APPS_ANCHORED_SUBMIT: false,
+            },
         );
+    });
+
+    after(function () {
+        initialPageData.unregister("toggles_dict");
     });
 
     beforeEach(function () {
@@ -35,6 +42,9 @@ describe('Entries', function () {
             "ix": "0",
             "relevant": 1,
             "help": null,
+            "help_image": null,
+            "help_audio": null,
+            "help_video": null,
             "answer": null,
             "datatype": "int",
             "style": {},
@@ -67,7 +77,7 @@ describe('Entries', function () {
         var entry;
 
         questionJSON.datatype = constants.SELECT;
-        questionJSON.style = { raw: constants.MINIMAL };
+        questionJSON.style = { raw: constants.MINIMAL + " dummy" };
         questionJSON.choices = ['a', 'b'];
 
         entry = formUI.Question(questionJSON).entry;
@@ -82,6 +92,7 @@ describe('Entries', function () {
             id: 2,
         }]);
 
+        assert.equal(entry.placeholderText, 'Please choose an item');
         entry.rawAnswer(1);
         this.clock.tick(1000);
         assert.isTrue(spy.calledOnce);
@@ -90,6 +101,31 @@ describe('Entries', function () {
         entry.rawAnswer(2);
         this.clock.tick(1000);
         assert.isTrue(spy.calledTwice);
+    });
+
+    it('Should return MultiDropdownEntry', function () {
+        var entry;
+
+        questionJSON.datatype = constants.MULTI_SELECT;
+        questionJSON.style = { raw: constants.MINIMAL};
+        questionJSON.choices = ['a', 'b'];
+        questionJSON.answer = [1, 2]; // answer is based on a 1 indexed index of the choices
+
+        entry = formUI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof entries.MultiDropdownEntry);
+        assert.equal(entry.templateType, 'multidropdown');
+        assert.equal(entry.placeholderText, 'Please choose an item');
+
+        assert.isTrue(entry instanceof entries.MultiSelectEntry);
+        assert.sameMembers(entry.answer(), [1, 2]);
+        assert.sameMembers(entry.rawAnswer(), ['a', 'b']);
+
+        entry.answer([1]);
+        entry.choices(['a', 'c']);
+        this.clock.tick(1000);
+        assert.equal(spy.calledOnce, true);
+        assert.equal(entry.rawAnswer()[0], 'a');
+        assert.equal(entry.answer()[0], 1);
     });
 
     it('Should retain Dropdown value on options change', function () {
@@ -176,50 +212,54 @@ describe('Entries', function () {
 
         // Multiword filter
         assert.isTrue(
-            entries.ComboboxEntry.filter('one three', { text: 'one two three', id: 1 }, constants.COMBOBOX_MULTIWORD)
+            entries.ComboboxEntry.filter('one three', { text: 'one two three', id: 1 }, constants.COMBOBOX_MULTIWORD),
         );
         assert.isFalse(
-            entries.ComboboxEntry.filter('two three', { text: 'one two', id: 1 }, constants.COMBOBOX_MULTIWORD)
+            entries.ComboboxEntry.filter('two three', { text: 'one two', id: 1 }, constants.COMBOBOX_MULTIWORD),
         );
 
         // Fuzzy filter
         assert.isTrue(
-            entries.ComboboxEntry.filter('onet', { text: 'onetwo', id: 1 }, constants.COMBOBOX_FUZZY)
+            entries.ComboboxEntry.filter('onet', { text: 'onetwo', id: 1 }, constants.COMBOBOX_FUZZY),
         );
         assert.isTrue(
-            entries.ComboboxEntry.filter('onet', { text: 'onetwothree', id: 1 }, constants.COMBOBOX_FUZZY)
+            entries.ComboboxEntry.filter('onet', { text: 'onetwothree', id: 1 }, constants.COMBOBOX_FUZZY),
         );
         assert.isFalse(
-            entries.ComboboxEntry.filter('onwt', { text: 'onetwo', id: 1 }, constants.COMBOBOX_FUZZY)
+            entries.ComboboxEntry.filter('onwt', { text: 'onetwo', id: 1 }, constants.COMBOBOX_FUZZY),
         );
         assert.isTrue(
-            entries.ComboboxEntry.filter('OneT', { text: 'onetwo', id: 1 }, constants.COMBOBOX_FUZZY)
+            entries.ComboboxEntry.filter('OneT', { text: 'onetwo', id: 1 }, constants.COMBOBOX_FUZZY),
         );
         assert.isTrue(
-            entries.ComboboxEntry.filter('one tt', { text: 'one', id: 1 }, constants.COMBOBOX_FUZZY)
+            entries.ComboboxEntry.filter('one tt', { text: 'one', id: 1 }, constants.COMBOBOX_FUZZY),
         );
         assert.isTrue(
-            entries.ComboboxEntry.filter('o', { text: 'one', id: 1 }, constants.COMBOBOX_FUZZY)
+            entries.ComboboxEntry.filter('o', { text: 'one', id: 1 }, constants.COMBOBOX_FUZZY),
         );
         assert.isTrue(
-            entries.ComboboxEntry.filter('on', { text: 'on', id: 1 }, constants.COMBOBOX_FUZZY)
+            entries.ComboboxEntry.filter('on', { text: 'on', id: 1 }, constants.COMBOBOX_FUZZY),
         );
         assert.isTrue(
-            entries.ComboboxEntry.filter('three', { text: 'one two three', id: 1 }, constants.COMBOBOX_FUZZY)
+            entries.ComboboxEntry.filter('three', { text: 'one two three', id: 1 }, constants.COMBOBOX_FUZZY),
         );
         assert.isTrue(
-            entries.ComboboxEntry.filter('tree', { text: 'one two three', id: 1 }, constants.COMBOBOX_FUZZY)
+            entries.ComboboxEntry.filter('tree', { text: 'one two three', id: 1 }, constants.COMBOBOX_FUZZY),
         );
         assert.isFalse(
-            entries.ComboboxEntry.filter('thirty', { text: 'one two three', id: 1 }, constants.COMBOBOX_FUZZY)
+            entries.ComboboxEntry.filter('thirty', { text: 'one two three', id: 1 }, constants.COMBOBOX_FUZZY),
         );
     });
 
     it('Should return FreeTextEntry', function () {
         questionJSON.datatype = constants.STRING;
+        questionJSON.style.raw = 'hint-as-placeholder';
+        questionJSON.hint = 'this is a hint';
         var entry = formUI.Question(questionJSON).entry;
+        entry.setPlaceHolder(entry.useHintAsPlaceHolder());
         assert.isTrue(entry instanceof entries.FreeTextEntry);
         assert.equal(entry.templateType, 'text');
+        assert.equal(entry.placeholderText, 'this is a hint');
 
         entry.answer('harry');
         this.clock.tick(1000);
@@ -320,6 +360,38 @@ describe('Entries', function () {
         assert.isNull(entry.rawAnswer());
     });
 
+    it('Should return ButtonSelectEntry', function () {
+        questionJSON.datatype = constants.SELECT;
+        questionJSON.style = { raw: constants.BUTTON_SELECT };
+        questionJSON.choices = ['a', 'b'];
+        questionJSON.answer = 1;
+
+        var entry = formUI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof entries.ButtonSelectEntry);
+        assert.equal(entry.templateType, 'button');
+        assert.equal(entry.rawAnswer(), 'a');
+    });
+
+    it('Should cycle through ButtonSelect choices on click', function () {
+        questionJSON.datatype = constants.SELECT;
+        questionJSON.style = { raw: constants.BUTTON_SELECT };
+        questionJSON.choices = ['a', 'b', 'c'];
+        questionJSON.answer = 1;
+
+        var entry = formUI.Question(questionJSON).entry;
+        // value 'a' shows label 'b' to indicate what will be selected when clicked
+        assert.equal(entry.rawAnswer(), 'a');
+        assert.equal(entry.buttonLabel(), 'b');
+
+        entry.onClick();
+        assert.equal(entry.rawAnswer(), 'b');
+        assert.equal(entry.buttonLabel(), 'c');
+
+        entry.onClick();
+        assert.equal(entry.rawAnswer(), 'c');
+        assert.equal(entry.buttonLabel(), 'a');
+    });
+
     it('Should return DateEntry', function () {
         questionJSON.datatype = constants.DATE;
         questionJSON.answer = '1990-09-26';
@@ -346,7 +418,7 @@ describe('Entries', function () {
             assert.isTrue(moment.isMoment(res));
             assert.equal(
                 res.toISOString(),
-                moment(expected, "YYYY-MM-DD").toISOString()
+                moment(expected, "YYYY-MM-DD").toISOString(),
             );
         };
 
@@ -499,7 +571,17 @@ describe('Entries', function () {
         assert.isTrue(entry instanceof entries.VideoEntry);
     });
 
-    it('Should return UnsuportedEntry when binary question has an unsupported control', function () {
+    it('Should return SignatureEntry', function () {
+        var entry;
+        questionJSON.datatype = constants.BINARY;
+        questionJSON.control = constants.CONTROL_IMAGE_CHOOSE;
+        questionJSON.style = { raw: constants.SIGNATURE };
+
+        entry = formUI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof entries.SignatureEntry);
+    });
+
+    it('Should return UnsupportedEntry when binary question has an unsupported control', function () {
         var entry;
         questionJSON.datatype = constants.BINARY;
         questionJSON.control = constants.CONTROL_UPLOAD;

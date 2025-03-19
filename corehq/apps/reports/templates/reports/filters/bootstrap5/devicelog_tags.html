@@ -1,0 +1,26 @@
+{% extends 'reports/filters/bootstrap5/base.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block filter_content %}
+  {% if errors_only %}
+    <div class="checkbox">  {# todo B5: css:checkbox #}
+      <label for="{{ errors_css_id }}">
+        <input type="checkbox"  {# todo B5: css:checkbox #}
+               id="{{ errors_css_id }}"
+               value="True"
+               name="{{ errors_only_slug }}"
+               checked="checked" /> Showing Errors Only
+      </label>
+    </div>
+  {% endif %}
+  <select multiple="multiple"
+          style="height:300px;{% if errors_only %} margin-top: 10px;{% endif %}"  {# todo B5: inline style #}
+          class="form-control{% if errors_only %} d-none{% endif %} report-filter-logtag"
+          {% if not errors_only %}name="{{ slug }}"{% endif %}
+          data-default-on='{{ default_on|JSON }}'
+          data-errors-only='{{ errors_only|JSON }}'>
+    {% for tag in logtags %}
+      <option{% if tag.show %} selected="selected"{% endif %}>{{ tag.name }}</option>
+    {% endfor %}
+  </select>
+{% endblock %}

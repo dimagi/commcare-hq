@@ -15,11 +15,8 @@ from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.const import (
-    RECORD_FAILURE_STATE,
-    RECORD_SUCCESS_STATE,
-)
-from corehq.motech.repeaters.models import FormRepeater, send_request
+from corehq.motech.repeaters.const import State
+from corehq.motech.repeaters.models import FormRepeater
 from corehq.util.test_utils import timelimit
 
 DOMAIN = ''.join([random.choice(string.ascii_lowercase) for __ in range(20)])
@@ -33,7 +30,10 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.addClassCleanup(clear_plan_version_cache)
         cls.domain_obj = create_domain(DOMAIN)
+        cls.addClassCleanup(cls.domain_obj.delete)
+        cls.addClassCleanup(cls.teardown_subscriptions)
         cls.setup_subscription(DOMAIN, SoftwarePlanEdition.PRO)
 
         url = 'https://www.example.com/api/'
@@ -42,31 +42,19 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             domain=DOMAIN,
             connection_settings_id=conn.id,
             include_app_id_param=False,
-            repeater_id=uuid4().hex
         )
         cls.repeater.save()
         cls.instance_id = str(uuid4())
         post_xform(cls.instance_id)
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.repeater.delete()
-        cls.teardown_subscriptions()
-        cls.domain_obj.delete()
-        clear_plan_version_cache()
-        super().tearDownClass()
-
     def setUp(self):
         super().setUp()
+        self.repeater = self.reget_repeater()
         self.repeat_record = self.repeater.repeat_records.create(
             domain=DOMAIN,
             payload_id=self.instance_id,
             registered_at=timezone.now(),
         )
-
-    def tearDown(self):
-        self.repeat_record.delete()
-        super().tearDown()
 
     def reget_repeater(self):
         return FormRepeater.objects.get(pk=self.repeater.pk)
@@ -76,40 +64,40 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
         with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
             simple_request.return_value = resp
 
-            payload = self.repeater.get_payload(self.repeat_record)
-            send_request(self.repeater, self.repeat_record, payload)
+            self.repeat_record.fire()
 
             self.assertEqual(self.repeat_record.attempts.last().state,
-                             RECORD_SUCCESS_STATE)
+                             State.Success)
             repeater = self.reget_repeater()
-            self.assertIsNone(repeater.next_attempt_at)
+            repeat_record = repeater.repeat_records.last()
+            self.assertIsNone(repeat_record.next_check)
 
-    def test_no_backoff_on_409(self):
+    def test_backoff_on_409(self):
         resp = ResponseMock(status_code=409, reason='Conflict')
         with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
             simple_request.return_value = resp
 
-            payload = self.repeater.get_payload(self.repeat_record)
-            send_request(self.repeater, self.repeat_record, payload)
+            self.repeat_record.fire()
 
             self.assertEqual(self.repeat_record.attempts.last().state,
-                             RECORD_FAILURE_STATE)
+                             State.Fail)
             repeater = self.reget_repeater()
+            repeat_record = repeater.repeat_records.last()
             # Trying tomorrow is just as likely to work as in 5 minutes
-            self.assertIsNone(repeater.next_attempt_at)
+            self.assertIsNotNone(repeat_record.next_check)
 
-    def test_no_backoff_on_500(self):
+    def test_backoff_on_500(self):
         resp = ResponseMock(status_code=500, reason='Internal Server Error')
         with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
             simple_request.return_value = resp
 
-            payload = self.repeater.get_payload(self.repeat_record)
-            send_request(self.repeater, self.repeat_record, payload)
+            self.repeat_record.fire()
 
             self.assertEqual(self.repeat_record.attempts.last().state,
-                             RECORD_FAILURE_STATE)
+                             State.Fail)
             repeater = self.reget_repeater()
-            self.assertIsNone(repeater.next_attempt_at)
+            repeat_record = repeater.repeat_records.last()
+            self.assertIsNotNone(repeat_record.next_check)
 
     @timelimit(65)
     def test_backoff_on_503(self):
@@ -139,25 +127,25 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
         with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
             simple_request.return_value = resp
 
-            payload = self.repeater.get_payload(self.repeat_record)
-            send_request(self.repeater, self.repeat_record, payload)
+            self.repeat_record.fire()
 
             self.assertEqual(self.repeat_record.attempts.last().state,
-                             RECORD_FAILURE_STATE)
+                             State.Fail)
             repeater = self.reget_repeater()
-            self.assertIsNotNone(repeater.next_attempt_at)
+            repeat_record = repeater.repeat_records.last()
+            self.assertIsNotNone(repeat_record.next_check)
 
     def test_backoff_on_connection_error(self):
         with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
             simple_request.side_effect = ConnectionError()
 
-            payload = self.repeater.get_payload(self.repeat_record)
-            send_request(self.repeater, self.repeat_record, payload)
+            self.repeat_record.fire()
 
             self.assertEqual(self.repeat_record.attempts.last().state,
-                             RECORD_FAILURE_STATE)
+                             State.Fail)
             repeater = self.reget_repeater()
-            self.assertIsNotNone(repeater.next_attempt_at)
+            repeat_record = repeater.repeat_records.last()
+            self.assertIsNotNone(repeat_record.next_check)
 
 
 def post_xform(instance_id):

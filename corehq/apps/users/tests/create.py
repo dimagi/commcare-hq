@@ -1,5 +1,6 @@
 from django.test import TestCase
 
+from corehq.apps.cleanup.models import DeletedCouchDoc
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.utils import clear_domain_names
@@ -36,7 +37,6 @@ class CreateTestCase(TestCase):
         django_user = couch_user.get_django_user()
         self.assertEqual(django_user.email, email)
         self.assertEqual(django_user.username, username)
-
 
     def testCreateCompleteWebUser(self):
         """
@@ -120,7 +120,7 @@ class TestDomainMemberships(TestCase):
         self.setUp()  # reload users to clear CouchUser.role
 
         self.assertEqual(self.webuser.get_domain_membership(self.domain).role_id,
-                          self.ccuser.get_domain_membership(self.domain).role_id)
+                         self.ccuser.get_domain_membership(self.domain).role_id)
         self.assertEqual(self.webuser.role_label(), self.ccuser.role_label())
 
         self.assertTrue(self.webuser.has_permission(self.domain, 'view_reports'))
@@ -139,6 +139,15 @@ class TestDomainMemberships(TestCase):
         self.assertFalse(self.webuser2.is_member_of(self.domain))
         self.assertTrue(self.ccuser.is_member_of(self.domain))
         self.assertEqual(self.ccuser.get_domain_membership(self.domain).domain, self.domain)
+
+    def test_undo_delete_domain_membership_removes_deleted_couch_doc_record(self):
+        rec = self.webuser.delete_domain_membership(self.domain, create_record=True)
+        self.webuser.save()
+        params = {'doc_id': rec._id, 'doc_type': rec.doc_type}
+        assert DeletedCouchDoc.objects.get(**params)
+        rec.undo()
+        with self.assertRaises(DeletedCouchDoc.DoesNotExist):
+            DeletedCouchDoc.objects.get(**params)
 
     def testTransferMembership(self):
         self.webuser.transfer_domain_membership(self.domain, self.webuser2)

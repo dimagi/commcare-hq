@@ -79,7 +79,12 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
             ApplicationCaseDataSourceHelper(self.domain, self.app, 'form', self.form.unique_id)
 
     def test_builder_for_forms(self):
-        builder = ApplicationFormDataSourceHelper(self.domain, self.app, DATA_SOURCE_TYPE_FORM, self.form.unique_id)
+        builder = ApplicationFormDataSourceHelper(
+            self.domain,
+            self.app,
+            DATA_SOURCE_TYPE_FORM,
+            self.form.unique_id
+        )
         self.assertEqual('XFormInstance', builder.source_doc_type)
         expected_filter = {
             "type": "and",
@@ -142,13 +147,15 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
         self.assertEqual('first_name', first_name_prop.get_id())
         self.assertEqual('first name', first_name_prop.get_text())
 
-    @flag_enabled('SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER')
-    def test_owner_as_location(self):
+    @flag_enabled('SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER_TOGGLE')
+    def test_owner_as_location(self, *args):
         builder = ApplicationCaseDataSourceHelper(self.domain, self.app, DATA_SOURCE_TYPE_CASE, self.case_type)
 
         self.assertTrue(COMPUTED_OWNER_LOCATION_PROPERTY_ID in builder.data_source_properties)
         self.assertTrue(COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID in builder.data_source_properties)
-        self.assertTrue(COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID in builder.data_source_properties)
+        self.assertTrue(
+            COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID in builder.data_source_properties
+        )
 
         owner_location_prop = builder.data_source_properties[COMPUTED_OWNER_LOCATION_PROPERTY_ID]
         self.assertEqual(COMPUTED_OWNER_LOCATION_PROPERTY_ID, owner_location_prop.get_id())
@@ -173,7 +180,7 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
         case_type_for_registry = CaseType(domain=self.domain, name='registry_prop', fully_generated=True)
         case_type_for_registry.save()
         CaseProperty(case_type=case_type_for_registry, name='registry_property',
-                     deprecated=False, data_type='plain', group='').save()
+                     deprecated=False, data_type='plain', group=None).save()
         user = create_user("admin", "123")
         registry = create_registry_for_test(user, self.domain, invitations=[
             Invitation('foo', accepted=True), Invitation('user-reports', accepted=True),

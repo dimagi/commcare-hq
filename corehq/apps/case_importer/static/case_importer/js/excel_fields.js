@@ -1,3 +1,4 @@
+
 hqDefine('case_importer/js/excel_fields', [
     'jquery',
     'knockout',
@@ -7,9 +8,10 @@ hqDefine('case_importer/js/excel_fields', [
     $,
     ko,
     _,
-    levenshtein
+    levenshtein,
 ) {
-    function excelFieldRows(excelFields, caseFieldSpecs) {
+    function excelFieldRows(excelFields, caseFieldSpecs, systemFields) {
+        systemFields = _(systemFields);
         var self = {
             excelFields: excelFields,
             caseFieldSpecs: caseFieldSpecs,
@@ -29,6 +31,9 @@ hqDefine('case_importer/js/excel_fields', [
                 customCaseField: ko.observable(excelField),
                 isCustom: ko.observable(false),
             };
+            row.hasValue = ko.computed(function () {
+                return row.isCustom() || row.selectedCaseField();
+            });
             row.selectedCaseFieldOrBlank = ko.computed({
                 read: function () {
                     return row.isCustom() ? '' : row.selectedCaseField();
@@ -62,12 +67,6 @@ hqDefine('case_importer/js/excel_fields', [
             row.valuesHints = ko.computed(function () {
                 return row.caseFieldSpec().values_hints || [];
             });
-            row.createNewChecked = ko.computed({
-                read: function () {
-                    return _.isEmpty(row.caseFieldSpec());
-                },
-                write: row.isCustom,
-            });
             row.isDeprecated = ko.computed(function () {
                 return row.caseFieldSpec().deprecated === true;
             });
@@ -80,7 +79,7 @@ hqDefine('case_importer/js/excel_fields', [
                     row.isCustom(false);
                     row.selectedCaseField(field);
                 } else {
-                    row.isCustom(true);
+                    row.isCustom(!systemFields.contains(field));
                     row.selectedCaseField(null);
                 }
             };
@@ -100,6 +99,9 @@ hqDefine('case_importer/js/excel_fields', [
                     return suggestion.distance < 4;
                 });
                 return _.chain(suggestions).sortBy('distance').pluck('field').value();
+            });
+            row.isSystemProperty = ko.computed(function () {
+                return row.isCustom() && systemFields.contains(row.customCaseField());
             });
 
             self.mappingRows.push(row);

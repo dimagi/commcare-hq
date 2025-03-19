@@ -42,7 +42,7 @@ class SimpleCrispyFormView(BaseSimpleCrispyFormSectionView):
     """
     page_title = gettext_noop("Register a New User")
     urlname = 'ex_simple_crispy_forms'
-    template_name = 'styleguide/examples/simple_crispy_form/base.html'
+    template_name = 'styleguide/bootstrap3/examples/simple_crispy_form/base.html'
 
     @property
     @memoized

@@ -1,5 +1,4 @@
 hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
-    'use strict';
 
     $(function () {
         var caseConfigUtils = hqImport('app_manager/js/case_config_utils'),
@@ -20,6 +19,12 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
 
         var CaseConfig = function (params) {
             var self = {};
+            self.title = gettext("Save Questions to Case Properties");
+
+            self.trackGoogleEvent = function () {
+                hqImport('analytix/js/google').track.event(...arguments);
+            };
+
             self.makePopover = function () {
                 $('.property-description').closest('.read-only').popover({
                     'trigger': 'hover',
@@ -47,8 +52,9 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
             self.setPropertiesMap(params.propertiesMap);
 
             self.descriptionDict = params.propertyDescriptions;
+            self.deprecatedPropertiesDict = params.deprecatedProperties;
 
-            self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+            self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
                 unsavedMessage: "You have unchanged case settings",
                 save: function () {
                     var actions = JSON.stringify(self.caseConfigViewModel.unwrap());
@@ -215,7 +221,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                     });
 
                     $('.hq-help-template').each(function () {
-                        hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);
+                        hqImport("hqwebapp/js/bootstrap3/main").transformHelpTemplate($(this), true);
                     });
 
                     caseConfigUtils.initRefreshQuestions(self.questions);

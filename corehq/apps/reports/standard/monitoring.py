@@ -17,6 +17,8 @@ from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
 
 from corehq import toggles
 from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.es import UserES
 from corehq.apps.es import cases as case_es
 from corehq.apps.es import filters
 from corehq.apps.es.aggregations import (
@@ -24,13 +26,11 @@ from corehq.apps.es.aggregations import (
     MissingAggregation,
     TermsAggregation,
 )
-from corehq.apps.es.utils import track_es_report_load
 from corehq.apps.locations.permissions import (
     conditionally_location_safe,
     location_safe,
 )
 from corehq.apps.reports import util
-from corehq.apps.reports.const import USER_QUERY_LIMIT
 from corehq.apps.reports.analytics.esaccessors import (
     get_active_case_counts_by_owner,
     get_case_counts_closed_by_user,
@@ -46,6 +46,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_submission_counts_by_user,
     get_total_case_counts_by_owner,
 )
+from corehq.apps.reports.const import USER_QUERY_LIMIT
 from corehq.apps.reports.datatables import (
     DataTablesColumn,
     DataTablesColumnGroup,
@@ -68,13 +69,15 @@ from corehq.apps.reports.standard import (
     ProjectReport,
     ProjectReportParametersMixin,
 )
-from corehq.apps.reports.util import format_datatables_data, friendly_timedelta
+from corehq.apps.reports.util import format_datatables_data, friendly_timedelta, DatatablesServerSideParams
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util import flatten_list
 from corehq.util.context_processors import commcare_hq_names
 from corehq.util.timezones.conversions import PhoneTime, ServerTime
 from corehq.util.view_utils import absolute_reverse
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.groups.models import Group
 
 TOO_MUCH_DATA = gettext_noop(
     'The filters you selected include too much data. Please change your filters and try again'
@@ -93,11 +96,15 @@ WorkerActivityReportData = namedtuple('WorkerActivityReportData', [
 class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     exportable = True
 
-    def get_user_link(self, user):
+    def get_row_link(self, row_obj):
+        """
+        :row_obj: Can be a User or RowData object
+        """
+        name = row_obj.raw_username if hasattr(row_obj, 'raw_username') else row_obj.name
         if self._has_form_view_permission():
-            user_link = self.get_raw_user_link(user)
-            return self.table_cell(user.raw_username, user_link)
-        return self.table_cell(user.raw_username)
+            row_link = self.get_raw_row_link(row_obj)
+            return self.table_cell(name, row_link)
+        return self.table_cell(name)
 
     def _has_form_view_permission(self):
         return self.request.couch_user.has_permission(
@@ -106,14 +113,17 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
             data='corehq.apps.reports.standard.inspect.SubmitHistory'
         )
 
-    def get_raw_user_link(self, user):
+    def get_raw_row_link(self, row_obj):
         raise NotImplementedError
 
 
 class WorkerMonitoringCaseReportTableBase(WorkerMonitoringReportTableBase):
 
-    def get_raw_user_link(self, user):
-        return _get_raw_user_link(user, self.raw_user_link_url, filter_class=CaseListFilter)
+    def get_raw_row_link(self, row_obj):
+        """
+        :row_obj: Can be a User or RowData object
+        """
+        return _get_raw_user_link(row_obj, self.raw_user_link_url, filter_class=CaseListFilter)
 
     @property
     def raw_user_link_url(self):
@@ -123,26 +133,26 @@ class WorkerMonitoringCaseReportTableBase(WorkerMonitoringReportTableBase):
 
 class WorkerMonitoringFormReportTableBase(WorkerMonitoringReportTableBase):
 
-    def get_raw_user_link(self, user):
+    def get_raw_row_link(self, row_obj):
         params = {
-            "form_unknown": self.request.GET.get("form_unknown", ''),
-            "form_unknown_xmlns": self.request.GET.get("form_unknown_xmlns", ''),
-            "form_status": self.request.GET.get("form_status", ''),
-            "form_app_id": self.request.GET.get("form_app_id", ''),
-            "form_module": self.request.GET.get("form_module", ''),
-            "form_xmlns": self.request.GET.get("form_xmlns", ''),
-            "startdate": self.request.GET.get("startdate", ''),
-            "enddate": self.request.GET.get("enddate", '')
+            "form_unknown": self.get_request_param("form_unknown", ''),
+            "form_unknown_xmlns": self.get_request_param("form_unknown_xmlns", ''),
+            "form_status": self.get_request_param("form_status", ''),
+            "form_app_id": self.get_request_param("form_app_id", ''),
+            "form_module": self.get_request_param("form_module", ''),
+            "form_xmlns": self.get_request_param("form_xmlns", ''),
+            "startdate": self.get_request_param("startdate", ''),
+            "enddate": self.get_request_param("enddate", '')
         }
 
-        params.update(EMWF.for_user(user.user_id))
+        params.update(EMWF.for_user(row_obj.user_id))
 
         from corehq.apps.reports.standard.inspect import SubmitHistory
 
         user_link_template = '<a href="{link}">{username}</a>'
         base_link = SubmitHistory.get_url(domain=self.domain)
         link = "{baselink}?{params}".format(baselink=base_link, params=urlencode(params))
-        return format_html(user_link_template, link=link, username=user.username_in_report)
+        return format_html(user_link_template, link=link, username=row_obj.username_in_report)
 
 
 class MultiFormDrilldownMixin(object):
@@ -154,6 +164,16 @@ class MultiFormDrilldownMixin(object):
     @memoized
     def all_relevant_forms(self):
         return FormsByApplicationFilter.get_value(self.request, self.domain)
+
+    @property
+    @memoized
+    def selected_form_data(self):
+        forms = list(FormsByApplicationFilter.get_value(self.request, self.domain).values())
+        if len(forms) == 1 and forms[0]['xmlns']:
+            return forms[0]
+        non_fuzzy_forms = [form for form in forms if not form['is_fuzzy']]
+        if len(non_fuzzy_forms) == 1:
+            return non_fuzzy_forms[0]
 
 
 class CompletionOrSubmissionTimeMixin(object):
@@ -171,14 +191,32 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     """See column headers for details"""
     name = gettext_lazy('Case Activity')
     slug = 'case_activity'
-    fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
-              'corehq.apps.reports.filters.select.CaseTypeFilter']
     display_data = ['percent']
     emailable = True
     description = gettext_lazy("Followup rates on active cases.")
     is_cacheable = True
     ajax_pagination = True
     exportable_all = True
+
+    @property
+    def fields(self):
+        fields = [
+            'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+            'corehq.apps.reports.filters.select.CaseTypeFilter',
+        ]
+        if self.has_case_sharing:
+            fields.append('corehq.apps.reports.filters.users.UserOrGroupFilter')
+        return fields
+
+    @property
+    @memoized
+    def has_case_sharing(self):
+        return self.domain_object.case_sharing_included()
+
+    @property
+    @memoized
+    def view_by_groups(self):
+        return self.get_request_param('view_by') == 'groups'
 
     @property
     def shared_pagination_GET_params(self):
@@ -191,11 +229,15 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                 value=CaseTypeFilter.get_value(self.request, self.domain)),
             dict(
                 name='milestone',
-                value=self.request.GET.get('milestone')
+                value=self.get_request_param('milestone')
             ),
             dict(
                 name='landmark',
-                value=self.request.GET.get('landmark')
+                value=self.get_request_param('landmark')
+            ),
+            dict(
+                name='view_by',
+                value=self.get_request_param('view_by')
             )
         ]
         return params
@@ -229,28 +271,36 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def special_notice(self):
-        if self.domain_object.case_sharing_included():
-            return _("This report currently does not support case sharing. "
-                     "There might be inconsistencies in case totals if the "
-                     "user is part of a case sharing group.")
+        if self.has_case_sharing:
+            help_link = (
+                "https://dimagi.atlassian.net/wiki/spaces/commcarepublic"
+                "/pages/2143957523/Debugging+Case+Sharing+errors"
+            )
+            return format_html(_(
+                "Note that when viewing this report by group it will only include "
+                "cases which are assigned to a Case Sharing Group/Location. To learn "
+                "more about Case Sharing click "
+                "<a href='{}' target='blank'>here</a>."
+            ).format(help_link))
 
     _default_landmarks = [30, 60, 90]
 
     @property
     @memoized
     def landmarks(self):
-        landmarks_param = self.request_params.get('landmarks')
+        landmarks_param = self.get_request_param('landmarks', from_json=True)
         landmarks_param = landmarks_param if isinstance(landmarks_param, list) else []
         landmarks_param = [param for param in landmarks_param if isinstance(param, int)]
         landmarks = landmarks_param if landmarks_param else self._default_landmarks
-        return [('landmark_' + str(idx), datetime.timedelta(days=l)) for idx, l in enumerate(landmarks)]
+        return [('landmark_' + str(i), datetime.timedelta(days=lmk))
+                for i, lmk in enumerate(landmarks)]
 
     _default_milestone = 120
 
     @property
     @memoized
     def milestone(self):
-        milestone_param = self.request_params.get('milestone')
+        milestone_param = self.get_request_param('milestone', from_json=True)
         milestone_param = milestone_param if isinstance(milestone_param, int) else None
         milestone = milestone_param if milestone_param else self._default_milestone
         return datetime.timedelta(days=milestone)
@@ -272,7 +322,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def total_records(self):
-        return len(self.user_ids)
+        return len(self.owner_ids)
 
     @property
     def headers(self):
@@ -282,7 +332,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                                     help_text=help_text.format(num_days),
                                     sortable=False if title == "Proportion" else True)
 
-        columns = [DataTablesColumn(_("Users"))]
+        columns = [DataTablesColumn(_("Groups"))] if self.view_by_groups else [DataTablesColumn(_("Users"))]
 
         for __, landmark in self.landmarks:
             columns.append(DataTablesColumnGroup(
@@ -299,43 +349,99 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     @property
     @memoized
     def selected_users(self):
-        return _get_selected_users(self.domain, self.request)
+        users = _get_selected_users(self.domain, self.request)
+        return [
+            self.RowData(
+                id=user.user_id,
+                name=user.raw_username,
+                name_in_report=user.username_in_report,
+                filter_func=CaseListFilter.for_user
+            ) for user in users
+        ]
+
+    @property
+    def has_case_group_filters(self):
+        slugs = EMWF.get_value(self.request, self.domain)
+        filter_count = len(EMWF.selected_group_ids(slugs) + EMWF.selected_location_ids(slugs))
+        return filter_count > 0
 
     @property
     @memoized
-    def users_by_id(self):
-        return {user.user_id: user for user in self.selected_users}
+    def selected_groups(self):
+        if self.has_case_group_filters:
+            slugs = EMWF.get_value(self.request, self.domain)
+            group_ids = EMWF.selected_group_ids(slugs)
+            groups = [Group.get(g) for g in group_ids]
+        else:
+            groups = Group.get_reporting_groups(self.domain)
+        return [
+            self.RowData(
+                id=group['_id'],
+                name=group['name'],
+                name_in_report=group['name'],
+                filter_func=CaseListFilter.for_reporting_group
+            ) for group in groups
+        ]
 
     @property
     @memoized
-    def user_ids(self):
-        return list(self.users_by_id)
+    def selected_locations(self):
+        locations = SQLLocation.objects.filter(domain=self.domain)
+        slugs = EMWF.get_value(self.request, self.domain)
+        if self.has_case_group_filters:
+            location_ids = EMWF.selected_location_ids(slugs)
+            locations = locations.filter(location_id__in=location_ids)
+        return [
+            self.RowData(
+                id=loc.location_id,
+                name=loc.name,
+                name_in_report=loc.display_name,
+                filter_func=CaseListFilter.for_reporting_location
+            ) for loc in locations
+        ]
 
     @property
     @memoized
-    def paginated_users(self):
-        if self.sort_column is None:
-            return sorted(
-                self.selected_users, key=lambda u: u.raw_username, reverse=self.pagination.desc
-            )[self.pagination.start:self.pagination.start + self.pagination.count]
+    def selected_owners(self):
+        if self.view_by_groups:
+            return self.selected_groups + self.selected_locations
         return self.selected_users
 
     @property
     @memoized
-    def paginated_users_by_id(self):
-        return [(user.user_id, user) for user in self.paginated_users]
+    def owners_by_id(self):
+        return {owner.id: owner for owner in self.selected_owners}
 
     @property
     @memoized
-    def paginated_user_ids(self):
-        return [user.user_id for user in self.paginated_users]
+    def owner_ids(self):
+        return list(self.owners_by_id)
+
+    @property
+    @memoized
+    def paginated_owners(self):
+        if self.sort_column is None:
+            return sorted(
+                self.selected_owners, key=lambda o: o.name, reverse=self.pagination.desc
+            )[self.pagination.start:self.pagination.start + self.pagination.count]
+        return self.selected_owners
+
+    @property
+    @memoized
+    def paginated_owners_by_id(self):
+        return [(owner.id, owner) for owner in self.paginated_owners]
+
+    @property
+    @memoized
+    def paginated_owner_ids(self):
+        return [owner.id for owner in self.paginated_owners]
 
     @property
     def sort_column(self):
         column_num = self.request_params.get('iSortCol_0', 0)
         num_columns = self.request_params.get('iColumns', 15)
         if column_num == 0:
-            return None  # user
+            return None  # owner
         elif column_num == (num_columns - 2):
             return "active_total"
         elif column_num == (num_columns - 1):
@@ -358,7 +464,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             return "landmark_%d" % (landmark,)
 
     @property
-    def should_sort_by_username(self):
+    def should_sort_by_name(self):
         return self.request_params.get('iSortCol_0', 0) == 0
 
     def _format_row(self, row):
@@ -388,25 +494,23 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def rows(self):
-        track_es_report_load(self.domain, self.slug, len(self.paginated_user_ids))
         es_results = self.es_queryset(
-            user_ids=self.paginated_user_ids,
+            owner_ids=self.paginated_owner_ids,
             size=self.pagination.start + self.pagination.count
         )
-        buckets = es_results.aggregations.users.buckets_list
-        if self.missing_users:
-            buckets.append(es_results.aggregations.missing_users.bucket)
+        buckets = es_results.aggregations.owners.buckets_list
+        if self.missing_owners:
+            buckets.append(es_results.aggregations.missing_owners.bucket)
         rows = []
         for bucket in buckets:
-            user = self.users_by_id[bucket.key]
-            rows.append(self.Row(self, user, bucket))
+            owner = self.owners_by_id[bucket.key]
+            rows.append(self.Row(self, owner, bucket))
 
-        rows.extend(self._unmatched_buckets(buckets, self.paginated_user_ids))
+        rows.extend(self._unmatched_buckets(buckets, self.paginated_owner_ids))
 
-        if self.should_sort_by_username:
+        if self.should_sort_by_name:
             # ES handles sorting for all other columns
-            rows.sort(key=lambda row: row.user.raw_username)
-
+            rows.sort(key=lambda row: row.row_data.name)
         self.total_row = self._total_row
         if len(rows) <= self.pagination.count:
             return list(map(self._format_row, rows))
@@ -418,29 +522,29 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def get_all_rows(self):
-        es_results = self.es_queryset(user_ids=self.user_ids)
-        buckets = es_results.aggregations.users.buckets_list
-        if self.missing_users:
-            buckets.append(es_results.aggregations.missing_users.bucket)
+        es_results = self.es_queryset(owner_ids=self.owner_ids)
+        buckets = es_results.aggregations.owners.buckets_list
+        if self.missing_owners:
+            buckets.append(es_results.aggregations.missing_owners.bucket)
         rows = []
         for bucket in buckets:
-            user = self.users_by_id[bucket.key]
-            rows.append(self.Row(self, user, bucket))
+            owner = self.owners_by_id[bucket.key]
+            rows.append(self.Row(self, owner, bucket))
 
-        rows.extend(self._unmatched_buckets(buckets, self.user_ids))
+        rows.extend(self._unmatched_buckets(buckets, self.owner_ids))
 
         self.total_row = self._total_row
         return list(map(self._format_row, rows))
 
-    def _unmatched_buckets(self, buckets, user_ids):
+    def _unmatched_buckets(self, buckets, owner_ids):
         # ES doesn't return buckets that don't have any docs matching docs
-        # we expect a bucket for each relevant user id so add empty buckets
-        returned_user_ids = {b.key for b in buckets}
-        not_returned_user_ids = set(user_ids) - returned_user_ids
+        # we expect a bucket for each relevant owner id so add empty buckets
+        returned_owner_ids = {b.key for b in buckets}
+        not_returned_owner_ids = set(owner_ids) - returned_owner_ids
         extra_rows = []
-        for user_id in not_returned_user_ids:
-            extra_rows.append(self.Row(self, self.users_by_id[user_id], {}))
-        extra_rows.sort(key=lambda row: row.user.raw_username)
+        for owner_id in not_returned_owner_ids:
+            extra_rows.append(self.Row(self, self.owners_by_id[owner_id], {}))
+        extra_rows.sort(key=lambda row: row.row_data.name)
         return extra_rows
 
     @property
@@ -460,13 +564,16 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         query = (
             case_es.CaseES()
             .domain(self.domain)
-            .user_ids_handle_unknown(self.user_ids)
             .size(0)
         )
+        if self.view_by_groups:
+            query = query.owner(self.owner_ids)
+        else:
+            query = query.user_ids_handle_unknown(self.owner_ids)
         if self.case_type:
             query = query.filter(case_es.case_type(self.case_type))
         else:
-            query = query.filter(filters.NOT(case_es.case_type('commcare-user')))
+            query = query.filter(filters.NOT(case_es.case_type(USERCASE_TYPE)))
 
         query = (
             query
@@ -477,12 +584,15 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
         query = self.add_landmark_aggregations(query, self.end_date)
 
-        return self._format_row(self.TotalRow(query.run(), _("All Users")))
+        return self._format_row(self.TotalRow(
+            query.run(),
+            _("All Groups") if self.view_by_groups else _("All Users")
+        ))
 
     @property
     @memoized
-    def missing_users(self):
-        return None in self.user_ids
+    def missing_owners(self):
+        return None in self.owner_ids
 
     @property
     def end_date(self):
@@ -492,9 +602,10 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     def milestone_start(self):
         return ServerTime(self.utc_now - self.milestone).phone_time(self.timezone).done()
 
-    def es_queryset(self, user_ids, size=None):
+    def es_queryset(self, owner_ids, size=None):
+        field = 'owner_id' if self.view_by_groups else 'user_id'
         top_level_aggregation = (
-            TermsAggregation('users', 'user_id')
+            TermsAggregation('owners', field)
             .aggregation(self._touched_total_aggregation)
             .aggregation(self._active_total_aggregation)
             .aggregation(self._inactive_total_aggregation)
@@ -513,19 +624,23 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         query = (
             case_es.CaseES()
             .domain(self.domain)
-            .user_ids_handle_unknown(user_ids)
             .size(0)
         )
+        if self.view_by_groups:
+            query = query.owner(owner_ids)
+        else:
+            query = query.user_ids_handle_unknown(owner_ids)
+
         if self.case_type:
             query = query.case_type(self.case_type)
         else:
-            query = query.filter(filters.NOT(case_es.case_type('commcare-user')))
+            query = query.filter(filters.NOT(case_es.case_type(USERCASE_TYPE)))
 
         query = query.aggregation(top_level_aggregation)
 
-        if self.missing_users:
+        if self.missing_owners:
             missing_aggregation = (
-                MissingAggregation('missing_users', 'user_id')
+                MissingAggregation('missing_owners', field)
                 .aggregation(self._touched_total_aggregation)
                 .aggregation(self._active_total_aggregation)
                 .aggregation(self._inactive_total_aggregation)
@@ -552,11 +667,22 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             .aggregation(FilterAggregation('closed', case_es.is_closed()))
         )
 
+    class RowData(object):
+        def __init__(self, id, name, name_in_report, filter_func):
+            self.id = id
+            self.name = name
+            self.name_in_report = name_in_report
+            self.filter_func = filter_func  # Func for getting ID to filter by in Case List
+
+        @property
+        def filter_id(self):
+            return urlencode(self.filter_func(self.id))
+
     class Row(object):
 
-        def __init__(self, report, user, bucket):
+        def __init__(self, report, row_data, bucket):
             self.report = report
-            self.user = user
+            self.row_data = row_data
             self.bucket = bucket
 
         def active_count(self, landmark_key):
@@ -614,7 +740,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                 return 0
 
         def header(self):
-            return self.report.get_user_link(self.user)['html']
+            return self.report.get_row_link(self.row_data)['html']
 
     class TotalRow(object):
 
@@ -645,6 +771,16 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
         def header(self):
             return self._header
+
+    def get_raw_row_link(self, row_obj):
+        row_link_template = '<a href="{link}?{params}">{name}</a>'
+        row_link = format_html(
+            row_link_template,
+            link=self.raw_user_link_url,
+            params=row_obj.filter_id,
+            name=row_obj.name_in_report,
+        )
+        return row_link
 
 
 @location_safe
@@ -708,18 +844,16 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
     def rows(self):
         export = self.rendered_as in ('email', 'export')
         if util.is_query_too_big(
-            self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user,
+            self.domain, self.get_request_param(EMWF.slug, as_list=True), self.request.couch_user,
         ) and not export:
             raise BadRequestError(
                 _('Query selects too many users. Please modify your filters to select fewer than {} users').format(
                     USER_QUERY_LIMIT,
                 )
             )
-        selected_users = self.selected_simplified_users
-        track_es_report_load(self.domain, self.slug, len(self.selected_simplified_users))
 
         totals = [0] * (len(self.all_relevant_forms) + 1)
-        for simplified_user in selected_users:
+        for simplified_user in self.selected_simplified_users:
             row = []
             if self.all_relevant_forms:
                 for form in self.all_relevant_forms.values():
@@ -728,7 +862,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                     ])
                 row_sum = sum(row)
                 row = (
-                    [self.get_user_link(simplified_user)]
+                    [self.get_row_link(simplified_user)]
                     + [self.table_cell(row_data, zerostyle=True) for row_data in row]
                     + [self.table_cell(row_sum, format_html("<strong>{}</strong>", row_sum))]
                 )
@@ -736,7 +870,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                           for i, col in enumerate(row[1:])]
                 yield row
             else:
-                yield [self.get_user_link(simplified_user), '--']
+                yield [self.get_row_link(simplified_user), '--']
         if self.all_relevant_forms:
             self.total_row = [_("All Users")] + totals
         yield self.total_row
@@ -744,7 +878,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
     @property
     @memoized
     def _form_counts(self):
-        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        mobile_user_and_group_slugs = self.get_request_param(EMWF.slug, as_list=True)
         if (EMWF.show_all_mobile_workers(mobile_user_and_group_slugs)
                 and self.request.can_access_all_locations):
             user_ids = []
@@ -871,7 +1005,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         else:
             get_counts_by_user = get_completed_counts_by_user
 
-        if EMWF.show_all_mobile_workers(self.request.GET.getlist(EMWF.slug)):
+        if EMWF.show_all_mobile_workers(self.get_request_param(EMWF.slug, as_list=True)):
             user_ids = None  # Don't restrict query by user ID
         else:
             user_ids = [u.user_id for u in self.selected_users]
@@ -923,7 +1057,6 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         else:
             users = self.users_by_username(order)
 
-        track_es_report_load(self.domain, self.slug, len(users))
         # Todo; this hits ES seperately for each user
         #   should instead aggregate by user in one ES query
         rows = [self.get_row(user) for user in users]
@@ -964,13 +1097,15 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         ]
         styled_zero = mark_safe('<span class="text-muted">0</span>')  # nosec: no user input
         styled_date_cols = [styled_zero if c == 0 else c for c in date_cols]
-        first_col = self.get_raw_user_link(user) if user else _("Total")
+        first_col = self.get_raw_row_link(user) if user else _("Total")
         return [first_col] + styled_date_cols + [sum(date_cols)]
 
-    def get_raw_user_link(self, user):
+    def get_raw_row_link(self, row_obj):
         from corehq.apps.reports.standard.inspect import SubmitHistory
-        return _get_raw_user_link(user, SubmitHistory.get_url(domain=self.domain),
-                                  filter_class=EMWF)
+        value = CompletionOrSubmissionTimeFilter.get_value(self.request, self.domain)
+        sub_time_param = {CompletionOrSubmissionTimeFilter.slug: value} if value else None
+        return _get_raw_user_link(row_obj, SubmitHistory.get_url(domain=self.domain),
+                                  filter_class=EMWF, additional_params=sub_time_param)
 
     @property
     def template_context(self):
@@ -983,7 +1118,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
 
 @location_safe
 class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixin,
-                               CompletionOrSubmissionTimeMixin):
+                               CompletionOrSubmissionTimeMixin, MultiFormDrilldownMixin):
     name = gettext_lazy("Form Completion Time")
     slug = "completion_times"
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
@@ -993,16 +1128,6 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
 
     description = gettext_lazy("Statistics on time spent on a particular form.")
     is_cacheable = True
-
-    @property
-    @memoized
-    def selected_form_data(self):
-        forms = list(FormsByApplicationFilter.get_value(self.request, self.domain).values())
-        if len(forms) == 1 and forms[0]['xmlns']:
-            return forms[0]
-        non_fuzzy_forms = [form for form in forms if not form['is_fuzzy']]
-        if len(non_fuzzy_forms) == 1:
-            return non_fuzzy_forms[0]
 
     @property
     def headers(self):
@@ -1054,8 +1179,6 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
         app_id = self.selected_form_data['app_id']
         xmlns = self.selected_form_data['xmlns']
 
-        track_es_report_load(self.domain, self.slug, len(self.users))
-
         data_map = get_form_duration_stats_by_user(
             self.domain,
             app_id,
@@ -1069,7 +1192,7 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
         for user in users:
             stats = data_map.get(user.user_id, {})
             rows.append([
-                self.get_user_link(user),
+                self.get_row_link(user),
                 _fmt_ts(stats.get('avg')),
                 _fmt_ts(stats.get('std_deviation')),
                 _fmt_ts(stats.get('min')),
@@ -1138,7 +1261,6 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
             user_map = {user.user_id: user
                         for user in users if user.user_id}
             user_ids = [user.user_id for user in users if user.user_id]
-            track_es_report_load(self.domain, self.slug, len(self.user_ids))
 
             xmlnss = []
             app_ids = []
@@ -1167,7 +1289,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
                 td = submission_time - completion_time
                 td_total = (td.seconds + td.days * 24 * 3600)
                 rows.append([
-                    self.get_user_link(
+                    self.get_row_link(
                         row['form']['meta']['username'],
                         user_map.get(row['form']['meta']['userID'])
                     ),
@@ -1190,10 +1312,10 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
         ]
         return rows
 
-    def get_user_link(self, username, user):
+    def get_row_link(self, username, user):
         if not user:
             return username
-        return super(FormCompletionVsSubmissionTrendsReport, self).get_user_link(user)
+        return super(FormCompletionVsSubmissionTrendsReport, self).get_row_link(user)
 
     def _format_date(self, date):
         """
@@ -1248,7 +1370,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
 
 class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
     flush_layout = True
-    report_template_path = "reports/async/basic.html"
+    report_template_path = "reports/async/bootstrap3/basic.html"
 
 
 def _worker_activity_is_location_safe(view, request, *args, **kwargs):
@@ -1291,7 +1413,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @property
     def case_types(self):
-        return [_f for _f in self.request.GET.getlist('case_type') if _f]
+        return [_f for _f in self.get_request_param('case_type', as_list=True) if _f]
 
     @property
     @memoized
@@ -1300,7 +1422,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             track_workflow(self.request.couch_user.username,
                            "Worker Activity Report: view_by_groups disabled by EMWF_WORKER_ACTIVITY_REPORT")
             return False
-        view_by_groups = self.request.GET.get('view_by', None) == 'groups'
+        view_by_groups = self.get_request_param('view_by', None) == 'groups'
         track_workflow(self.request.couch_user.username,
                        "Worker Activity Report: view_by_groups == {}".format(view_by_groups))
         return view_by_groups
@@ -1344,15 +1466,13 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @property
     def group_ids(self):
-        return [group_id for group_id in self.request.GET.getlist('group')
+        return [group_id for group_id in self.get_request_param('group', as_list=True)
                 if group_id and group_id != '_all']
 
     @property
     @memoized
     def users_by_group(self):
-        from corehq.apps.groups.models import Group
-
-        if not self.group_ids or self.request.GET.get('all_groups', 'off') == 'on':
+        if not self.group_ids or self.get_request_param('all_groups', 'off') == 'on':
             groups = Group.get_reporting_groups(self.domain)
         else:
             groups = [Group.get(g) for g in self.group_ids]
@@ -1375,7 +1495,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return user_dict
 
     def get_admins_and_demo_users(self):
-        ufilters = [uf for uf in ['1', '2', '3'] if uf in self.request.GET.getlist('ufilter')]
+        ufilters = [uf for uf in ['1', '2', '3'] if uf in self.get_request_param('ufilter', as_list=True)]
         return self.get_all_users_by_domain(
             group=None,
             user_filter=tuple(HQUserType.use_filter(ufilters)),
@@ -1387,12 +1507,14 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     def users_to_iterate(self):
         if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
             user_query = EMWF.user_es_query(
-                self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user
+                self.domain, self.get_request_param(EMWF.slug, as_list=True), self.request.couch_user
             )
             return util.get_simplified_users(user_query)
         elif not self.group_ids:
-            ret = [util._report_user(u) for u in list(CommCareUser.by_domain(self.domain))]
-            return ret
+            user_query = UserES().domain(self.domain)
+            if not toggles.WEB_USERS_IN_REPORTS.enabled(self.domain):
+                user_query = user_query.mobile_users()
+            return util.get_simplified_users(user_query)
         else:
             all_users = flatten_list(list(self.users_by_group.values()))
             all_users.extend([user for user in self.get_users_by_mobile_workers().values()])
@@ -1746,7 +1868,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     def user_rows(self):
         user_es_query = EMWF.user_es_query(
-            self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user
+            self.domain, self.get_request_param(EMWF.slug, as_list=True), self.request.couch_user
         )
         chunk_size = 50000
         user_iterator = user_es_query.scroll_ids_to_disk_and_iter_docs()
@@ -1800,23 +1922,32 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         if self.view_by_groups:
             rows = self._rows_by_group(report_data)
         else:
-            track_es_report_load(self.domain, self.slug, len(self.users_to_iterate))
             rows = self._rows_by_user(report_data, self.users_to_iterate)
 
         self.total_row = self._format_total_row(self._total_row(rows, report_data, self.users_to_iterate))
         return rows
 
 
-def _get_raw_user_link(user, url, filter_class):
+def _get_raw_user_link(user, url, filter_class, additional_params=None):
     """
-    filter_class is expected to be either ExpandedMobileWorkerFilter or a
-    subclass of it, such as the CaseListFilter
+    Generates an HTML anchor tag (<a>) for a user link with additional query parameters.
+
+    Parameters:
+    - user (SimplifiedUserInfo object): The user for whom the link is being generated.
+    - url (str): The base URL to which filter parameters and any additional parameters will be appended.
+    - filter_class (class): A filter class expected to be either ExpandedMobileWorkerFilter or a subclass of it,
+    such as CaseListFilter.
+    - additional_params (dict, optional): An optional dictionary of additional query parameters to be appended to
+    the URL. Each key-value pair in the dictionary represents a parameter name and its value.
+
+    Returns:
+    - str: A string containing an HTML anchor tag (<a>) with the constructed URL and the user's display name.
     """
     user_link_template = '<a href="{link}?{params}">{username}</a>'
     user_link = format_html(
         user_link_template,
         link=url,
-        params=urlencode(filter_class.for_user(user.user_id)),
+        params=urlencode(filter_class.for_user(user.user_id) | (additional_params or {})),
         username=user.username_in_report,
     )
     return user_link
@@ -1829,7 +1960,7 @@ def _get_selected_users(domain, request):
     """
     return util.get_simplified_users(EMWF.user_es_query(
         domain,
-        request.GET.getlist(EMWF.slug),
+        DatatablesServerSideParams.get_value_from_request(request, EMWF.slug, as_list=True),
         request.couch_user,
     ))
 

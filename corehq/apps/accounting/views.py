@@ -32,6 +32,7 @@ from corehq.apps.accounting.utils.downgrade import downgrade_eligible_domains
 from corehq.apps.accounting.utils.invoicing import (
     get_oldest_unpaid_invoice_over_threshold,
 )
+from corehq.apps.sso.tasks import auto_deactivate_removed_sso_users
 from corehq.toggles import ACCOUNTING_TESTING_TOOLS
 
 from corehq import privileges
@@ -85,6 +86,7 @@ from corehq.apps.accounting.forms import (
     TriggerDowngradeForm,
     TriggerAutopaymentsForm,
     BulkUpgradeToLatestVersionForm,
+    TriggerRemovedSsoUserAutoDeactivationForm,
 )
 from corehq.apps.accounting.interface import (
     AccountingInterface,
@@ -442,10 +444,9 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
 
         if self.subscription.account.is_customer_billing_account:
             invoice_report = CustomerInvoiceInterface(self.request)
-            invoice_report.filter_by_account(self.subscription.account)
         else:
             invoice_report = InvoiceInterface(self.request)
-            invoice_report.filter_by_subscription(self.subscription)
+        invoice_report.filter_by_subscription(self.subscription)
         # Tied to InvoiceInterface.
         encoded_params = urlencode({'subscriber': subscriber_domain})
         invoice_report_url = "{}?{}".format(invoice_report.get_url(), encoded_params)
@@ -1202,7 +1203,7 @@ class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
             'template': 'accounting-admin-new',
         }
 
-    def get_deleted_item_data(self, item_id):
+    def delete_item(self, item_id):
         user = User.objects.get(id=item_id)
         ops_role = Role.objects.get(slug=privileges.OPERATIONS_TEAM)
         grant_to_remove = Grant.objects.filter(
@@ -1245,6 +1246,7 @@ class AccountingSingleOptionResponseView(View, AsyncHandlerMixin):
         return HttpResponseBadRequest("Please check your query.")
 
 
+@method_decorator(ACCOUNTING_TESTING_TOOLS.required_decorator(), name="dispatch")
 class BaseTriggerAccountingTestView(AccountingSectionView, AsyncHandlerMixin):
     template_name = 'accounting/trigger_accounting_tests.html'
     async_handlers = [
@@ -1329,6 +1331,32 @@ class TriggerAutopaymentsView(BaseTriggerAccountingTestView):
                     ' to confirm.',
                     domain,
                     statements_url
+                )
+            )
+            return HttpResponseRedirect(reverse(self.urlname))
+        return self.get(request, *args, **kwargs)
+
+
+class TriggerRemovedSsoUserAutoDeactivationView(BaseTriggerAccountingTestView):
+    urlname = 'accounting_test_deactivation'
+    page_title = "Trigger Auto Deactivation of Removed SSO Users"
+
+    @property
+    @memoized
+    def trigger_form(self):
+        if self.request.method == 'POST':
+            return TriggerRemovedSsoUserAutoDeactivationForm(self.request.POST)
+        return TriggerRemovedSsoUserAutoDeactivationForm()
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+        if self.trigger_form.is_valid():
+            auto_deactivate_removed_sso_users()
+            messages.success(
+                request,
+                format_html(
+                    'Successfully triggered auto deactivation of web users'
                 )
             )
             return HttpResponseRedirect(reverse(self.urlname))

@@ -4,9 +4,6 @@
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
         <h4 class="modal-title">
           {% if export_instance.type == 'form' %}
             {% trans "Show Deleted Questions" %}
@@ -14,6 +11,7 @@
             {% trans "Show Deleted Properties" %}
           {% endif %}
         </h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
       </div>
       <div class="modal-body">
         <p>
@@ -34,8 +32,8 @@
           {% trans "Unable to process applications. Please report an issue if this persists" %}
         </p>
         <div class="spacer"></div>
-        <div class="progress " data-bind="visible: showBuildSchemaProgressBar">
-          <div class="progress-bar" role="progressbar" data-bind="
+        <div class="progress" role="progressbar" data-bind="visible: showBuildSchemaProgressBar">
+          <div class="progress-bar" data-bind="
               style: {
                   width: buildSchemaProgress() + '%'
               }
@@ -43,7 +41,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</button>
+        <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans "Close" %}</button>
         <button type="button" class="btn btn-primary" data-bind="
             click: onBeginSchemaBuild,
             text: schemaProgressText

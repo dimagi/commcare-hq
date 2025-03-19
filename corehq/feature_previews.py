@@ -100,7 +100,9 @@ CALC_XPATHS = FeaturePreview(
     description=_(
         "Specify a custom xpath expression to calculate a value "
         "in the case list or case detail screen."),
-    help_link='https://confluence.dimagi.com/display/commcarepublic/Calculations+in+the+Case+List+and+Details'
+    help_link=('https://dimagi.atlassian.net/wiki/spaces/commcarepublic/'
+               'pages/2143951603/Case+List+and+Case+Detail+Configuration#'
+               'Calculations-in-the-Case-List%2FDetail')
 )
 
 ENUM_IMAGE = FeaturePreview(
@@ -132,6 +134,15 @@ SPLIT_MULTISELECT_CASE_EXPORT = FeaturePreview(
     )
 )
 
+USE_LOCATION_DISPLAY_NAME = FeaturePreview(
+    slug='use_location_display_name',
+    label=_('Use location name'),
+    description=_(
+        "This setting changes the location dropdown to display location name instead of "
+        "the full location path."
+    )
+)
+
 
 def enable_callcenter(domain_name, checked):
     from corehq.apps.domain.models import Domain
@@ -157,7 +168,6 @@ CALLCENTER = FeaturePreview(
         'From here they can do things like monitor workers with performance issues, '
         'update their case with possible reasons for poor performance, '
         'and offer guidance towards solutions.'),
-    help_link='https://help.commcarehq.org/display/commcarepublic/How+to+set+up+a+Supervisor-Call+Center+Application',
     save_fn=enable_callcenter,
     can_self_enable_fn=can_enable_callcenter,
 )

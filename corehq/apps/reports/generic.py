@@ -1,6 +1,5 @@
 import datetime
 import io
-import json
 import re
 from itertools import chain
 
@@ -20,6 +19,7 @@ from django.utils.html import conditional_escape
 from celery.utils.log import get_task_logger
 from memoized import memoized
 
+from corehq.apps.hqwebapp.utils.bootstrap.paths import get_bootstrap5_path
 from corehq.util.timezones.utils import get_timezone
 from couchexport.export import export_from_tables, get_writer
 from couchexport.shortcuts import export_response
@@ -33,13 +33,17 @@ from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_daterangepicker,
     use_jquery_ui,
-    use_nvd3,
 )
 from corehq.apps.reports.cache import request_cache
+from corehq.apps.reports.const import EXPORT_PAGE_LIMIT
 from corehq.apps.reports.datatables import DataTablesHeader
+from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.tasks import export_all_rows_task
-from corehq.apps.reports.util import DatatablesParams
+from corehq.apps.reports.util import (
+    DatatablesPagination,
+    DatatablesServerSideParams,
+)
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.users.models import CouchUser
 from corehq.util.view_utils import absolute_reverse, request_as_dict, reverse
@@ -62,6 +66,25 @@ def _sanitize_col(col):
     # HACK: dictionaries make it here. The dictionaries I've seen have an 'html' key
     # which I expect to be sanitized already, but there is no guaranteee
     return col
+
+
+def get_filter_class(field, failhard=False):
+    if isinstance(field, str):
+        klass = to_function(field, failhard=failhard)
+    else:
+        klass = field
+    return klass
+
+
+def get_filter_classes(fields, request, domain, timezone, use_bootstrap5=False):
+    filters = []
+    fields = fields
+    for field in fields or []:
+        klass = get_filter_class(field, failhard=True)
+        filters.append(
+            klass(request, domain, timezone, use_bootstrap5=use_bootstrap5)
+        )
+    return filters
 
 
 class GenericReportView(object):
@@ -116,6 +139,7 @@ class GenericReportView(object):
 
     # not required
     description = None  # Human-readable description of the report
+    documentation_link = None  # Link to docs page if available
     report_template_path = None
     report_partial_path = None
 
@@ -142,7 +166,10 @@ class GenericReportView(object):
     show_time_notice = False
     is_admin_report = False
     special_notice = None
-    override_permissions_check = False # whether to ignore the permissions check that's done when rendering the report
+
+    # whether to ignore the permissions check that's done when rendering
+    # the report
+    override_permissions_check = False
 
     report_title = None
     report_subtitles = []
@@ -157,37 +184,46 @@ class GenericReportView(object):
     deprecation_email_message = gettext("This report has been deprecated.")
     deprecation_message = gettext("This report has been deprecated.")
 
+    # use for bootstrap5 migration
+    use_bootstrap5 = False
+    debug_bootstrap5 = False
+
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
-            raise NotImplementedError("Missing a required parameter: (name: %(name)s, section_name: %(section_name)s,"
-            " slug: %(slug)s, dispatcher: %(dispatcher)s" % dict(
-                name=self.name,
-                section_name=self.section_name,
-                slug=self.slug,
-                dispatcher=self.dispatcher
-            ))
+            raise NotImplementedError(
+                f'Missing a required parameter: (name: {self.name}, '
+                f'section_name: {self.section_name}, slug: {self.slug}, '
+                f'dispatcher: {self.dispatcher}'
+            )
 
         from corehq.apps.reports.dispatcher import ReportDispatcher
         if isinstance(self.dispatcher, ReportDispatcher):
             raise ValueError("Class property dispatcher should point to a subclass of ReportDispatcher.")
 
         self.request = request
-        self.request_params = json_request(self.request.GET if self.request.method == 'GET' else self.request.POST)
+        self._request_params = json_request(
+            self.request.GET if self.request.method == 'GET' else self.request.POST
+        )
         self.domain = normalize_domain_name(domain)
         self.context = base_context or {}
         self._update_initial_context()
-        self.is_rendered_as_email = False # setting this to true in email_response
+        self.is_rendered_as_email = False  # setting this to true in email_response
         self.is_rendered_as_export = False
         self.override_template = "reports/async/email_report.html"
 
     def __str__(self):
-        return "%(klass)s report named '%(name)s' with slug '%(slug)s' in section '%(section)s'.%(desc)s%(fields)s" % dict(
-            klass=self.__class__.__name__,
-            name=self.name,
-            slug=self.slug,
-            section=self.section_name,
-            desc="\n   Report Description: %s" % self.description if self.description else "",
-            fields="\n   Report Fields: \n     -%s" % "\n     -".join(self.fields) if self.fields else ""
+        if self.fields:
+            field_lines = "\n     -".join(self.fields)
+            fields = f"\n   Report Fields: \n     -{field_lines}"
+        else:
+            fields = ""
+        if self.description:
+            desc = f"\n   Report Description: {self.description}"
+        else:
+            desc = ""
+        return (
+            f"{self.__class__.__name__} report named '{self.name}' with slug "
+            f"'{self.slug}' in section '{self.section_name}'.{desc}{fields}"
         )
 
     def __getstate__(self):
@@ -198,7 +234,7 @@ class GenericReportView(object):
 
         return dict(
             request=request,
-            request_params=self.request_params,
+            request_params=self._request_params,
             domain=self.domain,
             context={}
         )
@@ -209,7 +245,7 @@ class GenericReportView(object):
         """
             For unpickling a pickled report.
         """
-        logging = get_task_logger(__name__) # logging lis likely to happen within celery.
+        logging = get_task_logger(__name__)  # logging is likely to happen within celery.
         self.domain = state.get('domain')
         self.context = state.get('context', {})
 
@@ -235,11 +271,43 @@ class GenericReportView(object):
             request.couch_user = couch_user
         except Exception as e:
             logging.error("Could not unpickle couch_user from request for report %s. Error: %s" %
-                            (self.name, e))
+                          (self.name, e))
         self.request = request
         self._caching = True
-        self.request_params = state.get('request_params')
+        self._request_params = state.get('request_params')
         self._update_initial_context()
+
+    def get_request_param(self, param, default_value=None, as_list=False, from_json=False):
+        """
+        Retrieves the value of a given parameter from the request GET/POST QueryDicts
+        or from a json_request wrapped version of that data stored in self._request_params.
+
+        TODO there is some uncertainty why some reports use self.request_params and others use
+        self.request.GET. This can be a point of investigation later and cleaned up if needed.
+        The intent to consolidate both retrievals here is to make sure the original behavior is kept,
+        so as not to burden these initial B5 migration changes with unrelated investigatory work.
+
+        :param param: (string) slug of parameter in request data
+        :param default_value: default value if parameter is not found in request data
+        :param as_list: (boolean) True if you want to retrieve the data using `getlist`
+        :param from_json: (boolean) True if you want to retrieve data from the `json_request`
+            object stored in `self._request_params`
+        """
+        if from_json:
+            return self._request_params.get(param, default_value)
+        request_data = self.request.POST if self.request.method == 'POST' else self.request.GET
+        return request_data.getlist(param) if as_list else request_data.get(param, default_value)
+
+    @property
+    def request_params(self):
+        if self.use_bootstrap5:
+            # Datatables 1.10+ introduces new formatting for request parameters that changes the
+            # keys passed to HQ from a Datatables request. `GenericTabularReport.get_request_param`
+            # includes utilities to work with these changes.
+            raise ValueError("Please use `get_request_param` to access request parameters.")
+        # Bootstrap 3 reports can still access self.request_params directly without issue, until
+        # that usage is cleaned up
+        return self._request_params
 
     @property
     @memoized
@@ -273,33 +341,57 @@ class GenericReportView(object):
     @property
     @memoized
     def template_base(self):
+        if self.use_bootstrap5:
+            return get_bootstrap5_path(self.base_template)
         return self.base_template
 
     @property
     @memoized
     def template_async_base(self):
+        if self.use_bootstrap5:
+            base_template_async = get_bootstrap5_path(self.base_template_async)
+            default_path = "reports/async/bootstrap5/default.html"
+        else:
+            base_template_async = self.base_template_async
+            default_path = "reports/async/bootstrap3/default.html"
         if self.asynchronous:
-            return self.base_template_async or "reports/async/default.html"
+            return base_template_async or default_path
         return self.template_base
 
     @property
     @memoized
     def template_report(self):
-        original_template = self.report_template_path or "reports/async/basic.html"
+        if self.use_bootstrap5:
+            template_path = get_bootstrap5_path(self.report_template_path)
+            override_template = get_bootstrap5_path(self.override_template)
+            default_path = "reports/async/bootstrap5/basic.html"
+        else:
+            template_path = self.report_template_path
+            override_template = self.override_template
+            default_path = "reports/async/bootstrap3/basic.html"
+        original_template = template_path or default_path
         if self.is_rendered_as_email:
             self.context.update(original_template=original_template)
-            return self.override_template
+            return override_template
         return original_template
 
     @property
     @memoized
     def template_report_partial(self):
+        if self.use_bootstrap5:
+            return get_bootstrap5_path(self.report_partial_path)
         return self.report_partial_path
 
     @property
     @memoized
     def template_filters(self):
-        return self.base_template_filters or "reports/async/filters.html"
+        if self.use_bootstrap5:
+            base_template_filters = get_bootstrap5_path(self.base_template_filters)
+            default_path = "reports/async/bootstrap5/filters.html"
+        else:
+            base_template_filters = self.base_template_filters
+            default_path = "reports/async/bootstrap3/filters.html"
+        return base_template_filters or default_path
 
     @property
     @memoized
@@ -309,23 +401,13 @@ class GenericReportView(object):
     @property
     @memoized
     def filter_classes(self):
-        filters = []
-        fields = self.fields
-        for field in fields or []:
-            if isinstance(field, str):
-                klass = to_function(field, failhard=True)
-            else:
-                klass = field
-            filters.append(
-                klass(self.request, self.domain, self.timezone)
-            )
-        return filters
+        return get_filter_classes(self.fields, self.request, self.domain, self.timezone, self.use_bootstrap5)
 
     @property
     @memoized
     def export_format(self):
         from couchexport.models import Format
-        return self.export_format_override or self.request.GET.get('format', Format.XLS_2007)
+        return self.export_format_override or self.get_request_param('format', Format.XLS_2007)
 
     @property
     def export_name(self):
@@ -410,9 +492,10 @@ class GenericReportView(object):
         is a query string. This gets carried to additional asynchronous calls
         """
         are_filters_set = bool(self.request.META.get('QUERY_STRING'))
-        if "filterSet" in self.request.GET:
+        filter_set_value = self.get_request_param("filterSet")
+        if filter_set_value is not None:
             try:
-                are_filters_set = string_to_boolean(self.request.GET.get("filterSet"))
+                are_filters_set = string_to_boolean(filter_set_value)
             except ValueError:
                 # not a parseable boolean
                 pass
@@ -441,7 +524,7 @@ class GenericReportView(object):
         """
         report_configs = ReportConfig.by_domain_and_owner(self.domain,
             self.request.couch_user._id, report_slug=self.slug)
-        current_config_id = self.request.GET.get('config_id', '')
+        current_config_id = self.get_request_param('config_id', '')
         default_config = ReportConfig.default()
 
         def is_editable_datespan(field):
@@ -454,6 +537,7 @@ class GenericReportView(object):
             report=dict(
                 title=self.rendered_report_title,
                 description=self.description,
+                documentation_link=self.documentation_link,
                 section_name=self.section_name,
                 slug=self.slug,
                 sub_slug=None,
@@ -470,7 +554,7 @@ class GenericReportView(object):
                     or self.request.couch_user.can_view_some_reports(self.domain)
                 ),
                 is_emailable=self.emailable,
-                is_export_all = self.exportable_all,
+                is_export_all=self.exportable_all,
                 is_printable=self.printable,
                 is_admin=self.is_admin_report,
                 special_notice=self.special_notice,
@@ -539,10 +623,10 @@ class GenericReportView(object):
         if hasattr(self, 'datespan'):
             self.context.update(datespan=self.datespan)
         if self.show_timezone_notice:
-            self.context.update(timezone=dict(
-                    now=datetime.datetime.now(tz=self.timezone),
-                    zone=self.timezone.zone
-                ))
+            self.context.update(timezone={
+                'now': datetime.datetime.now(tz=self.timezone),
+                'zone': self.timezone.zone,
+            })
         self.context.update(self._validate_context_dict(self.template_context))
 
     def update_report_context(self):
@@ -608,7 +692,7 @@ class GenericReportView(object):
         self.update_report_context()
 
         rendered_filters = None
-        if bool(self.request.GET.get('hq_filters')):
+        if bool(self.get_request_param('hq_filters')):
             self.update_filter_context()
             rendered_filters = render_to_string(
                 self.template_filters, self.context, request=self.request
@@ -646,11 +730,11 @@ class GenericReportView(object):
         rendered_filters = render_to_string(
             self.template_filters, self.context, request=self.request
         )
-        return HttpResponse(json.dumps(dict(
+        return JsonResponse(dict(
             filters=rendered_filters,
             slug=self.slug,
             url_root=self.url_root
-        )))
+        ))
 
     @property
     @request_cache()
@@ -715,7 +799,7 @@ class GenericReportView(object):
                              ', '.join(cls.dispatcher.allowed_renderings()))
         url_args = [domain] if domain is not None else []
         if render_as is not None:
-            url_args.append(render_as+'/')
+            url_args.append(render_as + '/')
         if relative:
             return reverse(cls.dispatcher.name(), args=url_args + [cls.slug])
         return absolute_reverse(cls.dispatcher.name(), args=url_args + [cls.slug])
@@ -752,7 +836,6 @@ class GenericReportView(object):
         """
         return []
 
-    @use_nvd3
     @use_jquery_ui
     @use_datatables
     @use_daterangepicker
@@ -767,7 +850,7 @@ class GenericReportView(object):
         class MyNewReport(GenericReport):
             ...
 
-            @use_nvd3
+            @use_jquery_ui
             def decorator_dispatcher(self, request, *args, **kwargs):
                 super(MyNewReport, self).decorator_dispatcher(request, *args, **kwargs)
 
@@ -816,7 +899,9 @@ class GenericTabularReport(GenericReportView):
     # new class properties
     total_row = None
     statistics_rows = None
+    force_page_size = False  # force page size to be as the default rows
     default_rows = 10
+    max_rows = 1000
     start_at_row = 0
     show_all_rows = False
     fix_left_col = False
@@ -827,11 +912,11 @@ class GenericTabularReport(GenericReportView):
     bad_request_error_text = None
     exporting_as_excel = False
 
-    # Sets bSort in the datatables instance to true/false (config.dataTables.bootstrap.js)
+    # Sets bSort in the datatables instance to true/false (datatables_config.js)
     sortable = True
 
     # override old class properties
-    report_template_path = "reports/tabular.html"
+    report_template_path = "reports/bootstrap3/tabular.html"
     flush_layout = True
 
     # set to a list of functions that take in a report object
@@ -906,10 +991,37 @@ class GenericTabularReport(GenericReportView):
     @property
     def pagination(self):
         if self._pagination is None:
-            self._pagination = DatatablesParams.from_request_dict(
-                self.request.POST if self.request.method == 'POST' else self.request.GET
-            )
+            if self.use_bootstrap5:
+                self._pagination = DatatablesPagination.from_datatables_params(
+                    self.datatables_params
+                )
+            else:
+                self._pagination = DatatablesPagination.from_request_dict(
+                    self.request.POST if self.request.method == 'POST' else self.request.GET
+                )
+            if self._pagination.count > self.max_rows:
+                raise BadRequestError(gettext("Row count is too large"))
         return self._pagination
+
+    @property
+    @memoized
+    def datatables_params(self):
+        """Use only for bootstrap 5 reports using Datatables > 1.10
+        """
+        if not self.use_bootstrap5:
+            raise NotImplementedError(
+                "'datatables_params' should only be used by Bootstrap 5 reports"
+            )
+        return DatatablesServerSideParams.from_request(self.request)
+
+    def get_request_param(self, param, default_value=None, as_list=False, from_json=False):
+        if self.use_bootstrap5:
+            return self.datatables_params.get_value_from_data(
+                self._request_params, param, default_value=default_value
+            ) if from_json else self.datatables_params.get_value(
+                param, default_value=default_value, as_list=as_list
+            )
+        return super().get_request_param(param, default_value=default_value, as_list=as_list, from_json=from_json)
 
     @property
     def json_dict(self):
@@ -926,11 +1038,10 @@ class GenericTabularReport(GenericReportView):
         total_filtered_records = self.total_filtered_records
         if not isinstance(total_filtered_records, int):
             raise ValueError("Property 'total_filtered_records' should return an int.")
-        ret = dict(
-            sEcho=self.pagination.echo,
-            iTotalRecords=total_records,
-            iTotalDisplayRecords=total_filtered_records if total_filtered_records >= 0 else total_records,
-            aaData=rows,
+        ret = self._get_datatables_json_dict(
+            total_records,
+            total_filtered_records if total_filtered_records >= 0 else total_records,
+            rows
         )
 
         if self.total_row:
@@ -939,6 +1050,26 @@ class GenericTabularReport(GenericReportView):
             ret["statistics_rows"] = list(self.statistics_rows)
 
         return ret
+
+    def _get_datatables_json_dict(self, records_total, records_filtered, data):
+        """Formats the data in a format that datatables expects.
+        see: https://datatables.net/manual/server-side#Example-data
+        default return is the < 1.9 version of datatables, which should be
+        phased out after the bootstrap 5 migration.
+        """
+        if self.use_bootstrap5:
+            return {
+                "draw": self.datatables_params.draw,
+                "recordsTotal": records_total,
+                "recordsFiltered": records_filtered,
+                "data": data,
+            }
+        return {
+            "sEcho": self.pagination.echo,
+            "iTotalRecords": records_total,
+            "iTotalDisplayRecords": records_filtered,
+            "aaData": data,
+        }
 
     @property
     def fixed_cols_spec(self):
@@ -977,7 +1108,7 @@ class GenericTabularReport(GenericReportView):
     def export_sheet_name(self):
         if self._export_sheet_name is None:
             override = self.override_export_sheet_name
-            self._export_sheet_name = override if isinstance(override, str) else self.name # unicode?
+            self._export_sheet_name = override if isinstance(override, str) else self.name
         return self._export_sheet_name
 
     @property
@@ -991,6 +1122,7 @@ class GenericTabularReport(GenericReportView):
         3. str(cell)
         """
         headers = self.headers
+
         def _unformat_row(row):
             def _unformat_val(val):
                 if isinstance(val, dict):
@@ -1001,6 +1133,7 @@ class GenericTabularReport(GenericReportView):
 
         table = headers.as_export_table
         self.exporting_as_excel = True
+        self.pagination.count = EXPORT_PAGE_LIMIT
         rows = (_unformat_row(row) for row in self.export_rows)
         table = chain(table, rows)
         if self.total_row:
@@ -1028,7 +1161,7 @@ class GenericTabularReport(GenericReportView):
             Don't override.
             Override the properties headers and rows instead of this.
         """
-        headers = self.headers # not all headers have been memoized
+        headers = self.headers  # not all headers have been memoized
         assert isinstance(headers, (DataTablesHeader, list))
         if isinstance(headers, list):
             raise DeprecationWarning("Property 'headers' should be a DataTablesHeader object, not a list.")
@@ -1070,6 +1203,7 @@ class GenericTabularReport(GenericReportView):
                 rows=rows,
                 total_row=self.total_row,
                 statistics_rows=self.statistics_rows,
+                force_page_size=self.force_page_size,
                 default_rows=self.default_rows,
                 start_at_row=self.start_at_row,
                 show_all_rows=self.show_all_rows,
@@ -1087,6 +1221,7 @@ class GenericTabularReport(GenericReportView):
         context.update({
             'report_table_js_options': {
                 'datatables': report_table['datatables'],
+                'force_page_size': report_table['force_page_size'],
                 'default_rows': report_table['default_rows'] or 10,
                 'start_at_row': report_table['start_at_row'] or 0,
                 'show_all_rows': report_table['show_all_rows'],
@@ -1098,7 +1233,7 @@ class GenericTabularReport(GenericReportView):
                 },
                 'bad_request_error_text': report_table['bad_request_error_text'],
                 'pagination': {
-                    'hide': getattr(report_table['pagination'], 'hide', False),
+                    'hide': report_table['pagination'].get('hide', False),
                     'is_on': pagination_on,
                     'source': report_table['pagination']['source'] if pagination_on else None,
                     'params': report_table['pagination']['params'] if pagination_on else None,
@@ -1131,25 +1266,15 @@ def summary_context(report):
     return {"summary_values": report.summary_values}
 
 
-class ProjectInspectionReportParamsMixin(object):
-
-    @property
-    def shared_pagination_GET_params(self):
-        # This was moved from ProjectInspectionReport so that it could be included in CaseReassignmentInterface too
-        # I tried a number of other inheritance schemes, but none of them worked because of the already
-        # complicated multiple-inheritance chain
-        # todo: group this kind of stuff with the field object in a comprehensive field refactor
-
-        return [dict(name='individual', value=self.individual),
-                dict(name='group', value=self.group_id),
-                dict(name='case_type', value=self.case_type),
-                dict(name='ufilter', value=[f.type for f in self.user_filter if f.show])]
-
-
 class PaginatedReportMixin(object):
     default_sort = None
 
     def get_sorting_block(self):
+        if self.use_bootstrap5:
+            return self._get_sorting_block_bootstrap5()
+        return self._get_sorting_block_bootstrap3()
+
+    def _get_sorting_block_bootstrap3(self):
         res = []
         #the NUMBER of cols sorting
         sort_cols = int(self.request.GET.get('iSortingCols', 0))
@@ -1166,6 +1291,20 @@ class PaginatedReportMixin(object):
             res.append(self.default_sort)
         return res
 
+    def _get_sorting_block_bootstrap5(self):
+        block = []
+        for col in self.datatables_params.order:
+            col_ind = col['column']
+            sort_dir = col['dir']
+            dt_column_obj = self.headers.header[col_ind]
+            if dt_column_obj.prop_name:
+                prop_name = dt_column_obj.prop_name
+                sort_dict = {prop_name: sort_dir}
+                block.append(sort_dict)
+        if len(block) == 0 and self.default_sort is not None:
+            block.append(self.default_sort)
+        return block
+
 
 class GetParamsMixin(object):
 
@@ -1181,8 +1320,7 @@ class GetParamsMixin(object):
         return ret
 
 
-class ElasticProjectInspectionReport(GetParamsMixin, ProjectInspectionReportParamsMixin,
-                                     PaginatedReportMixin, GenericTabularReport):
+class ElasticProjectInspectionReport(GetParamsMixin, PaginatedReportMixin, GenericTabularReport):
     """
     Tabular report that provides framework for doing elasticsearch backed tabular reports.
 

@@ -1,8 +1,8 @@
-from django.conf.urls import include, re_path as url
+from django.urls import include, re_path as url
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 from corehq.apps.domain.views.tombstone import TombstoneManagement, create_tombstone
-from corehq.apps.hqadmin.views.data import doc_in_es, raw_doc
+from corehq.apps.hqadmin.views.data import doc_in_es, download_blob, raw_doc
 from corehq.apps.hqadmin.views.operations import (
     CallcenterUCRCheck,
     ReprocessMessagingCaseUpdatesView,
@@ -28,6 +28,7 @@ from corehq.apps.hqadmin.views.users import (
     SuperuserManagement,
     OffboardingUserList,
     WebUserDataView,
+    email_status,
     superuser_table,
     web_user_lookup,
 )
@@ -48,6 +49,7 @@ urlpatterns = [
     url(r'^get_offboarding_list/$', OffboardingUserList.as_view(), name=OffboardingUserList.urlname),
     url(r'^superuser_table.csv$', superuser_table, name='superuser_table'),
     url(r'^tombstone_management/$', TombstoneManagement.as_view(), name=TombstoneManagement.urlname),
+    url(r'^email_status/$', email_status, name='email_status'),
     url(r'^create_tombstone/$', create_tombstone, name='create_tombstone'),
     url(r'^phone/restore/$', AdminRestoreView.as_view(), name="admin_restore"),
     url(r'^phone/restore/(?P<app_id>[\w-]+)/$', AdminRestoreView.as_view(), name='app_aware_admin_restore'),
@@ -59,6 +61,7 @@ urlpatterns = [
     url(r'^doc_in_es/$', doc_in_es, name='doc_in_es'),
     url(r'^raw_couch/$', raw_doc, name='raw_couch'),
     url(r'^raw_doc/$', raw_doc, name='raw_doc'),
+    url(r'^download_blob/$', download_blob, name='download_blob'),
     url(r'^api/', include(admin_api_urlpatterns)),
     url(r'^callcenter_ucr_check/$', CallcenterUCRCheck.as_view(), name=CallcenterUCRCheck.urlname),
     url(r'^download_malt/$',

@@ -111,21 +111,21 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
 
     @memoized
     def _get_queryset(self):
-        user_slugs = self.request.GET.getlist(EMWF.slug)
+        user_slugs = self.get_request_param(EMWF.slug, as_list=True)
         user_ids = self._get_user_ids(user_slugs)
         # return empty queryset if no matching users were found
         if user_slugs and not user_ids:
             return UserHistory.objects.none()
 
-        changed_by_user_slugs = self.request.GET.getlist(ChangedByUserFilter.slug)
+        changed_by_user_slugs = self.get_request_param(ChangedByUserFilter.slug, as_list=True)
         changed_by_user_ids = self._get_user_ids(changed_by_user_slugs)
         # return empty queryset if no matching users were found
         if changed_by_user_slugs and not changed_by_user_ids:
             return UserHistory.objects.none()
 
-        user_property = self.request.GET.get('user_property')
-        actions = self.request.GET.getlist('action')
-        user_upload_record_id = self.request.GET.get('user_upload_record')
+        user_property = self.get_request_param('user_property')
+        actions = self.get_request_param('action', as_list=True)
+        user_upload_record_id = self.get_request_param('user_upload_record')
         query = self._build_query(user_ids, changed_by_user_ids, user_property, actions, user_upload_record_id)
         return query
 
@@ -264,7 +264,7 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
                 [f"{key}: {value or _('None')}" for key, value in list(all_changes.items())]
             )
         else:
-            return render_to_string("reports/standard/partials/user_history_changes.html", {
+            return render_to_string("reports/standard/partials/bootstrap3/user_history_changes.html", {
                 "primary_changes": self._html_list(primary_changes),
                 "all_changes": self._html_list(all_changes),
                 "more_count": more_count,

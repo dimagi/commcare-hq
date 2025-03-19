@@ -15,6 +15,7 @@
  *    as well as a minimum length requirment (the length is configurable).
  *  - If any validation is being used, we automatically generate a suggested password that passes validation.
  */
+
 hqDefine("users/js/mobile_workers",[
     'jquery',
     'knockout',
@@ -26,9 +27,11 @@ hqDefine("users/js/mobile_workers",[
     'zxcvbn/dist/zxcvbn',
     'locations/js/widgets',
     'users/js/custom_data_fields',
-    'hqwebapp/js/components.ko', // for pagination
-    'hqwebapp/js/validators.ko', // email address validation
+    'hqwebapp/js/components/pagination',
+    'hqwebapp/js/components/search_box',
+    'hqwebapp/js/bootstrap3/validators.ko', // email address validation
     'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min',
+    'commcarehq',
 ], function (
     $,
     ko,
@@ -39,9 +42,8 @@ hqDefine("users/js/mobile_workers",[
     RMI,
     zxcvbn,
     locationsWidgets,
-    customDataFields
+    customDataFields,
 ) {
-    'use strict';
     // These are used as css classes, so the values of success/warning/error need to be what they are.
     var STATUS = {
         NONE: '',
@@ -79,6 +81,7 @@ hqDefine("users/js/mobile_workers",[
             profiles: initialPageData.get('custom_fields_profiles'),
             profile_slug: initialPageData.get('custom_fields_profile_slug'),
             slugs: initialPageData.get('custom_fields_slugs'),
+            can_edit_original_profile: initialPageData.get('can_edit_original_profile'),
         });
 
         self.email.extend({
@@ -252,6 +255,7 @@ hqDefine("users/js/mobile_workers",[
     var newUserCreationModel = function (options) {
         assertProperties.assertRequired(options, [
             'custom_fields_slugs',
+            'required_custom_fields_slugs',
             'skip_standard_password_validations',
             'location_url',
             'require_location_id',
@@ -262,7 +266,8 @@ hqDefine("users/js/mobile_workers",[
         var self = {};
         self.STATUS = STATUS;   // make status constants available to bindings in HTML
 
-        self.customFieldSlugs = options.custom_fields_slugs; // Required custom fields this domain has configured
+        self.customFieldSlugs = options.custom_fields_slugs;
+        self.requiredCustomFieldSlugs = options.required_custom_fields_slugs;
         self.stagedUser = ko.observable();                   // User in new user modal, not yet sent to server
         self.newUsers = ko.observableArray();                // New users sent to server
 
@@ -400,7 +405,8 @@ hqDefine("users/js/mobile_workers",[
 
         self.generateStrongPassword = function () {
             function pick(possible, min, max) {
-                var n, chars = '';
+                let n,
+                    chars = '';
 
                 if (typeof max === 'undefined') {
                     n = min;
@@ -417,13 +423,17 @@ hqDefine("users/js/mobile_workers",[
 
             function shuffle(password) {
                 var array = password.split('');
-                var tmp, current, top = array.length;
+                var tmp,
+                    current,
+                    top = array.length;
 
-                if (top) while (--top) {
-                    current = Math.floor(Math.random() * (top + 1));
-                    tmp = array[current];
-                    array[current] = array[top];
-                    array[top] = tmp;
+                if (top) {
+                    while (--top) {
+                        current = Math.floor(Math.random() * (top + 1));
+                        tmp = array[current];
+                        array[current] = array[top];
+                        array[top] = tmp;
+                    }
                 }
 
                 return array.join('');
@@ -575,7 +585,7 @@ hqDefine("users/js/mobile_workers",[
             if (self.usernameAvailabilityStatus() !== self.STATUS.SUCCESS) {
                 return false;
             }
-            if (_.find(self.customFieldSlugs, function (slug) {
+            if (_.find(self.requiredCustomFieldSlugs, function (slug) {
                 return !self.stagedUser().custom_fields[slug].value();
             })) {
                 return false;
@@ -624,6 +634,7 @@ hqDefine("users/js/mobile_workers",[
 
         var newUserCreation = newUserCreationModel({
             custom_fields_slugs: initialPageData.get('custom_fields_slugs'),
+            required_custom_fields_slugs: initialPageData.get('required_custom_fields_slugs'),
             skip_standard_password_validations: initialPageData.get('skip_standard_password_validations'),
             location_url: initialPageData.reverse('location_search'),
             require_location_id: !initialPageData.get('can_access_all_locations'),

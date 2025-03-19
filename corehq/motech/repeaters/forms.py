@@ -5,14 +5,14 @@ from django.utils.translation import gettext_lazy as _
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
-from crispy_forms.helper import FormHelper
 from memoized import memoized
 
 from corehq.apps.es.users import UserES
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.users.util import raw_username
-from corehq.motech.const import REQUEST_METHODS, REQUEST_POST
+from corehq.motech.const import DEFAULT_REQUEST_METHODS, REQUEST_POST
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 from corehq.motech.views import ConnectionSettingsListView
@@ -59,7 +59,7 @@ class GenericRepeaterForm(forms.Form):
         )
         self.fields['request_method'] = forms.ChoiceField(
             label=_("HTTP Request Method"),
-            choices=[(rm, rm) for rm in REQUEST_METHODS],
+            choices=[(rm, rm) for rm in DEFAULT_REQUEST_METHODS],
             initial=REQUEST_POST,
             required=True,
         )
@@ -71,11 +71,7 @@ class GenericRepeaterForm(forms.Form):
             )
 
     def _initialize_crispy_layout(self):
-        self.helper = FormHelper(self)
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.offset_class = 'col-sm-offset-3 col-md-offset-2'
+        self.helper = hqcrispy.HQFormHelper(self)
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -111,8 +107,11 @@ class GenericRepeaterForm(forms.Form):
 class FormRepeaterForm(GenericRepeaterForm):
     include_app_id_param = forms.BooleanField(
         required=False,
-        label="Include 'app_id' URL query parameter.",
-        initial=True
+        label=_(""),
+        initial=True,
+        widget=BootstrapCheckboxInput(
+            inline_label=_("Include 'app_id' URL query parameter."),
+        ),
     )
     user_blocklist = forms.MultipleChoiceField(
         required=False,
@@ -131,12 +130,11 @@ class FormRepeaterForm(GenericRepeaterForm):
     )
 
     def __init__(self, *args, **kwargs):
-        if kwargs.get('data', {}).get('white_listed_form_xmlns'):
+        if 'data' in kwargs and 'white_listed_form_xmlns' in kwargs['data']:
             # `FormRepeater.white_listed_form_xmlns` is a list, but
             # `FormRepeaterForm.white_listed_form_xmlns` takes a string.
-            kwargs['data']['white_listed_form_xmlns'] = ', \n'.join(
-                kwargs['data']['white_listed_form_xmlns']
-            )
+            xmlns_list = kwargs['data']['white_listed_form_xmlns']
+            kwargs['data']['white_listed_form_xmlns'] = ', \n'.join(xmlns_list)
         super().__init__(*args, **kwargs)
 
     @property

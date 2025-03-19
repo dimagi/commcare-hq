@@ -1,17 +1,17 @@
+
 hqDefine('hqwebapp/js/multiselect_utils', [
     "jquery",
     "knockout",
     "underscore",
     "hqwebapp/js/assert_properties",
     "multiselect/js/jquery.multi-select",
-    "quicksearch/dist/jquery.quicksearch.min",
 ], function (
     $,
     ko,
     _,
-    assertProperties
+    assertProperties,
 ) {
-    var multiselect_utils = {};
+    var self = {};
 
     var _renderHeader = function (title, action, search) {
         // Since action and search are created from _renderAction() and _renderSearch()
@@ -26,9 +26,9 @@ hqDefine('hqwebapp/js/multiselect_utils', [
 
     var _renderAction = function (buttonId, buttonClass, buttonIcon, text, disabled = false) {
         var action = _.template(
-            '<button class="btn <%-actionButtonClass %> btn-xs pull-right" id="<%- actionButtonId %>" <% if (actionDisabled) { %> disabled <% } %>>' +
+            '<button class="btn <%-actionButtonClass %> btn-xs <%- floatClass %>" id="<%- actionButtonId %>" <% if (actionDisabled) { %> disabled <% } %>>' +
                 '<i class="<%- actionButtonIcon %>"></i> <%- actionButtonText %>' +
-            '</button>'
+            '</button>',
         );
         return action({
             actionButtonId: buttonId,
@@ -36,18 +36,20 @@ hqDefine('hqwebapp/js/multiselect_utils', [
             actionButtonIcon: buttonIcon,
             actionButtonText: text,
             actionDisabled: disabled,
+            floatClass: window.USE_BOOTSTRAP5 ? "float-end" : "pull-right",
         });
     };
 
     var _renderSearch = function (inputId, placeholder) {
-        var input = _.template(
-            '<div class="input-group ms-input-group">' +
-                '<span class="input-group-addon">' +
-                    '<i class="fa fa-search"></i>' +
-                '</span>' +
-                '<input type="search" class="form-control search-input" id="<%- searchInputId %>" autocomplete="off" placeholder="<%- searchInputPlaceholder %>" />' +
-            '</div>'
-        );
+        var inputGroupTextClass = (window.USE_BOOTSTRAP5) ? "input-group-text" : "input-group-addon",
+            input = _.template(
+                '<div class="input-group ms-input-group">' +
+                    '<span class="' + inputGroupTextClass + '">' +
+                        '<i class="fa fa-search"></i>' +
+                    '</span>' +
+                    '<input type="search" class="form-control search-input" id="<%- searchInputId %>" autocomplete="off" placeholder="<%- searchInputPlaceholder %>" />' +
+                '</div>',
+            );
         return input({
             searchInputId: inputId,
             searchInputPlaceholder: placeholder,
@@ -63,7 +65,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
      * willSelectAllListener - Function to call before the multiselect processes the Add All action.
      * disableModifyAllActions - Boolean value to enable/disable Add All and Remove All buttons. Defaults to false.
      */
-    multiselect_utils.createFullMultiselectWidget = function (elementOrId, properties) {
+    self.createFullMultiselectWidget = function (elementOrId, properties) {
         assertProperties.assert(properties, [], ['selectableHeaderTitle', 'selectedHeaderTitle', 'searchItemTitle', 'willSelectAllListener', 'disableModifyAllActions']);
         var selectableHeaderTitle = properties.selectableHeaderTitle || gettext("Items");
         var selectedHeaderTitle = properties.selectedHeaderTitle || gettext("Selected items");
@@ -76,18 +78,19 @@ hqDefine('hqwebapp/js/multiselect_utils', [
             selectAllId = baseId + '-select-all',
             removeAllId = baseId + '-remove-all',
             searchSelectableId = baseId + '-search-selectable',
-            searchSelectedId = baseId + '-search-selected';
+            searchSelectedId = baseId + '-search-selected',
+            defaultBtnClass = (window.USE_BOOTSTRAP5) ? 'btn-outline-primary btn-sm' : 'btn-default';
 
         $element.multiSelect({
             selectableHeader: _renderHeader(
                 selectableHeaderTitle,
-                _renderAction(selectAllId, 'btn-default', 'fa fa-plus', gettext("Add All"), disableModifyAllActions),
-                _renderSearch(searchSelectableId, searchItemTitle)
+                _renderAction(selectAllId, defaultBtnClass, 'fa fa-plus', gettext("Add All"), disableModifyAllActions),
+                _renderSearch(searchSelectableId, searchItemTitle),
             ),
             selectionHeader: _renderHeader(
                 selectedHeaderTitle,
-                _renderAction(removeAllId, 'btn-default', 'fa fa-remove', gettext("Remove All"), disableModifyAllActions),
-                _renderSearch(searchSelectedId, searchItemTitle)
+                _renderAction(removeAllId, defaultBtnClass, 'fa fa-remove', gettext("Remove All"), disableModifyAllActions),
+                _renderSearch(searchSelectedId, searchItemTitle),
             ),
             afterInit: function () {
                 var that = this,
@@ -96,7 +99,24 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                     selectableSearchString = '#' + that.$container.attr('id') + ' .ms-elem-selectable:not(.ms-selected)',
                     selectionSearchString = '#' + that.$container.attr('id') + ' .ms-elem-selection.ms-selected';
 
-                that.search_left = $selectableSearch.quicksearch(selectableSearchString)
+                const _search = function (query, itemSelector) {
+                    const queries = (query || '').toLowerCase().split(/\s+/);
+                    $(itemSelector).each(function (index, item) {
+                        const $item = $(item),
+                            itemText = $item.text().toLowerCase();
+                        let found = _.every(queries, function (q) {
+                            return !q || itemText.indexOf(q) !== -1;
+                        });
+
+                        if (found) {
+                            $item.removeClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
+                        } else {
+                            $item.addClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
+                        }
+                    });
+                };
+
+                that.search_left = $selectableSearch
                     .on('keydown', function (e) {
                         if (e.which === 40) {  // down arrow, was recommended by loudev docs
                             that.$selectableUl.focus();
@@ -104,7 +124,9 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                         }
                     })
                     .on('keyup change search input', function () {
-                    // disable add all functionality so that user is not confused
+                        _search($selectableSearch.val(), selectableSearchString);
+
+                        // disable add all functionality so that user is not confused
                         if (that.search_left.val().length > 0) {
                             $('#' + selectAllId).addClass('disabled').prop('disabled', true);
                         } else {
@@ -114,7 +136,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                         }
                     });
 
-                that.search_right = $selectionSearch.quicksearch(selectionSearchString)
+                that.search_right = $selectionSearch
                     .on('keydown', function (e) {
                         if (e.which === 40) {  // down arrow, was recommended by loudev docs
                             that.$selectionUl.focus();
@@ -122,7 +144,9 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                         }
                     })
                     .on('keyup change search input', function () {
-                    // disable remove all functionality so that user is not confused
+                        _search($selectionSearch.val(), selectionSearchString);
+
+                        // disable remove all functionality so that user is not confused
                         if (that.search_right.val().length > 0) {
                             $('#' + removeAllId).addClass('disabled').prop('disabled', true);
                         } else if (!disableModifyAllActions) {
@@ -131,22 +155,14 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                     });
             },
             afterSelect: function () {
-                this.search_left.cache();
-                // remove search option so that user doesn't get confused
-                this.search_right.val('').search('');
                 if (!disableModifyAllActions) {
                     $('#' + removeAllId).removeClass('disabled').prop('disabled', false);
                 }
-                this.search_right.cache();
             },
             afterDeselect: function () {
-                // remove search option so that user doesn't get confused
-                this.search_left.val('').search('');
                 if (!disableModifyAllActions) {
                     $('#' + selectAllId).removeClass('disabled').prop('disabled', false);
                 }
-                this.search_left.cache();
-                this.search_right.cache();
             },
         });
 
@@ -163,11 +179,11 @@ hqDefine('hqwebapp/js/multiselect_utils', [
         });
     };
 
-    multiselect_utils.rebuildMultiselect = function (elementOrId, multiselectProperties) {
+    self.rebuildMultiselect = function (elementOrId, multiselectProperties) {
         var $element = _.isString(elementOrId) ? $('#' + elementOrId) : $(elementOrId);
         // multiSelect('refresh') breaks existing click handlers, so the alternative is to destroy and rebuild
         $element.multiSelect('destroy');
-        multiselect_utils.createFullMultiselectWidget(elementOrId, multiselectProperties);
+        self.createFullMultiselectWidget(elementOrId, multiselectProperties);
     };
 
     /*
@@ -182,7 +198,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
         init: function (element, valueAccessor) {
             var model = valueAccessor();
             assertProperties.assert(model, [], ['properties', 'options', 'didUpdateListener']);
-            multiselect_utils.createFullMultiselectWidget(element, model.properties);
+            self.createFullMultiselectWidget(element, model.properties);
 
             if (model.options) {
                 // apply bindings after the multiselect has been setup
@@ -197,12 +213,12 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                 ko.unwrap(model.options());
             }
 
-            multiselect_utils.rebuildMultiselect(element, model.properties);
+            self.rebuildMultiselect(element, model.properties);
             if (model.didUpdateListener) {
                 model.didUpdateListener();
             }
         },
     };
 
-    return multiselect_utils;
+    return self;
 });

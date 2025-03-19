@@ -1,16 +1,21 @@
+
 hqDefine('commtrack/js/products_and_programs_main', [
     'jquery',
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'commtrack/js/base_list_view_model',
-    'hqwebapp/js/widgets',   // "Additional Information" on product page uses a .hqwebapp-select2
+    'hqwebapp/js/bootstrap5/widgets',   // "Additional Information" on product page uses a .hqwebapp-select2
+    'hqwebapp/js/bootstrap5/knockout_bindings.ko',  // fadeVisible
+    'commcarehq',
 ], function (
     $,
     ko,
     _,
     initialPageData,
-    models
+    bootstrap,
+    models,
 ) {
     var commtrackProductsProgramsViewModel = function (o) {
         var self = models.BaseListViewModel(o);
@@ -37,7 +42,7 @@ hqDefine('commtrack/js/products_and_programs_main', [
                     dataType: 'json',
                     error: function () {
                         self.initialLoad(true);
-                        $('.hide-until-load').removeClass("hide");
+                        $('.hide-until-load').removeClass("d-none");
                         $('#user-list-notification').text(gettext('Sorry, there was an problem contacting the server ' +
                             'to fetch the data. Please, try again in a little bit.'));
                         self.currentlySearching(false);
@@ -51,12 +56,18 @@ hqDefine('commtrack/js/products_and_programs_main', [
 
         self.unsuccessfulArchiveAction = function (button) {
             return function (data) {
-                if (data.message && data.product_id) {
-                    var alertContainer = $('#alert_' + data.product_id);
-                    alertContainer.text(data.message);
-                    alertContainer.show();
+                if (data.product_id) {
+                    var alertContainer = $('#alert_' + data.product_id),
+                        message = data.message || _.template(gettext("Could not <%= action %> product. Please try again later."))({action: $(button).text().toLowerCase()});
+                    alertContainer.text(message);
+                    alertContainer.removeClass("d-none");
+                    var $modal = $(button).closest(".modal"),
+                        modal = bootstrap.Modal.getOrCreateInstance($modal);
+                    $modal.one('hidden.bs.modal', function () {
+                        alertContainer.addClass("d-none");
+                    });
                 }
-                $(button).button('unsuccessful');
+                $(button).enableButton();
             };
         };
 
@@ -65,9 +76,9 @@ hqDefine('commtrack/js/products_and_programs_main', [
             if (data.success) {
                 if (!self.initialLoad()) {
                     self.initialLoad(true);
-                    $('.hide-until-load').removeClass("hide");
+                    $('.hide-until-load').removeClass("d-none");
                 }
-                self.current_page(data.current_page);
+                self.current_page(parseInt(data.current_page));
                 self.dataList(data.data_list);
                 self.archiveActionItems([]);
             }
@@ -97,9 +108,9 @@ hqDefine('commtrack/js/products_and_programs_main', [
 
     ko.bindingHandlers.isPaginationActive = {
         update: function (element, valueAccessor, allBindingsAccessor) {
-            var current_page = parseInt(valueAccessor()());
-            var current_item = parseInt(allBindingsAccessor()['text']);
-            if (current_page === current_item) {
+            var currentPage = parseInt(valueAccessor()()),
+                currentItem = parseInt(allBindingsAccessor()['text']);
+            if (currentPage === currentItem) {
                 $(element).parent().addClass('active');
             } else {
                 $(element).parent().removeClass('active');

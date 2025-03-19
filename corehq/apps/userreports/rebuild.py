@@ -70,8 +70,45 @@ def get_table_diffs(engine, table_names, metadata):
 def get_tables_rebuild_migrate(diffs):
     tables_to_rebuild = get_tables_to_rebuild(diffs)
     tables_to_migrate = get_tables_to_migrate(diffs)
+    tables_to_ignore = get_tables_with_index_diff_only(diffs, index_column="inserted_at")
     tables_to_migrate -= tables_to_rebuild
+    tables_to_migrate -= tables_to_ignore
     return MigrateRebuildTables(migrate=tables_to_migrate, rebuild=tables_to_rebuild)
+
+
+def get_tables_with_index_diff_only(diffs, index_column):
+    """Iterates `diffs` for tables where the only change is an index that's added to the `index_column`"""
+    tables_to_ignore = set()
+    valid_netto_index_diffs = _get_indexes_diffs_to_change(diffs)
+    tables_with_index_change = {diff.table_name for diff in valid_netto_index_diffs}
+    for table_name in tables_with_index_change:
+        all_diffs_for_table = set(filter(lambda diff: diff.table_name == table_name, diffs))
+        index_diffs_for_table = set(
+            filter(
+                lambda diff: diff.table_name == table_name,
+                _filter_diffs(diffs, DiffTypes.INDEX_TYPES)
+            )
+        )
+        # The following code needs context:
+        # A `valid`` index is an index that's not being removed and added back. Those are there for some reason,
+        # thus what we're doing is to filter those out and only look at diffs that will cause a netto change
+        # to the table
+        valid_index_diffs_for_table = set(
+            filter(lambda diff: diff.table_name == table_name, valid_netto_index_diffs)
+        )
+        table_diffs_without_indexes = all_diffs_for_table - index_diffs_for_table
+        netto_diffs_for_table = list(table_diffs_without_indexes.union(valid_index_diffs_for_table))
+        if len(netto_diffs_for_table) > 1:
+            continue
+        _change_type, index = netto_diffs_for_table[0].raw
+        columns = list(index.columns)
+        if len(columns) > 1:
+            # Not sure if/when this will happen?
+            continue
+        column = columns[0]
+        if column.name == index_column:
+            tables_to_ignore.add(table_name)
+    return tables_to_ignore
 
 
 def get_tables_to_migrate(diffs):

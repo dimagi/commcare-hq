@@ -7,12 +7,9 @@ Initial setup
 Linux
 ~~~~~
 
-1. Install `Docker`_. You should `manage Docker as a non-root user`_.
+Install `Docker`_. You should `manage Docker as a non-root user`_.
 
-2. Install `Docker Compose`_. (You can install it in a virtualenv with
-   ``$ pip install docker-compose``.)
-
-OS X
+MacOS
 ~~~~
 
 Install `Docker Desktop`_. It is available for Mac with Intel, and Mac
@@ -41,7 +38,7 @@ etc.), you should stop them now.
 
 Run ::
 
-    $ scripts/docker up -d postgres couch redis elasticsearch2 zookeeper kafka minio
+    $ scripts/docker up -d postgres couch redis elasticsearch5 zookeeper kafka minio
 
 to build and start those Docker services in the background. (Omit ``-d``
 to run them in the foreground.)
@@ -200,8 +197,8 @@ TEST=[ javascript | **python** | python-sharded | python-sharded-and-javascript 
      ``javascript``. Also sends static analysis to Datadog if a job is a
      Travis "cron" event.
 
-NOSE_DIVIDED_WE_RUN
-   Only runs a subset of tests. See ``.travis.yml`` for exact options.
+DIVIDED_WE_RUN
+   Only runs a subset of tests. See the ``pytest dividedwerun plugin``_ for exact options.
 
 REUSE_DB
    Same as normal ``REUSE_DB``
@@ -227,3 +224,45 @@ DOCKER_HQ_OVERLAYFS_METACOPY=[ on | **off** ]
    (performance optimization, has security implications). (Default: "off")
 
 See ``.travis.yml`` for environment variable options used on Travis.
+
+.. _pytest dividedwerun plugin: https://github.com/dimagi/commcare-hq/blob/master/corehq/tests/pytest_plugins/dividedwerun.py
+
+Run containers with Podman instead of Docker
+============================================
+
+Podman 4.3 or later can be used to run HQ containers. Unlike docker, podman is
+daemonless and runs containers in rootless mode by default. Podman 4.x is
+available on recent versions of Ubuntu. Older versions, such as Ubuntu 22.04,
+require `a third-party package repository <https://podman.io/docs/installation#debian>`_.
+
+
+Install Podman
+--------------
+
+.. code:: bash
+
+    sudo apt install podman podman-docker
+    
+    echo 'export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock' >> ~/.bashrc
+    echo 'export DOCKER_SOCK=$XDG_RUNTIME_DIR/podman/podman.sock' >> ~/.bashrc
+
+Create a podman wrapper script named `docker` with the following content
+somewhere on your ``PATH`` (``~/.local/bin/docker`` may be a good place if it
+is on your ``PATH``).
+
+.. code:: bash
+
+    #! /usr/bin/bash
+    if [[ "$1" == compose ]]; then
+        shift
+        /usr/bin/docker-compose "$@"  # v1, installed by podman-docker
+    else
+        podman "$@"
+    fi
+
+Start containers
+----------------
+
+::
+
+    ./scripts/docker up -d

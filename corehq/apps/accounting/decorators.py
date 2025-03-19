@@ -1,7 +1,6 @@
-import json
 from functools import wraps
 
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 
 from django_prbac.decorators import requires_privilege
 from django_prbac.exceptions import PermissionDenied
@@ -9,6 +8,7 @@ from django_prbac.exceptions import PermissionDenied
 from corehq import privileges
 from corehq.apps.accounting.models import DefaultProductPlan
 from corehq.const import USER_DATE_FORMAT
+from corehq.toggles import domain_has_privilege_from_toggle
 
 
 def requires_privilege_with_fallback(slug, **assignment):
@@ -21,7 +21,8 @@ def requires_privilege_with_fallback(slug, **assignment):
         @wraps(fn)
         def wrapped(request, *args, **kwargs):
             try:
-                if (hasattr(request, 'subscription')
+                if (
+                    hasattr(request, 'subscription')
                     and request.subscription is not None
                     and request.subscription.is_trial
                     and request.subscription.date_end is not None
@@ -36,8 +37,14 @@ def requires_privilege_with_fallback(slug, **assignment):
                         'required_plan': edition_req,
                         'date_end': request.subscription.date_end.strftime(USER_DATE_FORMAT)
                     }
-                    request.is_domain_admin = (hasattr(request, 'couch_user') and
-                                               request.couch_user.is_domain_admin(request.domain))
+                    request.is_domain_admin = (hasattr(request, 'couch_user')
+                                               and request.couch_user.is_domain_admin(request.domain))
+
+                if (
+                    hasattr(request, 'domain')
+                    and domain_has_privilege_from_toggle(slug, request.domain)
+                ):
+                    return fn(request, *args, **kwargs)
 
                 return requires_privilege(slug, **assignment)(fn)(
                     request, *args, **kwargs
@@ -57,7 +64,7 @@ def requires_privilege_plaintext_response(slug,
     """
     A version of the requires_privilege decorator which returns an
     HttpResponse object with HTTP Status Code of 412 by default and
-    content_type of tex/plain if the privilege is not found.
+    content_type of text/plain if the privilege is not found.
     """
     def decorate(fn):
         @wraps(fn)
@@ -94,7 +101,8 @@ def requires_privilege_json_response(slug, http_status_code=None,
     """
     http_status_code = http_status_code or 401
     if get_response is None:
-        get_response = lambda msg, code: {'code': code, 'message': msg}
+        def get_response(msg, code):
+            return {'code': code, 'message': msg}
 
     def decorate(fn):
         @wraps(fn)
@@ -105,8 +113,7 @@ def requires_privilege_json_response(slug, http_status_code=None,
             except PermissionDenied:
                 error_message = "You have lost access to this feature."
                 response = get_response(error_message, http_status_code)
-                return HttpResponse(json.dumps(response),
-                                    content_type="application/json", status=401)
+                return JsonResponse(response, status=401)
         return wrapped
     return decorate
 

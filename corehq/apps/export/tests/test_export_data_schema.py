@@ -5,7 +5,6 @@ from django.test import SimpleTestCase, TestCase
 from unittest.mock import patch
 
 from corehq.apps.app_manager.models import (
-    AdvancedModule,
     AdvancedOpenCaseAction,
     Application,
     CaseIndex,
@@ -18,6 +17,8 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.signals import app_post_save
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.data_dictionary.models import CaseProperty, CasePropertyGroup, CaseType
+from corehq.apps.data_dictionary.util import generate_data_dictionary
 from corehq.apps.export.const import (
     CASE_ATTRIBUTES,
     CASE_CREATE_ELEMENTS,
@@ -312,18 +313,31 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
 
 class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
     app_id = '1234'
+    domain = 'test'
 
-    def test_case_type_metadata_parsing(self):
-
+    def _get_schema_from_case_property_mapping(self, for_bulk_export=False):
         case_property_mapping = {
             'candy': ['my_case_property', 'my_second_case_property']
         }
-        schema = CaseExportDataSchema._generate_schema_from_case_property_mapping(
-            case_property_mapping,
-            [],
-            self.app_id,
-            1,
-        )
+
+        with (patch('corehq.apps.export.models.new.get_case_property_group_name_for_properties')
+              as get_case_property_group_name_for_properties_patch):
+            get_case_property_group_name_for_properties_patch.return_value = {
+                'my_case_property': None,
+                'my_second_case_property': 'AwesomeProps'
+            }
+            return CaseExportDataSchema._generate_schema_from_case_property_mapping(
+                self.domain,
+                case_property_mapping,
+                [],
+                self.app_id,
+                1,
+                for_bulk_export=for_bulk_export,
+            )
+
+    @patch('corehq.apps.export.models.new.domain_has_privilege', return_value=True)
+    def test_case_type_metadata_parsing(self, _):
+        schema = self._get_schema_from_case_property_mapping()
         self.assertEqual(len(schema.group_schemas), 1)
         group_schema = schema.group_schemas[0]
 
@@ -344,6 +358,36 @@ class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
 
         update_items = [item for item in group_schema.items if item.tag == PROPERTY_TAG_UPDATE]
         self.assertEqual(len(update_items), 2 + len(KNOWN_CASE_PROPERTIES))
+
+    @patch('corehq.apps.export.models.new.domain_has_privilege', return_value=True)
+    def test_case_property_group_name(self, _):
+        schema = self._get_schema_from_case_property_mapping()
+        self.assertEqual(len(schema.group_schemas), 1)
+        group_schema = schema.group_schemas[0]
+
+        my_case_property_item = group_schema.items[0]
+        my_second_case_property_item = group_schema.items[1]
+
+        self.assertEqual(my_case_property_item.path, [PathNode(name='my_case_property')])
+        self.assertEqual(my_case_property_item.case_property_group_name, None)
+
+        self.assertEqual(my_second_case_property_item.path, [PathNode(name='my_second_case_property')])
+        self.assertEqual(my_second_case_property_item.case_property_group_name, 'AwesomeProps')
+
+    @patch('corehq.apps.export.models.new.domain_has_privilege', return_value=True)
+    def test_case_property_group_name_skipped_for_bulk_export(self, _):
+        schema = self._get_schema_from_case_property_mapping(for_bulk_export=True)
+        self.assertEqual(len(schema.group_schemas), 1)
+        group_schema = schema.group_schemas[0]
+
+        my_case_property_item = group_schema.items[0]
+        my_second_case_property_item = group_schema.items[1]
+
+        self.assertEqual(my_case_property_item.path, [PathNode(name='my_case_property')])
+        self.assertEqual(my_case_property_item.case_property_group_name, None)
+
+        self.assertEqual(my_second_case_property_item.path, [PathNode(name='my_second_case_property')])
+        self.assertEqual(my_second_case_property_item.case_property_group_name, None)
 
 
 class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
@@ -448,14 +492,23 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(len(group_schema2.items), 1)
 
 
+@patch('corehq.apps.export.models.new.domain_has_privilege', return_value=True)
+@patch('corehq.apps.export.models.new.get_case_property_group_name_for_properties')
 class TestMergingCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
+    domain = 'test'
 
-    def test_basic_case_prop_merge(self):
+    def test_basic_case_prop_merge(self, get_case_property_group_name_for_properties_patch, *args):
+        get_case_property_group_name_for_properties_patch.return_value = {
+            'my_case_property': None,
+            'my_second_case_property': 'AwesomeProps'
+        }
+
         app_id = '1234'
         case_property_mapping = {
             'candy': ['my_case_property', 'my_second_case_property']
         }
         schema1 = CaseExportDataSchema._generate_schema_from_case_property_mapping(
+            self.domain,
             case_property_mapping,
             [],
             app_id,
@@ -465,6 +518,7 @@ class TestMergingCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
             'candy': ['my_case_property', 'my_third_case_property']
         }
         schema2 = CaseExportDataSchema._generate_schema_from_case_property_mapping(
+            self.domain,
             case_property_mapping,
             [],
             app_id,
@@ -494,7 +548,12 @@ class TestMergingCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
             len(case_property_mapping['candy']) + len(KNOWN_CASE_PROPERTIES),
         )
 
-    def test_inferred_schema_merge(self):
+    def test_inferred_schema_merge(self, get_case_property_group_name_for_properties_patch, *args):
+        get_case_property_group_name_for_properties_patch.return_value = {
+            'my_case_property': None,
+            'my_second_case_property': 'AwesomeProps'
+        }
+
         schema = CaseExportDataSchema(
             domain='my-domain',
             group_schemas=[
@@ -1074,7 +1133,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         # Only the new property should be added. The repeated one should be merged
         self.assertEqual(len(group_schema.items), 3)
 
-    @patch('corehq.apps.export.models.new.get_case_types_from_apps', return_value=(case_type,))
+    @patch('corehq.apps.export.models.new.get_case_types_for_domain', return_value=(case_type,))
     def test_build_with_bulk_schema(self, _):
         schema = CaseExportDataSchema.generate_schema_from_builds(
             self.domain,
@@ -1354,3 +1413,134 @@ class TestOrderingOfSchemas(SimpleTestCase):
                 GeopointItem(path=[PathNode(name='one')]),
             ],
         )
+
+
+class BaseTestOrderingOfCaseSchemaItems(TestCase, TestXmlMixin):
+    file_path = ['data']
+    root = os.path.dirname(__file__)
+    case_type = 'person'
+    domain = 'test-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        super(BaseTestOrderingOfCaseSchemaItems, cls).setUpClass()
+
+        factory = AppFactory(domain=cls.domain)
+        module1, form1 = factory.new_basic_module('update_case', cls.case_type)
+        factory.form_requires_case(form1, cls.case_type, update={
+            'age': '/data/age',
+            'height': '/data/height',
+            'weight': '/data/weight',
+            'address': '/data/address'
+        })
+        cls.current_app = factory.app
+
+        with drop_connected_signals(app_post_save):
+            cls.current_app.save()
+
+        with patch('corehq.apps.data_dictionary.util.get_case_types_from_apps', return_value={cls.case_type}):
+            generate_data_dictionary(cls.domain)
+
+        case_type = CaseType.objects.filter(name=cls.case_type).first()
+        details_group = CasePropertyGroup.objects.create(case_type=case_type, name='details', index=1)
+
+        weight_case_property = CaseProperty.objects.filter(name='weight').first()
+        weight_case_property.group = details_group
+        weight_case_property.index = 0
+        weight_case_property.save()
+
+        height_case_property = CaseProperty.objects.filter(name='height').first()
+        height_case_property.group = details_group
+        height_case_property.index = 1
+        height_case_property.save()
+
+        address_group = CasePropertyGroup.objects.create(case_type=case_type, name='location', index=2)
+        address_case_property = CaseProperty.objects.filter(name='address').first()
+        address_case_property.group = address_group
+        address_case_property.index = 0
+        address_case_property.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.current_app.delete()
+        super(BaseTestOrderingOfCaseSchemaItems, cls).tearDownClass()
+
+    def _get_schema_item_order(self, for_new_export_instance=True):
+        schema = self._generate_schema(for_new_export_instance=for_new_export_instance)
+        return [item.label for item in schema.group_schemas[0].items]
+
+    def _generate_schema(self):
+        raise NotImplementedError
+
+
+class TestOrderingOfCaseSchemaItemsFromDataDictionary(BaseTestOrderingOfCaseSchemaItems):
+    def _generate_schema(self, for_new_export_instance=True):
+        return CaseExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            None,
+            self.case_type,
+            for_new_export_instance=for_new_export_instance
+        )
+
+    def test_data_dictionary_setup(self):
+        data_dictionary_case_types = CaseType.objects.filter(domain=self.domain).all()
+        self.assertEqual(len(data_dictionary_case_types), 1)
+
+        self.assertListEqual(
+            list(CaseProperty.objects.order_by('name').values_list('name', 'index')),
+            [('address', 0), ('age', 0), ('height', 1), ('name', 0), ('weight', 0)]
+        )
+
+        self.assertListEqual(
+            list(CasePropertyGroup.objects.order_by('name').values_list('name', 'index')),
+            [('details', 1), ('location', 2)]
+        )
+
+    @patch('corehq.apps.data_dictionary.util.get_case_types_from_apps')
+    def test_default_ordering(self, *args):
+        self.assertListEqual(
+            self._get_schema_item_order(),
+            ['address', 'age', 'height', 'weight']
+        )
+
+        self.assertListEqual(
+            self._get_schema_item_order(for_new_export_instance=False),
+            ['address', 'age', 'height', 'weight']
+        )
+
+    @patch('corehq.apps.export.models.new.domain_has_privilege', return_value=True)
+    def test_ordering_for_existing_instance_with_feature_flag(self, *args):
+        schema = self._generate_schema(for_new_export_instance=False)
+        schemas_item_order = [item.label for item in schema.group_schemas[0].items]
+        self.assertListEqual(schemas_item_order, ['address', 'age', 'height', 'weight'])
+
+    @patch('corehq.apps.export.models.new.domain_has_privilege', return_value=True)
+    def test_ordering_for_new_instance_with_feature_flag(self, *args):
+        self.assertListEqual(
+            self._get_schema_item_order(),
+            ['weight', 'height', 'address', 'age']
+        )
+
+
+class TestOrderingOfBulkCaseExportSchemaItemsFromDataDictionary(BaseTestOrderingOfCaseSchemaItems):
+    def _generate_schema(self, **kwargs):
+        return CaseExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            None,
+            ALL_CASE_TYPE_EXPORT,
+        )
+
+    def test_default_ordering(self, *args):
+        with patch('corehq.apps.export.models.new.get_case_types_for_domain', return_value=(self.case_type,)):
+            self.assertListEqual(
+                self._get_schema_item_order(),
+                ['address', 'age', 'height', 'weight']
+            )
+
+    @patch('corehq.apps.export.models.new.domain_has_privilege', return_value=True)
+    def test_ordering_for_bulk_export_with_feature_flag(self, *args):
+        with patch('corehq.apps.export.models.new.get_case_types_for_domain', return_value=(self.case_type,)):
+            self.assertListEqual(
+                self._get_schema_item_order(),
+                ['weight', 'height', 'address', 'age']
+            )

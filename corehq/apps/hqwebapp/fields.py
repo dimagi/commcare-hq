@@ -44,6 +44,9 @@ class MultiCharField(forms.Field):
     choices = property(_get_choices, _set_choices)
 
     def run_validators(self, value):
+        if value in self.empty_values:
+            return
+
         for val in value:
             if val not in self.choices:
                 super(MultiCharField, self).run_validators(val)

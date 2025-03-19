@@ -1,19 +1,41 @@
 import datetime
 import logging
+import requests
 
 from celery.schedules import crontab
 
-from corehq.apps.celery import periodic_task
+from corehq.apps.celery import periodic_task, task
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.sso.models import IdentityProvider, IdentityProviderProtocol
-from corehq.apps.sso.utils.context_helpers import (
-    get_idp_cert_expiration_email_context,
+from corehq.apps.sso.exceptions import EntraVerificationFailed, EntraUnsupportedType
+from corehq.apps.sso.models import (
+    IdentityProvider,
+    IdentityProviderProtocol,
+    IdentityProviderType,
 )
+from corehq.apps.sso.utils.context_helpers import (
+    get_api_secret_expiration_email_context,
+    get_idp_cert_expiration_email_context,
+    get_sso_deactivation_skip_email_context,
+)
+from corehq.apps.sso.utils.entra import MSGraphIssue
+from corehq.apps.sso.utils.user_helpers import convert_emails_to_lowercase
+from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import HQApiKey
+from corehq.apps.users.util import SYSTEM_USER_ID, log_user_change
+from django.contrib.auth.models import User
+from corehq.const import USER_CHANGE_VIA_SSO_DEACTIVATION
+from corehq.sql_db.util import paginate_query
+from django.db import router
+from django.db.models import Q
+from django.utils.translation import gettext as _
+from dimagi.utils.chunked import chunked
+from dimagi.utils.logging import notify_exception
 
 log = logging.getLogger(__name__)
 
 
 IDP_CERT_EXPIRES_REMINDER_DAYS = [30, 15, 7, 3, 1, 0]
+IDP_API_SECRET_EXPIRES_REMINDER_DAYS = [30, 15, 7, 3, 1, 0]
 
 
 @periodic_task(run_every=crontab(minute=0, hour=22), acks_late=True)
@@ -99,3 +121,183 @@ def send_idp_cert_expires_reminder_emails(num_days):
                 f"Failed to send cert reminder email for IdP {idp}: {exc!s}",
                 exc_info=True,
             )
+
+
+@periodic_task(run_every=crontab(minute=0, hour='*/4'), acks_late=True)
+def auto_deactivate_removed_sso_users():
+    for idp in IdentityProvider.objects.filter(
+        enable_user_deactivation=True,
+        idp_type=IdentityProviderType.ENTRA_ID,
+    ).all():
+        try:
+            usernames_in_idp = set(convert_emails_to_lowercase(idp.get_remote_member_usernames()))
+        except EntraVerificationFailed as e:
+            notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
+            send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.VERIFICATION_ERROR,
+                                            error=e.error,
+                                            error_description=e.message)
+            continue
+        except requests.exceptions.HTTPError as e:
+            notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
+            send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.HTTP_ERROR)
+            continue
+        except EntraUnsupportedType as e:
+            notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
+            send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.UNSUPPORTED_ERROR,
+                                            error_description=e.message)
+            continue
+        except Exception as e:
+            notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
+            send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.OTHER_ERROR)
+            continue
+
+        # if the Graph Users API returns an empty list of users we will skip auto deactivation
+        if len(usernames_in_idp) == 0:
+            send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.EMPTY_ERROR)
+            continue
+
+        usernames_governed_by_idp = set(idp.get_local_member_usernames())
+
+        # Deactivate user that is not returned by Graph Users API
+        for username in usernames_governed_by_idp:
+            if username not in usernames_in_idp:
+                user = WebUser.get_by_username(username)
+                if user and user.is_active:
+                    user.is_active = False
+                    user.save()
+                    log_user_change(by_domain=None, for_domain=None,
+                            by_domain_required_for_log=False, for_domain_required_for_log=False,
+                            couch_user=user, fields_changed={'is_active': user.is_active},
+                            changed_via=USER_CHANGE_VIA_SSO_DEACTIVATION,
+                            changed_by_user=SYSTEM_USER_ID)
+
+
+def send_deactivation_skipped_email(idp, failure_code, error=None, error_description=None):
+    if failure_code == MSGraphIssue.VERIFICATION_ERROR:
+        failure_reason = _("There was an issue connecting to the Microsoft Graph API. "
+                           f"Error: {error}. Error description: {error_description}")
+    elif failure_code == MSGraphIssue.HTTP_ERROR:
+        failure_reason = _("An HTTP error occured when connecting to the Microsoft Graph API, which usually"
+                           "indicates an issue with Microsoft's servers.")
+    elif failure_code == MSGraphIssue.EMPTY_ERROR:
+        failure_reason = _("We received an empty list of users from your Microsoft Entra ID instance.")
+    elif failure_code == MSGraphIssue.UNSUPPORTED_ERROR:
+        failure_reason = _("We encountered an issue when connecting to your Microsoft Graph API: "
+                           f"{error_description}")
+    elif failure_code == MSGraphIssue.OTHER_ERROR:
+        failure_reason = _("We encountered an unknown issue, please contact Commcare HQ Support.")
+
+    context = get_sso_deactivation_skip_email_context(idp, failure_reason)
+    for send_to in context["to"]:
+        send_html_email_async.delay(
+            context["subject"],
+            send_to,
+            context["html"],
+            text_content=context["plaintext"],
+            email_from=context["from"],
+            bcc=context["bcc"],
+        )
+        log.info(
+            "Sent sso user deactivation skipped notification"
+            "email for %(idp_name)s to %(send_to)s." % {
+                "idp_name": idp.name,
+                "send_to": send_to,
+            }
+        )
+
+
+@task(bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
+def update_sso_user_api_key_expiration_dates(self, identity_provider_id):
+    idp = IdentityProvider.objects.get(id=identity_provider_id)
+    enforce_key_expiration_for_idp(idp)
+
+
+def enforce_key_expiration_for_idp(idp):
+    num_updated = 0
+
+    if idp.max_days_until_user_api_key_expiration is None:
+        return num_updated
+
+    user_iter = get_users_for_email_domains(idp.get_email_domains())
+    max_expiration_date = datetime.datetime.utcnow() + datetime.timedelta(
+        days=idp.max_days_until_user_api_key_expiration)
+    key_iter = get_keys_expiring_after(user_iter, max_expiration_date)
+
+    for key_chunk in chunked(key_iter, 500):
+        batch = []
+        for key in key_chunk:
+            key.expiration_date = max_expiration_date
+            batch.append(key)
+        HQApiKey.objects.bulk_update(batch, ['expiration_date'])
+        num_updated += len(batch)
+
+    return num_updated
+
+
+def get_users_for_email_domains(domains):
+    user_db = router.db_for_read(User)
+    user_batch_size = 500
+
+    for domain in domains:
+        query = Q(username__endswith=f'@{domain}')
+        yield from paginate_query(user_db, User, query, query_size=user_batch_size)
+
+
+def get_keys_expiring_after(users, expiration_date):
+    has_noncompliant_expiration = Q(expiration_date=None) | Q(expiration_date__gt=expiration_date)
+
+    for user in users:
+        yield from user.api_keys(manager='all_objects').filter(has_noncompliant_expiration)
+
+
+@periodic_task(run_every=crontab(minute=0, hour=14), acks_late=True)
+def send_api_token_expiration_reminder():
+    """
+    Sends reminder emails for IDP api secret expiring N days from today.
+    """
+    for num_days in IDP_API_SECRET_EXPIRES_REMINDER_DAYS:
+        send_api_token_expiration_reminder_emails(num_days)
+
+
+def send_api_token_expiration_reminder_emails(num_days):
+    """
+    Sends a reminder email to the enterprise admin email addresses specified on
+    the IdP's owner account for any IdPs with api secret that will expire on
+    the date `num_days` from today, and have enable_user_deactivation is set to True.
+
+    :param num_days: Query IdP api secret expiring `num_days` from today.
+    """
+    today = datetime.datetime.utcnow().date()
+    date_in_n_days = today + datetime.timedelta(days=num_days)
+    day_after_that = date_in_n_days + datetime.timedelta(days=1)
+    queryset = IdentityProvider.objects.filter(
+        is_active=True,
+        enable_user_deactivation=True,
+        date_api_secret_expiration__gte=date_in_n_days,
+        date_api_secret_expiration__lt=day_after_that,
+    )
+    for idp in queryset.all():
+        context = get_api_secret_expiration_email_context(idp)
+        if not context["to"]:
+            notify_exception(None, f"no admin email addresses for IdP: {idp}")
+        try:
+            for send_to in context["to"]:
+                send_html_email_async.delay(
+                    context["subject"],
+                    send_to,
+                    context["html"],
+                    text_content=context["plaintext"],
+                    email_from=context["from"],
+                    bcc=context["bcc"],
+                )
+                log.info(
+                    "Sent %(num_days)s-day api secret expiration reminder "
+                    "email for %(idp_name)s to %(send_to)s." % {
+                        "num_days": num_days,
+                        "idp_name": idp.name,
+                        "send_to": send_to,
+                    }
+                )
+        except Exception as exc:
+            notify_exception(None, f"Failed to send api secret expire reminder email for IdP {idp}: {exc!s}",
+                             exc_info=True)

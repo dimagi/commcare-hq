@@ -7,24 +7,34 @@ from django.utils.translation import gettext_lazy
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import property_changed_in_action
+from couchexport.deid import deid_date, deid_ID
 from dimagi.utils.parsing import json_format_datetime
 
+from corehq.apps.case_search.const import INDEXED_METADATA_BY_KEY
+from corehq.apps.data_interfaces.deduplication import DEDUPE_XMLNS
 from corehq.apps.es import filters
 from corehq.apps.es.cases import CaseES
+from corehq.apps.export.const import DEID_DATE_TRANSFORM, DEID_ID_TRANSFORM
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.exceptions import CaseNotFound, MissingFormXml
 from corehq.form_processor.models import CommCareCase
+from corehq.motech.dhis2.const import XMLNS_DHIS2
+from corehq.apps.hqcase.constants import UPDATE_REASON_RESAVE
 
 CASEBLOCK_CHUNKSIZE = 100
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
 EDIT_FORM_XMLNS = 'http://commcarehq.org/case/edit'
 AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
+REPEATER_RESPONSE_XMLNS = 'http://commcarehq.org/data_forwarding/response'
 
 SYSTEM_FORM_XMLNS_MAP = {
     SYSTEM_FORM_XMLNS: gettext_lazy('System Form'),
     EDIT_FORM_XMLNS: gettext_lazy('Data Cleaning Form'),
     AUTO_UPDATE_XMLNS: gettext_lazy('Automatic Case Update Rule'),
+    DEDUPE_XMLNS: gettext_lazy('Deduplication Rule'),
+    XMLNS_DHIS2: gettext_lazy('DHIS2 Integration'),
+    REPEATER_RESPONSE_XMLNS: gettext_lazy('Data Forwarding Response'),
 }
 
 ALLOWED_CASE_IDENTIFIER_TYPES = [
@@ -142,7 +152,6 @@ def _get_update_or_close_case_block(
     case_properties=None,
     close=False,
     owner_id=None,
-    domain=None,
 ):
     kwargs = {
         'create': False,
@@ -157,8 +166,6 @@ def _get_update_or_close_case_block(
         kwargs['update'] = case_properties
     if owner_id:
         kwargs['owner_id'] = owner_id
-    if domain:
-        kwargs['domain'] = domain
 
     return CaseBlock.deprecated_init(case_id, **kwargs)
 
@@ -188,7 +195,7 @@ def update_case(
                the project is over its submission rate limit.
                See the docstring for submit_form_locally for meaning of values
     """
-    caseblock = _get_update_or_close_case_block(case_id, case_properties, close, owner_id, domain=domain)
+    caseblock = _get_update_or_close_case_block(case_id, case_properties, close, owner_id)
     return submit_case_blocks(
         ElementTree.tostring(caseblock.as_xml(), encoding='utf-8').decode('utf-8'),
         domain,
@@ -220,7 +227,7 @@ def bulk_update_cases(domain, case_changes, device_id, xmlns=None):
 
 def resave_case(domain, case, send_post_save_signal=True):
     from corehq.form_processor.change_publishers import publish_case_saved
-    publish_case_saved(case, send_post_save_signal)
+    publish_case_saved(case, associated_form_id=UPDATE_REASON_RESAVE, send_post_save_signal=send_post_save_signal)
 
 
 def get_last_non_blank_value(case, case_property):
@@ -237,3 +244,68 @@ def get_last_non_blank_value(case, case_property):
             property_changed_info = None
         if property_changed_info and property_changed_info.new_value:
             return property_changed_info.new_value
+
+
+def get_case_value(case, value):
+    """
+    Returns the case's ``value`` and whether it's a property on the case
+    (as opposed to attribute).
+
+    :param case: the relevant case
+    :param value: the value you want from the case
+    :returns: A tuple containing the value and whether that value is a
+        property on the case. If no value is found ``(None, None)`` is
+        returned
+    """
+    if not value:
+        return None, None
+
+    if value in INDEXED_METADATA_BY_KEY:
+        return INDEXED_METADATA_BY_KEY[value].get_value(case.to_json()), False
+    elif value in case.case_json:
+        return case.case_json.get(value, None), True
+    return None, None
+
+
+def get_deidentified_data(case, censor_data):
+    """
+    This function is used to get the data on the specified case, but
+    with the ``censor_data`` properties censored.
+
+    :param case: the case to censor the data for
+    :param censor_data: a dictionary containing as key the case
+        attribute or property to de-identify, and as value the name of
+        the transform method to use to de-identify the data. An invalid
+        transform name will result in a blank value.
+    :returns: A tuple containing a dictionary of censored case
+        attributes and their de-identified values, and a dictionary of
+        censored case properties and their de-identified values.
+    """
+    attrs = {}
+    props = {}
+
+    if censor_data:
+        for attr_or_prop, transform in censor_data.items():
+            case_value, is_case_property = get_case_value(case, attr_or_prop)
+
+            if not case_value:
+                continue
+
+            censored_value = ''
+            if transform == DEID_DATE_TRANSFORM:
+                censored_value = deid_date(case_value, None, key=case.case_id)
+            if transform == DEID_ID_TRANSFORM:
+                censored_value = deid_ID(case_value, None)
+
+            if is_case_property:
+                props[attr_or_prop] = censored_value
+            else:
+                attrs[attr_or_prop] = censored_value
+
+    return attrs, props
+
+
+def is_copied_case(case):
+    """Returns True if the case was created by copying an existing case using the 'COPY_CASES' feature"""
+    from corehq.apps.hqcase.case_helper import CaseCopier
+    return CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME in case.case_json

@@ -1,16 +1,20 @@
-/* global tableau */
-hqDefine("reports/js/tableau", function () {
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        self = {};
+hqDefine("reports/js/tableau", [
+    'jquery',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'commcarehq',
+], function (
+    $,
+    _,
+    initialPageData,
+) {
+    var self = {};
 
     self.requestViz = function () {
         $.ajax({
             method: 'post',
-            url: initialPageData.reverse('tableau_visualization_ajax'),
+            url: initialPageData.reverse('get_tableau_server_ticket'),
             data: {
-                validate_hostname: initialPageData.get("validate_hostname"),
-                server_name: initialPageData.get("server_address"),
-                target_site: initialPageData.get("target_site"),
                 viz_id: initialPageData.get("viz_id"),
             },
             dataType: 'json',
@@ -42,8 +46,10 @@ hqDefine("reports/js/tableau", function () {
             view_url: initialPageData.get("view_url"),
         });
 
-        new tableau.Viz(containerDiv, url, {
-            hideTabs: true,
+        $.getScript("https://" + initialPageData.get("validate_hostname") + "/javascripts/api/tableau-2.5.0.min.js", function () {
+            new window.tableau.Viz(containerDiv, url, {
+                hideTabs: true,
+            });
         });
     };
 

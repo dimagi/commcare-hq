@@ -62,6 +62,7 @@ from corehq.apps.sms.models import (
     OUTGOING,
     SMS,
     WORKFLOWS_FOR_REPORTS,
+    ConnectMessage,
     MessagingEvent,
     MessagingSubEvent,
     PhoneBlacklist,
@@ -466,7 +467,8 @@ class MessageLogReport(BaseCommConnectLogReport):
                 return phone_number[0:7] if phone_number[0] == "+" else phone_number[0:6]
             return phone_number
 
-        get_direction = lambda d: self._fmt_direction(d)['html']
+        def get_direction(d):
+            return self._fmt_direction(d)['html']
 
         def get_timestamp(date_):
             timestamp = ServerTime(date_).user_time(self.timezone).done()
@@ -708,9 +710,9 @@ class MessagingEventsReport(BaseMessagingEventReport):
         event_status = EventStatusFilter.get_value(self.request, self.domain)
         if event_status == MessagingEvent.STATUS_ERROR:
             event_status_filter = (
-                Q(status=event_status) |
-                Q(messagingsubevent__status=event_status) |
-                Q(messagingsubevent__sms__error=True)
+                Q(status=event_status)
+                | Q(messagingsubevent__status=event_status)
+                | Q(messagingsubevent__sms__error=True)
             )
         elif event_status == MessagingEvent.STATUS_IN_PROGRESS:
             # We need to check for id__isnull=False below because the
@@ -719,22 +721,22 @@ class MessagingEventsReport(BaseMessagingEventReport):
             # session_is_open=True if there actually are
             # subevent and xforms session records
             event_status_filter = (
-                Q(status=event_status) |
-                Q(messagingsubevent__status=event_status) |
-                (Q(messagingsubevent__xforms_session__id__isnull=False) &
-                 Q(messagingsubevent__xforms_session__session_is_open=True))
+                Q(status=event_status)
+                | Q(messagingsubevent__status=event_status)
+                | (Q(messagingsubevent__xforms_session__id__isnull=False)
+                   & Q(messagingsubevent__xforms_session__session_is_open=True))
             )
         elif event_status == MessagingEvent.STATUS_NOT_COMPLETED:
             event_status_filter = (
-                Q(status=event_status) |
-                Q(messagingsubevent__status=event_status) |
-                (Q(messagingsubevent__xforms_session__session_is_open=False) &
-                 Q(messagingsubevent__xforms_session__submission_id__isnull=True))
+                Q(status=event_status)
+                | Q(messagingsubevent__status=event_status)
+                | (Q(messagingsubevent__xforms_session__session_is_open=False)
+                   & Q(messagingsubevent__xforms_session__submission_id__isnull=True))
             )
         elif event_status == MessagingEvent.STATUS_EMAIL_DELIVERED:
             event_status_filter = (
-                Q(status=event_status) |
-                Q(messagingsubevent__status=event_status)
+                Q(status=event_status)
+                | Q(messagingsubevent__status=event_status)
             )
 
         return source_filter, content_type_filter, event_status_filter, error_code_filter
@@ -772,8 +774,8 @@ class MessagingEventsReport(BaseMessagingEventReport):
 
         if content_type_filter:
             data = data.filter(
-                (Q(content_type__in=content_type_filter) |
-                 Q(messagingsubevent__content_type__in=content_type_filter))
+                (Q(content_type__in=content_type_filter)
+                 | Q(messagingsubevent__content_type__in=content_type_filter))
             )
 
         if event_status_filter:
@@ -846,7 +848,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
     emailable = False
     exportable = False
     hide_filters = True
-    report_template_path = "reports/messaging/event_detail.html"
+    report_template_path = "reports/messaging/bootstrap3/event_detail.html"
     parent_report_class = MessagingEventsReport
 
     @classmethod
@@ -868,8 +870,13 @@ class MessageEventDetailReport(BaseMessagingEventReport):
     def headers(self):
         EMAIL_ADDRRESS = _('Email Address')
         PHONE_NUMBER = _('Phone Number')
-        if self.messaging_event and self.messaging_event.content_type == MessagingEvent.CONTENT_EMAIL:
-            contact_column = EMAIL_ADDRRESS
+        CONNECT_ID = _('ConnectID')
+        if self.messaging_event:
+            if self.messaging_event.content_type == MessagingEvent.CONTENT_EMAIL:
+                contact_column = EMAIL_ADDRRESS
+            elif self.messaging_event.content_type in (MessagingEvent.CONTENT_CONNECT,
+                                                       MessagingEvent.CONTENT_CONNECT_SURVEY):
+                contact_column = CONNECT_ID
         else:
             contact_column = PHONE_NUMBER
         return DataTablesHeader(
@@ -885,7 +892,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
     @property
     @memoized
     def messaging_event(self):
-        messaging_event_id = self.request.GET.get('id', None)
+        messaging_event_id = self.get_request_param('id', None)
 
         try:
             messaging_event_id = int(messaging_event_id)
@@ -910,11 +917,11 @@ class MessageEventDetailReport(BaseMessagingEventReport):
     def view_response(self):
         subevents = self.messaging_subevents
         if (
-            len(subevents) == 1 and
-            subevents[0].content_type in (MessagingEvent.CONTENT_SMS_SURVEY,
-                                          MessagingEvent.CONTENT_IVR_SURVEY) and
-            subevents[0].xforms_session_id and
-            subevents[0].status != MessagingEvent.STATUS_ERROR
+            len(subevents) == 1
+                and subevents[0].content_type in (MessagingEvent.CONTENT_SMS_SURVEY,
+                                                  MessagingEvent.CONTENT_IVR_SURVEY)
+                and subevents[0].xforms_session_id
+                and subevents[0].status != MessagingEvent.STATUS_ERROR
         ):
             # There's only one survey to report on here - just redirect to the
             # survey detail page
@@ -959,7 +966,8 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                             self._fmt(status),
                         ])
             elif messaging_subevent.content_type in (MessagingEvent.CONTENT_SMS_SURVEY,
-                    MessagingEvent.CONTENT_IVR_SURVEY):
+                                                     MessagingEvent.CONTENT_IVR_SURVEY,
+                                                     MessagingEvent.CONTENT_CONNECT_SURVEY):
                 status = get_status_display(messaging_subevent)
                 xforms_session = messaging_subevent.xforms_session
                 timestamp = xforms_session.start_time if xforms_session else messaging_subevent.date
@@ -993,6 +1001,26 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                     self._fmt(_('Email')),
                     self._fmt(status),
                 ])
+            elif messaging_subevent.content_type == MessagingEvent.CONTENT_CONNECT:
+                timestamp = ServerTime(messaging_subevent.date).user_time(self.timezone).done()
+                status = get_status_display(messaging_subevent)
+                content = '-'
+                recipient_address = '-'
+                try:
+                    msg = ConnectMessage.objects.get(messaging_subevent=messaging_subevent.pk)
+                except ConnectMessage.DoesNotExist:
+                    pass
+                content = msg.text
+                recipient = msg.couch_recipient
+                result.append([
+                    self._fmt_timestamp(timestamp),
+                    self._fmt_contact_link(messaging_subevent.recipient_id, doc_info),
+                    self._fmt(content),
+                    self._fmt(recipient),
+                    self._fmt_direction(msg.direction),
+                    self._fmt(_('Connect Message')),
+                    self._fmt(status),
+                ])
         return result
 
 
@@ -1003,7 +1031,7 @@ class SurveyDetailReport(BaseMessagingEventReport):
     emailable = False
     exportable = False
     hide_filters = True
-    report_template_path = "reports/messaging/survey_detail.html"
+    report_template_path = "reports/messaging/bootstrap3/survey_detail.html"
     parent_report_class = MessagingEventsReport
 
     @classmethod
@@ -1035,7 +1063,7 @@ class SurveyDetailReport(BaseMessagingEventReport):
     @property
     @memoized
     def xforms_session(self):
-        xforms_session_id = self.request.GET.get('id', None)
+        xforms_session_id = self.get_request_param('id', None)
 
         try:
             xforms_session_id = int(xforms_session_id)
@@ -1204,9 +1232,9 @@ class PhoneNumberReport(BaseCommConnectLogReport):
     @property
     def _show_users_without_phone_numbers(self):
         return (
-            self.filter_type == 'contact' and
-            self.contact_type == 'users' and
-            self.has_phone_number != 'has_phone_number'
+            self.filter_type == 'contact'
+            and self.contact_type == 'users'
+            and self.has_phone_number != 'has_phone_number'
         )
 
     @property
@@ -1228,9 +1256,9 @@ class PhoneNumberReport(BaseCommConnectLogReport):
         elif number.pending_verification:
             return "Verification Pending"
         elif (
-                not (number.is_two_way or number.pending_verification) and
-                PhoneNumber.get_reserved_number(number.phone_number)
-             ):
+                not (number.is_two_way or number.pending_verification)
+                and PhoneNumber.get_reserved_number(number.phone_number)
+        ):
             return "Already In Use"
         return "Not Verified"
 

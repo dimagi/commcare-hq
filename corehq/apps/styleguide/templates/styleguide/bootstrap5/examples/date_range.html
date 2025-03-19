@@ -1,0 +1,19 @@
+<input id="js-date-range" class="form-control" type="text" name="date_range" />
+
+<script>
+  new tempusDominus.TempusDominus(
+    document.getElementById('js-date-range'),
+    {
+      dateRange: true,
+      multipleDatesSeparator: " - ",
+      display: {
+        theme: 'light',
+        components: {
+          clock: false,
+        }
+      },
+      localization: {
+        format: 'L',
+      },
+    });
+</script>

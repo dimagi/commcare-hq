@@ -4,17 +4,19 @@ hqDefine("events/js/event_attendees",[
     'underscore',
     'hqwebapp/js/initial_page_data',
     'jquery.rmi/jquery.rmi',
-    "hqwebapp/js/widgets",
-    "hqwebapp/js/components.ko", // for pagination
+    'locations/js/widgets',
+    "hqwebapp/js/bootstrap3/widgets",
+    "hqwebapp/js/components/pagination",
+    "hqwebapp/js/components/search_box",
+    "commcarehq",
 ], function (
     $,
     ko,
     _,
     initialPageData,
-    RMI
+    RMI,
+    locationsWidgets,
 ) {
-    'use strict';
-
     var STATUS_CSS = {
         NONE: '',
         PENDING: 'pending',
@@ -32,6 +34,7 @@ hqDefine("events/js/event_attendees",[
             creationStatus: STATUS_CSS.NONE,
             creationError: '',
             name: '',
+            location_id: '',
             case_id: '',
         });
 
@@ -108,36 +111,24 @@ hqDefine("events/js/event_attendees",[
         return self;
     };
 
-    var mobileWorkerAttendees = function() {
+    var mobileWorkerAttendees = function () {
         self.mobileWorkerAttendeesEnabled = ko.observable(false);
         self.buttonText = ko.observable("");
-        self.toggleMobileWorkerAttendees = function() {
-            $.ajax({
-                method: 'POST',
-                url: initialPageData.reverse('attendees_config'),
-                contentType: 'application/json',
-                data: JSON.stringify({'mobile_worker_attendee_enabled': !self.mobileWorkerAttendeesEnabled()}),
-                success: function (data) {
-                    self.mobileWorkerAttendeesEnabled(data.mobile_worker_attendee_enabled);
-                    self.toggleButtonText();
-                },
-            });
-        };
 
-        self.toggleButtonText = function() {
+        self.toggleButtonText = function () {
             var button = document.getElementById("mobileWorkerAttendeeButton");
-            if(self.mobileWorkerAttendeesEnabled()) {
+            if (self.mobileWorkerAttendeesEnabled()) {
                 button.innerHTML = gettext("Disable Mobile Worker Attendees");
                 // Appending btn-danger will override btn-default
-                button.classList.add("btn-danger")
-            }else{
+                button.classList.add("btn-danger");
+            } else {
                 button.innerHTML = gettext("Enable Mobile Worker Attendees");
                 // Simply removing btn-danger will effectively enable btn-default
-                button.classList.remove("btn-danger")
-            };
+                button.classList.remove("btn-danger");
+            }
         };
 
-        self.loadMobileWorkerAttendeeConfig = function() {
+        self.loadMobileWorkerAttendeeConfig = function () {
             $.ajax({
                 method: 'GET',
                 url: initialPageData.reverse('attendees_config'),
@@ -169,6 +160,12 @@ hqDefine("events/js/event_attendees",[
 
         self.initializeAttendee = function () {
             self.stagedAttendee(attendeeModel({}));
+
+            var $locationSelect = $("#id_location_id");
+            if ($locationSelect.length) {
+                locationsWidgets.initAutocomplete($locationSelect);
+            }
+
         };
 
         self.submitNewAttendee = function () {
@@ -201,7 +198,7 @@ hqDefine("events/js/event_attendees",[
     $(function () {
         var rmiInvoker = RMI(
             initialPageData.reverse('event_attendees'),
-            $("#csrfTokenContainer").val()
+            $("#csrfTokenContainer").val(),
         );
         rmi = function (remoteMethod, data) {
             return rmiInvoker("", data, {
