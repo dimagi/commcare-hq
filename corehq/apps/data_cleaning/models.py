@@ -104,6 +104,14 @@ class BulkEditSession(models.Model):
         return round(self.result['percent'])
 
     @property
+    def has_any_filtering(self):
+        return self.has_pinned_values or self.has_filters
+
+    def reset_filtering(self):
+        self.reset_filters()
+        self.reset_pinned_filters()
+
+    @property
     def has_filters(self):
         return self.filters.count() > 0
 

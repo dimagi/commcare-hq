@@ -260,3 +260,17 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         self.assertTrue(session.has_pinned_values)
         session.reset_pinned_filters()
         self.assertFalse(session.has_pinned_values)
+
+    def test_has_any_filtering_and_reset(self):
+        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        self.assertFalse(session.has_any_filtering)
+        pinned_filter = session.pinned_filters.all()[0]
+        pinned_filter.value = ['t__1']
+        pinned_filter.save()
+        self.assertTrue(session.has_any_filtering)
+        session.reset_filtering()
+        self.assertFalse(session.has_any_filtering)
+        session.add_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, '2')
+        self.assertTrue(session.has_any_filtering)
+        session.reset_filtering()
+        self.assertFalse(session.has_any_filtering)
