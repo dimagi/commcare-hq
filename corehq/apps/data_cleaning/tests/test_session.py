@@ -243,6 +243,14 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         )
         self.assertEqual(query.es_query, expected_query.es_query)
 
+    def test_has_filters_and_reset(self):
+        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        self.assertFalse(session.has_filters)
+        session.add_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, '2')
+        self.assertTrue(session.has_filters)
+        session.reset_filters()
+        self.assertFalse(session.has_filters)
+
     def test_has_pinned_values_and_reset(self):
         session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
         self.assertFalse(session.has_pinned_values)
