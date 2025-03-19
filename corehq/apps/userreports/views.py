@@ -268,12 +268,12 @@ class BaseUserConfigReportsView(BaseDomainView):
 
 class UserConfigReportsHomeView(BaseUserConfigReportsView):
     urlname = 'configurable_reports_home'
-    template_name = 'userreports/configurable_reports_home.html'
+    template_name = 'userreports/bootstrap3/configurable_reports_home.html'
     page_title = gettext_lazy("Reports Home")
 
 
 class BaseEditConfigReportView(BaseUserConfigReportsView):
-    template_name = 'userreports/edit_report_config.html'
+    template_name = 'userreports/bootstrap3/edit_report_config.html'
 
     @use_multiselect
     def dispatch(self, *args, **kwargs):
@@ -406,7 +406,7 @@ class ReportBuilderPaywallBase(BaseDomainView):
 
 
 class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
-    template_name = "userreports/paywall/pricing.html"
+    template_name = "userreports/paywall/bootstrap3/pricing.html"
     urlname = 'report_builder_paywall_pricing'
     page_title = gettext_lazy('Pricing')
 
@@ -425,7 +425,7 @@ class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
 
 
 class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
-    template_name = "userreports/paywall/activating_subscription.html"
+    template_name = "userreports/paywall/bootstrap3/activating_subscription.html"
     urlname = 'report_builder_paywall_activating_subscription'
 
     def post(self, request, domain, *args, **kwargs):
@@ -446,7 +446,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
 
 
 class ReportBuilderDataSourceSelect(ReportBuilderView):
-    template_name = 'userreports/reportbuilder/data_source_select.html'
+    template_name = 'userreports/reportbuilder/bootstrap3/data_source_select.html'
     page_title = gettext_lazy('Create Report')
     urlname = 'report_builder_select_source'
 
@@ -520,7 +520,7 @@ class EditReportInBuilder(View):
 class ConfigureReport(ReportBuilderView):
     urlname = 'configure_report'
     page_title = gettext_lazy("Configure Report")
-    template_name = "userreports/reportbuilder/configure_report.html"
+    template_name = "userreports/reportbuilder/bootstrap3/configure_report.html"
     report_title = '{}'
     existing_report = None
 
@@ -590,7 +590,7 @@ class ConfigureReport(ReportBuilderView):
         context.update(self.main_context)
         if report_id:
             context['report_id'] = report_id
-        return render(self.request, 'userreports/report_error.html', context)
+        return render(self.request, 'userreports/bootstrap3/report_error.html', context)
 
     @property
     def page_name(self):
@@ -922,7 +922,7 @@ def undelete_report(request, domain, report_id):
 
 class ImportConfigReportView(BaseUserConfigReportsView):
     page_title = gettext_lazy("Import Report")
-    template_name = "userreports/import_report.html"
+    template_name = "userreports/bootstrap3/import_report.html"
     urlname = 'import_configurable_report'
 
     @property
@@ -965,7 +965,7 @@ def report_source_json(request, domain, report_id):
 
 class ExpressionDebuggerView(BaseUserConfigReportsView):
     urlname = 'expression_debugger'
-    template_name = 'userreports/expression_debugger.html'
+    template_name = 'userreports/bootstrap3/expression_debugger.html'
     page_title = gettext_lazy("Expression Debugger")
 
     @property
@@ -978,7 +978,7 @@ class ExpressionDebuggerView(BaseUserConfigReportsView):
 
 class DataSourceDebuggerView(BaseUserConfigReportsView):
     urlname = 'expression_debugger'
-    template_name = 'userreports/data_source_debugger.html'
+    template_name = 'userreports/bootstrap3/data_source_debugger.html'
     page_title = gettext_lazy("Data Source Debugger")
 
     def dispatch(self, *args, **kwargs):
@@ -1113,7 +1113,7 @@ def evaluate_data_source(request, domain):
 
 class CreateDataSourceFromAppView(BaseUserConfigReportsView):
     urlname = 'create_configurable_data_source_from_app'
-    template_name = "userreports/data_source_from_app.html"
+    template_name = "userreports/bootstrap3/data_source_from_app.html"
     page_title = gettext_lazy("Create Data Source from Application")
 
     @property
@@ -1152,7 +1152,7 @@ class CreateDataSourceFromAppView(BaseUserConfigReportsView):
 
 
 class BaseEditDataSourceView(BaseUserConfigReportsView):
-    template_name = 'userreports/edit_data_source.html'
+    template_name = 'userreports/bootstrap3/edit_data_source.html'
 
     @property
     def page_context(self):
@@ -1535,7 +1535,7 @@ def data_source_json(request, domain, config_id):
 
 class PreviewDataSourceView(BaseUserConfigReportsView):
     urlname = 'preview_configurable_data_source'
-    template_name = "userreports/preview_data.html"
+    template_name = "userreports/bootstrap3/preview_data.html"
     page_title = gettext_lazy("Preview Data Source")
 
     @method_decorator(swallow_programming_errors)
@@ -1831,7 +1831,7 @@ def choice_list_api(request, domain, report_id, filter_id):
 
 class DataSourceSummaryView(BaseUserConfigReportsView):
     urlname = 'summary_configurable_data_source'
-    template_name = "userreports/summary_data_source.html"
+    template_name = "userreports/bootstrap3/summary_data_source.html"
     page_title = gettext_lazy("Data Source Summary")
 
     @property
@@ -1927,7 +1927,7 @@ class NamedExpressionHighlighter:
 class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
     page_title = _("UCR Expressions")
     urlname = "ucr_expressions"
-    template_name = "userreports/ucr_expressions.html"
+    template_name = "userreports/bootstrap3/ucr_expressions.html"
 
     @property
     def base_query(self):
@@ -2012,7 +2012,7 @@ class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
 class UCRExpressionEditView(BaseProjectDataView):
     page_title = _("Edit UCR Expression")
     urlname = "edit_ucr_expression"
-    template_name = "userreports/ucr_expression.html"
+    template_name = "userreports/bootstrap3/ucr_expression.html"
 
     @property
     def expression_id(self):

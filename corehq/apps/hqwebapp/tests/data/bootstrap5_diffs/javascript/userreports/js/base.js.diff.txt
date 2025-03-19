@@ -1,0 +1,27 @@
+--- 
++++ 
+@@ -1,11 +1,11 @@
+-hqDefine('userreports/js/bootstrap3/base', [
++hqDefine('userreports/js/bootstrap5/base', [
+     'jquery',
+     'hqwebapp/js/initial_page_data',
+     'reports_core/js/charts',
+-    'reports_core/js/bootstrap3/maps',
+-    'reports/js/bootstrap3/datatables_config',
++    'reports_core/js/bootstrap5/maps',
++    'reports/js/bootstrap5/datatables_config',
+     'reports/js/charts/main',
+-    'reports/js/filters/bootstrap3/main',
++    'reports/js/filters/bootstrap5/main',
+ ], function (
+     $,
+     initialPageData,
+@@ -109,7 +109,7 @@
+         $("#apply-filters").prop('disabled', false);
+ 
+         $(function () {
+-            $('.header-popover').popover({
++            $('.header-popover').popover({  /* todo B5: js-popover */
+                 trigger: 'hover',
+                 placement: 'bottom',
+                 container: 'body',
