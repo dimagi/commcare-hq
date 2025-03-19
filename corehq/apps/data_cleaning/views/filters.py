@@ -58,7 +58,7 @@ class PinnedFilterFormView(BulkEditSessionViewMixin, BaseFilterFormView):
 class ManageFiltersFormView(BulkEditSessionViewMixin, BaseFilterFormView):
     urlname = "data_cleaning_manage_filters"
     template_name = "data_cleaning/forms/manage_filters_form.html"
-    session_not_found_message = gettext_lazy("Cannot retrieve column filters, session was not found.")
+    session_not_found_message = gettext_lazy("Cannot retrieve filters, session was not found.")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
