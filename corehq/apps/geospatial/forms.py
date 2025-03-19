@@ -224,7 +224,7 @@ class GeospatialConfigForm(forms.ModelForm):
                             _('Test API Key'),
                             type='button',
                             css_id='test-connection-button',
-                            css_class='btn btn-default',
+                            css_class='btn btn-outline-primary',
                             data_bind="click: validateApiToken",
                         ),
                         css_class=hqcrispy.CSS_ACTION_CLASS,

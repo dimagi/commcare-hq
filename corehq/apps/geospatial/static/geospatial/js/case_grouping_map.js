@@ -3,11 +3,11 @@ hqDefine("geospatial/js/case_grouping_map", [
     "knockout",
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/bootstrap3/alert_user',
+    'hqwebapp/js/bootstrap5/alert_user',
     'geospatial/js/models',
     'geospatial/js/utils',
     'mapbox-gl/dist/mapbox-gl',
-    'reports/js/bootstrap3/base',
+    'reports/js/bootstrap5/base',
     'hqwebapp/js/select2_knockout_bindings.ko',
     'commcarehq',
 ], function (

@@ -17,18 +17,18 @@
             Changes have been saved successfully!
         {% endblocktrans %}
     </div>
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h3 class="panel-title">
+    <div class="card ">  {# todo B5: css-panel #}
+        <div class="card-header">
+            <h3 class="card-title">
                 {% if data_type == 'user' %}
                     {% trans 'Users without GPS Data' %}
                 {% endif %}
             </h3>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
             {% if data_type == 'user' %}
                 <div class="row">
-                    <div class="col-sm-6">
+                    <div class="col-md-6">
                         <search-box data-apply-bindings="false"
                                     params="value: query,
                                             action: function() { goToPage(1); },
@@ -36,21 +36,23 @@
                     </div>
                 </div>
             {% endif %}
-            <table class="table table-striped table-responsive"
-                   style="margin-botton: 0;"
-                   data-bind="visible: showTable">
+            <table
+              id="users-without-gps-data-table"
+              class="table table-striped table-responsive"
+              data-bind="visible: showTable"
+            >
                 <thead>
                     <tr>
-                        <th class="col-xs-3">
+                        <th class="col-sm-3">
                             {% if data_type == 'user' %}
                                 {% trans "Username" %}
                             {% else %}
                                 {% trans "Name" %}
                             {% endif %}
                         </th>
-                        <th class="col-xs-3">{% trans "Latitude" %}</th>
-                        <th class="col-xs-3">{% trans "Longitude" %}</th>
-                        <th class="col-xs-3">{% trans "Actions" %}</th>
+                        <th class="col-sm-3">{% trans "Latitude" %}</th>
+                        <th class="col-sm-3">{% trans "Longitude" %}</th>
+                        <th class="col-sm-3">{% trans "Actions" %}</th>
                     </tr>
                 </thead>
                 <tbody data-bind="foreach: dataItems">
@@ -61,13 +63,18 @@
                             </a>
                         </td>
                         <td>
-                            <div data-bind="css: {'has-error': !isLatValid()}">
-                                <input class="form-control"
-                                       type="text"
-                                       name="latInput"
-                                       placeholder="{% trans 'Enter latitude...' %}"
-                                       data-bind="value: lat, event: {change: onValueChanged}" />
-                                <span class="help-block" data-bind="visible: !isLatValid()">
+                            <div>
+                                <input
+                                  class="form-control"
+                                  type="text"
+                                  name="latInput"
+                                  placeholder="{% trans 'Enter latitude...' %}"
+                                  data-bind="
+                                    css: {'is-invalid': !isLatValid()},
+                                    value: lat,
+                                    event: {change: onValueChanged}"
+                                />
+                                <span class="invalid-feedback" data-bind="visible: !isLatValid()">
                                     {% blocktrans %}
                                         The value should be a number between -90 and 90
                                     {% endblocktrans %}
@@ -75,12 +82,17 @@
                             </div>
                         </td>
                         <td>
-                            <div data-bind="css: {'has-error': !isLonValid()}">
-                                <input class="form-control"
-                                       type="text"
-                                       name="lonInput"
-                                       placeholder="{% trans 'Enter longitude...' %}"
-                                       data-bind="value: lon, event: {change: onValueChanged}" />
+                            <div>
+                                <input
+                                  class="form-control"
+                                  type="text"
+                                  name="lonInput"
+                                  placeholder="{% trans 'Enter longitude...' %}"
+                                  data-bind="
+                                    css: {'has-error': !isLonValid()},
+                                    value: lon,
+                                    event: {change: onValueChanged}"
+                                />
                                 <span class="help-block" data-bind="visible: !isLonValid()">
                                     {% blocktrans %}
                                         The value should be a number between -180 and 180
@@ -89,7 +101,7 @@
                             </div>
                         </td>
                         <td>
-                            <button type="button" class="btn btn-default" data-bind="event: {click: $root.captureLocationForItem.bind($data)}, disable: $root.isCreatingCase">
+                            <button type="button" class="btn btn-outline-primary" data-bind="event: {click: $root.captureLocationForItem.bind($data)}, disable: $root.isCreatingCase">
                                 {% trans "Capture on Map" %}
                             </button>
                             <button id="gtm-save-row-btn" type="button" class="btn btn-primary" data-bind="enable: canSaveRow, event: {click: $root.saveDataRow.bind($data)}">
@@ -113,7 +125,7 @@
                   <strong>There was an issue retrieving data from the server.</strong>
                   Please check your internet connection.
                   If this problem continues, please
-                  <a href="#modalReportIssue" data-toggle="modal">report an issue</a>.
+                  <a href="#modalReportIssue" data-bs-toggle="modal">report an issue</a>.
                 {% endblocktrans %}
             </div>
             <div class="alert alert-danger" data-bind="visible: hasSubmissionError">
@@ -122,7 +134,7 @@
                   <strong>There was an issue submitting data to the server.</strong>
                   Please check your internet connection.
                   If this problem continues, please
-                  <a href="#modalReportIssue" data-toggle="modal">report an issue</a>.
+                  <a href="#modalReportIssue" data-bs-toggle="modal">report an issue</a>.
                 {% endblocktrans %}
             </div>
             <pagination data-apply-bindings="false"
@@ -142,46 +154,62 @@
         <button class="btn btn-primary" data-bind="click: finishCreateCase, visible: isCreatingCase">
             {% trans 'Save Case' %}
         </button>
-        <button class="btn btn-default" data-bind="click: cancelCreateCase, visible: isCreatingCase">
+        <button class="btn btn-outline-primary" data-bind="click: cancelCreateCase, visible: isCreatingCase">
             {% trans 'Cancel' %}
         </button>
     {% endif %}
-    <div class="panel" data-bind="visible: itemLocationBeingCapturedOnMap">
+    <div class="card" data-bind="visible: itemLocationBeingCapturedOnMap">  {# todo B5: css-panel #}
         <div data-bind="with: itemLocationBeingCapturedOnMap" class="row">
             <h3 class="col">
                 {% trans "Capturing location for:" %}
                 <span data-bind="text: name"></span>
             </h3>
             <div data-bind="visible: $root.isCreatingCase" class="form-row">
-                <div class="col" data-bind="css: { 'has-error': $root.hasCreateCaseError }">
-                    <label class="control-label col-sm-1 col-md-1 col-lg-1">
+                <div class="col">
+                    <label class="form-label col-md-1 col-lg-1 col-xl-1">
                         {% trans 'Case Name' %}
                     </label>
-                    <div class="col-sm-2 col-md-2 col-lg-2" >
-                        <input data-bind="value: name, visible: $root.isCreatingCase" type="text" class="form-control" placeholder="{% trans 'Enter new case name...' %}" />
-                        <span class="help-block" data-bind="visible: $root.hasCreateCaseError">
+                    <div class="col-md-2 col-lg-2 col-xl-2" >
+                        <input
+                          data-bind="
+                            css: { 'is-invalid': $root.hasCreateCaseError },
+                            value: name,
+                            visible: $root.isCreatingCase"
+                          type="text"
+                          class="form-control"
+                          placeholder="{% trans 'Enter new case name...' %}"
+                        />
+                        <span
+                          class="invalid-feedback"
+                          data-bind="visible: $root.hasCreateCaseError"
+                        >
                             {% trans 'A case name is required' %}
                         </span>
                     </div>
                 </div>
-                <div class="col" data-bind="css: { 'has-error': $root.hasCaseTypeError }">
-                    <label class="control-label col-sm-1 col-md-1 col-lg-1">
+                <div class="col">
+                    <label class="form-label col-md-1 col-lg-1 col-xl-1">
                         {% trans 'Case Type' %}
                     </label>
-                    <div class="col-sm-2 col-md-2 col-lg-2">
-                        <select class="form-control" data-bind="select2: $root.availableCaseTypes, value: $root.selectedCaseType">
-                        </select>
-                        <span class="help-block" data-bind="visible: $root.hasCaseTypeError">
+                    <div class="col-md-2 col-lg-2 col-xl-2">
+                        <select
+                          class="form-select"
+                          data-bind="
+                            css: { 'is-invalid': $root.hasCaseTypeError },
+                            select2: $root.availableCaseTypes,
+                            value: $root.selectedCaseType"
+                        ></select>
+                        <span class="invalid-feedback" data-bind="visible: $root.hasCaseTypeError">
                             {% trans 'A case type is required' %}
                         </span>
                     </div>
                 </div>
                 <div class="col">
-                    <label class="control-label col-sm-1 col-md-1 col-lg-1">
+                    <label class="form-label col-md-1 col-lg-1 col-xl-1">
                         {% trans 'Owner' %}
                     </label>
-                    <div class="col-sm-3 col-md-3 col-lg-3">
-                        <select class="form-control"
+                    <div class="col-md-3 col-lg-3 col-xl-3">
+                        <select class="form-select"
                                 type="text"
                                 id="owner-select"
                                 data-bind="select2: {},

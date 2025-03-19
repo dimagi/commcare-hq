@@ -15,20 +15,22 @@ from corehq.apps.es import CaseSearchES, filters
 from corehq.apps.es.case_search import (
     PROPERTY_GEOPOINT_VALUE,
     PROPERTY_KEY,
-    wrap_case_search_hit,
     case_property_missing,
+    wrap_case_search_hit,
 )
-from corehq.apps.reports.standard import ProjectReport
-from corehq.apps.reports.standard.cases.basic import CaseListMixin
-from corehq.apps.reports.standard.cases.case_list_explorer import XpathCaseSearchFilterMixin
-from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
-from corehq.util.quickcache import quickcache
-
-from .dispatchers import CaseManagementMapDispatcher
 from corehq.apps.geospatial.const import (
     ES_INDEX_TASK_HELPER_BASE_KEY,
     ES_REASSIGNMENT_UPDATE_OWNERS_BASE_KEY,
 )
+from corehq.apps.reports.standard import ProjectReport
+from corehq.apps.reports.standard.cases.basic import CaseListMixin
+from corehq.apps.reports.standard.cases.case_list_explorer import (
+    XpathCaseSearchFilterMixin,
+)
+from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
+from corehq.util.quickcache import quickcache
+
+from .dispatchers import CaseManagementMapDispatcher
 from .es import (
     BUCKET_CASES_AGG,
     CASE_PROPERTIES_AGG,
@@ -40,9 +42,9 @@ from .es import (
 from .models import GeoPolygon
 from .utils import (
     geojson_to_es_geoshape,
+    get_celery_task_tracker,
     get_geo_case_property,
     validate_geometry,
-    get_celery_task_tracker,
 )
 
 
@@ -102,6 +104,8 @@ class CaseManagementMap(BaseCaseMapReport):
 
     base_template = "geospatial/case_management_base.html"
     report_template_path = "geospatial/case_management.html"
+    use_bootstrap5 = True
+
     max_rows = 5_000
     default_rows = 5_000
     force_page_size = True
@@ -124,10 +128,27 @@ class CaseManagementMap(BaseCaseMapReport):
             DataTablesHeader,
         )
         headers = DataTablesHeader(
-            DataTablesColumn(_("case_id"), prop_name="type.exact"),
-            DataTablesColumn(_("gps_point"), prop_name="type.exact"),
-            DataTablesColumn(_("link"), prop_name="name.exact", css_class="case-name-link"),
-            DataTablesColumn(_("name"), prop_name="name.exact"),
+            DataTablesColumn(
+                _("case_id"),
+                prop_name="type.exact",
+                use_bootstrap5=self.use_bootstrap5,
+            ),
+            DataTablesColumn(
+                _("gps_point"),
+                prop_name="type.exact",
+                use_bootstrap5=self.use_bootstrap5,
+            ),
+            DataTablesColumn(
+                _("link"),
+                prop_name="name.exact",
+                css_class="case-name-link",
+                use_bootstrap5=self.use_bootstrap5,
+            ),
+            DataTablesColumn(
+                _("name"),
+                prop_name="name.exact",
+                use_bootstrap5=self.use_bootstrap5,
+            ),
         )
         headers.custom_sort = [[2, 'desc']]
         return headers
@@ -163,6 +184,7 @@ class CaseGroupingReport(BaseCaseMapReport):
 
     base_template = 'geospatial/case_grouping_map_base.html'
     report_template_path = 'geospatial/case_grouping_map.html'
+    use_bootstrap5 = True
 
     default_rows = 1
     force_page_size = True
@@ -175,12 +197,36 @@ class CaseGroupingReport(BaseCaseMapReport):
             DataTablesHeader,
         )
         return DataTablesHeader(
-            DataTablesColumn(_("Case ID"), prop_name='case_id'),
-            DataTablesColumn(_("Case Name"), prop_name='case_name'),
-            DataTablesColumn(_("Owner ID"), prop_name='owner_id'),
-            DataTablesColumn(_("Owner Name"), prop_name='owner_name'),
-            DataTablesColumn(_("Case Coordinates"), prop_name='coordinates'),
-            DataTablesColumn(_("Link"), prop_name='link'),
+            DataTablesColumn(
+                _("Case ID"),
+                prop_name='case_id',
+                use_bootstrap5=self.use_bootstrap5,
+            ),
+            DataTablesColumn(
+                _("Case Name"),
+                prop_name='case_name',
+                use_bootstrap5=self.use_bootstrap5,
+            ),
+            DataTablesColumn(
+                _("Owner ID"),
+                prop_name='owner_id',
+                use_bootstrap5=self.use_bootstrap5,
+            ),
+            DataTablesColumn(
+                _("Owner Name"),
+                prop_name='owner_name',
+                use_bootstrap5=self.use_bootstrap5,
+            ),
+            DataTablesColumn(
+                _("Case Coordinates"),
+                prop_name='coordinates',
+                use_bootstrap5=self.use_bootstrap5,
+            ),
+            DataTablesColumn(
+                _("Link"),
+                prop_name='link',
+                use_bootstrap5=self.use_bootstrap5,
+            ),
         )
 
     @property

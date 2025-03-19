@@ -4,9 +4,12 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">
-          <span aria-hidden="true">&times;</span>
-        </button>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
         <h4 class="modal-title">
           {% trans "Are you sure you want to delete this saved area?" %}
         </h4>
@@ -20,8 +23,8 @@
         </p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-        <button type="button" class="btn btn-danger" id="delete-saved-area" data-dismiss="modal"
+        <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+        <button type="button" class="btn btn-outline-danger" id="delete-saved-area" data-bs-dismiss="modal"
                 data-bind="click: $root.deleteSelectedPolygonFilter">{% trans "Confirm" %}
         </button>
       </div>

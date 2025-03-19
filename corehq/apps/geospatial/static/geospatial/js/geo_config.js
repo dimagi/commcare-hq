@@ -4,7 +4,7 @@ hqDefine("geospatial/js/geo_config", [
     "jquery",
     "knockout",
     "hqwebapp/js/initial_page_data",
-    "hqwebapp/js/bootstrap3/alert_user",
+    "hqwebapp/js/bootstrap5/alert_user",
     "commcarehq",
 ], function (
     $,
