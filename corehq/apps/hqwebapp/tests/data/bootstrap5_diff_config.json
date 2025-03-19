@@ -849,5 +849,63 @@
       "label": "tabs",
       "compare_all_files": true
     }
+  ],
+  "apps/userreports/templates/userreports": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "userreports",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/bootstrap3",
+        "partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "userreports/partials",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "paywall/bootstrap3",
+        "paywall/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "userreports/paywall",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "reportbuilder/bootstrap3",
+        "reportbuilder/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "userreports/reportbuilder",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "spec/bootstrap3",
+        "spec/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "userreports/spec",
+      "compare_all_files": true
+    }
+  ],
+  "apps/userreports/static/userreports/js": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/userreports/js",
+      "compare_all_files": true
+    }
   ]
 }

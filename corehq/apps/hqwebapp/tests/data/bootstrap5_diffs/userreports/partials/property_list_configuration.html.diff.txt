@@ -1,0 +1,95 @@
+--- 
++++ 
+@@ -88,15 +88,15 @@
+       <i class="grip sortable-handle hq-icon-full fa-solid fa-up-down"></i>
+     </td>
+ 
+-    <td data-bind="css:{'has-error': $parent.showWarnings() && !isValid()}">
++    <td data-bind="css:{'has-error': $parent.showWarnings() && !isValid()}">  {# todo B5: css-has-error #}
+ 
+       <div class="property-name">{% block property_name_display %}</div>
+         <!-- ko ifnot: $root.optionsContainQuestions -->
+-        <select class="form-control"
++        <select class="form-select"
+                 data-bind="select2: $parent.selectablePropertyOptions, value: property"></select>
+         <!-- /ko -->
+         <!-- ko if: $root.optionsContainQuestions -->
+-        <select class="form-control" data-bind="
++        <select class="form-select" data-bind="
+                 questionsSelect: $parent.selectablePropertyOptions.concat(
+                     existsInCurrentVersion() ? [] : {value: dataSourceField(), label: ''}
+                 ),
+@@ -117,7 +117,7 @@
+ 
+     <!--ko if: $parent.hasDisplayCol -->
+     <td>
+-      <div data-bind="css: {'has-error': showDisplayTextError}">
++      <div data-bind="css: {'has-error': showDisplayTextError}">  {# todo B5: css-has-error #}
+         <input type="text" class="form-control input-sm" data-bind="
+                     textInput: inputBoundDisplayText,
+                     attr: {disabled: !isEditable},
+@@ -132,14 +132,14 @@
+     <!--ko if: $parent.hasFormatCol -->
+     <td>
+       <!--ko if: !$parent.hasFilterValueCol -->
+-      <select class="form-control input-sm" data-bind="
++      <select class="form-select input-sm" data-bind="
+                 options: $root.formatOptions,
+                 value: format,
+                 attr: {disabled: !existsInCurrentVersion()}
+             "></select>
+       <!--/ko-->
+       <!--ko if: $parent.hasFilterValueCol -->
+-      <select class="form-control input-sm" data-bind="
++      <select class="form-select input-sm" data-bind="
+                 options: $root.defaultFilterFormatOptions,
+                 value: format,
+                 attr: {disabled: !existsInCurrentVersion()}
+@@ -150,7 +150,7 @@
+ 
+     <!--ko if: $parent.hasCalculationCol -->
+     <td>
+-      <select class="form-control input-sm" data-bind="
++      <select class="form-select input-sm" data-bind="
+                 options: calculationOptions,
+                 value: inputBoundCalculation,
+                 attr: {disabled: !existsInCurrentVersion()}
+@@ -159,9 +159,9 @@
+     <!--/ko-->
+ 
+     <!--ko if: $parent.hasFilterValueCol -->
+-    <td class="form-group" data-bind="css:{'has-error': $parent.showWarnings() && hasFilterValueWarning()}">
++    <td class="form-group" data-bind="css:{'has-error': $parent.showWarnings() && hasFilterValueWarning()}">  {# todo B5: css-form-group, css-has-error #}
+       <!--ko if: $data.format() === 'Date'-->
+-      <select class="form-control input-sm" data-bind="
++      <select class="form-select input-sm" data-bind="
+                 options: $root.dateRangeOptions,
+                 optionsText: function (o) { return o.description; },
+                 optionsValue: function (o) { return o.slug; },
+@@ -186,7 +186,7 @@
+ 
+     <td>
+       <button
+-        class="btn btn-danger btn-sm"
++        class="btn btn-outline-danger btn-sm"
+         data-bind="click: function(){$parent.removeColumn($data)}"
+       >
+         <i class="fa fa-remove"></i>
+@@ -200,7 +200,7 @@
+     {% block add_property_row %}
+       <td></td>
+       <td>
+-        <button class="btn btn-default" data-bind="
++        <button class="btn btn-outline-primary" data-bind="
+                       click: buttonHandler
+                   ">
+           <i class="fa fa-plus"></i>&nbsp;
+@@ -211,7 +211,7 @@
+   </tr>
+   </tbody>
+ </table>
+-<div data-bind="visible: requireColumns && columns().length < 1" class="has-error">
++<div data-bind="visible: requireColumns && columns().length < 1" class="has-error">  {# todo B5: css-has-error #}
+   <label class="help-block" data-bind="text: requireColumnsText">
+   </label>
+ </div>
