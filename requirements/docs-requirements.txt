@@ -424,7 +424,7 @@ python-imap==1.0.0
     # via -r base-requirements.in
 python-magic==0.4.27
     # via -r base-requirements.in
-python-mimeparse==1.6.0
+python-mimeparse==2.0.0
     # via django-tastypie
 pytz==2024.1
     # via
