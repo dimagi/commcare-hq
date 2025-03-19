@@ -4,7 +4,7 @@ from django.views.generic import TemplateView
 from memoized import memoized
 
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
-from corehq.apps.data_cleaning.forms.filters import AddColumnFilterForm
+from corehq.apps.data_cleaning.forms.filters import AddFilterForm
 from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.domain.views import DomainViewMixin
@@ -65,13 +65,13 @@ class ManageFiltersFormView(BulkEditSessionViewMixin, BaseFilterFormView):
         context.update({
             'container_id': 'manage-filters',
             'active_filters': self.session.filters.all(),
-            'add_filter_form': kwargs.pop('filter_form', None) or AddColumnFilterForm(self.session),
+            'add_filter_form': kwargs.pop('filter_form', None) or AddFilterForm(self.session),
         })
         return context
 
     @hq_hx_action('post')
     def add_filter(self, request, *args, **kwargs):
-        filter_form = AddColumnFilterForm(self.session, request.POST)
+        filter_form = AddFilterForm(self.session, request.POST)
         if filter_form.is_valid():
             filter_form.create_filter()
             filter_form = None

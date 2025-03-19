@@ -33,7 +33,7 @@ class DynamicMultipleChoiceField(forms.MultipleChoiceField):
         return True
 
 
-class AddColumnFilterForm(forms.Form):
+class AddFilterForm(forms.Form):
     prop_id = forms.ChoiceField(
         label=gettext_lazy("Case Property"),
         required=False
