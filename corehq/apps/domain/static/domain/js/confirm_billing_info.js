@@ -5,6 +5,7 @@ hqDefine("domain/js/confirm_billing_info", [
     'hqwebapp/js/initial_page_data',
     'accounting/js/stripe_card_manager',
     'accounting/js/widgets',
+    'commcarehq',
 ], function (
     $,
     ko,
