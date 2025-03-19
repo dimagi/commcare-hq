@@ -453,6 +453,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     # For domains that have been migrated to a different environment
     redirect_url = StringProperty()
 
+    # name that users see for connect messaging channels tied to this domain
+    connect_messaging_channel_name = StringProperty()
+
     @classmethod
     def wrap(cls, data):
         # for domains that still use original_doc

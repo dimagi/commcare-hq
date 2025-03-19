@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine('app_manager/js/app_manager', [
     'jquery',
     'knockout',
@@ -22,7 +22,7 @@ hqDefine('app_manager/js/app_manager', [
     alertUser,
     hqMain,
     appManagerMenu,
-    sectionChanger
+    sectionChanger,
 ) {
     var module = hqMain.eventize({});
     var _private = {};
@@ -145,9 +145,9 @@ hqDefine('app_manager/js/app_manager', [
                 } else {
                     area.find('*').hide();
                     upgradeMessage.append(
-                        $('<i></i>').addClass('fa fa-arrow-left')
+                        $('<i></i>').addClass('fa fa-arrow-left'),
                     ).append(
-                        $('<span></span>').text(' Requires CommCare ' + version)
+                        $('<span></span>').text(' Requires CommCare ' + version),
                     ).appendTo(area);
                 }
             });

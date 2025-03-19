@@ -55,22 +55,34 @@ class PinnedFilterFormView(BulkEditSessionViewMixin, BaseFilterFormView):
         return context
 
 
-class ColumnFilterFormView(BulkEditSessionViewMixin, BaseFilterFormView):
-    urlname = "data_cleaning_column_filter_form"
-    template_name = "data_cleaning/forms/column_filter_form.html"
+class ManageFiltersFormView(BulkEditSessionViewMixin, BaseFilterFormView):
+    urlname = "data_cleaning_manage_filters"
+    template_name = "data_cleaning/forms/manage_filters_form.html"
     session_not_found_message = gettext_lazy("Cannot retrieve column filters, session was not found.")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
             'container_id': 'column-filters',
-            'add_filter_form': kwargs.pop('filter_form', AddColumnFilterForm(self.session)),
+            'active_filters': self.session.filters.all(),
+            'add_filter_form': kwargs.pop('filter_form', None) or AddColumnFilterForm(self.session),
         })
         return context
 
     @hq_hx_action('post')
-    def add_column_filter(self, request, *args, **kwargs):
-        filter_form = AddColumnFilterForm(request.POST)
+    def add_filter(self, request, *args, **kwargs):
+        filter_form = AddColumnFilterForm(self.session, request.POST)
         if filter_form.is_valid():
+            filter_form.create_filter()
             filter_form = None
         return self.get(request, filter_form=filter_form, *args, **kwargs)
+
+    @hq_hx_action('post')
+    def reorder_filters(self, request, *args, **kwargs):
+        # todo
+        return self.get(request, *args, **kwargs)
+
+    @hq_hx_action('post')
+    def delete_filter(self, request, *args, **kwargs):
+        self.session.remove_filter(request.POST['delete_id'])
+        return self.get(request, *args, **kwargs)

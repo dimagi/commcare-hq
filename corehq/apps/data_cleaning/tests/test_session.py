@@ -57,7 +57,7 @@ class BulkEditSessionTest(TestCase):
         new_session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
         self.assertEqual(new_session.session_type, BulkEditSessionType.CASE)
         self.assertEqual(new_session.columns.count(), 6)
-        self.assertEqual(new_session.column_filters.count(), 0)
+        self.assertEqual(new_session.filters.count(), 0)
         self.assertEqual(new_session.pinned_filters.count(), 2)
         self.assertEqual(new_session.records.count(), 0)
         self.assertEqual(new_session.changes.count(), 0)
@@ -130,59 +130,75 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         FormProcessorTestUtils.delete_all_cases()
         super().tearDownClass()
 
-    def test_add_column_filters(self):
+    def test_add_filters(self):
         session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
-        session.add_column_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
-        session.add_column_filter('name', DataType.TEXT, FilterMatchType.PHONETIC, "lowkey")
-        session.add_column_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, "2")
-        session.add_column_filter('pot_type', DataType.DATE, FilterMatchType.IS_EMPTY)
-        session.add_column_filter('height_cm', DataType.DECIMAL, FilterMatchType.LESS_THAN_EQUAL, "11.0")
-        column_filters = session.column_filters.all()
+        session.add_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
+        session.add_filter('name', DataType.TEXT, FilterMatchType.PHONETIC, "lowkey")
+        session.add_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, "2")
+        session.add_filter('pot_type', DataType.DATE, FilterMatchType.IS_EMPTY)
+        session.add_filter('height_cm', DataType.DECIMAL, FilterMatchType.LESS_THAN_EQUAL, "11.0")
+        filters = session.filters.all()
         for index, prop_id in enumerate(['watered_on', 'name', 'num_leaves', 'pot_type', 'height_cm']):
-            self.assertEqual(column_filters[index].prop_id, prop_id)
-            self.assertEqual(column_filters[index].index, index)
+            self.assertEqual(filters[index].prop_id, prop_id)
+            self.assertEqual(filters[index].index, index)
+
+    def test_remove_filters(self):
+        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        session.add_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
+        session.add_filter('name', DataType.TEXT, FilterMatchType.PHONETIC, "lowkey")
+        session.add_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, "2")
+        session.add_filter('pot_type', DataType.DATE, FilterMatchType.IS_EMPTY)
+        session.add_filter('height_cm', DataType.DECIMAL, FilterMatchType.LESS_THAN_EQUAL, "11.0")
+        filter_to_remove = session.filters.all()[1]  # name
+        self.assertEqual(filter_to_remove.prop_id, 'name')
+        session.remove_filter(filter_to_remove.filter_id)
+        filters = session.filters.all()
+        self.assertEqual(len(filters), 4)
+        for index, prop_id in enumerate(['watered_on', 'num_leaves', 'pot_type', 'height_cm']):
+            self.assertEqual(filters[index].prop_id, prop_id)
+            self.assertEqual(filters[index].index, index)
 
     def test_reorder_wrong_number_of_filter_ids_raises_error(self):
         session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
-        session.add_column_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
-        session.add_column_filter('name', DataType.TEXT, FilterMatchType.PHONETIC, "lowkey")
-        session.add_column_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, "2")
-        session.add_column_filter('pot_type', DataType.DATE, FilterMatchType.IS_EMPTY)
-        session.add_column_filter('height_cm', DataType.DECIMAL, FilterMatchType.LESS_THAN_EQUAL, "11.0")
-        column_filters = session.column_filters.all()
-        new_order = [column_filters[1].filter_id, column_filters[2].filter_id]
+        session.add_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
+        session.add_filter('name', DataType.TEXT, FilterMatchType.PHONETIC, "lowkey")
+        session.add_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, "2")
+        session.add_filter('pot_type', DataType.DATE, FilterMatchType.IS_EMPTY)
+        session.add_filter('height_cm', DataType.DECIMAL, FilterMatchType.LESS_THAN_EQUAL, "11.0")
+        filters = session.filters.all()
+        new_order = [filters[1].filter_id, filters[2].filter_id]
         with self.assertRaises(ValueError):
-            session.reorder_column_filters(new_order)
+            session.reorder_filters(new_order)
 
-    def test_reorder_column_filters(self):
+    def test_reorder_filters(self):
         session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
-        session.add_column_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
-        session.add_column_filter('name', DataType.TEXT, FilterMatchType.PHONETIC, "lowkey")
-        session.add_column_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, "2")
-        session.add_column_filter('pot_type', DataType.DATE, FilterMatchType.IS_EMPTY)
-        session.add_column_filter('height_cm', DataType.DECIMAL, FilterMatchType.LESS_THAN_EQUAL, "11.0")
-        column_filters = session.column_filters.all()
+        session.add_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
+        session.add_filter('name', DataType.TEXT, FilterMatchType.PHONETIC, "lowkey")
+        session.add_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, "2")
+        session.add_filter('pot_type', DataType.DATE, FilterMatchType.IS_EMPTY)
+        session.add_filter('height_cm', DataType.DECIMAL, FilterMatchType.LESS_THAN_EQUAL, "11.0")
+        filters = session.filters.all()
         new_order = [
-            column_filters[1].filter_id,
-            column_filters[0].filter_id,
-            column_filters[2].filter_id,
-            column_filters[4].filter_id,
-            column_filters[3].filter_id,
+            filters[1].filter_id,
+            filters[0].filter_id,
+            filters[2].filter_id,
+            filters[4].filter_id,
+            filters[3].filter_id,
         ]
-        session.reorder_column_filters(new_order)
-        reordered_prop_ids = [c.prop_id for c in session.column_filters.all()]
+        session.reorder_filters(new_order)
+        reordered_prop_ids = [c.prop_id for c in session.filters.all()]
         self.assertEqual(
             reordered_prop_ids,
             ['name', 'watered_on', 'num_leaves', 'height_cm', 'pot_type']
         )
 
-    def test_get_queryset_multiple_column_filters(self):
+    def test_get_queryset_multiple_filters(self):
         session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
-        session.add_column_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
-        session.add_column_filter('name', DataType.TEXT, FilterMatchType.PHONETIC, 'lowkey')
-        session.add_column_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, '2')
-        session.add_column_filter('pot_type', DataType.MULTIPLE_OPTION, FilterMatchType.IS_EMPTY)
-        session.add_column_filter('height_cm', DataType.DECIMAL, FilterMatchType.LESS_THAN_EQUAL, '11.1')
+        session.add_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
+        session.add_filter('name', DataType.TEXT, FilterMatchType.PHONETIC, 'lowkey')
+        session.add_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, '2')
+        session.add_filter('pot_type', DataType.MULTIPLE_OPTION, FilterMatchType.IS_EMPTY)
+        session.add_filter('height_cm', DataType.DECIMAL, FilterMatchType.LESS_THAN_EQUAL, '11.1')
         query = session.get_queryset()
         expected_query = (
             CaseSearchES()
@@ -198,9 +214,9 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         )
         self.assertEqual(query.es_query, expected_query.es_query)
 
-    def test_get_queryset_column_filters_no_xpath(self):
+    def test_get_queryset_filters_no_xpath(self):
         session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
-        session.add_column_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
+        session.add_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
         query = session.get_queryset()
         expected_query = (
             CaseSearchES()
@@ -211,9 +227,9 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         )
         self.assertEqual(query.es_query, expected_query.es_query)
 
-    def test_get_queryset_column_filters_xpath_only(self):
+    def test_get_queryset_filters_xpath_only(self):
         session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
-        session.add_column_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, '2')
+        session.add_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, '2')
         query = session.get_queryset()
         expected_query = (
             CaseSearchES()

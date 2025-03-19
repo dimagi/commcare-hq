@@ -14,7 +14,7 @@ hqDefine("app_manager/js/modules/module_view_report", function () {
             navMenuMediaItem.menu_refs.image,
             navMenuMediaItem.menu_refs.audio,
             initialPageData.get("multimedia_object_map"),
-            navMenuMediaItem.default_file_name
+            navMenuMediaItem.default_file_name,
         );
 
         var saveURL = initialPageData.reverse("edit_report_module");

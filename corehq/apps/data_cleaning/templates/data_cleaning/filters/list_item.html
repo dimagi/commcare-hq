@@ -1,0 +1,35 @@
+{% load i18n %}
+
+<li class="list-group-item d-flex">
+  <a class="link p-1 flex-grow-1">
+    <i class="fa-solid fa-up-down"></i>
+    <input
+      type="hidden"
+      name="filter_ids"
+      value="{{ filter.filter_id }}"
+    />
+    <span class="ps-2">
+      {{ filter.prop_id }}
+    </span>
+    <span class="ms-2 badge text-bg-secondary">
+      {{ filter.match_type }}
+    </span>
+    {% if filter.value %}
+      <span class="ps-2">
+        {{ filter.value }}
+      </span>
+    {% endif %}
+  </a>
+  <button
+    class="btn btn-outline-danger btn-sm"
+    type="button"
+    name="delete_id"
+    value="{{ filter.filter_id }}"
+    hx-post="{{ request.path_info }}"
+    hq-hx-action="delete_filter"
+    hx-disabled-elt="this"
+    hx-target="#{{ container_id }}"
+  >
+    <i class="fa-solid fa-close"></i>
+  </button>
+</li>

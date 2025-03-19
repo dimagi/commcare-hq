@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine("app_manager/js/details/case_detail_print", function () {
     var printRef, printTemplateUploader;
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
@@ -7,7 +7,7 @@ hqDefine("app_manager/js/details/case_detail_print", function () {
     if (printUploader) {
         printTemplateUploader = uploaders.uploader(
             printUploader.slug,
-            printUploader.options
+            printUploader.options,
         );
         printRef = hqImport('hqmedia/js/media_reference_models').BaseMediaReference(initialPageData.get('print_ref'));
         printRef.upload_controller = printTemplateUploader;

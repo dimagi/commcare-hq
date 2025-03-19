@@ -44,7 +44,7 @@ hqDefine("app_manager/js/settings/app_logos", function () {
                 if (status === 'success') {
                     imageRefs[slug].url("");
                 }
-            }
+            },
         );
     };
 
