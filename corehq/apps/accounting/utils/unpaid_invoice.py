@@ -32,7 +32,7 @@ from corehq.apps.accounting.utils.invoicing import (
     get_domains_with_subscription_invoices_overdue,
     get_oldest_overdue_invoice_over_threshold,
 )
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.util.log import send_HTML_email
 from corehq.util.view_utils import absolute_reverse
 
 
@@ -141,7 +141,7 @@ class InvoiceReminder(UnpaidInvoiceAction):
             "Your CommCare Billing Statement for {account_name} is due in {num_days} days"
         ).format(account_name=account_name, num_days=DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER)
 
-        send_html_email_async.delay(
+        send_HTML_email(
             subject,
             invoice.get_contact_emails(include_domain_admins=True, filter_out_dimagi=True),
             render_to_string('accounting/email/invoice_reminder.html', context),
@@ -270,7 +270,7 @@ class Downgrade(UnpaidInvoiceAction):
 
     @staticmethod
     def _send_downgrade_notice(invoice, context):
-        send_html_email_async.delay(
+        send_HTML_email(
             _('Oh no! Your CommCare subscription for {} has been paused'.format(invoice.get_domain())),
             invoice.get_contact_emails(include_domain_admins=True, filter_out_dimagi=True),
             render_to_string('accounting/email/downgrade.html', context),
@@ -304,7 +304,7 @@ class Downgrade(UnpaidInvoiceAction):
         context.update({
             'subscriptions_to_downgrade': subscriptions_to_downgrade
         })
-        send_html_email_async.delay(
+        send_HTML_email(
             subject,
             invoice.get_contact_emails(include_domain_admins=True, filter_out_dimagi=True),
             render_to_string('accounting/email/downgrade_warning.html', context),
@@ -323,7 +323,7 @@ class Downgrade(UnpaidInvoiceAction):
             bcc = None
         else:
             bcc = [settings.GROWTH_EMAIL]
-        send_html_email_async.delay(
+        send_HTML_email(
             _('CommCare Billing Statement {} days Overdue for {}'.format(
                 DAYS_PAST_DUE_TO_TRIGGER_OVERDUE_NOTICE, context['domain_or_account']
             )),
