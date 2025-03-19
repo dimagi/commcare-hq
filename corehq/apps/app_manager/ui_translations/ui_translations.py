@@ -70,8 +70,8 @@ def process_ui_translation_upload(app, trans_file):
 
     for row in translations:
         if row["property"] == "":
-            warnings.append(_("Property {prop} is empty, "
-                            "We did not add it to the translations").format(prop=row["property"]))
+            warnings.append(_("Property '' is empty, "
+                            "We did not add it to the translations"))
             continue
         if row["property"] not in commcare_ui_strings:
             # Add a warning for  unknown properties, but still add them to the translation dict
