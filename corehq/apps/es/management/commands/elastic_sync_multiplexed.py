@@ -302,6 +302,7 @@ class ESSyncUtil:
             for cname in cnames:
                 current_index_name, older_index_name = self._get_current_and_older_index_name(cname)
                 if older_index_name in old_checkpoint_id:
+                    assert new_checkpoint_id.count(older_index_name) == 1, (new_checkpoint_id, older_index_name)
                     new_checkpoint_id = new_checkpoint_id.replace(older_index_name, current_index_name)
                     checkpoint_updated = True
             if checkpoint_updated:
