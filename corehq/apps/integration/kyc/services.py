@@ -130,15 +130,11 @@ def get_user_data_for_api(kyc_user, config):
         Returns a dictionary of user data for the API.
         ``source`` is a CommCareUser or a CommCareCase.
     """
-    user_data_for_api = {}
-    for api_field, user_data_property in config.api_field_to_user_data_map.items():
-        try:
-            value = kyc_user[user_data_property]
-        except KeyError:
-            # Conservative approach to skip the API field if data is not available for the user
-            continue
-        user_data_for_api[api_field] = value
-    return user_data_for_api
+    return {
+        api_field: kyc_user.get(user_data_property)
+        for api_field, user_data_property in config.api_field_to_user_data_map.items()
+        if kyc_user.get(user_data_property) is not None
+    }
 
 
 def _validate_schema(endpoint, data):
