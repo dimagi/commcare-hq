@@ -35,7 +35,7 @@ hqDefine("app_manager/js/summary/utils",[
         } else if (module.module_type === 'shadow') {
             moduleIcon = 'fa-regular fa-folder-open appnav-primary-icon';
         } else if (!module.is_surveys) {
-            moduleIcon = 'fa fa-bars appnav-primary-icon';
+            moduleIcon = 'fa-solid fa-list-check appnav-primary-icon';
         }
         return moduleIcon;
     };

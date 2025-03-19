@@ -7,7 +7,7 @@ hqDefine("app_manager/js/forms/case_knockout_bindings", [
     $,
     ko,
     _,
-    DOMPurify
+    DOMPurify,
 ) {
     var utils = {
         _getIcon: function (question) {
@@ -81,7 +81,7 @@ hqDefine("app_manager/js/forms/case_knockout_bindings", [
                 var $warning = $('<div class="help-block"></div>').text(gettext(
                     'We cannot find this question in the allowed questions for this field. ' +
                     'It is likely that you deleted or renamed the question. ' +
-                    'Please choose a valid question from the dropdown.'
+                    'Please choose a valid question from the dropdown.',
                 ));
                 $(element).after($warning);
                 $(element).parent().addClass('has-error');

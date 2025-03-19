@@ -432,7 +432,7 @@ python-imap==1.0.0
     # via -r base-requirements.in
 python-magic==0.4.27
     # via -r base-requirements.in
-python-mimeparse==1.6.0
+python-mimeparse==2.0.0
     # via django-tastypie
 python3-saml==1.12.0
     # via -r sso-requirements.in
@@ -604,7 +604,7 @@ webencodings==0.5.1
     #   tinycss2
 werkzeug==3.0.6
     # via -r base-requirements.in
-wrapt==1.12.1
+wrapt==1.17.2
     # via
     #   ddtrace
     #   deprecated
@@ -622,7 +622,7 @@ zipp==3.21.0
     # via importlib-metadata
 zope-event==5.0
     # via gevent
-zope-interface==6.1
+zope-interface==7.2
     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:

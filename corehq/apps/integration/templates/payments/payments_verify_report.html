@@ -5,6 +5,15 @@
 {% js_entry "integration/js/payments/payments_verify" %}
 
 {% block page_content %}
+  {% if not has_config %}
+    <p class="alert alert-warning">
+      {% blocktrans %}
+        To request payments successfully, add necessary settings on the
+        <a href="{{ config_url }}">Payments Configuration</a>
+        page.
+      {% endblocktrans %}
+    </p>
+  {% endif %}
   <div>
     <h1 class="py-3 m-0">{% trans "Payments Verification Report" %}</h1>
   </div>

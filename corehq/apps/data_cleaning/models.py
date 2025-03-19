@@ -103,39 +103,44 @@ class BulkEditSession(models.Model):
             return None
         return round(self.result['percent'])
 
-    def add_column_filter(self, prop_id, data_type, match_type, value=None):
-        BulkEditColumnFilter.objects.create(
+    def add_filter(self, prop_id, data_type, match_type, value=None):
+        BulkEditFilter.objects.create(
             session=self,
-            index=self.column_filters.count(),
+            index=self.filters.count(),
             prop_id=prop_id,
             data_type=data_type,
             match_type=match_type,
             value=value,
         )
 
-    def reorder_column_filters(self, filter_ids):
+    def remove_filter(self, filter_id):
+        self.filters.get(filter_id=filter_id).delete()
+        remaining_ids = self.filters.values_list('filter_id', flat=True)
+        self.update_filter_order(remaining_ids)
+
+    def update_filter_order(self, filter_ids):
         """
-        This updates the order of column filters for this session
-        :param filter_ids: list of uuids matching filter_id field of BulkEditColumnFilters
+        This updates the order of filters for this session
+        :param filter_ids: list of uuids matching filter_id field of BulkEditFilters
         """
-        if len(filter_ids) != self.column_filters.count():
-            raise ValueError("the lengths of column_ids and available column filters do not match")
+        if len(filter_ids) != self.filters.count():
+            raise ValueError("the lengths of filter_ids and available filters do not match")
         for index, filter_id in enumerate(filter_ids):
-            column_filter = self.column_filters.get(filter_id=filter_id)
-            column_filter.index = index
-            column_filter.save()
+            active_filter = self.filters.get(filter_id=filter_id)
+            active_filter.index = index
+            active_filter.save()
 
     def get_queryset(self):
         query = CaseSearchES().domain(self.domain).case_type(self.identifier)
-        query = self._apply_column_filters(query)
+        query = self._apply_filters(query)
         query = self._apply_pinned_filters(query)
         return query
 
-    def _apply_column_filters(self, query):
+    def _apply_filters(self, query):
         xpath_expressions = []
-        for column_filter in self.column_filters.all():
-            query = column_filter.filter_query(query)
-            column_xpath = column_filter.get_xpath_expression()
+        for custom_filter in self.filters.all():
+            query = custom_filter.filter_query(query)
+            column_xpath = custom_filter.get_xpath_expression()
             if column_xpath is not None:
                 xpath_expressions.append(column_xpath)
         if xpath_expressions:
@@ -237,6 +242,27 @@ class DataType:
         FILTER_CATEGORY_MULTI_SELECT: (MULTIPLE_OPTION,),
     }
 
+    ICON_CLASSES = {
+        TEXT: 'fcc fcc-fd-text',
+        INTEGER: 'fcc fcc-fd-numeric',
+        PHONE_NUMBER: 'fa fa-signal',
+        DECIMAL: 'fcc fcc-fd-decimal',
+        DATE: 'fa-solid fa-calendar-days',
+        TIME: 'fa-regular fa-clock',
+        DATETIME: 'fcc fcc-fd-datetime',
+        SINGLE_OPTION: 'fcc fcc-fd-single-select',
+        MULTIPLE_OPTION: 'fcc fcc-fd-multi-select',
+        GPS: 'fa-solid fa-location-dot',
+        BARCODE: 'fa fa-barcode',
+        PASSWORD: 'fa fa-key',
+    }
+
+    @classmethod
+    def get_filter_category(cls, data_type):
+        for category, valid_data_types in cls.FILTER_CATEGORY_DATA_TYPES.items():
+            if data_type in valid_data_types:
+                return category
+
 
 class FilterMatchType:
     EXACT = "exact"
@@ -336,8 +362,8 @@ class FilterMatchType:
     )
 
 
-class BulkEditColumnFilter(models.Model):
-    session = models.ForeignKey(BulkEditSession, related_name="column_filters", on_delete=models.CASCADE)
+class BulkEditFilter(models.Model):
+    session = models.ForeignKey(BulkEditSession, related_name="filters", on_delete=models.CASCADE)
     filter_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
     index = models.IntegerField(default=0)
     prop_id = models.CharField(max_length=255)  # case property or form question_id
@@ -356,6 +382,35 @@ class BulkEditColumnFilter(models.Model):
     class Meta:
         ordering = ["index"]
 
+    @property
+    def is_editable_property(self):
+        from corehq.apps.data_cleaning.utils.cases import get_case_property_details
+        property_details = get_case_property_details(self.session.domain, self.session.identifier)
+        return property_details.get(self.prop_id, {}).get('is_editable', True)
+
+    @property
+    def human_readable_data_type(self):
+        return dict(DataType.CASE_CHOICES).get(self.data_type, _("unknown"))
+
+    @property
+    def human_readable_match_type(self):
+        category = DataType.get_filter_category(self.data_type)
+        match_to_text = {
+            DataType.FILTER_CATEGORY_TEXT: dict(
+                FilterMatchType.TEXT_CHOICES + FilterMatchType.ALL_DATA_TYPES_CHOICES
+            ),
+            DataType.FILTER_CATEGORY_NUMBER: dict(
+                FilterMatchType.NUMBER_CHOICES + FilterMatchType.ALL_DATA_TYPES_CHOICES
+            ),
+            DataType.FILTER_CATEGORY_DATE: dict(
+                FilterMatchType.DATE_CHOICES + FilterMatchType.ALL_DATA_TYPES_CHOICES
+            ),
+            DataType.FILTER_CATEGORY_MULTI_SELECT: dict(
+                FilterMatchType.MULTI_SELECT_CHOICES + FilterMatchType.ALL_DATA_TYPES_CHOICES
+            ),
+        }.get(category, {})
+        return match_to_text.get(self.match_type, _("unknown"))
+
     def filter_query(self, query):
         filter_query_functions = {
             FilterMatchType.IS_EMPTY: lambda q: q.empty(self.prop_id),
@@ -363,7 +418,9 @@ class BulkEditColumnFilter(models.Model):
             FilterMatchType.IS_MISSING: lambda q: q.missing(self.prop_id),
             FilterMatchType.IS_NOT_MISSING: lambda q: q.exists(self.prop_id),
         }
-        if self.match_type in filter_query_functions:
+        # if a property is not editable, then it can't be empty or missing
+        # we need the `is_editable_property` check to avoid elasticsearch RequestErrors on system fields
+        if self.match_type in filter_query_functions and self.is_editable_property:
             query = filter_query_functions[self.match_type](query)
         return query
 
@@ -379,10 +436,9 @@ class BulkEditColumnFilter(models.Model):
             DataType.FILTER_CATEGORY_DATE: dict(FilterMatchType.DATE_CHOICES),
             DataType.FILTER_CATEGORY_MULTI_SELECT: dict(FilterMatchType.MULTI_SELECT_CHOICES),
         }
-        for category, valid_data_types in DataType.FILTER_CATEGORY_DATA_TYPES.items():
-            if data_type in valid_data_types:
-                return match_type in matches_by_category[category]
-
+        category = DataType.get_filter_category(data_type)
+        if category:
+            return match_type in matches_by_category[category]
         return False
 
     @staticmethod

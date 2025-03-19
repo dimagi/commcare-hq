@@ -10,6 +10,8 @@ hqDefine('geospatial/js/models', [
     '@mapbox/mapbox-gl-draw',
     '@turf/turf',
     'hqwebapp/js/components/pagination',
+    'style-loader!mapbox-gl/dist/mapbox-gl.css',
+    'style-loader!@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css',
 ], function (
     $,
     ko,
@@ -162,7 +164,7 @@ hqDefine('geospatial/js/models', [
 
         self.DISBURSEMENT_LINES_LAYER_ID = 'disbursement-lines';
 
-        self.initMap = function (mapDivId, centerCoordinates) {
+        self.initMap = function (mapDivId, centerCoordinates, disableDrawControls = false) {
             mapboxgl.accessToken = initialPageData.get('mapbox_access_token');
             if (!centerCoordinates) {
                 centerCoordinates = [-91.874, 42.76]; // should be domain specific
@@ -177,16 +179,18 @@ hqDefine('geospatial/js/models', [
                              ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
             });
 
-            self.drawControls = new MapboxDraw({
-                // API: https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md
-                displayControlsDefault: false,
-                boxSelect: true, // enables box selection
-                controls: {
-                    polygon: true,
-                    trash: true,
-                },
-            });
-            self.mapInstance.addControl(self.drawControls);
+            if (!disableDrawControls) {
+                self.drawControls = new MapboxDraw({
+                    // API: https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md
+                    displayControlsDefault: false,
+                    boxSelect: true, // enables box selection
+                    controls: {
+                        polygon: true,
+                        trash: true,
+                    },
+                });
+                self.mapInstance.addControl(self.drawControls);
+            }
 
             // Add zoom and rotation controls to the map.
             self.mapInstance.addControl(new mapboxgl.NavigationControl());
