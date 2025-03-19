@@ -309,7 +309,7 @@ class AddColumnFilterForm(forms.Form):
             self.add_error('data_type', _("Please specify a data type."))
             return cleaned_data
 
-        category = self.get_data_type_category(data_type)
+        category = DataType.get_filter_category(data_type)
         clean_fn = {
             DataType.FILTER_CATEGORY_TEXT: lambda x: self._clean_text_filter(x),
             DataType.FILTER_CATEGORY_NUMBER: lambda x: self._clean_number_filter(x),
@@ -322,12 +322,6 @@ class AddColumnFilterForm(forms.Form):
             return cleaned_data
 
         return clean_fn(cleaned_data)
-
-    @staticmethod
-    def get_data_type_category(data_type):
-        for category, valid_data_types in DataType.FILTER_CATEGORY_DATA_TYPES.items():
-            if data_type in valid_data_types:
-                return category
 
     def _clean_text_filter(self, cleaned_data):
         match_type = self._clean_required_match_type('text_match_type', cleaned_data)

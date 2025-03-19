@@ -168,7 +168,7 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         filters = session.filters.all()
         new_order = [filters[1].filter_id, filters[2].filter_id]
         with self.assertRaises(ValueError):
-            session.reorder_filters(new_order)
+            session.update_filter_order(new_order)
 
     def test_reorder_filters(self):
         session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
@@ -185,7 +185,7 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
             filters[4].filter_id,
             filters[3].filter_id,
         ]
-        session.reorder_filters(new_order)
+        session.update_filter_order(new_order)
         reordered_prop_ids = [c.prop_id for c in session.filters.all()]
         self.assertEqual(
             reordered_prop_ids,

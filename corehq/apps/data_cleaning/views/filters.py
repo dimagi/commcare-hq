@@ -78,8 +78,9 @@ class ManageFiltersFormView(BulkEditSessionViewMixin, BaseFilterFormView):
         return self.get(request, filter_form=filter_form, *args, **kwargs)
 
     @hq_hx_action('post')
-    def reorder_filters(self, request, *args, **kwargs):
-        # todo
+    def update_filter_order(self, request, *args, **kwargs):
+        filter_ids = request.POST.getlist('filter_ids')
+        self.session.update_filter_order(filter_ids)
         return self.get(request, *args, **kwargs)
 
     @hq_hx_action('post')

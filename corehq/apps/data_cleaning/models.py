@@ -116,15 +116,15 @@ class BulkEditSession(models.Model):
     def remove_filter(self, filter_id):
         self.filters.get(filter_id=filter_id).delete()
         remaining_ids = self.filters.values_list('filter_id', flat=True)
-        self.reorder_filters(remaining_ids)
+        self.update_filter_order(remaining_ids)
 
-    def reorder_filters(self, filter_ids):
+    def update_filter_order(self, filter_ids):
         """
-        This updates the order of column filters for this session
+        This updates the order of filters for this session
         :param filter_ids: list of uuids matching filter_id field of BulkEditFilters
         """
         if len(filter_ids) != self.filters.count():
-            raise ValueError("the lengths of column_ids and available column filters do not match")
+            raise ValueError("the lengths of filter_ids and available filters do not match")
         for index, filter_id in enumerate(filter_ids):
             active_filter = self.filters.get(filter_id=filter_id)
             active_filter.index = index
@@ -241,6 +241,27 @@ class DataType:
         FILTER_CATEGORY_DATE: (DATE, DATETIME,),
         FILTER_CATEGORY_MULTI_SELECT: (MULTIPLE_OPTION,),
     }
+
+    ICON_CLASSES = {
+        TEXT: 'fcc fcc-fd-text',
+        INTEGER: 'fcc fcc-fd-numeric',
+        PHONE_NUMBER: 'fa fa-signal',
+        DECIMAL: 'fcc fcc-fd-decimal',
+        DATE: 'fa-solid fa-calendar-days',
+        TIME: 'fa-regular fa-clock',
+        DATETIME: 'fcc fcc-fd-datetime',
+        SINGLE_OPTION: 'fcc fcc-fd-single-select',
+        MULTIPLE_OPTION: 'fcc fcc-fd-multi-select',
+        GPS: 'fa-solid fa-location-dot',
+        BARCODE: 'fa fa-barcode',
+        PASSWORD: 'fa fa-key',
+    }
+
+    @classmethod
+    def get_filter_category(cls, data_type):
+        for category, valid_data_types in cls.FILTER_CATEGORY_DATA_TYPES.items():
+            if data_type in valid_data_types:
+                return category
 
 
 class FilterMatchType:
@@ -367,6 +388,29 @@ class BulkEditFilter(models.Model):
         property_details = get_case_property_details(self.session.domain, self.session.identifier)
         return property_details.get(self.prop_id, {}).get('is_editable', True)
 
+    @property
+    def human_readable_data_type(self):
+        return dict(DataType.CASE_CHOICES).get(self.data_type, _("unknown"))
+
+    @property
+    def human_readable_match_type(self):
+        category = DataType.get_filter_category(self.data_type)
+        match_to_text = {
+            DataType.FILTER_CATEGORY_TEXT: dict(
+                FilterMatchType.TEXT_CHOICES + FilterMatchType.ALL_DATA_TYPES_CHOICES
+            ),
+            DataType.FILTER_CATEGORY_NUMBER: dict(
+                FilterMatchType.NUMBER_CHOICES + FilterMatchType.ALL_DATA_TYPES_CHOICES
+            ),
+            DataType.FILTER_CATEGORY_DATE: dict(
+                FilterMatchType.DATE_CHOICES + FilterMatchType.ALL_DATA_TYPES_CHOICES
+            ),
+            DataType.FILTER_CATEGORY_MULTI_SELECT: dict(
+                FilterMatchType.MULTI_SELECT_CHOICES + FilterMatchType.ALL_DATA_TYPES_CHOICES
+            ),
+        }.get(category, {})
+        return match_to_text.get(self.match_type, _("unknown"))
+
     def filter_query(self, query):
         filter_query_functions = {
             FilterMatchType.IS_EMPTY: lambda q: q.empty(self.prop_id),
@@ -392,10 +436,9 @@ class BulkEditFilter(models.Model):
             DataType.FILTER_CATEGORY_DATE: dict(FilterMatchType.DATE_CHOICES),
             DataType.FILTER_CATEGORY_MULTI_SELECT: dict(FilterMatchType.MULTI_SELECT_CHOICES),
         }
-        for category, valid_data_types in DataType.FILTER_CATEGORY_DATA_TYPES.items():
-            if data_type in valid_data_types:
-                return match_type in matches_by_category[category]
-
+        category = DataType.get_filter_category(data_type)
+        if category:
+            return match_type in matches_by_category[category]
         return False
 
     @staticmethod
