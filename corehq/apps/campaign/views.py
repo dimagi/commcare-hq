@@ -27,7 +27,7 @@ from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.views import BaseProjectReportSectionView
 from corehq.form_processor.models import CommCareCase
-from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
+from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action, HtmxResponseException
 from corehq.util.timezones.utils import get_timezone
 
 
@@ -178,11 +178,17 @@ class DashboardWidgetView(HqHtmxActionMixin, BaseDomainView):
 
     @hq_hx_action('get')
     def new_widget(self, request, *args, **kwargs):
+        self._validate_request_widget_type()
+
         context = {
             'widget_form': self.form_class(domain=self.domain),
             'widget_type': self.widget_type,
         }
         return self.render_htmx_partial_response(request, self.form_template_partial_name, context)
+
+    def _validate_request_widget_type(self):
+        if not any(choice[0] == self.widget_type for choice in WidgetType.choices()):
+            raise HtmxResponseException(gettext_lazy("Requested widget type is not supported"))
 
     @cached_property
     def widget_type(self):
@@ -202,6 +208,8 @@ class DashboardWidgetView(HqHtmxActionMixin, BaseDomainView):
 
     @hq_hx_action('post')
     def save_widget(self, request, *args, **kwargs):
+        self._validate_request_widget_type()
+
         widget = self.model_class(dashboard=self.dashboard)
         form = self.form_class(self.domain, request.POST, instance=widget)
         show_success = False

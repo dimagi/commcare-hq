@@ -204,6 +204,15 @@ class TestDashboardWidgetView(BaseTestCampaignView):
         self._assert_for_success(response, WidgetType.REPORT)
 
     @flag_enabled('CAMPAIGN_DASHBOARD')
+    def test_new_widget_invalid_widget_type(self, *args):
+        response = self._make_request(
+            query_data={'widget_type': 'invalid'},
+            headers={'hq-hx-action': 'new_widget'},
+            is_logged_in=True,
+        )
+        assert response.context['htmx_error'].message == "Requested widget type is not supported"
+
+    @flag_enabled('CAMPAIGN_DASHBOARD')
     @patch('corehq.apps.campaign.forms.DashboardMapForm._get_case_types')
     def test_save_map_widget(self, mocked_case_types):
         mocked_case_types.return_value = [('case-02', 'case-02')]
