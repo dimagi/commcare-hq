@@ -6,6 +6,7 @@ hqDefine("domain/js/bootstrap5/billing_statements", [
     'hqwebapp/js/initial_page_data',
     'accounting/js/payment_method_handler',
     'hqwebapp/js/bootstrap5/crud_paginated_list',
+    'commcarehq',
 ], function (
     $,
     _,
