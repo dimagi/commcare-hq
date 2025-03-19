@@ -11,7 +11,7 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
     record_class = EditableCaseSearchElasticRecord
 
     class Meta(BaseHtmxTable.Meta):
-        pass
+        template_name = "data_cleaning/tables/table_with_controls.html"
 
     @classmethod
     def get_columns_from_session(cls, session):

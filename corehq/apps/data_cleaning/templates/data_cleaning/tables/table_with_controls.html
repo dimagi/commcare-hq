@@ -1,0 +1,21 @@
+{% extends "hqwebapp/tables/bootstrap5_htmx.html" %}
+{% load i18n %}
+{% load django_tables2 %}
+
+{% block before_table %}
+  <div class="d-flex align-items-center pb-2">
+
+    <div>
+      <div class="input-group">
+        <div class="input-group-text rounded-end"> {# todo: selection UI #}
+          <i class="fa-solid fa-circle-check me-2"></i>
+          {# todo: selection number #}
+          {% blocktrans %}
+            0 Records Selected
+          {% endblocktrans %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+{% endblock %}
