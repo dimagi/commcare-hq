@@ -15,7 +15,6 @@ from corehq.apps.integration.kyc.views import (
     KycVerificationTableView,
 )
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.motech.models import ConnectionSettings
 from corehq.util.test_utils import flag_enabled
 
 
@@ -37,13 +36,6 @@ class BaseTestKycView(TestCase):
             is_admin=True,
         )
         cls.webuser.save()
-        cls.conn_settings = ConnectionSettings.objects.create(
-            name='test-conn',
-            url='http://test.com',
-            username='test',
-            password='test',
-        )
-        cls.addClassCleanup(cls.conn_settings.delete)
 
     @classmethod
     def tearDownClass(cls):
@@ -108,7 +100,6 @@ class TestKycVerificationReportView(BaseTestKycView):
             domain=self.domain,
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
             api_field_to_user_data_map=[],
-            connection_settings=self.conn_settings
         )
         self.addCleanup(kyc_config.delete)
         response = self._make_request()
@@ -128,7 +119,6 @@ class TestKycVerificationReportView(BaseTestKycView):
             domain=self.domain,
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
             api_field_to_user_data_map=[],
-            connection_settings=self.conn_settings
         )
         self.addCleanup(kyc_config.delete)
 
@@ -150,7 +140,7 @@ class TestKycVerificationTableView(BaseTestKycView):
         super().setUpClass()
         cls.kyc_mapping = {
             # API field: User data
-            'first_name': 'first_name',
+            'first_name': 'name',
             'last_name': 'last_name',
             'email': 'email',
             'phone_number': 'phone_number',
@@ -164,7 +154,6 @@ class TestKycVerificationTableView(BaseTestKycView):
             domain=cls.domain,
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
             api_field_to_user_data_map=cls.kyc_mapping,
-            connection_settings=cls.conn_settings,
         )
         cls.addClassCleanup(cls.kyc_config.delete)
         cls.user1 = CommCareUser.create(
@@ -177,6 +166,7 @@ class TestKycVerificationTableView(BaseTestKycView):
             last_name='Doe',
             email='jdoe@example.org',
             user_data={
+                'name': 'Johnny',
                 'phone_number': '1234567890',
                 'national_id_number': '1234567890',
                 'street_address': '123 Main St',
@@ -203,7 +193,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                 data={
                     'first_name': 'Bob',
                     'last_name': 'Smith',
-                    'email': 'bsmith@example.org',
+                    'home_email': 'bsmith@example.org',
                     'phone_number': '0987654321',
                     'national_id_number': '0987654321',
                     'street_address': '456 Main St',
@@ -250,16 +240,18 @@ class TestKycVerificationTableView(BaseTestKycView):
                 assert row == {
                     'id': self.user2.user_id,
                     'has_invalid_data': True,
-                    'first_name': 'Jane',
-                    'last_name': 'Doe',
-                    'kyc_is_verified': None,
+                    'kyc_verification_status': None,
                     'kyc_last_verified_at': None,
+                    'name': 'Jane Doe',
+                    'last_name': 'Doe',
                 }
             else:
                 assert row == {
                     'id': self.user1.user_id,
                     'has_invalid_data': False,
-                    'first_name': 'John',
+                    'kyc_verification_status': None,
+                    'kyc_last_verified_at': None,
+                    'name': 'Johnny',
                     'last_name': 'Doe',
                     'email': 'jdoe@example.org',
                     'phone_number': '1234567890',
@@ -268,8 +260,6 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'city': 'Anytown',
                     'post_code': '12345',
                     'country': 'Anyplace',
-                    'kyc_is_verified': None,
-                    'kyc_last_verified_at': None,
                 }
 
     @flag_enabled('KYC_VERIFICATION')
@@ -279,7 +269,7 @@ class TestKycVerificationTableView(BaseTestKycView):
         self.kyc_config.api_field_to_user_data_map.update({
             'first_name': 'first_name',
             'last_name': 'last_name',
-            'email': 'email',
+            'email': 'home_email',
         })
         self.kyc_config.save()
 
@@ -291,26 +281,26 @@ class TestKycVerificationTableView(BaseTestKycView):
                 assert row == {
                     'id': self.case_list[1].case_id,
                     'has_invalid_data': True,
+                    'kyc_verification_status': None,
+                    'kyc_last_verified_at': None,
                     'first_name': 'Foo',
                     'last_name': 'Bar',
-                    'kyc_is_verified': None,
-                    'kyc_last_verified_at': None,
                 }
             else:
                 assert row == {
                     'id': self.case_list[0].case_id,
                     'has_invalid_data': False,
+                    'kyc_verification_status': None,
+                    'kyc_last_verified_at': None,
                     'first_name': 'Bob',
                     'last_name': 'Smith',
-                    'email': 'bsmith@example.org',
+                    'home_email': 'bsmith@example.org',
                     'phone_number': '0987654321',
                     'national_id_number': '0987654321',
                     'street_address': '456 Main St',
                     'city': 'Sometown',
                     'post_code': '54321',
                     'country': 'Someplace',
-                    'kyc_is_verified': None,
-                    'kyc_last_verified_at': None,
                 }
 
 

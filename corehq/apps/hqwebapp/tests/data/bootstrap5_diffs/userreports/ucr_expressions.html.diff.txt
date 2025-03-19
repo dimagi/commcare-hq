@@ -1,0 +1,85 @@
+--- 
++++ 
+@@ -1,8 +1,8 @@
+-{% extends 'hqwebapp/bootstrap3/base_paginated_crud.html' %}
++{% extends 'hqwebapp/bootstrap5/base_paginated_crud.html' %}
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ 
+-{% js_entry_b3 "userreports/js/bootstrap3/ucr_expressions" %}
++{% js_entry "userreports/js/bootstrap5/ucr_expressions" %}
+ 
+ {% block pagination_templates %}
+ <script type="text/html" id="base-ucr-statement-template">
+@@ -11,14 +11,14 @@
+     <td data-bind="text: description"></td>
+     <td>
+       <span data-bind="text: definition_preview"></span>
+-      <a data-toggle="modal" data-bind="attr: {'data-target': '#update-expression-' + id}">
++      <a data-bs-toggle="modal" data-bind="attr: {'data-bs-target': '#update-expression-' + id}">
+         ({% trans "see more" %})
+       </a>
+       <div class="modal fade" data-bind="attr: {id: 'update-expression-' + id}">
+             <div class="modal-dialog">
+                 <div class="modal-content">
+                     <div class="modal-header">
+-                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
++                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true">&times;</button>  {# todo B5: css-close #}
+                         <h3 data-bind="text: name"></h3>
+                     </div>
+                     <div class="modal-body">
+@@ -34,9 +34,9 @@
+             {% trans "Update Expression" %}
+         </a>
+         <button type="button"
+-                data-toggle="modal"
+-                data-bind="attr: {'data-target': '#delete-expression-' + id}"
+-                class="btn btn-danger">
++                data-bs-toggle="modal"
++                data-bind="attr: {'data-bs-target': '#delete-expression-' + id}"
++                class="btn btn-outline-danger">
+           <i class="fa fa-remove"></i> {% trans 'Remove' %}
+         </button>
+         <a class="btn btn-primary"
+@@ -49,7 +49,7 @@
+           <div class="modal-dialog">
+             <div class="modal-content">
+               <div class="modal-header">
+-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
++                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true">&times;</button>  {# todo B5: css-close #}
+                 <h4 class="modal-title">
+                   {% blocktrans %}
+                     Delete expression <strong data-bind="text: name"></strong>?
+@@ -65,13 +65,13 @@
+               </div>
+               <div class="modal-footer">
+                 <button type="button"
+-                        class="btn btn-default"
+-                        data-dismiss="modal">
++                        class="btn btn-outline-primary"
++                        data-bs-dismiss="modal">
+                   {% trans 'Cancel' %}
+                 </button>
+                 <button type="button"
+-                        class="btn btn-danger delete-item-confirm"
+-                        data-loading-text="{% trans 'Deleting Expression...' %}">
++                        class="btn btn-outline-danger delete-item-confirm"
++                        data-loading-text="{% trans 'Deleting Expression...' %}">  {# todo B5: stateful button #}
+                   <i class="fa fa-remove"></i> {% trans 'Delete Expression' %}
+                 </button>
+               </div>
+@@ -82,11 +82,11 @@
+ </script>
+ 
+ <script type="text/html" id="deleted-ucr-statement-template">
+-  <td class="col-sm-8">
++  <td class="col-md-8">
+     <a data-bind="text: name"></a>
+   </td>
+-  <td class="col-sm-4">
+-    <span class="label label-default">{% trans 'Deleted' %}</span>
++  <td class="col-md-4">
++    <span class="badge text-bg-secondary">{% trans 'Deleted' %}</span>
+   </td>
+ </script>
+ {% endblock %}

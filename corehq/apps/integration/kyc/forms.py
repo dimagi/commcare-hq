@@ -9,6 +9,7 @@ from crispy_forms.helper import FormHelper
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
+from corehq.apps.hqwebapp.utils.translation import format_html_lazy
 from corehq.apps.integration.kyc.models import (
     KycConfig,
     KycProviders,
@@ -16,7 +17,6 @@ from corehq.apps.integration.kyc.models import (
 )
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.userreports.ui.fields import JsonField
-from corehq.motech.models import ConnectionSettings
 
 
 class KycConfigureForm(forms.ModelForm):
@@ -28,7 +28,6 @@ class KycConfigureForm(forms.ModelForm):
             'other_case_type',
             'provider',
             'api_field_to_user_data_map',
-            'connection_settings',
         ]
 
     user_data_store = forms.ChoiceField(
@@ -49,19 +48,18 @@ class KycConfigureForm(forms.ModelForm):
         label=_('API Field to Recipient Data Map'),
         required=True,
         expected_type=dict,
-    )
-    connection_settings = forms.ModelChoiceField(
-        label=_('Connection Settings'),
-        required=True,
-        queryset=None,
+        help_text=format_html_lazy(
+            _('Maps API field for the KYC provider to the field used for storing the relevant data.'
+              ' To learn more about this, please have a look at our '
+              '<a href="{}" target="_blank">support documentation</a>.'),
+            'https://commcare-hq.readthedocs.io/integrations/kyc.html#api-field-to-recipient-data-map'
+        ),
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance = kwargs.pop('instance')
-        self.fields['connection_settings'].queryset = ConnectionSettings.objects.filter(
-            domain=self.instance.domain
-        )
+
         self.fields['other_case_type'].choices = self._get_case_types()
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -87,10 +85,6 @@ class KycConfigureForm(forms.ModelForm):
                     'api_field_to_user_data_map',
                     x_init='api_field_to_user_data_map = $el.value',
                     css_id='api-mapping',
-                ),
-                crispy.Field(
-                    'connection_settings',
-                    x_init='connection_settings = $el.value',
                 ),
                 twbscrispy.StrictButton(
                     _('Save'),

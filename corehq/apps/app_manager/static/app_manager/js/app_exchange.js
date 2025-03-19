@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine("app_manager/js/app_exchange", [
     "jquery",
     "knockout",
@@ -8,7 +8,7 @@ hqDefine("app_manager/js/app_exchange", [
 ], function (
     $,
     ko,
-    kissmetrics
+    kissmetrics,
 ) {
     var AppExchangeModel = function () {
         var self = {};

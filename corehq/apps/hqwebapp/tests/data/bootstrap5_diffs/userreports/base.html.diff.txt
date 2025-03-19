@@ -1,0 +1,77 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ {% load compress %}
+@@ -41,13 +41,13 @@
+   {% initial_page_data 'url' url %}
+ 
+   {% block report_alerts %}
+-    <div id="report-error" class="alert alert-danger hide">
++    <div id="report-error" class="alert alert-danger d-none">
+       {% blocktrans %}
+         There was an error rendering your report.
+       {% endblocktrans %}
+       <div id="error-message"></div>
+     </div>
+-    <div id="report-warning" class="alert alert-warning hide">
++    <div id="report-warning" class="alert alert-warning d-none">
+       {% blocktrans %}
+         Warning:
+       {% endblocktrans %}
+@@ -56,7 +56,7 @@
+   {% endblock report_alerts %}
+   {% block main_column_content %}
+     {% block filter_panel %}
+-      {% include "reports_core/partials/bootstrap3/filter_panel.html" %}
++      {% include "reports_core/partials/bootstrap5/filter_panel.html" %}
+     {% endblock %}
+ 
+     <hr />
+@@ -64,22 +64,22 @@
+       <h4><i class="fa fa-info-circle"></i> {% blocktrans %}Why can't I see any data?{% endblocktrans %}</h4>
+       <p>{% blocktrans %}Please choose your filters above and click <strong>Apply</strong> to see report data.{% endblocktrans %}</p>
+     </div>
+-    <div id="reportContent" class="hide">
++    <div id="reportContent" class="d-none">
+       {% block reportcharts %}
+-        <section id="chart-container" style="display: none;">
++        <section id="chart-container" style="display: none;">  {# todo B5: inline-style #}
+         </section>
+-        <section id="chart-warning" class="alert alert-warning hide">
++        <section id="chart-warning" class="alert alert-warning d-none">
+           {% blocktrans %}
+             Charts cannot be displayed with more than 25 categories. Please filter the data or change your report to limit the number of rows.
+           {% endblocktrans %}
+         </section>
+-        <section id="map-container" style="display: none;" >
++        <section id="map-container" style="display: none;" >  {# todo B5: inline-style #}
+         </section>
+-        <div id="zoomtofit" class="leaflet-control-layers" style="display: none;">
++        <div id="zoomtofit" class="leaflet-control-layers" style="display: none;">  {# todo B5: inline-style #}
+           <div id="zoomtofit-target" class="zoomtofit leaflet-control-layers-toggle" title="{% trans "Fit all data into view" %}"></div>
+         </div>
+ 
+-        <div id="report-info" class="alert alert-info hide">
++        <div id="report-info" class="alert alert-info d-none">
+           {% blocktrans %}
+             Note:
+           {% endblocktrans %}
+@@ -87,11 +87,11 @@
+         </div>
+       {% endblock %}
+       {% block reporttable %}
+-        <div class="panel panel-default">
+-          <div class="panel-heading">
++        <div class="card ">  {# todo B5: css-panel #}
++          <div class="card-header">
+             <h4>{{ report.title }}</h4>
+           </div>
+-          <div class="panel-body hq-datatable-container">
++          <div class="card-body hq-datatable-container">
+             <table id="report_table_{{ report.slug }}" class="table table-striped">
+               <thead>
+               {{ headers.render_html }}

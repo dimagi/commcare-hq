@@ -28,7 +28,7 @@ def get_submit_url(domain, app_id=None):
         return "/a/{domain}/receiver/".format(domain=domain)
 
 
-def submit_form_locally(instance, domain, max_wait=..., **kwargs):
+def submit_form_locally(instance, domain, max_wait=..., app_id=None, build_id=None, **kwargs):
     """
     :param instance: XML instance (as a string) to submit
     :param domain: The domain to submit the form to
@@ -45,9 +45,13 @@ def submit_form_locally(instance, domain, max_wait=..., **kwargs):
         rate_limit_submission(domain, delay_rather_than_reject=True, max_wait=max_wait)
     # intentionally leave these unauth'd for now
     kwargs['auth_context'] = kwargs.get('auth_context') or DefaultAuthContext()
+    if app_id is not None and build_id is None:
+        app_id, build_id = get_app_and_build_ids(domain, app_id)
     result = SubmissionPost(
         domain=domain,
         instance=instance,
+        app_id=app_id,
+        build_id=build_id,
         **kwargs
     ).run()
     if not 200 <= result.response.status_code < 300:
