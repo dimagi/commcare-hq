@@ -21,7 +21,7 @@ def dc_filter_value(dc_filter):
         context['values_list'] = dc_filter.value.split(" ")
     else:
         context['value'] = dc_filter.value
-    return mark_safe(  # nosec: render_to_string should have already handled escaping
+    return mark_safe(  # nosec: render_to_string below will handle escaping
         render_to_string(
             "data_cleaning/filters/formatted_value.html",
             context
