@@ -1,5 +1,3 @@
-const { expr } = require("jquery");
-
 hqDefine('cloudcare/js/gtx', [
     'underscore',
     'analytix/js/gtx',

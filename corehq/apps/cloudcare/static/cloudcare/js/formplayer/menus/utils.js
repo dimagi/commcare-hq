@@ -220,9 +220,6 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
                 domain: UsersModels.getCurrentUser().domain,
                 name: menuResponse.title,
             });
-            var gtxEventData = _.extend(eventData, {
-                moduleName: menuResponse.title,
-            });
             kissmetrics.track.event("Viewed Case List", kissmetricsEventData);
             gtx.logCaseList(menuResponse);
 
