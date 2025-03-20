@@ -295,7 +295,7 @@ jsonschema==4.17.3
     # via -r base-requirements.in
 jwcrypto==1.5.6
     # via django-oauth-toolkit
-kafka-python==1.4.7
+kafka-python==2.1.2
     # via -r base-requirements.in
 kombu==5.2.4
     # via celery
