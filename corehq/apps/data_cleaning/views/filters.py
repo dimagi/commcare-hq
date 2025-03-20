@@ -44,6 +44,11 @@ class PinnedFilterFormView(BulkEditSessionViewMixin, BaseFilterFormView):
         [f.update_stored_value() for f in self.form_filters]
         return self.get(request, *args, **kwargs)
 
+    @hq_hx_action('post')
+    def reset_filters(self, request, *args, **kwargs):
+        self.session.reset_pinned_filters()
+        return self.get(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
@@ -51,6 +56,7 @@ class PinnedFilterFormView(BulkEditSessionViewMixin, BaseFilterFormView):
             'form_filters': [
                 f.render() for f in self.form_filters
             ],
+            'has_values': self.session.has_pinned_values,
         })
         return context
 
