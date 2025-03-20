@@ -978,15 +978,15 @@ hqDefine("cloudcare/js/form_entry/entries", [
             let badMime = true;
             const ext = newValue.slice(newValue.lastIndexOf(".") + 1);
             let acceptedExts = self.extensionsMap[self.accept];
-            let mimeTypes = self.accept
+            let mimeTypes = self.accept;
             if (self.acceptedMimeTypes) {
                 acceptedExts = self.extensionsMap[self.acceptedMimeTypes];
-                mimeTypes = self.acceptedMimeTypes
+                mimeTypes = self.acceptedMimeTypes;
             }
             badExtension = !acceptedExts.includes(ext.toLowerCase());
 
             for (const acc of mimeTypes.split(",")) {
-                if (self.file().type.match(acc) || ext.toLowerCase() == "msg") {
+                if (self.file().type.match(acc) || ext.toLowerCase() === "msg") {
                     badMime = false;
                     break;
                 }
@@ -1037,7 +1037,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
         var self = this;
         FileEntry.call(this, question, options);
         self.accept = "image/*,.pdf,.xlsx,.docx,.html,.txt,.rtf,.msg";
-        self.acceptedMimeTypes = "image/*,text/*,application/*,.msg"
+        self.acceptedMimeTypes = "image/*,text/*,application/*,.msg";
     }
     ImageEntry.prototype = Object.create(FileEntry.prototype);
     ImageEntry.prototype.constructor = FileEntry;
