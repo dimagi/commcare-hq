@@ -28,7 +28,7 @@ class Command(BaseCommand):
             return [line.strip() for line in f.readlines()]
 
     def find_invalid_multimedia_names(self, doc):
-        keys = doc.get('multimedia', {}).keys()
+        keys = doc.get('multimedia_map', {}).keys()
         invalid_keys = []
         for key in keys:
             if '..' in key:
@@ -40,7 +40,8 @@ class Command(BaseCommand):
         log = {
             'app_id': app['_id'],
             'key': key,
-            'multimedia': val
+            'multimedia': val,
+            'copy_of': app.get('copy_of')
         }
         if not self.dry_run:
             Application.get_db().save_doc(app)
@@ -48,7 +49,6 @@ class Command(BaseCommand):
             self.save_logs(log)
         else:
             logger.info("Dry run mode is enabled. Log would be - " + json.dumps(log))
-        return val
 
     def save_logs(self, logs):
         with open(self.log_file_path, 'a') as f:
