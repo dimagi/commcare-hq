@@ -10,6 +10,7 @@ hqDefine('app_manager/js/app_manager', [
     "hqwebapp/js/bootstrap3/alert_user",
     "app_manager/js/menu",
     "app_manager/js/section_changer",
+    "hqwebapp/js/components/inline_edit",   // app, menu, and form names and comments all use these
 ], function (
     $,
     ko,
