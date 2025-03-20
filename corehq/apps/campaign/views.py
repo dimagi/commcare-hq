@@ -74,7 +74,7 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
             'map_widgets': self._dashboard_map_configs,
-            'widget_types': WidgetType.choices(),
+            'widget_types': WidgetType.choices,
 
         })
         context.update(self.dashboard_map_case_filters_context())
@@ -187,7 +187,7 @@ class DashboardWidgetView(HqHtmxActionMixin, BaseDomainView):
         return self.render_htmx_partial_response(request, self.form_template_partial_name, context)
 
     def _validate_request_widget_type(self):
-        if not any(choice[0] == self.widget_type for choice in WidgetType.choices()):
+        if not any(choice[0] == self.widget_type for choice in WidgetType.choices):
             raise HtmxResponseException(gettext_lazy("Requested widget type is not supported"))
 
     @cached_property
