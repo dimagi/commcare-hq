@@ -43,6 +43,10 @@ class AddColumnForm(forms.Form):
         is_initial_editable = (
             property_details[initial_prop_id]['is_editable'] if initial_prop_id else True
         )
+        default_label = (
+            property_details[initial_prop_id]['label'] if initial_prop_id else ""
+        )
+        initial_label = self.data.get('column_label', default_label)
 
         offcanvas_selector = "#offcanvas-configure-columns"
 
@@ -51,6 +55,7 @@ class AddColumnForm(forms.Form):
             "dataType": self.data.get(
                 'data_type', DataType.CASE_CHOICES[0][0]
             ),
+            'label': initial_label,
             "casePropertyDetails": property_details,
             "isEditable": is_initial_editable,
         }
@@ -68,11 +73,15 @@ class AddColumnForm(forms.Form):
                     **({
                         "@select2change": "propId = $event.detail; "
                                           "dataType = casePropertyDetails[$event.detail].data_type; "
+                                          "label = casePropertyDetails[$event.detail].label; "
                                           "isEditable = casePropertyDetails[$event.detail].is_editable;",
                     })
                 ),
                 crispy.Div(
-                    'column_label',
+                    crispy.Field(
+                        'column_label',
+                        x_model="label",
+                    ),
                     crispy.Div(
                         crispy.Field(
                             'column_data_type',
