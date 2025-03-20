@@ -316,7 +316,8 @@ class ElasticManageAdapter(BaseAdapter):
 
         :param index: ``str`` index for which to change the settings
         """
-        return self._index_put_settings(index, INDEX_CONF_STANDARD)
+        standard_settings = INDEX_CONF_STANDARD | INDEX_SLOWLOG_CONF
+        return self._index_put_settings(index, standard_settings)
 
     def index_configure_slow_logs(self, index):
         """Update an index with settings to collect logs on slow requests
