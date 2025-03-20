@@ -541,6 +541,7 @@ class GenericReportView(object):
                 section_name=self.section_name,
                 slug=self.slug,
                 sub_slug=None,
+                html_id_suffix='',
                 type=self.dispatcher.prefix,
                 url_root=self.url_root,
                 is_async=self.asynchronous,
