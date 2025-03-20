@@ -27,7 +27,8 @@ from corehq.apps.integration.payments.const import PaymentProperties
 class PaymentsFiltersMixin:
     fields = [
         'corehq.apps.integration.payments.filters.PaymentVerificationStatusFilter',
-        'corehq.apps.integration.payments.filters.BatchNumberFilter'
+        'corehq.apps.integration.payments.filters.BatchNumberFilter',
+        'corehq.apps.integration.payments.filters.PaymentVerifiedByFilter'
     ]
 
     def filters_context(self):
@@ -88,6 +89,9 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
 
         if batch_numer := self.request.GET.get('batch_number'):
             query = query.filter(case_property_query(PaymentProperties.BATCH_NUMBER, batch_numer))
+
+        if verified_by := self.request.GET.get('verified_by'):
+            query = query.filter(case_property_query(PaymentProperties.PAYMENT_VERIFIED_BY, verified_by))
 
         return query
 

@@ -1,5 +1,7 @@
 from django.utils.translation import gettext as _
-from corehq.apps.reports.filters.base import BaseSingleOptionFilter
+
+from corehq.apps.es import UserES
+from corehq.apps.reports.filters.base import BaseSingleOptionFilter, BaseMultipleOptionFilter
 from corehq.apps.integration.payments.services import get_payment_batch_numbers_for_domain
 
 
@@ -27,4 +29,17 @@ class BatchNumberFilter(BaseSingleOptionFilter):
         batch_numbers = get_payment_batch_numbers_for_domain(self.domain)
         return [
             (batch_number, batch_number) for batch_number in batch_numbers
+        ]
+
+
+class PaymentVerifiedByFilter(BaseMultipleOptionFilter):
+    slug = 'verified_by'
+    label = _('Verified by')
+    default_text = _('Show all')
+
+    @property
+    def options(self):
+        query = UserES().domain(self.domain).web_users()
+        return [
+            user_details for user_details in query.values_list('username', 'username')
         ]
