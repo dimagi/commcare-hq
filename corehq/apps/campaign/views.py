@@ -216,9 +216,10 @@ class DashboardWidgetView(HqHtmxActionMixin, BaseDomainView):
         if form.is_valid():
             form.save(commit=True)
             show_success = True
+            form = self.form_class(self.domain)
 
         context = {
-            'widget_form': self.form_class(self.domain) if show_success else form,
+            'widget_form': form,
             'widget_type': self.widget_type,
             'show_success': show_success,
         }
