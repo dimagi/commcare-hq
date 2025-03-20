@@ -1,5 +1,73 @@
 {% load i18n %}
 
+<script type="text/html" id="cost-item-template">
+  <fieldset>
+    <legend>
+      {% trans 'Prepayment Amount' %}
+    </legend>
+
+    <div class="alert alert-info">
+      {% trans 'One credit is equivalent to one USD. Credits are applied to monthly invoices' %}
+    </div>
+
+    <div data-bind="with: general_credit">
+      <div class="form-group">
+        <label class="control-label col-sm-2">
+          <span data-bind="text: name"></span>
+        </label>
+        <div class="col-sm-10">
+          <div class="input-group">
+            <span class="input-group-addon">$</span>
+            <input type="text"
+                   class="form-control"
+                   data-bind="
+                                 attr:{name: creditType},
+                                 textInput: addAmount" />
+          </div>
+          <div class="alert alert-danger"
+               data-bind="visible: !addAmountValid()">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>{% blocktrans %}
+              Please enter an amount that's either $0 or  greater than $0.5
+            {% endblocktrans %}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="control-label col-sm-2">
+        {% trans 'Total Credits' %}
+      </label>
+      <div class="col-sm-10">
+        <p class="form-control-text" data-bind="text: ('$ ' + amount())"></p>
+      </div>
+    </div>
+    <input type="hidden" name="amount" data-bind="value: amount" />
+  </fieldset>
+</script>
+
+<script type="text/html" id="payment-method-modal-title">
+  <!-- ko if: $root.paymentMethod() === $root.CREDIT_CARD -->
+  {% trans 'Prepay by Credit Card' %}
+  <!-- /ko -->
+  <!-- ko if: $root.paymentMethod() === $root.WIRE -->
+  {% trans 'Generate Prepayment Invoice' %}
+  <!-- /ko -->
+</script>
+
+<script type="text/html" id="payment-complete-template">
+  <!-- ko if: $root.paymentMethod() === $root.CREDIT_CARD -->
+  {% trans "Thank you for your payment!" %}
+  <!-- /ko -->
+  <!-- ko if: $root.paymentMethod() === $root.WIRE -->
+  {% blocktrans %}
+    Thank you! You will receive an invoice via email with instructions for wire payment.
+    Please include the invoice ID in the wire payment details.
+  {% endblocktrans %}
+  <!-- /ko -->
+</script>
+
 <div class="payment-modal modal fade" id="{{ payment_modal_id }}">
   <div class="modal-dialog">
     <div class="modal-content">
