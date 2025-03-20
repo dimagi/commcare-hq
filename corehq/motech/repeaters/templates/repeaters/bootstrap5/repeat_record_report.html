@@ -47,7 +47,7 @@
   </div>
   <div id="selected-page-info" class="alert alert-info hide">
     {% blocktrans with state_label=state.label.lower %}
-      All records on this page are selected. <button id="select-table-button" role="button" class="btn btn-outline-primary">Select all <b>{{ total }}</b> {{ state_label }} records in this table</button>
+      All <b><span id="selected-page-count"></span></b> records on this page are selected. <button id="select-table-button" role="button" class="btn btn-outline-primary">Select all <b>{{ total }}</b> {{ state_label }} records in this table</button>
     {% endblocktrans %}
   </div>
   <div id="selected-table-info" class="alert alert-info hide">
@@ -86,6 +86,7 @@
     {% initial_page_data 'payload_id' payload_id %}
     {% initial_page_data 'repeater_id' repeater_id %}
     {% initial_page_data 'state' state %}
+    {% initial_page_data 'total' total %}
 {% endblock %}
 
 {% block modals %}{{ block.super }}

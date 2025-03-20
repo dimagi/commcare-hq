@@ -16,6 +16,7 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
     const selectAllCheckbox = document.getElementById('select-all-checkbox'),
         selectedPageInfo = document.getElementById('selected-page-info'),
         selectedTableInfo = document.getElementById('selected-table-info'),
+        selectTableButton = document.getElementById('select-table-button'),
         items = document.getElementsByName('record_ids'),
         cancelButton = document.getElementById('cancel-button'),
         requeueButton = document.getElementById('requeue-button'),
@@ -278,6 +279,13 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
             if (selectAllCheckbox.checked) {
                 toggleItems(true);
                 selectedPageInfo.classList.remove('hide');
+                const pageSize = document.querySelectorAll("#report_table_repeat_record_report tbody tr").length
+                document.getElementById("selected-page-count").innerText = pageSize
+                if (pageSize >= initialPageData.get('total')) {
+                    selectTableButton.classList.add('hide');
+                } else {
+                    selectTableButton.classList.remove('hide');
+                }
             } else {
                 toggleItems(false);
                 selectedPageInfo.classList.add('hide');
