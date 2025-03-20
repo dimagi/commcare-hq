@@ -1037,7 +1037,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
         var self = this;
         FileEntry.call(this, question, options);
         self.accept = "image/*,.pdf,.xlsx,.docx,.html,.txt,.rtf,.msg";
-        self.acceptedMimeTypes = "image/*,text/*,application/*,.msg";
+        self.acceptedMimeTypes = "image/*,text/*,application/*";
     }
     ImageEntry.prototype = Object.create(FileEntry.prototype);
     ImageEntry.prototype.constructor = FileEntry;
@@ -1072,7 +1072,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
         FileEntry.call(this, question, options);
         self.templateType = 'signature';
         self.accept = 'image/*,.pdf';
-        self.acceptedMimeTypes = "image/*,text/*,application/*,.msg";
+        self.acceptedMimeTypes = "image/*,text/*,application/*";
 
         self.afterRender = function () {
             self.$input = $('#' + self.entryId);
