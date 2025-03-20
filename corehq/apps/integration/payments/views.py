@@ -4,6 +4,7 @@ from django.utils.translation import gettext as _
 from memoized import memoized
 
 from corehq import toggles
+from corehq.apps.es.case_search import case_property_query
 from corehq.util.timezones.utils import get_timezone
 from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
@@ -19,6 +20,8 @@ from corehq.apps.integration.payments.services import verify_payment_cases
 from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.apps.integration.payments.forms import PaymentConfigureForm
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
+from corehq.apps.integration.payments.filters import PaymentVerificationStatusFilter
+from corehq.apps.integration.payments.const import PaymentProperties
 
 
 class PaymentsFiltersMixin:
@@ -76,7 +79,13 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
     table_class = PaymentsVerifyTable
 
     def get_queryset(self):
-        return CaseSearchES().domain(self.request.domain).case_type(MOMO_PAYMENT_CASE_TYPE)
+        query = CaseSearchES().domain(self.request.domain).case_type(MOMO_PAYMENT_CASE_TYPE)
+
+        if verification_status := self.request.GET.get('payment_verification_status'):
+            filter_value = 'True' if verification_status == PaymentVerificationStatusFilter.verified else ''
+            query = query.filter(case_property_query(PaymentProperties.PAYMENT_VERIFIED, filter_value))
+
+        return query
 
     @hq_hx_action('post')
     def verify_rows(self, request, *args, **kwargs):
