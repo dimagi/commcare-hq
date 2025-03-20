@@ -325,9 +325,14 @@ class InvoiceTemplate(object):
         origin_x = inches(0.5)
         origin_y = inches(7.15)
         self.canvas.translate(origin_x, origin_y)
+        if self.is_prepayment:
+            period_type = "Prepayment term"
+        else:
+            period_type = "Statement period"
 
         self.canvas.drawString(
-            0, 0, "Statement period from {} to {}.".format(
+            0, 0, "{} from {} to {}.".format(
+                period_type,
                 self.date_start.strftime(USER_DATE_FORMAT)
                 if self.date_start is not None else "",
                 self.date_end.strftime(USER_DATE_FORMAT)
@@ -407,8 +412,7 @@ class InvoiceTemplate(object):
             self.draw_account_name()
         else:
             self.draw_project_name()
-        if not self.is_prepayment:
-            self.draw_statement_period()
+        self.draw_statement_period()
         self.draw_invoice_label()
         self.draw_details()
 
@@ -590,8 +594,7 @@ class InvoiceTemplate(object):
         self.draw_from_address()
         self.draw_to_address()
         self.draw_account_name()
-        if not self.is_prepayment:
-            self.draw_statement_period()
+        self.draw_statement_period()
         self.draw_invoice_label()
         self.draw_details()
 
@@ -619,7 +622,8 @@ class InvoiceTemplate(object):
         self.canvas.drawString(totals_x, subtotal_y, "Subtotal:")
         self.canvas.drawString(totals_x, tax_y,
                                "Tax (%0.2f%%):" % self.tax_rate)
-        self.canvas.drawString(totals_x, credit_y, "Credit:")
+        if not self.is_prepayment:
+            self.canvas.drawString(totals_x, credit_y, "Credit:")
         self.canvas.drawString(totals_x, total_y, "Total:")
         self.canvas.drawString(
             totals_money_x,
@@ -631,11 +635,12 @@ class InvoiceTemplate(object):
             tax_y,
             get_money_str(self.applied_tax)
         )
-        self.canvas.drawString(
-            totals_money_x,
-            credit_y,
-            get_money_str(self.applied_credit)
-        )
+        if not self.is_prepayment:
+            self.canvas.drawString(
+                totals_money_x,
+                credit_y,
+                get_money_str(self.applied_credit)
+            )
         self.canvas.drawString(
             totals_money_x,
             total_y,
