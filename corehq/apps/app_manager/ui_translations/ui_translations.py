@@ -70,12 +70,12 @@ def process_ui_translation_upload(app, trans_file):
 
     for row in translations:
         if row["property"] == "":
-            warnings.append(_("Property '' is empty, "
+            warnings.append(_("Property '' is empty. "
                             "We did not add it to the translations"))
             continue
         if row["property"] not in commcare_ui_strings:
             # Add a warning for  unknown properties, but still add them to the translation dict
-            warnings.append(_("Property {prop} is not a known CommCare UI string, "
+            warnings.append(_("Property '{prop}' is not a known CommCare UI string, "
                             "but we added it anyway.").format(prop=row["property"]))
         default = default_trans.get(row["property"])
         default_params_text = _get_params_text(_get_params(default)) if default else None
