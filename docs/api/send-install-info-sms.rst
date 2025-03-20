@@ -26,7 +26,7 @@ Endpoint Specifications
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/sms_user_registration_reinstall/
+    https://www.commcarehq.org/a/[domain]/api/sms_user_registration_reinstall/v1/
 
 **Method**
 
@@ -37,9 +37,6 @@ Endpoint Specifications
 **Authentication**
     For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
 
-
-**Available since**
-    Version - ``v0.5``
 
 Request & Response Details
 --------------------------

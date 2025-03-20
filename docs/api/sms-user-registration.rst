@@ -19,9 +19,7 @@ Endpoint Specifications
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/sms_user_registration/
-
-**Available since** ``v0.5``
+    https://www.commcarehq.org/a/[domain]/api/sms_user_registration/v1/
 
 **Method** ``POST``
 

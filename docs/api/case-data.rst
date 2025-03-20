@@ -11,7 +11,7 @@ Overview
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/case/[case_id]/
+    https://www.commcarehq.org/a/[domain]/api/case/v1/[case_id]/
 
 **Authentication**
     For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
@@ -151,7 +151,7 @@ Request & Response Details
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/demo/api/v0.4/case/0X9OCW3JMV98EYOVN32SGN4II/?format=xml&properties=all&indices=all
+    https://www.commcarehq.org/a/demo/api/case/v1/0X9OCW3JMV98EYOVN32SGN4II/?format=xml&properties=all&indices=all
 
 **Sample Output**
 
