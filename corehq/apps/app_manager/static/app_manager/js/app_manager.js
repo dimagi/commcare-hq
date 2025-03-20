@@ -4,24 +4,28 @@ hqDefine('app_manager/js/app_manager', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/layout',
     'hqwebapp/js/toggles',
     'analytix/js/google',
     'analytix/js/kissmetrix',
     'hqwebapp/js/bootstrap3/alert_user',
     'hqwebapp/js/bootstrap3/main',
     'app_manager/js/menu',
+    'app_manager/js/preview_app',
     'app_manager/js/section_changer',
 ], function (
     $,
     ko,
     _,
     initialPageData,
+    hqLayout,
     toggles,
     google,
     kissmetrix,
     alertUser,
     hqMain,
     appManagerMenu,
+    previewApp,
     sectionChanger,
 ) {
     var module = hqMain.eventize({});
@@ -459,6 +463,26 @@ hqDefine('app_manager/js/app_manager', [
             sectionChanger.attachToForm($form);
         });
     };
+
+    $(function () {
+        // Handling for popup displayed when accessing a deleted app
+        $('#deleted-app-modal').modal({
+            backdrop: 'static',
+            keyboard: false,
+            show: true,
+        }).on('hide.bs.modal', function () {
+            window.location = initialPageData.reverse('dashboard_default');
+        });
+
+        // Set up app preview
+        previewApp.initPreviewWindow();
+
+        // Hide fancy app manager loading animation
+        $('.appmanager-content').fadeIn();
+        $('.appmanager-loading').fadeOut();
+
+        hqLayout.setIsAppbuilderResizing(true);
+    });
 
     return module;
 });
