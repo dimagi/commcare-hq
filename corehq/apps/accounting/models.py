@@ -2702,6 +2702,11 @@ class WireBillingRecord(BillingRecordBase):
     def is_email_throttled():
         return False
 
+    def email_context(self):
+        context = super().email_context()
+        context.update({'date_due': self.invoice.date_due})
+        return context
+
     def email_subject(self):
         month_name = self.invoice.date_start.strftime("%B")
         return "Your %(month)s Bulk Billing Statement for Project Space %(domain)s" % {
@@ -2724,7 +2729,22 @@ class WirePrepaymentBillingRecord(WireBillingRecord):
         proxy = True
 
     def email_subject(self):
-        return _("Your prepayment invoice")
+        account = self.invoice.account
+        if account is not None and account.is_customer_billing_account:
+            account_or_domain = account
+        else:
+            account_or_domain = self.invoice.get_domain()
+
+        if self.invoice.date_due is not None:
+            subject = _(
+                "CommCare Subscription Prepayment Invoice for {account_or_domain} due {due_date}"
+            ).format(account_or_domain=account_or_domain, due_date=self.invoice.date_due)
+        else:
+            subject = _(
+                "CommCare Subscription Prepayment Invoice for {account_or_domain}"
+            ).format(account_or_domain=account_or_domain)
+
+        return subject
 
     def can_view_statement(self, web_user):
         return web_user.is_domain_admin(self.invoice.get_domain())
