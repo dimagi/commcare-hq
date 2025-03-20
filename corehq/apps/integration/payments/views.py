@@ -21,31 +21,10 @@ from corehq.apps.integration.payments.forms import PaymentConfigureForm
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 
 
-@method_decorator(use_bootstrap5, name='dispatch')
-@method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
-class PaymentsVerificationReportView(BaseDomainView):
-    urlname = 'payments_verify'
-    template_name = 'payments/payments_verify_report.html'
-    section_name = _('Data')
-    page_title = _('Payments Verification Report')
-
+class PaymentsFiltersMixin:
     fields = [
         'corehq.apps.integration.payments.filters.PaymentVerificationStatusFilter',
     ]
-
-    @property
-    def section_url(self):
-        return reverse(self.urlname, args=(self.domain,))
-
-    @property
-    def page_context(self):
-        return {
-            'has_config': MoMoConfig.objects.filter(domain=self.domain).exists(),
-            'config_url': reverse(
-                'momo_configuration', args=(self.domain,),
-            ),
-            **self.filters_context(),
-        }
 
     def filters_context(self):
         return {
@@ -65,6 +44,29 @@ class PaymentsVerificationReportView(BaseDomainView):
     def filter_classes(self):
         timezone = get_timezone(self.request, self.domain)
         return get_filter_classes(self.fields, self.request, self.domain, timezone, use_bootstrap5=True)
+
+
+@method_decorator(use_bootstrap5, name='dispatch')
+@method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
+class PaymentsVerificationReportView(BaseDomainView, PaymentsFiltersMixin):
+    urlname = 'payments_verify'
+    template_name = 'payments/payments_verify_report.html'
+    section_name = _('Data')
+    page_title = _('Payments Verification Report')
+
+    @property
+    def section_url(self):
+        return reverse(self.urlname, args=(self.domain,))
+
+    @property
+    def page_context(self):
+        return {
+            'has_config': MoMoConfig.objects.filter(domain=self.domain).exists(),
+            'config_url': reverse(
+                'momo_configuration', args=(self.domain,),
+            ),
+            **self.filters_context(),
+        }
 
 
 @method_decorator(login_required, name='dispatch')
