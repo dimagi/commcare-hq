@@ -522,6 +522,10 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         """
         return self.report_config_id
 
+    @property
+    def html_id_suffix(self):
+        return f"-{self.report_config_id}"
+
     @classmethod
     def get_report(cls, domain, slug, report_config_id):
         report = cls()
