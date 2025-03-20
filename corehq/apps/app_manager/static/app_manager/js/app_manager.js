@@ -1,30 +1,29 @@
-
 hqDefine('app_manager/js/app_manager', [
     'jquery',
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/toggles',
-    'analytix/js/google',
-    'analytix/js/kissmetrix',
-    'hqwebapp/js/bootstrap3/alert_user',
-    'hqwebapp/js/bootstrap3/main',
-    'app_manager/js/menu',
-    'app_manager/js/section_changer',
+    "hqwebapp/js/bootstrap3/main",
+    "analytix/js/google",
+    "analytix/js/kissmetrix",
+    "hqwebapp/js/toggles",
+    "hqwebapp/js/bootstrap3/alert_user",
+    "app_manager/js/menu",
+    "app_manager/js/section_changer",
 ], function (
     $,
     ko,
     _,
     initialPageData,
-    toggles,
+    main,
     google,
     kissmetrix,
+    toggles,
     alertUser,
-    hqMain,
-    appManagerMenu,
+    menu,
     sectionChanger,
 ) {
-    var module = hqMain.eventize({});
+    var module = main.eventize({});
     var _private = {};
     _private.appendedPageTitle = "";
     _private.prependedPageTitle = "";
@@ -96,7 +95,7 @@ hqDefine('app_manager/js/app_manager', [
         if (module.fetchAndShowFormValidation) {
             module.fetchAndShowFormValidation();
         }
-        hqMain.updateDOM(update);
+        main.updateDOM(update);
     };
 
     module.setupValidation = function (validationUrl) {
@@ -423,7 +422,7 @@ hqDefine('app_manager/js/app_manager', [
                     alertUser.alert_user(xhr.responseJSON.error, "danger");
                 },
             });
-            appManagerMenu.setPublishStatus(true);
+            menu.setPublishStatus(true);
         }
 
     };
@@ -437,7 +436,7 @@ hqDefine('app_manager/js/app_manager', [
         $forms.each(function () {
             var $form = $(this),
                 $buttonHolder = $form.find('.save-button-holder'),
-                button = hqMain.initSaveButtonForm($form, {
+                button = main.initSaveButtonForm($form, {
                     unsavedMessage: gettext("You have unsaved changes"),
                     success: function (data) {
                         var key;

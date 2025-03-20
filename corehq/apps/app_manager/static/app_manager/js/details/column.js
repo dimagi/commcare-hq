@@ -1,4 +1,3 @@
-
 /**
  * Model for a column in the Display Properties section of case list/detail.
  *
@@ -11,12 +10,37 @@
  * set of properties that match python's DetailTab model. The screen model
  * is responsible for creating the tab "columns" and injecting them into itself.
  */
-hqDefine("app_manager/js/details/column", function () {
-    const uiElementInput = hqImport('hqwebapp/js/ui_elements/bootstrap3/ui-element-input');
-    const uiElementKeyValueMapping = hqImport('hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping');
-    const uiElementSelect = hqImport('hqwebapp/js/ui_elements/bootstrap3/ui-element-select');
-    const initialPageData = hqImport('hqwebapp/js/initial_page_data');
+hqDefine("app_manager/js/details/column", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "hqwebapp/js/initial_page_data",
+    "hqwebapp/js/bootstrap3/main",
+    "app_manager/js/details/utils",
+    "hqwebapp/js/ui_elements/bootstrap3/ui-element-input",
+    "hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping",
+    "hqwebapp/js/ui_elements/ui-element-langcode-button",
+    "hqwebapp/js/ui_elements/bootstrap3/ui-element-select",
+    "app_manager/js/details/detail_tab_nodeset",
+    "app_manager/js/details/graph_config",
+    "analytix/js/google",
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+    main,
+    Utils,
+    uiElementInput,
+    uiElementKeyValueMapping,
+    uiElementLangcodeButton,
+    uiElementSelect,
+    detailTabNodeset,
+    graphConfig,
+    google,
+) {
     const microCaseImageName = 'cc_case_image';
+    self.$ = $;     // make $ available to data bindings, where it's used in sorting elements
 
     return function (col, screen) {
         /*
@@ -24,11 +48,10 @@ hqDefine("app_manager/js/details/column", function () {
             column extras: enum, late_flag
         */
         const self = {};
-        hqImport("hqwebapp/js/bootstrap3/main").eventize(self);
+        main.eventize(self);
         self.original = JSON.parse(JSON.stringify(col));
 
         // Set defaults for normal (non-tab) column attributes
-        const Utils = hqImport('app_manager/js/details/utils');
         const defaults = {
             calc_xpath: ".",
             enum: [],
@@ -168,7 +191,7 @@ hqDefine("app_manager/js/details/column", function () {
         }
         self.field.setIcon(icon);
         self.getFieldHtml = function (value) {
-            return hqImport('app_manager/js/details/utils').getFieldHtml(value);
+            return Utils.getFieldHtml(value);
         };
 
         // Make it possible to observe changes to self.field
@@ -191,7 +214,7 @@ hqDefine("app_manager/js/details/column", function () {
                     lang = self.screen.langs[i];
                     if (self.original.header[lang]) {
                         visibleVal = self.original.header[lang] +
-                            hqImport('hqwebapp/js/ui_elements/ui-element-langcode-button').LANG_DELIN +
+                            uiElementLangcodeButton.LANG_DELIN +
                             lang;
                         break;
                     }
@@ -200,7 +223,7 @@ hqDefine("app_manager/js/details/column", function () {
             self.header = uiElementInput.new().val(invisibleVal);
             self.header.setVisibleValue(visibleVal);
 
-            self.nodeset_extra = hqImport("app_manager/js/details/detail_tab_nodeset")(_.extend({
+            self.nodeset_extra = detailTabNodeset(_.extend({
                 caseTypes: self.screen.childCaseTypes,
             }, _.pick(self.original, ['nodeset', 'nodesetCaseType', 'nodesetFilter'])));
 
@@ -229,7 +252,7 @@ hqDefine("app_manager/js/details/column", function () {
 
         self.saveAttempted = ko.observable(false);
         self.useXpathExpression = self.original.useXpathExpression;
-        self.warningText = hqImport('app_manager/js/details/utils').fieldFormatWarningMessage;
+        self.warningText = Utils.fieldFormatWarningMessage;
         self.showWarning = ko.computed(function () {
             if (self.useXpathExpression) {
                 return false;
@@ -294,8 +317,7 @@ hqDefine("app_manager/js/details/column", function () {
             };
             self.enum_extra = uiElementKeyValueMapping.new(o);
         }());
-        const graphConfigurationUiElement = hqImport('app_manager/js/details/graph_config').graphConfigurationUiElement;
-        self.graph_extra = graphConfigurationUiElement({
+        self.graph_extra = graphConfig.graphConfigurationUiElement({
             childCaseTypes: self.screen.childCaseTypes,
             fixtures: self.screen.fixtures,
             lang: self.lang,
@@ -503,7 +525,7 @@ hqDefine("app_manager/js/details/column", function () {
         // because self way the events are not fired during the initialization
         // of the page.
         self.format.$edit_view.on("change", function (event) {
-            hqImport('analytix/js/google').track.event('Case List Config', 'Display Format', event.target.value);
+            google.track.event('Case List Config', 'Display Format', event.target.value);
         });
         self.serialize = function () {
             const column = self.original;
