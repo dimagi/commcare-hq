@@ -83,7 +83,10 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
 
     def get_queryset(self):
         query = CaseSearchES().domain(self.request.domain).case_type(MOMO_PAYMENT_CASE_TYPE)
+        query = self._apply_filters(query)
+        return query
 
+    def _apply_filters(self, query):
         if verification_status := self.request.GET.get('payment_verification_status'):
             filter_value = 'True' if verification_status == PaymentVerificationStatusFilter.verified else ''
             query = query.filter(case_property_query(PaymentProperties.PAYMENT_VERIFIED, filter_value))
@@ -102,7 +105,6 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
             else:
                 filter_value = ''
             query = query.filter(case_property_query(PaymentProperties.PAYMENT_SUBMITTED, filter_value))
-
         return query
 
     @hq_hx_action('post')
