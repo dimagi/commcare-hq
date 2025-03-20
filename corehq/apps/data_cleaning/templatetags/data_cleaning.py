@@ -1,7 +1,7 @@
 from django import template
 from django.template.loader import render_to_string
-from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext as _
 
 from corehq.apps.data_cleaning.models import DataType
 
@@ -30,10 +30,18 @@ def dc_filter_value(dc_filter):
 
 
 @register.filter
-def dc_filter_icon(dc_filter):
-    icon_class = DataType.ICON_CLASSES.get(
-        dc_filter.data_type, DataType.ICON_CLASSES[DataType.TEXT]
-    )
-    return format_html(
-        '<i class="{}"></i>', icon_class
+def dc_data_type_icon(data_type):
+    context = {
+        'icon_class': DataType.ICON_CLASSES.get(
+            data_type, DataType.ICON_CLASSES[DataType.TEXT]
+        ),
+        'data_type_label': dict(DataType.CASE_CHOICES).get(
+            data_type, _("unknown")
+        ),
+    }
+    return mark_safe(  # nosec: render_to_string below will handle escaping
+        render_to_string(
+            "data_cleaning/partials/data_type_icon.html",
+            context
+        )
     )
