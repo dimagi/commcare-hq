@@ -1,10 +1,22 @@
 <button
   id="case-list-config-button"
-  class="btn"
+  <% if (headerModel.allColumnsHidden()) { %>
+    class="d-none"
+  <% } else { %>
+    class="btn"
+  <% } %>
   style="color: white; position: absolute; right: 0px; top: 1.3em;"
 >
   <i class="fa fa-gear" style="14px" aria-hidden="true"></i>
 </button>
+
+<div
+  <% if (!headerModel.allColumnsHidden()) { %>
+    class="d-none"
+  <% } %>
+  style="text-align: center;">
+  No columns shown. Open <a id="case-list-config-button" style="color: #5d70d2">configuration</a> to choose which are visible.
+</div>
 
 <div
   class="modal fade"

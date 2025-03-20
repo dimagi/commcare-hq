@@ -6,7 +6,8 @@
   <table class="table module-table module-table-case-list">
     <thead>
       <tr>
-        <% if (isMultiSelect && !hasNoItems) { %>
+        <% if (isMultiSelect && !hasNoItems && !headerModel.allColumnsHidden())
+        { %>
         <th class="module-case-list-header">
           <input
             type="checkbox"

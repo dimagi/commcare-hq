@@ -671,7 +671,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         };
     };
 
-    // USH-5319: model
     const HeaderModel = Backbone.Model.extend({
         defaults: function () {
             return {
@@ -698,14 +697,17 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             return this.get('headerVisible')[index];
         },
 
+        allColumnsHidden: function () {
+            return this.get('headerVisible').every(col => col === false);
+        },
+
         saveToLocalStorage: function () {
             if (this.caseListId) {
                 localStorage.setItem(this.caseListId, JSON.stringify(this.get('headerVisible')));
             }
-        }
+        },
     });
 
-    // USH-5319: config view
     const CaseListConfigView = Marionette.View.extend({
         template: _.template($("#case-list-config-body").html() || ""),
 
@@ -1253,6 +1255,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
 
         onRender: function () {
+            MultiSelectCaseListView.__super__.onRender.apply(this)
             this.reconcileMultiSelectUI();
         },
     });
