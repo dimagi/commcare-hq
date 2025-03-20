@@ -345,10 +345,12 @@ class PreOrPostPay(object):
 
 class CommunicationType(object):
     OTHER = "OTHER"
+    INVOICE_REMINDER = "INVOICE_REMINDER"
     OVERDUE_INVOICE = "OVERDUE_INVOICE"
     DOWNGRADE_WARNING = "DOWNGRADE_WARNING"
     CHOICES = (
         (OTHER, "other"),
+        (INVOICE_REMINDER, "Invoice Reminder"),
         (OVERDUE_INVOICE, "Overdue Invoice"),
         (DOWNGRADE_WARNING, "Subscription Pause Warning"),
     )

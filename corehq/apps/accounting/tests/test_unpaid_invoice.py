@@ -2,6 +2,7 @@ import datetime
 
 from corehq.apps.accounting import tasks, utils
 from corehq.apps.accounting.const import (
+    DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER,
     DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE,
     DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE_WARNING,
     DAYS_PAST_DUE_TO_TRIGGER_OVERDUE_NOTICE,
@@ -19,7 +20,7 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
-from corehq.apps.accounting.utils.downgrade import downgrade_eligible_domains
+from corehq.apps.accounting.utils.unpaid_invoice import Downgrade, InvoiceReminder
 
 
 def _generate_invoice_and_subscription(days_ago, is_customer_billing_account=False):
@@ -106,7 +107,7 @@ class TestDowngrades(BaseAccountingTest):
             is_customer_billing_account=is_customer_billing_account
         )
         self.domains.append(domain)
-        downgrade_eligible_domains(only_downgrade_domain=domain.name)
+        Downgrade.run_action(only_downgrade_domain=domain.name)
         return domain, latest_invoice
 
     def test_no_notification(self):
@@ -130,7 +131,7 @@ class TestDowngrades(BaseAccountingTest):
 
         # try to trigger another communication (it should fail), and make sure
         # only one communication was ever sent
-        downgrade_eligible_domains(only_downgrade_domain=domain.name)
+        Downgrade.run_action(only_downgrade_domain=domain.name)
         self.assertTrue(InvoiceCommunicationHistory.objects.filter(
             invoice=latest_invoice,
         ).count(), 1)
@@ -160,7 +161,7 @@ class TestDowngrades(BaseAccountingTest):
         ).exists())
 
         # make sure a downgrade warning isn't sent again
-        downgrade_eligible_domains(only_downgrade_domain=domain.name)
+        Downgrade.run_action(only_downgrade_domain=domain.name)
         self.assertTrue(InvoiceCommunicationHistory.objects.filter(
             invoice=latest_invoice,
             communication_type=CommunicationType.DOWNGRADE_WARNING,
@@ -185,7 +186,7 @@ class TestDowngrades(BaseAccountingTest):
         history.save()
 
         # now trigger a successful downgrade
-        downgrade_eligible_domains(only_downgrade_domain=domain.name)
+        Downgrade.run_action(only_downgrade_domain=domain.name)
         subscription = Subscription.get_active_subscription_by_domain(domain)
         self.assertEqual(subscription.plan_version.plan.edition, SoftwarePlanEdition.PAUSED)
 
@@ -209,4 +210,117 @@ class TestDowngrades(BaseAccountingTest):
         self.assertTrue(CustomerInvoiceCommunicationHistory.objects.filter(
             invoice=latest_invoice,
             communication_type=CommunicationType.DOWNGRADE_WARNING,
+        ).exists())
+
+
+class TestInvoiceReminder(BaseAccountingTest):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        generator.bootstrap_test_software_plan_versions()
+        generator.init_default_currency()
+
+    def setUp(self):
+        super().setUp()
+        self.domains = []
+
+    def tearDown(self):
+        for domain in self.domains:
+            for user in domain.all_users():
+                user.delete(domain.name, deleted_by=None)
+            domain.delete()
+        super().tearDown()
+
+    @classmethod
+    def tearDownClass(cls):
+        utils.clear_plan_version_cache()
+        super().tearDownClass()
+
+    def _send_invoice_reminders(self, days_before_due, is_customer_billing_account=False):
+        domain, latest_invoice = _generate_invoice_and_subscription(
+            -(days_before_due),
+            is_customer_billing_account=is_customer_billing_account
+        )
+        self.domains.append(domain)
+        InvoiceReminder.run_action()
+        return domain, latest_invoice
+
+    def test_invoice_reminder(self):
+        domain, latest_invoice = self._send_invoice_reminders(
+            DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER
+        )
+
+        # confirm communication was initiated
+        self.assertTrue(InvoiceCommunicationHistory.objects.filter(
+            invoice=latest_invoice,
+            communication_type=CommunicationType.INVOICE_REMINDER,
+        ).exists())
+
+        # make sure an invoice reminder isn't sent again
+        InvoiceReminder.run_action()
+        self.assertTrue(InvoiceCommunicationHistory.objects.filter(
+            invoice=latest_invoice,
+            communication_type=CommunicationType.INVOICE_REMINDER,
+        ).count(), 1)
+
+    def test_belated_invoice_reminder(self):
+        domain, latest_invoice = self._send_invoice_reminders(
+            DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER - 1,
+        )
+
+        self.assertTrue(InvoiceCommunicationHistory.objects.filter(
+            invoice=latest_invoice,
+            communication_type=CommunicationType.INVOICE_REMINDER,
+        ).exists())
+
+    def test_invoice_reminder_not_sent_early(self):
+        domain, latest_invoice = self._send_invoice_reminders(
+            DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER + 1,
+        )
+
+        self.assertFalse(InvoiceCommunicationHistory.objects.filter(
+            invoice=latest_invoice,
+            communication_type=CommunicationType.INVOICE_REMINDER,
+        ).exists())
+
+    def test_customer_invoice_reminder(self):
+        domain, latest_invoice = self._send_invoice_reminders(
+            DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER,
+            is_customer_billing_account=True,
+        )
+
+        # confirm communication was initiated
+        self.assertTrue(CustomerInvoiceCommunicationHistory.objects.filter(
+            invoice=latest_invoice,
+            communication_type=CommunicationType.INVOICE_REMINDER,
+        ).exists())
+
+        # make sure an invoice reminder isn't sent again
+        InvoiceReminder.run_action()
+        self.assertTrue(CustomerInvoiceCommunicationHistory.objects.filter(
+            invoice=latest_invoice,
+            communication_type=CommunicationType.INVOICE_REMINDER,
+        ).count(), 1)
+
+    def test_belated_customer_invoice_reminder(self):
+        domain, latest_invoice = self._send_invoice_reminders(
+            DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER - 1,
+            is_customer_billing_account=True,
+        )
+
+        self.assertTrue(CustomerInvoiceCommunicationHistory.objects.filter(
+            invoice=latest_invoice,
+            communication_type=CommunicationType.INVOICE_REMINDER,
+        ).exists())
+
+    def test_customer_invoice_reminder_not_sent_early(self):
+        domain, latest_invoice = self._send_invoice_reminders(
+            DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER + 1,
+            is_customer_billing_account=True,
+        )
+
+        self.assertFalse(CustomerInvoiceCommunicationHistory.objects.filter(
+            invoice=latest_invoice,
+            communication_type=CommunicationType.INVOICE_REMINDER,
         ).exists())
