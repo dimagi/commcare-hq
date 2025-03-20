@@ -69,6 +69,7 @@ hqDefine('accounting/js/credits', [
         var self = {};
         self.name = ko.observable("Unit Cost");
         self.creditType = ko.observable("invoice_general_credit");
+        self.quantity = ko.observable(1);
         self.addAmount = ko.observable(0);
         self.addAmountValid = ko.computed(function () {
             return  parseFloat(self.addAmount()) === 0 || (parseFloat(self.addAmount()) >= 0.5);
