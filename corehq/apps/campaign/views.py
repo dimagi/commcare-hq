@@ -73,7 +73,7 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
         context = super().get_context_data(**kwargs)
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
-            'map_widgets': self._dashboard_map_configs,
+            # 'map_widgets': self._dashboard_map_configs,
             'widget_types': WidgetType.choices(),
 
         })
@@ -164,17 +164,35 @@ class PaginatedCasesWithGPSView(BaseDomainView, CaseListMixin):
             paginator.count,
         )
 
-
+# TODO Check if we should use instead BaseProjectReportSectionView
 @method_decorator(login_and_domain_required, name='dispatch')
 @method_decorator(toggles.CAMPAIGN_DASHBOARD.required_decorator(), name='dispatch')
 @method_decorator(use_bootstrap5, name='dispatch')
-class DashboardWidgetView(HqHtmxActionMixin, BaseDomainView):
+class DashboardWidgetView(HqHtmxActionMixin, BaseDomainView, DashboardMapFilterMixin):
     urlname = "dashboard_widget"
     form_template_partial_name = 'campaign/partials/widget_form.html'
 
     @property
     def section_url(self):
         return reverse(self.urlname, args=[self.domain])
+
+    @hq_hx_action('get')
+    def get_widgets(self, request, *args, **kwargs):
+        dashboard_tab = self.request.GET.get('dashboard_tab')
+        # TODO Add Validation for Dashboard Tab
+        context = {
+            'map_widgets': self._dashboard_map_configs(dashboard_tab),
+        }
+        context.update(self.dashboard_map_case_filters_context())
+        return self.render_htmx_partial_response(request, 'campaign/partials/widgets_list.html', context)
+
+    def _dashboard_map_configs(self, dashboard_tab):
+        dashboard_maps = Dashboard.objects.get(domain=self.domain).maps.filter(dashboard_tab=dashboard_tab)
+        dashboard_map_configs = []
+        for dashboard_map in dashboard_maps:
+            config = model_to_dict(dashboard_map, exclude=['dashboard', 'dashboard_tab', 'display_order'])
+            dashboard_map_configs.append(config)
+        return dashboard_map_configs
 
     @hq_hx_action('get')
     def new_widget(self, request, *args, **kwargs):

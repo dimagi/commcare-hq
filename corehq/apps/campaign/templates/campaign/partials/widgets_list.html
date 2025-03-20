@@ -1,0 +1,9 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+<!--TODO see if there is a better way to do below-->
+<div id="map-widgets-store" data="{{map_widgets|JSON}}"></div>
+
+<h2>{% trans "Reports" %}</h2>
+{% for widget in map_widgets %}
+  {% include 'campaign/partials/dashboard_map.html' %}
+{% endfor %}

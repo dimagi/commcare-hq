@@ -10,11 +10,19 @@ let mobileWorkerMapsInitialized = false;
 
 $(function () {
     // Only init case map widgets since this is the default tab
-    const mapWidgetConfigs = initialPageData.get('map_widgets');
-    for (const mapWidgetConfig of mapWidgetConfigs.cases) {
-        const mapWidget = new MapWidget(mapWidgetConfig);
-        mapWidget.initializeMap();
-    }
+//    const mapWidgetConfigs = initialPageData.get('map_widgets');
+//    for (const mapWidgetConfig of mapWidgetConfigs.cases) {
+//        const mapWidget = new MapWidget(mapWidgetConfig);
+//        mapWidget.initializeMap();
+//    }
+
+    // TODO Use Jquery
+    document.body.addEventListener('htmx:afterRequest', function(evt) {
+      // 2. Do your own logic here
+      console.log(evt.detail)
+      initialiseMapWidgets();
+    });
+
     $('a[data-bs-toggle="tab"]').on('shown.bs.tab', tabSwitch);
 
     $('#widget-modal').on('hidden.bs.modal', function () {
@@ -36,6 +44,17 @@ function tabSwitch(e) {
         }
     }
 }
+
+var initialiseMapWidgets = function(){
+    console.log($('#map-widgets-store').text())
+    console.log($('#map-widgets-store').attr('data'));
+    const mapWidgetConfigs = JSON.parse($('#map-widgets-store').attr('data'));
+    for (const mapWidgetConfig of mapWidgetConfigs) {
+        console.log(mapWidgetConfig);
+        const mapWidget = new MapWidget(mapWidgetConfig);
+        mapWidget.initializeMap();
+    }
+};
 
 var MapWidget = function (mapWidgetConfig) {
     let self = this;
