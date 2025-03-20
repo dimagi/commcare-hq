@@ -8,8 +8,7 @@ from corehq.apps.integration.payments.services import get_payment_batch_numbers_
 class PaymentVerificationStatusFilter(BaseSingleOptionFilter):
     slug = 'payment_verification_status'
     label = _("Verification Status")
-
-    default_text = _('Select Verification Status')
+    default_text = _('Show all')
 
     verified = 'verified'
     unverified = 'unverified'
@@ -22,7 +21,7 @@ class PaymentVerificationStatusFilter(BaseSingleOptionFilter):
 class BatchNumberFilter(BaseSingleOptionFilter):
     slug = "batch_number"
     label = _("Batch number")
-    default_text = _("All batch numbers")
+    default_text = _("Show all")
 
     @property
     def options(self):
@@ -42,4 +41,22 @@ class PaymentVerifiedByFilter(BaseMultipleOptionFilter):
         query = UserES().domain(self.domain).web_users()
         return [
             user_details for user_details in query.values_list('username', 'username')
+        ]
+
+
+class PaymentStatus(BaseSingleOptionFilter):
+    slug = 'payment_status'
+    label = _('Payment status')
+    default_text = _('Show all')
+
+    submitted = 'submitted'
+    not_submitted = 'not_submitted'
+    submission_failed = 'submission_failed'
+
+    @property
+    def options(self):
+        return [
+            (self.submitted, _('Submitted')),
+            (self.not_submitted, _('Not submitted')),
+            (self.submission_failed, _('Submission failed')),
         ]
