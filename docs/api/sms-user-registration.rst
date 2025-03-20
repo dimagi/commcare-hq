@@ -21,8 +21,6 @@ Endpoint Specifications
 
     https://www.commcarehq.org/a/[domain]/api/[version]/sms_user_registration/
 
-**Available since** ``v0.5``
-
 **Method** ``POST``
 
 **Authentication**

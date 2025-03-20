@@ -79,7 +79,7 @@ Request & Response Details
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/demo/api/v0.4/fixture/1J9NF7B4FTH73435PYJJSL5SJ/
+    https://www.commcarehq.org/a/demo/api/fixture/v1/1J9NF7B4FTH73435PYJJSL5SJ/
 
 **Sample Output**
 

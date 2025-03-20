@@ -1,4 +1,4 @@
-List Groups 
+List Groups
 ===========
 
 Overview
@@ -53,7 +53,7 @@ Request & Response Details
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/demo/api/v0.4/group/
+    https://www.commcarehq.org/a/demo/api/group/v1/
 
 **Sample JSON Output**
 

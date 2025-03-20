@@ -83,7 +83,7 @@ Request & Response Details
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/demo/api/v0.5/web-user/
+    https://www.commcarehq.org/a/demo/api/web-user/v1/
 
 **Sample Output (JSON)**
 

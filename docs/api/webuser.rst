@@ -309,7 +309,7 @@ Endpoint Specifications
 
 .. code-block:: text
 
-    https://www.commcarehq.org/api/v0.5/identity/
+    https://www.commcarehq.org/api/identity/v1/
 
 Request & Response Details
 ---------------------------

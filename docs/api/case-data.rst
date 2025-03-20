@@ -151,7 +151,7 @@ Request & Response Details
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/demo/api/v0.4/case/0X9OCW3JMV98EYOVN32SGN4II/?format=xml&properties=all&indices=all
+    https://www.commcarehq.org/a/demo/api/case/v1/0X9OCW3JMV98EYOVN32SGN4II/?format=xml&properties=all&indices=all
 
 **Sample Output**
 

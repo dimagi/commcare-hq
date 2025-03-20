@@ -24,7 +24,7 @@ Request & Response Details
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/corpora/api/v0.5/form/66d7a362-18a2-4f45-bd84-06f19b408d64/
+    https://www.commcarehq.org/a/corpora/api/form/v1/66d7a362-18a2-4f45-bd84-06f19b408d64/
 
 **Sample JSON Output:**
 

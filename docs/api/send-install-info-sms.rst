@@ -38,9 +38,6 @@ Endpoint Specifications
     For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
 
 
-**Available since**
-    Version - ``v0.5``
-
 Request & Response Details
 --------------------------
 
