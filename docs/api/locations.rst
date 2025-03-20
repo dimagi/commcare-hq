@@ -12,7 +12,7 @@ List Locations
 
 .. code-block:: text
 
-    GET https://www.commcarehq.org/a/[domain]/api/[version]/location/
+    GET https://www.commcarehq.org/a/[domain]/api/location/v1/
 
 **Input Parameters (v1)**
 
@@ -104,7 +104,7 @@ Location Details
 
 .. code-block:: text
 
-    GET https://www.commcarehq.org/a/[domain]/api/[version]/location/[location_id]
+    GET https://www.commcarehq.org/a/[domain]/api/location/v1/[location_id]
 
 **Sample JSON Output (v1)**
 
@@ -142,7 +142,7 @@ Create an individual location. Available from version v2.
 
 .. code-block:: text
 
-    POST https://www.commcarehq.org/a/[domain]/api/[version]/location/
+    POST https://www.commcarehq.org/a/[domain]/api/location/v2/
 
 **Required Fields**
 
@@ -193,7 +193,7 @@ Allows editing an individual location. Available from version v2.
 
 .. code-block:: text
 
-    PUT https://www.commcarehq.org/a/[domain]/api/[version]/location/[location_id]
+    PUT https://www.commcarehq.org/a/[domain]/api/location/v2/[location_id]
 
 **Editable Fields**
 
@@ -241,7 +241,7 @@ Version v2 allows you to create and update locations in bulk. Even though the me
 
 .. code-block:: text
 
-    PATCH https://www.commcarehq.org/a/[domain]/api/[version]/location/
+    PATCH https://www.commcarehq.org/a/[domain]/api/location/v2/
 
 The request body should be a list of locations, with each location as a JSON dictionary (if you are using JSON). The list should be called ``objects``. Include ``location_id`` in the dictionary if you want to update a location, and don’t include it if you want to create a location.
 
@@ -289,7 +289,7 @@ Retrieves a list of location types available in the specified domain.
 
 .. code-block:: text
 
-    GET https://www.commcarehq.org/a/[domain]/api/[version]/location_type/
+    GET https://www.commcarehq.org/a/[domain]/api/location_type/v1/
 
 
 **Sample JSON Output**
@@ -330,7 +330,7 @@ Retrieves details for a specific location type.
 
 .. code-block:: text
 
-    GET https://www.commcarehq.org/a/[domain]/api/[version]/location_type/[id]
+    GET https://www.commcarehq.org/a/[domain]/api/location_type/v1/[id]
 
 
 **Sample JSON Output**

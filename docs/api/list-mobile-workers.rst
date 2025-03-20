@@ -11,13 +11,13 @@ Overview
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/user/
+    https://www.commcarehq.org/a/[domain]/api/user/v1/
 
 **Single User URL**
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/user/[user_id]
+    https://www.commcarehq.org/a/[domain]/api/user/v1/[user_id]
 
 **Permissions Required**
     Edit Mobile Workers & Edit Access API's

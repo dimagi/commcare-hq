@@ -16,19 +16,19 @@ Endpoint Specifications
 
   .. code-block:: text
 
-      https://www.commcarehq.org/a/[domain]/api/[version]/fixture/[fixture_item_id]/
+      https://www.commcarehq.org/a/[domain]/api/fixture/v1/[fixture_item_id]/
 
 - **For a specific fixture table:**
 
   .. code-block:: text
 
-      https://www.commcarehq.org/a/[domain]/api/[version]/fixture/?fixture_type=[name of table]
+      https://www.commcarehq.org/a/[domain]/api/fixture/v1/?fixture_type=[name of table]
 
 - **For a list of all fixture types:**
 
   .. code-block:: text
 
-      https://www.commcarehq.org/a/[domain]/api/[version]/fixture/
+      https://www.commcarehq.org/a/[domain]/api/fixture/v1/
 
 **Authentication**
     For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
@@ -209,7 +209,7 @@ List Lookup Table
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/lookup_table/
+    https://www.commcarehq.org/a/[domain]/api/lookup_table/v1/
 
 **HTTP Method**
     GET
@@ -248,7 +248,7 @@ Create Lookup Table
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/lookup_table/
+    https://www.commcarehq.org/a/[domain]/api/lookup_table/v1/
 
 **HTTP Method**
     POST
@@ -290,7 +290,7 @@ Edit or Delete Lookup Table
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/lookup_table/[lookup_table_id]
+    https://www.commcarehq.org/a/[domain]/api/lookup_table/v1/[lookup_table_id]
 
 **HTTP Method**
     PUT, DELETE
@@ -340,7 +340,7 @@ List Lookup Table Row
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/lookup_table_item/
+    https://www.commcarehq.org/a/[domain]/api/lookup_table_item/v1/
 
 **HTTP Method**
     GET
@@ -378,7 +378,7 @@ Create Lookup Table Row
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/lookup_table_item/
+    https://www.commcarehq.org/a/[domain]/api/lookup_table_item/v1/
 
 **HTTP Method**
     POST
@@ -431,7 +431,7 @@ Edit or Delete Lookup Table Row
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/lookup_table_item/[lookup_table_item_id]
+    https://www.commcarehq.org/a/[domain]/api/lookup_table_item/v1/[lookup_table_item_id]
 
 **HTTP Method**
     PUT, DELETE

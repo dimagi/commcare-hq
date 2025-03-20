@@ -16,7 +16,7 @@ Endpoint Specifications
 
 .. code-block:: text
 
-        https://www.commcarehq.org/a/[domain]/api/invitation/[version]/
+        https://www.commcarehq.org/a/[domain]/api/invitation/v1/
 
 **Method**
 
@@ -139,7 +139,7 @@ Endpoint Specifications
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/web-user/[version]/[id]/
+    https://www.commcarehq.org/a/[domain]/api/web-user/v1/[id]/
 
 **Method**
 

@@ -21,7 +21,7 @@ For more information, please review `API Authentication <https://dimagi.atlassia
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/messaging-event/
+    https://www.commcarehq.org/a/[domain]/api/messaging-event/v1/
 
 **Supported versions** ``v1``
 

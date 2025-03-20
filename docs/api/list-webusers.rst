@@ -11,13 +11,13 @@ Overview
 
 .. code-block:: 
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/web-user/
+    https://www.commcarehq.org/a/[domain]/api/web-user/v1/
 
 **Single User Request**
 
 .. code-block:: 
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/web-user/[user_id]
+    https://www.commcarehq.org/a/[domain]/api/web-user/v1/[user_id]
 
 **Authentication**
     All URL endpoints should be utilized as part of a cURL authentication command. For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.

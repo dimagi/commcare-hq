@@ -11,7 +11,7 @@ Overview
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/form/[form_id]/
+    https://www.commcarehq.org/a/[domain]/api/form/v1/[form_id]/
 
 **Authentication**
     All URL endpoints should be used as part of a cURL authentication command. For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.

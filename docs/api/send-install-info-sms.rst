@@ -26,7 +26,7 @@ Endpoint Specifications
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/sms_user_registration_reinstall/
+    https://www.commcarehq.org/a/[domain]/api/sms_user_registration_reinstall/v1/
 
 **Method**
 
