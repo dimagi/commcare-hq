@@ -8,7 +8,6 @@ hqDefine("app_manager/js/forms/form_view", [
     "app_manager/js/forms/form_workflow",
     "hqwebapp/js/toggles",
     "app_manager/js/forms/custom_instances",
-    "app_manager/js/apps_base",
     "app_manager/js/nav_menu_media",
     "app_manager/js/forms/copy_form_to_app",
     "app_manager/js/forms/case_knockout_bindings",  // casePropertyAutocomplete and questionsSelect
@@ -16,7 +15,6 @@ hqDefine("app_manager/js/forms/form_view", [
     "app_manager/js/forms/advanced/case_config_ui", // advanced modules only
     "app_manager/js/xpathValidator",
     "app_manager/js/custom_assertions",
-    "app_manager/js/managed_app",
     "hqwebapp/js/bootstrap3/knockout_bindings.ko",  // sortable binding
     "commcarehq",
 ], function (
