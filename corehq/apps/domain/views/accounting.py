@@ -704,14 +704,21 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
             message = _('The following e-mail addresses contain invalid characters, or are missing required '
                         'characters: ') + ', '.join(['"{}"'.format(email) for email in invalid_emails])
             return json_response({'error': {'message': message}})
-        amount = Decimal(request.POST.get('amount', 0))
+        amount = Decimal(request.POST.get('invoice_amount', 0))
         if amount < 0:
             message = _('There was an error processing your request. Please try again.')
             return json_response({'error': {'message': message}})
-        general_credit = Decimal(request.POST.get('general_credit', 0))
+        credit_label = request.POST.get('credit_label', 'General Credits')
+        unit_cost = Decimal(request.POST.get('unit_cost', 0))
+        quantity = int(request.POST.get('quantity', 0))
+        date_start = request.POST.get('prepay_date_start', datetime.date.today().strftime('%Y-%M-%d'))
+        date_end = request.POST.get('prepay_date_end', datetime.date.today().strftime('%Y-%M-%d'))
+
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
         try:
-            wire_invoice_factory.create_wire_credits_invoice(amount, general_credit)
+            wire_invoice_factory.create_wire_credits_invoice(
+                amount, credit_label, unit_cost, quantity, date_start, date_end
+            )
         except Exception as e:
             return json_response({'error': {'message': str(e)}})
 
