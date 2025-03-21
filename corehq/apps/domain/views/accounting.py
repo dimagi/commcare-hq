@@ -693,21 +693,12 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
         return super(CreditsWireInvoiceView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        emails = request.POST.get('emails', '').replace(' ', '').split(',')
-        invalid_emails = []
-        for email in emails:
-            try:
-                validate_email(email)
-            except ValidationError:
-                invalid_emails.append(email)
-        if invalid_emails:
-            message = _('The following e-mail addresses contain invalid characters, or are missing required '
-                        'characters: ') + ', '.join(['"{}"'.format(email) for email in invalid_emails])
-            return json_response({'error': {'message': message}})
-        amount = Decimal(request.POST.get('invoice_amount', 0))
-        if amount < 0:
-            message = _('There was an error processing your request. Please try again.')
-            return json_response({'error': {'message': message}})
+        try:
+            emails = self.validate_emails(request)
+            amount = self.validate_amount(request)
+        except ValidationError as e:
+            return json_response({'error': {'message': e.message}})
+
         credit_label = request.POST.get('credit_label', 'General Credits')
         unit_cost = Decimal(request.POST.get('unit_cost', 0))
         quantity = int(request.POST.get('quantity', 0))
@@ -723,6 +714,32 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
             return json_response({'error': {'message': str(e)}})
 
         return json_response({'success': True})
+
+    @staticmethod
+    def validate_emails(request):
+        emails = request.POST.get('emails', [])
+        if len(emails):
+            emails = emails.replace(' ', '').split(',')
+
+        invalid_emails = []
+        for email in emails:
+            try:
+                validate_email(email)
+            except ValidationError:
+                invalid_emails.append(email)
+        if invalid_emails:
+            message = _('The following e-mail addresses contain invalid characters, or are missing required '
+                        'characters: ') + ', '.join(['"{}"'.format(email) for email in invalid_emails])
+            raise ValidationError(message=message)
+        return emails
+
+    @staticmethod
+    def validate_amount(request):
+        amount = Decimal(request.POST.get('invoice_amount', 0))
+        if amount < 0:
+            message = _('There was an error processing your request. Please try again.')
+            raise ValidationError(message=message)
+        return amount
 
 
 class InvoiceStripePaymentView(BaseStripePaymentView):
