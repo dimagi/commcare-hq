@@ -3,6 +3,10 @@
 
 {% if show_time_notice %}{% include "hqwebapp/partials/bootstrap5/time_notice.html" with hide=1 %}{% endif %}
 
+{% block page_content %}
+  {% initial_page_data 'html_id_suffix' report.html_id_suffix|default:'' %}
+{% endblock page_content %}
+
 {% block reportcontent %}
   {% if report.slug %}
     <div class="report-loading-container">
