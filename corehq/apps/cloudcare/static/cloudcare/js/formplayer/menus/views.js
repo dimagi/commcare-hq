@@ -726,7 +726,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 columnVisibility: this.columnVisibility,
                 allColumnsHidden: function () {
                     return this.columnVisibility.every(hidden => hidden === false);
-                }
+                },
             };
         },
 
@@ -772,7 +772,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
         onRender: function () {
             const self = this;
-            const configButton = this.$('#case-list-config-button')
+            const configButton = this.$('#case-list-config-button');
             if (configButton.length) {
                 const popoverInstance = new bootstrap.Popover(configButton[0], {
                     html: true,
@@ -1287,7 +1287,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
 
         onRender: function () {
-            MultiSelectCaseListView.__super__.onRender.apply(this)
+            MultiSelectCaseListView.__super__.onRender.apply(this);
             this.reconcileMultiSelectUI();
         },
     });
