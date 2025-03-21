@@ -301,6 +301,18 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
             updateActionButtons();
         });
 
+        $('#report-content').on('click', '#report_table_repeat_record_report_length', function () {
+            toggleItems(false);
+            resetTableSelections();
+            updateActionButtons();
+        });
+
+        $('#report-content').on('click', '#report_table_repeat_record_report_paginate', function () {
+            toggleItems(false);
+            resetTableSelections();
+            updateActionButtons();
+        });
+
         $("#select-table-button").click(function() {
             selectedEntireTable = true;
             selectedPageInfo.classList.add('hide');
