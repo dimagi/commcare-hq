@@ -696,14 +696,13 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
         try:
             emails = self.validate_emails(request)
             amount = self.validate_amount(request)
+            date_start, date_end = self.validate_daterange(request)
         except ValidationError as e:
             return json_response({'error': {'message': e.message}})
 
         credit_label = request.POST.get('credit_label', 'General Credits')
         unit_cost = Decimal(request.POST.get('unit_cost', 0))
         quantity = int(request.POST.get('quantity', 0))
-        date_start = request.POST.get('prepay_date_start', datetime.date.today().strftime('%Y-%M-%d'))
-        date_end = request.POST.get('prepay_date_end', datetime.date.today().strftime('%Y-%M-%d'))
 
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
         try:
@@ -740,6 +739,22 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
             message = _('There was an error processing your request. Please try again.')
             raise ValidationError(message=message)
         return amount
+
+    def validate_daterange(self, request):
+        date_start = self._get_date_or_today(request.POST.get('prepay_date_start'))
+        date_end = self._get_date_or_today(request.POST.get('prepay_date_end'))
+        if date_end < date_start:
+            message = _('Prepayment end date must be after start date.')
+            raise ValidationError(message=message)
+        return date_start.isoformat(), date_end.isoformat()
+
+    @staticmethod
+    def _get_date_or_today(date_string):
+        try:
+            date = datetime.date.fromisoformat(date_string)
+        except (TypeError, ValueError):
+            date = datetime.date.today()
+        return date
 
 
 class InvoiceStripePaymentView(BaseStripePaymentView):
