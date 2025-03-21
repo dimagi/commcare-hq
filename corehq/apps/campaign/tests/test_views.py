@@ -176,6 +176,15 @@ class TestPaginatedCasesWithGPSView(BaseTestCampaignView):
 
 class TestDashboardWidgetView(BaseTestCampaignView):
     urlname = DashboardWidgetView.urlname
+    HQ_ACTION_NEW_WIDGET = 'new_widget'
+    HQ_ACTION_EDIT_WIDGET = 'edit_widget'
+    HQ_ACTION_SAVE_WIDGET = 'save_widget'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.dashboard = Dashboard.objects.create(domain=cls.domain)
+        cls.addClassCleanup(cls.dashboard.delete)
 
     def tearDown(self):
         DashboardMap.objects.all().delete()
@@ -195,7 +204,7 @@ class TestDashboardWidgetView(BaseTestCampaignView):
     def test_new_map_widget(self, *args):
         response = self._make_request(
             query_data={'widget_type': WidgetType.MAP},
-            headers={'hq-hx-action': 'new_widget'},
+            headers={'hq-hx-action': self.HQ_ACTION_NEW_WIDGET},
             is_logged_in=True,
         )
 
@@ -206,7 +215,7 @@ class TestDashboardWidgetView(BaseTestCampaignView):
     def test_new_report_widget(self, *args):
         response = self._make_request(
             query_data={'widget_type': WidgetType.REPORT},
-            headers={'hq-hx-action': 'new_widget'},
+            headers={'hq-hx-action': self.HQ_ACTION_NEW_WIDGET},
             is_logged_in=True,
         )
 
@@ -216,7 +225,7 @@ class TestDashboardWidgetView(BaseTestCampaignView):
     def test_new_widget_invalid_widget_type(self, *args):
         response = self._make_request(
             query_data={'widget_type': 'invalid'},
-            headers={'hq-hx-action': 'new_widget'},
+            headers={'hq-hx-action': self.HQ_ACTION_NEW_WIDGET},
             is_logged_in=True,
         )
         assert response.context['htmx_error'].message == "Requested widget type is not supported"
@@ -235,10 +244,9 @@ class TestDashboardWidgetView(BaseTestCampaignView):
                 "dashboard_tab": DashboardTab.CASES,
                 "case_type": "case-02",
                 "geo_case_property": "Test",
-                "submit": "Submit",
                 "widget_type": WidgetType.MAP
             },
-            headers={'hq-hx-action': 'save_widget'},
+            headers={'hq-hx-action': self.HQ_ACTION_SAVE_WIDGET},
         )
 
         self._assert_for_success(response, WidgetType.MAP)
@@ -260,7 +268,7 @@ class TestDashboardWidgetView(BaseTestCampaignView):
                 "report_configuration_id": report_id,
                 "widget_type": WidgetType.REPORT
             },
-            headers={'hq-hx-action': 'save_widget'},
+            headers={'hq-hx-action': self.HQ_ACTION_SAVE_WIDGET},
         )
 
         self._assert_for_success(response, WidgetType.REPORT)
@@ -277,7 +285,7 @@ class TestDashboardWidgetView(BaseTestCampaignView):
                 "dashboard_tab": DashboardTab.CASES,
                 "widget_type": WidgetType.REPORT
             },
-            headers={'hq-hx-action': 'save_widget'},
+            headers={'hq-hx-action': self.HQ_ACTION_SAVE_WIDGET},
         )
 
         self._assert_for_success(response, WidgetType.REPORT)
@@ -289,6 +297,107 @@ class TestDashboardWidgetView(BaseTestCampaignView):
         assert response.status_code == 200
         assert response.context['widget_type'] == widget_type
         assert isinstance(response.context['widget_form'], WidgetType.get_form_class(widget_type))
+
+    @flag_enabled('CAMPAIGN_DASHBOARD')
+    @patch('corehq.apps.campaign.forms.DashboardMapForm._get_case_types', return_value=[])
+    def test_edit_map_widget_form(self, *args):
+        map_widget = self._sample_map_widget()
+
+        response = self._make_request(
+            query_data={
+                'widget_type': WidgetType.MAP,
+                'widget_id': map_widget.id,
+            },
+            headers={'hq-hx-action': self.HQ_ACTION_EDIT_WIDGET},
+            is_logged_in=True,
+        )
+
+        self._assert_for_success(response, WidgetType.MAP)
+        assert response.context['widget'] == map_widget
+
+    def _sample_map_widget(self):
+        return DashboardMap.objects.create(
+            dashboard=self.dashboard,
+            title='Cases Map',
+            case_type='foo',
+            geo_case_property='somewhere',
+            dashboard_tab=DashboardTab.CASES,
+        )
+
+    @flag_enabled('CAMPAIGN_DASHBOARD')
+    @patch('corehq.apps.campaign.forms.DashboardReportForm._get_report_configurations', return_value=[])
+    def test_edit_report_widget_form(self, *args):
+        report_widget = self._sample_report_widget(report_id=uuid.uuid4().hex)
+
+        response = self._make_request(
+            query_data={
+                'widget_type': WidgetType.REPORT,
+                'widget_id': report_widget.id,
+            },
+            headers={'hq-hx-action': self.HQ_ACTION_EDIT_WIDGET},
+            is_logged_in=True,
+        )
+
+        self._assert_for_success(response, WidgetType.REPORT)
+        assert response.context['widget'] == report_widget
+
+    def _sample_report_widget(self, report_id):
+        return DashboardReport.objects.create(
+            dashboard=self.dashboard,
+            title='Cases Map',
+            report_configuration_id=report_id,
+            dashboard_tab=DashboardTab.CASES,
+        )
+
+    @flag_enabled('CAMPAIGN_DASHBOARD')
+    @patch('corehq.apps.campaign.forms.DashboardMapForm._get_case_types')
+    def test_save_existing_map_widget(self, mocked_case_types):
+        mocked_case_types.return_value = [('foo', 'foo')]
+        map_widget = self._sample_map_widget()
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={
+                'title': 'New Title',
+                'dashboard_tab': map_widget.dashboard_tab,
+                'case_type': map_widget.case_type,
+                'geo_case_property': map_widget.geo_case_property,
+                'widget_type': WidgetType.MAP,
+                'widget_id': map_widget.id,
+            },
+            headers={'hq-hx-action': self.HQ_ACTION_SAVE_WIDGET},
+            is_logged_in=True,
+        )
+
+        self._assert_for_success(response, WidgetType.MAP)
+        saved_map_widget = DashboardMap.objects.get(pk=map_widget.id)
+        assert saved_map_widget.title == 'New Title'
+
+    @flag_enabled('CAMPAIGN_DASHBOARD')
+    @patch('corehq.apps.campaign.forms.DashboardReportForm._get_report_configurations')
+    def test_save_existing_report_widget(self, mocked_get_report_configurations):
+        report_id = uuid.uuid4().hex
+        mocked_get_report_configurations.return_value = [(report_id, 'Test Report')]
+        report_widget = self._sample_report_widget(report_id=report_id)
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={
+                'title': 'New Title',
+                'report_configuration_id': report_widget.report_configuration_id,
+                'dashboard_tab': DashboardTab.MOBILE_WORKERS,
+                'widget_type': WidgetType.REPORT,
+                'widget_id': report_widget.id,
+            },
+            headers={'hq-hx-action': self.HQ_ACTION_SAVE_WIDGET},
+        )
+
+        self._assert_for_success(response, WidgetType.REPORT)
+        saved_report_widget = DashboardReport.objects.get(pk=report_widget.id)
+        assert saved_report_widget.title == 'New Title'
+        assert saved_report_widget.dashboard_tab == DashboardTab.MOBILE_WORKERS
 
 
 class TestGetGeoCaseProperties(BaseTestCampaignView):
