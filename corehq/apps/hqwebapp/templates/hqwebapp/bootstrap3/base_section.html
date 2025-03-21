@@ -3,6 +3,10 @@
 
 {% block title %}{% if current_page.title %}{{ current_page.title }} : {% endif %}{{ section.page_name }} :: {% endblock %}
 
+{% block page_content %}
+  {% initial_page_data 'html_id_suffix' report.html_id_suffix|default:'' %}
+{% endblock page_content %}
+
 {% block page_breadcrumbs %}
   {% captureas page_actions_block %}{% block page_actions %}{% endblock page_actions %}{% endcaptureas %}
   {% if page_actions_block %}

@@ -39,6 +39,7 @@
   {% initial_page_data 'created_by_builder' report.spec.report_meta.created_by_builder %}
   {% initial_page_data 'charts' report.spec.charts %}
   {% initial_page_data 'url' url %}
+  {% initial_page_data 'html_id_suffix' report.html_id_suffix %}
 
   {% block report_alerts %}
     <div id="report-error" class="alert alert-danger hide">
