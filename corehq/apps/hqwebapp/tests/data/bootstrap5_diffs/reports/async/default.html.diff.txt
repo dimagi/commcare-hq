@@ -7,9 +7,9 @@
 +
 +{% if show_time_notice %}{% include "hqwebapp/partials/bootstrap5/time_notice.html" with hide=1 %}{% endif %}
  
- {% block reportcontent %}
-   {% if report.slug %}
-@@ -12,7 +13,7 @@
+ {% block page_content %}
+   {% initial_page_data 'html_id_suffix' report.html_id_suffix|default:'' %}
+@@ -16,7 +17,7 @@
        </div>
      </div>
    {% else %}
@@ -18,13 +18,13 @@
    {% endif %}
  {% endblock %}
  
-@@ -25,23 +26,40 @@
+@@ -29,23 +30,40 @@
  {% block modals %}
    <div class="loading-backdrop collapse"></div>
  
--  <div class="modal fade" tabindex="-1" role="dialog" id="loadingReportIssueModal">
+-  <div class="modal fade" tabindex="-1" role="dialog" id="loadingReportIssueModal{{ report.html_id_suffix }}">
 +  <div
-+    id="loadingReportIssueModal"
++    id="loadingReportIssueModal{{ report.html_id_suffix }}"
 +    class="modal fade"
 +    tabindex="-1"
 +    role="dialog"
@@ -67,7 +67,7 @@
              {% endblocktrans %}
            </p>
          </div>
-@@ -49,9 +67,16 @@
+@@ -53,9 +71,16 @@
            <button
               class="btn btn-primary try-again"
               data-loading-text="{% trans 'Trying Again...' %}"
