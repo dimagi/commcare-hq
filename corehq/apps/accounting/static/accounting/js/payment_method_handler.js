@@ -415,6 +415,7 @@ hqDefine('accounting/js/payment_method_handler', [
         self.products = data.products;
         self.features = data.features;
         self.general_credit = data.general_credit;
+        self.invoice_credit = data.invoice_credit;
 
         self.amount = ko.computed(function () {
             var productSum = _.reduce(self.products(), function (memo, product) {
