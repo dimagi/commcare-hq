@@ -202,18 +202,25 @@ class DashboardWidgetView(HqHtmxActionMixin, BaseDomainView):
     def save_widget(self, request, *args, **kwargs):
         self._validate_request_widget_type()
 
-        widget = self.model_class(dashboard=self.dashboard)
+        if self.widget_id:
+            widget = get_object_or_404(self.model_class, pk=self.widget_id)
+        else:
+            widget = self.model_class(dashboard=self.dashboard)
+
         form = self.form_class(self.domain, request.POST, instance=widget)
         show_success = False
         if form.is_valid():
             form.save(commit=True)
             show_success = True
-            form = self.form_class(self.domain)
+            # Returns empty form if new widget created successfully
+            if not self.widget_id:
+                form = self.form_class(self.domain)
 
         context = {
             'widget_form': form,
             'widget_type': self.widget_type,
             'show_success': show_success,
+            'widget': widget,
         }
         return self.render_htmx_partial_response(request, self.form_template_partial_name, context)
 
