@@ -693,7 +693,7 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
         return super(CreditsWireInvoiceView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        emails = request.POST.get('emails', []).split()
+        emails = request.POST.get('emails', '').replace(' ', '').split(',')
         invalid_emails = []
         for email in emails:
             try:
