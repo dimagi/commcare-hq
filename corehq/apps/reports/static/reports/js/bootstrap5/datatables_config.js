@@ -6,6 +6,7 @@ import 'datatables.net-fixedcolumns-bs5/js/fixedColumns.bootstrap5';
 
 import _ from 'underscore';
 import googleAnalytics from 'analytix/js/google';
+import initialPageData from 'hqwebapp/js/initial_page_data';
 import {Tooltip} from 'bootstrap5';
 
 
@@ -223,12 +224,12 @@ var HQReportDataTables = function (options) {
             });
 
             var $dataTablesFilter = $(".dataTables_filter");
-            if ($dataTablesFilter && $("#extra-filter-info")) {
+            if ($dataTablesFilter && $("#extra-filter-info" + initialPageData.get("html_id_suffix"))) {
                 if ($dataTablesFilter.length > 1) {
                     $($dataTablesFilter.first()).remove();
                     $dataTablesFilter = $($dataTablesFilter.last());
                 }
-                $("#extra-filter-info").html($dataTablesFilter);
+                $("#extra-filter-info" + initialPageData.get("html_id_suffix")).html($dataTablesFilter);
                 $dataTablesFilter.addClass("form-search");
                 var $inputField = $dataTablesFilter.find("input"),
                     $inputLabel = $dataTablesFilter.find("label");

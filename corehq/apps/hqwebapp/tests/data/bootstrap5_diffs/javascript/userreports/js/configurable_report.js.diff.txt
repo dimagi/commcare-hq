@@ -21,12 +21,21 @@
      'commcarehq',
  ], function (
      $,
+@@ -62,7 +62,7 @@
+         }
+ 
+         var reportConfigsView = reportConfigModels.reportConfigsViewModel({
+-            filterForm: $("#paramSelectorForm" + initialPageData.get("html_id_suffix")),
++            filterForm: $("#paramSelectorForm" + initialPageData.get('html_id_suffix')),
+             items: initialPageData.get("report_configs"),
+             defaultItem: defaultConfig,
+             saveUrl: initialPageData.reverse("add_report_config"),
 @@ -70,7 +70,7 @@
-         $("#savedReports").koApplyBindings(reportConfigsView);
+         $("#savedReports" + initialPageData.get('html_id_suffix')).koApplyBindings(reportConfigsView);
          reportConfigsView.setUserConfigurableConfigBeingViewed(reportConfigModels.reportConfig(defaultConfig));
  
--        $('#email-enabled').tooltip({
-+        $('#email-enabled').tooltip({  /* todo B5: js-tooltip */
+-        $('#email-enabled' + initialPageData.get('html_id_suffix')).tooltip({
++        $('#email-enabled' + initialPageData.get('html_id_suffix')).tooltip({  /* todo B5: js-tooltip */
              placement: 'right',
              html: true,
              title: gettext("You can email a saved version<br />of this report."),

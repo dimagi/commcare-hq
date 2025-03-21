@@ -256,8 +256,8 @@ hqDefine("reports/js/bootstrap5/maps_utils", [
             setMapHeight(map);
         };
         $(window).resize(resize);
-        $('#reportFiltersAccordion').on('shown', resize);
-        $('#reportFiltersAccordion').on('hidden', resize);
+        $('#reportFiltersAccordion').on('shown', resize);  // This ignores 'html_id_suffix'
+        $('#reportFiltersAccordion').on('hidden', resize);  // and can't be used for UCRs.
         resize();
     }
 

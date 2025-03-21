@@ -50,7 +50,7 @@
              $(self.filterAccordion).on('show.bs.collapse', showFilterButtonStatus);
 @@ -178,7 +178,7 @@
          self.resetFilterState = function () {
-             $('#paramSelectorForm fieldset button, #paramSelectorForm fieldset span[data-dropdown="dropdown"]').click(function () {
+             $('#paramSelectorForm' + initialPageData.get('html_id_suffix') + ' fieldset button, #paramSelectorForm' + initialPageData.get('html_id_suffix') + ' fieldset span[data-dropdown="dropdown"]').click(function () {
                  $(self.filterSubmitSelector)
 -                    .button('reset')
 +                    .changeButtonState('reset')
@@ -59,7 +59,7 @@
                      .prop('disabled', false);
 @@ -188,7 +188,7 @@
                  // This is necessary for pages that contain multiple filter panels, since we are using CSS IDs.
-                 const submitButton = $(e.target).closest('#reportFilters').find(self.filterSubmitSelector);
+                 const submitButton = $(e.target).closest('#reportFilters' + initialPageData.get('html_id_suffix')).find(self.filterSubmitSelector);
                  $(submitButton)
 -                    .button('reset')
 +                    .changeButtonState('reset')

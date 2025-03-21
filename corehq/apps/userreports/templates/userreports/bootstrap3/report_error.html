@@ -9,13 +9,13 @@
 
 {% block page_content %}
   {% block report_alerts %}
-    <div id="report-error" class="alert alert-danger">
+    <div id="report-error{{ report.html_id_suffix }}" class="alert alert-danger">
       <p>{{ error_message }}</p>
       {% if details %}
         <p>{% trans "Technical Details:" %}</p>
         {{ details }}
       {% endif %}
-      <div id="error-message"></div>
+      <div id="error-message{{ report.html_id_suffix }}"></div>
     </div>
   {% endblock report_alerts %}
   {% if allow_delete %}
