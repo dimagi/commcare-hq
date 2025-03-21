@@ -1,12 +1,12 @@
 {% load hq_shared_tags %}
 {% load i18n %}
-<div class="panel panel-default{% if report.is_async%} hide{% endif %}" id="reportFiltersAccordion">
+<div class="panel panel-default{% if report.is_async%} hide{% endif %}" id="reportFiltersAccordion{{ report.html_id_suffix }}">
   {% if report.show_filters %}
-    <div id="reportFilters" class="panel-body collapse">
+    <div id="reportFilters{{ report.html_id_suffix }}" class="panel-body collapse">
       <div class="accordion-inner">
         {% block report_description %}{% endblock %}
-        <form method="get" id="paramSelectorForm" class="form form-horizontal">
-          <div id="hq-report-filters">
+        <form method="get" id="paramSelectorForm{{ report.html_id_suffix }}" class="form form-horizontal">
+          <div id="hq-report-filters{{ report.html_id_suffix }}">
             {% block report_filters %}
               {% if not report.is_async %}
                 {% include "reports/async/bootstrap3/filters.html" %}
@@ -20,7 +20,7 @@
                         disabled="disabled"
                         data-loading-text="{% trans "Generating Report..." %}"
                         data-standard-text="{% trans "Apply" %}"
-                        id="apply-btn">
+                        id="apply-btn{{ report.html_id_suffix }}">
                   {% trans "Apply" %}
                 </button>
               </div>
@@ -29,7 +29,7 @@
         </form>
       </div>
       {% if report.slug == 'mpr_report' %}
-        <span style="font-style: italic" id="mpr-banner-info">The report is currently available at Sector and Anganwadi Center level. The expansion to levels above is currently under development</span>
+        <span style="font-style: italic" id="mpr-banner-info{{ report.html_id_suffix }}">The report is currently available at Sector and Anganwadi Center level. The expansion to levels above is currently under development</span>
       {% endif %}
     </div>
   {% endif %}
@@ -39,7 +39,7 @@
         {% if report.show_filters %}
           <a href="#reportFilters"
              class="btn btn-default"
-             id="toggle-report-filters"
+             id="toggle-report-filters{{ report.html_id_suffix }}"
              data-toggle="collapse"
              data-open-text="{% trans "Show Filter Options" %}"
              data-close-text="{% trans "Hide Filter Options" %}">
@@ -48,25 +48,25 @@
         {% endif %}
         {% block export %}
           {% if report.is_exportable and request.couch_user.can_download_reports %}
-            <a href="#" class="btn btn-default{% if report.needs_filters %} hide{% endif %}" id="export-report-excel">
+            <a href="#" class="btn btn-default{% if report.needs_filters %} hide{% endif %}" id="export-report-excel{{ report.html_id_suffix }}">
               <i class="fa fa-share"></i>
               {% trans "Export to" %} {% if report.export_target %}{{ report.export_target }}{% else %}Excel{% endif %}
             </a>
           {% endif %}
         {% endblock %}
         {% if report.is_emailable and request.couch_user.can_download_reports %}
-          <a href="#email-report-modal" class="btn btn-default{% if report.needs_filters %} hide{% endif %}" data-toggle="modal" id="email-report">
+          <a href="#email-report-modal" class="btn btn-default{% if report.needs_filters %} hide{% endif %}" data-toggle="modal" id="email-report{{ report.html_id_suffix }}">
             <i class="fa fa-envelope"></i> {% trans "Email report" %}
           </a>
         {% endif %}
 
         {% if report.is_printable %}
-          <a href="#" class="btn btn-default{% if report.needs_filters %} hide{% endif %}" id="print-report">
+          <a href="#" class="btn btn-default{% if report.needs_filters %} hide{% endif %}" id="print-report{{ report.html_id_suffix }}">
             <i class="fa fa-print"></i> {% trans "Print" %}
           </a>
         {% endif %}
       </div>
-      <div id="extra-filter-info" class="col-xs-4"></div>
+      <div id="extra-filter-info{{ report.html_id_suffix }}" class="col-xs-4"></div>
     </div>
   </div>
 </div>

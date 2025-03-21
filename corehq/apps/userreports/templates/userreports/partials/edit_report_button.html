@@ -1,5 +1,5 @@
 {% load i18n %}
-<a class="btn btn-primary track-usage-link" id="edit-report-link"
+<a class="btn btn-primary track-usage-link" id="edit-report-link{{ report.html_id_suffix }}"
   {% if report.spec.report_meta.created_by_builder %}
    href="{% url 'edit_report_in_builder' domain report.report_config_id %}"
    data-category="Report Builder"
