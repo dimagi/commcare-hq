@@ -9,12 +9,10 @@ hqDefine("app_manager/js/modules/module_view", [
     "app_manager/js/modules/shadow_module_settings",
     "hqwebapp/js/toggles",
     "app_manager/js/visit_scheduler",   // advanced modules only
-    "app_manager/js/managed_app",       // calls init from app_manager/js/app_manager
     "app_manager/js/nav_menu_media",
     "app_manager/js/modules/case_list_setting",
     "hqwebapp/js/key-value-mapping",
     "app_manager/js/xpathValidator",
-    "app_manager/js/apps_base",
     "app_manager/js/custom_assertions",
     "select2/dist/js/select2.full.min",
 ], function (
