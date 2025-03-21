@@ -1,15 +1,26 @@
-hqDefine("app_manager/js/modules/module_view_report", function () {
+hqDefine("app_manager/js/modules/module_view_report", [
+    "jquery",
+    "underscore",
+    "hqwebapp/js/initial_page_data",
+    "app_manager/js/app_manager_media",
+    "app_manager/js/modules/report_module",
+    "reports_core/js/choice_list_utils",
+    "select2/dist/js/select2.full.min",
+    "app_manager/js/xpathValidator",
+    "app_manager/js/app_manager",
+], function (
+    $,
+    _,
+    initialPageData,
+    appManagerMedia,
+    reportModule,
+    choiceListUtils,
+) {
     $(function () {
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data");
-        var initNavMenuMedia = hqImport('app_manager/js/app_manager_media').initNavMenuMedia;
-        var reportModuleModel = hqImport('app_manager/js/modules/report_module').reportModuleModel;
-        var staticFilterDataModel = hqImport('app_manager/js/modules/report_module').staticFilterDataModel;
-        var choiceListUtils = hqImport('reports_core/js/choice_list_utils');
-
         // Hacky: report modules only deal with one kind of multimedia (the menu image/audio),
         // so assume nav_menu_media_specifics has one element.
         var navMenuMediaItem = initialPageData.get("nav_menu_media_specifics")[0];
-        var navMenuMedia = initNavMenuMedia(
+        var navMenuMedia = appManagerMedia.initNavMenuMedia(
             "",
             navMenuMediaItem.menu_refs.image,
             navMenuMediaItem.menu_refs.audio,
@@ -18,8 +29,8 @@ hqDefine("app_manager/js/modules/module_view_report", function () {
         );
 
         var saveURL = initialPageData.reverse("edit_report_module");
-        var staticData = staticFilterDataModel(initialPageData.get('static_data_options'));
-        var reportModule = reportModuleModel(_.extend({}, initialPageData.get("report_module_options"), {
+        var staticData = reportModule.staticFilterDataModel(initialPageData.get('static_data_options'));
+        var reportModuleModel = reportModule.reportModuleModel(_.extend({}, initialPageData.get("report_module_options"), {
             lang: initialPageData.get('lang'),
             staticFilterData: staticData,
             saveURL: saveURL,
@@ -38,14 +49,14 @@ hqDefine("app_manager/js/modules/module_view_report", function () {
         ]).each(function ($element) {
             // never call applyBindings with null as the second arg!
             if ($element.get(0)) {
-                $element.koApplyBindings(reportModule);
+                $element.koApplyBindings(reportModuleModel);
             }
         });
         navMenuMedia.menuImage.ref.subscribe(function () {
-            reportModule.changeSaveButton();
+            reportModuleModel.changeSaveButton();
         });
         navMenuMedia.menuAudio.ref.subscribe(function () {
-            reportModule.changeSaveButton();
+            reportModuleModel.changeSaveButton();
         });
 
         var select2s = $('.choice_filter');
