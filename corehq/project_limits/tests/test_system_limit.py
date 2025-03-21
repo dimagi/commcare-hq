@@ -31,9 +31,10 @@ class TestSystemLimitMethods(TestCase):
             global_limit.domain = 'new-domain'  # this is changing scope from global to domain
             global_limit.save()
 
-        # nothing stops you from changing a domain scope to a global scope apart from the db constraint
+    def test_no_error_is_raised_if_changing_scope_from_domain_to_global(self):
         new_limit = SystemLimit.objects.create(key="domain_limit", limit=5, domain='test')
         new_limit.domain = ''
+        # should not fail
         new_limit.save()
 
     def test_raises_db_error_if_conflicting_global_scopes(self):
