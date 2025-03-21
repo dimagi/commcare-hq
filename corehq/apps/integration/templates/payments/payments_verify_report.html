@@ -17,6 +17,11 @@
   <div>
     <h1 class="py-3 m-0">{% trans "Payments Verification Report" %}</h1>
   </div>
+
+  <div class="mb-3">
+    {% include "reports/standard/partials/bootstrap5/filter_panel.html" %}
+  </div>
+
   <div id="verify-alert"></div>
   <p>
     <button

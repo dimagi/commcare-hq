@@ -46,6 +46,15 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
     payer_message = columns.Column(
         verbose_name=_("Payer Message"),
     )
+    payment_verified = columns.Column(
+        verbose_name=_("Verified"),
+    )
+    payment_verified_by = columns.Column(
+        verbose_name=_("Verified By"),
+    )
+    payment_submitted = columns.Column(
+        verbose_name=_("Payment Submitted"),
+    )
 
     def render_verify_select(self, record, value):
         default_attrs = {
