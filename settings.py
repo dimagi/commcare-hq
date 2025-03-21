@@ -279,6 +279,7 @@ HQ_APPS = (
     'corehq.apps.hqwebapp.apps.HqWebAppConfig',
     'corehq.apps.hqmedia',
     'corehq.apps.integration',
+    'corehq.apps.ip_access',
     'corehq.apps.linked_domain',
     'corehq.apps.locations',
     'corehq.apps.products',

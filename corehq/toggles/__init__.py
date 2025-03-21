@@ -2124,6 +2124,13 @@ DOMAIN_PERMISSIONS_MIRROR = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/Enterprise+Permissions',
 )
 
+IP_ACCESS_CONTROLS = StaticToggle(
+    'ip_access_controls',
+    "USH: IP access controls - control project access by country and by individual IP",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
     'show_build_profile_in_app_status',
     'Show build profile installed on phone tracked via heartbeat request in App Status Report',
