@@ -12,7 +12,7 @@
 
 {% block head %}{{ block.super }}
   <style>
-    #map-container {
+    .map-container {
       height: 500px;
     }
   </style>
@@ -42,17 +42,17 @@
   {% initial_page_data 'html_id_suffix' report.html_id_suffix %}
 
   {% block report_alerts %}
-    <div id="report-error" class="alert alert-danger hide">
+    <div id="report-error{{ report.html_id_suffix }}" class="alert alert-danger hide">
       {% blocktrans %}
         There was an error rendering your report.
       {% endblocktrans %}
-      <div id="error-message"></div>
+      <div id="error-message{{ report.html_id_suffix }}"></div>
     </div>
-    <div id="report-warning" class="alert alert-warning hide">
+    <div id="report-warning{{ report.html_id_suffix }}" class="alert alert-warning hide">
       {% blocktrans %}
         Warning:
       {% endblocktrans %}
-      <div id="warning-message"></div>
+      <div id="warning-message{{ report.html_id_suffix }}"></div>
     </div>
   {% endblock report_alerts %}
   {% block main_column_content %}
@@ -61,30 +61,30 @@
     {% endblock %}
 
     <hr />
-    <div id="reportHint" class="alert alert-info">
+    <div id="reportHint{{ report.html_id_suffix }}" class="alert alert-info">
       <h4><i class="fa fa-info-circle"></i> {% blocktrans %}Why can't I see any data?{% endblocktrans %}</h4>
       <p>{% blocktrans %}Please choose your filters above and click <strong>Apply</strong> to see report data.{% endblocktrans %}</p>
     </div>
-    <div id="reportContent" class="hide">
+    <div id="reportContent{{ report.html_id_suffix }}" class="hide">
       {% block reportcharts %}
-        <section id="chart-container" style="display: none;">
+        <section id="chart-container{{ report.html_id_suffix }}" style="display: none;">
         </section>
-        <section id="chart-warning" class="alert alert-warning hide">
+        <section id="chart-warning{{ report.html_id_suffix }}" class="alert alert-warning hide">
           {% blocktrans %}
             Charts cannot be displayed with more than 25 categories. Please filter the data or change your report to limit the number of rows.
           {% endblocktrans %}
         </section>
-        <section id="map-container" style="display: none;" >
+        <section id="map-container{{ report.html_id_suffix }}" class="map-container" style="display: none;" >
         </section>
-        <div id="zoomtofit" class="leaflet-control-layers" style="display: none;">
-          <div id="zoomtofit-target" class="zoomtofit leaflet-control-layers-toggle" title="{% trans "Fit all data into view" %}"></div>
+        <div id="zoomtofit{{ report.html_id_suffix }}" class="leaflet-control-layers" style="display: none;">
+          <div id="zoomtofit-target{{ report.html_id_suffix }}" class="zoomtofit leaflet-control-layers-toggle" title="{% trans "Fit all data into view" %}"></div>
         </div>
 
-        <div id="report-info" class="alert alert-info hide">
+        <div id="report-info{{ report.html_id_suffix }}" class="alert alert-info hide">
           {% blocktrans %}
             Note:
           {% endblocktrans %}
-          <span id="info-message"></span>
+          <span id="info-message{{ report.html_id_suffix }}"></span>
         </div>
       {% endblock %}
       {% block reporttable %}
@@ -93,7 +93,7 @@
             <h4>{{ report.title }}</h4>
           </div>
           <div class="panel-body hq-datatable-container">
-            <table id="report_table_{{ report.slug }}" class="table table-striped">
+            <table id="report_table_{{ report.slug }}{{ report.html_id_suffix }}" class="table table-striped">
               <thead>
               {{ headers.render_html }}
               </thead>
