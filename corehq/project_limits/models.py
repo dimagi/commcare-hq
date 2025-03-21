@@ -120,7 +120,7 @@ class SystemLimit(models.Model):
             try:
                 previous_domain = SystemLimit.objects.get(id=self.id).domain
             except SystemLimit.DoesNotExist:
-                previous_domain = self.domain
+                return
             if not previous_domain:
                 raise SystemLimitIllegalScopeChange(
                     "This is scoped globally. You cannot modify it to a domain scope."
