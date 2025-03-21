@@ -21,7 +21,12 @@
     hx-post="{{ request.path_info }}"
     hx-target="#widget-form"
     hx-swap="outerHTML"
-    hx-vals='{"widget_type": "{{ widget_type }}"}'
+    hx-vals='{
+      "widget_type": "{{ widget_type }}"
+      {% if widget.id %}
+      , "widget_id": "{{ widget.id }}"
+    {% endif %}
+    }'
   >
     {% crispy widget_form %}
   </form>
