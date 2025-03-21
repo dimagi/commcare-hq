@@ -6,6 +6,7 @@
       {% trans 'Prepayment Amount' %}
     </legend>
 
+    <!-- ko if: $root.paymentMethod() === $root.CREDIT_CARD -->
     <div class="alert alert-info">
       {% trans 'One credit is equivalent to one USD. Credits are applied to monthly invoices' %}
     </div>
@@ -44,6 +45,97 @@
       </div>
     </div>
     <input type="hidden" name="amount" data-bind="value: amount" />
+    <!-- /ko -->
+
+    <!-- ko if: $root.paymentMethod() === $root.WIRE -->
+    <div data-bind="with: invoice_credit">
+      <div class="form-group">  {# todo B5: css-form-group #}
+        <label class="form-label col-md-2">
+          {% trans "Prepayment Start Date" %}
+        </label>
+        <div class="col-md-10">
+          <input type="text"
+            id="prepay-date-start"
+            class="date-picker form-control"
+            name="prepay_date_start"
+            data-bind="value: date_start"
+            placeholder='{% trans "YYYY-MM-DD" %}' />
+        </div>
+      </div>
+
+      <div class="form-group">  {# todo B5: css-form-group #}
+        <label class="form-label col-md-2">
+          {% trans "Prepayment End Date" %}
+        </label>
+        <div class="col-md-10">
+          <input type="text"
+            id="prepay-date-end"
+            class="date-picker form-control"
+            name="prepay_date_end"
+            data-bind="value: date_end"
+            placeholder='{% trans "YYYY-MM-DD" %}' />
+        </div>
+      </div>
+
+      <div class="form-group">  {# todo B5: css-form-group #}
+        <label class="form-label col-md-2">
+          {% trans "Credit Label" %}
+        </label>
+        <div class="col-md-10">
+          <input type="text"
+                 class="form-control"
+                 data-bind="textInput: credit_label"
+                 name="credit_label"/>
+        </div>
+      </div>
+
+      <div class="form-group">  {# todo B5: css-form-group #}
+        <label class="form-label col-md-2">
+          {% trans "Unit Cost" %}
+        </label>
+        <div class="col-md-10">
+          <div class="input-group">
+            <span class="input-group-addon">$</span>
+            <input type="number"
+                   class="form-control"
+                   data-bind="textInput: addAmount"
+                   name="unit_cost"
+                   step="0.01"/>
+          </div>
+          <div class="alert alert-danger"
+               data-bind="visible: !addAmountValid()">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>{% blocktrans %}
+              Please enter an amount that's either $0 or  greater than $0.5
+            {% endblocktrans %}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">  {# todo B5: css-form-group #}
+        <label class="form-label col-md-2">
+          {% trans "Quantity" %}
+        </label>
+        <div class="col-md-10">
+          <input type="number"
+                 class="form-control"
+                 data-bind="textInput: quantity"
+                 name="quantity"
+                 step="1"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">  {# todo B5: css-form-group #}
+      <label class="form-label col-md-2">
+        {% trans 'Total Credits' %}
+      </label>
+      <div class="col-md-10">
+        <p class="form-control-text" data-bind="text: ('$ ' + invoice_amount())"></p>
+      </div>
+    </div>
+    <input type="hidden" name="invoice_amount" data-bind="value: invoice_amount" />
+    <!-- /ko -->
   </fieldset>
 </script>
 
@@ -121,7 +213,7 @@
                        size="20"
                        name="emails"
                        class="form-control"
-                       placeholder="jane@gmail.com john@gmail.com" />
+                       placeholder="jane@gmail.com, john@gmail.com" />
               </div>
             </div>
           </fieldset>
