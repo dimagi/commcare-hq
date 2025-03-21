@@ -4,6 +4,7 @@ hqDefine('accounting/js/credits', [
     'knockout',
     'underscore',
     'accounting/js/payment_method_handler',
+    'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min',
 ], function (
     $,
     ko,
@@ -67,6 +68,8 @@ hqDefine('accounting/js/credits', [
 
     var invoiceGeneralCreditItem = function (paymentHandler) {
         var self = {};
+        self.date_start = ko.observable();
+        self.date_end = ko.observable();
         self.name = ko.observable("Unit Cost");
         self.creditType = ko.observable("invoice_general_credit");
         self.quantity = ko.observable(1);
@@ -127,6 +130,17 @@ hqDefine('accounting/js/credits', [
 
         return self;
     };
+
+    $(function () {
+        $('#paymentModal').on('shown.bs.modal', function () {
+            $("#prepay-date-start").datetimepicker({
+                format: "YYYY-MM-DD",
+            });
+            $("#prepay-date-end").datetimepicker({
+                format: "YYYY-MM-DD",
+            });
+        });
+    });
 
     return {
         creditsManager: creditsManager,
