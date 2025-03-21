@@ -199,6 +199,15 @@ class TestDashboardWidgetView(BaseTestCampaignView):
         response = self._make_request(is_logged_in=True)
         assert response.status_code == 404
 
+    @staticmethod
+    def _assert_for_success(response, widget_type):
+        assert response.status_code == 200
+        assert response.context['widget_type'] == widget_type
+        assert isinstance(response.context['widget_form'], WidgetType.get_form_class(widget_type))
+
+
+class TestNewWidget(TestDashboardWidgetView):
+
     @flag_enabled('CAMPAIGN_DASHBOARD')
     @patch('corehq.apps.campaign.forms.DashboardMapForm._get_case_types', return_value=[])
     def test_new_map_widget(self, *args):
@@ -292,11 +301,8 @@ class TestDashboardWidgetView(BaseTestCampaignView):
         assert DashboardReport.objects.count() == 0
         assert response.context["widget_form"].errors == {'report_configuration_id': ['This field is required.']}
 
-    @staticmethod
-    def _assert_for_success(response, widget_type):
-        assert response.status_code == 200
-        assert response.context['widget_type'] == widget_type
-        assert isinstance(response.context['widget_form'], WidgetType.get_form_class(widget_type))
+
+class TestEditWidget(TestDashboardWidgetView):
 
     @flag_enabled('CAMPAIGN_DASHBOARD')
     @patch('corehq.apps.campaign.forms.DashboardMapForm._get_case_types', return_value=[])
