@@ -372,7 +372,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('data_analytics', 'GIRRow', 'domain_name'),
     ModelDeletion('data_analytics', 'MALTRow', 'domain_name'),
     ModelDeletion('data_cleaning', 'BulkEditSession', 'domain', [
-        'BulkEditColumnFilter',
+        'BulkEditFilter',
         'BulkEditPinnedFilter',
         'BulkEditColumn',
         'BulkEditRecord',
@@ -505,6 +505,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('campaign', 'Dashboard', 'domain', extra_models=[
         'DashboardMap',
         'DashboardReport',
+        'DashboardGauge'
     ]),
 ]
 

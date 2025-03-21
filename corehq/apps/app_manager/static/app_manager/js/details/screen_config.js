@@ -68,7 +68,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     allowsEmptyColumns: columnType === 'long',
                     caseTileTemplateOptions: spec.caseTileTemplateOptions,
                     caseTileTemplateConfigs: spec.caseTileTemplateConfigs,
-                }
+                },
             );
             self.screens.push(screen);
             return screen;
@@ -152,7 +152,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         spec.sortRows[j].blanks,
                         spec.sortRows[j].display[self.lang],
                         false,
-                        spec.sortRows[j].sort_calculation
+                        spec.sortRows[j].sort_calculation,
                     );
                 }
             }
@@ -168,7 +168,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 $caseListLookup,
                 spec.state.short,
                 spec.lang,
-                self.shortScreen.saveButton
+                self.shortScreen.saveButton,
             );
             // Set up case search
             var caseClaimModels = hqImport("app_manager/js/details/case_claim");
@@ -179,7 +179,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 _.pick(spec, caseClaimModels.searchConfigKeys),
                 spec.lang,
                 self.shortScreen.saveButton,
-                self.filter.filterText
+                self.filter.filterText,
             );
         }
         if (spec.state.long !== undefined) {
@@ -201,7 +201,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                                 printRef.is_matched(false);
                                 printTemplateUploader.updateUploadFormUI();
                             }
-                        }
+                        },
                     );
                 },
             });

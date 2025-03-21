@@ -13,6 +13,7 @@ def dashboard_fixture():
         dashboard.delete()
 
 
+@use(dashboard_fixture)
 @fixture
 def dashboard_maps():
     dashboard = dashboard_fixture()
@@ -51,6 +52,7 @@ def dashboard_maps():
     yield
 
 
+@use(dashboard_fixture)
 @fixture
 def dashboard_reports():
     dashboard = dashboard_fixture()
@@ -85,7 +87,7 @@ def dashboard_reports():
     yield
 
 
-@use('db', dashboard_maps)
+@use(dashboard_maps)
 def test_dashboard_map_ordering():
     dashboard = dashboard_fixture()
     map_ordering = [
@@ -100,7 +102,7 @@ def test_dashboard_map_ordering():
     ]
 
 
-@use('db', dashboard_reports)
+@use(dashboard_reports)
 def test_dashboard_report_ordering():
     dashboard = dashboard_fixture()
     report_ordering = [

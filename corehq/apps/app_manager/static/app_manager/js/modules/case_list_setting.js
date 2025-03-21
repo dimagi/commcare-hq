@@ -3,7 +3,7 @@ hqDefine("app_manager/js/modules/case_list_setting", [
     'underscore',
 ], function (
     $,
-    _
+    _,
 ) {
     function getLabel(slug) { return $('.case-list-setting-label[data-slug="' + slug + '"]'); }
     function getShow(slug) { return $('.case-list-setting-show[data-slug="' + slug + '"]'); }

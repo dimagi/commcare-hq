@@ -214,7 +214,7 @@ hqDefine("app_manager/js/releases/releases", [
 
         self.download_application_zip = function (multimediaOnly, buildProfile) {
             releasesMain.download_application_zip(
-                self.id(), multimediaOnly, buildProfile, self.download_targeted_version()
+                self.id(), multimediaOnly, buildProfile, self.download_targeted_version(),
             );
         };
 
@@ -396,7 +396,7 @@ hqDefine("app_manager/js/releases/releases", [
                     self.savedApps(
                         _.map(data.apps, function (app) {
                             return savedAppModel(app, self);
-                        })
+                        }),
                     );
                     self.totalItems(data.pagination.total);
                     self.fetchState('');
