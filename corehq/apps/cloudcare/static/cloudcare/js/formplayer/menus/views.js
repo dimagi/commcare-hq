@@ -695,10 +695,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             return this.get('headerVisible')[index];
         },
 
-        allColumnsHidden: function () {
-            return this.get('headerVisible').every(col => col === false);
-        },
-
         saveToLocalStorage: function () {
             if (this.caseListId) {
                 localStorage.setItem(this.caseListId, JSON.stringify(this.get('headerVisible')));
@@ -716,7 +712,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         templateContext: function () {
             return {
                 headers: this.model.get('headers'),
-                headerVisible: this.headerVisibility
+                headerVisible: this.headerVisibility,
+                allColumnsHidden: function () {
+                    return this.headerVisible.every(hidden => hidden === false);
+                }
             };
         },
 
@@ -738,7 +737,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
         onCheckboxChange: function (e) {
             this.headerVisibility[e.currentTarget.value] = e.currentTarget.checked;
-            console.log(this.headerVisibility);
+            this.render();
         },
     });
 

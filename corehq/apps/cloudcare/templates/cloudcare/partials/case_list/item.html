@@ -1,5 +1,5 @@
 <script type="text/template" id="case-view-item-template">
-  <% if (isMultiSelect && !headerModel.allColumnsHidden()) { %>
+  <% if (isMultiSelect ) { %>
     <td class="module-case-list-column-checkbox"><input type="checkbox" class="select-row-checkbox"/></td>
   <% } %>
   <% _.each(data, function(datum, index) { %>
