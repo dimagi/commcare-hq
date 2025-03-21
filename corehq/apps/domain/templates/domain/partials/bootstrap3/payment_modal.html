@@ -84,7 +84,8 @@
         <div class="col-sm-10">
           <input type="text"
                  class="form-control"
-                 data-bind="textInput: label" />
+                 data-bind="textInput: credit_label"
+                 name="credit_label"/>
         </div>
       </div>
 
@@ -97,7 +98,8 @@
             <span class="input-group-addon">$</span>
             <input type="text"
                    class="form-control"
-                   data-bind="textInput: addAmount"/>
+                   data-bind="textInput: addAmount"
+                   name="unit_cost"/>
           </div>
           <div class="alert alert-danger"
                data-bind="visible: !addAmountValid()">
@@ -116,7 +118,8 @@
         <div class="col-sm-10">
           <input type="number"
                  class="form-control"
-                 data-bind="textInput: quantity" />
+                 data-bind="textInput: quantity"
+                 name="quantity"/>
         </div>
       </div>
     </div>
