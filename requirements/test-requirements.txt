@@ -229,7 +229,7 @@ faker==32.1.0
     # via -r test-requirements.in
 flaky==3.8.1
     # via -r test-requirements.in
-freezegun==1.1.0
+freezegun==1.5.1
     # via -r test-requirements.in
 frozenlist==1.4.1
     # via
