@@ -3,7 +3,7 @@
 <script type="text/template" id="case-list-config-body">
   <div class="popover-content">
     <form class="header-visibility-form">
-      <% _.each(headers, function(header, index) { %>
+      <% _.each(columnNames, function(columnName, index) { %>
         <div class="form-check" style="margin-bottom: 0.5rem;">
           <input
             type="checkbox"
@@ -11,9 +11,9 @@
             id="header-checkbox-<%= index %>"
             value="<%= index %>"
             data-index="<%= index %>"
-            <%= headerVisible[index] ? 'checked' : '' %> >
+            <%= columnVisibility[index] ? 'checked' : '' %> >
           <label class="form-check-label" for="header-checkbox-<%= index %>">
-            <%= header %>
+            <%= columnName %>
           </label>
         </div>
       <% }); %>
@@ -26,7 +26,7 @@
       <% } %>
       role="alert"
     >
-      Please Select at least one column.
+      % trans "Please Select at least one column." %}
     </div>
 
     <div class="d-flex justify-content-between">

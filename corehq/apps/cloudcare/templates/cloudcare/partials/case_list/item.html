@@ -1,9 +1,9 @@
 <script type="text/template" id="case-view-item-template">
-  <% if (isMultiSelect ) { %>
+  <% if (isMultiSelect) { %>
     <td class="module-case-list-column-checkbox"><input type="checkbox" class="select-row-checkbox"/></td>
   <% } %>
   <% _.each(data, function(datum, index) { %>
-    <% if (!(styles[index].widthHint === 0) && headerModel.isVisible(index)) { %>
+    <% if (!(styles[index].widthHint === 0) && columnConfigModel.isVisible(index)) { %>
       <% if (styles[index].displayFormat === 'Image') { %>
         <td class="module-case-list-column"><img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>"/></td>
       <% } else if (styles[index].displayFormat === 'ClickableIcon') { %>

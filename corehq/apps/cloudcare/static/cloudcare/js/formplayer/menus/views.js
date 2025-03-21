@@ -306,8 +306,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             });
             self.smallScreenEnabled = cloudcareUtils.smallScreenIsEnabled();
             self.scrollContainer = $(constants.SCROLLABLE_CONTENT_CONTAINER);
-            this.headerModel = this.options.headerModel;
-            this.listenTo(this.headerModel, 'change:headerVisible', this.render);
+            this.columnConfigModel = this.options.columnConfigModel;
+            this.listenTo(this.columnConfigModel, 'change:headerVisible', this.render);
         },
 
         className: "formplayer-request case-row",
@@ -477,7 +477,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri.trim(), appId);
                 },
-                headerModel: this.headerModel,
+                columnConfigModel: this.columnConfigModel,
             };
         },
 
@@ -669,11 +669,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         };
     };
 
-    const HeaderModel = Backbone.Model.extend({
+    const ColumnConfigModel = Backbone.Model.extend({
         defaults: function () {
             return {
-                headers: [],
-                headerVisible: [],
+                columnNames: [],
+                columnVisibility: [],
             };
         },
 
@@ -681,23 +681,34 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             if (attributes) {
                 this.caseListId = attributes.caseListId;
                 if (this.caseListId && localStorage.getItem(this.caseListId)) {
-                    this.set('headerVisible', JSON.parse(localStorage.getItem(this.caseListId)));
-                } else if (attributes && attributes.headers && !attributes.headerVisible) {
-                    this.set('headerVisible', Array(attributes.headers.length).fill(true));
+                    const savedModel = JSON.parse(localStorage.getItem(this.caseListId));
+                    const columnNameMismatch = attributes.columnNames &&
+                        (!savedModel.columnNames ||
+                            savedModel.columnNames.length !== attributes.columnNames.length);
+                    if (columnNameMismatch) {
+                        localStorage.removeItem(this.caseListId);
+                        this.set('columnNames', attributes.columnNames);
+                        this.set('columnVisibility', Array(attributes.columnNames.length).fill(true));
+                    } else {
+                        this.set(savedModel);
+                    }
+                } else if (attributes && attributes.columnNames) {
+                    this.set('columnNames', attributes.columnNames);
+                    this.set('columnVisibility', Array(attributes.columnNames.length).fill(true));
                 }
 
-                this.on('change:headerVisible', this.saveToLocalStorage, this);
+                this.on('change', this.saveToLocalStorage, this);
             }
-
         },
 
         isVisible: function (index) {
-            return this.get('headerVisible')[index];
+            return this.get('columnVisibility')[index];
         },
 
         saveToLocalStorage: function () {
             if (this.caseListId) {
-                localStorage.setItem(this.caseListId, JSON.stringify(this.get('headerVisible')));
+                const modelData = this.toJSON();
+                localStorage.setItem(this.caseListId, JSON.stringify(modelData));
             }
         },
     });
@@ -706,15 +717,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         template: _.template($("#case-list-config-body").html() || ""),
 
         initialize: function () {
-            this.headerVisibility = this.model.get('headerVisible').slice();
+            this.columnVisibility = this.model.get('columnVisibility').slice();
         },
 
         templateContext: function () {
             return {
-                headers: this.model.get('headers'),
-                headerVisible: this.headerVisibility,
+                columnNames: this.model.get('columnNames'),
+                columnVisibility: this.columnVisibility,
                 allColumnsHidden: function () {
-                    return this.headerVisible.every(hidden => hidden === false);
+                    return this.columnVisibility.every(hidden => hidden === false);
                 }
             };
         },
@@ -726,17 +737,17 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
 
         onUpdate: function () {
-            this.model.set('headerVisible', this.headerVisibility);
+            this.model.set('columnVisibility', this.columnVisibility);
             this.trigger('save', this.model);
         },
 
         onReset: function () {
-            this.headerVisibility.fill(true);
+            this.columnVisibility.fill(true);
             this.render();
         },
 
         onCheckboxChange: function (e) {
-            this.headerVisibility[e.currentTarget.value] = e.currentTarget.checked;
+            this.columnVisibility[e.currentTarget.value] = e.currentTarget.checked;
             this.render();
         },
     });
@@ -751,7 +762,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             return {
                 styles: this.options.styles,
                 endpointActions: this.options.endpointActions,
-                headerModel: this.headerModel,
+                columnConfigModel: this.columnConfigModel,
             };
         },
 
@@ -761,44 +772,39 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
         onRender: function () {
             const self = this;
-            const setUpPopOver = function (button) {
-                if (button.length) {
-                    const popoverInstance = new bootstrap.Popover(button[0], {
-                        html: true,
-                        sanitize: false,
-                        content: function () {
-                            const caseListConfigView = new CaseListConfigView({
-                                model: self.headerModel,
-                            });
-                            const container = document.createElement('div');
-                            caseListConfigView.setElement(container);
-                            caseListConfigView.render();
+            const configButton = this.$('#case-list-config-button')
+            if (configButton.length) {
+                const popoverInstance = new bootstrap.Popover(configButton[0], {
+                    html: true,
+                    sanitize: false,
+                    content: function () {
+                        const caseListConfigView = new CaseListConfigView({
+                            model: self.columnConfigModel,
+                        });
+                        const container = document.createElement('div');
+                        caseListConfigView.setElement(container);
+                        caseListConfigView.render();
 
-                            // Set up listeners for the view
-                            self.listenTo(caseListConfigView, 'save', function () {
-                                popoverInstance.dispose();
-                                self.render();
-                            });
+                        // Set up listeners for the view
+                        self.listenTo(caseListConfigView, 'save', function () {
+                            popoverInstance.dispose();
+                            self.render();
+                        });
 
-                            return container;
-                        },
-                        placement: 'auto',
-                        trigger: 'click',
-                    });
+                        return container;
+                    },
+                    placement: 'auto',
+                    trigger: 'click',
+                });
 
-                    document.addEventListener('click', function (event) {
-                        // If click is inside popover but NOT on the save button, don't close
-                        if ($(event.target).closest('.popover').length > 0 &&
-                            !$(event.target).hasClass('js-action') &&
-                            !$(event.target).closest('.js-action').length) {
-                            event.stopPropagation();
-                        }
-                    }, true);
-                }
-            };
-            setUpPopOver(this.$('#case-list-config-button'));
-            setUpPopOver(this.$('#case-list-config-link'));
-
+                document.addEventListener('click', function (event) {
+                    if ($(event.target).closest('.popover').length > 0 &&
+                        !$(event.target).hasClass('js-action') &&
+                        !$(event.target).closest('.js-action').length) {
+                        event.stopPropagation();
+                    }
+                }, true);
+            }
         },
 
         initialize: function (options) {
@@ -814,7 +820,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const urlObject = formplayerUtils.currentUrlToObject();
             const caseListId = `${urlObject.appId}:${JSON.stringify(urlObject.selections)}:${user.username}`;
             console.log(caseListId);
-            self.headerModel = new HeaderModel({headers: self.headers, caseListId: caseListId});
+            self.columnConfigModel = new ColumnConfigModel({columnNames: self.headers, caseListId: caseListId});
             self.redoLast = options.redoLast;
             if (sessionStorage.selectedValues !== undefined) {
                 const parsedSelectedValues = JSON.parse(sessionStorage.selectedValues)[sessionStorage.queryKey];
@@ -1205,7 +1211,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 description: description === undefined ? "" : markdown.render(description.trim()),
                 selectText: this.selectText === undefined ? "" : this.selectText,
                 headers: this.headers,
-                headerModel: this.headerModel,
+                columnConfigModel: this.columnConfigModel,
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,
                 currentPage: this.options.currentPage,
@@ -1229,7 +1235,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                     return this.sortIndices.indexOf(index) > -1;
                 },
                 columnVisible: function (index) {
-                    return !(this.widthHints && this.widthHints[index] === 0) && this.headerModel.isVisible(index);
+                    return !(this.widthHints && this.widthHints[index] === 0) && this.columnConfigModel.isVisible(index);
                 },
             });
         },
