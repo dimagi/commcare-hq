@@ -29,7 +29,7 @@ hqDefine("reports/js/bootstrap3/standard_hq_report", [
 
         if (initialPageData.get('override_report_render_url')) {
             reportOptions.getReportRenderUrl = function (renderType) {
-                var params = util.urlSerialize($('#paramSelectorForm'), ['format']);
+                var params = util.urlSerialize($('#paramSelectorForm' + initialPageData.get('html_id_suffix')), ['format']);
                 return window.location.pathname + "?format=" + renderType + "&" + params;
             };
         }
