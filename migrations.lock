@@ -828,6 +828,7 @@ pillowtop
  0005_kafkacheckpoint_doc_modification_time
  0006_add_geopoint_to_case_search_index
  0007_copy_xforms_checkpoint
+ 0008_sync_es_with_couch_webusers
 preindex
  0001_initial
  0002_initial
