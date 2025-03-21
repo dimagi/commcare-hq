@@ -6,8 +6,9 @@
     class="btn"
   <% } %>
   style="color: white; position: absolute; right: 0px; top: 1.3em;"
+  title="Column Configuration"
 >
-  <i class="fa fa-gear" style="14px" aria-hidden="true"></i>
+  <i class="fa fa-gear" style="font-size: 14px" aria-hidden="true"></i>
 </button>
 
 <div
@@ -15,17 +16,14 @@
     class="d-none"
   <% } %>
   style="text-align: center;">
-  No columns shown. Open <a id="case-list-config-button" style="color: #5d70d2">configuration</a> to choose which are visible.
-</div>
-
-<div
-  class="modal fade"
-  id="case-list-config-modal"
-  tabindex="-1"
-  aria-labelledby="exampleModalLabel"
-  aria-hidden="true"
->
-  <div class="modal-dialog">
-    <div class="modal-content js-config-modal-content"></div>
-  </div>
+  No columns shown. Open
+  <a
+    id="case-list-config-link"
+    style="color: #5d70d2"
+    title="Column Configuration"
+  >
+    configuration
+    <i class="fa fa-gear" style="font-size: 14px" aria-hidden="true"></i>
+  </a>
+  to choose which are visible.
 </div>

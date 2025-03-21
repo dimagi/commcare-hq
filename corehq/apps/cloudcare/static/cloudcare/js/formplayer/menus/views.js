@@ -648,7 +648,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             searchMoreButton: '#search-more',
             scrollToBottomButton: '#scroll-to-bottom',
             mapShowHideButton: '#hide-map-button',
-            caseListConfigButton: '#case-list-config-button',
         };
     };
 
@@ -656,7 +655,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         return {
             'click @ui.actionButton': 'caseListAction',
             'click @ui.mapShowHideButton': 'showHideMap',
-            'click @ui.caseListConfigButton': 'openCaseListConfig',
             'click @ui.searchButton': 'caseListSearch',
             'click @ui.paginators': 'paginateAction',
             'click @ui.paginationGoButton': 'paginationGoAction',
@@ -715,15 +713,27 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             this.headerVisibility = this.model.get('headerVisible').slice();
         },
 
+        templateContext: function () {
+            return {
+                headers: this.model.get('headers'),
+                headerVisible: this.headerVisibility
+            };
+        },
+
         events: {
-            'click .js-save': 'onSave',
+            'click .js-update': 'onUpdate',
+            'click .js-reset': 'onReset',
             'change .header-checkbox': 'onCheckboxChange',
         },
 
-        onSave: function () {
+        onUpdate: function () {
             this.model.set('headerVisible', this.headerVisibility);
             this.trigger('save', this.model);
-            this.$el.closest('.modal').modal('hide');
+        },
+
+        onReset: function () {
+            this.headerVisibility.fill(true);
+            this.render();
         },
 
         onCheckboxChange: function (e) {
@@ -751,13 +761,45 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
 
         onRender: function () {
-            if (this.$el.find('.js-config-modal-content').length === 0) {
-                this.$el.html(this.template());
-            }
+            const self = this;
+            const setUpPopOver = function (button) {
+                if (button.length) {
+                    const popoverInstance = new bootstrap.Popover(button[0], {
+                        html: true,
+                        sanitize: false,
+                        content: function () {
+                            const caseListConfigView = new CaseListConfigView({
+                                model: self.headerModel,
+                            });
+                            const container = document.createElement('div');
+                            caseListConfigView.setElement(container);
+                            caseListConfigView.render();
 
-            this.configModalRegion = new Marionette.Region({
-                el: this.$('.js-config-modal-content'),
-            });
+                            // Set up listeners for the view
+                            self.listenTo(caseListConfigView, 'save', function () {
+                                popoverInstance.dispose();
+                                self.render();
+                            });
+
+                            return container;
+                        },
+                        placement: 'auto',
+                        trigger: 'click',
+                    });
+
+                    document.addEventListener('click', function (event) {
+                        // If click is inside popover but NOT on the save button, don't close
+                        if ($(event.target).closest('.popover').length > 0 &&
+                            !$(event.target).hasClass('js-action') &&
+                            !$(event.target).closest('.js-action').length) {
+                            event.stopPropagation();
+                        }
+                    }, true);
+                }
+            };
+            setUpPopOver(this.$('#case-list-config-button'));
+            setUpPopOver(this.$('#case-list-config-link'));
+
         },
 
         initialize: function (options) {
@@ -916,21 +958,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 $(e.target).attr('aria-expanded', 'true');
             }
 
-        },
-
-        openCaseListConfig: function () {
-            const self = this;
-            const caseListConfigView = new CaseListConfigView({
-                model: this.headerModel,
-            });
-            this.configModalRegion.show(caseListConfigView);
-            this.listenTo(caseListConfigView, 'save', function () {
-                self.render();
-            });
-
-            const modalEl = document.getElementById('case-list-config-modal');
-            const modal = new bootstrap.Modal(modalEl);
-            modal.show();
         },
 
         _allCaseIds: function () {

@@ -1,30 +1,27 @@
 {% load i18n %}
 
 <script type="text/template" id="case-list-config-body">
-  <div class="modal-content">
-      <div class="modal-header">
-          <h5 class="modal-title">{% trans "Show/hide columns" %}</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-          <form class="header-visibility-form">
-              <% _.each(headers, function(header, index) { %>
-                  <div class="checkbox">
-                      <label>
-                          <input
-                            type="checkbox"
-                              class="header-checkbox"
-                              value="<%= index %>"
-                              data-index="<%= index %>"
-                              <%= headerVisible[index] ? 'checked' : '' %> >
-                          <%= header %>
-                      </label>
-                  </div>
-              <% }); %>
-            </form>
-      </div>
-      <div class="modal-footer">
-          <button type="button" class="btn btn-secondary js-save" data-bs-dismiss="modal">Save</button>
-      </div>
+  <div class="popover-content">
+      <form class="header-visibility-form">
+        <% _.each(headers, function(header, index) { %>
+          <div class="form-check" style="margin-bottom: 0.5rem;">
+            <input
+              type="checkbox"
+              class="form-check-input header-checkbox"
+              id="header-checkbox-<%= index %>"
+              value="<%= index %>"
+              data-index="<%= index %>"
+              <%= headerVisible[index] ? 'checked' : '' %> >
+            <label class="form-check-label" for="header-checkbox-<%= index %>">
+              <%= header %>
+            </label>
+          </div>
+        <% }); %>
+      </form>
+    </div>
+     <div class="d-flex justify-content-between">
+       <button type="button" class="btn btn-secondary btn-sm js-reset js-action">{% trans "Reset" %}</button>
+        <button type="button" class="btn btn-primary btn-sm js-update js-action">{% trans "Update" %}</button>
+     </div>
   </div>
 </script>
