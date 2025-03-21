@@ -16,8 +16,70 @@
  ], function (
      $,
      initialPageData,
+@@ -25,10 +25,10 @@
+             if (chartSpecs !== null && chartSpecs.length > 0) {
+                 var isReportBuilderReport = initialPageData.get('created_by_builder');
+                 if (data.iTotalRecords > 25 && isReportBuilderReport) {
+-                    $("#chart-warning" + initialPageData.get('html_id_suffix')).removeClass("hide");
++                    $("#chart-warning" + initialPageData.get('html_id_suffix')).removeClass("d-none");
+                     charts.clear($("#chart-container" + initialPageData.get('html_id_suffix')));
+                 } else {
+-                    $("#chart-warning" + initialPageData.get('html_id_suffix')).addClass("hide");
++                    $("#chart-warning" + initialPageData.get('html_id_suffix')).addClass("d-none");
+                     charts.render(chartSpecs, data.aaData, $("#chart-container" + initialPageData.get('html_id_suffix')));
+                 }
+             }
+@@ -49,9 +49,9 @@
+                         $('#info-message' + initialPageData.get('html_id_suffix')).html(
+                             gettext('Showing the current page of data. Switch pages to see more data.'),
+                         );
+-                        $('#report-info' + initialPageData.get('html_id_suffix')).removeClass('hide');
++                        $('#report-info' + initialPageData.get('html_id_suffix')).removeClass('d-none');
+                     } else {
+-                        $('#report-info' + initialPageData.get('html_id_suffix')).addClass('hide');
++                        $('#report-info' + initialPageData.get('html_id_suffix')).addClass('d-none');
+                     }
+                 }
+             }
+@@ -59,22 +59,22 @@
+ 
+         var errorCallback = function (jqXHR, textStatus, errorThrown) {
+             $('#error-message' + initialPageData.get('html_id_suffix')).html(errorThrown);
+-            $('#report-error' + initialPageData.get('html_id_suffix')).removeClass('hide');
++            $('#report-error' + initialPageData.get('html_id_suffix')).removeClass('d-none');
+         };
+ 
+         var successCallback = function (data) {
+             if (data.error || data.error_message) {
+                 const message = data.error || data.error_message;
+                 $('#error-message' + initialPageData.get('html_id_suffix')).html(message);
+-                $('#report-error' + initialPageData.get('html_id_suffix')).removeClass('hide');
++                $('#report-error' + initialPageData.get('html_id_suffix')).removeClass('d-none');
+             } else {
+-                $('#report-error' + initialPageData.get('html_id_suffix')).addClass('hide');
++                $('#report-error' + initialPageData.get('html_id_suffix')).addClass('d-none');
+             }
+             if (data.warning) {
+                 $('#warning-message' + initialPageData.get('html_id_suffix')).html(data.warning);
+-                $('#report-warning' + initialPageData.get('html_id_suffix')).removeClass('hide');
++                $('#report-warning' + initialPageData.get('html_id_suffix')).removeClass('d-none');
+             } else {
+-                $('#report-warning' + initialPageData.get('html_id_suffix')).addClass('hide');
++                $('#report-warning' + initialPageData.get('html_id_suffix')).addClass('d-none');
+             }
+         };
+ 
+@@ -100,7 +100,7 @@
+         });
+         $('#paramSelectorForm' + initialPageData.get('html_id_suffix')).submit(function (event) {
+             $('#reportHint' + initialPageData.get('html_id_suffix')).remove();
+-            $('#reportContent' + initialPageData.get('html_id_suffix')).removeClass('hide');
++            $('#reportContent' + initialPageData.get('html_id_suffix')).removeClass('d-none');
+             event.preventDefault();
+             reportTables.render();
+         });
 @@ -109,7 +109,7 @@
-         $("#apply-filters").prop('disabled', false);
+         $("#apply-filters" + initialPageData.get('html_id_suffix')).prop('disabled', false);
  
          $(function () {
 -            $('.header-popover').popover({
