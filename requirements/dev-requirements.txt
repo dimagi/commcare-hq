@@ -347,7 +347,7 @@ jwcrypto==1.5.6
     # via django-oauth-toolkit
 kafka-python==1.4.7
     # via -r base-requirements.in
-kombu==5.2.4
+kombu==5.4.2
     # via celery
 looseversion==1.0.3
     # via -r base-requirements.in
@@ -706,7 +706,7 @@ turn-python==0.0.1
     # via -r base-requirements.in
 twilio==9.2.3
     # via -r base-requirements.in
-typing-extensions==4.8.0
+typing-extensions==4.12.2
     # via
     #   asgiref
     #   bytecode
@@ -714,9 +714,12 @@ typing-extensions==4.8.0
     #   django-countries
     #   faker
     #   jwcrypto
+    #   kombu
     #   oic
     #   qrcode
     #   stripe
+tzdata==2025.1
+    # via kombu
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
@@ -734,7 +737,7 @@ user-agents==2.2.0
     # via django-user-agents
 uwsgi==2.0.22
     # via -r test-requirements.in
-vine==5.0.0
+vine==5.1.0
     # via
     #   amqp
     #   celery
