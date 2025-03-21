@@ -3,7 +3,7 @@ from functools import cached_property
 from django.conf import settings
 from django.core.paginator import Paginator
 from django.http import HttpResponseBadRequest, JsonResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy
@@ -220,6 +220,25 @@ class DashboardWidgetView(HqHtmxActionMixin, BaseDomainView):
     @property
     def model_class(self):
         return WidgetType.get_model_class(self.widget_type)
+
+    @hq_hx_action('get')
+    def edit_widget(self, request, *args, **kwargs):
+        self._validate_request_widget_type()
+
+        widget = get_object_or_404(self.model_class, pk=self.widget_id)
+        context = {
+            'widget_form': self.form_class(self.domain, instance=widget),
+            'widget_type': self.widget_type,
+            'widget': widget,
+        }
+        return self.render_htmx_partial_response(request, self.form_template_partial_name, context)
+
+    @cached_property
+    def widget_id(self):
+        if self.request.method == "GET":
+            return self.request.GET.get('widget_id')
+        else:
+            return self.request.POST.get('widget_id')
 
 
 @require_GET
