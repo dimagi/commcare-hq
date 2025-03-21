@@ -96,10 +96,11 @@
         <div class="col-sm-10">
           <div class="input-group">
             <span class="input-group-addon">$</span>
-            <input type="text"
+            <input type="number"
                    class="form-control"
                    data-bind="textInput: addAmount"
-                   name="unit_cost"/>
+                   name="unit_cost"
+                   step="0.01"/>
           </div>
           <div class="alert alert-danger"
                data-bind="visible: !addAmountValid()">
@@ -119,7 +120,8 @@
           <input type="number"
                  class="form-control"
                  data-bind="textInput: quantity"
-                 name="quantity"/>
+                 name="quantity"
+                 step="1"/>
         </div>
       </div>
     </div>

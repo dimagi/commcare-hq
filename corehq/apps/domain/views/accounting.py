@@ -697,12 +697,12 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
             emails = self.validate_emails(request)
             amount = self.validate_amount(request)
             date_start, date_end = self.validate_daterange(request)
+            unit_cost = self.validate_unit_cost(request)
+            quantity = self.validate_quantity(request)
         except ValidationError as e:
             return json_response({'error': {'message': e.message}})
 
         credit_label = request.POST.get('credit_label', 'General Credits')
-        unit_cost = Decimal(request.POST.get('unit_cost', 0))
-        quantity = int(request.POST.get('quantity', 0))
 
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
         try:
@@ -755,6 +755,28 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
         except (TypeError, ValueError):
             date = datetime.date.today()
         return date
+
+    @staticmethod
+    def validate_unit_cost(request):
+        try:
+            unit_cost = Decimal(request.POST.get('unit_cost', 0))
+            if abs(unit_cost) != unit_cost:
+                raise ValueError
+        except ValueError:
+            message = _('Unit cost must be a decimal number greater than 0.')
+            raise ValidationError(message=message)
+        return unit_cost
+
+    @staticmethod
+    def validate_quantity(request):
+        try:
+            quantity = int(request.POST.get('quantity', 0))
+            if abs(quantity) != quantity:
+                raise ValueError
+        except ValueError:
+            message = _('Quantity must be a whole number greater than 0.')
+            raise ValidationError(message=message)
+        return quantity
 
 
 class InvoiceStripePaymentView(BaseStripePaymentView):
