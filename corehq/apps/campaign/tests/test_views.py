@@ -232,7 +232,7 @@ class TestDashboardWidgetView(BaseTestCampaignView):
 
     @flag_enabled('CAMPAIGN_DASHBOARD')
     @patch('corehq.apps.campaign.forms.DashboardMapForm._get_case_types')
-    def test_save_map_widget(self, mocked_case_types):
+    def test_save_new_map_widget(self, mocked_case_types):
         mocked_case_types.return_value = [('case-02', 'case-02')]
 
         self.client.login(username=self.username, password=self.password)
@@ -254,7 +254,7 @@ class TestDashboardWidgetView(BaseTestCampaignView):
 
     @flag_enabled('CAMPAIGN_DASHBOARD')
     @patch('corehq.apps.campaign.forms.DashboardReportForm._get_report_configurations')
-    def test_save_report_widget(self, mocked_get_report_configurations):
+    def test_save_new_report_widget(self, mocked_get_report_configurations):
         report_id = uuid.uuid4().hex
         mocked_get_report_configurations.return_value = [(report_id, 'Test Report')]
 
@@ -275,7 +275,7 @@ class TestDashboardWidgetView(BaseTestCampaignView):
         assert DashboardReport.objects.count() == 1
 
     @flag_enabled('CAMPAIGN_DASHBOARD')
-    def test_save_widget_form_error(self):
+    def test_save_new_widget_form_error(self):
         self.client.login(username=self.username, password=self.password)
         response = self.client.post(
             self.endpoint,
