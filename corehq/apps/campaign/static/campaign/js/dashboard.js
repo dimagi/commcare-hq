@@ -117,16 +117,16 @@ var MapWidget = function (mapWidgetConfig) {
     }
 };
 
-var onHideWidgetModal = function(event){
+var onHideWidgetModal = function () {
     $('#widget-modal-body').html(`<i class="fa-solid fa-spinner fa-spin"></i> ${loadingText}`);
     modalTitleElement.text('');
 };
 
-var onShowWidgetModal = function(event){
-      const triggerSource = event.relatedTarget;
-      if (triggerSource.id === 'edit-widget-btn') {
+var onShowWidgetModal = function (event) {
+    const triggerSource = event.relatedTarget;
+    if (triggerSource.id === 'edit-widget-btn') {
         modalTitleElement.text(editWidgetText);
-      } else {
+    } else {
         modalTitleElement.text(addWidgetText);
-      }
+    }
 };
