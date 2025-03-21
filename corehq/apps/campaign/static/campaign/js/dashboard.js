@@ -8,6 +8,12 @@ import { Map, MapItem } from "geospatial/js/models";
 
 let mobileWorkerMapsInitialized = false;
 
+const widgetModalSelector = '#widget-modal';
+const modalTitleSelector = '.modal-title';
+const addWidgetText = gettext('Add Widget');
+const editWidgetText = gettext('Edit Widget');
+let modalTitleElement = null;
+
 $(function () {
     // Only init case map widgets since this is the default tab
     const mapWidgetConfigs = initialPageData.get('map_widgets');
@@ -17,10 +23,15 @@ $(function () {
     }
     $('a[data-bs-toggle="tab"]').on('shown.bs.tab', tabSwitch);
 
-    $('#widget-modal').on('hidden.bs.modal', function () {
+    modalTitleElement = $(widgetModalSelector).find(modalTitleSelector);
+    $(widgetModalSelector).on('hidden.bs.modal', function () {
         const loadingText = gettext("Loading...");
         $('#widget-modal-body').html(`<i class="fa-solid fa-spinner fa-spin"></i> ${loadingText}`);
+        modalTitleElement.text('');
     });
+
+    $(widgetModalSelector).on('show.bs.modal', onShowWidgetModal);
+
 });
 
 function tabSwitch(e) {
@@ -108,4 +119,13 @@ var MapWidget = function (mapWidgetConfig) {
         self.mapInstance.addDataToSource(features);
         self.mapInstance.fitMapBounds(caseMapItems);
     }
+};
+
+var onShowWidgetModal = function(event){
+      const triggerSource = event.relatedTarget;
+      if (triggerSource.id === 'edit-widget-btn') {
+        modalTitleElement.text(editWidgetText);
+      } else {
+        modalTitleElement.text(addWidgetText);
+      }
 };
