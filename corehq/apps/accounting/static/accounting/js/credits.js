@@ -70,7 +70,7 @@ hqDefine('accounting/js/credits', [
         var self = {};
         self.date_start = ko.observable();
         self.date_end = ko.observable();
-        self.name = ko.observable("Unit Cost");
+        self.label = ko.observable("General Credits");
         self.creditType = ko.observable("invoice_general_credit");
         self.quantity = ko.observable(1);
         self.addAmount = ko.observable(0);
