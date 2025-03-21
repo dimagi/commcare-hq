@@ -378,6 +378,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             "isExportAll": self.exportable_all,
             "isEmailable": False,       # see emailable attr above
             "emailDefaultSubject": self.title,
+            "url": self.url,  # Used with {% initial_page_data 'override_report_render_url' True %}
         }
 
     def pop_report_builder_context_data(self):
