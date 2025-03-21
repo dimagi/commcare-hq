@@ -2,18 +2,18 @@
 {% load i18n %}
 <div
   class="card card-default{% if report.is_async%} d-none{% endif %}"
-  id="reportFiltersAccordion"
+  id="reportFiltersAccordion{{ report.html_id_suffix }}"
 >
   {% if report.show_filters %}
-    <div id="reportFilters" class="card-body collapse">
+    <div id="reportFilters{{ report.html_id_suffix }}" class="card-body collapse">
       <div class="accordion-inner">
         {% block report_description %}{% endblock %}
         <form
           method="get"
-          id="paramSelectorForm"
+          id="paramSelectorForm{{ report.html_id_suffix }}"
           class="form"
         >
-          <div id="hq-report-filters">
+          <div id="hq-report-filters{{ report.html_id_suffix }}">
             {% block report_filters %}
               {% if not report.is_async %}
                 {% include "reports/async/bootstrap5/filters.html" %}
@@ -24,7 +24,7 @@
             {% block report_filter_actions %}
               <div class="{{ report_filter_form_action_css_class }}">
                 <button
-                  class="btn disabled" id="apply-btn"
+                  class="btn disabled" id="apply-btn{{ report.html_id_suffix }}"
                   disabled="disabled" type="submit"
                   data-loading-text="{% trans "Generating Report..." %}"
                   data-standard-text="{% trans "Apply" %}"
@@ -37,7 +37,7 @@
         </form>
       </div>
       {% if report.slug == 'mpr_report' %}
-        <span style="font-style: italic" id="mpr-banner-info">The report is currently available at Sector and Anganwadi Center level. The expansion to levels above is currently under development</span>  {# todo B5: inline style #}
+        <span style="font-style: italic" id="mpr-banner-info{{ report.html_id_suffix }}">The report is currently available at Sector and Anganwadi Center level. The expansion to levels above is currently under development</span>  {# todo B5: inline style #}
       {% endif %}
     </div>
   {% endif %}
@@ -49,7 +49,7 @@
         {% if report.show_filters %}
           <button
             class="btn btn-outline-primary"
-            id="toggle-report-filters"
+            id="toggle-report-filters{{ report.html_id_suffix }}"
             type="button"
             data-bs-toggle="collapse"
             data-bs-target="#reportFilters"
@@ -64,7 +64,7 @@
           {% if report.is_exportable and request.couch_user.can_download_reports %}
             <button
               class="btn btn-outline-primary{% if report.needs_filters %} d-none{% endif %}"
-              id="export-report-excel"
+              id="export-report-excel{{ report.html_id_suffix }}"
               type="button"
             >
               <i class="fa fa-share"></i>
@@ -76,7 +76,7 @@
         {% if report.is_emailable and request.couch_user.can_download_reports %}
           <button
             class="btn btn-outline-primary{% if report.needs_filters %} d-none{% endif %}"
-            id="email-report"
+            id="email-report{{ report.html_id_suffix }}"
             type="button"
             data-bs-target="#email-report-modal"
             data-bs-toggle="modal"
@@ -89,7 +89,7 @@
         {% if report.is_printable %}
           <button
             class="btn btn-outline-primary{% if report.needs_filters %} d-none{% endif %}"
-            id="print-report"
+            id="print-report{{ report.html_id_suffix }}"
             type="button"
           >
             <i class="fa fa-print"></i>
@@ -98,7 +98,7 @@
         {% endif %}
 
       </div>
-      <div id="extra-filter-info" class="col-sm-4"></div>
+      <div id="extra-filter-info{{ report.html_id_suffix }}" class="col-sm-4"></div>
     </div>
   </div>
 </div>
