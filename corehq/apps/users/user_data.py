@@ -208,6 +208,7 @@ class SQLUserData(models.Model):
     user_id = models.CharField(max_length=36)
     django_user = models.ForeignKey(User, on_delete=models.CASCADE)
     modified_on = models.DateTimeField(auto_now=True)
+    deleted_on = models.DateTimeField(null=True)
 
     profile = models.ForeignKey("custom_data_fields.CustomDataFieldsProfile",
                                 on_delete=models.SET_NULL, null=True)
