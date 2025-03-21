@@ -12,6 +12,7 @@ const widgetModalSelector = '#widget-modal';
 const modalTitleSelector = '.modal-title';
 const addWidgetText = gettext('Add Widget');
 const editWidgetText = gettext('Edit Widget');
+const loadingText = gettext("Loading...");
 let modalTitleElement = null;
 
 $(function () {
@@ -24,12 +25,7 @@ $(function () {
     $('a[data-bs-toggle="tab"]').on('shown.bs.tab', tabSwitch);
 
     modalTitleElement = $(widgetModalSelector).find(modalTitleSelector);
-    $(widgetModalSelector).on('hidden.bs.modal', function () {
-        const loadingText = gettext("Loading...");
-        $('#widget-modal-body').html(`<i class="fa-solid fa-spinner fa-spin"></i> ${loadingText}`);
-        modalTitleElement.text('');
-    });
-
+    $(widgetModalSelector).on('hidden.bs.modal', onHideWidgetModal);
     $(widgetModalSelector).on('show.bs.modal', onShowWidgetModal);
 
 });
@@ -119,6 +115,11 @@ var MapWidget = function (mapWidgetConfig) {
         self.mapInstance.addDataToSource(features);
         self.mapInstance.fitMapBounds(caseMapItems);
     }
+};
+
+var onHideWidgetModal = function(event){
+    $('#widget-modal-body').html(`<i class="fa-solid fa-spinner fa-spin"></i> ${loadingText}`);
+    modalTitleElement.text('');
 };
 
 var onShowWidgetModal = function(event){
