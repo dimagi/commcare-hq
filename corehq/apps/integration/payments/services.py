@@ -6,6 +6,8 @@ from django.utils.translation import gettext as _
 
 from dimagi.utils.chunked import chunked
 
+from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
+from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.apps.integration.payments.const import (
@@ -167,3 +169,15 @@ def _payment_is_verified(case_data: dict):
 
 def _payment_already_submitted(case_data: dict):
     return case_data.get(PaymentProperties.PAYMENT_SUBMITTED) == 'True'
+
+
+def get_payment_batch_numbers_for_domain(domain):
+    case_ids = (
+        CaseSearchES()
+        .domain(domain)
+        .case_type(MOMO_PAYMENT_CASE_TYPE)
+        .values_list("_id", flat=True)
+    )
+    cases = CommCareCase.objects.get_cases(case_ids=case_ids, domain=domain)
+    batch_numbers = set([case.case_json.get(PaymentProperties.BATCH_NUMBER) for case in cases])
+    return sorted([batch_number for batch_number in batch_numbers if batch_number])

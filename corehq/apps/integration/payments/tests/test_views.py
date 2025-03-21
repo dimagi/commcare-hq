@@ -7,6 +7,7 @@ from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.integration.payments.const import PaymentProperties
 from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.apps.integration.payments.views import (
     PaymentsVerificationReportView,
@@ -51,10 +52,15 @@ class BaseTestPaymentsView(TestCase):
     def login_endpoint(self):
         return reverse('domain_login', kwargs={'domain': self.domain})
 
-    def _make_request(self, log_in=True):
+    def _make_request(self, log_in=True, querystring=None):
         if log_in:
             self.client.login(username=self.username, password=self.password)
-        return self.client.get(self.endpoint)
+
+        url = self.endpoint
+        if querystring:
+            url += f'?{querystring}'
+
+        return self.client.get(url)
 
 
 class TestPaymentsVerificationReportView(BaseTestPaymentsView):
@@ -82,10 +88,10 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
     def setUpClass(cls):
         super().setUpClass()
 
-        factory = CaseFactory(cls.domain)
+        cls.factory = CaseFactory(cls.domain)
         cls.case_list = [
             _create_case(
-                factory,
+                cls.factory,
                 name='foo',
                 data={
                     'batch_number': 'B001',
@@ -97,7 +103,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
                     'payer_message': 'Thanks',
                 }),
             _create_case(
-                factory,
+                cls.factory,
                 name='bar',
                 data={
                     'batch_number': 'B001',
@@ -160,6 +166,102 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
         assert response.status_code == 200
         assert response.context['success_count'] == 2
         assert response.context['failure_count'] == 0
+
+
+@es_test(requires=[case_search_adapter], setup_class=True)
+class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
+    urlname = PaymentsVerificationTableView.urlname
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.factory = CaseFactory(cls.domain)
+        cls.case_list = [
+            _create_case(
+                cls.factory,
+                name='foo',
+                data={
+                    PaymentProperties.BATCH_NUMBER: 'B001',
+                    PaymentProperties.PAYMENT_VERIFIED: True,
+                    PaymentProperties.PAYMENT_SUBMITTED: True,
+                }),
+            _create_case(
+                cls.factory,
+                name='bar',
+                data={
+                    PaymentProperties.BATCH_NUMBER: 'B001',
+                    PaymentProperties.PAYMENT_VERIFIED: True,
+                    PaymentProperties.PAYMENT_SUBMITTED: False,
+                }),
+            _create_case(
+                cls.factory,
+                name='baz',
+                data={
+                    PaymentProperties.BATCH_NUMBER: 'B001',
+                }),
+        ]
+        case_search_adapter.bulk_index(cls.case_list, refresh=True)
+
+    @classmethod
+    def tearDownClass(cls):
+        for case in cls.case_list:
+            case.delete()
+        super().tearDownClass()
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_verification_status_filter_verified_has_two(self):
+        response = self._make_request(querystring='payment_verification_status=verified')
+        queryset = response.context['table'].data
+        assert len(queryset) == 2
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_verification_status_filter_unverified_has_one(self):
+        response = self._make_request(querystring='payment_verification_status=unverified')
+        queryset = response.context['table'].data
+        assert len(queryset) == 1
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_verification_status_filter_unfiltered(self):
+        response = self._make_request(querystring='payment_verification_status=')
+        queryset = response.context['table'].data
+        assert len(queryset) == 3
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_batch_number_filter_has_none(self):
+        response = self._make_request(querystring='batch_number=9999')
+        queryset = response.context['table'].data
+        assert len(queryset) == 0
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_batch_number_filter_has_three(self):
+        response = self._make_request(querystring='batch_number=B001')
+        queryset = response.context['table'].data
+        assert len(queryset) == 3
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_batch_number_filter_no_value_has_three(self):
+        response = self._make_request(querystring='batch_number=')
+        queryset = response.context['table'].data
+        assert len(queryset) == 3
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_payment_status_filter_submitted_payments_has_one(self):
+        response = self._make_request(querystring='payment_status=submitted')
+        queryset = response.context['table'].data
+        assert len(queryset) == 1
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_payment_status_filter_not_submitted_payments_has_one(self):
+        response = self._make_request(querystring='payment_status=not_submitted')
+        queryset = response.context['table'].data
+        assert len(queryset) == 1
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_payment_status_filter_failed_payments_has_one(self):
+        response = self._make_request(querystring='payment_status=submission_failed')
+        queryset = response.context['table'].data
+        assert len(queryset) == 1
 
 
 class TestPaymentsConfigurationView(BaseTestPaymentsView):
