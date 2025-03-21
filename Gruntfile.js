@@ -32,6 +32,8 @@ module.exports = function (grunt) {
         'notifications/bootstrap5',
         'reports_core/choiceListUtils',
         'locations',
+        //'reports/bootstrap3',
+        'reports/bootstrap5',
         'userreports/bootstrap3',
         'userreports/bootstrap5',
         'cloudcare',
