@@ -1,3 +1,5 @@
+from functools import cached_property
+
 from django.conf import settings
 from django.core.paginator import Paginator
 from django.forms.models import model_to_dict
@@ -13,6 +15,8 @@ from dimagi.utils.web import json_request
 
 from corehq import toggles
 from corehq.apps.campaign.models import Dashboard
+from corehq.apps.campaign.models import WidgetType
+
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es.case_search import CaseSearchES, case_property_missing
@@ -23,6 +27,7 @@ from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.views import BaseProjectReportSectionView
 from corehq.form_processor.models import CommCareCase
+from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action, HtmxResponseException
 from corehq.util.timezones.utils import get_timezone
 
 
@@ -69,6 +74,8 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
             'map_widgets': self._dashboard_map_configs,
+            'widget_types': WidgetType.choices,
+
         })
         context.update(self.dashboard_map_case_filters_context())
         return context
@@ -156,3 +163,68 @@ class PaginatedCasesWithGPSView(BaseDomainView, CaseListMixin):
             CommCareCase.objects.get_cases(case_ids_page, self.domain, ordered=True),
             paginator.count,
         )
+
+
+@method_decorator(login_and_domain_required, name='dispatch')
+@method_decorator(toggles.CAMPAIGN_DASHBOARD.required_decorator(), name='dispatch')
+@method_decorator(use_bootstrap5, name='dispatch')
+class DashboardWidgetView(HqHtmxActionMixin, BaseDomainView):
+    urlname = "dashboard_widget"
+    form_template_partial_name = 'campaign/partials/widget_form.html'
+
+    @property
+    def section_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    @hq_hx_action('get')
+    def new_widget(self, request, *args, **kwargs):
+        self._validate_request_widget_type()
+
+        context = {
+            'widget_form': self.form_class(domain=self.domain),
+            'widget_type': self.widget_type,
+        }
+        return self.render_htmx_partial_response(request, self.form_template_partial_name, context)
+
+    def _validate_request_widget_type(self):
+        if not any(choice[0] == self.widget_type for choice in WidgetType.choices):
+            raise HtmxResponseException(gettext_lazy("Requested widget type is not supported"))
+
+    @cached_property
+    def widget_type(self):
+        if self.request.method == "GET":
+            return self.request.GET.get('widget_type')
+        else:
+            return self.request.POST.get('widget_type')
+
+    @cached_property
+    def form_class(self):
+        return WidgetType.get_form_class(self.widget_type)
+
+    @property
+    def dashboard(self):
+        dashboard, _ = Dashboard.objects.get_or_create(domain=self.domain)
+        return dashboard
+
+    @hq_hx_action('post')
+    def save_widget(self, request, *args, **kwargs):
+        self._validate_request_widget_type()
+
+        widget = self.model_class(dashboard=self.dashboard)
+        form = self.form_class(self.domain, request.POST, instance=widget)
+        show_success = False
+        if form.is_valid():
+            form.save(commit=True)
+            show_success = True
+            form = self.form_class(self.domain)
+
+        context = {
+            'widget_form': form,
+            'widget_type': self.widget_type,
+            'show_success': show_success,
+        }
+        return self.render_htmx_partial_response(request, self.form_template_partial_name, context)
+
+    @property
+    def model_class(self):
+        return WidgetType.get_model_class(self.widget_type)
