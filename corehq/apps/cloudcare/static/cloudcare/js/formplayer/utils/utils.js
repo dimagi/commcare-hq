@@ -465,54 +465,16 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
         if (!useAggressiveSyncTiming) {
             return;
         }
-
         const FIVE_MINUTES_IN_MILLISECONDS = 1000 * 60 * 5;
-        if (restartInterval) {
-            stopSyncInterval();
-            startSyncInterval(FIVE_MINUTES_IN_MILLISECONDS);
-        } else {
-            startSyncInterval(FIVE_MINUTES_IN_MILLISECONDS);
-        }
+        import("cloudcare/js/formplayer/app").then(function (FormplayerFrontend) {
+            if (restartInterval) {
+                FormplayerFrontend.trigger("stopSyncInterval");
+                FormplayerFrontend.trigger("startSyncInterval", FIVE_MINUTES_IN_MILLISECONDS);
+            } else {
+                FormplayerFrontend.trigger("startSyncInterval", FIVE_MINUTES_IN_MILLISECONDS);
+            }
+        });
     };
-
-    function startSyncInterval(delayInMilliseconds) {
-        function shouldSync() {
-            const currentTime = Date.now(),
-                lastUserActivityTime =  sessionStorage.getItem("lastUserActivityTime") || 0,
-                elapsedTimeSinceLastActivity = currentTime - lastUserActivityTime,
-                isInApp = Utils.currentUrlToObject().appId !== undefined;
-            if (elapsedTimeSinceLastActivity <= delayInMilliseconds && isInApp) {
-                return true;
-            }
-        }
-
-        import("cloudcare/js/formplayer/app").then(function (FormplayerFrontend) {
-            if (!FormplayerFrontend.syncInterval) {
-                FormplayerFrontend.syncInterval = setInterval(function () {
-                    const urlObject = Utils.currentUrlToObject(),
-                        currentApp = AppsAPI.getAppEntity(urlObject.appId);
-                    let customProperties = {};
-                    if (currentApp && currentApp.attributes && currentApp.attributes.profile) {
-                        customProperties = currentApp.attributes.profile.custom_properties || {};
-                    }
-                    const useAggressiveSyncTiming = (customProperties[constants.POST_FORM_SYNC] === "yes");
-                    if (!useAggressiveSyncTiming) {
-                        stopSyncInterval();
-                    }
-                    if (shouldSync() && FormplayerFrontend.permitIntervalSync) {
-                        FormplayerFrontend.trigger("interval_sync-db", urlObject.appId);
-                    }
-                }, delayInMilliseconds);
-            }
-        });
-    }
-
-    function stopSyncInterval() {
-        import("cloudcare/js/formplayer/app").then(function (FormplayerFrontend) {
-            clearInterval(FormplayerFrontend.syncInterval);
-            FormplayerFrontend.syncInterval = null;
-        });
-    }
 
     return Utils;
 });
