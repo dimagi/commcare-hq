@@ -1,5 +1,7 @@
+from kafka import TopicPartition
+
 from corehq.apps.app_manager.util import app_doc_types
-from corehq.apps.change_feed.connection import get_simple_kafka_client
+from corehq.apps.change_feed.connection import get_kafka_consumer
 from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
 from corehq.form_processor.models import XFormInstance
 
@@ -91,31 +93,14 @@ def _get_topic_offsets(topics, latest):
     :param latest: True to fetch latest offsets, False to fetch earliest available
     :return: dict: { (topic, partition): offset, ... }
     """
-    from kafka.structs import OffsetRequestPayload  # not available in kafka-python>=2
-
-    # https://cwiki.apache.org/confluence/display/KAFKA/A+Guide+To+The+Kafka+Protocol#AGuideToTheKafkaProtocol-OffsetRequest
-    # https://cfchou.github.io/blog/2015/04/23/a-closer-look-at-kafka-offsetrequest/
     assert set(topics) <= set(ALL)
-    with get_simple_kafka_client() as client:
-        partition_meta = client.topic_partitions
-
-        # only return the offset of the latest message in the partition
-        num_offsets = 1
-        time_value = -1 if latest else -2
-
-        offsets = {}
-        offset_requests = []
-        for topic in topics:
-            partitions = list(partition_meta.get(topic, {}))
-            for partition in partitions:
-                offsets[(topic, partition)] = None
-                offset_requests.append(OffsetRequestPayload(topic, partition, time_value, num_offsets))
-
-        responses = client.send_offset_request(offset_requests)
-        for r in responses:
-            offsets[(r.topic, r.partition)] = r.offsets[0]
-
-        return offsets
+    with get_kafka_consumer() as consumer:
+        get_offsets = consumer.end_offsets if latest else consumer.beginning_offsets
+        return get_offsets([
+            TopicPartition(topic, partition)
+            for topic in topics
+            for partition in consumer.partitions_for_topic(topic)
+        ])
 
 
 def get_all_kafka_partitons_for_topic(topic):
