@@ -49,6 +49,7 @@ from corehq.apps.app_manager.decorators import (
     require_deploy_apps,
 )
 from corehq.apps.app_manager.exceptions import (
+    AppInDifferentDomainException,
     AppMisconfigurationError,
     FormNotFoundException,
     ModuleNotFoundException,
@@ -970,7 +971,10 @@ def get_form_datums(request, domain, app_id):
 
 def _get_form_datums(domain, app_id, form_id):
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
-    app = get_app(domain, app_id)
+    try:
+        app = get_app(domain, app_id)
+    except AppInDifferentDomainException as e:
+        raise Http404(str(e))
 
     try:
         module_id, form_id = form_id.split('.')

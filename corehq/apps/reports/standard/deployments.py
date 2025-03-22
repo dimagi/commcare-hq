@@ -12,6 +12,7 @@ from django.utils.translation import gettext_lazy
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
+from corehq.apps.app_manager.exceptions import AppInDifferentDomainException
 from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.dates import safe_strftime
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -377,7 +378,13 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             if last_build:
                 build_version = last_build.get('build_version') or build_version
                 if last_build.get('app_id'):
-                    app_name = self.get_app_name(last_build['app_id'])
+                    try:
+                        # For web users, who are hopping into multiple apps, in different domains,
+                        # we should not fail the whole report if one of the app names is not found
+                        # We should skip the entry for that user as it did not belong to the requested domain
+                        app_name = self.get_app_name(last_build['app_id'])
+                    except AppInDifferentDomainException:
+                        continue
                 if self.show_build_profile:
                     last_build_profile_id = last_build.get('build_profile_id')
                     if last_build_profile_id:
