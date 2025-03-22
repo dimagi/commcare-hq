@@ -156,8 +156,8 @@ def get_commcare_version_from_appversion_text(appversion_text):
     ]
     version = _first_group_match(appversion_text, patterns)
 
-    # Check if the version is in the format of major.minor and append .0 if needed
-    if version and len(version.split('.')) == 2:
+    # Check if the version is in the format of major.minor or major and append .0 if needed
+    while version and version.count('.') < 2:
         version += '.0'
 
     return version

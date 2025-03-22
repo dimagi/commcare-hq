@@ -21,3 +21,7 @@ class TestGetCommcareVersionFromAppversionText(unittest.TestCase):
     def test_empty_string(self):
         appversion_text = ''
         self.assertIsNone(get_commcare_version_from_appversion_text(appversion_text))
+
+    def test_only_major_version(self):
+        appversion_text = 'CommCare Android, version "3"(12345).'
+        self.assertEqual(get_commcare_version_from_appversion_text(appversion_text), '3.0.0')
