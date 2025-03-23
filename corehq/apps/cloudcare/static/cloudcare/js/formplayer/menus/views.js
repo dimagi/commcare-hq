@@ -774,20 +774,20 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const self = this;
             const configButton = this.$('#case-list-config-button');
             if (configButton.length) {
-                const popoverInstance = new bootstrap.Popover(configButton[0], {
+                self.caseListConfigViewPopover = new bootstrap.Popover(configButton[0], {
                     html: true,
                     sanitize: false,
                     content: function () {
-                        const caseListConfigView = new CaseListConfigView({
+                        self.caseListConfigView = new CaseListConfigView({
                             model: self.columnConfigModel,
                         });
                         const container = document.createElement('div');
-                        caseListConfigView.setElement(container);
-                        caseListConfigView.render();
+                        self.caseListConfigView.setElement(container);
+                        self.caseListConfigView.render();
 
                         // Set up listeners for the view
-                        self.listenTo(caseListConfigView, 'save', function () {
-                            popoverInstance.dispose();
+                        self.listenTo(self.caseListConfigView, 'save', function () {
+                            self.caseListConfigViewPopover.dispose();
                             self.render();
                         });
 
@@ -819,7 +819,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const user = UsersModels.getCurrentUser();
             const urlObject = formplayerUtils.currentUrlToObject();
             const caseListId = `${urlObject.appId}:${JSON.stringify(urlObject.selections)}:${user.username}`;
-            console.log(caseListId);
             self.columnConfigModel = new ColumnConfigModel({columnNames: self.headers, caseListId: caseListId});
             self.redoLast = options.redoLast;
             if (sessionStorage.selectedValues !== undefined) {
@@ -1191,6 +1190,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const self = this;
             self.smallScreenListener.stopListening();
             self.scrollContainer.off('scroll', self.boundHandleScroll);
+        },
+
+        onBeforeDestroy: function () {
+            if (this.caseListConfigView) {
+                this.caseListConfigView.destroy();
+            }
+            if (this.caseListConfigViewPopover) {
+                this.caseListConfigViewPopover.dispose();
+            }
         },
 
         templateContext: function () {
