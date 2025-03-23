@@ -3,6 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from jsonfield.fields import JSONField
 
 from corehq.apps.userreports.models import ReportConfiguration
+from corehq.util.view_utils import absolute_reverse
 
 
 class Dashboard(models.Model):
@@ -74,6 +75,18 @@ class DashboardReport(DashboardWidgetBase):
     @property
     def report_configuration(self):
         return ReportConfiguration.get(self.report_configuration_id)
+
+    @property
+    def url(self):
+        """
+        Returns the URL of the view for the user-configurable report.
+
+        e.g. http://example.org/a/test-domain/reports/configurable/abc123/
+        """
+        return absolute_reverse(
+            'configurable',
+            args=[self.dashboard.domain, self.report_configuration_id],
+        )
 
 
 class DashboardGauge(DashboardWidgetBase):
