@@ -1,0 +1,57 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+      <div id="reportHint{{ report.html_id_suffix }}" class="alert alert-info">
+        <h4><i class="fa fa-info-circle"></i> {% blocktrans %}Why can't I see any data?{% endblocktrans %}</h4>
+        <p>{% blocktrans %}Please choose your filters and click <strong>Apply</strong> to see report data.{% endblocktrans %}</p>
+      </div>
+      <div id="reportContent{{ report.html_id_suffix }}" class="hide">
+        {% block reportcharts %}
+          <section id="chart-container{{ report.html_id_suffix }}" style="display: none;">
+          </section>
+          <section id="chart-warning{{ report.html_id_suffix }}" class="alert alert-warning hide">
+            {% blocktrans %}
+              Charts cannot be displayed with more than 25 categories. Please filter the data or change your report to limit the number of rows.
+            {% endblocktrans %}
+          </section>
+          <section id="map-container{{ report.html_id_suffix }}" class="map-container" style="display: none;" >
+          </section>
+          <div id="zoomtofit{{ report.html_id_suffix }}" class="leaflet-control-layers" style="display: none;">
+            <div id="zoomtofit-target{{ report.html_id_suffix }}" class="zoomtofit leaflet-control-layers-toggle" title="{% trans "Fit all data into view" %}"></div>
+          </div>
+
+          <div id="report-info{{ report.html_id_suffix }}" class="alert alert-info hide">
+            {% blocktrans %}
+              Note:
+            {% endblocktrans %}
+            <span id="info-message{{ report.html_id_suffix }}"></span>
+          </div>
+        {% endblock %}
+        {% block reporttable %}
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h4>{{ report.title }}</h4>
+            </div>
+            <div class="panel-body hq-datatable-container">
+              <table id="report_table_{{ report.slug }}{{ report.html_id_suffix }}" class="table table-striped">
+                <thead>
+                {{ headers.render_html }}
+                </thead>
+                <tbody>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        {% endblock reporttable %}
+      </div>
+
+      {% if queries %}
+        <div class="alert alert-info">
+          {% trans 'Base Query/Queries' %}
+            <ul>
+            {% for query in queries %}
+              <li>{{ query }}</li>
+            {% endfor %}
+            </ul>
+        </div>
+      {% endif %}

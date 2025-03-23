@@ -59,61 +59,9 @@
     {% block filter_panel %}
       {% include "reports_core/partials/bootstrap5/filter_panel.html" %}
     {% endblock %}
-
     <hr />
-    <div id="reportHint{{ report.html_id_suffix }}" class="alert alert-info">
-      <h4><i class="fa fa-info-circle"></i> {% blocktrans %}Why can't I see any data?{% endblocktrans %}</h4>
-      <p>{% blocktrans %}Please choose your filters above and click <strong>Apply</strong> to see report data.{% endblocktrans %}</p>
-    </div>
-    <div id="reportContent{{ report.html_id_suffix }}" class="d-none">
-      {% block reportcharts %}
-        <section id="chart-container{{ report.html_id_suffix }}" style="display: none;">  {# todo B5: inline-style #}
-        </section>
-        <section id="chart-warning{{ report.html_id_suffix }}" class="alert alert-warning d-none">
-          {% blocktrans %}
-            Charts cannot be displayed with more than 25 categories. Please filter the data or change your report to limit the number of rows.
-          {% endblocktrans %}
-        </section>
-        <section id="map-container{{ report.html_id_suffix }}" class="map-container" style="display: none;" >  {# todo B5: inline-style #}
-        </section>
-        <div id="zoomtofit{{ report.html_id_suffix }}" class="leaflet-control-layers" style="display: none;">  {# todo B5: inline-style #}
-          <div id="zoomtofit-target{{ report.html_id_suffix }}" class="zoomtofit leaflet-control-layers-toggle" title="{% trans "Fit all data into view" %}"></div>
-        </div>
-
-        <div id="report-info{{ report.html_id_suffix }}" class="alert alert-info d-none">
-          {% blocktrans %}
-            Note:
-          {% endblocktrans %}
-          <span id="info-message{{ report.html_id_suffix }}"></span>
-        </div>
-      {% endblock %}
-      {% block reporttable %}
-        <div class="card ">  {# todo B5: css-panel #}
-          <div class="card-header">
-            <h4>{{ report.title }}</h4>
-          </div>
-          <div class="card-body hq-datatable-container">
-            <table id="report_table_{{ report.slug }}{{ report.html_id_suffix }}" class="table table-striped">
-              <thead>
-              {{ headers.render_html }}
-              </thead>
-              <tbody>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      {% endblock reporttable %}
-    </div>
-
-    {% if queries %}
-      <div class="alert alert-info">
-        {% trans 'Base Query/Queries' %}
-          <ul>
-          {% for query in queries %}
-            <li>{{ query }}</li>
-          {% endfor %}
-          </ul>
-      </div>
-    {% endif %}
+    {% block report_content %}
+      {% include "reports_core/partials/bootstrap5/report_content.html" %}
+    {% endblock report_content %}
   {% endblock main_column_content %}
 {% endblock %}
