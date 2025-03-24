@@ -2,7 +2,7 @@ from datetime import datetime
 
 from django.conf import settings
 from django.db import transaction
-from kafka.common import TopicPartition
+from kafka import TopicPartition
 
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
