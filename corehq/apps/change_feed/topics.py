@@ -1,5 +1,3 @@
-from kafka.common import OffsetRequestPayload
-
 from corehq.apps.app_manager.util import app_doc_types
 from corehq.apps.change_feed.connection import get_simple_kafka_client
 from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
@@ -93,6 +91,7 @@ def _get_topic_offsets(topics, latest):
     :param latest: True to fetch latest offsets, False to fetch earliest available
     :return: dict: { (topic, partition): offset, ... }
     """
+    from kafka.structs import OffsetRequestPayload  # not available in kafka-python>=2
 
     # https://cwiki.apache.org/confluence/display/KAFKA/A+Guide+To+The+Kafka+Protocol#AGuideToTheKafkaProtocol-OffsetRequest
     # https://cfchou.github.io/blog/2015/04/23/a-closer-look-at-kafka-offsetrequest/
