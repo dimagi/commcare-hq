@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.test import TestCase
 from django.urls import reverse
 
@@ -17,6 +19,7 @@ from corehq.apps.integration.payments.views import (
 from corehq.apps.users.models import WebUser
 from corehq.motech.models import ConnectionSettings
 from corehq.util.test_utils import flag_enabled
+from corehq.apps.integration.payments.filters import BatchNumberFilter
 
 
 class BaseTestPaymentsView(TestCase):
@@ -75,6 +78,7 @@ class TestPaymentsVerificationReportView(BaseTestPaymentsView):
         assert response.status_code == 404
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @patch.object(BatchNumberFilter, 'options', [])
     def test_success(self):
         response = self._make_request()
         assert response.status_code == 200
