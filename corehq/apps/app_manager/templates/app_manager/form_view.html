@@ -77,7 +77,7 @@
 {% block pre_form_content %}
   <div class="appmanager-page-actions">
     {% include 'app_manager/partials/app_summary_button.html' %}
-    <a class="btn btn-primary" href="{% url "form_source" domain app.id form.unique_id %}">
+    <a class="btn btn-default" href="{% url "form_source" domain app.id form.unique_id %}">
       <i class="fa fa-pencil"></i> {% trans "Edit Form" %}
     </a>
   </div>
