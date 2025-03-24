@@ -774,7 +774,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const self = this;
             const configButton = this.$('#case-list-config-button');
             if (configButton.length) {
-                self.caseListConfigViewPopover = new bootstrap.Popover(configButton[0], {
+                const caseListConfigViewPopover = new bootstrap.Popover(configButton[0], {
                     html: true,
                     sanitize: false,
                     content: function () {
@@ -785,9 +785,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                         self.caseListConfigView.setElement(container);
                         self.caseListConfigView.render();
 
-                        // Set up listeners for the view
                         self.listenTo(self.caseListConfigView, 'save', function () {
-                            self.caseListConfigViewPopover.dispose();
+                            caseListConfigViewPopover.dispose();
                             self.render();
                         });
 
@@ -804,7 +803,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                             event.stopPropagation();
                         }
                     } else {
-                        self.caseListConfigViewPopover.hide();
+                        caseListConfigViewPopover.hide();
                     }
                 }, true);
             }
@@ -1198,9 +1197,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         onBeforeDestroy: function () {
             if (this.caseListConfigView) {
                 this.caseListConfigView.destroy();
-            }
-            if (this.caseListConfigViewPopover) {
-                this.caseListConfigViewPopover.dispose();
             }
         },
 
