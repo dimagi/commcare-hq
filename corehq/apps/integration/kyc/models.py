@@ -137,6 +137,8 @@ class KycConfig(models.Model):
         return map_vals
 
     def is_sensitive_field(self, field):
+        if field not in self.api_field_to_user_data_map:
+            return False
         field_data = self.api_field_to_user_data_map[field]
         return (
             isinstance(field_data, dict)
