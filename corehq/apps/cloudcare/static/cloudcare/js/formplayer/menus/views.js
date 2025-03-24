@@ -798,10 +798,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 });
 
                 document.addEventListener('click', function (event) {
-                    if ($(event.target).closest('.popover').length > 0 &&
-                        !$(event.target).hasClass('js-action') &&
-                        !$(event.target).closest('.js-action').length) {
-                        event.stopPropagation();
+                    if ($(event.target).closest('.popover').length) {
+                        if (!$(event.target).hasClass('js-action') &&
+                                !$(event.target).closest('.js-action').length) {
+                            event.stopPropagation();
+                        }
+                    } else {
+                        self.caseListConfigViewPopover.hide();
                     }
                 }, true);
             }

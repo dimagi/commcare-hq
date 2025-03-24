@@ -1,8 +1,14 @@
+{% load i18n %}
 <button
   id="case-list-config-button"
   class="btn"
   style="color: white; position: absolute; right: 0px; top: 1.3em;"
-  title="Column Configuration"
+  title="{% trans 'Column Configuration' %}"
 >
-  <i class="fa fa-sliders" style="font-size: 14px" aria-hidden="true"></i>
+  <i
+    title="{% trans 'Column Configuration' %}"
+    class="fa fa-sliders"
+    style="font-size: 14px"
+    aria-hidden="true"
+  ></i>
 </button>
