@@ -31,7 +31,7 @@ _get_or_create = type(BillingContactInfo.objects).get_or_create
 
 
 def _issue_initializing_domain(self, *args, **kwargs):
-    # Create object, then raise excpetion. This will cause
+    # Create object, then raise exception. This will cause
     # _setup_subscription to fail, but SQL objects related to the domain
     # will have been saved to the database. They should be cleaned up on
     # transaction rollback caused by the exception.
