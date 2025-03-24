@@ -338,7 +338,12 @@
     <div class="add-property">
       <button class="btn btn-default" data-bind="click: addProperty, visible: $parent.hasPrivilege">
         <i class="fa fa-plus"></i>
-        {% trans "Add Property" %}
+        <!-- ko if: $data.type() == "case-property" -->
+          {% trans "Add Case Property" %}
+        <!-- /ko -->
+        <!-- ko if: $data.type() == "user-property" -->
+          {% trans "Add User Property" %}
+        <!-- /ko -->
       </button>
     </div>
     <!-- ko if: !case_properties().length && !$parent.hasPrivilege -->
