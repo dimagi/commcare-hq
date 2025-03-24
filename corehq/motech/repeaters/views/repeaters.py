@@ -24,13 +24,9 @@ from corehq.apps.users.models import HqPermissions
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.models import ConnectionSettings
 
-from ..const import State
+from ..const import RECORD_QUEUED_STATES, State
 from ..forms import CaseRepeaterForm, FormRepeaterForm, GenericRepeaterForm
-from ..models import (
-    Repeater,
-    RepeatRecord,
-    get_all_repeater_types,
-)
+from ..models import Repeater, RepeatRecord, get_all_repeater_types
 
 RepeaterTypeInfo = namedtuple('RepeaterTypeInfo',
                               'class_name friendly_name has_config instances')
@@ -79,7 +75,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
             'pending_record_count': sum(
                 count for repeater_id, states in state_counts.items()
                 for state, count in states.items()
-                if state == State.Pending or state == State.Fail
+                if state in RECORD_QUEUED_STATES
             ),
             'user_can_configure': (
                 self.request.couch_user.is_superuser

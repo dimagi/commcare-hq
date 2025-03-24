@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,12 +1,14 @@
+@@ -1,13 +1,15 @@
 -hqDefine("hqwebapp/js/bootstrap3/knockout_bindings.ko", [
 +hqDefine("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
      'jquery',
@@ -8,6 +8,7 @@
      'knockout',
 +    "es6!hqwebapp/js/bootstrap5_loader",
      'jquery-ui/ui/widgets/sortable',
+     'langcodes/js/langcodes',   // $.langcodes
  ], function (
      $,
      _,
@@ -16,7 +17,7 @@
  ) {
      // Need this due to https://github.com/knockout/knockout/pull/2324
      // so that ko.bindingHandlers.foreach.update works properly
-@@ -341,19 +343,15 @@
+@@ -342,19 +344,15 @@
  
      ko.bindingHandlers.modal = {
          init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
@@ -40,7 +41,7 @@
              }
          },
      };
-@@ -374,25 +372,32 @@
+@@ -375,25 +373,32 @@
           */
          init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
              let value = valueAccessor(),
@@ -82,7 +83,7 @@
                      };
                      return clickAction;
                  };
-@@ -402,11 +407,13 @@
+@@ -403,11 +408,13 @@
  
      ko.bindingHandlers.openRemoteModal = {
          init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
@@ -99,7 +100,7 @@
                      };
                      return clickAction;
                  };
-@@ -642,7 +649,7 @@
+@@ -643,7 +650,7 @@
                  options.sanitize = false;
              }
              if (options.title || options.content) { // don't show empty popovers

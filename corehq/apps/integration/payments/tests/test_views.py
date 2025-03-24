@@ -7,11 +7,14 @@ from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.apps.integration.payments.views import (
     PaymentsVerificationReportView,
     PaymentsVerificationTableView,
+    PaymentConfigurationView,
 )
 from corehq.apps.users.models import WebUser
+from corehq.motech.models import ConnectionSettings
 from corehq.util.test_utils import flag_enabled
 
 
@@ -143,6 +146,67 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
                     'batch_number': 'B001',
                     'phone_number': '0987654322',
                 }
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_verify_rows(self):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={
+                'selected_ids': [case.case_id for case in self.case_list],
+            },
+            headers={'HQ-HX-Action': 'verify_rows'},
+        )
+        assert response.status_code == 200
+        assert response.context['success_count'] == 2
+        assert response.context['failure_count'] == 0
+
+
+class TestPaymentsConfigurationView(BaseTestPaymentsView):
+    urlname = PaymentConfigurationView.urlname
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.connection_settings = ConnectionSettings.objects.create(
+            domain=cls.domain,
+            name='test-conn-settings',
+            username='test-username',
+            password='test-password',
+            url='http://test-url.com',
+        )
+
+    def test_not_logged_in(self):
+        response = self._make_request(log_in=False)
+        assert response.status_code == 404
+
+    def test_ff_not_enabled(self):
+        response = self._make_request()
+        assert response.status_code == 404
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_success_get(self, *args):
+        response = self._make_request()
+        assert response.status_code == 200
+
+        form_fields = response.context[0].get('payments_config_form').fields
+        assert form_fields['connection_settings'].choices == [(self.connection_settings.id, 'test-conn-settings')]
+        assert form_fields['environment'].choices == [('sandbox', 'Sandbox'), ('live', 'Live')]
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_success_create(self, *args):
+        assert not MoMoConfig.objects.filter(domain=self.domain)
+
+        post_data = {
+            'connection_settings': self.connection_settings.id,
+            'environment': 'live',
+        }
+        self.client.login(username=self.username, password=self.password)
+        self.client.post(self.endpoint, data=post_data)
+
+        payment_config = MoMoConfig.objects.get(domain=self.domain)
+        assert payment_config.connection_settings_id == self.connection_settings.id
+        assert payment_config.environment == 'live'
 
 
 def _create_case(factory, name, data):

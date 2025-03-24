@@ -1,0 +1,53 @@
+--- 
++++ 
+@@ -3,7 +3,7 @@
+ {% if report.spec.report_meta.created_by_builder %}
+   <a
+     id="deleteReport"
+-    class="btn btn-danger"
++    class="btn btn-outline-danger"
+     href="{% url 'delete_configurable_report' domain report_id %}?redirect={% url 'reports_home' domain %}"
+   >
+   {% if use_updated_ucr_naming %}
+@@ -15,16 +15,16 @@
+ {% else %}
+   <div class="btn-group">
+     {% if referring_apps %}
+-      <a href="#confirm_delete" class="btn btn-danger pull-right" data-toggle="modal">
++      <a href="#confirm_delete" class="btn btn-outline-danger float-end" data-bs-toggle="modal">
+         {% trans 'Delete Report' %}
+       </a>
+     {% else %}
+       <form method='post' action="{% url 'delete_configurable_report' domain report_id %}" >
+         {% csrf_token %}
+         {% if use_updated_ucr_naming %}
+-          <input type="submit" value="{% trans 'Delete Custom Web Report'%}" class="btn btn-danger disable-on-submit pull-right">
++          <input type="submit" value="{% trans 'Delete Custom Web Report'%}" class="btn btn-outline-danger disable-on-submit float-end">
+         {% else %}
+-          <input type="submit" value="{% trans 'Delete Report'%}" class="btn btn-danger disable-on-submit pull-right">
++          <input type="submit" value="{% trans 'Delete Report'%}" class="btn btn-outline-danger disable-on-submit float-end">
+         {% endif %}
+       </form>
+     {% endif %}
+@@ -35,7 +35,7 @@
+       <div class="modal-dialog" role="document">
+         <div class="modal-content">
+           <div class="modal-header">
+-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
++            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">  {# todo B5: css-close #}
+               <span aria-hidden="true">&times;</span>
+             </button>
+             <h4 class="modal-title">{% trans 'Are you sure you want to delete this report?' %}</h4>
+@@ -58,10 +58,10 @@
+           <form method='post' action="{% url 'delete_configurable_report' domain report_id %}" >
+             {% csrf_token %}
+             <div class="modal-footer">
+-              <button type="button" class="btn btn-default btn-primary" data-dismiss="modal">
++              <button type="button" class="btn btn-outline-primary btn-primary" data-bs-dismiss="modal">
+                 {% trans "Cancel" %}
+               </button>
+-              <button type="submit" value="{% trans 'Delete Report'%}" class="disable-on-submit btn btn-danger">{% trans 'Delete Report'%}</button>
++              <button type="submit" value="{% trans 'Delete Report'%}" class="disable-on-submit btn btn-outline-danger">{% trans 'Delete Report'%}</button>
+             </div>
+           </form>
+         </div>

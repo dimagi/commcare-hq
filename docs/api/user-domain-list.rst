@@ -14,7 +14,7 @@ Overview
 
 .. code-block:: text
 
-    https://www.commcarehq.org/api/v0.5/user_domains/
+    https://www.commcarehq.org/api/user_domains/v1/
 
 **Method**
     GET

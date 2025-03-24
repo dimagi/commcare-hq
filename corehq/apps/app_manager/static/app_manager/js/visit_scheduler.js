@@ -67,7 +67,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
         self.phases = ko.observableArray(
             _.map(params.schedulePhases, function (phase) {
                 return phaseModel(phase.id, phase.anchor, phase.forms);
-            })
+            }),
         );
         self.phases.subscribe(function () {
             self.change();

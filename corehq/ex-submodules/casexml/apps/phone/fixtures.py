@@ -49,7 +49,7 @@ def _fixture_generators():
     return [f for f in functions if f]
 
 
-def get_fixture_elements(restore_state, timing_context, skip_fixtures):
+def get_fixture_elements(restore_state, timing_context):
     if restore_state.version == V1:
         return  # V1 phones will never use or want fixtures
 
@@ -57,7 +57,6 @@ def get_fixture_elements(restore_state, timing_context, skip_fixtures):
         return
 
     for provider in _fixture_generators():
-        if not skip_fixtures or getattr(provider, 'ignore_skip_fixtures_flag', False):
-            with timing_context('fixture:{}'.format(provider.id)):
-                for element in provider(restore_state):
-                    yield element
+        with timing_context('fixture:{}'.format(provider.id)):
+            for element in provider(restore_state):
+                yield element
