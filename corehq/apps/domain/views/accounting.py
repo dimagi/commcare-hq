@@ -30,7 +30,7 @@ from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from corehq.apps.accounting.decorators import always_allow_project_access
-from corehq.apps.accounting.utils.downgrade import can_domain_unpause
+from corehq.apps.accounting.utils.unpaid_invoice import can_domain_unpause
 from dimagi.utils.web import json_response
 
 from corehq import privileges

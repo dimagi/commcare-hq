@@ -29,6 +29,17 @@
         >
           {% trans "Apply" %}
         </button>
+        {% if has_values %}
+          <button
+            class="btn btn-outline-primary"
+            type="button"
+            hx-post="{{ request.path_info }}"
+            hx-disabled-elt="this"
+            hq-hx-action="reset_filters"
+          >
+            {% trans "Reset" %}
+          </button>
+        {% endif %}
       </div>
     </form>
   </div>

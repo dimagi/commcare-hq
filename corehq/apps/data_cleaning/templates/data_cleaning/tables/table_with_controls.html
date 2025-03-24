@@ -1,0 +1,47 @@
+{% extends "hqwebapp/tables/bootstrap5_htmx.html" %}
+{% load i18n %}
+{% load django_tables2 %}
+
+{% block before_table %}
+  <div class="d-flex align-items-center pb-2">
+
+    {% if table.session.has_any_filtering %}
+      <div class="pe-2">
+        <div class="input-group">
+          <div class="input-group-text">
+            <i class="fa-solid fa-filter me-2"></i>
+            {% blocktrans with table.page.paginator.count as num_records %}
+              Filters Applied: {{ num_records }} Matching Records
+            {% endblocktrans %}
+          </div>
+          <button
+            class="btn btn-outline-danger"
+            type="button"
+            hx-post="{{ request.path_info }}{% querystring %}"
+            hq-hx-action="clear_filters"
+            hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
+            hx-swap="outerHTML"
+            hq-hx-loading="{{ table.loading_indicator_id }}"
+            hx-disable-elt="this"
+          >
+            <i class="fa-solid fa-close"></i>
+            <span class="visually-hidden">{% trans "Clear Filters" %}</span>
+          </button>
+        </div>
+      </div>
+    {% endif %}
+
+    <div>
+      <div class="input-group">
+        <div class="input-group-text rounded-end"> {# todo: selection UI #}
+          <i class="fa-solid fa-circle-check me-2"></i>
+          {# todo: selection number #}
+          {% blocktrans %}
+            0 Records Selected
+          {% endblocktrans %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+{% endblock %}

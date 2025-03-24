@@ -16,7 +16,7 @@ from corehq.apps.integration.kyc.services import (
 )
 from corehq.apps.integration.kyc.tables import KycVerifyTable
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
-from corehq.util.metrics import metrics_gauge, metrics_counter
+from corehq.util.metrics import metrics_counter, metrics_gauge
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -83,46 +83,28 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
     def kyc_config(self):
         return KycConfig.objects.get(domain=self.request.domain)
 
-    def get_queryset(self):
-        row_objs = self.kyc_config.get_kyc_users()
-        return [self._parse_row(row_obj) for row_obj in row_objs]
-
-    def _parse_row(self, row_obj):
-        row_data = {
-            'id': row_obj.user_id,
-            'has_invalid_data': False,
+    def get_table_kwargs(self):
+        return {
+            'extra_columns': KycVerifyTable.get_extra_columns(self.kyc_config),
         }
-        user_fields = (
-            'first_name',
-            'last_name',
-            'phone_number',
-            'email',
-            'national_id_number',
-            'street_address',
-            'city',
-            'post_code',
-            'country',
-        )
-        system_fields = (
-            'kyc_verification_status',
-            'kyc_last_verified_at',
-            'kyc_verification_error',
-        )
-        for field in (user_fields + system_fields):
-            value = None
 
-            try:
-                value = row_obj[field]
-            except KeyError:
-                pass
-            finally:
-                if field in user_fields and self._is_invalid_value(value):
-                    row_data['has_invalid_data'] = True
-                else:
-                    if field == 'kyc_verification_error' and value in KycVerificationFailureCause:
-                        row_data[field] = KycVerificationFailureCause(value).label
-                    else:
-                        row_data[field] = value
+    def get_queryset(self):
+        kyc_users = self.kyc_config.get_kyc_users()
+        return [self._parse_row(kyc_user) for kyc_user in kyc_users]
+
+    def _parse_row(self, kyc_user):
+        row_data = {
+            'id': kyc_user.user_id,
+            'has_invalid_data': False,
+            'kyc_verification_status': kyc_user.get('kyc_verification_status'),
+            'kyc_last_verified_at': kyc_user.get('kyc_verification_status'),
+        }
+        for field in self.kyc_config.api_field_to_user_data_map.values():
+            value = kyc_user.get(field)
+            if not value:
+                row_data['has_invalid_data'] = True
+            else:
+                row_data[field] = value
         return row_data
 
     @staticmethod
