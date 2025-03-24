@@ -178,6 +178,11 @@ def get_payment_batch_numbers_for_domain(domain):
         .case_type(MOMO_PAYMENT_CASE_TYPE)
         .values_list("_id", flat=True)
     )
-    cases = CommCareCase.objects.get_cases(case_ids=case_ids, domain=domain)
-    batch_numbers = set([case.case_json.get(PaymentProperties.BATCH_NUMBER) for case in cases])
+
+    batch_numbers = set()
+    for case_id_chunk in chunked(case_ids, CHUNK_SIZE):
+        cases = CommCareCase.objects.get_cases(case_ids=list(case_id_chunk), domain=domain)
+        chunk_batch_numbers = set([case.case_json.get(PaymentProperties.BATCH_NUMBER) for case in cases])
+        batch_numbers.update(chunk_batch_numbers)
+
     return sorted([batch_number for batch_number in batch_numbers if batch_number])
