@@ -69,7 +69,6 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
             'name': 'selection',
             'value': value,
         }
-        # All columns are required except the checkbox
         required_fields = list(self.base_columns.keys())
 
         for optional_field in self.OPTIONAL_FIELDS:
