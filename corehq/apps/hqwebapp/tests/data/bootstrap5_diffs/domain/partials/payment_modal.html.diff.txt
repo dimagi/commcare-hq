@@ -140,14 +140,29 @@
 -              <label class="control-label col-sm-3">
 +            <div class="form-group">  {# todo B5: css-form-group #}
 +              <label class="form-label col-md-3">
-                 {% trans 'Invoice Recipients' %}
+                 {% trans 'Email To' %}
                </label>
 -              <div class="col-sm-9">
 +              <div class="col-md-9">
                  <input type="text"
-                        data-bind="value: wireEmails"
+                        data-bind="value: wireEmail"
                         size="20"
-@@ -240,8 +240,8 @@
+@@ -217,11 +217,11 @@
+               </div>
+             </div>
+ 
+-            <div class="form-group">
+-              <label class="control-label col-sm-3">
++            <div class="form-group">  {# todo B5: css-form-group #}
++              <label class="control-label col-md-3">
+                 {% trans 'Additional Recipients' %}
+               </label>
+-              <div class="col-sm-9">
++              <div class="col-md-9">
+                 <input type="text"
+                        data-bind="value: wireAdditionalEmails"
+                        size="20"
+@@ -254,8 +254,8 @@
          <div class="modal-footer">
            <button type="button"
                    data-bind="visible: paymentIsNotComplete"
@@ -158,7 +173,7 @@
              {% trans "Cancel" %}
            </button>
            <!-- ko if: hasAgreedToPrivacy || isSavedCard -->
-@@ -261,12 +261,12 @@
+@@ -275,12 +275,12 @@
                                  text: submitBtnText"
                    disabled="disabled">
            </button>
