@@ -1,3 +1,5 @@
+{% load i18n %}
+
 <button
   id="edit-widget-btn"
   class="btn btn-default"
@@ -7,6 +9,7 @@
   hx-target="#widget-modal-body"
   hx-get="{% url 'dashboard_widget' domain %}?widget_type=map&widget_id={{ widget.id }}"
   hq-hx-action="edit_widget"
+  aria-label="{% trans 'Edit Widget' %}"
 >
   <i class="fa fa-edit"></i>
 </button>
