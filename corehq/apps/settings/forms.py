@@ -181,13 +181,19 @@ class HQTwoFactorMethodForm(MethodForm):
 
 
 class HQTOTPDeviceForm(TOTPDeviceForm):
-    # https://github.com/jazzband/django-two-factor-auth/issues/84
-    # override the underlying form input because a two-factor code is not an integer
-    token = forms.RegexField(required=False,
-                             label=_("Token"),
-                             regex=r'^[0-9]*$',
-                             min_length=totp_digits(),
-                             max_length=totp_digits())
+    token = forms.IntegerField(
+        required=False,
+        label=_("Token"),
+        min_value=1,
+        max_value=int('9' * totp_digits()),
+        widget=forms.TextInput(
+            attrs={
+                'pattern': r'^[0-9]{%s}$' % totp_digits(),
+                'maxlength': totp_digits(),
+                'inputmode': 'numeric',
+            }
+        ),
+    )
 
     def __init__(self, key, user, **kwargs):
         super(HQTOTPDeviceForm, self).__init__(key, user, **kwargs)

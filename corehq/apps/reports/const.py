@@ -2,6 +2,7 @@ from django.utils.translation import gettext_lazy as _
 
 USER_QUERY_LIMIT = 5000
 DEFAULT_PAGE_LIMIT = 10
+EXPORT_PAGE_LIMIT = 5000
 
 TABLEAU_ROLES = (
     ('Explorer', _('Explorer')),

@@ -180,8 +180,8 @@ def admin_users():
 
 
 def demo_users():
-    """Matches users whose username is demo_user"""
-    return username("demo_user")
+    """Matches users who has is_demo_user set to True"""
+    return filters.term("is_demo_user", True)
 
 
 def created(gt=None, gte=None, lt=None, lte=None):

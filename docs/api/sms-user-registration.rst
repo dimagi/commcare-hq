@@ -9,6 +9,9 @@ Initiate the SMS self-registration workflow for mobile workers. This performs th
 **Project Prerequisites**
 Your project must have a **PRO plan or higher** to use this feature, and you must enable **"SMS Mobile Worker Registration"** on the Messaging -> General Settings page.
 
+**Permissions Required**
+    - Edit Data
+
 Endpoint Specifications
 -----------------------
 
@@ -16,9 +19,7 @@ Endpoint Specifications
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/sms_user_registration/
-
-**Available since** ``v0.5``
+    https://www.commcarehq.org/a/[domain]/api/sms_user_registration/v1/
 
 **Method** ``POST``
 

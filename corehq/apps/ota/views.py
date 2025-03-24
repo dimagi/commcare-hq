@@ -288,7 +288,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     :param device_id: ID of device performing restore
     :param user_id: ID of user performing restore (used in case of deleted user with same username)
     :param openrosa_version:
-    :param skip_fixtures: Do not include fixtures in sync payload
+    :param skip_fixtures: Do not include fixtures in sync payload.  Supports mobile background sync.
     :param auth_type: The type of auth that was used to authenticate the request.
         Used to determine if the request is coming from an actual user or as part of some automation.
     :param fail_hard: In case of exceptions, fail hardly by raising exception instead of logging

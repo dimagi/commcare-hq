@@ -10,14 +10,11 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.kyc.forms import KycConfigureForm
-from corehq.apps.integration.kyc.models import KycConfig, KycIsVerifiedChoice
-from corehq.apps.integration.kyc.services import (
-    get_user_data_for_api,
-    verify_users,
-)
+from corehq.apps.integration.kyc.models import KycConfig, KycVerificationStatus
+from corehq.apps.integration.kyc.services import verify_users
 from corehq.apps.integration.kyc.tables import KycVerifyTable
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
-from corehq.util.metrics import metrics_gauge, metrics_counter
+from corehq.util.metrics import metrics_counter, metrics_gauge
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -84,38 +81,28 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
     def kyc_config(self):
         return KycConfig.objects.get(domain=self.request.domain)
 
-    def get_queryset(self):
-        row_objs = self.kyc_config.get_kyc_users()
-        return [self._parse_row(row_obj) for row_obj in row_objs]
-
-    def _parse_row(self, row_obj):
-        user_data = get_user_data_for_api(row_obj, self.kyc_config)
-        row_data = {
-            'id': row_obj.user_id,
-            'has_invalid_data': False,
+    def get_table_kwargs(self):
+        return {
+            'extra_columns': KycVerifyTable.get_extra_columns(self.kyc_config),
         }
-        user_fields = (
-            'first_name',
-            'last_name',
-            'phone_number',
-            'email',
-            'national_id_number',
-            'street_address',
-            'city',
-            'post_code',
-            'country',
-        )
-        system_fields = (
-            'kyc_is_verified',
-            'kyc_last_verified_at',
-        )
-        for field in user_fields:
-            if field not in user_data or user_data[field] in ('', None):
+
+    def get_queryset(self):
+        kyc_users = self.kyc_config.get_kyc_users()
+        return [self._parse_row(kyc_user) for kyc_user in kyc_users]
+
+    def _parse_row(self, kyc_user):
+        row_data = {
+            'id': kyc_user.user_id,
+            'has_invalid_data': False,
+            'kyc_verification_status': kyc_user.get('kyc_verification_status'),
+            'kyc_last_verified_at': kyc_user.get('kyc_verification_status'),
+        }
+        for field in self.kyc_config.api_field_to_user_data_map.values():
+            value = kyc_user.get(field)
+            if not value:
                 row_data['has_invalid_data'] = True
-                continue
-            row_data[field] = user_data[field]
-        for field in system_fields:
-            row_data[field] = user_data.get(field)
+            else:
+                row_data[field] = value
         return row_data
 
     @hq_hx_action('post')
@@ -127,13 +114,11 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
             kyc_users = self.kyc_config.get_kyc_users_by_ids(selected_ids)
         existing_failed_user_ids = self._get_existing_failed_users(kyc_users)
         results = verify_users(kyc_users, self.kyc_config)
-        verify_success = all(results.values())
-        success_count = sum(1 for result in results.values() if result)
-        fail_count = len(results) - success_count
+        success_count = sum(1 for result in results.values() if result == KycVerificationStatus.PASSED)
+        failure_count = len(results) - success_count
         context = {
-            'verify_success': verify_success,
             'success_count': success_count,
-            'fail_count': fail_count,
+            'failure_count': failure_count,
         }
 
         self._report_success_on_reverification_metric(existing_failed_user_ids, results)
@@ -153,7 +138,7 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
     def _get_existing_failed_users(self, kyc_users):
         return [
             kyc_user.user_id for kyc_user in kyc_users
-            if kyc_user.kyc_is_verified is KycIsVerifiedChoice.FALSE
+            if kyc_user.kyc_verification_status == KycVerificationStatus.FAILED
         ]
 
 

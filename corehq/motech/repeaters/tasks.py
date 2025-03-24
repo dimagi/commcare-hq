@@ -110,6 +110,7 @@ from .const import (
     MAX_RETRY_WAIT,
     PROCESS_REPEATERS_INTERVAL,
     RATE_LIMITER_DELAY_RANGE,
+    RECORD_QUEUED_STATES,
     State,
 )
 from .models import (
@@ -275,7 +276,7 @@ def _process_repeat_record(repeat_record):
                 # with the intent of avoiding clumping and spreading load
                 repeat_record.postpone_by(random.uniform(*RATE_LIMITER_DELAY_RANGE))
                 action = 'rate_limited'
-            elif repeat_record.is_queued():
+            elif repeat_record.state in RECORD_QUEUED_STATES:
                 report_repeater_attempt(repeat_record.repeater.repeater_id)
                 with timer('fire_timing') as fire_timer:
                     repeat_record.fire(timing_context=fire_timer)
@@ -430,7 +431,7 @@ def process_ready_repeat_record(repeat_record_id):
 def is_repeat_record_ready(repeat_record):
     # Fail loudly if repeat_record is not ready.
     # process_ready_repeat_record() will log an exception.
-    assert repeat_record.state in (State.Pending, State.Fail)
+    assert repeat_record.state in RECORD_QUEUED_STATES
 
     # The repeater could have been paused or rate-limited while it was
     # being processed
@@ -551,7 +552,7 @@ class RepeaterLock:
 metrics_gauge_task(
     'commcare.repeaters.overdue',
     RepeatRecord.objects.count_overdue,
-    run_every=crontab(),  # every minute
+    run_every=crontab(minute='*/5'),  # every five minutes
     multiprocess_mode=MPM_MAX
 )
 

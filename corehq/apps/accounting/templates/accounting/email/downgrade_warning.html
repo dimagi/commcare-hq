@@ -7,22 +7,49 @@
 
 <p>
   {% blocktrans %}
-    Your CommCare {{ subscriptions_to_downgrade }} will be paused <b><i>after tomorrow</i></b> because your CommCare Billing Statements are more than 60 days overdue.
-    If you do not make a payment before tomorrow, your subscription will automatically be paused and you will lose access to your project space and data until you re-subscribe to paid plan.
+    Your CommCare {{ subscriptions_to_downgrade }} will be paused
+    <b><i>after tomorrow</i></b> because your CommCare Billing Statements are
+    more than {{ days_overdue }} days overdue.
+    <strong
+      >If you do not make a payment before tomorrow, your subscription will
+      automatically be paused and you will lose access to your project space and
+      data until you re-subscribe to paid plan.</strong
+    >
   {% endblocktrans %}
 </p>
 
 <p>
-  {% blocktrans %}To see the full list of unpaid invoices you can follow this link: {% endblocktrans %}<a href="{{ statements_url }}">{{ statements_url }}</a>
-<ul>
-  <li>{% blocktrans %}As a reminder, payments can be made via credit card, Electronic Fund Transfer (EFT), or check by following these <a href="https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment">instructions</a>.{% endblocktrans %}</li>
-  <li>{% blocktrans %}You can also pre-pay for several months at any time by following <a href="https://confluence.dimagi.com/display/commcarepublic/CommCare+Pricing+FAQs#CommCarePricingFAQs-Pre-payment">these steps</a>.{% endblocktrans %}</li>
-</ul>
+  {% blocktrans %}
+    To see the full list of unpaid invoices you can follow this link:
+  {% endblocktrans %}<a href="{{ statements_url }}">{{ statements_url }}</a>
 </p>
+<ul>
+  <li>
+    {% blocktrans %}
+      As a reminder, payments can be made via credit card, Electronic Fund
+      Transfer (EFT), or check by following these
+      <a
+        href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143956507/Payment+Methods+Instructions"
+        >instructions</a
+      >.
+    {% endblocktrans %}
+  </li>
+  <li>
+    {% blocktrans %}
+      You can also pre-pay for several months at any time by following
+      <a
+        href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143950358/CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing"
+        >these steps</a
+      >.
+    {% endblocktrans %}
+  </li>
+</ul>
 
 <p>
   {% blocktrans %}
-    If you have any questions, please don’t hesitate to contact <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>. Thank you for using CommCare.
+    If you have any questions, please don’t hesitate to contact
+    <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>. Thank you for
+    using CommCare.
   {% endblocktrans %}
 </p>
 

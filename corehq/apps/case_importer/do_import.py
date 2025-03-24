@@ -676,7 +676,7 @@ class _CaseImportRow(object):
 
 
 def _log_case_lookup(domain):
-    case_load_counter("case_importer", domain)
+    case_load_counter("case_importer", domain)()
 
 
 class _ImportResults(object):

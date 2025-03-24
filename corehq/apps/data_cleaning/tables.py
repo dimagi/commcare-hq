@@ -11,7 +11,11 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
     record_class = EditableCaseSearchElasticRecord
 
     class Meta(BaseHtmxTable.Meta):
-        pass
+        template_name = "data_cleaning/tables/table_with_controls.html"
+
+    def __init__(self, session=None, **kwargs):
+        super().__init__(**kwargs)
+        self.session = session
 
     @classmethod
     def get_columns_from_session(cls, session):
@@ -27,7 +31,8 @@ class CaseCleaningTasksTable(BaseHtmxTable, tables.Table):
     class Meta(BaseHtmxTable.Meta):
         pass
 
-    status = columns.Column(
+    status = columns.TemplateColumn(
+        template_name="data_cleaning/columns/task_status.html",
         verbose_name=gettext_lazy("Status"),
     )
     committed_on = columns.Column(
@@ -39,6 +44,10 @@ class CaseCleaningTasksTable(BaseHtmxTable, tables.Table):
     case_type = columns.Column(
         verbose_name=gettext_lazy("Case Type"),
     )
-    details = columns.Column(
-        verbose_name=gettext_lazy("Details"),
+    case_count = columns.Column(
+        verbose_name=gettext_lazy("# Cases Cleaned"),
+    )
+    form_ids = columns.TemplateColumn(
+        template_name="data_cleaning/columns/task_form_ids.html",
+        verbose_name=gettext_lazy("Form IDs"),
     )

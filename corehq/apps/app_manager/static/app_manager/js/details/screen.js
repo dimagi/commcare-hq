@@ -14,7 +14,8 @@
 hqDefine("app_manager/js/details/screen", function () {
     const Utils = hqImport('app_manager/js/details/utils'),
         ColumnModel = hqImport("app_manager/js/details/column"),
-        uiMapList = hqImport("hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list");
+        uiMapList = hqImport("hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list"),
+        initialPageData = hqImport('hqwebapp/js/initial_page_data');
 
     const getPropertyTitle = function (property) {
         // Strip "<prefix>:" before converting to title case.
@@ -107,6 +108,11 @@ hqDefine("app_manager/js/details/screen", function () {
             const caseTileTemplate = self.caseTileTemplate() && self.caseTileTemplate() !== "custom";
             return caseTileTemplate && featureFlag;
         });
+        self.showCaseListOptimizations = (
+            self.columnKey === 'short' &&
+            initialPageData.get('app_supports_case_list_optimizations') &&
+            initialPageData.get('show_case_list_optimization_options')
+        );
         self.persistCaseContext = ko.observable(detail.persist_case_context || false);
         self.persistentCaseContextXML = ko.observable(detail.persistent_case_context_xml || 'case_name');
 
@@ -396,7 +402,7 @@ hqDefine("app_manager/js/details/screen", function () {
                     nodeset: tabs[i].nodeset,
                     nodesetCaseType: tabs[i].nodeset_case_type,
                     nodesetFilter: tabs[i].nodeset_filter,
-                }, _.pick(tabs[i], ["header", "isTab", "relevant"]))
+                }, _.pick(tabs[i], ["header", "isTab", "relevant"])),
             );
         }
         if (self.columnKey === 'long') {
@@ -568,7 +574,7 @@ hqDefine("app_manager/js/details/screen", function () {
                 }),
                 function (c) {
                     return c.serialize();
-                }
+                },
             ));
 
             // Add tabs
@@ -588,7 +594,7 @@ hqDefine("app_manager/js/details/screen", function () {
                 }),
                 function (c) {
                     return c.serialize();
-                }
+                },
             ));
 
             data.caseTileTemplate = self.caseTileTemplate();
@@ -660,7 +666,7 @@ hqDefine("app_manager/js/details/screen", function () {
         };
         self.addItem = function (columnConfiguration, index) {
             var column = self.initColumnAsColumn(
-                ColumnModel(columnConfiguration, self)
+                ColumnModel(columnConfiguration, self),
             );
             if (index === undefined) {
                 self.columns.push(column);
