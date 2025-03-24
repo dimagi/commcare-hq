@@ -1270,7 +1270,7 @@ class Subscription(models.Model):
         from corehq.apps.accounting.mixins import get_overdue_invoice
 
         super(Subscription, self).save(*args, **kwargs)
-        Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
+        Subscription.clear_caches(self.subscriber.domain)
         get_overdue_invoice.clear(self.subscriber.domain)
 
         domain = Domain.get_by_name(self.subscriber.domain)
@@ -1281,7 +1281,11 @@ class Subscription(models.Model):
 
     def delete(self, *args, **kwargs):
         super(Subscription, self).delete(*args, **kwargs)
-        Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
+        Subscription.clear_caches(self.subscriber.domain)
+
+    @classmethod
+    def clear_caches(cls, domain_name):
+        cls._get_active_subscription_by_domain.clear(cls, domain_name)
 
     @property
     def is_community(self):

@@ -25,7 +25,7 @@ class TestBackfillSubevent(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.domain = Domain.get_or_create_with_name("backfill-test", is_active=True)
-        cls.addClassCleanup(Subscription._get_active_subscription_by_domain.clear, Subscription, cls.domain.name)
+        cls.addClassCleanup(Subscription.clear_caches, cls.domain.name)
         cls.addClassCleanup(cls.domain.delete)
 
     def test_update_from_email(self):
