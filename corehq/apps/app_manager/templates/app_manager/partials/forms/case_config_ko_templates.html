@@ -227,7 +227,12 @@
         </th>
         <th class="col-sm-1"></th>
         <th data-bind="class: saveOnlyEditedFormFieldsEnabled ? 'col-sm-3' : 'col-sm-4'">
-          {% trans "Case Property" %}
+          <!-- ko if: $data.type() == "user-property" -->
+            {% trans "User Property" %}
+          <!-- /ko -->
+          <!-- ko if: $data.type() == "case-property" -->
+            {% trans "Case Property" %}
+          <!-- /ko -->
         </th>
         {% comment %} The odd style additions in this block were necessary to put the question mark
         in line with the text when the text is both wrapped and unwrapped. {% endcomment %}
