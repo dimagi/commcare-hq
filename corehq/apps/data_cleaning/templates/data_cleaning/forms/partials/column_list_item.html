@@ -11,6 +11,9 @@
         value="{{ column.column_id }}"
       />
     </div>
+    <div class="p-2 align-self-center">
+      {{ column.data_type|dc_data_type_icon }}
+    </div>
     <div class="p-2 flex-fill">
       <h5 class="mb-1">
         {{ column.label }}
