@@ -15,6 +15,13 @@ from corehq.apps.hqwebapp.widgets import AlpineSelect
 
 
 class AddColumnForm(forms.Form):
+    """
+    NOTE: While `AddFilterForm` and `AddColumnForm` share similar properties (`prop_id`, `data_type`)
+    the `column_` prefix is used here because both forms will be inserted into the same DOM, resulting
+    in the same css ids for each field (generated as `id_<field slug>`). Having multiple elements
+    with the same id is invalid HTML. Additionally, this scenario will result in select2s being
+    applied to only ONE field.
+    """
     column_prop_id = forms.ChoiceField(
         label=gettext_lazy("Case Property"),
         required=False
