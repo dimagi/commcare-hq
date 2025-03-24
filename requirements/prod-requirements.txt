@@ -242,7 +242,7 @@ greenlet==3.1.1
     #   -r base-requirements.in
     #   django-websocket-redis
     #   gevent
-gunicorn==22.0.0
+gunicorn==23.0.0
     # via -r base-requirements.in
 haversine==2.8.0
     # via -r base-requirements.in
