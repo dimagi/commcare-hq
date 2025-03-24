@@ -91,8 +91,8 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
             filter_value = 'True' if verification_status == PaymentVerificationStatusFilter.verified else ''
             query = query.filter(case_property_query(PaymentProperties.PAYMENT_VERIFIED, filter_value))
 
-        if batch_numer := self.request.GET.get('batch_number'):
-            query = query.filter(case_property_query(PaymentProperties.BATCH_NUMBER, batch_numer))
+        if batch_number := self.request.GET.get('batch_number'):
+            query = query.filter(case_property_query(PaymentProperties.BATCH_NUMBER, batch_number))
 
         if verified_by := self.request.GET.get('verified_by'):
             query = query.filter(case_property_query(PaymentProperties.PAYMENT_VERIFIED_BY, verified_by))
