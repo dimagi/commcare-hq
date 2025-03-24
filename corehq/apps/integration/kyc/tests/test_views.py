@@ -14,6 +14,7 @@ from corehq.apps.integration.kyc.views import (
     KycVerificationReportView,
     KycVerificationTableView,
 )
+from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.util.test_utils import flag_enabled
 
@@ -141,11 +142,24 @@ class TestKycVerificationTableView(BaseTestKycView):
         cls.kyc_mapping = {
             # API field: User data
             'first_name': 'name',
-            'last_name': 'last_name',
-            'email': 'email',
-            'phone_number': 'phone_number',
-            'national_id_number': 'national_id_number',
-            'street_address': 'street_address',
+            'last_name': {
+                'value': 'last_name'
+            },
+            'email': {
+                'value': 'email',
+                'is_sensitive': False
+            },
+            'phone_number': {
+                'value': 'phone_number',
+                'is_sensitive': True
+            },
+            'national_id_number': {
+                'value': 'national_id_number',
+                'is_sensitive': 'true'
+            },
+            'street_address': {
+                'velue': 'street_address',
+            },
             'city': 'city',
             'post_code': 'post_code',
             'country': 'country',
@@ -254,9 +268,8 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'name': 'Johnny',
                     'last_name': 'Doe',
                     'email': 'jdoe@example.org',
-                    'phone_number': '1234567890',
-                    'national_id_number': '1234567890',
-                    'street_address': '123 Main St',
+                    'phone_number': PASSWORD_PLACEHOLDER,
+                    'national_id_number': PASSWORD_PLACEHOLDER,
                     'city': 'Anytown',
                     'post_code': '12345',
                     'country': 'Anyplace',
@@ -295,9 +308,8 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'first_name': 'Bob',
                     'last_name': 'Smith',
                     'home_email': 'bsmith@example.org',
-                    'phone_number': '0987654321',
-                    'national_id_number': '0987654321',
-                    'street_address': '456 Main St',
+                    'phone_number': PASSWORD_PLACEHOLDER,
+                    'national_id_number': PASSWORD_PLACEHOLDER,
                     'city': 'Sometown',
                     'post_code': '54321',
                     'country': 'Someplace',

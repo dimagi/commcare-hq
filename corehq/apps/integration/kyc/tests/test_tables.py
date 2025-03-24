@@ -16,6 +16,12 @@ class TestKycVerifyTable(SimpleTestCase):
             api_field_to_user_data_map={
                 'pants_type': 'apple_bottom_jeans',
                 'shoe_type': 'boots_with_fur',
+                'test': {
+                    'value': 'foo',
+                },
+                'incorrect_field': {
+                    'velue': 'bar'
+                }
             }
         )
 
@@ -24,6 +30,7 @@ class TestKycVerifyTable(SimpleTestCase):
         expected_data = [
             ('apple_bottom_jeans', 'Apple Bottom Jeans'),
             ('boots_with_fur', 'Boots With Fur'),
+            ('foo', 'Foo'),
             ('kyc_verification_status', 'KYC Status'),
             ('kyc_last_verified_at', 'Last Verified'),
             ('verify_btn', 'Verify')
