@@ -41,7 +41,7 @@ def report_verification_status_count():
 
 
 @periodic_task(
-    run_every=crontab(minute=0, hour=1),
+    run_every=crontab(minute=15),
     queue=settings.CELERY_PERIODIC_QUEUE,
     acks_late=True,
     ignore_result=True,
