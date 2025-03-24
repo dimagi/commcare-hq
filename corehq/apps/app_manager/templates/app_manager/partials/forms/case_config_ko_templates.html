@@ -227,10 +227,10 @@
         </th>
         <th class="col-sm-1"></th>
         <th data-bind="class: saveOnlyEditedFormFieldsEnabled ? 'col-sm-3' : 'col-sm-4'">
-          <!-- ko if: $data.type() == "user-property" -->
+          <!-- ko if: $data.type && $data.type() == "user-property" -->
             {% trans "User Property" %}
           <!-- /ko -->
-          <!-- ko if: $data.type() == "case-property" -->
+          <!-- ko if: !$data.type || $data.type() == "case-property" -->
             {% trans "Case Property" %}
           <!-- /ko -->
         </th>
@@ -338,10 +338,10 @@
     <div class="add-property">
       <button class="btn btn-primary" data-bind="click: addProperty, visible: $parent.hasPrivilege">
         <i class="fa fa-plus"></i>
-        <!-- ko if: $data.type() == "case-property" -->
+        <!-- ko if: !$data.type || $data.type() == "case-property" -->
           {% trans "Add Case Property" %}
         <!-- /ko -->
-        <!-- ko if: $data.type() == "user-property" -->
+        <!-- ko if: $data.type && $data.type() == "user-property" -->
           {% trans "Add User Property" %}
         <!-- /ko -->
       </button>
