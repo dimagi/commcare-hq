@@ -335,7 +335,7 @@ class TestUserDataLifecycle(TestCase):
         self.addCleanup(user.delete, self.domain.name, deleted_by=None)
         return user
 
-    def test_user_data_is_removed_when_domain_membership_is_deleted(self):
+    def test_user_data_is_soft_deleted_when_domain_membership_is_deleted(self):
         web_user = self._create_web_user('test@example.com')
         self._create_user_data(web_user, self.domain.name, {'favorite_color': 'purple'})
         # test that removing this user's domain membership removes the user data
@@ -345,6 +345,28 @@ class TestUserDataLifecycle(TestCase):
         web_user.delete_domain_membership(self.domain.name)
         self.assertFalse(
             SQLUserData.objects.filter(django_user=web_user.get_django_user(), domain=self.domain.name).exists()
+        )
+        self.assertTrue(
+            SQLUserData.all_objects.filter(
+                django_user=web_user.get_django_user(), domain=self.domain.name, deleted_on__isnull=False
+            ).exists()
+        )
+
+    def test_user_data_is_undeleted_when_domain_membership_is_restored(self):
+        web_user = self._create_web_user('test@example.com')
+        self._create_user_data(web_user, self.domain.name, {'favorite_color': 'purple'})
+        self.assertTrue(
+            SQLUserData.objects.filter(django_user=web_user.get_django_user(), domain=self.domain.name).exists()
+        )
+        record = web_user.delete_domain_membership(self.domain.name, create_record=True)
+        record.undo()
+        self.assertTrue(
+            SQLUserData.objects.filter(django_user=web_user.get_django_user(), domain=self.domain.name).exists()
+        )
+        self.assertFalse(
+            SQLUserData.all_objects.filter(
+                django_user=web_user.get_django_user(), domain=self.domain.name, deleted_on__isnull=False
+            ).exists()
         )
 
     def test_user_data_for_another_domain_is_not_deleted(self):

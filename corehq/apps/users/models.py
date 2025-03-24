@@ -611,8 +611,8 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 del self.domains[i]
                 break
 
-        # cleanup any user data associated with this domain too
-        SQLUserData.objects.filter(user_id=self.user_id, domain=domain).delete()
+        # soft delete any user data associated with this domain too
+        SQLUserData.objects.filter(user_id=self.user_id, domain=domain).update(deleted_on=datetime.now(tz.utc))
 
         if record:
             record.save()
@@ -2941,6 +2941,7 @@ class DomainRemovalRecord(DeleteRecord):
     domain_membership = SchemaProperty(DomainMembership)
 
     def undo(self):
+        SQLUserData.all_objects.filter(user_id=self.user_id, domain=self.domain).update(deleted_on=None)
         user = WebUser.get_by_user_id(self.user_id)
         user.domain_memberships.append(self.domain_membership)
         user.domains.append(self.domain)
