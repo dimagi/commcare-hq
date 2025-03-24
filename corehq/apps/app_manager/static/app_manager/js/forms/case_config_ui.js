@@ -482,7 +482,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
         };
 
         var caseTransaction = function (data, caseConfig, hasPrivilege) {
-            data.title = gettext("Save Questions to Case Properties");
             data.type = 'case-property';
             var self = baseTransaction(caseTransactionMapping, caseConfig.saveButton, 'Form Level', data, caseConfig, hasPrivilege);
 
@@ -508,7 +507,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
 
 
         var usercaseTransaction = function (data, caseConfig) {
-            data.title = gettext("Save Questions to User Properties");
             data.type = 'user-property';
             var self = baseTransaction(usercaseTransactionMapping, caseConfig.saveUsercaseButton, 'User Case Management', data, caseConfig, true);
 

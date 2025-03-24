@@ -200,8 +200,12 @@
         </div>
       </div>
       <i class="fa fa-arrow-right"></i><i class="fa fa-save"></i>
-      {# Location of title is different for regular and advanced forms #}
-      <!-- ko text: $data.title || $root.title --><!-- /ko -->
+      <!-- ko if: !$data.type || $data.type() == "case-property" -->
+      {% trans "Save Questions to Case Properties" %}
+      <!-- /ko -->
+      <!-- ko if: $data.type && $data.type() == "user-property" -->
+        {% trans "Save Questions to User Properties" %}
+      <!-- /ko -->
     </h4>
   </div>
   <div class="panel-body">
