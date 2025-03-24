@@ -26,6 +26,11 @@ def clear_caches_case_data_cleaning(domain, case_type=None):
     for case_type in case_types:
         all_case_properties_by_domain.clear(
             domain=domain,
+            include_parent_properties=False,
+            exclude_deprecated_properties=False,
+        )
+        get_case_property_details.clear(
+            domain=domain,
             case_type=case_type,
         )
 
@@ -91,7 +96,7 @@ def _get_data_type_from_data_dictionary(case_property):
 
 
 def _get_default_label(prop_id):
-    return prop_id.replace('_', ' ').title
+    return prop_id.replace('_', ' ').title()
 
 
 def _get_property_details_from_data_dictionary(domain, case_type):
