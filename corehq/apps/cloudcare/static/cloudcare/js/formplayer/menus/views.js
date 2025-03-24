@@ -733,7 +733,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         events: {
             'click .js-update': 'onUpdate',
             'click .js-reset': 'onReset',
-            'change .header-checkbox': 'onCheckboxChange',
+            'change .column-checkbox': 'onCheckboxChange',
         },
 
         onUpdate: function () {

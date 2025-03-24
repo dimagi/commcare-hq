@@ -2,17 +2,17 @@
 
 <script type="text/template" id="case-list-config-body">
   <div class="popover-content">
-    <form class="header-visibility-form">
+    <form>
       <% _.each(columnNames, function(columnName, index) { %>
         <div class="form-check mb-2">
           <input
             type="checkbox"
-            class="form-check-input header-checkbox"
-            id="header-checkbox-<%= index %>"
+            class="form-check-input column-checkbox"
+            id="column-checkbox-<%= index %>"
             value="<%= index %>"
             data-index="<%= index %>"
             <%= columnVisibility[index] ? 'checked' : '' %> >
-          <label class="form-check-label" for="header-checkbox-<%= index %>">
+          <label class="form-check-label" for="column-checkbox-<%= index %>">
             <%= columnName %>
           </label>
         </div>
