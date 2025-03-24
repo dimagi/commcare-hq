@@ -91,7 +91,7 @@ def _get_data_type_from_data_dictionary(case_property):
 
 
 def _get_default_label(prop_id):
-    return prop_id.replace('_', ' ').title
+    return prop_id.replace('_', ' ').title()
 
 
 def _get_property_details_from_data_dictionary(domain, case_type):
