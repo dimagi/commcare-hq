@@ -132,7 +132,7 @@ def get_user_data_for_api(kyc_user, config):
     """
     return {
         api_field: kyc_user.get(user_data_property)
-        for api_field, user_data_property in config.api_field_to_user_data_map.items()
+        for api_field, user_data_property in config.get_api_field_to_user_data_map_values().items()
         if kyc_user.get(user_data_property) is not None
     }
 

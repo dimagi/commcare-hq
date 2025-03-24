@@ -97,7 +97,7 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
             'kyc_verification_status': kyc_user.get('kyc_verification_status'),
             'kyc_last_verified_at': kyc_user.get('kyc_verification_status'),
         }
-        for field in self.kyc_config.api_field_to_user_data_map.values():
+        for field in self.kyc_config.get_api_field_to_user_data_map_values().values():
             value = kyc_user.get(field)
             if not value:
                 row_data['has_invalid_data'] = True

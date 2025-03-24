@@ -125,6 +125,17 @@ class KycConfig(models.Model):
                 for user_obj in CommCareCase.objects.get_cases(obj_ids, self.domain)
             ]
 
+    def get_api_field_to_user_data_map_values(self):
+        map_vals = {}
+        for provider_field, field in self.api_field_to_user_data_map.items():
+            if isinstance(field, dict):
+                if 'value' not in field:
+                    continue
+                map_vals[provider_field] = field['value']
+            else:
+                map_vals[provider_field] = field
+        return map_vals
+
 
 class KycUser:
 
