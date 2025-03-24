@@ -140,7 +140,7 @@ class TestKycVerificationTableView(BaseTestKycView):
         super().setUpClass()
         cls.kyc_mapping = {
             # API field: User data
-            'first_name': 'first_name',
+            'first_name': 'name',
             'last_name': 'last_name',
             'email': 'email',
             'phone_number': 'phone_number',
@@ -166,6 +166,7 @@ class TestKycVerificationTableView(BaseTestKycView):
             last_name='Doe',
             email='jdoe@example.org',
             user_data={
+                'name': 'Johnny',
                 'phone_number': '1234567890',
                 'national_id_number': '1234567890',
                 'street_address': '123 Main St',
@@ -192,7 +193,7 @@ class TestKycVerificationTableView(BaseTestKycView):
                 data={
                     'first_name': 'Bob',
                     'last_name': 'Smith',
-                    'email': 'bsmith@example.org',
+                    'home_email': 'bsmith@example.org',
                     'phone_number': '0987654321',
                     'national_id_number': '0987654321',
                     'street_address': '456 Main St',
@@ -239,16 +240,18 @@ class TestKycVerificationTableView(BaseTestKycView):
                 assert row == {
                     'id': self.user2.user_id,
                     'has_invalid_data': True,
-                    'first_name': 'Jane',
-                    'last_name': 'Doe',
                     'kyc_verification_status': None,
                     'kyc_last_verified_at': None,
+                    'name': 'Jane Doe',
+                    'last_name': 'Doe',
                 }
             else:
                 assert row == {
                     'id': self.user1.user_id,
                     'has_invalid_data': False,
-                    'first_name': 'John',
+                    'kyc_verification_status': None,
+                    'kyc_last_verified_at': None,
+                    'name': 'Johnny',
                     'last_name': 'Doe',
                     'email': 'jdoe@example.org',
                     'phone_number': '1234567890',
@@ -257,8 +260,6 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'city': 'Anytown',
                     'post_code': '12345',
                     'country': 'Anyplace',
-                    'kyc_verification_status': None,
-                    'kyc_last_verified_at': None,
                 }
 
     @flag_enabled('KYC_VERIFICATION')
@@ -268,7 +269,7 @@ class TestKycVerificationTableView(BaseTestKycView):
         self.kyc_config.api_field_to_user_data_map.update({
             'first_name': 'first_name',
             'last_name': 'last_name',
-            'email': 'email',
+            'email': 'home_email',
         })
         self.kyc_config.save()
 
@@ -280,26 +281,26 @@ class TestKycVerificationTableView(BaseTestKycView):
                 assert row == {
                     'id': self.case_list[1].case_id,
                     'has_invalid_data': True,
-                    'first_name': 'Foo',
-                    'last_name': 'Bar',
                     'kyc_verification_status': None,
                     'kyc_last_verified_at': None,
+                    'first_name': 'Foo',
+                    'last_name': 'Bar',
                 }
             else:
                 assert row == {
                     'id': self.case_list[0].case_id,
                     'has_invalid_data': False,
+                    'kyc_verification_status': None,
+                    'kyc_last_verified_at': None,
                     'first_name': 'Bob',
                     'last_name': 'Smith',
-                    'email': 'bsmith@example.org',
+                    'home_email': 'bsmith@example.org',
                     'phone_number': '0987654321',
                     'national_id_number': '0987654321',
                     'street_address': '456 Main St',
                     'city': 'Sometown',
                     'post_code': '54321',
                     'country': 'Someplace',
-                    'kyc_verification_status': None,
-                    'kyc_last_verified_at': None,
                 }
 
 

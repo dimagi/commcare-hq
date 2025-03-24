@@ -1,4 +1,4 @@
-'use strict';
+
 /**
  * Model for a column in the Display Properties section of case list/detail.
  *

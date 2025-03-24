@@ -33,7 +33,7 @@ hqDefine("app_manager/js/forms/custom_instances", [
         self.addInstance = function (instance) {
             instance = instance || {instanceId: null, instancePath: null};
             self.customInstances.push(
-                customInstance(instance.instanceId, instance.instancePath)
+                customInstance(instance.instanceId, instance.instancePath),
             );
         };
 

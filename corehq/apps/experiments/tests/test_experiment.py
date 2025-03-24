@@ -56,8 +56,8 @@ def test_experiment_timing_metrics():
 
     sleep2 = experiment(
         sleeper,
-        old_args={"seconds": .0011},
-        new_args={"seconds": .002},
+        old_args={"seconds": .0001},
+        new_args={"seconds": .001},
     )
     with capture_metrics() as metrics, gc_disabled():
         sleep2()
@@ -68,7 +68,7 @@ def test_experiment_timing_metrics():
         'commcare.experiment.time.duration:lt_0.01s': 1,
         'commcare.experiment.diff.campaign:test': 1,
         f'commcare.experiment.diff.path:{__name__}.{sleeper.__qualname__}': 1,
-        'commcare.experiment.diff.duration:lt_200%': 1,
+        'commcare.experiment.diff.duration:over_200%': 1,
         'commcare.experiment.diff.notify:none': 1,
     }
 

@@ -17,15 +17,17 @@
   </div>
   <div class="offcanvas-body">
     <div
+      id="hq-hx-pinned-filters"
       hx-get="{% url "data_cleaning_pinned_filter_form" domain session_id %}"
-      hx-trigger="load"
+      hx-trigger="load, dcPinnedFilterRefresh"
     >
       {% include "data_cleaning/partials/loading_indicator.html" %}
     </div>
     <div
+      id="hq-hx-active-filters"
       class="mt-3"
-      hx-get="{% url "data_cleaning_column_filter_form" domain session_id %}"
-      hx-trigger="load"
+      hx-get="{% url "data_cleaning_manage_filters" domain session_id %}"
+      hx-trigger="load, dcFilterRefresh"
     >
       {% include "data_cleaning/partials/loading_indicator.html" %}
     </div>
@@ -48,7 +50,12 @@
     ></button>
   </div>
   <div class="offcanvas-body">
-    <p>todo</p>
+    <div
+      hx-get="{% url "data_cleaning_manage_columns_form" domain session_id %}"
+      hx-trigger="load"
+    >
+      {% include "data_cleaning/partials/loading_indicator.html" %}
+    </div>
   </div>
 </div>
 
