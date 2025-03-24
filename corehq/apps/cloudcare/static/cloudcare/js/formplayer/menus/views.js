@@ -679,14 +679,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
         initialize: function (attributes) {
             if (attributes) {
-                this.caseListId = attributes.caseListId;
-                if (this.caseListId && localStorage.getItem(this.caseListId)) {
-                    const savedModel = JSON.parse(localStorage.getItem(this.caseListId));
+                this.configStorageId = attributes.configStorageId;
+                if (this.configStorageId && localStorage.getItem(this.configStorageId)) {
+                    const savedModel = JSON.parse(localStorage.getItem(this.configStorageId));
                     const columnNameMismatch = attributes.columnNames &&
                         (!savedModel.columnNames ||
                             savedModel.columnNames.length !== attributes.columnNames.length);
                     if (columnNameMismatch) {
-                        localStorage.removeItem(this.caseListId);
+                        localStorage.removeItem(this.configStorageId);
                         this.set('columnNames', attributes.columnNames);
                         this.set('columnVisibility', Array(attributes.columnNames.length).fill(true));
                     } else {
@@ -706,9 +706,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
 
         saveToLocalStorage: function () {
-            if (this.caseListId) {
+            if (this.configStorageId) {
                 const modelData = this.toJSON();
-                localStorage.setItem(this.caseListId, JSON.stringify(modelData));
+                localStorage.setItem(this.configStorageId, JSON.stringify(modelData));
             }
         },
     });
@@ -819,6 +819,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             }
         },
 
+        getConfigStorageId: function (user) {
+            const urlObject = formplayerUtils.currentUrlToObject();
+            const configStorageId = `${urlObject.appId}:${JSON.stringify(urlObject.selections)}:${user.username}`;
+            // hash?
+            return configStorageId;
+        },
+
         initialize: function (options) {
             const self = this,
                 sidebarNoItemsText = gettext("Please perform a search.");
@@ -829,9 +836,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             self.headers = options.triggerEmptyCaseList ? [] : this.options.headers;
             // needs to include appId, moduleId and userId. Should be hashed
             const user = UsersModels.getCurrentUser();
-            const urlObject = formplayerUtils.currentUrlToObject();
-            const caseListId = `${urlObject.appId}:${JSON.stringify(urlObject.selections)}:${user.username}`;
-            self.columnConfigModel = new ColumnConfigModel({columnNames: self.headers, caseListId: caseListId});
+            const configStorageId = this.getConfigStorageId(user);
+            self.columnConfigModel = new ColumnConfigModel({columnNames: self.headers, configStorageId: configStorageId});
             self.redoLast = options.redoLast;
             if (sessionStorage.selectedValues !== undefined) {
                 const parsedSelectedValues = JSON.parse(sessionStorage.selectedValues)[sessionStorage.queryKey];
