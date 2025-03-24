@@ -26,6 +26,11 @@ def clear_caches_case_data_cleaning(domain, case_type=None):
     for case_type in case_types:
         all_case_properties_by_domain.clear(
             domain=domain,
+            include_parent_properties=False,
+            exclude_deprecated_properties=False,
+        )
+        get_case_property_details.clear(
+            domain=domain,
             case_type=case_type,
         )
 
