@@ -176,9 +176,9 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
         function isActionPossibleForCheckedItems(action, checkedItems) {
             for (const item of checkedItems) {
                 const isQueued = item.getAttribute('is_queued');
-                if (isQueued == 'false' && action == 'cancel') {
+                if (isQueued === 'false' && action === 'cancel') {
                     return false;
-                } else if (isQueued == 'true' && ['resend', 'requeue'].includes(action)) {
+                } else if (isQueued === 'true' && ['resend', 'requeue'].includes(action)) {
                     return false;
                 }
             }
@@ -279,8 +279,8 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
             if (selectAllCheckbox.checked) {
                 toggleItems(true);
                 selectedPageInfo.classList.remove('hide');
-                const pageSize = document.querySelectorAll("#report_table_repeat_record_report tbody tr").length
-                document.getElementById("selected-page-count").innerText = pageSize
+                const pageSize = document.querySelectorAll("#report_table_repeat_record_report tbody tr").length;
+                document.getElementById("selected-page-count").innerText = pageSize;
                 if (pageSize >= initialPageData.get('total')) {
                     selectTableButton.classList.add('hide');
                 } else {
@@ -296,7 +296,7 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
             updateActionButtons();
         });
 
-        $('#report-content').on('click', '.record-checkbox', function() {
+        $('#report-content').on('click', '.record-checkbox', function () {
             resetTableSelections();
             updateActionButtons();
         });
@@ -313,17 +313,17 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
             updateActionButtons();
         });
 
-        $("#select-table-button").click(function() {
+        $("#select-table-button").click(function () {
             selectedEntireTable = true;
             selectedPageInfo.classList.add('hide');
             selectedTableInfo.classList.remove('hide');
-            updateActionButtons()
+            updateActionButtons();
         });
 
-        $("#clear-table-selection").click(function() {
+        $("#clear-table-selection").click(function () {
             toggleItems(false);
             resetTableSelections();
-            updateActionButtons()
+            updateActionButtons();
         });
 
         $('body').on('DOMNodeInserted', 'tbody', function () {
@@ -342,7 +342,7 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
 
         function updateActionButtons() {
             const checkedRecords = getCheckedRecords();
-            if (checkedRecords.length == 0) {
+            if (checkedRecords.length === 0) {
                 resendButton.disabled = true;
                 requeueButton.disabled = true;
                 cancelButton.disabled = true;
@@ -350,7 +350,7 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
             }
 
             const containsQueuedRecords = checkedRecords.some(record => {
-                return record.getAttribute('is_queued') == true;
+                return record.getAttribute('is_queued') === true;
             });
 
             // default to no-op on cancelling a batch of records
