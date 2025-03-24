@@ -806,6 +806,16 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                         caseListConfigViewPopover.hide();
                     }
                 }, true);
+
+                configButton[0].addEventListener('shown.bs.popover', function () {
+                    const popover = document.querySelector('.popover');
+                    if (popover) {
+                        const firstCheckbox = popover.querySelector('.column-checkbox');
+                        if (firstCheckbox) {
+                            firstCheckbox.focus();
+                        }
+                    }
+                });
             }
         },
 
