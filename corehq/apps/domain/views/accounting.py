@@ -837,7 +837,7 @@ class WireInvoiceView(View):
         return super(WireInvoiceView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        emails = request.POST.get('emails', []).split()
+        emails = self.validate_emails(request)
         balance = Decimal(request.POST.get('customPaymentAmount', 0))
 
         from corehq.apps.accounting.utils.account import (
@@ -856,6 +856,27 @@ class WireInvoiceView(View):
             return json_response({'error': {'message', e}})
 
         return json_response({'success': True})
+
+    @staticmethod
+    def validate_emails(request):
+        contact_email = request.POST.get('email_to', '').strip()
+        cc_emails = request.POST.get('email_cc', '').replace(' ', '').split(',')
+
+        all_emails = [email for email in cc_emails if email]
+        if contact_email:
+            all_emails.append(contact_email)
+
+        invalid_emails = []
+        for email in all_emails:
+            try:
+                validate_email(email)
+            except ValidationError:
+                invalid_emails.append(email)
+        if invalid_emails:
+            message = _('The following e-mail addresses contain invalid characters, or are missing required '
+                        'characters: ') + ', '.join(['"{}"'.format(email) for email in invalid_emails])
+            raise ValidationError(message=message)
+        return all_emails
 
 
 class BillingStatementPdfView(View):
