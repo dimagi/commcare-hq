@@ -132,10 +132,8 @@ class InvoiceReminder(UnpaidInvoiceAction):
     def _send_reminder_email(invoice, communication_model, context):
         if invoice.is_customer_invoice:
             account_name = invoice.account.name
-            bcc = None
         else:
             account_name = invoice.get_domain()
-            bcc = [settings.GROWTH_EMAIL]
 
         subject = _(
             "Your CommCare Billing Statement for {account_name} is due in {num_days} days"
@@ -147,7 +145,6 @@ class InvoiceReminder(UnpaidInvoiceAction):
             render_to_string('accounting/email/invoice_reminder.html', context),
             render_to_string('accounting/email/invoice_reminder.txt', context),
             cc=[settings.ACCOUNTS_EMAIL],
-            bcc=bcc,
             email_from=get_dimagi_from_email())
         communication_model.objects.create(
             invoice=invoice,
