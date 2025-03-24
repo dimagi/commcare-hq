@@ -1,5 +1,5 @@
-List Cases (Version 3+)
-=======================
+List Cases (Version 0.3+)
+=========================
 
 Overview
 --------
@@ -11,7 +11,7 @@ Overview
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/v0.5/case/
+    https://www.commcarehq.org/a/[domain]/api/case/v1/
 
 **Authentication**
     For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
@@ -149,7 +149,7 @@ In addition to all `Case Data API <case-data.rst>`_ parameters, you may use the 
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/v0.5/case/?format=xml
+    https://www.commcarehq.org/a/[domain]/api/case/v1/?format=xml
 
 **Sample XML Output**
 

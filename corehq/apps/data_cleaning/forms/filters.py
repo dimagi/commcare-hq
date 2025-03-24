@@ -33,7 +33,7 @@ class DynamicMultipleChoiceField(forms.MultipleChoiceField):
         return True
 
 
-class AddColumnFilterForm(forms.Form):
+class AddFilterForm(forms.Form):
     prop_id = forms.ChoiceField(
         label=gettext_lazy("Case Property"),
         required=False
@@ -100,7 +100,7 @@ class AddColumnFilterForm(forms.Form):
             (p, p) for p in sorted(property_details.keys()) if p not in EXCLUDED_FILTERED_PROPERTIES
         ]
 
-        initial_prop_id = self._get_initial_value('prop_id')
+        initial_prop_id = self.data.get('prop_id')
         is_initial_editable = (
             property_details[initial_prop_id]['is_editable'] if initial_prop_id else True
         )
@@ -108,7 +108,7 @@ class AddColumnFilterForm(forms.Form):
         offcanvas_selector = "#offcanvas-filter"
 
         alpine_data_model = {
-            "dataType": self._get_initial_value(
+            "dataType": self.data.get(
                 'data_type', DataType.CASE_CHOICES[0][0]
             ),
             "propId": initial_prop_id,
@@ -128,16 +128,16 @@ class AddColumnFilterForm(forms.Form):
             "multiSelectDataTypes": DataType.FILTER_CATEGORY_DATA_TYPES[
                 DataType.FILTER_CATEGORY_MULTI_SELECT
             ],
-            "textMatchType": self._get_initial_value(
+            "textMatchType": self.data.get(
                 'text_match_type', FilterMatchType.TEXT_CHOICES[0][0]
             ),
-            "numberMatchType": self._get_initial_value(
+            "numberMatchType": self.data.get(
                 'number_match_type', FilterMatchType.NUMBER_CHOICES[0][0]
             ),
-            "dateMatchType": self._get_initial_value(
+            "dateMatchType": self.data.get(
                 'date_match_type', FilterMatchType.DATE_CHOICES[0][0]
             ),
-            "multiSelectMatchType": self._get_initial_value(
+            "multiSelectMatchType": self.data.get(
                 'multi_select_match_type', FilterMatchType.MULTI_SELECT_CHOICES[0][0]
             ),
             "matchTypesWithNoValue": [
@@ -285,11 +285,6 @@ class AddColumnFilterForm(forms.Form):
                 ),
                 x_data=json.dumps(alpine_data_model),
             ),
-        )
-
-    def _get_initial_value(self, field_name, default_value=None):
-        return self.data.get(
-            field_name, self.fields[field_name].initial or default_value
         )
 
     def clean_prop_id(self):
