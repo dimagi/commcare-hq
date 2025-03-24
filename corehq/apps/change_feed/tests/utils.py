@@ -16,7 +16,7 @@ def get_test_kafka_consumer(*topics):
     with trap_extra_setup(KafkaUnavailableError):
         configs = {
             'bootstrap_servers': settings.KAFKA_BROKERS,
-            'consumer_timeout_ms': 100,
+            'consumer_timeout_ms': 500,
             'enable_auto_commit': False,
         }
         consumer = KafkaConsumer(*topics, **configs)
