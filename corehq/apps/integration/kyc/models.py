@@ -136,6 +136,14 @@ class KycConfig(models.Model):
                 map_vals[provider_field] = field
         return map_vals
 
+    def is_sensitive_field(self, field):
+        field_data = self.api_field_to_user_data_map[field]
+        return (
+            isinstance(field_data, dict)
+            and 'is_sensitive' in field_data
+            and field_data['is_sensitive'] in (True, 'true')
+        )
+
 
 class KycUser:
 
