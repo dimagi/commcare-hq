@@ -126,6 +126,11 @@ class KycConfig(models.Model):
             ]
 
     def get_api_field_to_user_data_map_values(self):
+        """
+        The dict values for `api_field_to_user_data_map` can either contain a `str` value
+        or a dict including a 'value' key. This method parses through both formats and returns a dict
+        with only the mapping values.
+        """
         map_vals = {}
         for provider_field, field in self.api_field_to_user_data_map.items():
             if isinstance(field, dict):
