@@ -336,7 +336,7 @@
       {% trans "No properties will be saved" %}
     </div>
     <div class="add-property">
-      <button class="btn btn-default" data-bind="click: addProperty, visible: $parent.hasPrivilege">
+      <button class="btn btn-primary" data-bind="click: addProperty, visible: $parent.hasPrivilege">
         <i class="fa fa-plus"></i>
         <!-- ko if: $data.type() == "case-property" -->
           {% trans "Add Case Property" %}
