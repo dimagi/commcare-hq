@@ -214,10 +214,11 @@ class DomainInvoiceFactory(object):
 
 class DomainWireInvoiceFactory(object):
 
-    def __init__(self, domain, date_start=None, date_end=None, contact_emails=None, account=None):
+    def __init__(self, domain, date_start=None, date_end=None, contact_emails=None, cc_emails=None, account=None):
         self.date_start = date_start
         self.date_end = date_end
         self.contact_emails = contact_emails
+        self.cc_emails = cc_emails
         self.domain = ensure_domain_instance(domain)
         self.logged_throttle_error = False
         if self.domain is None:
@@ -298,7 +299,8 @@ class DomainWireInvoiceFactory(object):
             invoice_items=serializable_items,
             date_start=date_start,
             date_end=date_end,
-            contact_emails=self.contact_emails
+            contact_emails=self.contact_emails,
+            cc_emails=self.cc_emails,
         )
 
 

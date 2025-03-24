@@ -694,7 +694,7 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
 
     def post(self, request, *args, **kwargs):
         try:
-            emails = self.validate_emails(request)
+            contact_email, cc_emails = self.validate_emails(request)
             amount = self.validate_amount(request)
             date_start, date_end = self.validate_daterange(request)
             unit_cost = self.validate_unit_cost(request)
@@ -704,7 +704,8 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
 
         credit_label = request.POST.get('credit_label', 'General Credits')
 
-        wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
+        wire_invoice_factory = DomainWireInvoiceFactory(
+            request.domain, contact_emails=[contact_email], cc_emails=cc_emails)
         try:
             wire_invoice_factory.create_wire_credits_invoice(
                 amount, credit_label, unit_cost, quantity, date_start, date_end
@@ -716,12 +717,15 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
 
     @staticmethod
     def validate_emails(request):
-        emails = request.POST.get('emails', [])
-        if len(emails):
-            emails = emails.replace(' ', '').split(',')
+        contact_email = request.POST.get('email_to', '').strip()
+        cc_emails = request.POST.get('email_cc', '').replace(' ', '').split(',')
+
+        all_emails = [email for email in cc_emails if email]
+        if contact_email:
+            all_emails.append(contact_email)
 
         invalid_emails = []
-        for email in emails:
+        for email in all_emails:
             try:
                 validate_email(email)
             except ValidationError:
@@ -730,7 +734,7 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
             message = _('The following e-mail addresses contain invalid characters, or are missing required '
                         'characters: ') + ', '.join(['"{}"'.format(email) for email in invalid_emails])
             raise ValidationError(message=message)
-        return emails
+        return contact_email, cc_emails
 
     @staticmethod
     def validate_amount(request):

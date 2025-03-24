@@ -24,7 +24,8 @@ hqDefine('accounting/js/payment_method_handler', [
         });
 
         self.isWire = ko.observable(opts.isWire || false);
-        self.wireEmails = ko.observable('');
+        self.wireEmail = ko.observable('');
+        self.wireAdditionalEmails = ko.observable('');
 
         self.paymentIsComplete = ko.observable(false);
         self.paymentIsNotComplete = ko.computed(function () {
@@ -152,7 +153,7 @@ hqDefine('accounting/js/payment_method_handler', [
         });
 
         if (opts.wire_email) {
-            self.wireEmails(opts.wire_email);
+            self.wireEmail(opts.wire_email);
         }
 
         self.mustCreateNewCard = ko.computed(function () {

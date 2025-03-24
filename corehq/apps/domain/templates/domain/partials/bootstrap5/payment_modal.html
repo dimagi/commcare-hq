@@ -205,15 +205,29 @@
             </p>
             <div class="form-group">  {# todo B5: css-form-group #}
               <label class="form-label col-md-3">
-                {% trans 'Invoice Recipients' %}
+                {% trans 'Email To' %}
               </label>
               <div class="col-md-9">
                 <input type="text"
-                       data-bind="value: wireEmails"
+                       data-bind="value: wireEmail"
                        size="20"
-                       name="emails"
+                       name="email_to"
                        class="form-control"
-                       placeholder="jane@gmail.com, john@gmail.com" />
+                       placeholder="jane@example.com" />
+              </div>
+            </div>
+
+            <div class="form-group">  {# todo B5: css-form-group #}
+              <label class="control-label col-md-3">
+                {% trans 'Additional Recipients' %}
+              </label>
+              <div class="col-md-9">
+                <input type="text"
+                       data-bind="value: wireAdditionalEmails"
+                       size="20"
+                       name="email_cc"
+                       class="form-control"
+                       placeholder="john@example.com, bob@example.com" />
               </div>
             </div>
           </fieldset>
