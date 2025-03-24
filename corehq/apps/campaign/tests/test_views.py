@@ -405,6 +405,19 @@ class TestEditWidget(TestDashboardWidgetView):
         assert saved_report_widget.title == 'New Title'
         assert saved_report_widget.dashboard_tab == DashboardTab.MOBILE_WORKERS
 
+    @flag_enabled('CAMPAIGN_DASHBOARD')
+    def test_edit_nonexistent_widget(self):
+        response = self._make_request(
+            query_data={
+                'widget_type': WidgetType.MAP,
+                'widget_id': 99999,
+            },
+            headers={'hq-hx-action': self.HQ_ACTION_EDIT_WIDGET},
+            is_logged_in=True,
+        )
+
+        assert response.status_code == 404
+
 
 class TestGetGeoCaseProperties(BaseTestCampaignView):
     urlname = 'get_geo_case_properties'
