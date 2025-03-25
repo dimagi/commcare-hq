@@ -5,12 +5,19 @@
  * each map to a display property column and have
  * sorting-related attributes like direction.
  */
-hqDefine("app_manager/js/details/sort_rows", function () {
-    var uiElementSelect = hqImport('hqwebapp/js/ui_elements/bootstrap3/ui-element-select');
-
+hqDefine("app_manager/js/details/sort_rows", [
+    "jquery",
+    "knockout",
+    "hqwebapp/js/ui_elements/bootstrap3/ui-element-select",
+    "app_manager/js/details/utils",
+], function (
+    $,
+    ko,
+    uiElementSelect,
+    Utils,
+) {
     var sortRow = function (params, saveButton) {
-        var Utils = hqImport('app_manager/js/details/utils'),
-            self = {};
+        var self = {};
         params = params || {};
 
         self.selectField = uiElementSelect.new(params.properties).val(typeof params.field !== 'undefined' ? params.field : "");
@@ -18,7 +25,7 @@ hqDefine("app_manager/js/details/sort_rows", function () {
         self.sortCalculation = ko.observable(typeof params.sortCalculation !== 'undefined' ? params.sortCalculation : "");
 
         self.showWarning = ko.observable(false);
-        self.warningText = hqImport('app_manager/js/details/utils').fieldFormatWarningMessage;
+        self.warningText = Utils.fieldFormatWarningMessage;
         self.hasValidPropertyName = function () {
             let name = self.selectField.val();
             // changes here should also be made in
