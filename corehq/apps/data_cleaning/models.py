@@ -137,10 +137,6 @@ class BulkEditSession(models.Model):
             value=value,
         )
 
-    def remove_filter(self, filter_id):
-        self.filters.get(filter_id=filter_id).delete()
-        remaining_ids = self.filters.values_list('filter_id', flat=True)
-        self.update_filter_order(remaining_ids)
 
     def update_filter_order(self, filter_ids):
         """
@@ -153,6 +149,11 @@ class BulkEditSession(models.Model):
             active_filter = self.filters.get(filter_id=filter_id)
             active_filter.index = index
             active_filter.save()
+
+    def remove_filter(self, filter_id):
+        self.filters.get(filter_id=filter_id).delete()
+        remaining_ids = self.filters.values_list('filter_id', flat=True)
+        self.update_filter_order(remaining_ids)
 
     def get_queryset(self):
         query = CaseSearchES().domain(self.domain).case_type(self.identifier)
