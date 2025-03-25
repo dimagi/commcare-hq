@@ -154,7 +154,7 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
 
         $('#select-all-checkbox').on('click', function () {
             if (selectAllCheckbox.checked) {
-                toggleItems(true);
+                checkAllRows();
                 selectedPageInfo.classList.remove('hide');
                 const pageSize = document.querySelectorAll("#report_table_repeat_record_report tbody tr").length;
                 document.getElementById("selected-page-count").innerText = pageSize;
@@ -164,7 +164,7 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
                     selectTableButton.classList.remove('hide');
                 }
             } else {
-                toggleItems(false);
+                uncheckAllRows();
                 selectedPageInfo.classList.add('hide');
                 // just in case
                 selectedTableInfo.classList.add('hide');
@@ -179,13 +179,13 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
         });
 
         $('#report-content').on('click', '#report_table_repeat_record_report_length', function () {
-            toggleItems(false);
+            uncheckAllRows();
             resetTableSelections();
             updateActionButtons();
         });
 
         $('#report-content').on('click', '#report_table_repeat_record_report_paginate', function () {
-            toggleItems(false);
+            uncheckAllRows();
             resetTableSelections();
             updateActionButtons();
         });
@@ -198,7 +198,7 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
         });
 
         $("#clear-table-selection").click(function () {
-            toggleItems(false);
+            uncheckAllRows();
             resetTableSelections();
             updateActionButtons();
         });
@@ -330,10 +330,18 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
             $('#not-allowed').addClass('hide');
         }
 
-        function toggleItems(checked) {
+        function checkAllRows() {
             for (const item of items) {
                 if (item.type === 'checkbox') {
-                    item.checked = checked;
+                    item.checked = true;
+                }
+            }
+        }
+
+        function uncheckAllRows() {
+            for (const item of items) {
+                if (item.type === 'checkbox') {
+                    item.checked = false;
                 }
             }
         }

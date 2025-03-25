@@ -28,7 +28,7 @@
 @@ -155,19 +155,19 @@
          $('#select-all-checkbox').on('click', function () {
              if (selectAllCheckbox.checked) {
-                 toggleItems(true);
+                 checkAllRows();
 -                selectedPageInfo.classList.remove('hide');
 +                selectedPageInfo.classList.remove('d-none');
                  const pageSize = document.querySelectorAll("#report_table_repeat_record_report tbody tr").length;
@@ -41,7 +41,7 @@
 +                    selectTableButton.classList.remove('d-none');
                  }
              } else {
-                 toggleItems(false);
+                 uncheckAllRows();
 -                selectedPageInfo.classList.add('hide');
 +                selectedPageInfo.classList.add('d-none');
                  // just in case
@@ -107,8 +107,8 @@
 +            $('#not-allowed').addClass('d-none');
          }
  
-         function toggleItems(checked) {
-@@ -369,8 +369,8 @@
+         function checkAllRows() {
+@@ -377,8 +377,8 @@
          function resetTableSelections() {
              selectedEntireTable = false;
              selectAllCheckbox.checked = false;
