@@ -1,14 +1,7 @@
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 
-from corehq.motech.repeaters.const import (
-    RECORD_CANCELLED_STATE,
-    RECORD_EMPTY_STATE,
-    RECORD_FAILURE_STATE,
-    RECORD_INVALIDPAYLOAD_STATE,
-    RECORD_PENDING_STATE,
-    RECORD_SUCCESS_STATE,
-)
+from corehq.motech.repeaters.const import RECORD_QUEUED_STATES, State
 from corehq.util.timezones.conversions import ServerTime
 
 MISSING_VALUE = '---'
@@ -37,6 +30,8 @@ class RepeatRecordDisplay:
 
     @property
     def next_check(self):
+        if self.record.state not in RECORD_QUEUED_STATES:
+            return '---'
         if self.record.repeater.is_paused:
             return _('Paused')
         if self.process_repeaters_enabled:
@@ -60,7 +55,8 @@ class RepeatRecordDisplay:
 
     @property
     def state(self):
-        return format_html('<span class="label label-{}">{}</span>', *_get_state_tuple(self.record))
+        label_cls, label_text = _get_state_tuple(self.record)
+        return format_html(f'<span class="label label-{label_cls}">{label_text}</span>')
 
     def _format_date(self, date):
         if not date:
@@ -69,26 +65,12 @@ class RepeatRecordDisplay:
 
 
 def _get_state_tuple(record):
-    if record.state == RECORD_SUCCESS_STATE:
-        label_cls = 'success'
-        label_text = _('Success')
-    elif record.state == RECORD_PENDING_STATE:
-        label_cls = 'warning'
-        label_text = _('Pending')
-    elif record.state == RECORD_CANCELLED_STATE:
-        label_cls = 'danger'
-        label_text = _('Cancelled')
-    elif record.state == RECORD_FAILURE_STATE:
-        label_cls = 'danger'
-        label_text = _('Failed')
-    elif record.state == RECORD_EMPTY_STATE:
-        label_cls = 'success'
-        label_text = _('Empty')
-    elif record.state == RECORD_INVALIDPAYLOAD_STATE:
-        label_cls = 'danger'
-        label_text = _('Invalid Payload')
-    else:
-        label_cls = ''
-        label_text = ''
-
-    return label_cls, label_text
+    state_map = {
+        State.Success: ('success', _('Success')),
+        State.Pending: ('warning', _('Pending')),
+        State.Cancelled: ('danger', _('Cancelled')),
+        State.Fail: ('danger', _('Failed')),
+        State.Empty: ('success', _('Empty')),
+        State.InvalidPayload: ('danger', _('Invalid payload')),
+    }
+    return state_map.get(record.state, ('', ''))

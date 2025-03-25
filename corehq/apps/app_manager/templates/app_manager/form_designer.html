@@ -1,18 +1,28 @@
-{% extends 'app_manager/apps_base.html'%}
+{% extends 'app_manager/apps_base.html' %}
 {% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load xforms_extras %}
 
-{% block head %}{{ block.super }}
+{% block head %}
+  {{ block.super }}
   {% if not vellum_debug %}
-    <link href="{% static "app_manager/js/vellum/style.css" %}" type="text/css" rel="stylesheet"/>
+    <link
+      href="{% static "app_manager/js/vellum/style.css" %}"
+      type="text/css"
+      rel="stylesheet"
+    />
   {% elif vellum_debug == "dev-min" %}
-    <link href="{% static 'formdesigner/_build/style.css' %}" type="text/css" rel="stylesheet"/>
+    <link
+      href="{% static 'formdesigner/_build/style.css' %}"
+      type="text/css"
+      rel="stylesheet"
+    />
   {% endif %}
 {% endblock %}
 
-{% block stylesheets %}{{ block.super }}
+{% block stylesheets %}
+  {{ block.super }}
   <style type="text/css">
     .hq-container {
       padding-bottom: 0;
@@ -21,7 +31,8 @@
   </style>
 {% endblock %}
 
-{% block js %}{{ block.super }}
+{% block js %}
+  {{ block.super }}
   {# This is fine as an inline script; it'll be removed once form designer is migrated to RequireJS #}
   <script>
     /*
@@ -59,14 +70,23 @@
   <div id="formdesigner" class="clearfix loading"></div>
 
   <script type="text/html" id="js-fd-form-actions">
-    <div class="btn-group pull-right">
-      <a class="btn btn-form-action track-usage-link" href="{% url "app_form_summary" domain app.id %}"
-         data-category="App Builder" data-action="Form Action Link" data-label="App Summary"
+    <div class="pull-right">
+      <!-- B5 TODO: Replace btn-form-action with bootstrap 5 utils after migration -->
+      <a
+        class="btn btn-form-action track-usage-link custom-button-style"
+        href="{% url 'app_form_summary' domain app.id %}"
+        data-category="App Builder"
+        data-action="Form Action Link"
+        data-label="App Summary"
       >
         <i class="fa-regular fa-rectangle-list"></i> {% trans 'App Summary' %}
       </a>
-      <a class="btn btn-form-action track-usage-link" href="{% url "view_form" domain app.id form.unique_id %}"
-         data-category="App Builder" data-action="Form Action Link" data-label="Manage Case"
+      <a
+        class="btn btn-form-action track-usage-link custom-button-style"
+        href="{% url 'view_form' domain app.id form.unique_id %}"
+        data-category="App Builder"
+        data-action="Form Action Link"
+        data-label="Manage Case"
       >
         <i class="fa fa-cog"></i> {% trans 'Manage Case' %}
       </a>
@@ -74,11 +94,14 @@
   </script>
 
   <script type="text/html" id="fd-hq-helptext-registration">
-    <h4>{% blocktrans %}This is a <i class="fcc fcc-app-createform"></i> Registration Form.{% endblocktrans %}</h4>
-    <p>
+    <h4>
       {% blocktrans %}
-        Users will fill it out when they need to <strong>add</strong> a new item to the application.
+        This is a <i class="fcc fcc-app-createform"></i> Registration Form.
       {% endblocktrans %}
+    </h4>
+    <p>
+      {% blocktrans %} Users will fill it out when they need to
+      <strong>add</strong> a new item to the application. {% endblocktrans %}
     </p>
   </script>
 
@@ -87,20 +110,26 @@
   </script>
 
   <script type="text/html" id="fd-hq-helptext-followup">
-    <h4>{% blocktrans %}This is a <i class="fcc fcc-app-updateform"></i> Followup Form.{% endblocktrans %}</h4>
+    <h4>
+      {% blocktrans %}This is a <i class="fcc fcc-app-updateform"></i> Followup
+      Form.{% endblocktrans %}
+    </h4>
     <p>
-      {% blocktrans %}
-        Users will fill it out when they need to <strong>update</strong> an item that has already been added to the application.
-      {% endblocktrans %}
+      {% blocktrans %} Users will fill it out when they need to
+      <strong>update</strong> an item that has already been added to the
+      application. {% endblocktrans %}
     </p>
   </script>
 
   <script type="text/html" id="fd-hq-helptext-survey">
-    <h4>{% blocktrans %}This is a <i class="fa-regular fa-file"></i> Survey.{% endblocktrans %}</h4>
-    <p>
+    <h4>
       {% blocktrans %}
-        It's useful for asking questions once, for information that you won't need to follow up on later.
-      {% endblocktrans %}
+        This is a <i class="fa-regular fa-file"></i> Survey.
+      {%endblocktrans %}
+    </h4>
+    <p>
+      {% blocktrans %} It's useful for asking questions once, for information
+      that you won't need to follow up on later. {% endblocktrans %}
     </p>
   </script>
 
@@ -113,7 +142,8 @@
 
 {% block column_style %}hq-flush-content{% endblock %}
 
-{% block modals %}{{ block.super }}
+{% block modals %}
+  {{ block.super }}
   <div class="modal fade" id="edit-form-name-modal">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -123,7 +153,11 @@
           </button>
           <h4 class="modal-title">{% trans "Edit Form Details" %}</h4>
         </div>
-        <form name="update-form-data" class="form-horizontal" data-bind="submit:update">
+        <form
+          name="update-form-data"
+          class="form-horizontal"
+          data-bind="submit:update"
+        >
           <div class="modal-body">
             <div class="form-group">
               <div class="col-sm-3">
@@ -132,7 +166,11 @@
                 </label>
               </div>
               <div class="col-sm-9">
-                <input type="text" data-bind="value: name" class="form-control" />
+                <input
+                  type="text"
+                  data-bind="value: name"
+                  class="form-control"
+                />
               </div>
             </div>
             <div class="form-group">
@@ -142,15 +180,21 @@
                 </label>
               </div>
               <div class="col-sm-9">
-                              <textarea rows="5"
-                                        data-bind="value: comment"
-                                        class="form-control vertical-resize"></textarea>
+                <textarea
+                  rows="5"
+                  data-bind="value: comment"
+                  class="form-control vertical-resize"
+                ></textarea>
               </div>
             </div>
           </div>
           <div class="modal-footer">
-            <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</a>
-            <button type="submit" class="btn btn-primary disable-on-submit">{% trans "Save" %}</button>
+            <a href="#" data-dismiss="modal" class="btn btn-default"
+              >{% trans "Cancel" %}</a
+            >
+            <button type="submit" class="btn btn-primary disable-on-submit">
+              {% trans "Save" %}
+            </button>
           </div>
         </form>
       </div>
@@ -158,4 +202,5 @@
   </div>
 {% endblock %}
 
-{% block footer %}{% endblock %}
+{% block footer %}
+{% endblock %}

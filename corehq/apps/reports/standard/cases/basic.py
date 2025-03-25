@@ -1,3 +1,5 @@
+import contextlib
+
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
@@ -12,8 +14,10 @@ from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard import (
+    ESQueryProfilerMixin,
     ProjectReport,
     ProjectReportParametersMixin,
+    profile,
 )
 from corehq.apps.reports.standard.cases.filters import CaseSearchFilter
 from corehq.apps.reports.standard.cases.utils import (
@@ -28,7 +32,7 @@ from corehq.util.es.elasticsearch import TransportError
 from .data_sources import CaseDisplayES
 
 
-class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin):
+class CaseListMixin(ESQueryProfilerMixin, ElasticProjectInspectionReport, ProjectReportParametersMixin):
     fields = [
         'corehq.apps.reports.filters.case_list.CaseListFilter',
         'corehq.apps.reports.filters.select.CaseTypeFilter',
@@ -42,8 +46,12 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     search_class = case_es.CaseES
 
     def _base_query(self):
+        if getattr(self, 'rendered_as', None) == 'export':
+            search_class = self.search_class(for_export=True)
+        else:
+            search_class = self.search_class()
         return (
-            self.search_class()
+            search_class
             .domain(self.domain)
             .size(self.pagination.count)
             .start(self.pagination.start)
@@ -107,7 +115,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     @memoized
     def es_results(self):
         try:
-            return self._build_query().run().raw
+            return self._run_es_query()
         except ESError as e:
             original_exception = e.args[0]
             if isinstance(original_exception, TransportError):
@@ -116,11 +124,17 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                         raise BadRequestError()
             raise e
 
+    @profile("ES query")
+    def _run_es_query(self):
+        return self._build_query().run().raw
+
     @property
     @memoized
     def case_owners(self):
         mobile_user_and_group_slugs = self.get_request_param(EMWF.slug, as_list=True)
-        return get_case_owners(self.request, self.domain, mobile_user_and_group_slugs)
+        return get_case_owners(
+            self.request.can_access_all_locations, self.domain, mobile_user_and_group_slugs
+        )
 
     def get_case(self, row):
         if '_source' in row:
@@ -234,3 +248,13 @@ class CaseListReport(CaseListMixin, ProjectReport, ReportDataSource):
                 display.modified_on,
                 display.closed_display
             ]
+
+    @property
+    def json_response(self):
+        with self.profiler.timing_context if self.should_profile else contextlib.nullcontext():
+            response = super().json_response
+
+        if self.profiler_enabled:
+            # Todo: SC-4181
+            pass
+        return response

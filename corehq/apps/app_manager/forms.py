@@ -141,7 +141,7 @@ class PromptUpdateSettingsForm(forms.Form):
         super(PromptUpdateSettingsForm, self).__init__(*args, **kwargs)
 
         self.fields['apk_version'].choices = [(LATEST_APK_VALUE, 'Latest Released Build')] + [
-            (build.to_string(), 'CommCare {}'.format(build.get_label()))
+            (build.to_string(), 'CommCare {}'.format(build.get_menu_item_label()))
             for build in get_commcare_builds(request_user)
         ]
 

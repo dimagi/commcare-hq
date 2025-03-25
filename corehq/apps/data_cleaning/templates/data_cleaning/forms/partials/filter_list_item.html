@@ -1,0 +1,49 @@
+{% load i18n %}
+{% load data_cleaning %}
+
+<a href="#" class="list-group-item list-group-item-action">
+  <div class="d-flex">
+    <div class="p-2 align-self-center fs-5">
+      <i class="fa-solid fa-up-down"></i>
+      <input
+        type="hidden"
+        name="filter_ids"
+        value="{{ filter.filter_id }}"
+      />
+    </div>
+    <div class="p-2 flex-fill">
+      <h5 class="mb-1">
+        {{ filter.prop_id }}
+      </h5>
+      <div class="mb-1 d-flex align-items-center">
+        <div>
+          <span class="badge text-bg-secondary fs-6">
+            {{ filter.human_readable_match_type }}
+          </span>
+        </div>
+        {% if filter.value %}
+          <div class="ps-2">
+            {{ filter.data_type|dc_data_type_icon }}
+          </div>
+          <div class="ps-2">
+            {{ filter|dc_filter_value }}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="p-2 align-self-center">
+      <button
+        class="btn btn-outline-danger btn-sm"
+        type="button"
+        name="delete_id"
+        value="{{ filter.filter_id }}"
+        hx-post="{{ request.path_info }}"
+        hq-hx-action="delete_filter"
+        hx-disabled-elt="this"
+        hx-target="#{{ container_id }}"
+      >
+        <i class="fa-solid fa-close"></i>
+      </button>
+    </div>
+  </div>
+</a>

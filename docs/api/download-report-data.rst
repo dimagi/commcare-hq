@@ -13,10 +13,13 @@ Overview
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[PROJECT]/api/v0.5/configurablereportdata/REPORTID/
+    https://www.commcarehq.org/a/[PROJECT]/api/configurablereportdata/v1/REPORTID/
 
 **Method**
     GET
+
+**Permission Required**
+    View Data
 
 Request & Response Details
 ---------------------------
@@ -48,7 +51,7 @@ The report data can be filtered (based on the report's filter) and is also paged
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[PROJECT]/api/v0.5/configurablereportdata/9aab0eeb88555a7b4568676883e7379a/?offset=20&limit=10&state=vermont&gender=male
+    https://www.commcarehq.org/a/[PROJECT]/api/configurablereportdata/v1/9aab0eeb88555a7b4568676883e7379a/?offset=20&limit=10&state=vermont&gender=male
 
 **Sample JSON Output**
 
@@ -89,7 +92,7 @@ The report data can be filtered (based on the report's filter) and is also paged
           "gender-female": 4
         }
       ],
-      "next_page": "/a/[PROJECT]/api/v0.5/configurablereportdata/9aab0eeb88555a7b4568676883e7379a/?offset=3&limit=3&state=vermont",
+      "next_page": "/a/[PROJECT]/api/configurablereportdata/v1/9aab0eeb88555a7b4568676883e7379a/?offset=3&limit=3&state=vermont",
       "total_records": 30
     }
 

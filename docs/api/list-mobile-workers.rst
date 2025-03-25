@@ -11,13 +11,13 @@ Overview
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/user/
+    https://www.commcarehq.org/a/[domain]/api/user/v1/
 
 **Single User URL**
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/user/[user_id]
+    https://www.commcarehq.org/a/[domain]/api/user/v1/[user_id]
 
 **Permissions Required**
     Edit Mobile Workers & Edit Access API's
@@ -25,6 +25,9 @@ Overview
 
 **Authentication and Usage**
     All URL endpoints should be utilized as part of a cURL authentication command. For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
+
+**Permission Required**
+    Edit Mobile Workers
 
 Request & Response Details
 --------------------------
@@ -97,7 +100,7 @@ Request & Response Details
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/demo/api/v0.4/user/?format=xml&limit=5
+    https://www.commcarehq.org/a/demo/api/user/v1/?format=xml&limit=5
 
 **Sample JSON Output**
 

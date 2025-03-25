@@ -1,4 +1,4 @@
-List Groups 
+List Groups
 ===========
 
 Overview
@@ -11,10 +11,13 @@ Overview
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/group/
+    https://www.commcarehq.org/a/[domain]/api/group/v1/
 
 **Authentication**
     For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
+
+**Permission Required**
+    Edit Mobile Workers
 
 Request & Response Details
 ---------------------------
@@ -50,7 +53,7 @@ Request & Response Details
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/demo/api/v0.4/group/
+    https://www.commcarehq.org/a/demo/api/group/v1/
 
 **Sample JSON Output**
 

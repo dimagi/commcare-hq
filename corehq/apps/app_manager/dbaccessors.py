@@ -148,6 +148,11 @@ def get_build_doc_by_version(domain, app_id, version):
     return get_build_by_version(domain, app_id, version, return_doc=True)
 
 
+def get_build_doc_by_build_id(build_id):
+    from .models import Application
+    return Application.get_db().get(build_id)
+
+
 def wrap_app(app_doc, wrap_cls=None):
     """Will raise DocTypeError if it can't figure out the correct class"""
     from corehq.apps.app_manager.util import get_correct_app_class
@@ -445,7 +450,10 @@ def get_all_apps(domain):
             include_docs=False,
             wrapper=lambda row: row['id'],
         )
-        correct_wrap = lambda app_doc: get_correct_app_class(app_doc).wrap(app_doc)
+
+        def correct_wrap(app_doc):
+            return get_correct_app_class(app_doc).wrap(app_doc)
+
         return map(correct_wrap, iter_docs(Application.get_db(), saved_app_ids))
 
     return chain(get_apps_in_domain(domain), _saved_apps())

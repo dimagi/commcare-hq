@@ -300,6 +300,7 @@ HQ_APPS = (
     'corehq.apps.data_dictionary',
     'corehq.apps.analytics',
     'corehq.apps.callcenter',
+    'corehq.apps.campaign',
     'corehq.apps.change_feed',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
@@ -391,8 +392,6 @@ HQ_APPS = (
     # custom reports
     'custom.reports.mc',
     'custom.ucla',
-
-    'custom.common',
 
     'custom.hki',
     'custom.bha',
@@ -1158,10 +1157,6 @@ CONNECTID_MESSAGE_URL = 'http://localhost:8080/messaging/send_fcm/'
 
 MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
 MAX_MOBILE_UCR_SIZE = 100000  # max number of rows allowed when syncing a mobile UCR
-
-DEVICE_LIMIT_PER_USER = 10  # number of devices allowed per user per minute
-INCREASED_DEVICE_LIMIT_PER_USER = 100  # value when INCREASE_DEVICE_LIMIT_PER_USER ff is enabled
-ENABLE_DEVICE_RATE_LIMITER = False
 
 # used by periodic tasks that delete soft deleted data older than PERMANENT_DELETION_WINDOW days
 PERMANENT_DELETION_WINDOW = 30  # days

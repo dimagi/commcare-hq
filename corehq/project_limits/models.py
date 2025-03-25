@@ -1,6 +1,10 @@
 import architect
 from django.db import models
+from django.conf import settings
 from field_audit import audit_fields
+
+from corehq.project_limits.exceptions import SystemLimitIllegalScopeChange
+from corehq.util.quickcache import quickcache
 
 AVG = 'AVG'
 MAX = 'MAX'
@@ -9,6 +13,8 @@ AGGREGATION_OPTIONS = [
     (AVG, 'Average'),
     (MAX, 'Maximum'),
 ]
+
+FIVE_MINUTES = 5 * 60
 
 
 class DynamicRateDefinition(models.Model):
@@ -97,3 +103,51 @@ class SystemLimit(models.Model):
     def __str__(self):
         domain = f"[{self.domain}] " if self.domain else ""
         return f"{domain}{self.key}: {self.limit}"
+
+    def save(self, *args, **kwargs):
+        self._prevent_changing_from_global_to_domain_scope()
+        super().save(*args, **kwargs)
+        SystemLimit._get_global_limit.clear(self.key)
+        SystemLimit._get_domain_specific_limit.clear(self.key, self.domain)
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        SystemLimit._get_global_limit.clear(self.key)
+        SystemLimit._get_domain_specific_limit.clear(self.key, self.domain)
+
+    def _prevent_changing_from_global_to_domain_scope(self):
+        if self.domain:
+            try:
+                previous_domain = SystemLimit.objects.get(id=self.id).domain
+            except SystemLimit.DoesNotExist:
+                return
+            if not previous_domain:
+                raise SystemLimitIllegalScopeChange(
+                    "This is scoped globally. You cannot modify it to a domain scope."
+                )
+
+    @classmethod
+    def for_key(cls, key, domain=''):
+        """
+        Return the value associated with the given key, prioritizing the domain specific entry over the general one
+        """
+        domain_limit = cls._get_domain_specific_limit(key, domain) if domain else None
+        if domain_limit is not None:
+            return domain_limit
+        return cls._get_global_limit(key)
+
+    @staticmethod
+    @quickcache(['key'], timeout=FIVE_MINUTES, skip_arg=lambda *args: settings.UNIT_TESTING)
+    def _get_global_limit(key):
+        try:
+            return SystemLimit.objects.get(key=key, domain='').limit
+        except SystemLimit.DoesNotExist:
+            return None
+
+    @staticmethod
+    @quickcache(['key', 'domain'], timeout=FIVE_MINUTES, skip_arg=lambda *args: settings.UNIT_TESTING)
+    def _get_domain_specific_limit(key, domain):
+        try:
+            return SystemLimit.objects.get(key=key, domain=domain).limit
+        except SystemLimit.DoesNotExist:
+            return None

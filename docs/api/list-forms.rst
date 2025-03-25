@@ -11,10 +11,13 @@ Overview
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/v0.5/form/
+    https://www.commcarehq.org/a/[domain]/api/form/v1/
 
 **Authentication**
     For more information, please review `API Authentication <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2279637003/CommCare+API+Overview#API-Authentication>`_.
+
+**Permission Required**
+    Edit Data
 
 Request & Response Details
 ---------------------------
@@ -76,7 +79,7 @@ The forms can be filtered using the following parameters, which also control pag
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/v0.5/form/
+    https://www.commcarehq.org/a/[domain]/api/form/v1/
 
 **Sample JSON Output**
 
@@ -85,7 +88,7 @@ The forms can be filtered using the following parameters, which also control pag
     {
       "meta": {
         "limit": 20,
-        "next": "/a/corpora/api/v0.5/form/?limit=20&offset=20",
+        "next": "/a/corpora/api/form/v1/?limit=20&offset=20",
         "offset": 0,
         "previous": null,
         "total_count": 6909

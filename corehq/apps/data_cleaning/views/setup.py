@@ -4,7 +4,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.views.generic import TemplateView
 
-from corehq import toggles
+from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
 from corehq.apps.data_cleaning.forms.setup import (
     SelectCaseTypeForm,
     ResumeOrRestartCaseSessionForm,
@@ -18,9 +18,9 @@ from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 
 @method_decorator([
     use_bootstrap5,
-    toggles.DATA_CLEANING_CASES.required_decorator(),
+    require_bulk_data_cleaning_cases,
 ], name='dispatch')
-class SetupCaseSessionFormView(HqHtmxActionMixin, LoginAndDomainMixin, DomainViewMixin, TemplateView):
+class SetupCaseSessionFormView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin, TemplateView):
     urlname = "data_cleaning_select_case_type_form"
     template_name = "data_cleaning/forms/next_action_form.html"
     container_id = "setup-case-session"
@@ -28,7 +28,7 @@ class SetupCaseSessionFormView(HqHtmxActionMixin, LoginAndDomainMixin, DomainVie
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
-            "form": kwargs.pop('form', SelectCaseTypeForm(self.domain)),
+            "form": kwargs.pop('form', None) or SelectCaseTypeForm(self.domain),
             "container_id": self.container_id,
             "next_action": kwargs.pop('next_action', 'validate_session'),
         })

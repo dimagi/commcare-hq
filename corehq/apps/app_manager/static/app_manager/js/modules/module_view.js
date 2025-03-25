@@ -120,7 +120,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
             if (!valueNoSpaces) {
                 $el.closest('.form-group').addClass('has-error');
                 showCaseTypeError(
-                    gettext("Case type is required.")
+                    gettext("Case type is required."),
                 );
                 return;
             }
@@ -132,12 +132,12 @@ hqDefine("app_manager/js/modules/module_view", function () {
             if (!valueNoSpaces.match(/^[\w-]*$/g)) {
                 $el.closest('.form-group').addClass('has-error');
                 showCaseTypeError(
-                    gettext("Case types can only include the characters a-z, 0-9, '-' and '_'")
+                    gettext("Case types can only include the characters a-z, 0-9, '-' and '_'"),
                 );
             } else if (valueNoSpaces === 'commcare-user' && moduleType !== 'advanced') {
                 $el.closest('.form-group').addClass('has-error');
                 showCaseTypeError(
-                    gettext("'commcare-user' is a reserved case type. Please change the case type")
+                    gettext("'commcare-user' is a reserved case type. Please change the case type"),
                 );
 
             } else {
@@ -179,6 +179,15 @@ hqDefine("app_manager/js/modules/module_view", function () {
         if (lazyloadCaseListFields.length > 0) {
             lazyloadCaseListFields.koApplyBindings({
                 lazy_load_case_list_fields: ko.observable(initialPageData.get('lazy_load_case_list_fields')),
+            });
+        }
+
+        var $showCaseListOptimizationsElement = $('#show_case_list_optimization_options');
+        if ($showCaseListOptimizationsElement.length) {
+            $showCaseListOptimizationsElement.koApplyBindings({
+                show_case_list_optimization_options: ko.observable(
+                    initialPageData.get('show_case_list_optimization_options'),
+                ),
             });
         }
 
@@ -242,7 +251,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
             var caseListForm = caseListFormModel(
                 caseListFormOptions ? caseListFormOptions.form.form_id : null,
                 caseListFormOptions ? caseListFormOptions.options : [],
-                caseListFormOptions ? caseListFormOptions.form.post_form_workflow : 'default'
+                caseListFormOptions ? caseListFormOptions.form.post_form_workflow : 'default',
             );
             $('#case-list-form').koApplyBindings(caseListForm);
 
@@ -262,7 +271,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
                 shadowOptions.source_module_id,
                 shadowOptions.excluded_form_ids,
                 shadowOptions.form_session_endpoints,
-                shadowOptions.shadow_module_version
+                shadowOptions.shadow_module_version,
             ));
         } else if (moduleType === 'advanced') {
             if (moduleBrief.has_schedule || hqImport('hqwebapp/js/toggles').toggleEnabled('VISIT_SCHEDULER')) {

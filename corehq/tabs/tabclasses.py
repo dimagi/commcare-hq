@@ -27,12 +27,12 @@ from corehq.apps.accounting.views import (
     TriggerRemovedSsoUserAutoDeactivationView,
 )
 from corehq.apps.app_manager.dbaccessors import (
-    domain_has_apps,
     get_brief_apps_in_domain,
 )
 from corehq.apps.app_manager.util import is_remote_app, is_linked_app
 from corehq.apps.builds.views import EditMenuView
 from corehq.apps.data_dictionary.views import DataDictionaryView
+from corehq.apps.data_cleaning.decorators import bulk_data_cleaning_enabled_for_request
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import ManageReleasesByLocation
@@ -56,6 +56,7 @@ from corehq.apps.hqadmin.reports import (
 from corehq.apps.hqadmin.views.system import GlobalThresholds
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
+from corehq.apps.integration.payments.views import PaymentConfigurationView
 from corehq.apps.integration.views import (
     DialerSettingsView,
     GaenOtpServerSettingsView,
@@ -129,6 +130,7 @@ class ProjectReportsTab(UITab):
         '/a/{domain}/reports/',
         '/a/{domain}/configurable_reports/',
         '/a/{domain}/location_reassignment_download/',
+        '/a/{domain}/campaign/',
     )
 
     @property
@@ -147,12 +149,13 @@ class ProjectReportsTab(UITab):
         tools = self._get_tools_items()
         tableau = self._get_tableau_items()
         report_builder_nav = self._get_report_builder_items()
+        campaign = self._get_campaign_items()
 
         project_reports = ProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-        sidebar_items = (tools + tableau + report_builder_nav + custom_reports + project_reports)
+        sidebar_items = (tools + tableau + campaign + report_builder_nav + custom_reports + project_reports)
         return self._filter_sidebar_items(sidebar_items)
 
     def _get_tools_items(self):
@@ -209,6 +212,22 @@ class ProjectReportsTab(UITab):
         ]
 
         return [(_("Tableau Reports"), items)] if items else []
+
+    def _get_campaign_items(self):
+        if not toggles.CAMPAIGN_DASHBOARD.enabled(self.domain):
+            return []
+
+        from corehq.apps.campaign.views import DashboardView
+        items = [
+            {
+                'title': DashboardView.page_title,
+                'url': reverse(DashboardView.urlname, args=[self.domain]),
+                'icon': 'icon-tasks fa fa-compass',
+                'show_in_dropdown': True,
+            }
+        ]
+
+        return [(_("Campaign"), items)]
 
     def _get_report_builder_items(self):
         user_reports = []
@@ -311,11 +330,8 @@ class DashboardTab(UITab):
     @property
     def _is_viewable(self):
         if self.domain and self.project and not self.project.is_snapshot and self.couch_user:
-            if self.couch_user.is_commcare_user():
-                # never show the dashboard for mobile workers
-                return False
-            else:
-                return domain_has_apps(self.domain)
+            # never show the dashboard for mobile workers
+            return not self.couch_user.is_commcare_user()
         return False
 
     @property
@@ -464,7 +480,8 @@ class ProjectDataTab(UITab):
         '/a/{domain}/case/',
         '/a/{domain}/clean/',
         '/a/{domain}/microplanning/',
-        '/a/{domain}/kyc/'
+        '/a/{domain}/kyc/',
+        '/a/{domain}/payments/'
     )
 
     @property
@@ -656,6 +673,8 @@ class ProjectDataTab(UITab):
             items += self._get_geospatial_views()
         if self._can_view_kyc_integration:
             items += self._get_kyc_verification_views()
+        if self._can_view_payments_integration:
+            items += self._get_payments_verification_views()
         return items
 
     @cached_property
@@ -987,7 +1006,10 @@ class ProjectDataTab(UITab):
 
     @property
     def _can_view_case_data_cleaning(self):
-        return toggles.DATA_CLEANING_CASES.enabled_for_request(self._request)
+        return (
+            bulk_data_cleaning_enabled_for_request(self._request)
+            and toggles.DATA_CLEANING_CASES.enabled_for_request(self._request)
+        )
 
     def _get_explore_data_views(self):
         explore_data_views = []
@@ -1059,6 +1081,27 @@ class ProjectDataTab(UITab):
     @cached_property
     def _can_view_kyc_integration(self):
         return toggles.KYC_VERIFICATION.enabled(self.domain)
+
+    @cached_property
+    def _can_view_payments_integration(self):
+        return toggles.MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain)
+
+    def _get_payments_verification_views(self):
+        from corehq.apps.integration.payments.views import PaymentsVerificationReportView
+        items = [[
+            _("Payments Verification"),
+            [
+                {
+                    "title": PaymentConfigurationView.page_title,
+                    "url": reverse(PaymentConfigurationView.urlname, args=[self.domain]),
+                },
+                {
+                    "title": PaymentsVerificationReportView.page_title,
+                    "url": reverse(PaymentsVerificationReportView.urlname, args=[self.domain]),
+                },
+            ]
+        ]]
+        return items
 
     @property
     def dropdown_items(self):
