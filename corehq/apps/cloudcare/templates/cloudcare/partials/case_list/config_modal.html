@@ -1,0 +1,41 @@
+{% load i18n %}
+
+<script type="text/template" id="case-list-config-body">
+  <div class="popover-content">
+    <form>
+      <% _.each(columnNames, function(columnName, index) { %>
+        <div class="form-check mb-2">
+          <input
+            type="checkbox"
+            class="form-check-input column-checkbox"
+            id="column-checkbox-<%= index %>"
+            value="<%= index %>"
+            data-index="<%= index %>"
+            <%= columnVisibility[index] ? 'checked' : '' %> >
+          <label class="form-check-label" for="column-checkbox-<%= index %>">
+            <%= columnName %>
+          </label>
+        </div>
+      <% }); %>
+    </form>
+    <div
+      <% if (!allColumnsHidden()) { %>
+        class="alert alert-warning invisible h-0 py-0 my-0"
+      <% } else { %>
+        class="alert alert-warning"
+      <% } %>
+      role="alert"
+    >
+      {% trans "Please Select at least one column." %}
+    </div>
+
+    <div class="d-flex justify-content-between">
+      <button type="button" class="btn btn-secondary btn-sm js-reset js-action">{% trans "Reset" %}</button>
+      <button type="button" class="btn btn-primary btn-sm js-update js-action"
+        <% if (allColumnsHidden()) { %>
+          disabled="true"
+        <% } %>
+      >{% trans "Update" %}</button>
+    </div>
+  </div>
+</script>
