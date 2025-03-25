@@ -234,10 +234,10 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
             const containsQueuedRecords = selectionContainsQueuedRecords();
             if (containsQueuedRecords) {
                 // all we can do is cancel
-                return action === 'cancel'
+                return action === 'cancel';
             } else {
                 // nothing is queued, so you shouldn't need to cancel
-                return ['resend', 'requeue'].includes(action)
+                return ['resend', 'requeue'].includes(action);
             }
         }
 
@@ -371,7 +371,7 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
 
         function selectionContainsQueuedRecords() {
             return getCheckedRecords().some(record => {
-                return !!parseInt(record.getAttribute('is_queued'))
+                return !!parseInt(record.getAttribute('is_queued'));
             });
         }
 
