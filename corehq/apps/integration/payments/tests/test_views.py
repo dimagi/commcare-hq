@@ -213,6 +213,10 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
             case.delete()
         super().tearDownClass()
 
+    def test_ff_not_enabled(self):
+        response = self._make_request()
+        assert response.status_code == 404
+
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
     def test_verification_status_filter_verified_has_two(self):
         response = self._make_request(querystring='payment_verification_status=verified')
