@@ -215,7 +215,7 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
                 hideAllWarnings();
                 $popUp.modal('show');
             } else if (checkedRecords.length > 0) {
-                if (isActionPossibleForCheckedItems(action, checkedRecords)) {
+                if (isActionPossible(action)) {
                     hideAllWarnings();
                     $popUp.modal('show');
                 } else {
@@ -230,16 +230,15 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
             return $.find('input[type=checkbox][name=record_ids]:checked');
         }
 
-        function isActionPossibleForCheckedItems(action, checkedItems) {
-            for (const item of checkedItems) {
-                const isQueued = item.getAttribute('is_queued');
-                if (isQueued === 'false' && action === 'cancel') {
-                    return false;
-                } else if (isQueued === 'true' && ['resend', 'requeue'].includes(action)) {
-                    return false;
-                }
+        function isActionPossible(action) {
+            const containsQueuedRecords = selectionContainsQueuedRecords();
+            if (containsQueuedRecords) {
+                // all we can do is cancel
+                return action === 'cancel'
+            } else {
+                // nothing is queued, so you shouldn't need to cancel
+                return ['resend', 'requeue'].includes(action)
             }
-            return true;
         }
 
         function getRequestBody() {
@@ -355,15 +354,11 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
                 return;
             }
 
-            const containsQueuedRecords = checkedRecords.some(record => {
-                return record.getAttribute('is_queued') === true;
-            });
-
             // default to no-op on cancelling a batch of records
             // that contain some already cancelled records
             // versus allowing no-op when queueing already queued
             // records
-            if (containsQueuedRecords) {
+            if (selectionContainsQueuedRecords()) {
                 resendButton.disabled = true;
                 requeueButton.disabled = true;
                 cancelButton.disabled = false;
@@ -372,6 +367,12 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
                 requeueButton.disabled = false;
                 cancelButton.disabled = true;
             }
+        }
+
+        function selectionContainsQueuedRecords() {
+            return getCheckedRecords().some(record => {
+                return !!parseInt(record.getAttribute('is_queued'))
+            });
         }
 
         function resetTableSelections() {

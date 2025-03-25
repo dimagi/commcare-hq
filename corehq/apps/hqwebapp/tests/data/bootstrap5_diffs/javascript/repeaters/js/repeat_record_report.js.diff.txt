@@ -68,14 +68,14 @@
 -                $popUp.modal('show');
 +                $popUp.modal('show');  /* todo B5: plugin:modal */
              } else if (checkedRecords.length > 0) {
-                 if (isActionPossibleForCheckedItems(action, checkedRecords)) {
+                 if (isActionPossible(action)) {
                      hideAllWarnings();
 -                    $popUp.modal('show');
 +                    $popUp.modal('show');  /* todo B5: plugin:modal */
                  } else {
                      showWarning('not-allowed');
                  }
-@@ -278,7 +278,7 @@
+@@ -277,7 +277,7 @@
                      } else {
                          btn.text(gettext('Failed'));
                          btn.addClass('btn-danger');
@@ -84,7 +84,7 @@
                          $('#payload-error-modal .error-message').text(response.failure_reason);
                      }
                  },
-@@ -317,17 +317,17 @@
+@@ -316,17 +316,17 @@
  
          function showWarning(reason) {
              if (reason === 'no-selection') {
@@ -108,7 +108,7 @@
          }
  
          function checkAllRows() {
-@@ -377,8 +377,8 @@
+@@ -378,8 +378,8 @@
          function resetTableSelections() {
              selectedEntireTable = false;
              selectAllCheckbox.checked = false;
