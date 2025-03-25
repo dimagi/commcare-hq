@@ -176,7 +176,7 @@ def get_payment_batch_numbers_for_domain(domain):
         CaseSearchES()
         .domain(domain)
         .case_type(MOMO_PAYMENT_CASE_TYPE)
-        .values_list("_id", flat=True)
+        .get_ids()
     )
 
     batch_numbers = set()
