@@ -4,12 +4,14 @@
 {% block title %}
   {% trans "File Downloader" %}
 {% endblock title %}
-
 {% js_entry "soil/js/file_download" %}
 
 {% block content %}
   <h2>{% trans "Preparing download. This may take some time..." %}</h2>
-  <div class="downloader_container" id="display_{{ download_id }}"
-       data-download-id="{{ download_id }}"
-       data-url="{% url 'ajax_job_poll' download_id %}"></div>
+  <div
+    class="downloader_container"
+    id="display_{{ download_id }}"
+    data-download-id="{{ download_id }}"
+    data-url="{% url 'ajax_job_poll' download_id %}"
+  ></div>
 {% endblock content %}
