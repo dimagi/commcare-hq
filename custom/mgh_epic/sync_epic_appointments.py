@@ -15,6 +15,10 @@ from corehq.apps.celery import periodic_task
 from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 
+OAUTH_TEST_URL = "https://stage-ws-interconnect-fhir.partners.org/Interconnect-FHIR-MU-TST/oauth2/token"
+PATIENT_TEST_URL = "https://stage-ws-interconnect-fhir.partners.org/Interconnect-FHIR-MU-TST/api/FHIR/R4/Patient"
+APPOINTMENT_TEST_URL = "https://stage-ws-interconnect-fhir.partners.org/Interconnect-FHIR-MU-TST/api/FHIR/R4/Appointment"
+
 
 def handle_response(response):
     if response.status_code == 200:
@@ -35,7 +39,7 @@ def generate_epic_jwt():
     payload = {
         "iss": settings.EPIC_CLIENT_ID,
         "sub": settings.EPIC_CLIENT_ID,
-        "aud": "https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token",
+        "aud": OAUTH_TEST_URL,
         "jti": jti,
         "exp": exp
     }
@@ -52,7 +56,7 @@ def request_epic_access_token():
         "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
         "client_assertion": generate_epic_jwt()
     }
-    url = "https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token"
+    url = OAUTH_TEST_URL
     response = requests.post(url, data=data, headers=headers)
     response_json = handle_response(response)
 
@@ -60,7 +64,7 @@ def request_epic_access_token():
 
 
 def get_patient_fhir_id(given_name, family_name, birthdate, access_token):
-    base_url = "https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4/Patient"
+    base_url = PATIENT_TEST_URL
     params = {
         'birthdate': birthdate,
         'family': family_name,
@@ -108,14 +112,14 @@ def filter_appointments_by_date(appointments_entries_json, study_start_date, wee
     return appointments
 
 
-def get_epic_appointments_for_patient(fhir_id, access_token, study_start_date):
+def get_epic_appointments_for_patient(fhir_id, access_token, study_start_date=None):
     if not fhir_id:
         return []
     appointments = []
     headers = {
         'authorization': f'Bearer {access_token}',
     }
-    base_url = "https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4/Appointment"
+    base_url = APPOINTMENT_TEST_URL
     params = {
         'patient': fhir_id,
         'service-category': 'appointment',
