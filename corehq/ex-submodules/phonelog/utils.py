@@ -290,6 +290,7 @@ class SumoLogicLog(object):
 
         return data
 
+
 def clear_device_log_request(domain, xform):
     from corehq.apps.ota.models import DeviceLogRequest
     user_subreport = _get_logs(xform.form_data, 'user_subreport', 'user')
