@@ -226,8 +226,8 @@ class SumoLogicLog(object):
             "[device_id={device_id}] "
             "[app_version={app_version}] "
             "[cc_version={cc_version}] "
-            "[msg={msg}]"
-            "[device_model={device_model}]"
+            "[msg={msg}] "
+            "[device_model={device_model}] "
             "[android_version={android_version}]"
         )
         appversion_text = self.xform.form_data.get('app_version')
