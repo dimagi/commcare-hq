@@ -599,18 +599,6 @@ class BulkEditColumn(models.Model):
         ordering = ["index"]
 
     @staticmethod
-    def get_default_label(prop_id):
-        known_labels = {
-            'name': _("Name"),
-            'owner_name': _('Owner'),
-            'opened_on': _("Opened On"),
-            'opened_by_username': _("Created By"),
-            'modified_on': _("Last Modified On"),
-            '@status': _("Status"),
-        }
-        return known_labels.get(prop_id, prop_id)
-
-    @staticmethod
     def is_system_property(prop_id):
         return prop_id in set(METADATA_IN_REPORTS).difference({
             'name', 'case_name', 'external_id',
@@ -628,12 +616,15 @@ class BulkEditColumn(models.Model):
         if not default_properties:
             raise NotImplementedError(f"{session.session_type} default columns not yet supported")
 
+        from corehq.apps.data_cleaning.utils.cases import (
+            get_system_property_label,
+        )
         for index, prop_id in enumerate(default_properties):
             cls.objects.create(
                 session=session,
                 index=index,
                 prop_id=prop_id,
-                label=cls.get_default_label(prop_id),
+                label=get_system_property_label(prop_id),
                 is_system=cls.is_system_property(prop_id),
             )
 

@@ -44,7 +44,7 @@ def _get_system_property_data_type(prop_id):
     }.get(prop_id, DataType.TEXT)
 
 
-def _get_system_property_label(prop_id):
+def get_system_property_label(prop_id):
     return {
         '@case_id': _("Case ID"),
         '@case_type': _("Case Type"),
@@ -71,7 +71,7 @@ def _get_system_property_details():
         if prop_id in SKIPPED_SYSTEM_PROPERTIES:
             continue
         system_properties[prop_id] = PropertyDetail(
-            label=_get_system_property_label(prop_id),
+            label=get_system_property_label(prop_id),
             data_type=_get_system_property_data_type(prop_id),
             prop_id=prop_id,
             is_editable=prop_id in EDITABLE_SYSTEM_PROPERTIES,
