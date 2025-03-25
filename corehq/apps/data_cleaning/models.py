@@ -137,6 +137,16 @@ class BulkEditSession(models.Model):
             value=value,
         )
 
+    def add_column(self, prop_id, label, data_type=None):
+        """
+        Add a column to this session.
+
+        :param prop_id: string - The property ID (e.g., case property)
+        :param label: string - The column label to display
+        :param data_type: DataType - Optional. Will be inferred for system props
+        :return: The created BulkEditColumn
+        """
+        return BulkEditColumn.create_for_session(self, prop_id, label, data_type)
 
     def update_filter_order(self, filter_ids):
         """
@@ -176,17 +186,6 @@ class BulkEditSession(models.Model):
         for pinned_filter in self.pinned_filters.all():
             query = pinned_filter.filter_query(query)
         return query
-
-    def add_column(self, prop_id, label, data_type=None):
-        """
-        Add a column to this session.
-
-        :param prop_id: string - The property ID (e.g., case property)
-        :param label: string - The column label to display
-        :param data_type: DataType - Optional. Will be inferred for system props
-        :return: The created BulkEditColumn
-        """
-        return BulkEditColumn.create_for_session(self, prop_id, label, data_type)
 
     def update_result(self, record_count, form_id=None):
         result = self.result or {}
