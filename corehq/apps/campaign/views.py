@@ -3,7 +3,8 @@ from functools import cached_property
 from django.conf import settings
 from django.core.paginator import Paginator
 from django.forms.models import model_to_dict
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseBadRequest
+from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy
@@ -11,6 +12,8 @@ from django.views.decorators.http import require_GET
 
 from memoized import memoized
 
+from corehq.apps.data_dictionary.util import get_gps_properties
+from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 from dimagi.utils.web import json_request
 
 from corehq import toggles
@@ -228,3 +231,25 @@ class DashboardWidgetView(HqHtmxActionMixin, BaseDomainView):
     @property
     def model_class(self):
         return WidgetType.get_model_class(self.widget_type)
+
+
+@require_GET
+@login_and_domain_required
+@use_bootstrap5
+def get_geo_case_properties_view(request, domain):
+    case_type = request.GET.get('case_type')
+    if not case_type:
+        return HttpResponseBadRequest(gettext_lazy('case_type param is required'))
+
+    geo_case_props= get_geo_case_properties(domain, case_type)
+    return render(
+        request,
+        'campaign/partials/case_properties_dropdown.html',
+        {'geo_case_props': sorted(geo_case_props)},
+    )
+
+
+def get_geo_case_properties(domain, case_type):
+    geo_case_props = get_gps_properties(domain, case_type)
+    geo_case_props.add(GPS_POINT_CASE_PROPERTY)
+    return geo_case_props

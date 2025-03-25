@@ -20,6 +20,7 @@ from corehq.apps.campaign.views import (
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.tests.utils import create_case
 from corehq.util.test_utils import flag_enabled
@@ -283,3 +284,26 @@ class TestDashboardWidgetView(BaseTestCampaignView):
         assert response.status_code == 200
         assert response.context['widget_type'] == widget_type
         assert isinstance(response.context['widget_form'], WidgetType.get_form_class(widget_type))
+
+
+class TestGetGeoCaseProperties(BaseTestCampaignView):
+    urlname = 'get_geo_case_properties'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+    def test_not_logged_in(self):
+        response = self._make_request(is_logged_in=False)
+        self.assertRedirects(response, f"{self.login_endpoint}?next={self.endpoint}")
+
+    @patch('corehq.apps.campaign.views.get_gps_properties', return_value={'geo_prop'})
+    def test_success(self, *args):
+        response = self._make_request(is_logged_in=True, query_data={'case_type': 'case1'})
+        assert response.status_code == 200
+        assert response.context['geo_case_props'] == ['geo_prop', GPS_POINT_CASE_PROPERTY]
+
+    def test_missing_case_type(self, *args):
+        response = self._make_request(is_logged_in=True)
+        assert response.status_code == 400
+        assert response.content == b'case_type param is required'
