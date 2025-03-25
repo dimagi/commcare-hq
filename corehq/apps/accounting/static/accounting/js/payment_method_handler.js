@@ -208,7 +208,9 @@ hqDefine('accounting/js/payment_method_handler', [
             self.serverErrorMsg('');
             self.newCard(stripeCardModel());
             if (self.cardElementMounted) {
-                self.cardElement.clear();
+                self.cardElementPromise.then(function (cardElement) {
+                    self.cardElement.clear();
+                });
             }
         };
 
