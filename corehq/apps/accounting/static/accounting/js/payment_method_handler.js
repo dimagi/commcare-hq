@@ -512,7 +512,6 @@ hqDefine('accounting/js/payment_method_handler', [
         var self = {};
 
         self.number = ko.observable();
-        self.cvc = ko.observable();
         self.expMonth = ko.observable();
         self.expYear = ko.observable();
         self.errorMsg = ko.observable();
@@ -540,17 +539,9 @@ hqDefine('accounting/js/payment_method_handler', [
         self.showErrors = ko.computed(function () {
             return !! self.errorMsg();
         });
-        self.cleanedNumber = ko.computed(function () {
-            if (self.number()) {
-                return self.number().split('-').join('');
-            }
-            return null;
-        });
-
         self.cardName = ko.computed(function () {
             return self.cardType() + ' ' + self.number() + ' exp ' + self.expMonth() + '/' + self.expYear();
         });
-
 
         self.loadSavedData = function (data) {
             self.number('************' + data.last4);
@@ -558,7 +549,6 @@ hqDefine('accounting/js/payment_method_handler', [
             self.expMonth(data.exp_month);
             self.expYear(data.exp_year);
             self.token(data.id);
-            self.cvc('****');
             self.isSaved(true);
         };
 
