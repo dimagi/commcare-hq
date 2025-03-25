@@ -152,6 +152,63 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
             }
         });
 
+        $('#select-all-checkbox').on('click', function () {
+            if (selectAllCheckbox.checked) {
+                toggleItems(true);
+                selectedPageInfo.classList.remove('hide');
+                const pageSize = document.querySelectorAll("#report_table_repeat_record_report tbody tr").length;
+                document.getElementById("selected-page-count").innerText = pageSize;
+                if (pageSize >= initialPageData.get('total')) {
+                    selectTableButton.classList.add('hide');
+                } else {
+                    selectTableButton.classList.remove('hide');
+                }
+            } else {
+                toggleItems(false);
+                selectedPageInfo.classList.add('hide');
+                // just in case
+                selectedTableInfo.classList.add('hide');
+                selectedEntireTable = false;
+            }
+            updateActionButtons();
+        });
+
+        $('#report-content').on('click', '.record-checkbox', function () {
+            resetTableSelections();
+            updateActionButtons();
+        });
+
+        $('#report-content').on('click', '#report_table_repeat_record_report_length', function () {
+            toggleItems(false);
+            resetTableSelections();
+            updateActionButtons();
+        });
+
+        $('#report-content').on('click', '#report_table_repeat_record_report_paginate', function () {
+            toggleItems(false);
+            resetTableSelections();
+            updateActionButtons();
+        });
+
+        $("#select-table-button").click(function () {
+            selectedEntireTable = true;
+            selectedPageInfo.classList.add('hide');
+            selectedTableInfo.classList.remove('hide');
+            updateActionButtons();
+        });
+
+        $("#clear-table-selection").click(function () {
+            toggleItems(false);
+            resetTableSelections();
+            updateActionButtons();
+        });
+
+        $('body').on('DOMNodeInserted', 'tbody', function () {
+            for (const item of items) {
+                $(item).on('click', updateActionButtons);
+            }
+        });
+
         function performAction(action) {
             const checkedRecords = getCheckedRecords();
             if (selectedEntireTable) {
@@ -272,65 +329,6 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
             $('#no-selection').addClass('hide');
             $('#not-allowed').addClass('hide');
         }
-
-        // ----- what was once repeat_record_report_selects.js ------
-
-        $('#select-all-checkbox').on('click', function () {
-            if (selectAllCheckbox.checked) {
-                toggleItems(true);
-                selectedPageInfo.classList.remove('hide');
-                const pageSize = document.querySelectorAll("#report_table_repeat_record_report tbody tr").length;
-                document.getElementById("selected-page-count").innerText = pageSize;
-                if (pageSize >= initialPageData.get('total')) {
-                    selectTableButton.classList.add('hide');
-                } else {
-                    selectTableButton.classList.remove('hide');
-                }
-            } else {
-                toggleItems(false);
-                selectedPageInfo.classList.add('hide');
-                // just in case
-                selectedTableInfo.classList.add('hide');
-                selectedEntireTable = false;
-            }
-            updateActionButtons();
-        });
-
-        $('#report-content').on('click', '.record-checkbox', function () {
-            resetTableSelections();
-            updateActionButtons();
-        });
-
-        $('#report-content').on('click', '#report_table_repeat_record_report_length', function () {
-            toggleItems(false);
-            resetTableSelections();
-            updateActionButtons();
-        });
-
-        $('#report-content').on('click', '#report_table_repeat_record_report_paginate', function () {
-            toggleItems(false);
-            resetTableSelections();
-            updateActionButtons();
-        });
-
-        $("#select-table-button").click(function () {
-            selectedEntireTable = true;
-            selectedPageInfo.classList.add('hide');
-            selectedTableInfo.classList.remove('hide');
-            updateActionButtons();
-        });
-
-        $("#clear-table-selection").click(function () {
-            toggleItems(false);
-            resetTableSelections();
-            updateActionButtons();
-        });
-
-        $('body').on('DOMNodeInserted', 'tbody', function () {
-            for (const item of items) {
-                $(item).on('click', updateActionButtons);
-            }
-        });
 
         function toggleItems(checked) {
             for (const item of items) {
