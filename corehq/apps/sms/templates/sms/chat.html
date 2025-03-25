@@ -1,5 +1,6 @@
 {% load hq_shared_tags %}{% load i18n %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
+{% js_entry_b3 "sms/js/chat" %}
 <html lang="{{ LANGUAGE_CODE }}">
   <head>
     <title>
@@ -8,13 +9,11 @@
       {% endblock %}
     </title>
     <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
+    {% include "hqwebapp/partials/webpack.html" %} {# must come after statici18n above #}
     {% compress css %}
       <link type="text/less" rel="stylesheet" media="all" href="{% static 'hqwebapp/less/style.less' %}"/>
     {% endcompress %}
-    {% javascript_libraries ko=True underscore=True %}
     <script src="{% statici18n LANGUAGE_CODE %}"></script>
-    <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
-    <script src="{% static "sms/js/chat.js" %}"></script>
     <style>
       html, body {
         height: 100%;
