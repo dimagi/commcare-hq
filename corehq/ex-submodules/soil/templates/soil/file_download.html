@@ -4,10 +4,9 @@
 {% block title %}
   {% trans "File Downloader" %}
 {% endblock title %}
-{% block extrahead %}
-  {% javascript_libraries %}
-  <script src="{% static "soil/js/file_download.js" %}"></script>
-{% endblock extrahead %}
+
+{% js_entry "soil/js/file_download" %}
+
 {% block content %}
   <h2>{% trans "Preparing download. This may take some time..." %}</h2>
   <div class="downloader_container" id="display_{{ download_id }}"
