@@ -10,7 +10,7 @@ from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.es import CaseSearchES
+from corehq.apps.es import CaseSearchES, filters
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.payments.tables import PaymentsVerifyTable
@@ -87,15 +87,16 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
         return query
 
     def _apply_filters(self, query):
+        query_filters = []
         if verification_status := self.request.GET.get('payment_verification_status'):
             filter_value = 'True' if verification_status == PaymentVerificationStatusFilter.verified else ''
-            query = query.filter(case_property_query(PaymentProperties.PAYMENT_VERIFIED, filter_value))
+            query_filters.append(case_property_query(PaymentProperties.PAYMENT_VERIFIED, filter_value))
 
         if batch_number := self.request.GET.get('batch_number'):
-            query = query.filter(case_property_query(PaymentProperties.BATCH_NUMBER, batch_number))
+            query_filters.append(case_property_query(PaymentProperties.BATCH_NUMBER, batch_number))
 
         if verified_by := self.request.GET.get('verified_by'):
-            query = query.filter(case_property_query(PaymentProperties.PAYMENT_VERIFIED_BY, verified_by))
+            query_filters.append(case_property_query(PaymentProperties.PAYMENT_VERIFIED_BY, verified_by))
 
         if payment_status := self.request.GET.get('payment_status'):
             if payment_status == PaymentStatus.submitted:
@@ -104,7 +105,11 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
                 filter_value = 'False'
             else:
                 filter_value = ''
-            query = query.filter(case_property_query(PaymentProperties.PAYMENT_SUBMITTED, filter_value))
+            query_filters.append(case_property_query(PaymentProperties.PAYMENT_SUBMITTED, filter_value))
+
+        if query_filters:
+            query = query.filter(filters.AND(*query_filters))
+
         return query
 
     @hq_hx_action('post')
