@@ -3,7 +3,7 @@ from functools import cached_property
 from django.conf import settings
 from django.core.paginator import Paginator
 from django.forms.models import model_to_dict
-from django.http import JsonResponse, HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -12,17 +12,15 @@ from django.views.decorators.http import require_GET
 
 from memoized import memoized
 
-from corehq.apps.data_dictionary.util import get_gps_properties
-from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 from dimagi.utils.web import json_request
 
 from corehq import toggles
-from corehq.apps.campaign.models import Dashboard
-from corehq.apps.campaign.models import WidgetType
-
+from corehq.apps.campaign.models import Dashboard, WidgetType
+from corehq.apps.data_dictionary.util import get_gps_properties
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es.case_search import CaseSearchES, case_property_missing
+from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 from corehq.apps.geospatial.utils import get_lat_lon_from_dict
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
@@ -30,7 +28,11 @@ from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.views import BaseProjectReportSectionView
 from corehq.form_processor.models import CommCareCase
-from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action, HtmxResponseException
+from corehq.util.htmx_action import (
+    HqHtmxActionMixin,
+    HtmxResponseException,
+    hq_hx_action,
+)
 from corehq.util.timezones.utils import get_timezone
 
 

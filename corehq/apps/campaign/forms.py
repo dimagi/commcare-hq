@@ -1,14 +1,18 @@
 import json
 
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit
 from django import forms
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from corehq.apps.campaign.models import DashboardTab, DashboardMap, DashboardReport
 from crispy_forms import layout as crispy
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 
+from corehq.apps.campaign.models import (
+    DashboardMap,
+    DashboardReport,
+    DashboardTab,
+)
 from corehq.apps.campaign.views import get_geo_case_properties, get_geo_case_properties_view
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.userreports.models import ReportConfiguration
