@@ -206,6 +206,8 @@ class SumoLogicLog(object):
             environment = 'india'
         if settings.SERVER_ENVIRONMENT == 'production':
             environment = 'prod'
+        if settings.SERVER_ENVIRONMENT == 'staging':
+            environment = 'staging'
 
         header = "{env}/{domain}/{fmt}".format(env=environment, domain=self.domain, fmt=fmt)
         return {"X-Sumo-Category": header}
