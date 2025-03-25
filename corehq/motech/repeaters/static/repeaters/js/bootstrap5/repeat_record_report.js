@@ -155,19 +155,19 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
         $('#select-all-checkbox').on('click', function () {
             if (selectAllCheckbox.checked) {
                 toggleItems(true);
-                selectedPageInfo.classList.remove('hide');
+                selectedPageInfo.classList.remove('d-none');
                 const pageSize = document.querySelectorAll("#report_table_repeat_record_report tbody tr").length;
                 document.getElementById("selected-page-count").innerText = pageSize;
                 if (pageSize >= initialPageData.get('total')) {
-                    selectTableButton.classList.add('hide');
+                    selectTableButton.classList.add('d-none');
                 } else {
-                    selectTableButton.classList.remove('hide');
+                    selectTableButton.classList.remove('d-none');
                 }
             } else {
                 toggleItems(false);
-                selectedPageInfo.classList.add('hide');
+                selectedPageInfo.classList.add('d-none');
                 // just in case
-                selectedTableInfo.classList.add('hide');
+                selectedTableInfo.classList.add('d-none');
                 selectedEntireTable = false;
             }
             updateActionButtons();
@@ -192,8 +192,8 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
 
         $("#select-table-button").click(function () {
             selectedEntireTable = true;
-            selectedPageInfo.classList.add('hide');
-            selectedTableInfo.classList.remove('hide');
+            selectedPageInfo.classList.add('d-none');
+            selectedTableInfo.classList.remove('d-none');
             updateActionButtons();
         });
 
@@ -317,17 +317,17 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
 
         function showWarning(reason) {
             if (reason === 'no-selection') {
-                $('#no-selection').removeClass('hide');
-                $('#not-allowed').addClass('hide');
+                $('#no-selection').removeClass('d-none');
+                $('#not-allowed').addClass('d-none');
             } else if (reason === 'not-allowed') {
-                $('#not-allowed').removeClass('hide');
-                $('#no-selection').addClass('hide');
+                $('#not-allowed').removeClass('d-none');
+                $('#no-selection').addClass('d-none');
             }
         }
 
         function hideAllWarnings() {
-            $('#no-selection').addClass('hide');
-            $('#not-allowed').addClass('hide');
+            $('#no-selection').addClass('d-none');
+            $('#not-allowed').addClass('d-none');
         }
 
         function toggleItems(checked) {
@@ -369,8 +369,8 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
         function resetTableSelections() {
             selectedEntireTable = false;
             selectAllCheckbox.checked = false;
-            selectedPageInfo.classList.add('hide');
-            selectedTableInfo.classList.add('hide');
+            selectedPageInfo.classList.add('d-none');
+            selectedTableInfo.classList.add('d-none');
         }
     });
 });
