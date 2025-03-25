@@ -85,7 +85,7 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
 
     @property
     def _dashboard_map_configs(self):
-        dashboard_maps = Dashboard.objects.get(domain=self.domain).maps.all()
+        dashboard_maps = Dashboard.objects.get(domain=self.domain).maps.all().order_by('-id')
         dashboard_map_configs = {
             'cases': [],
             'mobile_workers': [],
