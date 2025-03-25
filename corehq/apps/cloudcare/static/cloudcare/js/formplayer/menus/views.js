@@ -306,6 +306,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             });
             self.smallScreenEnabled = cloudcareUtils.smallScreenIsEnabled();
             self.scrollContainer = $(constants.SCROLLABLE_CONTENT_CONTAINER);
+            this.columnConfigModel = this.options.columnConfigModel;
+            this.listenTo(this.columnConfigModel, 'change:headerVisible', this.render);
         },
 
         className: "formplayer-request case-row",
@@ -475,6 +477,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri.trim(), appId);
                 },
+                columnConfigModel: this.columnConfigModel,
             };
         },
 
@@ -666,6 +669,89 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         };
     };
 
+    const ColumnConfigModel = Backbone.Model.extend({
+        defaults: function () {
+            return {
+                columnNames: [],
+                columnVisibility: [],
+            };
+        },
+
+        initialize: function (attributes) {
+            if (attributes) {
+                this.configStorageId = attributes.configStorageId;
+                if (this.configStorageId && localStorage.getItem(this.configStorageId)) {
+                    const savedModel = JSON.parse(localStorage.getItem(this.configStorageId));
+                    const columnNameMismatch = attributes.columnNames &&
+                        (!savedModel.columnNames ||
+                            savedModel.columnNames.length !== attributes.columnNames.length);
+                    if (columnNameMismatch) {
+                        localStorage.removeItem(this.configStorageId);
+                        this.set('columnNames', attributes.columnNames);
+                        this.set('columnVisibility', Array(attributes.columnNames.length).fill(true));
+                    } else {
+                        this.set(savedModel);
+                    }
+                } else if (attributes && attributes.columnNames) {
+                    this.set('columnNames', attributes.columnNames);
+                    this.set('columnVisibility', Array(attributes.columnNames.length).fill(true));
+                }
+
+                this.on('change', this.saveToLocalStorage, this);
+            }
+        },
+
+        isVisible: function (index) {
+            return this.get('columnVisibility')[index];
+        },
+
+        saveToLocalStorage: function () {
+            if (this.configStorageId) {
+                const modelData = this.toJSON();
+                localStorage.setItem(this.configStorageId, JSON.stringify(modelData));
+            }
+        },
+    });
+
+    const CaseListConfigView = Marionette.View.extend({
+        template: _.template($("#case-list-config-body").html() || ""),
+
+        initialize: function () {
+            this.columnVisibility = this.model.get('columnVisibility').slice();
+        },
+
+        templateContext: function () {
+            return {
+                columnNames: this.model.get('columnNames'),
+                columnVisibility: this.columnVisibility,
+                allColumnsHidden: function () {
+                    return this.columnVisibility.every(hidden => hidden === false);
+                },
+            };
+        },
+
+        events: {
+            'click .js-update': 'onUpdate',
+            'click .js-reset': 'onReset',
+            'change .column-checkbox': 'onCheckboxChange',
+        },
+
+        onUpdate: function () {
+            this.model.set('columnVisibility', this.columnVisibility);
+            this.trigger('save', this.model);
+        },
+
+        onReset: function () {
+            this.columnVisibility.fill(true);
+            this.render();
+        },
+
+        onCheckboxChange: function (e) {
+            this.columnVisibility[e.currentTarget.value] = e.currentTarget.checked;
+            this.render();
+        },
+    });
+
     const CaseListView = Marionette.CollectionView.extend({
         tagName: "div",
         template: _.template($("#case-view-list-template").html() || ""),
@@ -676,7 +762,68 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             return {
                 styles: this.options.styles,
                 endpointActions: this.options.endpointActions,
+                columnConfigModel: this.columnConfigModel,
             };
+        },
+
+        regions: {
+            configModalRegion: '.js-config-modal-content',
+        },
+
+        onRender: function () {
+            const self = this;
+            const configButton = this.$('#case-list-config-button');
+            if (configButton.length) {
+                const caseListConfigViewPopover = new bootstrap.Popover(configButton[0], {
+                    html: true,
+                    sanitize: false,
+                    content: function () {
+                        self.caseListConfigView = new CaseListConfigView({
+                            model: self.columnConfigModel,
+                        });
+                        const container = document.createElement('div');
+                        self.caseListConfigView.setElement(container);
+                        self.caseListConfigView.render();
+
+                        self.listenTo(self.caseListConfigView, 'save', function () {
+                            caseListConfigViewPopover.dispose();
+                            self.render();
+                        });
+
+                        return container;
+                    },
+                    placement: 'auto',
+                    trigger: 'click',
+                });
+
+                document.addEventListener('click', function (event) {
+                    if ($(event.target).closest('.popover').length) {
+                        if (!$(event.target).hasClass('js-action') &&
+                                !$(event.target).closest('.js-action').length) {
+                            event.stopPropagation();
+                        }
+                    } else {
+                        caseListConfigViewPopover.hide();
+                    }
+                }, true);
+
+                configButton[0].addEventListener('shown.bs.popover', function () {
+                    const popover = document.querySelector('.popover');
+                    if (popover) {
+                        const firstCheckbox = popover.querySelector('.column-checkbox');
+                        if (firstCheckbox) {
+                            firstCheckbox.focus();
+                        }
+                    }
+                });
+            }
+        },
+
+        getConfigStorageId: function (user) {
+            const urlObject = formplayerUtils.currentUrlToObject();
+            const configStorageId = `${urlObject.appId}:${JSON.stringify(urlObject.selections)}:${user.username}`;
+            // hash?
+            return configStorageId;
         },
 
         initialize: function (options) {
@@ -687,6 +834,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             self.noItemsText = options.triggerEmptyCaseList ? sidebarNoItemsText : this.options.collection.noItemsText;
             self.selectText = options.collection.selectText;
             self.headers = options.triggerEmptyCaseList ? [] : this.options.headers;
+            // needs to include appId, moduleId and userId. Should be hashed
+            const user = UsersModels.getCurrentUser();
+            const configStorageId = this.getConfigStorageId(user);
+            self.columnConfigModel = new ColumnConfigModel({columnNames: self.headers, configStorageId: configStorageId});
             self.redoLast = options.redoLast;
             if (sessionStorage.selectedValues !== undefined) {
                 const parsedSelectedValues = JSON.parse(sessionStorage.selectedValues)[sessionStorage.queryKey];
@@ -694,7 +845,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             } else {
                 self.selectedCaseIds = [];
             }
-            const user = UsersModels.getCurrentUser();
             const displayOptions = user.displayOptions;
             const appPreview = displayOptions.singleAppMode;
             const addressFieldPresent = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
@@ -1060,6 +1210,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             self.scrollContainer.off('scroll', self.boundHandleScroll);
         },
 
+        onBeforeDestroy: function () {
+            if (this.caseListConfigView) {
+                this.caseListConfigView.destroy();
+            }
+        },
+
         templateContext: function () {
             const paginateItems = formplayerUtils.paginateOptions(
                 this.options.currentPage,
@@ -1078,6 +1234,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 description: description === undefined ? "" : markdown.render(description.trim()),
                 selectText: this.selectText === undefined ? "" : this.selectText,
                 headers: this.headers,
+                columnConfigModel: this.columnConfigModel,
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,
                 currentPage: this.options.currentPage,
@@ -1101,7 +1258,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                     return this.sortIndices.indexOf(index) > -1;
                 },
                 columnVisible: function (index) {
-                    return !(this.widthHints && this.widthHints[index] === 0);
+                    return !(this.widthHints && this.widthHints[index] === 0) && this.columnConfigModel.isVisible(index);
                 },
             });
         },
@@ -1153,6 +1310,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
 
         onRender: function () {
+            MultiSelectCaseListView.__super__.onRender.apply(this);
             this.reconcileMultiSelectUI();
         },
     });
