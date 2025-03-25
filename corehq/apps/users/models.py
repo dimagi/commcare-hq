@@ -611,9 +611,6 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 del self.domains[i]
                 break
 
-        # soft delete any user data associated with this domain too
-        SQLUserData.objects.filter(user_id=self.user_id, domain=domain).update(deleted_on=datetime.now(tz.utc))
-
         if record:
             record.save()
             return record
@@ -2472,7 +2469,9 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         if TABLEAU_USER_SYNCING.enabled(domain):
             from corehq.apps.reports.util import delete_tableau_user
             delete_tableau_user(domain, self.username)
-        return super().delete_domain_membership(domain, create_record=create_record)
+        record = super().delete_domain_membership(domain, create_record=create_record)
+        SQLUserData.objects.filter(user_id=self.user_id, domain=domain).update(deleted_on=datetime.now(tz.utc))
+        return record
 
     def is_commcare_user(self):
         return False
