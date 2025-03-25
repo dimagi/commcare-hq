@@ -15,6 +15,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     'cloudcare/js/formplayer/utils/utils',
     'cloudcare/js/markdown',
     'cloudcare/js/utils',
+    'crypto-js/crypto-js',
     'mapbox-gl/dist/mapbox-gl',
     'leaflet',
     'leaflet-fullscreen/dist/Leaflet.fullscreen.min',   // adds L.control.fullscreen to L
@@ -35,6 +36,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     formplayerUtils,
     markdown,
     cloudcareUtils,
+    CryptoJS,
     mapboxgl,
     L,
 ) {
@@ -821,9 +823,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
         getConfigStorageId: function (user) {
             const urlObject = formplayerUtils.currentUrlToObject();
-            const configStorageId = `${urlObject.appId}:${JSON.stringify(urlObject.selections)}:${user.username}`;
-            // hash?
-            return configStorageId;
+            const selectionsWithoutUuid = urlObject.selections.map(function (s) {
+                if (s.match('^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$')) {
+                    return 'uuid';
+                } else {
+                    return s;
+                }
+            });
+            const configStorageId = `${urlObject.appId}:${JSON.stringify(selectionsWithoutUuid)}:${user.username}`;
+            return CryptoJS.SHA512(configStorageId);
         },
 
         initialize: function (options) {
@@ -834,7 +842,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             self.noItemsText = options.triggerEmptyCaseList ? sidebarNoItemsText : this.options.collection.noItemsText;
             self.selectText = options.collection.selectText;
             self.headers = options.triggerEmptyCaseList ? [] : this.options.headers;
-            // needs to include appId, moduleId and userId. Should be hashed
             const user = UsersModels.getCurrentUser();
             const configStorageId = this.getConfigStorageId(user);
             self.columnConfigModel = new ColumnConfigModel({columnNames: self.headers, configStorageId: configStorageId});
