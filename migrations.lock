@@ -796,6 +796,7 @@ phonelog
  0012_server_date_not_null
  0013_delete_olddevicereportentry
  0014_auto_20170718_2039
+ 0015_devicereportentry_android_version_and_more
 phonenumber
  0001_squashed_0001_initial (10 squashed migrations)
 pillow_retry
