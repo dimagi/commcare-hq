@@ -176,6 +176,17 @@ class BulkEditSession(models.Model):
             query = pinned_filter.filter_query(query)
         return query
 
+    def add_column(self, prop_id, label, data_type=None):
+        """
+        Add a column to this session.
+
+        :param prop_id: string - The property ID (e.g., case property)
+        :param label: string - The column label to display
+        :param data_type: DataType - Optional. Will be inferred for system props
+        :return: The created BulkEditColumn
+        """
+        return BulkEditColumn.create_for_session(self, prop_id, label, data_type)
+
     def update_result(self, record_count, form_id=None):
         result = self.result or {}
 
@@ -629,6 +640,20 @@ class BulkEditColumn(models.Model):
                 data_type=get_system_property_data_type(prop_id),
                 is_system=cls.is_system_property(prop_id),
             )
+
+    @classmethod
+    def create_for_session(cls, session, prop_id, label, data_type=None):
+        is_system_property = cls.is_system_property(prop_id)
+        from corehq.apps.data_cleaning.utils.cases import get_system_property_data_type
+        data_type = get_system_property_data_type(prop_id) if is_system_property else data_type
+        return cls.objects.create(
+            session=session,
+            index=session.columns.count(),
+            prop_id=prop_id,
+            label=label,
+            data_type=data_type or DataType.TEXT,
+            is_system=is_system_property,
+        )
 
 
 class BulkEditRecord(models.Model):
