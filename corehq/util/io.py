@@ -1,6 +1,6 @@
 
 
-class ClosingContextProxy(object):
+class ClosingContextProxy:
     """Context manager wrapper for object with close() method
 
     Calls `wrapped_object.close()` on exit context.
@@ -16,7 +16,7 @@ class ClosingContextProxy(object):
         return iter(self._obj)
 
     def __enter__(self):
-        return self
+        return self._obj
 
     def __exit__(self, *args):
         self._obj.close()
