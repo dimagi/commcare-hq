@@ -69,11 +69,7 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
             'name': 'selection',
             'value': value,
         }
-        required_fields = list(self.base_columns.keys())
-
-        for optional_field in self.OPTIONAL_FIELDS:
-            if optional_field in required_fields:
-                required_fields.remove(optional_field)
+        required_fields = list(set(self.base_columns.keys()) - set(self.OPTIONAL_FIELDS))
 
         for field in required_fields:
             if not record.record.get(field):
