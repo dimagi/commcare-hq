@@ -4,6 +4,7 @@ hqDefine('accounting/js/subscriptions_main', [
     'hqwebapp/js/initial_page_data',
     'accounting/js/widgets',
     'accounting/js/base_subscriptions_main',
+    'commcarehq',
 ], function (
     $,
     initialPageData,

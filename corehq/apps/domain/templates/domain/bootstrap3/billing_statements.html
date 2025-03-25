@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main 'domain/js/bootstrap3/billing_statements' %}
+{% js_entry_b3 'domain/js/bootstrap3/billing_statements' %}
 
 {% block paginated_list_top %}
   {% initial_page_data 'pagination' pagination %}
