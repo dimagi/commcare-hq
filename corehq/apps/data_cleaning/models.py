@@ -618,6 +618,7 @@ class BulkEditColumn(models.Model):
 
         from corehq.apps.data_cleaning.utils.cases import (
             get_system_property_label,
+            get_system_property_data_type,
         )
         for index, prop_id in enumerate(default_properties):
             cls.objects.create(
@@ -625,6 +626,7 @@ class BulkEditColumn(models.Model):
                 index=index,
                 prop_id=prop_id,
                 label=get_system_property_label(prop_id),
+                data_type=get_system_property_data_type(prop_id),
                 is_system=cls.is_system_property(prop_id),
             )
 
