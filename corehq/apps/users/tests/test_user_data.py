@@ -385,3 +385,18 @@ class TestUserDataLifecycle(TestCase):
         self.assertTrue(
             SQLUserData.objects.filter(django_user=web_user.get_django_user(), domain='new-domain').exists()
         )
+
+    def test_soft_deleted_user_data_is_removed_before_readding_to_domain(self):
+        web_user = self._create_web_user('test@example.com')
+        self._create_user_data(web_user, self.domain.name, {'favorite_color': 'purple'})
+        self.assertTrue(
+            SQLUserData.objects.filter(django_user=web_user.get_django_user(), domain=self.domain.name).exists()
+        )
+        web_user.delete_domain_membership(self.domain.name, create_record=True)
+        web_user.add_domain_membership(self.domain.name)
+        # no user data should exist at this point
+        self.assertFalse(
+            SQLUserData.all_objects.filter(
+                django_user=web_user.get_django_user(), domain=self.domain.name
+            ).exists()
+        )
