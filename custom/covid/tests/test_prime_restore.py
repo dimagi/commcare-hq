@@ -5,7 +5,7 @@ from django.test import TestCase
 
 from casexml.apps.phone.models import SyncLogSQL
 from corehq.apps.domain.auth import FORMPLAYER
-from custom.covid.tasks import get_users_for_priming
+from corehq.apps.formplayer_api.tasks import get_users_for_priming
 
 
 def make_synclog(domain, date, user, request_user=None, is_formplayer=True, case_count=None, auth_type=None):
@@ -27,9 +27,12 @@ class PrimeRestoreTests(TestCase):
         after_cutoff = datetime.utcnow() - relativedelta(hours=1)
         SyncLogSQL.objects.bulk_create([
             make_synclog(domain="d1", user="u1", request_user=None, is_formplayer=True, date=before_window),
-            make_synclog(domain="d1", user="u1", request_user=None, is_formplayer=True, date=in_window, case_count=100),
-            make_synclog(domain="d1", user="u1", request_user="u2", is_formplayer=True, date=in_window, case_count=100),
-            make_synclog(domain="d1", user="u3", request_user=None, is_formplayer=True, date=in_window, case_count=10),
+            make_synclog(domain="d1", user="u1", request_user=None, is_formplayer=True, date=in_window,
+                         case_count=100),
+            make_synclog(domain="d1", user="u1", request_user="u2", is_formplayer=True, date=in_window,
+                         case_count=100),
+            make_synclog(domain="d1", user="u3", request_user=None, is_formplayer=True, date=in_window,
+                         case_count=10),
             make_synclog(domain="d1", user="u4", request_user="u5", is_formplayer=True, date=after_cutoff),
             # not formplayer
             make_synclog(domain="d1", user="u4", is_formplayer=False, date=in_window),

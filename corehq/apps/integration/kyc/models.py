@@ -43,13 +43,6 @@ class KycConfig(models.Model):
         choices=KycProviders.choices,
         default=KycProviders.MTN_KYC,
     )
-    connection_settings = models.ForeignKey(
-        ConnectionSettings,
-        on_delete=models.PROTECT,
-        # Assumes we can determine connection settings for provider
-        null=True,
-        blank=True,
-    )
 
     class Meta:
         constraints = [
@@ -64,7 +57,7 @@ class KycConfig(models.Model):
         ):
             raise ValidationError({
                 'other_case_type': _(
-                    'This field is required when "User Data Store" is set to '
+                    'This field is required when "Recipient Data Store" is set to '
                     '"Other Case Type".'
                 )
             })
@@ -72,22 +65,20 @@ class KycConfig(models.Model):
             self.other_case_type = None
 
     def get_connection_settings(self):
-        if not self.connection_settings_id:
-            if self.provider == KycProviders.MTN_KYC:
-                kyc_settings = settings.MTN_KYC_CONNECTION_SETTINGS
-                return ConnectionSettings(
-                    domain=self.domain,
-                    name=KycProviders.MTN_KYC.label,
-                    url=kyc_settings['url'],
-                    auth_type=OAUTH2_CLIENT,
-                    client_id=kyc_settings['client_id'],
-                    client_secret=kyc_settings['client_secret'],
-                    token_url=kyc_settings['token_url'],
-                )
-            # elif self.provider == KycProviders.NEW_PROVIDER_HERE: ...
-            else:
-                raise ValueError(f'Unable to determine connection settings for KYC provider {self.provider!r}.')
-        return self.connection_settings
+        if self.provider == KycProviders.MTN_KYC:
+            kyc_settings = settings.MTN_KYC_CONNECTION_SETTINGS
+            return ConnectionSettings(
+                domain=self.domain,
+                name=KycProviders.MTN_KYC.label,
+                url=kyc_settings['url'],
+                auth_type=OAUTH2_CLIENT,
+                client_id=kyc_settings['client_id'],
+                client_secret=kyc_settings['client_secret'],
+                token_url=kyc_settings['token_url'],
+            )
+        # elif self.provider == KycProviders.NEW_PROVIDER_HERE: ...
+        else:
+            raise ValueError(f'Unable to determine connection settings for KYC provider {self.provider!r}.')
 
     def get_kyc_users(self):
         """
@@ -178,6 +169,12 @@ class KycUser:
         else:
             raise KeyError(item)
 
+    def get(self, item, default=None):
+        try:
+            return self[item]
+        except KeyError:
+            return default
+
     @property
     def user_data(self):
         if self._user_data is None:
@@ -197,28 +194,29 @@ class KycUser:
         return self.user_data.get('kyc_last_verified_at')
 
     @property
-    def kyc_is_verified(self):
-        value = self.user_data.get('kyc_is_verified')
+    def kyc_verification_status(self):
+        value = self.user_data.get('kyc_verification_status')
         # value can be '' when field is defined as a custom field in custom user data
-        assert value in (None, 'True', 'False', '')
-        if value == 'True':
-            return True
-        if value == 'False':
-            return False
-        return None
+        assert value in (
+            KycVerificationStatus.PENDING,
+            KycVerificationStatus.PASSED,
+            KycVerificationStatus.FAILED,
+            ''
+        )
+        return value or KycVerificationStatus.PENDING
 
     @property
     def kyc_provider(self):
         return self.user_data.get('kyc_provider')
 
-    def update_verification_status(self, is_verified, device_id=None):
+    def update_verification_status(self, verification_status, device_id=None):
         from corehq.apps.hqcase.utils import update_case
 
-        assert is_verified in [True, False]
+        assert verification_status in [KycVerificationStatus.PASSED, KycVerificationStatus.FAILED]
         update = {
             'kyc_provider': self.kyc_config.provider,
             'kyc_last_verified_at': datetime.utcnow().isoformat(),  # TODO: UTC or project timezone?
-            'kyc_is_verified': str(is_verified),
+            'kyc_verification_status': verification_status,
         }
         if self.kyc_config.user_data_store == UserDataStore.CUSTOM_USER_DATA:
             user_data_obj = self._user_or_case_obj.get_user_data(self.kyc_config.domain)
@@ -240,10 +238,13 @@ class KycUser:
         self._user_data = None
 
 
-class KycIsVerifiedChoice(models.TextChoices):
-    TRUE = (True, 'KYC verification successful.')
-    FALSE = (False, 'KYC verification failed.')
-    NONE = (None, 'KYC verification pending.')
+class KycVerificationStatus:
+    PASSED = 'passed'
+    # FAILED indicates a request was made to KYC Provider and the KYC failed
+    FAILED = 'failed'
+    # PENDING indicates KYC is yet to be initiated and in that case, verification status is returned as None
+    # as case property/field does not exist or is empty.
+    PENDING = None
 
 
 class KycVerificationFailureCause(models.TextChoices):

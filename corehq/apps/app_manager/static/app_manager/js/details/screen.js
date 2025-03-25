@@ -402,7 +402,7 @@ hqDefine("app_manager/js/details/screen", function () {
                     nodeset: tabs[i].nodeset,
                     nodesetCaseType: tabs[i].nodeset_case_type,
                     nodesetFilter: tabs[i].nodeset_filter,
-                }, _.pick(tabs[i], ["header", "isTab", "relevant"]))
+                }, _.pick(tabs[i], ["header", "isTab", "relevant"])),
             );
         }
         if (self.columnKey === 'long') {
@@ -574,7 +574,7 @@ hqDefine("app_manager/js/details/screen", function () {
                 }),
                 function (c) {
                     return c.serialize();
-                }
+                },
             ));
 
             // Add tabs
@@ -594,7 +594,7 @@ hqDefine("app_manager/js/details/screen", function () {
                 }),
                 function (c) {
                     return c.serialize();
-                }
+                },
             ));
 
             data.caseTileTemplate = self.caseTileTemplate();
@@ -666,7 +666,7 @@ hqDefine("app_manager/js/details/screen", function () {
         };
         self.addItem = function (columnConfiguration, index) {
             var column = self.initColumnAsColumn(
-                ColumnModel(columnConfiguration, self)
+                ColumnModel(columnConfiguration, self),
             );
             if (index === undefined) {
                 self.columns.push(column);

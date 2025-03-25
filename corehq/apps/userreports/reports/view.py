@@ -144,13 +144,15 @@ def _ucr_view_is_safe(view_fn, *args, **kwargs):
 @conditionally_location_safe(_ucr_view_is_safe)
 class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     section_name = gettext_noop("Reports")
-    template_name = 'userreports/configurable_report.html'
+    template_name = 'userreports/bootstrap3/configurable_report.html'
     slug = "configurable"
     prefix = slug
-    emailable = False
     is_exportable = True
     exportable_all = False
     show_filters = True
+
+    # The UCR UI does not currently support emailing. However, UCRs can be emailed via scheduled reports.
+    emailable = True
 
     _domain = None
 
@@ -304,7 +306,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                         'If you believe you are seeing this message in error, please report an issue.'
                     )
                     details = str(e)
-                self.template_name = 'userreports/report_error.html'
+                self.template_name = 'userreports/bootstrap3/report_error.html'
                 allow_delete = (
                     self.report_config_id
                     and not self.is_static
@@ -374,7 +376,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             "type": self.type,
             "isExportable": self.is_exportable,
             "isExportAll": self.exportable_all,
-            "isEmailable": self.emailable,
+            "isEmailable": False,       # see emailable attr above
             "emailDefaultSubject": self.title,
         }
 

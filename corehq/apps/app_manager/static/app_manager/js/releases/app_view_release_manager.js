@@ -31,7 +31,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
                     self.releaseLogs(
                         _.map(data.app_release_logs, function (log) {
                             return ko.mapping.fromJS(log);
-                        })
+                        }),
                     );
                     self.totalItems(data.pagination.total);
                     self.fetchState('');

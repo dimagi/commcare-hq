@@ -1,0 +1,80 @@
+{% extends "userreports/bootstrap5/userreports_base.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% js_entry 'userreports/js/data_source_evaluator' %}
+
+{% block page_content %}
+  {% registerurl "data_source_evaluator" domain %}
+  <h1>
+    {% if use_updated_ucr_naming %}
+      {% trans "Custom Web Report Source Debugger" %}
+    {% else %}
+      {% trans "UCR Data Source Debugger" %}
+    {% endif %}
+  </h1>
+  <form id="data-source-debugger" class="form-horizontal" data-bind="submit: evaluateDataSource">
+    <div class="form-group">  {# todo B5: css-form-group #}
+      <label for="data_source_id" class="col-md-2 form-label">
+        {% if use_updated_ucr_naming %}
+          {% trans "Custom Web Report Source" %}
+        {% else %}
+          {% trans "Data Source" %}
+        {% endif %}
+      </label>
+      <div class="col-md-6">
+        <select class="form-select hqwebapp-select2" id="data_source_id" data-bind="value: dataSourceId">
+          {% for data_source in data_sources %}
+            <option value="{{ data_source.get_id }}">{{ data_source.display_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="form-group">  {# todo B5: css-form-group #}
+      <label for="doc_id" class="col-md-2 form-label">{% trans "Document IDs" %}</label>
+      <div class="col-md-6">
+        <input type="text" class="form-control" id="doc_id" data-bind="value: documentsId">
+        <p class="help-block">{% trans "Comma separated" %}</p>
+      </div>
+    </div>
+    <p class="offset-md-2 col-md-10" data-bind="html: uiFeedback"></p>
+    <div class="form-group">  {# todo B5: css-form-group #}
+      <div class="offset-md-2 col-md-10">
+        <button type="submit" class="btn btn-primary" data-bind="disable: loading">{% trans "Submit!" %}</button>
+      </div>
+    </div>
+
+    <h3 data-bind="visible: columns">{% trans "Evaluated rows" %}</h3>
+    <div class="table-responsive">
+      <table class="table table-hovered">
+        <thead>
+          <tr data-bind="foreach: columns">
+            <th data-bind="text: $data"></th>
+          </tr>
+        </thead>
+        <tbody data-bind="foreach: { data: rows, as: 'row' }">
+          <tr data-bind="foreach: row">
+            <td data-bind="text: $data"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 data-bind="visible: columns">{% trans "Rows from the database" %}</h3>
+    <p data-bind="html: dbError"></p>
+    <div class="table-responsive">
+      <table class="table table-hovered">
+        <thead>
+          <tr data-bind="foreach: columns">
+            <th data-bind="text: $data"></th>
+          </tr>
+        </thead>
+        <tbody data-bind="foreach: { data: dbRows, as: 'row' }">
+          <tr data-bind="foreach: row">
+            <td data-bind="text: $data"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </form>
+{% endblock %}

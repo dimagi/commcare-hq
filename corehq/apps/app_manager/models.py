@@ -4467,8 +4467,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         if errors:
             raise AppValidationError(errors)
 
-        if copy.create_build_files_on_build:
-            copy.create_build_files()
+        copy.create_build_files()
 
         # since this hard to put in a test
         # I'm putting this assert here if copy._id is ever None
@@ -4521,11 +4520,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             if regexp is None or re.match(regexp, name):
                 self.lazy_put_attachment(other.lazy_fetch_attachment(name), name)
 
-    @property
-    @memoized
-    def create_build_files_on_build(self):
-        return not toggles.SKIP_CREATING_DEFAULT_BUILD_FILES_ON_BUILD.enabled(self.domain)
-
     def delete_app(self):
         domain_has_apps.clear(self.domain)
         get_app_languages.clear(self.domain)
@@ -4543,6 +4537,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def save(self, response_json=None, increment_version=None, **params):
         from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
+        from corehq.apps.app_manager.tasks import refresh_data_dictionary_from_app
         from corehq.apps.case_search.utils import get_app_context_by_case_type
         self.last_modified = datetime.datetime.utcnow()
         if not self._rev and not domain_has_apps(self.domain):
@@ -4558,12 +4553,16 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         get_apps_in_domain.clear(self.domain, True)
         get_apps_in_domain.clear(self.domain, False)
         get_mobile_ucr_count.clear(self.domain)
+        if toggles.DATA_CLEANING_CASES.enabled(self.domain):
+            from corehq.apps.data_cleaning.utils.cases import clear_caches_case_data_cleaning
+            clear_caches_case_data_cleaning(self.domain)
 
         request = view_utils.get_request()
         user = getattr(request, 'couch_user', None)
         if user and user.days_since_created == 0:
             track_workflow(user.get_email(), 'Saved the App Builder within first 24 hours')
         send_hubspot_form(HUBSPOT_SAVED_APP_FORM_ID, request)
+        refresh_data_dictionary_from_app.delay(self.domain, self.get_id)
         if self.copy_of:
             cache.delete('app_build_cache_{}_{}'.format(self.domain, self.get_id))
 

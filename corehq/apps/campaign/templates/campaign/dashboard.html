@@ -1,0 +1,85 @@
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% js_entry "campaign/js/dashboard" %}
+
+{% block title %}
+  {% trans "Campaign Dashboard" %}
+{% endblock %}
+
+{% block page_content %}
+  {% initial_page_data 'mapbox_access_token' mapbox_access_token %}
+  {% registerurl 'api_cases_with_gps' request.domain %}
+  {% initial_page_data 'map_report_widgets' map_report_widgets %}
+
+  <ul class="nav nav-tabs" role="tablist">
+    <li role="presentation" class="nav-item">
+      <a
+        class="nav-link active"
+        role="tab"
+        data-bs-toggle="tab"
+        href="#cases-tab-content"
+      >
+        {% trans "Cases" %}
+      </a>
+    </li>
+    <li>
+      <a
+        class="nav-link"
+        role="tab"
+        data-bs-toggle="tab"
+        href="#mobile-workers-tab-content"
+      >
+        {% trans "Mobile Workers" %}
+      </a>
+    </li>
+  </ul>
+  <div class="spacer"></div>
+  <div class="tab-content">
+    <div class="tab-pane active" id="cases-tab-content" role="tabpanel">
+      <!-- Cases tab content -->
+      <!-- Gauges Section -->
+      <div class="row">
+        <h2>{% trans "Gauges" %}</h2>
+      </div>
+      <div class="spacer"></div>
+      <!-- Report and Map Section -->
+      <div class="row">
+        <h2>{% trans "Reports" %}</h2>
+        <div id="map-reports-container-cases">
+          {% for widget in map_report_widgets.cases %}
+            {% if widget.widget_type == 'DashboardMap' %}
+              {% include 'campaign/partials/dashboard_map.html' %}
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="mobile-workers-tab-content">
+      <!-- Users tab content -->
+      <!-- Gauges Section -->
+      <div class="row">
+        <h2>{% trans "Gauges" %}</h2>
+      </div>
+      <div class="spacer"></div>
+      <!-- Report and Map Section -->
+      <div class="row">
+        <h2>{% trans "Reports" %}</h2>
+        <div id="map-reports-container-mobile-workers">
+          {% for widget in map_report_widgets.mobile_workers %}
+            {% if widget.widget_type == 'DashboardMap' %}
+              {% include 'campaign/partials/dashboard_map.html' %}
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock page_content %}
+
+{% block modals %}
+  {% include "hqwebapp/htmx/error_modal.html" %}
+  {{ block.super }}
+{% endblock modals %}

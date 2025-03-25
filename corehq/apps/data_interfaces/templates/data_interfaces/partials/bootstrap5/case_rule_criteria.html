@@ -166,8 +166,10 @@
     <label class="form-label col-sm-2">{% trans "When the current date is" %}</label>
     <div class="controls col-sm-2">
       <select class="select form-select" data-bind="value: match_type">
-        <option value="{{ form.constants.MATCH_DAYS_GREATER_OR_EQUAL }}">{% trans "greater than" %}</option>
+        <option value="{{ form.constants.MATCH_DAYS_GREATER_THAN }}">{% trans "greater than" %}</option>
+        <option value="{{ form.constants.MATCH_DAYS_GREATER_OR_EQUAL }}">{% trans "greater than or equal" %}</option>
         <option value="{{ form.constants.MATCH_DAYS_LESS_THAN }}">{% trans "less than" %}</option>
+        <option value="{{ form.constants.MATCH_DAYS_LESS_OR_EQUAL }}">{% trans "less than or equal" %}</option>
       </select>
     </div>
     <div class="col-sm-2">
