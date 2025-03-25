@@ -243,7 +243,7 @@ def get_geo_case_properties_view(request, domain):
     if not case_type:
         return HttpResponseBadRequest(gettext_lazy('case_type param is required'))
 
-    geo_case_props= get_geo_case_properties(domain, case_type)
+    geo_case_props = get_geo_case_properties(domain, case_type)
     return render(
         request,
         'campaign/partials/case_properties_dropdown.html',
