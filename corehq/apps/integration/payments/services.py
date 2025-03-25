@@ -185,4 +185,4 @@ def get_payment_batch_numbers_for_domain(domain):
         chunk_batch_numbers = set([case.case_json.get(PaymentProperties.BATCH_NUMBER) for case in cases])
         batch_numbers.update(chunk_batch_numbers)
 
-    return sorted([batch_number for batch_number in batch_numbers if batch_number])
+    return [batch_number for batch_number in batch_numbers if batch_number]
