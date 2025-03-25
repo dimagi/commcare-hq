@@ -21,14 +21,15 @@ hqDefine("reports/js/bootstrap5/hq_report", [
         self.datespan = options.datespan;
         self.filterSet = options.filterSet || false;
         self.needsFilters = options.needsFilters || false;
-        self.filterAccordion = options.filterAccordion || "#reportFilters" + initialPageData.get('html_id_suffix');
-        self.filterSubmitSelector = options.filterSubmitSelector || '#paramSelectorForm' + initialPageData.get('html_id_suffix') + ' button[type="submit"]';
+        self.htmlIDSuffix = options.html_id_suffix;
+        self.filterAccordion = options.filterAccordion || "#reportFilters" + self.htmlIDSuffix;
+        self.filterSubmitSelector = options.filterSubmitSelector || '#paramSelectorForm' + self.htmlIDSuffix + ' button[type="submit"]';
         self.filterSubmitButton = $(self.filterSubmitSelector);
-        self.toggleFiltersButton = options.toggleFiltersButton || "#toggle-report-filters" + initialPageData.get('html_id_suffix');
-        self.exportReportButton = options.exportReportButton || "#export-report-excel" + initialPageData.get('html_id_suffix');
-        self.emailReportButton = options.emailReportButton || "#email-report" + initialPageData.get('html_id_suffix');
-        self.printReportButton = options.printReportButton || "#print-report" + initialPageData.get('html_id_suffix');
-        self.emailReportModal = options.emailReportModal || "#email-report-modal" + initialPageData.get('html_id_suffix');
+        self.toggleFiltersButton = options.toggleFiltersButton || "#toggle-report-filters" + self.htmlIDSuffix;
+        self.exportReportButton = options.exportReportButton || "#export-report-excel" + self.htmlIDSuffix;
+        self.emailReportButton = options.emailReportButton || "#email-report" + self.htmlIDSuffix;
+        self.printReportButton = options.printReportButton || "#print-report" + self.htmlIDSuffix;
+        self.emailReportModal = options.emailReportModal || "#email-report-modal" + self.htmlIDSuffix;
         self.isExportable = options.isExportable || false;
         self.isExportAll = options.isExportAll || false;
         self.isEmailable = options.isEmailable || false;
@@ -176,17 +177,17 @@ hqDefine("reports/js/bootstrap5/hq_report", [
         });
 
         self.resetFilterState = function () {
-            $('#paramSelectorForm' + initialPageData.get('html_id_suffix') + ' fieldset button, #paramSelectorForm' + initialPageData.get('html_id_suffix') + ' fieldset span[data-dropdown="dropdown"]').click(function () {
+            $('#paramSelectorForm' + self.htmlIDSuffix + ' fieldset button, #paramSelectorForm' + self.htmlIDSuffix + ' fieldset span[data-dropdown="dropdown"]').click(function () {
                 $(self.filterSubmitSelector)
                     .changeButtonState('reset')
                     .addClass('btn-primary')
                     .removeClass('disabled')
                     .prop('disabled', false);
             });
-            $('#paramSelectorForm' + initialPageData.get('html_id_suffix') + ' fieldset').on('change apply', function (e) {
+            $('#paramSelectorForm' + self.htmlIDSuffix + ' fieldset').on('change apply', function (e) {
                 // Ensure correct submit button is found in context of which form the button belongs to.
                 // This is necessary for pages that contain multiple filter panels, since we are using CSS IDs.
-                const submitButton = $(e.target).closest('#reportFilters' + initialPageData.get('html_id_suffix')).find(self.filterSubmitSelector);
+                const submitButton = $(e.target).closest('#reportFilters' + self.htmlIDSuffix).find(self.filterSubmitSelector);
                 $(submitButton)
                     .changeButtonState('reset')
                     .addClass('btn-primary')
