@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main "accounting/js/widgets" %} {# Uses .ko-adjust-balance-form #}
+{% js_entry_b3 "accounting/js/widgets" %} {# Uses .ko-adjust-balance-form #}
 
 {% block page_content %}
   {% if adjust_balance_form %}
