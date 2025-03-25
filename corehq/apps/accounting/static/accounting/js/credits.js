@@ -38,8 +38,8 @@ hqDefine('accounting/js/credits', [
         self.products = products;
         self.features = features;
         self.paymentHandler = paymentHandler;
-        self.cc_general_credit = ko.observable(ccGeneralCreditItem(paymentHandler));
-        self.invoice_general_credit = ko.observable(invoiceGeneralCreditItem(paymentHandler));
+        self.cardPaymentCredit = ko.observable(cardPaymentCreditItem(paymentHandler));
+        self.prepaymentInvoiceCredit = ko.observable(prepaymentInvoiceCreditItem(paymentHandler));
 
         self.triggerPayment = function (paymentMethod) {
             self.paymentHandler.reset();
@@ -47,34 +47,34 @@ hqDefine('accounting/js/credits', [
             self.paymentHandler.costItem(prepaymentItems({
                 products: self.products,
                 features: self.features,
-                general_credit: self.cc_general_credit,
-                invoice_credit: self.invoice_general_credit,
+                general_credit: self.cardPaymentCredit,
+                invoice_credit: self.prepaymentInvoiceCredit,
             }));
         };
         return self;
     };
 
-    var ccGeneralCreditItem = function (paymentHandler) {
+    var cardPaymentCreditItem = function (paymentHandler) {
         var self = {};
         self.name = ko.observable("Credits");
-        self.creditType = ko.observable("cc_general_credit");
+        self.creditType = ko.observable("card_general_credit");
         self.addAmount = ko.observable(0);
-        self.addAmountValid = ko.computed(function () {
+        self.isAddAmountValid = ko.computed(function () {
             return  parseFloat(self.addAmount()) === 0 || (parseFloat(self.addAmount()) >= 0.5);
         });
         self.paymentHandler = paymentHandler;
         return self;
     };
 
-    var invoiceGeneralCreditItem = function (paymentHandler) {
+    var prepaymentInvoiceCreditItem = function (paymentHandler) {
         var self = {};
-        self.date_start = ko.observable();
-        self.date_end = ko.observable();
-        self.credit_label = ko.observable("General Credits");
+        self.dateStart = ko.observable();
+        self.dateEnd = ko.observable();
+        self.creditLabel = ko.observable("General Credits");
         self.creditType = ko.observable("invoice_general_credit");
         self.quantity = ko.observable(1);
         self.addAmount = ko.observable(0);
-        self.addAmountValid = ko.computed(function () {
+        self.isAddAmountValid = ko.computed(function () {
             return  parseFloat(self.addAmount()) === 0 || (parseFloat(self.addAmount()) >= 0.5);
         });
         self.paymentHandler = paymentHandler;
@@ -100,7 +100,7 @@ hqDefine('accounting/js/credits', [
         self.paymentHandler = paymentHandler;
         self.addAmount = ko.observable(0);
 
-        self.addAmountValid = ko.computed(function () {
+        self.isAddAmountValid = ko.computed(function () {
             return  parseFloat(self.addAmount()) === 0 || (parseFloat(self.addAmount()) >= 0.5);
         });
 

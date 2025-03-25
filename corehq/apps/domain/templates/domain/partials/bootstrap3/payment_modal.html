@@ -27,7 +27,7 @@
           </div>
           <div
             class="alert alert-danger"
-            data-bind="visible: !addAmountValid()"
+            data-bind="visible: !isAddAmountValid()"
           >
             <i class="fa-solid fa-triangle-exclamation"></i>
             <span
@@ -62,7 +62,7 @@
             id="prepay-date-start"
             class="date-picker form-control"
             name="prepay_date_start"
-            data-bind="value: date_start"
+            data-bind="value: dateStart"
             placeholder='{% trans "YYYY-MM-DD" %}'
           />
         </div>
@@ -78,7 +78,7 @@
             id="prepay-date-end"
             class="date-picker form-control"
             name="prepay_date_end"
-            data-bind="value: date_end"
+            data-bind="value: dateEnd"
             placeholder='{% trans "YYYY-MM-DD" %}'
           />
         </div>
@@ -92,7 +92,7 @@
           <input
             type="text"
             class="form-control"
-            data-bind="textInput: credit_label"
+            data-bind="textInput: creditLabel"
             name="credit_label"
           />
         </div>
@@ -113,7 +113,7 @@
           </div>
           <div
             class="alert alert-danger"
-            data-bind="visible: !addAmountValid()"
+            data-bind="visible: !isAddAmountValid()"
           >
             <i class="fa-solid fa-triangle-exclamation"></i>
             <span
