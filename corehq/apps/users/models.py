@@ -2471,6 +2471,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             delete_tableau_user(domain, self.username)
         record = super().delete_domain_membership(domain, create_record=create_record)
         SQLUserData.objects.filter(user_id=self.user_id, domain=domain).update(deleted_on=datetime.now(tz.utc))
+        if domain in self._user_data_accessors.keys():
+            del self._user_data_accessors[domain]
         return record
 
     def is_commcare_user(self):
