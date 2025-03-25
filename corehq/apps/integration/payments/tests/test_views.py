@@ -78,7 +78,7 @@ class TestPaymentsVerificationReportView(BaseTestPaymentsView):
         assert response.status_code == 404
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
-    @patch.object(BatchNumberFilter, 'options', [])
+    @patch.object(BatchNumberFilter, 'options', [("b001", "b001")])
     def test_success(self):
         response = self._make_request()
         assert response.status_code == 200
