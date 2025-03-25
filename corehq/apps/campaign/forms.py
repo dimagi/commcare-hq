@@ -1,9 +1,15 @@
+import json
+
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django import forms
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.campaign.models import DashboardTab, DashboardMap, DashboardReport
+from crispy_forms import layout as crispy
+
+from corehq.apps.campaign.views import get_geo_case_properties, get_geo_case_properties_view
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.userreports.models import ReportConfiguration
 
@@ -57,16 +63,53 @@ class DashboardMapForm(DashboardWidgetBaseForm):
     )
     geo_case_property = forms.CharField(
         label=_('Geo Case Property'),
+        widget=forms.widgets.Select(choices=[]),
         help_text=_("The name of the case property storing the geo-location data of your cases."),
     )
 
     def __init__(self, domain, *args, **kwargs):
         super().__init__(domain, *args, **kwargs)
         self.fields['case_type'].choices = self._get_case_types()
+        if self.instance.pk:
+            self.fields['geo_case_property'].widget.choices = self._get_geo_case_properties()
+
+        self.helper.layout = crispy.Layout(
+            crispy.Div(
+                crispy.Field('title'),
+                crispy.Field('description'),
+                crispy.Field('dashboard_tab'),
+                crispy.Field('display_order'),
+                crispy.Field(
+                    'case_type',
+                    x_init='case_type = $el.value',
+                    x_model='case_type',
+                    hx_get=reverse(get_geo_case_properties_view, kwargs={'domain': self.domain}),
+                    hx_trigger='change',
+                    hx_target='#geo-case-property select',
+                    hx_swap='innerHTML',
+                    hx_indicator=".htmx-indicator",
+                ),
+                crispy.Div(
+                    'geo_case_property',
+                    css_id='geo-case-property',
+                    x_init='geo_case_property = $el.value',
+                    x_show='case_type !== ""',
+                ),
+                x_data=json.dumps({
+                    'case_type': self.instance.case_type,
+                }),
+            )
+        )
 
     def _get_case_types(self):
         case_types = sorted(get_case_types_for_domain(self.domain))
         return [(case_type, case_type) for case_type in case_types]
+
+    def _get_geo_case_properties(self):
+        return [
+            (case_property, case_property)
+            for case_property in get_geo_case_properties(self.domain, self.instance.case_type)
+        ]
 
 
 class DashboardReportForm(DashboardWidgetBaseForm):
