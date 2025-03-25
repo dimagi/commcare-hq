@@ -234,14 +234,10 @@ def _user_data(key, filter_):
 
 
 def query_user_data(key, value):
-    if not value:
-        return queries.match_all()
     return _user_data(key, queries.match(field='user_data_es.value', search_string=value))
 
 
 def login_as_user(value):
-    if not value:
-        return queries.match_all()
     return _user_data('login_as_user', filters.term('user_data_es.value', value))
 
 
