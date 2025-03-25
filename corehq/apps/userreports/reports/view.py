@@ -373,6 +373,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             "domain": self.domain,
             "slug": self.slug,
             "subReportSlug": self.sub_slug,
+            "html_id_suffix": self.html_id_suffix,
             "type": self.type,
             "isExportable": self.is_exportable,
             "isExportAll": self.exportable_all,
