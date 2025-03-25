@@ -44,7 +44,7 @@ def normalize_domain_name(domain):
     if domain:
         normalized = domain.replace('_', '-').lower()
         if settings.DEBUG:
-            assert(re.match('^%s$' % grandfathered_domain_re, normalized))
+            assert (re.match('^%s$' % grandfathered_domain_re, normalized))
         return normalized
     return domain
 
