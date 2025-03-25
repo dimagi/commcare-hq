@@ -5,6 +5,7 @@ hqDefine('accounting/js/billing_account_form', [
     'hqwebapp/js/initial_page_data',
     'accounting/js/credits_tab',
     'accounting/js/widgets',
+    'commcarehq',
 ], function (
     $,
     ko,
