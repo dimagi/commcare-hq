@@ -266,7 +266,7 @@ importlib-metadata==8.5.0
     #   sphinx
 iso8601==2.0.0
     # via -r base-requirements.in
-jinja2==3.1.5
+jinja2==3.1.6
     # via
     #   -r base-requirements.in
     #   myst-parser
