@@ -12,10 +12,16 @@ hqDefine('reports_core/js/bootstrap3/maps', [
     // Reset images needed for map markers, which don't play well with webpack.
     // See https://github.com/Leaflet/Leaflet/issues/4968#issuecomment-483402699
     delete L.Icon.Default.prototype._getIconUrl;
-    L.Icon.Default.mergeOptions({
-        iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-        iconUrl: require('leaflet/dist/images/marker-icon.png'),
-        shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+    import('leaflet/dist/images/marker-icon-2x.png').then(function (iconRetina) {
+        import('leaflet/dist/images/marker-icon.png').then(function (icon) {
+            import('leaflet/dist/images/marker-shadow.png').then(function (shadow) {
+                L.Icon.Default.mergeOptions({
+                    iconRetinaUrl: iconRetina.default,
+                    iconUrl: icon.default,
+                    shadowUrl: shadow.default,
+                });
+            });
+        });
     });
 
     var module = {},
