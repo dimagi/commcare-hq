@@ -608,8 +608,8 @@ class BulkEditColumn(models.Model):
     def create_default_columns(cls, session):
         default_properties = {
             BulkEditSessionType.CASE: (
-                'name', 'owner_name', 'opened_on', 'opened_by_username',
-                'modified_on', '@status',
+                'name', 'owner_name', 'date_opened', 'opened_by_username',
+                'last_modified', '@status',
             ),
         }.get(session.session_type)
 
