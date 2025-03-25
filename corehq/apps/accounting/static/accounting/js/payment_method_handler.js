@@ -3,12 +3,14 @@ hqDefine('accounting/js/payment_method_handler', [
     'jquery',
     'knockout',
     'underscore',
-    'stripe',
+    '@stripe/stripe-js',
+    'hqwebapp/js/initial_page_data',
 ], function (
     $,
     ko,
     _,
-    Stripe
+    Stripe,
+    initialPageData,
 ) {
     var billingHandler = function (formId, opts) {
         var self = {};
@@ -130,8 +132,31 @@ hqDefine('accounting/js/payment_method_handler', [
         self.isNewCard = ko.computed(function () {
             return self.selectedCardType() === 'new';
         });
+        // Stripe can't attach the card UI to the page until its container exists.
+        // Its container is removed and re-added from the DOM depending on the user's
+        // selections, so mount and unmount it as needed.
+        self.isNewCard.subscribe(function (newValue) {
+            self.stripePromise.then(function (stripe) {
+                _.delay(function () {
+                    if (newValue) {
+                        self.cardElement.mount('#stripe-card-container');
+                    } else {
+                        self.cardElement.unmount();
+                    }
+                });
+            });
+        });
 
         self.newCard = ko.observable(stripeCardModel());
+        self.stripePromise = undefined;
+        $(function () {
+            self.stripePromise = Stripe.loadStripe(initialPageData.get("stripe_public_key"));
+            self.stripePromise.then(function (stripe) {
+                 self.cardElement = stripe.elements().create('card', {
+                     hidePostalCode: true,
+                });
+            });
+        });
 
         self.handlers = [self];
 
@@ -185,6 +210,9 @@ hqDefine('accounting/js/payment_method_handler', [
             self.paymentIsComplete(false);
             self.serverErrorMsg('');
             self.newCard(stripeCardModel());
+            if (self.cardElement) {
+                self.cardElement.clear();
+            }
         };
 
         self.processPayment = function () {
@@ -540,26 +568,23 @@ hqDefine('accounting/js/payment_method_handler', [
                 callbackOnSuccess();
                 return;
             }
-            Stripe.card.createToken({
-                number: self.number(),
-                cvc: self.cvc(),
-                exp_month: self.expMonth(),
-                exp_year: self.expYear(),
-            }, function (status, response) {
-                if (response.error) {
-                    self.errorMsg(response.error.message);
-                    self.isProcessing(false);
-                } else {
-                    self.errorMsg('');
-                    self.token(response.id);
-                    self.isTestMode(!response.livemode);
-                    if (self.token()) {
-                        callbackOnSuccess();
-                    } else {
+            self.stripePromise.then(function (stripe) {
+                stripe.createToken(self.cardElement).then(function (response) {
+                    if (response.error) {
+                        self.errorMsg(response.error.message);
                         self.isProcessing(false);
-                        self.errorMsg('Response from Stripe did not complete properly.');
+                    } else {
+                        self.errorMsg('');
+                        self.token(response.token.id);
+                        self.isTestMode(!response.token.livemode);
+                        if (self.token()) {
+                            callbackOnSuccess();
+                        } else {
+                            self.isProcessing(false);
+                            self.errorMsg(gettext('Response from Stripe did not complete properly.'));
+                        }
                     }
-                }
+                });
             });
         };
 
