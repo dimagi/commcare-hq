@@ -83,27 +83,28 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping', [
         };
 
         // attach a media-manager if item.value is a file-path to icon
+        self.iconManagerReady = ko.observable(false);
         if (mappingContext.values_are_icons()) {
             var actualPath = item.value[mappingContext.lang];
             var altText = item.alt_text[mappingContext.lang];
             var defaultIconPath = actualPath || self.generateIconPath();
-            hqRequire([
-                'app_manager/js/app_manager_media',
-                'app_manager/js/nav_menu_media_common',
-            ], function (appManager, uploaders) {
-                self.iconManager = appManager.appMenuMediaManager({
-                    ref: {
-                        "path": actualPath,
-                        "icon_type": "icon-picture",
-                        "media_type": "Image",
-                        "media_class": "CommCareImage",
-                        "icon_class": "icon-picture",
-                        "alt_text": altText,
-                    },
-                    objectMap: mappingContext.multimedia,
-                    uploadController: uploaders.iconUploader,
-                    defaultPath: defaultIconPath,
-                    inputElement: $("#" + self.cssId()),
+            import('app_manager/js/app_manager_media').then(function (appManager) {
+                import('app_manager/js/nav_menu_media_common').then(function (uploaders) {
+                    self.iconManager = appManager.appMenuMediaManager({
+                        ref: {
+                            "path": actualPath,
+                            "icon_type": "icon-picture",
+                            "media_type": "Image",
+                            "media_class": "CommCareImage",
+                            "icon_class": "icon-picture",
+                            "alt_text": altText,
+                        },
+                        objectMap: mappingContext.multimedia,
+                        uploadController: uploaders.iconUploader,
+                        defaultPath: defaultIconPath,
+                        inputElement: $("#" + self.cssId()),
+                    });
+                    self.iconManagerReady(true);
                 });
             });
         }
@@ -119,7 +120,9 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping', [
             _.each(langs, function (lang) {
                 // return ko reference to path in `iconManager` for current UI language value
                 if (mappingContext.values_are_icons() && lang === mappingContext.lang) {
-                    newValue.push([lang, self.iconManager.customPath]);
+                    if (self.iconManagerReady()) {
+                        newValue.push([lang, self.iconManager.customPath]);
+                    }
                 } else {
                     // return new ko.observable for other languages
                     newValue.push([lang, ko.observable(item.value[lang])]);
@@ -133,7 +136,9 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping', [
             var langs = _.union(_(item.alt_text).keys(), [mappingContext.lang]);
             _.each(langs, function (lang) {
                 if (mappingContext.values_are_icons() && lang === mappingContext.lang) {
-                    newAltText.push([lang, self.iconManager.altText]);
+                    if (self.iconManagerReady()) {
+                        newAltText.push([lang, self.iconManager.altText]);
+                    }
                 } else {
                     newAltText.push([lang, ko.observable(item.alt_text[lang])]);
                 }
