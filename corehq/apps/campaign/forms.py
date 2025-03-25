@@ -1,6 +1,7 @@
 import json
 
 from django import forms
+from django.db.models import Max
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
@@ -47,6 +48,30 @@ class DashboardWidgetBaseForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.add_input(Submit(_('submit'), 'Submit', css_class='btn btn-primary'))
+
+    def save(self, commit=True):
+        if not self.instance.pk:
+            self.instance.display_order = self._get_display_order()
+        super().save(commit)
+
+    def _get_display_order(self):
+        # TODO Handle race conditions for concurrent requests to ensure consistent display_order value
+        tab = self.cleaned_data['dashboard_tab']
+        dashboard = self.instance.dashboard
+
+        max_map_order = dashboard.maps.filter(
+            dashboard_tab=tab
+        ).aggregate(
+            Max('display_order')
+        )['display_order__max'] or 0
+
+        max_report_order = dashboard.reports.filter(
+            dashboard_tab=tab
+        ).aggregate(
+            Max('display_order')
+        )['display_order__max'] or 0
+
+        return max(max_map_order, max_report_order) + 1
 
 
 class DashboardMapForm(DashboardWidgetBaseForm):
