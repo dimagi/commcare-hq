@@ -39,8 +39,8 @@ hqDefine('reports_core/js/bootstrap5/maps', [
         });
     };
 
-    var init_map = function (config, mapContainer) {
-        if (!privates.hasOwnProperty('map')) {
+    var initMap = function (config, mapContainer) {
+        if (!_.has(privates, 'map')) {
             mapContainer.show();
             mapContainer.empty();
             var streets = getTileLayer('mapbox/streets-v11', config.mapboxAccessToken),
@@ -99,13 +99,13 @@ hqDefine('reports_core/js/bootstrap5/maps', [
     };
 
     module.render = function (config, data, mapContainer) {
-        init_map(config, mapContainer);
+        initMap(config, mapContainer);
         initPopupTemplate(config);
 
-        var bad_re = /[a-zA-Z()]+/;
+        var badRegex = /[a-zA-Z()]+/;
         var points = _.compact(_.map(data, function (row) {
             var val = row[config.location_column_id];
-            if (val !== null && !bad_re.test(val)) {
+            if (val !== null && !badRegex.test(val)) {
                 var latlon = val.split(" ").slice(0, 2);
                 return L.marker(latlon).bindPopup(privates.template({row: row, columns: privates.columns}));
             }
