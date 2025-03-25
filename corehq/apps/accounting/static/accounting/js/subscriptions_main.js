@@ -1,4 +1,3 @@
-"use strict";
 hqDefine('accounting/js/subscriptions_main', [
     'jquery',
     'hqwebapp/js/initial_page_data',
@@ -8,7 +7,7 @@ hqDefine('accounting/js/subscriptions_main', [
 ], function (
     $,
     initialPageData,
-    widgets
+    widgets,
 ) {
     $(function () {
         var asyncSelect2Handler = widgets.asyncSelect2Handler;

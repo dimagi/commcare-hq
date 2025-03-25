@@ -25,6 +25,6 @@ function createStripeToken(handleResponse) {
     self.stripePromise.then(function (stripe) {
         stripe.createToken(self.cardElement).then(handleResponse);
     });
-};
+}
 
 export { createStripeToken, getCardElementPromise };

@@ -1,4 +1,3 @@
-'use strict';
 hqDefine('domain/js/bootstrap3/update_billing_contact_info', [
     'jquery',
     'hqwebapp/js/initial_page_data',
