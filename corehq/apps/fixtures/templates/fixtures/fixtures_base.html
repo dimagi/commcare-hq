@@ -26,8 +26,6 @@
 {% endblock %}
 
 {% block page_content %}
-  {% initial_page_data 'html_id_suffix' report.html_id_suffix|default:'' %}
-
   <div id="report-content">
     {% block reportcontent %}
     {% endblock %}
