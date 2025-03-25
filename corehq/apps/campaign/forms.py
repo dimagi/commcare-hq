@@ -95,8 +95,7 @@ class DashboardMapForm(DashboardWidgetBaseForm):
     def __init__(self, domain, *args, **kwargs):
         super().__init__(domain, *args, **kwargs)
         self.fields['case_type'].choices = self._get_case_types()
-        if self.instance.pk:
-            self.fields['geo_case_property'].widget.choices = self._get_geo_case_properties()
+        self.fields['geo_case_property'].widget.choices = self._get_geo_case_properties()
 
         self.helper.layout = crispy.Layout(
             crispy.Div(
