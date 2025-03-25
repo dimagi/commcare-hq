@@ -1,11 +1,11 @@
 --- 
 +++ 
-@@ -9,7 +9,7 @@
+@@ -10,7 +10,7 @@
  {% endblock %}
  
  {% block content %}
--    <div class="col-sm-12">
-+    <div class="col-md-12">
-         {{ block.super }}
-         <a href="{{ next_url }}" class="btn btn-primary">{% trans 'Go back' %}</a>
-     </div>
+-  <div class="col-sm-12">
++  <div class="col-md-12">
+     {{ block.super }}
+     <a href="{{ next_url }}" class="btn btn-primary">{% trans 'Go back' %}</a>
+   </div>
