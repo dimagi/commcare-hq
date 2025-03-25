@@ -148,3 +148,10 @@ class AddColumnForm(forms.Form):
                     )
                 )
         return cleaned_data
+
+    def add_column(self):
+        self.session.add_column(
+            self.cleaned_data['column_prop_id'],
+            self.cleaned_data['column_label'],
+            self.cleaned_data['column_data_type']
+        )
