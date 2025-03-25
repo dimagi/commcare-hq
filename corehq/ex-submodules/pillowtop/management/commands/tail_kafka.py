@@ -6,6 +6,7 @@ from django.core.management.base import BaseCommand
 
 from kafka import KafkaConsumer, TopicPartition
 
+from corehq.apps.change_feed.connection import get_kafka_api_version
 from corehq.apps.change_feed.consumer.feed import change_from_kafka_message
 from corehq.apps.change_feed.topics import (
     get_multi_topic_first_available_offsets,
@@ -72,7 +73,7 @@ def get_consumer():
         'bootstrap_servers': settings.KAFKA_BROKERS,
         'auto_offset_reset': 'earliest',
         'enable_auto_commit': False,
-        'api_version': settings.KAFKA_API_VERSION,
+        'api_version': get_kafka_api_version(),
         'consumer_timeout_ms': 10000
     }
 
