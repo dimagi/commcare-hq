@@ -83,6 +83,7 @@ class LookupTable(models.Model):
     item_attributes = models.JSONField(default=list)
     description = models.CharField(max_length=255, default="")
     is_synced = models.BooleanField(default=False)
+    last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
         app_label = 'fixtures'
@@ -237,6 +238,7 @@ class LookupTableRow(models.Model):
     fields = AttrsDict(list_of(Field), default=dict)
     item_attributes = models.JSONField(default=dict)
     sort_key = models.IntegerField()
+    last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
         app_label = 'fixtures'
@@ -277,6 +279,7 @@ class LookupTableRowOwner(models.Model):
     owner_type = models.PositiveSmallIntegerField(choices=OwnerType.choices)
     owner_id = CharIdField(max_length=126, default=None)
     row = models.ForeignKey(LookupTableRow, on_delete=DB_CASCADE, db_constraint=False)
+    last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
         app_label = 'fixtures'

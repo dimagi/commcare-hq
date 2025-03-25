@@ -505,6 +505,7 @@ fixtures
  0008_sqllookuptables
  0009_remove_lookuptablerowowner_couch_id
  0010_lookuptable_is_synced
+ 0011_lookuptable_last_modified_and_more
 form_processor
  0001_initial
  0002_xformattachmentsql
