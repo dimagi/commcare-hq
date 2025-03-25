@@ -1,5 +1,6 @@
-{% load hq_shared_tags %}{% load i18n %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
+{% load hq_shared_tags %}{% load i18n %}{% load compress %}{% load statici18n %}<!doctype html>
 {% get_current_language as LANGUAGE_CODE %}
+{% js_entry_b3 "sms/js/chat" %}
 <html lang="{{ LANGUAGE_CODE }}">
   <head>
     <title>
@@ -7,21 +8,28 @@
         Chat - {{ contact_name }}
       {% endblock %}
     </title>
-    <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
-    {% compress css %}
-      <link type="text/less" rel="stylesheet" media="all" href="{% static 'hqwebapp/less/style.less' %}"/>
-    {% endcompress %}
-    {% javascript_libraries ko=True underscore=True %}
+    <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}" />
     <script src="{% statici18n LANGUAGE_CODE %}"></script>
-    <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
-    <script src="{% static "sms/js/chat.js" %}"></script>
+    {# DO NOT COMPRESS #}
+    {% include "hqwebapp/partials/webpack.html" %}
+    {# must come after statici18n above #}
+    {% compress css %}
+      <link
+        type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'hqwebapp/less/style.less' %}"
+      />
+    {% endcompress %}
+    <script src="{% statici18n LANGUAGE_CODE %}"></script>
     <style>
-      html, body {
+      html,
+      body {
         height: 100%;
         overflow: hidden;
       }
       body {
-        background-color: #F0F0F0;
+        background-color: #f0f0f0;
       }
       #chat_header {
         height: auto;
@@ -29,9 +37,9 @@
       #chat_messages {
         height: 200px;
         overflow-y: auto;
-        border-top: 1px solid #CCC;
-        border-bottom: 1px solid #CCC;
-        background-color: #FFF;
+        border-top: 1px solid #ccc;
+        border-bottom: 1px solid #ccc;
+        background-color: #fff;
       }
       #chat_footer {
         height: auto;
@@ -58,13 +66,13 @@
         vertical-align: top;
       }
       #message_history_choices {
-        border-bottom: 1px solid #CCC;
+        border-bottom: 1px solid #ccc;
         text-align: center;
-        background-color: #FFF;
+        background-color: #fff;
       }
       .message_history_choice {
         cursor: pointer;
-        color: #44F;
+        color: #44f;
       }
       .message_history_choice:hover {
         text-decoration: underline;
@@ -86,10 +94,10 @@
         border: 1px solid black;
         margin-right: 10px;
         padding: 5px;
-        background-color: #FFF;
+        background-color: #fff;
       }
       .highlight_bullet {
-        color: #44F;
+        color: #44f;
         padding-right: 3px;
       }
       #message_counter_container {
@@ -98,44 +106,103 @@
       #message_count {
         padding: 5px 5px 5px 5px;
         border: 1px solid black;
-        background-color: #FFF;
+        background-color: #fff;
       }
     </style>
   </head>
   <body>
+    {% registerurl 'notifications_service' %}
+    <div class="commcarehq-urls hide">
+      {% block registered_urls %}
+        {# do not override this block, use registerurl template tag to populate #}
+      {% endblock %}
+    </div>
     <div id="chat_header">
       <table id="header_table">
         <tbody>
-        <tr>
-          <td>{% block chat_header %}{% endblock %}</td>
-          <td><div id="message_counter_container" data-bind="visible: {{ use_message_counter|JSON }}"><div><strong><span id="message_count" data-bind="text: message_count"></span></strong></div><div><span class="btn btn-primary" data-bind="click: reset_message_count">Reset</span></div></div></td>
-        </tr>
+          <tr>
+            <td>{% block chat_header %}{% endblock %}</td>
+            <td>
+              <div
+                id="message_counter_container"
+                data-bind="visible: {{ use_message_counter|JSON }}"
+              >
+                <div>
+                  <strong
+                    ><span
+                      id="message_count"
+                      data-bind="text: message_count"
+                    ></span
+                  ></strong>
+                </div>
+                <div>
+                  <span
+                    class="btn btn-primary"
+                    data-bind="click: reset_message_count"
+                    >Reset</span
+                  >
+                </div>
+              </div>
+            </td>
+          </tr>
         </tbody>
       </table>
       <div id="message_history_choices">
         <span>Message History</span>
         <span data-bind="foreach: history_choices">
-                        &#8901; <span data-bind="text: description, css: {message_history_choice_selected: selected(), message_history_choice: !selected()}, click: function(data, event) {$parent.update_history_choice($index(), true);}"></span>
-                    </span>
+          &#8901;
+          <span
+            data-bind="text: description, css: {message_history_choice_selected: selected(), message_history_choice: !selected()}, click: function(data, event) {$parent.update_history_choice($index(), true);}"
+          ></span>
+        </span>
       </div>
     </div>
     <div id="chat_messages">
       <table id="message_table">
         <tbody data-bind="foreach: messages">
-        <tr data-bind="visible: (utc_timestamp > $parent.selected_history_choice().utc_timestamp) || (unread_message && !$parent.history_choice_selected)">
-          <td><div class="message_content"><strong><span data-bind="text: sender"></span></strong>: <span data-bind="text: text"></span></div></td>
-          <td><div class="timestamp_content"><strong><span class="highlight_bullet" data-bind="text: seen_text"></span></strong><span data-bind="text: timestamp"></span></div></td>
-        </tr>
+          <tr
+            data-bind="visible: (utc_timestamp > $parent.selected_history_choice().utc_timestamp) || (unread_message && !$parent.history_choice_selected)"
+          >
+            <td>
+              <div class="message_content">
+                <strong><span data-bind="text: sender"></span></strong>:
+                <span data-bind="text: text"></span>
+              </div>
+            </td>
+            <td>
+              <div class="timestamp_content">
+                <strong
+                  ><span
+                    class="highlight_bullet"
+                    data-bind="text: seen_text"
+                  ></span></strong
+                ><span data-bind="text: timestamp"></span>
+              </div>
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
     <div id="chat_footer">
       <table id="footer_table">
         <tbody>
-        <tr>
-          <td><textarea id="text_box"></textarea></td>
-          <td id="send_col"><strong><span id="message_length_label" data-bind="text: message_length"></span></strong><button id="send_sms_button" class="btn btn-primary" data-bind="click: send_message">Send</button></td>
-        </tr>
+          <tr>
+            <td><textarea id="text_box"></textarea></td>
+            <td id="send_col">
+              <strong
+                ><span
+                  id="message_length_label"
+                  data-bind="text: message_length"
+                ></span></strong
+              ><button
+                id="send_sms_button"
+                class="btn btn-primary"
+                data-bind="click: send_message"
+              >
+                Send
+              </button>
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
