@@ -7,6 +7,7 @@ hqDefine("accounting/js/software_plan_version_handler", [
     'hqwebapp/js/select2_handler',
     'hqwebapp/js/multiselect_utils',
     'select2/dist/js/select2.full.min',
+    'commcarehq',
 ], function (
     $,
     ko,
