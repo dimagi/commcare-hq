@@ -59,10 +59,6 @@ class DeviceRateLimiter:
 
         if device_count < self.device_limit_per_user(domain):
             self._track_usage(key, device_id)
-            # this intentionally doesn't capture users with 1 device, only those with multiple
-            metrics_counter(
-                'commcare.devices_per_user.additional_device', tags={'domain': domain, 'user_id': user_id}
-            )
             return False
 
         is_enabled = toggles.DEVICE_RATE_LIMITER.enabled(domain, toggles.NAMESPACE_DOMAIN)

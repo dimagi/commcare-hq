@@ -93,6 +93,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     fhir/index
     openmrs
     value_source
+    integrations/kyc
 
 .. toctree::
     :caption: Single Sign On (SSO)

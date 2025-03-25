@@ -4,7 +4,7 @@ from corehq.apps.celery import task
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.data_cleaning.models import (
     BulkEditColumn,
-    BulkEditColumnFilter,
+    BulkEditFilter,
     BulkEditPinnedFilter,
     BulkEditSession,
 )
@@ -20,7 +20,7 @@ def commit_data_cleaning(bulk_edit_session_id):
     session = BulkEditSession.objects.get(session_id=bulk_edit_session_id)
 
     # Delete UI-only models
-    BulkEditColumnFilter.objects.filter(session=session).delete()
+    BulkEditFilter.objects.filter(session=session).delete()
     BulkEditPinnedFilter.objects.filter(session=session).delete()
     BulkEditColumn.objects.filter(session=session).delete()
 

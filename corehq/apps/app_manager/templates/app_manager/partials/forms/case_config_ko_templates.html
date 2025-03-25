@@ -200,8 +200,12 @@
         </div>
       </div>
       <i class="fa fa-arrow-right"></i><i class="fa fa-save"></i>
-      {# Location of title is different for regular and advanced forms #}
-      <!-- ko text: $data.title || $root.title --><!-- /ko -->
+      <!-- ko if: !$data.type || $data.type() == "case-property" -->
+      {% trans "Save Questions to Case Properties" %}
+      <!-- /ko -->
+      <!-- ko if: $data.type && $data.type() == "user-property" -->
+        {% trans "Save Questions to User Properties" %}
+      <!-- /ko -->
     </h4>
   </div>
   <div class="panel-body">
@@ -227,7 +231,12 @@
         </th>
         <th class="col-sm-1"></th>
         <th data-bind="class: saveOnlyEditedFormFieldsEnabled ? 'col-sm-3' : 'col-sm-4'">
-          {% trans "Case Property" %}
+          <!-- ko if: $data.type && $data.type() == "user-property" -->
+            {% trans "User Property" %}
+          <!-- /ko -->
+          <!-- ko if: !$data.type || $data.type() == "case-property" -->
+            {% trans "Case Property" %}
+          <!-- /ko -->
           <!-- ko ifnot: case_type() == 'commcare-user' -->
           <span
                 data-bind="makeHqHelp: {
@@ -341,9 +350,14 @@
       {% trans "No properties will be saved" %}
     </div>
     <div class="add-property">
-      <button class="btn btn-default" data-bind="click: addProperty, visible: $parent.hasPrivilege">
+      <button class="btn btn-primary" data-bind="click: addProperty, visible: $parent.hasPrivilege">
         <i class="fa fa-plus"></i>
-        {% trans "Add Property" %}
+        <!-- ko if: !$data.type || $data.type() == "case-property" -->
+          {% trans "Add Case Property" %}
+        <!-- /ko -->
+        <!-- ko if: $data.type && $data.type() == "user-property" -->
+          {% trans "Add User Property" %}
+        <!-- /ko -->
       </button>
     </div>
     <!-- ko if: !case_properties().length && !$parent.hasPrivilege -->
