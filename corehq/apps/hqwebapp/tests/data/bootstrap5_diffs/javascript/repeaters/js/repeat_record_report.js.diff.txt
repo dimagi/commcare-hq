@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,13 +1,13 @@
+@@ -1,12 +1,12 @@
  
 -hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
 +hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
@@ -9,7 +9,6 @@
      'ace-builds/src-min-noconflict/ace',
      'ace-builds/src-min-noconflict/mode-json',
      'ace-builds/src-min-noconflict/mode-xml',
-     'repeaters/js/repeat_record_report_selects',
 -    'reports/js/bootstrap3/base',
 -    'reports/js/bootstrap3/tabular',
 +    'reports/js/bootstrap5/base',
@@ -17,17 +16,22 @@
      'commcarehq',
  ], function (
      $,
-@@ -154,7 +154,7 @@
+@@ -136,7 +136,7 @@
                  action = getAction();
              let $btn;
  
 -            $popUp.modal('hide');
 +            $popUp.modal('hide');  /* todo B5: plugin:modal */
              if (action === 'resend') {
-                 $btn = $('#resend-all-button');
+                 $btn = $('#resend-button');
                  $btn.disableButton();
-@@ -179,7 +179,7 @@
-                 // leaving as is to preserve behavior
+@@ -156,11 +156,11 @@
+             const checkedRecords = getCheckedRecords();
+             if (selectedEntireTable) {
+                 hideAllWarnings();
+-                $popUp.modal('show');
++                $popUp.modal('show');  /* todo B5: plugin:modal */
+             } else if (checkedRecords.length > 0) {
                  if (isActionPossibleForCheckedItems(action, checkedRecords)) {
                      hideAllWarnings();
 -                    $popUp.modal('show');
@@ -35,7 +39,7 @@
                  } else {
                      showWarning('not-allowed');
                  }
-@@ -252,7 +252,7 @@
+@@ -221,7 +221,7 @@
                      } else {
                          btn.text(gettext('Failed'));
                          btn.addClass('btn-danger');
