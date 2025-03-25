@@ -2,23 +2,24 @@
 hqDefine("accounting/js/stripe_card_manager", [
     'jquery',
     'knockout',
-    '@stripe/stripe-js',
+    'accounting/js/stripe',
     'hqwebapp/js/initial_page_data',
 ], function (
     $,
     ko,
-    Stripe,
+    hqStripe,
     initialPageData,
 ) {
     var newStripeCardModel = function (data, cardManager) {
         var self = {};
 
-        self.stripePromise = Stripe.loadStripe(initialPageData.get("stripe_public_key"));
-        self.stripePromise.then(function (stripe) {
-            self.cardElement = stripe.elements().create('card', {
-                hidePostalCode: true,
-            });
-            self.cardElement.mount(data.elementSelector);
+        // This assumes this model won't be created until the page is loaded,
+        // which is reasonable because knockout bindings don't get applied until then.
+        self.cardElementMounted = false;
+        self.cardElementPromise = hqStripe.getCardElementPromise(initialPageData.get("stripe_public_key"));
+        self.cardElementPromise.then(function (cardElement) {
+            cardElement.mount(data.elementSelector);
+            self.cardElementMounted = true;
         });
 
         var mapping = {
@@ -30,8 +31,10 @@ hqDefine("accounting/js/stripe_card_manager", [
         };
         self.reset = function () {
             self.wrap({'isAutopay': false, 'token': ''});
-            if (self.cardElement) {
-                self.cardElement.clear();
+            if (self.cardElementMounted) {
+                self.cardElementPromise.then(function (cardElement) {
+                    cardElement.clear();
+                });
             }
         };
         self.reset();
@@ -75,15 +78,9 @@ hqDefine("accounting/js/stripe_card_manager", [
             }
         };
 
-        function createStripeToken() {
-            self.stripePromise.then(function (stripe) {
-                stripe.createToken(self.cardElement).then(handleStripeResponse);
-            });
-        };
-
         self.saveCard = function () {
             self.isProcessing(true);
-            createStripeToken();
+            hqStripe.createStripeToken(handleStripeResponse);
         };
 
         return self;
