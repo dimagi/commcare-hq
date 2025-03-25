@@ -1036,11 +1036,22 @@ hqDefine("cloudcare/js/form_entry/entries", [
     function ImageEntry(question, options) {
         var self = this;
         FileEntry.call(this, question, options);
-        self.accept = "image/*,.pdf,.xlsx,.docx,.html,.txt,.rtf,.msg";
-        self.acceptedMimeTypes = "image/*,text/*,application/*";
+        self.accept = "image/*,.pdf";
     }
     ImageEntry.prototype = Object.create(FileEntry.prototype);
     ImageEntry.prototype.constructor = FileEntry;
+
+    /**
+     * Represents an document upload.
+     */
+    function DocumentEntry(question, options) {
+        var self = this;
+        FileEntry.call(this, question, options);
+        self.accept = ".pdf,.xlsx,.docx,.html,.txt,.rtf,.msg";
+        self.acceptedMimeTypes = "application/*,text/*";
+    }
+    DocumentEntry.prototype = Object.create(FileEntry.prototype);
+    DocumentEntry.prototype.constructor = FileEntry;
 
     /**
      * Represents an audio upload.
@@ -1072,7 +1083,6 @@ hqDefine("cloudcare/js/form_entry/entries", [
         FileEntry.call(this, question, options);
         self.templateType = 'signature';
         self.accept = 'image/*,.pdf';
-        self.acceptedMimeTypes = "image/*,text/*,application/*";
 
         self.afterRender = function () {
             self.$input = $('#' + self.entryId);
@@ -1393,6 +1403,11 @@ hqDefine("cloudcare/js/form_entry/entries", [
                                 broadcastStyles: broadcastStyles,
                             });
                             break;
+                        case constants.CONTROL_DOCUMENT_UPLOAD:
+                            entry = new DocumentEntry(question, {
+                                broadcastStyles: broadcastStyles,
+                            });
+                            break;
                         // any other control types are unsupported
                     }
                 }
@@ -1470,6 +1485,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
         ButtonSelectEntry: ButtonSelectEntry,
         ComboboxEntry: ComboboxEntry,
         DateEntry: DateEntry,
+        DocumentEntry: DocumentEntry,
         DropdownEntry: DropdownEntry,
         EthiopianDateEntry: EthiopianDateEntry,
         FloatEntry: FloatEntry,

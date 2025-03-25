@@ -23,10 +23,10 @@ DEVICE_LOG_XMLNS = 'http://code.javarosa.org/devicereport'
 # Should be in sync with file extensions supported by CommCare
 # https://github.com/dimagi/commcare-android/blob/ef45074bbb8647339387e179a2baca89fb394a23/app/src/org/commcare/utils/FormUploadUtil.java#LL63C1-L63C1
 VALID_ATTACHMENT_FILE_EXTENSION_MAP = {
-    "image/*,text/*,application/*": ["jpg", "jpeg", "png", "pdf", "xlsx",
-                                     "docx", "html", "txt", "rtf", "msg"],
+    "image/*,.pdf": ["jpg", "jpeg", "png", "pdf"],
     "audio/*": ["3ga", "mp3", "wav", "amr", "qcp", "ogg"],
     "video/*": ["3gpp", "3gp", "3gp2", "3g2", "mp4", "mpg4", "mpeg4", "m4v", "mpg", "mpeg"],
+    "application/*,text/*": ["docx", "msg", "pdf", "xlsx", "html", "rtf", "txt"],
 }
 
 VALID_ATTACHMENT_FILE_EXTENSIONS = set(chain.from_iterable(VALID_ATTACHMENT_FILE_EXTENSION_MAP.values()))
