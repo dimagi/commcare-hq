@@ -6,7 +6,7 @@ hqDefine("domain/js/bootstrap3/billing_statements", [
     'hqwebapp/js/initial_page_data',
     'accounting/js/payment_method_handler',
     'hqwebapp/js/bootstrap3/crud_paginated_list',
-    'stripe',
+    'commcarehq',
 ], function (
     $,
     _,
@@ -14,9 +14,7 @@ hqDefine("domain/js/bootstrap3/billing_statements", [
     initialPageData,
     paymentMethodHandlers,
     CRUDPaginatedList,
-    Stripe
 ) {
-    Stripe.setPublishableKey(initialPageData.get("stripe_options").stripe_public_key);
     var wireInvoiceHandler = paymentMethodHandlers.wireInvoiceHandler;
     var paymentMethodHandler = paymentMethodHandlers.paymentMethodHandler;
     var invoice = paymentMethodHandlers.invoice;

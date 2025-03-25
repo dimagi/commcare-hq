@@ -2,23 +2,37 @@
 hqDefine("accounting/js/stripe_card_manager", [
     'jquery',
     'knockout',
-    'stripe',
+    '@stripe/stripe-js',
+    'hqwebapp/js/initial_page_data',
 ], function (
     $,
     ko,
-    Stripe
+    Stripe,
+    initialPageData,
 ) {
     var newStripeCardModel = function (data, cardManager) {
         var self = {};
+
+        self.stripePromise = Stripe.loadStripe(initialPageData.get("stripe_public_key"));
+        self.stripePromise.then(function (stripe) {
+            self.cardElement = stripe.elements().create('card', {
+                hidePostalCode: true,
+            });
+            self.cardElement.mount(data.elementSelector);
+        });
+
         var mapping = {
-            observe: ['number', 'cvc', 'expMonth','expYear', 'isAutopay', 'token'],
+            observe: ['isAutopay', 'token'],
         };
 
         self.wrap = function (data) {
             ko.mapping.fromJS(data, mapping, self);
         };
         self.reset = function () {
-            self.wrap({'number': '', 'cvc': '', 'expMonth': '', 'expYear': '', 'isAutopay': false, 'token': ''});
+            self.wrap({'isAutopay': false, 'token': ''});
+            if (self.cardElement) {
+                self.cardElement.clear();
+            }
         };
         self.reset();
 
@@ -50,24 +64,21 @@ hqDefine("accounting/js/stripe_card_manager", [
             });
         };
 
-        var handleStripeResponse = function (status, response) {
+        var handleStripeResponse = function (response) {
             if (response.error) {
                 self.isProcessing(false);
                 self.errorMsg(response.error.message);
             } else {
                 self.errorMsg('');
-                self.token(response.id);
+                self.token(response.token.id);
                 submit();
             }
         };
 
-        var createStripeToken = function () {
-            Stripe.card.createToken({
-                number: self.number(),
-                cvc: self.cvc(),
-                exp_month: self.expMonth(),
-                exp_year: self.expYear(),
-            }, handleStripeResponse);
+        function createStripeToken() {
+            self.stripePromise.then(function (stripe) {
+                stripe.createToken(self.cardElement).then(handleStripeResponse);
+            });
         };
 
         self.saveCard = function () {
@@ -164,7 +175,10 @@ hqDefine("accounting/js/stripe_card_manager", [
         self.wrap(data);
 
         self.autoPayButtonEnabled = ko.observable(true);
-        self.newCard = newStripeCardModel({url: data.url}, self);
+        self.newCard = newStripeCardModel({
+            url: data.url,
+            elementSelector: data.elementSelector,
+        }, self);
 
         return self;
     };
