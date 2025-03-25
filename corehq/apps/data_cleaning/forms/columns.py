@@ -42,8 +42,9 @@ class AddColumnForm(forms.Form):
         self.session = session
 
         property_details = get_case_property_details(self.session.domain, self.session.identifier)
+        self.existing_columns = self.session.columns.values_list('prop_id', flat=True)
         self.fields['column_prop_id'].choices = [(None, None)] + [
-            (p, p) for p in sorted(property_details.keys())
+            (p, p) for p in sorted(property_details.keys()) if p not in self.existing_columns
         ]
 
         initial_prop_id = self.data.get('column_prop_id')
