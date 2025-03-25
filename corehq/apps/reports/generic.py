@@ -588,6 +588,7 @@ class GenericReportView(object):
             'needsFilters': self.needs_filters,
             'slug': self.slug,
             'subReportSlug': None,
+            'html_id_suffix': '',
             'emailDefaultSubject': self.rendered_report_title,
             'type': self.dispatcher.prefix,
             'urlRoot': self.url_root,
