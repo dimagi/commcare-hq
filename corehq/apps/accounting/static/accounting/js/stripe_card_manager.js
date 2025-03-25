@@ -1,24 +1,43 @@
-"use strict";
+/**
+ *  This module requires initial page data to provide "stripe_public_key".
+ */
 hqDefine("accounting/js/stripe_card_manager", [
     'jquery',
     'knockout',
-    'stripe',
+    'accounting/js/stripe',
+    'hqwebapp/js/initial_page_data',
 ], function (
     $,
     ko,
-    Stripe
+    hqStripe,
+    initialPageData,
 ) {
     var newStripeCardModel = function (data, cardManager) {
         var self = {};
+
+        // This assumes this model won't be created until the page is loaded,
+        // which is reasonable because knockout bindings don't get applied until then.
+        self.cardElementMounted = false;
+        self.cardElementPromise = hqStripe.getCardElementPromise(initialPageData.get("stripe_public_key"));
+        self.cardElementPromise.then(function (cardElement) {
+            cardElement.mount(data.elementSelector);
+            self.cardElementMounted = true;
+        });
+
         var mapping = {
-            observe: ['number', 'cvc', 'expMonth','expYear', 'isAutopay', 'token'],
+            observe: ['isAutopay', 'token'],
         };
 
         self.wrap = function (data) {
             ko.mapping.fromJS(data, mapping, self);
         };
         self.reset = function () {
-            self.wrap({'number': '', 'cvc': '', 'expMonth': '', 'expYear': '', 'isAutopay': false, 'token': ''});
+            self.wrap({'isAutopay': false, 'token': ''});
+            if (self.cardElementMounted) {
+                self.cardElementPromise.then(function (cardElement) {
+                    cardElement.clear();
+                });
+            }
         };
         self.reset();
 
@@ -50,29 +69,20 @@ hqDefine("accounting/js/stripe_card_manager", [
             });
         };
 
-        var handleStripeResponse = function (status, response) {
+        var handleStripeResponse = function (response) {
             if (response.error) {
                 self.isProcessing(false);
                 self.errorMsg(response.error.message);
             } else {
                 self.errorMsg('');
-                self.token(response.id);
+                self.token(response.token.id);
                 submit();
             }
         };
 
-        var createStripeToken = function () {
-            Stripe.card.createToken({
-                number: self.number(),
-                cvc: self.cvc(),
-                exp_month: self.expMonth(),
-                exp_year: self.expYear(),
-            }, handleStripeResponse);
-        };
-
         self.saveCard = function () {
             self.isProcessing(true);
-            createStripeToken();
+            hqStripe.createStripeToken(handleStripeResponse);
         };
 
         return self;
@@ -164,7 +174,10 @@ hqDefine("accounting/js/stripe_card_manager", [
         self.wrap(data);
 
         self.autoPayButtonEnabled = ko.observable(true);
-        self.newCard = newStripeCardModel({url: data.url}, self);
+        self.newCard = newStripeCardModel({
+            url: data.url,
+            elementSelector: data.elementSelector,
+        }, self);
 
         return self;
     };
