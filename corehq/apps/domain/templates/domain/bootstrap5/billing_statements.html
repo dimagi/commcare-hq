@@ -6,7 +6,8 @@
 
 {% block paginated_list_top %}
   {% initial_page_data 'pagination' pagination %}  {# todo B5: css-pagination #}
-  {% initial_page_data 'stripe_options' stripe_options %}
+  {% initial_page_data 'stripe_cards' stripe_cards %}
+  {% initial_page_data 'stripe_public_key' stripe_public_key %}
   {% initial_page_data 'payment_urls' payment_urls %}
   {% initial_page_data 'payment_error_messages' payment_error_messages %}
   {% initial_page_data 'item_creation_allowed' pagination.create.is_allowed %}

@@ -365,10 +365,8 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
     def page_context(self):
         pagination_context = self.pagination_context
         pagination_context.update({
-            'stripe_options': {
-                'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
-                'stripe_cards': self.stripe_cards,
-            },
+            'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
+            'stripe_cards': self.stripe_cards,
             'payment_error_messages': PAYMENT_ERROR_MESSAGES,
             'payment_urls': {
                 'process_invoice_payment_url': reverse(

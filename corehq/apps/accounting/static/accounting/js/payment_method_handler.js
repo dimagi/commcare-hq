@@ -1,4 +1,6 @@
-"use strict";
+/**
+ *  This module requires initial page data to provide "stripe_public_key".
+ */
 hqDefine('accounting/js/payment_method_handler', [
     'jquery',
     'knockout',

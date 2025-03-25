@@ -69,7 +69,7 @@ hqDefine("domain/js/bootstrap3/billing_statements", [
     for (var i = 0; i < handlers.length; i++) {
         handlers[i].handlers = handlers;
     }
-    var stripeCards = initialPageData.get("stripe_options").stripe_cards;
+    var stripeCards = initialPageData.get("stripe_cards");
     if (stripeCards) {
         bulkPaymentHandler.loadCards(stripeCards);
         paymentHandler.loadCards(stripeCards);
