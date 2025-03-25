@@ -148,17 +148,35 @@ class BulkEditSession(models.Model):
         """
         return BulkEditColumn.create_for_session(self, prop_id, label, data_type)
 
+    @staticmethod
+    def _update_order(related_manager, id_field, provided_ids):
+        """
+        Updates the ordering of related objects by setting their `index` field.
+
+        :param related_manager: a Django RelatedManager (e.g., self.filters, self.columns)
+        :param id_field: string name of the object's unique identifier (e.g., 'filter_id')
+        :param provided_ids: list of UUIDs in desired order
+        """
+        if len(provided_ids) != related_manager.count():
+            raise ValueError("The lengths of provided_ids and existing objects do not match.")
+        for index, object_id in enumerate(provided_ids):
+            obj = related_manager.get(**{id_field: object_id})
+            obj.index = index
+            obj.save()
+
     def update_filter_order(self, filter_ids):
         """
         This updates the order of filters for this session
         :param filter_ids: list of uuids matching filter_id field of BulkEditFilters
         """
-        if len(filter_ids) != self.filters.count():
-            raise ValueError("the lengths of filter_ids and available filters do not match")
-        for index, filter_id in enumerate(filter_ids):
-            active_filter = self.filters.get(filter_id=filter_id)
-            active_filter.index = index
-            active_filter.save()
+        self._update_order(self.filters, 'filter_id', filter_ids)
+
+    def update_column_order(self, column_ids):
+        """
+        This updates the order of columns for this session
+        :param column_ids: list of uuids matching column_id field of BulkEditColumns
+        """
+        self._update_order(self.columns, 'column_id', column_ids)
 
     def remove_filter(self, filter_id):
         self.filters.get(filter_id=filter_id).delete()
