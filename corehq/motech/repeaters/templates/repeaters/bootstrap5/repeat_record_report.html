@@ -3,50 +3,48 @@
 {% load compress %}
 {% load i18n %}
 {% load crispy_forms_tags %}
-
 {% js_entry "repeaters/js/bootstrap5/repeat_record_report" %}
 
-{% block filter_panel %} {{ block.super }}
+{% block filter_panel %}
+  {{ block.super }}
   <div>
-      {% if total > 0 %}
-        <div id="form_options" class="card form-inline">  {# todo B5: css:form-inline, css:well #}
-          <div>
-            <button id="resend-all-button"
-                    class="btn btn-outline-primary"
-                    data-bs-target="#are-you-sure"
-                    title="{% trans 'Resend selected records' %}">
-              <i class="fa fa-play"></i>
-              {% trans 'Resend' %}
-            </button>
-            <button id="cancel-all-button"
-                    class="btn btn-outline-primary"
-                    data-bs-target="#are-you-sure"
-                    title="{% trans 'Cancel selected records' %}">
-              <i class="fa fa-times"></i>
-              {% trans 'Cancel' %}
-            </button>
-            <button id="requeue-all-button"
-                    class="btn btn-outline-primary"
-                    data-bs-target="#are-you-sure"
-                    title="{% trans 'Requeue selected records' %}">
-              <i class="fa fa-recycle"></i>
-              {% trans 'Requeue' %}
-            </button>
-            <label class="checkbox" >  {# todo B5: css:checkbox #}
-              <input type="checkbox" id="select-all">  {# todo B5: css:checkbox #}
-                {% blocktrans %}Select all {{ total }} payloads{% endblocktrans %}
-            </label>
-            <label class="checkbox" >  {# todo B5: css:checkbox #}
-              <input type="checkbox" id="select-pending">  {# todo B5: css:checkbox #}
-                {% blocktrans %}Select {{ total_pending }} pending payloads{% endblocktrans %}
-            </label>
-            <label class="checkbox" >  {# todo B5: css:checkbox #}
-              <input type="checkbox" id="select-cancelled">  {# todo B5: css:checkbox #}
-                {% blocktrans %}Select {{ total_cancelled }} cancelled payloads{% endblocktrans %}
-            </label>
-          </div>
+    {% if total > 0 %}
+      <div id="form_options" class="card form-inline">
+        {# todo B5: css:form-inline, css:well #}
+        <div>
+          <button
+            id="resend-button"
+            class="btn btn-outline-primary"
+            data-bs-target="#are-you-sure"
+            disabled="true"
+            title="{% trans 'Resend selected records' %}"
+          >
+            <i class="fa fa-play"></i>
+            {% trans 'Resend' %}
+          </button>
+          <button
+            id="requeue-button"
+            class="btn btn-outline-primary"
+            data-bs-target="#are-you-sure"
+            disabled="true"
+            title="{% trans 'Requeue selected records' %}"
+          >
+            <i class="fa fa-rotate-right"></i>
+            {% trans 'Requeue' %}
+          </button>
+          <button
+            id="cancel-button"
+            class="btn btn-outline-primary"
+            data-bs-target="#are-you-sure"
+            disabled="true"
+            title="{% trans 'Cancel selected records' %}"
+          >
+            <i class="fa fa-times"></i>
+            {% trans 'Cancel' %}
+          </button>
         </div>
-      {% endif %}
+      </div>
+    {% endif %}
   </div>
   <div id="no-selection" class="alert alert-warning d-none">
     {% blocktrans %}Please select at least one payload{% endblocktrans %}
@@ -54,22 +52,64 @@
   <div id="not-allowed" class="alert alert-warning d-none">
     {% blocktrans %}This action is not allowed for some of the selected payloads{% endblocktrans %}
   </div>
+  <div id="selected-page-info" class="alert alert-info hide">
+    {% blocktrans with state_label=state.label.lower %}
+      All <b><span id="selected-page-count"></span></b> records on this page are
+      selected.
+      <button
+        id="select-table-button"
+        role="button"
+        class="btn btn-outline-primary"
+      >
+        Select all <b>{{ total }}</b> {{ state_label }} records in this table
+      </button>
+    {% endblocktrans %}
+  </div>
+  <div id="selected-table-info" class="alert alert-info hide">
+    {% blocktrans with state_label=state.label.lower %}
+      All <b>{{ total }}</b> {{ state_label }} records in this table are
+      selected.
+      <button
+        id="clear-table-selection"
+        role="button"
+        class="btn btn-outline-primary"
+      >
+        Clear selection
+      </button>
+    {% endblocktrans %}
+  </div>
   <div class="modal fade" id="are-you-sure">
     <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header">  {# todo B5: css:modal-header #}
-          <button type="button" class="btn-close" data-bs-dismiss="modal"><span aria-hidden="true">&times;</span>  {# todo B5: css:close #}
-            <span class="sr-only">{% blocktrans %}Close{% endblocktrans %}</span></button>
-          <h4 class="modal-title">{% blocktrans %}Confirmation{% endblocktrans %}</h4>
+        <div class="modal-header">
+          {# todo B5: css:modal-header #}
+          <button type="button" class="btn-close" data-bs-dismiss="modal">
+            <span aria-hidden="true">&times;</span> {# todo B5: css:close #}
+            <span class="sr-only"
+              >{% blocktrans %}Close{% endblocktrans %}</span
+            >
+          </button>
+          <h4 class="modal-title">
+            {% blocktrans %}Confirmation{% endblocktrans %}
+          </h4>
         </div>
         <div class="modal-body">
           {% blocktrans %}Are you sure?{% endblocktrans %}
         </div>
         <div class="modal-footer">
-          <button type="button" data-bs-dismiss="modal" class="btn btn-outline-primary">
+          <button
+            type="button"
+            data-bs-dismiss="modal"
+            class="btn btn-outline-primary"
+          >
             {% blocktrans %}No{% endblocktrans %}
           </button>
-          <button type="button" id="confirm-button" data-action="" data-flag="" class="btn btn-primary">
+          <button
+            type="button"
+            id="confirm-button"
+            data-action=""
+            class="btn btn-primary"
+          >
             {% blocktrans %}Yes{% endblocktrans %}
           </button>
         </div>
@@ -78,54 +118,85 @@
   </div>
 {% endblock %}
 
-{% block additional_initial_page_data %} {{ block.super }}
-    {% registerurl 'repeat_record' domain %}
-    {% registerurl 'cancel_repeat_record' domain %}
-    {% registerurl 'requeue_repeat_record' domain %}
-    {% initial_page_data 'payload_id' payload_id %}
-    {% initial_page_data 'repeater_id' repeater_id %}
+{% block additional_initial_page_data %}
+  {{ block.super }}
+  {% registerurl 'repeat_record' domain %}
+  {% registerurl 'cancel_repeat_record' domain %}
+  {% registerurl 'requeue_repeat_record' domain %}
+  {% initial_page_data 'payload_id' payload_id %}
+  {% initial_page_data 'repeater_id' repeater_id %}
+  {% initial_page_data 'state' state %}
+  {% initial_page_data 'total' total %}
 {% endblock %}
 
-{% block modals %}{{ block.super }}
-    <!-- "View Payload" Modal -->
-    <div class="modal fade full-screen-modal" id="view-record-payload-modal" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">  {# todo B5: css:modal-header #}
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span>  {# todo B5: css:close #}
-                    </button>
-                    <h4 class="modal-title">{% trans "Payload" %}</h4>
-                </div>
-                <div class="modal-body">
-                    <div class="payload"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
-                    {% trans "Close" %}
-                    </button>
-                </div>
-            </div>
+{% block modals %}
+  {{ block.super }}
+  <!-- "View Payload" Modal -->
+  <div
+    class="modal fade full-screen-modal"
+    id="view-record-payload-modal"
+    tabindex="-1"
+    role="dialog"
+  >
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          {# todo B5: css:modal-header #}
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          >
+            <span aria-hidden="true">&times;</span> {# todo B5: css:close #}
+          </button>
+          <h4 class="modal-title">{% trans "Payload" %}</h4>
         </div>
+        <div class="modal-body">
+          <div class="payload"></div>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-outline-primary"
+            data-bs-dismiss="modal"
+          >
+            {% trans "Close" %}
+          </button>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <!-- Modal for error messages from server -->
-    <div class="modal fade" id="payload-error-modal" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">  {# todo B5: css:modal-header #}
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span>  {# todo B5: css:close #}
-                    </button>
-                    <h4 class="modal-title">{% trans "Error" %}</h4>
-                </div>
-                <div class="modal-body">
-                    <div class="error-message"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
-                    {% trans "Close" %}
-                    </button>
-                </div>
-            </div>
+  <!-- Modal for error messages from server -->
+  <div class="modal fade" id="payload-error-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          {# todo B5: css:modal-header #}
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          >
+            <span aria-hidden="true">&times;</span> {# todo B5: css:close #}
+          </button>
+          <h4 class="modal-title">{% trans "Error" %}</h4>
         </div>
+        <div class="modal-body">
+          <div class="error-message"></div>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-outline-primary"
+            data-bs-dismiss="modal"
+          >
+            {% trans "Close" %}
+          </button>
+        </div>
+      </div>
     </div>
+  </div>
 {% endblock modals %}
