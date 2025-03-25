@@ -21,7 +21,6 @@ class DashboardWidgetBaseForm(forms.ModelForm):
             'title',
             'description',
             'dashboard_tab',
-            'display_order',
         ]
 
     title = forms.CharField(
@@ -35,9 +34,6 @@ class DashboardWidgetBaseForm(forms.ModelForm):
     dashboard_tab = forms.ChoiceField(
         label=_('Dashboard Tab'),
         choices=DashboardTab.choices
-    )
-    display_order = forms.IntegerField(
-        label=_('Display Order'),
     )
 
     def __init__(self, domain, *args, **kwargs):
@@ -78,7 +74,6 @@ class DashboardMapForm(DashboardWidgetBaseForm):
                 crispy.Field('title'),
                 crispy.Field('description'),
                 crispy.Field('dashboard_tab'),
-                crispy.Field('display_order'),
                 crispy.Field(
                     'case_type',
                     x_init='case_type = $el.value',

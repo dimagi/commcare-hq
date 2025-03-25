@@ -225,7 +225,6 @@ class TestDashboardWidgetView(BaseTestCampaignView):
                 "title": "Map Widget",
                 "description": "Sample widget",
                 "dashboard_tab": DashboardTab.CASES,
-                "display_order": 1,
                 "case_type": "case-02",
                 "geo_case_property": "Test",
                 "submit": "Submit",
@@ -250,7 +249,6 @@ class TestDashboardWidgetView(BaseTestCampaignView):
                 "title": "New Report Widget",
                 "description": "Sample widget",
                 "dashboard_tab": DashboardTab.MOBILE_WORKERS,
-                "display_order": 0,
                 "report_configuration_id": report_id,
                 "widget_type": WidgetType.REPORT
             },
@@ -269,7 +267,6 @@ class TestDashboardWidgetView(BaseTestCampaignView):
                 "title": "New Report Widget",
                 "description": "Sample widget",
                 "dashboard_tab": DashboardTab.CASES,
-                "display_order": 0,
                 "widget_type": WidgetType.REPORT
             },
             headers={'hq-hx-action': 'save_widget'},
