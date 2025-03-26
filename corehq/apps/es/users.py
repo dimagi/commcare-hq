@@ -234,6 +234,8 @@ def _user_data(key, filter_):
 
 
 def query_user_data(key, value):
+    if value is None:
+        return filters.match_none()
     return _user_data(key, queries.match(field='user_data_es.value', search_string=value))
 
 
