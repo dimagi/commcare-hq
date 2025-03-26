@@ -36,7 +36,14 @@ function setup {
         install -dm0755 -o cchq -g cchq ./artifacts
     fi
 
-    uv pip sync requirements/test-requirements.txt
+    apt update
+    apt install libffi-dev  # for cffi
+
+    uv venv --python=3.13
+    source .venv/bin/activate
+    CC=gcc LDFLAGS="-L`python -c'import sys; print(sys.base_prefix)'`/lib" \
+        uv pip sync --compile-bytecode requirements/test-requirements.txt
+
     pip check  # make sure there are no incompatibilities in test-requirements.txt
     python_preheat  # preheat the python libs
 
