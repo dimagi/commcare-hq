@@ -121,6 +121,17 @@ class TestDashboardView(BaseTestCampaignView):
         }
 
 
+class TestDashboardViewNoDashboard(BaseTestCampaignView):
+    urlname = DashboardView.urlname
+
+    @flag_enabled('CAMPAIGN_DASHBOARD')
+    def test_no_dashboard(self):
+        assert not Dashboard.objects.filter(domain=self.domain).exists()
+        response = self._make_request(is_logged_in=True)
+        assert response.status_code == 200
+        assert Dashboard.objects.filter(domain=self.domain).exists()
+
+
 @es_test(requires=[case_search_adapter], setup_class=True)
 class TestPaginatedCasesWithGPSView(BaseTestCampaignView):
     case_type = 'person'
