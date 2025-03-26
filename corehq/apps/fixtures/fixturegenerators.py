@@ -151,6 +151,12 @@ class ItemListsProvider(FixtureProvider):
 
         return self._get_fixtures(global_types, get_items_by_type, GLOBAL_USER_ID)
 
+    def _should_full_sync(self, last_sync, app_id):
+        app_has_changed = (last_sync and last_sync.build_id is not None
+                and app_id is not None
+                and app_id != last_sync.build_id)
+        return app_has_changed or not last_sync or not last_sync.date
+
     def get_user_items_and_count(self, user_types, restore_user):
         user_items_count = 0
         items_by_type = defaultdict(list)
