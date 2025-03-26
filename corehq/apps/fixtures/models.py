@@ -27,6 +27,29 @@ class LookupTableManager(models.Manager):
     def domain_tag_exists(self, domain_name, tag):
         return self.filter(domain=domain_name, tag=tag).exists()
 
+    def get_tables_modified_since(self, domain, since_datetime):
+        tables_with_modified_rows = models.Subquery(
+            LookupTableRow.objects.filter(
+                domain=domain,
+                last_modified__gt=since_datetime
+            ).values('table_id').distinct()
+        )
+
+        tables_with_modified_ownership = models.Subquery(
+            LookupTableRowOwner.objects.filter(
+                domain=domain,
+                last_modified__gt=since_datetime
+            ).values('row__table_id').distinct()
+        )
+
+        return self.filter(
+            domain=domain,
+        ).filter(
+            models.Q(last_modified__gt=since_datetime)
+            | models.Q(id__in=tables_with_modified_rows)
+            | models.Q(id__in=tables_with_modified_ownership)
+        )
+
 
 @define
 class Alias:
