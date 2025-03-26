@@ -18,8 +18,11 @@ seem to be a good fit.
 
 
 """
+from __future__ import annotations
+
 import re
 import uuid
+from typing import Optional
 
 from lxml import etree
 from lxml.builder import E
@@ -424,13 +427,18 @@ class XFormBuilder(object):
 
 class Question(object):
 
-    def __init__(self, name, xform, groups=None):
+    def __init__(
+        self,
+        name: str,
+        xform: XFormBuilder,
+        groups: Optional[list[str]] = None,
+    ) -> None:
         self.name = name
         self.xform = xform
         self.groups = groups
 
     @property
-    def form(self) -> "XFormBuilder":
+    def form(self) -> XFormBuilder:
         return self.xform
 
 
