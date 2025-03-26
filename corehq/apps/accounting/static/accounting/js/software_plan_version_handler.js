@@ -1,4 +1,3 @@
-"use strict";
 hqDefine("accounting/js/software_plan_version_handler", [
     'jquery',
     'knockout',
@@ -7,19 +6,20 @@ hqDefine("accounting/js/software_plan_version_handler", [
     'hqwebapp/js/select2_handler',
     'hqwebapp/js/multiselect_utils',
     'select2/dist/js/select2.full.min',
+    'commcarehq',
 ], function (
     $,
     ko,
     _,
     initialPageData,
     select2Handler,
-    multiselectUtils
+    multiselectUtils,
 ) {
     $(function () {
         var planVersionFormHandler = softwarePlanVersionFormHandler(
             initialPageData.get('role'),
             initialPageData.get('feature_rates'),
-            initialPageData.get('product_rates')
+            initialPageData.get('product_rates'),
         );
         $('#roles').koApplyBindings(planVersionFormHandler);
         planVersionFormHandler.init();

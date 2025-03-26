@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main 'accounting/js/billing_account_form' %}
+{% js_entry_b3 'accounting/js/billing_account_form' %}
 
 {% block page_content %}
   {% initial_page_data 'account_form_is_active' basic_form.is_active.value %}

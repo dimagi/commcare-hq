@@ -7,8 +7,8 @@
  {% load hq_shared_tags %}
  {% load i18n %}
  
--{% requirejs_main 'domain/js/confirm_billing_info' %}
-+{% requirejs_main_b5 'domain/js/confirm_billing_info' %}
+-{% js_entry_b3 'domain/js/confirm_billing_info' %}
++{% js_entry 'domain/js/confirm_billing_info' %}
  
  {% block form_content %}
    {% initial_page_data "plan" plan %}
