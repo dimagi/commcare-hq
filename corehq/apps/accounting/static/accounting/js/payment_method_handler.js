@@ -206,7 +206,7 @@ hqDefine('accounting/js/payment_method_handler', [
         self.reset = function () {
             self.paymentIsComplete(false);
             self.serverErrorMsg('');
-            self.newCard(stripeCardModel());
+            self.newCard().reset();
             if (self.cardElementMounted) {
                 self.cardElementPromise.then(function (cardElement) {
                     cardElement.clear();
@@ -518,6 +518,17 @@ hqDefine('accounting/js/payment_method_handler', [
         self.isTestMode = ko.observable(false);
         self.isProcessing = ko.observable(false);
         self.newSavedCard = ko.observable(false);
+
+        self.reset = function () {
+            self.number(null);
+            self.expMonth(null);
+            self.expYear(null);
+            self.errorMsg(null);
+            self.token(null);
+            self.isTestMode(false);
+            self.isProcessing(false);
+            self.newSavedCard(false);
+        };
 
         self.autopayCard = ko.computed(function () {
             if (!self.newSavedCard()) {
