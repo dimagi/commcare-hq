@@ -20,8 +20,8 @@ $(function () {
     $('a[data-bs-toggle="tab"]').on('shown.bs.tab', tabSwitch);
 
     $('#widget-modal').on('hidden.bs.modal', function () {
-        const loadingText = gettext("Loading...");
-        $('#widget-modal-body').html(`<i class="fa-solid fa-spinner fa-spin"></i> ${loadingText}`);
+        $('#widget-modal-spinner').removeClass('d-none');
+        $('#widget-form').text('');
     });
 
     $('#widget-modal').on('htmx:afterSwap', htmxAfterSwapWidgetForm);
@@ -117,6 +117,8 @@ var MapWidget = function (mapWidgetConfig) {
 };
 
 var htmxAfterSwapWidgetForm = function (event) {
+    $('#widget-modal-spinner').addClass('d-none');
+
     const requestMethod = event.detail.requestConfig.verb;
     const responseStatus = event.detail.xhr.status;
     if (requestMethod === 'post' && responseStatus === 200) {
