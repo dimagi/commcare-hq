@@ -20,7 +20,7 @@ requirejs.config({
         "popper": "@popperjs/core/dist/umd/popper.min",
         "sentry_browser": "sentry/js/sentry.browser.7.28.0.min",
         "sentry_captureconsole": "sentry/js/sentry.captureconsole.7.28.0.min",
-        "tempusDominus": "@eonasdan/tempus-dominus/dist/js/tempus-dominus.min",
+        "tempusDominus": "tempus-dominus/js/tempus-dominus",
         "underscore": "underscore/underscore",
         "stripe": "https://js.stripe.com/v2/?noext",
         "commcarehq": "hqwebapp/js/requirejs_webpack_fake",
