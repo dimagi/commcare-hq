@@ -78,6 +78,13 @@ class BaseAdapter:
             return version
         raise ESError(f"invalid elasticsearch info: {cluster_info!r}")
 
+    @property
+    def transport(self):
+        try:
+            return self._es.transport
+        except ElasticsearchException as err:
+            raise ESError("Elasticsearch is unavailable") from err
+
 
 class ElasticManageAdapter(BaseAdapter):
 
