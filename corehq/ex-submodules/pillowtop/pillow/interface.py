@@ -474,6 +474,12 @@ class ConstructedPillow(PillowBase):
     def get_change_feed(self):
         return self._change_feed
 
+    def process_changes(self, since, forever):
+        if self.pillow_id == 'case-pillow' and settings.USE_GEVENT_IN_CASE_PILLOW:
+            pass
+        else:
+            super().process_changes(since, forever)
+
     def process_change(self, change, serial_only=False):
         processors = self.serial_processors if serial_only else self.processors
         for processor in processors:
