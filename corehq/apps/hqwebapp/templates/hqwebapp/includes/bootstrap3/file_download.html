@@ -3,9 +3,8 @@
 {% load i18n %}
 
 {% block extrahead %}
-    <link rel="stylesheet" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}" />
-    {% javascript_libraries %}
     {{ block.super }}
+    <link rel="stylesheet" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}" />
 {% endblock %}
 
 {% block content %}
