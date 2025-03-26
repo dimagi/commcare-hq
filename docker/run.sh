@@ -38,11 +38,12 @@ function setup {
         install -dm0755 -o cchq -g cchq ./artifacts
     fi
 
-    # Fixes error: The lockfile at `uv.lock` needs to be updated, but `--locked` was provided.
-    # remove when uv>=0.7.2 has propagated from the Dockerfile
-    uv pip install --upgrade uv && hash -d uv
+    apt update
+    apt install libffi-dev  # for cffi
 
-    uv sync --locked --group=test --no-dev --no-progress
+    CC=gcc LDFLAGS="-L`python -c'import sys; print(sys.base_prefix)'`/lib" \
+        uv sync --locked --group=test --no-dev --no-progress
+
     python_preheat  # preheat the python libs
 
     # compile pyc files
