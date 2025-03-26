@@ -8,6 +8,6 @@
      'underscore',
 -    'reports/js/bootstrap3/datatables_config',
 +    'reports/js/bootstrap5/datatables_config',
+     'hqwebapp/js/initial_page_data',
      'leaflet',
  ], function (
-     $,
