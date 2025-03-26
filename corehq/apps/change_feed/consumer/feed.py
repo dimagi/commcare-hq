@@ -12,7 +12,6 @@ from pillowtop.checkpoints.manager import PillowCheckpointEventHandler
 from pillowtop.feed.interface import Change, ChangeFeed, ChangeMeta
 from pillowtop.models import kafka_seq_to_str
 
-from corehq.apps.change_feed.connection import get_kafka_api_version
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
 from corehq.apps.change_feed.topics import validate_offsets
@@ -142,7 +141,7 @@ class KafkaChangeFeed(ChangeFeed):
             'consumer_timeout_ms': timeout,
             'auto_offset_reset': auto_offset_reset,
             'enable_auto_commit': False,
-            'api_version': get_kafka_api_version(),
+            'api_version': settings.KAFKA_API_VERSION,
         }
         self._consumer = KafkaConsumer(**config)
 
