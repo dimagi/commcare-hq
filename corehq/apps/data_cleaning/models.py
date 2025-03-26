@@ -178,10 +178,39 @@ class BulkEditSession(models.Model):
         """
         self._update_order(self.columns, 'column_id', column_ids)
 
+    def _delete_and_update_order(self, related_manager, id_field, provided_id):
+        """
+        Deletes a related object by its unique identifier and reindexes the remaining
+        related objects to maintain sequential ordering.
+
+        This is typically used for managing indexed relationships (like filters or columns)
+        that use an 'index' field to determine order.
+
+        :param related_manager: A Django RelatedManager (e.g., self.filters, self.columns)
+        :param id_field: The name of the unique identifier field (e.g., 'filter_id')
+        :param provided_id: The ID of the object to be removed
+        """
+        related_manager.get(**{id_field: provided_id}).delete()
+        remaining_ids = related_manager.values_list(id_field, flat=True)
+        self._update_order(related_manager, id_field, remaining_ids)
+
     def remove_filter(self, filter_id):
-        self.filters.get(filter_id=filter_id).delete()
-        remaining_ids = self.filters.values_list('filter_id', flat=True)
-        self.update_filter_order(remaining_ids)
+        """
+        Remove a BulkEditFilter from this session by its filter_id,
+        and update the remaining filters to maintain correct index order.
+
+        :param filter_id: UUID of the BulkEditFilter to remove
+        """
+        self._delete_and_update_order(self.filters, 'filter_id', filter_id)
+
+    def remove_column(self, column_id):
+        """
+        Remove a BulkEditColumn from this session by its column_id,
+        and update the remaining columns to maintain correct index order.
+
+        :param column_id: UUID of the BulkEditColumn to remove
+        """
+        self._delete_and_update_order(self.columns, 'column_id', column_id)
 
     def get_queryset(self):
         query = CaseSearchES().domain(self.domain).case_type(self.identifier)
