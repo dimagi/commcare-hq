@@ -124,6 +124,6 @@ var htmxAfterSwapWidgetForm = function (event) {
     if (requestMethod === 'post' && responseStatus === 200) {
         setTimeout(function () {
             window.location.reload();
-        }, 2000);
+        }, 1000);
     }
 };
