@@ -14,6 +14,7 @@ from requests import RequestException
 from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
 from casexml.apps.case.xml import V2_NAMESPACE
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
+from lxml import etree
 
 from corehq.apps import formplayer_api
 from corehq.apps.app_manager.const import (
@@ -663,7 +664,7 @@ class XForm(WrappedNode):
 
     """
 
-    def __init__(self, *args, domain=None, **kwargs):
+    def __init__(self, xml_content, *args, domain=None, **kwargs):
         super(XForm, self).__init__(*args, **kwargs)
         if self.exists():
             xmlns = self.data_node.tag_xmlns
@@ -678,6 +679,8 @@ class XForm(WrappedNode):
             self.save_only_if_edited = SAVE_ONLY_EDITED_FORM_FIELDS.enabled(domain, NAMESPACE_DOMAIN)
         else:
             self.save_only_if_edited = False
+        self.xml_content = xml_content
+        self.tree = ET.fromstring(xml_content)
 
     def __str__(self):
         return ET.tostring(self.xml, encoding='utf-8').decode('utf-8') if self.xml is not None else ''
@@ -1047,250 +1050,145 @@ class XForm(WrappedNode):
                 instance_dict[instance_id] = src
         return instance_dict
 
-    def get_questions(self, langs, include_triggers=False,
-                      include_groups=False, include_translations=False,
-                      exclude_select_with_itemsets=False, include_fixtures=False):
+    def get_questions(self):
         """
-        parses out the questions from the xform, into the format:
-        [{"label": label, "tag": tag, "value": value}, ...]
-
-        if the xform is bad, it will raise an XFormException
-
-        :param langs: A list of language codes - will use the first available language code in
-            determining the question's "label". When include_translations=True, it will attempt to
-            find a translation for each language in langs, though will only add it if non-null.
-        :param include_triggers: When set to True will return label questions as well as regular questions
-        :param include_groups: When set will return repeats and group questions
-        :param include_translations: When set to True will return all the translations for the question
-        :param exclude_select_with_itemsets: exclude select/multi-select with itemsets
-        :param include_fixtures: add fixture data for questions that we can infer it from
+        Returns a list of questions in the form.
         """
-        # HELPME
-        #
-        # This method has been flagged for refactoring due to its complexity and
-        # frequency of touches in changesets
-        #
-        # If you are writing code that touches this method, your changeset
-        # should leave the method better than you found it.
-        #
-        # Please remove this flag when this method no longer triggers an 'E' or 'F'
-        # classification from the radon code static analysis
-
-        from corehq.apps.app_manager.models import ConditionalCaseUpdate
-        from corehq.apps.app_manager.util import first_elem, extract_instance_id_from_nodeset_ref
-
-        def _get_select_question_option(item):
-            translation = self._get_label_text(item, langs)
-            try:
-                value = item.findtext('{f}value').strip()
-            except AttributeError:
-                raise XFormException(_("<item> ({}) has no <value>").format(translation))
-            option = {
-                'label': translation,
-                'label_ref': self._get_label_ref(item),
-                'value': value,
-            }
-            if include_translations:
-                option['translations'] = self._get_label_translations(item, langs)
-            return option
-
-        if not self.exists():
-            return []
-
+        # Refactored by GitHub Copilot using DeepSeek V3
         questions = []
-
-        # control_nodes will contain all nodes in question tree (the <h:body> of an xform)
-        # The question tree doesn't contain every question - notably, it's missing hidden values - so
-        # we also need to look at the data tree (the <model> in the xform's <head>). Getting the leaves
-        # of the data tree should be sufficient to fill in what's not available from the question tree.
-        control_nodes = self._get_control_nodes()
-        leaf_data_nodes = self._get_leaf_data_nodes()
-        external_instances = self.get_external_instances()
-
-        for cnode in control_nodes:
-            node = cnode.node
-            path = cnode.path
-
-            path = getattr(path, "question_path", path)
-
-            is_group = not cnode.is_leaf
-            if is_group and not include_groups:
-                continue
-
-            if node.tag_name == 'trigger'and not include_triggers:
-                continue
-
-            if (exclude_select_with_itemsets and cnode.data_type in ['Select', 'MSelect']
-                    and cnode.node.find('{f}itemset').exists()):
-                continue
-            question = {
-                "label": self._get_label_text(node, langs),
-                "label_ref": self._get_label_ref(node),
-                "tag": node.tag_name,
-                "value": path,
-                "repeat": cnode.repeat,
-                "group": cnode.group,
-                "type": cnode.data_type,
-                "relevant": cnode.relevant,
-                "required": cnode.required == "true()",
-                "constraint": cnode.constraint,
-                "comment": self._get_comment(path),
-                "hashtagValue": self.hashtag_path(path),
-                "setvalue": self._get_setvalue(path),
-                "is_group": is_group,
-            }
-            if include_translations:
-                question["translations"] = self._get_label_translations(node, langs)
-
-            if include_fixtures and cnode.node.find('{f}itemset').exists():
-                itemset_node = cnode.node.find('{f}itemset')
-                nodeset = itemset_node.attrib.get('nodeset')
-                fixture_data = {
-                    'nodeset': nodeset,
-                }
-                if itemset_node.find('{f}label').exists():
-                    fixture_data['label_ref'] = itemset_node.find('{f}label').attrib.get('ref')
-                if itemset_node.find('{f}value').exists():
-                    fixture_data['value_ref'] = itemset_node.find('{f}value').attrib.get('ref')
-
-                fixture_id = extract_instance_id_from_nodeset_ref(nodeset)
-                if fixture_id:
-                    fixture_data['instance_id'] = fixture_id
-                    fixture_data['instance_ref'] = external_instances.get(fixture_id)
-
-                question['data_source'] = fixture_data
-
-            if cnode.items is not None:
-                question['options'] = [_get_select_question_option(item) for item in cnode.items]
-
-            constraint_ref_xml = '{jr}constraintMsg'
-            if cnode.constraint and cnode.bind_node.attrib.get(constraint_ref_xml):
-                constraint_jr_itext = cnode.bind_node.attrib.get(constraint_ref_xml)
-                question['constraintMsg_ref'] = self._normalize_itext_id(constraint_jr_itext)
-
-            questions.append(question)
-
-        repeat_contexts = set()
-        group_contexts = set()
-        excluded_paths = set()  # prevent adding the same question twice
-        for cnode in control_nodes:
-            excluded_paths.add(cnode.path)
-            if cnode.repeat is not None:
-                repeat_contexts.add(cnode.repeat)
-            if cnode.data_type == 'Repeat':
-                # A repeat is a node inside of a `group`, so it part of both a
-                # repeat and a group context
-                repeat_contexts.add(cnode.path)
-                group_contexts.add(cnode.path)
-            if cnode.group is not None:
-                group_contexts.add(cnode.group)
-            if cnode.data_type == 'Group':
-                group_contexts.add(cnode.path)
-
-        repeat_contexts = sorted(repeat_contexts, reverse=True)
-        group_contexts = sorted(group_contexts, reverse=True)
-
-        save_to_case_nodes = {}
-        for path, data_node in leaf_data_nodes.items():
-            if isinstance(path, ConditionalCaseUpdate):
-                path = path.question_path
-            if path not in excluded_paths:
-                bind = self.get_bind(path)
-
-                matching_repeat_context = first_elem([rc for rc in repeat_contexts
-                                                      if path.startswith(rc + '/')])
-                matching_group_context = first_elem([gc for gc in group_contexts
-                                                     if path.startswith(gc + '/')])
-
-                question = {
-                    "tag": "hidden",
-                    "value": path,
-                    "repeat": matching_repeat_context,
-                    "group": matching_group_context,
-                    "type": "DataBindOnly",
-                    "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
-                    "relevant": bind.attrib.get('relevant') if hasattr(bind, 'attrib') else None,
-                    "constraint": bind.attrib.get('constraint') if hasattr(bind, 'attrib') else None,
-                    "comment": self._get_comment(path),
-                    "setvalue": self._get_setvalue(path)
-                }
-
-                # Include meta information about the stock entry
-                if data_node.tag_name == 'entry':
-                    parent = next(data_node.xml.iterancestors())
-                    if len(parent):
-                        is_stock_element = any([namespace == COMMTRACK_REPORT_XMLNS for namespace in parent.nsmap.values()])
-                        if is_stock_element:
-                            question.update({
-                                "stock_entry_attributes": dict(data_node.xml.attrib),
-                                "stock_type_attributes": dict(parent.attrib),
-                            })
-                if '/case/' in path:
-                    path_to_case = path.split('/case/')[0] + '/case'
-                    save_to_case_nodes[path_to_case] = {
-                        'data_node': data_node,
-                        'repeat': matching_repeat_context,
-                        'group': matching_group_context,
-                    }
-
-                hashtag_path = self.hashtag_path(path)
-                question.update({
-                    "label": hashtag_path,
-                    "hashtagValue": hashtag_path,
-                })
-
-                if include_translations:
-                    question["translations"] = {}
-
-                questions.append(question)
-
-        for path, node_info in save_to_case_nodes.items():
-            data_node = node_info['data_node']
-            try:
-                case_node = next(data_node.iterancestors('{cx2}case'))
-                for attrib in ('case_id', 'user_id', 'date_modified'):
-                    if attrib not in case_node.attrib:
-                        continue
-
-                    bind = self.get_bind(path + '/@' + attrib)
-                    question = {
-                        "tag": "hidden",
-                        "value": '{}/@{}'.format(path, attrib),
-                        "repeat": node_info['repeat'],
-                        "group": node_info['group'],
-                        "type": "DataBindOnly",
-                        "calculate": None,
-                        "relevant": None,
-                        "constraint": None,
-                        "comment": None,
-                    }
-                    if bind.exists():
-                        question.update({
-                            "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
-                            "relevant": bind.attrib.get('relevant') if hasattr(bind, 'attrib') else None,
-                            "constraint": bind.attrib.get('constraint') if hasattr(bind, 'attrib') else None,
-                        })
-                    else:
-                        ref = self.model_node.find('{f}setvalue[@ref="%s"]' % path)
-                        if ref.exists():
-                            question.update({
-                                'calculate': ref.attrib.get('value'),
-                            })
-
-                    hashtag_path = '{}/@{}'.format(self.hashtag_path(path), attrib)
-                    question.update({
-                        "label": hashtag_path,
-                        "hashtagValue": hashtag_path,
-                    })
-
-                    if include_translations:
-                        question["translations"] = {}
-
+        for element in self._get_form_elements():
+            if self._is_question_element(element):
+                question = self._extract_question(element)
+                if question:
                     questions.append(question)
-            except StopIteration:
-                pass
-
         return questions
+
+    def _get_form_elements(self):
+        """
+        Returns all relevant XML elements that could contain questions.
+        """
+        return self.tree.xpath("//*[local-name()='input' or local-name()='select' or local-name()='group' or local-name()='repeat' or local-name()='trigger' or local-name()='select1' or local-name()='upload']")
+
+    def _is_question_element(self, element):
+        """
+        Determines if the given XML element represents a question.
+        """
+        return element.tag in ['input', 'select', 'group', 'repeat', 'trigger', 'select1', 'upload']
+
+    def _extract_question(self, element):
+        """
+        Extracts a question from the given XML element.
+        """
+        question_type = self._get_question_type(element)
+        if question_type == 'text':
+            return self._extract_common_question(element, 'text')
+        elif question_type == 'select':
+            return self._extract_select_question(element)
+        elif question_type == 'group':
+            return self._extract_common_question(element, 'group')
+        elif question_type == 'repeat':
+            return self._extract_common_question(element, 'repeat')
+        elif question_type == 'trigger':
+            return self._extract_common_question(element, 'trigger')
+        elif question_type == 'multi-select':
+            return self._extract_select_question(element)  # Reuse select logic
+        elif question_type == 'date':
+            return self._extract_common_question(element, 'date')
+        elif question_type == 'time':
+            return self._extract_common_question(element, 'time')
+        elif question_type == 'datetime':
+            return self._extract_common_question(element, 'datetime')
+        elif question_type == 'geopoint':
+            return self._extract_common_question(element, 'geopoint')
+        elif question_type == 'image':
+            return self._extract_common_question(element, 'image')
+        elif question_type == 'audio':
+            return self._extract_common_question(element, 'audio')
+        elif question_type == 'video':
+            return self._extract_common_question(element, 'video')
+        elif question_type == 'barcode':
+            return self._extract_common_question(element, 'barcode')
+        elif question_type == 'secret':
+            return self._extract_common_question(element, 'secret')
+        elif question_type == 'android-app':
+            return self._extract_common_question(element, 'android-app')
+        elif question_type == 'phone-number':
+            return self._extract_common_question(element, 'phone-number')
+        elif question_type == 'int':
+            return self._extract_common_question(element, 'int')
+        elif question_type == 'decimal':
+            return self._extract_common_question(element, 'decimal')
+        elif question_type == 'note':
+            return self._extract_common_question(element, 'note')
+        return None
+
+    def _get_question_type(self, element):
+        """
+        Determines the type of the question based on the XML element.
+        """
+        if element.tag == 'input':
+            bind_element = element.getparent().find(".//{http://www.w3.org/2002/xforms}bind[@nodeset='.']")
+            if bind_element is not None:
+                bind_type = bind_element.get('type')
+                if bind_type == 'xsd:date':
+                    return 'date'
+                elif bind_type == 'xsd:time':
+                    return 'time'
+                elif bind_type == 'xsd:dateTime':
+                    return 'datetime'
+                elif bind_type == 'xsd:int':
+                    return 'int'
+                elif bind_type == 'xsd:decimal':
+                    return 'decimal'
+            return 'text'
+        elif element.tag == 'select':
+            return 'select'
+        elif element.tag == 'group':
+            return 'group'
+        elif element.tag == 'repeat':
+            return 'repeat'
+        elif element.tag == 'trigger':
+            return 'trigger'
+        elif element.tag == 'select1':
+            return 'multi-select'
+        elif element.tag == 'upload':
+            mediatype = element.get('mediatype')
+            if mediatype == 'image/*':
+                return 'image'
+            elif mediatype == 'audio/*':
+                return 'audio'
+            elif mediatype == 'video/*':
+                return 'video'
+            elif mediatype == 'barcode/*':
+                return 'barcode'
+        return None
+
+    def _extract_common_question(self, element, question_type):
+        """
+        Extracts common question attributes (label, ref) for simple question types.
+        """
+        return {
+            'type': question_type,
+            'label': element.get('label'),
+            'ref': element.get('ref')
+        }
+
+    def _extract_select_question(self, element):
+        """
+        Extracts a select or multi-select question from the given XML element.
+        """
+        options = []
+        for item in element.findall(".//{http://www.w3.org/2002/xforms}item"):
+            options.append({
+                'label': item.find(".//{http://www.w3.org/2002/xforms}label").text,
+                'value': item.find(".//{http://www.w3.org/2002/xforms}value").text
+            })
+        return {
+            'type': 'select' if element.tag == 'select' else 'multi-select',
+            'label': element.get('label'),
+            'ref': element.get('ref'),
+            'options': options
+        }
 
     def _get_control_nodes(self):
         if not self.exists():
