@@ -3,12 +3,14 @@ hqDefine("reports/js/bootstrap5/maps_utils", [
     'knockout',
     'underscore',
     'reports/js/bootstrap5/datatables_config',
+    'hqwebapp/js/initial_page_data',
     'leaflet',
 ], function (
     $,
     ko,
     _,
     dataTablesConfig,
+    initialPageData,
     L,
 ) {
     var module = {};
@@ -256,8 +258,9 @@ hqDefine("reports/js/bootstrap5/maps_utils", [
             setMapHeight(map);
         };
         $(window).resize(resize);
-        $('#reportFiltersAccordion').on('shown', resize);  // This ignores 'html_id_suffix'
-        $('#reportFiltersAccordion').on('hidden', resize);  // and can't be used for UCRs.
+        var htmlIDSuffix = initialPageData.get('html_id_suffix');
+        $('#reportFiltersAccordion' + htmlIDSuffix).on('shown', resize);
+        $('#reportFiltersAccordion' + htmlIDSuffix).on('hidden', resize);
         resize();
     }
 
