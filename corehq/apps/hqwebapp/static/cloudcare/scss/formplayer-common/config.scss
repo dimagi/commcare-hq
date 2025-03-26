@@ -1,0 +1,14 @@
+#case-list-config-button {
+  color: white;
+  position: absolute;
+  right: 0px;
+  top: 1.3em;
+
+  &:focus {
+    outline: 1px solid white;
+  }
+
+  i {
+    font-size: 14px;
+  }
+}
