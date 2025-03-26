@@ -718,7 +718,7 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
     @staticmethod
     def validate_emails(request):
         contact_email = request.POST.get('email_to', '').strip()
-        cc_emails = request.POST.get('email_cc', '').replace(' ', '').split(',')
+        cc_emails = [email.strip() for email in request.POST.get('email_cc', '').split(',')]
 
         all_emails = [email for email in cc_emails if email]
         if contact_email:
@@ -860,7 +860,7 @@ class WireInvoiceView(View):
     @staticmethod
     def validate_emails(request):
         contact_email = request.POST.get('email_to', '').strip()
-        cc_emails = request.POST.get('email_cc', '').replace(' ', '').split(',')
+        cc_emails = [email.strip() for email in request.POST.get('email_cc', '').split(',')]
 
         all_emails = [email for email in cc_emails if email]
         if contact_email:
