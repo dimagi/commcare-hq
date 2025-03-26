@@ -52,7 +52,8 @@ class BaseTestCampaignView(TestCase):
     def login_endpoint(self):
         return reverse('domain_login', kwargs={'domain': self.domain})
 
-    def _make_request(self, query_data={}, is_logged_in=True):
+    def _make_request(self, query_data=None, is_logged_in=True):
+        query_data = query_data or {}
         if is_logged_in:
             self.client.login(username=self.username, password=self.password)
         return self.client.get(self.endpoint, query_data)
