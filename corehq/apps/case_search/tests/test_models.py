@@ -7,16 +7,20 @@ from testil import assert_raises, eq
 from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.filter_dsl import CaseFilterError
 from corehq.apps.case_search.models import (
+    CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+    CASE_SEARCH_CASE_TYPE_KEY,
     CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY,
-    CASE_SEARCH_REGISTRY_ID_KEY,
     CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY,
-    CASE_SEARCH_SORT_KEY,
     CASE_SEARCH_MODULE_NAME_TAG_KEY,
+    CASE_SEARCH_REGISTRY_ID_KEY,
+    CASE_SEARCH_SORT_KEY,
+    CASE_SEARCH_XPATH_QUERY_KEY,
+    CASE_SEARCH_XPATH_VAR_PREFIX,
     CaseSearchRequestConfig,
+    SearchCriteria,
     disable_case_search,
     enable_case_search,
     extract_search_request_config,
-    CASE_SEARCH_CASE_TYPE_KEY, SearchCriteria, CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
 )
 from corehq.util.test_utils import generate_cases
 
@@ -88,6 +92,22 @@ def _make_request_dict(params):
         key: (value if isinstance(value, list) else [value])
         for key, value in params.items() if value is not None
     }
+
+
+def test_extract_xpath_vars():
+    config = extract_search_request_config({
+        CASE_SEARCH_CASE_TYPE_KEY: 'jelly',
+        CASE_SEARCH_XPATH_QUERY_KEY: "@status='open' and {has_parent}",
+        f'{CASE_SEARCH_XPATH_VAR_PREFIX}has_parent': "ancestor-exists('parent', @case_type='sandwich')",
+        f'{CASE_SEARCH_XPATH_VAR_PREFIX}old': "last_modified < '2022-01-01'",
+    })
+    assert config.xpath_vars == {
+        'has_parent': "ancestor-exists('parent', @case_type='sandwich')",
+        'old': "last_modified < '2022-01-01'",
+    }
+    assert len(config.criteria) == 1
+    assert config.criteria[0] == SearchCriteria(
+        CASE_SEARCH_XPATH_QUERY_KEY, "@status='open' and {has_parent}")
 
 
 @generate_cases([
