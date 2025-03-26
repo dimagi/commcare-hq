@@ -143,22 +143,22 @@ class TestKycVerificationTableView(BaseTestKycView):
             # API field: User data
             'first_name': 'name',
             'last_name': {
-                'value': 'last_name'
+                'data_field': 'last_name'
             },
             'email': {
-                'value': 'email',
+                'data_field': 'email',
                 'is_sensitive': False
             },
             'phone_number': {
-                'value': 'phone_number',
+                'data_field': 'phone_number',
                 'is_sensitive': True
             },
             'national_id_number': {
-                'value': 'national_id_number',
+                'data_field': 'national_id_number',
                 'is_sensitive': 'true'
             },
             'street_address': {
-                'velue': 'street_address',
+                'data_feild': 'street_address',
             },
             'city': 'city',
             'post_code': 'post_code',

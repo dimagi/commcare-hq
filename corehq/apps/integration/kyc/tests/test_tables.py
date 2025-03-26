@@ -17,10 +17,10 @@ class TestKycVerifyTable(SimpleTestCase):
                 'pants_type': 'apple_bottom_jeans',
                 'shoe_type': 'boots_with_fur',
                 'test': {
-                    'value': 'foo',
+                    'data_field': 'foo',
                 },
                 'incorrect_field': {
-                    'velue': 'bar'
+                    'data_feild': 'bar'
                 }
             }
         )

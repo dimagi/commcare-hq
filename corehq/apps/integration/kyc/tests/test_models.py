@@ -291,19 +291,19 @@ class TestKycConfig(SimpleTestCase):
             domain=DOMAIN,
             api_field_to_user_data_map={
                 'first_name': {
-                    'value': 'first_name',
+                    'data_field': 'first_name',
                 },
                 'last_name': {
-                    'value': 'last_name',
+                    'data_field': 'last_name',
                     'is_sensitive': True,
                 },
                 'email': {
-                    'value': 'email',
+                    'data_field': 'email',
                     'is_sensitive': 'falsey',
                     'random_prop': 123,
                 },
                 'phone_number': {
-                    'value': 'phone_number',
+                    'data_field': 'phone_number',
                     'is_sensitive': 'true',
                 },
                 'street_address': {
@@ -312,7 +312,7 @@ class TestKycConfig(SimpleTestCase):
                 'id_num': 'id_num',
                 'country': {},
                 'reg_num': {
-                    'VALUE': 'reg_num'
+                    'DATA_FIELD': 'reg_num'
                 }
             }
         )
