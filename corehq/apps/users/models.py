@@ -2458,7 +2458,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         return web_user
 
     def add_domain_membership(self, domain, timezone=None, **kwargs):
-        # delete any soft deleted user data
+        # delete soft deleted user data to prevent conflict with new user data
         SQLUserData.all_objects.filter(user_id=self.user_id, domain=domain, deleted_on__isnull=False).delete()
         if TABLEAU_USER_SYNCING.enabled(domain):
             from corehq.apps.reports.util import add_tableau_user
