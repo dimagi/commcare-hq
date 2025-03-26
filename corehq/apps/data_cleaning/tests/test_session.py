@@ -274,3 +274,50 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         self.assertTrue(session.has_any_filtering)
         session.reset_filtering()
         self.assertFalse(session.has_any_filtering)
+
+
+class BulkEditSessionCaseColumnTests(TestCase):
+    domain_name = 'session-test-case-columns'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.domain = create_domain(cls.domain_name)
+        cls.addClassCleanup(cls.domain.delete)
+
+        cls.web_user = WebUser.create(
+            cls.domain.name, 'tester@datacleaning.org', 'testpwd', None, None
+        )
+        cls.django_user = User.objects.get(username=cls.web_user.username)
+        cls.addClassCleanup(cls.web_user.delete, cls.domain.name, deleted_by=None)
+
+        cls.case_type = 'plant-friend'
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+
+    def setUp(self):
+        self.session = BulkEditSession.new_case_session(
+            self.django_user, self.domain_name, self.case_type
+        )
+
+    def test_add_column(self):
+        self.assertEqual(self.session.columns.count(), 6)
+        new_column = self.session.add_column('num_leaves', "Number of Leaves", DataType.INTEGER)
+        self.assertEqual(new_column.index, 6)
+        self.assertEqual(self.session.columns.count(), 7)
+        self.assertEqual(new_column.prop_id, 'num_leaves')
+        self.assertEqual(new_column.label, "Number of Leaves")
+        self.assertEqual(new_column.data_type, DataType.INTEGER)
+        self.assertFalse(new_column.is_system)
+
+    def test_add_system_column(self):
+        new_column = self.session.add_column('@owner_id', "Owner ID", DataType.INTEGER)
+        self.assertEqual(new_column.index, 6)
+        self.assertEqual(self.session.columns.count(), 7)
+        self.assertEqual(new_column.prop_id, '@owner_id')
+        self.assertEqual(new_column.label, "Owner ID")
+        self.assertEqual(new_column.data_type, DataType.TEXT)
+        self.assertTrue(new_column.is_system)
