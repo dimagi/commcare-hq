@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -12,13 +12,13 @@
+@@ -11,13 +11,13 @@
      </div>
  
      <div data-bind="with: general_credit">
@@ -15,10 +15,10 @@
            <div class="input-group">
 -            <span class="input-group-addon">$</span>
 +            <span class="input-group-addon">$</span>  {# todo B5: css-input-group-addon #}
-             <input type="text"
-                    class="form-control"
-                    data-bind="
-@@ -36,11 +36,11 @@
+             <input
+               type="text"
+               class="form-control"
+@@ -39,11 +39,11 @@
        </div>
      </div>
  
@@ -33,7 +33,7 @@
          <p class="form-control-text" data-bind="text: ('$ ' + amount())"></p>
        </div>
      </div>
-@@ -49,11 +49,11 @@
+@@ -52,11 +52,11 @@
  
      <!-- ko if: $root.paymentMethod() === $root.WIRE -->
      <div data-bind="with: invoice_credit">
@@ -45,10 +45,10 @@
          </label>
 -        <div class="col-sm-10">
 +        <div class="col-md-10">
-           <input type="text"
+           <input
+             type="text"
              id="prepay-date-start"
-             class="date-picker form-control"
-@@ -63,11 +63,11 @@
+@@ -68,11 +68,11 @@
          </div>
        </div>
  
@@ -60,10 +60,10 @@
          </label>
 -        <div class="col-sm-10">
 +        <div class="col-md-10">
-           <input type="text"
+           <input
+             type="text"
              id="prepay-date-end"
-             class="date-picker form-control"
-@@ -77,11 +77,11 @@
+@@ -84,11 +84,11 @@
          </div>
        </div>
  
@@ -75,40 +75,36 @@
          </label>
 -        <div class="col-sm-10">
 +        <div class="col-md-10">
-           <input type="text"
-                  class="form-control"
-                  data-bind="textInput: credit_label"
-@@ -89,11 +89,11 @@
+           <input
+             type="text"
+             class="form-control"
+@@ -98,9 +98,9 @@
          </div>
        </div>
  
 -      <div class="form-group">
--        <label class="control-label col-sm-2">
-+      <div class="form-group">  {# todo B5: css-form-group #}
-+        <label class="form-label col-md-2">
-           {% trans "Unit Cost" %}
-         </label>
+-        <label class="control-label col-sm-2"> {% trans "Unit Cost" %} </label>
 -        <div class="col-sm-10">
++      <div class="form-group">  {# todo B5: css-form-group #}
++        <label class="form-label col-md-2"> {% trans "Unit Cost" %} </label>
 +        <div class="col-md-10">
            <div class="input-group">
              <span class="input-group-addon">$</span>
-             <input type="number"
-@@ -112,11 +112,11 @@
+             <input
+@@ -124,9 +124,9 @@
          </div>
        </div>
  
 -      <div class="form-group">
--        <label class="control-label col-sm-2">
-+      <div class="form-group">  {# todo B5: css-form-group #}
-+        <label class="form-label col-md-2">
-           {% trans "Quantity" %}
-         </label>
+-        <label class="control-label col-sm-2"> {% trans "Quantity" %} </label>
 -        <div class="col-sm-10">
++      <div class="form-group">  {# todo B5: css-form-group #}
++        <label class="form-label col-md-2"> {% trans "Quantity" %} </label>
 +        <div class="col-md-10">
-           <input type="number"
-                  class="form-control"
-                  data-bind="textInput: quantity"
-@@ -126,11 +126,11 @@
+           <input
+             type="number"
+             class="form-control"
+@@ -138,11 +138,11 @@
        </div>
      </div>
  
@@ -120,20 +116,22 @@
        </label>
 -      <div class="col-sm-10">
 +      <div class="col-md-10">
-         <p class="form-control-text" data-bind="text: ('$ ' + invoice_amount())"></p>
-       </div>
-     </div>
-@@ -164,7 +164,7 @@
-   <div class="modal-dialog">
-     <div class="modal-content">
+         <p
+           class="form-control-text"
+           data-bind="text: ('$ ' + invoice_amount())"
+@@ -184,8 +184,8 @@
        <div class="modal-header">
--        <button type="button" class="close" data-dismiss="modal"
-+        <button type="button" class="btn-close" data-bs-dismiss="modal"  {# todo B5: css-close #}
-                 aria-label="Close">
+         <button
+           type="button"
+-          class="close"
+-          data-dismiss="modal"
++          class="btn-close"
++          data-bs-dismiss="modal"  {# todo B5: css-close #}
+           aria-label="Close"
+         >
            <span aria-hidden="true">&times;</span>
-         </button>
-@@ -203,11 +203,11 @@
-                 <a href="https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment" target="_blank">More information...</a>
+@@ -238,11 +238,11 @@
+                 >
                {% endblocktrans %}
              </p>
 -            <div class="form-group">
@@ -144,48 +142,51 @@
                </label>
 -              <div class="col-sm-9">
 +              <div class="col-md-9">
-                 <input type="text"
-                        data-bind="value: wireEmail"
-                        size="20"
-@@ -217,11 +217,11 @@
+                 <input
+                   type="text"
+                   data-bind="value: wireEmail"
+@@ -254,11 +254,11 @@
                </div>
              </div>
  
 -            <div class="form-group">
 -              <label class="control-label col-sm-3">
 +            <div class="form-group">  {# todo B5: css-form-group #}
-+              <label class="control-label col-md-3">
++              <label class="form-label col-md-3">
                  {% trans 'Additional Recipients' %}
                </label>
 -              <div class="col-sm-9">
 +              <div class="col-md-9">
-                 <input type="text"
-                        data-bind="value: wireAdditionalEmails"
-                        size="20"
-@@ -254,8 +254,8 @@
-         <div class="modal-footer">
-           <button type="button"
-                   data-bind="visible: paymentIsNotComplete"
--                  class="btn btn-default"
--                  data-dismiss="modal">
-+                  class="btn btn-outline-primary"
-+                  data-bs-dismiss="modal">
+                 <input
+                   type="text"
+                   data-bind="value: wireAdditionalEmails"
+@@ -302,8 +302,8 @@
+           <button
+             type="button"
+             data-bind="visible: paymentIsNotComplete"
+-            class="btn btn-default"
+-            data-dismiss="modal"
++            class="btn btn-outline-primary"
++            data-bs-dismiss="modal"
+           >
              {% trans "Cancel" %}
            </button>
-           <!-- ko if: hasAgreedToPrivacy || isSavedCard -->
-@@ -275,12 +275,12 @@
-                                 text: submitBtnText"
-                   disabled="disabled">
-           </button>
--          <span class="label label-info">{% trans 'Please agree to the Privacy Policy.' %}</span>
-+          <span class="badge text-bg-info">{% trans 'Please agree to the Privacy Policy.' %}</span>
+@@ -324,15 +324,15 @@
+             data-bind="text: submitBtnText"
+             disabled="disabled"
+           ></button>
+-          <span class="label label-info"
++          <span class="badge text-bg-info"
+             >{% trans 'Please agree to the Privacy Policy.' %}</span
+           >
            <!-- /ko -->
-           <button type="button"
-                   data-bind="visible: paymentIsComplete"
--                  class="btn btn-default"
--                  data-dismiss="modal">
-+                  class="btn btn-outline-primary"
-+                  data-bs-dismiss="modal">
+           <button
+             type="button"
+             data-bind="visible: paymentIsComplete"
+-            class="btn btn-default"
+-            data-dismiss="modal"
++            class="btn btn-outline-primary"
++            data-bs-dismiss="modal"
+           >
              {% trans "Close" %}
            </button>
-         </div>
