@@ -10,10 +10,12 @@ let mobileWorkerMapsInitialized = false;
 
 $(function () {
     // Only init case map widgets since this is the default tab
-    const mapWidgetConfigs = initialPageData.get('map_widgets');
-    for (const mapWidgetConfig of mapWidgetConfigs.cases) {
-        const mapWidget = new MapWidget(mapWidgetConfig);
-        mapWidget.initializeMap();
+    const widgetConfigs = initialPageData.get('map_report_widgets');
+    for (const widgetConfig of widgetConfigs.cases) {
+        if (widgetConfig.widget_type === 'DashboardMap') {
+            const mapWidget = new MapWidget(widgetConfig);
+            mapWidget.initializeMap();
+        }
     }
     $('a[data-bs-toggle="tab"]').on('shown.bs.tab', tabSwitch);
 
@@ -31,10 +33,12 @@ function tabSwitch(e) {
     // Only load mobile worker map widgets when tab is clicked to prevent weird map sizing behaviour
     if (!mobileWorkerMapsInitialized && tabContentId === '#mobile-workers-tab-content') {
         mobileWorkerMapsInitialized = true;
-        const mapWidgetConfigs = initialPageData.get('map_widgets');
-        for (const mapWidgetConfig of mapWidgetConfigs.mobile_workers) {
-            const mapWidget = new MapWidget(mapWidgetConfig);
-            mapWidget.initializeMap();
+        const widgetConfigs = initialPageData.get('map_report_widgets');
+        for (const widgetConfig of widgetConfigs.mobile_workers) {
+            if (widgetConfig.widget_type === 'DashboardMap') {
+                const mapWidget = new MapWidget(widgetConfig);
+                mapWidget.initializeMap();
+            }
         }
     }
 }

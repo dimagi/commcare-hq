@@ -4,6 +4,7 @@
 <div
   id="{{ container_id }}"
   hx-swap="outerHTML"
+  hq-hx-refresh-swap="#CleanCaseTable"
 >
   {% if active_filters %}
     <div class="mb-3">
@@ -11,14 +12,17 @@
         hx-post="{{ request.path_info }}"
         hx-target="#{{ container_id }}"
         hx-disabled-elt="find button"
-        hq-hx-action="reorder_filters"
+        hq-hx-action="update_filter_order"
         hx-trigger="end"
       >
-        <ul class="list-group">
+        <div
+          class="list-group"
+          x-htmx-sortable=""
+        >
           {% for filter in active_filters %}
-            {% include "data_cleaning/filters/list_item.html" %}
+            {% include "data_cleaning/forms/partials/filter_list_item.html" %}
           {% endfor %}
-        </ul>
+        </div>
       </form>
     </div>
   {% endif %}

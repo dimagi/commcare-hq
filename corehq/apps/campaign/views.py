@@ -2,7 +2,6 @@ from functools import cached_property
 
 from django.conf import settings
 from django.core.paginator import Paginator
-from django.forms.models import model_to_dict
 from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
@@ -76,26 +75,14 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        dashboard = Dashboard.objects.get(domain=self.domain)
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
-            'map_widgets': self._dashboard_map_configs,
+            'map_report_widgets': dashboard.get_map_report_widgets_by_tab(),
             'widget_types': WidgetType.choices,
-
         })
         context.update(self.dashboard_map_case_filters_context())
         return context
-
-    @property
-    def _dashboard_map_configs(self):
-        dashboard_maps = Dashboard.objects.get(domain=self.domain).maps.all()
-        dashboard_map_configs = {
-            'cases': [],
-            'mobile_workers': [],
-        }
-        for dashboard_map in dashboard_maps:
-            config = model_to_dict(dashboard_map, exclude=['dashboard', 'dashboard_tab', 'display_order'])
-            dashboard_map_configs[dashboard_map.dashboard_tab].append(config)
-        return dashboard_map_configs
 
 
 @method_decorator([login_and_domain_required, require_GET], name='dispatch')

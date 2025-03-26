@@ -168,7 +168,7 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         filters = session.filters.all()
         new_order = [filters[1].filter_id, filters[2].filter_id]
         with self.assertRaises(ValueError):
-            session.reorder_filters(new_order)
+            session.update_filter_order(new_order)
 
     def test_reorder_filters(self):
         session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
@@ -185,7 +185,7 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
             filters[4].filter_id,
             filters[3].filter_id,
         ]
-        session.reorder_filters(new_order)
+        session.update_filter_order(new_order)
         reordered_prop_ids = [c.prop_id for c in session.filters.all()]
         self.assertEqual(
             reordered_prop_ids,
@@ -242,3 +242,35 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
             .OR(all_project_data_filter(self.domain_name, ['project_data']))  # default Case Owners pinned filter
         )
         self.assertEqual(query.es_query, expected_query.es_query)
+
+    def test_has_filters_and_reset(self):
+        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        self.assertFalse(session.has_filters)
+        session.add_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, '2')
+        self.assertTrue(session.has_filters)
+        session.reset_filters()
+        self.assertFalse(session.has_filters)
+
+    def test_has_pinned_values_and_reset(self):
+        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        self.assertFalse(session.has_pinned_values)
+        pinned_filter = session.pinned_filters.all()[0]
+        pinned_filter.value = ['t__1']
+        pinned_filter.save()
+        self.assertTrue(session.has_pinned_values)
+        session.reset_pinned_filters()
+        self.assertFalse(session.has_pinned_values)
+
+    def test_has_any_filtering_and_reset(self):
+        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        self.assertFalse(session.has_any_filtering)
+        pinned_filter = session.pinned_filters.all()[0]
+        pinned_filter.value = ['t__1']
+        pinned_filter.save()
+        self.assertTrue(session.has_any_filtering)
+        session.reset_filtering()
+        self.assertFalse(session.has_any_filtering)
+        session.add_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, '2')
+        self.assertTrue(session.has_any_filtering)
+        session.reset_filtering()
+        self.assertFalse(session.has_any_filtering)

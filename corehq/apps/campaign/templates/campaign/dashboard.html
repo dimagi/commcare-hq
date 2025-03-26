@@ -11,7 +11,7 @@
 {% block page_content %}
   {% initial_page_data 'mapbox_access_token' mapbox_access_token %}
   {% registerurl 'api_cases_with_gps' request.domain %}
-  {% initial_page_data 'map_widgets' map_widgets %}
+  {% initial_page_data 'map_report_widgets' map_report_widgets %}
   {% include "campaign/partials/add_widget_button.html" %}
 
   <ul class="nav nav-tabs" role="tablist">
@@ -49,8 +49,10 @@
       <div class="row">
         <h2>{% trans "Reports" %}</h2>
         <div id="map-reports-container-cases">
-          {% for widget in map_widgets.cases %}
-            {% include 'campaign/partials/dashboard_map.html' %}
+          {% for widget in map_report_widgets.cases %}
+            {% if widget.widget_type == 'DashboardMap' %}
+              {% include 'campaign/partials/dashboard_map.html' %}
+            {% endif %}
           {% endfor %}
         </div>
       </div>
@@ -67,8 +69,10 @@
       <div class="row">
         <h2>{% trans "Reports" %}</h2>
         <div id="map-reports-container-mobile-workers">
-          {% for widget in map_widgets.mobile_workers %}
-            {% include 'campaign/partials/dashboard_map.html' %}
+          {% for widget in map_report_widgets.mobile_workers %}
+            {% if widget.widget_type == 'DashboardMap' %}
+              {% include 'campaign/partials/dashboard_map.html' %}
+            {% endif %}
           {% endfor %}
         </div>
       </div>
