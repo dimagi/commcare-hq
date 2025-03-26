@@ -3,7 +3,7 @@
 # This Dockerfile is built as the `dimagi/commcarehq_base` image, which
 # is used for running tests.
 
-FROM ghcr.io/astral-sh/uv:0.5.2-python3.9-bookworm-slim
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
 MAINTAINER Dimagi <devops@dimagi.com>
 
 ENV PYTHONUNBUFFERED=1 \
@@ -31,16 +31,22 @@ RUN apt-get update \
      gettext \
      git \
      google-chrome-stable \
+     libffi-dev \
      libmagic1 \
      libpq-dev \
-     libxml2 \
-     libxmlsec1 \
+     libxml2-dev \
+     libxmlsec1-dev \
      libxmlsec1-openssl \
+     libz-dev \
      make \
+     pkg-config \
   && rm -rf /var/lib/apt/lists/* /src/*.deb
 # build-essential allows uv to build dependencies; increases image size by 240 MB
+# libffi-dev is for cffi on Python 3.13 (was not needed on 3.9; TODO find version with prebuilt cp313 wheel)
 # libpq-dev is for make-requirements-test.sh; increases image size by ~20 MB
 # libpq-dev can be replaced with libpq5 if pip-tools is replaced with uv in make-requirements-test.sh
+# pkg-config and the -dev variants of libxml2 and libxmlsec1 are necessary for xmlsec on Python 3.13
+# libz-dev is necessary for `--no-binary lxml` (see below)
 
 RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.gz" \
   && tar -xzf "node-v$NODE_VERSION-linux-x64.tar.gz" -C /usr/local --strip-components=1 \
@@ -50,7 +56,10 @@ COPY requirements/test-requirements.txt package.json /vendor/
 
 RUN --mount=type=cache,target=/root/.cache/uv \
   uv venv --allow-existing /vendor \
-  && uv pip install --prefix=/vendor -r /vendor/test-requirements.txt
+  && uv pip install --no-binary lxml --prefix=/vendor -r /vendor/test-requirements.txt
+# `--no-binary lxml` forces lxml to be built against the local libxml2-dev to
+# resolve xmlsec.InternalError: (-1, 'lxml & xmlsec libxml2 library version mismatch')
+# This can be revisited if lxml and xmlsec versions with pre-build wheels can be found
 
 # this keeps the image size down, make sure to set in mocha-headless-chrome options
 #   executablePath: 'google-chrome-stable'
@@ -67,10 +76,3 @@ RUN npm -g install \
  && cd /vendor \
  && npm shrinkwrap \
  && yarn global add phantomjs-prebuilt
-
-# For backward compatibility with commcarehq_base image containing
-# google-chrome-unstable. Can be removed after all test jobs with Gruntfile.js
-# referencing google-chrome-unstable have completed (at least a few weeks or
-# months after the PR in which this was introduced is merged). Old PRs can be
-# updated to use google-chrome-stable by merging master into them.
-RUN ln -s /usr/bin/google-chrome-stable /usr/bin/google-chrome-unstable
