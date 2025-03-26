@@ -129,6 +129,10 @@ module.exports = {
         },
     },
 
+    cache: {
+        type: 'filesystem',
+    },
+
     resolve: {
         alias: utils.getAllAliases(aliases),
     },
