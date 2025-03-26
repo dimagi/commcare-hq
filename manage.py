@@ -37,6 +37,7 @@ def main():
         GeventCommand('verify_ssl_connections'),
         GeventCommand('elastic_sync_multiplexed'),
         GeventCommand('translate_po_files'),
+        GeventCommand('run_ptop'),
     )
     _patch_gevent_if_required(sys.argv, GEVENT_COMMANDS)
 
