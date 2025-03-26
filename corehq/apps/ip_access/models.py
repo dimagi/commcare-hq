@@ -1,3 +1,6 @@
+import geoip2.webservice
+
+from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
@@ -22,5 +25,15 @@ class IPAccessConfig(models.Model):
 
 
 def is_in_country(ip_address, country_allowlist):
-    # TODO
-    return True
+    # If there is no countries in the allowlist, or MaxMind is not configured in the env
+    # assume all countries are allowed
+    if not country_allowlist or not settings.MAXMIND_LICENSE_KEY:
+        return True
+
+    with geoip2.webservice.Client(settings.MAXMIND_ACCOUNT_ID,
+                                  settings.MAXMIND_LICENSE_KEY, host='geolite.info') as client:
+        response = client.country(ip_address)
+        if response.country.iso_code in country_allowlist:
+            return True
+        else:
+            return False
