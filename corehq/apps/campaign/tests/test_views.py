@@ -95,13 +95,17 @@ class TestDashboardView(BaseTestCampaignView):
         assert response.status_code == 200
 
         context = response.context
-        assert context['map_widgets'] == {
+        assert context['map_report_widgets'] == {
             'cases': [{
                 'id': self.dashboard_map_cases.id,
                 'title': 'Cases Map',
                 'description': None,
                 'case_type': 'foo',
                 'geo_case_property': 'somewhere',
+                'dashboard': {
+                    'domain': 'test-domain',
+                },
+                'widget_type': 'DashboardMap',
             }],
             'mobile_workers': [{
                 'id': self.dashboard_map_mobile_workers.id,
@@ -109,6 +113,10 @@ class TestDashboardView(BaseTestCampaignView):
                 'description': 'My cool map',
                 'case_type': 'bar',
                 'geo_case_property': 'nowhere',
+                'dashboard': {
+                    'domain': 'test-domain',
+                },
+                'widget_type': 'DashboardMap',
             }],
         }
 

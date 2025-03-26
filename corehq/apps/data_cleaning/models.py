@@ -176,6 +176,17 @@ class BulkEditSession(models.Model):
             query = pinned_filter.filter_query(query)
         return query
 
+    def add_column(self, prop_id, label, data_type=None):
+        """
+        Add a column to this session.
+
+        :param prop_id: string - The property ID (e.g., case property)
+        :param label: string - The column label to display
+        :param data_type: DataType - Optional. Will be inferred for system props
+        :return: The created BulkEditColumn
+        """
+        return BulkEditColumn.create_for_session(self, prop_id, label, data_type)
+
     def update_result(self, record_count, form_id=None):
         result = self.result or {}
 
@@ -599,18 +610,6 @@ class BulkEditColumn(models.Model):
         ordering = ["index"]
 
     @staticmethod
-    def get_default_label(prop_id):
-        known_labels = {
-            'name': _("Name"),
-            'owner_name': _('Owner'),
-            'opened_on': _("Opened On"),
-            'opened_by_username': _("Created By"),
-            'modified_on': _("Last Modified On"),
-            '@status': _("Status"),
-        }
-        return known_labels.get(prop_id, prop_id)
-
-    @staticmethod
     def is_system_property(prop_id):
         return prop_id in set(METADATA_IN_REPORTS).difference({
             'name', 'case_name', 'external_id',
@@ -620,22 +619,41 @@ class BulkEditColumn(models.Model):
     def create_default_columns(cls, session):
         default_properties = {
             BulkEditSessionType.CASE: (
-                'name', 'owner_name', 'opened_on', 'opened_by_username',
-                'modified_on', '@status',
+                'name', 'owner_name', 'date_opened', 'opened_by_username',
+                'last_modified', '@status',
             ),
         }.get(session.session_type)
 
         if not default_properties:
             raise NotImplementedError(f"{session.session_type} default columns not yet supported")
 
+        from corehq.apps.data_cleaning.utils.cases import (
+            get_system_property_label,
+            get_system_property_data_type,
+        )
         for index, prop_id in enumerate(default_properties):
             cls.objects.create(
                 session=session,
                 index=index,
                 prop_id=prop_id,
-                label=cls.get_default_label(prop_id),
+                label=get_system_property_label(prop_id),
+                data_type=get_system_property_data_type(prop_id),
                 is_system=cls.is_system_property(prop_id),
             )
+
+    @classmethod
+    def create_for_session(cls, session, prop_id, label, data_type=None):
+        is_system_property = cls.is_system_property(prop_id)
+        from corehq.apps.data_cleaning.utils.cases import get_system_property_data_type
+        data_type = get_system_property_data_type(prop_id) if is_system_property else data_type
+        return cls.objects.create(
+            session=session,
+            index=session.columns.count(),
+            prop_id=prop_id,
+            label=label,
+            data_type=data_type or DataType.TEXT,
+            is_system=is_system_property,
+        )
 
 
 class BulkEditRecord(models.Model):
