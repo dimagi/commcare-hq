@@ -65,9 +65,8 @@ def _get_payment_case_ids_on_domain(domain):
         .filter(
             filters.AND(
                 case_property_query(PaymentProperties.PAYMENT_VERIFIED, 'True'),
-                filters.OR(
-                    case_property_query(PaymentProperties.PAYMENT_STATUS, PaymentStatus.PENDING),
-                    case_property_query(PaymentProperties.PAYMENT_STATUS, PaymentStatus.REQUEST_FAILED),
+                filters.NOT(
+                    case_property_query(PaymentProperties.PAYMENT_STATUS, PaymentStatus.REQUESTED),
                 ),
             )
         )
