@@ -16,7 +16,7 @@ from dimagi.utils.web import json_request
 from corehq import toggles
 from corehq.apps.campaign.const import GAUGE_METRICS
 from corehq.apps.campaign.models import Dashboard, WidgetType
-from corehq.apps.campaign.utils import get_gauge_metric_value
+from corehq.apps.campaign.services import get_gauge_metric_value
 from corehq.apps.data_dictionary.util import get_gps_properties
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
