@@ -195,11 +195,21 @@ hqDefine('accounting/js/pricing_table', [
         return self;
     };
 
+    var planDisplayName = function (name) {
+        const plans = {
+            'Community': 'Free Edition',
+            'Standard': 'Standard',
+            'Pro': 'Pro',
+            'Advanced': 'Advanced',
+        };
+        return plans[name] || '';
+    };
+
     var PlanOption = function (data, parent) {
         'use strict';
         var self = this;
 
-        self.oName = ko.observable(data.name);
+        self.oName = ko.observable(planDisplayName(data.name));
         self.oSlug = ko.observable(data.name.toLowerCase());
 
         self.oMonthlyPrice = ko.observable(data.monthly_price);
