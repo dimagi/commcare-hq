@@ -125,6 +125,34 @@ class KycConfig(models.Model):
                 for user_obj in CommCareCase.objects.get_cases(obj_ids, self.domain)
             ]
 
+    def get_api_field_to_user_data_map_values(self):
+        """
+        The dict values for `api_field_to_user_data_map` consist of a dict with the following structure:
+        ```
+        {
+            'data_field': 'field_name',
+            'is_sensitive': True/False
+        }
+        ```
+        This method parses through `api_field_to_user_data_map` and returns a dict with only the mapping values.
+        """
+        map_vals = {}
+        for provider_field, field in self.api_field_to_user_data_map.items():
+            if not isinstance(field, dict) or 'data_field' not in field:
+                continue
+            map_vals[provider_field] = field['data_field']
+        return map_vals
+
+    def is_sensitive_field(self, field):
+        if field not in self.api_field_to_user_data_map:
+            return False
+        field_data = self.api_field_to_user_data_map[field]
+        return (
+            isinstance(field_data, dict)
+            and 'is_sensitive' in field_data
+            and field_data['is_sensitive'] is True
+        )
+
 
 class KycUser:
 

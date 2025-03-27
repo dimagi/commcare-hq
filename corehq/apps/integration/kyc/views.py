@@ -15,6 +15,7 @@ from corehq.apps.integration.kyc.services import (
     verify_users,
 )
 from corehq.apps.integration.kyc.tables import KycVerifyTable
+from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 from corehq.util.metrics import metrics_counter, metrics_gauge
 
@@ -102,12 +103,13 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
             },
             'kyc_last_verified_at': kyc_user.get('kyc_last_verified_at'),
         }
-
-        for field in self.kyc_config.api_field_to_user_data_map.values():
+        for provider_field, field in self.kyc_config.get_api_field_to_user_data_map_values().items():
             value = kyc_user.get(field)
             if not value:
                 row_data['has_invalid_data'] = True
             else:
+                if self.kyc_config.is_sensitive_field(provider_field):
+                    value = PASSWORD_PLACEHOLDER
                 row_data[field] = value
         return row_data
 

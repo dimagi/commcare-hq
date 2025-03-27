@@ -92,8 +92,12 @@ class BaseKycUserSetup(TestCase):
     def _sample_api_field_to_user_data_map(self):
         return {
             # API Field : User data
-            "first_name": "first_name",
-            "nationality": "nationality",
+            "first_name": {
+                "data_field": "first_name"
+            },
+            "nationality": {
+                "data_field": "nationality"
+            }
         }
 
 
