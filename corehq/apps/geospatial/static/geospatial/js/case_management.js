@@ -5,7 +5,7 @@ hqDefine("geospatial/js/case_management", [
     "underscore",
     "hqwebapp/js/initial_page_data",
     "knockout",
-    'geospatial/js/models',
+    'geospatial/js/bootstrap3/models',
     'geospatial/js/utils',
     'hqwebapp/js/bootstrap3/alert_user',
     'reports/js/bootstrap3/base',

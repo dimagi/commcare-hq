@@ -3,7 +3,7 @@ import "hqwebapp/js/htmx_and_alpine";
 import 'reports/js/bootstrap5/base';
 import $ from 'jquery';
 import initialPageData from "hqwebapp/js/initial_page_data";
-import { Map, MapItem } from "geospatial/js/models";
+import { Map, MapItem } from "geospatial/js/bootstrap3/models";
 
 
 let mobileWorkerMapsInitialized = false;

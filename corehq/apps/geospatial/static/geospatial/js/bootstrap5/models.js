@@ -1,11 +1,11 @@
 
-hqDefine('geospatial/js/models', [
+hqDefine('geospatial/js/bootstrap5/models', [
     'jquery',
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
     'geospatial/js/utils',
-    'hqwebapp/js/bootstrap3/alert_user',
+    'hqwebapp/js/bootstrap5/alert_user',
     'mapbox-gl',
     '@mapbox/mapbox-gl-draw',
     '@turf/turf',
