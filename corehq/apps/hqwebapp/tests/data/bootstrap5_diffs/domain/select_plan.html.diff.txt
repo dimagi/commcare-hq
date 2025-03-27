@@ -1,54 +1,53 @@
 --- 
 +++ 
-@@ -1,9 +1,9 @@
+@@ -1,8 +1,8 @@
 -{% extends "domain/bootstrap3/base_change_plan.html" %}
 +{% extends "domain/bootstrap5/base_change_plan.html" %}
  {% load hq_shared_tags %}
  {% load i18n %}
  {% load menu_tags %}
- 
 -{% js_entry_b3 'accounting/js/pricing_table' %}
 +{% js_entry 'accounting/js/pricing_table' %}
  
  {% block form_content %}
    {% initial_page_data 'editions' editions %}
-@@ -30,7 +30,7 @@
-     <p class="switch-label text-center">
-       {% trans "Pay Monthly" %}
-       <label class="switch">
--        <input type="checkbox" id="pricing-toggle" data-bind="{checked: oShowAnnualPricing}">
-+        <input type="checkbox" id="pricing-toggle" data-bind="{checked: oShowAnnualPricing}">  {# todo B5: css-checkbox #}
+@@ -32,7 +32,7 @@
+           type="checkbox"
+           id="pricing-toggle"
+           data-bind="{checked: oShowAnnualPricing}"
+-        />
++        />  {# todo B5: css-checkbox #}
          <span class="slider round slider-blue slider-blue-on"></span>
        </label>
        {% trans "Pay Annually" %}
-@@ -38,7 +38,7 @@
+@@ -40,7 +40,7 @@
  
-     <p class="text-center">
+     <p class="text-center" data-bind="visible: !oShowAnnualPricing()">
        {% blocktrans %}
 -        Save close to 20% when you pay annually.
 +        Save close to 20% when you pay annually.  {# todo B5: css-close #}
        {% endblocktrans %}
      </p>
  
-@@ -166,7 +166,7 @@
-     </div>
+@@ -186,7 +186,7 @@
  
-     <div class="alert alert-warning text-center"
--         style="margin-top: 20px;"
-+         style="margin-top: 20px;"  {# todo B5: inline-style #}
-          data-bind="visible: oIsNextPlanDowngrade">
+     <div
+       class="alert alert-warning text-center"
+-      style="margin-top: 20px;"
++      style="margin-top: 20px;"  {# todo B5: inline-style #}
+       data-bind="visible: oIsNextPlanDowngrade"
+     >
        <i class="fa fa-warning"></i>
-       {% blocktrans %}
-@@ -196,7 +196,7 @@
-         id="select-plan-form"
-         method="post"
-         data-bind="visible: oShowNext"
--        style="display: none;"
-+        style="display: none;"  {# todo B5: inline-style #}
-         action="{% url 'confirm_selected_plan' domain %}">
+@@ -208,7 +208,7 @@
+       id="select-plan-form"
+       method="post"
+       data-bind="visible: oShowNext"
+-      style="display: none;"
++      style="display: none;"  {# todo B5: inline-style #}
+       action="{% url 'confirm_selected_plan' domain %}"
+     >
        {% csrf_token %}
-       {% if is_renewal %}
-@@ -242,7 +242,7 @@
+@@ -269,7 +269,7 @@
      <div class="modal-dialog">
        <div class="modal-content">
          <div class="modal-header">
@@ -57,14 +56,18 @@
              <span aria-hidden="true">&times;</span>
              <span class="sr-only">{% trans "Close" %}</span>
            </button>
-@@ -252,8 +252,8 @@
-           <br><br>
+@@ -277,12 +277,12 @@
          </div>
+         <div class="modal-body"><br /><br /></div>
          <div class="modal-footer">
--          <button type="button" class="btn btn-primary" data-dismiss="modal">{% trans "Dismiss" %}</button>
--          <button type="button" class="btn btn-danger" data-bind="click: submitDowngradeForm">{% trans "Continue" %}</button>
-+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">{% trans "Dismiss" %}</button>
-+          <button type="button" class="btn btn-outline-danger" data-bind="click: submitDowngradeForm">{% trans "Continue" %}</button>
-         </div>
-       </div>
-     </div>
+-          <button type="button" class="btn btn-primary" data-dismiss="modal">
++          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+             {% trans "Dismiss" %}
+           </button>
+           <button
+             type="button"
+-            class="btn btn-danger"
++            class="btn btn-outline-danger"
+             data-bind="click: submitDowngradeForm"
+           >
+             {% trans "Continue" %}
