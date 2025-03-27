@@ -7,6 +7,7 @@ from django_tables2 import columns
 from corehq.apps.hqwebapp.tables.elasticsearch.records import CaseSearchElasticRecord
 from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
 from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
+from corehq.apps.integration.payments.const import PaymentStatus
 
 
 class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
@@ -14,7 +15,7 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
         'verify_select',
         'payment_verified',
         'payment_verified_by',
-        'payment_submitted',
+        'payment_status',
     ]
 
     record_class = CaseSearchElasticRecord
@@ -76,3 +77,6 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
                 default_attrs['disabled'] = 'disabled'
                 break
         return mark_safe('<input %s/>' % flatatt(default_attrs))
+
+    def render_payment_status(self, record, value):
+        return PaymentStatus(value).label
