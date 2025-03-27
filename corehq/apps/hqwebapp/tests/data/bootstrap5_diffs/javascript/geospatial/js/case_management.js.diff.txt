@@ -1,0 +1,21 @@
+--- 
++++ 
+@@ -1,14 +1,14 @@
+ 
+ 
+-hqDefine("geospatial/js/bootstrap3/case_management", [
++hqDefine("geospatial/js/bootstrap5/case_management", [
+     "jquery",
+     "underscore",
+     "hqwebapp/js/initial_page_data",
+     "knockout",
+-    'geospatial/js/bootstrap3/models',
++    'geospatial/js/bootstrap5/models',
+     'geospatial/js/utils',
+-    'hqwebapp/js/bootstrap3/alert_user',
+-    'reports/js/bootstrap3/base',
++    'hqwebapp/js/bootstrap5/alert_user',
++    'reports/js/bootstrap5/base',
+     'hqwebapp/js/select2_knockout_bindings.ko',
+     'commcarehq',
+ ], function (
