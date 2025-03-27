@@ -10,6 +10,13 @@ from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
 
 
 class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
+    OPTIONAL_FIELDS = [
+        'verify_select',
+        'payment_verified',
+        'payment_verified_by',
+        'payment_submitted',
+    ]
+
     record_class = CaseSearchElasticRecord
 
     class Meta(BaseHtmxTable.Meta):
@@ -46,6 +53,15 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
     payer_message = columns.Column(
         verbose_name=_("Payer Message"),
     )
+    payment_verified = columns.Column(
+        verbose_name=_("Verified"),
+    )
+    payment_verified_by = columns.Column(
+        verbose_name=_("Verified By"),
+    )
+    payment_submitted = columns.Column(
+        verbose_name=_("Payment Submitted"),
+    )
 
     def render_verify_select(self, record, value):
         default_attrs = {
@@ -53,9 +69,7 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
             'name': 'selection',
             'value': value,
         }
-        # All columns are required except the checkbox
-        required_fields = list(self.base_columns.keys())
-        required_fields.remove('verify_select')
+        required_fields = list(set(self.base_columns.keys()) - set(self.OPTIONAL_FIELDS))
 
         for field in required_fields:
             if not record.record.get(field):
