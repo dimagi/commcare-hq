@@ -525,7 +525,7 @@ hqDefine('geospatial/js/models', [
                     continue;
                 }
                 const coordinatesArr = [coordinates.lng, coordinates.lat];
-                const point = turf.point(coordinatesArr);  // eslint-disable-line no-undef
+                const point = turf.point(coordinatesArr);
                 if (turf.booleanPointInPolygon(point, polygon.geometry)) {
                     return true;
                 }
