@@ -1,19 +1,16 @@
-'use strict';
 hqDefine('domain/js/bootstrap5/update_billing_contact_info', [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'accounting/js/stripe_card_manager',
-    'stripe',
     'accounting/js/widgets',
     'hqwebapp/js/bootstrap5/knockout_bindings.ko', // openModal
+    'commcarehq',
 ], function (
     $,
     initialPageData,
     stripeCardManager,
-    Stripe
 ) {
     $(function () {
-        Stripe.setPublishableKey(initialPageData.get("stripe_public_key"));
         var cardManager = stripeCardManager.stripeCardManager({
             cards: initialPageData.get("cards"),
             url: initialPageData.reverse("cards_view"),

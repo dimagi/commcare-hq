@@ -1,14 +1,18 @@
-"use strict";
+/**
+ *  This module requires initial page data to provide "stripe_public_key".
+ */
 hqDefine('accounting/js/payment_method_handler', [
     'jquery',
     'knockout',
     'underscore',
-    'stripe',
+    'accounting/js/stripe',
+    'hqwebapp/js/initial_page_data',
 ], function (
     $,
     ko,
     _,
-    Stripe
+    hqStripe,
+    initialPageData,
 ) {
     var billingHandler = function (formId, opts) {
         var self = {};
@@ -130,6 +134,24 @@ hqDefine('accounting/js/payment_method_handler', [
         self.isNewCard = ko.computed(function () {
             return self.selectedCardType() === 'new';
         });
+        // Stripe can't attach the card UI to the page until its container exists.
+        // Its container is removed and re-added from the DOM depending on the user's
+        // selections, so mount and unmount it as needed.
+        self.cardElementPromise = hqStripe.getCardElementPromise(initialPageData.get("stripe_public_key"));
+        self.cardElementMounted = false;
+        self.isNewCard.subscribe(function (newValue) {
+            self.cardElementPromise.then(function (cardElement) {
+                _.delay(function () {
+                    if (newValue) {
+                        cardElement.mount('#stripe-card-container');
+                        self.cardElementMounted = true;
+                    } else {
+                        cardElement.unmount();
+                        self.cardElementMounted = false;
+                    }
+                });
+            });
+        });
 
         self.newCard = ko.observable(stripeCardModel());
 
@@ -184,7 +206,12 @@ hqDefine('accounting/js/payment_method_handler', [
         self.reset = function () {
             self.paymentIsComplete(false);
             self.serverErrorMsg('');
-            self.newCard(stripeCardModel());
+            self.newCard().reset();
+            if (self.cardElementMounted) {
+                self.cardElementPromise.then(function (cardElement) {
+                    cardElement.clear();
+                });
+            }
         };
 
         self.processPayment = function () {
@@ -484,7 +511,6 @@ hqDefine('accounting/js/payment_method_handler', [
         var self = {};
 
         self.number = ko.observable();
-        self.cvc = ko.observable();
         self.expMonth = ko.observable();
         self.expYear = ko.observable();
         self.errorMsg = ko.observable();
@@ -492,6 +518,17 @@ hqDefine('accounting/js/payment_method_handler', [
         self.isTestMode = ko.observable(false);
         self.isProcessing = ko.observable(false);
         self.newSavedCard = ko.observable(false);
+
+        self.reset = function () {
+            self.number(null);
+            self.expMonth(null);
+            self.expYear(null);
+            self.errorMsg(null);
+            self.token(null);
+            self.isTestMode(false);
+            self.isProcessing(false);
+            self.newSavedCard(false);
+        };
 
         self.autopayCard = ko.computed(function () {
             if (!self.newSavedCard()) {
@@ -512,17 +549,9 @@ hqDefine('accounting/js/payment_method_handler', [
         self.showErrors = ko.computed(function () {
             return !! self.errorMsg();
         });
-        self.cleanedNumber = ko.computed(function () {
-            if (self.number()) {
-                return self.number().split('-').join('');
-            }
-            return null;
-        });
-
         self.cardName = ko.computed(function () {
             return self.cardType() + ' ' + self.number() + ' exp ' + self.expMonth() + '/' + self.expYear();
         });
-
 
         self.loadSavedData = function (data) {
             self.number('************' + data.last4);
@@ -530,7 +559,6 @@ hqDefine('accounting/js/payment_method_handler', [
             self.expMonth(data.exp_month);
             self.expYear(data.exp_year);
             self.token(data.id);
-            self.cvc('****');
             self.isSaved(true);
         };
 
@@ -540,24 +568,19 @@ hqDefine('accounting/js/payment_method_handler', [
                 callbackOnSuccess();
                 return;
             }
-            Stripe.card.createToken({
-                number: self.number(),
-                cvc: self.cvc(),
-                exp_month: self.expMonth(),
-                exp_year: self.expYear(),
-            }, function (status, response) {
+            hqStripe.createStripeToken(function (response) {
                 if (response.error) {
                     self.errorMsg(response.error.message);
                     self.isProcessing(false);
                 } else {
                     self.errorMsg('');
-                    self.token(response.id);
-                    self.isTestMode(!response.livemode);
+                    self.token(response.token.id);
+                    self.isTestMode(!response.token.livemode);
                     if (self.token()) {
                         callbackOnSuccess();
                     } else {
                         self.isProcessing(false);
-                        self.errorMsg('Response from Stripe did not complete properly.');
+                        self.errorMsg(gettext('Response from Stripe did not complete properly.'));
                     }
                 }
             });
