@@ -23,7 +23,8 @@ hqDefine("reports/js/bootstrap5/hq_report", [
         self.needsFilters = options.needsFilters || false;
         self.htmlIDSuffix = options.html_id_suffix;
         self.filterAccordion = options.filterAccordion || "#reportFilters" + self.htmlIDSuffix;
-        self.filterSubmitSelector = options.filterSubmitSelector || '#paramSelectorForm' + self.htmlIDSuffix + ' button[type="submit"]';
+        self.paramSelectorForm = options.paramSelectorForm || "#paramSelectorForm" + self.htmlIDSuffix;
+        self.filterSubmitSelector = options.filterSubmitSelector || self.paramSelectorForm + ' button[type="submit"]';
         self.filterSubmitButton = $(self.filterSubmitSelector);
         self.toggleFiltersButton = options.toggleFiltersButton || "#toggle-report-filters" + self.htmlIDSuffix;
         self.exportReportButton = options.exportReportButton || "#export-report-excel" + self.htmlIDSuffix;
@@ -177,17 +178,17 @@ hqDefine("reports/js/bootstrap5/hq_report", [
         });
 
         self.resetFilterState = function () {
-            $('#paramSelectorForm' + self.htmlIDSuffix + ' fieldset button, #paramSelectorForm' + self.htmlIDSuffix + ' fieldset span[data-dropdown="dropdown"]').click(function () {
+            $(self.paramSelectorForm + ' fieldset button, ' + self.paramSelectorForm + ' fieldset span[data-dropdown="dropdown"]').click(function () {
                 $(self.filterSubmitSelector)
                     .changeButtonState('reset')
                     .addClass('btn-primary')
                     .removeClass('disabled')
                     .prop('disabled', false);
             });
-            $('#paramSelectorForm' + self.htmlIDSuffix + ' fieldset').on('change apply', function (e) {
+            $(self.paramSelectorForm + ' fieldset').on('change apply', function (e) {
                 // Ensure correct submit button is found in context of which form the button belongs to.
                 // This is necessary for pages that contain multiple filter panels, since we are using CSS IDs.
-                const submitButton = $(e.target).closest('#reportFilters' + self.htmlIDSuffix).find(self.filterSubmitSelector);
+                const submitButton = $(e.target).closest(self.filterAccordion).find(self.filterSubmitSelector);
                 $(submitButton)
                     .changeButtonState('reset')
                     .addClass('btn-primary')
