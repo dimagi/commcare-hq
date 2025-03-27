@@ -1,3 +1,6 @@
+import $ from 'jquery';
+import 'hqwebapp/js/components/inline_edit';
+
 $(function () {
   var inlineEditExample = function () {
     var self = {};

@@ -1,3 +1,6 @@
+import $ from 'jquery';
+import 'hqwebapp/js/components/bootstrap3/feedback';
+
 $(function () {
   var feedbackExample = function () {
     var self = {};

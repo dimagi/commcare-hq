@@ -1,3 +1,9 @@
+import $ from 'jquery';
+import ko from 'knockout';
+import "select2/dist/js/select2.full.min";
+import "hqwebapp/js/select2_knockout_bindings.ko";
+import "hqwebapp/js/bootstrap3/widgets";
+
 $(function () {
   $("#example-select2 .basic").select2();
 
