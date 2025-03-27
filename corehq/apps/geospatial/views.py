@@ -260,7 +260,7 @@ class GeospatialConfigPage(BaseConfigView):
 
 class GPSCaptureView(BaseGeospatialView):
     urlname = 'gps_capture'
-    template_name = 'geospatial/gps_capture_view.html'
+    template_name = 'geospatial/bootstrap3/gps_capture_view.html'
 
     page_name = _("Manage GPS Data")
     section_name = _("Data")
