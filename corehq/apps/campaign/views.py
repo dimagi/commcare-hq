@@ -73,12 +73,20 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
 
+    @property
+    def dashboard(self):
+        """
+        Returns the campaign dashboard for the domain. Creates an empty
+        one if it doesn't exist yet.
+        """
+        dashboard, __ = Dashboard.objects.get_or_create(domain=self.domain)
+        return dashboard
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        dashboard = Dashboard.objects.get(domain=self.domain)
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
-            'map_report_widgets': dashboard.get_map_report_widgets_by_tab(),
+            'map_report_widgets': self.dashboard.get_map_report_widgets_by_tab(),
             'widget_types': WidgetType.choices,
         })
         context.update(self.dashboard_map_case_filters_context())
