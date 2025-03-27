@@ -161,7 +161,7 @@ class CaseGroupingReport(BaseCaseMapReport):
         'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
     ]
 
-    base_template = 'geospatial/case_grouping_map_base.html'
+    base_template = 'geospatial/bootstrap3/case_grouping_map_base.html'
     report_template_path = 'geospatial/bootstrap3/case_grouping_map.html'
 
     default_rows = 1
