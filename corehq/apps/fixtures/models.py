@@ -106,6 +106,7 @@ class LookupTable(models.Model):
     item_attributes = models.JSONField(default=list)
     description = models.CharField(max_length=255, default="")
     is_synced = models.BooleanField(default=False)
+    # last_modified is also updated when a related LookupTableRow or LookupTableRowOwner is deleted
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -286,6 +287,14 @@ class LookupTableRow(models.Model):
             fields[name] = values[0].value
         return fields
 
+    def delete(self, *args, **kwargs):
+        try:
+            self.table.last_modified = datetime.utcnow()
+            self.table.save()
+        except (AttributeError, LookupTable.DoesNotExist):
+            pass
+        return super().delete(*args, **kwargs)
+
 
 class OwnerType(models.IntegerChoices):
     User = 0
@@ -309,6 +318,14 @@ class LookupTableRowOwner(models.Model):
         indexes = [
             models.Index(fields=["domain", "owner_type", "owner_id"])
         ]
+
+    def delete(self, *args, **kwargs):
+        try:
+            self.row.table.last_modified = datetime.utcnow()
+            self.row.table.save()
+        except (AttributeError, LookupTable.DoesNotExist, LookupTableRow.DoesNotExist):
+            pass
+        return super().delete(*args, **kwargs)
 
 
 class UserLookupTableType:
