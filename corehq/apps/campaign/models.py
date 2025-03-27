@@ -139,6 +139,27 @@ class DashboardGauge(DashboardWidgetBase):
     configuration = JSONField(default=dict)
 
 
+class WidgetType(models.TextChoices):
+    MAP = 'map', _('Map')
+    REPORT = 'report', _('Report')
+
+    @classmethod
+    def get_form_class(cls, widget_type):
+        from corehq.apps.campaign.forms import (
+            DashboardMapForm,
+            DashboardReportForm,
+        )
+        form_classes = {
+            cls.MAP: DashboardMapForm,
+            cls.REPORT: DashboardReportForm,
+        }
+        return form_classes[widget_type]
+
+    @classmethod
+    def get_model_class(cls, widget_type):
+        return cls.get_form_class(widget_type).Meta.model
+
+
 def model_to_widget(instance, fields=None, exclude=None, properties=()):
     """
     Like model_to_dict, but adds 'widget_type', 'dashboard', and

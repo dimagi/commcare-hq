@@ -1,0 +1,26 @@
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% if show_success %}
+  <div class="alert alert-success alert-dismissable fade show" role="alert">
+    {% blocktrans %}
+      Saved! Reloading, please wait..
+    {% endblocktrans %}
+    <button
+      type="button"
+      class="btn-close float-end"
+      data-bs-dismiss="alert"
+      aria-label="{% trans Close %}"
+    ></button>
+  </div>
+{% endif %}
+
+<form
+  hq-hx-action="save_widget"
+  hx-post="{{ request.path_info }}"
+  hx-target="#widget-form"
+  hx-swap="outerHTML"
+  hx-vals='{"widget_type": "{{ widget_type }}"}'
+>
+  {% crispy widget_form %}
+</form>

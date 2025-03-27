@@ -12,6 +12,7 @@
   {% initial_page_data 'mapbox_access_token' mapbox_access_token %}
   {% registerurl 'api_cases_with_gps' request.domain %}
   {% initial_page_data 'map_report_widgets' map_report_widgets %}
+  {% include "campaign/partials/add_widget_button.html" %}
 
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h1>{% trans "Campaign Dashboard" %}</h1>
@@ -91,6 +92,8 @@
       </div>
     </div>
   </div>
+
+  {% include "campaign/partials/widget_modal.html" %}
 {% endblock page_content %}
 
 {% block modals %}

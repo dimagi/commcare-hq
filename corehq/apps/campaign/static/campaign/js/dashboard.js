@@ -20,6 +20,13 @@ $(function () {
     }
     $('a[data-bs-toggle="tab"]').on('shown.bs.tab', tabSwitch);
     $('#print-to-pdf').on('click', printActiveTabToPdf);
+
+    $('#widget-modal').on('hidden.bs.modal', function () {
+        $('#widget-modal-spinner').removeClass('d-none');
+        $('#widget-form').text('');
+    });
+
+    $('#widget-modal').on('htmx:afterSwap', htmxAfterSwapWidgetForm);
 });
 
 function tabSwitch(e) {
@@ -147,5 +154,17 @@ var MapWidget = function (mapWidgetConfig) {
         self.mapInstance.caseMapItems(caseMapItems);
         self.mapInstance.addDataToSource(features);
         self.mapInstance.fitMapBounds(caseMapItems);
+    }
+};
+
+var htmxAfterSwapWidgetForm = function (event) {
+    $('#widget-modal-spinner').addClass('d-none');
+
+    const requestMethod = event.detail.requestConfig.verb;
+    const responseStatus = event.detail.xhr.status;
+    if (requestMethod === 'post' && responseStatus === 200) {
+        setTimeout(function () {
+            window.location.reload();
+        }, 1000);
     }
 };

@@ -14,6 +14,7 @@ from corehq.apps.integration.kyc.views import (
     KycVerificationReportView,
     KycVerificationTableView,
 )
+from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.util.test_utils import flag_enabled
 
@@ -140,15 +141,33 @@ class TestKycVerificationTableView(BaseTestKycView):
         super().setUpClass()
         cls.kyc_mapping = {
             # API field: User data
-            'first_name': 'name',
-            'last_name': 'last_name',
-            'email': 'email',
-            'phone_number': 'phone_number',
-            'national_id_number': 'national_id_number',
-            'street_address': 'street_address',
-            'city': 'city',
-            'post_code': 'post_code',
-            'country': 'country',
+            'first_name': {
+                'data_field': 'name'
+            },
+            'last_name': {
+                'data_field': 'last_name'
+            },
+            'email': {
+                'data_field': 'email',
+                'is_sensitive': False
+            },
+            'phone_number': {
+                'data_field': 'phone_number',
+                'is_sensitive': True
+            },
+            'national_id_number': {
+                'data_field': 'national_id_number',
+                'is_sensitive': 'true'
+            },
+            'street_address': {
+                'data_feild': 'street_address',
+            },
+            'city': ['city'],
+            'post_code': {
+                'data_field': 'post_code',
+                'other_prop': 'foobar',
+            },
+            'country': 'country'
         }
         cls.kyc_config = KycConfig.objects.create(
             domain=cls.domain,
@@ -240,7 +259,10 @@ class TestKycVerificationTableView(BaseTestKycView):
                 assert row == {
                     'id': self.user2.user_id,
                     'has_invalid_data': True,
-                    'kyc_verification_status': None,
+                    'kyc_verification_status': {
+                        'status': None,
+                        'error_message': None,
+                    },
                     'kyc_last_verified_at': None,
                     'name': 'Jane Doe',
                     'last_name': 'Doe',
@@ -249,17 +271,17 @@ class TestKycVerificationTableView(BaseTestKycView):
                 assert row == {
                     'id': self.user1.user_id,
                     'has_invalid_data': False,
-                    'kyc_verification_status': None,
+                    'kyc_verification_status': {
+                        'status': None,
+                        'error_message': None,
+                    },
                     'kyc_last_verified_at': None,
                     'name': 'Johnny',
                     'last_name': 'Doe',
                     'email': 'jdoe@example.org',
-                    'phone_number': '1234567890',
+                    'phone_number': PASSWORD_PLACEHOLDER,
                     'national_id_number': '1234567890',
-                    'street_address': '123 Main St',
-                    'city': 'Anytown',
                     'post_code': '12345',
-                    'country': 'Anyplace',
                 }
 
     @flag_enabled('KYC_VERIFICATION')
@@ -267,9 +289,12 @@ class TestKycVerificationTableView(BaseTestKycView):
         self.kyc_config.user_data_store = UserDataStore.OTHER_CASE_TYPE
         self.kyc_config.other_case_type = 'other-case'
         self.kyc_config.api_field_to_user_data_map.update({
-            'first_name': 'first_name',
-            'last_name': 'last_name',
-            'email': 'home_email',
+            'first_name': {
+                'data_field': 'first_name',
+            },
+            'email': {
+                'data_field': 'home_email',
+            },
         })
         self.kyc_config.save()
 
@@ -281,7 +306,10 @@ class TestKycVerificationTableView(BaseTestKycView):
                 assert row == {
                     'id': self.case_list[1].case_id,
                     'has_invalid_data': True,
-                    'kyc_verification_status': None,
+                    'kyc_verification_status': {
+                        'status': None,
+                        'error_message': None,
+                    },
                     'kyc_last_verified_at': None,
                     'first_name': 'Foo',
                     'last_name': 'Bar',
@@ -290,17 +318,17 @@ class TestKycVerificationTableView(BaseTestKycView):
                 assert row == {
                     'id': self.case_list[0].case_id,
                     'has_invalid_data': False,
-                    'kyc_verification_status': None,
+                    'kyc_verification_status': {
+                        'status': None,
+                        'error_message': None,
+                    },
                     'kyc_last_verified_at': None,
                     'first_name': 'Bob',
                     'last_name': 'Smith',
                     'home_email': 'bsmith@example.org',
-                    'phone_number': '0987654321',
+                    'phone_number': PASSWORD_PLACEHOLDER,
                     'national_id_number': '0987654321',
-                    'street_address': '456 Main St',
-                    'city': 'Sometown',
                     'post_code': '54321',
-                    'country': 'Someplace',
                 }
 
 

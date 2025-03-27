@@ -40,7 +40,8 @@ class ManageColumnsFormView(BulkEditSessionViewMixin,
 
     @hq_hx_action('post')
     def update_column_order(self, request, *args, **kwargs):
-        # todo
+        column_ids = request.POST.getlist('column_ids')
+        self.session.update_column_order(column_ids)
         return self.get(request, *args, **kwargs)
 
     @hq_hx_action('post')
