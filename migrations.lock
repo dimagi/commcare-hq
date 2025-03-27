@@ -828,6 +828,7 @@ pillowtop
  0005_kafkacheckpoint_doc_modification_time
  0006_add_geopoint_to_case_search_index
  0007_copy_xforms_checkpoint
+ 0008_sync_es_with_couch_webusers
 preindex
  0001_initial
  0002_initial
@@ -1304,6 +1305,7 @@ users
  0075_hqapikey_encrypted_key
  0076_connectiduserlink_messaging_consent_and_more
  0077_invitationhistory
+ 0078_sqluserdata_deleted_on
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

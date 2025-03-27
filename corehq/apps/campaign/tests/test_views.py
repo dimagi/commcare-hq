@@ -52,7 +52,8 @@ class BaseTestCampaignView(TestCase):
     def login_endpoint(self):
         return reverse('domain_login', kwargs={'domain': self.domain})
 
-    def _make_request(self, query_data={}, is_logged_in=True):
+    def _make_request(self, query_data=None, is_logged_in=True):
+        query_data = query_data or {}
         if is_logged_in:
             self.client.login(username=self.username, password=self.password)
         return self.client.get(self.endpoint, query_data)
@@ -95,13 +96,17 @@ class TestDashboardView(BaseTestCampaignView):
         assert response.status_code == 200
 
         context = response.context
-        assert context['map_widgets'] == {
+        assert context['map_report_widgets'] == {
             'cases': [{
                 'id': self.dashboard_map_cases.id,
                 'title': 'Cases Map',
                 'description': None,
                 'case_type': 'foo',
                 'geo_case_property': 'somewhere',
+                'dashboard': {
+                    'domain': 'test-domain',
+                },
+                'widget_type': 'DashboardMap',
             }],
             'mobile_workers': [{
                 'id': self.dashboard_map_mobile_workers.id,
@@ -109,8 +114,23 @@ class TestDashboardView(BaseTestCampaignView):
                 'description': 'My cool map',
                 'case_type': 'bar',
                 'geo_case_property': 'nowhere',
+                'dashboard': {
+                    'domain': 'test-domain',
+                },
+                'widget_type': 'DashboardMap',
             }],
         }
+
+
+class TestDashboardViewNoDashboard(BaseTestCampaignView):
+    urlname = DashboardView.urlname
+
+    @flag_enabled('CAMPAIGN_DASHBOARD')
+    def test_no_dashboard(self):
+        assert not Dashboard.objects.filter(domain=self.domain).exists()
+        response = self._make_request(is_logged_in=True)
+        assert response.status_code == 200
+        assert Dashboard.objects.filter(domain=self.domain).exists()
 
 
 @es_test(requires=[case_search_adapter], setup_class=True)
