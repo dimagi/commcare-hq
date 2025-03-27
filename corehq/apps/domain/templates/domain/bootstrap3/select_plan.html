@@ -36,18 +36,17 @@
       {% trans "Pay Annually" %}
     </p>
 
-    <p class="text-center">
+    <p class="text-center" data-bind="visible: !oShowAnnualPricing()">
       {% blocktrans %}
         Save close to 20% when you pay annually.
       {% endblocktrans %}
     </p>
 
-    <p class="refund-text text-center"
-       data-bind="css: oRefundCss">
+    <p class="refund-text text-center" data-bind="visible: oShowAnnualPricing">
       <i class="fa fa-check"></i>
       <a href="https://dimagi.com/terms/latest/tos/"
          class="check-icon blue">
-        {% trans '90 day refund policy' %}
+        {% trans '30 day refund policy' %}
       </a>
     </p>
 

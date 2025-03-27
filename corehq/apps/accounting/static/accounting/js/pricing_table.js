@@ -45,12 +45,6 @@ hqDefine('accounting/js/pricing_table', [
 
         self.oShowAnnualPricing = ko.observable(false);
 
-        self.oRefundCss = ko.computed(function () {
-            if (self.oShowAnnualPricing()) {
-                return "show-refund";
-            }
-        });
-
         self.oIsSubmitDisabled = ko.computed(function () {
             var isCurrentPlan = self.oSelectedPlan() === self.oCurrentPlan() && !self.oNextSubscription(),
                 isNextPlan = self.oNextSubscription() && self.oSelectedPlan() === self.oNextSubscription().toLowerCase();
