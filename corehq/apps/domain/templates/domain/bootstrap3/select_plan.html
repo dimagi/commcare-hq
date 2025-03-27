@@ -177,15 +177,6 @@
       {% endblocktrans %}
     </div>
 
-    <div class="community-plan-notice alert alert-info text-center"
-         data-bind="visible: oIsCurrentPlanCommunity">
-      <p class="lead">
-        {% blocktrans %}
-          You are currently on the FREE CommCare Community plan.
-        {% endblocktrans %}
-      </p>
-    </div>
-
     <form
       {% if is_renewal %}
         action="{% url 'domain_subscription_renewal_confirmation' domain %}"
