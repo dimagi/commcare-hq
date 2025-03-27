@@ -12,7 +12,7 @@ import "styleguide/bootstrap3/js/select2";
 
 // Organisms page
 $(function () {
-  $('.styleguide-example form').submit(function (e) {
-    e.preventDefault();
-  });
+    $('.styleguide-example form').submit(function (e) {
+        e.preventDefault();
+    });
 });

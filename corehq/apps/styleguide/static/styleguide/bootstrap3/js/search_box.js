@@ -4,21 +4,21 @@ import _ from 'underscore';
 import 'hqwebapp/js/components/search_box';
 
 $(function () {
-  var searchBoxExample = function () {
-    var self = {};
+    var searchBoxExample = function () {
+        var self = {};
 
-    self.allItems = "alpha beta delta gamma epsilon omega chi".split(" ");
-    self.items = ko.observableArray(self.allItems);
+        self.allItems = "alpha beta delta gamma epsilon omega chi".split(" ");
+        self.items = ko.observableArray(self.allItems);
 
-    self.query = ko.observable('');
-    self.search = function (page) {
-      self.items(_.filter(self.allItems, function (item) { return item.indexOf(self.query()) !== -1; }));
+        self.query = ko.observable('');
+        self.search = function (page) {         // eslint-disable-line no-unused-vars
+            self.items(_.filter(self.allItems, function (item) { return item.indexOf(self.query()) !== -1; }));
+        };
+
+        return self;
     };
 
-    return self;
-  };
-
-  if ($("#search-box-example").length) {
-    $("#search-box-example").koApplyBindings(searchBoxExample());
-  }
+    if ($("#search-box-example").length) {
+        $("#search-box-example").koApplyBindings(searchBoxExample());
+    }
 });
