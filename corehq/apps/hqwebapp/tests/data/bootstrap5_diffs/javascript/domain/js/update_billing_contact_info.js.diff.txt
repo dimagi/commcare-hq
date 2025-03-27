@@ -12,11 +12,3 @@
      'commcarehq',
  ], function (
      $,
-@@ -14,7 +14,6 @@
-         var cardManager = stripeCardManager.stripeCardManager({
-             cards: initialPageData.get("cards"),
-             url: initialPageData.reverse("cards_view"),
--            elementSelector: '#stripe-card-container',
-         });
-         $("#card-manager").koApplyBindings(cardManager);
- 
