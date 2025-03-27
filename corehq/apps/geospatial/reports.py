@@ -100,7 +100,7 @@ class CaseManagementMap(BaseCaseMapReport):
         'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
     ]
 
-    base_template = "geospatial/case_management_base.html"
+    base_template = "geospatial/bootstrap3/case_management_base.html"
     report_template_path = "geospatial/bootstrap3/case_management.html"
     max_rows = 5_000
     default_rows = 5_000
