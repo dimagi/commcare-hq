@@ -8,6 +8,12 @@ import { Map, MapItem } from "geospatial/js/models";
 
 let mobileWorkerMapsInitialized = false;
 
+const widgetModalSelector = '#widget-modal';
+const modalTitleSelector = '.modal-title';
+const addWidgetText = gettext('Add Widget');
+const editWidgetText = gettext('Edit Widget');
+let $modalTitleElement = null;
+
 $(function () {
     // Only init case map widgets since this is the default tab
     const widgetConfigs = initialPageData.get('map_report_widgets');
@@ -19,12 +25,11 @@ $(function () {
     }
     $('a[data-bs-toggle="tab"]').on('shown.bs.tab', tabSwitch);
 
-    $('#widget-modal').on('hidden.bs.modal', function () {
-        $('#widget-modal-spinner').removeClass('d-none');
-        $('#widget-form').text('');
-    });
+    $modalTitleElement = $(widgetModalSelector).find(modalTitleSelector);
+    $(widgetModalSelector).on('hidden.bs.modal', onHideWidgetModal);
+    $(widgetModalSelector).on('show.bs.modal', onShowWidgetModal);
 
-    $('#widget-modal').on('htmx:afterSwap', htmxAfterSwapWidgetForm);
+    $(widgetModalSelector).on('htmx:afterSwap', htmxAfterSwapWidgetForm);
 });
 
 function tabSwitch(e) {
@@ -125,5 +130,19 @@ var htmxAfterSwapWidgetForm = function (event) {
         setTimeout(function () {
             window.location.reload();
         }, 1000);
+    }
+};
+
+var onHideWidgetModal = function () {
+    $('#widget-modal-spinner').removeClass('d-none');
+    $('#widget-form').text('');
+};
+
+var onShowWidgetModal = function (event) {
+    const triggerSource = event.relatedTarget;
+    if (triggerSource.id === 'edit-widget-btn') {
+        $modalTitleElement.text(editWidgetText);
+    } else {
+        $modalTitleElement.text(addWidgetText);
     }
 };
