@@ -1,4 +1,23 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<!-- ToDo: Display gauge -->
+<div
+  id="gauge-widget-container-{{ widget.id }}"
+  class="col-md-4 mb-4 float-start"
+>
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0" title="{{ widget.description }}">{{ widget.title }}</h5>
+      {% include "campaign/partials/edit_widget_button.html" with widget_type='gauge' %}
+    </div>
+    <div class="card-body p-0 d-flex">
+      <canvas id="gauge-widget-{{ widget.id }}"></canvas>
+    </div>
+    <div>
+      <b class="ms-2"> {% trans 'Metric' %} : {{ widget.metric_name }} </b>
+      <b class="me-2 float-end">
+        {% trans 'Case Type' %} : {{ widget.case_type }}
+      </b>
+    </div>
+  </div>
+</div>

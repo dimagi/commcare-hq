@@ -14,7 +14,9 @@ from memoized import memoized
 from dimagi.utils.web import json_request
 
 from corehq import toggles
+from corehq.apps.campaign.const import GAUGE_METRICS
 from corehq.apps.campaign.models import Dashboard, WidgetType
+from corehq.apps.campaign.utils import get_gauge_metric_value
 from corehq.apps.data_dictionary.util import get_gps_properties
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
@@ -85,15 +87,23 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
         context.update(self.dashboard_map_case_filters_context())
         return context
 
-    @staticmethod
-    def _dashboard_gauge_configs(dashboard):
+    def _dashboard_gauge_configs(self, dashboard):
         dashboard_gauge_configs = {
             'cases': [],
             'mobile_workers': [],
         }
         for dashboard_gauge in dashboard.gauges.all():
-            dashboard_gauge_configs[dashboard_gauge.dashboard_tab].append(dashboard_gauge.to_widget())
+            dashboard_gauge_configs[dashboard_gauge.dashboard_tab].append(
+                self._get_gauge_config(dashboard_gauge)
+            )
         return dashboard_gauge_configs
+
+    @staticmethod
+    def _get_gauge_config(dashboard_gauge):
+        config = dashboard_gauge.to_widget()
+        config['value'] = get_gauge_metric_value(dashboard_gauge)
+        config['metric_name'] = dict(GAUGE_METRICS).get(dashboard_gauge.metric, '')
+        return config
 
 
 @method_decorator([login_and_domain_required, require_GET], name='dispatch')

@@ -2,6 +2,7 @@ import "commcarehq";
 import "hqwebapp/js/htmx_and_alpine";
 import 'reports/js/bootstrap5/base';
 import $ from 'jquery';
+import { RadialGauge } from 'canvas-gauges';
 import initialPageData from "hqwebapp/js/initial_page_data";
 import { Map, MapItem } from "geospatial/js/models";
 
@@ -23,6 +24,14 @@ $(function () {
             const mapWidget = new MapWidget(widgetConfig);
             mapWidget.initializeMap();
         }
+    }
+    const gaugeWidgetConfigs = initialPageData.get('gauge_widgets');
+    for (const gaugeWidgetConfig of gaugeWidgetConfigs.cases) {
+        new RadialGauge({
+            renderTo: `gauge-widget-${ gaugeWidgetConfig.id }`,
+            value: gaugeWidgetConfig.value,
+            valueDec: 0
+        }).draw();
     }
     $('a[data-bs-toggle="tab"]').on('shown.bs.tab', tabSwitch);
 
