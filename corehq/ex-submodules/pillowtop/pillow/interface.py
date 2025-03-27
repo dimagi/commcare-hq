@@ -480,6 +480,7 @@ class ConstructedPillow(PillowBase):
         min_wait_seconds = 30
         start_time = datetime.utcnow()
         changes = []
+        latest_change = None
         total_size = chunk_size * limit
         for change in iterator:
             if change is None:
@@ -492,38 +493,37 @@ class ConstructedPillow(PillowBase):
             time_elapsed = (datetime.utcnow() - start_time).seconds > min_wait_seconds
             if len(changes) == total_size or time_elapsed:
                 break
-        latest_change = changes[-1]
+        if changes:
+            latest_change = changes[-1]
         return chunked(changes, chunk_size), latest_change
 
-    def process_changes_with_gevent(self, since, forever):
+    def process_changes_with_gevent(self, since):
         context = PillowRuntimeContext(changes_seen=0)
         gevent_pool_size = 10  # TODO: Make this configurable
-        iter_change_feed = self.get_change_feed().iter_changes(since=since or None, forever=forever)
-        latest_change = None
-        try:
-            change_chunks, latest_change = self._create_chunks_for_gevent(
-                iter_change_feed, self.processor_chunk_size, gevent_pool_size
-            )
-            tasks = []
-            for index, changes in enumerate(change_chunks):
-                context.changes_seen += len(changes)
-                tasks.append(gevent.spawn(self._process_change_chunk_with_gevent, index, changes, context))
-            gevent.joinall(tasks)
-        except PillowtopCheckpointReset:
-            #process_offset_chunk(changes_chunk, context)  # TODO: Figure out what to process here
-            self.process_changes_with_gevent(since=self.get_last_checkpoint_sequence(), forever=forever)
-        if forever:
-            if context.changes_seen and latest_change:
-                self._update_checkpoint(latest_change, context)
 
-    def _process_change_chunk_with_gevent(self, identifier, change_chunk, context):
-        self._batch_process_with_error_handling(change_chunk)
-        self._update_checkpoint(change_chunk[-1], context)
-        return identifier
+        # Set forever to False to ensure consumer times out quickly if there are no changes to pull
+        # This ensures we don't wait too long to build a chunk
+        iter_change_feed = self.get_change_feed().iter_changes(since=since or None, forever=False)
+        latest_change = None
+        change_chunks, latest_change = self._create_chunks_for_gevent(
+            iter_change_feed, self.processor_chunk_size, gevent_pool_size
+        )
+        tasks = []
+        for changes in change_chunks:
+            context.changes_seen += len(changes)
+            tasks.append(gevent.spawn(self._batch_process_with_error_handling, changes))
+        gevent.joinall(tasks)
+
+        # do not need to except PillowtopCheckpointReset exception because the case-pillow uses a
+        # KafkaPillowCheckpoint which overrides PillowCheckpoint.get_or_create_wrapped where
+        # PillowtopCheckpointReset is raised
+        self._update_checkpoint(latest_change, context)
 
     def process_changes(self, since, forever):
         if self.pillow_id == 'case-pillow' and settings.GEVENT_IN_CASE_PILLOW:
-            self.process_changes_with_gevent(since, forever)
+            # this is specifically built for case pillows and should not be used on other pillows
+            # without code changes
+            self.process_changes_with_gevent(since)
         else:
             super().process_changes(since, forever)
 
