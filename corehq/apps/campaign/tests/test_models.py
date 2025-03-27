@@ -1,6 +1,7 @@
 from unmagic import fixture, use  # https://github.com/dimagi/pytest-unmagic
 
-from ..models import Dashboard, DashboardMap, DashboardReport, DashboardTab
+from ..const import GAUGE_METRICS
+from ..models import Dashboard, DashboardMap, DashboardReport, DashboardTab, DashboardGauge
 
 
 @use('db')
@@ -91,6 +92,33 @@ def dashboard_reports():
         report_configuration_id='report4',
         dashboard_tab=DashboardTab.MOBILE_WORKERS,
         display_order=3,
+    )
+    yield
+
+
+@use(dashboard_fixture)
+@fixture
+def dashboard_gauges():
+    dashboard = dashboard_fixture()
+    DashboardGauge.objects.create(
+        id=1,
+        dashboard=dashboard,
+        title='Cases Gauge 1',
+        description='Gauge 1 described for type1 cases.',
+        dashboard_tab=DashboardTab.CASES,
+        display_order=0,
+        case_type='type1',
+        metric=GAUGE_METRICS[0][0],
+    )
+    DashboardGauge.objects.create(
+        id=2,
+        dashboard=dashboard,
+        title='Mobile Workers Gauge 1',
+        description='Gauge 1 described for type1 cases for mobile workers.',
+        dashboard_tab=DashboardTab.MOBILE_WORKERS,
+        display_order=0,
+        case_type='type1',
+        metric=GAUGE_METRICS[0][0]
     )
     yield
 
@@ -263,4 +291,22 @@ def test_dashboard_map_report_widgets():
                 'widget_type': 'DashboardMap',
             },
         ],
+    }
+
+
+@use(dashboard_gauges)
+def test_dashboard_gauge_widget():
+    dashboard = dashboard_fixture()
+    widget = dashboard.gauges.first().to_widget()
+    assert widget == {
+        'case_type': 'type1',
+        'configuration': {},
+        'dashboard': {
+            'domain': 'test-domain',
+        },
+        'description': 'Gauge 1 described for type1 cases.',
+        'id': 1,
+        'metric': 'total_number_of_cases',
+        'title': 'Cases Gauge 1',
+        'widget_type': 'DashboardGauge',
     }

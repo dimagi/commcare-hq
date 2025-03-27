@@ -14,7 +14,9 @@ from memoized import memoized
 from dimagi.utils.web import json_request
 
 from corehq import toggles
+from corehq.apps.campaign.const import GAUGE_METRICS
 from corehq.apps.campaign.models import Dashboard, WidgetType
+from corehq.apps.campaign.services import get_gauge_metric_value
 from corehq.apps.data_dictionary.util import get_gps_properties
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
@@ -74,6 +76,7 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
         return reverse(self.urlname, args=[self.domain])
 
     @property
+    @memoized
     def dashboard(self):
         """
         Returns the campaign dashboard for the domain. Creates an empty
@@ -87,10 +90,34 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
             'map_report_widgets': self.dashboard.get_map_report_widgets_by_tab(),
+            'gauge_widgets': self._dashboard_gauge_configs(),
             'widget_types': WidgetType.choices,
         })
         context.update(self.dashboard_map_case_filters_context())
         return context
+
+    def _dashboard_gauge_configs(self):
+        dashboard_gauge_configs = {
+            'cases': [],
+            'mobile_workers': [],
+        }
+        for dashboard_gauge in self.dashboard.gauges.all():
+            dashboard_gauge_configs[dashboard_gauge.dashboard_tab].append(
+                self._get_gauge_config(dashboard_gauge)
+            )
+        return dashboard_gauge_configs
+
+    @staticmethod
+    def _get_gauge_config(dashboard_gauge):
+        config = dashboard_gauge.to_widget()
+        config['value'] = get_gauge_metric_value(dashboard_gauge)
+        # set max value of dial to nearest equivalent of 100
+        config['max_value'] = 10 ** len(str(config['value']))
+        number_of_ticks = 5
+        config['major_ticks'] = [int(config['max_value'] * i / 5)
+                                 for i in range(0, number_of_ticks + 1)]
+        config['metric_name'] = dict(GAUGE_METRICS).get(dashboard_gauge.metric, '')
+        return config
 
 
 @method_decorator([login_and_domain_required, require_GET], name='dispatch')
