@@ -30,6 +30,7 @@ You can browse and test the Data APIs using the `CommCare API Explorer <https://
     application-structure
     form-data
     case-data
+    cases-v2
     list-cases
     list-forms
     list-groups
