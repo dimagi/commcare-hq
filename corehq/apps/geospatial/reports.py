@@ -162,7 +162,7 @@ class CaseGroupingReport(BaseCaseMapReport):
     ]
 
     base_template = 'geospatial/case_grouping_map_base.html'
-    report_template_path = 'geospatial/case_grouping_map.html'
+    report_template_path = 'geospatial/bootstrap3/case_grouping_map.html'
 
     default_rows = 1
     force_page_size = True
