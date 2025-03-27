@@ -8,9 +8,9 @@
   >
     {% csrf_token %}
     <button class="btn btn-close" type="submit">
-      <p class="visually-hidden">
+      <span class="visually-hidden">
         {% trans "Permanently dismiss this alert" %}
-      </p>
+      </span>
     </button>
   </form>
   <div class="row">
@@ -20,14 +20,16 @@
           You're using the free edition of CommCare for practice purposes.
         {% endblocktrans %}
       </h4>
-      {% blocktrans %}
-        With a 5-user limit, it's not intended for active programs.<br />
-        <a href="{{ change_plan_url }}">Upgrade</a> to a paid plan to boost
-        security, expand your team, access expert support, and unlock the full
-        power of CommCare.
-      {% endblocktrans %}
+      <p class="mb-1">
+        {% blocktrans %}
+          With a 5-user limit, it's not intended for active programs.<br />
+          <a href="{{ change_plan_url }}">Upgrade</a> to a paid plan to boost
+          security, expand your team, access expert support, and unlock the full
+          power of CommCare.
+        {% endblocktrans %}
+      </p>
     </div>
-    <div class="col-lg-2 my-2 d-flex align-items-center">
+    <div class="col-lg-2 my-1 d-flex align-items-center">
       <a href="{{ change_plan_url }}" class="btn btn-lg btn-primary">
         {% trans "Select Plan" %}
       </a>
