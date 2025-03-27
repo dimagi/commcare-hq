@@ -137,22 +137,51 @@ class BulkEditSession(models.Model):
             value=value,
         )
 
-    def remove_filter(self, filter_id):
-        self.filters.get(filter_id=filter_id).delete()
-        remaining_ids = self.filters.values_list('filter_id', flat=True)
-        self.update_filter_order(remaining_ids)
+    def add_column(self, prop_id, label, data_type=None):
+        """
+        Add a column to this session.
+
+        :param prop_id: string - The property ID (e.g., case property)
+        :param label: string - The column label to display
+        :param data_type: DataType - Optional. Will be inferred for system props
+        :return: The created BulkEditColumn
+        """
+        return BulkEditColumn.create_for_session(self, prop_id, label, data_type)
+
+    @staticmethod
+    def _update_order(related_manager, id_field, provided_ids):
+        """
+        Updates the ordering of related objects by setting their `index` field.
+
+        :param related_manager: a Django RelatedManager (e.g., self.filters, self.columns)
+        :param id_field: string name of the object's unique identifier (e.g., 'filter_id')
+        :param provided_ids: list of UUIDs in desired order
+        """
+        if len(provided_ids) != related_manager.count():
+            raise ValueError("The lengths of provided_ids and existing objects do not match.")
+        for index, object_id in enumerate(provided_ids):
+            obj = related_manager.get(**{id_field: object_id})
+            obj.index = index
+            obj.save()
 
     def update_filter_order(self, filter_ids):
         """
         This updates the order of filters for this session
         :param filter_ids: list of uuids matching filter_id field of BulkEditFilters
         """
-        if len(filter_ids) != self.filters.count():
-            raise ValueError("the lengths of filter_ids and available filters do not match")
-        for index, filter_id in enumerate(filter_ids):
-            active_filter = self.filters.get(filter_id=filter_id)
-            active_filter.index = index
-            active_filter.save()
+        self._update_order(self.filters, 'filter_id', filter_ids)
+
+    def update_column_order(self, column_ids):
+        """
+        This updates the order of columns for this session
+        :param column_ids: list of uuids matching column_id field of BulkEditColumns
+        """
+        self._update_order(self.columns, 'column_id', column_ids)
+
+    def remove_filter(self, filter_id):
+        self.filters.get(filter_id=filter_id).delete()
+        remaining_ids = self.filters.values_list('filter_id', flat=True)
+        self.update_filter_order(remaining_ids)
 
     def get_queryset(self):
         query = CaseSearchES().domain(self.domain).case_type(self.identifier)
@@ -599,18 +628,6 @@ class BulkEditColumn(models.Model):
         ordering = ["index"]
 
     @staticmethod
-    def get_default_label(prop_id):
-        known_labels = {
-            'name': _("Name"),
-            'owner_name': _('Owner'),
-            'opened_on': _("Opened On"),
-            'opened_by_username': _("Created By"),
-            'modified_on': _("Last Modified On"),
-            '@status': _("Status"),
-        }
-        return known_labels.get(prop_id, prop_id)
-
-    @staticmethod
     def is_system_property(prop_id):
         return prop_id in set(METADATA_IN_REPORTS).difference({
             'name', 'case_name', 'external_id',
@@ -620,22 +637,41 @@ class BulkEditColumn(models.Model):
     def create_default_columns(cls, session):
         default_properties = {
             BulkEditSessionType.CASE: (
-                'name', 'owner_name', 'opened_on', 'opened_by_username',
-                'modified_on', '@status',
+                'name', 'owner_name', 'date_opened', 'opened_by_username',
+                'last_modified', '@status',
             ),
         }.get(session.session_type)
 
         if not default_properties:
             raise NotImplementedError(f"{session.session_type} default columns not yet supported")
 
+        from corehq.apps.data_cleaning.utils.cases import (
+            get_system_property_label,
+            get_system_property_data_type,
+        )
         for index, prop_id in enumerate(default_properties):
             cls.objects.create(
                 session=session,
                 index=index,
                 prop_id=prop_id,
-                label=cls.get_default_label(prop_id),
+                label=get_system_property_label(prop_id),
+                data_type=get_system_property_data_type(prop_id),
                 is_system=cls.is_system_property(prop_id),
             )
+
+    @classmethod
+    def create_for_session(cls, session, prop_id, label, data_type=None):
+        is_system_property = cls.is_system_property(prop_id)
+        from corehq.apps.data_cleaning.utils.cases import get_system_property_data_type
+        data_type = get_system_property_data_type(prop_id) if is_system_property else data_type
+        return cls.objects.create(
+            session=session,
+            index=session.columns.count(),
+            prop_id=prop_id,
+            label=label,
+            data_type=data_type or DataType.TEXT,
+            is_system=is_system_property,
+        )
 
 
 class BulkEditRecord(models.Model):

@@ -55,7 +55,8 @@ class DashboardWidgetBaseForm(forms.ModelForm):
         super().save(commit)
 
     def _get_display_order(self):
-        # TODO Handle race conditions for concurrent requests to ensure consistent display_order value
+        # There is a rare chance of race conditions with concurrent requests for same dashboard and tab
+        # which may result in duplicate display_order value.
         tab = self.cleaned_data['dashboard_tab']
         dashboard = self.instance.dashboard
 

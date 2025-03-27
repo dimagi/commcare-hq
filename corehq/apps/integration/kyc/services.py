@@ -22,39 +22,46 @@ def verify_users(kyc_users, config):
     device_id = f'{__name__}.verify_users'
     errors_with_count = defaultdict(int)
     for kyc_user in kyc_users:
-        verification_status = KycVerificationStatus.PENDING
-        try:
-            verification_status = verify_user(kyc_user, config)
-            if verification_status == KycVerificationStatus.FAILED:
-                errors_with_count[KycVerificationFailureCause.USER_INFORMATION_MISMATCH.value] += 1
-        # TODO - Decide on how we want to handle these exceptions for the end user
-        except jsonschema.exceptions.ValidationError:
-            errors_with_count[KycVerificationFailureCause.USER_INFORMATION_INCOMPLETE.value] += 1
-        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
-            errors_with_count[KycVerificationFailureCause.NETWORK_ERROR.value] += 1
-        except requests.HTTPError:
-            errors_with_count[KycVerificationFailureCause.API_ERROR.value] += 1
+        verification_status, verification_error = verify_user(kyc_user, config)
 
-        # Store result only when API successfully returns a verification response
-        if verification_status in (KycVerificationStatus.PASSED, KycVerificationStatus.FAILED):
-            kyc_user.update_verification_status(verification_status, device_id=device_id)
+        if verification_error:
+            errors_with_count[verification_error] += 1
 
+        kyc_user.update_verification_status(
+            verification_status,
+            device_id=device_id,
+            error_message=verification_error,
+        )
         results[kyc_user.user_id] = verification_status
 
     _report_verification_failure_metric(config.domain, errors_with_count)
     return results
 
 
-def _report_verification_failure_metric(domain, errors_with_count):
-    for error, count in errors_with_count.items():
-        metrics_counter(
-            'commcare.integration.kyc.verification_failure.count',
-            count,
-            tags={'domain': domain, 'error': error}
-        )
-
-
 def verify_user(kyc_user, config):
+    verification_error = None
+
+    try:
+        verification_status = _verify_user(kyc_user, config)
+        if verification_status == KycVerificationStatus.FAILED:
+            verification_error = KycVerificationFailureCause.USER_INFORMATION_MISMATCH.value
+
+    except jsonschema.exceptions.ValidationError:
+        verification_error = KycVerificationFailureCause.USER_INFORMATION_INCOMPLETE.value
+        verification_status = KycVerificationStatus.ERROR
+
+    except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+        verification_error = KycVerificationFailureCause.NETWORK_ERROR.value
+        verification_status = KycVerificationStatus.ERROR
+
+    except requests.HTTPError:
+        verification_error = KycVerificationFailureCause.API_ERROR.value
+        verification_status = KycVerificationStatus.ERROR
+
+    return verification_status, verification_error
+
+
+def _verify_user(kyc_user, config):
     """
     Verify a user using the Chenosis MTN KYC API.
 
@@ -125,6 +132,15 @@ def verify_user(kyc_user, config):
     return KycVerificationStatus.PASSED if verification_successful else KycVerificationStatus.FAILED
 
 
+def _report_verification_failure_metric(domain, errors_with_count):
+    for error, count in errors_with_count.items():
+        metrics_counter(
+            'commcare.integration.kyc.verification_failure.count',
+            count,
+            tags={'domain': domain, 'error': error}
+        )
+
+
 def get_user_data_for_api(kyc_user, config):
     """
         Returns a dictionary of user data for the API.
@@ -132,7 +148,7 @@ def get_user_data_for_api(kyc_user, config):
     """
     return {
         api_field: kyc_user.get(user_data_property)
-        for api_field, user_data_property in config.api_field_to_user_data_map.items()
+        for api_field, user_data_property in config.get_api_field_to_user_data_map_values().items()
         if kyc_user.get(user_data_property) is not None
     }
 

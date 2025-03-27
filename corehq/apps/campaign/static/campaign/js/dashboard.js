@@ -12,7 +12,6 @@ const widgetModalSelector = '#widget-modal';
 const modalTitleSelector = '.modal-title';
 const addWidgetText = gettext('Add Widget');
 const editWidgetText = gettext('Edit Widget');
-const loadingText = gettext("Loading...");
 let $modalTitleElement = null;
 
 $(function () {
@@ -123,18 +122,20 @@ var MapWidget = function (mapWidgetConfig) {
 };
 
 var htmxAfterSwapWidgetForm = function (event) {
+    $('#widget-modal-spinner').addClass('d-none');
+
     const requestMethod = event.detail.requestConfig.verb;
     const responseStatus = event.detail.xhr.status;
     if (requestMethod === 'post' && responseStatus === 200) {
         setTimeout(function () {
             window.location.reload();
-        }, 2000);
+        }, 1000);
     }
 };
 
 var onHideWidgetModal = function () {
-    $('#widget-modal-body').html(`<i class="fa-solid fa-spinner fa-spin"></i> ${loadingText}`);
-    $modalTitleElement.text('');
+    $('#widget-modal-spinner').removeClass('d-none');
+    $('#widget-form').text('');
 };
 
 var onShowWidgetModal = function (event) {
