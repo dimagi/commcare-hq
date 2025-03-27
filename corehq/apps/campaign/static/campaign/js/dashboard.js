@@ -7,7 +7,7 @@ import initialPageData from "hqwebapp/js/initial_page_data";
 import { Map, MapItem } from "geospatial/js/models";
 
 
-let mobileWorkerMapsInitialized = false;
+let mobileWorkerWidgetsInitialized = false;
 
 const widgetModalSelector = '#widget-modal';
 const modalTitleSelector = '.modal-title';
@@ -48,14 +48,25 @@ function tabSwitch(e) {
     const tabContentId = $(e.target).attr('href');
 
     // Only load mobile worker map widgets when tab is clicked to prevent weird map sizing behaviour
-    if (!mobileWorkerMapsInitialized && tabContentId === '#mobile-workers-tab-content') {
-        mobileWorkerMapsInitialized = true;
+    if (!mobileWorkerWidgetsInitialized && tabContentId === '#mobile-workers-tab-content') {
+        mobileWorkerWidgetsInitialized = true;
         const widgetConfigs = initialPageData.get('map_report_widgets');
         for (const widgetConfig of widgetConfigs.mobile_workers) {
             if (widgetConfig.widget_type === 'DashboardMap') {
                 const mapWidget = new MapWidget(widgetConfig);
                 mapWidget.initializeMap();
             }
+        }
+
+        const gaugeWidgetConfigs = initialPageData.get('gauge_widgets');
+        for (const gaugeWidgetConfig of gaugeWidgetConfigs.mobile_workers) {
+            new RadialGauge({
+                renderTo: `gauge-widget-${ gaugeWidgetConfig.id }`,
+                value: gaugeWidgetConfig.value,
+                maxValue: gaugeWidgetConfig.max_value,
+                majorTicks: gaugeWidgetConfig.major_ticks,
+                valueDec: 0
+            }).draw();
         }
     }
 }
