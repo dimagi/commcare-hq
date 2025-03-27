@@ -4,9 +4,8 @@ from corehq.apps.accounting.models import FeatureType, SoftwarePlanEdition
 
 DESC_BY_EDITION = {
     SoftwarePlanEdition.COMMUNITY: {
-        'name': _("Community"),
-        'description': _("For projects in a pilot phase with a small group (up to {}) of "
-                         "mobile users that only need very basic CommCare features."),
+        'name': _("Free"),
+        'description': _("For practice purposes. Not intended for live projects. {} users maximum."),
     },
     SoftwarePlanEdition.STANDARD: {
         'name': _("Standard"),

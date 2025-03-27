@@ -972,7 +972,7 @@ class PlanViewBase(DomainAccountingSettings):
 
     @property
     def plan_options(self):
-        return [
+        options = [
             PlanOption(
                 SoftwarePlanEdition.STANDARD,
                 "$300",
@@ -995,6 +995,19 @@ class PlanViewBase(DomainAccountingSettings):
                   "management tools. 500 users included."),
             ),
         ]
+        if (
+            self.current_subscription is not None
+            and self.current_subscription.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY
+        ):
+            options.insert(
+                0, PlanOption(
+                    SoftwarePlanEdition.COMMUNITY,
+                    "Free",
+                    "Free",
+                    _("For practice purposes. Not intended for live projects. 5 users maximum."),
+                )
+            )
+        return options
 
     @property
     def start_date_after_minimum_subscription(self):
