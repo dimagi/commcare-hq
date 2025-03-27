@@ -240,7 +240,10 @@ class TestKycVerificationTableView(BaseTestKycView):
                 assert row == {
                     'id': self.user2.user_id,
                     'has_invalid_data': True,
-                    'kyc_verification_status': None,
+                    'kyc_verification_status': {
+                        'status': None,
+                        'error_message': None,
+                    },
                     'kyc_last_verified_at': None,
                     'name': 'Jane Doe',
                     'last_name': 'Doe',
@@ -249,7 +252,10 @@ class TestKycVerificationTableView(BaseTestKycView):
                 assert row == {
                     'id': self.user1.user_id,
                     'has_invalid_data': False,
-                    'kyc_verification_status': None,
+                    'kyc_verification_status': {
+                        'status': None,
+                        'error_message': None,
+                    },
                     'kyc_last_verified_at': None,
                     'name': 'Johnny',
                     'last_name': 'Doe',
@@ -281,7 +287,10 @@ class TestKycVerificationTableView(BaseTestKycView):
                 assert row == {
                     'id': self.case_list[1].case_id,
                     'has_invalid_data': True,
-                    'kyc_verification_status': None,
+                    'kyc_verification_status': {
+                        'status': None,
+                        'error_message': None,
+                    },
                     'kyc_last_verified_at': None,
                     'first_name': 'Foo',
                     'last_name': 'Bar',
@@ -290,7 +299,10 @@ class TestKycVerificationTableView(BaseTestKycView):
                 assert row == {
                     'id': self.case_list[0].case_id,
                     'has_invalid_data': False,
-                    'kyc_verification_status': None,
+                    'kyc_verification_status': {
+                        'status': None,
+                        'error_message': None,
+                    },
                     'kyc_last_verified_at': None,
                     'first_name': 'Bob',
                     'last_name': 'Smith',
