@@ -43,6 +43,11 @@
       <!-- Gauges Section -->
       <div class="row">
         <h2>{% trans "Gauges" %}</h2>
+        <div id="gauges-container-cases">
+          {% for widget in gauge_widgets.cases %}
+            {% include 'campaign/partials/dashboard_gauge.html' %}
+          {% endfor %}
+        </div>
       </div>
       <div class="spacer"></div>
       <!-- Report and Map Section -->
@@ -63,6 +68,11 @@
       <!-- Gauges Section -->
       <div class="row">
         <h2>{% trans "Gauges" %}</h2>
+        <div id="gauges-container-mobile-workers">
+          {% for widget in gauge_widgets.mobile_workers %}
+            {% include 'campaign/partials/dashboard_gauge.html' %}
+          {% endfor %}
+        </div>
       </div>
       <div class="spacer"></div>
       <!-- Report and Map Section -->

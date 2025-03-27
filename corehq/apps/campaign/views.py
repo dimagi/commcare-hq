@@ -79,10 +79,21 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
             'map_report_widgets': dashboard.get_map_report_widgets_by_tab(),
+            'gauge_widgets': self._dashboard_gauge_configs(dashboard),
             'widget_types': WidgetType.choices,
         })
         context.update(self.dashboard_map_case_filters_context())
         return context
+
+    @staticmethod
+    def _dashboard_gauge_configs(dashboard):
+        dashboard_gauge_configs = {
+            'cases': [],
+            'mobile_workers': [],
+        }
+        for dashboard_gauge in dashboard.gauges.all():
+            dashboard_gauge_configs[dashboard_gauge.dashboard_tab].append(dashboard_gauge.to_widget())
+        return dashboard_gauge_configs
 
 
 @method_decorator([login_and_domain_required, require_GET], name='dispatch')

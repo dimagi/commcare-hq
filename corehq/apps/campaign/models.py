@@ -138,6 +138,12 @@ class DashboardGauge(DashboardWidgetBase):
     # optional additional configuration set to customize gauge appearance
     configuration = JSONField(default=dict)
 
+    def to_widget(self):
+        return model_to_widget(
+            self,
+            exclude=['dashboard_tab', 'display_order'],
+        )
+
 
 class WidgetType(models.TextChoices):
     GAUGE = 'gauge', _('Gauge')
