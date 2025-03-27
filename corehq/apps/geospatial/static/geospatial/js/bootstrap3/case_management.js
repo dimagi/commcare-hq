@@ -1,6 +1,6 @@
 
 
-hqDefine("geospatial/js/case_management", [
+hqDefine("geospatial/js/bootstrap3/case_management", [
     "jquery",
     "underscore",
     "hqwebapp/js/initial_page_data",
