@@ -104,14 +104,9 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
         config['value'] = get_gauge_metric_value(dashboard_gauge)
         # set max value of dial to nearest equivalent of 100
         config['max_value'] = 10 ** len(str(config['value']))
-        config['major_ticks'] = [
-            '0',
-            int(0.2 * config['max_value']),
-            int(0.4 * config['max_value']),
-            int(0.6 * config['max_value']),
-            int(0.8 * config['max_value']),
-            config['max_value']
-        ]
+        number_of_ticks = 5
+        config['major_ticks'] = [int(config['max_value'] * i / 5)
+                                 for i in range(0, number_of_ticks + 1)]
         config['metric_name'] = dict(GAUGE_METRICS).get(dashboard_gauge.metric, '')
         return config
 
