@@ -8,7 +8,6 @@ class PaymentProperties(str, Enum):
     PAYMENT_VERIFIED_BY_USER_ID = 'payment_verified_by_user_id'
     PAYMENT_STATUS = 'payment_status'
     PAYMENT_TIMESTAMP = 'payment_timestamp'
-    PAYMENT_SUBMITTED = 'payment_submitted'
     AMOUNT = 'amount'
     CURRENCY = 'currency'
     PAYEE_NOTE = 'payee_note'

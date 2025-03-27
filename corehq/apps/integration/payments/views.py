@@ -20,7 +20,7 @@ from corehq.apps.integration.payments.services import verify_payment_cases
 from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.apps.integration.payments.forms import PaymentConfigureForm
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
-from corehq.apps.integration.payments.filters import PaymentVerificationStatusFilter, PaymentStatus
+from corehq.apps.integration.payments.filters import PaymentVerificationStatusFilter
 from corehq.apps.integration.payments.const import PaymentProperties
 
 
@@ -99,13 +99,7 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
             query_filters.append(case_property_query(PaymentProperties.PAYMENT_VERIFIED_BY, verified_by))
 
         if payment_status := self.request.GET.get('payment_status'):
-            if payment_status == PaymentStatus.submitted:
-                filter_value = 'True'
-            elif payment_status == PaymentStatus.submission_failed:
-                filter_value = 'False'
-            else:
-                filter_value = ''
-            query_filters.append(case_property_query(PaymentProperties.PAYMENT_SUBMITTED, filter_value))
+            query_filters.append(case_property_query(PaymentProperties.PAYMENT_STATUS, payment_status))
 
         if query_filters:
             query = query.filter(filters.AND(*query_filters))

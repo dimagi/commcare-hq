@@ -41,14 +41,14 @@ class PaymentStatus(BaseSingleOptionFilter):
     label = _('Payment status')
     default_text = _('Show all')
 
-    submitted = 'submitted'
-    not_submitted = 'not_submitted'
-    submission_failed = 'submission_failed'
+    pending = 'pending'
+    requested = 'requested'
+    request_failed = 'request_failed'
 
     @property
     def options(self):
         return [
-            (self.submitted, _('Submitted')),
-            (self.not_submitted, _('Not submitted')),
-            (self.submission_failed, _('Submission failed')),
+            (self.pending, _('Pending')),
+            (self.requested, _('Requested')),
+            (self.request_failed, _('Request failed')),
         ]
