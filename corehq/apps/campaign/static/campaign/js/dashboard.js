@@ -13,7 +13,7 @@ const modalTitleSelector = '.modal-title';
 const addWidgetText = gettext('Add Widget');
 const editWidgetText = gettext('Edit Widget');
 const loadingText = gettext("Loading...");
-let modalTitleElement = null;
+let $modalTitleElement = null;
 
 $(function () {
     // Only init case map widgets since this is the default tab
@@ -26,7 +26,7 @@ $(function () {
     }
     $('a[data-bs-toggle="tab"]').on('shown.bs.tab', tabSwitch);
 
-    modalTitleElement = $(widgetModalSelector).find(modalTitleSelector);
+    $modalTitleElement = $(widgetModalSelector).find(modalTitleSelector);
     $(widgetModalSelector).on('hidden.bs.modal', onHideWidgetModal);
     $(widgetModalSelector).on('show.bs.modal', onShowWidgetModal);
 
@@ -134,14 +134,14 @@ var htmxAfterSwapWidgetForm = function (event) {
 
 var onHideWidgetModal = function () {
     $('#widget-modal-body').html(`<i class="fa-solid fa-spinner fa-spin"></i> ${loadingText}`);
-    modalTitleElement.text('');
+    $modalTitleElement.text('');
 };
 
 var onShowWidgetModal = function (event) {
     const triggerSource = event.relatedTarget;
     if (triggerSource.id === 'edit-widget-btn') {
-        modalTitleElement.text(editWidgetText);
+        $modalTitleElement.text(editWidgetText);
     } else {
-        modalTitleElement.text(addWidgetText);
+        $modalTitleElement.text(addWidgetText);
     }
 };
