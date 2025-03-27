@@ -1,4 +1,10 @@
-hqDefine('app_manager/js/forms/edit_form_details', function () {
+hqDefine("app_manager/js/forms/edit_form_details", [
+    "jquery",
+    "knockout",
+], function (
+    $,
+    ko,
+) {
     var module = {};
 
     module.name = ko.observable();
