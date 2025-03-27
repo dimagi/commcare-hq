@@ -127,18 +127,20 @@ class KycConfig(models.Model):
 
     def get_api_field_to_user_data_map_values(self):
         """
-        The dict values for `api_field_to_user_data_map` can either contain a `str` value
-        or a dict including a 'data_field' key. This method parses through both formats and returns a dict
-        with only the mapping values.
+        The dict values for `api_field_to_user_data_map` consist of a dict with the following structure:
+        ```
+        {
+            'data_field': 'field_name',
+            'is_sensitive': True/False
+        }
+        ```
+        This method parses through `api_field_to_user_data_map` and returns a dict with only the mapping values.
         """
         map_vals = {}
         for provider_field, field in self.api_field_to_user_data_map.items():
-            if isinstance(field, dict):
-                if 'data_field' not in field:
-                    continue
-                map_vals[provider_field] = field['data_field']
-            else:
-                map_vals[provider_field] = field
+            if not isinstance(field, dict) or 'data_field' not in field:
+                continue
+            map_vals[provider_field] = field['data_field']
         return map_vals
 
     def is_sensitive_field(self, field):

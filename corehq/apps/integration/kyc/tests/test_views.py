@@ -141,7 +141,9 @@ class TestKycVerificationTableView(BaseTestKycView):
         super().setUpClass()
         cls.kyc_mapping = {
             # API field: User data
-            'first_name': 'name',
+            'first_name': {
+                'data_field': 'name'
+            },
             'last_name': {
                 'data_field': 'last_name'
             },
@@ -160,9 +162,12 @@ class TestKycVerificationTableView(BaseTestKycView):
             'street_address': {
                 'data_feild': 'street_address',
             },
-            'city': 'city',
-            'post_code': 'post_code',
-            'country': 'country',
+            'city': ['city'],
+            'post_code': {
+                'data_field': 'post_code',
+                'other_prop': 'foobar',
+            },
+            'country': 'country'
         }
         cls.kyc_config = KycConfig.objects.create(
             domain=cls.domain,
@@ -269,10 +274,8 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'last_name': 'Doe',
                     'email': 'jdoe@example.org',
                     'phone_number': PASSWORD_PLACEHOLDER,
-                    'national_id_number': PASSWORD_PLACEHOLDER,
-                    'city': 'Anytown',
+                    'national_id_number': '1234567890',
                     'post_code': '12345',
-                    'country': 'Anyplace',
                 }
 
     @flag_enabled('KYC_VERIFICATION')
@@ -280,9 +283,12 @@ class TestKycVerificationTableView(BaseTestKycView):
         self.kyc_config.user_data_store = UserDataStore.OTHER_CASE_TYPE
         self.kyc_config.other_case_type = 'other-case'
         self.kyc_config.api_field_to_user_data_map.update({
-            'first_name': 'first_name',
-            'last_name': 'last_name',
-            'email': 'home_email',
+            'first_name': {
+                'data_field': 'first_name',
+            },
+            'email': {
+                'data_field': 'home_email',
+            },
         })
         self.kyc_config.save()
 
@@ -309,10 +315,8 @@ class TestKycVerificationTableView(BaseTestKycView):
                     'last_name': 'Smith',
                     'home_email': 'bsmith@example.org',
                     'phone_number': PASSWORD_PLACEHOLDER,
-                    'national_id_number': PASSWORD_PLACEHOLDER,
-                    'city': 'Sometown',
+                    'national_id_number': '0987654321',
                     'post_code': '54321',
-                    'country': 'Someplace',
                 }
 
 
