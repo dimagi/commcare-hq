@@ -3331,12 +3331,11 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
                     )
 
         if invoice.is_wire and invoice.is_prepayment:
-            unit_cost = 1
             applied_credit = 0
             for item in invoice.items:
                 template.add_item(item['type'],
-                                  item['amount'],
-                                  unit_cost,
+                                  item['quantity'],
+                                  item['unit_cost'],
                                   item['amount'],
                                   applied_credit,
                                   item['amount'])

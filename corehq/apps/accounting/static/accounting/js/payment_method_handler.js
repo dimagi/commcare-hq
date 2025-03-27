@@ -30,7 +30,8 @@ hqDefine('accounting/js/payment_method_handler', [
         });
 
         self.isWire = ko.observable(opts.isWire || false);
-        self.wireEmails = ko.observable('');
+        self.wireEmail = ko.observable('');
+        self.wireAdditionalEmails = ko.observable('');
 
         self.paymentIsComplete = ko.observable(false);
         self.paymentIsNotComplete = ko.computed(function () {
@@ -176,7 +177,7 @@ hqDefine('accounting/js/payment_method_handler', [
         });
 
         if (opts.wire_email) {
-            self.wireEmails(opts.wire_email);
+            self.wireEmail(opts.wire_email);
         }
 
         self.mustCreateNewCard = ko.computed(function () {
@@ -444,6 +445,7 @@ hqDefine('accounting/js/payment_method_handler', [
         self.products = data.products;
         self.features = data.features;
         self.general_credit = data.general_credit;
+        self.invoice_credit = data.invoice_credit;
 
         self.amount = ko.computed(function () {
             var productSum = _.reduce(self.products(), function (memo, product) {
@@ -455,6 +457,13 @@ hqDefine('accounting/js/payment_method_handler', [
             }, 0);
             var sum = productSum + featureSum + parseFloat(self.general_credit().addAmount());
             return isNaN(sum) ? 0.0 : sum;
+        });
+
+        self.invoice_amount = ko.computed(function () {
+            var amount = parseFloat(self.invoice_credit().addAmount());
+            var quantity = Math.round(Math.max(self.invoice_credit().quantity(), 1));
+            var rawTotal =  isNaN(amount) ? 0.0 : amount * quantity;
+            return Math.round(rawTotal * 100) / 100;
         });
 
         self.reset = function (response) {

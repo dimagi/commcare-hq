@@ -466,21 +466,32 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
 def create_wire_credits_invoice(domain_name,
                                 amount,
                                 invoice_items,
-                                contact_emails):
+                                date_start,
+                                date_end,
+                                contact_emails,
+                                cc_emails=None):
     deserialized_amount = deserialize_decimal(amount)
     wire_invoice = WirePrepaymentInvoice.objects.create(
         domain=domain_name,
-        date_start=datetime.datetime.utcnow(),
-        date_end=datetime.datetime.utcnow(),
-        date_due=None,
+        date_start=datetime.date.fromisoformat(date_start),
+        date_end=datetime.date.fromisoformat(date_end),
+        date_due=datetime.date.today() + datetime.timedelta(days=30),
         balance=deserialized_amount,
     )
 
     deserialized_items = []
     for item in invoice_items:
+        general_credit_cost = item['unit_cost']
+        general_credit_qty = item['quantity']
         general_credit_amount = item['amount']
-        deserialized_general_credit = deserialize_decimal(general_credit_amount)
-        deserialized_items.append({'type': item['type'], 'amount': deserialized_general_credit})
+        deserialized_credit_amount = deserialize_decimal(general_credit_amount)
+        deserialized_credit_cost = deserialize_decimal(general_credit_cost)
+        deserialized_items.append({
+            'type': item['type'],
+            'amount': deserialized_credit_amount,
+            'unit_cost': deserialized_credit_cost,
+            'quantity': general_credit_qty,
+        })
 
     wire_invoice.items = deserialized_items
 
@@ -488,7 +499,7 @@ def create_wire_credits_invoice(domain_name,
     if record.should_send_email:
         try:
             for email in contact_emails:
-                record.send_email(contact_email=email)
+                record.send_email(contact_email=email, cc_emails=cc_emails)
         except Exception as e:
             log_accounting_error(
                 "Error sending email for WirePrepaymentBillingRecord %d: %s" % (record.id, str(e)),
