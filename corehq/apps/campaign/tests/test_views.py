@@ -52,7 +52,8 @@ class BaseTestCampaignView(TestCase):
     def login_endpoint(self):
         return reverse('domain_login', kwargs={'domain': self.domain})
 
-    def _make_request(self, query_data={}, is_logged_in=True):
+    def _make_request(self, query_data=None, is_logged_in=True):
+        query_data = query_data or {}
         if is_logged_in:
             self.client.login(username=self.username, password=self.password)
         return self.client.get(self.endpoint, query_data)
@@ -119,6 +120,17 @@ class TestDashboardView(BaseTestCampaignView):
                 'widget_type': 'DashboardMap',
             }],
         }
+
+
+class TestDashboardViewNoDashboard(BaseTestCampaignView):
+    urlname = DashboardView.urlname
+
+    @flag_enabled('CAMPAIGN_DASHBOARD')
+    def test_no_dashboard(self):
+        assert not Dashboard.objects.filter(domain=self.domain).exists()
+        response = self._make_request(is_logged_in=True)
+        assert response.status_code == 200
+        assert Dashboard.objects.filter(domain=self.domain).exists()
 
 
 @es_test(requires=[case_search_adapter], setup_class=True)
