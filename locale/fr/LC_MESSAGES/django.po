@@ -48,7 +48,9 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
+#: corehq/apps/accounting/templates/accounting/email/wire_invoice.txt
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
 #: corehq/apps/domain/forms.py corehq/apps/enterprise/enterprise.py
 #: corehq/apps/enterprise/filters.py corehq/apps/enterprise/interface.py
@@ -146,7 +148,8 @@ msgstr ""
 #: corehq/apps/hqadmin/templates/hqadmin/email_status.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
 #: corehq/apps/notifications/forms.py corehq/apps/reports/standard/sms.py
-#: corehq/apps/userreports/templates/userreports/ucr_expression.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expression.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expression.html
 #: corehq/apps/userreports/views.py
 #: corehq/ex-submodules/casexml/apps/case/views.py
 msgid "Type"
@@ -188,7 +191,8 @@ msgstr ""
 #: corehq/apps/export/forms.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 msgid "End Date"
 msgstr ""
 
@@ -197,6 +201,8 @@ msgid "Statement Period"
 msgstr ""
 
 #: corehq/apps/accounting/filters.py
+#: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
+#: corehq/apps/accounting/templates/accounting/email/wire_invoice.txt
 msgid "Due Date"
 msgstr ""
 
@@ -303,6 +309,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
 #: corehq/apps/domain/forms.py
 msgid "Software Plan"
@@ -338,11 +345,11 @@ msgid "Funding Source"
 msgstr ""
 
 #: corehq/apps/accounting/forms.py
-msgid "Exclude from automated downgrade process"
+msgid "Exclude from automated pause process"
 msgstr ""
 
 #: corehq/apps/accounting/forms.py
-msgid "Justify why \"Skip Auto Downgrade\""
+msgid "Justify why \"Skip Auto Pause\""
 msgstr ""
 
 #: corehq/apps/accounting/forms.py
@@ -475,8 +482,10 @@ msgstr ""
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
 #: corehq/apps/toggle_ui/templates/toggle/flags.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
-#: corehq/apps/userreports/templates/userreports/ucr_expression.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expression.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expression.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/userreports/views.py
 #: corehq/apps/users/templates/users/web_users.html
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_hierarchy.html
@@ -579,14 +588,13 @@ msgstr ""
 msgid "Your card is being used to auto-pay for {billing_account}"
 msgstr ""
 
-#: corehq/apps/accounting/models.py corehq/apps/integration/kyc/tables.py
-#: corehq/apps/styleguide/example_forms.py corehq/apps/users/forms.py
+#: corehq/apps/accounting/models.py corehq/apps/styleguide/example_forms.py
+#: corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid "First Name"
 msgstr ""
 
-#: corehq/apps/accounting/models.py corehq/apps/integration/kyc/tables.py
-#: corehq/apps/users/forms.py
+#: corehq/apps/accounting/models.py corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Last Name"
 msgstr ""
@@ -602,7 +610,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/accounting/models.py corehq/apps/data_dictionary/models.py
-#: corehq/apps/data_interfaces/views.py corehq/apps/integration/kyc/tables.py
+#: corehq/apps/data_interfaces/views.py
 #: corehq/apps/integration/payments/tables.py corehq/apps/registration/forms.py
 #: corehq/apps/reports/standard/sms.py corehq/apps/settings/forms.py
 #: corehq/apps/sms/filters.py corehq/apps/sms/templates/sms/add_gateway.html
@@ -622,7 +630,7 @@ msgstr ""
 msgid "Address Second Line"
 msgstr ""
 
-#: corehq/apps/accounting/models.py corehq/apps/integration/kyc/tables.py
+#: corehq/apps/accounting/models.py
 msgid "City"
 msgstr ""
 
@@ -634,8 +642,8 @@ msgstr ""
 msgid "Postal Code"
 msgstr ""
 
-#: corehq/apps/accounting/models.py corehq/apps/integration/kyc/tables.py
-#: custom/abt/reports/filters.py custom/abt/reports/late_pmt_2020.py
+#: corehq/apps/accounting/models.py custom/abt/reports/filters.py
+#: custom/abt/reports/late_pmt_2020.py
 msgid "Country"
 msgstr ""
 
@@ -682,10 +690,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/accounting/models.py
+#: corehq/apps/accounting/utils/unpaid_invoice.py
 msgid "Paid"
 msgstr ""
 
 #: corehq/apps/accounting/models.py
+#: corehq/apps/accounting/utils/unpaid_invoice.py
 msgid "Payment Required"
 msgstr ""
 
@@ -699,7 +709,15 @@ msgid "Dear %s,"
 msgstr ""
 
 #: corehq/apps/accounting/models.py
-msgid "Your prepayment invoice"
+#, python-brace-format
+msgid ""
+"CommCare Subscription Prepayment Invoice for {account_or_domain} due "
+"{due_date}"
+msgstr ""
+
+#: corehq/apps/accounting/models.py
+#, python-brace-format
+msgid "CommCare Subscription Prepayment Invoice for {account_or_domain}"
 msgstr ""
 
 #: corehq/apps/accounting/models.py
@@ -926,7 +944,8 @@ msgstr ""
 #: corehq/apps/sms/templates/sms/add_gateway.html
 #: corehq/apps/sms/templates/sms/backend_map.html
 #: corehq/apps/sms/templates/sms/partials/day_time_windows.html
-#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expressions.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expressions.html
 #: corehq/motech/dhis2/templates/dhis2/dhis2_entity_config.html
 #: corehq/motech/openmrs/templates/openmrs/partials/openmrs_importer_template.html
 msgid "Remove"
@@ -1043,10 +1062,14 @@ msgstr ""
 #: corehq/apps/styleguide/examples/bootstrap5/select_toggle_form.py
 #: corehq/apps/styleguide/examples/bootstrap5/switch_form.py
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
-#: corehq/apps/userreports/templates/userreports/partials/delete_report_button.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
-#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expressions.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expressions.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/delete_report_button.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/delete_report_button.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/users/templates/users/edit_commcare_user.html
 #: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
@@ -1103,113 +1126,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/accounts.html
 msgid "Autopay"
-msgstr ""
-
-#: corehq/apps/accounting/templates/accounting/email/30_days.html
-#: corehq/apps/accounting/templates/accounting/email/downgrade_warning.html
-#, python-format
-msgid ""
-"\n"
-"    Dear %(domain_or_account)s administrator,\n"
-"  "
-msgstr ""
-
-#: corehq/apps/accounting/templates/accounting/email/30_days.html
-#, python-format
-msgid ""
-"\n"
-"    Your billing account has unpaid CommCare Billing Statements which are "
-"more than 30 days overdue. The balance currently owed is: $%(total)s.\n"
-"  "
-msgstr ""
-
-#: corehq/apps/accounting/templates/accounting/email/30_days.html
-#: corehq/apps/accounting/templates/accounting/email/downgrade.html
-#: corehq/apps/accounting/templates/accounting/email/downgrade_warning.html
-msgid "To see the full list of unpaid invoices you can follow this link: "
-msgstr ""
-
-#: corehq/apps/accounting/templates/accounting/email/30_days.html
-#: corehq/apps/accounting/templates/accounting/email/downgrade.html
-#: corehq/apps/accounting/templates/accounting/email/downgrade_warning.html
-msgid ""
-"As a reminder, payments can be made via credit card, Electronic Fund "
-"Transfer (EFT), or check by following these <a href=\"https://confluence."
-"dimagi.com/display/commcarepublic/"
-"How+to+Pay+by+Credit+Card+or+Wire+Payment\">instructions</a>."
-msgstr ""
-
-#: corehq/apps/accounting/templates/accounting/email/30_days.html
-#: corehq/apps/accounting/templates/accounting/email/downgrade_warning.html
-msgid ""
-"You can also pre-pay for several months at any time by following <a "
-"href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"CommCare+Pricing+FAQs#CommCarePricingFAQs-Pre-payment\">these steps</a>."
-msgstr ""
-
-#: corehq/apps/accounting/templates/accounting/email/30_days.html
-#, python-format
-msgid ""
-"\n"
-"    <b><i>Please make a payment as soon as possible for the amount due.</i></"
-"b>\n"
-"    If you are not able to make a payment, your subscription will be paused "
-"on %(date_60)s.\n"
-"    As of this date, you will lose access to your project space until you re-"
-"subscribe to a paid plan.\n"
-"  "
-msgstr ""
-
-#: corehq/apps/accounting/templates/accounting/email/30_days.html
-#, python-format
-msgid ""
-"\n"
-"    If you have any questions or if you think your recent payments haven’t "
-"been reflected in this balance, please don't hesitate to contact <a "
-"href=\"mailto:%(contact_email)s\">%(contact_email)s</a>.\n"
-"  "
-msgstr ""
-
-#: corehq/apps/accounting/templates/accounting/email/30_days.html
-msgid ""
-"\n"
-"    Thanks, <br />\n"
-"    The CommCare HQ Team <br />\n"
-"    www.commcarehq.org\n"
-"  "
-msgstr ""
-
-#: corehq/apps/accounting/templates/accounting/email/30_days.txt
-#, python-format
-msgid ""
-"\n"
-"Dear %(domain_or_account)s administrator,\n"
-"\n"
-"Your billing account has unpaid CommCare Billing Statements which are more "
-"than 30 days overdue. The balance currently owed is: $%(total)s.\n"
-"\n"
-"To see the full list of unpaid invoices you can follow this link: "
-"%(statements_url)s\n"
-"As a reminder, payments can be made via credit card, Electronic Fund "
-"Transfer (EFT), or check by following the instructions at https://confluence."
-"dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment\n"
-"You can also pre-pay for several months at any time by following the steps "
-"at https://confluence.dimagi.com/display/commcarepublic/"
-"CommCare+Pricing+FAQs#CommCarePricingFAQs-Pre-payment\n"
-"\n"
-"Please make a payment as soon as possible for the amount due.\n"
-"If you are not able to make a payment, your subscription will be paused on "
-"%(date_60)s.\n"
-"As of this date, you will lose access to your project space until you re-"
-"subscribe to a paid plan.\n"
-"\n"
-"If you have any questions or if you think your recent payments haven’t been "
-"reflected in this balance, please don’t hesitate to contact "
-"%(contact_email)s.\n"
-"\n"
-"Thanks,\n"
-"The CommCare HQ Team\n"
-"www.commcarehq.org\n"
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/autopay_card_removed.html
@@ -1446,8 +1362,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"    Your %(month_name)s Billing Statement is now available for Customer "
-"Account %(account_name)s.\n"
+"    Your %(month_name)s Billing Statement is now available for Customer\n"
+"    Account %(account_name)s.\n"
 "  "
 msgstr ""
 
@@ -1455,6 +1371,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #: corehq/apps/domain/views/accounting.py corehq/apps/enterprise/views.py
 msgid "Statement No."
 msgstr ""
@@ -1463,6 +1380,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
@@ -1505,6 +1423,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 msgid "Amount Due this Month"
 msgstr ""
 
@@ -1512,6 +1431,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 msgid "Total Balance"
 msgstr ""
 
@@ -1519,6 +1439,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 msgid "Payment Due Date"
 msgstr ""
 
@@ -1561,19 +1482,9 @@ msgid ""
 "\n"
 "        Please note that the due date for this %(month_name)s payment has "
 "been\n"
-"        postponed, as the amount due this month is less than $100. However "
-"as\n"
-"        your total balance is now beyond $100, please note that you have to "
-"pay\n"
-"        your balance within the next 30 days.\n"
-"      "
-msgstr ""
-
-#: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
-#: corehq/apps/accounting/templates/accounting/email/invoice.html
-msgid ""
-"\n"
-"        Your total balance is now beyond $100, please note that you have to "
+"        postponed, as the amount due this month is less than\n"
+"        $%(small_invoice_threshold)s. However as your total balance is now\n"
+"        beyond $%(small_invoice_threshold)s, please note that you have to "
 "pay\n"
 "        your balance within the next 30 days.\n"
 "      "
@@ -1584,9 +1495,20 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
+"        Your total balance is now beyond $%(small_invoice_threshold)s, "
+"please\n"
+"        note that you have to pay your balance within the next 30 days.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
+#: corehq/apps/accounting/templates/accounting/email/invoice.html
+#, python-format
+msgid ""
+"\n"
 "        To view the full billing statement, log into your project space on\n"
-"        CommCare HQ and navigate to <a href=\"%(statements_url)s\">\n"
-"        Billing Statements</a>.\n"
+"        CommCare HQ and navigate to\n"
+"        <a href=\"%(statements_url)s\"> Billing Statements</a>.\n"
 "      "
 msgstr ""
 
@@ -1610,19 +1532,23 @@ msgid ""
 "      <ul>\n"
 "        <li>\n"
 "          To pay by credit card, please go to your\n"
-"          <a href=\"%(statements_url)s\">Billing Statements</a> page, click\n"
-"          on the green \"Make Payment\" button in front of your unpaid\n"
-"          invoice(s), and fill in the amount you want to pay as well as "
-"your\n"
-"          credit card details.\n"
+"          <a href=\"%(statements_url)s\">Billing Statements</a> page, click "
+"on\n"
+"          the green \"Make Payment\" button in front of your unpaid "
+"invoice(s),\n"
+"          and fill in the amount you want to pay as well as your credit "
+"card\n"
+"          details.\n"
 "        </li>\n"
 "        <li>\n"
 "          To pay by wire, find Dimagi's bank account details on your "
 "invoice.\n"
-"          Please include the invoice number in your wire payment and make\n"
-"          sure to send an email to %(accounts_email)s after you have made\n"
-"          the payment, mentioning the date of the payment, the amount, the\n"
-"          invoice number, and the project space.\n"
+"          Please include the invoice number in your wire payment and make "
+"sure\n"
+"          to send an email to %(accounts_email)s after you have made the\n"
+"          payment, mentioning the date of the payment, the amount, the "
+"invoice\n"
+"          number, and the project space.\n"
 "        </li>\n"
 "      </ul>\n"
 "    "
@@ -1630,13 +1556,16 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
+#, python-format
 msgid ""
 "\n"
 "        Please note that the due date for this payment has been postponed, "
 "as\n"
-"        the amount due this month is less than $100.  You will start "
-"receiving\n"
-"        reminder emails for payments once your total balance reaches $100.\n"
+"        the amount due this month is less than $"
+"%(small_invoice_threshold)s.\n"
+"        You will start receiving reminder emails for payments once your "
+"total\n"
+"        balance reaches $%(small_invoice_threshold)s.\n"
 "      "
 msgstr ""
 
@@ -1646,8 +1575,8 @@ msgstr ""
 msgid ""
 "\n"
 "        To view and pay invoices, you can log into your project space on\n"
-"        CommCare HQ and navigate to <a href=\"%(statements_url)s\">Billing "
-"Statements</a>.\n"
+"        CommCare HQ and navigate to\n"
+"        <a href=\"%(statements_url)s\">Billing Statements</a>.\n"
 "      "
 msgstr ""
 
@@ -1657,19 +1586,22 @@ msgstr ""
 msgid ""
 "\n"
 "        To view and pay invoices, your project's administrator can log into "
-"your project space on\n"
-"        CommCare HQ and navigate to <a href=\"%(statements_url)s\">Billing "
-"Statements</a>.\n"
+"your\n"
+"        project space on CommCare HQ and navigate to\n"
+"        <a href=\"%(statements_url)s\">Billing Statements</a>.\n"
 "      "
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
+#: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #, python-format
 msgid ""
 "\n"
 "    Thank you for using %(plan_name)s. If you have any questions, please "
-"don't hesitate to contact %(invoicing_contact_email)s.\n"
+"don't\n"
+"    hesitate to contact %(invoicing_contact_email)s.\n"
 "  "
 msgstr ""
 
@@ -1684,13 +1616,10 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
-#: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
-#: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
 msgid ""
 "\n"
-"    Statement From:\n"
-"    CommCare HQ and the corporation Dimagi, Inc.\n"
-"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+"    Statement From: CommCare HQ and the corporation Dimagi, Inc. 585\n"
+"    Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 "  "
 msgstr ""
 
@@ -1712,6 +1641,7 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.txt
 #: corehq/apps/accounting/templates/accounting/email/invoice.txt
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
 #, python-format
 msgid ""
 "\n"
@@ -1725,10 +1655,10 @@ msgid ""
 "\n"
 "        Please note that the due date for this %(month_name)s payment has "
 "been\n"
-"        postponed, as the amount due this month is less than $100. However "
-"as\n"
-"        your total balance is now beyond $100, please note that you have to "
-"pay\n"
+"        postponed, as the amount due this month is less than $"
+"%(small_invoice_threshold)s. However as\n"
+"        your total balance is now beyond $%(small_invoice_threshold)s, "
+"please note that you have to pay\n"
 "        your balance within the next 30 days.\n"
 "        "
 msgstr ""
@@ -1782,13 +1712,15 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.txt
 #: corehq/apps/accounting/templates/accounting/email/invoice.txt
+#, python-format
 msgid ""
 "\n"
 "        Please note that the due date for this payment has been postponed, "
 "as\n"
-"        the amount due this month is less than $100.  You will start "
-"receiving\n"
-"        reminder emails for payments once your total balance reaches $100.\n"
+"        the amount due this month is less than $"
+"%(small_invoice_threshold)s.  You will start receiving\n"
+"        reminder emails for payments once your total balance reaches $"
+"%(small_invoice_threshold)s.\n"
 "    "
 msgstr ""
 
@@ -1889,6 +1821,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_subscription_ending_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.html
 #: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
 #: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.html
@@ -1932,17 +1865,43 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"    Your subscription has been paused for the CommCare project space "
-"%(domain)s.\n"
-"    You can regain access to your data and project space by re-subscribing "
-"to a plan.\n"
+"    Your subscription has been paused for the CommCare project space\n"
+"    %(domain)s. You can regain access to your data and project space by\n"
+"    re-subscribing to a plan.\n"
 "  "
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/downgrade.html
+#: corehq/apps/accounting/templates/accounting/email/downgrade_warning.html
+#: corehq/apps/accounting/templates/accounting/email/overdue_notice.html
 msgid ""
-"After you have paid the unpaid invoices you can re-subscribe to your plan "
-"here: "
+"\n"
+"    To see the full list of unpaid invoices you can follow this link:\n"
+"  "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/downgrade.html
+#: corehq/apps/accounting/templates/accounting/email/downgrade_warning.html
+#: corehq/apps/accounting/templates/accounting/email/overdue_notice.html
+msgid ""
+"\n"
+"      As a reminder, payments can be made via credit card, Electronic Fund\n"
+"      Transfer (EFT), or check by following these\n"
+"      <a\n"
+"        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143956507/Payment+Methods+Instructions\"\n"
+"        >instructions</a\n"
+"      >.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/downgrade.html
+msgid ""
+"\n"
+"    After you have paid the unpaid invoices you can re-subscribe to your "
+"plan\n"
+"    here:\n"
+"  "
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/downgrade.html
@@ -1950,17 +1909,19 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"    If you have any questions, please don’t hesitate to contact <a "
-"href=\"mailto:%(contact_email)s\">%(contact_email)s</a>. Thank you for using "
-"CommCare.\n"
+"    If you have any questions, please don’t hesitate to contact\n"
+"    <a href=\"mailto:%(contact_email)s\">%(contact_email)s</a>. Thank you "
+"for\n"
+"    using CommCare.\n"
 "  "
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/downgrade.html
+#: corehq/apps/accounting/templates/accounting/email/downgrade_warning.html
 msgid ""
 "\n"
 "    Best regards, <br />\n"
-"    The CommCare HQ Team  <br />\n"
+"    The CommCare HQ Team <br />\n"
 "    www.commcarehq.org\n"
 "  "
 msgstr ""
@@ -1978,8 +1939,9 @@ msgid ""
 "To see the full list of unpaid invoices you can follow this link: "
 "%(statements_url)s\n"
 "As a reminder, payments can be made via credit card, Electronic Fund "
-"Transfer (EFT), or check by following the instructions at https://confluence."
-"dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment\n"
+"Transfer (EFT), or check by following the instructions at https://dimagi."
+"atlassian.net/wiki/spaces/commcarepublic/pages/2143956507/"
+"Payment+Methods+Instructions\n"
 "After you have paid the unpaid invoices you can re-subscribe to your plan "
 "here: %(subscription_url)s\n"
 "\n"
@@ -1992,25 +1954,42 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/downgrade_warning.html
+#: corehq/apps/accounting/templates/accounting/email/overdue_notice.html
 #, python-format
 msgid ""
 "\n"
-"    Your CommCare %(subscriptions_to_downgrade)s will be paused <b><i>after "
-"tomorrow</i></b> because your CommCare Billing Statements are more than 60 "
-"days overdue.\n"
-"    If you do not make a payment before tomorrow, your subscription will "
-"automatically be paused and you will lose access to your project space and "
-"data until you re-subscribe to paid plan.\n"
+"    Dear %(domain_or_account)s administrator,\n"
 "  "
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/downgrade_warning.html
+#, python-format
 msgid ""
 "\n"
-"    Best regards, <br />\n"
-"    The CommCare HQ Team <br />\n"
-"    www.commcarehq.org\n"
+"    Your CommCare %(subscriptions_to_downgrade)s will be paused\n"
+"    <b><i>after tomorrow</i></b> because your CommCare Billing Statements "
+"are\n"
+"    more than %(days_overdue)s days overdue.\n"
+"    <strong\n"
+"      >If you do not make a payment before tomorrow, your subscription will\n"
+"      automatically be paused and you will lose access to your project space "
+"and\n"
+"      data until you re-subscribe to paid plan.</strong\n"
+"    >\n"
 "  "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/downgrade_warning.html
+#: corehq/apps/accounting/templates/accounting/email/overdue_notice.html
+msgid ""
+"\n"
+"      You can also pre-pay for several months at any time by following\n"
+"      <a\n"
+"        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143950358/CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing\"\n"
+"        >these steps</a\n"
+"      >.\n"
+"    "
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/downgrade_warning.txt
@@ -2020,19 +1999,21 @@ msgid ""
 "Dear %(domain_or_account)s administrator,\n"
 "\n"
 "Your CommCare %(subscriptions_to_downgrade)s will be paused after tomorrow "
-"because your CommCare Billing Statements are more than 60 days overdue.\n"
+"because your CommCare Billing Statements are more than %(days_overdue)s days "
+"overdue.\n"
 "If you do not make a payment before tomorrow, your subscription will "
 "automatically be paused and you will lose access to your project space and "
-"data until you re-subscribe to paid plan.\n"
+"data until you re-subscribe to a paid plan.\n"
 "\n"
 "To see the full list of unpaid invoices you can follow this link: "
 "%(statements_url)s\n"
 "As a reminder, payments can be made via credit card, Electronic Fund "
-"Transfer (EFT), or check by following the instructions at https://confluence."
-"dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment\n"
+"Transfer (EFT), or check by following the instructions at https://dimagi."
+"atlassian.net/wiki/spaces/commcarepublic/pages/2143956507/"
+"Payment+Methods+Instructions\n"
 "You can also pre-pay for several months at any time by following the steps "
-"at https://confluence.dimagi.com/display/commcarepublic/"
-"CommCare+Pricing+FAQs#CommCarePricingFAQs-Pre-payment.\n"
+"at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143950358/"
+"CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing\n"
 "\n"
 "If you have any questions, please don’t hesitate to contact "
 "%(contact_email)s. Thank you for using CommCare.\n"
@@ -2043,12 +2024,11 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
-#: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #, python-format
 msgid ""
 "\n"
-"    Your %(plan_name)s Billing Statement is now available for "
-"%(month_name)s.\n"
+"    Your %(plan_name)s Billing Statement is now available for\n"
+"    %(month_name)s.\n"
 "  "
 msgstr ""
 
@@ -2169,6 +2149,15 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
+"    Your %(plan_name)s Billing Statement is now available for "
+"%(month_name)s.\n"
+"  "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
+#, python-format
+msgid ""
+"\n"
 "    You have selected to automatically pay this invoice using a credit card\n"
 "    with the last four digits %(last_4)s. Your credit card will "
 "automatically\n"
@@ -2180,12 +2169,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
-#, python-format
+#: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
 msgid ""
 "\n"
-"    Thank you for using %(plan_name)s. If you have any questions, please "
-"don't\n"
-"    hesitate to contact %(invoicing_contact_email)s.\n"
+"    Statement From:\n"
+"    CommCare HQ and the corporation Dimagi, Inc.\n"
+"    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 "  "
 msgstr ""
 
@@ -2255,6 +2244,7 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_receipt.html
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
+#: corehq/apps/accounting/templates/accounting/email/wire_invoice.txt
 msgid "Invoice No."
 msgstr ""
 
@@ -2300,6 +2290,244 @@ msgid ""
 "Email From:\n"
 "CommCare HQ and the corporation Dimagi, Inc.\n"
 "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
+#, python-format
+msgid ""
+"\n"
+"    Dear %(domain_or_account)s administrator, this is a reminder that your\n"
+"    %(plan_name)s Billing Statement for %(month_name)s is due in\n"
+"    %(days_until_due)s days.\n"
+"  "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
+#, python-format
+msgid ""
+"\n"
+"      To view the full billing statement, log into your project space on\n"
+"      CommCare HQ and navigate to\n"
+"      <a href=\"%(statements_url)s\"> Billing Statements</a>.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
+#, python-format
+msgid ""
+"\n"
+"      Your project's administrator can view the full billing statement by\n"
+"      logging into your project space on CommCare HQ and navigating to\n"
+"      <a href=\"%(statements_url)s\">Billing Statements</a>.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
+msgid ""
+"\n"
+"    You can pay this bill by credit card or by wire:\n"
+"  "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
+#, python-format
+msgid ""
+"\n"
+"      To pay by credit card, please go to your\n"
+"      <a href=\"%(statements_url)s\">Billing Statements</a> page, click on "
+"the\n"
+"      green \"Make Payment\" button in front of your unpaid invoice(s), and "
+"fill\n"
+"      in the amount you want to pay as well as your credit card details.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
+#, python-format
+msgid ""
+"\n"
+"      To pay by wire, find Dimagi's bank account details on your invoice. "
+"Please\n"
+"      include the invoice number in your wire payment and make sure to send "
+"an\n"
+"      email to %(invoicing_contact_email)s after you have made the payment,\n"
+"      mentioning the date of the payment, the amount, the invoice number, "
+"and\n"
+"      the project space.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
+msgid "Best Regards,"
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
+#, python-format
+msgid ""
+"\n"
+"Dear %(domain_or_account)s administrator, this is a reminder that your\n"
+"%(plan_name)s Billing Statement for %(month_name)s is due in\n"
+"%(days_until_due)s days.\n"
+"\n"
+"Statement No.: %(statement_number)s\n"
+"Project Space: %(domain)s\n"
+"Software Plan: %(plan_name)s\n"
+"Status: %(payment_status)s\n"
+"Amount Due this Month: %(amount_due)s\n"
+"Total Balance: %(total_balance)s\n"
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
+#, python-format
+msgid ""
+"\n"
+"    To view the full billing statement, log into your project space on\n"
+"    CommCare HQ and navigate to Billing Statements: %(statements_url)s.\n"
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
+#, python-format
+msgid ""
+"\n"
+"    Your project's administrator can view the full billing statement by\n"
+"    logging into your project space on CommCare HQ and navigating to\n"
+"    navigate to Billing Statements: %(statements_url)s.\n"
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
+#, python-format
+msgid ""
+"\n"
+"To pay this bill, you can either choose a credit card or wire payment:\n"
+"    - To pay by credit card, please go to your Billing Statements page, "
+"click\n"
+"    on the green \"Make Payment\" button in front of your unpaid "
+"invoice(s),\n"
+"    and fill in the amount you want to pay as well as your credit card\n"
+"    details.\n"
+"    - To pay by wire, find Dimagi's bank account details on your invoice.\n"
+"    Please include the invoice number in your wire payment and make sure to\n"
+"    send an email to %(accounts_email)s after you have made the payment,\n"
+"    mentioning the date of the payment, the amount, the invoice number, and\n"
+"    the project space.\n"
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
+#, python-format
+msgid ""
+"\n"
+"Thank you for using %(plan_name)s. If you have any questions, please don't\n"
+"hesitate to contact %(invoicing_contact_email)s.\n"
+"\n"
+"Best Regards,\n"
+"The CommCare HQ Team\n"
+"www.commcarehq.org\n"
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/overdue_notice.html
+#, python-format
+msgid ""
+"\n"
+"    Your billing account has unpaid CommCare Billing Statements which are "
+"more\n"
+"    than %(days_overdue)s days overdue. The balance currently owed is:\n"
+"    $%(total)s.\n"
+"  "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/overdue_notice.html
+msgid ""
+"\n"
+"      As a reminder, payments can be made via credit card, Electronic Fund\n"
+"      Transfer (EFT), or check by following these\n"
+"      <a\n"
+"        href=\"https://confluence.dimagi.com/display/commcarepublic/"
+"How+to+Pay+by+Credit+Card+or+Wire+Payment\"\n"
+"        >instructions</a\n"
+"      >.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/overdue_notice.html
+msgid ""
+"\n"
+"      You can also pre-pay for several months at any time by following\n"
+"      <a\n"
+"        href=\"https://confluence.dimagi.com/display/commcarepublic/"
+"CommCare+Pricing+FAQs#CommCarePricingFAQs-Pre-payment\"\n"
+"        >these steps</a\n"
+"      >.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/overdue_notice.html
+#, python-format
+msgid ""
+"\n"
+"    <em>Please make a payment as soon as possible for the amount due.</em>\n"
+"    <strong\n"
+"      >If you are not able to make a payment, your subscription will be "
+"paused\n"
+"      on %(date_to_pause)s.</strong\n"
+"    >\n"
+"    As of this date, you will lose access to your project space until you\n"
+"    re-subscribe to a paid plan.\n"
+"  "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/overdue_notice.html
+#, python-format
+msgid ""
+"\n"
+"    If you have any questions or if you think your recent payments haven’t "
+"been\n"
+"    reflected in this balance, please don't hesitate to contact\n"
+"    <a href=\"mailto:%(contact_email)s\">%(contact_email)s</a>.\n"
+"  "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/overdue_notice.html
+msgid ""
+"\n"
+"    Thanks, <br />\n"
+"    The CommCare HQ Team <br />\n"
+"    www.commcarehq.org\n"
+"  "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/overdue_notice.txt
+#, python-format
+msgid ""
+"\n"
+"Dear %(domain_or_account)s administrator,\n"
+"\n"
+"Your billing account has unpaid CommCare Billing Statements which are more "
+"than %(days_overdue)s days overdue. The balance currently owed is: $"
+"%(total)s.\n"
+"\n"
+"To see the full list of unpaid invoices you can follow this link: "
+"%(statements_url)s\n"
+"As a reminder, payments can be made via credit card, Electronic Fund "
+"Transfer (EFT), or check by following the instructions at https://dimagi."
+"atlassian.net/wiki/spaces/commcarepublic/pages/2143956507/"
+"Payment+Methods+Instructions\n"
+"You can also pre-pay for several months at any time by following the steps "
+"at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143950358/"
+"CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing\n"
+"\n"
+"Please make a payment as soon as possible for the amount due.\n"
+"If you are not able to make a payment, your subscription will be paused on "
+"%(date_to_pause)s.\n"
+"As of this date, you will lose access to your project space until you re-"
+"subscribe to a paid plan.\n"
+"\n"
+"If you have any questions or if you think your recent payments haven’t been "
+"reflected in this balance, please don’t hesitate to contact "
+"%(contact_email)s.\n"
+"\n"
+"Thanks,\n"
+"The CommCare HQ Team\n"
+"www.commcarehq.org\n"
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.html
@@ -2416,30 +2644,44 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
-#, python-format
 msgid ""
 "\n"
-"    The Wire Payment Invoice you requested for project %(domain)s is now "
-"available.\n"
+"    Please find attached the prepayment invoice for your CommCare "
+"subscription.\n"
 "  "
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
+#: corehq/apps/accounting/templates/accounting/email/wire_invoice.txt
 msgid "Amount Due"
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
 msgid ""
 "\n"
-"    <b>Instructions for Wire Payment</b>\n"
+"    <b>Note:</b> Any on-demand charges for excess users or SMS will be "
+"billed separately\n"
+"    based on actual usage in the following month. If you prefer, you may "
+"also prepay for\n"
+"    expected on-demand usage. Please contact us if you would like to explore "
+"this option.\n"
 "  "
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
 msgid ""
 "\n"
-"    Dimagi accepts wire payments via ACH and wire transfer. To complete the "
-"Wire Payment, please follow these instructions:\n"
+"    <b>Instructions for Payment</b>\n"
+"  "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/wire_invoice.html
+msgid ""
+"\n"
+"    Dimagi accepts payments via ACH, wire transfer, and credit card. All "
+"payment options are listed in the attached invoice.\n"
+"    If paying by wire, please follow these instructions to ensure timely "
+"processing and identification of your payment:\n"
 "  "
 msgstr ""
 
@@ -2477,17 +2719,26 @@ msgid ""
 "\n"
 "%(greeting)s\n"
 "\n"
-"The Wire Payment Invoice you requested for project %(domain)s is now "
-"available.\n"
+"Please find attached the prepayment invoice for your CommCare subscription.\n"
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/wire_invoice.txt
+#, python-format
+msgid ""
 "\n"
-"Invoice No.: %(statement_number)s\n"
-"Project Space: %(domain)s\n"
-"Amount Due: %(amount_due)s\n"
+"Note: Any on-demand charges for excess users or SMS will be billed "
+"separately\n"
+"based on actual usage in the following month. If you prefer, you may also "
+"prepay for\n"
+"expected on-demand usage. Please contact us if you would like to explore "
+"this option.\n"
 "\n"
-"Instructions for Wire Payment\n"
+"Instructions for Payment\n"
 "\n"
-"Dimagi accepts wire payments via ACH and wire transfer. To complete the Wire "
-"Payment, please follow these instructions:\n"
+"Dimagi accepts payments via ACH, wire transfer, and credit card. All payment "
+"options are listed in the attached invoice.\n"
+"If paying by wire, please follow these instructions to ensure timely "
+"processing and identification of your payment:\n"
 "\n"
 "1. Send the wire payment to Dimagi’s bank account and include the invoice ID "
 "in the wire payment details. Dimagi’s bank account details and the invoice "
@@ -2862,7 +3113,8 @@ msgstr ""
 #: corehq/apps/styleguide/examples/bootstrap5/checkbox_form.py
 #: corehq/apps/styleguide/examples/bootstrap5/select_toggle_form.py
 #: corehq/apps/userreports/forms.py
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/userreports/ui/forms.py
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/messaging/scheduling/forms.py
@@ -3004,7 +3256,8 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/reports/templates/reports/standard/partials/bootstrap3/filter_panel.html
 #: corehq/apps/reports/templates/reports/standard/partials/bootstrap5/filter_panel.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 msgid "Generating Report..."
 msgstr ""
 
@@ -3016,7 +3269,8 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/reports/templates/reports/standard/partials/bootstrap3/filter_panel.html
 #: corehq/apps/reports/templates/reports/standard/partials/bootstrap5/filter_panel.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 msgid "Apply"
 msgstr ""
 
@@ -3063,7 +3317,8 @@ msgstr ""
 #: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_settings.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 #: corehq/messaging/scheduling/forms.py
 msgid "Advanced"
 msgstr ""
@@ -3136,28 +3391,34 @@ msgstr ""
 msgid "USD %s"
 msgstr ""
 
-#: corehq/apps/accounting/utils/downgrade.py
+#: corehq/apps/accounting/utils/unpaid_invoice.py
+#, python-brace-format
+msgid ""
+"Your CommCare Billing Statement for {account_name} is due in {num_days} days"
+msgstr ""
+
+#: corehq/apps/accounting/utils/unpaid_invoice.py
 msgid "Oh no! Your CommCare subscription for {} has been paused"
 msgstr ""
 
-#: corehq/apps/accounting/utils/downgrade.py
+#: corehq/apps/accounting/utils/unpaid_invoice.py
 msgid "CommCare Alert: {}'s subscriptions will be paused after tomorrow!"
 msgstr ""
 
-#: corehq/apps/accounting/utils/downgrade.py
+#: corehq/apps/accounting/utils/unpaid_invoice.py
 msgid "subscriptions on {}"
 msgstr ""
 
-#: corehq/apps/accounting/utils/downgrade.py
+#: corehq/apps/accounting/utils/unpaid_invoice.py
 msgid "CommCare Alert: {}'s subscription will be paused after tomorrow!"
 msgstr ""
 
-#: corehq/apps/accounting/utils/downgrade.py
+#: corehq/apps/accounting/utils/unpaid_invoice.py
 msgid "subscription for {}"
 msgstr ""
 
-#: corehq/apps/accounting/utils/downgrade.py
-msgid "CommCare Billing Statement 30 days Overdue for {}"
+#: corehq/apps/accounting/utils/unpaid_invoice.py
+msgid "CommCare Billing Statement {} days Overdue for {}"
 msgstr ""
 
 #: corehq/apps/accounting/views.py corehq/apps/domain/views/accounting.py
@@ -4062,7 +4323,8 @@ msgid "Form"
 msgstr ""
 
 #: corehq/apps/app_manager/fields.py
-#: corehq/apps/userreports/templates/userreports/data_source_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/data_source_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/data_source_debugger.html
 msgid "Data Source"
 msgstr ""
 
@@ -4641,7 +4903,8 @@ msgstr ""
 #: corehq/apps/reports/standard/users/reports.py
 #: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
 #: corehq/apps/reports/templates/reports/bootstrap5/tableau_visualization.html
-#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expressions.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expressions.html
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html
 #: corehq/motech/templates/motech/connection_settings.html
 #: corehq/tabs/tabclasses.py
@@ -5328,7 +5591,8 @@ msgstr ""
 #: corehq/apps/locations/templates/locations/location_types.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 msgid "Required"
 msgstr ""
 
@@ -5959,6 +6223,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 #: corehq/apps/case_importer/templates/case_importer/excel_fields.html
+#: corehq/apps/data_cleaning/forms/columns.py
 #: corehq/apps/data_cleaning/forms/filters.py
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/views.py
@@ -6103,11 +6368,13 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
 #: corehq/apps/builds/templates/builds/edit_menu.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+#: corehq/apps/data_cleaning/forms/columns.py
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/views.py
 #: corehq/apps/reports/templates/reports/filters/bootstrap3/explorer_columns.html
 #: corehq/apps/reports/templates/reports/filters/bootstrap5/explorer_columns.html
-#: corehq/apps/userreports/templates/userreports/partials/property_list_configuration.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/property_list_configuration.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/property_list_configuration.html
 msgid "Label"
 msgstr ""
 
@@ -6201,27 +6468,30 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/form_view.html
 msgid ""
 "\n"
-"                      The User Properties feature is no longer available "
-"because of the change in your\n"
-"                      CommCare subscription. Although currently-deployed "
-"applications will still\n"
-"                      function properly, it will not be possible to update "
-"or redeploy them unless\n"
-"                      the User Properties functionality is removed, or you "
-"upgrade your CommCare\n"
-"                      subscription.\n"
-"                    "
+"                        The User Properties feature is no longer available\n"
+"                        because of the change in your CommCare "
+"subscription.\n"
+"                        Although currently-deployed applications will still\n"
+"                        function properly, it will not be possible to update "
+"or\n"
+"                        redeploy them unless the User Properties "
+"functionality\n"
+"                        is removed, or you upgrade your CommCare "
+"subscription.\n"
+"                      "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_view.html
 msgid ""
 "\n"
-"                      WARNING: By clicking \"Remove User Properties\" you "
-"will lose User Properties\n"
-"                      functionality if you redeploy your application. "
-"However, you will still be\n"
-"                      able to see all previously collected data.\n"
-"                    "
+"                        WARNING: By clicking \"Remove User Properties\" you "
+"will\n"
+"                        lose User Properties functionality if you redeploy "
+"your\n"
+"                        application. However, you will still be able to see "
+"all\n"
+"                        previously collected data.\n"
+"                      "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_view.html
@@ -6405,7 +6675,8 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/standard/bootstrap5/submission_error_report.html
 #: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/html_guide/attribute_wrap_length.html
 #: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/partial_form.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
@@ -7802,7 +8073,8 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/filters/bootstrap3/sensitive_columns.html
 #: corehq/apps/reports/templates/reports/filters/bootstrap5/explorer_columns.html
 #: corehq/apps/reports/templates/reports/filters/bootstrap5/sensitive_columns.html
-#: corehq/apps/userreports/templates/userreports/partials/property_list_configuration.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/property_list_configuration.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/property_list_configuration.html
 msgid "Property"
 msgstr ""
 
@@ -7827,6 +8099,14 @@ msgid "Add Property"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
+msgid "Save Questions to Case Properties"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
+msgid "Save Questions to User Properties"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid ""
 "\n"
 "          There are one or more form questions that are being saved to "
@@ -7840,6 +8120,10 @@ msgid ""
 "target=\"_blank\">this documentation</a>\n"
 "          .\n"
 "        "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
+msgid "User Property"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
@@ -7870,6 +8154,17 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "No properties will be saved"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
+msgid "Add Case Property"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
+msgid "Add User Property"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
@@ -8600,7 +8895,8 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
-#: corehq/apps/userreports/templates/userreports/partials/property_list_configuration.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/property_list_configuration.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/property_list_configuration.html
 msgid "Format"
 msgstr ""
 
@@ -8997,7 +9293,8 @@ msgid "Optimize"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
-#: corehq/apps/userreports/templates/userreports/partials/property_list_configuration.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/property_list_configuration.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/property_list_configuration.html
 msgid "N/A"
 msgstr ""
 
@@ -9526,7 +9823,8 @@ msgid "Series"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/graph_configuration_modal.html
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_report_config.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_report_config.html
 msgid "Configuration"
 msgstr ""
 
@@ -9606,8 +9904,10 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
 #: corehq/apps/sms/forms.py corehq/apps/sms/views.py
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
-#: corehq/apps/userreports/templates/userreports/ucr_expression.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expression.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expression.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/userreports/views.py corehq/motech/dhis2/forms.py
 #: corehq/motech/dhis2/views.py corehq/motech/generic_inbound/views.py
 msgid "Description"
@@ -9618,7 +9918,8 @@ msgid "Sync Delay (in hours)"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/mobile_report_configs.html
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid "Data Table"
 msgstr ""
 
@@ -9659,7 +9960,8 @@ msgid " hours."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/mobile_report_configs.html
-#: corehq/apps/userreports/templates/userreports/configurable_reports_home.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/configurable_reports_home.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/configurable_reports_home.html
 msgid "Add Report"
 msgstr ""
 
@@ -10641,6 +10943,16 @@ msgstr ""
 
 #: corehq/apps/app_manager/ui_translations/ui_translations.py
 msgid "Could not find sheet \"translations\" in uploaded file."
+msgstr ""
+
+#: corehq/apps/app_manager/ui_translations/ui_translations.py
+msgid "Property '' is empty. We did not add it to the translations"
+msgstr ""
+
+#: corehq/apps/app_manager/ui_translations/ui_translations.py
+#, python-brace-format
+msgid ""
+"Property '{prop}' is not a known CommCare UI string, but we added it anyway."
 msgstr ""
 
 #: corehq/apps/app_manager/ui_translations/ui_translations.py
@@ -13487,10 +13799,23 @@ msgstr ""
 msgid "Please add case owners to filter the list of cases."
 msgstr ""
 
+#: corehq/apps/data_cleaning/forms/columns.py
 #: corehq/apps/data_cleaning/forms/filters.py
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/views.py
 msgid "Data Type"
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/columns.py
+#: corehq/apps/data_cleaning/forms/filters.py
+msgid "Select a Case Property"
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/columns.py
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/manage_columns_form.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
+msgid "Add Column"
 msgstr ""
 
 #: corehq/apps/data_cleaning/forms/filters.py
@@ -13498,10 +13823,6 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
 msgid "Match Type"
-msgstr ""
-
-#: corehq/apps/data_cleaning/forms/filters.py
-msgid "Select a Case Property"
 msgstr ""
 
 #: corehq/apps/data_cleaning/forms/filters.py
@@ -13774,6 +14095,11 @@ msgstr ""
 msgid "on or after"
 msgstr ""
 
+#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/templatetags/data_cleaning.py
+msgid "unknown"
+msgstr ""
+
 #: corehq/apps/data_cleaning/models.py corehq/apps/data_cleaning/utils/cases.py
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/geospatial/templates/geospatial/gps_capture.html
@@ -13880,6 +14206,10 @@ msgid ""
 "  "
 msgstr ""
 
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/pinned_filter_form.html
+msgid "Reset"
+msgstr ""
+
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/button_bar.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/offcanvas.html
 msgid "Filter Cases"
@@ -13893,6 +14223,25 @@ msgstr ""
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/button_bar.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/offcanvas.html
 msgid "Clean Selected Cases"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#, python-format
+msgid ""
+"\n"
+"              Filters Applied: %(num_records)s Matching Records\n"
+"            "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+msgid "Clear Filters"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+msgid ""
+"\n"
+"            0 Records Selected\n"
+"          "
 msgstr ""
 
 #: corehq/apps/data_cleaning/utils/cases.py corehq/apps/geospatial/reports.py
@@ -13949,12 +14298,16 @@ msgstr ""
 msgid "Last Modified (UTC)"
 msgstr ""
 
+#: corehq/apps/data_cleaning/views/columns.py
+msgid "Cannot retrieve columns, session was not found."
+msgstr ""
+
 #: corehq/apps/data_cleaning/views/filters.py
 msgid "Cannot retrieve pinned filters, session was not found."
 msgstr ""
 
 #: corehq/apps/data_cleaning/views/filters.py
-msgid "Cannot retrieve column filters, session was not found."
+msgid "Cannot retrieve filters, session was not found."
 msgstr ""
 
 #: corehq/apps/data_cleaning/views/main.py
@@ -13976,6 +14329,10 @@ msgstr ""
 #: corehq/apps/data_cleaning/views/main.py
 #, python-brace-format
 msgid "Case Type \"{case_type}\""
+msgstr ""
+
+#: corehq/apps/data_cleaning/views/main.py
+msgid "Caches successfully cleared."
 msgstr ""
 
 #: corehq/apps/data_cleaning/views/main.py
@@ -14166,18 +14523,13 @@ msgstr ""
 #: corehq/apps/data_dictionary/util.py corehq/apps/export/forms.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 msgid "YYYY-MM-DD"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Deprecate"
-msgstr ""
-
-#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
-msgid "Add Case Property"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -14269,7 +14621,8 @@ msgstr ""
 #: corehq/apps/integration/templates/payments/partials/payments_confirmation_modal.html
 #: corehq/apps/reports/templates/reports/bootstrap3/notification_unsubscribe.html
 #: corehq/apps/reports/templates/reports/bootstrap5/notification_unsubscribe.html
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "Confirm"
 msgstr ""
 
@@ -14914,11 +15267,6 @@ msgstr ""
 #: corehq/apps/reports_core/templates/reports_core/partials/bootstrap3/filter_panel.html
 #: corehq/apps/reports_core/templates/reports_core/partials/bootstrap5/filter_panel.html
 msgid "Report Filters"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-msgid "Add Column"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
@@ -19676,7 +20024,6 @@ msgid "OData Feeds Available"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py corehq/apps/hqwebapp/forms.py
-#: corehq/apps/integration/kyc/tables.py
 #: corehq/apps/integration/payments/tables.py corehq/apps/registration/forms.py
 #: corehq/apps/reports/standard/sms.py corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/web_users.html
@@ -20732,49 +21079,56 @@ msgstr ""
 #: corehq/apps/export/forms.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 msgid "Last 7 days"
 msgstr ""
 
 #: corehq/apps/export/forms.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 msgid "Last 30 days"
 msgstr ""
 
 #: corehq/apps/export/forms.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 msgid "Last month"
 msgstr ""
 
 #: corehq/apps/export/forms.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 msgid "Last year"
 msgstr ""
 
 #: corehq/apps/export/forms.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 msgid "Days ago"
 msgstr ""
 
 #: corehq/apps/export/forms.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 msgid "Since a date"
 msgstr ""
 
 #: corehq/apps/export/forms.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 msgid "From a date to a date"
 msgstr ""
 
@@ -20789,14 +21143,16 @@ msgstr ""
 #: corehq/apps/export/forms.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 msgid "Number of Days"
 msgstr ""
 
 #: corehq/apps/export/forms.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 msgid "Begin Date"
 msgstr ""
 
@@ -24493,6 +24849,7 @@ msgid "Request Method"
 msgstr ""
 
 #: corehq/apps/hqadmin/reports.py
+#: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
 msgid "Request Path"
 msgstr ""
 
@@ -25655,14 +26012,12 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"            You're at risk of losing access to your project space\n"
-"            if your invoice isn't paid in 1 day.\n"
-"          "
+"            You're at risk of losing access to your project space if your\n"
+"            invoice isn't paid in 1 day. "
 msgid_plural ""
-"\n"
-"            You're at risk of losing access to your project space\n"
-"            if your invoice isn't paid in %(days_until_downgrade)s\n"
-"            days.\n"
+" You're at risk of losing\n"
+"            access to your project space if your invoice isn't paid in\n"
+"            %(days_until_downgrade)s days.\n"
 "          "
 msgstr[0] ""
 msgstr[1] ""
@@ -25911,7 +26266,15 @@ msgid "Errors"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
-msgid "Server Error Encountered"
+msgid "HTMX Request: Server Error Encountered"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
+msgid "Additional Details"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
+msgid "HTMX Event Error"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/htmx_action_error.html
@@ -27198,18 +27561,6 @@ msgid "API error occurred. Please reach out to support."
 msgstr ""
 
 #: corehq/apps/integration/kyc/tables.py
-msgid "National ID Number"
-msgstr ""
-
-#: corehq/apps/integration/kyc/tables.py
-msgid "Street Address"
-msgstr ""
-
-#: corehq/apps/integration/kyc/tables.py
-msgid "Post Code"
-msgstr ""
-
-#: corehq/apps/integration/kyc/tables.py
 msgid "KYC Status"
 msgstr ""
 
@@ -27763,7 +28114,8 @@ msgstr ""
 
 #: corehq/apps/linked_domain/templates/linked_domain/partials/get_started.html
 #: corehq/apps/linked_domain/views.py
-#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expressions.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expressions.html
 #: corehq/tabs/tabclasses.py
 msgid "Linked Project Spaces"
 msgstr ""
@@ -30181,7 +30533,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/register_new_user/success.html
-#: corehq/apps/userreports/templates/userreports/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/expression_debugger.html
 msgid "Success!"
 msgstr ""
 
@@ -32028,7 +32381,8 @@ msgid " (Inactive)"
 msgstr ""
 
 #: corehq/apps/reports/standard/cases/filters.py
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 #: corehq/apps/users/forms.py
 msgid "Columns"
 msgstr ""
@@ -33713,13 +34067,15 @@ msgstr ""
 
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/description.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/description.html
-#: corehq/apps/userreports/templates/userreports/base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/base.html
 msgid "Why can't I see any data?"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/description.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/description.html
-#: corehq/apps/userreports/templates/userreports/base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/base.html
 msgid ""
 "Please choose your filters above and click <strong>Apply</strong> to see "
 "report data."
@@ -33727,31 +34083,36 @@ msgstr ""
 
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/filter_panel.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/filter_panel.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 msgid "Favorites"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/filter_panel.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/filter_panel.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 msgid "You don't have any favorites"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/filter_panel.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/filter_panel.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 msgid "Email Supported"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 msgid "Date Filter"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
 msgid "Default Date Range"
 msgstr ""
 
@@ -39295,21 +39656,24 @@ msgstr ""
 msgid "There was an error rebuilding Your UCR table {} in {}."
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/base.html
 msgid ""
 "\n"
 "        There was an error rendering your report.\n"
 "      "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/base.html
 msgid ""
 "\n"
 "        Warning:\n"
 "      "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/base.html
 msgid ""
 "\n"
 "            Charts cannot be displayed with more than 25 categories. Please "
@@ -39317,24 +39681,30 @@ msgid ""
 "          "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/base.html
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/base.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid "Fit all data into view"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/base.html
 msgid ""
 "\n"
 "            Note:\n"
 "          "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/base.html
 msgid "Base Query/Queries"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/base_report_builder.html
-#: corehq/apps/userreports/templates/userreports/paywall/pricing.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/base_report_builder.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/base_report_builder.html
+#: corehq/apps/userreports/templates/userreports/paywall/bootstrap3/pricing.html
+#: corehq/apps/userreports/templates/userreports/paywall/bootstrap5/pricing.html
 #, python-format
 msgid ""
 "\n"
@@ -39343,8 +39713,10 @@ msgid ""
 "          "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/base_report_builder.html
-#: corehq/apps/userreports/templates/userreports/paywall/pricing.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/base_report_builder.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/base_report_builder.html
+#: corehq/apps/userreports/templates/userreports/paywall/bootstrap3/pricing.html
+#: corehq/apps/userreports/templates/userreports/paywall/bootstrap5/pricing.html
 msgid ""
 "\n"
 "            If you would like to create more, delete one of your existing "
@@ -39352,8 +39724,10 @@ msgid ""
 "          "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/base_report_builder.html
-#: corehq/apps/userreports/templates/userreports/paywall/pricing.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/base_report_builder.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/base_report_builder.html
+#: corehq/apps/userreports/templates/userreports/paywall/bootstrap3/pricing.html
+#: corehq/apps/userreports/templates/userreports/paywall/bootstrap5/pricing.html
 #, python-format
 msgid ""
 "\n"
@@ -39362,192 +39736,241 @@ msgid ""
 "          "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/configurable_report.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/configurable_report.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/configurable_report.html
 msgid "Subscribe to Report Builder"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/configurable_reports_home.html
-#: corehq/apps/userreports/templates/userreports/userreports_base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/configurable_reports_home.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/userreports_base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/configurable_reports_home.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/userreports_base.html
 #: corehq/apps/userreports/views.py corehq/tabs/tabclasses.py
 msgid "Custom Web Reports"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/configurable_reports_home.html
-#: corehq/apps/userreports/templates/userreports/userreports_base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/configurable_reports_home.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/userreports_base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/configurable_reports_home.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/userreports_base.html
 msgid "Add Custom Web Report"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/configurable_reports_home.html
-#: corehq/apps/userreports/templates/userreports/userreports_base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/configurable_reports_home.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/userreports_base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/configurable_reports_home.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/userreports_base.html
 msgid "Import Custom Web Report"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/configurable_reports_home.html
-#: corehq/apps/userreports/templates/userreports/userreports_base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/configurable_reports_home.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/userreports_base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/configurable_reports_home.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/userreports_base.html
 msgid "Add Custom Web Report Source"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/configurable_reports_home.html
-#: corehq/apps/userreports/templates/userreports/userreports_base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/configurable_reports_home.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/userreports_base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/configurable_reports_home.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/userreports_base.html
 #: corehq/apps/userreports/views.py
 msgid "Configurable Reports"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/configurable_reports_home.html
-#: corehq/apps/userreports/templates/userreports/import_report.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/configurable_reports_home.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/import_report.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/configurable_reports_home.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/import_report.html
 #: corehq/apps/userreports/views.py
 msgid "Import Report"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/configurable_reports_home.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/configurable_reports_home.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/configurable_reports_home.html
 msgid "Add Data Source"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/data_source_debugger.html
-#: corehq/apps/userreports/templates/userreports/userreports_base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/data_source_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/userreports_base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/data_source_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/userreports_base.html
 #: corehq/apps/userreports/views.py
 msgid "Custom Web Report Source Debugger"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/data_source_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/data_source_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/data_source_debugger.html
 msgid "UCR Data Source Debugger"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/data_source_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/data_source_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/data_source_debugger.html
 msgid "Custom Web Report Source"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/data_source_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/data_source_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/data_source_debugger.html
 msgid "Document IDs"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/data_source_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/data_source_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/data_source_debugger.html
 msgid "Comma separated"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/data_source_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/data_source_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/data_source_debugger.html
 msgid "Submit!"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/data_source_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/data_source_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/data_source_debugger.html
 msgid "Evaluated rows"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/data_source_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/data_source_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/data_source_debugger.html
 msgid "Rows from the database"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 #: corehq/apps/userreports/templates/userreports/partials/build_in_progress_warning.html
 msgid "Populating your report did not complete successfully."
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "Please note that this datasource is being rebuilt."
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "Please note that this datasource is being rebuilt in place."
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid ""
 "Please note that this datasource is yet be built / rebuilt by CommCare HQ."
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "Preview Custom Web Report Data"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "Custom Web Report Source Summary"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "Preview Data"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 #: corehq/apps/userreports/views.py
 msgid "Data Source Summary"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "Rebuild Custom Web Report Source"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "Rebuild Data Source"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "Custom Web Report Source JSON"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "Data Source JSON"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "Resume Build"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "Rebuild Table in Place"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "Delete Custom Web Report Source"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "Delete Data Source"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "This datasource is read only, any changes made can not be saved."
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "Datasource currently unused"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "Reports dependent on this datasource"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "Are you sure you want to delete this data source?"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid ""
 "Deleting this will break the reports below that refer to the data source"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "Are you sure you want to rebuild this custom web report source?"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid "Are you sure you want to rebuild this data source?"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid ""
 "Rebuilding this report source will erase all the existing data in the report "
 "source and start populating it again. While the rebuild is happening, "
 "reports based on this data source will show incomplete data."
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid ""
 "Rebuilding this data source will erase all the existing data in the data "
 "source and start populating it again. While the rebuild is happening, "
 "reports based on this data source will show incomplete data."
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid ""
 "\n"
 "              <p>\n"
@@ -39559,81 +39982,99 @@ msgid ""
 "            "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_report_config.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_report_config.html
 msgid "View Custom Web Report"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_report_config.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_report_config.html
 msgid "View Report"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_report_config.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_report_config.html
 msgid "View Custom Web Report Source"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_report_config.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_report_config.html
 msgid "View Data Source"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_report_config.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_report_config.html
 msgid "Custom Web Report JSON"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_report_config.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_report_config.html
 msgid "Report Source"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_report_config.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_report_config.html
 msgid "Usage"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_report_config.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_report_config.html
 msgid "This report is not referred to by any apps in this domain."
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_report_config.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_report_config.html
 msgid ""
 "This is a static report, which might be referred to by apps in other domains."
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/edit_report_config.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_report_config.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_report_config.html
 msgid ""
 "\n"
 "            The following apps depend on this report:\n"
 "          "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/expression_debugger.html
 msgid "Custom Web Report Expression Debugger"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/expression_debugger.html
 msgid "UCR Expression Debugger"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/expression_debugger.html
 msgid ""
 "Paste an expression and document information below to see the result of that "
 "expression evaluated on the document."
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/expression_debugger.html
 msgid "Input Type"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/expression_debugger.html
 msgid "Document Type"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/expression_debugger.html
 msgid "Document ID"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/expression_debugger.html
 msgid "Document JSON"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/expression_debugger.html
 msgid ""
 "\n"
 "            Your document JSON has parse errors!\n"
@@ -39642,25 +40083,30 @@ msgid ""
 "          "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/expression_debugger.html
 msgid "Custom Web Report Source (optional)"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/expression_debugger.html
 msgid "Data Source (optional)"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/expression_debugger.html
 msgid ""
 "If specified, named filters and expressions from this data source can be "
 "used."
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/expression_debugger.html
 msgid "Saved expression"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/expression_debugger.html
 #, python-format
 msgid ""
 "\n"
@@ -39669,11 +40115,13 @@ msgid ""
 "            "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/expression_debugger.html
 msgid "Expression JSON"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/expression_debugger.html
 msgid ""
 "\n"
 "            Your expression has parse errors!\n"
@@ -39682,21 +40130,227 @@ msgid ""
 "          "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/expression_debugger.html
 msgid "Evaluate!"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/expression_debugger.html
-#: corehq/apps/userreports/templates/userreports/ucr_expression.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expression.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/expression_debugger.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expression.html
 msgid "Format JSON"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/import_report.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/import_report.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/import_report.html
 msgid "Report spec"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/import_report.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/import_report.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/import_report.html
 msgid "paste report source here"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/preview_data.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/preview_data.html
+#, python-format
+msgid "Preview table: %(display_name)s (%(total_rows)s total rows)"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/report_error.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/report_error.html
+msgid "Technical Details:"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/report_error.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/report_error.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/delete_report_button.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/delete_report_button.html
+msgid "Delete Report"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expression.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expression.html
+msgid "Named Expression"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expression.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expression.html
+msgid "Named Filter"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expression.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expression.html
+#: corehq/apps/userreports/views.py
+msgid "Definition"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expression.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expression.html
+msgid ""
+"\n"
+"                    Your expression has parse errors!\n"
+"                    For more details, try pasting into a <a href=\"http://"
+"jsonlint.com/\" target=\"_blank\">JSON Validator</a>.\n"
+"                  "
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expressions.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expressions.html
+msgid "see more"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expressions.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expressions.html
+msgid "Update Expression"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expressions.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expressions.html
+msgid ""
+"\n"
+"                    Delete expression <strong data-bind=\"text: name\"></"
+"strong>?\n"
+"                  "
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expressions.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expressions.html
+msgid ""
+"\n"
+"                    Yes, delete the <strong data-bind=\"text: name\"></"
+"strong> expression.\n"
+"                  "
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expressions.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expressions.html
+msgid "Deleting Expression..."
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expressions.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expressions.html
+msgid "Delete Expression"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/userreports_base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/userreports_base.html
+#: corehq/tabs/tabclasses.py
+msgid "Tools"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/userreports_base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/userreports_base.html
+msgid "Custom Web Report Source from Application"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/userreports_base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/userreports_base.html
+#: corehq/apps/userreports/views.py
+msgid "Expression Debugger"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/userreports_base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/userreports_base.html
+msgid "Add report"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/userreports_base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/userreports_base.html
+msgid "Import report"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/userreports_base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/userreports_base.html
+msgid "Add data source"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/userreports_base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/userreports_base.html
+msgid "Data source from application"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/userreports_base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/userreports_base.html
+#: corehq/apps/userreports/views.py
+msgid "Data Source Debugger"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/userreports_base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/userreports_base.html
+msgid "Edit Reports"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/userreports_base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/userreports_base.html
+msgid "Edit Custom Data Sources"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/userreports_base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/userreports_base.html
+msgid "Edit Data Sources"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/userreports_base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/userreports_base.html
+msgid "Aggregate Data Sources"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/delete_report_button.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/delete_report_button.html
+msgid "Delete Custom Web Report"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/delete_report_button.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/delete_report_button.html
+msgid "Are you sure you want to delete this report?"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/delete_report_button.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/delete_report_button.html
+msgid ""
+"\n"
+"              Deleting this will break the apps below, which refer to this "
+"report.\n"
+"              In addition, there may be older app versions that depend on "
+"these reports but are not displayed here.\n"
+"              Please delete with caution.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
+msgid "Some required fields are missing. Please complete them before saving."
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/property_list_configuration.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/property_list_configuration.html
+msgid "Filter Value"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/property_list_configuration.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/property_list_configuration.html
+msgid "Please select a property."
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/property_list_configuration.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/property_list_configuration.html
+msgid ""
+"\n"
+"          This property or question no longer exists in your app. <br>\n"
+"          You must delete this property to update this report.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/property_list_configuration.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/property_list_configuration.html
+msgid "Display text should not be blank."
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/property_list_configuration.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/property_list_configuration.html
+msgid "Filter Value should not be blank."
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/partials/build_in_progress_warning.html
@@ -39715,37 +40369,9 @@ msgid ""
 "        "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/partials/delete_report_button.html
-msgid "Delete Custom Web Report"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/partials/delete_report_button.html
-#: corehq/apps/userreports/templates/userreports/report_error.html
-msgid "Delete Report"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/partials/delete_report_button.html
-msgid "Are you sure you want to delete this report?"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/partials/delete_report_button.html
-msgid ""
-"\n"
-"              Deleting this will break the apps below, which refer to this "
-"report.\n"
-"              In addition, there may be older app versions that depend on "
-"these reports but are not displayed here.\n"
-"              Please delete with caution.\n"
-"            "
-msgstr ""
-
 #: corehq/apps/userreports/templates/userreports/partials/edit_report_button.html
 #: corehq/apps/userreports/views.py
 msgid "Edit Report"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
-msgid "Some required fields are missing. Please complete them before saving."
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/partials/preview_warning.html
@@ -39776,41 +40402,21 @@ msgid ""
 "      "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/partials/property_list_configuration.html
-msgid "Filter Value"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/partials/property_list_configuration.html
-msgid "Please select a property."
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/partials/property_list_configuration.html
-msgid ""
-"\n"
-"          This property or question no longer exists in your app. <br>\n"
-"          You must delete this property to update this report.\n"
-"        "
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/partials/property_list_configuration.html
-msgid "Display text should not be blank."
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/partials/property_list_configuration.html
-msgid "Filter Value should not be blank."
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/paywall/activating_subscription.html
-#: corehq/apps/userreports/templates/userreports/paywall/pricing.html
+#: corehq/apps/userreports/templates/userreports/paywall/bootstrap3/activating_subscription.html
+#: corehq/apps/userreports/templates/userreports/paywall/bootstrap3/pricing.html
+#: corehq/apps/userreports/templates/userreports/paywall/bootstrap5/activating_subscription.html
+#: corehq/apps/userreports/templates/userreports/paywall/bootstrap5/pricing.html
 #: corehq/apps/userreports/views.py corehq/tabs/tabclasses.py
 msgid "Report Builder"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/paywall/activating_subscription.html
+#: corehq/apps/userreports/templates/userreports/paywall/bootstrap3/activating_subscription.html
+#: corehq/apps/userreports/templates/userreports/paywall/bootstrap5/activating_subscription.html
 msgid "Subscribing to Report Builder"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/paywall/activating_subscription.html
+#: corehq/apps/userreports/templates/userreports/paywall/bootstrap3/activating_subscription.html
+#: corehq/apps/userreports/templates/userreports/paywall/bootstrap5/activating_subscription.html
 #, python-format
 msgid ""
 "\n"
@@ -39822,11 +40428,13 @@ msgid ""
 "      "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/paywall/pricing.html
+#: corehq/apps/userreports/templates/userreports/paywall/bootstrap3/pricing.html
+#: corehq/apps/userreports/templates/userreports/paywall/bootstrap5/pricing.html
 msgid "Build Your Own Reports In CommCare!"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/paywall/pricing.html
+#: corehq/apps/userreports/templates/userreports/paywall/bootstrap3/pricing.html
+#: corehq/apps/userreports/templates/userreports/paywall/bootstrap5/pricing.html
 msgid ""
 "\n"
 "          Build map reports, pie and bar charts, and form and case lists "
@@ -39834,7 +40442,8 @@ msgid ""
 "        "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/paywall/pricing.html
+#: corehq/apps/userreports/templates/userreports/paywall/bootstrap3/pricing.html
+#: corehq/apps/userreports/templates/userreports/paywall/bootstrap5/pricing.html
 msgid ""
 "\n"
 "          Report Builder is part of the <strong>Pro</strong> or higher "
@@ -39842,7 +40451,8 @@ msgid ""
 "        "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/paywall/pricing.html
+#: corehq/apps/userreports/templates/userreports/paywall/bootstrap3/pricing.html
+#: corehq/apps/userreports/templates/userreports/paywall/bootstrap5/pricing.html
 #, python-format
 msgid ""
 "\n"
@@ -39851,44 +40461,43 @@ msgid ""
 "          "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/paywall/pricing.html
+#: corehq/apps/userreports/templates/userreports/paywall/bootstrap3/pricing.html
+#: corehq/apps/userreports/templates/userreports/paywall/bootstrap5/pricing.html
 msgid "Screenshot of report builder"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/preview_data.html
-#, python-format
-msgid "Preview table: %(display_name)s (%(total_rows)s total rows)"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/report_error.html
-msgid "Technical Details:"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid "Save and View Report"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid "Enter report name here"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid "Enter report description here"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid "Type of Report"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid "Indicators"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid "User Filters"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid ""
 "\n"
 "                    Add filters to your report to allow viewers to select "
@@ -39898,11 +40507,13 @@ msgid ""
 "                  "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid "Default Filters"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid ""
 "\n"
 "                    These filters are not displayed to report viewers and "
@@ -39910,19 +40521,23 @@ msgid ""
 "                  "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid "Preview Report"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid "Preview includes at most 100 cases"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid "Preview includes at most 100 forms"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid ""
 "\n"
 "                      Properties with FORMAT <strong>Sum</strong> or "
@@ -39930,7 +40545,8 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid ""
 "\n"
 "                      This bar chart below will not be shown in the report "
@@ -39940,7 +40556,8 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid ""
 "\n"
 "                      Pie charts will show the breakdown of the first column "
@@ -39948,7 +40565,8 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid ""
 "\n"
 "                      This pie chart below will not be shown in the report "
@@ -39958,23 +40576,28 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid "Add Chart"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid "Map Preview"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid "Location field"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid "Chart Preview"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid ""
 "\n"
 "                    Charts cannot be displayed with more than 25 "
@@ -39984,7 +40607,8 @@ msgid ""
 "                  "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid ""
 "\n"
 "                      At least one indicator must not be of format \"Group "
@@ -39992,7 +40616,8 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid ""
 "\n"
 "                    There was an error rendering your report preview. Please "
@@ -40001,113 +40626,9 @@ msgid ""
 "                  "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/data_source_select.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/data_source_select.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/data_source_select.html
 msgid "Step 1 of 2 - Select Data Source"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/ucr_expression.html
-msgid "Named Expression"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/ucr_expression.html
-msgid "Named Filter"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/ucr_expression.html
-#: corehq/apps/userreports/views.py
-msgid "Definition"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/ucr_expression.html
-msgid ""
-"\n"
-"                    Your expression has parse errors!\n"
-"                    For more details, try pasting into a <a href=\"http://"
-"jsonlint.com/\" target=\"_blank\">JSON Validator</a>.\n"
-"                  "
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
-msgid "see more"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
-msgid "Update Expression"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
-msgid ""
-"\n"
-"                    Delete expression <strong data-bind=\"text: name\"></"
-"strong>?\n"
-"                  "
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
-msgid ""
-"\n"
-"                    Yes, delete the <strong data-bind=\"text: name\"></"
-"strong> expression.\n"
-"                  "
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
-msgid "Deleting Expression..."
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/ucr_expressions.html
-msgid "Delete Expression"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/userreports_base.html
-#: corehq/tabs/tabclasses.py
-msgid "Tools"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/userreports_base.html
-msgid "Custom Web Report Source from Application"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/userreports_base.html
-#: corehq/apps/userreports/views.py
-msgid "Expression Debugger"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/userreports_base.html
-msgid "Add report"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/userreports_base.html
-msgid "Import report"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/userreports_base.html
-msgid "Add data source"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/userreports_base.html
-msgid "Data source from application"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/userreports_base.html
-#: corehq/apps/userreports/views.py
-msgid "Data Source Debugger"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/userreports_base.html
-msgid "Edit Reports"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/userreports_base.html
-msgid "Edit Custom Data Sources"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/userreports_base.html
-msgid "Edit Data Sources"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/userreports_base.html
-msgid "Aggregate Data Sources"
 msgstr ""
 
 #: corehq/apps/userreports/transforms/factory.py

@@ -10,9 +10,12 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.kyc.forms import KycConfigureForm
-from corehq.apps.integration.kyc.models import KycConfig, KycVerificationStatus
-from corehq.apps.integration.kyc.services import verify_users
+from corehq.apps.integration.kyc.models import KycConfig, KycVerificationStatus, KycVerificationFailureCause
+from corehq.apps.integration.kyc.services import (
+    verify_users,
+)
 from corehq.apps.integration.kyc.tables import KycVerifyTable
+from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 from corehq.util.metrics import metrics_counter, metrics_gauge
 
@@ -94,16 +97,35 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         row_data = {
             'id': kyc_user.user_id,
             'has_invalid_data': False,
-            'kyc_verification_status': kyc_user.get('kyc_verification_status'),
-            'kyc_last_verified_at': kyc_user.get('kyc_verification_status'),
+            'kyc_verification_status': {
+                'status': kyc_user.get('kyc_verification_status'),
+                'error_message': self._get_verification_error_message(kyc_user),
+            },
+            'kyc_last_verified_at': kyc_user.get('kyc_last_verified_at'),
         }
-        for field in self.kyc_config.api_field_to_user_data_map.values():
+        for provider_field, field in self.kyc_config.get_api_field_to_user_data_map_values().items():
             value = kyc_user.get(field)
             if not value:
                 row_data['has_invalid_data'] = True
             else:
+                if self.kyc_config.is_sensitive_field(provider_field):
+                    value = PASSWORD_PLACEHOLDER
                 row_data[field] = value
         return row_data
+
+    @staticmethod
+    def _get_verification_error_message(kyc_user):
+        verification_error = kyc_user.get('kyc_verification_error')
+        if verification_error:
+            try:
+                return KycVerificationFailureCause(verification_error).label
+            except ValueError:
+                return _('Unknown error')
+        return None
+
+    @staticmethod
+    def _is_invalid_value(value):
+        return value in ['', None]
 
     @hq_hx_action('post')
     def verify_rows(self, request, *args, **kwargs):
