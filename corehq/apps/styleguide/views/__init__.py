@@ -287,16 +287,16 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
                 'selections': {
                     'button_group': self.example('button_group.html'),
                     'select2': self.example('select2.html', 'select2.js'),
-                    'multiselect': self.example('multiselect.html'),
+                    'multiselect': self.example('multiselect.html', 'multiselect.js'),
                 },
                 'checkbox_in_form': self.example('checkbox_in_form.html'),
                 'lonely_checkbox': self.example('lonely_checkbox.html'),
                 'modals': self.example('modals.html'),
-                'pagination': self.example('pagination.html'),
-                'search_box': self.example('search_box.html'),
-                'inline_edit': self.example('inline_edit.html'),
-                'help': self.example('help.html'),
-                'feedback': self.example('feedback.html'),
+                'pagination': self.example('pagination.html', 'pagination.js'),
+                'search_box': self.example('search_box.html', 'search_box.js'),
+                'inline_edit': self.example('inline_edit.html', 'inline_edit.js'),
+                'help': self.example('help.html', 'help.js'),
+                'feedback': self.example('feedback.html', 'feedback.js'),
             },
         }
 
