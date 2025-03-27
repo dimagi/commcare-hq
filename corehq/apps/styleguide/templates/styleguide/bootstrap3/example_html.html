@@ -4,6 +4,6 @@
   {{ content|safe }}
 {% endblock demo %}
 
-{% block code %}
+{% block html %}
   <pre>{% autoescape on %}{{ content }}{% endautoescape %}</pre>
-{% endblock code %}
+{% endblock html %}
