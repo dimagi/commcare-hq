@@ -21,7 +21,7 @@ from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import get_ip
 
-from corehq.apps.accounting.models import BillingAccount, SoftwarePlanEdition
+from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.analytics import ab_tests
 from corehq.apps.analytics.tasks import (
     HUBSPOT_COOKIE,
@@ -47,7 +47,6 @@ from corehq.apps.registration.forms import (
 from corehq.apps.registration.models import (
     AsyncSignupRequest,
     RegistrationRequest,
-    SelfSignupWorkflow,
 )
 from corehq.apps.registration.rate_limiter import rate_limit_check_username_availability
 from corehq.apps.registration.utils import (
@@ -516,7 +515,7 @@ def confirm_domain(request, guid=''):
             return render(request, 'registration/confirmation_error.html', context)
 
         requested_domain = Domain.get_by_name(req.domain)
-        view_name = _confirm_domain_redirect(request.plan.plan.edition, req.domain)
+        view_name = _confirm_domain_redirect()
         view_args = [requested_domain.name]
 
         # Has guid already been confirmed?
@@ -547,12 +546,9 @@ def confirm_domain(request, guid=''):
         return HttpResponseRedirect(reverse(view_name, args=view_args))
 
 
-def _confirm_domain_redirect(edition, domain):
+def _confirm_domain_redirect():
     from corehq.apps.dashboard.views import DomainDashboardView
-    from corehq.apps.domain.views import SelectPlanView
-    should_select_plan = bool(edition == SoftwarePlanEdition.COMMUNITY
-                              and SelfSignupWorkflow.get_in_progress_for_domain(domain))
-    return SelectPlanView.urlname if should_select_plan else DomainDashboardView.urlname
+    return DomainDashboardView.urlname
 
 
 @retry_resource(3)
