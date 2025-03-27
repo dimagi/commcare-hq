@@ -21,14 +21,15 @@ hqDefine("reports/js/bootstrap5/hq_report", [
         self.datespan = options.datespan;
         self.filterSet = options.filterSet || false;
         self.needsFilters = options.needsFilters || false;
-        self.filterAccordion = options.filterAccordion || "#reportFilters";
-        self.filterSubmitSelector = options.filterSubmitSelector || '#paramSelectorForm button[type="submit"]';
+        self.htmlIDSuffix = options.html_id_suffix;
+        self.filterAccordion = options.filterAccordion || "#reportFilters" + self.htmlIDSuffix;
+        self.filterSubmitSelector = options.filterSubmitSelector || '#paramSelectorForm' + self.htmlIDSuffix + ' button[type="submit"]';
         self.filterSubmitButton = $(self.filterSubmitSelector);
-        self.toggleFiltersButton = options.toggleFiltersButton || "#toggle-report-filters";
-        self.exportReportButton = options.exportReportButton || "#export-report-excel";
-        self.emailReportButton = options.emailReportButton || "#email-report";
-        self.printReportButton = options.printReportButton || "#print-report";
-        self.emailReportModal = options.emailReportModal || "#email-report-modal";
+        self.toggleFiltersButton = options.toggleFiltersButton || "#toggle-report-filters" + self.htmlIDSuffix;
+        self.exportReportButton = options.exportReportButton || "#export-report-excel" + self.htmlIDSuffix;
+        self.emailReportButton = options.emailReportButton || "#email-report" + self.htmlIDSuffix;
+        self.printReportButton = options.printReportButton || "#print-report" + self.htmlIDSuffix;
+        self.emailReportModal = options.emailReportModal || "#email-report-modal" + self.htmlIDSuffix;
         self.isExportable = options.isExportable || false;
         self.isExportAll = options.isExportAll || false;
         self.isEmailable = options.isEmailable || false;
@@ -176,17 +177,17 @@ hqDefine("reports/js/bootstrap5/hq_report", [
         });
 
         self.resetFilterState = function () {
-            $('#paramSelectorForm fieldset button, #paramSelectorForm fieldset span[data-dropdown="dropdown"]').click(function () {
+            $('#paramSelectorForm' + self.htmlIDSuffix + ' fieldset button, #paramSelectorForm' + self.htmlIDSuffix + ' fieldset span[data-dropdown="dropdown"]').click(function () {
                 $(self.filterSubmitSelector)
                     .changeButtonState('reset')
                     .addClass('btn-primary')
                     .removeClass('disabled')
                     .prop('disabled', false);
             });
-            $('#paramSelectorForm fieldset').on('change apply', function (e) {
+            $('#paramSelectorForm' + self.htmlIDSuffix + ' fieldset').on('change apply', function (e) {
                 // Ensure correct submit button is found in context of which form the button belongs to.
                 // This is necessary for pages that contain multiple filter panels, since we are using CSS IDs.
-                const submitButton = $(e.target).closest('#reportFilters').find(self.filterSubmitSelector);
+                const submitButton = $(e.target).closest('#reportFilters' + self.htmlIDSuffix).find(self.filterSubmitSelector);
                 $(submitButton)
                     .changeButtonState('reset')
                     .addClass('btn-primary')

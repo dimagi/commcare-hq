@@ -86,7 +86,7 @@
  {% endblock %}
  
  {% block page_content %}
-@@ -68,19 +81,18 @@
+@@ -69,19 +82,18 @@
    {% initial_page_data 'slug' report.slug %}
  
    {% block filter_panel %}
@@ -112,7 +112,7 @@
              <h4 class="modal-title">
                {% trans "Email report:" %}
                {{ datespan.startdate|date:"Y-m-d" }}
-@@ -89,15 +101,21 @@
+@@ -90,15 +102,21 @@
                {% endif %}
                {{ datespan.enddate|date:"Y-m-d" }}
              </h4>
@@ -136,7 +136,7 @@
        <h4>{% trans 'Notice' %}</h4>
        <p>{{ report.special_notice }}</p>
      </div>
-@@ -107,7 +125,7 @@
+@@ -108,7 +126,7 @@
        {% block reportcontent %}
        {% endblock %}
      {% else %}
