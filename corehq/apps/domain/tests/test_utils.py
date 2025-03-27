@@ -111,19 +111,19 @@ class UtilsTests(TestCase):
 class TestGetSerializableWireInvoiceItem(SimpleTestCase):
 
     def test_empty_list_is_returned_if_general_credit_is_zero(self):
-        items = get_serializable_wire_invoice_general_credit(0)
+        items = get_serializable_wire_invoice_general_credit(0, 'credit', 1, 1)
         self.assertFalse(items)
 
     def test_empty_list_is_returned_if_general_credit_is_less_than_zero(self):
-        items = get_serializable_wire_invoice_general_credit(-1)
+        items = get_serializable_wire_invoice_general_credit(-1, 'credit', 1, 1)
         self.assertFalse(items)
 
     def test_item_is_returned_if_general_credit_is_greater_than_zero(self):
-        items = get_serializable_wire_invoice_general_credit(1)
+        items = get_serializable_wire_invoice_general_credit(1, 'credit', 1, 1)
         self.assertTrue(items)
 
     def test_return_value_is_json_serializable(self):
-        items = get_serializable_wire_invoice_general_credit(1.5)
+        items = get_serializable_wire_invoice_general_credit(1.5, 'credit', 1.5, 1)
         # exception would be raised here if there is an issue
         serialized_items = json.dumps(items)
         self.assertTrue(serialized_items)

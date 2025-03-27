@@ -28,16 +28,9 @@
 
     <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:100,300,400,500,700,800" rel="stylesheet">
 
-    {% javascript_libraries hq=True %}
     <script src="{% statici18n LANGUAGE_CODE %}"></script>
-    {% compress js %}
-      <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
-      <script src="{% static 'hqwebapp/js/select2_knockout_bindings.ko.js' %}"></script>
-      <script src="{% static 'hqwebapp/js/bootstrap3/widgets.js' %}"></script>
-      <script src="{% static 'hqwebapp/js/bootstrap3/main.js' %}"></script>
-      <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>
-      <script src="{% static 'hqwebapp/js/multiselect_utils.js' %}"></script>
-    {% endcompress %}
+    {% js_entry_b3 "styleguide/bootstrap3/js/main" %}
+    {% include "hqwebapp/partials/webpack.html" %}
   </head>
   <body data-spy="scroll" data-target=".docs-nav">
     <div class="navbar navbar-inverse navbar-static-top navbar-docs">
@@ -82,5 +75,12 @@
         <p class="lead">Thanks for reading the style guide! <3</p>
       </div>
     </footer>
+
+    {% registerurl 'notifications_service' %}
+    <div class="commcarehq-urls hide">
+      {% block registered_urls %}
+        {# do not override this block, use registerurl template tag to populate #}
+      {% endblock %}
+    </div>
   </body>
 </html>
