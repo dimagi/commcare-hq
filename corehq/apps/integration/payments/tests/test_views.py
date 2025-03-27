@@ -260,12 +260,6 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
         assert len(queryset) == 1
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
-    def test_payment_status_filter_not_requested_payments_has_one(self):
-        response = self._make_request(querystring=f'payment_status={PaymentStatus.NOT_REQUESTED}')
-        queryset = response.context['table'].data
-        assert len(queryset) == 1
-
-    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
     def test_payment_status_filter_request_failed_payments_has_one(self):
         response = self._make_request(querystring=f'payment_status={PaymentStatus.REQUEST_FAILED}')
         queryset = response.context['table'].data
