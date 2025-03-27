@@ -65,6 +65,12 @@ def request_payment(payment_case: CommCareCase, config: MoMoConfig):
             PaymentProperties.PAYMENT_ERROR: str(e),
             PaymentProperties.PAYMENT_STATUS: PaymentStatus.REQUEST_FAILED,
         })
+    except Exception:
+        # We need to know when anything goes wrong
+        payment_update.update({
+            PaymentProperties.PAYMENT_ERROR: _("Something went wrong"),
+            PaymentProperties.PAYMENT_STATUS: PaymentStatus.REQUEST_FAILED,
+        })
 
     return payment_update
 
