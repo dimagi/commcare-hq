@@ -34,7 +34,7 @@ class ManageColumnsFormView(BulkEditSessionViewMixin,
     def add_column(self, request, *args, **kwargs):
         column_form = AddColumnForm(self.session, request.POST)
         if column_form.is_valid():
-            # todo add column to session
+            column_form.add_column()
             column_form = None
         return self.get(request, column_form=column_form, *args, **kwargs)
 

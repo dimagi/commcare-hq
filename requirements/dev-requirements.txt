@@ -49,9 +49,9 @@ billiard==3.6.4.0
     # via celery
 bleach==6.1.0
     # via -r base-requirements.in
-boto3==1.37.15
+boto3==1.24.96
     # via -r base-requirements.in
-botocore==1.37.15
+botocore==1.27.96
     # via
     #   boto3
     #   s3transfer
@@ -139,7 +139,7 @@ diff-match-patch==20241021
     # via -r base-requirements.in
 dimagi-memoized==1.1.3
     # via -r base-requirements.in
-django==4.2.18
+django==4.2.20
     # via
     #   -r base-requirements.in
     #   crispy-bootstrap3to5
@@ -285,7 +285,7 @@ greenlet==3.1.1
     #   -r base-requirements.in
     #   django-websocket-redis
     #   gevent
-gunicorn==22.0.0
+gunicorn==23.0.0
     # via -r base-requirements.in
 haversine==2.8.0
     # via -r base-requirements.in
@@ -319,7 +319,7 @@ isort==5.10.1
     # via -r dev-requirements.in
 jedi==0.18.1
     # via ipython
-jinja2==3.1.5
+jinja2==3.1.6
     # via
     #   -r base-requirements.in
     #   myst-parser
@@ -347,7 +347,7 @@ jwcrypto==1.5.6
     # via django-oauth-toolkit
 kafka-python==1.4.7
     # via -r base-requirements.in
-kombu==5.2.4
+kombu==5.4.2
     # via celery
 looseversion==1.0.3
     # via -r base-requirements.in
@@ -587,7 +587,7 @@ requests-toolbelt==1.0.0
     # via -r base-requirements.in
 rjsmin==1.2.1
     # via django-compressor
-s3transfer==0.11.4
+s3transfer==0.6.0
     # via boto3
 schema==0.7.5
     # via -r base-requirements.in
@@ -706,7 +706,7 @@ turn-python==0.0.1
     # via -r base-requirements.in
 twilio==9.2.3
     # via -r base-requirements.in
-typing-extensions==4.8.0
+typing-extensions==4.12.2
     # via
     #   asgiref
     #   bytecode
@@ -714,9 +714,12 @@ typing-extensions==4.8.0
     #   django-countries
     #   faker
     #   jwcrypto
+    #   kombu
     #   oic
     #   qrcode
     #   stripe
+tzdata==2025.1
+    # via kombu
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
@@ -734,7 +737,7 @@ user-agents==2.2.0
     # via django-user-agents
 uwsgi==2.0.22
     # via -r test-requirements.in
-vine==5.0.0
+vine==5.1.0
     # via
     #   amqp
     #   celery
