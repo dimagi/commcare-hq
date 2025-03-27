@@ -175,6 +175,7 @@ hqDefine('geospatial/js/models', [
                 style: 'mapbox://styles/mapbox/streets-v12', // style URL
                 center: centerCoordinates, // starting position [lng, lat]
                 zoom: 12,
+                preserveDrawingBuffer: true,
                 attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
                              ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
             });

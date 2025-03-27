@@ -13,6 +13,14 @@
   {% registerurl 'api_cases_with_gps' request.domain %}
   {% initial_page_data 'map_report_widgets' map_report_widgets %}
 
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>{% trans "Campaign Dashboard" %}</h1>
+    <button id="print-to-pdf" class="btn btn-info">
+      <i class="fa fa-file-pdf me-1"></i>
+      {% trans "Export to PDF" %}
+    </button>
+  </div>
+
   <ul class="nav nav-tabs" role="tablist">
     <li role="presentation" class="nav-item">
       <a

@@ -4,6 +4,7 @@ import 'reports/js/bootstrap5/base';
 import $ from 'jquery';
 import initialPageData from "hqwebapp/js/initial_page_data";
 import { Map, MapItem } from "geospatial/js/models";
+import html2pdf from "html2pdf.js";
 
 
 let mobileWorkerMapsInitialized = false;
@@ -18,6 +19,7 @@ $(function () {
         }
     }
     $('a[data-bs-toggle="tab"]').on('shown.bs.tab', tabSwitch);
+    $('#print-to-pdf').on('click', printActiveTabToPdf);
 });
 
 function tabSwitch(e) {
@@ -34,6 +36,40 @@ function tabSwitch(e) {
             }
         }
     }
+}
+
+function printActiveTabToPdf() {
+    const activeTabId = $('.nav-tabs .nav-link.active').attr('href');
+    const elementToPrint = document.querySelector(activeTabId);
+
+    // Hide the map controls as they're not needed in the PDF
+    const mapControlElements = elementToPrint.querySelectorAll('.mapboxgl-control-container');
+    mapControlElements.forEach((element) => {
+        element.style.visibility = 'hidden';
+    });
+
+    const dateString = new Date().toISOString().split('T')[0];
+    const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `campaign-dashboard-${dateString}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+            scale: 2,
+            logging: false,
+            letterRendering: true,
+        },
+        jsPDF: {
+            unit: 'mm',
+            format: 'a4',
+            orientation: 'portrait',
+        },
+    };
+
+    html2pdf().from(elementToPrint).set(opt).save().then(() => {
+        mapControlElements.forEach((element) => {
+            element.style.visibility = 'visible';
+        });
+    });
 }
 
 var MapWidget = function (mapWidgetConfig) {
