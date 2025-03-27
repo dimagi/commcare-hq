@@ -26,5 +26,7 @@ $(function () {
     return self;
   };
 
-  $("#pagination-example").koApplyBindings(paginationExample());
+  if ($("#pagination-example").length) {
+    $("#pagination-example").koApplyBindings(paginationExample());
+  }
 });

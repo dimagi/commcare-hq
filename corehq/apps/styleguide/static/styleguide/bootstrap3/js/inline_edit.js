@@ -14,5 +14,7 @@ $(function () {
     return self;
   };
 
-  $("#inline-edit-example").koApplyBindings(inlineEditExample());
+  if ($("#inline-edit-example").length) {
+    $("#inline-edit-example").koApplyBindings(inlineEditExample());
+  }
 });

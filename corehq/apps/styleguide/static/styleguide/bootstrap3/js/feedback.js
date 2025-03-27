@@ -17,5 +17,7 @@ $(function () {
     return self;
   };
 
-  $("#feedback-example").koApplyBindings(feedbackExample());
+  if ($("#feedback-example").length) {
+    $("#feedback-example").koApplyBindings(feedbackExample());
+  }
 });
