@@ -231,7 +231,7 @@ class BaseConfigView(BaseGeospatialView):
 
 class GeospatialConfigPage(BaseConfigView):
     urlname = "geospatial_settings"
-    template_name = "geospatial/settings.html"
+    template_name = "geospatial/bootstrap3/settings.html"
 
     page_name = _("Configuration Settings")
 
