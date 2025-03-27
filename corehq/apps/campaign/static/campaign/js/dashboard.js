@@ -41,6 +41,9 @@ function tabSwitch(e) {
 function printActiveTabToPdf() {
     const activeTabId = $('.nav-tabs .nav-link.active').attr('href');
     const elementToPrint = document.querySelector(activeTabId);
+    const pdfExportErrorElement =  document.querySelector('#pdf-export-error');
+
+    pdfExportErrorElement.classList.add('d-none');
 
     // Hide the map controls as they're not needed in the PDF
     const mapControlElements = elementToPrint.querySelectorAll('.mapboxgl-control-container');
@@ -65,7 +68,9 @@ function printActiveTabToPdf() {
         },
     };
 
-    html2pdf().from(elementToPrint).set(opt).save().then(() => {
+    html2pdf().from(elementToPrint).set(opt).save().catch(() => {
+        pdfExportErrorElement.classList.remove('d-none');
+    }).finally(() => {
         mapControlElements.forEach((element) => {
             element.style.visibility = 'visible';
         });

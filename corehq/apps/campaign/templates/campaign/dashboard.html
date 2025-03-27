@@ -20,6 +20,12 @@
       {% trans "Export to PDF" %}
     </button>
   </div>
+  <div id="pdf-export-error" class="alert alert-danger d-none">
+    {% blocktrans %}
+      There was an error while exporting to PDF!
+      Please try again, and contact support if the issue persists.
+    {% endblocktrans %}
+  </div>
 
   <ul class="nav nav-tabs" role="tablist">
     <li role="presentation" class="nav-item">
