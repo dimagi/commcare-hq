@@ -101,7 +101,7 @@ class CaseManagementMap(BaseCaseMapReport):
     ]
 
     base_template = "geospatial/case_management_base.html"
-    report_template_path = "geospatial/case_management.html"
+    report_template_path = "geospatial/bootstrap3/case_management.html"
     max_rows = 5_000
     default_rows = 5_000
     force_page_size = True
