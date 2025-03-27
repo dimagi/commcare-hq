@@ -100,7 +100,7 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
                 'status': kyc_user.get('kyc_verification_status'),
                 'error_message': self._get_verification_error_message(kyc_user),
             },
-            'kyc_last_verified_at': kyc_user.get('kyc_verification_status'),
+            'kyc_last_verified_at': kyc_user.get('kyc_last_verified_at'),
         }
 
         for field in self.kyc_config.api_field_to_user_data_map.values():
