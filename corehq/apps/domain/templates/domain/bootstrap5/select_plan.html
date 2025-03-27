@@ -21,8 +21,8 @@
   <p class="lead text-center">
     {{ lead_text }}
     <a href="{% prelogin_url 'public_pricing' %}" target="_blank">
-      {% trans "Learn More" %}
-    </a>
+      {% trans "Learn More" %}</a
+    >.
   </p>
 
   <section id="plans" class="ko-template">
@@ -36,18 +36,17 @@
       {% trans "Pay Annually" %}
     </p>
 
-    <p class="text-center">
+    <p class="text-center" data-bind="visible: !oShowAnnualPricing()">
       {% blocktrans %}
         Save close to 20% when you pay annually.  {# todo B5: css-close #}
       {% endblocktrans %}
     </p>
 
-    <p class="refund-text text-center"
-       data-bind="css: oRefundCss">
+    <p class="refund-text text-center" data-bind="visible: oShowAnnualPricing">
       <i class="fa fa-check"></i>
       <a href="https://dimagi.com/terms/latest/tos/"
          class="check-icon blue">
-        {% trans '90 day refund policy' %}
+        {% trans '30 day refund policy' %}
       </a>
     </p>
 
@@ -58,12 +57,20 @@
            class="tile"
            data-bind="css: oCssClass, click: selectPlan">
           <h3 data-bind="text: oName"></h3>
-          <p class="pricing-type"
-             data-bind="text: oPricingTypeText, css: oPricingTypeCssClass"></p>
+          <p
+            class="pricing-type"
+            data-bind="
+                css: oPricingTypeCssClass,
+                text: oPricingTypeText,
+                attr: { 'aria-hidden': oIsCommunityPlan() }
+            "
+          ></p>
 
           <p class="plan-price" data-bind="text: oDisplayPrice"></p>
-          <p class="plan-monthly-label">
-            {% trans "monthly" %}
+          <p
+            class="plan-monthly-label"
+            data-bind="attr: { 'aria-hidden': oIsCommunityPlan() }"
+          >{% trans "monthly" %}
             <span data-bind="visible: oDisplayDiscountNotice">({% trans 'discounted' %})</span>
           </p>
           <p class="plan-desc" data-bind="text: oDescription"></p>
@@ -175,15 +182,6 @@
         <span data-bind="text: oStartDateAfterMinimumSubscription"></span> unless
         you select a different plan above.
       {% endblocktrans %}
-    </div>
-
-    <div class="community-plan-notice alert alert-info text-center"
-         data-bind="visible: oIsCurrentPlanCommunity">
-      <p class="lead">
-        {% blocktrans %}
-          You are currently on the FREE CommCare Community plan.
-        {% endblocktrans %}
-      </p>
     </div>
 
     <form
