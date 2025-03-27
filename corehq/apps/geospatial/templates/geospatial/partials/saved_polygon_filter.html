@@ -31,7 +31,7 @@
                 data-bind="attr: { disabled: btnSaveDisabled }, click: saveGeoPolygon">
            {% trans 'Save Area' %}
        </button>
-       {% include 'geospatial/partials/delete_saved_area_modal.html' %}
+       {% include 'geospatial/partials/bootstrap3/delete_saved_area_modal.html' %}
        {% if uses_disbursement == 'true' %}
            <a id="btnRunDisbursement" class="col-sm-2 btn btn-primary" style="float:right; margin-right:1em" data-bind="attr: { disabled: btnRunDisbursementDisabled }">
                {% trans 'Run Disbursement' %}
