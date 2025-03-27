@@ -1,4 +1,6 @@
 from enum import Enum
+from django.db import models
+from django.utils.translation import gettext as _
 
 
 class PaymentProperties(str, Enum):
@@ -8,7 +10,6 @@ class PaymentProperties(str, Enum):
     PAYMENT_VERIFIED_BY_USER_ID = 'payment_verified_by_user_id'
     PAYMENT_STATUS = 'payment_status'
     PAYMENT_TIMESTAMP = 'payment_timestamp'
-    PAYMENT_SUBMITTED = 'payment_submitted'
     AMOUNT = 'amount'
     CURRENCY = 'currency'
     PAYEE_NOTE = 'payee_note'
@@ -22,3 +23,9 @@ class PaymentProperties(str, Enum):
 
 PAYMENT_SUCCESS_STATUS_CODE = 202
 PAYMENT_SUBMITTED_DEVICE_ID = 'momo_payment_service'
+
+
+class PaymentStatus(models.TextChoices):
+    PENDING = 'pending', _("Pending")
+    REQUESTED = 'requested', _("Requested")
+    REQUEST_FAILED = 'request_failed', _("Request failed")

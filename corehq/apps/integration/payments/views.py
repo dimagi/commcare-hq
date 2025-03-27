@@ -1,12 +1,16 @@
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
+from memoized import memoized
 
 from corehq import toggles
+from corehq.apps.es.case_search import case_property_query
+from corehq.util.timezones.utils import get_timezone
+from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.es import CaseSearchES
+from corehq.apps.es import CaseSearchES, filters
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.payments.tables import PaymentsVerifyTable
@@ -15,11 +19,42 @@ from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 from corehq.apps.integration.payments.services import verify_payment_cases
 from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.apps.integration.payments.forms import PaymentConfigureForm
+from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
+from corehq.apps.integration.payments.filters import PaymentVerificationStatusFilter
+from corehq.apps.integration.payments.const import PaymentProperties
+
+
+class PaymentsFiltersMixin:
+    fields = [
+        'corehq.apps.integration.payments.filters.PaymentVerificationStatusFilter',
+        'corehq.apps.integration.payments.filters.BatchNumberFilter',
+        'corehq.apps.integration.payments.filters.PaymentVerifiedByFilter',
+        'corehq.apps.integration.payments.filters.PaymentStatusFilter',
+    ]
+
+    def filters_context(self):
+        return {
+            'report': {
+                'title': self.page_title,
+                'section_name': self.section_name,
+                'show_filters': True,
+            },
+            'report_filters': [
+                dict(field=f.render(), slug=f.slug) for f in self.filter_classes
+            ],
+            'report_filter_form_action_css_class': CSS_ACTION_CLASS,
+        }
+
+    @property
+    @memoized
+    def filter_classes(self):
+        timezone = get_timezone(self.request, self.domain)
+        return get_filter_classes(self.fields, self.request, self.domain, timezone, use_bootstrap5=True)
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
-class PaymentsVerificationReportView(BaseDomainView):
+class PaymentsVerificationReportView(BaseDomainView, PaymentsFiltersMixin):
     urlname = 'payments_verify'
     template_name = 'payments/payments_verify_report.html'
     section_name = _('Data')
@@ -35,7 +70,8 @@ class PaymentsVerificationReportView(BaseDomainView):
             'has_config': MoMoConfig.objects.filter(domain=self.domain).exists(),
             'config_url': reverse(
                 'momo_configuration', args=(self.domain,),
-            )
+            ),
+            **self.filters_context(),
         }
 
 
@@ -46,7 +82,29 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
     table_class = PaymentsVerifyTable
 
     def get_queryset(self):
-        return CaseSearchES().domain(self.request.domain).case_type(MOMO_PAYMENT_CASE_TYPE)
+        query = CaseSearchES().domain(self.request.domain).case_type(MOMO_PAYMENT_CASE_TYPE)
+        query = self._apply_filters(query)
+        return query
+
+    def _apply_filters(self, query):
+        query_filters = []
+        if verification_status := self.request.GET.get('payment_verification_status'):
+            filter_value = 'True' if verification_status == PaymentVerificationStatusFilter.verified else ''
+            query_filters.append(case_property_query(PaymentProperties.PAYMENT_VERIFIED, filter_value))
+
+        if batch_number := self.request.GET.get('batch_number'):
+            query_filters.append(case_property_query(PaymentProperties.BATCH_NUMBER, batch_number))
+
+        if verified_by := self.request.GET.get('verified_by'):
+            query_filters.append(case_property_query(PaymentProperties.PAYMENT_VERIFIED_BY, verified_by))
+
+        if payment_status := self.request.GET.get('payment_status'):
+            query_filters.append(case_property_query(PaymentProperties.PAYMENT_STATUS, payment_status))
+
+        if query_filters:
+            query = query.filter(filters.AND(*query_filters))
+
+        return query
 
     @hq_hx_action('post')
     def verify_rows(self, request, *args, **kwargs):
