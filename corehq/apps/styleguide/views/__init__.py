@@ -66,12 +66,14 @@ class BaseStyleGuideArticleView(TemplateView):
         return {}
 
     def example(self, filename, js_filename=None):
-        examples = os.path.join(os.path.dirname(__file__),
+        html_dir = os.path.join(os.path.dirname(__file__),
                                 '..', 'templates', 'styleguide', 'bootstrap3', 'examples')
-        with open(os.path.join(examples, filename), 'r', encoding='utf-8') as content:
+        with open(os.path.join(html_dir, filename), 'r', encoding='utf-8') as content:
             content = content.read()
         if js_filename:
-            with open(os.path.join(examples, js_filename), 'r', encoding='utf-8') as js_content:
+            js_dir = os.path.join(os.path.dirname(__file__),
+                                  '..', 'static', 'styleguide', 'bootstrap3', 'js')
+            with open(os.path.join(js_dir, js_filename), 'r', encoding='utf-8') as js_content:
                 js_content = js_content.read()
             return {
                 'html': content,
