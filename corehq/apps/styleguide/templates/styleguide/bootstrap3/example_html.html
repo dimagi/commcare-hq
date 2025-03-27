@@ -7,3 +7,7 @@
 {% block html %}
   <pre>{% autoescape on %}{{ content }}{% endautoescape %}</pre>
 {% endblock html %}
+
+{% block js %}
+  <pre>{{ script }}</pre>
+{% endblock js %}

@@ -65,11 +65,20 @@ class BaseStyleGuideArticleView(TemplateView):
         """
         return {}
 
-    def example(self, filename):
+    def example(self, filename, js_filename=None):
         examples = os.path.join(os.path.dirname(__file__),
                                 '..', 'templates', 'styleguide', 'bootstrap3', 'examples')
         with open(os.path.join(examples, filename), 'r', encoding='utf-8') as content:
-            return content.read()
+            content = content.read()
+        if js_filename:
+            with open(os.path.join(examples, js_filename), 'r', encoding='utf-8') as js_content:
+                js_content = js_content.read()
+            return {
+                'html': content,
+                'js': js_content,
+            }
+        else:
+            return content
 
     def render_to_response(self, context, **response_kwargs):
         context.update(self.section_context)
@@ -277,7 +286,7 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
             'examples': {
                 'selections': {
                     'button_group': self.example('button_group.html'),
-                    'select2': self.example('select2.html'),
+                    'select2': self.example('select2.html', 'select2.js'),
                     'multiselect': self.example('multiselect.html'),
                 },
                 'checkbox_in_form': self.example('checkbox_in_form.html'),
