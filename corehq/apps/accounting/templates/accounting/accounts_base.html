@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main 'accounting/js/widgets' %}
+{% js_entry_b3 'accounting/js/widgets' %}
 
 {% block page_content %}
   {% crispy basic_form %}
