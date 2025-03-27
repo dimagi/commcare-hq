@@ -297,7 +297,7 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
                 'pagination': self.example('pagination.html', 'pagination.js'),
                 'search_box': self.example('search_box.html', 'search_box.js'),
                 'inline_edit': self.example('inline_edit.html', 'inline_edit.js'),
-                'help': self.example('help.html', 'help.js'),
+                'help': self.example('help.html'),
                 'feedback': self.example('feedback.html', 'feedback.js'),
             },
         }
