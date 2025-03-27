@@ -150,7 +150,7 @@ class KycConfig(models.Model):
         return (
             isinstance(field_data, dict)
             and 'is_sensitive' in field_data
-            and field_data['is_sensitive'] in (True, 'true')
+            and field_data['is_sensitive'] is True
         )
 
 

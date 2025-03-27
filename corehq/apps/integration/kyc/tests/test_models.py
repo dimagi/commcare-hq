@@ -324,7 +324,6 @@ class TestKycConfig(SimpleTestCase):
             'last_name': 'last_name',
             'email': 'email',
             'phone_number': 'phone_number',
-            'id_num': 'id_num',
         }
 
     def test_is_sensitive_field(self):
@@ -332,7 +331,7 @@ class TestKycConfig(SimpleTestCase):
             'first_name': False,
             'last_name': True,
             'email': False,
-            'phone_number': True,
+            'phone_number': False,
             'street_address': False,
             'id_num': False,
             'country': False,
