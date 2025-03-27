@@ -150,10 +150,8 @@ msgid "Please enter your organization."
 msgstr ""
 
 #: corehq/apps/analytics/static/analytix/js/cta_forms.js
-#, fuzzy
-#| msgid "Please enter your name."
 msgid "Please enter your job title."
-msgstr "Veuillez saisir votre nom"
+msgstr ""
 
 #: corehq/apps/analytics/static/analytix/js/cta_forms.js
 msgid "Please enter your email address."
@@ -216,29 +214,29 @@ msgid "You have unsaved changes"
 msgstr "Vous avez des modifications non sauvegardées."
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view.js
-#: corehq/apps/app_manager/static/app_manager/js/multimedia_size_util.js
-msgid "Oops, there was a problem loading this section. Please try again."
-msgstr "Il semble qu'une erreur se soit glissée. Veuillez essayer à nouveau."
-
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js
 msgid "Select None"
 msgstr "Sélectionner aucun"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Select All"
 msgstr "Tout sélectionner"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Application name is required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Project name is required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Invalid Project Selected"
 msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/multimedia_size_util.js
+msgid "Oops, there was a problem loading this section. Please try again."
+msgstr "Il semble qu'une erreur se soit glissée. Veuillez essayer à nouveau."
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 msgid "Mobile UCR Options"
@@ -264,6 +262,18 @@ msgstr "Table de Recherche"
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
 msgid "Select a Lookup Table..."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Cache"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Lazy Load"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/column.js
+msgid "Cache & Lazy Load"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/column.js
@@ -596,11 +606,6 @@ msgid "Select parent"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-msgid "Save Questions to Case Properties"
-msgstr "Enregistrer les questions dans les propriétés de dossier."
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Raw"
 msgstr "Brut"
 
@@ -661,10 +666,6 @@ msgstr "Vous avez des paramètres de dossier non sauvegardées"
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "You have unchanged user properties settings"
 msgstr "Vous avez des paramètres d'utilisateur non sauvegardées"
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-msgid "Save Questions to User Properties"
-msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "Property uses unrecognized prefix <strong>"
@@ -1162,6 +1163,10 @@ msgstr "Options de format de date"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "No Formatting"
 msgstr "Pas de formatage"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Invalid XPath expression."
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
@@ -2979,6 +2984,10 @@ msgstr ""
 msgid "Edit Profile"
 msgstr ""
 
+#: corehq/apps/data_cleaning/static/data_cleaning/js/directives/dynamic_options_select2.js
+msgid "No available suggestions. Add more by separating words with spaces."
+msgstr ""
+
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js
 msgid "No Name"
 msgstr "Pas de Nom"
@@ -3206,6 +3215,7 @@ msgid "Last 30 Days"
 msgstr "30 derniers jours"
 
 #: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Previous Month"
 msgstr ""
@@ -3560,6 +3570,141 @@ msgstr ""
 "Danny est déçu que vous ayez rencontré ce problème. Il travaille le plus "
 "rapidement possible afin de résoudre le problème."
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Clear selection"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Close the picker"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "long"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "2-digit"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Decrement Hour"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Decrement Minute"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Decrement Second"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Increment Hour"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Increment Minute"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Increment Second"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Next Century"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Next Decade"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Next Month"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Next Year"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Pick Hour"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Pick Minute"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Pick Second"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Previous Century"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Previous Decade"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Previous Year"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Select Date"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Select Decade"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Select Month"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Select Time"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Select Year"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Go to today"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Toggle Meridiem"
+msgstr ""
+
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/email-request.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/email-request.js
 msgid "Incorrect Format"
@@ -3674,6 +3819,18 @@ msgstr ""
 msgid "Request timed out. Max retries exceeded."
 msgstr ""
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/htmx_utils/errors.js
+#, fuzzy
+#| msgid "Unknown"
+msgid "Unknown Event"
+msgstr "Inconnu"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/htmx_utils/errors.js
+#, fuzzy
+#| msgid "Unknown"
+msgid "Unknown Path"
+msgstr "Inconnu"
+
 #: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js
 msgid "Items"
 msgstr ""
@@ -3706,114 +3863,6 @@ msgstr ""
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid " to "
 msgstr "à"
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Clear selection"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Close the picker"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "long"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "2-digit"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Decrement Hour"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Decrement Minute"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Decrement Second"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Increment Hour"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Increment Minute"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Increment Second"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Next Century"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Next Decade"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Next Month"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Next Year"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Pick Hour"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Pick Minute"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Pick Second"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Previous Century"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Previous Decade"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Previous Year"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Select Date"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Select Decade"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Select Month"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Select Time"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Select Year"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Go to today"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Toggle Meridiem"
-msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
@@ -4223,7 +4272,8 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/base.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/base.js
-#: corehq/apps/userreports/static/userreports/js/configurable_report.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/configurable_report.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/configurable_report.js
 msgid "You can email a saved version<br />of this report."
 msgstr ""
 "Vous pouvez envoyer par email une version<br />sauvegardée de ce rapport."
@@ -4585,43 +4635,72 @@ msgid ""
 "the dropdown in the top left."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/base.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/base.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/base.js
 msgid "Showing the current page of data. Switch pages to see more data."
 msgstr ""
 "Affichage de la page de données en cours. Changez de page pour voir plus de "
 "données."
 
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
+msgid "Linked projects"
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
+msgid "Projects to copy to"
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
+msgid "Search projects"
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
-#: corehq/apps/userreports/static/userreports/js/report_config.js
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr ""
 
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
-#: corehq/apps/userreports/static/userreports/js/report_config.js
 msgid ""
 "Web users viewing the report will see this display text instead of the "
 "property name. Name your filter something easy for users to understand."
 msgstr ""
 
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
-#: corehq/apps/userreports/static/userreports/js/report_config.js
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this if the property is a date.<br/><strong>Choice</strong>: Select this if "
 "the property is text or multiple choice."
 msgstr ""
 
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
-#: corehq/apps/userreports/static/userreports/js/report_config.js
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this to filter the property by a date range.<br/><strong>Value</strong>: "
 "Select this to filter the property by a single value."
 msgstr ""
 
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
-#: corehq/apps/userreports/static/userreports/js/report_config.js
 msgid "What value or date range must the property be equal to?"
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/ucr_expression.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/ucr_expression.js
+msgid "Expression saved"
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
@@ -4649,27 +4728,8 @@ msgstr ""
 msgid "deactivated"
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/configure_report.js
-#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
-msgid "Linked projects"
-msgstr ""
-
-#: corehq/apps/userreports/static/userreports/js/configure_report.js
-#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
-msgid "Projects to copy to"
-msgstr ""
-
-#: corehq/apps/userreports/static/userreports/js/configure_report.js
-#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
-msgid "Search projects"
-msgstr ""
-
 #: corehq/apps/userreports/static/userreports/js/expression_evaluator.js
 msgid "Unknown error"
-msgstr ""
-
-#: corehq/apps/userreports/static/userreports/js/ucr_expression.js
-msgid "Expression saved"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
@@ -5329,3 +5389,6 @@ msgstr ""
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr ""
+
+#~ msgid "Save Questions to Case Properties"
+#~ msgstr "Enregistrer les questions dans les propriétés de dossier."

@@ -192,6 +192,31 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
             ['name', 'watered_on', 'num_leaves', 'height_cm', 'pot_type']
         )
 
+    def test_reorder_wrong_number_of_column_ids_raises_error(self):
+        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        columns = session.columns.all()
+        new_order = [columns[1].column_id, columns[2].column_id]
+        with self.assertRaises(ValueError):
+            session.update_column_order(new_order)
+
+    def test_update_column_order(self):
+        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        columns = session.columns.all()
+        new_order = [
+            columns[1].column_id,
+            columns[0].column_id,
+            columns[2].column_id,
+            columns[4].column_id,
+            columns[5].column_id,
+            columns[3].column_id,
+        ]
+        session.update_column_order(new_order)
+        reordered_prop_ids = [c.prop_id for c in session.columns.all()]
+        self.assertEqual(
+            reordered_prop_ids,
+            ['owner_name', 'name', 'date_opened', 'last_modified', '@status', 'opened_by_username']
+        )
+
     def test_get_queryset_multiple_filters(self):
         session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
         session.add_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
@@ -242,3 +267,82 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
             .OR(all_project_data_filter(self.domain_name, ['project_data']))  # default Case Owners pinned filter
         )
         self.assertEqual(query.es_query, expected_query.es_query)
+
+    def test_has_filters_and_reset(self):
+        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        self.assertFalse(session.has_filters)
+        session.add_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, '2')
+        self.assertTrue(session.has_filters)
+        session.reset_filters()
+        self.assertFalse(session.has_filters)
+
+    def test_has_pinned_values_and_reset(self):
+        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        self.assertFalse(session.has_pinned_values)
+        pinned_filter = session.pinned_filters.all()[0]
+        pinned_filter.value = ['t__1']
+        pinned_filter.save()
+        self.assertTrue(session.has_pinned_values)
+        session.reset_pinned_filters()
+        self.assertFalse(session.has_pinned_values)
+
+    def test_has_any_filtering_and_reset(self):
+        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        self.assertFalse(session.has_any_filtering)
+        pinned_filter = session.pinned_filters.all()[0]
+        pinned_filter.value = ['t__1']
+        pinned_filter.save()
+        self.assertTrue(session.has_any_filtering)
+        session.reset_filtering()
+        self.assertFalse(session.has_any_filtering)
+        session.add_filter('num_leaves', DataType.INTEGER, FilterMatchType.GREATER_THAN, '2')
+        self.assertTrue(session.has_any_filtering)
+        session.reset_filtering()
+        self.assertFalse(session.has_any_filtering)
+
+
+class BulkEditSessionCaseColumnTests(TestCase):
+    domain_name = 'session-test-case-columns'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.domain = create_domain(cls.domain_name)
+        cls.addClassCleanup(cls.domain.delete)
+
+        cls.web_user = WebUser.create(
+            cls.domain.name, 'tester@datacleaning.org', 'testpwd', None, None
+        )
+        cls.django_user = User.objects.get(username=cls.web_user.username)
+        cls.addClassCleanup(cls.web_user.delete, cls.domain.name, deleted_by=None)
+
+        cls.case_type = 'plant-friend'
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+
+    def setUp(self):
+        self.session = BulkEditSession.new_case_session(
+            self.django_user, self.domain_name, self.case_type
+        )
+
+    def test_add_column(self):
+        self.assertEqual(self.session.columns.count(), 6)
+        new_column = self.session.add_column('num_leaves', "Number of Leaves", DataType.INTEGER)
+        self.assertEqual(new_column.index, 6)
+        self.assertEqual(self.session.columns.count(), 7)
+        self.assertEqual(new_column.prop_id, 'num_leaves')
+        self.assertEqual(new_column.label, "Number of Leaves")
+        self.assertEqual(new_column.data_type, DataType.INTEGER)
+        self.assertFalse(new_column.is_system)
+
+    def test_add_system_column(self):
+        new_column = self.session.add_column('@owner_id', "Owner ID", DataType.INTEGER)
+        self.assertEqual(new_column.index, 6)
+        self.assertEqual(self.session.columns.count(), 7)
+        self.assertEqual(new_column.prop_id, '@owner_id')
+        self.assertEqual(new_column.label, "Owner ID")
+        self.assertEqual(new_column.data_type, DataType.TEXT)
+        self.assertTrue(new_column.is_system)

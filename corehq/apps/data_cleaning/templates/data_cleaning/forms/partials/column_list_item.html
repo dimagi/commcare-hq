@@ -1,0 +1,40 @@
+{% load i18n %}
+{% load data_cleaning %}
+
+<a href="#" class="list-group-item list-group-item-action">
+  <div class="d-flex">
+    <div class="p-2 align-self-center fs-5">
+      <i class="fa-solid fa-up-down"></i>
+      <input
+        type="hidden"
+        name="column_ids"
+        value="{{ column.column_id }}"
+      />
+    </div>
+    <div class="p-2 align-self-center">
+      {{ column.data_type|dc_data_type_icon }}
+    </div>
+    <div class="p-2 flex-fill">
+      <h5 class="mb-1">
+        {{ column.label }}
+      </h5>
+      <p class="mb-0">
+        {{ column.prop_id }}
+      </p>
+    </div>
+    <div class="p-2 align-self-center">
+      <button
+        class="btn btn-outline-danger btn-sm"
+        type="button"
+        name="delete_id"
+        value="{{ column.column_id }}"
+        hx-post="{{ request.path_info }}"
+        hq-hx-action="remove_column"
+        hx-disabled-elt="this"
+        hx-target="#{{ container_id }}"
+      >
+        <i class="fa-solid fa-close"></i>
+      </button>
+    </div>
+  </div>
+</a>
