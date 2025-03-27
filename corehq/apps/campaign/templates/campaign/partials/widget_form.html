@@ -26,6 +26,7 @@
     , "widget_id": "{{ widget.id }}"
   {% endif %}
   }'
+  hx-disabled-elt="find input[type='submit']"
 >
   {% crispy widget_form %}
 </form>
