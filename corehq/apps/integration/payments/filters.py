@@ -3,6 +3,7 @@ from django.utils.translation import gettext as _
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.integration.payments.services import get_payment_batch_numbers_for_domain
 from corehq.apps.reports.filters.users import WebUserFilter
+from corehq.apps.integration.payments.const import PaymentStatus
 
 
 class PaymentVerificationStatusFilter(BaseSingleOptionFilter):
@@ -36,19 +37,8 @@ class PaymentVerifiedByFilter(WebUserFilter):
     label = _('Verified by')
 
 
-class PaymentStatus(BaseSingleOptionFilter):
+class PaymentStatusFilter(BaseSingleOptionFilter):
     slug = 'payment_status'
     label = _('Payment status')
     default_text = _('Show all')
-
-    pending = 'pending'
-    requested = 'requested'
-    request_failed = 'request_failed'
-
-    @property
-    def options(self):
-        return [
-            (self.pending, _('Pending')),
-            (self.requested, _('Requested')),
-            (self.request_failed, _('Request failed')),
-        ]
+    options = PaymentStatus.choices

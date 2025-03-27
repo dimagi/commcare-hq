@@ -9,7 +9,7 @@ from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.integration.payments.const import PaymentProperties
+from corehq.apps.integration.payments.const import PaymentProperties, PaymentStatus
 from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.apps.integration.payments.views import (
     PaymentsVerificationReportView,
@@ -188,7 +188,7 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
                 data={
                     PaymentProperties.BATCH_NUMBER: 'B001',
                     PaymentProperties.PAYMENT_VERIFIED: True,
-                    PaymentProperties.PAYMENT_SUBMITTED: True,
+                    PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING,
                 }),
             _create_case(
                 cls.factory,
@@ -196,7 +196,7 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
                 data={
                     PaymentProperties.BATCH_NUMBER: 'B001',
                     PaymentProperties.PAYMENT_VERIFIED: True,
-                    PaymentProperties.PAYMENT_SUBMITTED: False,
+                    PaymentProperties.PAYMENT_STATUS: PaymentStatus.REQUEST_FAILED,
                 }),
             _create_case(
                 cls.factory,
@@ -254,20 +254,20 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
         assert len(queryset) == 3
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
-    def test_payment_status_filter_submitted_payments_has_one(self):
-        response = self._make_request(querystring='payment_status=submitted')
+    def test_payment_status_filter_pending_payments_has_one(self):
+        response = self._make_request(querystring=f'payment_status={PaymentStatus.PENDING}')
         queryset = response.context['table'].data
         assert len(queryset) == 1
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
-    def test_payment_status_filter_not_submitted_payments_has_one(self):
-        response = self._make_request(querystring='payment_status=not_submitted')
+    def test_payment_status_filter_not_requested_payments_has_one(self):
+        response = self._make_request(querystring=f'payment_status={PaymentStatus.NOT_REQUESTED}')
         queryset = response.context['table'].data
         assert len(queryset) == 1
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
-    def test_payment_status_filter_failed_payments_has_one(self):
-        response = self._make_request(querystring='payment_status=submission_failed')
+    def test_payment_status_filter_request_failed_payments_has_one(self):
+        response = self._make_request(querystring=f'payment_status={PaymentStatus.REQUEST_FAILED}')
         queryset = response.context['table'].data
         assert len(queryset) == 1
 

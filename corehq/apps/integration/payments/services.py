@@ -12,8 +12,9 @@ from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.apps.integration.payments.const import (
     PAYMENT_SUCCESS_STATUS_CODE,
-    PaymentProperties,
     PAYMENT_SUBMITTED_DEVICE_ID,
+    PaymentProperties,
+    PaymentStatus,
 )
 from corehq.apps.integration.payments.exceptions import PaymentRequestError
 from corehq.apps.integration.payments.models import MoMoConfig
@@ -49,7 +50,6 @@ def _get_payment_cases_updates(case_ids_chunk, config):
 
 def request_payment(payment_case: CommCareCase, config: MoMoConfig):
     payment_update = {
-        PaymentProperties.PAYMENT_SUBMITTED: False,
         PaymentProperties.PAYMENT_TIMESTAMP: datetime.utcnow().isoformat(),
         PaymentProperties.PAYMENT_ERROR: '',
     }
@@ -58,10 +58,13 @@ def request_payment(payment_case: CommCareCase, config: MoMoConfig):
         transaction_id = _request_payment(payment_case, config)
         payment_update.update({
             'transaction_id': transaction_id,  # can be used to check payment status
-            PaymentProperties.PAYMENT_SUBMITTED: True
+            PaymentProperties.PAYMENT_STATUS: PaymentStatus.REQUESTED,
         })
     except PaymentRequestError as e:
-        payment_update[PaymentProperties.PAYMENT_ERROR] = str(e)
+        payment_update.update({
+            PaymentProperties.PAYMENT_ERROR: str(e),
+            PaymentProperties.PAYMENT_STATUS: PaymentStatus.REQUEST_FAILED,
+        })
 
     return payment_update
 
@@ -103,6 +106,7 @@ def verify_payment_cases(domain, case_ids: list, verifying_user: WebUser):
         PaymentProperties.PAYMENT_VERIFIED_ON_UTC: str(datetime.now()),
         PaymentProperties.PAYMENT_VERIFIED_BY: verifying_user.username,
         PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID: verifying_user.user_id,
+        PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING,
     }
 
     updated_cases = []
@@ -159,16 +163,16 @@ def _get_payee_details(case_data: dict) -> PartyDetails:
 def _validate_payment_request(case_data: dict):
     if not _payment_is_verified(case_data):
         raise PaymentRequestError(_("Payment has not been verified"))
-    if _payment_already_submitted(case_data):
-        raise PaymentRequestError(_("Payment has already been submitted"))
+    if _payment_already_requested(case_data):
+        raise PaymentRequestError(_("Payment has already been requested"))
 
 
 def _payment_is_verified(case_data: dict):
     return case_data.get(PaymentProperties.PAYMENT_VERIFIED) == 'True'
 
 
-def _payment_already_submitted(case_data: dict):
-    return case_data.get(PaymentProperties.PAYMENT_SUBMITTED) == 'True'
+def _payment_already_requested(case_data: dict):
+    return case_data.get(PaymentProperties.PAYMENT_STATUS) == PaymentStatus.REQUESTED
 
 
 def get_payment_batch_numbers_for_domain(domain):

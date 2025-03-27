@@ -21,7 +21,7 @@ from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.apps.integration.payments.forms import PaymentConfigureForm
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.integration.payments.filters import PaymentVerificationStatusFilter
-from corehq.apps.integration.payments.const import PaymentProperties
+from corehq.apps.integration.payments.const import PaymentProperties, PaymentStatus
 
 
 class PaymentsFiltersMixin:
@@ -29,7 +29,7 @@ class PaymentsFiltersMixin:
         'corehq.apps.integration.payments.filters.PaymentVerificationStatusFilter',
         'corehq.apps.integration.payments.filters.BatchNumberFilter',
         'corehq.apps.integration.payments.filters.PaymentVerifiedByFilter',
-        'corehq.apps.integration.payments.filters.PaymentStatus',
+        'corehq.apps.integration.payments.filters.PaymentStatusFilter',
     ]
 
     def filters_context(self):
@@ -99,6 +99,8 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
             query_filters.append(case_property_query(PaymentProperties.PAYMENT_VERIFIED_BY, verified_by))
 
         if payment_status := self.request.GET.get('payment_status'):
+            if payment_status == PaymentStatus.NOT_REQUESTED:
+                payment_status = ''
             query_filters.append(case_property_query(PaymentProperties.PAYMENT_STATUS, payment_status))
 
         if query_filters:
