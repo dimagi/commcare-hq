@@ -30,6 +30,8 @@ $(function () {
         new RadialGauge({
             renderTo: `gauge-widget-${ gaugeWidgetConfig.id }`,
             value: gaugeWidgetConfig.value,
+            maxValue: gaugeWidgetConfig.max_value,
+            majorTicks: gaugeWidgetConfig.major_ticks,
             valueDec: 0
         }).draw();
     }
