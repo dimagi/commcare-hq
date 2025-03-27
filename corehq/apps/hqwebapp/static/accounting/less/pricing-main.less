@@ -91,6 +91,7 @@ input:checked + .slider:before {
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 1px;
+    height: 1.75em;
     padding: 1px 4px;
     border: 1px solid transparent;
     display: inline-block;
@@ -234,6 +235,16 @@ input:checked + .slider:before {
 
   .btn-current {
     color: @_color-tile !important;
+  }
+}
+
+.tile-community {
+  ._make-color-tile(@cc-neutral-mid);
+  .pricing-type {
+    opacity: 0;
+  }
+  .plan-monthly-label {
+    opacity: 0;
   }
 }
 

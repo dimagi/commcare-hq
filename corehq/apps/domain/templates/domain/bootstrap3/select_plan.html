@@ -58,12 +58,20 @@
            class="tile"
            data-bind="css: oCssClass, click: selectPlan">
           <h3 data-bind="text: oName"></h3>
-          <p class="pricing-type"
-             data-bind="text: oPricingTypeText, css: oPricingTypeCssClass"></p>
+          <p
+            class="pricing-type"
+            data-bind="
+                css: oPricingTypeCssClass,
+                text: oPricingTypeText,
+                attr: { 'aria-hidden': oIsCommunityPlan() }
+            "
+          ></p>
 
           <p class="plan-price" data-bind="text: oDisplayPrice"></p>
-          <p class="plan-monthly-label">
-            {% trans "monthly" %}
+          <p
+            class="plan-monthly-label"
+            data-bind="attr: { 'aria-hidden': oIsCommunityPlan() }"
+          >{% trans "monthly" %}
             <span data-bind="visible: oDisplayDiscountNotice">({% trans 'discounted' %})</span>
           </p>
           <p class="plan-desc" data-bind="text: oDescription"></p>

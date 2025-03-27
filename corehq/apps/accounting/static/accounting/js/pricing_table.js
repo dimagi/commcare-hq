@@ -216,6 +216,10 @@ hqDefine('accounting/js/pricing_table', [
         self.oAnnualPrice = ko.observable(data.annual_price);
         self.oDescription = ko.observable(data.description);
 
+        self.oIsCommunityPlan = ko.computed(function () {
+            return self.oSlug() === 'community';
+        });
+
         self.oIsCurrentPlan = ko.computed(function () {
             return self.oSlug() === parent.oCurrentPlan();
         });
