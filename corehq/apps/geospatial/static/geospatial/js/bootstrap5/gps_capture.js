@@ -1,4 +1,4 @@
-hqDefine("geospatial/js/gps_capture", [
+hqDefine("geospatial/js/bootstrap5/gps_capture", [
     "jquery",
     "knockout",
     'underscore',
@@ -7,7 +7,7 @@ hqDefine("geospatial/js/gps_capture", [
     '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min',
     "hqwebapp/js/components/pagination",
     "hqwebapp/js/components/search_box",
-    'reports/js/bootstrap3/base',
+    'reports/js/bootstrap5/base',
     'hqwebapp/js/select2_knockout_bindings.ko',
     'commcarehq',
 ], function (
