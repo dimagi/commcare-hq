@@ -148,7 +148,7 @@ class ItemListsProvider(FixtureProvider):
                                            FIXTURE_BUCKET,
                                            '',
                                            data_fn,
-                                           restore_state.overwrite_cache)
+                                           True)
 
     def _get_global_items(self, global_types, domain):
         def get_items_by_type(data_type):
