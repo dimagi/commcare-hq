@@ -14,7 +14,6 @@ hqDefine('domain/js/bootstrap3/update_billing_contact_info', [
         var cardManager = stripeCardManager.stripeCardManager({
             cards: initialPageData.get("cards"),
             url: initialPageData.reverse("cards_view"),
-            elementSelector: '#stripe-card-container',
         });
         $("#card-manager").koApplyBindings(cardManager);
 

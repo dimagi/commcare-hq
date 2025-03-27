@@ -1,5 +1,7 @@
 /**
  *  This module requires initial page data to provide "stripe_public_key".
+ *  It also requires a container with the id stripe-card-container, which is where the credit card UI will be
+ *  mounted.
  */
 hqDefine("accounting/js/stripe_card_manager", [
     'jquery',
@@ -20,7 +22,7 @@ hqDefine("accounting/js/stripe_card_manager", [
         self.cardElementMounted = false;
         self.cardElementPromise = hqStripe.getCardElementPromise(initialPageData.get("stripe_public_key"));
         self.cardElementPromise.then(function (cardElement) {
-            cardElement.mount(data.elementSelector);
+            cardElement.mount('#stripe-card-container');
             self.cardElementMounted = true;
         });
 
@@ -176,7 +178,6 @@ hqDefine("accounting/js/stripe_card_manager", [
         self.autoPayButtonEnabled = ko.observable(true);
         self.newCard = newStripeCardModel({
             url: data.url,
-            elementSelector: data.elementSelector,
         }, self);
 
         return self;
