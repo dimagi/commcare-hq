@@ -3,14 +3,14 @@ from django.conf import settings
 from celery.schedules import crontab
 
 from corehq.apps.celery import periodic_task
-from corehq.apps.es.case_search import CaseSearchES, case_property_missing, case_property_query
+from corehq.apps.es.case_search import CaseSearchES, case_property_query
 from corehq.apps.es import filters
 from corehq.apps.integration.kyc.models import KycConfig, KycVerificationStatus
 from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.apps.integration.payments.services import request_payments_for_cases
 from corehq.toggles import KYC_VERIFICATION, MTN_MOBILE_WORKER_VERIFICATION
 from corehq.util.metrics import metrics_gauge
-from corehq.apps.integration.payments.const import PaymentProperties
+from corehq.apps.integration.payments.const import PaymentProperties, PaymentStatus
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 
 
@@ -66,8 +66,8 @@ def _get_payment_case_ids_on_domain(domain):
             filters.AND(
                 case_property_query(PaymentProperties.PAYMENT_VERIFIED, 'True'),
                 filters.OR(
-                    case_property_query(PaymentProperties.PAYMENT_SUBMITTED, 'False'),
-                    case_property_missing(PaymentProperties.PAYMENT_SUBMITTED),
+                    case_property_query(PaymentProperties.PAYMENT_STATUS, PaymentStatus.PENDING),
+                    case_property_query(PaymentProperties.PAYMENT_STATUS, PaymentStatus.REQUEST_FAILED),
                 ),
             )
         )
