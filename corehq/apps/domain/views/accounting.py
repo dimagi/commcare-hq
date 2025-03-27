@@ -977,24 +977,22 @@ class PlanViewBase(DomainAccountingSettings):
                 SoftwarePlanEdition.STANDARD,
                 "$300",
                 "$250",
-                _("For programs with one-time data collection needs, simple "
-                  "case management workflows, and basic M&E requirements."),
+                _("Get started. Build secure apps for offline mobile data collection and case management. "
+                  "50 users included."),
             ),
             PlanOption(
                 SoftwarePlanEdition.PRO,
                 "$600",
                 "$500",
-                _("For programs with complex case management needs, field "
-                  "staff collaborating on tasks, and M&E teams that need to "
-                  "clean and report on data."),
+                _("Beyond the basics. Unlock reporting, case sharing, and hands-on support. 250 users included."),
             ),
             PlanOption(
                 SoftwarePlanEdition.ADVANCED,
                 "$1200",
                 "$1000",
-                _("For programs with distributed field staff, facility-based "
-                  "workflows, and advanced security needs. Also for M&E teams "
-                  "integrating data with 3rd party analytics."),
+                _("Unlock everything. Our most secure plan, built for managing connected systems across "
+                  "locations and user profiles, featuring web apps, advanced security, and robust admin and data "
+                  "management tools. 500 users included."),
             ),
         ]
 
