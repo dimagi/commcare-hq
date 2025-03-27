@@ -1,4 +1,4 @@
-hqDefine("geospatial/js/case_grouping_map", [
+hqDefine("geospatial/js/bootstrap3/case_grouping_map", [
     "jquery",
     "knockout",
     'underscore',
