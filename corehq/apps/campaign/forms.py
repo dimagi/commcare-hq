@@ -9,7 +9,9 @@ from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 
+from corehq.apps.campaign.const import GAUGE_METRICS
 from corehq.apps.campaign.models import (
+    DashboardGauge,
     DashboardMap,
     DashboardReport,
     DashboardTab,
@@ -157,3 +159,30 @@ class DashboardReportForm(DashboardWidgetBaseForm):
             (report.get_id, report.title)
             for report in report_configs
         ]
+
+
+class DashboardGaugeForm(DashboardWidgetBaseForm):
+
+    class Meta(DashboardWidgetBaseForm.Meta):
+        model = DashboardGauge
+        fields = DashboardWidgetBaseForm.Meta.fields + [
+            'case_type',
+            'metric',
+        ]
+
+    case_type = forms.ChoiceField(
+        label=_('Case Type'),
+    )
+
+    metric = forms.ChoiceField(
+        label=_('Metric'),
+        choices=GAUGE_METRICS
+    )
+
+    def __init__(self, domain, *args, **kwargs):
+        super().__init__(domain, *args, **kwargs)
+        self.fields['case_type'].choices = self._get_case_types()
+
+    def _get_case_types(self):
+        case_types = sorted(get_case_types_for_domain(self.domain))
+        return [(case_type, case_type) for case_type in case_types]
