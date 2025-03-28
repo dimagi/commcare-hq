@@ -46,5 +46,5 @@ class ManageColumnsFormView(BulkEditSessionViewMixin,
 
     @hq_hx_action('post')
     def remove_column(self, request, *args, **kwargs):
-        # todo
+        self.session.remove_column(request.POST['delete_id'])
         return self.get(request, *args, **kwargs)
