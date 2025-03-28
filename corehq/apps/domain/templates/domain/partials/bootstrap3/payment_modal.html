@@ -1,35 +1,223 @@
 {% load i18n %}
 
+<script type="text/html" id="cost-item-template">
+  <fieldset>
+    <legend>{% trans 'Prepayment Amount' %}</legend>
+
+    <!-- ko if: $root.paymentMethod() === $root.CREDIT_CARD -->
+    <div class="alert alert-info">
+      {% trans 'One credit is equivalent to one USD. Credits are applied to
+      monthly invoices' %}
+    </div>
+
+    <div data-bind="with: general_credit">
+      <div class="form-group">
+        <label class="control-label col-sm-2">
+          <span data-bind="text: name"></span>
+        </label>
+        <div class="col-sm-10">
+          <div class="input-group">
+            <span class="input-group-addon">$</span>
+            <input
+              type="text"
+              class="form-control"
+              data-bind="attr:{name: creditType},
+                         textInput: addAmount"
+            />
+          </div>
+          <div
+            class="alert alert-danger"
+            data-bind="visible: !isAddAmountValid()"
+          >
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span
+              >{% blocktrans %} Please enter an amount that's either $0 or
+              greater than $0.50 {% endblocktrans %}</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="control-label col-sm-2">
+        {% trans 'Total Credits' %}
+      </label>
+      <div class="col-sm-10">
+        <p class="form-control-text" data-bind="text: ('$ ' + amount())"></p>
+      </div>
+    </div>
+    <input type="hidden" name="amount" data-bind="value: amount" />
+    <!-- /ko -->
+
+    <!-- ko if: $root.paymentMethod() === $root.WIRE -->
+    <div data-bind="with: invoice_credit">
+      <div class="form-group">
+        <label class="control-label col-sm-2">
+          {% trans "Prepayment Start Date" %}
+        </label>
+        <div class="col-sm-10">
+          <input
+            type="text"
+            id="prepay-date-start"
+            class="date-picker form-control"
+            name="prepay_date_start"
+            data-bind="value: dateStart"
+            placeholder='{% trans "YYYY-MM-DD" %}'
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="control-label col-sm-2">
+          {% trans "Prepayment End Date" %}
+        </label>
+        <div class="col-sm-10">
+          <input
+            type="text"
+            id="prepay-date-end"
+            class="date-picker form-control"
+            name="prepay_date_end"
+            data-bind="value: dateEnd"
+            placeholder='{% trans "YYYY-MM-DD" %}'
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="control-label col-sm-2">
+          {% trans "Credit Label" %}
+        </label>
+        <div class="col-sm-10">
+          <input
+            type="text"
+            class="form-control"
+            data-bind="textInput: creditLabel"
+            name="credit_label"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="control-label col-sm-2"> {% trans "Unit Cost" %} </label>
+        <div class="col-sm-10">
+          <div class="input-group">
+            <span class="input-group-addon">$</span>
+            <input
+              type="number"
+              class="form-control"
+              data-bind="textInput: addAmount"
+              name="unit_cost"
+              step="0.01"
+            />
+          </div>
+          <div
+            class="alert alert-danger"
+            data-bind="visible: !isAddAmountValid()"
+          >
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span
+              >{% blocktrans %} Please enter an amount that's either $0 or
+              greater than $0.50 {% endblocktrans %}</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="control-label col-sm-2"> {% trans "Quantity" %} </label>
+        <div class="col-sm-10">
+          <input
+            type="number"
+            class="form-control"
+            data-bind="textInput: quantity"
+            name="quantity"
+            step="1"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="control-label col-sm-2">
+        {% trans 'Total Credits' %}
+      </label>
+      <div class="col-sm-10">
+        <p
+          class="form-control-text"
+          data-bind="text: ('$ ' + invoice_amount())"
+        ></p>
+      </div>
+    </div>
+    <input
+      type="hidden"
+      name="invoice_amount"
+      data-bind="value: invoice_amount"
+    />
+    <!-- /ko -->
+  </fieldset>
+</script>
+
+<script type="text/html" id="payment-method-modal-title">
+  <!-- ko if: $root.paymentMethod() === $root.CREDIT_CARD -->
+  {% trans 'Prepay by Credit Card' %}
+  <!-- /ko -->
+  <!-- ko if: $root.paymentMethod() === $root.WIRE -->
+  {% trans 'Generate Prepayment Invoice' %}
+  <!-- /ko -->
+</script>
+
+<script type="text/html" id="payment-complete-template">
+  <!-- ko if: $root.paymentMethod() === $root.CREDIT_CARD -->
+  {% trans "Thank you for your payment!" %}
+  <!-- /ko -->
+  <!-- ko if: $root.paymentMethod() === $root.WIRE -->
+  {% blocktrans %} Thank you! You will receive an invoice via email with
+  instructions for wire payment. Please include the invoice ID in the wire
+  payment details. {% endblocktrans %}
+  <!-- /ko -->
+</script>
+
 <div class="payment-modal modal fade" id="{{ payment_modal_id }}">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal"
-                aria-label="Close">
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
           <span aria-hidden="true">&times;</span>
         </button>
-        <h4 class="modal-title" data-bind="template: {
-                    data: costItem,
-                    name: '{{ title_template }}',
-                    if: hasCostItem
-                }"></h4>
+        <h4
+          class="modal-title"
+          data-bind="template: {
+                         data: costItem,
+                         name: '{{ title_template }}',
+                         if: hasCostItem
+                     }"
+        ></h4>
       </div>
-      <form method="POST"
-            class="form-horizontal"
-            data-bind="attr: {
-                      id: formId,
-                      action: submitURL,
-                  }">
+      <form
+        method="POST"
+        class="form-horizontal"
+        data-bind="attr: {
+                       id: formId,
+                       action: submitURL,
+                   }"
+      >
         {% csrf_token %}
         <div class="modal-body">
-          <div data-bind="template: {
-                        data: costItem,
-                        name: '{{ cost_item_template }}',
-                        if: hasCostItem
-                    }, visible: paymentIsNotComplete"></div>
+          <div
+            data-bind="template: {
+                           data: costItem,
+                           name: '{{ cost_item_template }}',
+                           if: hasCostItem
+                       }, visible: paymentIsNotComplete"
+          ></div>
 
-          <p class="alert alert-danger"
-             data-bind="visible: showServerErrorMsg">
+          <p class="alert alert-danger" data-bind="visible: showServerErrorMsg">
             <i class="fa-solid fa-triangle-exclamation"></i>
             <span data-bind="text: serverErrorMsg"></span>
           </p>
@@ -39,79 +227,117 @@
             <legend>{% trans 'Wire Payment Information' %}</legend>
             <p>
               {% blocktrans %}
-                Dimagi accepts wire payments via ACH and wire transfer. You will receive an invoice via email with bank information and instructions for wire payment. Please include the Invoice # in the wire payment memo or note field.
-                <a href="https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment" target="_blank">More information...</a>
+                Dimagi accepts wire payments via ACH and wire transfer. You will
+                receive an invoice via email with bank information and
+                instructions for wire payment. Please include the Invoice # in
+                the wire payment memo or note field.
+                <a
+                  href="https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment"
+                  target="_blank"
+                  >More information...</a
+                >
               {% endblocktrans %}
             </p>
             <div class="form-group">
               <label class="control-label col-sm-3">
-                {% trans 'Invoice Recipients' %}
+                {% trans 'Email To' %}
               </label>
               <div class="col-sm-9">
-                <input type="text"
-                       data-bind="value: wireEmails"
-                       size="20"
-                       name="emails"
-                       class="form-control"
-                       placeholder="jane@gmail.com john@gmail.com" />
+                <input
+                  type="text"
+                  data-bind="value: wireEmail"
+                  size="20"
+                  name="email_to"
+                  class="form-control"
+                  placeholder="jane@example.com"
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="control-label col-sm-3">
+                {% trans 'Additional Recipients' %}
+              </label>
+              <div class="col-sm-9">
+                <input
+                  type="text"
+                  data-bind="value: wireAdditionalEmails"
+                  size="20"
+                  name="email_cc"
+                  class="form-control"
+                  placeholder="john@example.com, bob@example.com"
+                />
               </div>
             </div>
           </fieldset>
           <!-- /ko -->
 
           <!-- ko if: paymentMethod() === CREDIT_CARD -->
-          <div data-bind="template: {
-                        data: newCard,
-                        name: 'select-new-stripe-card-template',
-                        if: mustCreateNewCard
-                    }"></div>
+          <div
+            data-bind="template: {
+                           data: newCard,
+                           name: 'select-new-stripe-card-template',
+                           if: mustCreateNewCard
+                       }"
+          ></div>
 
-          <div data-bind="template: {
-                        data: $data,
-                        name: 'select-stripe-card-template',
-                        if: canSelectCard
-                    }"></div>
+          <div
+            data-bind="template: {
+                           data: $data,
+                           name: 'select-stripe-card-template',
+                           if: canSelectCard
+                       }"
+          ></div>
           <!-- /ko -->
 
-          <div class="alert alert-success" data-bind="visible: paymentIsComplete, template: {
-                        name: '{{ payment_complete_template }}',
-                    }"></div>
+          <div
+            class="alert alert-success"
+            data-bind="visible: paymentIsComplete,
+                       template: {
+                           name: '{{ payment_complete_template }}',
+                       }"
+          ></div>
         </div>
         <div class="modal-footer">
-          <button type="button"
-                  data-bind="visible: paymentIsNotComplete"
-                  class="btn btn-default"
-                  data-dismiss="modal">
+          <button
+            type="button"
+            data-bind="visible: paymentIsNotComplete"
+            class="btn btn-default"
+            data-dismiss="modal"
+          >
             {% trans "Cancel" %}
           </button>
           <!-- ko if: hasAgreedToPrivacy || isSavedCard -->
-          <button type="submit"
-                  data-bind="
-                                visible: paymentIsNotComplete,
-                                disable: isSubmitDisabled,
-                                click: processPayment,
-                                text: submitBtnText"
-                  class="btn btn-primary">
-          </button>
+          <button
+            type="submit"
+            data-bind="visible: paymentIsNotComplete,
+                       disable: isSubmitDisabled,
+                       click: processPayment,
+                       text: submitBtnText"
+            class="btn btn-primary"
+          ></button>
           <!-- /ko -->
           <!-- ko ifnot: hasAgreedToPrivacy -->
-          <button type="submit"
-                  class="btn btn-primary disabled"
-                  data-bind="
-                                text: submitBtnText"
-                  disabled="disabled">
-          </button>
-          <span class="label label-info">{% trans 'Please agree to the Privacy Policy.' %}</span>
+          <button
+            type="submit"
+            class="btn btn-primary disabled"
+            data-bind="text: submitBtnText"
+            disabled="disabled"
+          ></button>
+          <span class="label label-info"
+            >{% trans 'Please agree to the Privacy Policy.' %}</span
+          >
           <!-- /ko -->
-          <button type="button"
-                  data-bind="visible: paymentIsComplete"
-                  class="btn btn-default"
-                  data-dismiss="modal">
+          <button
+            type="button"
+            data-bind="visible: paymentIsComplete"
+            class="btn btn-default"
+            data-dismiss="modal"
+          >
             {% trans "Close" %}
           </button>
         </div>
       </form>
     </div>
   </div>
-
 </div>

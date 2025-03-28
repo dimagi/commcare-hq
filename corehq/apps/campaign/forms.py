@@ -113,7 +113,6 @@ class DashboardMapForm(DashboardWidgetBaseForm):
                     hx_trigger='change',
                     hx_target='#geo-case-property select',
                     hx_swap='innerHTML',
-                    hx_indicator=".htmx-indicator",
                 ),
                 crispy.Div(
                     'geo_case_property',
