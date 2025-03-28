@@ -274,6 +274,21 @@ def get_example_context(filename):
         return content.read()
 
 
+def get_html_and_js_example_context(filename, js_filename):
+    html_dir = os.path.join(os.path.dirname(__file__), 'templates')
+    with open(os.path.join(html_dir, filename), 'r', encoding='utf-8') as content:
+        content = content.read()
+
+    js_dir = os.path.join(os.path.dirname(__file__), 'static', 'styleguide', 'js', 'examples')
+    with open(os.path.join(js_dir, js_filename), 'r', encoding='utf-8') as js_content:
+        js_content = js_content.read()
+
+    return {
+        'html': content,
+        'js': js_content,
+    }
+
+
 def get_python_example_context(filename):
     examples = os.path.join(os.path.dirname(__file__), 'examples', 'bootstrap5')
     with open(os.path.join(examples, filename), 'r', encoding='utf-8') as content:
