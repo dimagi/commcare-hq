@@ -39,19 +39,23 @@ class XpathCaseSearchFilterMixin(object):
         if xpath:
             try:
                 query = query.xpath_query(self.domain, xpath)
-            except CaseFilterError as e:
+            except CaseFilterError as exception:
                 track_workflow(self.request.couch_user.username, f"{self.name}: Query Error")
-
-                error = "<p>{}.</p>".format(escape(e))
-                bad_part = "<p>{} <strong>{}</strong></p>".format(
-                    _("The part of your search query that caused this error is: "),
-                    escape(e.filter_part)
-                ) if e.filter_part else ""
+                error, bad_part = get_error_from_failed_query(exception)
                 raise BadRequestError("{}{}".format(error, bad_part))
 
             if '/' in xpath:
                 track_workflow(self.request.couch_user.username, f"{self.name}: Related case search")
         return query
+
+
+def get_error_from_failed_query(exception):
+    error = "<p>{}.</p>".format(escape(exception))
+    bad_part = "<p>{} <strong>{}</strong></p>".format(
+        _("The part of your search query that caused this error is: "),
+        escape(exception.filter_part)
+    ) if exception.filter_part else ""
+    return error, bad_part
 
 
 @location_safe
