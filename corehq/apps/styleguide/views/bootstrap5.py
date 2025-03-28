@@ -460,8 +460,14 @@ def styleguide_organisms_tables(request):
         'examples': {
             'basic_table': get_example_context('styleguide/bootstrap5/examples/basic_table.html'),
             'sectioned_table': get_example_context('styleguide/bootstrap5/examples/sectioned_table.html'),
-            'datatables': get_example_context('styleguide/bootstrap5/examples/datatables.html'),
-            'paginated_table': get_example_context('styleguide/bootstrap5/examples/paginated_table.html'),
+            'datatables': HtmlWithJsDemo(
+                code_html=get_html_example_context('datatables.html'),
+                code_js=get_js_example_context('datatables.js'),
+            ),
+            'paginated_table': HtmlWithJsDemo(
+                code_html=get_html_example_context('paginated_table.html'),
+                code_js=get_js_example_context('paginated_table.js'),
+            ),
         },
     })
     return render(request, 'styleguide/bootstrap5/organisms/tables.html', context)

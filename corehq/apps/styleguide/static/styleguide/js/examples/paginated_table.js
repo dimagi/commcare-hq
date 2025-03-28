@@ -2,6 +2,7 @@ import $ from 'jquery';
 import ko from 'knockout';
 import _ from 'underscore';
 import initialPageData from 'hqwebapp/js/initial_page_data';
+import 'hqwebapp/js/components/pagination';
 
 $(function () {
     let rowData = function (data) {

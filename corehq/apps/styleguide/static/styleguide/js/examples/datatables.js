@@ -1,6 +1,10 @@
 import $ from 'jquery';
 import initialPageData from 'hqwebapp/js/initial_page_data';
 
+import 'datatables.net/js/jquery.dataTables';
+import 'datatables.net-fixedcolumns/js/dataTables.fixedColumns';
+import 'datatables.net-fixedcolumns-bs5/js/fixedColumns.bootstrap5';
+
 $(function () {
     let table = $('#example-datatable').dataTable({
         // This defines the layout of the datatable and is important for getting everything to look standard
