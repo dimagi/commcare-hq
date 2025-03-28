@@ -37,7 +37,7 @@
     <div class="row">
       <div class="col-xs-8">
         {% if report.show_filters %}
-          <a href="#reportFilters"
+          <a href="#reportFilters{{ report.html_id_suffix }}"
              class="btn btn-default"
              id="toggle-report-filters{{ report.html_id_suffix }}"
              data-toggle="collapse"
