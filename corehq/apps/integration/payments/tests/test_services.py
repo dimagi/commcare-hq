@@ -12,7 +12,7 @@ from corehq.apps.users.models import WebUser
 from corehq.motech.models import ConnectionSettings
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 from corehq.apps.integration.payments.services import verify_payment_cases, request_payments_for_cases
-from corehq.apps.integration.payments.const import PaymentProperties
+from corehq.apps.integration.payments.const import PaymentProperties, PaymentStatus
 from corehq.apps.integration.payments.services import _request_payment
 from corehq.apps.integration.payments.exceptions import PaymentRequestError
 
@@ -131,13 +131,13 @@ class TestPaymentRequest(TestCase):
             name='foo',
             data={
                 PaymentProperties.PAYMENT_VERIFIED: True,
-                PaymentProperties.PAYMENT_SUBMITTED: True,
+                PaymentProperties.PAYMENT_STATUS: PaymentStatus.REQUESTED,
                 **self._payment_details,
             }
         )
         self._add_cleanup(previously_submitted_case)
 
-        with pytest.raises(PaymentRequestError, match="Payment has already been submitted"):
+        with pytest.raises(PaymentRequestError, match="Payment has already been requested"):
             _request_payment(previously_submitted_case, self.config)
 
     def test_verified_payment_with_missing_data(self):
@@ -254,7 +254,7 @@ class TestRequestPaymentsForCases(TestCase):
         case_id, payment_property_update, _ = payment_updates[0]
         assert case_id == payment_cases[0].case_id
         assert payment_property_update['transaction_id'] == transaction_id
-        assert payment_property_update[PaymentProperties.PAYMENT_SUBMITTED]
+        assert payment_property_update[PaymentProperties.PAYMENT_STATUS] == PaymentStatus.REQUESTED
         assert PaymentProperties.PAYMENT_TIMESTAMP in payment_property_update
 
     @patch('corehq.apps.integration.payments.services._make_payment_request')
@@ -281,7 +281,7 @@ class TestRequestPaymentsForCases(TestCase):
         for payment_case in payment_cases:
             case_data = payment_case.case_json
             assert case_data.get('transaction_id') is None
-            assert PaymentProperties.PAYMENT_SUBMITTED not in case_data
+            assert PaymentProperties.PAYMENT_STATUS not in case_data
             assert PaymentProperties.PAYMENT_TIMESTAMP not in case_data
 
         request_payments_for_cases([_case.case_id for _case in payment_cases], self.config)
@@ -299,7 +299,7 @@ class TestRequestPaymentsForCases(TestCase):
         assert case_id == non_eligible_case.case_id
         assert 'transaction_id' not in payment_property_update
         assert PaymentProperties.PAYMENT_TIMESTAMP in payment_property_update
-        assert not payment_property_update[PaymentProperties.PAYMENT_SUBMITTED]
+        assert payment_property_update[PaymentProperties.PAYMENT_STATUS] == PaymentStatus.REQUEST_FAILED
         assert payment_property_update[PaymentProperties.PAYMENT_ERROR] == 'Invalid payee details'
 
 
