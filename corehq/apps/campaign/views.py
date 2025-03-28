@@ -255,6 +255,14 @@ class DashboardWidgetView(HqHtmxActionMixin, BaseDomainView):
         else:
             return self.request.POST.get('widget_id')
 
+    @hq_hx_action('post')
+    def delete_widget(self, request, *args, **kwargs):
+        self._validate_request_widget_type()
+
+        widget = get_object_or_404(self.model_class, pk=self.widget_id)
+        widget.delete()
+        return self.render_htmx_no_response(request)
+
 
 @require_GET
 @login_and_domain_required
