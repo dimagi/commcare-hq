@@ -76,7 +76,7 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
 
         Role.get_cache().clear()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
-        cls.addClassCleanup(Subscription._get_active_subscription_by_domain.clear, Subscription, cls.domain.name)
+        cls.addClassCleanup(Subscription.clear_caches, cls.domain.name)
         cls.addClassCleanup(cls.domain.delete)
         cls.list_endpoint = cls._get_list_endpoint()
         cls.username = 'rudolph@qwerty.commcarehq.org'

@@ -19,8 +19,6 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
 
         var CaseConfig = function (params) {
             var self = {};
-            self.title = gettext("Save Questions to Case Properties");
-
             self.trackGoogleEvent = function () {
                 hqImport('analytix/js/google').track.event(...arguments);
             };

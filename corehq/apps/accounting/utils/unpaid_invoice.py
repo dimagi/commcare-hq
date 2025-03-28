@@ -123,19 +123,26 @@ class InvoiceReminder(UnpaidInvoiceAction):
 
     @staticmethod
     def _should_send_invoice_reminder(communication_model, invoice):
-        return not communication_model.objects.filter(
-            invoice=invoice,
-            communication_type=CommunicationType.INVOICE_REMINDER,
-        ).exists()
+        if invoice.is_customer_invoice:
+            billing_record = invoice.customerbillingrecord_set.first()
+        else:
+            billing_record = invoice.billingrecord_set.first()
+
+        return (
+            billing_record.should_send_email
+            and not billing_record.skipped_email
+            and not communication_model.objects.filter(
+                invoice=invoice,
+                communication_type=CommunicationType.INVOICE_REMINDER,
+            ).exists()
+        )
 
     @staticmethod
     def _send_reminder_email(invoice, communication_model, context):
         if invoice.is_customer_invoice:
             account_name = invoice.account.name
-            bcc = None
         else:
             account_name = invoice.get_domain()
-            bcc = [settings.GROWTH_EMAIL]
 
         subject = _(
             "Your CommCare Billing Statement for {account_name} is due in {num_days} days"
@@ -147,7 +154,6 @@ class InvoiceReminder(UnpaidInvoiceAction):
             render_to_string('accounting/email/invoice_reminder.html', context),
             render_to_string('accounting/email/invoice_reminder.txt', context),
             cc=[settings.ACCOUNTS_EMAIL],
-            bcc=bcc,
             email_from=get_dimagi_from_email())
         communication_model.objects.create(
             invoice=invoice,
