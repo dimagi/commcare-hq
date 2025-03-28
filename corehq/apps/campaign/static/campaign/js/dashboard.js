@@ -8,22 +8,22 @@ import { Map, MapItem } from "geospatial/js/models";
 import html2pdf from "html2pdf.js";
 
 Alpine.store('deleteWidgetModel', {
-      id: null,
-      type: null,
-      title: null,
-      widgetDivSelector: null,  // div inside which the widget is displayed
-      setData(id, type, title) {
+    id: null,
+    type: null,
+    title: null,
+    widgetDivSelector: null,  // div inside which the widget is displayed
+    setData(id, type, title) {
         this.id = id;
         this.type = type;
         this.title = title;
         this.widgetDivSelector = `#${type}-widget-${id}`;
-      },
-      resetData() {
+    },
+    resetData() {
         this.widgetId = null;
         this.widgetType = null;
         this.title = null;
         this.widgetDivSelector = null;
-      },
+    },
 });
 
 Alpine.start();
@@ -210,12 +210,12 @@ var onShowWidgetModal = function (event) {
 };
 
 // TODO Use alert_js instead after geospatial bootstrap5 migration
-var afterDeleteWidgetRequest = function(event) {
+var afterDeleteWidgetRequest = function (event) {
     const responseStatus = event.detail.xhr.status;
-    if (responseStatus == 200) {
+    if (responseStatus === 200) {
         $(event.currentTarget).modal('hide');
-        $('#delete-widget-alert').removeClass('d-none')
-        setTimeout(function() {
+        $('#delete-widget-alert').removeClass('d-none');
+        setTimeout(function () {
             $('#delete-widget-alert').addClass('d-none');
         }, 3000);
     }
