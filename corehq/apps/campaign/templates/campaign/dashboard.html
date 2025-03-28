@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/bootstrap5/base_section.html' %}
+{% extends 'hqwebapp/bootstrap3/base_section.html' %}
 {% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -14,14 +14,14 @@
   {% initial_page_data 'map_report_widgets' map_report_widgets %}
   {% include "campaign/partials/add_widget_button.html" %}
 
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1>{% trans "Campaign Dashboard" %}</h1>
-    <button id="print-to-pdf" class="btn btn-info">
-      <i class="fa fa-file-pdf me-1"></i>
+  <div class="clearfix margin-bottom-10">
+    <h1 class="pull-left">{% trans "Campaign Dashboard" %}</h1>
+    <button id="print-to-pdf" class="btn btn-info pull-right">
+      <i class="fa fa-file-pdf-o margin-right-5"></i>
       {% trans "Export to PDF" %}
     </button>
   </div>
-  <div id="pdf-export-error" class="alert alert-danger d-none">
+  <div id="pdf-export-error" class="alert alert-danger hide">
     {% blocktrans %}
       There was an error while exporting to PDF! Please try again, and contact
       support if the issue persists.
@@ -29,22 +29,20 @@
   </div>
 
   <ul class="nav nav-tabs" role="tablist">
-    <li role="presentation" class="nav-item">
+    <li role="presentation" class="active">
       <a
-        class="nav-link active"
-        role="tab"
-        data-bs-toggle="tab"
         href="#cases-tab-content"
+        role="tab"
+        data-toggle="tab"
       >
         {% trans "Cases" %}
       </a>
     </li>
     <li>
       <a
-        class="nav-link"
-        role="tab"
-        data-bs-toggle="tab"
         href="#mobile-workers-tab-content"
+        role="tab"
+        data-toggle="tab"
       >
         {% trans "Mobile Workers" %}
       </a>

@@ -4,17 +4,17 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title"></h5>
         <button
           type="button"
-          class="btn-close"
-          data-bs-dismiss="modal"
+          class="close"
+          data-dismiss="modal"
           aria-label="Close"
-        ></button>
+        ><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title"></h4>
       </div>
       <div class="modal-body" id="widget-modal-body">
         <div id="widget-modal-spinner">
-          <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading..." %}
+          <i class="fa fa-spinner fa-spin"></i> {% trans "Loading..." %}
         </div>
         <div id="widget-form"></div>
       </div>

@@ -2,10 +2,10 @@
 
 <button
   id="edit-widget-btn"
-  class="btn btn-default"
+  class="btn btn-default pull-right"
   type="button"
-  data-bs-toggle="modal"
-  data-bs-target="#widget-modal"
+  data-toggle="modal"
+  data-target="#widget-modal"
   hx-target="#widget-form"
   hx-get="{% url 'dashboard_widget' domain %}?widget_type={{ widget_type }}&widget_id={{ widget.id }}"
   hq-hx-action="edit_widget"

@@ -1,6 +1,6 @@
 import "commcarehq";
 import "hqwebapp/js/htmx_and_alpine";
-import 'reports/js/bootstrap5/base';
+import 'reports/js/bootstrap3/base';
 import $ from 'jquery';
 import initialPageData from "hqwebapp/js/initial_page_data";
 import { Map, MapItem } from "geospatial/js/bootstrap3/models";
@@ -24,7 +24,7 @@ $(function () {
             mapWidget.initializeMap();
         }
     }
-    $('a[data-bs-toggle="tab"]').on('shown.bs.tab', tabSwitch);
+    $('a[data-toggle="tab"]').on('shown.bs.tab', tabSwitch);
     $('#print-to-pdf').on('click', printActiveTabToPdf);
 
     $modalTitleElement = $(widgetModalSelector).find(modalTitleSelector);
@@ -51,11 +51,11 @@ function tabSwitch(e) {
 }
 
 function printActiveTabToPdf() {
-    const activeTabId = $('.nav-tabs .nav-link.active').attr('href');
+    const activeTabId = $('.nav-tabs .active a').attr('href');
     const elementToPrint = document.querySelector(activeTabId);
     const pdfExportErrorElement =  document.querySelector('#pdf-export-error');
 
-    pdfExportErrorElement.classList.add('d-none');
+    pdfExportErrorElement.classList.add('hide');
 
     // Hide the map controls as they're not needed in the PDF
     const mapControlElements = elementToPrint.querySelectorAll('.mapboxgl-control-container');
@@ -81,7 +81,7 @@ function printActiveTabToPdf() {
     };
 
     html2pdf().from(elementToPrint).set(opt).save().catch(() => {
-        pdfExportErrorElement.classList.remove('d-none');
+        pdfExportErrorElement.classList.remove('hide');
     }).finally(() => {
         mapControlElements.forEach((element) => {
             element.style.visibility = 'visible';
@@ -132,7 +132,7 @@ var MapWidget = function (mapWidgetConfig) {
                 loadCases(data.items);
             },
             error: function () {
-                $(`#error-alert-${self.id}`).removeClass('d-none');
+                $(`#error-alert-${self.id}`).removeClass('hide');
             },
         });
     }
@@ -163,7 +163,7 @@ var MapWidget = function (mapWidgetConfig) {
 };
 
 var htmxAfterSwapWidgetForm = function (event) {
-    $('#widget-modal-spinner').addClass('d-none');
+    $('#widget-modal-spinner').addClass('hide');
 
     const requestMethod = event.detail.requestConfig.verb;
     const responseStatus = event.detail.xhr.status;
@@ -175,7 +175,7 @@ var htmxAfterSwapWidgetForm = function (event) {
 };
 
 var onHideWidgetModal = function () {
-    $('#widget-modal-spinner').removeClass('d-none');
+    $('#widget-modal-spinner').removeClass('hide');
     $('#widget-form').text('');
 };
 
