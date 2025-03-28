@@ -1,14 +1,34 @@
 import "commcarehq";
-import "hqwebapp/js/htmx_and_alpine";
+import 'hqwebapp/js/htmx_base';
+import Alpine from 'alpinejs';
 import 'reports/js/bootstrap5/base';
 import $ from 'jquery';
 import initialPageData from "hqwebapp/js/initial_page_data";
 import { Map, MapItem } from "geospatial/js/bootstrap3/models";
 import html2pdf from "html2pdf.js";
 
+Alpine.store('deleteWidgetModel', {
+    id: null,
+    type: null,
+    title: null,
+    widgetDivSelector: null,  // div inside which the widget is displayed
+    setData(id, type, title, widgetDivId) {
+        this.id = id;
+        this.type = type;
+        this.title = title;
+        this.widgetDivSelector = `#${widgetDivId}`;
+    },
+    resetData() {
+        this.widgetId = null;
+        this.widgetType = null;
+        this.title = null;
+        this.widgetDivSelector = null;
+    },
+});
+
+Alpine.start();
 
 let mobileWorkerMapsInitialized = false;
-
 const widgetModalSelector = '#widget-modal';
 const modalTitleSelector = '.modal-title';
 const addWidgetText = gettext('Add Widget');
@@ -32,6 +52,7 @@ $(function () {
     $(widgetModalSelector).on('show.bs.modal', onShowWidgetModal);
 
     $(widgetModalSelector).on('htmx:afterSwap', htmxAfterSwapWidgetForm);
+    $('#delete-widget-confirmation-modal').on('htmx:afterRequest', afterDeleteWidgetRequest);
 });
 
 function tabSwitch(e) {
@@ -185,5 +206,17 @@ var onShowWidgetModal = function (event) {
         $modalTitleElement.text(editWidgetText);
     } else {
         $modalTitleElement.text(addWidgetText);
+    }
+};
+
+// TODO Use alert_js instead after geospatial bootstrap5 migration
+var afterDeleteWidgetRequest = function (event) {
+    const responseStatus = event.detail.xhr.status;
+    if (responseStatus === 200) {
+        $(event.currentTarget).modal('hide');
+        $('#delete-widget-alert').removeClass('d-none');
+        setTimeout(function () {
+            $('#delete-widget-alert').addClass('d-none');
+        }, 3000);
     }
 };
