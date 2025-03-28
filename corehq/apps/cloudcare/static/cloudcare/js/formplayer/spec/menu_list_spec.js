@@ -31,10 +31,14 @@ describe('Render a case list', function () {
     });
 
     describe('#getMenuView', function () {
+        const currentUrl = new Utils.CloudcareUrl({ appId: 'abc123' , selections: ['1', '2']});
         let server,
             user;
         beforeEach(function () {
             server = sinon.useFakeXMLHttpRequest();
+            sinon.stub(Utils, 'currentUrlToObject').callsFake(function () {
+                return currentUrl;
+            });
             sinon.stub(Backbone.history, 'getFragment').callsFake(sinon.spy());
 
             user = UsersModels.getCurrentUser();
@@ -46,6 +50,7 @@ describe('Render a case list', function () {
         afterEach(function () {
             server.restore();
             Backbone.history.getFragment.restore();
+            Utils.currentUrlToObject.restore();
         });
 
         let getMenuView = MenusUtils.getMenuView;
