@@ -50,6 +50,7 @@ $(function () {
     $(widgetModalSelector).on('show.bs.modal', onShowWidgetModal);
 
     $(widgetModalSelector).on('htmx:afterSwap', htmxAfterSwapWidgetForm);
+    $('#delete-widget-confirmation-modal').on('htmx:afterRequest', afterDeleteWidgetRequest);
 });
 
 function tabSwitch(e) {
@@ -164,5 +165,17 @@ var onShowWidgetModal = function (event) {
         $modalTitleElement.text(editWidgetText);
     } else {
         $modalTitleElement.text(addWidgetText);
+    }
+};
+
+// TODO Use alert_js instead after geospatial bootstrap5 migration
+var afterDeleteWidgetRequest = function(event) {
+    const responseStatus = event.detail.xhr.status;
+    if (responseStatus == 200) {
+        $(event.currentTarget).modal('hide');
+        $('#delete-widget-alert').removeClass('d-none')
+        setTimeout(function() {
+            $('#delete-widget-alert').addClass('d-none');
+        }, 3000);
     }
 };
