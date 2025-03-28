@@ -1049,6 +1049,9 @@ class GenericTabularReport(GenericReportView):
         if self.statistics_rows:
             ret["statistics_rows"] = list(self.statistics_rows)
 
+        if self.profiler_enabled and self.profiler.debug_mode:
+            ret["report_timing_profile"] = self.profiler.timing_context.to_dict()
+
         return ret
 
     def _get_datatables_json_dict(self, records_total, records_filtered, data):

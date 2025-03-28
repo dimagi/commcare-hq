@@ -356,6 +356,7 @@ class ESQueryProfilerMixin(object):
             self._profiler = ESQueryProfiler(
                 name=self.profiler_name,
                 search_class=self._get_search_class(),
+                debug_mode=self.debug_mode,
             )
             self.search_class = self.profiler.get_search_class(slug=self.__class__.__name__)
 
@@ -366,6 +367,11 @@ class ESQueryProfilerMixin(object):
     @property
     def should_profile(self):
         return self.profiler_enabled and self.profiler
+
+    @property
+    def debug_mode(self):
+        debug_enabled = self.request.GET.get('debug', 'false')
+        return debug_enabled == 'true' and self.request.couch_user.is_superuser
 
     def _get_search_class(self):
         if not self.search_class:
