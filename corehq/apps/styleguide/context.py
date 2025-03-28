@@ -281,6 +281,6 @@ def get_python_example_context(filename):
 
 
 def get_js_example_context(filename):
-    examples = os.path.join(os.path.dirname(__file__), 'static', 'styleguide', 'js_examples')
+    examples = os.path.join(os.path.dirname(__file__), 'static', 'styleguide', 'js', 'examples')
     with open(os.path.join(examples, filename), 'r', encoding='utf-8') as content:
         return content.read()

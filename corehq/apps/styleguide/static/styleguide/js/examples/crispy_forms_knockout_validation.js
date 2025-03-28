@@ -1,3 +1,7 @@
+import $ from 'jquery';
+import ko from 'knockout';
+import initialPageData from 'hqwebapp/js/initial_page_data';
+
 $(function () {
     let UserModel = function () {
         let self = {},
@@ -6,9 +10,7 @@ $(function () {
                     method: "notifyWhenChangesStop",
                     timeout: 400,
                 },
-            },
-            // This line below would be part of an hqDefine import
-            initialPageData = hqImport("hqwebapp/js/initial_page_data");
+            };
 
         self.username = ko.observable()
             .extend(_rateLimit)
