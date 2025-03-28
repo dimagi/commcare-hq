@@ -4,6 +4,8 @@
   id="delete-widget-confirmation-modal"
   tabindex="-1"
   role="dialog"
+  x-data
+  @hidden-bs-modal.dot="$store.deleteWidgetModel.resetData()"
 >
   <div class="modal-dialog">
     <div class="modal-content">
