@@ -1,6 +1,8 @@
 {% extends 'styleguide/bootstrap5/base.html' %}
 {% load hq_shared_tags %}
 
+{% js_entry "styleguide/js/tables" %}
+
 {% block stylesheets %}
   <link type="text/css"
         rel="stylesheet"
@@ -11,13 +13,6 @@
         media="all"
         href="{% static 'datatables.net-fixedcolumns-bs5/css/fixedColumns.bootstrap5.min.css' %}" />
 {% endblock stylesheets %}
-
-{% block javascript %}
-  <script src="{% static 'datatables.net/js/jquery.dataTables.min.js' %}"></script>
-  <script src="{% static 'datatables.net-bs5/js/dataTables.bootstrap5.min.js' %}"></script>
-  <script src="{% static 'datatables.net-fixedcolumns/js/dataTables.fixedColumns.min.js' %}"></script>
-  <script src="{% static 'datatables.net-fixedcolumns-bs5/js/fixedColumns.bootstrap5.min.js' %}"></script>
-{% endblock javascript %}
 
 {% block intro %}
   <h1 class="sg-title mb-0" id="content">Tables</h1>
