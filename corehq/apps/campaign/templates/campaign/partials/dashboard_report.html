@@ -1,0 +1,35 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div id="report-widget-{{ widget.id }}" class="margin-bottom-10">
+  <div class="panel panel-default">
+    <div class="panel-heading clearfix">
+      <h3 class="panel-title pull-left">{{ widget.title }}</h3>
+    </div>
+
+    <div class="panel-body no-padding">
+      <div id="report-error{{ report.html_id_suffix }}" class="alert alert-danger hide">
+        {% trans 'There was an error rendering your report.' %}
+        <div id="error-message{{ report.html_id_suffix }}"></div>
+      </div>
+      <div id="report-warning{{ report.html_id_suffix }}" class="alert alert-warning hide">
+        {% trans 'Warning:' %}
+        <div id="warning-message{{ report.html_id_suffix }}"></div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-4 border-right">
+          <div id="report-widget-filters-{{ widget.id }}" class="padding-10">
+            {% include "reports_core/partials/bootstrap3/filter_panel.html" %}
+          </div>
+        </div>
+
+        <div class="col-md-8">
+          <div class="position-relative">
+            {% include "reports_core/partials/bootstrap3/report_content.html" %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

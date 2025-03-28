@@ -5,6 +5,7 @@ from django.forms import model_to_dict
 from django.utils.translation import gettext_lazy as _
 
 from jsonfield.fields import JSONField
+from memoized import memoized
 
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.util.view_utils import absolute_reverse
@@ -95,8 +96,25 @@ class DashboardReport(DashboardWidgetBase):
         app_label = 'campaign'
 
     @property
+    @memoized
     def report_configuration(self):
         return ReportConfiguration.get(self.report_configuration_id)
+
+    @property
+    def is_async(self):
+        return False
+
+    @property
+    def show_filters(self):
+        return True
+
+    @property
+    def slug(self):
+        return 'configurable'
+
+    @property
+    def spec(self):
+        return self.report_configuration
 
     @property
     def url(self):
@@ -106,15 +124,31 @@ class DashboardReport(DashboardWidgetBase):
         e.g. http://example.org/a/test-domain/reports/configurable/abc123/
         """
         return absolute_reverse(
-            'configurable',
+            self.slug,
             args=[self.dashboard.domain, self.report_configuration_id],
         )
+
+    @property
+    def html_id_suffix(self):
+        return f'-{self.report_configuration_id}'
+
+    @property
+    def filters(self):
+        return self.report_configuration.ui_filters
+
+    def get_filter_context(self, view):
+        request_params = {}
+        request_user = view.request.couch_user
+        return {
+            f.css_id: f.context(request_params, request_user, view.lang)
+            for f in self.filters
+        }
 
     def to_widget(self):
         return model_to_widget(
             self,
             exclude=['dashboard_tab', 'display_order'],
-            properties=['url'],
+            properties=['slug', 'url', 'html_id_suffix'],
         )
 
 

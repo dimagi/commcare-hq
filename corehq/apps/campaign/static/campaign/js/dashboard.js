@@ -1,9 +1,10 @@
 import "commcarehq";
 import "hqwebapp/js/htmx_and_alpine";
-import 'reports/js/bootstrap5/base';
+import 'reports/js/bootstrap3/base';
 import $ from 'jquery';
 import initialPageData from "hqwebapp/js/initial_page_data";
 import { Map, MapItem } from "geospatial/js/bootstrap3/models";
+import { getStandardHQReport } from 'reports/js/bootstrap3/standard_hq_report';
 import html2pdf from "html2pdf.js";
 
 
@@ -16,15 +17,18 @@ const editWidgetText = gettext('Edit Widget');
 let $modalTitleElement = null;
 
 $(function () {
-    // Only init case map widgets since this is the default tab
+    // Only init widgets on "cases" tab since this is the default tab
     const widgetConfigs = initialPageData.get('map_report_widgets');
     for (const widgetConfig of widgetConfigs.cases) {
         if (widgetConfig.widget_type === 'DashboardMap') {
             const mapWidget = new MapWidget(widgetConfig);
             mapWidget.initializeMap();
+        } else if (widgetConfig.widget_type === 'DashboardReport') {
+            const reportWidget = new ReportWidget(widgetConfig);
+            reportWidget.init();
         }
     }
-    $('a[data-bs-toggle="tab"]').on('shown.bs.tab', tabSwitch);
+    $('a[data-toggle="tab"]').on('shown.bs.tab', tabSwitch);
     $('#print-to-pdf').on('click', printActiveTabToPdf);
 
     $modalTitleElement = $(widgetModalSelector).find(modalTitleSelector);
@@ -45,17 +49,20 @@ function tabSwitch(e) {
             if (widgetConfig.widget_type === 'DashboardMap') {
                 const mapWidget = new MapWidget(widgetConfig);
                 mapWidget.initializeMap();
+            } else if (widgetConfig.widget_type === 'DashboardReport') {
+                const reportWidget = new ReportWidget(widgetConfig);
+                reportWidget.init();
             }
         }
     }
 }
 
 function printActiveTabToPdf() {
-    const activeTabId = $('.nav-tabs .nav-link.active').attr('href');
+    const activeTabId = $('.nav-tabs .active a').attr('href');
     const elementToPrint = document.querySelector(activeTabId);
     const pdfExportErrorElement =  document.querySelector('#pdf-export-error');
 
-    pdfExportErrorElement.classList.add('d-none');
+    pdfExportErrorElement.classList.add('hide');
 
     // Hide the map controls as they're not needed in the PDF
     const mapControlElements = elementToPrint.querySelectorAll('.mapboxgl-control-container');
@@ -81,7 +88,7 @@ function printActiveTabToPdf() {
     };
 
     html2pdf().from(elementToPrint).set(opt).save().catch(() => {
-        pdfExportErrorElement.classList.remove('d-none');
+        pdfExportErrorElement.classList.remove('hide');
     }).finally(() => {
         mapControlElements.forEach((element) => {
             element.style.visibility = 'visible';
@@ -132,7 +139,7 @@ var MapWidget = function (mapWidgetConfig) {
                 loadCases(data.items);
             },
             error: function () {
-                $(`#error-alert-${self.id}`).removeClass('d-none');
+                $(`#error-alert-${self.id}`).removeClass('hide');
             },
         });
     }
@@ -162,8 +169,23 @@ var MapWidget = function (mapWidgetConfig) {
     }
 };
 
+var ReportWidget = function (config) {
+    let self = this;
+
+    self.init = function () {
+        const reportOptions = {
+            'url': config.url,
+            'domain': config.dashboard.domain,
+            'html_id_suffix': config.html_id_suffix,
+            'slug': config.slug,
+            'subReportSlug': config.report_configuration_id,
+        };
+        getStandardHQReport(reportOptions);
+    };
+}
+
 var htmxAfterSwapWidgetForm = function (event) {
-    $('#widget-modal-spinner').addClass('d-none');
+    $('#widget-modal-spinner').addClass('hide');
 
     const requestMethod = event.detail.requestConfig.verb;
     const responseStatus = event.detail.xhr.status;
@@ -175,7 +197,7 @@ var htmxAfterSwapWidgetForm = function (event) {
 };
 
 var onHideWidgetModal = function () {
-    $('#widget-modal-spinner').removeClass('d-none');
+    $('#widget-modal-spinner').removeClass('hide');
     $('#widget-form').text('');
 };
 
