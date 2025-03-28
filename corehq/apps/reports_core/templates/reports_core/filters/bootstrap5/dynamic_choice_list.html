@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 {% load reports_core_tags %}
 {% block filter-controls %}
-  <select class="form-control report-filter-dynamic-choice-list"
+  <select class="form-select report-filter-dynamic-choice-list"
           name="{{ context_.css_id }}"
           id="{{ context_.css_id }}-input"
           data-initial-values='{{ context_.value|JSON }}'
