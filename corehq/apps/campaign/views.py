@@ -2,7 +2,7 @@ from functools import cached_property
 
 from django.conf import settings
 from django.core.paginator import Paginator
-from django.http import HttpResponseBadRequest, JsonResponse
+from django.http import HttpResponseBadRequest, JsonResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -216,18 +216,13 @@ class DashboardWidgetView(HqHtmxActionMixin, BaseDomainView):
             widget = self.model_class(dashboard=self.dashboard)
 
         form = self.form_class(self.domain, request.POST, instance=widget)
-        show_success = False
         if form.is_valid():
             form.save(commit=True)
-            show_success = True
-            # Returns empty form if new widget created successfully
-            if not self.widget_id:
-                form = self.form_class(self.domain)
+            return JsonResponse({'success': True})
 
         context = {
             'widget_form': form,
             'widget_type': self.widget_type,
-            'show_success': show_success,
             'widget': widget,
         }
         return self.render_htmx_partial_response(request, self.form_template_partial_name, context)
