@@ -45,7 +45,7 @@ beaker==1.11.0
     # via oic
 beautifulsoup4==4.10.0
     # via -r base-requirements.in
-billiard==3.6.4.0
+billiard==4.2.1
     # via celery
 bleach==6.1.0
     # via -r base-requirements.in
@@ -59,7 +59,7 @@ build==1.2.2.post1
     # via pip-tools
 bytecode==0.14.2
     # via ddtrace
-celery==5.2.7
+celery==5.4.0
     # via
     #   -r base-requirements.in
     #   django-celery-results
@@ -76,7 +76,7 @@ chardet==5.2.0
     # via reportlab
 charset-normalizer==3.1.0
     # via requests
-click==8.0.3
+click==8.1.8
     # via
     #   celery
     #   click-didyoumean
@@ -517,6 +517,7 @@ python-dateutil==2.8.2
     # via
     #   -r base-requirements.in
     #   botocore
+    #   celery
     #   django-tastypie
     #   faker
     #   freezegun
@@ -532,7 +533,6 @@ pytz==2024.1
     # via
     #   -r base-requirements.in
     #   babel
-    #   celery
 pyyaml==6.0.2
     # via
     #   -r base-requirements.in
@@ -719,7 +719,9 @@ typing-extensions==4.12.2
     #   qrcode
     #   stripe
 tzdata==2025.1
-    # via kombu
+    # via
+    #   celery
+    #   kombu
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
