@@ -3,7 +3,8 @@
 <script type="text/template" id="case-list-config-body">
   <div class="popover-content">
     <form>
-      <% _.each(columnNames, function(columnName, index) { %>
+      <% _.each(columnNames, function(columnName, index) {
+        if (columnCanBeVisible[index]) { %>
         <div class="form-check mb-2">
           <input
             type="checkbox"
@@ -16,7 +17,7 @@
             <%= columnName %>
           </label>
         </div>
-      <% }); %>
+      <% } }); %>
     </form>
     <div
       <% if (!allColumnsHidden()) { %>

@@ -676,10 +676,16 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             return {
                 columnNames: [],
                 columnVisibility: [],
+                columnCanBeVisible: [],
             };
         },
 
         initialize: function (attributes) {
+            const setFromAttributes = (attributes) => {
+                this.set('columnNames', attributes.columnNames);
+                this.set('columnVisibility', Array(attributes.columnNames.length).fill(true));
+                this.set('columnCanBeVisible', attributes.styles.map(s => s.widthHint !== 0));
+            };
             if (attributes) {
                 this.configStorageId = attributes.configStorageId;
                 if (this.configStorageId && localStorage.getItem(this.configStorageId)) {
@@ -689,14 +695,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                             savedModel.columnNames.length !== attributes.columnNames.length);
                     if (columnNameMismatch) {
                         localStorage.removeItem(this.configStorageId);
-                        this.set('columnNames', attributes.columnNames);
-                        this.set('columnVisibility', Array(attributes.columnNames.length).fill(true));
+                        setFromAttributes(attributes);
                     } else {
                         this.set(savedModel);
                     }
                 } else if (attributes && attributes.columnNames) {
-                    this.set('columnNames', attributes.columnNames);
-                    this.set('columnVisibility', Array(attributes.columnNames.length).fill(true));
+                    setFromAttributes(attributes);
                 }
 
                 this.on('change', this.saveToLocalStorage, this);
@@ -789,7 +793,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
                         self.listenTo(self.caseListConfigView, 'save', function () {
                             caseListConfigViewPopover.dispose();
+                            // save map
+                            const initialixedMapEl = self.$('#module-case-list-map')[0];
+
                             self.render();
+
+                            // Replace the map element with the initial map element
+                            const newMapEl = self.$('#module-case-list-map')[0];
+                            newMapEl.parentNode.replaceChild(initialixedMapEl, newMapEl);
                         });
 
                         return container;
@@ -844,7 +855,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             self.headers = options.triggerEmptyCaseList ? [] : this.options.headers;
             const user = UsersModels.getCurrentUser();
             const configStorageId = this.getConfigStorageId(user);
-            self.columnConfigModel = new ColumnConfigModel({columnNames: self.headers, configStorageId: configStorageId});
+            self.columnConfigModel = new ColumnConfigModel({
+                columnNames: self.headers,
+                configStorageId: configStorageId,
+                styles: self.styles,
+            });
             self.redoLast = options.redoLast;
             if (sessionStorage.selectedValues !== undefined) {
                 const parsedSelectedValues = JSON.parse(sessionStorage.selectedValues)[sessionStorage.queryKey];
