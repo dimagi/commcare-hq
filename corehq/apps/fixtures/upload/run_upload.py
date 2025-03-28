@@ -172,9 +172,11 @@ def flush(tables, rows, owners):
         owner_table_ids = set()
         if owners.to_delete:
             owner_row_ids = [owner.row_id for owner in owners.to_delete]
-            owner_table_ids = set(LookupTableRow.objects.filter(
-                id__in=owner_row_ids
-            ).values_list('table_id', flat=True).distinct())
+            for chunk in chunked(owner_row_ids, 1000, list):
+                chunk_table_ids = set(LookupTableRow.objects.filter(
+                    id__in=chunk
+                ).values_list('table_id', flat=True).distinct())
+                owner_table_ids.update(chunk_table_ids)
 
         tables_being_deleted = {table.id for table in tables.to_delete}
         return (row_table_ids | owner_table_ids) - tables_being_deleted
