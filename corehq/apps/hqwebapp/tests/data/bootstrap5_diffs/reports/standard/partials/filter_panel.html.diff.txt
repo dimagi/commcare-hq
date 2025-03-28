@@ -62,7 +62,7 @@
 +      <div class="col-sm-8">
 +
          {% if report.show_filters %}
--          <a href="#reportFilters"
+-          <a href="#reportFilters{{ report.html_id_suffix }}"
 -             class="btn btn-default"
 -             id="toggle-report-filters{{ report.html_id_suffix }}"
 -             data-toggle="collapse"
@@ -73,7 +73,7 @@
 +            id="toggle-report-filters{{ report.html_id_suffix }}"
 +            type="button"
 +            data-bs-toggle="collapse"
-+            data-bs-target="#reportFilters"
++            data-bs-target="#reportFilters{{ report.html_id_suffix }}"
 +            data-open-text="{% trans "Show Filter Options" %}"
 +            data-close-text="{% trans "Hide Filter Options" %}"
 +          >
