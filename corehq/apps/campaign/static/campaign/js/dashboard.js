@@ -12,11 +12,11 @@ Alpine.store('deleteWidgetModel', {
     type: null,
     title: null,
     widgetDivSelector: null,  // div inside which the widget is displayed
-    setData(id, type, title) {
+    setData(id, type, title, widgetDivId) {
         this.id = id;
         this.type = type;
         this.title = title;
-        this.widgetDivSelector = `#${type}-widget-${id}`;
+        this.widgetDivSelector = `#${widgetDivId}`;
     },
     resetData() {
         this.widgetId = null;

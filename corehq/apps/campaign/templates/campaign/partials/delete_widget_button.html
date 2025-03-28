@@ -8,7 +8,14 @@
   data-bs-target="#delete-widget-confirmation-modal"
   aria-label="{% trans 'Delete Widget' %}"
   x-data
-  @click="$store.deleteWidgetModel.setData('{{ widget.id }}', '{{ widget_type }}', '{{ widget.title }}')"
+  @click="
+      $store.deleteWidgetModel.setData(
+        '{{ widget.id }}',
+        '{{ widget_type }}',
+        '{{ widget.title }}',
+        '{{ widget_div_id }}'
+      );
+  "
 >
   <i class="fa fa-trash"></i>
 </button>
