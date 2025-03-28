@@ -978,7 +978,7 @@ class PlanViewBase(DomainAccountingSettings):
                 "$300",
                 "$250",
                 _("Get started. Build secure apps for offline mobile data collection and case management. "
-                  "50 users included."),
+                  "125 users included."),
             ),
             PlanOption(
                 SoftwarePlanEdition.PRO,
