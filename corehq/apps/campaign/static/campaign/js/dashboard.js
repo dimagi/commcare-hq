@@ -4,9 +4,16 @@ import 'reports/js/bootstrap5/base';
 import $ from 'jquery';
 import initialPageData from "hqwebapp/js/initial_page_data";
 import { Map, MapItem } from "geospatial/js/bootstrap3/models";
+import html2pdf from "html2pdf.js";
 
 
 let mobileWorkerMapsInitialized = false;
+
+const widgetModalSelector = '#widget-modal';
+const modalTitleSelector = '.modal-title';
+const addWidgetText = gettext('Add Widget');
+const editWidgetText = gettext('Edit Widget');
+let $modalTitleElement = null;
 
 $(function () {
     // Only init case map widgets since this is the default tab
@@ -18,13 +25,13 @@ $(function () {
         }
     }
     $('a[data-bs-toggle="tab"]').on('shown.bs.tab', tabSwitch);
+    $('#print-to-pdf').on('click', printActiveTabToPdf);
 
-    $('#widget-modal').on('hidden.bs.modal', function () {
-        $('#widget-modal-spinner').removeClass('d-none');
-        $('#widget-form').text('');
-    });
+    $modalTitleElement = $(widgetModalSelector).find(modalTitleSelector);
+    $(widgetModalSelector).on('hidden.bs.modal', onHideWidgetModal);
+    $(widgetModalSelector).on('show.bs.modal', onShowWidgetModal);
 
-    $('#widget-modal').on('htmx:afterSwap', htmxAfterSwapWidgetForm);
+    $(widgetModalSelector).on('htmx:afterSwap', htmxAfterSwapWidgetForm);
 });
 
 function tabSwitch(e) {
@@ -41,6 +48,45 @@ function tabSwitch(e) {
             }
         }
     }
+}
+
+function printActiveTabToPdf() {
+    const activeTabId = $('.nav-tabs .nav-link.active').attr('href');
+    const elementToPrint = document.querySelector(activeTabId);
+    const pdfExportErrorElement =  document.querySelector('#pdf-export-error');
+
+    pdfExportErrorElement.classList.add('d-none');
+
+    // Hide the map controls as they're not needed in the PDF
+    const mapControlElements = elementToPrint.querySelectorAll('.mapboxgl-control-container');
+    mapControlElements.forEach((element) => {
+        element.style.visibility = 'hidden';
+    });
+
+    const dateString = new Date().toISOString().split('T')[0];
+    const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `campaign-dashboard-${dateString}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+            scale: 2,
+            logging: false,
+            letterRendering: true,
+        },
+        jsPDF: {
+            unit: 'mm',
+            format: 'a4',
+            orientation: 'portrait',
+        },
+    };
+
+    html2pdf().from(elementToPrint).set(opt).save().catch(() => {
+        pdfExportErrorElement.classList.remove('d-none');
+    }).finally(() => {
+        mapControlElements.forEach((element) => {
+            element.style.visibility = 'visible';
+        });
+    });
 }
 
 var MapWidget = function (mapWidgetConfig) {
@@ -125,5 +171,19 @@ var htmxAfterSwapWidgetForm = function (event) {
         setTimeout(function () {
             window.location.reload();
         }, 1000);
+    }
+};
+
+var onHideWidgetModal = function () {
+    $('#widget-modal-spinner').removeClass('d-none');
+    $('#widget-form').text('');
+};
+
+var onShowWidgetModal = function (event) {
+    const triggerSource = event.relatedTarget;
+    if (triggerSource.id === 'edit-widget-btn') {
+        $modalTitleElement.text(editWidgetText);
+    } else {
+        $modalTitleElement.text(addWidgetText);
     }
 };
