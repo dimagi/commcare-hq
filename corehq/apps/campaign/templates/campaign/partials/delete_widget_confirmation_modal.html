@@ -36,6 +36,12 @@
           type="button"
           class="btn btn-primary"
           id="delete-widget-confirmation-btn"
+          hx-post="{% url 'dashboard_widget' domain %}"
+          hq-hx-action="delete_widget"
+          :hx-vals='JSON.stringify({ "widget_id": $store.deleteWidgetModel.id,
+                    "widget_type": $store.deleteWidgetModel.type })'
+          :hx-target="$store.deleteWidgetModel.widgetDivSelector"
+          hx-swap="delete"
         >
           {% trans "Confirm" %}
         </button>
