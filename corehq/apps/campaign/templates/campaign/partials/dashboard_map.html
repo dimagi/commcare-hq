@@ -1,25 +1,25 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<div id="map-widget-{{ widget.id }}" class="paginated-map-widget mb-4">
-  <div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">{{ widget.title }}</h5>
+<div id="map-widget-{{ widget.id }}" class="paginated-map-widget margin-bottom-20">
+  <div class="panel panel-default">
+    <div class="panel-heading clearfix">
+      <h5 class="pull-left">{{ widget.title }}</h5>
       {% include "campaign/partials/edit_widget_button.html" with widget_type='map' %}
     </div>
 
     <!-- TODO: This needs pagination support -->
-    <div class="card-body p-0">
-      <div id="error-alert-{{ widget.id }}" class="alert alert-danger d-none">
+    <div class="panel-body no-padding">
+      <div id="error-alert-{{ widget.id }}" class="alert alert-danger hide">
         {% blocktrans %}
           Something went wrong while loading this widget! Please try again.
         {% endblocktrans %}
       </div>
-      <div class="row g-0">
+      <div class="row">
         <!-- Left Column: Filter Space -->
-        <div class="col-md-4 border-end">
-          <div id="map-widget-filters-{{ widget.id }}" class="p-3">
-            {% include "reports/standard/partials/bootstrap5/filter_panel.html" %}
+        <div class="col-md-4 border-right">
+          <div id="map-widget-filters-{{ widget.id }}" class="padding-10">
+            {% include "reports/standard/partials/bootstrap3/filter_panel.html" %}
           </div>
         </div>
 
@@ -43,9 +43,8 @@
 <!-- Popup for map markers -->
 <script type="text/html" id="select-case">
   <small data-bind="html: getItemType()"></small>
-  <div class="form-check">
+  <div class="checkbox">
     <label
-      class="form-check-label"
       data-bind="html: $data.link, attr: {for: selectCssId}"
     ></label>
   </div>

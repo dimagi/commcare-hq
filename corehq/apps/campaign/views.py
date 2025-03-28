@@ -22,7 +22,6 @@ from corehq.apps.es.case_search import CaseSearchES, case_property_missing
 from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 from corehq.apps.geospatial.utils import get_lat_lon_from_dict
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
-from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.views import BaseProjectReportSectionView
@@ -63,7 +62,6 @@ class DashboardMapFilterMixin(object):
 
 @method_decorator(login_and_domain_required, name='dispatch')
 @method_decorator(toggles.CAMPAIGN_DASHBOARD.required_decorator(), name='dispatch')
-@method_decorator(use_bootstrap5, name='dispatch')
 class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
     urlname = 'campaign_dashboard'
     page_title = gettext_lazy("Campaign Dashboard")
@@ -167,7 +165,6 @@ class PaginatedCasesWithGPSView(BaseDomainView, CaseListMixin):
 
 @method_decorator(login_and_domain_required, name='dispatch')
 @method_decorator(toggles.CAMPAIGN_DASHBOARD.required_decorator(), name='dispatch')
-@method_decorator(use_bootstrap5, name='dispatch')
 class DashboardWidgetView(HqHtmxActionMixin, BaseDomainView):
     urlname = "dashboard_widget"
     form_template_partial_name = 'campaign/partials/widget_form.html'
@@ -258,7 +255,6 @@ class DashboardWidgetView(HqHtmxActionMixin, BaseDomainView):
 
 @require_GET
 @login_and_domain_required
-@use_bootstrap5
 def get_geo_case_properties_view(request, domain):
     case_type = request.GET.get('case_type')
     if not case_type:

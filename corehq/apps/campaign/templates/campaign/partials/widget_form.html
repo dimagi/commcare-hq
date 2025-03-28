@@ -2,16 +2,16 @@
 {% load i18n %}
 
 {% if show_success %}
-  <div class="alert alert-success alert-dismissable fade show" role="alert">
+  <div class="alert alert-success alert-dismissable" role="alert">
     {% blocktrans %}
       Saved! Reloading, please wait..
     {% endblocktrans %}
     <button
       type="button"
-      class="btn-close float-end"
-      data-bs-dismiss="alert"
+      class="close"
+      data-dismiss="alert"
       aria-label="{% trans Close %}"
-    ></button>
+    ><span aria-hidden="true">&times;</span></button>
   </div>
 {% endif %}
 
