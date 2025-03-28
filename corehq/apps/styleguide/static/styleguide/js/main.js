@@ -12,8 +12,6 @@ import 'hqwebapp/js/bootstrap5/main';
 import 'hqwebapp/js/bootstrap5/validators.ko';
 import 'hqwebapp/js/bootstrap5/widgets';
 import 'hqwebapp/js/password_validators.ko';
-import 'hqwebapp/js/select2_knockout_bindings.ko';
-import 'hqwebapp/js/select_2_ajax_widget';
 import 'knockout-validation/dist/knockout.validation.min';
 import initialPageData from 'hqwebapp/js/initial_page_data';
 import { Tooltip } from 'hqwebapp/js/bootstrap5_loader';
