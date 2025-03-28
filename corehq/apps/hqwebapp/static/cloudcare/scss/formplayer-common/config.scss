@@ -1,0 +1,16 @@
+#case-list-config-button {
+  color: white;
+  position: absolute;
+  right: 0px;
+  top: 1.3em;
+  background-color: $cc-brand-low;
+  opacity: 0.8;
+
+  &:focus {
+    outline: 1px solid white;
+  }
+
+  i {
+    font-size: 14px;
+  }
+}
