@@ -1,13 +1,33 @@
 import "commcarehq";
-import "hqwebapp/js/htmx_and_alpine";
+import 'hqwebapp/js/htmx_base';
+import Alpine from 'alpinejs';
 import 'reports/js/bootstrap5/base';
 import $ from 'jquery';
 import initialPageData from "hqwebapp/js/initial_page_data";
 import { Map, MapItem } from "geospatial/js/models";
 
+Alpine.store('deleteWidgetModel', {
+      id: null,
+      type: null,
+      title: null,
+      widgetDivSelector: null,  // div inside which the widget is displayed
+      setData(id, type, title) {
+        this.id = id;
+        this.type = type;
+        this.title = title;
+        this.widgetDivSelector = `#${type}-widget-${id}`;
+      },
+      resetData() {
+        this.widgetId = null;
+        this.widgetType = null;
+        this.title = null;
+        this.widgetDivSelector = null;
+      },
+});
+
+Alpine.start();
 
 let mobileWorkerMapsInitialized = false;
-
 const widgetModalSelector = '#widget-modal';
 const modalTitleSelector = '.modal-title';
 const addWidgetText = gettext('Add Widget');
