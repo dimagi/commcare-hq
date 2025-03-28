@@ -31,9 +31,9 @@ def _get_number_of_forms_submitted_by_mobile_workers(gauge):
 
 
 metric_function_mapping = {
-    'total_number_of_cases': _get_number_of_cases,
-    'total_number_of_mobile_workers': _get_number_of_mobile_workers,
-    'total_number_of_active_mobile_workers': _get_number_of_active_mobile_workers,
-    'total_number_of_inactive_mobile_workers': _get_number_of_inactive_mobile_workers,
-    'total_number_of_forms_submitted_by_mobile_workers': _get_number_of_forms_submitted_by_mobile_workers,
+    'number_of_cases': _get_number_of_cases,
+    'number_of_mobile_workers': _get_number_of_mobile_workers,
+    'number_of_active_mobile_workers': _get_number_of_active_mobile_workers,
+    'number_of_inactive_mobile_workers': _get_number_of_inactive_mobile_workers,
+    'number_of_forms_submitted_by_mobile_workers': _get_number_of_forms_submitted_by_mobile_workers,
 }
