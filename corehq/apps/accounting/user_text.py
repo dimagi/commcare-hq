@@ -4,31 +4,25 @@ from corehq.apps.accounting.models import FeatureType, SoftwarePlanEdition
 
 DESC_BY_EDITION = {
     SoftwarePlanEdition.COMMUNITY: {
-        'name': _("Community"),
-        'description': _("For projects in a pilot phase with a small group (up to {}) of "
-                         "mobile users that only need very basic CommCare features."),
+        'name': _("Free"),
+        'description': _("For practice purposes. Not intended for live projects. {} users maximum."),
     },
     SoftwarePlanEdition.STANDARD: {
         'name': _("Standard"),
-        'description': _("For programs with one-time data collection needs, "
-                         "simple case management workflows, and basic M&E "
-                         "requirements. "
-                         "({} mobile workers included)"),
+        'description': _("Get started. Build secure apps for offline mobile data collection and case management. "
+                         "{} users included."),
     },
     SoftwarePlanEdition.PRO: {
         'name': _("Pro"),
-        'description': _("For programs with complex case management needs, "
-                         "field staff collaborating on tasks, and M&E teams "
-                         "that need to clean and report on data. "
-                         "({} mobile workers included)"),
+        'description': _("Beyond the basics. Unlock reporting, case sharing, and hands-on support. "
+                         "{} users included."),
     },
     SoftwarePlanEdition.ADVANCED: {
         'name': _("Advanced"),
-        'description': _("For programs with distributed field staff, "
-                         "facility-based workflows, and advanced security "
-                         "needs. Also for M&E teams integrating data with "
-                         "3rd party analytics. "
-                         "({} mobile workers included)")
+        'description': _("Unlock everything. Our most secure plan, built for managing connected systems across "
+                         "locations and user profiles, featuring web apps, advanced security, and robust admin "
+                         "and data management tools. "
+                         "{} users included.")
     },
     SoftwarePlanEdition.ENTERPRISE: {
         'name': _("Enterprise"),
