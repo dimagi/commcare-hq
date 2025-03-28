@@ -6,16 +6,16 @@
  {% load i18n %}
  {% load hq_shared_tags %}
  
--{% requirejs_main 'domain/js/bootstrap3/billing_statements' %}
-+{% requirejs_main_b5 'domain/js/bootstrap5/billing_statements' %}
+-{% js_entry_b3 'domain/js/bootstrap3/billing_statements' %}
++{% js_entry 'domain/js/bootstrap5/billing_statements' %}
  
  {% block paginated_list_top %}
 -  {% initial_page_data 'pagination' pagination %}
 +  {% initial_page_data 'pagination' pagination %}  {# todo B5: css-pagination #}
-   {% initial_page_data 'stripe_options' stripe_options %}
+   {% initial_page_data 'stripe_cards' stripe_cards %}
+   {% initial_page_data 'stripe_public_key' stripe_public_key %}
    {% initial_page_data 'payment_urls' payment_urls %}
-   {% initial_page_data 'payment_error_messages' payment_error_messages %}
-@@ -21,8 +21,8 @@
+@@ -22,8 +22,8 @@
        <p data-bind="visible: hasInitialLoadFinished() && totalDue()">
          <button type="button"
                  class="btn btn-primary"
@@ -26,7 +26,7 @@
                  id="bulkPaymentBtn">
            {% trans 'Pay by Credit Card' %}
          </button>
-@@ -30,14 +30,14 @@
+@@ -31,14 +31,14 @@
        <p data-bind="visible: hasInitialLoadFinished() && totalDue()">
          <button type="button"
                  class="btn btn-primary"
@@ -44,7 +44,7 @@
              <i class="fa fa-info-circle"></i>
              {% trans "Not Billing Admin, Can't Make Payment" %}
          </span>
-@@ -62,33 +62,33 @@
+@@ -63,33 +63,33 @@
  
  {% block pagination_templates %}
    <script type="text/html" id="statement-row-template">
@@ -87,7 +87,7 @@
        <a class="btn btn-primary"
           data-bind="attr: { href: pdfUrl }"
           target="_blank">{% trans 'Download' %}</a>
-@@ -98,14 +98,14 @@
+@@ -99,14 +99,14 @@
    {% include 'accounting/partials/stripe_card_ko_template.html' %}
  
    <script type="text/html" id="cost-item-template">
@@ -105,7 +105,7 @@
          <div class="radio">
            <label>
              <input type="radio"
-@@ -129,7 +129,7 @@
+@@ -130,7 +130,7 @@
                Pay a portion of the balance:
              {% endblocktrans %}
              <div class="input-group">
@@ -114,7 +114,7 @@
                <input type="text"
                       class="form-control"
                       name="customPaymentAmount"
-@@ -187,12 +187,12 @@
+@@ -188,12 +188,12 @@
  
  {% block modals %}{{ block.super }}
    {% with process_invoice_payment_url as process_payment_url %}

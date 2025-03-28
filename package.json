@@ -12,6 +12,7 @@
         "@mapbox/mapbox-gl-draw": "1.4.3",
         "@mapbox/mapbox-gl-geocoder": "5.0.2",
         "@popperjs/core": "npm:@popperjs/core#2.11.6",
+        "@stripe/stripe-js": "^6.1.0",
         "@turf/turf": "6.5.0",
         "At.js": "millerdev/At.js#master",
         "Caret.js": "INTELOGIE/Caret.js#0.3.1",
