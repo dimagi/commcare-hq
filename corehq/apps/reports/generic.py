@@ -1049,6 +1049,7 @@ class GenericTabularReport(GenericReportView):
         if self.statistics_rows:
             ret["statistics_rows"] = list(self.statistics_rows)
 
+        # Not necessarily the best place to put this
         if self.profiler_enabled and self.profiler.debug_mode:
             ret["report_timing_profile"] = self.profiler.timing_context.to_dict()
 
