@@ -33,7 +33,7 @@ def is_valid_ip(request, domain):
 
     if ip in request.session[key]:
         return True
-    elif ip in request.sessions[block_key]:
+    elif ip in request.session[block_key]:
         return False
     else:
         try:

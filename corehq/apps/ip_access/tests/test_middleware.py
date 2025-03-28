@@ -4,7 +4,6 @@ from django.http import HttpResponse
 from django.test import TestCase, override_settings
 from django.urls import path
 
-from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_disabled, flag_enabled
 
