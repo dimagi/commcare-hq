@@ -8,7 +8,10 @@ def get_gauge_metric_value(gauge):
 def _get_number_of_cases(gauge):
     case_type = gauge.case_type
     domain = gauge.dashboard.domain
-    return CaseSearchES().domain(domain).case_type(case_type).count()
+    case_es_query = CaseSearchES().domain(domain)
+    if case_type:
+        case_es_query = case_es_query.case_type(case_type)
+    return case_es_query.count()
 
 
 metric_function_mapping = {
