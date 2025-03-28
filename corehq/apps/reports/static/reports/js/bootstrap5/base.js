@@ -23,10 +23,10 @@ $(function () {
     defaultConfig.datespan_filters = [];
     defaultConfig.datespan_slug = null;
 
-    var $savedReports = $("#savedReports");
+    var $savedReports = $("#savedReports" + initialPageData.get("html_id_suffix"));
     if ($savedReports.length) {
         var reportConfigsView = reportConfigModels.reportConfigsViewModel({
-            filterForm: $("#reportFilters"),
+            filterForm: $("#reportFilters" + initialPageData.get("html_id_suffix")),
             items: initialPageData.get('report_configs'),
             defaultItem: defaultConfig,
             saveUrl: initialPageData.reverse("add_report_config"),

@@ -19,6 +19,14 @@
 {% registerurl 'paginate_mobile_workers' domain %}
 {% initial_page_data 'case_types_with_gps' case_types_with_gps %}
 {% initial_page_data 'couch_user_username' couch_user_username %}
+{% comment %}
+  'html_id_suffix' is required by reports/js/bootstrapX/maps_utils.js
+  to use the reportFiltersAccordion. `<div id="reportFiltersAccordion">`
+  is defined in reports/standard/partials/bootstrapX/filter_panel.html.
+  This file is one of the two templates that includes that template,
+  and so we set 'html_id_suffix' here to ensure it is always set.
+{% endcomment %}
+{% initial_page_data 'html_id_suffix' '' %}
 
 {% include 'geospatial/partials/index_alert.html' %}
 <ul id="tabs-list" class="nav nav-tabs">
