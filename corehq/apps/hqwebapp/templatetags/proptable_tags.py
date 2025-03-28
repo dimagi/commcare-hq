@@ -10,6 +10,7 @@ Supports psuedo-tables using dls and real tables.
 
 import collections
 import datetime
+from collections.abc import Iterable
 
 import attr
 from django import template
@@ -48,7 +49,7 @@ register = template.Library()
 
 
 def _is_list_like(val):
-    return isinstance(val, collections.Iterable) and not isinstance(val, str)
+    return isinstance(val, Iterable) and not isinstance(val, str)
 
 
 def _parse_date_or_datetime(val):
