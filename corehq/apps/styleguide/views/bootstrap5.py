@@ -8,6 +8,7 @@ from corehq.apps.styleguide.context import (
     get_common_icons,
     get_custom_icons,
     get_example_context,
+    get_html_and_js_example_context,
     get_python_example_context,
     CrispyFormsDemo,
     CrispyFormsWithJsDemo,
@@ -368,8 +369,12 @@ def styleguide_molecules_inline_editing(request):
     context = get_navigation_context("styleguide_molecules_inline_editing_b5")
     context.update({
         'examples': {
-            'inline_edit': get_example_context('styleguide/bootstrap5/examples/inline_edit.html'),
-            'inline_edit_lang': get_example_context('styleguide/bootstrap5/examples/inline_edit_lang.html'),
+            'inline_edit': get_html_and_js_example_context(
+                'styleguide/bootstrap5/examples/inline_edit.html', 'inline_edit.js'
+            ),
+            'inline_edit_lang': get_html_and_js_example_context(
+                'styleguide/bootstrap5/examples/inline_edit_lang.html', 'inline_edit_lang.js'
+            ),
         }
     })
     return render(request, 'styleguide/bootstrap5/molecules/inline_editing.html', context)
