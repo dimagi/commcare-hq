@@ -163,10 +163,33 @@ def flush(tables, rows, owners):
         for chunk in chunked(ids, 1000, list):
             model_class.objects.filter(id__in=chunk).delete()
 
+    def get_tables_of_deleted_rows_and_owners():
+        if not (rows.to_delete or owners.to_delete):
+            return set()
+
+        row_table_ids = {row.table_id for row in rows.to_delete}
+
+        owner_table_ids = set()
+        if owners.to_delete:
+            owner_row_ids = [owner.row_id for owner in owners.to_delete]
+            owner_table_ids = set(LookupTableRow.objects.filter(
+                id__in=owner_row_ids
+            ).values_list('table_id', flat=True).distinct())
+
+        tables_being_deleted = {table.id for table in tables.to_delete}
+        return (row_table_ids | owner_table_ids) - tables_being_deleted
+
     with atomic():
         bulk_delete(LookupTable, tables.to_delete)
         bulk_delete(LookupTableRow, rows.to_delete)
         bulk_delete(LookupTableRowOwner, owners.to_delete)
+
+        tables_to_update = get_tables_of_deleted_rows_and_owners()
+
+        if tables_to_update:
+            now = datetime.utcnow()
+            for chunk in chunked(tables_to_update, 1000, list):
+                LookupTable.objects.filter(id__in=chunk).update(last_modified=now)
 
         bulk_create(LookupTable, tables.to_create)
         bulk_create(LookupTableRow, rows.to_create)
