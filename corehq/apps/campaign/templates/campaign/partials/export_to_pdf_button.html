@@ -1,0 +1,19 @@
+{% load i18n %}
+
+<div class="btn-group pull-right">
+  <div>
+    <button
+      type="button"
+      id="print-to-pdf"
+      class="btn btn-info"
+    >
+      {% trans "Export to PDF" %}
+    </button>
+  </div>
+  <div id="pdf-export-error" class="alert alert-danger hide">
+    {% blocktrans %}
+      There was an error while exporting to PDF! Please try again, and contact
+      support if the issue persists.
+    {% endblocktrans %}
+  </div>
+</div>
