@@ -1,5 +1,4 @@
 import json
-import logging
 import uuid
 from functools import partial
 
@@ -7,6 +6,7 @@ from django.conf import settings
 
 from kafka import KafkaProducer
 
+from corehq.apps.change_feed.connection import get_kafka_api_version
 from corehq.form_processor.exceptions import KafkaPublishingError
 from dimagi.utils.logging import notify_exception
 
@@ -28,7 +28,7 @@ class ChangeProducer(object):
 
         self._producer = KafkaProducer(
             bootstrap_servers=settings.KAFKA_BROKERS,
-            api_version=settings.KAFKA_API_VERSION,
+            api_version=get_kafka_api_version(),
             client_id="cchq-producer",
             retries=3,
             acks=1,

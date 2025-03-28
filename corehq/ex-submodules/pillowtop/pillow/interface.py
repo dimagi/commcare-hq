@@ -12,7 +12,7 @@ from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_MAX
 from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
-from kafka.common import TopicPartition
+from kafka import TopicPartition
 from pillowtop.const import CHECKPOINT_MIN_WAIT
 from pillowtop.dao.exceptions import DocumentMissingError
 from pillowtop.utils import force_seq_int
