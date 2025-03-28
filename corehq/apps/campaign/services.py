@@ -1,4 +1,6 @@
+from corehq.apps.case_search.exceptions import CaseFilterError
 from corehq.apps.es import CaseSearchES, FormES, UserES
+from corehq.apps.reports.standard.cases.case_list_explorer import get_error_from_failed_query
 
 
 def get_gauge_metric_value(gauge):
@@ -11,6 +13,12 @@ def _get_number_of_cases(gauge):
     case_es_query = CaseSearchES().domain(domain)
     if case_type:
         case_es_query = case_es_query.case_type(case_type)
+    if gauge.case_query:
+        try:
+            case_es_query = case_es_query.xpath_query(domain, gauge.case_query)
+        except CaseFilterError as exception:
+            error, bad_part = get_error_from_failed_query(exception)
+            return 0
     return case_es_query.count()
 
 
