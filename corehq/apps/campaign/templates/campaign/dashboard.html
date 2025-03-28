@@ -1,8 +1,8 @@
-{% extends 'hqwebapp/bootstrap5/base_section.html' %}
+{% extends 'hqwebapp/bootstrap3/base_section.html' %}
 {% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% js_entry "campaign/js/dashboard" %}
+{% js_entry_b3 "campaign/js/dashboard" %}
 
 {% block title %}
   {% trans "Campaign Dashboard" %}
@@ -29,11 +29,11 @@
   </div>
 
   <ul class="nav nav-tabs" role="tablist">
-    <li role="presentation" class="nav-item">
+    <li role="presentation" class="active">
       <a
-        class="nav-link active"
+        class="active"
         role="tab"
-        data-bs-toggle="tab"
+        data-toggle="tab"
         href="#cases-tab-content"
       >
         {% trans "Cases" %}
@@ -41,9 +41,8 @@
     </li>
     <li>
       <a
-        class="nav-link"
         role="tab"
-        data-bs-toggle="tab"
+        data-toggle="tab"
         href="#mobile-workers-tab-content"
       >
         {% trans "Mobile Workers" %}
