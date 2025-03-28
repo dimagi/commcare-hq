@@ -11,10 +11,12 @@ from corehq.apps.styleguide.context import (
     get_python_example_context,
     CrispyFormsDemo,
     CrispyFormsWithJsDemo,
+    get_html_example_context,
     get_js_example_context,
     get_gradient_colors,
     CodeForDisplay,
     CodeForDisplayWithPartial,
+    HtmlWithJsDemo,
 )
 from corehq.apps.styleguide.examples.bootstrap5.checkbox_form import CheckboxDemoForm
 from corehq.apps.styleguide.examples.bootstrap5.crispy_forms_basic import BasicCrispyExampleForm
@@ -368,8 +370,14 @@ def styleguide_molecules_inline_editing(request):
     context = get_navigation_context("styleguide_molecules_inline_editing_b5")
     context.update({
         'examples': {
-            'inline_edit': get_example_context('styleguide/bootstrap5/examples/inline_edit.html'),
-            'inline_edit_lang': get_example_context('styleguide/bootstrap5/examples/inline_edit_lang.html'),
+            'inline_edit': HtmlWithJsDemo(
+                code_html=get_html_example_context('inline_edit.html'),
+                code_js=get_js_example_context('inline_edit.js'),
+            ),
+            'inline_edit_lang': HtmlWithJsDemo(
+                code_html=get_html_example_context('inline_edit_lang.html'),
+                code_js=get_js_example_context('inline_edit_lang.js'),
+            ),
         }
     })
     return render(request, 'styleguide/bootstrap5/molecules/inline_editing.html', context)
