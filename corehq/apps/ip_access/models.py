@@ -4,6 +4,8 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
+from corehq.util.metrics import metrics_counter
+
 
 class IPAccessConfig(models.Model):
     domain = models.CharField(max_length=126, db_index=True, unique=True)
@@ -33,6 +35,7 @@ def is_in_country(ip_address, country_allowlist):
     with geoip2.webservice.Client(settings.MAXMIND_ACCOUNT_ID,
                                   settings.MAXMIND_LICENSE_KEY, host='geolite.info') as client:
         response = client.country(ip_address)
+        metrics_counter('commcare.ip_access.check_country')
         if response.country.iso_code in country_allowlist:
             return True
         else:
