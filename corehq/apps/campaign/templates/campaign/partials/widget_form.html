@@ -19,8 +19,12 @@
   hq-hx-action="save_widget"
   hx-post="{{ request.path_info }}"
   hx-target="#widget-form"
-  hx-swap="outerHTML"
-  hx-vals='{"widget_type": "{{ widget_type }}"}'
+  hx-swap="innerHTML"
+  hx-vals='{
+    "widget_type": "{{ widget_type }}",
+    "widget_id": "{{ widget.id }}"
+  }'
+  hx-disabled-elt="find input[type='submit']"
 >
   {% crispy widget_form %}
 </form>
