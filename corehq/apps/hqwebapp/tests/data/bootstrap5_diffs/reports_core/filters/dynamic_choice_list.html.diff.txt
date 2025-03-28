@@ -1,8 +1,13 @@
 --- 
 +++ 
-@@ -1,4 +1,4 @@
+@@ -1,8 +1,8 @@
 -{% extends "reports_core/filters/bootstrap3/filter_base.html" %}
 +{% extends "reports_core/filters/bootstrap5/filter_base.html" %}
  {% load hq_shared_tags %}
  {% load reports_core_tags %}
  {% block filter-controls %}
+-  <select class="form-control report-filter-dynamic-choice-list"
++  <select class="form-select report-filter-dynamic-choice-list"
+           name="{{ context_.css_id }}"
+           id="{{ context_.css_id }}-input"
+           data-initial-values='{{ context_.value|JSON }}'
