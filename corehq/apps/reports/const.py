@@ -17,4 +17,4 @@ TABLEAU_ROLES = (
 
 HQ_TABLEAU_GROUP_NAME = 'HQ'
 
-LONG_RUNNING_CLE_THRESHOLD = 10
+LONG_RUNNING_CLE_THRESHOLD = 2  # should be 10, but for staging test purposes, we are setting it to 2
