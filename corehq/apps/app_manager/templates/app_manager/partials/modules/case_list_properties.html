@@ -30,11 +30,7 @@
       </tr>
     </thead>
     <tbody
-      data-bind="sortable: {
-            data: columns,
-            afterAdd: function (elem) { $(elem).hide().fadeIn() },
-            beforeRemove: function (elem) { $(elem).fadeOut() }
-        }"
+      data-bind="sortable: { data: columns }"
       {# there must be no whitespace between <tbody> and <tr> #}
       {# the .hide().fadeIn() will fail badly on FireFox #}
     >

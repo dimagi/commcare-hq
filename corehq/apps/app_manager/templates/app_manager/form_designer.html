@@ -31,8 +31,62 @@
   </style>
 {% endblock %}
 
+{% js_entry_b3 "" %}
+
 {% block js %}
   {{ block.super }}
+  <!--
+      jQuery UI needs to be included before Bootstrap's JavaScript, otherwise the two
+      tooltip widgets conflict. The B3 base template takes care of that when you use the
+      @use_jquery_ui decorator, but app manager doesn't, so instead include only the pieces
+      actually used in app manager (no tooltip).
+  -->
+  {% compress js %}
+    <!-- this defines jquery ui ($.ui) so this MUST come first -->
+    <script src="{% static 'jquery-ui/ui/version.js' %}"></script>
+
+    <!-- all files originally in core.js, as that file now requires use of an AMD and it will be deprecated in 1.13 -->
+    <script src="{% static 'jquery-ui/ui/data.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/disable-selection.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/focusable.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/form.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/ie.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/keycode.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/labels.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/plugin.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/safe-active-element.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/safe-blur.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/scroll-parent.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/tabbable.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/unique-id.js' %}"></script>
+
+    <script src="{% static 'jquery-ui/ui/position.js' %}"></script>
+
+    <script src="{% static 'jquery-ui/ui/widget.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/widgets/mouse.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/widgets/autocomplete.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/widgets/draggable.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/widgets/droppable.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/widgets/menu.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/widgets/sortable.js' %}"></script>
+  {% endcompress %}
+
+  {% include 'hqwebapp/includes/atwho.html' %}
+
+  {% include 'hqwebapp/includes/ui_element_js.html' %}
+  {% compress js %}
+    <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
+    <script src="{% static 'jquery-textchange/jquery.textchange.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/select2_knockout_bindings.ko.js' %}"></script>
+    <script src="{% static 'app_manager/js/section_changer.js' %}"></script>
+    <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
+    <script src="{% static 'app_manager/js/preview_app.js' %}"></script>
+    <script src="{% static 'app_manager/js/menu.js' %}"></script>
+    <script src="{% static 'app_manager/js/app_manager.js' %}"></script><!-- depends on menu.js -->
+    <script src="{% static 'hqwebapp/js/bootstrap3/rollout_modal.js' %}"></script>
+    <script src="{% static 'app_manager/js/custom_assertions.js' %}"></script>
+  {% endcompress %}
+
   <script src="{% static 'moment/moment.js' %}"></script>
   {# This is fine as an inline script; it'll be removed once form designer is migrated to RequireJS #}
   <script>

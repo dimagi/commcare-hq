@@ -1,5 +1,6 @@
 hqDefine("app_manager/js/forms/custom_instances", [
     "knockout",
+    "commcarehq",
 ], function (
     ko,
 ) {

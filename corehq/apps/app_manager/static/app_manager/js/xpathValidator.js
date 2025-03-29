@@ -1,4 +1,7 @@
-/* globals XPATH_CONFIG */
+import $ from "jquery";
+import ko from "knockout";
+import xpathConfig from "app_manager/js/xpathConfig";
+
 ko.bindingHandlers.xpathValidator = (function () {
     /*
      * usage:
@@ -30,7 +33,7 @@ ko.bindingHandlers.xpathValidator = (function () {
             var error = '';
             if (self.xpathText()) {
                 try {
-                    XPATH_CONFIG.configureHashtags(self.allowCaseHashtags).parse(value);
+                    xpathConfig.XPATH_CONFIG.configureHashtags(self.allowCaseHashtags).parse(value);
                 } catch (e) {
                     error = e.message;
                 }
