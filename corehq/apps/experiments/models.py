@@ -51,6 +51,15 @@ def should_record_metrics(campaign, path):
     return -1 < _get_enabled_percent_for_path(campaign, path) < 102
 
 
+def get_error_on(campaign, path):
+    return {
+        96: "old",
+        97: "new",
+        98: "both",
+        99: "diff",
+    }.get(_get_enabled_percent_for_path(campaign, path), "none")
+
+
 def _get_enabled_percent_for_path(campaign, path):
     enablers = _get_enablers(campaign)
     while path and path not in enablers:
