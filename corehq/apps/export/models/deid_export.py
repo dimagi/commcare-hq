@@ -13,6 +13,9 @@ class DeIdHash(models.Model):
 
     @classmethod
     def get_deid(cls, value, doc):
+        if not value and not doc:
+            return ''
+
         domain = doc['domain'] if isinstance(doc, dict) else doc.domain
         salt = cls._get_salt(domain)
         return DeidGenerator(value, salt).random_hash()
