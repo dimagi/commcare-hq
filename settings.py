@@ -148,6 +148,7 @@ MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
     'corehq.middleware.SecureCookiesMiddleware',
     'corehq.middleware.SelectiveSessionMiddleware',
+    'corehq.apps.ip_access.middleware.IPAccessMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -245,6 +246,9 @@ SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
 RECAPTCHA_PRIVATE_KEY = ''
 RECAPTCHA_PUBLIC_KEY = ''
 
+MAXMIND_ACCOUNT_ID = ''
+MAXMIND_LICENSE_KEY = ''
+
 CRISPY_TEMPLATE_PACK = 'bootstrap3to5'
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap3to5"
 
@@ -279,6 +283,7 @@ HQ_APPS = (
     'corehq.apps.hqwebapp.apps.HqWebAppConfig',
     'corehq.apps.hqmedia',
     'corehq.apps.integration',
+    'corehq.apps.ip_access',
     'corehq.apps.linked_domain',
     'corehq.apps.locations',
     'corehq.apps.products',
