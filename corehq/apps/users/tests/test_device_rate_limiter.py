@@ -15,8 +15,9 @@ class TestDeviceRateLimiter(TestCase):
 
     def setUp(self):
         SystemLimit.objects.create(key=DEVICE_LIMIT_PER_USER_KEY, limit=1)
+        self.addCleanup(self._cleanup_redis)
 
-    def tearDown(self):
+    def _cleanup_redis(self):
         for key in device_rate_limiter.client.scan_iter(f"{REDIS_KEY_PREFIX}*"):
             device_rate_limiter.client.delete(key.decode('utf-8'))
 
