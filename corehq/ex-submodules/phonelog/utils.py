@@ -191,9 +191,15 @@ class SumoLogicLog(object):
         self.xform = xform
 
     def send_data(self, url):
-        send_device_log_to_sumologic.delay(url, self.log_subreport(), self._get_header('log'))
-        send_device_log_to_sumologic.delay(url, self.user_error_subreport(), self._get_header('user_error'))
-        send_device_log_to_sumologic.delay(url, self.force_close_subreport(), self._get_header('force_close'))
+        send_device_log_to_sumologic.delay(
+            url, self.log_subreport(), self._get_header('log'), self.domain
+        )
+        send_device_log_to_sumologic.delay(
+            url, self.user_error_subreport(), self._get_header('user_error'), self.domain
+        )
+        send_device_log_to_sumologic.delay(
+            url, self.force_close_subreport(), self._get_header('force_close'), self.domain
+        )
 
     def _get_header(self, fmt):
         """
