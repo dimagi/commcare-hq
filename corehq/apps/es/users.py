@@ -53,6 +53,7 @@ class UserES(HQESQuery):
             location,
             login_as_user,
             last_logged_in,
+            last_modified,
             analytics_enabled,
             is_practice_user,
             role_id,
@@ -190,6 +191,10 @@ def created(gt=None, gte=None, lt=None, lte=None):
 
 def last_logged_in(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range('last_login', gt, gte, lt, lte)
+
+
+def last_modified(gt=None, gte=None, lt=None, lte=None):
+    return filters.date_range('last_modified', gt, gte, lt, lte)
 
 
 def user_ids(user_ids):
