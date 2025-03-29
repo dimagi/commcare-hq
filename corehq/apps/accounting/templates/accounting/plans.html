@@ -3,7 +3,7 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% requirejs_main "accounting/js/software_plan_version_handler" %}
+{% js_entry_b3 "accounting/js/software_plan_version_handler" %}
 
 {% block page_content %}
   {% initial_page_data 'role' plan_version_form.role_dict %}

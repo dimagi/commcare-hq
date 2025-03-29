@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main_b5 'domain/js/current_subscription' %}
+{% js_entry 'domain/js/current_subscription' %}
 
 {% block page_content %}
   {% initial_page_data "stripe_public_key" stripe_public_key %}
