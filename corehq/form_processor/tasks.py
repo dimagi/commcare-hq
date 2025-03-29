@@ -31,6 +31,7 @@ def reprocess_submission(submission_stub_id):
         if result:
             metrics_counter('commcare.submission_reprocessing.count', tags={
                 'domain': stub.domain,
+                'xform_id': stub.xform_id,
                 'status': 'error' if result.error else 'success'
             })
 
