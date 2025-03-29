@@ -7,7 +7,7 @@
  {% load i18n %}
  
 @@ -10,14 +10,14 @@
-           <button id="apply-filters"
+           <button id="apply-filters{{ report.html_id_suffix }}"
                    type="submit"
                    class="filters btn btn-primary"
 -                  data-loading-text="{% trans 'Generating Report...' %}"
@@ -37,8 +37,8 @@
          </a>
  
          {% if report.is_emailable %}
--          <div style="display: inline-block; margin-left:0.5em;" class="label label-info" id="email-enabled">
-+          <div style="display: inline-block; margin-left:0.5em;" class="badge text-bg-info" id="email-enabled">  {# todo B5: inline-style #}
+-          <div style="display: inline-block; margin-left:0.5em;" class="label label-info" id="email-enabled{{ report.html_id_suffix }}">
++          <div style="display: inline-block; margin-left:0.5em;" class="badge text-bg-info" id="email-enabled{{ report.html_id_suffix }}">  {# todo B5: inline-style #}
              <i class="fa fa-info-circle"></i> {% trans "Email Supported" %}
            </div>
          {% endif %}

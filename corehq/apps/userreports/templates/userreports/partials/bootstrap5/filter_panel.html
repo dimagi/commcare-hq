@@ -4,10 +4,10 @@
 
 {% block report_filter_actions %}
   <div class="{{ report_filter_form_action_css_class }}">
-    <div id="savedReports">
+    <div id="savedReports{{ report.html_id_suffix }}">
       <div class="btn-toolbar">
         <div class="btn-group">
-          <button id="apply-filters"
+          <button id="apply-filters{{ report.html_id_suffix }}"
                   type="submit"
                   class="filters btn btn-primary"
                   data-loading-text="{% trans 'Generating Report...' %}"  {# todo B5: stateful button #}
@@ -42,14 +42,14 @@
         </a>
 
         {% if report.is_emailable %}
-          <div style="display: inline-block; margin-left:0.5em;" class="badge text-bg-info" id="email-enabled">  {# todo B5: inline-style #}
+          <div style="display: inline-block; margin-left:0.5em;" class="badge text-bg-info" id="email-enabled{{ report.html_id_suffix }}">  {# todo B5: inline-style #}
             <i class="fa fa-info-circle"></i> {% trans "Email Supported" %}
           </div>
         {% endif %}
         {# TODO: I think we need a block here for exportable or some shit? #}
       </div>
 
-      <div class="modal fade" id="report-config-modal" data-bind="modal: configBeingEdited">
+      <div class="modal fade" id="report-config-modal{{ report.html_id_suffix }}" data-bind="modal: configBeingEdited">
         <div class="modal-dialog">
           <div class="modal-content" data-bind="with: configBeingEdited">
             <div class="modal-header">

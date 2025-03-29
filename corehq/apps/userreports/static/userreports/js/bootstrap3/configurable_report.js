@@ -26,7 +26,7 @@ hqDefine("userreports/js/bootstrap3/configurable_report", [
 
         // Set up analytics
         if (initialPageData.get("created_by_builder")) {
-            var $applyFiltersButton = $("#apply-filters"),
+            var $applyFiltersButton = $("#apply-filters" + initialPageData.get('html_id_suffix')),
                 builderType = initialPageData.get("builder_report_type"),
                 reportType = initialPageData.get("type");
             $applyFiltersButton.click(function () {
@@ -34,7 +34,7 @@ hqDefine("userreports/js/bootstrap3/configurable_report", [
                 analytics.track.event("View Report Builder Report", label);
             });
             analytics.track.event("Loaded Report Builder Report");
-            $("#edit-report-link").click(function () {
+            $("#edit-report-link" + initialPageData.get('html_id_suffix')).click(function () {
                 kissmetrics.track.event("RBv2 - Click Edit Report");
             });
         }
@@ -62,15 +62,15 @@ hqDefine("userreports/js/bootstrap3/configurable_report", [
         }
 
         var reportConfigsView = reportConfigModels.reportConfigsViewModel({
-            filterForm: $("#paramSelectorForm"),
+            filterForm: $("#paramSelectorForm" + initialPageData.get("html_id_suffix")),
             items: initialPageData.get("report_configs"),
             defaultItem: defaultConfig,
             saveUrl: initialPageData.reverse("add_report_config"),
         });
-        $("#savedReports").koApplyBindings(reportConfigsView);
+        $("#savedReports" + initialPageData.get('html_id_suffix')).koApplyBindings(reportConfigsView);
         reportConfigsView.setUserConfigurableConfigBeingViewed(reportConfigModels.reportConfig(defaultConfig));
 
-        $('#email-enabled').tooltip({
+        $('#email-enabled' + initialPageData.get('html_id_suffix')).tooltip({
             placement: 'right',
             html: true,
             title: gettext("You can email a saved version<br />of this report."),

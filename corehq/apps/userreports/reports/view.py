@@ -373,11 +373,13 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             "domain": self.domain,
             "slug": self.slug,
             "subReportSlug": self.sub_slug,
+            "html_id_suffix": self.html_id_suffix,
             "type": self.type,
             "isExportable": self.is_exportable,
             "isExportAll": self.exportable_all,
             "isEmailable": False,       # see emailable attr above
             "emailDefaultSubject": self.title,
+            "url": self.url,  # Used with {% initial_page_data 'override_report_render_url' True %}
         }
 
     def pop_report_builder_context_data(self):
@@ -521,6 +523,10 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         Used to populate ReportConfig.subreport_slug
         """
         return self.report_config_id
+
+    @property
+    def html_id_suffix(self):
+        return f"-{self.report_config_id}"
 
     @classmethod
     def get_report(cls, domain, slug, report_config_id):
