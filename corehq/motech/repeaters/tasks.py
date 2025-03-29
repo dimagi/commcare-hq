@@ -491,6 +491,9 @@ def update_repeater(repeat_record_states, repeater_id, lock_token, more):
     """
     repeater = Repeater.objects.get(id=repeater_id)
     try:
+        if len(repeat_record_states) < repeater.num_workers:
+            # Ensure we have a full batch of records before backing off
+            return
         if all(s in (State.Empty, None) for s in repeat_record_states):
             # We can't tell anything about the remote endpoint.
             return
