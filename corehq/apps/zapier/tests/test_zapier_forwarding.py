@@ -48,7 +48,8 @@ class TestZapierCaseForwarding(TestCase):
         self._run_test(EventTypes.UPDATE_CASE, 0, 1)
 
     def test_change_case_forwarding(self):
-        self._run_test(EventTypes.CHANGED_CASE, 1, 2)
+        # Only sends case once if the first payload has not yet been sent.
+        self._run_test(EventTypes.CHANGED_CASE, 1, 1)
 
     def test_case_forwarding_wrong_type(self):
         self._run_test(EventTypes.NEW_CASE, 0, 0, 'plant')
