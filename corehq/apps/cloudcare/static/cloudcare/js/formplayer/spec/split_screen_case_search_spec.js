@@ -12,7 +12,7 @@ import Utils from "cloudcare/js/formplayer/utils/utils";
 import UsersModels from "cloudcare/js/formplayer/users/models";
 
 describe('Split Screen Case Search', function () {
-    const currentUrl = new Utils.CloudcareUrl({ appId: 'abc123' }),
+    const currentUrl = new Utils.CloudcareUrl({ appId: 'abc123', selections: []}),
         stubs = {};
 
     before(function () {
