@@ -38,7 +38,7 @@ from corehq.motech.models import RequestLog
 from corehq.motech.utils import pformat_json
 from corehq.util.xml_utils import indent_xml
 
-from ..const import RECORD_QUEUED_STATES, State
+from ..const import State
 from ..exceptions import BulkActionMissingParameters
 from ..models import RepeatRecord
 from .repeat_record_display import RepeatRecordDisplay
@@ -61,35 +61,12 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         'corehq.apps.reports.filters.simple.RepeaterPayloadIdFilter',
     ]
 
-    # Keys match RepeatRecordStateFilter.options[*][0]
-    _state_map = {s.name.upper(): s for s in State}
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.process_repeaters_enabled = toggles.PROCESS_REPEATERS.enabled(
             self.domain,
             toggles.NAMESPACE_DOMAIN,
         )
-
-    def _make_cancel_payload_button(self, record_id):
-        return format_html('''
-                <a
-                    class="btn btn-default cancel-record-payload"
-                    role="button"
-                    data-record-id={}>
-                    Cancel Payload
-                </a>
-                ''', record_id)
-
-    def _make_requeue_payload_button(self, record_id):
-        return format_html('''
-                <a
-                    class="btn btn-default requeue-record-payload"
-                    role="button"
-                    data-record-id={}>
-                    Requeue Payload
-                </a>
-                ''', record_id)
 
     def _make_view_payload_button(self, record_id):
         return format_html('''
@@ -111,15 +88,6 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             data-record-id={}>
             <i class="fa fa-search"></i>
             Responses
-        </button>
-        ''', record_id)
-
-    def _make_resend_payload_button(self, record_id):
-        return format_html('''
-        <button
-            class="btn btn-default resend-record-payload"
-            data-record-id={}>
-            Resend Payload
         </button>
         ''', record_id)
 
@@ -163,8 +131,11 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         return self.request.GET.get('repeater', None)
 
     @property
+    def state(self):
+        return State.state_for_key(self.request.GET.get('record_state'))
+
+    @property
     def rows(self):
-        self.state = self._state_map.get(self.request.GET.get('record_state'))
         if self.payload_id:
             end = self.pagination.start + self.pagination.count
             records = self._get_all_records_by_payload()[self.pagination.start:end]
@@ -199,8 +170,10 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             process_repeaters_enabled=self.process_repeaters_enabled,
         )
         checkbox = format_html(
-            '<input type="checkbox" class="xform-checkbox" data-id="{}" name="xform_ids"/>',
-            record.id)
+            '<input type="checkbox" class="record-checkbox" data-id="{}" name="record_ids" is_queued="{}"/>',
+            record.id,
+            1 if record.is_queued else 0,
+        )
         row = [
             checkbox,
             display.state,
@@ -208,15 +181,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             display.next_check,
             self._make_view_attempts_button(record.id),
             self._make_view_payload_button(record.id),
-            self._make_resend_payload_button(record.id),
         ]
-
-        if record.state == State.Cancelled:
-            row.append(self._make_requeue_payload_button(record.id))
-        elif record.state in RECORD_QUEUED_STATES:
-            row.append(self._make_cancel_payload_button(record.id))
-        else:
-            row.append(None)
 
         if toggles.SUPPORT.enabled_for_request(self.request):
             row.insert(2, self._payload_id_and_search_link(record.payload_id))
@@ -226,13 +191,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     def headers(self):
         columns = [
             DataTablesColumn(
-                format_html(
-                    '{}<button id="all" class="select-visible btn btn-xs btn-default">{}</button>'
-                    '<button id="none" class="select-none btn btn-xs btn-default">{}</button>',
-                    _('Select'),
-                    _('all'),
-                    _('none')
-                ),
+                format_html('<input type="checkbox" id="select-all-checkbox"></input>'),
                 sortable=False, span=3
             ),
             DataTablesColumn(_('Status')),
@@ -240,8 +199,6 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             DataTablesColumn(_('Retry Date')),
             DataTablesColumn(_('Delivery Attempts')),
             DataTablesColumn(_('View Responses')),
-            DataTablesColumn(_('Resend')),
-            DataTablesColumn(_('Cancel or Requeue'))
         ]
         if toggles.SUPPORT.enabled_for_request(self.request):
             columns.insert(2, DataTablesColumn(_('Payload ID')))
@@ -257,16 +214,15 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             where &= Q(repeater_id=self.repeater_id)
         if self.payload_id:
             where &= Q(payload_id=self.payload_id)
+        if self.state:
+            where &= Q(state=self.state)
         total = RepeatRecord.objects.filter(where).count()
-        total_pending = RepeatRecord.objects.filter(where, state=State.Pending).count()  # include State.Fail?
-        total_cancelled = RepeatRecord.objects.filter(where, state=State.Cancelled).count()
 
         context.update(
             total=total,
-            total_pending=total_pending,
-            total_cancelled=total_cancelled,
             payload_id=self.payload_id,
             repeater_id=self.repeater_id,
+            state=self.state.label.upper() if self.state else 'ALL',
         )
         return context
 
@@ -340,13 +296,13 @@ class RepeatRecordView(View):
 
     def post(self, request, domain):
         # Retriggers a repeat record
-        if _get_flag(request):
+        if _get_state(request):
             try:
-                _schedule_task_with_flag(request, domain, 'resend')
+                _schedule_task_with_state(request, domain, 'resend')
             except BulkActionMissingParameters:
                 return _missing_parameters_response()
         else:
-            _schedule_task_without_flag(request, domain, 'resend')
+            _schedule_task_without_state(request, domain, 'resend')
         return JsonResponse({'success': True})
 
 
@@ -354,13 +310,13 @@ class RepeatRecordView(View):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def cancel_repeat_record(request, domain):
-    if _get_flag(request) == 'select_pending':
+    if _get_state(request) in [State.Pending, State.Fail]:
         try:
-            _schedule_task_with_flag(request, domain, 'cancel')
+            _schedule_task_with_state(request, domain, 'cancel')
         except BulkActionMissingParameters:
             return _missing_parameters_response()
     else:
-        _schedule_task_without_flag(request, domain, 'cancel')
+        _schedule_task_without_state(request, domain, 'cancel')
 
     return HttpResponse('OK')
 
@@ -369,13 +325,13 @@ def cancel_repeat_record(request, domain):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def requeue_repeat_record(request, domain):
-    if _get_flag(request) == 'select_cancelled':
+    if _get_state(request) in [State.Cancelled, State.InvalidPayload]:
         try:
-            _schedule_task_with_flag(request, domain, 'requeue')
+            _schedule_task_with_state(request, domain, 'requeue')
         except BulkActionMissingParameters:
             return _missing_parameters_response()
     else:
-        _schedule_task_without_flag(request, domain, 'requeue')
+        _schedule_task_without_state(request, domain, 'requeue')
 
     return HttpResponse('OK')
 
@@ -395,20 +351,17 @@ def _get_record_ids_from_request(request):
     return record_ids.strip().split()
 
 
-def _get_flag(request: HttpRequest) -> str:
-    return request.POST.get('flag') or ''
+def _get_state(request: HttpRequest) -> str:
+    state_from_request = request.POST.get('state')
+    if state_from_request is None:
+        return None
+    state = State.state_for_key(state_from_request)
+    if state is None and state_from_request != 'ALL':
+        raise KeyError(f"{state_from_request} is not a valid option for RepeatRecord.State")
+    return state
 
 
-def _get_state_from_request(request):
-    flag = _get_flag(request)
-    return {
-        'select_all': None,
-        'select_pending': State.Pending,
-        'select_cancelled': State.Cancelled,
-    }[flag]
-
-
-def _schedule_task_with_flag(
+def _schedule_task_with_state(
     request: HttpRequest,
     domain: str,
     action: Literal['resend', 'cancel', 'requeue']
@@ -418,13 +371,13 @@ def _schedule_task_with_flag(
     repeater_id = request.POST.get('repeater_id', None)
     if not any([repeater_id, payload_id]):
         raise BulkActionMissingParameters
-    state = _get_state_from_request(request)
+    state = _get_state(request)
     task = task_generate_ids_and_operate_on_payloads.delay(
         payload_id, repeater_id, domain, action, state=state)
     task_ref.set_task(task)
 
 
-def _schedule_task_without_flag(
+def _schedule_task_without_state(
     request: HttpRequest,
     domain: str,
     action: Literal['resend', 'cancel', 'requeue']
