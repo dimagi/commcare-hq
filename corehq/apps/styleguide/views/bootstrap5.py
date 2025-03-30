@@ -385,7 +385,10 @@ def styleguide_molecules_searching(request):
     context = get_navigation_context("styleguide_molecules_searching_b5")
     context.update({
         'examples': {
-            'search_box': get_example_context('styleguide/bootstrap5/examples/search_box.html'),
+            'search_box': HtmlWithJsDemo(
+                code_html=get_html_example_context('search_box.html'),
+                code_js=get_js_example_context('search_box.js'),
+            ),
         }
     })
     return render(request, 'styleguide/bootstrap5/molecules/searching.html', context)
