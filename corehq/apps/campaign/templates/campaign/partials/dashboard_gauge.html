@@ -11,10 +11,21 @@
       {% include "campaign/partials/edit_widget_button.html" with widget_type='gauge' %}
     </div>
     <div class="card-body p-0 d-flex">
-      <canvas id="gauge-widget-{{ widget.id }}"></canvas>
+      {% if widget.value %}
+        <canvas id="gauge-widget-{{ widget.id }}"></canvas>
+      {% else %}
+        <canvas data-type="radial-gauge"></canvas>
+      {% endif %}
     </div>
     <div>
-      <b class="ms-2"> {% trans 'Metric' %} : {{ widget.metric_name }} </b>
+      <b class="ms-2">
+        {% trans 'Metric' %} :
+        {% if widget.metric_name %}
+          {{ widget.metric_name }}
+        {% else %}
+          {% trans 'Unknown metric' %}
+        {% endif %}
+      </b>
       {% if widget.case_type %}
         <b class="me-2 float-end">
           {% trans 'Case Type' %} : {{ widget.case_type }}

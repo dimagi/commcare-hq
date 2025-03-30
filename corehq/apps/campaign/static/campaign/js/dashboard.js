@@ -26,13 +26,15 @@ $(function () {
     }
     const gaugeWidgetConfigs = initialPageData.get('gauge_widgets');
     for (const gaugeWidgetConfig of gaugeWidgetConfigs.cases) {
-        new RadialGauge({
-            renderTo: `gauge-widget-${ gaugeWidgetConfig.id }`,
-            value: gaugeWidgetConfig.value,
-            maxValue: gaugeWidgetConfig.max_value,
-            majorTicks: gaugeWidgetConfig.major_ticks,
-            valueDec: 0
-        }).draw();
+        if (gaugeWidgetConfig.value) {
+            new RadialGauge({
+                renderTo: `gauge-widget-${ gaugeWidgetConfig.id }`,
+                value: gaugeWidgetConfig.value,
+                maxValue: gaugeWidgetConfig.max_value,
+                majorTicks: gaugeWidgetConfig.major_ticks,
+                valueDec: 0
+            }).draw();
+        }
     }
     $('a[data-bs-toggle="tab"]').on('shown.bs.tab', tabSwitch);
 

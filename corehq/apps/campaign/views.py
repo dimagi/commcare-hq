@@ -110,12 +110,14 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
     @staticmethod
     def _get_gauge_config(dashboard_gauge):
         config = dashboard_gauge.to_widget()
-        config['value'] = get_gauge_metric_value(dashboard_gauge)
-        # set max value of dial to nearest equivalent of 100
-        config['max_value'] = 10 ** len(str(config['value']))
-        number_of_ticks = 5
-        config['major_ticks'] = [int(config['max_value'] * i / 5)
-                                 for i in range(0, number_of_ticks + 1)]
+        gauge_metric_value = get_gauge_metric_value(dashboard_gauge)
+        if gauge_metric_value:
+            config['value'] = get_gauge_metric_value(dashboard_gauge)
+            # set max value of dial to nearest equivalent of 100
+            config['max_value'] = 10 ** len(str(config['value']))
+            number_of_ticks = 5
+            config['major_ticks'] = [int(config['max_value'] * i / 5)
+                                     for i in range(0, number_of_ticks + 1)]
         config['metric_name'] = dict(GAUGE_METRICS).get(dashboard_gauge.metric, '')
         return config
 

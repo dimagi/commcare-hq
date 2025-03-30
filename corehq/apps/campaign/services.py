@@ -2,7 +2,8 @@ from corehq.apps.es import CaseSearchES, FormES, UserES
 
 
 def get_gauge_metric_value(gauge):
-    return metric_function_mapping[gauge.metric](gauge)
+    if gauge.metric in metric_function_mapping:
+        return metric_function_mapping[gauge.metric](gauge)
 
 
 def _get_number_of_cases(gauge):

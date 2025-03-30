@@ -98,6 +98,15 @@ class TestDashboardView(BaseTestCampaignView):
             metric=GAUGE_METRICS[0][0],
             dashboard_tab=DashboardTab.CASES,
         )
+        cls.dashboard_gauge_widget_for_cases_with_removed_metric = DashboardGauge.objects.create(
+            dashboard=cls.dashboard,
+            title='Cases Gauge 2',
+            description='Gauge 2 described for foo cases.',
+            display_order=1,
+            case_type='foo',
+            metric='removed',
+            dashboard_tab=DashboardTab.CASES,
+        )
         cls.dashboard_gauge_widget_for_mobile_workers = DashboardGauge.objects.create(
             dashboard=cls.dashboard,
             title='Mobile Workers Gauge 1',
@@ -158,6 +167,21 @@ class TestDashboardView(BaseTestCampaignView):
                 'max_value': 100,
                 'metric': 'total_number_of_cases',
                 'metric_name': 'Total number of cases',
+                'configuration': {},
+                'dashboard': {
+                    'domain': 'test-domain',
+                },
+                'value': 10,
+                'widget_type': 'DashboardGauge',
+            }, {
+                'id': self.dashboard_gauge_widget_for_cases_with_removed_metric.id,
+                'title': 'Cases Gauge 2',
+                'description': 'Gauge 2 described for foo cases.',
+                'case_type': 'foo',
+                'major_ticks': [0, 20, 40, 60, 80, 100],
+                'max_value': 100,
+                'metric': 'removed',
+                'metric_name': '',
                 'configuration': {},
                 'dashboard': {
                     'domain': 'test-domain',
