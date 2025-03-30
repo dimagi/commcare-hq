@@ -458,12 +458,15 @@ class TestRepeaterHandleResponse(RepeaterTestCase):
         self.assertEqual(repeat_record.state, State.Success)
 
     def test_handle_response_429(self):
+        self.assertEqual(self.repeater.num_workers, 7)
         resp = RepeaterResponse(
             status_code=429,
             reason='Too Many Requests',
         )
         repeat_record = self.get_repeat_record()
         self.repeater.handle_response(resp, repeat_record)
+        repeater = Repeater.objects.get(id=self.repeater.id)  # Reload
+        self.assertEqual(repeater.num_workers, 3)
         self.assertEqual(repeat_record.state, State.Fail)
 
     def test_handle_response_server_failure(self):
