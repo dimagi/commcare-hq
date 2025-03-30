@@ -40,7 +40,7 @@
           hq-hx-action="delete_widget"
           :hx-vals='JSON.stringify({ "widget_id": $store.deleteWidgetModel.id,
                     "widget_type": $store.deleteWidgetModel.type })'
-          :hx-target="$store.deleteWidgetModel.widgetDivSelector"
+          :hx-target="$store.deleteWidgetModel.swapTargetSelector"
           hx-swap="delete"
         >
           {% trans "Confirm" %}

@@ -11,18 +11,18 @@ Alpine.store('deleteWidgetModel', {
     id: null,
     type: null,
     title: null,
-    widgetDivSelector: null,  // div inside which the widget is displayed
-    setData(id, type, title, widgetDivId) {
+    swapTargetSelector: null,  // element css selector that should be removed post deletion
+    setData(id, type, title) {
         this.id = id;
         this.type = type;
         this.title = title;
-        this.widgetDivSelector = `#${widgetDivId}`;
+        this.swapTargetSelector = `[data-htmx-swap-target=${type}-${id}]`;
     },
     resetData() {
         this.widgetId = null;
         this.widgetType = null;
         this.title = null;
-        this.widgetDivSelector = null;
+        this.swapTargetSelector = null;
     },
 });
 
