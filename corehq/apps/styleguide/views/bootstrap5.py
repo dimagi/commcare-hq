@@ -432,11 +432,26 @@ def styleguide_molecules_dates_times(request):
     context.update({
         'examples': {
             'datepicker_widget': get_example_context('styleguide/bootstrap5/examples/datepicker_widget.html'),
-            'date_only': get_example_context('styleguide/bootstrap5/examples/date_only.html'),
-            'tempus_dominus': get_example_context('styleguide/bootstrap5/examples/tempus_dominus.html'),
-            'date_range': get_example_context('styleguide/bootstrap5/examples/date_range.html'),
-            'time_only': get_example_context('styleguide/bootstrap5/examples/time_only.html'),
-            'time_only_24': get_example_context('styleguide/bootstrap5/examples/time_only_24.html'),
+            'date_only': HtmlWithJsDemo(
+                code_html=get_html_example_context('date_only.html'),
+                code_js=get_js_example_context('date_only.js'),
+            ),
+            'tempus_dominus': HtmlWithJsDemo(
+                code_html=get_html_example_context('tempus_dominus.html'),
+                code_js=get_js_example_context('tempus_dominus.js'),
+            ),
+            'date_range': HtmlWithJsDemo(
+                code_html=get_html_example_context('date_range.html'),
+                code_js=get_js_example_context('date_range.js'),
+            ),
+            'time_only': HtmlWithJsDemo(
+                code_html=get_html_example_context('time_only.html'),
+                code_js=get_js_example_context('time_only.js'),
+            ),
+            'time_only_24': HtmlWithJsDemo(
+                code_html=get_html_example_context('time_only_24.html'),
+                code_js=get_js_example_context('time_only_24.js'),
+            ),
         }
     })
     return render(request, 'styleguide/bootstrap5/molecules/dates_times.html', context)
