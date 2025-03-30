@@ -565,11 +565,8 @@ class Repeater(RepeaterSuperProxy):
             return repeat_record.handle_exception(result)
         elif is_success_response(result):
             return repeat_record.handle_success(result)
-        elif not is_response(result) or (
-            500 <= result.status_code < 600
-            or result.status_code in HTTP_STATUS_4XX_RETRY
-        ):
-            return repeat_record.handle_failure(result)
+        elif is_server_failure(result):
+            return repeat_record.handle_server_failure(result)
         else:
             message = format_response(result)
             return repeat_record.handle_payload_error(message)
@@ -1367,7 +1364,7 @@ class RepeatRecord(models.Model):
             )
         return self.add_success_attempt(response)
 
-    def handle_failure(self, response):
+    def handle_server_failure(self, response):
         log_repeater_error_in_datadog(self.domain, response.status_code, self.repeater_type)
         return self.add_server_failure_attempt(format_response(response))
 
@@ -1478,6 +1475,17 @@ def is_response(duck):
     instance that this module uses, otherwise False.
     """
     return hasattr(duck, 'status_code') and hasattr(duck, 'reason')
+
+
+def is_server_failure(result):
+    """
+    Returns True if ``result`` is a server error (5xx) or a 4xx
+    response that should be retried after backing off.
+    """
+    return not is_response(result) or (
+        500 <= result.status_code < 600
+        or result.status_code in HTTP_STATUS_4XX_RETRY
+    )
 
 
 def domain_can_forward(domain):
