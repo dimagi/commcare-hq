@@ -328,10 +328,18 @@ def styleguide_molecules_modals(request):
     context.update({
         'examples': {
             'modal': get_example_context('styleguide/bootstrap5/examples/modal.html'),
-            'modal_ko': get_example_context('styleguide/bootstrap5/examples/modal_ko.html'),
-            'open_modal_ko': get_example_context('styleguide/bootstrap5/examples/open_modal_ko.html'),
-            'open_remote_modal_ko': get_example_context(
-                'styleguide/bootstrap5/examples/open_remote_modal_ko.html'),
+            'modal_ko': HtmlWithJsDemo(
+                code_html=get_html_example_context('modal_ko.html'),
+                code_js=get_js_example_context('modal_ko.js'),
+            ),
+            'open_modal_ko': HtmlWithJsDemo(
+                code_html=get_html_example_context('open_modal_ko.html'),
+                code_js=get_js_example_context('open_modal_ko.js'),
+            ),
+            'open_remote_modal_ko': HtmlWithJsDemo(
+                code_html=get_html_example_context('open_remote_modal_ko.html'),
+                code_js=get_js_example_context('open_remote_modal_ko.js'),
+            ),
             'remote_modal': get_example_context('styleguide/bootstrap5/examples/remote_modal.html'),
         }
     })
