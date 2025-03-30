@@ -166,6 +166,7 @@ var HQReportDataTables = function (options) {
                     applyBootstrapMagic();
                     if ('context' in data) {
                         let iconPath = data['icon_path'] || $(".base-maps-data").data("icon_path");
+                        // TODO
                         hqRequire(["reports/js/bootstrap5/maps_utils"], function (mapsUtils) {
                             mapsUtils.load(data['context'], iconPath);
                         });
