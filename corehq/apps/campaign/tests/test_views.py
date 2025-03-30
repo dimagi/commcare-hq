@@ -165,8 +165,8 @@ class TestDashboardView(BaseTestCampaignView):
                 'case_type': 'foo',
                 'major_ticks': [0, 20, 40, 60, 80, 100],
                 'max_value': 100,
-                'metric': 'total_number_of_cases',
-                'metric_name': 'Total number of cases',
+                'metric': 'number_of_cases',
+                'metric_name': 'Number of cases',
                 'configuration': {},
                 'dashboard': {
                     'domain': 'test-domain',
@@ -196,8 +196,8 @@ class TestDashboardView(BaseTestCampaignView):
                 'case_type': 'bar',
                 'major_ticks': [0, 20, 40, 60, 80, 100],
                 'max_value': 100,
-                'metric': 'total_number_of_cases',
-                'metric_name': 'Total number of cases',
+                'metric': 'number_of_cases',
+                'metric_name': 'Number of cases',
                 'configuration': {},
                 'dashboard': {
                     'domain': 'test-domain',
