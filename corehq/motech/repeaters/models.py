@@ -558,14 +558,6 @@ class Repeater(RepeaterSuperProxy):
             return repeat_record.handle_success(result)
         elif is_server_failure(result):
             return repeat_record.handle_server_failure(result)
-        elif result.status_code == HTTPStatus.NOT_FOUND:
-            # Traefik proxy returns (client error) 404 instead of (server error)
-            # 503 when it has not been configured with a catch-all router and is
-            # unable to match a request to a router.
-            # https://doc.traefik.io/traefik/getting-started/faq/#404-not-found
-            # TODO: Add an additional check for Traefik proxy, and treat other
-            #       404s as payload errors
-            return repeat_record.handle_server_failure(result)  # Current behavior
         elif result.status_code == HTTPStatus.TOO_MANY_REQUESTS:
             # TODO:
             #   self.max_workers = ceil(self.num_workers / 2)
