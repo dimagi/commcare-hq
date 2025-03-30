@@ -9,10 +9,7 @@ import 'ace-builds/src-min-noconflict/mode-javascript';
 import 'ace-builds/src-min-noconflict/mode-python';
 
 import 'hqwebapp/js/bootstrap5/main';
-import 'hqwebapp/js/bootstrap5/validators.ko';
 import 'hqwebapp/js/bootstrap5/widgets';
-import 'hqwebapp/js/password_validators.ko';
-import 'knockout-validation/dist/knockout.validation.min';
 import initialPageData from 'hqwebapp/js/initial_page_data';
 import { Tooltip } from 'hqwebapp/js/bootstrap5_loader';
 
