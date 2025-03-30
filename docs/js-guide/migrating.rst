@@ -241,10 +241,8 @@ Common issues on Webpack pages:
   ``something`` is one of the parameters in the module’s main function:
   this can indicate a circular dependency. This is rare in HQ. Track down
   the circular dependency and see if it makes sense to eliminate it by
-  reorganizing code. If it doesn’t work, you can use
-  `hqRequire <https://github.com/dimagi/commcare-hq/commit/15b436f77875f57d1e3d8d6db9b990720fa5dd6f#diff-73c73327e873d0e5f5f4e17c3251a1ceR100>`__
-  to require the necessary module at the point where it’s used rather than
-  at the top of the module using it.
+  reorganizing code. If it doesn’t work, you can use `import` at the point
+  where the module is used rather than at the top of the module.
 - JS error like ``x is not defined``
   where ``x`` is a third-party module, which is the dependency of another
   third party module ``y`` and both of them are not modules. You
@@ -274,7 +272,8 @@ Common issues on non-Bundled pages:
   could be later on, possibly in an event handler or some other code that
   would never execute until the entire page was loaded. To fix, try
   reordering the script tags. If you find there’s a circular dependency,
-  use ``hqRequire`` as described above.
+  use ``import`` at the point where the dependency is needed rather than
+  importing at at the top of the file.
 
 Troubleshooting the RequireJS build process
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

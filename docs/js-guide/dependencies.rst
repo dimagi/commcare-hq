@@ -341,12 +341,6 @@ that don't yet use a bundler.
 ``hqImport`` only works in non-bundled contexts. In modules (Webpack or RequireJS), dependencies should be
 included using ESM ``imports`` or listed module's ``hqDefine`` call, as described `here <#amd-style-legacy-modules>`__.
 
-Occasionally, this does not work due to a circular dependency. This will manifest as the module being undefined.
-`hqRequire <https://github.com/dimagi/commcare-hq/commit/15b436f77875f57d1e3d8d6db9b990720fa5dd6f#diff-73c73327e873d0e5f5f4e17c3251a1ceR100>`__
-exists for this purpose, to require the necessary module at the point where it’s used. ``hqRequire`` defines
-a new module, which can be fragile, so limit the code using it. As in python, best practice is to include
-dependencies at the module level, at the top of the file.
-
 
 **test_files_match_modules**
 
