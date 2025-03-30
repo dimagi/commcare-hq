@@ -146,18 +146,15 @@ from .repeater_generators import (
     UserPayloadGenerator,
 )
 
-# Retry responses with these status codes. All other 4XX status codes
-# are treated as InvalidPayload errors.
-HTTP_STATUS_4XX_RETRY = (
-    HTTPStatus.BAD_REQUEST,
+# Back off, and retry responses with these status codes. All other
+# status codes are treated as InvalidPayload errors.
+HTTP_STATUS_BACK_OFF = (
     HTTPStatus.REQUEST_TIMEOUT,
-    HTTPStatus.CONFLICT,
-    HTTPStatus.PRECONDITION_FAILED,
     HTTPStatus.LOCKED,
-    HTTPStatus.FAILED_DEPENDENCY,
     HTTPStatus.TOO_EARLY,
-    HTTPStatus.UPGRADE_REQUIRED,
-    HTTPStatus.PRECONDITION_REQUIRED,
+    HTTPStatus.BAD_GATEWAY,
+    HTTPStatus.SERVICE_UNAVAILABLE,
+    HTTPStatus.GATEWAY_TIMEOUT,
 )
 
 
@@ -1489,10 +1486,7 @@ def is_server_failure(result):
     Returns True if ``result`` is a server error (5xx) or a 4xx
     response that should be retried after backing off.
     """
-    return not is_response(result) or (
-        500 <= result.status_code < 600
-        or result.status_code in HTTP_STATUS_4XX_RETRY
-    )
+    return not is_response(result) or result.status_code in HTTP_STATUS_BACK_OFF
 
 
 def domain_can_forward(domain):

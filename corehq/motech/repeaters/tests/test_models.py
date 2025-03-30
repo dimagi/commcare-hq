@@ -25,7 +25,7 @@ from ..const import (
     State,
 )
 from ..models import (
-    HTTP_STATUS_4XX_RETRY,
+    HTTP_STATUS_BACK_OFF,
     FormRepeater,
     Repeater,
     RepeatRecord,
@@ -457,15 +457,6 @@ class TestRepeaterHandleResponse(RepeaterTestCase):
         self.repeater.handle_response(resp, repeat_record)
         self.assertEqual(repeat_record.state, State.Success)
 
-    def test_handle_response_server_failure(self):
-        resp = RepeaterResponse(
-            status_code=504,
-            reason='Gateway Timeout',
-        )
-        repeat_record = self.get_repeat_record()
-        self.repeater.handle_response(resp, repeat_record)
-        self.assertEqual(repeat_record.state, State.Fail)
-
     def test_handle_response_429(self):
         resp = RepeaterResponse(
             status_code=429,
@@ -475,8 +466,8 @@ class TestRepeaterHandleResponse(RepeaterTestCase):
         self.repeater.handle_response(resp, repeat_record)
         self.assertEqual(repeat_record.state, State.Fail)
 
-    def test_handle_4XX_retry_codes(self):
-        for status_code in HTTP_STATUS_4XX_RETRY:
+    def test_handle_response_server_failure(self):
+        for status_code in HTTP_STATUS_BACK_OFF:
             resp = RepeaterResponse(
                 status_code=status_code,
                 reason='Retry',
@@ -485,30 +476,20 @@ class TestRepeaterHandleResponse(RepeaterTestCase):
             self.repeater.handle_response(resp, repeat_record)
             self.assertEqual(repeat_record.state, State.Fail)
 
-    def test_handle_4XX_invalid_payload(self):
-        for http_status in HTTPStatus:
-            if (
-                400 <= http_status.value < 500
-                and http_status not in HTTP_STATUS_4XX_RETRY
-            ):
-                resp = RepeaterResponse(
-                    status_code=http_status.value,
-                    reason='Invalid Payload',
-                )
-                repeat_record = self.get_repeat_record()
-                self.repeater.handle_response(resp, repeat_record)
-                self.assertEqual(repeat_record.state, State.InvalidPayload)
-
-    def test_handle_5XX_retry(self):
-        for http_status in HTTPStatus:
-            if 500 <= http_status.value < 600:
-                resp = RepeaterResponse(
-                    status_code=http_status.value,
-                    reason='Invalid Payload',
-                )
-                repeat_record = self.get_repeat_record()
-                self.repeater.handle_response(resp, repeat_record)
-                self.assertEqual(repeat_record.state, State.Fail)
+    def test_handle_payload_errors(self):
+        retry_codes = HTTP_STATUS_BACK_OFF + (HTTPStatus.TOO_MANY_REQUESTS,)
+        payload_error_status_codes = (
+            s for s in HTTPStatus
+            if 400 <= s.value < 600 and s.value not in retry_codes
+        )
+        for http_status in payload_error_status_codes:
+            resp = RepeaterResponse(
+                status_code=http_status.value,
+                reason='Error',
+            )
+            repeat_record = self.get_repeat_record()
+            self.repeater.handle_response(resp, repeat_record)
+            self.assertEqual(repeat_record.state, State.InvalidPayload)
 
 
 class TestConnectionSettingsUsedBy(TestCase):
