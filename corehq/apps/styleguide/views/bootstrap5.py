@@ -343,7 +343,10 @@ def styleguide_molecules_pagination(request):
     context = get_navigation_context("styleguide_molecules_pagination_b5")
     context.update({
         'examples': {
-            'pagination': get_example_context('styleguide/bootstrap5/examples/pagination.html'),
+            'pagination': HtmlWithJsDemo(
+                code_html=get_html_example_context('pagination.html'),
+                code_js=get_js_example_context('pagination.js'),
+            ),
             'htmx_pagination_data': CodeForDisplay(
                 code=get_python_example_context('htmx_pagination_data.py'),
                 language="Python",
@@ -414,7 +417,10 @@ def styleguide_molecules_feedback(request):
     context = get_navigation_context("styleguide_molecules_feedback_b5")
     context.update({
         'examples': {
-            'feedback': get_example_context('styleguide/bootstrap5/examples/feedback.html'),
+            'feedback': HtmlWithJsDemo(
+                code_html=get_html_example_context('feedback.html'),
+                code_js=get_js_example_context('feedback.js'),
+            ),
         }
     })
     return render(request, 'styleguide/bootstrap5/molecules/feedback.html', context)

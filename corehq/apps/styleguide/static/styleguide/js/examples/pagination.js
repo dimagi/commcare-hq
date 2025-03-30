@@ -1,6 +1,7 @@
 import $ from 'jquery';
 import ko from 'knockout';
 import _ from 'underscore';
+import 'hqwebapp/js/components/pagination';
 
 $(function () {
     let paginationExample = function () {
