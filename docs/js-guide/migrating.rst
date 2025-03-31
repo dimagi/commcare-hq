@@ -2,9 +2,6 @@ JS Bundler Migration Guide
 ===========================
 
 This page is a guide to upgrading legacy code in HQ to use Webpack, a modern JavaScript bundler.
-Previously, we were migrating legacy code to RequireJS, an older JavaScript bundler which has since been
-deprecated. If you wish to migrate a RequireJS page to Webpack, please see the `RequireJS to Webpack Migration Guide
-<https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/requirejs-to-webpack.rst>`__
 
 For information on how to work within existing code, see `Managing
 Dependencies <https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/dependencies.rst>`__.
@@ -22,13 +19,13 @@ Background: modules and pages
 The JS Bundler migration deals with both **pages** (HTML) and **modules**
 (JavaScript). Any individual page is either migrated or not. Individual
 modules are also migrated or not, but a “migrated” module may be used on
-both bundled (Webpack and RequireJS) and non-bundled pages.
+both bundled (Webpack) and non-bundled pages.
 
 Logic in ``hqModules.js`` determines whether or not we’re in a bundler
-environment (Webpack or RequireJS) and changes the behavior of
+environment (Webpack) and changes the behavior of
 ``hqDefine`` accordingly. In a bundler environment, ``hqDefine`` just passes
 through to the standard AMD Module ``define``, which is understood by
-both Webpack and RequireJS as a module and bundled accordingly.
+Webpack as a module and bundled accordingly.
 Once all pages have been migrated, we’ll be able to delete
 ``hqModules.js`` altogether and switch all of the ``hqDefine`` calls to
 ``define``--or better, switch to using ES Modules (ESM).
@@ -59,15 +56,14 @@ definition, and also updating each HTML page to reference a single
     ``requirejs_main``. Additionally, you should be sure to include the ``commcarehq``
     module in the list of dependencies of the final ``hqDefine`` entry point.
 
-    See the `RequireJS to Webpack Migration Guide
-    <https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/requirejs-to-webpack.rst>`__
-    for additional guidance.
 
+Sample PRs:
 
-Sample PRs: - `Bundler migration (RequireJS):
+- `Bundler migration (RequireJS):
 dashboard <https://github.com/dimagi/commcare-hq/pull/19182/>`__ is an
 example of an easy migration, where all dependencies are already
-migrated - `Bundler proof of
+migrated
+- `Bundler proof of
 concept (with RequireJS) <https://github.com/dimagi/commcare-hq/pull/18116>`__ migrates a
 few pages (lookup tables, data dictionary) and many of our commonly-used
 modules (analytics, ``hq.helpers.js``, etc.). This also contains the
@@ -199,8 +195,7 @@ based on the changes you made:
   un-migrated page, its dependencies need to be available at the time the
   module is defined. This is a change from previous behavior, where the
   dependencies didn't need to be defined until ``hqImport`` first called
-  them. We do not currently have a construct to require dependencies after
-  a module is defined.
+  them.
 - The most likely missing dependencies are the
   invisible ones: knockout bindings and jquery plugins like select2. These
   often don’t error but will look substantially different on the page if
@@ -222,9 +217,8 @@ Troubleshooting migration issues
 
 When debugging Webpack issues, the first question is whether or not
 the page you’re on has been migrated. You can find out by checking the
-value of ``window.USE_WEBPACK`` in the browser console or ``window.USE_REQUIREJS``
-if the page is still using RequireJS. If neither values return ``true``, then
-the page has not been migrated yet.
+value of ``window.USE_WEBPACK`` in the browser console. If this is ``false``,
+then the page has not been migrated yet.
 
 Common issues on Webpack pages:
 
@@ -242,8 +236,7 @@ Common issues on Webpack pages:
   this can indicate a circular dependency. This is rare in HQ. Track down
   the circular dependency and see if it makes sense to eliminate it by
   reorganizing code. If it doesn’t work, you can use
-  `hqRequire <https://github.com/dimagi/commcare-hq/commit/15b436f77875f57d1e3d8d6db9b990720fa5dd6f#diff-73c73327e873d0e5f5f4e17c3251a1ceR100>`__
-  to require the necessary module at the point where it’s used rather than
+  ``import`` to include the necessary module at the point where it’s used rather than
   at the top of the module using it.
 - JS error like ``x is not defined``
   where ``x`` is a third-party module, which is the dependency of another
@@ -273,45 +266,4 @@ Common issues on non-Bundled pages:
   dependencies were not imported until ``hqImport`` was called, which
   could be later on, possibly in an event handler or some other code that
   would never execute until the entire page was loaded. To fix, try
-  reordering the script tags. If you find there’s a circular dependency,
-  use ``hqRequire`` as described above.
-
-Troubleshooting the RequireJS build process
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. note::
-    This is here for informational purposes only and will be removed once
-    all of the RequireJS code is moved to Webpack.
-
-Tactics that can help track down problems with the RequireJS build
-process, which usually manifest as errors that happen on staging but not
-locally:
-
--  To turn off minification, you can run ``build_requirejs`` with the
-   ``--no_optimize`` option. This also makes the script run much faster.
--  To stop using the CDN, comment out `resource_versions.js in
-   hqwebapp/base.html <https://github.com/dimagi/commcare-hq/pull/18116/files#diff-1ecb20ffccb745a5c0fc279837215a25R433>`__.
-   Note that this will still fetch a few files, such as ``hqModules.js``
-   and ``{bootstrap_version}/requirejs_config.js``, from the CDN. To turn off the CDN
-   entirely, comment out all of the code that manipulates
-   ``resource_versions`` in
-   `build_requirejs <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/management/commands/build_requirejs.py>`__.
--  To mimic the entire build process locally:
-
-   -  Collect static files: ``manage.py collectstatic --noinput`` This
-      is necessary if you’ve made any changes to ``{bootstrap_version}/requirejs.yml`` or
-      ``{bootstrap_version}/requirejs_config.js``, since the build script pulls these files
-      from ``staticfiles``, not ``corehq``.
-   -  Compile translation files: ``manage.py compilejsi18n``
-   -  Run the build script: ``manage.py build_requirejs --local``
-
-      -  This will **overwrite** your local versions of
-         ``{bootstrap_version}/requirejs_config.js`` and ``resource_versions.js``, so be
-         cautious running it if you have uncommitted changes.
-      -  This will also copy the generated bundle files from
-         ``staticfiles`` back into ``corehq``.
-      -  If you don’t need to test locally but just want to see the
-         results of dependency tracing, leave off the ``--local``. A
-         list of each bundle’s contents will be written to
-         ``staticfiles/build.txt``, but no files will be added to or
-         overwritten in ``corehq``.
+  reordering the script tags.
