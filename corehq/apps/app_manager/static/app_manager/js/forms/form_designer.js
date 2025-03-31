@@ -1,8 +1,24 @@
 /* global require */
-hqDefine("app_manager/js/forms/form_designer", function () {
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        appcues = hqImport('analytix/js/appcues'),
-        FORM_TYPES = {
+hqDefine("app_manager/js/forms/form_designer", [
+    'jquery',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'analytix/js/appcues',
+    'analytix/js/google',
+    'analytix/js/kissmetrix',
+    'app_manager/js/app_manager',
+    'app_manager/js/forms/edit_form_details',
+], function (
+    $,
+    _,
+    initialPageData,
+    appcues,
+    google,
+    kissmetrics,
+    appManager,
+    editDetails,
+) {
+    var FORM_TYPES = {
             REGISTRATION: "registration",
             SURVEY: "survey",
             FOLLOWUP: "followup",
@@ -63,11 +79,10 @@ hqDefine("app_manager/js/forms/form_designer", function () {
         });
         VELLUM_OPTIONS.core = _.extend(VELLUM_OPTIONS.core, {
             onFormSave: function (data) {
-                var appManager = hqImport('app_manager/js/app_manager');
                 appManager.updateDOM(data.update);
                 $('.js-preview-toggle').removeAttr('disabled');
                 if (initialPageData.get("days_since_created") === 0) {
-                    hqImport('analytix/js/kissmetrix').track.event('Saved the Form Builder within first 24 hours');
+                    kissmetrics.track.event('Saved the Form Builder within first 24 hours');
                 }
                 trackFormEvent(appcues.EVENT_TYPES.FORM_SAVE);
             },
@@ -85,7 +100,7 @@ hqDefine("app_manager/js/forms/form_designer", function () {
                 var kissmetrixTrack = function () {};
                 if (initialPageData.get('days_since_created') === 0) {
                     kissmetrixTrack = function () {
-                        hqImport('analytix/js/kissmetrix').track.event(
+                        kissmetrics.track.event(
                             'Added question in Form Builder within first 24 hours',
                         );
                     };
@@ -116,11 +131,11 @@ hqDefine("app_manager/js/forms/form_designer", function () {
                 define("moment", [], function () { return window.moment; });
                 define("vellum/hqAnalytics", [], function () {
                     function workflow(message) {
-                        hqImport('analytix/js/kissmetrix').track.event(message);
+                        kissmetrics.track.event(message);
                     }
 
                     function usage(label, group, message) {
-                        hqImport('analytix/js/google').track.event(label, group, message);
+                        google.track.event(label, group, message);
                     }
 
                     function fbUsage(group, message) {
@@ -156,10 +171,10 @@ hqDefine("app_manager/js/forms/form_designer", function () {
                         $('#formdesigner').vellum(VELLUM_OPTIONS);
                     });
                 });
-                hqImport('analytix/js/kissmetrix').track.event('Entered the Form Builder');
+                kissmetrics.track.event('Entered the Form Builder');
 
-                hqImport('app_manager/js/app_manager').setPrependedPageTitle("\u270E ", true);
-                hqImport('app_manager/js/app_manager').setAppendedPageTitle(gettext("Edit Form"));
+                appManager.setPrependedPageTitle("\u270E ", true);
+                appManager.setAppendedPageTitle(gettext("Edit Form"));
 
                 if (initialPageData.get('form_uses_cases')) {
                     // todo make this a more broadly used util, perhaps? actually add buttons to formplayer?
@@ -185,8 +200,7 @@ hqDefine("app_manager/js/forms/form_designer", function () {
                     );
                 }
 
-                var editDetails = hqImport('app_manager/js/forms/edit_form_details');
-                hqImport('app_manager/js/app_manager').updatePageTitle(initialPageData.get("form_name"));
+                appManager.updatePageTitle(initialPageData.get("form_name"));
                 editDetails.initName(
                     initialPageData.get("form_name"),
                     initialPageData.reverse("edit_form_attr", "name"),
@@ -198,16 +212,16 @@ hqDefine("app_manager/js/forms/form_designer", function () {
                 editDetails.setUpdateCallbackFn(function (name) {
                     $('#formdesigner .fd-content-left .fd-head-text').text(name);
                     $('.variable-form_name').text(name);
-                    hqImport('app_manager/js/app_manager').updatePageTitle(name);
+                    appManager.updatePageTitle(name);
                     $('#edit-form-name-modal').modal('hide');
                     $('#edit-form-name-modal').find('.disable-on-submit').enableButton();
                 });
                 $('#edit-form-name-modal').koApplyBindings(editDetails);
                 $("#edit-form-name-modal button[type='submit']").click(function () {
-                    hqImport('analytix/js/kissmetrix').track.event("Renamed form from form builder");
+                    kissmetrics.track.event("Renamed form from form builder");
                 });
             });
         };
-        hqImport("analytix/js/appcues").then(initFormBuilder, initFormBuilder);
+        appcues.then(initFormBuilder, initFormBuilder);
     });
 });
