@@ -36,6 +36,11 @@ from corehq.apps.hqwebapp.decorators import (
     use_daterangepicker,
     use_jquery_ui,
 )
+from corehq.apps.hqwebapp.utils.bootstrap import (
+    BOOTSTRAP_5,
+    get_bootstrap_version,
+)
+from corehq.apps.hqwebapp.utils.bootstrap.paths import get_bootstrap5_path
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.dispatcher import ReportDispatcher
@@ -260,7 +265,11 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def filters(self):
-        return self.spec.ui_filters
+        ui_filters = self.spec.ui_filters
+        if get_bootstrap_version() == BOOTSTRAP_5:
+            for ui_filter in ui_filters:
+                ui_filter.template = get_bootstrap5_path(ui_filter.template)
+        return ui_filters
 
     _report_config_id = None
 
