@@ -118,6 +118,7 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin, Dashb
         return context
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator([login_and_domain_required, require_GET], name='dispatch')
 class PaginatedCasesWithGPSView(BaseDomainView, CaseListMixin):
     urlname = 'api_cases_with_gps'
