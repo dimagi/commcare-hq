@@ -13,6 +13,9 @@
   {% registerurl 'api_cases_with_gps' request.domain %}
   {% initial_page_data 'map_report_widgets' map_report_widgets %}
   {% include "campaign/partials/add_widget_button.html" %}
+  {% registerurl 'add_report_config' domain %}{# Used by reports/js/bootstrapX/base.js #}
+  {% initial_page_data 'domain' domain %}
+  {% initial_page_data 'override_report_render_url' True %}
 
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h1>{% trans "Campaign Dashboard" %}</h1>
@@ -66,6 +69,8 @@
           {% for widget in map_report_widgets.cases %}
             {% if widget.widget_type == 'DashboardMap' %}
               {% include 'campaign/partials/dashboard_map.html' %}
+            {% elif widget.widget_type == 'DashboardReport' %}
+              {% include 'campaign/partials/dashboard_report.html' with report=reports_by_id|dict_lookup:widget.id report_filters=report_filters_by_id|dict_lookup:widget.id filter_context=filter_context_by_id|dict_lookup:widget.id %}
             {% endif %}
           {% endfor %}
         </div>
@@ -86,6 +91,8 @@
           {% for widget in map_report_widgets.mobile_workers %}
             {% if widget.widget_type == 'DashboardMap' %}
               {% include 'campaign/partials/dashboard_map.html' %}
+            {% elif widget.widget_type == 'DashboardReport' %}
+              {% include 'campaign/partials/dashboard_report.html' with report=reports_by_id|dict_lookup:widget.id report_filters=report_filters_by_id|dict_lookup:widget.id filter_context=filter_context_by_id|dict_lookup:widget.id %}
             {% endif %}
           {% endfor %}
         </div>

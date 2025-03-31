@@ -4,6 +4,7 @@ import 'reports/js/bootstrap5/base';
 import $ from 'jquery';
 import initialPageData from "hqwebapp/js/initial_page_data";
 import { Map, MapItem } from "geospatial/js/bootstrap5/models";
+import { getStandardHQReport } from 'reports/js/bootstrap5/standard_hq_report';
 import html2pdf from "html2pdf.js";
 
 
@@ -16,12 +17,15 @@ const editWidgetText = gettext('Edit Widget');
 let $modalTitleElement = null;
 
 $(function () {
-    // Only init case map widgets since this is the default tab
+    // Only init widgets on "cases" tab since this is the default tab
     const widgetConfigs = initialPageData.get('map_report_widgets');
     for (const widgetConfig of widgetConfigs.cases) {
         if (widgetConfig.widget_type === 'DashboardMap') {
             const mapWidget = new MapWidget(widgetConfig);
             mapWidget.initializeMap();
+        } else if (widgetConfig.widget_type === 'DashboardReport') {
+            const reportWidget = new ReportWidget(widgetConfig);
+            reportWidget.init();
         }
     }
     $('a[data-bs-toggle="tab"]').on('shown.bs.tab', tabSwitch);
@@ -45,6 +49,9 @@ function tabSwitch(e) {
             if (widgetConfig.widget_type === 'DashboardMap') {
                 const mapWidget = new MapWidget(widgetConfig);
                 mapWidget.initializeMap();
+            } else if (widgetConfig.widget_type === 'DashboardReport') {
+                const reportWidget = new ReportWidget(widgetConfig);
+                reportWidget.init();
             }
         }
     }
@@ -161,6 +168,21 @@ var MapWidget = function (mapWidgetConfig) {
         self.mapInstance.fitMapBounds(caseMapItems);
     }
 };
+
+var ReportWidget = function (config) {
+    let self = this;
+
+    self.init = function () {
+        const reportOptions = {
+            'url': config.url,
+            'domain': config.dashboard.domain,
+            'html_id_suffix': config.html_id_suffix,
+            'slug': config.slug,
+            'subReportSlug': config.report_configuration_id,
+        };
+        getStandardHQReport(reportOptions);
+    };
+}
 
 var htmxAfterSwapWidgetForm = function (event) {
     $('#widget-modal-spinner').addClass('d-none');
