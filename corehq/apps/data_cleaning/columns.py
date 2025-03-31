@@ -30,6 +30,15 @@ class DataCleaningHtmxSelectionColumn(CheckBoxColumn):
     select_page_checkbox_id = "id-select-page-checkbox"
 
     def __init__(self, session, request, select_row_action, select_page_action, *args, **kwargs):
+        """
+        Defines a django_tables2 compatible column that handles selecting
+        records in a data cleaning session.
+
+        :param session: BulkEditSession instance
+        :param request: a django request object from the session view
+        :param select_row_action: the hq_hx_action from the session view for selecting a row
+        :param select_page_action: the hq_hx_action from the session view for selecting all records in a page
+        """
         super().__init__(*args, **kwargs)
         self.session = session
         self.request = request
