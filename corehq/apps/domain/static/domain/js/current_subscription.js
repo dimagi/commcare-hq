@@ -1,16 +1,19 @@
+'use strict';
 hqDefine("domain/js/current_subscription", [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'accounting/js/credits',
     'accounting/js/payment_method_handler',
-    'commcarehq',
+    'stripe',
 ], function (
     $,
     initialPageData,
     credits,
     paymentMethodHandler,
+    Stripe
 ) {
     $(function () {
+        Stripe.setPublishableKey(initialPageData.get('stripe_public_key'));
         var paymentHandler = paymentMethodHandler.paymentMethodHandler(
             "add-credit-form",
             {
@@ -19,7 +22,7 @@ hqDefine("domain/js/current_subscription", [
                 credit_card_url: initialPageData.reverse("domain_credits_payment"),
                 wire_url: initialPageData.reverse("domain_wire_payment"),
                 wire_email: initialPageData.get("user_email"),
-            },
+            }
         );
         var plan = initialPageData.get("plan");
         if (plan.cards) {
@@ -31,7 +34,7 @@ hqDefine("domain/js/current_subscription", [
             plan.products,
             plan.features,
             paymentHandler,
-            initialPageData.get("can_purchase_credits"),
+            initialPageData.get("can_purchase_credits")
         );
         $('#subscriptionSummary').koApplyBindings(creditsHandler);
         creditsHandler.init();
