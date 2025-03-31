@@ -34,6 +34,7 @@ $(document).on('htmx:afterRequest', function (event) {
         handler.selectedIds = [];
         updateVerifyButton([]);
     } else if (method === 'post') {
-        htmx.ajax('GET', event.detail.requestConfig.path, {target: '#payment-verify-table'});
+        const endpoint = requestPath + window.location.search;
+        htmx.ajax('GET', endpoint, {target: '#payment-verify-table'});
     }
 });
