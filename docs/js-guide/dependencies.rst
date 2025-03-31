@@ -106,9 +106,7 @@ Why is old code formatted differently?
 --------------------------------------
 
 Most older entry points are written in a modified AMD
-style and should eventually be migrated to an ESM format
-once these entry points `are migrated to Webpack
-<https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/requirejs-to-webpack.rst>`__.
+style and should eventually be migrated to an ESM format.
 
 However, be careful when migrating modified AMD modules that aren't entry points, as some of these modules,
 like ``hqwebapp/js/initial_page_data``, are still being referenced by pages not using a JavaScript bundler.
