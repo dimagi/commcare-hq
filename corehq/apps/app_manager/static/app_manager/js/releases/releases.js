@@ -8,6 +8,7 @@ hqDefine("app_manager/js/releases/releases", [
     "hqwebapp/js/initial_page_data",
     "app_manager/js/app_manager",
     "app_manager/js/menu",
+    "hqwebapp/js/bootstrap3/knockout_bindings.ko",      // openModal binding
 ], function (
     $,
     ko,
