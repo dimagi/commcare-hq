@@ -26,12 +26,15 @@ class DataCleaningHtmxColumn(TemplateColumn):
 
 class DataCleaningHtmxSelectionColumn(CheckBoxColumn):
     template_column = "data_cleaning/columns/selection.html"
+    template_header = "data_cleaning/columns/selection_header.html"
+    select_page_checkbox_id = "id-select-page-checkbox"
 
-    def __init__(self, session, request, select_row_action, *args, **kwargs):
+    def __init__(self, session, request, select_row_action, select_page_action, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.session = session
         self.request = request
         self.select_row_action = select_row_action
+        self.select_page_action = select_page_action
         self.attrs['th'] = {
             'class': 'select-header',
         }
@@ -39,6 +42,23 @@ class DataCleaningHtmxSelectionColumn(CheckBoxColumn):
     @classmethod
     def get_selected_record_checkbox_id(self, value):
         return f'id-selected-record-{value}'
+
+    @property
+    def header(self):
+        general = self.attrs.get("input")
+        specific = self.attrs.get("th__input")
+        attrs = AttributeDict(specific or general or {})
+        return mark_safe(  # nosec: render_to_string below will handle escaping
+            render_to_string(
+                self.template_header,
+                {
+                    'hq_hx_action': self.select_page_action,
+                    'css_id': self.select_page_checkbox_id,
+                    'attrs': attrs,
+                },
+                request=self.request,
+            )
+        )
 
     def render(self, value, bound_column, record):
         general = self.attrs.get("input")
