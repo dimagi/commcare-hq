@@ -11,13 +11,14 @@ from django.http import (
 )
 from django.http.response import HttpResponseServerError
 from django.shortcuts import redirect, render
+from django.utils.html import escape
 from django.utils.safestring import SafeText
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
-from django.utils.html import escape
 
 from braces.views import JSONResponseMixin
 from memoized import memoized
+from no_exceptions.exceptions import Http403
 
 from couchexport.models import Format
 from dimagi.utils.dates import DateSpan
@@ -35,6 +36,11 @@ from corehq.apps.hqwebapp.decorators import (
     use_daterangepicker,
     use_jquery_ui,
 )
+from corehq.apps.hqwebapp.utils.bootstrap import (
+    BOOTSTRAP_5,
+    get_bootstrap_version,
+)
+from corehq.apps.hqwebapp.utils.bootstrap.paths import get_bootstrap5_path
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.dispatcher import ReportDispatcher
@@ -73,18 +79,14 @@ from corehq.apps.userreports.util import (
     can_edit_report,
     default_language,
     get_referring_apps,
+    get_report_config_or_not_found,
     get_ucr_class_name,
     has_report_builder_access,
     has_report_builder_trial,
-    get_report_config_or_not_found,
 )
 from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR
-from corehq.util.couch import (
-    DocumentNotFound,
-    get_document_or_404,
-)
+from corehq.util.couch import DocumentNotFound, get_document_or_404
 from corehq.util.view_utils import is_ajax, reverse
-from no_exceptions.exceptions import Http403
 
 
 def get_filter_values(filters, request_dict, user=None):
@@ -263,7 +265,11 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def filters(self):
-        return self.spec.ui_filters
+        ui_filters = self.spec.ui_filters
+        if get_bootstrap_version() == BOOTSTRAP_5:
+            for ui_filter in ui_filters:
+                ui_filter.template = get_bootstrap5_path(ui_filter.template)
+        return ui_filters
 
     _report_config_id = None
 
