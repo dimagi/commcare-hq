@@ -2,6 +2,16 @@
 {% load i18n %}
 {% load django_tables2 %}
 
+{% block table-container-attrs %}
+  {{ block.super }}
+  x-data="{
+    numRecordsSelected: {{ table.num_selected_records }},
+    totalRecords: {{ table.page.paginator.count }},
+    pageTotalRecords: {{ table.paginated_rows|length }},
+    pageNumRecordsSelected: 0,
+  }"
+{% endblock %}
+
 {% block before_table %}
   <div class="d-flex align-items-center pb-2">
 

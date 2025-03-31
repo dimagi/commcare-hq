@@ -30,7 +30,20 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
             session, request, select_row_action, select_page_action, accessor='case_id',
             attrs={
                 'td__input': {
-                    "@click": "isRowSelected = $event.target.checked;",
+                    "@click": (
+                        "if ($event.target.checked !== isRowSelected) {"
+                        # `numRecordsSelected` defined in template
+                        "  $event.target.checked ? numRecordsSelected++ : numRecordsSelected--;"
+                        # `pageNumRecordsSelected` defined in template
+                        "  $event.target.checked ? pageNumRecordsSelected++ : pageNumRecordsSelected--; "
+                        "} "
+                        # `isRowSelected` defined in `row_attrs` in `class Meta`
+                        "isRowSelected = $event.target.checked;"
+                    ),
+                },
+                'th__input': {
+                    # `pageNumRecordsSelected`, `pageTotalRecords`: defined in template
+                    ":checked": "pageNumRecordsSelected == pageTotalRecords",
                 },
             },
         )
@@ -42,6 +55,14 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
             slug = column_spec.prop_id.replace('@', '')
             visible_columns.append((slug, DataCleaningHtmxColumn(column_spec)))
         return visible_columns
+
+    @property
+    def num_selected_records(self):
+        """
+        Return the number of selected records in the session.
+        """
+        # todo
+        return 0
 
 
 class CaseCleaningTasksTable(BaseHtmxTable, tables.Table):
