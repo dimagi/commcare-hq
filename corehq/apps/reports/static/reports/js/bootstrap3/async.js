@@ -15,9 +15,10 @@ hqDefine("reports/js/bootstrap3/async", [
 ) {
     return function (o) {
         var self = {};
-        self.reportContent = $('#report-content');
-        self.filterForm = o.filterForm || $('#paramSelectorForm');
-        self.loadingIssueModal = $('#loadingReportIssueModal');
+        self.htmlIDSuffix = o.html_id_suffix;
+        self.reportContent = $('#report-content' + self.htmlIDSuffix);
+        self.filterForm = o.filterForm || $('#paramSelectorForm' + self.htmlIDSuffix);
+        self.loadingIssueModal = $('#loadingReportIssueModal' + self.htmlIDSuffix);
         self.issueAttempts = 0;
         self.hqLoading = null;
         self.standardReport = o.standardReport;
@@ -47,12 +48,12 @@ hqDefine("reports/js/bootstrap3/async", [
         var loadFilters = function (data) {
             self.filterRequest = null;
             try {
-                $('#hq-report-filters').html(data.filters);
-                filtersMain.init();
+                $('#hq-report-filters' + self.htmlIDSuffix).html(data.filters);
+                // filtersMain.init();  // Error: You cannot apply bindings multiple times to the same element.
             } catch (e) {
                 console.log(e);
             }
-            $('#reportFiltersAccordion').removeClass('hide');
+            $('#reportFiltersAccordion' + self.htmlIDSuffix).removeClass('hide');
             self.standardReport.resetFilterState();
         };
 

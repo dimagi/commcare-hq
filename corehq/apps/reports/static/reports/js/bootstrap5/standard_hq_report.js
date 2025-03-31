@@ -60,21 +60,26 @@ hqDefine("reports/js/bootstrap5/standard_hq_report", [
         return standardHQReport;
     };
 
-    var getAsync = function () {
-        if (typeof asyncReport !== 'undefined') {
+    var getAsync = function (options) {
+        if (!options && typeof asyncReport !== 'undefined') {
             return asyncReport;
         }
 
-        var reportOptions = initialPageData.get('js_options') || {};
+        var reportOptions = _.extend({}, initialPageData.get('js_options'), options);
         if (reportOptions.slug && reportOptions.async) {
             let promise = $.Deferred();
             import("reports/js/bootstrap5/async").then(function (asyncHQReportModule) {
                 var asyncHQReport = asyncHQReportModule.default({
-                    standardReport: getStandard(),
+                    html_id_suffix: options.html_id_suffix,
+                    standardReport: getStandard(options),
                 });
                 asyncHQReport.init();
-                asyncReport = asyncHQReport;
-                promise.resolve(asyncReport);
+                if (!options) {
+                    asyncReport = asyncHQReport;
+                    promise.resolve(asyncReport);
+                } else {
+                    promise.resolve(asyncHQReport);
+                }
             });
             return promise;
         }
@@ -105,5 +110,6 @@ hqDefine("reports/js/bootstrap5/standard_hq_report", [
 
     return {
         getStandardHQReport: getStandard,
+        getAsyncHQReport: getAsync,
     };
 });
