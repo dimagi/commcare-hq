@@ -6,12 +6,15 @@ from django.utils.translation import gettext as _
 
 from dimagi.utils.chunked import chunked
 
+from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
+from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.apps.integration.payments.const import (
     PAYMENT_SUCCESS_STATUS_CODE,
-    PaymentProperties,
     PAYMENT_SUBMITTED_DEVICE_ID,
+    PaymentProperties,
+    PaymentStatus,
 )
 from corehq.apps.integration.payments.exceptions import PaymentRequestError
 from corehq.apps.integration.payments.models import MoMoConfig
@@ -47,7 +50,6 @@ def _get_payment_cases_updates(case_ids_chunk, config):
 
 def request_payment(payment_case: CommCareCase, config: MoMoConfig):
     payment_update = {
-        PaymentProperties.PAYMENT_SUBMITTED: False,
         PaymentProperties.PAYMENT_TIMESTAMP: datetime.utcnow().isoformat(),
         PaymentProperties.PAYMENT_ERROR: '',
     }
@@ -56,13 +58,19 @@ def request_payment(payment_case: CommCareCase, config: MoMoConfig):
         transaction_id = _request_payment(payment_case, config)
         payment_update.update({
             'transaction_id': transaction_id,  # can be used to check payment status
-            PaymentProperties.PAYMENT_SUBMITTED: True
+            PaymentProperties.PAYMENT_STATUS: PaymentStatus.REQUESTED,
         })
     except PaymentRequestError as e:
-        payment_update[PaymentProperties.PAYMENT_ERROR] = str(e)
+        payment_update.update({
+            PaymentProperties.PAYMENT_ERROR: str(e),
+            PaymentProperties.PAYMENT_STATUS: PaymentStatus.REQUEST_FAILED,
+        })
     except Exception:
         # We need to know when anything goes wrong
-        payment_update[PaymentProperties.PAYMENT_ERROR] = _("Something went wrong")
+        payment_update.update({
+            PaymentProperties.PAYMENT_ERROR: _("Something went wrong"),
+            PaymentProperties.PAYMENT_STATUS: PaymentStatus.REQUEST_FAILED,
+        })
 
     return payment_update
 
@@ -104,6 +112,7 @@ def verify_payment_cases(domain, case_ids: list, verifying_user: WebUser):
         PaymentProperties.PAYMENT_VERIFIED_ON_UTC: str(datetime.now()),
         PaymentProperties.PAYMENT_VERIFIED_BY: verifying_user.username,
         PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID: verifying_user.user_id,
+        PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING,
     }
 
     updated_cases = []
@@ -160,13 +169,30 @@ def _get_payee_details(case_data: dict) -> PartyDetails:
 def _validate_payment_request(case_data: dict):
     if not _payment_is_verified(case_data):
         raise PaymentRequestError(_("Payment has not been verified"))
-    if _payment_already_submitted(case_data):
-        raise PaymentRequestError(_("Payment has already been submitted"))
+    if _payment_already_requested(case_data):
+        raise PaymentRequestError(_("Payment has already been requested"))
 
 
 def _payment_is_verified(case_data: dict):
     return case_data.get(PaymentProperties.PAYMENT_VERIFIED) == 'True'
 
 
-def _payment_already_submitted(case_data: dict):
-    return case_data.get(PaymentProperties.PAYMENT_SUBMITTED) == 'True'
+def _payment_already_requested(case_data: dict):
+    return case_data.get(PaymentProperties.PAYMENT_STATUS) == PaymentStatus.REQUESTED
+
+
+def get_payment_batch_numbers_for_domain(domain):
+    case_ids = (
+        CaseSearchES()
+        .domain(domain)
+        .case_type(MOMO_PAYMENT_CASE_TYPE)
+        .get_ids()
+    )
+
+    batch_numbers = set()
+    for case_id_chunk in chunked(case_ids, 1000):
+        cases = CommCareCase.objects.get_cases(case_ids=list(case_id_chunk), domain=domain)
+        chunk_batch_numbers = set([case.case_json.get(PaymentProperties.BATCH_NUMBER) for case in cases])
+        batch_numbers.update(chunk_batch_numbers)
+
+    return [batch_number for batch_number in batch_numbers if batch_number]
