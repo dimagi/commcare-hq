@@ -109,7 +109,8 @@ class ItemListsProvider(FixtureProvider):
         restore_user = restore_state.restore_user
         global_types = {}
         user_types = {}
-        if self._should_full_sync(restore_state.last_sync_log, restore_state.params.app_id):
+        should_full_sync = not restore_state.last_sync_log or not restore_state.last_sync_log.date
+        if should_full_sync:
             data_types = LookupTable.objects.by_domain(restore_user.domain)
         else:
             data_types = LookupTable.objects.get_tables_modified_since(restore_user.domain,
@@ -155,12 +156,6 @@ class ItemListsProvider(FixtureProvider):
             return LookupTableRow.objects.iter_rows(domain, table_id=data_type.id)
 
         return self._get_fixtures(global_types, get_items_by_type, GLOBAL_USER_ID)
-
-    def _should_full_sync(self, last_sync, app_id):
-        app_has_changed = (last_sync and last_sync.build_id is not None
-                and app_id is not None
-                and app_id != last_sync.build_id)
-        return app_has_changed or not last_sync or not last_sync.date
 
     def get_user_items_and_count(self, user_types, restore_user):
         user_items_count = 0
