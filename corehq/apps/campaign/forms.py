@@ -172,6 +172,7 @@ class DashboardGaugeForm(DashboardWidgetBaseForm):
 
     case_type = forms.ChoiceField(
         label=_('Case Type'),
+        required=False,
     )
 
     metric = forms.ChoiceField(
@@ -181,8 +182,10 @@ class DashboardGaugeForm(DashboardWidgetBaseForm):
 
     def __init__(self, domain, *args, **kwargs):
         super().__init__(domain, *args, **kwargs)
-        self.fields['case_type'].choices = self._get_case_types()
+        self.fields['case_type'].choices = self._get_case_type_choices()
 
-    def _get_case_types(self):
+    def _get_case_type_choices(self):
+        case_type_choices = [('', '---')]
         case_types = sorted(get_case_types_for_domain(self.domain))
-        return [(case_type, case_type) for case_type in case_types]
+        case_type_choices.extend([(case_type, case_type) for case_type in case_types])
+        return case_type_choices
