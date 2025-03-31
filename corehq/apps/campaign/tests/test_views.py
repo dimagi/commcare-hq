@@ -5,8 +5,10 @@ from uuid import uuid4
 from django.test import TestCase
 from django.urls import reverse
 
+from corehq.apps.campaign.const import GAUGE_METRICS
 from corehq.apps.campaign.models import (
     Dashboard,
+    DashboardGauge,
     DashboardMap,
     DashboardReport,
     DashboardTab,
@@ -87,6 +89,24 @@ class TestDashboardView(BaseTestCampaignView):
             geo_case_property='nowhere',
             dashboard_tab=DashboardTab.MOBILE_WORKERS,
         )
+        cls.dashboard_gauge_widget_for_cases = DashboardGauge.objects.create(
+            dashboard=cls.dashboard,
+            title='Cases Gauge 1',
+            description='Gauge 1 described for foo cases.',
+            display_order=0,
+            case_type='foo',
+            metric=GAUGE_METRICS[0][0],
+            dashboard_tab=DashboardTab.CASES,
+        )
+        cls.dashboard_gauge_widget_for_mobile_workers = DashboardGauge.objects.create(
+            dashboard=cls.dashboard,
+            title='Mobile Workers Gauge 1',
+            description='Gauge 1 described for bar cases for mobile workers.',
+            display_order=0,
+            case_type='bar',
+            metric=GAUGE_METRICS[0][0],
+            dashboard_tab=DashboardTab.MOBILE_WORKERS,
+        )
 
     def test_not_logged_in(self):
         response = self._make_request(is_logged_in=False)
@@ -97,7 +117,8 @@ class TestDashboardView(BaseTestCampaignView):
         assert response.status_code == 404
 
     @flag_enabled('CAMPAIGN_DASHBOARD')
-    def test_success(self):
+    @patch('corehq.apps.campaign.views.get_gauge_metric_value', return_value=10)
+    def test_success(self, metric_value_patch):
         response = self._make_request(is_logged_in=True)
         assert response.status_code == 200
 
@@ -124,6 +145,41 @@ class TestDashboardView(BaseTestCampaignView):
                     'domain': 'test-domain',
                 },
                 'widget_type': 'DashboardMap',
+            }],
+        }
+
+        assert context['gauge_widgets'] == {
+            'cases': [{
+                'id': self.dashboard_gauge_widget_for_cases.id,
+                'title': 'Cases Gauge 1',
+                'description': 'Gauge 1 described for foo cases.',
+                'case_type': 'foo',
+                'major_ticks': [0, 20, 40, 60, 80, 100],
+                'max_value': 100,
+                'metric': 'total_number_of_cases',
+                'metric_name': 'Total number of cases',
+                'configuration': {},
+                'dashboard': {
+                    'domain': 'test-domain',
+                },
+                'value': 10,
+                'widget_type': 'DashboardGauge',
+            }],
+            'mobile_workers': [{
+                'id': self.dashboard_gauge_widget_for_mobile_workers.id,
+                'title': 'Mobile Workers Gauge 1',
+                'description': 'Gauge 1 described for bar cases for mobile workers.',
+                'case_type': 'bar',
+                'major_ticks': [0, 20, 40, 60, 80, 100],
+                'max_value': 100,
+                'metric': 'total_number_of_cases',
+                'metric_name': 'Total number of cases',
+                'configuration': {},
+                'dashboard': {
+                    'domain': 'test-domain',
+                },
+                'value': 10,
+                'widget_type': 'DashboardGauge',
             }],
         }
 
