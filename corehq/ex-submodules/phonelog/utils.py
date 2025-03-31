@@ -100,8 +100,8 @@ def _process_log_subreport(domain, xform):
             device_id=form_data.get('device_id'),
             username=logged_in_username,
             user_id=logged_in_user_id,
-            device_model=log.get('device_model'),
-            android_version=log.get('android_version'),
+            device_model=form_data.get('device_model'),
+            android_version=form_data.get('android_version'),
         ))
     DeviceReportEntry.objects.bulk_create(to_save)
 
@@ -241,8 +241,8 @@ class SumoLogicLog(object):
             app_version=get_version_from_appversion_text(appversion_text),
             cc_version=get_commcare_version_from_appversion_text(appversion_text),
             msg=log["msg"],
-            device_model=log.get('device_model'),
-            android_version=log.get('android_version'),
+            device_model=self.xform.form_data.get('device_model'),
+            android_version=self.xform.form_data.get('android_version'),
         )
 
     def _get_user_info(self, log):
