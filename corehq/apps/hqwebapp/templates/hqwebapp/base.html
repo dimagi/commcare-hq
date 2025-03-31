@@ -131,7 +131,6 @@
 
     {# Everything in this `if not use_js_bundler`-block below this line can be removed once all of app manager, including form builder, is on webpack. #}
     {% if not use_js_bundler %}
-      {% javascript_libraries use_bootstrap5=use_bootstrap5 underscore=True jquery_ui=request.use_jquery_ui ko=True hq=True analytics=True %}
       <script src="{% static 'underscore/underscore-min.js' %}"></script>
       <script src="{% static 'hqwebapp/js/lib/modernizr.js' %}"></script>
       <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
