@@ -59,16 +59,13 @@ definition, and also updating each HTML page to reference a single
 
 Sample PRs:
 
-- `Bundler migration (RequireJS):
-dashboard <https://github.com/dimagi/commcare-hq/pull/19182/>`__ is an
-example of an easy migration, where all dependencies are already
-migrated
-- `Bundler proof of
-concept (with RequireJS) <https://github.com/dimagi/commcare-hq/pull/18116>`__ migrates a
-few pages (lookup tables, data dictionary) and many of our commonly-used
-modules (analytics, ``hq.helpers.js``, etc.). This also contains the
-changes to ``hqModules.js`` that make ``hqDefine`` support both migrated
-and unmigrated pages.
+- `Bundler migration (RequireJS): dashboard <https://github.com/dimagi/commcare-hq/pull/19182/>`__ is an
+  example of an easy migration, where all dependencies are already migrated
+- `Bundler proof of concept (with RequireJS) <https://github.com/dimagi/commcare-hq/pull/18116>`__ migrates a
+  few pages (lookup tables, data dictionary) and many of our commonly-used
+  modules (analytics, ``hq.helpers.js``, etc.). This also contains the
+  changes to ``hqModules.js`` that make ``hqDefine`` support both migrated
+  and unmigrated pages.
 
 Add ``js_entry`` tag and remove ``<script>`` tags
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
