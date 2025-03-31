@@ -12,7 +12,7 @@ from corehq.motech.value_source import CaseTriggerInfo
 class RepeaterResponse:
     """
     Ducktypes an HTTP response for Repeater.handle_response(),
-    RepeatRecord.handle_success() and RepeatRecord.handle_failure()
+    RepeatRecord.handle_success() and RepeatRecord.handle_server_failure()
     """
     status_code = attr.ib()
     reason = attr.ib()

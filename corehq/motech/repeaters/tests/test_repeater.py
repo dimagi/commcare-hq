@@ -1167,7 +1167,7 @@ class HandleResponseTests(SimpleTestCase):
 
         self.repeat_record.handle_exception.assert_not_called()
         self.repeat_record.handle_success.assert_called()
-        self.repeat_record.handle_failure.assert_not_called()
+        self.repeat_record.handle_server_failure.assert_not_called()
 
     def test_handle_true_response(self):
         response = True
@@ -1175,7 +1175,7 @@ class HandleResponseTests(SimpleTestCase):
 
         self.repeat_record.handle_exception.assert_not_called()
         self.repeat_record.handle_success.assert_called()
-        self.repeat_record.handle_failure.assert_not_called()
+        self.repeat_record.handle_server_failure.assert_not_called()
 
     def test_handle_none_response(self):
         response = None
@@ -1183,15 +1183,15 @@ class HandleResponseTests(SimpleTestCase):
 
         self.repeat_record.handle_exception.assert_not_called()
         self.repeat_record.handle_success.assert_not_called()
-        self.repeat_record.handle_failure.assert_called()
+        self.repeat_record.handle_server_failure.assert_called()
 
-    def test_handle_500_response(self):
-        response = Response(status_code=500, reason='The core is exposed')
+    def test_handle_bad_gateway_response(self):
+        response = Response(status_code=502, reason='The core is exposed')
         self.repeater.handle_response(response, self.repeat_record)
 
         self.repeat_record.handle_exception.assert_not_called()
         self.repeat_record.handle_success.assert_not_called()
-        self.repeat_record.handle_failure.assert_called()
+        self.repeat_record.handle_server_failure.assert_called()
 
     def test_handle_exception(self):
         err = Exception('The core is exposed')
@@ -1199,7 +1199,7 @@ class HandleResponseTests(SimpleTestCase):
 
         self.repeat_record.handle_exception.assert_called()
         self.repeat_record.handle_success.assert_not_called()
-        self.repeat_record.handle_failure.assert_not_called()
+        self.repeat_record.handle_server_failure.assert_not_called()
 
 
 class FormatResponseTests(SimpleTestCase):
