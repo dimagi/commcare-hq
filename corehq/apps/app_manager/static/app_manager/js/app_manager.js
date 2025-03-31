@@ -124,6 +124,7 @@ hqDefine('app_manager/js/app_manager', [
         _initMenuItemSorting();
         _initResponsiveMenus();
         _initAddItemPopovers();
+        _initNewModuleOptionClicks();
     };
 
     /**
@@ -536,6 +537,13 @@ hqDefine('app_manager/js/app_manager', [
 
         hqLayout.setIsAppbuilderResizing(true);
     });
+
+    var _initNewModuleOptionClicks = function () {
+        $('.new-module-option').on('click', function () {
+            var type = $(this).data('type');
+            console.log("You clicked module type:", type);
+        });
+    };
 
     return module;
 });
