@@ -5,7 +5,7 @@ hqDefine('domain/js/bootstrap3/internal_subscription_management', [
     'commcarehq',
 ], function (
     $,
-    ko
+    ko,
 ) {
     $(function () {
         var viewModel = {

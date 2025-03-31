@@ -14,7 +14,7 @@ hqDefine('domain/js/bootstrap5/toggles', [
     _,
     initialPageData,
     alertUser,
-    assertProperties
+    assertProperties,
 ) {
 
     var Toggle = function (data) {

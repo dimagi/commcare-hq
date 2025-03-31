@@ -4,7 +4,7 @@ hqDefine("domain/js/bootstrap5/info_basic", [
     'select2/dist/js/select2.full.min',
     'hqwebapp/js/bootstrap5/widgets',
 ], function (
-    $
+    $,
 ) {
     $(function () {
         $('#id_default_timezone').select2({
@@ -14,10 +14,10 @@ hqDefine("domain/js/bootstrap5/info_basic", [
         $('#id_call_center_enabled').change(function () {
             var type = $('#id_call_center_type').closest('.control-group');
             var caseOwner = $('#id_call_center_case_owner').closest(
-                '.control-group'
+                '.control-group',
             );
             var caseType = $('#id_call_center_case_type').closest(
-                '.control-group'
+                '.control-group',
             );
             if ($(this).is(':checked')) {
                 type.removeClass('hide');

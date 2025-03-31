@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine("domain/js/confirm_billing_info", [
     'jquery',
     'knockout',
@@ -11,7 +11,7 @@ hqDefine("domain/js/confirm_billing_info", [
     ko,
     initialPageData,
     Stripe,
-    stripeCardManager
+    stripeCardManager,
 ) {
     $('a.breadcrumb-2').click(function (e) {
         e.preventDefault();

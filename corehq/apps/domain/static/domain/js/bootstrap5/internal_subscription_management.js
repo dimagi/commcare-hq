@@ -4,7 +4,7 @@ hqDefine('domain/js/bootstrap5/internal_subscription_management', [
     'hqwebapp/js/bootstrap5/widgets',
 ], function (
     $,
-    ko
+    ko,
 ) {
     $(function () {
         var viewModel = {

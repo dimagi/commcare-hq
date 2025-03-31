@@ -6,7 +6,7 @@ hqDefine('domain/js/bootstrap5/case_search_main', [
 ], function (
     $,
     initialPageData,
-    caseSearch
+    caseSearch,
 ) {
     $(function () {
         var viewModel = caseSearch.caseSearchConfig({

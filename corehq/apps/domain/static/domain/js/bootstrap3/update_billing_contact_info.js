@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine('domain/js/bootstrap3/update_billing_contact_info', [
     'jquery',
     'hqwebapp/js/initial_page_data',
@@ -10,7 +10,7 @@ hqDefine('domain/js/bootstrap3/update_billing_contact_info', [
     $,
     initialPageData,
     stripeCardManager,
-    Stripe
+    Stripe,
 ) {
     $(function () {
         Stripe.setPublishableKey(initialPageData.get("stripe_public_key"));

@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine("domain/js/bootstrap5/billing_statements", [
     'jquery',
     'underscore',
@@ -14,7 +14,7 @@ hqDefine("domain/js/bootstrap5/billing_statements", [
     initialPageData,
     paymentMethodHandlers,
     CRUDPaginatedList,
-    Stripe
+    Stripe,
 ) {
     Stripe.setPublishableKey(initialPageData.get("stripe_options").stripe_public_key);
     var wireInvoiceHandler = paymentMethodHandlers.wireInvoiceHandler;
@@ -30,7 +30,7 @@ hqDefine("domain/js/bootstrap5/billing_statements", [
             statusCodeText: pagination.status_codes,
             allowItemCreation: initialPageData.get('item_creation_allowed'),
             createItemForm: pagination.create_item_form,
-        }
+        },
     );
 
     $(function () {
@@ -43,7 +43,7 @@ hqDefine("domain/js/bootstrap5/billing_statements", [
             submitBtnText: gettext("Submit Payment"),
             errorMessages: initialPageData.get("payment_error_messages"),
             submitURL: initialPageData.get("payment_urls").process_bulk_payment_url,
-        }
+        },
     );
 
     var bulkWirePaymentHandler = wireInvoiceHandler(
@@ -53,7 +53,7 @@ hqDefine("domain/js/bootstrap5/billing_statements", [
             isWire: true,
             errorMessages: initialPageData.get("payment_error_messages"),
             submitURL: initialPageData.get("payment_urls").process_wire_invoice_url,
-        }
+        },
     );
 
     var paymentHandler = paymentMethodHandler(
@@ -62,7 +62,7 @@ hqDefine("domain/js/bootstrap5/billing_statements", [
             submitBtnText: gettext("Submit Payment"),
             errorMessages: initialPageData.get("payment_error_messages"),
             submitURL: initialPageData.get("payment_urls").process_invoice_payment_url,
-        }
+        },
     );
 
     // A sign that the data model isn't exactly right - credit cards are shared data.
