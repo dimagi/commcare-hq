@@ -103,7 +103,7 @@ class DashboardReport(DashboardWidgetBase):
 
     @property
     def is_async(self):
-        return False
+        return True
 
     @property
     def show_filters(self):
@@ -152,7 +152,7 @@ class DashboardReport(DashboardWidgetBase):
         return model_to_widget(
             self,
             exclude=['dashboard_tab', 'display_order'],
-            properties=['slug', 'url', 'html_id_suffix'],
+            properties=['is_async', 'slug', 'url', 'html_id_suffix'],
         )
 
 

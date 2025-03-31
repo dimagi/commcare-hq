@@ -4,7 +4,7 @@ import 'reports/js/bootstrap5/base';
 import $ from 'jquery';
 import initialPageData from "hqwebapp/js/initial_page_data";
 import { Map, MapItem } from "geospatial/js/bootstrap5/models";
-import { getStandardHQReport } from 'reports/js/bootstrap5/standard_hq_report';
+import { getAsyncHQReport } from 'reports/js/bootstrap5/standard_hq_report';
 import html2pdf from "html2pdf.js";
 
 
@@ -179,8 +179,9 @@ var ReportWidget = function (config) {
             'html_id_suffix': config.html_id_suffix,
             'slug': config.slug,
             'subReportSlug': config.report_configuration_id,
+            'async': config.is_async,
         };
-        getStandardHQReport(reportOptions);
+        getAsyncHQReport(reportOptions);
     };
 }
 
