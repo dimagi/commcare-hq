@@ -35,6 +35,10 @@ $(document).on('htmx:afterRequest', function (event) {
         updateVerifyButton([]);
     } else if (method === 'post') {
         const endpoint = requestPath + window.location.search;
-        htmx.ajax('GET', endpoint, {target: '#payment-verify-table'});
+        // The timeout is to allow the verification request enough time to update the affected cases in ES before
+        // doing a refresh
+        setTimeout(() => {
+            htmx.ajax('GET', endpoint, {target: '#payment-verify-table'});
+        }, 2000);
     }
 });
