@@ -309,6 +309,9 @@ class GPSCaptureView(BaseGeospatialView):
                 'title': self.page_name,
                 'section_name': self.section_name,
                 'show_filters': True,
+                # Used in reports/standard/partials/bootstrapX/filter_panel.html
+                # to support pages that have multiple reports:
+                'html_id_suffix': '',
             },
             'report_filters': [
                 dict(field=f.render(), slug=f.slug) for f in self.filter_classes

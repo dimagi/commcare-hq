@@ -15,7 +15,7 @@
  ], function (
      $,
      ko,
-@@ -56,7 +56,7 @@
+@@ -57,7 +57,7 @@
  
                  if (self.needsFilters) {
                      self.filterSubmitButton
@@ -24,7 +24,7 @@
                          .addClass('btn-primary')
                          .removeClass('disabled')
                          .prop('disabled', false);
-@@ -148,19 +148,19 @@
+@@ -149,19 +149,19 @@
          };
  
          var checkFilterAccordionToggleState = function () {
@@ -48,25 +48,25 @@
              };
  
              $(self.filterAccordion).on('show.bs.collapse', showFilterButtonStatus);
-@@ -178,7 +178,7 @@
+@@ -179,7 +179,7 @@
          self.resetFilterState = function () {
-             $('#paramSelectorForm fieldset button, #paramSelectorForm fieldset span[data-dropdown="dropdown"]').click(function () {
+             $('#paramSelectorForm' + self.htmlIDSuffix + ' fieldset button, #paramSelectorForm' + self.htmlIDSuffix + ' fieldset span[data-dropdown="dropdown"]').click(function () {
                  $(self.filterSubmitSelector)
 -                    .button('reset')
 +                    .changeButtonState('reset')
                      .addClass('btn-primary')
                      .removeClass('disabled')
                      .prop('disabled', false);
-@@ -188,7 +188,7 @@
+@@ -189,7 +189,7 @@
                  // This is necessary for pages that contain multiple filter panels, since we are using CSS IDs.
-                 const submitButton = $(e.target).closest('#reportFilters').find(self.filterSubmitSelector);
+                 const submitButton = $(e.target).closest('#reportFilters' + self.htmlIDSuffix).find(self.filterSubmitSelector);
                  $(submitButton)
 -                    .button('reset')
 +                    .changeButtonState('reset')
                      .addClass('btn-primary')
                      .removeClass('disabled')
                      .prop('disabled', false);
-@@ -257,16 +257,16 @@
+@@ -258,16 +258,16 @@
  
              self.sendEmail = function () {
                  var $sendButton = $(hqReport.emailReportModal).find('.send-button');
@@ -86,7 +86,7 @@
                          self.resetModal();
                          const errors = JSON.parse(response.responseText);
                          let messages = [hqReport.emailErrorMessage].concat(errors);
-@@ -276,7 +276,7 @@
+@@ -277,7 +277,7 @@
              };
  
              self.resetModal = function () {
