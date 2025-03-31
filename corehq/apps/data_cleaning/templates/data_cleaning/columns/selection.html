@@ -1,0 +1,17 @@
+{% load django_tables2 %}
+
+<input
+  id="{{ css_id }}"
+  class="form-check-input"
+  type="checkbox"
+  {% if is_checked %}
+    checked="checked"
+  {% endif %}
+  name="selected_record"
+  value="{{ value }}"
+  hx-post="{{ request.path_info }}{% querystring %}"
+  hq-hx-action="{{ hq_hx_action }}"
+  hx-swap="none"
+  hx-disabled-elt="this"
+  {{ attrs.as_html }}
+/>

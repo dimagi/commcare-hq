@@ -21,9 +21,9 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
         self.session = session
 
     @classmethod
-    def get_select_column(cls, session):
+    def get_select_column(cls, session, request, select_row_action):
         return DataCleaningHtmxSelectionColumn(
-            session, accessor='case_id',
+            session, request, select_row_action, accessor='case_id',
         )
 
     @classmethod

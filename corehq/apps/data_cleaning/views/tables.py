@@ -33,6 +33,8 @@ class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataC
             "selection",
             self.table_class.get_select_column(
                 self.session,
+                self.request,
+                select_row_action="select_row",
             )
         )]
         extra_columns.extend(self.table_class.get_columns_from_session(self.session))
@@ -60,6 +62,14 @@ class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataC
             },
         })
         return response
+
+    @hq_hx_action('post')
+    def select_row(self, request, *args, **kwargs):
+        """
+        Selects a single record.
+        """
+        # todo
+        return self.get(request, *args, **kwargs)
 
 
 class CaseCleaningTasksTableView(BaseDataCleaningTableView):
