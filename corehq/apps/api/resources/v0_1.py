@@ -13,7 +13,6 @@ from corehq.apps.api.resources import (
 )
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
-from corehq.apps.api.util import make_date_filter
 from corehq.apps.es import users as user_es
 from corehq.apps.es import FormES
 from corehq.apps.groups.models import Group
@@ -165,16 +164,7 @@ class WebUserResource(UserResource):
         SIMPLE_FILTERS = {
             'username': user_es.username
         }
-        COMPOUND_FILTERS = {
-            'last_modified': make_date_filter(user_es.last_modified)
-        }
-
         filters = []
-        for key in bundle.request.GET.keys():
-            if '.' in key and key.split(".")[0] in COMPOUND_FILTERS:
-                prefix, qualifier = key.split(".", maxsplit=1)
-                filters.append(COMPOUND_FILTERS[prefix](qualifier, bundle.request.GET.get(key)))
-
         if username:
             filters.append(SIMPLE_FILTERS['username'](username))
         queryset = UserQuerySetAdapter(domain, show_archived=False, is_web_user=True, filters=filters)

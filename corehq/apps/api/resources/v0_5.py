@@ -400,7 +400,6 @@ class WebUserResource(v0_1.WebUserResource):
     tableau_role = fields.CharField(null=True)
     # Don't use in list for performance - it currently makes a request for each user in the response
     tableau_groups = fields.ListField(null=True, use_in='detail')
-    last_modified = fields.DateTimeField(null=True, attribute='last_modified')
 
     class Meta(v0_1.WebUserResource.Meta):
         detail_allowed_methods = ['get', 'patch']
