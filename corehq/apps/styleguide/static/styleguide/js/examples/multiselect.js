@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import multiselectUtils from 'hqwebapp/js/multiselect_utils';
 
-let listener = function() {
+let listener = function () {
     console.log("Triggered willSelectAllListener");
 };
 

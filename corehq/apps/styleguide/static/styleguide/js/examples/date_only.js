@@ -7,10 +7,10 @@ new TempusDominus(
             theme: 'light',
             components: {
                 clock: false,
-            }
+            },
         },
         localization: {
             format: 'L',
         },
-    }
+    },
 );

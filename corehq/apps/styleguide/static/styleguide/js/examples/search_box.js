@@ -10,7 +10,7 @@ var searchBoxExample = function () {
     self.items = ko.observableArray(self.allItems);
 
     self.query = ko.observable('');
-    self.search = function (page) {
+    self.search = function (page) {      // eslint-disable-line no-unused-vars
         self.items(_.filter(self.allItems, function (item) { return item.indexOf(self.query()) !== -1; }));
     };
 

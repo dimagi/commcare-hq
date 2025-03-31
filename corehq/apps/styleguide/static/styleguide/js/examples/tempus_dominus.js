@@ -4,7 +4,7 @@ new TempusDominus(
     document.getElementById('js-id-date-end'),
     {
         display: {
-                theme: 'light',
+            theme: 'light',
         },
-    }
+    },
 );

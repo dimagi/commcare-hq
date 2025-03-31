@@ -7,10 +7,10 @@ new TempusDominus(
             theme: 'light',
             components: {
                 calendar: false,
-            }
+            },
         },
         localization: {
             format: 'LT',
         },
-    }
+    },
 );

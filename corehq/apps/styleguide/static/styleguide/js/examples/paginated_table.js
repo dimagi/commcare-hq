@@ -36,7 +36,7 @@ $(function () {
                     self.totalItems(data.total);
                     self.rows.removeAll();
                     _.each(data.rows, function (row) {
-                      self.rows.push(new rowData(row));
+                        self.rows.push(new rowData(row));
                     });
                     self.error(null);
                 },
