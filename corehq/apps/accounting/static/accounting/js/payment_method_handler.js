@@ -157,7 +157,7 @@ hqDefine('accounting/js/payment_method_handler', [
             });
         };
         self.isNewCard.subscribe(function (newValue) {
-            _.delay(function () { self.showOrHideStripeUI(newValue) });
+            _.delay(function () { self.showOrHideStripeUI(newValue); });
         });
 
         self.newCard = ko.observable(stripeCardModel());
@@ -191,7 +191,7 @@ hqDefine('accounting/js/payment_method_handler', [
             return self.paymentIsNotComplete() && self.savedCards().length > 0;
         });
         self.mustCreateNewCard.subscribe(function (newValue) {
-            _.delay(function () { self.showOrHideStripeUI(newValue) });
+            _.delay(function () { self.showOrHideStripeUI(newValue); });
         });
 
         self.isSubmitDisabled = ko.computed(function () {
