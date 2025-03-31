@@ -17,6 +17,7 @@ class RepeaterResponse:
     status_code = attr.ib()
     reason = attr.ib()
     text = attr.ib(default="")
+    headers = attr.ib(factory=dict)
     retry = attr.ib(default=True)
 
 

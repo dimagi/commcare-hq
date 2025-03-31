@@ -469,6 +469,18 @@ class TestRepeaterHandleResponse(RepeaterTestCase):
         self.assertEqual(repeater.num_workers, 3)
         self.assertEqual(repeat_record.state, State.Fail)
 
+    def test_handle_traefik_proxy_404(self):
+        resp = RepeaterResponse(
+            status_code=404,
+            reason='because Traefik',
+            headers={
+                'Server': 'Traefik v3.3.5',
+            }
+        )
+        repeat_record = self.get_repeat_record()
+        self.repeater.handle_response(resp, repeat_record)
+        self.assertEqual(repeat_record.state, State.Fail)
+
     def test_handle_response_server_failure(self):
         for status_code in HTTP_STATUS_BACK_OFF:
             resp = RepeaterResponse(
