@@ -158,6 +158,18 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
             self.assertEqual(filters[index].prop_id, prop_id)
             self.assertEqual(filters[index].index, index)
 
+    def test_remove_column(self):
+        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        column_to_remove = session.columns.all()[1]  # owner_name
+        self.assertEqual(column_to_remove.prop_id, 'owner_name')
+        session.remove_column(column_to_remove.column_id)
+        columns = session.columns.all()
+        self.assertEqual(len(columns), 5)
+        for index, prop_id in enumerate(['name', 'date_opened', 'opened_by_username',
+                                         'last_modified', '@status']):
+            self.assertEqual(columns[index].prop_id, prop_id)
+            self.assertEqual(columns[index].index, index)
+
     def test_reorder_wrong_number_of_filter_ids_raises_error(self):
         session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
         session.add_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
