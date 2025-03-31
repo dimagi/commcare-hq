@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine('accounting/js/confirm_plan', [
     'jquery',
     'knockout',
@@ -9,7 +9,7 @@ hqDefine('accounting/js/confirm_plan', [
     $,
     ko,
     _,
-    initialPageData
+    initialPageData,
 ) {
     var PROJECT_ENDED = gettext("My project ended");
     var FUNDING_ENDED = gettext("The funding for my project ended");
@@ -114,7 +114,7 @@ hqDefine('accounting/js/confirm_plan', [
             initialPageData.get('is_upgrade'),
             initialPageData.get('is_same_edition'),
             initialPageData.get('is_paused'),
-            initialPageData.get('current_plan')
+            initialPageData.get('current_plan'),
         );
 
         $('#confirm-plan-content').koApplyBindings(confirmPlan);
