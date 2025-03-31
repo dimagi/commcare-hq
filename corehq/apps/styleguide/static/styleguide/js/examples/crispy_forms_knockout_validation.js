@@ -1,3 +1,11 @@
+import $ from 'jquery';
+import ko from 'knockout';
+import initialPageData from 'hqwebapp/js/initial_page_data';
+
+import 'hqwebapp/js/bootstrap5/validators.ko';
+import 'hqwebapp/js/password_validators.ko';
+import 'knockout-validation/dist/knockout.validation.min';
+
 $(function () {
     let UserModel = function () {
         let self = {},
@@ -6,9 +14,7 @@ $(function () {
                     method: "notifyWhenChangesStop",
                     timeout: 400,
                 },
-            },
-            // This line below would be part of an hqDefine import
-            initialPageData = hqImport("hqwebapp/js/initial_page_data");
+            };
 
         self.username = ko.observable()
             .extend(_rateLimit)

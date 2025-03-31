@@ -1,3 +1,6 @@
+import $ from 'jquery';
+import ko from 'knockout';
+
 $(function () {
     $("#ko-playlist-generator").koApplyBindings(function () {
         return {
