@@ -48,9 +48,9 @@ process of explicitly adding each module’s dependencies to the module’s
 definition, and also updating each HTML page to reference a single
 “main” module rather than including a bunch of ``<script>`` tags:
 
-1. Add ``js_entry`` tag and remove ``<script>`` tags
-1. Add dependencies
-1. Test
+#. Add ``js_entry`` tag and remove ``<script>`` tags
+#. Add dependencies
+#. Test
 
 Add ``js_entry`` tag and remove ``<script>`` tags
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
