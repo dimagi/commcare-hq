@@ -20,13 +20,15 @@
       <div class="row g-0">
         <div class="col-md-4 border-end">
           <div id="report-widget-filters-{{ widget.id }}" class="p-3">
-            {% include "reports_core/partials/bootstrap5/filter_panel.html" %}
+            {% include "reports/standard/partials/bootstrap5/filter_panel.html" %}
           </div>
         </div>
 
         <div class="col-md-8">
           <div class="position-relative">
-            {% include "reports_core/partials/bootstrap5/report_content.html" %}
+            <div id="report-content{{ report.html_id_suffix }}">
+              {% include "reports/bootstrap5/tabular.html" %}
+            </div>
           </div>
         </div>
       </div>
