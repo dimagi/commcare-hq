@@ -45,9 +45,12 @@
       <div class="input-group">
         <div class="input-group-text rounded-end"> {# todo: selection UI #}
           <i class="fa-solid fa-circle-check me-2"></i>
-          {# todo: selection number #}
+          <span
+            class="me-1"
+            x-text="numRecordsSelected"
+          ></span>
           {% blocktrans %}
-            0 Records Selected
+            Records Selected
           {% endblocktrans %}
         </div>
       </div>
