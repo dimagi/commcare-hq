@@ -1,7 +1,10 @@
 from django.utils.translation import gettext_lazy
 from django_tables2 import columns, tables
 
-from corehq.apps.data_cleaning.columns import DataCleaningHtmxColumn
+from corehq.apps.data_cleaning.columns import (
+    DataCleaningHtmxColumn,
+    DataCleaningHtmxSelectionColumn,
+)
 from corehq.apps.data_cleaning.records import EditableCaseSearchElasticRecord
 from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
 from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
@@ -16,6 +19,12 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
     def __init__(self, session=None, **kwargs):
         super().__init__(**kwargs)
         self.session = session
+
+    @classmethod
+    def get_select_column(cls, session):
+        return DataCleaningHtmxSelectionColumn(
+            session, accessor='case_id',
+        )
 
     @classmethod
     def get_columns_from_session(cls, session):

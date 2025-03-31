@@ -29,8 +29,15 @@ class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataC
     table_class = CleanCaseTable
 
     def get_table_kwargs(self):
+        extra_columns = [(
+            "selection",
+            self.table_class.get_select_column(
+                self.session,
+            )
+        )]
+        extra_columns.extend(self.table_class.get_columns_from_session(self.session))
         return {
-            'extra_columns': self.table_class.get_columns_from_session(self.session),
+            'extra_columns': extra_columns,
             'record_kwargs': {
                 'session': self.session,
             },

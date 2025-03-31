@@ -1,4 +1,4 @@
-from django_tables2.columns import TemplateColumn
+from django_tables2.columns import TemplateColumn, CheckBoxColumn
 
 
 class DataCleaningHtmxColumn(TemplateColumn):
@@ -18,3 +18,17 @@ class DataCleaningHtmxColumn(TemplateColumn):
             *args, **kwargs
         )
         self.column_spec = column_spec
+
+
+class DataCleaningHtmxSelectionColumn(CheckBoxColumn):
+
+    def __init__(self, session, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.session = session
+        self.attrs['th'] = {
+            'class': 'select-header',
+        }
+
+    def is_checked(self, value, record):
+        # todo
+        return False
