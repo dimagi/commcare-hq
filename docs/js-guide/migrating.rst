@@ -46,26 +46,11 @@ which are rare, cannot yet be migrated.
 Once these conditions are met, migrating to Webpack is essentially the
 process of explicitly adding each module’s dependencies to the module’s
 definition, and also updating each HTML page to reference a single
-“main” module rather than including a bunch of ``<script>`` tags: 1. Add
-``js_entry`` tag and remove ``<script>`` tags 1. Add dependencies
+“main” module rather than including a bunch of ``<script>`` tags:
+
+1. Add ``js_entry`` tag and remove ``<script>`` tags
+1. Add dependencies
 1. Test
-
-.. note::
-    The sample PRs below were created when we were still using RequireJS.
-    You can read the sample PRs and substitute ``js_entry`` where you see
-    ``requirejs_main``. Additionally, you should be sure to include the ``commcarehq``
-    module in the list of dependencies of the final ``hqDefine`` entry point.
-
-
-Sample PRs:
-
-- `Bundler migration (RequireJS): dashboard <https://github.com/dimagi/commcare-hq/pull/19182/>`__ is an
-  example of an easy migration, where all dependencies are already migrated
-- `Bundler proof of concept (with RequireJS) <https://github.com/dimagi/commcare-hq/pull/18116>`__ migrates a
-  few pages (lookup tables, data dictionary) and many of our commonly-used
-  modules (analytics, ``hq.helpers.js``, etc.). This also contains the
-  changes to ``hqModules.js`` that make ``hqDefine`` support both migrated
-  and unmigrated pages.
 
 Add ``js_entry`` tag and remove ``<script>`` tags
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
