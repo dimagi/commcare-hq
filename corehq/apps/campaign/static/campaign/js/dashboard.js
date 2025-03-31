@@ -3,6 +3,7 @@ import 'hqwebapp/js/htmx_base';
 import Alpine from 'alpinejs';
 import 'reports/js/bootstrap5/base';
 import $ from 'jquery';
+import { RadialGauge } from 'canvas-gauges';
 import initialPageData from "hqwebapp/js/initial_page_data";
 import { Map, MapItem } from "geospatial/js/bootstrap3/models";
 import html2pdf from "html2pdf.js";
@@ -28,7 +29,8 @@ Alpine.store('deleteWidgetModel', {
 
 Alpine.start();
 
-let mobileWorkerMapsInitialized = false;
+let mobileWorkerWidgetsInitialized = false;
+
 const widgetModalSelector = '#widget-modal';
 const modalTitleSelector = '.modal-title';
 const addWidgetText = gettext('Add Widget');
@@ -44,14 +46,26 @@ $(function () {
             mapWidget.initializeMap();
         }
     }
+    const gaugeWidgetConfigs = initialPageData.get('gauge_widgets');
+    for (const gaugeWidgetConfig of gaugeWidgetConfigs.cases) {
+        if (gaugeWidgetConfig.value) {
+            new RadialGauge({
+                renderTo: `gauge-widget-${ gaugeWidgetConfig.id }`,
+                value: gaugeWidgetConfig.value,
+                maxValue: gaugeWidgetConfig.max_value,
+                majorTicks: gaugeWidgetConfig.major_ticks,
+                valueDec: 0
+            }).draw();
+        }
+    }
     $('a[data-bs-toggle="tab"]').on('shown.bs.tab', tabSwitch);
     $('#print-to-pdf').on('click', printActiveTabToPdf);
 
     $modalTitleElement = $(widgetModalSelector).find(modalTitleSelector);
     $(widgetModalSelector).on('hidden.bs.modal', onHideWidgetModal);
     $(widgetModalSelector).on('show.bs.modal', onShowWidgetModal);
+    $(widgetModalSelector).on('htmx:beforeSwap', htmxBeforeSwapWidgetForm);
 
-    $(widgetModalSelector).on('htmx:afterSwap', htmxAfterSwapWidgetForm);
     $('#delete-widget-confirmation-modal').on('htmx:afterRequest', afterDeleteWidgetRequest);
 });
 
@@ -59,14 +73,25 @@ function tabSwitch(e) {
     const tabContentId = $(e.target).attr('href');
 
     // Only load mobile worker map widgets when tab is clicked to prevent weird map sizing behaviour
-    if (!mobileWorkerMapsInitialized && tabContentId === '#mobile-workers-tab-content') {
-        mobileWorkerMapsInitialized = true;
+    if (!mobileWorkerWidgetsInitialized && tabContentId === '#mobile-workers-tab-content') {
+        mobileWorkerWidgetsInitialized = true;
         const widgetConfigs = initialPageData.get('map_report_widgets');
         for (const widgetConfig of widgetConfigs.mobile_workers) {
             if (widgetConfig.widget_type === 'DashboardMap') {
                 const mapWidget = new MapWidget(widgetConfig);
                 mapWidget.initializeMap();
             }
+        }
+
+        const gaugeWidgetConfigs = initialPageData.get('gauge_widgets');
+        for (const gaugeWidgetConfig of gaugeWidgetConfigs.mobile_workers) {
+            new RadialGauge({
+                renderTo: `gauge-widget-${ gaugeWidgetConfig.id }`,
+                value: gaugeWidgetConfig.value,
+                maxValue: gaugeWidgetConfig.max_value,
+                majorTicks: gaugeWidgetConfig.major_ticks,
+                valueDec: 0
+            }).draw();
         }
     }
 }
@@ -183,15 +208,23 @@ var MapWidget = function (mapWidgetConfig) {
     }
 };
 
-var htmxAfterSwapWidgetForm = function (event) {
+var htmxBeforeSwapWidgetForm = function (event) {
     $('#widget-modal-spinner').addClass('d-none');
 
     const requestMethod = event.detail.requestConfig.verb;
     const responseStatus = event.detail.xhr.status;
     if (requestMethod === 'post' && responseStatus === 200) {
-        setTimeout(function () {
-            window.location.reload();
-        }, 1000);
+        // If form is saved successfully, show success message and reload the page
+        const contentType = event.detail.xhr.getResponseHeader("Content-Type");
+        if (contentType && contentType.includes('application/json')) {
+            const response = JSON.parse(event.detail.xhr.response);
+            if (response.success) {
+                $('#widget-success-message').removeClass('d-none');
+                event.detail.shouldSwap = false;
+                $('#widget-form').text('');
+                window.location.reload();
+            }
+        }
     }
 };
 
