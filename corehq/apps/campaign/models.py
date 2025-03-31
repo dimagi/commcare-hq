@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from jsonfield.fields import JSONField
 from memoized import memoized
 
+from corehq.apps.hqwebapp.utils.bootstrap.paths import get_bootstrap5_path
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.util.view_utils import absolute_reverse
 
@@ -134,7 +135,10 @@ class DashboardReport(DashboardWidgetBase):
 
     @property
     def filters(self):
-        return self.report_configuration.ui_filters
+        ui_filters = self.report_configuration.ui_filters
+        for ui_filter in ui_filters:
+            ui_filter.template = get_bootstrap5_path(ui_filter.template)
+        return ui_filters
 
     def get_filter_context(self, view):
         request_params = {}
