@@ -6,8 +6,10 @@
 
     <!-- ko if: $root.paymentMethod() === $root.CREDIT_CARD -->
     <div class="alert alert-info">
-      {% trans 'One credit is equivalent to one USD. Credits are applied to
-      monthly invoices' %}
+      {% blocktrans %}
+        One credit is equivalent to one USD.
+        Credits are applied to monthly invoices.
+      {% endblocktrans %}
     </div>
 
     <div data-bind="with: general_credit">
