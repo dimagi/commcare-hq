@@ -15,6 +15,10 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
 
     class Meta(BaseHtmxTable.Meta):
         template_name = "data_cleaning/tables/table_with_controls.html"
+        row_attrs = {
+            "x-data": "{ isRowSelected: $el.querySelector('input[type=checkbox]').checked }",
+            ":class": "{ 'table-primary': isRowSelected }",
+        }
 
     def __init__(self, session=None, **kwargs):
         super().__init__(**kwargs)
@@ -24,6 +28,11 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
     def get_select_column(cls, session, request, select_row_action, select_page_action):
         return DataCleaningHtmxSelectionColumn(
             session, request, select_row_action, select_page_action, accessor='case_id',
+            attrs={
+                'td__input': {
+                    "@click": "isRowSelected = $event.target.checked;",
+                },
+            },
         )
 
     @classmethod
