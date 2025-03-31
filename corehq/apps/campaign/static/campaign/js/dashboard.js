@@ -4,7 +4,7 @@ import Alpine from 'alpinejs';
 import 'reports/js/bootstrap5/base';
 import $ from 'jquery';
 import initialPageData from "hqwebapp/js/initial_page_data";
-import { Map, MapItem } from "geospatial/js/models";
+import { Map, MapItem } from "geospatial/js/bootstrap3/models";
 import html2pdf from "html2pdf.js";
 
 Alpine.store('deleteWidgetModel', {
