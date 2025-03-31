@@ -19,22 +19,22 @@ hqDefine("reports/js/bootstrap5/standard_hq_report", [
     var standardReport = undefined,
         asyncReport = undefined;
 
-    var getStandard = function () {
-        if (typeof standardReport !== 'undefined') {
+    var getStandard = function (options) {
+        if (!options && typeof standardReport !== 'undefined') {
             return standardReport;
         }
 
         var reportOptions = _.extend({}, initialPageData.get('js_options'), {
             emailSuccessMessage: gettext('Report successfully emailed'),
             emailErrorMessage: gettext('An error occurred emailing your report. Please try again.'),
-        });
+        }, options);
 
         if (initialPageData.get('override_report_render_url')) {
             reportOptions.getReportBaseUrl = function (renderType) {
                 return reportOptions.url + "?format=" + renderType;
             };
             reportOptions.getReportParams = function () {
-                return util.urlSerialize($('#paramSelectorForm' + initialPageData.get('html_id_suffix')), ['format']);
+                return util.urlSerialize($('#paramSelectorForm' + reportOptions.html_id_suffix), ['format']);
             };
             reportOptions.getReportRenderUrl = function (renderType) {
                 var baseUrl = self.getReportBaseUrl(renderType);
@@ -52,9 +52,12 @@ hqDefine("reports/js/bootstrap5/standard_hq_report", [
 
         var standardHQReport = hqReportModule.hqReport(reportOptions);
         standardHQReport.init();
-        standardReport = standardHQReport;
 
-        return standardReport;
+        if (!options) {
+            standardReport = standardHQReport;
+            return standardReport;
+        }
+        return standardHQReport;
     };
 
     var getAsync = function () {

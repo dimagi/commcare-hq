@@ -13,6 +13,9 @@
   {% registerurl 'api_cases_with_gps' request.domain %}
   {% initial_page_data 'map_report_widgets' map_report_widgets %}
   {% initial_page_data 'gauge_widgets' gauge_widgets %}
+  {% registerurl 'add_report_config' domain %}{# Used by reports/js/bootstrapX/base.js #}
+  {% initial_page_data 'domain' domain %}
+  {% initial_page_data 'override_report_render_url' True %}
 
   <div id="delete-widget-alert" class="alert alert-success d-none">
     {% trans "Widget has been deleted successfully!" %}
@@ -78,6 +81,8 @@
           {% for widget in map_report_widgets.cases %}
             {% if widget.widget_type == 'DashboardMap' %}
               {% include 'campaign/partials/dashboard_map.html' %}
+            {% elif widget.widget_type == 'DashboardReport' %}
+              {% include 'campaign/partials/dashboard_report.html' with report=reports_by_id|dict_lookup:widget.id report_filters=report_filters_by_id|dict_lookup:widget.id filter_context=filter_context_by_id|dict_lookup:widget.id %}
             {% endif %}
           {% endfor %}
         </div>
@@ -103,6 +108,8 @@
           {% for widget in map_report_widgets.mobile_workers %}
             {% if widget.widget_type == 'DashboardMap' %}
               {% include 'campaign/partials/dashboard_map.html' %}
+            {% elif widget.widget_type == 'DashboardReport' %}
+              {% include 'campaign/partials/dashboard_report.html' with report=reports_by_id|dict_lookup:widget.id report_filters=report_filters_by_id|dict_lookup:widget.id filter_context=filter_context_by_id|dict_lookup:widget.id %}
             {% endif %}
           {% endfor %}
         </div>
