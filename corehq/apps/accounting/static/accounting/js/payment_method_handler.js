@@ -142,18 +142,22 @@ hqDefine('accounting/js/payment_method_handler', [
         // selections, so mount and unmount it as needed.
         self.cardElementPromise = hqStripe.getCardElementPromise(initialPageData.get("stripe_public_key"));
         self.cardElementMounted = false;
-        self.isNewCard.subscribe(function (newValue) {
+        self.showOrHideStripeUI = function (show) {
             self.cardElementPromise.then(function (cardElement) {
-                _.delay(function () {
-                    if (newValue) {
-                        cardElement.mount('#stripe-card-container');
+                const containerId = 'stripe-card-container';
+                if (show) {
+                    if (document.getElementById(containerId)) {
+                        cardElement.mount('#' + containerId);
                         self.cardElementMounted = true;
-                    } else {
-                        cardElement.unmount();
-                        self.cardElementMounted = false;
                     }
-                });
+                } else {
+                    cardElement.unmount();
+                    self.cardElementMounted = false;
+                }
             });
+        };
+        self.isNewCard.subscribe(function (newValue) {
+            _.delay(function () { self.showOrHideStripeUI(newValue) });
         });
 
         self.newCard = ko.observable(stripeCardModel());
@@ -186,6 +190,9 @@ hqDefine('accounting/js/payment_method_handler', [
         self.canSelectCard = ko.computed(function () {
             return self.paymentIsNotComplete() && self.savedCards().length > 0;
         });
+        self.mustCreateNewCard.subscribe(function (newValue) {
+            _.delay(function () { self.showOrHideStripeUI(newValue) });
+        });
 
         self.isSubmitDisabled = ko.computed(function () {
             if (self.paymentMethod() === self.CREDIT_CARD) {
@@ -204,6 +211,7 @@ hqDefine('accounting/js/payment_method_handler', [
             if (self.savedCards().length > 0) {
                 self.selectedCardType('saved');
             }
+            self.showOrHideStripeUI(self.mustCreateNewCard());
         };
 
         self.reset = function () {
