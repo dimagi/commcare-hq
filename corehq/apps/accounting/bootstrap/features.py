@@ -47,8 +47,6 @@ standard_v0 = community_v0 + [
     privileges.BULK_CASE_MANAGEMENT,
     privileges.ALLOW_EXCESS_USERS,
     privileges.LOCATIONS,
-    privileges.USERCASE,
-    privileges.ZAPIER_INTEGRATION,
     privileges.LOGIN_AS,
     privileges.PRACTICE_MOBILE_WORKERS,
 ]
@@ -63,10 +61,8 @@ standard_v1 = community_v2 + [
     privileges.BULK_CASE_MANAGEMENT,
     privileges.BULK_USER_MANAGEMENT,
     privileges.ALLOW_EXCESS_USERS,
-    privileges.USERCASE,
     privileges.EXCEL_DASHBOARD,
     privileges.DAILY_SAVED_EXPORT,
-    privileges.ZAPIER_INTEGRATION,
     privileges.PRACTICE_MOBILE_WORKERS,
     privileges.FORM_LINK_WORKFLOW,
     privileges.PHONE_APK_HEARTBEAT,
@@ -89,6 +85,8 @@ pro_v0 = standard_v0 + [
     privileges.TEMPLATED_INTENTS,
     privileges.RESTRICT_ACCESS_BY_LOCATION,
     privileges.REPORT_BUILDER_5,
+    privileges.USERCASE,
+    privileges.ZAPIER_INTEGRATION,
 ]
 
 # Current Pro Plan
@@ -110,6 +108,8 @@ pro_v1 = standard_v1 + [
     privileges.EXPORT_OWNERSHIP,
     privileges.CASE_LIST_EXPLORER,
     privileges.CASE_DEDUPE,
+    privileges.USERCASE,
+    privileges.ZAPIER_INTEGRATION,
 ]
 
 
