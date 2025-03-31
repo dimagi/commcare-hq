@@ -1,15 +1,25 @@
-
-hqDefine('app_manager/js/app_manager_media', function () {
+hqDefine("app_manager/js/app_manager_media", [
+    "jquery",
+    "knockout",
+    "hqwebapp/js/initial_page_data",
+    "analytix/js/google",
+    "app_manager/js/nav_menu_media_common",
+], function (
+    $,
+    ko,
+    initialPageData,
+    google,
+    uploaders,
+) {
     var appMenuMediaManager = function (o) {
         /* This interfaces the media reference for a form or module menu
         (as an icon or image) with the upload manager.*/
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-            self = {
+        let self = {
                 isDefaultLanguage: initialPageData.get('current_language') === initialPageData.get('default_language'),
             };
 
         self.trackGoogleEvent = function () {
-            hqImport('analytix/js/google').track.event(...arguments);
+            google.track.event(...arguments);
         };
 
         self.enabled = ko.observable(
@@ -167,7 +177,6 @@ hqDefine('app_manager/js/app_manager_media', function () {
     };
 
     function initNavMenuMedia(qualifier, imageRef, audioRef, objectMap, defaultFileName) {
-        var uploaders = hqImport("app_manager/js/nav_menu_media_common");
         var $mediaImage = $('#' + qualifier + 'media_image'),
             $mediaAudio = $('#' + qualifier + 'media_audio');
 
