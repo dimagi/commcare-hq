@@ -292,10 +292,15 @@ class TestDashboardWidgetView(BaseTestCampaignView):
         assert response.status_code == 404
 
     @staticmethod
-    def _assert_for_success(response, widget_type):
+    def _assert_for_get_form_success(response, widget_type):
         assert response.status_code == 200
         assert response.context['widget_type'] == widget_type
         assert isinstance(response.context['widget_form'], WidgetType.get_form_class(widget_type))
+
+    @staticmethod
+    def _assert_for_save_form_success(response, widget_type):
+        assert response.status_code == 200
+        assert response.json()['success'] is True
 
 
 class TestNewWidget(TestDashboardWidgetView):
@@ -309,7 +314,7 @@ class TestNewWidget(TestDashboardWidgetView):
             is_logged_in=True,
         )
 
-        self._assert_for_success(response, WidgetType.MAP)
+        self._assert_for_get_form_success(response, WidgetType.MAP)
 
     @flag_enabled('CAMPAIGN_DASHBOARD')
     @patch('corehq.apps.campaign.forms.DashboardReportForm._get_report_configurations', return_value=[])
@@ -320,7 +325,7 @@ class TestNewWidget(TestDashboardWidgetView):
             is_logged_in=True,
         )
 
-        self._assert_for_success(response, WidgetType.REPORT)
+        self._assert_for_get_form_success(response, WidgetType.REPORT)
 
     @flag_enabled('CAMPAIGN_DASHBOARD')
     def test_new_widget_invalid_widget_type(self, *args):
@@ -350,7 +355,7 @@ class TestNewWidget(TestDashboardWidgetView):
             headers={'hq-hx-action': self.HQ_ACTION_SAVE_WIDGET},
         )
 
-        self._assert_for_success(response, WidgetType.MAP)
+        self._assert_for_save_form_success(response, WidgetType.MAP)
         assert DashboardMap.objects.count() == 1
 
     @flag_enabled('CAMPAIGN_DASHBOARD')
@@ -372,7 +377,7 @@ class TestNewWidget(TestDashboardWidgetView):
             headers={'hq-hx-action': self.HQ_ACTION_SAVE_WIDGET},
         )
 
-        self._assert_for_success(response, WidgetType.REPORT)
+        self._assert_for_save_form_success(response, WidgetType.REPORT)
         assert DashboardReport.objects.count() == 1
 
     @flag_enabled('CAMPAIGN_DASHBOARD')
@@ -389,7 +394,7 @@ class TestNewWidget(TestDashboardWidgetView):
             headers={'hq-hx-action': self.HQ_ACTION_SAVE_WIDGET},
         )
 
-        self._assert_for_success(response, WidgetType.REPORT)
+        self._assert_for_get_form_success(response, WidgetType.REPORT)
         assert DashboardReport.objects.count() == 0
         assert response.context["widget_form"].errors == {'report_configuration_id': ['This field is required.']}
 
@@ -410,7 +415,7 @@ class TestEditWidget(TestDashboardWidgetView):
             is_logged_in=True,
         )
 
-        self._assert_for_success(response, WidgetType.MAP)
+        self._assert_for_get_form_success(response, WidgetType.MAP)
         assert response.context['widget'] == map_widget
 
     def _sample_map_widget(self):
@@ -436,7 +441,7 @@ class TestEditWidget(TestDashboardWidgetView):
             is_logged_in=True,
         )
 
-        self._assert_for_success(response, WidgetType.REPORT)
+        self._assert_for_get_form_success(response, WidgetType.REPORT)
         assert response.context['widget'] == report_widget
 
     def _sample_report_widget(self, report_id):
@@ -468,7 +473,7 @@ class TestEditWidget(TestDashboardWidgetView):
             is_logged_in=True,
         )
 
-        self._assert_for_success(response, WidgetType.MAP)
+        self._assert_for_save_form_success(response, WidgetType.MAP)
         saved_map_widget = DashboardMap.objects.get(pk=map_widget.id)
         assert saved_map_widget.title == 'New Title'
 
@@ -492,7 +497,7 @@ class TestEditWidget(TestDashboardWidgetView):
             headers={'hq-hx-action': self.HQ_ACTION_SAVE_WIDGET},
         )
 
-        self._assert_for_success(response, WidgetType.REPORT)
+        self._assert_for_save_form_success(response, WidgetType.REPORT)
         saved_report_widget = DashboardReport.objects.get(pk=report_widget.id)
         assert saved_report_widget.title == 'New Title'
         assert saved_report_widget.dashboard_tab == DashboardTab.MOBILE_WORKERS

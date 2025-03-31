@@ -44,7 +44,7 @@ $(function () {
     $(widgetModalSelector).on('hidden.bs.modal', onHideWidgetModal);
     $(widgetModalSelector).on('show.bs.modal', onShowWidgetModal);
 
-    $(widgetModalSelector).on('htmx:afterSwap', htmxAfterSwapWidgetForm);
+    $(widgetModalSelector).on('htmx:beforeSwap', htmxBeforeSwapWidgetForm);
 });
 
 function tabSwitch(e) {
@@ -186,15 +186,23 @@ var MapWidget = function (mapWidgetConfig) {
     }
 };
 
-var htmxAfterSwapWidgetForm = function (event) {
+var htmxBeforeSwapWidgetForm = function (event) {
     $('#widget-modal-spinner').addClass('d-none');
 
     const requestMethod = event.detail.requestConfig.verb;
     const responseStatus = event.detail.xhr.status;
     if (requestMethod === 'post' && responseStatus === 200) {
-        setTimeout(function () {
-            window.location.reload();
-        }, 1000);
+        // If form is saved successfully, show success message and reload the page
+        const contentType = event.detail.xhr.getResponseHeader("Content-Type");
+        if (contentType && contentType.includes('application/json')) {
+            const response = JSON.parse(event.detail.xhr.response);
+            if (response.success) {
+                $('#widget-success-message').removeClass('d-none');
+                event.detail.shouldSwap = false;
+                $('#widget-form').text('');
+                window.location.reload();
+            }
+        }
     }
 };
 
