@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine("accounting/js/stripe_card_manager", [
     'jquery',
     'knockout',
@@ -6,7 +6,7 @@ hqDefine("accounting/js/stripe_card_manager", [
 ], function (
     $,
     ko,
-    Stripe
+    Stripe,
 ) {
     var newStripeCardModel = function (data, cardManager) {
         var self = {};

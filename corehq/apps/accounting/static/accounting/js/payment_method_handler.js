@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine('accounting/js/payment_method_handler', [
     'jquery',
     'knockout',
@@ -8,7 +8,7 @@ hqDefine('accounting/js/payment_method_handler', [
     $,
     ko,
     _,
-    Stripe
+    Stripe,
 ) {
     var billingHandler = function (formId, opts) {
         var self = {};
