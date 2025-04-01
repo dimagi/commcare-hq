@@ -1,19 +1,5 @@
-import 'commcarehq';
-import $ from 'jquery';
-import _ from 'underscore';
-
-import ace from 'ace-builds/src-min-noconflict/ace';
-import 'ace-builds/src-min-noconflict/mode-django';
-import 'ace-builds/src-min-noconflict/mode-html';
-import 'ace-builds/src-min-noconflict/mode-javascript';
-import 'ace-builds/src-min-noconflict/mode-python';
-
-import 'hqwebapp/js/bootstrap5/main';
-import 'hqwebapp/js/bootstrap5/widgets';
-import initialPageData from 'hqwebapp/js/initial_page_data';
-import { Tooltip } from 'hqwebapp/js/bootstrap5_loader';
-
 $(function () {
+    let initialPageData = hqImport("hqwebapp/js/initial_page_data");
     ace.config.set('basePath', initialPageData.get('ace_base_path'));
     _.each(["python", "html", "js", "django"], function (lang) {
         $('pre[data-lang="' + lang + '"]').each(function () {
@@ -42,7 +28,7 @@ $(function () {
             $(this).addClass('d-inline-block pe-3').after(
                 $copyLinkToSection,
             );
-            new Tooltip($copyLinkToSection.get(0), {
+            new bootstrap.Tooltip($copyLinkToSection.get(0), {
                 title: "Click to copy link to section.",
                 placement: "right",
             });

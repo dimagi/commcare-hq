@@ -1,8 +1,6 @@
 {% extends 'styleguide/bootstrap5/base.html' %}
 {% load hq_shared_tags %}
 
-{% js_entry "styleguide/js/tables" %}
-
 {% block stylesheets %}
   <link type="text/css"
         rel="stylesheet"
@@ -13,6 +11,13 @@
         media="all"
         href="{% static 'datatables.net-fixedcolumns-bs5/css/fixedColumns.bootstrap5.min.css' %}" />
 {% endblock stylesheets %}
+
+{% block javascript %}
+  <script src="{% static 'datatables.net/js/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'datatables.net-bs5/js/dataTables.bootstrap5.min.js' %}"></script>
+  <script src="{% static 'datatables.net-fixedcolumns/js/dataTables.fixedColumns.min.js' %}"></script>
+  <script src="{% static 'datatables.net-fixedcolumns-bs5/js/fixedColumns.bootstrap5.min.js' %}"></script>
+{% endblock javascript %}
 
 {% block intro %}
   <h1 class="sg-title mb-0" id="content">Tables</h1>
@@ -237,7 +242,7 @@
     is in your list of dependencies.
   </div>
   {% registerurl "styleguide_datatables_data" %}
-  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.datatables %}
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.datatables %}
 
   <h2 id="paginated-table" class="pt-4">
     Paginated Table
@@ -261,5 +266,5 @@
     docs on <a href="https://commcare-hq.readthedocs.io/reporting.html" target="_blank">Reporting</a>.
   </p>
   {% registerurl "styleguide_paginated_table_data" %}
-  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.paginated_table %}
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.paginated_table %}
 {% endblock content %}

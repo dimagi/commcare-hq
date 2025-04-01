@@ -1,6 +1,3 @@
-import $ from 'jquery';
-import ko from 'knockout';
-
 $(function () {
     let ExampleFormModel = function () {
         let self = {};
