@@ -66,6 +66,11 @@
           data-bind="css: oCssClass, click: selectPlan"
         >
           <h3 data-bind="text: oName"></h3>
+
+          {% comment %}
+          We could hide this text block for Community, but instead just make
+          its contents invisible to avoid layout shifting
+          {% endcomment %}
           <p
             class="pricing-type"
             data-bind="
@@ -79,6 +84,11 @@
             class="plan-price"
             data-bind="text: oDisplayPrice"
           ></p>
+
+          {% comment %}
+          We could hide this text block for Community, but instead just make
+          its contents invisible to avoid layout shifting
+          {% endcomment %}
           <p
             class="plan-monthly-label"
             data-bind="attr: { 'aria-hidden': oIsCommunityPlan() }"
