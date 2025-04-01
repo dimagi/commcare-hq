@@ -20,16 +20,16 @@
          <span class="slider round slider-blue slider-blue-on"></span>
        </label>
        {% trans "Pay Annually" %}
-@@ -40,7 +40,7 @@
- 
-     <p class="text-center" data-bind="visible: !oShowAnnualPricing()">
+@@ -43,7 +43,7 @@
+       data-bind="visible: !oShowAnnualPricing()"
+     >
        {% blocktrans %}
 -        Save close to 20% when you pay annually.
 +        Save close to 20% when you pay annually.  {# todo B5: css-close #}
        {% endblocktrans %}
      </p>
  
-@@ -186,7 +186,7 @@
+@@ -220,7 +220,7 @@
  
      <div
        class="alert alert-warning text-center"
@@ -38,7 +38,7 @@
        data-bind="visible: oIsNextPlanDowngrade"
      >
        <i class="fa fa-warning"></i>
-@@ -208,7 +208,7 @@
+@@ -242,7 +242,7 @@
        id="select-plan-form"
        method="post"
        data-bind="visible: oShowNext"
@@ -47,21 +47,26 @@
        action="{% url 'confirm_selected_plan' domain %}"
      >
        {% csrf_token %}
-@@ -269,7 +269,7 @@
-     <div class="modal-dialog">
-       <div class="modal-content">
+@@ -308,9 +308,9 @@
          <div class="modal-header">
--          <button type="button" class="close" data-dismiss="modal">
-+          <button type="button" class="btn-close" data-bs-dismiss="modal">  {# todo B5: css-close #}
+           <button
+             type="button"
+-            class="close"
+-            data-dismiss="modal"
+-          >
++            class="btn-close"
++            data-bs-dismiss="modal"
++          >  {# todo B5: css-close #}
              <span aria-hidden="true">&times;</span>
              <span class="sr-only">{% trans "Close" %}</span>
            </button>
-@@ -277,12 +277,12 @@
-         </div>
-         <div class="modal-body"><br /><br /></div>
-         <div class="modal-footer">
--          <button type="button" class="btn btn-primary" data-dismiss="modal">
-+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+@@ -321,13 +321,13 @@
+           <button
+             type="button"
+             class="btn btn-primary"
+-            data-dismiss="modal"
++            data-bs-dismiss="modal"
+           >
              {% trans "Dismiss" %}
            </button>
            <button
