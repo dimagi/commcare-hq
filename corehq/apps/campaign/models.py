@@ -40,6 +40,30 @@ class DashboardTab(models.TextChoices):
     MOBILE_WORKERS = 'mobile_workers', _('Mobile Workers')
 
 
+class WidgetType(models.TextChoices):
+    GAUGE = 'gauge', _('Gauge')
+    MAP = 'map', _('Map')
+    REPORT = 'report', _('Report')
+
+    @classmethod
+    def get_form_class(cls, widget_type):
+        from corehq.apps.campaign.forms import (
+            DashboardGaugeForm,
+            DashboardMapForm,
+            DashboardReportForm,
+        )
+        form_classes = {
+            cls.GAUGE: DashboardGaugeForm,
+            cls.MAP: DashboardMapForm,
+            cls.REPORT: DashboardReportForm,
+        }
+        return form_classes[widget_type]
+
+    @classmethod
+    def get_model_class(cls, widget_type):
+        return cls.get_form_class(widget_type).Meta.model
+
+
 class DashboardWidgetBase(models.Model):
     """
     Base class for dashboard widgets
@@ -62,6 +86,8 @@ class DashboardMap(DashboardWidgetBase):
     """
     Configuration for a map in a campaign dashboard
     """
+    WIDGET_TYPE = WidgetType.MAP.value
+
     dashboard = models.ForeignKey(
         Dashboard,
         on_delete=models.CASCADE,
@@ -72,6 +98,10 @@ class DashboardMap(DashboardWidgetBase):
 
     class Meta(DashboardWidgetBase.Meta):
         app_label = 'campaign'
+
+    @property
+    def widget_type(self):
+        return WidgetType.MAP
 
     def to_widget(self):
         return model_to_widget(
@@ -84,6 +114,8 @@ class DashboardReport(DashboardWidgetBase):
     """
     Configuration for a report in a campaign dashboard
     """
+    WIDGET_TYPE = WidgetType.REPORT.value
+
     dashboard = models.ForeignKey(
         Dashboard,
         on_delete=models.CASCADE,
@@ -110,6 +142,10 @@ class DashboardReport(DashboardWidgetBase):
             args=[self.dashboard.domain, self.report_configuration_id],
         )
 
+    @property
+    def widget_type(self):
+        return WidgetType.REPORT
+
     def to_widget(self):
         return model_to_widget(
             self,
@@ -122,6 +158,8 @@ class DashboardGauge(DashboardWidgetBase):
     """
     Configuration for a gauge in a campaign dashboard
     """
+    WIDGET_TYPE = WidgetType.GAUGE.value
+
     dashboard = models.ForeignKey(
         Dashboard,
         on_delete=models.CASCADE,
@@ -138,35 +176,15 @@ class DashboardGauge(DashboardWidgetBase):
     # optional additional configuration set to customize gauge appearance
     configuration = JSONField(default=dict)
 
+    @property
+    def widget_type(self):
+        return WidgetType.GAUGE
+
     def to_widget(self):
         return model_to_widget(
             self,
             exclude=['dashboard_tab', 'display_order'],
         )
-
-
-class WidgetType(models.TextChoices):
-    GAUGE = 'gauge', _('Gauge')
-    MAP = 'map', _('Map')
-    REPORT = 'report', _('Report')
-
-    @classmethod
-    def get_form_class(cls, widget_type):
-        from corehq.apps.campaign.forms import (
-            DashboardGaugeForm,
-            DashboardMapForm,
-            DashboardReportForm,
-        )
-        form_classes = {
-            cls.GAUGE: DashboardGaugeForm,
-            cls.MAP: DashboardMapForm,
-            cls.REPORT: DashboardReportForm,
-        }
-        return form_classes[widget_type]
-
-    @classmethod
-    def get_model_class(cls, widget_type):
-        return cls.get_form_class(widget_type).Meta.model
 
 
 def model_to_widget(instance, fields=None, exclude=None, properties=()):
@@ -177,7 +195,7 @@ def model_to_widget(instance, fields=None, exclude=None, properties=()):
     widget = model_to_dict(instance, fields, exclude)
     widget.update(
         {prop: getattr(instance, prop) for prop in properties},
-        widget_type=instance.__class__.__name__,
+        widget_type=instance.WIDGET_TYPE,
         dashboard=model_to_dict(instance.dashboard, exclude=['id']),
     )
     return widget

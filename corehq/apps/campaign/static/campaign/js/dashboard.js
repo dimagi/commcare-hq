@@ -20,7 +20,7 @@ $(function () {
     // Only init case map widgets since this is the default tab
     const widgetConfigs = initialPageData.get('map_report_widgets');
     for (const widgetConfig of widgetConfigs.cases) {
-        if (widgetConfig.widget_type === 'DashboardMap') {
+        if (widgetConfig.widget_type === 'map') {
             const mapWidget = new MapWidget(widgetConfig);
             mapWidget.initializeMap();
         }
@@ -55,7 +55,7 @@ function tabSwitch(e) {
         mobileWorkerWidgetsInitialized = true;
         const widgetConfigs = initialPageData.get('map_report_widgets');
         for (const widgetConfig of widgetConfigs.mobile_workers) {
-            if (widgetConfig.widget_type === 'DashboardMap') {
+            if (widgetConfig.widget_type === 'map') {
                 const mapWidget = new MapWidget(widgetConfig);
                 mapWidget.initializeMap();
             }
