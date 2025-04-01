@@ -2,6 +2,7 @@ hqDefine("reports/js/bootstrap5/async", [
     'jquery',
     'underscore',
     'bootstrap5',
+    'hqwebapp/js/initial_page_data',
     'hqwebapp/js/bootstrap5/alert_user',
     'reports/js/charts/main',
     'reports/js/filters/bootstrap5/main',
@@ -10,6 +11,7 @@ hqDefine("reports/js/bootstrap5/async", [
     $,
     _,
     bootstrap,
+    initialPageData,
     alertUser,
     chartsMain,
     filtersMain,
@@ -129,10 +131,19 @@ hqDefine("reports/js/bootstrap5/async", [
         };
 
         self.updateFilters = function (params) {
+            var url;
+            if (initialPageData.get('override_report_render_url')) {
+                // TODO: ConfigurableReportView to support filters
+                url = self.standardReport.getReportBaseUrl('filters') + "&" + params;
+            } else {
+                url = window.location.pathname.replace(
+                    self.standardReport.urlRoot,
+                    self.standardReport.urlRoot + 'filters/'
+                ) + "?" + params;
+            }
             self.standardReport.saveDatespanToCookie();
             self.filterRequest = $.ajax({
-                url: window.location.pathname.replace(self.standardReport.urlRoot,
-                    self.standardReport.urlRoot + 'filters/') + "?" + params,
+                url: url,
                 dataType: 'json',
                 success: loadFilters,
             });
@@ -140,6 +151,7 @@ hqDefine("reports/js/bootstrap5/async", [
 
         self.updateReport = function (initialLoad, params, setFilters) {
             var processFilters = "";
+            var url;
             if (initialLoad) {
                 processFilters = "hq_filters=true&";
                 if (self.standardReport.loadDatespanFromCookie()) {
@@ -156,10 +168,17 @@ hqDefine("reports/js/bootstrap5/async", [
                 $(self.standardReport.emailReportButton).removeClass('d-none');
                 $(self.standardReport.printReportButton).removeClass('d-none');
             }
+            if (initialPageData.get('override_report_render_url')) {
+                url = self.standardReport.getReportBaseUrl('async') + "&" + processFilters + "&" + params;
+            } else {
+                url = window.location.pathname.replace(
+                    self.standardReport.urlRoot,
+                    self.standardReport.urlRoot + 'async/'
+                ) + "?" + processFilters + "&" + params;
+            }
 
             self.reportRequest = $.ajax({
-                url: (window.location.pathname.replace(self.standardReport.urlRoot,
-                    self.standardReport.urlRoot + 'async/')) + "?" + processFilters + "&" + params,
+                url: url,
                 dataType: 'json',
                 success: function (data) {
                     self.reportRequest = null;
