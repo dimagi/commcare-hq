@@ -533,6 +533,32 @@ hqDefine('app_manager/js/app_manager', [
             $('#add-new-module-modal').modal('hide');
             $form.submit();
         });
+
+        var hoverHelpTexts = {
+            survey: {
+                title: gettext("What is a Survey Menu?"),
+                content: gettext("Surveys are used to collect independent forms that do not need to be tracked over time. Common examples include satisfaction surveys or anonymous feedback forms."),
+            },
+            case: {
+                title: gettext("What is a Case List?"),
+                content: gettext("Case Lists are used to register and track related data (cases) over time. This data can be referenced in other forms and by other cases. Common examples include maternal health, student attendance, or crop monitoring."),
+            },
+        };
+
+        $('.new-module-option').each(function () {
+            var type = $(this).data('type');
+            if (hoverHelpTexts[type]) {
+                $(this).popover({
+                    title: hoverHelpTexts[type].title,
+                    content: hoverHelpTexts[type].content,
+                    trigger: 'hover',
+                    placement: 'auto',
+                    container: 'body',
+                    html: true,
+                });
+            }
+        });
+
     };
 
     return module;
