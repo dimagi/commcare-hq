@@ -191,7 +191,7 @@ hqDefine('accounting/js/pricing_table', [
 
     var planDisplayName = function (name) {
         const plans = {
-            'Community': 'Free Edition',
+            'Community': gettext('Free edition'),
             'Standard': 'Standard',
             'Pro': 'Pro',
             'Advanced': 'Advanced',
