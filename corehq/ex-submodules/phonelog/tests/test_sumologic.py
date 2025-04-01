@@ -76,7 +76,7 @@ class TestSumologic(SimpleTestCase, TestXmlMixin):
         at android.app.Activity.performCreate(Activity.java:6251)
         at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1107)
         at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2369)
-        ... 9 more] [device_model=Nexus 7] [android_version=6.0.1] [app_id=73d5f08b9d55fe48602906a89672c214] """
+        ... 9 more] [device_model=None] [android_version=None] [app_id=73d5f08b9d55fe48602906a89672c214] """
             "[user_id=37cc2dcdb1abf5c16bab0763f435e6b7] [session=readable_session] [device_model=Nexus 7]"
         ).format(domain=self.domain, received=self.received_on)
         self.assertEqual(expected_log, compiled_log)
