@@ -232,10 +232,6 @@
           "_panels.scss"
         ],
         [
-          "plan_notice.less",
-          "_plan_notice.scss"
-        ],
-        [
           "popovers.less",
           "_popover.scss"
         ],
