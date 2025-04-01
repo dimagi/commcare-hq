@@ -67,6 +67,7 @@ $(function () {
     $(widgetModalSelector).on('hidden.bs.modal', onHideWidgetModal);
     $(widgetModalSelector).on('show.bs.modal', onShowWidgetModal);
     $(widgetModalSelector).on('htmx:beforeSwap', htmxBeforeSwapWidgetForm);
+    $(widgetModalSelector).on('htmx:configRequest', widgetHtmxConfigRequestHandler);
 
     $('#delete-widget-confirmation-modal').on('htmx:afterRequest', afterDeleteWidgetRequest);
 });
@@ -249,6 +250,13 @@ var onShowWidgetModal = function (event) {
         $modalTitleElement.text(editWidgetText);
     } else {
         $modalTitleElement.text(addWidgetText);
+    }
+};
+
+var widgetHtmxConfigRequestHandler = function (event) {
+    const requestMethod = event.detail.verb;
+    if (requestMethod === 'post') {
+        event.detail.parameters['dashboard_tab'] = activeTab;
     }
 };
 
