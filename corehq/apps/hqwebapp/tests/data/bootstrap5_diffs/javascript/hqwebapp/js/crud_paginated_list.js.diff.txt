@@ -8,7 +8,7 @@
      "knockout",
      "underscore",
 -    "hqwebapp/js/bootstrap3/knockout_bindings.ko",  // fadeVisible
-+    "es6!hqwebapp/js/bootstrap5_loader",
++    "hqwebapp/js/bootstrap5_loader",
 +    'hqwebapp/js/bootstrap5/knockout_bindings.ko',  // fadeVisible
  ], function (
      $,
