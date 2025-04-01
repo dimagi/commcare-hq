@@ -13,14 +13,20 @@
   {% registerurl 'api_cases_with_gps' request.domain %}
   {% initial_page_data 'map_report_widgets' map_report_widgets %}
   {% initial_page_data 'gauge_widgets' gauge_widgets %}
-  {% include "campaign/partials/add_widget_button.html" %}
+
+  <div id="delete-widget-alert" class="alert alert-success d-none">
+    {% trans "Widget has been deleted successfully!" %}
+  </div>
 
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h1>{% trans "Campaign Dashboard" %}</h1>
-    <button id="print-to-pdf" class="btn btn-info">
-      <i class="fa fa-file-pdf me-1"></i>
-      {% trans "Export to PDF" %}
-    </button>
+    <div>
+      {% include "campaign/partials/add_widget_button.html" %}
+      <button id="print-to-pdf" class="btn btn-info">
+        <i class="fa fa-file-pdf me-1"></i>
+        {% trans "Export to PDF" %}
+      </button>
+    </div>
   </div>
   <div id="pdf-export-error" class="alert alert-danger d-none">
     {% blocktrans %}
@@ -105,6 +111,7 @@
   </div>
 
   {% include "campaign/partials/widget_modal.html" %}
+  {% include "campaign/partials/delete_widget_confirmation_modal.html" %}
 {% endblock page_content %}
 
 {% block modals %}

@@ -516,6 +516,70 @@ class TestEditWidget(TestDashboardWidgetView):
         assert response.status_code == 404
 
 
+class TestDeleteWidget(TestDashboardWidgetView):
+    HQ_ACTION_DELETE_WIDGET = 'delete_widget'
+
+    def _create_sample_map_widget(self):
+        return DashboardMap.objects.create(
+            dashboard=self.dashboard,
+            title='Cases Map',
+            case_type='foo',
+            geo_case_property='somewhere',
+            dashboard_tab=DashboardTab.CASES,
+        )
+
+    @flag_enabled('CAMPAIGN_DASHBOARD')
+    def test_delete_success(self, *args):
+        map_widget = self._create_sample_map_widget()
+        self.addCleanup(map_widget.delete)
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={
+                'widget_type': WidgetType.MAP,
+                'widget_id': map_widget.id,
+            },
+            headers={'hq-hx-action': self.HQ_ACTION_DELETE_WIDGET},
+        )
+
+        assert response.status_code == 200
+        assert DashboardMap.objects.filter(pk=map_widget.id).exists() is False
+
+    @flag_enabled('CAMPAIGN_DASHBOARD')
+    def test_delete_nonexistent_widget(self):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={
+                'widget_type': WidgetType.MAP,
+                'widget_id': 99999,
+            },
+            headers={'hq-hx-action': self.HQ_ACTION_DELETE_WIDGET},
+        )
+
+        assert response.status_code == 404
+
+    @flag_enabled('CAMPAIGN_DASHBOARD')
+    def test_invalid_widget_type(self, *args):
+        map_widget = self._create_sample_map_widget()
+        self.addCleanup(map_widget.delete)
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={
+                'widget_type': 'invalid',
+                'widget_id': map_widget.id,
+            },
+            headers={'hq-hx-action': self.HQ_ACTION_DELETE_WIDGET},
+        )
+
+        assert response.context['htmx_error'].status_code == 400
+        assert response.context['htmx_error'].message == "Requested widget type is not supported"
+        assert DashboardMap.objects.filter(pk=map_widget.id).exists() is True
+
+
 class TestGetGeoCaseProperties(BaseTestCampaignView):
     urlname = 'get_geo_case_properties'
 
