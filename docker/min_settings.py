@@ -70,6 +70,7 @@ S3_BLOB_DB_SETTINGS = {
     "config": {
         "connect_timeout": 3,
         "read_timeout": 5,
+        "signature_version": "s3"
     },
 }
 

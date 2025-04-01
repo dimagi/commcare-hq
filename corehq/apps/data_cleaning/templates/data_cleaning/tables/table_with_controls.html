@@ -2,6 +2,16 @@
 {% load i18n %}
 {% load django_tables2 %}
 
+{% block table-container-attrs %}
+  {{ block.super }}
+  x-data="{
+    numRecordsSelected: {{ table.num_selected_records }},
+    totalRecords: {{ table.page.paginator.count }},
+    pageTotalRecords: {{ table.paginated_rows|length }},
+    pageNumRecordsSelected: 0,
+  }"
+{% endblock %}
+
 {% block before_table %}
   <div class="d-flex align-items-center pb-2">
 
@@ -35,9 +45,12 @@
       <div class="input-group">
         <div class="input-group-text rounded-end"> {# todo: selection UI #}
           <i class="fa-solid fa-circle-check me-2"></i>
-          {# todo: selection number #}
+          <span
+            class="me-1"
+            x-text="numRecordsSelected"
+          ></span>
           {% blocktrans %}
-            0 Records Selected
+            Records Selected
           {% endblocktrans %}
         </div>
       </div>

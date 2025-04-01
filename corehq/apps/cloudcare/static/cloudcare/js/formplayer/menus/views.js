@@ -3,7 +3,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     'underscore',
     'backbone',
     'backbone.marionette',
-    'DOMPurify/dist/purify.min',
+    'DOMPurify',
     'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
