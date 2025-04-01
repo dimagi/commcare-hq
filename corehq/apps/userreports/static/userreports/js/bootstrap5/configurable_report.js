@@ -20,8 +20,10 @@ hqDefine("userreports/js/bootstrap5/configurable_report", [
     reportConfigModels,
     standardHQReportModule,
     analytics,
+    userreportsBase,
 ) {
     $(function () {
+        userreportsBase.main();
         standardHQReportModule.getStandardHQReport();
 
         // Set up analytics
