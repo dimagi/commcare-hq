@@ -8,13 +8,8 @@
         <a href="#tab-demo-{{ slug }}" role="tab" data-toggle="tab">Demo</a>
       </li>
       <li>
-        <a href="#tab-html-{{ slug }}" role="tab" data-toggle="tab">HTML</a>
+        <a href="#tab-code-{{ slug }}" role="tab" data-toggle="tab">Code</a>
       </li>
-      {% if has_javascript %}
-        <li>
-          <a href="#tab-js-{{ slug }}" role="tab" data-toggle="tab">JavaScript</a>
-        </li>
-      {% endif %}
     </ul>
 
     <div class="tab-content">
@@ -23,18 +18,11 @@
           {% block demo %}{% endblock %}
         </div>
       </div>
-      <div class="tab-pane fade" id="tab-html-{{ slug }}">
+      <div class="tab-pane fade" id="tab-code-{{ slug }}">
         <div class="panel-body">
-          {% block html %}{% endblock %}
+          {% block code %}{% endblock %}
         </div>
       </div>
-      {% if has_javascript %}
-        <div class="tab-pane fade" id="tab-js-{{ slug }}">
-          <div class="panel-body">
-            {% block js %}{% endblock %}
-          </div>
-        </div>
-      {% endif %}
     </div>
   </div>
 </div>
