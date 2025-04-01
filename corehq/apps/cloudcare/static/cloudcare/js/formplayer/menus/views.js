@@ -309,7 +309,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             self.smallScreenEnabled = cloudcareUtils.smallScreenIsEnabled();
             self.scrollContainer = $(constants.SCROLLABLE_CONTENT_CONTAINER);
             this.columnConfigModel = this.options.columnConfigModel;
-            this.listenTo(this.columnConfigModel, 'change:headerVisible', this.render);
         },
 
         className: "formplayer-request case-row",
