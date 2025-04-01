@@ -12,6 +12,7 @@ import {Tooltip} from 'bootstrap5';
 
 var HQReportDataTables = function (options) {
     var self = {};
+    // TODO: self.htmlIDSuffix = options.html_id_suffix;
     self.dataTableElem = options.dataTableElem || '.table-hq-report';
     self.forcePageSize = options.forcePageSize || false;
     self.defaultRows = options.defaultRows || 10;

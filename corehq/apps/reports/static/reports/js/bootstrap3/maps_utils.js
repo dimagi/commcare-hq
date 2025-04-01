@@ -251,6 +251,8 @@ hqDefine("reports/js/bootstrap3/maps_utils", [
 
 
     function load(context, iconPath) {
+        // TODO: Determine HTML ID suffix from context
+
         L.Icon.Default.imagePath = iconPath;
         var map = mapsInit(context);
 

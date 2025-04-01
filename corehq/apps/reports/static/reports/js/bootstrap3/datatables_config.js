@@ -13,6 +13,7 @@ hqDefine("reports/js/bootstrap3/datatables_config", [
 ) {
     var HQReportDataTables = function (options) {
         var self = {};
+        // TODO: self.htmlIDSuffix = options.html_id_suffix;
         self.dataTableElem = options.dataTableElem || '.datatable';
         self.paginationType = options.paginationType || 'bs_normal';
         self.forcePageSize = options.forcePageSize || false;

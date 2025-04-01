@@ -12,6 +12,9 @@ hqDefine("reports/js/bootstrap3/base", [
     reportConfigModels,
 ) {
     $(function () {
+        // TODO: Accept `options` param
+        // self.htmlIDSuffix = options.html_id_suffix;
+
         filtersMain.init();
 
         var defaultConfig = initialPageData.get('default_config') || {};

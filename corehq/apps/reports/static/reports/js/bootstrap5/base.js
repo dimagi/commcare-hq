@@ -11,6 +11,9 @@ import reportConfigModels from 'reports/js/bootstrap5/report_config_models';
 import 'reports/js/bootstrap5/tabular';
 
 $(function () {
+    // TODO: Accept `options` param
+    // self.htmlIDSuffix = options.html_id_suffix;
+
     filtersMain.init();
 
     var defaultConfig = initialPageData.get('default_config') || {};
