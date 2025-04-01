@@ -78,7 +78,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
                 'hqwebapp/js/lib/modernizr': 'Modernizr',
             };
             if (window.USE_BOOTSTRAP5) {
-                thirdPartyGlobals['hqwebapp/js/bootstrap5_loader'] = 'bootstrap';
+                thirdPartyGlobals['bootstrap5'] = 'bootstrap';
                 thirdPartyGlobals['tempusDominus'] = 'tempusDominus';
             }
             var args = [];

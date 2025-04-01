@@ -1,6 +1,6 @@
 hqDefine("hqwebapp/js/500",[
     'jquery',
-    'hqwebapp/js/bootstrap5_loader',
+    'bootstrap5',
     'commcarehq',
 ], function ($, bootstrap) {
     $(function () {

@@ -2,7 +2,7 @@ hqDefine('locations/js/location_tree', [
     'jquery',
     'knockout',
     'underscore',
-    'hqwebapp/js/bootstrap5_loader',
+    'bootstrap5',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/bootstrap5/alert_user',
     'analytix/js/google',
