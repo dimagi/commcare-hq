@@ -1,5 +1,6 @@
 import abc
 from django.conf import settings
+import requests
 from memoized import memoized
 
 
@@ -100,3 +101,71 @@ class TranslationFormat(abc.ABC):
     @abc.abstractmethod
     def format_output_description(self):
         pass
+
+
+class OpenaiTranslator(LLMTranslator):
+    @property
+    def supported_models(self):
+        return ["gpt-4o-mini", "gpt-4o", "gpt-4", "gpt-3.5-turbo"]
+
+    def __init__(self, api_key, model, lang, translation_format):
+        super().__init__(api_key, model, lang, translation_format)
+        try:
+            from openai import OpenAI
+            self.client = OpenAI(api_key=api_key)
+        except ImportError:
+            self.client = None
+            print("OpenAI Python package not found, will use HTTP requests instead.")
+
+        self.api_base = "https://api.openai.com/v1"
+
+    def _call_llm(self, system_prompt, user_message):
+        if self.client is None:
+            return self._call_llm_http(system_prompt, user_message)
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_message}
+                ],
+                temperature=0.2,
+                response_format={"type": "json_object"}
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            print(f"Error calling OpenAI API via client: {e}")
+            raise e
+
+    def _call_llm_http(self, system_prompt, user_message):
+        # We might not use this method at all, but it was useful in testing other LLM clients
+        # without installing their package, so I am keeping it here for now.
+        try:
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json"
+            }
+
+            payload = {
+                "model": self.model,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_message}
+                ],
+                "temperature": 0.2,
+                "response_format": {"type": "json_object"}
+            }
+
+            response = requests.post(
+                f"{self.api_base}/chat/completions",
+                headers=headers,
+                json=payload
+            )
+            response.raise_for_status()
+
+            result = response.json()
+            return result["choices"][0]["message"]["content"]
+        except Exception as e:
+            print(f"Error making HTTP request to OpenAI API: {e}")
+            raise e
+
