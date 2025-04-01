@@ -109,7 +109,13 @@ class ItemListsProvider(FixtureProvider):
         restore_user = restore_state.restore_user
         global_types = {}
         user_types = {}
-        for data_type in LookupTable.objects.by_domain(restore_user.domain):
+        should_full_sync = not restore_state.last_sync_log or not restore_state.last_sync_log.date
+        if should_full_sync:
+            data_types = LookupTable.objects.by_domain(restore_user.domain)
+        else:
+            data_types = LookupTable.objects.get_tables_modified_since(restore_user.domain,
+                                                                       restore_state.last_sync_log.date)
+        for data_type in data_types:
             if data_type.is_global:
                 global_types[data_type.id] = data_type
             else:
@@ -143,7 +149,7 @@ class ItemListsProvider(FixtureProvider):
                                            FIXTURE_BUCKET,
                                            '',
                                            data_fn,
-                                           restore_state.overwrite_cache)
+                                           True)
 
     def _get_global_items(self, global_types, domain):
         def get_items_by_type(data_type):
