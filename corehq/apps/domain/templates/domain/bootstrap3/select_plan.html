@@ -53,7 +53,9 @@
     >
       <i class="fa fa-check"></i>
       <a href="https://dimagi.com/terms/latest/tos/" class="check-icon blue">
-        {% trans '30 day refund policy' %}
+        {% blocktrans with days=30 %}
+          {{days}} day refund policy
+        {% endblocktrans %}
       </a>
     </p>
 

@@ -978,13 +978,14 @@ class PlanViewBase(DomainAccountingSettings):
                 "$300",
                 "$250",
                 _("Get started. Build secure apps for offline mobile data collection and case management. "
-                  "125 users included."),
+                  "{num_users} users included.").format(num_users=125),
             ),
             PlanOption(
                 SoftwarePlanEdition.PRO,
                 "$600",
                 "$500",
-                _("Beyond the basics. Unlock reporting, case sharing, and hands-on support. 250 users included."),
+                _("Beyond the basics. Unlock reporting, case sharing, and hands-on support. "
+                  "{num_users} users included.").format(num_users=250),
             ),
             PlanOption(
                 SoftwarePlanEdition.ADVANCED,
@@ -992,7 +993,7 @@ class PlanViewBase(DomainAccountingSettings):
                 "$1000",
                 _("Unlock everything. Our most secure plan, built for managing connected systems across "
                   "locations and user profiles, featuring web apps, advanced security, and robust admin and data "
-                  "management tools. 500 users included."),
+                  "management tools. {num_users} users included.").format(num_users=250),
             ),
         ]
         if (
@@ -1004,7 +1005,8 @@ class PlanViewBase(DomainAccountingSettings):
                     SoftwarePlanEdition.COMMUNITY,
                     "Free",
                     "Free",
-                    _("For practice purposes. Not intended for live projects. 5 users maximum."),
+                    _("For practice purposes. Not intended for live projects. "
+                      "{num_users} users maximum.").format(num_users=5),
                 )
             )
         return options
