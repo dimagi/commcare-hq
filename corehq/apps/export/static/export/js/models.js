@@ -8,7 +8,7 @@ hqDefine('export/js/models', [
     'jquery',
     'knockout',
     'underscore',
-    'es6!hqwebapp/js/bootstrap5_loader',
+    'hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
     'analytix/js/google',

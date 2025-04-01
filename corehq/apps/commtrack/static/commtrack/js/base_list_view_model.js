@@ -3,7 +3,7 @@ hqDefine("commtrack/js/base_list_view_model", [
     'jquery',
     'knockout',
     'underscore',
-    'es6!hqwebapp/js/bootstrap5_loader',
+    'hqwebapp/js/bootstrap5_loader',
 ], function (
     $,
     ko,

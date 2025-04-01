@@ -16,7 +16,7 @@ hqDefine("export/js/export_list", [
     'knockout',
     'underscore',
     'hqwebapp/js/assert_properties',
-    'es6!hqwebapp/js/bootstrap5_loader',
+    'hqwebapp/js/bootstrap5_loader',
     'clipboard/dist/clipboard',
     'analytix/js/google',
     'analytix/js/kissmetrix',
