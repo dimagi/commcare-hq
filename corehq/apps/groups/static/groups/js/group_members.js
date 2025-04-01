@@ -1,9 +1,8 @@
-
 hqDefine("groups/js/group_members", [
     "jquery",
     "underscore",
     "analytix/js/google",
-    "es6!hqwebapp/js/bootstrap5_loader",
+    "hqwebapp/js/bootstrap5_loader",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/bootstrap5/alert_user",
     "hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list",

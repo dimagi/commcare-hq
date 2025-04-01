@@ -4,7 +4,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
     'underscore',
     'DOMPurify',
     'hqwebapp/js/toggles',
-    'es6!hqwebapp/js/bootstrap5_loader',
+    'hqwebapp/js/bootstrap5_loader',
     'cloudcare/js/markdown',
     'cloudcare/js/utils',
     'cloudcare/js/form_entry/const',
