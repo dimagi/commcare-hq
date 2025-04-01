@@ -1265,6 +1265,10 @@ class RepeatRecord(models.Model):
         # incorrect status code interpretation resulting in Empty state.
         return self.state == State.Success or self.state == State.Empty
 
+    @property
+    def is_queued(self):
+        return self.state in RECORD_QUEUED_STATES
+
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Members below this line have been added to support the
     # Couch repeater processing logic.
