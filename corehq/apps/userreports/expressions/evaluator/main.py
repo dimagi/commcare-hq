@@ -6,6 +6,7 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from corehq.util import eval_lazy
+from corehq.util.decorators import ignore_warning
 from simpleeval import (
     DEFAULT_OPERATORS,
     FeatureNotAvailable,
@@ -13,6 +14,7 @@ from simpleeval import (
     DISALLOW_FUNCTIONS,
     FunctionNotDefined,
     EvalWithCompoundTypes,
+    MultipleExpressions,
 )
 
 from .functions import FUNCTIONS, CONTEXT_PARAM_NAME, NEEDS_CONTEXT_PARAM_NAME
@@ -79,7 +81,8 @@ def eval_statements(statement, variable_context, execution_context=None):
 
     evaluator = CommCareEval(operators=SAFE_OPERATORS, names=variable_context, functions=FUNCTIONS)
     evaluator.set_context(execution_context)
-    return evaluator.eval(statement)
+    with ignore_warning(MultipleExpressions):
+        return evaluator.eval(statement)
 
 
 @dataclasses.dataclass(frozen=True)
