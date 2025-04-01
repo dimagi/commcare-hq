@@ -34,7 +34,7 @@ class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataC
             self.table_class.get_select_column(
                 self.session,
                 self.request,
-                select_row_action="select_row",
+                select_record_action="select_record",
                 select_page_action="select_page",
             )
         )]
@@ -65,7 +65,7 @@ class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataC
         return response
 
     @hq_hx_action('post')
-    def select_row(self, request, *args, **kwargs):
+    def select_record(self, request, *args, **kwargs):
         """
         Selects a single record.
         """
