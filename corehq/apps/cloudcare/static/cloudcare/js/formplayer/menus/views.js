@@ -689,10 +689,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 this.configStorageId = attributes.configStorageId;
                 if (this.configStorageId && localStorage.getItem(this.configStorageId)) {
                     const savedModel = JSON.parse(localStorage.getItem(this.configStorageId));
-                    const columnNameMismatch = attributes.columnNames &&
+                    const columnCountMismatch = attributes.columnNames &&
                         (!savedModel.columnNames ||
                             savedModel.columnNames.length !== attributes.columnNames.length);
-                    if (columnNameMismatch) {
+                    if (columnCountMismatch) {
                         localStorage.removeItem(this.configStorageId);
                         setFromAttributes(attributes);
                     } else {
