@@ -11,6 +11,7 @@ from django.http import (
 )
 from django.http.response import HttpResponseServerError
 from django.shortcuts import redirect, render
+from django.template.loader import render_to_string
 from django.utils.html import escape
 from django.utils.safestring import SafeText
 from django.utils.translation import gettext as _
@@ -296,6 +297,8 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                 return self.excel_response
             elif request.GET.get('format', None) == "export":
                 return self.export_response
+            elif request.GET.get('format', None) == "async":
+                return JsonResponse(self._async_context())
             elif is_ajax(request) or request.GET.get('format', None) == 'json':
                 return self.get_ajax(self.request.GET)
             self.content_type = None
@@ -341,6 +344,79 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                 return HttpResponseBadRequest()
         else:
             raise Http403()
+
+    # @request_cache()  # TODO: Should we?
+    def _async_context(self):
+        context = {
+            'report': {'html_id_suffix': self.html_id_suffix},
+        }
+        self.update_template_context(context)
+        self.update_report_context(context)
+
+        rendered_filters = None
+        if bool(self.request.GET.get('hq_filters')):
+            self.update_filter_context(context)
+            rendered_filters = render_to_string(
+                'reports/async/bootstrap5/filters.html',
+                context,
+                self.request
+            )
+        rendered_report = render_to_string(
+            'reports/bootstrap5/tabular.html',
+            context,
+            self.request
+        )
+        return dict(
+            filters=rendered_filters,
+            report=rendered_report,
+            report_table_js_options={},
+            title=self.title,
+            slug=self.slug,
+            url_root=None,
+        )
+
+    def update_template_context(self, context):
+        context.update({
+            'report_filter_form_action_css_class': CSS_ACTION_CLASS,
+        })
+        context['report'].update(
+            show_filters=self.show_filters,
+            breadcrumbs=None,
+            default_url=self.url,
+            url=self.url,
+            title=self.title,
+        )
+
+    def update_report_context(self, context):
+        context.update(
+            report_partial=None,
+            report_base='reports/async/bootstrap5/default.html',
+        )
+        context['report'].update(
+            title=self.title,
+        )
+
+    def update_filter_context(self, context):
+        context['report_filters'] = []
+        for filter_ in self.filters:
+            context_ = {
+                'domain': self.domain,
+                'report': self,
+                'filter': filter_,
+                'context_': self.filter_context[filter_.css_id],
+            }
+            context['report_filters'].append({
+                'field': render_to_string(filter_.template, context_, self.request),
+                'slug': filter_.css_id,
+            })
+
+    def get_filter_context(self, view):
+        request_params = {}
+        request_user = view.request.couch_user
+        return {
+            f.css_id: f.context(request_params, request_user, view.lang)
+            for f in self.filters
+        }
 
     def has_permissions(self, domain, user):
         return _has_permission(domain, user, self.report_config_id)
