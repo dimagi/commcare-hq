@@ -6,7 +6,7 @@
      'jquery',
      'underscore',
      'knockout',
-+    "hqwebapp/js/bootstrap5_loader",
++    "bootstrap5",
      'jquery-ui/ui/widgets/sortable',
      'langcodes/js/langcodes',   // $.langcodes
  ], function (
