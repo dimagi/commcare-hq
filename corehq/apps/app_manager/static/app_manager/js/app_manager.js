@@ -174,8 +174,7 @@ hqDefine('app_manager/js/app_manager', [
             container: 'body',
             sanitize: false,
             content: function () {
-                var slug = $(this).data("slug"),
-                    template = $('.js-popover-template-add-item-content[data-slug="' + slug + '"]').text();
+                var template = $('.js-popover-template-add-item-content[data-slug="form"]').text();
                 return _.template(template)($(this).data());
             },
             html: true,
