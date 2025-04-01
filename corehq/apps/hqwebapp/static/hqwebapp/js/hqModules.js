@@ -58,8 +58,8 @@ function hqDefine(path, dependencies, moduleAccessor) {
 
     (function (factory) {
         if (typeof define === 'function' && define.amd && window.USE_WEBPACK) {
-            // HQ's requirejs build process (build_requirejs.py) replaces hqDefine calls with
-            // define calls, so it's important that this do nothing but pass through to require
+            // HQ's webpack config replaces hqDefine calls with define calls,
+            // so it's important that this do nothing but pass through to require
             define(path, dependencies, factory);
         } else {
             var thirdPartyGlobals = {
@@ -119,8 +119,8 @@ function hqImport(path) {
 // introduce a circular dependency.
 function hqRequire(paths, callback) {       // eslint-disable-line no-unused-vars
     if (typeof define === 'function' && define.amd && window.USE_WEBPACK) {
-        // HQ's requirejs build process (build_requirejs.py) replaces hqRequire calls with
-        // require calls, so it's important that this do nothing but pass through to require
+        // HQ's webpack config replaces hqDefine calls with define calls,
+        // so it's important that this do nothing but pass through to require
         require(paths, callback);   // eslint-disable-line no-undef
     } else {
         var args = [];
