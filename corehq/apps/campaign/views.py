@@ -1,4 +1,5 @@
 from functools import cached_property
+from itertools import chain
 
 from django.conf import settings
 from django.core.paginator import Paginator
@@ -14,9 +15,6 @@ from memoized import memoized
 from dimagi.utils.web import json_request
 
 from corehq import toggles
-from corehq.apps.campaign.const import GAUGE_METRICS
-from corehq.apps.campaign.models import Dashboard, WidgetType
-from corehq.apps.campaign.services import get_gauge_metric_value
 from corehq.apps.data_dictionary.util import get_gps_properties
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
@@ -28,6 +26,7 @@ from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.views import BaseProjectReportSectionView
+from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.userreports.util import default_language
 from corehq.form_processor.models import CommCareCase
 from corehq.util.htmx_action import (
@@ -36,6 +35,10 @@ from corehq.util.htmx_action import (
     hq_hx_action,
 )
 from corehq.util.timezones.utils import get_timezone
+
+from .const import GAUGE_METRICS
+from .models import Dashboard, DashboardReport, DashboardTab, WidgetType
+from .services import get_gauge_metric_value
 
 
 class DashboardMapFilterMixin(object):
@@ -72,19 +75,23 @@ class DashboardReportMixin:
         return self.request.couch_user.language or default_language()
 
     def dashboard_reports_context(self):
-        dashboard = Dashboard.objects.get(domain=self.domain)
-        context = {
-            'report_table': {'default_rows': 25},
-            'report_filter_form_action_css_class': CSS_ACTION_CLASS,
-            'reports_by_id': {},
-            'report_filters_by_id': {},
-            'filter_context_by_id': {},
+        per_report_context = {}
+        for report in self.dashboard.reports.all():
+            view = self._get_configurable_report_view(report)
+            per_report_context[report.id] = view.page_context
+        return {'context_by_id': per_report_context}
+
+    def _get_configurable_report_view(self, report):
+        view = ConfigurableReportView()
+        view.request = self.request
+        view._domain = self.domain
+        view.args = []
+        view.kwargs = {
+            'domain': self.domain,
+            'slug': report.slug,
+            'subreport_slug': report.report_configuration_id,
         }
-        for report in dashboard.reports.all():
-            context['reports_by_id'][report.id] = report
-            context['report_filters_by_id'][report.id] = report.filters
-            context['filter_context_by_id'][report.id] = report.get_filter_context(view=self)
-        return context
+        return view
 
 
 @method_decorator(login_and_domain_required, name='dispatch')
@@ -113,13 +120,26 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin, Dashb
         context = super().get_context_data(**kwargs)
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
-            'map_report_widgets': self.dashboard.get_map_report_widgets_by_tab(),
+            'map_report_widgets': self._get_map_report_widgets(),
             'gauge_widgets': self._dashboard_gauge_configs(),
             'widget_types': WidgetType.choices,
         })
         context.update(self.dashboard_map_case_filters_context())
         context.update(self.dashboard_reports_context())
         return context
+
+    def _get_map_report_widgets(self):
+        # map_reports = chain(self.dashboard.maps.all(), self.dashboard.reports.all())
+        widgets_by_tab = {tab: [] for tab in DashboardTab.values}
+        for instance in sorted(
+            chain(self.dashboard.maps.all(), self.dashboard.reports.all()),
+            key=lambda inst: inst.display_order
+        ):
+            widget = instance.to_widget()
+            if type(instance) is DashboardReport:
+                self._add_report_options(widget, instance)
+            widgets_by_tab[instance.dashboard_tab].append(widget)
+        return widgets_by_tab
 
     def _dashboard_gauge_configs(self):
         dashboard_gauge_configs = {
@@ -145,6 +165,50 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin, Dashb
                                      for i in range(0, number_of_ticks + 1)]
         config['metric_name'] = dict(GAUGE_METRICS).get(dashboard_gauge.metric, '')
         return config
+
+    def _add_report_options(self, widget, report):
+        """
+        Updates ``widget`` (by reference) with report options parameters
+        to pass to report viewmodels.
+        """
+        view = self._get_configurable_report_view(report)
+
+        if report.report_configuration.report_meta.builder_report_type == 'map':
+            default_rows = 25
+        else:
+            default_rows = 100
+        data_tables_headers = view.headers
+        # Used by userreports/js/bootstrap[3,5]/base.js
+        widget['userreport_options'] = {
+            'chartSpecs': report.report_configuration.charts,
+            'isReportBuilderReport': report.report_configuration.report_meta.created_by_builder,
+            'htmlIDSuffix': report.html_id_suffix,
+            'mapSpec': report.report_configuration.map_config,
+            'mapboxAccessToken': settings.MAPBOX_ACCESS_TOKEN,
+            'reportSlug': report.slug,
+            'tableDefaultRows': default_rows,
+            'tableStartAtRow': 0,
+            'renderAoColumns': data_tables_headers.render_aoColumns,
+            'headerAutoWidth': data_tables_headers.auto_width,
+            'customSort': data_tables_headers.custom_sort,
+            'url': report.url,
+            'ajaxMethod': 'POST',
+            # The following are not defined by ConfigurableReportView:
+            # 'tableShowAllRows': report_table.show_all_rows,
+            # 'leftColIsFixed': report_table.left_col.is_fixed,
+            # 'leftColFixedNum': report_table.left_col.fixed.num,
+            # 'leftColFixedWidth': report_table.left_col.fixed.width,
+        }
+
+        # Used by reports/js/bootstrap[3,5]/standard_hq_report.js
+        # and reports/js/bootstrap[3,5]/hq_report
+        widget['report_options'] = {
+            'url': report.url,
+            'domain': report.dashboard.domain,
+            'html_id_suffix': report.html_id_suffix,
+            'slug': report.slug,
+            'subReportSlug': report.report_configuration_id,
+        }
 
 
 @method_decorator([login_and_domain_required, require_GET], name='dispatch')

@@ -82,7 +82,9 @@
             {% if widget.widget_type == 'DashboardMap' %}
               {% include 'campaign/partials/dashboard_map.html' %}
             {% elif widget.widget_type == 'DashboardReport' %}
-              {% include 'campaign/partials/dashboard_report.html' with report=reports_by_id|dict_lookup:widget.id report_filters=report_filters_by_id|dict_lookup:widget.id filter_context=filter_context_by_id|dict_lookup:widget.id %}
+              {% with c=context_by_id|dict_lookup:widget.id  %}
+                {% include 'campaign/partials/dashboard_report.html' with report=c.report report_table=c.report_table js_options=c.js_options filter_context=c.filter_context url=c.url method=c.method headers=c.headers can_edit_report=c.can_edit_report can_delete_report=c.can_delete_report referring_apps=c.referring_apps has_report_builder_trial=c.has_report_builder_trial report_filter_form_action_css_class=c.report_filter_form_action_css_class %}
+              {% endwith %}
             {% endif %}
           {% endfor %}
         </div>
@@ -109,7 +111,9 @@
             {% if widget.widget_type == 'DashboardMap' %}
               {% include 'campaign/partials/dashboard_map.html' %}
             {% elif widget.widget_type == 'DashboardReport' %}
-              {% include 'campaign/partials/dashboard_report.html' with report=reports_by_id|dict_lookup:widget.id report_filters=report_filters_by_id|dict_lookup:widget.id filter_context=filter_context_by_id|dict_lookup:widget.id %}
+              {% with c=context_by_id|dict_lookup:widget.id  %}
+                {% include 'campaign/partials/dashboard_report.html' with report=c.report report_table=c.report_table js_options=c.js_options filter_context=c.filter_context url=c.url method=c.method headers=c.headers can_edit_report=c.can_edit_report can_delete_report=c.can_delete_report referring_apps=c.referring_apps has_report_builder_trial=c.has_report_builder_trial report_filter_form_action_css_class=c.report_filter_form_action_css_class %}
+              {% endwith %}
             {% endif %}
           {% endfor %}
         </div>

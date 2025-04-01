@@ -1,13 +1,16 @@
 import "commcarehq";
 import 'hqwebapp/js/htmx_base';
 import Alpine from 'alpinejs';
-import 'reports/js/bootstrap5/base';
+import 'reports/js/bootstrap5/base';  // TODO: Required?
 import $ from 'jquery';
 import { RadialGauge } from 'canvas-gauges';
 import initialPageData from "hqwebapp/js/initial_page_data";
 import { Map, MapItem } from "geospatial/js/bootstrap5/models";
+import userreportsBase from 'userreports/js/bootstrap5/base';
 import { getStandardHQReport } from 'reports/js/bootstrap5/standard_hq_report';
 import html2pdf from "html2pdf.js";
+import 'hqwebapp/js/bootstrap5/main';  // TODO: Required?
+import 'reports/js/bootstrap5/report_config_models';  // TODO: Required?
 
 Alpine.store('deleteWidgetModel', {
     id: null,
@@ -219,14 +222,8 @@ var ReportWidget = function (config) {
     let self = this;
 
     self.init = function () {
-        const reportOptions = {
-            'url': config.url,
-            'domain': config.dashboard.domain,
-            'html_id_suffix': config.html_id_suffix,
-            'slug': config.slug,
-            'subReportSlug': config.report_configuration_id,
-        };
-        getStandardHQReport(reportOptions);
+        userreportsBase.main(config.userreport_options);
+        getStandardHQReport(config.report_options);
     };
 }
 

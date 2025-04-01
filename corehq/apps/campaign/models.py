@@ -1,5 +1,3 @@
-from itertools import chain
-
 from django.db import models
 from django.forms import model_to_dict
 from django.utils.translation import gettext_lazy as _
@@ -20,18 +18,6 @@ class Dashboard(models.Model):
 
     class Meta:
         app_label = 'campaign'
-
-    def get_map_report_widgets_by_tab(self):
-        """
-        Returns a dictionary of map and report widgets by tab.
-        """
-        widgets_by_tab = {tab: [] for tab in DashboardTab.values}
-        for instance in sorted(
-            chain(self.maps.all(), self.reports.all()),
-            key=lambda inst: inst.display_order
-        ):
-            widgets_by_tab[instance.dashboard_tab].append(instance.to_widget())
-        return widgets_by_tab
 
 
 class DashboardTab(models.TextChoices):
@@ -93,6 +79,20 @@ class DashboardReport(DashboardWidgetBase):
     )
     report_configuration_id = models.CharField(max_length=36)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # `userreport_options` is populated by
+        # `views.DashboardView._add_report_options()` and used in
+        # `userreports/js/bootstrap[3,5]/base.js`
+        self.userreport_options = {}
+
+        # `report_options` is populated by
+        # `views.DashboardView._add_report_options()` and used in
+        # `reports/js/bootstrap[3,5]/standard_hq_report.js` and
+        # `reports/js/bootstrap[3,5]/hq_report`
+        self.report_options = {}
+
     class Meta(DashboardWidgetBase.Meta):
         app_label = 'campaign'
 
@@ -152,7 +152,13 @@ class DashboardReport(DashboardWidgetBase):
         return model_to_widget(
             self,
             exclude=['dashboard_tab', 'display_order'],
-            properties=['slug', 'url', 'html_id_suffix'],
+            properties=[
+                'slug',
+                'url',
+                'html_id_suffix',
+                'userreport_options',
+                'report_options',
+            ],
         )
 
 
