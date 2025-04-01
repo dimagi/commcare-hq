@@ -1,7 +1,7 @@
 hqDefine("groups/js/all_groups", [
     'jquery',
     'analytix/js/google',
-    'hqwebapp/js/bootstrap5_loader',
+    'bootstrap5',
     // Just importing main.py so the post-link function is accessible, function parameter not needed
     'hqwebapp/js/bootstrap5/main',
     'commcarehq',

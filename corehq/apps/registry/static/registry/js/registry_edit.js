@@ -6,7 +6,7 @@ hqDefine("registry/js/registry_edit", [
     'registry/js/registry_text',
     'registry/js/registry_actions',
     'registry/js/registry_logs',
-    'hqwebapp/js/bootstrap5_loader',
+    'bootstrap5',
     'hqwebapp/js/select2_knockout_bindings.ko',
     'hqwebapp/js/bootstrap5/knockout_bindings.ko', // openModal
     'hqwebapp/js/bootstrap5/main', // makeHqHelp
