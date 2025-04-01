@@ -27,6 +27,29 @@ class LookupTableManager(models.Manager):
     def domain_tag_exists(self, domain_name, tag):
         return self.filter(domain=domain_name, tag=tag).exists()
 
+    def get_tables_modified_since(self, domain, since_datetime):
+        tables_with_modified_rows = models.Subquery(
+            LookupTableRow.objects.filter(
+                domain=domain,
+                last_modified__gt=since_datetime
+            ).values('table_id').distinct()
+        )
+
+        tables_with_modified_ownership = models.Subquery(
+            LookupTableRowOwner.objects.filter(
+                domain=domain,
+                last_modified__gt=since_datetime
+            ).values('row__table_id').distinct()
+        )
+
+        return self.filter(
+            domain=domain,
+        ).filter(
+            models.Q(last_modified__gt=since_datetime)
+            | models.Q(id__in=tables_with_modified_rows)
+            | models.Q(id__in=tables_with_modified_ownership)
+        )
+
 
 @define
 class Alias:
@@ -83,6 +106,8 @@ class LookupTable(models.Model):
     item_attributes = models.JSONField(default=list)
     description = models.CharField(max_length=255, default="")
     is_synced = models.BooleanField(default=False)
+    # last_modified is also updated when a related LookupTableRow or LookupTableRowOwner is deleted
+    last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
         app_label = 'fixtures'
@@ -237,6 +262,7 @@ class LookupTableRow(models.Model):
     fields = AttrsDict(list_of(Field), default=dict)
     item_attributes = models.JSONField(default=dict)
     sort_key = models.IntegerField()
+    last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
         app_label = 'fixtures'
@@ -261,6 +287,14 @@ class LookupTableRow(models.Model):
             fields[name] = values[0].value
         return fields
 
+    def delete(self, *args, **kwargs):
+        try:
+            self.table.last_modified = datetime.utcnow()
+            self.table.save()
+        except (AttributeError, LookupTable.DoesNotExist):
+            pass
+        return super().delete(*args, **kwargs)
+
 
 class OwnerType(models.IntegerChoices):
     User = 0
@@ -277,12 +311,21 @@ class LookupTableRowOwner(models.Model):
     owner_type = models.PositiveSmallIntegerField(choices=OwnerType.choices)
     owner_id = CharIdField(max_length=126, default=None)
     row = models.ForeignKey(LookupTableRow, on_delete=DB_CASCADE, db_constraint=False)
+    last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
         app_label = 'fixtures'
         indexes = [
             models.Index(fields=["domain", "owner_type", "owner_id"])
         ]
+
+    def delete(self, *args, **kwargs):
+        try:
+            self.row.table.last_modified = datetime.utcnow()
+            self.row.table.save()
+        except (AttributeError, LookupTable.DoesNotExist, LookupTableRow.DoesNotExist):
+            pass
+        return super().delete(*args, **kwargs)
 
 
 class UserLookupTableType:
