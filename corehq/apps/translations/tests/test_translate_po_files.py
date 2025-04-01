@@ -1,8 +1,9 @@
 import json
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from corehq.apps.translations.management.commands.translate_po_files import (
     LLMTranslator,
+    OpenaiTranslator,
     TranslationFormat,
 )
 from corehq.tests.tools import nottest
@@ -76,4 +77,95 @@ def test_llm_translator_base_prompt_with_unsupported_lang():
         prompt = translator.base_prompt()
         assert "professional translator" in prompt
         assert "some_lang_code" in prompt
+
+
+def test_openai_translator_supported_models():
+    mock_client = MagicMock()
+
+    translation_format = MockTranslationFormat()
+    translator = OpenaiTranslator(
+        api_key="test-api-key",
+        model="gpt-4",
+        lang="es",
+        translation_format=translation_format
+    )
+
+    with patch.object(translator, 'client') as mock_client:
+        mock_client.return_value = mock_client
+        models = translator.supported_models
+        assert "gpt-4" in models
+        assert "gpt-4o" in models
+        assert "gpt-4o-mini" in models
+        assert "gpt-3.5-turbo" in models
+
+
+def test_openai_translator_call_llm():
+    mock_client = MagicMock()
+
+    translation_format = MockTranslationFormat()
+    translator = OpenaiTranslator(
+        api_key="test-api-key",
+        model="gpt-4",
+        lang="es",
+        translation_format=translation_format
+    )
+    translator.client = mock_client
+
+    with patch.object(translator, 'client') as mock_client:
+        mock_client.return_value = mock_client
+        mock_response = MagicMock()
+        mock_response.choices[0].message.content = json.dumps(["Message numero 1", "Message numero 2"])
+        mock_client.chat.completions.create.return_value = mock_response
+
+        result = translator._call_llm("Test prompt", "Test user message")
+
+        assert result == json.dumps(["Message numero 1", "Message numero 2"])
+        translator.client.chat.completions.create.assert_called_once()
+
+
+@patch('corehq.apps.translations.management.commands.translate_po_files.requests.post')
+def test_openai_translator_call_llm_http(mock_post):
+    translation_format = MockTranslationFormat()
+    translator = OpenaiTranslator(
+        api_key="test-api-key",
+        model="gpt-4",
+        lang="es",
+        translation_format=translation_format
+    )
+
+    mock_response = MagicMock()
+    mock_response.json.return_value = {
+        "choices": [{"message": {"content": json.dumps(["Message numero 1 http", "Message numero 2 http"])}}]
+    }
+    mock_post.return_value = mock_response
+
+    result = translator._call_llm_http("Test prompt", "Test user message")
+
+    assert result == json.dumps(["Message numero 1 http", "Message numero 2 http"])
+    mock_post.assert_called_once()
+
+
+@patch('corehq.apps.translations.management.commands.translate_po_files.requests.post')
+def test_openai_translator_client_fallback_to_http(mock_post):
+    translation_format = MockTranslationFormat()
+    translator = OpenaiTranslator(
+        api_key="test-api-key",
+        model="gpt-4",
+        lang="es",
+        translation_format=translation_format
+    )
+
+    translator.client = None
+
+    mock_response = MagicMock()
+    mock_response.json.return_value = {
+        "choices": [{"message": {"content": json.dumps(["Message numero 1", "Message numero 2"])}}]
+    }
+    mock_post.return_value = mock_response
+
+    result = translator._call_llm("Test system prompt", "Test user message")
+
+    assert json.loads(result)[0] == "Message numero 1"
+    assert json.loads(result)[1] == "Message numero 2"
+    mock_post.assert_called_once()
 
