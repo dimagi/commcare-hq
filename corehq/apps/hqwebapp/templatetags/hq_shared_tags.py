@@ -805,6 +805,20 @@ def bootstrap_form_errors(form):
     return {'form': form}
 
 
+@register.inclusion_tag('hqwebapp/includes/core_libraries.html', takes_context=True)
+def javascript_libraries(context, **kwargs):
+    return {
+        'request': getattr(context, 'request', None),
+        'underscore': kwargs.pop('underscore', False),
+        'jquery_ui': kwargs.pop('jquery_ui', False),
+        'ko': kwargs.pop('ko', False),
+        'analytics': kwargs.pop('analytics', False),
+        'hq': kwargs.pop('hq', False),
+        'helpers': kwargs.pop('helpers', False),
+        'use_bootstrap5': kwargs.pop('use_bootstrap5', False),
+    }
+
+
 @register.simple_tag
 def breadcrumbs(page, section, parents=None):
     """

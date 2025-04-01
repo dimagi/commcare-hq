@@ -77,6 +77,24 @@ class TagTest(SimpleTestCase):
             'domain': 'hqsharedtags'
         })
 
+    def test_javascript_libraries_jquery_only(self):
+        self._test('javascript_libraries_jquery_only', {})
+
+    def test_javascript_libraries_hq(self):
+        self._test('javascript_libraries_hq', {
+            'hq': True,
+        })
+
+    def test_javascript_libraries_hq_bootstrap5(self):
+        self._test(
+            'javascript_libraries_hq',
+            {
+                'hq': True,
+                'use_bootstrap5': True,
+            },
+            rendered_filename='javascript_libraries_hq_bootstrap5'
+        )
+
     def test_requirejs_main(self):
         self.assertEqual(
             self.render("""
