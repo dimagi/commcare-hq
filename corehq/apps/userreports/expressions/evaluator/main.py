@@ -37,6 +37,10 @@ class CommCareEval(EvalWithCompoundTypes):
     users less options to do crazy things that might get them / us into
     hard to back out of situations."""
 
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.nodes.pop(ast.DictComp)  # disallow dict comprehensions
+
     def set_context(self, context):
         self._context = context.scope(self)
 
