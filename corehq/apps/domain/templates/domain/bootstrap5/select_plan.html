@@ -38,13 +38,19 @@
       {% trans "Pay Annually" %}
     </p>
 
-    <p class="text-center" data-bind="visible: !oShowAnnualPricing()">
+    <p
+      class="text-center"
+      data-bind="visible: !oShowAnnualPricing()"
+    >
       {% blocktrans %}
         Save close to 20% when you pay annually.  {# todo B5: css-close #}
       {% endblocktrans %}
     </p>
 
-    <p class="refund-text text-center" data-bind="visible: oShowAnnualPricing">
+    <p
+      class="refund-text text-center"
+      data-bind="visible: oShowAnnualPricing"
+    >
       <i class="fa fa-check"></i>
       <a href="https://dimagi.com/terms/latest/tos/" class="check-icon blue">
         {% trans '30 day refund policy' %}
@@ -54,7 +60,11 @@
     <div class="select-plan-row">
       <!-- ko foreach: oPlanOptions -->
       <div class="select-plan-col">
-        <a href="#" class="tile" data-bind="css: oCssClass, click: selectPlan">
+        <a
+          href="#"
+          class="tile"
+          data-bind="css: oCssClass, click: selectPlan"
+        >
           <h3 data-bind="text: oName"></h3>
           <p
             class="pricing-type"
@@ -65,7 +75,10 @@
             "
           ></p>
 
-          <p class="plan-price" data-bind="text: oDisplayPrice"></p>
+          <p
+            class="plan-price"
+            data-bind="text: oDisplayPrice"
+          ></p>
           <p
             class="plan-monthly-label"
             data-bind="attr: { 'aria-hidden': oIsCommunityPlan() }"
@@ -75,7 +88,10 @@
               >({% trans 'discounted' %})</span
             >
           </p>
-          <p class="plan-desc" data-bind="text: oDescription"></p>
+          <p
+            class="plan-desc"
+            data-bind="text: oDescription"
+          ></p>
 
           <p
             class="plan-downgrade-notice text-warning"
@@ -100,11 +116,17 @@
             {% endblocktrans %}
           </p>
 
-          <div class="btn btn-current" data-bind="visible: oIsCurrentPlan">
+          <div
+            class="btn btn-current"
+            data-bind="visible: oIsCurrentPlan"
+          >
             {% trans "Current Plan" %}
           </div>
 
-          <div class="btn btn-select" data-bind="visible: !oIsCurrentPlan()">
+          <div
+            class="btn btn-select"
+            data-bind="visible: !oIsCurrentPlan()"
+          >
             {% trans "Select Plan" %}
           </div>
         </a>
@@ -255,7 +277,10 @@
         data-bind="value: oSelectedPlan"
       />
       <div class="text-center plan-next">
-        <button class="btn btn-primary btn-lg" data-bind="click: contactSales">
+        <button
+          class="btn btn-primary btn-lg"
+          data-bind="click: contactSales"
+        >
           {% trans 'Talk to Sales' %}
         </button>
       </div>
@@ -269,7 +294,11 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="btn-close" data-bs-dismiss="modal">  {# todo B5: css-close #}
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+          >  {# todo B5: css-close #}
             <span aria-hidden="true">&times;</span>
             <span class="sr-only">{% trans "Close" %}</span>
           </button>
@@ -277,7 +306,11 @@
         </div>
         <div class="modal-body"><br /><br /></div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+          <button
+            type="button"
+            class="btn btn-primary"
+            data-bs-dismiss="modal"
+          >
             {% trans "Dismiss" %}
           </button>
           <button
