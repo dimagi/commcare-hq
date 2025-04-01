@@ -196,6 +196,7 @@ def enable_all_experiments():
     with (
         patch("corehq.apps.experiments.models.is_enabled", return_value=True),
         patch("corehq.apps.experiments.models.should_record_metrics", return_value=True),
+        patch("corehq.apps.experiments.models.get_error_on", return_value="none"),
     ):
         yield
 
