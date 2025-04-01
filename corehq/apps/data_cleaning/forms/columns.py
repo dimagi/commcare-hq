@@ -9,8 +9,12 @@ from crispy_forms.helper import FormHelper
 
 from corehq.apps.data_cleaning.models import (
     DataType,
+    BulkEditColumn,
 )
-from corehq.apps.data_cleaning.utils.cases import get_case_property_details
+from corehq.apps.data_cleaning.utils.cases import (
+    get_case_property_details,
+    get_system_property_data_type,
+)
 from corehq.apps.hqwebapp.widgets import AlpineSelect
 
 
@@ -42,8 +46,9 @@ class AddColumnForm(forms.Form):
         self.session = session
 
         property_details = get_case_property_details(self.session.domain, self.session.identifier)
+        self.existing_columns = self.session.columns.values_list('prop_id', flat=True)
         self.fields['column_prop_id'].choices = [(None, None)] + [
-            (p, p) for p in sorted(property_details.keys())
+            (p, p) for p in sorted(property_details.keys()) if p not in self.existing_columns
         ]
 
         initial_prop_id = self.data.get('column_prop_id')
@@ -105,4 +110,48 @@ class AddColumnForm(forms.Form):
                 ),
                 x_data=json.dumps(alpine_data_model),
             )
+        )
+
+    def clean_column_label(self):
+        column_label = self.cleaned_data.get('column_label')
+        if not column_label:
+            raise forms.ValidationError(_("Please specify a label for the column."))
+        return column_label
+
+    def clean_column_data_type(self):
+        data_type = self.cleaned_data.get('column_data_type')
+        if not data_type:
+            raise forms.ValidationError(_("Please specify a data type."))
+        return data_type
+
+    def clean_column_prop_id(self):
+        prop_id = self.cleaned_data.get('column_prop_id')
+        if not prop_id:
+            raise forms.ValidationError(_("Please specify a case property."))
+        if prop_id in self.existing_columns:
+            raise forms.ValidationError(_("This case property is already a column."))
+        return prop_id
+
+    def clean(self):
+        cleaned_data = super().clean()
+        data_type = cleaned_data.get('column_data_type')
+        prop_id = cleaned_data.get('column_prop_id')
+        is_system_property = BulkEditColumn.is_system_property(prop_id)
+        if is_system_property:
+            expected_data_type = get_system_property_data_type(prop_id)
+            if expected_data_type != data_type:
+                self.add_error(
+                    'column_data_type',
+                    _("Incorrect data type for '{prop_id}', should be '{expected_data_type}'").format(
+                        prop_id=prop_id,
+                        expected_data_type=expected_data_type
+                    )
+                )
+        return cleaned_data
+
+    def add_column(self):
+        self.session.add_column(
+            self.cleaned_data['column_prop_id'],
+            self.cleaned_data['column_label'],
+            self.cleaned_data['column_data_type']
         )

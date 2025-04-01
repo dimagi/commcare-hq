@@ -123,10 +123,19 @@ class InvoiceReminder(UnpaidInvoiceAction):
 
     @staticmethod
     def _should_send_invoice_reminder(communication_model, invoice):
-        return not communication_model.objects.filter(
-            invoice=invoice,
-            communication_type=CommunicationType.INVOICE_REMINDER,
-        ).exists()
+        if invoice.is_customer_invoice:
+            billing_record = invoice.customerbillingrecord_set.first()
+        else:
+            billing_record = invoice.billingrecord_set.first()
+
+        return (
+            billing_record.should_send_email
+            and not billing_record.skipped_email
+            and not communication_model.objects.filter(
+                invoice=invoice,
+                communication_type=CommunicationType.INVOICE_REMINDER,
+            ).exists()
+        )
 
     @staticmethod
     def _send_reminder_email(invoice, communication_model, context):

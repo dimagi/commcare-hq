@@ -1,5 +1,5 @@
 {% load i18n %}
 
-{% blocktrans %}
-  Encountered error "{{ htmx_error }}" while performing action {{ action }}.
+{% blocktrans with htmx_error.message as error_message %}
+  Encountered error "{{ error_message }}" while performing action {{ action }}.
 {% endblocktrans %}

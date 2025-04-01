@@ -1,0 +1,33 @@
+{% load i18n %}
+
+<div class="btn-group d-flex flex-row-reverse">
+  <div>
+    <button
+      type="button"
+      class="btn btn-primary dropdown-toggle"
+      data-bs-toggle="dropdown"
+      aria-expanded="false"
+    >
+      {% trans "Add Widget" %}
+    </button>
+
+    <ul class="dropdown-menu">
+      {% for value, label in widget_types %}
+        <li>
+          <a
+            class="dropdown-item"
+            href="#"
+            hx-get="{% url 'dashboard_widget' domain %}?widget_type={{ value }}"
+            hq-hx-action="new_widget"
+            hx-target="#widget-form"
+            hx-swap="innerHTML"
+            data-bs-toggle="modal"
+            data-bs-target="#widget-modal"
+          >
+            {{ label }}
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>

@@ -6,7 +6,7 @@
   {% crispy checkboxes_form %}
 {% endblock demo %}
 
-{% block code %}
+{% block html %}
   <p>Located in <code>corehq.apps.styleguide.example_forms</code></p>
 
   <pre>from django import forms
@@ -60,4 +60,4 @@ class CheckboxesForm(forms.Form):
             ),
         )
     </pre>
-{% endblock code %}
+{% endblock html %}

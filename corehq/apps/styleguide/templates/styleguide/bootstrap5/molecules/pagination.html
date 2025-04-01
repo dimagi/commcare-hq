@@ -1,4 +1,7 @@
 {% extends 'styleguide/bootstrap5/base.html' %}
+{% load hq_shared_tags %}
+
+{% js_entry 'styleguide/js/pagination' %}
 
 {% block intro %}
   <h1 class="sg-title mb-0" id="content">Pagination</h1>
@@ -172,5 +175,5 @@
     <code>inlinePageListOnly: true</code> to the pagination element's params. You can see an example of this on the
     HQ Dashboard page.
   </div>
-  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.pagination %}
+  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.pagination %}
 {% endblock content %}

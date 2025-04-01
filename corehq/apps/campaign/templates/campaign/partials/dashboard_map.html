@@ -5,6 +5,7 @@
   <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
       <h5 class="mb-0">{{ widget.title }}</h5>
+      {% include "campaign/partials/edit_widget_button.html" with widget_type='map' %}
     </div>
 
     <!-- TODO: This needs pagination support -->

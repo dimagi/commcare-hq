@@ -693,9 +693,39 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
         return super(CreditsWireInvoiceView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        emails = request.POST.get('emails', []).split()
+        try:
+            contact_email, cc_emails = self.validate_emails(request)
+            amount = self.validate_amount(request)
+            date_start, date_end = self.validate_daterange(request)
+            unit_cost = self.validate_unit_cost(request)
+            quantity = self.validate_quantity(request)
+        except ValidationError as e:
+            return json_response({'error': {'message': e.message}})
+
+        credit_label = request.POST.get('credit_label', 'General Credits')
+
+        wire_invoice_factory = DomainWireInvoiceFactory(
+            request.domain, contact_emails=[contact_email], cc_emails=cc_emails)
+        try:
+            wire_invoice_factory.create_wire_credits_invoice(
+                amount, credit_label, unit_cost, quantity, date_start, date_end
+            )
+        except Exception as e:
+            return json_response({'error': {'message': str(e)}})
+
+        return json_response({'success': True})
+
+    @staticmethod
+    def validate_emails(request):
+        contact_email = request.POST.get('email_to', '').strip()
+        cc_emails = [email.strip() for email in request.POST.get('email_cc', '').split(',')]
+
+        all_emails = [email for email in cc_emails if email]
+        if contact_email:
+            all_emails.append(contact_email)
+
         invalid_emails = []
-        for email in emails:
+        for email in all_emails:
             try:
                 validate_email(email)
             except ValidationError:
@@ -703,19 +733,54 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
         if invalid_emails:
             message = _('The following e-mail addresses contain invalid characters, or are missing required '
                         'characters: ') + ', '.join(['"{}"'.format(email) for email in invalid_emails])
-            return json_response({'error': {'message': message}})
-        amount = Decimal(request.POST.get('amount', 0))
+            raise ValidationError(message=message)
+        return contact_email, cc_emails
+
+    @staticmethod
+    def validate_amount(request):
+        amount = Decimal(request.POST.get('invoice_amount', 0))
         if amount < 0:
             message = _('There was an error processing your request. Please try again.')
-            return json_response({'error': {'message': message}})
-        general_credit = Decimal(request.POST.get('general_credit', 0))
-        wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
-        try:
-            wire_invoice_factory.create_wire_credits_invoice(amount, general_credit)
-        except Exception as e:
-            return json_response({'error': {'message': str(e)}})
+            raise ValidationError(message=message)
+        return amount
 
-        return json_response({'success': True})
+    def validate_daterange(self, request):
+        date_start = self._get_date_or_today(request.POST.get('prepay_date_start'))
+        date_end = self._get_date_or_today(request.POST.get('prepay_date_end'))
+        if date_end < date_start:
+            message = _('Prepayment end date must be after start date.')
+            raise ValidationError(message=message)
+        return date_start.isoformat(), date_end.isoformat()
+
+    @staticmethod
+    def _get_date_or_today(date_string):
+        try:
+            date = datetime.date.fromisoformat(date_string)
+        except (TypeError, ValueError):
+            date = datetime.date.today()
+        return date
+
+    @staticmethod
+    def validate_unit_cost(request):
+        try:
+            unit_cost = Decimal(request.POST.get('unit_cost', 0))
+            if abs(unit_cost) != unit_cost:
+                raise ValueError
+        except ValueError:
+            message = _('Unit cost must be a decimal number greater than 0.')
+            raise ValidationError(message=message)
+        return unit_cost
+
+    @staticmethod
+    def validate_quantity(request):
+        try:
+            quantity = int(request.POST.get('quantity', 0))
+            if abs(quantity) != quantity:
+                raise ValueError
+        except ValueError:
+            message = _('Quantity must be a whole number greater than 0.')
+            raise ValidationError(message=message)
+        return quantity
 
 
 class InvoiceStripePaymentView(BaseStripePaymentView):
@@ -772,7 +837,7 @@ class WireInvoiceView(View):
         return super(WireInvoiceView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        emails = request.POST.get('emails', []).split()
+        emails = self.validate_emails(request)
         balance = Decimal(request.POST.get('customPaymentAmount', 0))
 
         from corehq.apps.accounting.utils.account import (
@@ -791,6 +856,27 @@ class WireInvoiceView(View):
             return json_response({'error': {'message', e}})
 
         return json_response({'success': True})
+
+    @staticmethod
+    def validate_emails(request):
+        contact_email = request.POST.get('email_to', '').strip()
+        cc_emails = [email.strip() for email in request.POST.get('email_cc', '').split(',')]
+
+        all_emails = [email for email in cc_emails if email]
+        if contact_email:
+            all_emails.append(contact_email)
+
+        invalid_emails = []
+        for email in all_emails:
+            try:
+                validate_email(email)
+            except ValidationError:
+                invalid_emails.append(email)
+        if invalid_emails:
+            message = _('The following e-mail addresses contain invalid characters, or are missing required '
+                        'characters: ') + ', '.join(['"{}"'.format(email) for email in invalid_emails])
+            raise ValidationError(message=message)
+        return all_emails
 
 
 class BillingStatementPdfView(View):
