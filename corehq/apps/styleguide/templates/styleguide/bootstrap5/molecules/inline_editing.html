@@ -1,6 +1,8 @@
 {% extends 'styleguide/bootstrap5/base.html' %}
 {% load hq_shared_tags %}
 
+{% js_entry "styleguide/js/inline_edit" %}
+
 {% block intro %}
   <h1 class="sg-title mb-0" id="content">Inline Editing</h1>
   <p class="sg-lead">
@@ -92,7 +94,7 @@
     expects to find an server-generated error message in.
   </div>
   {% registerurl "styleguide_inline_edit_demo" %}
-  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.inline_edit %}
+  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.inline_edit %}
 
   <h3 id="langcode" class="pt-3">
     Using Language Tags
@@ -106,5 +108,5 @@
     As with the example above, this component posts to a view that randomly throws an error so that
     the error message functionality can be observed and tested here.
   </p>
-  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.inline_edit_lang %}
+  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.inline_edit_lang %}
 {% endblock content %}

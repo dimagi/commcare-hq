@@ -41,19 +41,19 @@ babel==2.9.1
     # via sphinx
 beautifulsoup4==4.12.2
     # via -r base-requirements.in
-billiard==3.6.4.0
+billiard==4.2.1
     # via celery
 bleach==6.1.0
     # via -r base-requirements.in
-boto3==1.24.96
+boto3==1.37.15
     # via -r base-requirements.in
-botocore==1.27.96
+botocore==1.37.15
     # via
     #   boto3
     #   s3transfer
 bytecode==0.14.2
     # via ddtrace
-celery==5.2.7
+celery==5.4.0
     # via
     #   -r base-requirements.in
     #   django-celery-results
@@ -120,7 +120,7 @@ diff-match-patch==20241021
     # via -r base-requirements.in
 dimagi-memoized==1.1.3
     # via -r base-requirements.in
-django==4.2.18
+django==4.2.20
     # via
     #   -r base-requirements.in
     #   crispy-bootstrap3to5
@@ -243,7 +243,7 @@ greenlet==3.1.1
     #   -r base-requirements.in
     #   django-websocket-redis
     #   gevent
-gunicorn==22.0.0
+gunicorn==23.0.0
     # via -r base-requirements.in
 haversine==2.8.0
     # via -r base-requirements.in
@@ -266,7 +266,7 @@ importlib-metadata==8.5.0
     #   sphinx
 iso8601==2.0.0
     # via -r base-requirements.in
-jinja2==3.1.5
+jinja2==3.1.6
     # via
     #   -r base-requirements.in
     #   myst-parser
@@ -293,7 +293,7 @@ jwcrypto==1.5.6
     # via django-oauth-toolkit
 kafka-python==2.1.4
     # via -r base-requirements.in
-kombu==5.2.4
+kombu==5.4.2
     # via celery
 looseversion==1.0.3
     # via -r base-requirements.in
@@ -417,6 +417,7 @@ python-dateutil==2.8.2
     # via
     #   -r base-requirements.in
     #   botocore
+    #   celery
     #   django-tastypie
 python-dotenv==1.0.1
     # via pydantic-settings
@@ -430,7 +431,6 @@ pytz==2024.1
     # via
     #   -r base-requirements.in
     #   babel
-    #   celery
 pyyaml==6.0.2
     # via
     #   -r base-requirements.in
@@ -477,7 +477,7 @@ requests-toolbelt==1.0.0
     # via -r base-requirements.in
 rjsmin==1.2.1
     # via django-compressor
-s3transfer==0.6.0
+s3transfer==0.11.4
     # via boto3
 schema==0.7.5
     # via -r base-requirements.in
@@ -485,7 +485,7 @@ sentry-sdk==2.8.0
     # via -r base-requirements.in
 sh==2.0.3
     # via -r base-requirements.in
-simpleeval @ git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
+simpleeval==1.0.3
     # via -r base-requirements.in
 simplejson==3.17.6
     # via
@@ -572,17 +572,22 @@ turn-python==0.0.1
     # via -r base-requirements.in
 twilio==9.2.3
     # via -r base-requirements.in
-typing-extensions==4.8.0
+typing-extensions==4.12.2
     # via
     #   asgiref
     #   bytecode
     #   ddtrace
     #   django-countries
     #   jwcrypto
+    #   kombu
     #   pydantic
     #   pydantic-core
     #   qrcode
     #   stripe
+tzdata==2025.1
+    # via
+    #   celery
+    #   kombu
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
@@ -598,7 +603,7 @@ urllib3==1.26.19
     #   sentry-sdk
 user-agents==2.2.0
     # via django-user-agents
-vine==5.0.0
+vine==5.1.0
     # via
     #   amqp
     #   celery

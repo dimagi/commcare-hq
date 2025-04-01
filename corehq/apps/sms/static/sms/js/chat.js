@@ -1,6 +1,16 @@
-hqDefine("sms/js/chat", function () {
+hqDefine("sms/js/chat", [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'commcarehq',
+], function (
+    $,
+    ko,
+    _,
+    initialPageData
+) {
     $(function () {
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data");
         function resize_messages() {
             body_height = $("body").height();
             chat_header_height = $("#chat_header").height();

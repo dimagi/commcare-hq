@@ -30,7 +30,7 @@ class TestSumologic(SimpleTestCase, TestXmlMixin):
         expected_log = (
             "[log_date=2018-02-13T20:19:30.622000Z] [log_submission_date={received}] [log_type=maintenance] "
             "[domain={domain}] [username=t1] [device_id=014915000230428] [app_version=260] "
-            "[cc_version=2.43] [msg=Succesfully submitted 1 device reports to server.]"
+            "[cc_version=2.43.0] [msg=Succesfully submitted 1 device reports to server.]"
         ).format(domain=self.domain, received=self.received_on)
 
         self.assertEqual(expected_log, compiled_log)
@@ -41,7 +41,7 @@ class TestSumologic(SimpleTestCase, TestXmlMixin):
         expected_log = (
             "[log_date=2018-02-22T22:21:21.201000Z] [log_submission_date={received}] [log_type=error-config] "
             "[domain={domain}] [username=t1] [device_id=014915000230428] [app_version=260] "
-            "[cc_version=2.43] [msg=This is a test user error] [app_id=73d5f08b9d55fe48602906a89672c214] "
+            "[cc_version=2.43.0] [msg=This is a test user error] [app_id=73d5f08b9d55fe48602906a89672c214] "
             "[user_id=37cc2dcdb1abf5c16bab0763f435e6b7] [session=session] [expr=an expression]"
         ).format(domain=self.domain, received=self.received_on)
 
@@ -53,7 +53,7 @@ class TestSumologic(SimpleTestCase, TestXmlMixin):
         expected_log = (
             "[log_date=2018-02-22T22:21:21.232000Z] [log_submission_date={received}] [log_type=forceclose] "
             "[domain={domain}] [username=t1] [device_id=014915000230428] [app_version=260] "
-            "[cc_version=2.43] "
+            "[cc_version=2.43.0] "
             "[msg=java.lang.RuntimeException: Unable to start activity "
             "ComponentInfo{{org.commcare.dalvik.debug/org.commcare.activities.MenuActivity}}: "
             """java.lang.RuntimeException

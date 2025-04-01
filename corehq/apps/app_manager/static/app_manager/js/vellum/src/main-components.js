@@ -23042,9 +23042,10 @@ define('vellum/logic',[
             }
         },
         _addReferences: function (mug, property, value) {
+            value = this.form.getLogicalXPath(value || mug.p[property]);
             var _this = this,
                 form = _this.form,
-                expr = new LogicExpression(value || mug.p[property], form.xpath),
+                expr = new LogicExpression(value, form.xpath),
                 unknowns = [],
                 messages = [],
                 warning = "",
@@ -24158,6 +24159,23 @@ define('vellum/richText',[
     }
 
     /**
+     * Get unescaped hashtag expression
+     *
+     * @return - expression with hashtags as they were
+     *      originally typed if the given value is marked with the
+     *      invalid xpath prefix, otherwise the given value
+     */
+    function unescapeHashtags(value, form) {
+        if (isInvalid(value)) {
+            value = escapedHashtags.transform(
+                value.slice(INVALID_PREFIX.length),
+                form.normalizeHashtag.bind(form)
+            );
+        }
+        return value;
+    }
+
+    /**
      * Convert plain text to HTML to be edited in CKEditor
      *
      * Replace line breaks with <p> tags and preserve contiguous spaces.
@@ -24376,6 +24394,7 @@ define('vellum/richText',[
         toRichText: toRichText,
         isInvalid: isInvalid,
         unescapeXPath: unescapeXPath,
+        unescapeHashtags: unescapeHashtags,
     };
 });
 
@@ -29565,6 +29584,37 @@ define('vellum/form',[
             } catch (err) {
                 return [];
             }
+        },
+        getLogicalXPath: function (expr) {
+            // Work around js-xpath limitation that fails to parse hashtag
+            // nodes with filters by converting hashtags to xpath.
+            function hasHashtagFilter(expr) {
+                if (!richText.isInvalid(expr)) return false;
+                var unescaped = richText.unescapeHashtags(expr, form);
+                if (unescaped) {
+                    try {
+                        form.xpath.parse(unescaped);
+                    } catch (err) {
+                        if (/\bExpecting '.+', got 'LBRACK'$/.test(String(err))) {
+                            return /`#[\w/]+`\s*\[.+\]/.test(expr);
+                        }
+                    }
+                }
+                return false;
+            }
+
+            var original = expr,
+                form = this;
+            expr = String(expr);
+            if (original && form.richText && hasHashtagFilter(expr)) {
+                expr = richText.unescapeXPath(expr, form);
+                try {
+                    form.xpath.parse(expr);
+                    // return unescaped xpath only when it parses
+                    return expr;
+                } catch (err) { }
+            }
+            return original;
         },
         knownExternalReferences: function () {
             return this._logicManager.knownExternalReferences();

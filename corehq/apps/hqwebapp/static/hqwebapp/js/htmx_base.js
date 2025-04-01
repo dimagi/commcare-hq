@@ -44,6 +44,7 @@ document.body.addEventListener('htmx:responseError', (evt) => {
             showHtmxErrorModal(
                 errorCode,
                 gettext('Gateway Timeout Error. Max retries exceeded.'),
+                evt,
             );
         }
         return;
@@ -51,6 +52,7 @@ document.body.addEventListener('htmx:responseError', (evt) => {
     showHtmxErrorModal(
         errorCode,
         evt.detail.xhr.statusText,
+        evt,
     );
 });
 
@@ -66,6 +68,7 @@ document.body.addEventListener('htmx:timeout', (evt) => {
         showHtmxErrorModal(
             HTTP_REQUEST_TIMEOUT,
             gettext('Request timed out. Max retries exceeded.'),
+            evt,
         );
     }
 });

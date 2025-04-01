@@ -19,7 +19,7 @@ Endpoint Specifications
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/user/
+    https://www.commcarehq.org/a/[domain]/api/user/v1/
 
 **Method**
 
@@ -136,7 +136,7 @@ Endpoint Specifications
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/user/[id]/
+    https://www.commcarehq.org/a/[domain]/api/user/v1/[id]/
 
 **Method**
     PUT
@@ -236,7 +236,7 @@ Endpoint Specifications
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/user/[id]/
+    https://www.commcarehq.org/a/[domain]/api/user/v1/[id]/
 
 **Method**
 

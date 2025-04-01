@@ -1,4 +1,7 @@
 {% extends 'styleguide/bootstrap5/base.html' %}
+{% load hq_shared_tags %}
+
+{% js_entry "styleguide/js/selections" %}
 
 {% block intro %}
   <h1 class="sg-title mb-0" id="content">Selections</h1>
@@ -149,11 +152,11 @@
   <p>
     This is the most straightforward way of initializing a <code>select2</code> element.
   </p>
-  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.select2_manual %}
+  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.select2_manual %}
   <p>
     A clearable version of that <code>select2</code> element:
   </p>
-  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.select2_manual_allow_clear %}
+  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.select2_manual_allow_clear %}
 
   <h4 id="select2-manual-crispy" class="pt-2">
     Manual Setup with Crispy Forms
@@ -172,7 +175,7 @@
   </p>
   {% include 'styleguide/bootstrap5/code_example.html' with content=examples.select2_css_class %}
   <p>
-    This also applies <code>&lt;select multiple&gt;</code> elements:
+    This also applies to <code>&lt;select multiple&gt;</code> elements:
   </p>
   {% include 'styleguide/bootstrap5/code_example.html' with content=examples.select2_css_class_multiple %}
 
@@ -192,7 +195,7 @@
     We can also use the knockout binding <code>select2</code> to initialize a <code>select2</code>, with options
     provided by Knockout.
   </p>
-  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.select2_ko_dynamic %}
+  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.select2_ko_dynamic %}
 
   <h4 id="select2-ko-dynamic-crispy" class="pt-2">
     Dynamic Knockout Binding with Crispy Forms
@@ -214,7 +217,7 @@
     non-varying options but don't work with the <code>hqwebapp-select2</code> CSS class because they're inside a
     Knockout-controlled UI, so they aren't guaranteed to exist on page render.
   </p>
-  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.select2_ko_static %}
+  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.select2_ko_static %}
 
   <h4 id="select2-ko-static-crispy" class="pt-2">
     Static Knockout Binding with Crispy Forms
@@ -234,7 +237,7 @@
     Knockout binding. The difference between this binding and the original <code>select2</code>, is the ability to
     enter free text.
   </p>
-  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.select2_ko_autocomplete %}
+  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.select2_ko_autocomplete %}
 
   <h4 id="select2-ko-autocomplete-crispy" class="pt-2">
     Autocomplete Knockout Binding with Crispy Forms
@@ -272,7 +275,7 @@
     weight and potential learning curve is worthwhile for the workflow
     you're creating. It's more complicated than a dropdown and takes up much more space.
   </div>
-  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.multiselect %}
+  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.multiselect %}
 
   <h4 id="multiselect-optional-properties" class="pt-3">
     Optional Properties

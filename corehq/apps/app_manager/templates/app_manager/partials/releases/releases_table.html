@@ -37,7 +37,7 @@
       <a class="btn btn-default" data-bind="
                 attr: {href: compareUnbuiltChangesUrl},
                 visible: savedApps().length,
-                click: function () { return trackClick('Compare App Versions: Clicked Version Preview'); }
+                click: function () { return $root.trackClick('Compare App Versions: Clicked Version Preview'); }
                 ">
         <i class="fa-solid fa-right-left"></i>
         {% trans "Preview" %}
@@ -51,7 +51,7 @@
     {% endif %}
     <button class="btn btn-primary" data-bind="
             click: function() {
-              trackClick('Clicked Make New Version');
+              $root.trackClick('Clicked Make New Version');
               return makeNewBuild();
             },
             attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},
@@ -156,7 +156,7 @@
             <button type="button"
                     class="btn btn-xs"
                     data-bind="click: $root.toggleRelease,
-                                attr: {disabled: !showReleaseOperations()},
+                                attr: {disabled: !$root.showReleaseOperations()},
                                            css: {
                                               'active': is_released(),
                                               'btn-primary': is_released(),
@@ -167,7 +167,7 @@
             <button type="button"
                     class="btn btn-xs btn-default"
                     data-bind="click: $root.toggleRelease,
-                                attr: {disabled: !showReleaseOperations()},
+                                attr: {disabled: !$root.showReleaseOperations()},
                                            css: {
                                               'active': !is_released(),
                                               'btn-primary': !is_released(),
@@ -220,7 +220,7 @@
                             $data.id())
                           },
                     click: function () {
-                        return trackClick('Compare App Versions: Clicked View Changes');
+                        return $root.trackClick('Compare App Versions: Clicked View Changes');
                     }
                     visible: $parent.previousBuildId($index())">
             <i class="fa-solid fa-right-left"></i>

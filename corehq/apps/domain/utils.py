@@ -44,7 +44,7 @@ def normalize_domain_name(domain):
     if domain:
         normalized = domain.replace('_', '-').lower()
         if settings.DEBUG:
-            assert(re.match('^%s$' % grandfathered_domain_re, normalized))
+            assert (re.match('^%s$' % grandfathered_domain_re, normalized))
         return normalized
     return domain
 
@@ -141,11 +141,13 @@ def clear_domain_names(*domain_names):
             domain.delete()
 
 
-def get_serializable_wire_invoice_general_credit(general_credit):
-    if general_credit > 0:
+def get_serializable_wire_invoice_general_credit(credit_total, credit_label, unit_cost, quantity):
+    if credit_total > 0:
         return [{
-            'type': 'General Credits',
-            'amount': simplejson.dumps(general_credit, use_decimal=True)
+            'type': credit_label,
+            'unit_cost': simplejson.dumps(unit_cost, use_decimal=True),
+            'quantity': quantity,
+            'amount': simplejson.dumps(credit_total, use_decimal=True),
         }]
 
     return []

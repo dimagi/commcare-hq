@@ -320,7 +320,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     restoring_user_id = as_user_obj._id if uses_login_as else couch_user._id
     should_limit = device_rate_limiter.rate_limit_device(domain, restoring_user_id, device_id)
     if should_limit:
-        return HttpNotAcceptable(DEVICE_RATE_LIMIT_MESSAGE)
+        return HttpNotAcceptable(DEVICE_RATE_LIMIT_MESSAGE), None
 
     is_permitted, message = is_permitted_to_restore(
         domain,

@@ -1,5 +1,6 @@
 import "commcarehq";
 import "hqwebapp/js/htmx_and_alpine";
+import 'reports/js/bootstrap5/base';
 import $ from "jquery";
 import { multiCheckboxSelectionHandler } from "integration/js/checkbox_selection_handler";
 

@@ -56,8 +56,8 @@ hqDefine("reports/js/bootstrap3/standard_hq_report", [
         var reportOptions = initialPageData.get('js_options') || {};
         if (reportOptions.slug && reportOptions.async) {
             let promise = $.Deferred();
-            require(["reports/js/bootstrap3/async"], function (asyncHQReportModule) {
-                var asyncHQReport = asyncHQReportModule({
+            import("reports/js/bootstrap3/async").then(function (asyncHQReportModule) {
+                var asyncHQReport = asyncHQReportModule.default({
                     standardReport: getStandard(),
                 });
                 asyncHQReport.init();

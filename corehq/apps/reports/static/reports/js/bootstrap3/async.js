@@ -163,7 +163,7 @@ hqDefine("reports/js/bootstrap3/async", [
                         loadFilters(data);
                     }
                     self.issueAttempts = 0;
-                    if ($('loadingIssueModal').hasClass('show')) {
+                    if (self.loadingIssueModal.hasClass('show')) {
                         self.loadingIssueModal.modal('hide');
                     }
                     self.hqLoading = $(self.loaderClass);

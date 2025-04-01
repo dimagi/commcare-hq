@@ -311,7 +311,9 @@ class FormattedDetailColumn(object):
             # since case list optimizations are only available for versions higher than the
             # ones needed for multi sort, it's safe to assume that case list optimizations
             # should only be added only when multi sort is enabled
-            if self.app.supports_case_list_optimizations and self.column.supports_optimizations:
+            if (self.app.supports_case_list_optimizations
+                    and self.module.show_case_list_optimization_options
+                    and self.column.supports_optimizations):
                 self._set_case_list_optimizations(field, self.column.optimization)
             yield field
         elif (self.sort_xpath_function and self.detail.display == 'short'

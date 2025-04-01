@@ -93,6 +93,9 @@
   "export": {
     "is_complete": true
   },
+  "geospatial": {
+    "in_progress": true
+  },
   "groups": {
     "is_complete": true
   },

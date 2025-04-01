@@ -31,7 +31,7 @@ from corehq.toggles import (
     DOMAIN_PERMISSIONS_MIRROR,
     MTN_MOBILE_WORKER_VERIFICATION,
 )
-from corehq.util.metrics import metrics_counter, metrics_histogram
+from corehq.util.metrics import metrics_histogram
 from corehq.util.metrics.load_counters import case_load_counter
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
@@ -377,11 +377,6 @@ class _TimedAndThrottledImporter:
             'commcare.case_importer.duration_per_case', active_duration_per_case,
             buckets=[50, 70, 100, 150, 250, 350, 500], bucket_tag='duration', bucket_unit='ms',
         )
-
-        for rows, status in ((rows_created, 'created'),
-                             (rows_updated, 'updated'),
-                             (rows_failed, 'error')):
-            metrics_counter("commcare.case_importer.cases", rows, tags={"status": status, "domain": self.domain})
 
 
 class SubmitCaseBlockHandler:

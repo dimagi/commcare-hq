@@ -21,9 +21,9 @@ For more information, please review `API Authentication <https://dimagi.atlassia
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/messaging-event/
+    https://www.commcarehq.org/a/[domain]/api/messaging-event/v1/
 
-**Supported versions** ``v0.5``
+**Supported versions** ``v1``
 
 **Permissions Required:** Edit Data
 
@@ -125,17 +125,17 @@ Example:
 .. code-block:: text
 
     # First request
-    https://www.commcarehq.org/a/[domain]/api/v0.5/messaging-event/?content_type=sms
+    https://www.commcarehq.org/a/[domain]/api/messaging-event/v1/?content_type=sms
 
-    {"objects": [{}, {}, {}...], "meta": {"limit": 20, "next": "https://www.commcarehq.org/a/[domain]/api/v0.5/messaging-event/?cursor=XYZ"}}
-
-    # Request for next page
-    https://www.commcarehq.org/a/[domain]/api/v0.5/messaging-event/?cursor=XYZ
-
-    {"objects": [{}, {}, {}...], "meta": {"limit": 20, "next": "https://www.commcarehq.org/a/[domain]/api/v0.5/messaging-event/?cursor=ABC"}}
+    {"objects": [{}, {}, {}...], "meta": {"limit": 20, "next": "https://www.commcarehq.org/a/[domain]/api/messaging-event/v1/?cursor=XYZ"}}
 
     # Request for next page
-    https://www.commcarehq.org/a/[domain]/api/v0.5/messaging-event/?cursor=ABC
+    https://www.commcarehq.org/a/[domain]/api/messaging-event/v1/?cursor=XYZ
+
+    {"objects": [{}, {}, {}...], "meta": {"limit": 20, "next": "https://www.commcarehq.org/a/[domain]/api/messaging-event/v1/?cursor=ABC"}}
+
+    # Request for next page
+    https://www.commcarehq.org/a/[domain]/api/messaging-event/v1/?cursor=ABC
 
     {"objects": [{}, {}, {}...], "meta": {"limit": 20, "next": null}}
 
@@ -190,7 +190,7 @@ Request & Response Details
       ],
       "meta": {
         "limit": 20,
-        "next": "https://www.commcarehq.org/a/[domain]/api/v0.5/messaging-event/?cursor=ZGF0ZS5ndGU9MjAyMC0wNS0xN1QyMCUzQTM3JTNBMTEuNzU3OTQwJmxhc3Rfb2JqZWN0X2lkPTEwMjUwOTYw"
+        "next": "https://www.commcarehq.org/a/[domain]/api/messaging-event/v1/?cursor=ZGF0ZS5ndGU9MjAyMC0wNS0xN1QyMCUzQTM3JTNBMTEuNzU3OTQwJmxhc3Rfb2JqZWN0X2lkPTEwMjUwOTYw"
       }
     }
 
@@ -200,14 +200,14 @@ Request & Response Details
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/v0.5/messaging-event/?[FILTER-NAME]=[FILTER-VALUE]
+    https://www.commcarehq.org/a/[domain]/api/messaging-event/v1/?[FILTER-NAME]=[FILTER-VALUE]
 
 - Example of a single filter:
     - Example filter shown: date.gte=2020-07-13T06:30:21.109409
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/v0.5/messaging-event/?date.gte=2020-07-13T06:30:21.109409
+    https://www.commcarehq.org/a/[domain]/api/messaging-event/v1/?date.gte=2020-07-13T06:30:21.109409
 
 
 
@@ -216,7 +216,7 @@ Request & Response Details
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/v0.5/messaging-event/?content_type=sms&phone_number=1234567
+    https://www.commcarehq.org/a/[domain]/api/messaging-event/v1/?content_type=sms&phone_number=1234567
 
 
 

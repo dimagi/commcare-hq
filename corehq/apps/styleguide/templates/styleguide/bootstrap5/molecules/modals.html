@@ -1,6 +1,8 @@
 {% extends 'styleguide/bootstrap5/base.html' %}
 {% load hq_shared_tags %}
 
+{% js_entry "styleguide/js/modals" %}
+
 {% block intro %}
   <h1 class="sg-title mb-0" id="content">Modals</h1>
   <p class="sg-lead">
@@ -77,7 +79,7 @@
     toggled <code>true</code> or <code>false</code> with knockout code. However, the example below is a slightly
     more complex approach that's more realistic to how we use it in HQ (like with <code>UserRole</code> editing).
   </p>
-  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.modal_ko %}
+  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.modal_ko %}
 
   <h3 id="ko-open-modal-binding" class="pt-3">
     OpenModal Knockout Binding
@@ -91,7 +93,7 @@
     contain the <code>&lt;div class="modal fade"&gt;</code> wrapper element. Additionally, the modal inherits the
     knockout model context that was applied to the element that applied <code>openModal</code> binding.
   </div>
-  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.open_modal_ko %}
+  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.open_modal_ko %}
 
   <h3 id="ko-open-remote-modal-binding" class="pt-3">
     OpenRemoteModal Knockout Binding
@@ -102,7 +104,7 @@
     to the knockout template above.
   </p>
   {% registerurl "styleguide_data_remote_modal" %}
-  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.open_remote_modal_ko %}
+  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.open_remote_modal_ko %}
   <p class="m-0">
     In the example above, the URL passed to <code>openRemoteModal</code> was registered
     on the page using the following template tag:

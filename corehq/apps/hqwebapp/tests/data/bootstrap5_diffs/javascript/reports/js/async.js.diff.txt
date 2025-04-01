@@ -55,7 +55,7 @@
                          loadFilters(data);
                      }
                      self.issueAttempts = 0;
--                    if ($('loadingIssueModal').hasClass('show')) {
+-                    if (self.loadingIssueModal.hasClass('show')) {
 -                        self.loadingIssueModal.modal('hide');
 +                    if (self.loadingIssueModalElem.hasClass('show')) {
 +                        self.loadingIssueModal.hide();

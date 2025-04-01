@@ -1,0 +1,98 @@
+{% load i18n %}
+
+<p>
+  {% blocktrans %}
+    Dear {{ domain_or_account }} administrator, this is a reminder that your
+    {{ plan_name }} Billing Statement for {{ month_name }} is due in
+    {{ days_until_due }} days.
+  {% endblocktrans %}
+</p>
+
+<table cellpadding="2">
+  <tr>
+    <th align="right">{% trans "Statement No." %}:</th>
+    <td>{{ statement_number }}</td>
+  </tr>
+  <tr>
+    <th align="right">{% trans "Project Space" %}:</th>
+    <td>
+      <a href="{{ domain_url }}"> {{ domain }} </a>
+    </td>
+  </tr>
+  <tr>
+    <th align="right">{% trans "Software Plan" %}:</th>
+    <td>{{ plan_name }}</td>
+  </tr>
+  <tr>
+    <th align="right">{% trans "Status" %}:</th>
+    <td>{{ payment_status }}</td>
+  </tr>
+  <tr>
+    <th align="right">{% trans "Amount Due this Month" %}:</th>
+    <td>{{ amount_due }}</td>
+  </tr>
+  <tr>
+    <th align="right">{% trans "Total Balance" %}:</th>
+    <td>{{ total_balance }}</td>
+  </tr>
+  {% if total_balance > 0 %}
+    <tr>
+      <th align="right">{% trans "Payment Due Date" %}:</th>
+      <td>{{ date_due }}</td>
+    </tr>
+  {% endif %}
+</table>
+
+<p>
+  {% if can_view_statement %}
+    {% blocktrans %}
+      To view the full billing statement, log into your project space on
+      CommCare HQ and navigate to
+      <a href="{{ statements_url }}"> Billing Statements</a>.
+    {% endblocktrans %}
+  {% else %}
+    {% blocktrans %}
+      Your project's administrator can view the full billing statement by
+      logging into your project space on CommCare HQ and navigating to
+      <a href="{{ statements_url }}">Billing Statements</a>.
+    {% endblocktrans %}
+  {% endif %}
+</p>
+
+<p>
+  {% blocktrans %}
+    You can pay this bill by credit card or by wire:
+  {% endblocktrans %}
+</p>
+<ul>
+  <li>
+    {% blocktrans %}
+      To pay by credit card, please go to your
+      <a href="{{ statements_url }}">Billing Statements</a> page, click on the
+      green "Make Payment" button in front of your unpaid invoice(s), and fill
+      in the amount you want to pay as well as your credit card details.
+    {% endblocktrans %}
+  </li>
+  <li>
+    {% blocktrans %}
+      To pay by wire, find Dimagi's bank account details on your invoice. Please
+      include the invoice number in your wire payment and make sure to send an
+      email to {{ invoicing_contact_email }} after you have made the payment,
+      mentioning the date of the payment, the amount, the invoice number, and
+      the project space.
+    {% endblocktrans %}
+  </li>
+</ul>
+
+<p>
+  {% blocktrans %}
+    Thank you for using {{ plan_name }}. If you have any questions, please don't
+    hesitate to contact {{ invoicing_contact_email }}.
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% trans "Best Regards," %}<br />
+  {% trans "The CommCare HQ Team" %}<br />
+  www.commcarehq.org
+</p>

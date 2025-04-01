@@ -13,6 +13,7 @@ from django.utils.translation import gettext_lazy, gettext as _
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
 from corehq.apps.data_cleaning.models import BulkEditSession
 from corehq.apps.data_cleaning.tasks import commit_data_cleaning
+from corehq.apps.data_cleaning.utils.cases import clear_caches_case_data_cleaning
 from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
@@ -87,6 +88,15 @@ class CleanCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
         return {
             "session_id": self.session_id,
         }
+
+
+@login_and_domain_required
+@require_bulk_data_cleaning_cases
+def clear_session_caches(request, domain, session_id):
+    session = BulkEditSession.objects.get(session_id=session_id)
+    clear_caches_case_data_cleaning(session.domain, session.identifier)
+    messages.success(request, _("Caches successfully cleared."))
+    return redirect(reverse(CleanCasesMainView.urlname, args=(domain,)))
 
 
 @login_and_domain_required

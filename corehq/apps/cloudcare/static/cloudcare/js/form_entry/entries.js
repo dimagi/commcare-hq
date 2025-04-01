@@ -2,7 +2,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
     'jquery',
     'knockout',
     'underscore',
-    'DOMPurify/dist/purify.min',
+    'DOMPurify',
     'moment',
     'fast-levenshtein/levenshtein',
     'hqwebapp/js/initial_page_data',

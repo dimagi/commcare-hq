@@ -214,10 +214,11 @@ class DomainInvoiceFactory(object):
 
 class DomainWireInvoiceFactory(object):
 
-    def __init__(self, domain, date_start=None, date_end=None, contact_emails=None, account=None):
+    def __init__(self, domain, date_start=None, date_end=None, contact_emails=None, cc_emails=None, account=None):
         self.date_start = date_start
         self.date_end = date_end
         self.contact_emails = contact_emails
+        self.cc_emails = cc_emails
         self.domain = ensure_domain_instance(domain)
         self.logged_throttle_error = False
         if self.domain is None:
@@ -284,17 +285,22 @@ class DomainWireInvoiceFactory(object):
 
         return wire_invoice
 
-    def create_wire_credits_invoice(self, amount, general_credit):
+    def create_wire_credits_invoice(self, amount, credit_label, unit_cost, quantity, date_start, date_end):
 
         serializable_amount = simplejson.dumps(amount, use_decimal=True)
-        serializable_items = get_serializable_wire_invoice_general_credit(general_credit)
+        serializable_items = get_serializable_wire_invoice_general_credit(
+            amount, credit_label, unit_cost, quantity
+        )
 
         from corehq.apps.accounting.tasks import create_wire_credits_invoice
         create_wire_credits_invoice.delay(
             domain_name=self.domain.name,
             amount=serializable_amount,
             invoice_items=serializable_items,
-            contact_emails=self.contact_emails
+            date_start=date_start,
+            date_end=date_end,
+            contact_emails=self.contact_emails,
+            cc_emails=self.cc_emails,
         )
 
 

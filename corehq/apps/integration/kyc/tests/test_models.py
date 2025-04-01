@@ -1,5 +1,5 @@
 from django.core.exceptions import ValidationError
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 
 import pytest
 
@@ -242,6 +242,7 @@ class TestKycUser(BaseKycUsersSetup):
         assert kyc_user.kyc_verification_status == KycVerificationStatus.PENDING
         assert kyc_user.kyc_last_verified_at is None
         assert kyc_user.kyc_provider is None
+        assert kyc_user.kyc_verification_error is None
 
     def _assert_for_verification_status(self, kyc_user, expected_status, expected_provider):
         assert kyc_user.kyc_verification_status == expected_status
@@ -280,3 +281,63 @@ class TestKycUser(BaseKycUsersSetup):
         kyc_user.update_verification_status(KycVerificationStatus.PASSED)
 
         self._assert_for_verification_status(kyc_user, KycVerificationStatus.PASSED, config.provider)
+
+
+class TestKycConfig(SimpleTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.kyc_config = KycConfig(
+            domain=DOMAIN,
+            api_field_to_user_data_map={
+                'first_name': {
+                    'data_field': 'first_name',
+                },
+                'last_name': {
+                    'data_field': 'last_name',
+                    'is_sensitive': True,
+                },
+                'email': {
+                    'data_field': 'email',
+                    'is_sensitive': 'falsey',
+                    'random_prop': 123,
+                },
+                'phone_number': {
+                    'data_field': 'phone_number',
+                    'is_sensitive': 'true',
+                },
+                'street_address': {
+                    'is_sensitive': False,
+                },
+                'id_num': 'id_num',
+                'country': {},
+                'reg_num': {
+                    'DATA_FIELD': 'reg_num'
+                }
+            }
+        )
+
+    def test_get_api_field_to_user_data_map_values(self):
+        map_values = self.kyc_config.get_api_field_to_user_data_map_values()
+        assert map_values == {
+            'first_name': 'first_name',
+            'last_name': 'last_name',
+            'email': 'email',
+            'phone_number': 'phone_number',
+        }
+
+    def test_is_sensitive_field(self):
+        expected_output = {
+            'first_name': False,
+            'last_name': True,
+            'email': False,
+            'phone_number': False,
+            'street_address': False,
+            'id_num': False,
+            'country': False,
+            'reg_num': False,
+        }
+        for field, expected_val in expected_output.items():
+            is_sensitive = self.kyc_config.is_sensitive_field(field)
+            assert is_sensitive == expected_val

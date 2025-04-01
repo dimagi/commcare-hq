@@ -907,5 +907,36 @@
       "label": "javascript/userreports/js",
       "compare_all_files": true
     }
+  ],
+  "apps/geospatial/templates/geospatial": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "geospatial",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/bootstrap3",
+        "partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "geospatial/partials",
+      "compare_all_files": true
+    }
+  ],
+  "apps/geospatial/static/geospatial/js": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/geospatial/js",
+      "compare_all_files": true
+    }
   ]
 }

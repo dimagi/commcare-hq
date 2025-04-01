@@ -2,7 +2,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
     'jquery',
     'knockout',
     'underscore',
-    'DOMPurify/dist/purify.min',
+    'DOMPurify',
     'hqwebapp/js/toggles',
     'es6!hqwebapp/js/bootstrap5_loader',
     'cloudcare/js/markdown',

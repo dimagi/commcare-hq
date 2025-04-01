@@ -448,10 +448,15 @@ def is_repeat_record_ready(repeat_record):
 def _metrics_wait_duration(repeat_record):
     """
     The duration since ``repeat_record`` was registered or last attempted.
-
-    Buckets are exponential: [1m, 6m, 36m, 3.6h, 21.6h, 5.4d]
     """
-    buckets = [60 * (6 ** exp) for exp in range(6)]
+    buckets = make_buckets_from_timedeltas(
+        timedelta(minutes=1),
+        timedelta(minutes=10),
+        timedelta(hours=1),
+        timedelta(hours=6),
+        timedelta(days=1),
+        timedelta(days=7),
+    )
     metrics_histogram(
         'commcare.repeaters.process_repeaters.repeat_record_wait',
         _get_wait_duration_seconds(repeat_record),

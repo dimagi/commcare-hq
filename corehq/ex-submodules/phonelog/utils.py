@@ -206,6 +206,8 @@ class SumoLogicLog(object):
             environment = 'india'
         if settings.SERVER_ENVIRONMENT == 'production':
             environment = 'prod'
+        if settings.SERVER_ENVIRONMENT == 'staging':
+            environment = 'staging'
 
         header = "{env}/{domain}/{fmt}".format(env=environment, domain=self.domain, fmt=fmt)
         return {"X-Sumo-Category": header}
@@ -287,6 +289,7 @@ class SumoLogicLog(object):
         ))
 
         return data
+
 
 def clear_device_log_request(domain, xform):
     from corehq.apps.ota.models import DeviceLogRequest

@@ -10,6 +10,7 @@ from corehq.apps.data_cleaning.views.filters import (
 from corehq.apps.data_cleaning.views.main import (
     CleanCasesMainView,
     CleanCasesSessionView,
+    clear_session_caches,
     download_form_ids,
     save_case_session,
 )
@@ -35,6 +36,8 @@ urlpatterns = [
         name=PinnedFilterFormView.urlname),
     url(r'^session/(?P<session_id>[\w\-]+)/columns/$', ManageColumnsFormView.as_view(),
         name=ManageColumnsFormView.urlname),
+    url(r'^session/(?P<session_id>[\w\-]+)/clear/$', clear_session_caches,
+        name="data_cleaning_clear_session_caches"),
     url(r'^cases/save/(?P<session_id>[\w\-]+)/$', save_case_session, name='save_case_session'),
     url(r'^form_ids/(?P<session_id>[\w\-]+)/$', download_form_ids, name='download_form_ids'),
 ]

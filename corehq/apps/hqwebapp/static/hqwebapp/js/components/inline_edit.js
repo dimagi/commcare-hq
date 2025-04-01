@@ -25,7 +25,7 @@ hqDefine('hqwebapp/js/components/inline_edit', [
     'jquery',
     'knockout',
     'underscore',
-    'DOMPurify/dist/purify.min',
+    'DOMPurify',
     'hqwebapp/js/components.ko',
 ], function (
     $,

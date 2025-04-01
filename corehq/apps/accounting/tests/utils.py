@@ -60,7 +60,7 @@ class DomainSubscriptionMixin(object):
             cls.__subscriptions[domain].delete()
             cls.__accounts[domain].delete()
         finally:
-            Subscription._get_active_subscription_by_domain.clear(Subscription, domain)
+            Subscription.clear_caches(domain)
 
 
 @contextmanager
