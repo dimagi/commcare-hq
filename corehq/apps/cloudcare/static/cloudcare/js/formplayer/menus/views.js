@@ -683,7 +683,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const setFromAttributes = (attributes) => {
                 this.set('columnNames', attributes.columnNames);
                 this.set('columnVisibility', Array(attributes.columnNames.length).fill(true));
-                this.set('columnCanBeVisible', attributes.styles.map(s => s.widthHint !== 0));
+                if (attributes.styles) {
+                    this.set('columnCanBeVisible', attributes.styles.map(s => s.widthHint !== 0));
+                } else {
+                    this.set('columnCanBeVisible', Array(attributes.columnNames.length).fill(true));
+                }
             };
             if (attributes) {
                 this.configStorageId = attributes.configStorageId;
