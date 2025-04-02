@@ -731,6 +731,12 @@ class CCUserRow(BaseUserRow):
 class WebUserRow(BaseUserRow):
 
     def _process_column_values(self):
+        # TODO: This fills in None for any values not provided
+        # Fill in Ellipsis instead? Or don't set those values?
+        # The other BaseUserRow classes presumably do the same thing.
+        # From local testing, it seems that web users handle missing columns properly,
+        # and will ignore if the column is missing but clear if it's there with a blank value.
+        # Mobile users and invitations both appear to clear excluded columns.
         self.column_values = {
             'username': self.row.get('username'),
             'role': self.row.get('role'),
