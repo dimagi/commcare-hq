@@ -92,6 +92,7 @@ from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.permissions import (
     can_download_data_files,
     can_view_sms_exports,
+    PAYMENTS_REPORT_PERMISSION,
 )
 from corehq.feature_previews import (
     EXPLORE_CASE_DATA_PREVIEW,
@@ -1084,7 +1085,12 @@ class ProjectDataTab(UITab):
 
     @cached_property
     def _can_view_payments_integration(self):
-        return toggles.MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain)
+        has_payments_report_permission = self.couch_user.has_permission(
+            self.domain,
+            get_permission_name(HqPermissions.view_report),
+            PAYMENTS_REPORT_PERMISSION
+        )
+        return toggles.MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain) and has_payments_report_permission
 
     def _get_payments_verification_views(self):
         from corehq.apps.integration.payments.views import PaymentsVerificationReportView
