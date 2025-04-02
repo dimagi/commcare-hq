@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine('accounting/js/pricing_table', [
     'jquery',
     'knockout',
@@ -13,7 +13,7 @@ hqDefine('accounting/js/pricing_table', [
     _,
     initialPageData,
     utils,
-    assertProperties
+    assertProperties,
 ) {
     var PricingTable = function (options) {
         assertProperties.assert(options, [
@@ -109,7 +109,7 @@ hqDefine('accounting/js/pricing_table', [
                         "<p>Continuing ahead will allow you to schedule your current <%- oldPlan %> " +
                         "Edition Plan subscription to be paused on <strong> <%- date %> </strong></p>" +
                         "<p>If you have questions or if you would like to speak to us about your subscription, " +
-                        "please reach out to <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>.</p>"
+                        "please reach out to <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>.</p>",
                     ))({
                         date: newStartDate,
                         newPlan: newPlan,
@@ -125,7 +125,7 @@ hqDefine('accounting/js/pricing_table', [
                         "Plan subscription to be downgraded to the <%- newPlan %> Edition Plan " +
                         "on <strong> <%- date %> </strong></p>" +
                         "<p>If you have questions or if you would like to speak to us about your subscription, " +
-                        "please reach out to <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>.</p>"
+                        "please reach out to <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>.</p>",
                     ))({
                         oldPlan: oldPlan,
                         date: newStartDate,
@@ -141,7 +141,7 @@ hqDefine('accounting/js/pricing_table', [
                         "Plan subscription to be downgraded to the <%- newPlan %> Edition Plan " +
                         "on <strong> <%- date %> </strong></p>" +
                         "<p>If you have questions or if you would like to speak to us about your subscription, " +
-                        "please reach out to <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>.</p>"
+                        "please reach out to <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>.</p>",
                     ))({
                         oldPlan: oldPlan,
                         nextSubscription: self.oNextSubscription(),
@@ -156,7 +156,7 @@ hqDefine('accounting/js/pricing_table', [
                         "Plan subscription to be downgraded to the <%- newPlan %> Edition Plan " +
                         "on <strong> <%- date %> </strong></p>" +
                         "If you have questions or if you would like to speak to us about your subscription, " +
-                        "please reach out to <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>."
+                        "please reach out to <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>.",
                     ))({
                         oldPlan: oldPlan,
                         date: newStartDate,
@@ -196,7 +196,6 @@ hqDefine('accounting/js/pricing_table', [
     };
 
     var PlanOption = function (data, parent) {
-        'use strict';
         var self = this;
 
         self.oName = ko.observable(data.name);
