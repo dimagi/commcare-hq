@@ -484,18 +484,22 @@ class Command(BaseCommand):
         self.stdout.write(f"Batch size: {batch_size}, Parallel batches: {parallel_batches}")
 
         for lang in langs:
+            po_file_paths = [
+                f"locale/{lang}/LC_MESSAGES/django.po",
+                f"locale/{lang}/LC_MESSAGES/djangojs.po"
+            ]
             self.stdout.write(f"\nProcessing language: {lang}")
-            try:
-                self._translate_language(lang, model, api_key, batch_size, parallel_batches)
-            except Exception as e:
-                self.stderr.write(f"Error processing language {lang}: {str(e)}")
+            for po_file_path in po_file_paths:
+                try:
+                    if not os.path.exists(po_file_path):
+                        self.stderr.write(f"PO file not found: {po_file_path}")
+                        continue
+                    self.stdout.write(f"Processing PO file: {po_file_path}")
+                    self._translate_language(lang, model, api_key, batch_size, parallel_batches, po_file_path)
+                except Exception as e:
+                    self.stderr.write(f"Error processing language {lang}: {str(e)}")
 
-    def _translate_language(self, lang, model, api_key, batch_size, parallel_batches):
-        po_file_path = f"locale/{lang}/LC_MESSAGES/django.po"
-        if not os.path.exists(po_file_path):
-            self.stderr.write(f"PO file not found: {po_file_path}")
-            return
-
+    def _translate_language(self, lang, model, api_key, batch_size, parallel_batches, po_file_path):
         translation_format = PoTranslationFormat(po_file_path)
         translator = OpenaiTranslator(
             api_key=api_key,
