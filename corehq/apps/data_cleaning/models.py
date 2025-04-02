@@ -234,6 +234,9 @@ class BulkEditSession(models.Model):
             query = pinned_filter.filter_query(query)
         return query
 
+    def get_num_selected_records(self):
+        return self.records.filter(is_selected=True).count()
+
     def update_result(self, record_count, form_id=None):
         result = self.result or {}
 

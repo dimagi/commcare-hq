@@ -61,8 +61,7 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
         """
         Return the number of selected records in the session.
         """
-        # todo
-        return 0
+        return self.session.get_num_selected_records()
 
 
 class CaseCleaningTasksTable(BaseHtmxTable, tables.Table):
