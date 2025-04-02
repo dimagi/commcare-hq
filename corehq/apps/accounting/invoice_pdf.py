@@ -5,7 +5,7 @@ from django.conf import settings
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.pdfgen.canvas import Canvas
-from reportlab.platypus import Paragraph
+from reportlab.platypus import Frame, Paragraph
 
 from corehq.apps.accounting.exceptions import InvoiceError
 from corehq.apps.accounting.utils import get_money_str
@@ -584,8 +584,8 @@ class InvoiceTemplate(object):
             ach_payment_text,
             wire_payment_text if self.can_pay_by_wire else "",
         ]), ParagraphStyle(''))
-        payment_info2.wrapOn(self.canvas, width - inches(0.1), inches(0.9))
-        payment_info2.drawOn(self.canvas, inches(0.6), inches(0.5))
+        payment_info2_frame = Frame(left_x, inches(0.5), width - inches(0.1), inches(0.9))
+        payment_info2_frame.add(payment_info2, self.canvas)
 
     def draw_table_with_header_and_footer(self, items):
         self.draw_header()
