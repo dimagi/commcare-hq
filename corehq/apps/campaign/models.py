@@ -5,7 +5,6 @@ from django.utils.translation import gettext_lazy as _
 from jsonfield.fields import JSONField
 from memoized import memoized
 
-from corehq.apps.hqwebapp.utils.bootstrap.paths import get_bootstrap5_path
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.util.view_utils import absolute_reverse
 
@@ -102,20 +101,8 @@ class DashboardReport(DashboardWidgetBase):
         return ReportConfiguration.get(self.report_configuration_id)
 
     @property
-    def is_async(self):
-        return False
-
-    @property
-    def show_filters(self):
-        return True
-
-    @property
     def slug(self):
         return 'configurable'
-
-    @property
-    def spec(self):
-        return self.report_configuration
 
     @property
     def url(self):
@@ -132,21 +119,6 @@ class DashboardReport(DashboardWidgetBase):
     @property
     def html_id_suffix(self):
         return f'-{self.report_configuration_id}'
-
-    @property
-    def filters(self):
-        ui_filters = self.report_configuration.ui_filters
-        for ui_filter in ui_filters:
-            ui_filter.template = get_bootstrap5_path(ui_filter.template)
-        return ui_filters
-
-    def get_filter_context(self, view):
-        request_params = {}
-        request_user = view.request.couch_user
-        return {
-            f.css_id: f.context(request_params, request_user, view.lang)
-            for f in self.filters
-        }
 
     def to_widget(self):
         return model_to_widget(

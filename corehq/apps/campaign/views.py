@@ -129,12 +129,9 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin, Dashb
         return context
 
     def _get_map_report_widgets(self):
-        # map_reports = chain(self.dashboard.maps.all(), self.dashboard.reports.all())
+        map_reports = chain(self.dashboard.maps.all(), self.dashboard.reports.all())
         widgets_by_tab = {tab: [] for tab in DashboardTab.values}
-        for instance in sorted(
-            chain(self.dashboard.maps.all(), self.dashboard.reports.all()),
-            key=lambda inst: inst.display_order
-        ):
+        for instance in sorted(map_reports, key=lambda inst: inst.display_order):
             widget = instance.to_widget()
             if type(instance) is DashboardReport:
                 self._add_report_options(widget, instance)
@@ -143,8 +140,8 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin, Dashb
 
     def _dashboard_gauge_configs(self):
         dashboard_gauge_configs = {
-            'cases': [],
-            'mobile_workers': [],
+            DashboardTab.CASES: [],
+            DashboardTab.MOBILE_WORKERS: [],
         }
         for dashboard_gauge in self.dashboard.gauges.all():
             dashboard_gauge_configs[dashboard_gauge.dashboard_tab].append(
