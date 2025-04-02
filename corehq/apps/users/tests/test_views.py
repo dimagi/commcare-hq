@@ -239,7 +239,6 @@ class TestUpdateRoleFromView(TestCase):
         self.assertFalse(role.is_non_admin_editable)
         self.assertEqual(role.assignable_by, [self.role.couch_id])
         self.assertEqual(role.permissions.to_json(), role_data['permissions'])
-        return role
 
     def test_create_role_duplicate_name(self):
         role_data = deepcopy(self.BASE_JSON)
