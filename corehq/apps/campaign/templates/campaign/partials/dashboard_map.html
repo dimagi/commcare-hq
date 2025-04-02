@@ -1,11 +1,16 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<div id="map-widget-{{ widget.id }}" class="paginated-map-widget mb-4">
+<div
+  id="map-widget-{{ widget.id }}"
+  class="paginated-map-widget mb-4"
+  data-htmx-swap-target="map-{{ widget.id }}"
+>
   <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">{{ widget.title }}</h5>
+      <h5 class="mb-0 me-auto">{{ widget.title }}</h5>
       {% include "campaign/partials/edit_widget_button.html" with widget_type='map' %}
+      {% include "campaign/partials/delete_widget_button.html" with widget_type='map' %}
     </div>
 
     <!-- TODO: This needs pagination support -->

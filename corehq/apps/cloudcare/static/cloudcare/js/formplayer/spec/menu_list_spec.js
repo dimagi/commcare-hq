@@ -20,7 +20,6 @@ describe('Render a case list', function () {
                 DYNAMICALLY_UPDATE_SEARCH_RESULTS: false,
                 USE_PROMINENT_PROGRESS_BAR: false,
                 ACTIVATE_DATADOG_APM_TRACES: false,
-                USH_DISABLE_INTERVAL_SYNC: false,
             },
         );
         sinon.stub(Utils, 'getCurrentQueryInputs').callsFake(function () { return {}; });
@@ -31,10 +30,14 @@ describe('Render a case list', function () {
     });
 
     describe('#getMenuView', function () {
+        const currentUrl = new Utils.CloudcareUrl({ appId: 'abc123' , selections: ['1', '2']});
         let server,
             user;
         beforeEach(function () {
             server = sinon.useFakeXMLHttpRequest();
+            sinon.stub(Utils, 'currentUrlToObject').callsFake(function () {
+                return currentUrl;
+            });
             sinon.stub(Backbone.history, 'getFragment').callsFake(sinon.spy());
 
             user = UsersModels.getCurrentUser();
@@ -46,6 +49,7 @@ describe('Render a case list', function () {
         afterEach(function () {
             server.restore();
             Backbone.history.getFragment.restore();
+            Utils.currentUrlToObject.restore();
         });
 
         let getMenuView = MenusUtils.getMenuView;
