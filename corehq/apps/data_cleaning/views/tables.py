@@ -69,8 +69,13 @@ class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataC
         """
         Selects a single record.
         """
-        # todo
-        return self.get(request, *args, **kwargs)
+        doc_id = request.POST['record_id']
+        is_selected = request.POST.get('is_selected') is not None
+        if is_selected:
+            self.session.select_record(doc_id)
+        else:
+            self.session.deselect_record(doc_id)
+        return self.render_htmx_no_response(request, *args, **kwargs)
 
     @hq_hx_action('post')
     def select_page(self, request, *args, **kwargs):
