@@ -251,7 +251,7 @@ class PoTranslationFormat(TranslationFormat):
             filtered_output = {
                 msg_id: msg_str
                 for msg_id, msg_str in llm_output.items()
-                if self._is_valid_msgstr(msg_id, msg_str)
+                if self._is_valid_msgstr(self.translation_obj_map[msg_id].msgid, msg_str)
             }
             self.fill_translations(filtered_output)
             return filtered_output
