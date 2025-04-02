@@ -40,10 +40,11 @@ class ManageColumnsFormView(BulkEditSessionViewMixin,
 
     @hq_hx_action('post')
     def update_column_order(self, request, *args, **kwargs):
-        # todo
+        column_ids = request.POST.getlist('column_ids')
+        self.session.update_column_order(column_ids)
         return self.get(request, *args, **kwargs)
 
     @hq_hx_action('post')
     def remove_column(self, request, *args, **kwargs):
-        # todo
+        self.session.remove_column(request.POST['delete_id'])
         return self.get(request, *args, **kwargs)

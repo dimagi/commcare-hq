@@ -204,28 +204,28 @@ msgid "You have unsaved changes"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view.js
-#: corehq/apps/app_manager/static/app_manager/js/multimedia_size_util.js
-msgid "Oops, there was a problem loading this section. Please try again."
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js
 msgid "Select None"
 msgstr "Selecionar Nenhum"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Select All"
 msgstr "Selecionar tudo"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Application name is required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Project name is required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
 msgid "Invalid Project Selected"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_view.js
+#: corehq/apps/app_manager/static/app_manager/js/multimedia_size_util.js
+msgid "Oops, there was a problem loading this section. Please try again."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/case_claim.js
@@ -590,11 +590,6 @@ msgid "Select parent"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-msgid "Save Questions to Case Properties"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js
 msgid "Raw"
 msgstr ""
 
@@ -654,10 +649,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 msgid "You have unchanged user properties settings"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-msgid "Save Questions to User Properties"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
@@ -3794,6 +3785,14 @@ msgstr ""
 msgid "Request timed out. Max retries exceeded."
 msgstr ""
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/htmx_utils/errors.js
+msgid "Unknown Event"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/htmx_utils/errors.js
+msgid "Unknown Path"
+msgstr ""
+
 #: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js
 msgid "Items"
 msgstr ""
@@ -4233,7 +4232,8 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/base.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/base.js
-#: corehq/apps/userreports/static/userreports/js/configurable_report.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/configurable_report.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/configurable_report.js
 msgid "You can email a saved version<br />of this report."
 msgstr "Pode enviar por e-mail uma versão salva <br />deste relatório."
 
@@ -4590,41 +4590,70 @@ msgid ""
 "the dropdown in the top left."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/base.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/base.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/base.js
 msgid "Showing the current page of data. Switch pages to see more data."
 msgstr ""
 
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
+msgid "Linked projects"
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
+msgid "Projects to copy to"
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/configure_report.js
+#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
+msgid "Search projects"
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
-#: corehq/apps/userreports/static/userreports/js/report_config.js
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr ""
 
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
-#: corehq/apps/userreports/static/userreports/js/report_config.js
 msgid ""
 "Web users viewing the report will see this display text instead of the "
 "property name. Name your filter something easy for users to understand."
 msgstr ""
 
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
-#: corehq/apps/userreports/static/userreports/js/report_config.js
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this if the property is a date.<br/><strong>Choice</strong>: Select this if "
 "the property is text or multiple choice."
 msgstr ""
 
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
-#: corehq/apps/userreports/static/userreports/js/report_config.js
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this to filter the property by a date range.<br/><strong>Value</strong>: "
 "Select this to filter the property by a single value."
 msgstr ""
 
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
-#: corehq/apps/userreports/static/userreports/js/report_config.js
 msgid "What value or date range must the property be equal to?"
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/bootstrap3/ucr_expression.js
+#: corehq/apps/userreports/static/userreports/js/bootstrap5/ucr_expression.js
+msgid "Expression saved"
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
@@ -4652,27 +4681,8 @@ msgstr ""
 msgid "deactivated"
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/configure_report.js
-#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
-msgid "Linked projects"
-msgstr ""
-
-#: corehq/apps/userreports/static/userreports/js/configure_report.js
-#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
-msgid "Projects to copy to"
-msgstr ""
-
-#: corehq/apps/userreports/static/userreports/js/configure_report.js
-#: corehq/apps/userreports/static/userreports/js/edit_report_config.js
-msgid "Search projects"
-msgstr ""
-
 #: corehq/apps/userreports/static/userreports/js/expression_evaluator.js
 msgid "Unknown error"
-msgstr ""
-
-#: corehq/apps/userreports/static/userreports/js/ucr_expression.js
-msgid "Expression saved"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/edit_commcare_user.js

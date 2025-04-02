@@ -158,6 +158,18 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
             self.assertEqual(filters[index].prop_id, prop_id)
             self.assertEqual(filters[index].index, index)
 
+    def test_remove_column(self):
+        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        column_to_remove = session.columns.all()[1]  # owner_name
+        self.assertEqual(column_to_remove.prop_id, 'owner_name')
+        session.remove_column(column_to_remove.column_id)
+        columns = session.columns.all()
+        self.assertEqual(len(columns), 5)
+        for index, prop_id in enumerate(['name', 'date_opened', 'opened_by_username',
+                                         'last_modified', '@status']):
+            self.assertEqual(columns[index].prop_id, prop_id)
+            self.assertEqual(columns[index].index, index)
+
     def test_reorder_wrong_number_of_filter_ids_raises_error(self):
         session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
         session.add_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
@@ -190,6 +202,31 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         self.assertEqual(
             reordered_prop_ids,
             ['name', 'watered_on', 'num_leaves', 'height_cm', 'pot_type']
+        )
+
+    def test_reorder_wrong_number_of_column_ids_raises_error(self):
+        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        columns = session.columns.all()
+        new_order = [columns[1].column_id, columns[2].column_id]
+        with self.assertRaises(ValueError):
+            session.update_column_order(new_order)
+
+    def test_update_column_order(self):
+        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        columns = session.columns.all()
+        new_order = [
+            columns[1].column_id,
+            columns[0].column_id,
+            columns[2].column_id,
+            columns[4].column_id,
+            columns[5].column_id,
+            columns[3].column_id,
+        ]
+        session.update_column_order(new_order)
+        reordered_prop_ids = [c.prop_id for c in session.columns.all()]
+        self.assertEqual(
+            reordered_prop_ids,
+            ['owner_name', 'name', 'date_opened', 'last_modified', '@status', 'opened_by_username']
         )
 
     def test_get_queryset_multiple_filters(self):

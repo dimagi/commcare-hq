@@ -1,0 +1,13 @@
+{% load django_tables2 %}
+
+<input
+  id="{{ css_id }}"
+  class="form-check-input htmx-disable-on-select-page"
+  type="checkbox"
+  name="select_page"
+  hx-post="{{ request.path_info }}{% querystring %}"
+  hq-hx-action="{{ hq_hx_action }}"
+  hx-swap="none"
+  hx-disabled-elt=".htmx-disable-on-select-page"
+  {{ attrs.as_html }}
+/>
