@@ -16,6 +16,7 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
         'payment_verified',
         'payment_verified_by',
         'payment_status',
+        'kyc_status',
     ]
 
     record_class = CaseSearchElasticRecord
@@ -47,6 +48,9 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
     )
     user_or_case_id = columns.Column(
         verbose_name=_("User or Case ID"),
+    )
+    kyc_status = columns.Column(
+        verbose_name=_("KYC Status"),
     )
     payee_note = columns.Column(
         verbose_name=_("Payee Note"),
