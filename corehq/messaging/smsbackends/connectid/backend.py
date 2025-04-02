@@ -9,6 +9,7 @@ from corehq.apps.users.models import ConnectIDUserLink, CouchUser
 
 FCM_ANALYTICS_LABEL = "commcare-hq-message-notification"
 
+
 class ConnectBackend:
     couch_id = "connectid"
     opt_out_keywords = []
