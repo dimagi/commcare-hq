@@ -9,6 +9,7 @@ from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.integration.kyc.models import KycVerificationStatus, UserDataStore, KycConfig
 from corehq.apps.integration.payments.const import PaymentProperties, PaymentStatus
 from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.apps.integration.payments.views import (
@@ -94,6 +95,13 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
         super().setUpClass()
 
         cls.factory = CaseFactory(cls.domain)
+        cls.case_linked_to_payment_case = cls.factory.create_case(
+            case_name='test_case',
+            case_type='test',
+            update={
+                'kyc_verification_status': KycVerificationStatus.PASSED,
+            }
+        )
         cls.case_list = [
             _create_case(
                 cls.factory,
@@ -106,6 +114,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
                     'currency': 'Dollar',
                     'payee_note': 'Jan payment',
                     'payer_message': 'Thanks',
+                    PaymentProperties.USER_OR_CASE_ID: cls.case_linked_to_payment_case.case_id,
                 }),
             _create_case(
                 cls.factory,
@@ -151,6 +160,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
                     'currency': 'Dollar',
                     'payee_note': 'Jan payment',
                     'payer_message': 'Thanks',
+                    PaymentProperties.USER_OR_CASE_ID: self.case_linked_to_payment_case.case_id,
                 }
             else:
                 assert row.record.case.case_json == {
@@ -171,6 +181,25 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
         assert response.status_code == 200
         assert response.context['success_count'] == 2
         assert response.context['failure_count'] == 0
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_verification_status(self):
+        response = self._make_request()
+
+        # no kyc config
+        assert response.context_data['user_or_cases_verification_statuses'] == {}
+
+        KycConfig.objects.create(
+            domain=self.domain,
+            user_data_store=UserDataStore.OTHER_CASE_TYPE,
+            api_field_to_user_data_map=[],
+            other_case_type="test",
+        )
+        response = self._make_request()
+
+        assert response.context_data['user_or_cases_verification_statuses'] == {
+            self.case_linked_to_payment_case.case_id: KycVerificationStatus.PASSED
+        }
 
 
 @es_test(requires=[case_search_adapter], setup_class=True)
