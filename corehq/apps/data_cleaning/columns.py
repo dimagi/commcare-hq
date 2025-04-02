@@ -90,5 +90,4 @@ class DataCleaningHtmxSelectionColumn(CheckBoxColumn):
         )
 
     def is_checked(self, value, record):
-        # todo
-        return False
+        return self.session.is_record_selected(value)
