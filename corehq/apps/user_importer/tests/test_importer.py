@@ -2122,6 +2122,32 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
             {self.loc1._id, self.loc2._id}
         )
 
+    def test_invite_clear_locations(self):
+        self.setup_locations()
+        invite_spec = self._get_invited_spec()
+        invite = Invitation.objects.create(
+            email=invite_spec['email'],
+            invited_by='friend@country.com',
+            invited_on=datetime.datetime.utcnow(),
+            domain=self.domain.name,
+            primary_location=self.loc1,
+        )
+        invite.assigned_locations.set([self.loc1, self.loc2])
+
+        spec = self._get_invited_spec()
+        spec['location_codes'] = None
+        import_users_and_groups(
+            self.domain.name,
+            [spec],
+            [],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            True
+        )
+
+        self.assertIsNone(self.user_invite.primary_location.location_id)
+        self.assertEqual([loc.location_id for loc in self.user_invite.assigned_locations.all()], [])
+
     def setup_locations(self):
         self.loc1 = make_loc('loc1', type='state', domain=self.domain_name)
         self.loc2 = make_loc('loc2', type='state', domain=self.domain_name)
