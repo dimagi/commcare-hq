@@ -1,10 +1,13 @@
 import abc
 import json
+import os
 import re
 from functools import cached_property
 
 from django.conf import settings
+from django.core.management.base import BaseCommand, CommandError
 
+import gevent
 import polib
 import requests
 from memoized import memoized
@@ -395,3 +398,127 @@ class PoTranslationFormat(TranslationFormat):
     def format_output_description(self):
         return "Response: JSON object on the following format: " \
                "{\"0\":\"translated_message for key 0\", \"1\":\"translated_message for key 1\", ...}"
+
+
+class Command(BaseCommand):
+    help = 'Translate PO files using LLM models'
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--model',
+            type=str,
+            required=True,
+            help='LLM model to use for translation (e.g., gpt-4o-mini, gpt-4o, gpt-4, gpt-3.5-turbo)'
+        )
+        parser.add_argument(
+            '--langs',
+            type=str,
+            nargs='+',
+            help='Language codes to translate to. If not provided, uses all languages from settings.LANGUAGES'
+        )
+        parser.add_argument(
+            '--batch-size',
+            type=int,
+            default=30,
+            help='Number of messages to translate in each batch (default: 30)'
+        )
+        parser.add_argument(
+            '--api-key',
+            type=str,
+            help='API key for the LLM service. If not provided, will check settings.OPENAI_API_KEY or '
+                 'OPENAI_API_KEY env var'
+        )
+        parser.add_argument(
+            '--parallel-batches',
+            type=int,
+            default=10,
+            help='Number of batches to process in parallel (default: 10)'
+        )
+
+    def handle(self, *args, **options):
+        model = options['model']
+        langs = options['langs'] or [lang[0] for lang in settings.LANGUAGES]
+        batch_size = options['batch_size']
+        parallel_batches = options['parallel_batches']
+
+        api_key = options['api_key']
+        if not api_key:
+            api_key = getattr(settings, 'OPENAI_API_KEY', None)
+        if not api_key:
+            api_key = os.environ.get('OPENAI_API_KEY')
+        if not api_key:
+            raise CommandError(
+                "API key not found. Please provide it via:\n"
+                "1. --api-key command line argument\n"
+                "2. settings.OPENAI_API_KEY in Django settings\n"
+                "3. OPENAI_API_KEY environment variable"
+            )
+
+        self.stdout.write(f"Starting translation with model {model} for languages: {', '.join(langs)}")
+        self.stdout.write(f"Batch size: {batch_size}, Parallel batches: {parallel_batches}")
+
+        for lang in langs:
+            self.stdout.write(f"\nProcessing language: {lang}")
+            try:
+                self._translate_language(lang, model, api_key, batch_size, parallel_batches)
+            except Exception as e:
+                self.stderr.write(f"Error processing language {lang}: {str(e)}")
+
+    def _translate_language(self, lang, model, api_key, batch_size, parallel_batches):
+        po_file_path = f"locale/{lang}/LC_MESSAGES/django.po"
+        if not os.path.exists(po_file_path):
+            self.stderr.write(f"PO file not found: {po_file_path}")
+            return
+
+        translation_format = PoTranslationFormat(po_file_path)
+        translator = OpenaiTranslator(
+            api_key=api_key,
+            model=model,
+            lang=lang,
+            translation_format=translation_format
+        )
+
+        untranslated = translation_format.load_input()
+        if not untranslated:
+            self.stdout.write(f"No untranslated messages found for {lang}")
+            return
+
+        batches = translation_format.create_batches(untranslated, batch_size=batch_size)
+        self.stdout.write(f"Found {len(untranslated)} untranslated messages in {len(batches)} batches")
+
+        pool = gevent.pool.Pool(parallel_batches)
+        completed_batches = 0
+        total_batches = len(batches)
+
+        def process_batch(batch_data, batch_index):
+            try:
+                translation = translator.translate(batch_data)
+                if translation:
+                    self.stdout.write(f"Successfully translated batch {batch_index + 1}/{total_batches}")
+                    translation_format.save_output()
+                    return translation
+                else:
+                    self.stderr.write(f"No valid translations received for batch {batch_index + 1}")
+                    return {}
+            except Exception as e:
+                self.stderr.write(f"Error processing batch {batch_index + 1}: {str(e)}")
+                return {}
+
+        jobs = []
+        for i, batch in enumerate(batches):
+            job = pool.spawn(process_batch, batch, i)
+            jobs.append(job)
+
+        for job in jobs:
+            try:
+                result = job.get()
+                if result:
+                    completed_batches += 1
+            except Exception as e:
+                self.stderr.write(f"Error in batch processing: {str(e)}")
+
+        translation_format.save_output()
+        self.stdout.write(
+            f"Completed translation for {lang}. "
+            f"Successfully processed {completed_batches}/{total_batches} batches."
+        )
