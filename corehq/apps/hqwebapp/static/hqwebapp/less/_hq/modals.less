@@ -1,208 +1,208 @@
 .modal-body {
-    legend {
-        border-bottom: 1px solid @cc-bg;
-        font-size: 14px;
-        font-weight: 500;
-        border-bottom: 1px solid @cc-bg;
-        margin-bottom: 20px;
-        padding: 10px 0;
-    }
+  legend {
+    border-bottom: 1px solid @cc-bg;
+    font-size: 14px;
+    font-weight: 500;
+    border-bottom: 1px solid @cc-bg;
+    margin-bottom: 20px;
+    padding: 10px 0;
+  }
 }
 
 .modal-title {
-    font-size: 16px;
+  font-size: 16px;
 }
 
-.modal-header, .modal-footer {
-    border-width: 0;
+.modal-header,
+.modal-footer {
+  border-width: 0;
 }
 
 // Modal that takes up virtually the entire screen, with a variable amount of padding around it
 .absolute-center-modal(@spacing) {
-    .modal-dialog {
-        position: absolute;
-        top: @spacing;
-        bottom: @spacing;
-        left: @spacing;
-        right: @spacing;
-        margin: 0;
-        width: auto;
+  .modal-dialog {
+    position: absolute;
+    top: @spacing;
+    bottom: @spacing;
+    left: @spacing;
+    right: @spacing;
+    margin: 0;
+    width: auto;
 
-        .modal-content {
-            position: absolute;
-            top: @spacing;
-            bottom: @spacing;
-            left: @spacing;
-            right: @spacing;
+    .modal-content {
+      position: absolute;
+      top: @spacing;
+      bottom: @spacing;
+      left: @spacing;
+      right: @spacing;
 
-            // These styles, along with the body/header/footer ones below,
-            // allow the body to scroll vertically while the header and footer stay fixed
-            display: flex;
-            flex: auto;
-            flex-direction: column;
+      // These styles, along with the body/header/footer ones below,
+      // allow the body to scroll vertically while the header and footer stay fixed
+      display: flex;
+      flex: auto;
+      flex-direction: column;
 
-            .modal-body {
-                overflow-y: auto;
-                flex-grow: 1;
-            }
+      .modal-body {
+        overflow-y: auto;
+        flex-grow: 1;
+      }
 
-            .modal-header, .modal-footer {
-                flex-grow: 0;
-            }
-        }
+      .modal-header,
+      .modal-footer {
+        flex-grow: 0;
+      }
     }
+  }
 }
 
 .full-screen-modal {
-    .absolute-center-modal(20px);
+  .absolute-center-modal(20px);
 }
 
 .full-screen-no-background-modal {
-    .absolute-center-modal(0);
+  .absolute-center-modal(0);
 
-    .modal-dialog {
-        .modal-content {
-            border-radius: 0;
-            border: 0;
+  .modal-dialog {
+    .modal-content {
+      border-radius: 0;
+      border: 0;
 
-            .modal-body .video-container {
-                margin: 15px auto;
-                float: none;
-            }
-        }
+      .modal-body .video-container {
+        margin: 15px auto;
+        float: none;
+      }
     }
+  }
 }
 
 // Modal that has some kind of control (pagination, search box, etc.) in header or footer
-.modal-header.with-controls, .modal-footer.with-controls {
-    h4 {
-        margin-top: 3px;    // vertically align better with controls, which are taller than plain text
-    }
+.modal-header.with-controls,
+.modal-footer.with-controls {
+  h4 {
+    margin-top: 3px; // vertically align better with controls, which are taller than plain text
+  }
 
-    .close {
-        margin-left: 10px;
-    }
+  .close {
+    margin-left: 10px;
+  }
 
-    .nav-pills {
-        display: inline-block;
-        vertical-align: middle;
+  .nav-pills {
+    display: inline-block;
+    vertical-align: middle;
 
-        a {
-            padding: 6px 9px;
-        }
+    a {
+      padding: 6px 9px;
     }
+  }
 
-    .pagination {
-        margin: 0;
-    }
+  .pagination {
+    margin: 0;
+  }
 }
 
-
 .modal-primary {
-    .modal-header {
-        border-bottom: 4px solid @cc-brand-low;
-    }
+  .modal-header {
+    border-bottom: 4px solid @cc-brand-low;
+  }
 
-    .modal-content {
-        color: white;
-        background-color: @cc-brand-mid;
-    }
+  .modal-content {
+    color: white;
+    background-color: @cc-brand-mid;
+  }
 
-    .close {
-        color: white;
-        opacity: 1.0;
-    }
+  .close {
+    color: white;
+    opacity: 1;
+  }
 }
 
 .modal-force-show {
-    display: block;
-    opacity: 1.0;
+  display: block;
+  opacity: 1;
 
-    .modal-dialog {
-        -webkit-transform: translate(0, 0) !important;
-        -ms-transform: translate(0, 0) !important;
-        -o-transform: translate(0, 0) !important;
-        transform: translate(0, 0) !important;
-    }
+  .modal-dialog {
+    -webkit-transform: translate(0, 0) !important;
+    -ms-transform: translate(0, 0) !important;
+    -o-transform: translate(0, 0) !important;
+    transform: translate(0, 0) !important;
+  }
 }
 
 .add-new-module-modal {
+  .modal-header {
+    border-bottom: 1px solid lightgray;
+  }
 
-    .modal-header {
-        border-bottom: 1px solid lightgray;
+  .modal-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: -20px;
+    margin-bottom: 20px;
+    color: #676b70;
+  }
+
+  .modal-flex-container {
+    max-height: 400px;
+    // Make the container scrollable
+    overflow-y: auto;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    padding-top: 10px;
+    align-items: stretch;
+  }
+
+  .new-module-option {
+    display: flex;
+    flex-direction: column;
+    // 80px is the total width of the margin
+    width: calc((100% - 80px) / 2);
+    box-sizing: border-box;
+    background-color: transparent;
+    border: none;
+    color: lighten(@cc-text, 20);
+    margin: 20px;
+    margin-bottom: 0px;
+
+    &:hover {
+      .panel {
+        border: 1px solid @call-to-action-mid;
+      }
+
+      .panel-heading {
+        color: @call-to-action-mid;
+      }
+
+      [class*="fa-"] {
+        color: @call-to-action-mid;
+      }
     }
 
-    .modal-footer {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-top: -20px;
-        margin-bottom:20px;
-        color: #676B70;
+    .panel {
+      flex: 1; // Stretch the panel to match the button height
+      display: flex;
+      flex-direction: column;
     }
 
-    .modal-flex-container {
-        max-height: 400px;
-        // Make the container scrollable
-        overflow-y: auto;
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: flex-start;
-        padding-top: 10px;
-        align-items: stretch;
+    .panel-heading {
+      font-size: 1.5rem;
     }
 
-    .new-module-option {
-        display: flex;
-        flex-direction: column;
-        // 80px is the total width of the margin
-        width: calc((100% - 80px) / 2);
-        box-sizing: border-box;
-        background-color: transparent;
-        border: none;
-        color: lighten(@cc-text, 20);
-        margin: 20px;
-        margin-bottom: 0px;
-
-
-        &:hover {
-            .panel {
-            border: 1px solid @call-to-action-mid;
-            }
-
-            .panel-heading {
-            color: @call-to-action-mid;
-            }
-
-            [class*='fa-'] {
-            color: @call-to-action-mid;
-            }
-        }
-
-        .panel {
-            flex: 1; // Stretch the panel to match the button height
-            display: flex;
-            flex-direction: column;
-        }
-
-        .panel-heading {
-            font-size: 1.5rem;
-        }
-
-        .panel-body {
-            padding: 20px;
-        }
-
-        .panel .panel-body [class*='fa-'] {
-            font-size: 5rem;
-            display: block;
-            text-align: center;
-            width: 100%;
-        }
-
-        p {
-          margin: 10px 5px 0;
-        }
+    .panel-body {
+      padding: 20px;
     }
+
+    .panel .panel-body [class*="fa-"] {
+      font-size: 5rem;
+      display: block;
+      text-align: center;
+      width: 100%;
+    }
+
+    p {
+      margin: 10px 5px 0;
+    }
+  }
 }

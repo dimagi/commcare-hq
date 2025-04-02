@@ -1,101 +1,130 @@
 {% load i18n %}
 
-<div class="modal fade add-new-module-modal" id="add-new-module-modal" tabindex="-1" role="dialog" aria-labelledby="add-new-module">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          <h4 class="modal-title" id="modal-title">{% trans "Create a New Menu" %}</h4>
-        </div>
-        <div class="modal-body modal-flex-container">
-            <button type="button" class="new-module-option" data-type="survey">
-                <div class="panel panel-default">
-                    <div class="panel-heading">{% trans "Surveys" %}</div>
-                    <div class="panel-body">
-                        <i class="fa-regular fa-file"></i>
-                        <p>{% blocktrans %}Collect data once{% endblocktrans %}</p>
-                    </div>
-                </div>
-            </button>
-            <button type="button" class="new-module-option" data-type="case">
-                <div class="panel panel-default">
-                    <div class="panel-heading">{% trans "Case List" %}</div>
-                    <div class="panel-body">
-                        <i class="fa-solid fa-list-check"></i>
-                        <p>{% blocktrans %}Track items over time{% endblocktrans %}</p>
-                    </div>
-                </div>
-            </button>
-            {% if show_biometric %}
-            <button type="button" class="new-module-option" data-type="biometrics">
-                <div class="panel panel-default">
-                    <div class="panel-heading">{% trans "Biometrics" %}</div>
-                    <div class="panel-body">
-                        <i class="fcc fcc-app-biometrics"></i>
-                        <p>{% blocktrans %}Identify clients by fingerprint{% endblocktrans %}</p>
-                    </div>
-                </div>
-            </button>
-            {% endif %}
-            {% if show_advanced %}
-            <button type="button" class="new-module-option" data-type="advanced">
-                <div class="panel panel-default">
-                    <div class="panel-heading">{% trans "Advanced Menu" %}</div>
-                    <div class="panel-body">
-                        <i class="fa fa-flask"></i>
-                        <p>{% blocktrans %}Complex case management{% endblocktrans %}</p>
-                    </div>
-                </div>
-            </button>
-            {% endif %}
-            {% if show_report_modules %}
-            <button type="button" class="new-module-option" data-type="report">
-                <div class="panel panel-default">
-                    <div class="panel-heading">{% trans "Report Menu" %}</div>
-                    <div class="panel-body">
-                        <i class="fa-regular fa-chart-bar"></i>
-                        <p>{% blocktrans %}Worker performance{% endblocktrans %}</p>
-                    </div>
-                </div>
-            </button>
-            {% endif %}
-            {% if show_shadow_modules %}
-            <button type="button" class="new-module-option" data-type="shadow">
-                <div class="panel panel-default">
-                    <div class="panel-heading">{% trans "Shadow Menu" %}</div>
-                    <div class="panel-body">
-                        <i class="fa-regular fa-moon"></i>
-                        <p>{% blocktrans %}Mimic another menu{% endblocktrans %}</p>
-                    </div>
-                </div>
-            </button>
-            {% endif %}
-            {% if show_shadow_module_v1 %}
-            <button type="button" class="new-module-option" data-type="shadow-v1">
-                <div class="panel panel-default">
-                    <div class="panel-heading">{% trans "Shadow Menu V1" %}</div>
-                    <div class="panel-body">
-                        <i class="fa-regular fa-moon"></i>
-                        <p>{% blocktrans %}Old style shadow menu with deprecated child behaviour{% endblocktrans %}</p>
-                    </div>
-                </div>
-            </button>
-            {% endif %}
-            {% if show_training_modules %}
-            <button type="button" class="new-module-option" data-type="training">
-                <div class="panel panel-default">
-                    <div class="panel-heading">{% trans "Training" %}</div>
-                    <div class="panel-body">
-                        <i class="fa fa-graduation-cap"></i>
-                        <p>{% blocktrans %}Content for training users{% endblocktrans %}</p>
-                    </div>
-                </div>
-            </button>
-            {% endif %}
-        </div>
-        <div class="modal-footer">
-            {% trans "Please note you will not be able to change menu type later." %}
-        </div>
+<div
+  class="modal fade add-new-module-modal"
+  id="add-new-module-modal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="add-new-module"
+>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title" id="modal-title">
+          {% trans "Create a New Menu" %}
+        </h4>
+      </div>
+      <div class="modal-body modal-flex-container">
+        <button type="button" class="new-module-option" data-type="survey">
+          <div class="panel panel-default">
+            <div class="panel-heading">{% trans "Surveys" %}</div>
+            <div class="panel-body">
+              <i class="fa-regular fa-file"></i>
+              <p>{% blocktrans %}Collect data once{% endblocktrans %}</p>
+            </div>
+          </div>
+        </button>
+        <button type="button" class="new-module-option" data-type="case">
+          <div class="panel panel-default">
+            <div class="panel-heading">{% trans "Case List" %}</div>
+            <div class="panel-body">
+              <i class="fa-solid fa-list-check"></i>
+              <p>{% blocktrans %}Track items over time{% endblocktrans %}</p>
+            </div>
+          </div>
+        </button>
+        {% if show_biometric %}
+          <button
+            type="button"
+            class="new-module-option"
+            data-type="biometrics"
+          >
+            <div class="panel panel-default">
+              <div class="panel-heading">{% trans "Biometrics" %}</div>
+              <div class="panel-body">
+                <i class="fcc fcc-app-biometrics"></i>
+                <p>
+                  {% blocktrans %}Identify clients by fingerprint{% endblocktrans %}
+                </p>
+              </div>
+            </div>
+          </button>
+        {% endif %}
+        {% if show_advanced %}
+          <button type="button" class="new-module-option" data-type="advanced">
+            <div class="panel panel-default">
+              <div class="panel-heading">{% trans "Advanced Menu" %}</div>
+              <div class="panel-body">
+                <i class="fa fa-flask"></i>
+                <p>
+                  {% blocktrans %}Complex case management{% endblocktrans %}
+                </p>
+              </div>
+            </div>
+          </button>
+        {% endif %}
+        {% if show_report_modules %}
+          <button type="button" class="new-module-option" data-type="report">
+            <div class="panel panel-default">
+              <div class="panel-heading">{% trans "Report Menu" %}</div>
+              <div class="panel-body">
+                <i class="fa-regular fa-chart-bar"></i>
+                <p>{% blocktrans %}Worker performance{% endblocktrans %}</p>
+              </div>
+            </div>
+          </button>
+        {% endif %}
+        {% if show_shadow_modules %}
+          <button type="button" class="new-module-option" data-type="shadow">
+            <div class="panel panel-default">
+              <div class="panel-heading">{% trans "Shadow Menu" %}</div>
+              <div class="panel-body">
+                <i class="fa-regular fa-moon"></i>
+                <p>{% blocktrans %}Mimic another menu{% endblocktrans %}</p>
+              </div>
+            </div>
+          </button>
+        {% endif %}
+        {% if show_shadow_module_v1 %}
+          <button type="button" class="new-module-option" data-type="shadow-v1">
+            <div class="panel panel-default">
+              <div class="panel-heading">{% trans "Shadow Menu V1" %}</div>
+              <div class="panel-body">
+                <i class="fa-regular fa-moon"></i>
+                <p>
+                  {% blocktrans %}
+                    Old style shadow menu with deprecated child behaviour
+                  {% endblocktrans %}
+                </p>
+              </div>
+            </div>
+          </button>
+        {% endif %}
+        {% if show_training_modules %}
+          <button type="button" class="new-module-option" data-type="training">
+            <div class="panel panel-default">
+              <div class="panel-heading">{% trans "Training" %}</div>
+              <div class="panel-body">
+                <i class="fa fa-graduation-cap"></i>
+                <p>
+                  {% blocktrans %}Content for training users{% endblocktrans %}
+                </p>
+              </div>
+            </div>
+          </button>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        {% trans "Please note you will not be able to change menu type later." %}
       </div>
     </div>
   </div>
+</div>
