@@ -237,6 +237,15 @@ class BulkEditSession(models.Model):
     def get_num_selected_records(self):
         return self.records.filter(is_selected=True).count()
 
+    def is_record_selected(self, doc_id):
+        return BulkEditRecord.is_record_selected(self, doc_id)
+
+    def select_record(self, doc_id):
+        return BulkEditRecord.select_record(self, doc_id)
+
+    def deselect_record(self, doc_id):
+        return BulkEditRecord.deselect_record(self, doc_id)
+
     def update_result(self, record_count, form_id=None):
         result = self.result or {}
 
@@ -712,6 +721,43 @@ class BulkEditRecord(models.Model):
     is_selected = models.BooleanField(default=True)
     calculated_change_id = models.UUIDField(null=True, blank=True)
     calculated_properties = models.JSONField(null=True, blank=True)
+
+    @classmethod
+    def is_record_selected(self, session, doc_id):
+        return session.records.filter(
+            doc_id=doc_id,
+            is_selected=True,
+        ).exists()
+
+    @classmethod
+    def select_record(cls, session, doc_id):
+        try:
+            record = session.records.get(doc_id=doc_id)
+        except cls.DoesNotExist:
+            record = cls.objects.create(
+                session=session,
+                doc_id=doc_id,
+            )
+        if not record.is_selected:
+            record.is_selected = True
+            record.save()
+        return record
+
+    @classmethod
+    def deselect_record(cls, session, doc_id):
+        try:
+            record = session.records.get(doc_id=doc_id)
+        except cls.DoesNotExist:
+            return
+
+        if record.calculated_change_id is not None:
+            record.is_selected = False
+            record.save()
+        else:
+            record.delete()
+            record = None
+
+        return record
 
     @property
     def has_property_updates(self):
