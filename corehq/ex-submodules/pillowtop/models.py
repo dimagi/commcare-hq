@@ -1,6 +1,6 @@
 import json
 from django.db import models
-from kafka.common import TopicPartition
+from kafka import TopicPartition
 
 SEQUENCE_FORMATS = (
     ('text', 'text'),
