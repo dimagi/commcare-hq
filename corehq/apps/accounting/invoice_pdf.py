@@ -513,11 +513,9 @@ class InvoiceTemplate(object):
         left_x = inches(0.5)
 
         options = "PAYMENT OPTIONS:"
-        self.canvas.setFontSize(SMALL_FONT_SIZE)
-        options_text = Paragraph(options, ParagraphStyle(''))
+        options_text = Paragraph(options, ParagraphStyle('', fontSize=SMALL_FONT_SIZE))
         options_text.wrapOn(self.canvas, width, inches(.12))
         options_text.drawOn(self.canvas, left_x, inches(3.5))
-        self.canvas.setFontSize(DEFAULT_FONT_SIZE)
 
         if self.can_pay_by_wire:
             flywire = """<strong>International payments:</strong>
