@@ -1,9 +1,11 @@
 import datetime
+import uuid
 
 from django.contrib.auth.models import User
 from django.test import TestCase
 
 from corehq.apps.data_cleaning.models import (
+    BulkEditRecord,
     BulkEditSession,
     BulkEditSessionType,
     DataType,
@@ -363,3 +365,19 @@ class BulkEditSessionCaseColumnTests(BaseBulkEditSessionTest):
         self.assertEqual(new_column.label, "Owner ID")
         self.assertEqual(new_column.data_type, DataType.TEXT)
         self.assertTrue(new_column.is_system)
+
+
+class BulkEditSessionSelectionTests(BaseBulkEditSessionTest):
+    domain_name = 'session-test-selection'
+
+    def test_get_num_selected_records(self):
+        self.session.select_record(str(uuid.uuid4()))
+        self.session.select_record(str(uuid.uuid4()))
+        BulkEditRecord.objects.create(
+            session=self.session,
+            doc_id=str(uuid.uuid4()),
+            calculated_change_id=uuid.uuid4(),
+            is_selected=False,
+        )
+        num_selected_records = self.session.get_num_selected_records()
+        self.assertEqual(num_selected_records, 2)
