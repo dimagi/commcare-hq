@@ -141,7 +141,8 @@ class InvoiceTemplate(object):
                  swift_code=settings.BANK_SWIFT_CODE,
                  applied_credit=None,
                  subtotal=None, tax_rate=None, applied_tax=None, total=None,
-                 is_wire=False, is_customer=False, is_prepayment=False, account_name=''):
+                 is_wire=False, is_customer=False, is_prepayment=False, account_name='',
+                 can_pay_by_wire=False):
         self.canvas = Canvas(filename)
         self.canvas.setFontSize(DEFAULT_FONT_SIZE)
         self.logo_image = logo_image
@@ -169,6 +170,7 @@ class InvoiceTemplate(object):
         self.is_customer = is_customer
         self.is_prepayment = is_prepayment
         self.account_name = account_name
+        self.can_pay_by_wire = can_pay_by_wire
 
         self.items = []
 
@@ -539,23 +541,28 @@ class InvoiceTemplate(object):
         credit_card_text.wrapOn(self.canvas, width, inches(.5))
         credit_card_text.drawOn(self.canvas, left_x, inches(2.4))
 
-        ach_or_wire = """<strong>ACH or Wire:</strong> If you make payment via ACH
-                            or Wire, please make sure to email
+        ach_or_wire_lead = ("<strong>ACH or Wire:</strong> If you make payment via ACH or Wire"
+                            if self.can_pay_by_wire else "<strong>ACH:</strong> If you make payment via ACH")
+        ach_or_wire = """{ach_or_wire_lead}, please make sure to email
                             <font color='blue'>{invoicing_contact_email}</font>
                             so that we can match your payment to the correct invoice.  Please include:
                             Invoice No., Project Space, and payment date in the email. <br />""".format(
+            ach_or_wire_lead=ach_or_wire_lead,
             invoicing_contact_email=settings.INVOICING_CONTACT_EMAIL,
         )
         ach_or_wire_text = Paragraph(ach_or_wire, ParagraphStyle(''))
         ach_or_wire_text.wrapOn(self.canvas, width, inches(.5))
         ach_or_wire_text.drawOn(self.canvas, left_x, inches(1.7))
 
-        ach_payment_text = """<strong>ACH payment</strong>
-                            (preferred over wire payment for transfer in the US):<br />
+        ach_payment_lead = (
+            "<strong>ACH payment</strong> (preferred over wire payment for transfer in the US)"
+            if self.can_pay_by_wire else "<strong>ACH payment</strong>")
+        ach_payment_text = """{ach_payment_lead}:<br />
                             Bank: {bank_name}
                             Bank Address: {bank_address}
                             Account Number: {account_number}
                             Routing Number or ABA: {routing_number_ach}<br />""".format(
+            ach_payment_lead=ach_payment_lead,
             bank_name=self.bank_name,
             bank_address=self.bank_address,
             account_number=self.account_number,
@@ -575,7 +582,7 @@ class InvoiceTemplate(object):
         )
         payment_info2 = Paragraph('\n'.join([
             ach_payment_text,
-            wire_payment_text,
+            wire_payment_text if self.can_pay_by_wire else "",
         ]), ParagraphStyle(''))
         payment_info2.wrapOn(self.canvas, width - inches(0.1), inches(0.9))
         payment_info2.drawOn(self.canvas, inches(0.6), inches(0.5))
