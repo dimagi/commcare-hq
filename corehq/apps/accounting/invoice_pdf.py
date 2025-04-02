@@ -141,7 +141,8 @@ class InvoiceTemplate(object):
                  swift_code=settings.BANK_SWIFT_CODE,
                  applied_credit=None,
                  subtotal=None, tax_rate=None, applied_tax=None, total=None,
-                 is_wire=False, is_customer=False, is_prepayment=False, account_name=''):
+                 is_wire=False, is_customer=False, is_prepayment=False, account_name='',
+                 can_pay_by_wire=False):
         self.canvas = Canvas(filename)
         self.canvas.setFontSize(DEFAULT_FONT_SIZE)
         self.logo_image = logo_image
@@ -169,6 +170,7 @@ class InvoiceTemplate(object):
         self.is_customer = is_customer
         self.is_prepayment = is_prepayment
         self.account_name = account_name
+        self.can_pay_by_wire = can_pay_by_wire
 
         self.items = []
 
@@ -517,20 +519,21 @@ class InvoiceTemplate(object):
         options_text.drawOn(self.canvas, left_x, inches(3.5))
         self.canvas.setFontSize(DEFAULT_FONT_SIZE)
 
-        flywire = """<strong>International payments:</strong>
-                            Make payments in your local currency
-                            via bank transfer or credit card by following this link:
-                            <link href='{flywire_link}' color='blue'>{flywire_link}</link><br />""".format(
-            flywire_link="https://wl.flywire.com/?destination=DMG"
-        )
-        flywire_text = Paragraph(flywire, ParagraphStyle(''))
-        flywire_text.wrapOn(self.canvas, width, inches(.4))
-        flywire_text.drawOn(self.canvas, left_x, inches(2.95))
+        if self.can_pay_by_wire:
+            flywire = """<strong>International payments:</strong>
+                                Make payments in your local currency
+                                via bank transfer or credit card by following this link:
+                                <link href='{flywire_link}' color='blue'>{flywire_link}</link><br />""".format(
+                flywire_link="https://wl.flywire.com/?destination=DMG"
+            )
+            flywire_text = Paragraph(flywire, ParagraphStyle(''))
+            flywire_text.wrapOn(self.canvas, width, inches(.4))
+            flywire_text.drawOn(self.canvas, left_x, inches(2.95))
 
         from corehq.apps.domain.views.accounting import (
             DomainBillingStatementsView,
         )
-        credit_card = """<strong>Credit card payments (USD)</strong> can be made online here:<br />
+        credit_card = """<strong>Credit or debit card payments (USD)</strong> can be made online here:<br />
                             <link href='{payment_page}' color='blue'>{payment_page}</link><br />""".format(
             payment_page=absolute_reverse(
                 DomainBillingStatementsView.urlname, args=[self.project_name])
@@ -539,46 +542,47 @@ class InvoiceTemplate(object):
         credit_card_text.wrapOn(self.canvas, width, inches(.5))
         credit_card_text.drawOn(self.canvas, left_x, inches(2.4))
 
-        ach_or_wire = """<strong>ACH or Wire:</strong> If you make payment via ACH
-                            or Wire, please make sure to email
-                            <font color='blue'>{invoicing_contact_email}</font>
-                            so that we can match your payment to the correct invoice.  Please include:
-                            Invoice No., Project Space, and payment date in the email. <br />""".format(
-            invoicing_contact_email=settings.INVOICING_CONTACT_EMAIL,
-        )
-        ach_or_wire_text = Paragraph(ach_or_wire, ParagraphStyle(''))
-        ach_or_wire_text.wrapOn(self.canvas, width, inches(.5))
-        ach_or_wire_text.drawOn(self.canvas, left_x, inches(1.7))
+        if self.can_pay_by_wire:
+            ach_or_wire = """<strong>ACH or Wire:</strong> If you make payment via ACH
+                                or Wire, please make sure to email
+                                <font color='blue'>{invoicing_contact_email}</font>
+                                so that we can match your payment to the correct invoice.  Please include:
+                                Invoice No., Project Space, and payment date in the email. <br />""".format(
+                invoicing_contact_email=settings.INVOICING_CONTACT_EMAIL,
+            )
+            ach_or_wire_text = Paragraph(ach_or_wire, ParagraphStyle(''))
+            ach_or_wire_text.wrapOn(self.canvas, width, inches(.5))
+            ach_or_wire_text.drawOn(self.canvas, left_x, inches(1.7))
 
-        ach_payment_text = """<strong>ACH payment</strong>
-                            (preferred over wire payment for transfer in the US):<br />
-                            Bank: {bank_name}
-                            Bank Address: {bank_address}
-                            Account Number: {account_number}
-                            Routing Number or ABA: {routing_number_ach}<br />""".format(
-            bank_name=self.bank_name,
-            bank_address=self.bank_address,
-            account_number=self.account_number,
-            routing_number_ach=self.routing_number_ach
-        )
-        wire_payment_text = """<strong>Wire payment</strong>:<br />
-                            Bank: {bank_name}
-                            Bank Address: {bank_address}
-                            Account Number: {account_number}
-                            Routing Number or ABA: {routing_number_wire}
-                            Swift Code: {swift_code}<br/>""".format(
-            bank_name=self.bank_name,
-            bank_address=self.bank_address,
-            account_number=self.account_number,
-            routing_number_wire=self.routing_number_wire,
-            swift_code=self.swift_code
-        )
-        payment_info2 = Paragraph('\n'.join([
-            ach_payment_text,
-            wire_payment_text,
-        ]), ParagraphStyle(''))
-        payment_info2.wrapOn(self.canvas, width - inches(0.1), inches(0.9))
-        payment_info2.drawOn(self.canvas, inches(0.6), inches(0.5))
+            ach_payment_text = """<strong>ACH payment</strong>
+                                (preferred over wire payment for transfer in the US):<br />
+                                Bank: {bank_name}
+                                Bank Address: {bank_address}
+                                Account Number: {account_number}
+                                Routing Number or ABA: {routing_number_ach}<br />""".format(
+                bank_name=self.bank_name,
+                bank_address=self.bank_address,
+                account_number=self.account_number,
+                routing_number_ach=self.routing_number_ach
+            )
+            wire_payment_text = """<strong>Wire payment</strong>:<br />
+                                Bank: {bank_name}
+                                Bank Address: {bank_address}
+                                Account Number: {account_number}
+                                Routing Number or ABA: {routing_number_wire}
+                                Swift Code: {swift_code}<br/>""".format(
+                bank_name=self.bank_name,
+                bank_address=self.bank_address,
+                account_number=self.account_number,
+                routing_number_wire=self.routing_number_wire,
+                swift_code=self.swift_code
+            )
+            payment_info2 = Paragraph('\n'.join([
+                ach_payment_text,
+                wire_payment_text,
+            ]), ParagraphStyle(''))
+            payment_info2.wrapOn(self.canvas, width - inches(0.1), inches(0.9))
+            payment_info2.drawOn(self.canvas, inches(0.6), inches(0.5))
 
     def draw_table_with_header_and_footer(self, items):
         self.draw_header()
