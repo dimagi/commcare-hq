@@ -1,4 +1,4 @@
-/* globals require, WS4Redis */
+/* globals require */
 hqDefine("app_manager/js/forms/form_designer", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         appcues = hqImport('analytix/js/appcues'),
@@ -113,7 +113,6 @@ hqDefine("app_manager/js/forms/form_designer", function () {
                 define("jquery", [], function () { return window.jQuery; });
                 define("jquery.bootstrap", ["jquery"], function () {});
                 define("underscore", [], function () { return window._; });
-                define("moment", [], function () { return window.moment; });
                 define("vellum/hqAnalytics", [], function () {
                     function workflow(message) {
                         hqImport('analytix/js/kissmetrix').track.event(message);
@@ -149,22 +148,11 @@ hqDefine("app_manager/js/forms/form_designer", function () {
                     },
                 });
 
-                require(["jquery", "jquery.vellum", "moment"], function ($) {
+                require(["jquery", "jquery.vellum"], function ($) {
                     $(function () {
                         $("#edit").hide();
                         $('#hq-footer').hide();
                         $('#formdesigner').vellum(VELLUM_OPTIONS);
-                        var notificationOptions = initialPageData.get("notification_options");
-                        if (notificationOptions) {
-                            var notifications = hqImport('app_manager/js/forms/app_notifications'),
-                                vellum = $("#formdesigner").vellum("get");
-                            // initialize redis
-                            WS4Redis({
-                                uri: notificationOptions.WEBSOCKET_URI + notificationOptions.notify_facility + '?subscribe-broadcast',
-                                receive_message: notifications.alertUser(notificationOptions.user_id, vellum.alertUser, vellum),
-                                heartbeat_msg: notificationOptions.WS4REDIS_HEARTBEAT,
-                            });
-                        }
                     });
                 });
                 hqImport('analytix/js/kissmetrix').track.event('Entered the Form Builder');
@@ -191,8 +179,7 @@ hqDefine("app_manager/js/forms/form_designer", function () {
                         '.fd-form-actions',
                         $('#js-fd-form-actions').html(),
                         0,
-                        function () {
-                        },
+                        function () { },
                     );
                 }
 

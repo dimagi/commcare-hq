@@ -1,7 +1,6 @@
 --- 
 +++ 
-@@ -1,11 +1,11 @@
- 'use strict';
+@@ -1,10 +1,10 @@
 -hqDefine("domain/js/bootstrap3/billing_statements", [
 +hqDefine("domain/js/bootstrap5/billing_statements", [
      'jquery',
@@ -11,6 +10,6 @@
      'accounting/js/payment_method_handler',
 -    'hqwebapp/js/bootstrap3/crud_paginated_list',
 +    'hqwebapp/js/bootstrap5/crud_paginated_list',
-     'stripe',
+     'commcarehq',
  ], function (
      $,

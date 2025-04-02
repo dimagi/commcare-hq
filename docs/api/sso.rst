@@ -14,7 +14,7 @@ Endpoint Specifications
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/[version]/sso/
+    https://www.commcarehq.org/a/[domain]/api/sso/v1/
 
 **Authentication**
     Post a URL-encoded username and password, such as:

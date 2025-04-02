@@ -1,9 +1,11 @@
 import datetime
+import uuid
 
 from django.contrib.auth.models import User
 from django.test import TestCase
 
 from corehq.apps.data_cleaning.models import (
+    BulkEditRecord,
     BulkEditSession,
     BulkEditSessionType,
     DataType,
@@ -158,6 +160,18 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
             self.assertEqual(filters[index].prop_id, prop_id)
             self.assertEqual(filters[index].index, index)
 
+    def test_remove_column(self):
+        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        column_to_remove = session.columns.all()[1]  # owner_name
+        self.assertEqual(column_to_remove.prop_id, 'owner_name')
+        session.remove_column(column_to_remove.column_id)
+        columns = session.columns.all()
+        self.assertEqual(len(columns), 5)
+        for index, prop_id in enumerate(['name', 'date_opened', 'opened_by_username',
+                                         'last_modified', '@status']):
+            self.assertEqual(columns[index].prop_id, prop_id)
+            self.assertEqual(columns[index].index, index)
+
     def test_reorder_wrong_number_of_filter_ids_raises_error(self):
         session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
         session.add_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
@@ -190,6 +204,31 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         self.assertEqual(
             reordered_prop_ids,
             ['name', 'watered_on', 'num_leaves', 'height_cm', 'pot_type']
+        )
+
+    def test_reorder_wrong_number_of_column_ids_raises_error(self):
+        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        columns = session.columns.all()
+        new_order = [columns[1].column_id, columns[2].column_id]
+        with self.assertRaises(ValueError):
+            session.update_column_order(new_order)
+
+    def test_update_column_order(self):
+        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        columns = session.columns.all()
+        new_order = [
+            columns[1].column_id,
+            columns[0].column_id,
+            columns[2].column_id,
+            columns[4].column_id,
+            columns[5].column_id,
+            columns[3].column_id,
+        ]
+        session.update_column_order(new_order)
+        reordered_prop_ids = [c.prop_id for c in session.columns.all()]
+        self.assertEqual(
+            reordered_prop_ids,
+            ['owner_name', 'name', 'date_opened', 'last_modified', '@status', 'opened_by_username']
         )
 
     def test_get_queryset_multiple_filters(self):
@@ -274,3 +313,71 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         self.assertTrue(session.has_any_filtering)
         session.reset_filtering()
         self.assertFalse(session.has_any_filtering)
+
+
+class BaseBulkEditSessionTest(TestCase):
+    domain_name = None
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.domain = create_domain(cls.domain_name)
+        cls.addClassCleanup(cls.domain.delete)
+
+        cls.web_user = WebUser.create(
+            cls.domain.name, 'tester@datacleaning.org', 'testpwd', None, None
+        )
+        cls.django_user = User.objects.get(username=cls.web_user.username)
+        cls.addClassCleanup(cls.web_user.delete, cls.domain.name, deleted_by=None)
+
+        cls.case_type = 'plant-friend'
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+
+    def setUp(self):
+        super().setUp()
+        self.session = BulkEditSession.new_case_session(
+            self.django_user, self.domain_name, self.case_type
+        )
+
+
+class BulkEditSessionCaseColumnTests(BaseBulkEditSessionTest):
+    domain_name = 'session-test-case-columns'
+
+    def test_add_column(self):
+        self.assertEqual(self.session.columns.count(), 6)
+        new_column = self.session.add_column('num_leaves', "Number of Leaves", DataType.INTEGER)
+        self.assertEqual(new_column.index, 6)
+        self.assertEqual(self.session.columns.count(), 7)
+        self.assertEqual(new_column.prop_id, 'num_leaves')
+        self.assertEqual(new_column.label, "Number of Leaves")
+        self.assertEqual(new_column.data_type, DataType.INTEGER)
+        self.assertFalse(new_column.is_system)
+
+    def test_add_system_column(self):
+        new_column = self.session.add_column('@owner_id', "Owner ID", DataType.INTEGER)
+        self.assertEqual(new_column.index, 6)
+        self.assertEqual(self.session.columns.count(), 7)
+        self.assertEqual(new_column.prop_id, '@owner_id')
+        self.assertEqual(new_column.label, "Owner ID")
+        self.assertEqual(new_column.data_type, DataType.TEXT)
+        self.assertTrue(new_column.is_system)
+
+
+class BulkEditSessionSelectionTests(BaseBulkEditSessionTest):
+    domain_name = 'session-test-selection'
+
+    def test_get_num_selected_records(self):
+        self.session.select_record(str(uuid.uuid4()))
+        self.session.select_record(str(uuid.uuid4()))
+        BulkEditRecord.objects.create(
+            session=self.session,
+            doc_id=str(uuid.uuid4()),
+            calculated_change_id=uuid.uuid4(),
+            is_selected=False,
+        )
+        num_selected_records = self.session.get_num_selected_records()
+        self.assertEqual(num_selected_records, 2)

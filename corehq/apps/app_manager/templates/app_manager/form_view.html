@@ -6,7 +6,8 @@
 
 {% block title %}{# controlled by app_manager/js/form_view.js #}{% endblock %}
 
-{% block stylesheets %}{{ block.super }}
+{% block stylesheets %}
+  {{ block.super }}
   <style>
     .nodeset {
       min-width: 400px;
@@ -14,13 +15,15 @@
   </style>
 {% endblock %}
 
-{% block js %}{{ block.super }}
+{% block js %}
+  {{ block.super }}
   {% compress js %}
     <script src="{% static 'app_manager/js/forms/form_view.js' %}"></script>
   {% endcompress %}
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
+{% block js-inline %}
+  {{ block.super }}
   {% compress js %}
     <script src="{% static 'app_manager/js/forms/case_knockout_bindings.js' %}"></script>
     <script src="{% static 'app_manager/js/case_config_utils.js' %}"></script>
@@ -53,7 +56,6 @@
   {% compress js %}
     <script src="{% static 'cloudcare/js/formplayer/utils/utils.js' %}"></script>
   {% endcompress %}
-
   {% include "app_manager/partials/xpathValidator.html" %}
   {% compress js %}
     <script src="{% static 'hqmedia/js/uploaders.js' %}"></script>
@@ -62,7 +64,7 @@
     <script src="{% static 'app_manager/js/nav_menu_media.js' %}"></script>
     <script src="{% static 'app_manager/js/forms/form_workflow.js' %}"></script>
   {% endcompress %}
-  {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
+  {% if request|toggle_enabled:"CUSTOM_INSTANCES" %}
     {% compress js %}
       <script src="{% static 'app_manager/js/forms/custom_instances.js' %}"></script>
     {% endcompress %}
@@ -77,7 +79,10 @@
 {% block pre_form_content %}
   <div class="appmanager-page-actions">
     {% include 'app_manager/partials/app_summary_button.html' %}
-    <a class="btn btn-primary" href="{% url "form_source" domain app.id form.unique_id %}">
+    <a
+      class="btn btn-default"
+      href="{% url "form_source" domain app.id form.unique_id %}"
+    >
       <i class="fa fa-pencil"></i> {% trans "Edit Form" %}
     </a>
   </div>
@@ -97,7 +102,8 @@
   </div>
 
   <div class="appmanager-edit-description">
-    <inline-edit params="
+    <inline-edit
+      params="
           name: 'comment',
           id:'comment-id',
           value: '{{ form.comment|escapejs }}',
@@ -106,7 +112,8 @@
           saveValueName: 'comment',
           cols: 50,
           disallow_edit: {{ request.couch_user.can_edit_apps|yesno:"false,true" }},
-      "></inline-edit>
+      "
+    ></inline-edit>
   </div>
 
   <div id="build_errors"></div>
@@ -157,10 +164,13 @@
 
   <div class="tabbable appmanager-tabs-container">
     <ul class="nav nav-tabs sticky-tabs">
-
       {% if form.uses_cases %}
         <li>
-          <a id="case-configuration-tab" href="#case-configuration" data-toggle="tab">
+          <a
+            id="case-configuration-tab"
+            href="#case-configuration"
+            data-toggle="tab"
+          >
             {% trans "Case Management" %}
           </a>
         </li>
@@ -172,7 +182,11 @@
 
       {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
         <li>
-          <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
+          <a
+            id="usercase-configuration-tab"
+            href="#usercase-configuration"
+            data-toggle="tab"
+          >
             {% trans "User Properties" %}
           </a>
         </li>
@@ -198,7 +212,6 @@
     {% include 'app_manager/partials/forms/case_config_ko_templates.html' %}
 
     <div class="tab-content appmanager-tab-content">
-
       {% if form.uses_cases %}
         <div class="tab-pane" id="case-configuration">
           {% if xform_validation_missing %}
@@ -210,12 +223,24 @@
             <div class="alert alert-warning">
               {% trans "You are viewing a shadow form, therefore:" %}
               <ul>
-                <li>{% trans 'You will be unable to add "Open case" action' %}</li>
-                <li>{% trans 'Load/Update actions will be "merged" with the source form actions'%}</li>
-                <li>{% trans 'Every case tag in the source form load/update action configuration must appear in this configuration'%}</li>
-                <li>{% trans 'You are not allowed to specify load or save case properties'%}</li>
-                <li>{% trans 'The load and save case property behaviors specified in the shadow source form actions will be used for the actions with matching case tags specified here.'%}</li>
-                <li>{% trans 'You are not allowed to specify case closures here'%}</li>
+                <li>
+                  {% trans 'You will be unable to add "Open case" action' %}
+                </li>
+                <li>
+                  {% trans 'Load/Update actions will be "merged" with the source form actions' %}
+                </li>
+                <li>
+                  {% trans 'Every case tag in the source form load/update action configuration must appear in this configuration' %}
+                </li>
+                <li>
+                  {% trans 'You are not allowed to specify load or save case properties' %}
+                </li>
+                <li>
+                  {% trans 'The load and save case property behaviors specified in the shadow source form actions will be used for the actions with matching case tags specified here.' %}
+                </li>
+                <li>
+                  {% trans 'You are not allowed to specify case closures here' %}
+                </li>
               </ul>
             </div>
           {% endif %}
@@ -240,11 +265,9 @@
         </div>
       {% endif %}
 
-
       {% if nav_form %}
         {% include "app_manager/partials/forms/form_tab_settings.html" %}
       {% endif %}
-
 
       {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
         <div class="tab-pane" id="usercase-configuration">
@@ -255,27 +278,39 @@
           {% elif form.source %}
             <div class="casexml" id="usercasexml_home">
               {% block usercase_management_content %}
-                {%  if form.uses_usercase and not allow_usercase %}
+                {% if form.uses_usercase and not allow_usercase %}
                   <div>
-                    <p>{% blocktrans %}
-                      The User Properties feature is no longer available because of the change in your
-                      CommCare subscription. Although currently-deployed applications will still
-                      function properly, it will not be possible to update or redeploy them unless
-                      the User Properties functionality is removed, or you upgrade your CommCare
-                      subscription.
-                    {% endblocktrans %}</p>
+                    <p>
+                      {% blocktrans %}
+                        The User Properties feature is no longer available
+                        because of the change in your CommCare subscription.
+                        Although currently-deployed applications will still
+                        function properly, it will not be possible to update or
+                        redeploy them unless the User Properties functionality
+                        is removed, or you upgrade your CommCare subscription.
+                      {% endblocktrans %}
+                    </p>
 
-                    <p class="alert alert-danger">{% blocktrans %}
-                      WARNING: By clicking "Remove User Properties" you will lose User Properties
-                      functionality if you redeploy your application. However, you will still be
-                      able to see all previously collected data.
-                    {% endblocktrans %}</p>
+                    <p class="alert alert-danger">
+                      {% blocktrans %}
+                        WARNING: By clicking "Remove User Properties" you will
+                        lose User Properties functionality if you redeploy your
+                        application. However, you will still be able to see all
+                        previously collected data.
+                      {% endblocktrans %}
+                    </p>
 
                     <p>
-                      <a href="{% url 'domain_select_plan' domain %}" class="btn btn-primary">
+                      <a
+                        href="{% url 'domain_select_plan' domain %}"
+                        class="btn btn-primary"
+                      >
                         {% trans "Change your subscription" %}
                       </a>
-                      <a href="{% url 'drop_usercase' domain app.id %}" class="btn btn-danger">
+                      <a
+                        href="{% url 'drop_usercase' domain app.id %}"
+                        class="btn btn-danger"
+                      >
                         {% trans "Remove User Properties" %}
                       </a>
                     </p>
@@ -293,7 +328,7 @@
       {% endif %}{% endif %}
 
       {% if form.form_type == 'advanced_form' or form.form_type == "shadow_form" %}
-        {% if module.has_schedule  %}
+        {% if module.has_schedule %}
           {% include "app_manager/partials/forms/form_tab_visit_scheduler.html" %}
         {% endif %}
       {% endif %}
@@ -305,7 +340,8 @@
   <div id="questions"></div>
 {% endblock %}
 
-{% block modals %}{{ block.super }}
+{% block modals %}
+  {{ block.super }}
   {% include "app_manager/partials/forms/form_view_modals.html" %}
   {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.icon.slug type="image" %}
   {% include "hqmedia/partials/multimedia_uploader.html" with id=multimedia.upload_managers.audio.slug type="audio" %}

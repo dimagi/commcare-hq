@@ -21,7 +21,8 @@ urlpatterns = [
     url(r'^broadcasts/$', BroadcastListView.as_view(), name=BroadcastListView.urlname),
     url(r'^broadcasts/add/$', waf_allow('XSS_BODY')(CreateScheduleView.as_view()),
         name=CreateScheduleView.urlname),
-    url(r'^broadcasts/edit/(?P<broadcast_type>[\w-]+)/(?P<broadcast_id>[\w-]+)/$', EditScheduleView.as_view(),
+    url(r'^broadcasts/edit/(?P<broadcast_type>[\w-]+)/(?P<broadcast_id>[\w-]+)/$',
+        waf_allow('XSS_BODY')(EditScheduleView.as_view()),
         name=EditScheduleView.urlname),
     url(r'^conditional/$', ConditionalAlertListView.as_view(), name=ConditionalAlertListView.urlname),
     # System URL only, to enabling data refresh without logging as user activity

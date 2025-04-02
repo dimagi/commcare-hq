@@ -1,14 +1,4 @@
-import datetime
-import json
-
 from django.utils.translation import gettext as _
-
-from redis import ConnectionError
-from ws4redis.publisher import RedisPublisher
-from ws4redis.redis_store import RedisMessage
-
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.parsing import json_format_datetime
 
 
 def notify_form_opened(domain, couch_user, app_id, form_unique_id):
@@ -24,19 +14,8 @@ def notify_form_changed(domain, couch_user, app_id, form_unique_id):
 
 
 def notify_event(domain, couch_user, app_id, form_unique_id, message):
-    message_obj = RedisMessage(json.dumps({
-        'domain': domain,
-        'user_id': couch_user._id,
-        'username': couch_user.username,
-        'text': message,
-        'timestamp': json_format_datetime(datetime.datetime.utcnow()),
-    }))
-    try:
-        RedisPublisher(
-            facility=get_facility_for_form(domain, app_id, form_unique_id), broadcast=True
-        ).publish_message(message_obj)
-    except ConnectionError:
-        notify_exception(None, "Redis pub-sub error")
+    # Do nothing. This function will be removed in https://github.com/dimagi/commcare-hq/pull/35881
+    pass
 
 
 def get_facility_for_form(domain, app_id, form_unique_id):

@@ -136,7 +136,7 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-zookeeper:}/opt/zookeeper-3.7/data
 
   kafka:
-    image: docker.io/confluentinc/cp-kafka:7.2.2 # kafka v3.2.2
+    image: docker.io/confluentinc/cp-kafka:7.2.14  # Kafka v3.2.3
     expose:
       - "9092"
     environment:

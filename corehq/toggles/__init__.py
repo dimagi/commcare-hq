@@ -1174,13 +1174,6 @@ PAUSE_DATA_FORWARDING = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-PERSISTENT_MENU_SETTING = StaticToggle(
-    "persistent_menu_setting",
-    "Show Persistent Menu option in Web Apps settings",
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 
 def _ensure_search_index_is_enabled(domain, enabled):
     from corehq.apps.case_search.tasks import reindex_case_search_for_domain
@@ -3039,13 +3032,6 @@ MTN_MOBILE_WORKER_VERIFICATION = StaticToggle(
 ACTIVATE_DATADOG_APM_TRACES = StaticToggle(
     slug='activate_datadog_apm_traces',
     label='USH: Turn on Datadog APM traces for a project.',
-    tag=TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
-)
-
-USH_DISABLE_INTERVAL_SYNC = StaticToggle(
-    slug='ush_disable_interval_sync',
-    label='Disable interval sync',
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )

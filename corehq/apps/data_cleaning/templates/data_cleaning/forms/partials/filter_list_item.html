@@ -1,5 +1,5 @@
 {% load i18n %}
-{% load data_cleaning_filters %}
+{% load data_cleaning %}
 
 <a href="#" class="list-group-item list-group-item-action">
   <div class="d-flex">
@@ -22,13 +22,8 @@
           </span>
         </div>
         {% if filter.value %}
-          <div
-            class="ps-2"
-            aria-label="{{ filter.human_readable_data_type }}"
-            data-bs-title="{{ filter.human_readable_data_type }}"
-            x-tooltip=""
-          >
-            {{ filter|dc_filter_icon }}
+          <div class="ps-2">
+            {{ filter.data_type|dc_data_type_icon }}
           </div>
           <div class="ps-2">
             {{ filter|dc_filter_value }}

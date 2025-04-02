@@ -14,8 +14,16 @@ class TestKycVerifyTable(SimpleTestCase):
             domain=cls.domain,
             user_data_store=UserDataStore.CUSTOM_USER_DATA,
             api_field_to_user_data_map={
-                'pants_type': 'apple_bottom_jeans',
-                'shoe_type': 'boots_with_fur',
+                'pants_type': {
+                    'data_field': 'apple_bottom_jeans'
+                },
+                'shoe_type': {
+                    'data_field': 'boots_with_fur'
+                },
+                'incorrect_field': {
+                    'data_feild': 'bar'
+                },
+                'no_dict_field': 'no_dict_field',
             }
         )
 

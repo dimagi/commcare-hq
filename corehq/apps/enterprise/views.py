@@ -247,17 +247,22 @@ def enterprise_settings(request, domain):
         form = EnterpriseSettingsForm(domain=domain, account=request.account, username=request.user.username,
                                       export_settings=export_settings)
 
-    context = {
+    context = get_page_context(
+        page_url=reverse('enterprise_settings', args=(domain,)),
+        page_title=_('Enterprise Settings'),
+        page_name=_('Enterprise Settings'),
+        domain=domain,
+        section=Section(
+            _('Enterprise Console'),
+            reverse('platform_overview', args=(domain,)),
+        ),
+    )
+    context.update({
         'account': request.account,
         'accounts_email': settings.ACCOUNTS_EMAIL,
-        'domain': domain,
         'restrict_signup': request.POST.get('restrict_signup', request.account.restrict_signup),
-        'current_page': {
-            'title': _('Enterprise Settings'),
-            'page_name': _('Enterprise Settings'),
-        },
         'settings_form': form,
-    }
+    })
     return render(request, "enterprise/enterprise_settings.html", context)
 
 
@@ -365,10 +370,8 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
     def page_context(self):
         pagination_context = self.pagination_context
         pagination_context.update({
-            'stripe_options': {
-                'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
-                'stripe_cards': self.stripe_cards,
-            },
+            'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
+            'stripe_cards': self.stripe_cards,
             'payment_error_messages': PAYMENT_ERROR_MESSAGES,
             'payment_urls': {
                 'process_invoice_payment_url': reverse(
@@ -464,18 +467,23 @@ def enterprise_permissions(request, domain):
     all_domains = set(config.account.get_domains())
     ignored_domains = all_domains - set(config.domains) - {config.source_domain}
 
-    context = {
-        'domain': domain,
+    context = get_page_context(
+        page_url=reverse('enterprise_permissions', args=(domain,)),
+        page_title=_('Enterprise Permissions'),
+        page_name=_('Enterprise Permissions'),
+        domain=domain,
+        section=Section(
+            _('Enterprise Console'),
+            reverse('platform_overview', args=(domain,)),
+        ),
+    )
+    context.update({
         'all_domains': sorted(all_domains),
         'is_enabled': config.is_enabled,
         'source_domain': config.source_domain,
         'ignored_domains': sorted(list(ignored_domains)),
         'controlled_domains': sorted(config.domains),
-        'current_page': {
-            'page_name': _('Enterprise Permissions'),
-            'title': _('Enterprise Permissions'),
-        }
-    }
+    })
     return render(request, "enterprise/enterprise_permissions.html", context)
 
 
