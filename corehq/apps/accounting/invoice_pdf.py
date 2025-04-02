@@ -521,16 +521,27 @@ class InvoiceTemplate(object):
         footer_items.append(options_text)
 
         if self.can_pay_by_wire:
-            flywire = """<strong>International payments:</strong>
-                                Make payments in your local currency
-                                via bank transfer or credit card by following this link:
-                                <link href='{flywire_link}' color='blue'>{flywire_link}</link><br />""".format(
-                flywire_link="https://wl.flywire.com/?destination=DMG"
-            )
-            flywire_text = Paragraph(flywire, text_style)
-            flywire_text.wrapOn(self.canvas, width, inches(.4))
-            footer_items.append(flywire_text)
+            self._add_flywire_footer_item(footer_items, width, text_style)
 
+        self._add_credit_card_footer_item(footer_items, width, text_style)
+
+        if self.can_pay_by_wire:
+            self._add_ach_and_wire_footer_items(footer_items, width, text_style)
+
+        footer_frame.addFromList(footer_items, self.canvas)
+
+    def _add_flywire_footer_item(self, items, width, text_style):
+        flywire = """<strong>International payments:</strong>
+                        Make payments in your local currency
+                        via bank transfer or credit card by following this link:
+                        <link href='{flywire_link}' color='blue'>{flywire_link}</link><br />""".format(
+            flywire_link="https://wl.flywire.com/?destination=DMG"
+        )
+        flywire_text = Paragraph(flywire, text_style)
+        flywire_text.wrapOn(self.canvas, width, inches(.4))
+        items.append(flywire_text)
+
+    def _add_credit_card_footer_item(self, items, width, text_style):
         from corehq.apps.domain.views.accounting import (
             DomainBillingStatementsView,
         )
@@ -541,51 +552,49 @@ class InvoiceTemplate(object):
         )
         credit_card_text = Paragraph(credit_card, text_style)
         credit_card_text.wrapOn(self.canvas, width, inches(.5))
-        footer_items.append(credit_card_text)
+        items.append(credit_card_text)
 
-        if self.can_pay_by_wire:
-            ach_or_wire = """<strong>ACH or Wire:</strong> If you make payment via ACH
-                                or Wire, please make sure to email
-                                <font color='blue'>{invoicing_contact_email}</font>
-                                so that we can match your payment to the correct invoice.  Please include:
-                                Invoice No., Project Space, and payment date in the email. <br />""".format(
-                invoicing_contact_email=settings.INVOICING_CONTACT_EMAIL,
-            )
-            ach_or_wire_text = Paragraph(ach_or_wire, text_style)
-            ach_or_wire_text.wrapOn(self.canvas, width, inches(.5))
-            footer_items.append(ach_or_wire_text)
+    def _add_ach_and_wire_footer_items(self, items, width, text_style):
+        ach_or_wire = """<strong>ACH or Wire:</strong> If you make payment via ACH
+                            or Wire, please make sure to email
+                            <font color='blue'>{invoicing_contact_email}</font>
+                            so that we can match your payment to the correct invoice.  Please include:
+                            Invoice No., Project Space, and payment date in the email. <br />""".format(
+            invoicing_contact_email=settings.INVOICING_CONTACT_EMAIL,
+        )
+        ach_or_wire_text = Paragraph(ach_or_wire, text_style)
+        ach_or_wire_text.wrapOn(self.canvas, width, inches(.5))
+        items.append(ach_or_wire_text)
 
-            payment_detail_text_style = ParagraphStyle('', spaceBefore=inches(0.05), leftIndent=inches(0.1))
-            ach_payment = """<strong>ACH payment</strong>
-                                (preferred over wire payment for transfer in the US):<br />
-                                Bank: {bank_name}
-                                Bank Address: {bank_address}
-                                Account Number: {account_number}
-                                Routing Number or ABA: {routing_number_ach}<br />""".format(
-                bank_name=self.bank_name,
-                bank_address=self.bank_address,
-                account_number=self.account_number,
-                routing_number_ach=self.routing_number_ach
-            )
-            ach_payment_text = Paragraph(ach_payment, payment_detail_text_style)
-            footer_items.append(ach_payment_text)
+        payment_detail_text_style = ParagraphStyle('', spaceBefore=inches(0.05), leftIndent=inches(0.1))
+        ach_payment = """<strong>ACH payment</strong>
+                            (preferred over wire payment for transfer in the US):<br />
+                            Bank: {bank_name}
+                            Bank Address: {bank_address}
+                            Account Number: {account_number}
+                            Routing Number or ABA: {routing_number_ach}<br />""".format(
+            bank_name=self.bank_name,
+            bank_address=self.bank_address,
+            account_number=self.account_number,
+            routing_number_ach=self.routing_number_ach
+        )
+        ach_payment_text = Paragraph(ach_payment, payment_detail_text_style)
+        items.append(ach_payment_text)
 
-            wire_payment = """<strong>Wire payment</strong>:<br />
-                                Bank: {bank_name}
-                                Bank Address: {bank_address}
-                                Account Number: {account_number}
-                                Routing Number or ABA: {routing_number_wire}
-                                Swift Code: {swift_code}<br/>""".format(
-                bank_name=self.bank_name,
-                bank_address=self.bank_address,
-                account_number=self.account_number,
-                routing_number_wire=self.routing_number_wire,
-                swift_code=self.swift_code
-            )
-            wire_payment_text = Paragraph(wire_payment, payment_detail_text_style)
-            footer_items.append(wire_payment_text)
-
-        footer_frame.addFromList(footer_items, self.canvas)
+        wire_payment = """<strong>Wire payment</strong>:<br />
+                            Bank: {bank_name}
+                            Bank Address: {bank_address}
+                            Account Number: {account_number}
+                            Routing Number or ABA: {routing_number_wire}
+                            Swift Code: {swift_code}<br/>""".format(
+            bank_name=self.bank_name,
+            bank_address=self.bank_address,
+            account_number=self.account_number,
+            routing_number_wire=self.routing_number_wire,
+            swift_code=self.swift_code
+        )
+        wire_payment_text = Paragraph(wire_payment, payment_detail_text_style)
+        items.append(wire_payment_text)
 
     def draw_table_with_header_and_footer(self, items):
         self.draw_header()
