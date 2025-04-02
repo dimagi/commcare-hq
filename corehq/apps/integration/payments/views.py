@@ -5,6 +5,8 @@ from memoized import memoized
 
 from corehq import toggles
 from corehq.apps.es.case_search import case_property_query
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.permissions import PAYMENTS_REPORT_PERMISSION
 from corehq.util.timezones.utils import get_timezone
 from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
@@ -14,7 +16,7 @@ from corehq.apps.es import CaseSearchES, filters
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
 from corehq.apps.integration.payments.tables import PaymentsVerifyTable
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import HqPermissions, WebUser
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 from corehq.apps.integration.payments.services import verify_payment_cases
 from corehq.apps.integration.payments.models import MoMoConfig
@@ -52,8 +54,16 @@ class PaymentsFiltersMixin:
         return get_filter_classes(self.fields, self.request, self.domain, timezone, use_bootstrap5=True)
 
 
+require_payments_report_access = require_permission(
+    HqPermissions.view_report,
+    PAYMENTS_REPORT_PERMISSION,
+    login_decorator=None
+)
+
+
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
+@method_decorator(require_payments_report_access, name='dispatch')
 class PaymentsVerificationReportView(BaseDomainView, PaymentsFiltersMixin):
     urlname = 'payments_verify'
     template_name = 'payments/payments_verify_report.html'
@@ -77,6 +87,7 @@ class PaymentsVerificationReportView(BaseDomainView, PaymentsFiltersMixin):
 
 @method_decorator(login_required, name='dispatch')
 @method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
+@method_decorator(require_payments_report_access, name='dispatch')
 class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
     urlname = 'payments_verify_table'
     table_class = PaymentsVerifyTable
@@ -130,6 +141,7 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
 
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
+@method_decorator(require_payments_report_access, name='dispatch')
 class PaymentConfigurationView(HqHtmxActionMixin, BaseDomainView):
     section_name = _("Data")
     urlname = 'momo_configuration'
