@@ -304,3 +304,30 @@ class TestPoTranslationFormat:
         # Test invalid msgstr with unescaped newlines
         assert not PoTranslationFormat._is_valid_msgstr("Hello", "Hola\n")
 
+
+@patch('corehq.apps.translations.management.commands.translate_po_files.polib')
+def test_end_to_end_flow(mock_polib):
+    mock_entry1 = MagicMock(msgid="Hello", msgstr="")
+    mock_entry2 = MagicMock(msgid="World", msgstr="")
+    mock_po_file = MagicMock()
+    mock_po_file.__iter__.return_value = [mock_entry1, mock_entry2]
+    mock_polib.pofile.return_value = mock_po_file
+
+    translation_format = PoTranslationFormat("test_file.po")
+    translator = OpenaiTranslator(
+        api_key="test-api-key",
+        model="gpt-4",
+        lang="es",
+        translation_format=translation_format
+    )
+
+    with patch.object(translator, 'client') as mock_client:
+        mock_client.return_value = mock_client
+        mock_response = MagicMock()
+        mock_response.choices[0].message.content = json.dumps({"0": "Hola", "1": "Mundo"})
+        mock_client.chat.completions.create.return_value = mock_response
+
+        to_be_translated = translation_format.create_batches(batch_size=2)
+        translation = translator.translate(to_be_translated[0])
+
+        assert translation == {"0": "Hola", "1": "Mundo"}
