@@ -34,7 +34,7 @@ class ConnectBackend:
                 "channel": user_link.messaging_channel,
                 "content": content,
                 "message_id": str(message.message_id),
-                "fcm_analytics_label": FCM_ANALYTICS_LABEL
+                "fcm_options": {"analytics_label": FCM_ANALYTICS_LABEL}
             },
             auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY)
         )
