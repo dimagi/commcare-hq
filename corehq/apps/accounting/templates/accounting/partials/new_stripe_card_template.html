@@ -22,57 +22,10 @@
                                     text: errorMsg">
           </div>
 
-          <div class="form-group">
-            <label class="control-label col-sm-3">
-              {% trans 'Card Number' %}
-            </label>
-            <div class="col-sm-9">
-              <input type="text"
-                     data-bind="value: number, disable: isProcessing"
-                     size="20"
-                     class="form-control"
-                     placeholder="xxxx-xxxx-xxxx-xxxx", />
-            </div>
-          </div>
+          <div id="stripe-card-container"></div>{# populated by a card element from Stripe #}
 
           <div class="form-group">
-            <label class="control-label col-sm-3">
-              {% trans 'CVC' context "Check digits of credit card"%}
-            </label>
-            <div class="col-sm-3">
-              <input type="text"
-                     data-bind="value: cvc, disable: isProcessing"
-                     size="4"
-                     class="form-control"
-                     placeholder="xxxx"/>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="control-label col-sm-3">
-              {% trans 'Expiration' %}
-            </label>
             <div class="col-sm-9">
-              <div class="row">
-                <div class="col-sm-2">
-                  <input type="text"
-                         data-bind="value: expMonth, disable: isProcessing"
-                         size="2"
-                         class="form-control"
-                         placeholder="MM" />
-                </div>
-                <div class="col-sm-4">
-                  <input type="text"
-                         data-bind="value: expYear, disable: isProcessing"
-                         size="4"
-                         class="form-control"
-                         placeholder="YYYY" />
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="form-group">
-            <div class="col-sm-offset-3 col-sm-9">
               <div class="checkbox">
                 <label>
                   <input type="checkbox" name="autopay" data-bind="checked: isAutopay, disable: isProcessing"/>
@@ -94,8 +47,7 @@
             {% trans 'Cancel' %}
           </button>
           <button type="button" class="btn btn-primary"
-                  data-bind="click: saveCard,
-                                       enable: !isProcessing()">
+                  data-bind="click: saveCard, enable: !isProcessing()">
             {% trans 'Save' %}
           </button>
         </div>

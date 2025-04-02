@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine('accounting/js/renew_plan_selection', [
     'jquery',
     'knockout',
@@ -8,7 +8,7 @@ hqDefine('accounting/js/renew_plan_selection', [
 ], function (
     $,
     ko,
-    initialPageData
+    initialPageData,
 ) {
     var PlanRenewalView = function (options) {
         var self = this;
