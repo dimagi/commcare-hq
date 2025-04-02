@@ -5,7 +5,7 @@ from django.utils.translation import gettext as _
 from memoized import memoized
 
 from corehq import toggles
-from corehq.apps.es.case_search import case_property_query
+from corehq.apps.es.case_search import case_property_query, wrap_case_search_hit
 from corehq.apps.integration.kyc.models import KycConfig
 from corehq.util.timezones.utils import get_timezone
 from corehq.apps.reports.generic import get_filter_classes
@@ -119,10 +119,9 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
     def _get_user_or_case_ids(object_list):
         user_or_case_ids = []
         for commcare_payment_case_details in object_list:
-            for case_property_detail in commcare_payment_case_details['case_properties']:
-                if case_property_detail['key'] == PaymentProperties.USER_OR_CASE_ID:
-                    if case_property_detail['value']:
-                        user_or_case_ids.append(case_property_detail['value'])
+            case = wrap_case_search_hit(commcare_payment_case_details)
+            if case_prop := case.get_case_property(PaymentProperties.USER_OR_CASE_ID):
+                user_or_case_ids.append(case_prop)
         return user_or_case_ids
 
     def _apply_filters(self, query):
