@@ -3314,7 +3314,8 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
             is_wire=invoice.is_wire,
             is_customer=invoice.is_customer_invoice,
             is_prepayment=invoice.is_wire and invoice.is_prepayment,
-            account_name=account_name
+            account_name=account_name,
+            can_pay_by_wire=self.can_pay_by_wire(invoice),
         )
 
         if not invoice.is_wire:
@@ -3375,6 +3376,14 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
             'year': invoice.date_start.year,
             'month': invoice.date_start.month,
         }
+
+    @staticmethod
+    def can_pay_by_wire(invoice):
+        return (
+            invoice.is_wire
+            or (getattr(invoice, 'subscription', None)
+                and invoice.subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE)
+        )
 
     def get_data(self, invoice):
         with self.fetch_attachment(self.get_filename(invoice), stream=True) as fh:
