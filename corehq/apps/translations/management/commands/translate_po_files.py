@@ -2,6 +2,7 @@ import abc
 import json
 import os
 import re
+import time
 from functools import cached_property
 
 from django.conf import settings
@@ -11,6 +12,26 @@ import gevent
 import polib
 import requests
 from memoized import memoized
+
+
+class RateLimiter:
+    """Rate limiter for OpenAI API calls"""
+
+    def __init__(self, requests_per_minute: int = 60):
+        self.requests_per_minute = requests_per_minute
+        self.interval = 60.0 / requests_per_minute
+        self.last_request_time = 0
+        self._lock = gevent.lock.RLock()
+
+    def wait(self):
+        """Wait if necessary to respect rate limits"""
+        with self._lock:
+            current_time = time.time()
+            time_since_last = current_time - self.last_request_time
+            if time_since_last < self.interval:
+                sleep_time = self.interval - time_since_last
+                gevent.sleep(sleep_time)
+            self.last_request_time = time.time()
 
 
 @memoized
@@ -127,11 +148,15 @@ class OpenaiTranslator(LLMTranslator):
             print("OpenAI Python package not found, will use HTTP requests instead.")
 
         self.api_base = "https://api.openai.com/v1"
+        self.rate_limiter = RateLimiter(
+            requests_per_minute=60
+        )
 
     def _call_llm(self, system_prompt, user_message):
         if self.client is None:
             return self._call_llm_http(system_prompt, user_message)
         try:
+            self.rate_limiter.wait()
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
@@ -150,6 +175,7 @@ class OpenaiTranslator(LLMTranslator):
         # We might not use this method at all, but it was useful in testing other LLM clients
         # without installing their package, so I am keeping it here for now.
         try:
+            self.rate_limiter.wait()
             headers = {
                 "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json"
