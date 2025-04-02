@@ -313,8 +313,8 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         self.assertFalse(session.has_any_filtering)
 
 
-class BulkEditSessionCaseColumnTests(TestCase):
-    domain_name = 'session-test-case-columns'
+class BaseBulkEditSessionTest(TestCase):
+    domain_name = None
 
     @classmethod
     def setUpClass(cls):
@@ -336,9 +336,14 @@ class BulkEditSessionCaseColumnTests(TestCase):
         super().tearDownClass()
 
     def setUp(self):
+        super().setUp()
         self.session = BulkEditSession.new_case_session(
             self.django_user, self.domain_name, self.case_type
         )
+
+
+class BulkEditSessionCaseColumnTests(BaseBulkEditSessionTest):
+    domain_name = 'session-test-case-columns'
 
     def test_add_column(self):
         self.assertEqual(self.session.columns.count(), 6)
