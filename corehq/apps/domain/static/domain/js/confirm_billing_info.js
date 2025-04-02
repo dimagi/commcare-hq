@@ -1,17 +1,15 @@
-'use strict';
 hqDefine("domain/js/confirm_billing_info", [
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'stripe',
     'accounting/js/stripe_card_manager',
     'accounting/js/widgets',
+    'commcarehq',
 ], function (
     $,
     ko,
     initialPageData,
-    Stripe,
-    stripeCardManager
+    stripeCardManager,
 ) {
     $('a.breadcrumb-2').click(function (e) {
         e.preventDefault();
@@ -26,7 +24,6 @@ hqDefine("domain/js/confirm_billing_info", [
         document.getElementById('downgrade-email-note').value = initialPageData.get("downgrade_email_note");
     };
 
-    Stripe.setPublishableKey(initialPageData.get("stripe_public_key"));
     var cardManager = stripeCardManager.stripeCardManager({
         cards: initialPageData.get("cards"),
         url: initialPageData.reverse("cards_view"),

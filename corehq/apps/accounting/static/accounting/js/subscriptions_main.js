@@ -1,13 +1,13 @@
-"use strict";
 hqDefine('accounting/js/subscriptions_main', [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'accounting/js/widgets',
     'accounting/js/base_subscriptions_main',
+    'commcarehq',
 ], function (
     $,
     initialPageData,
-    widgets
+    widgets,
 ) {
     $(function () {
         var asyncSelect2Handler = widgets.asyncSelect2Handler;
