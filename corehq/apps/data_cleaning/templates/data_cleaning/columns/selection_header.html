@@ -9,5 +9,8 @@
   hq-hx-action="{{ hq_hx_action }}"
   hx-swap="none"
   hx-disabled-elt=".htmx-disable-on-select-page"
+  hx-vals='js:{
+    recordIds: [...document.querySelectorAll(".js-select-record")].map(input => input.value)
+  }'
   {{ attrs.as_html }}
 />
