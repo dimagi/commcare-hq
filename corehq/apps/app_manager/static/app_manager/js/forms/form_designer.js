@@ -1,4 +1,4 @@
-/* global require */
+/* globals require */
 hqDefine("app_manager/js/forms/form_designer", [
     'jquery',
     'underscore',
@@ -128,7 +128,6 @@ hqDefine("app_manager/js/forms/form_designer", [
                 define("jquery", [], function () { return window.jQuery; });
                 define("jquery.bootstrap", ["jquery"], function () {});
                 define("underscore", [], function () { return window._; });
-                define("moment", [], function () { return window.moment; });
                 define("vellum/hqAnalytics", [], function () {
                     function workflow(message) {
                         kissmetrics.track.event(message);
@@ -164,7 +163,7 @@ hqDefine("app_manager/js/forms/form_designer", [
                     },
                 });
 
-                require(["jquery", "jquery.vellum", "moment"], function ($) {
+                require(["jquery", "jquery.vellum"], function ($) {
                     $(function () {
                         $("#edit").hide();
                         $('#hq-footer').hide();
@@ -195,8 +194,7 @@ hqDefine("app_manager/js/forms/form_designer", [
                         '.fd-form-actions',
                         $('#js-fd-form-actions').html(),
                         0,
-                        function () {
-                        },
+                        function () { },
                     );
                 }
 
