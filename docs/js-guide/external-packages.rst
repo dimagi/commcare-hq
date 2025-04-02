@@ -90,13 +90,24 @@ Git branch    ``#<branch>``
 Using Yarn packages in HQ
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To use these packages in HQ you need to find where the js file you are
-looking for. In the case of jquery, it stores the minified jquery
-version in ``jquery/dist/jquery.min.js``:
+To use these packages in HQ, you can typically just import the name of the package.
+The library's ``package.json`` will have a ``main`` attribute that will signal to
+Webpack which code to include.
+
+Importing the library names rather than a specific file is more robust to library upgrades.
+
+In ESM modules:
 
 ::
 
-   <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+    import DOMPurify from "DOMPurify";
 
-Note: The ``node_modules`` bit is intentionally left off the path.
-Django already knows to look in that folder.
+In modules using ``hqDefine``:
+
+::
+
+    hqDefine("my_app/js/my_module", [
+        "DOMPurify",
+    ], function (
+        DOMPurify,
+    ) {

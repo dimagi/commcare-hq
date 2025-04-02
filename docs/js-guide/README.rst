@@ -31,7 +31,6 @@ Table of contents
     :maxdepth: 1
 
     migrating
-    requirejs-to-webpack
     amd-to-esm
 
 .. toctree::
