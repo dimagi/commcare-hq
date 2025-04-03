@@ -233,6 +233,7 @@ class KycUser:
             KycVerificationStatus.PENDING,
             KycVerificationStatus.PASSED,
             KycVerificationStatus.FAILED,
+            KycVerificationStatus.ERROR,
             ''
         )
         return value or KycVerificationStatus.PENDING
