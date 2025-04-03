@@ -26,7 +26,7 @@
                  id="bulkPaymentBtn">
            {% trans 'Pay by Credit Card' %}
          </button>
-@@ -31,15 +31,15 @@
+@@ -32,15 +32,15 @@
          <p data-bind="visible: hasInitialLoadFinished() && totalDue()">
            <button type="button"
                    class="btn btn-primary"
@@ -45,7 +45,7 @@
              <i class="fa fa-info-circle"></i>
              {% trans "Not Billing Admin, Can't Make Payment" %}
          </span>
-@@ -64,33 +64,33 @@
+@@ -65,33 +65,33 @@
  
  {% block pagination_templates %}
    <script type="text/html" id="statement-row-template">
@@ -88,7 +88,7 @@
        <a class="btn btn-primary"
           data-bind="attr: { href: pdfUrl }"
           target="_blank">{% trans 'Download' %}</a>
-@@ -100,14 +100,14 @@
+@@ -101,14 +101,14 @@
    {% include 'accounting/partials/stripe_card_ko_template.html' %}
  
    <script type="text/html" id="cost-item-template">
@@ -106,7 +106,7 @@
          <div class="radio">
            <label>
              <input type="radio"
-@@ -131,7 +131,7 @@
+@@ -132,7 +132,7 @@
                Pay a portion of the balance:
              {% endblocktrans %}
              <div class="input-group">
@@ -115,7 +115,7 @@
                <input type="text"
                       class="form-control"
                       name="customPaymentAmount"
-@@ -189,12 +189,12 @@
+@@ -190,12 +190,12 @@
  
  {% block modals %}{{ block.super }}
    {% with process_invoice_payment_url as process_payment_url %}
