@@ -16,7 +16,16 @@
  ], function (
      $,
      initialPageData,
-@@ -109,7 +109,7 @@
+@@ -96,7 +96,7 @@
+         });
+         $('#paramSelectorForm').submit(function (event) {
+             $('#reportHint').remove();
+-            $('#reportContent').removeClass('hide');
++            $('#reportContent').removeClass('d-none');
+             event.preventDefault();
+             reportTables.render();
+         });
+@@ -105,7 +105,7 @@
          $("#apply-filters").prop('disabled', false);
  
          $(function () {
