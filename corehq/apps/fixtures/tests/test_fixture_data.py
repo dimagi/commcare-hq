@@ -18,6 +18,7 @@ from corehq.apps.fixtures.models import (
     OwnerType,
     TypeField,
 )
+from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.users.models import CommCareUser
 from corehq.blobs import get_blob_db
 
@@ -282,11 +283,11 @@ class FixtureDataTest(TestCase):
         </fixture>
         """ % self.user.user_id, ElementTree.tostring(fixture, encoding='utf-8'))
 
-    def test_include_fixture_when_data_item_modified(self):
+    def test_include_fixture_when_cache_is_cleared(self):
         fixture = call_fixture_generator(self.user.to_ota_restore_user(self.domain), self.sync_log)
         self.assertEqual(len(fixture), 0)
 
-        self.data_item.save()
+        clear_fixture_cache(self.domain, self.data_type.id)
         fixture, = call_fixture_generator(self.user.to_ota_restore_user(self.domain), self.sync_log)
         check_xml_line_by_line(self, """
         <fixture id="item-list:district" user_id="%s">
@@ -297,51 +298,6 @@ class FixtureDataTest(TestCase):
                     <district_name lang="eng">Delhi_in_ENG</district_name>
                     <district_id>Delhi_id</district_id>
                 </district>
-            </district_list>
-        </fixture>
-        """ % self.user.user_id, ElementTree.tostring(fixture, encoding='utf-8'))
-
-    def test_include_fixture_when_ownership_modified(self):
-        fixture = call_fixture_generator(self.user.to_ota_restore_user(self.domain), self.sync_log)
-        self.assertEqual(len(fixture), 0)
-
-        self.ownership.save()
-        fixture, = call_fixture_generator(self.user.to_ota_restore_user(self.domain), self.sync_log)
-        check_xml_line_by_line(self, """
-        <fixture id="item-list:district" user_id="%s">
-            <district_list>
-                <district>
-                    <state_name>Delhi_state</state_name>
-                    <district_name lang="hin">Delhi_in_HIN</district_name>
-                    <district_name lang="eng">Delhi_in_ENG</district_name>
-                    <district_id>Delhi_id</district_id>
-                </district>
-            </district_list>
-        </fixture>
-        """ % self.user.user_id, ElementTree.tostring(fixture, encoding='utf-8'))
-
-    def test_include_fixture_when_data_item_deleted(self):
-        fixture = call_fixture_generator(self.user.to_ota_restore_user(self.domain), self.sync_log)
-        self.assertEqual(len(fixture), 0)
-
-        self.data_item.delete()
-        fixture, = call_fixture_generator(self.user.to_ota_restore_user(self.domain), self.sync_log)
-        check_xml_line_by_line(self, """
-        <fixture id="item-list:district" user_id="%s">
-            <district_list>
-            </district_list>
-        </fixture>
-        """ % self.user.user_id, ElementTree.tostring(fixture, encoding='utf-8'))
-
-    def test_include_fixture_when_ownership_deleted(self):
-        fixture = call_fixture_generator(self.user.to_ota_restore_user(self.domain), self.sync_log)
-        self.assertEqual(len(fixture), 0)
-
-        self.ownership.delete()
-        fixture, = call_fixture_generator(self.user.to_ota_restore_user(self.domain), self.sync_log)
-        check_xml_line_by_line(self, """
-        <fixture id="item-list:district" user_id="%s">
-            <district_list>
             </district_list>
         </fixture>
         """ % self.user.user_id, ElementTree.tostring(fixture, encoding='utf-8'))
