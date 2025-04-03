@@ -78,6 +78,14 @@ class TagTest(SimpleTestCase):
             "circus"
         )
 
+    def test_html_attr_string_with_quotes(self):
+        self.assertEqual(
+            self.render("""{% load hq_shared_tags %}{% html_attr what_on_earth %}""", {
+                "what_on_earth": """cir'cus ci"rcus""",
+            }),
+            "cir&#x27;cus ci&quot;rcus",
+        )
+
     def test_html_attr_translated_string(self):
         self.assertEqual(
             self.render("""{% load hq_shared_tags %}{% html_attr _("toxic") %}"""),
