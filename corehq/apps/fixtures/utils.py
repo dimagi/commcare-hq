@@ -55,6 +55,6 @@ def get_index_schema_node(fixture_id, attrs_to_index):
     return node
 
 
-def clear_fixture_cache(domain):
+def clear_fixture_cache(domain, data_type_id):
     from corehq.apps.fixtures.models import FIXTURE_BUCKET
-    get_blob_db().delete(key=FIXTURE_BUCKET + '/' + domain)
+    get_blob_db().delete(key=FIXTURE_BUCKET(data_type_id) + '/' + domain)

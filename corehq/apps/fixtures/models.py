@@ -12,7 +12,11 @@ from corehq.sql_db.fields import CharIdField
 from corehq.util.jsonattrs import AttrsDict, AttrsList, list_of
 from .exceptions import FixtureVersionError
 
-FIXTURE_BUCKET = 'domain-fixtures'
+FIXTURE_BUCKET_PREFIX = 'domain-fixtures'
+
+
+def FIXTURE_BUCKET(lookup_table_id):
+    return f'{FIXTURE_BUCKET_PREFIX}-{lookup_table_id}'
 
 
 class LookupTableManager(models.Manager):

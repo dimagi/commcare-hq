@@ -33,54 +33,65 @@ ITESM_COMMENT_REGEX = re.compile(br'(<!--items=(\d+)-->)')
 GLOBAL_USER_ID = 'global-user-id-7566F038-5000-4419-B3EF-5349FB2FF2E9'
 
 
-def get_or_cache_global_fixture(domain, user_id, cache_bucket_prefix,
-                                fixture_name, data_fn, overwrite_cache=False):
+def get_or_cache_global_fixture(domain, user_id, cache_bucket_prefix_data_fn_pairings,
+                                fixture_name, overwrite_cache=False):
     """
     Get the fixture data for a global fixture (one that does not vary by user).
 
     :param domain: The domain to get or cache the fixture
     :param user_id: User's id, if this is for case restore, then pass in case id
-    :param cache_bucket_prefix: Fixture bucket prefix
+    :param cache_bucket_prefix_data_fn_pairings: A list of tuples, each containing
+        (cache_bucket_prefix, data_fn) where:
+        - cache_bucket_prefix: The prefix for the cache bucket
+        - data_fn: Function that generates the XML fixture element
     :param fixture_name: Name of the fixture
-    :param data_fn: Function to generate the XML fixture elements
     :param overwrite_cache: a boolean property from RestoreState object, default is False
     :return: list containing byte string representation of the fixture
     """
+    io_streams = []
+    for cache_bucket_prefix, data_fn in cache_bucket_prefix_data_fn_pairings:
+        io_stream = None
+        key = '{}/{}'.format(cache_bucket_prefix, domain)
 
-    data = None
-    key = '{}/{}'.format(cache_bucket_prefix, domain)
+        if not overwrite_cache:
+            io_stream = get_cached_fixture_items(domain, cache_bucket_prefix)
+            _record_datadog_metric('cache_miss' if io_stream is None else 'cache_hit', key)
+            if io_stream is not None:
+                io_stream = BytesIO(io_stream)
 
-    if not overwrite_cache:
-        data = get_cached_fixture_items(domain, cache_bucket_prefix)
-        _record_datadog_metric('cache_miss' if data is None else 'cache_hit', key)
+        if io_stream is None:
+            with CriticalSection([key]):
+                if not overwrite_cache:
+                    # re-check cache to avoid re-computing it
+                    io_stream = get_cached_fixture_items(domain, cache_bucket_prefix)
+                    if io_stream is not None:
+                        io_stream = BytesIO(io_stream)
+                if io_stream is None:
+                    _record_datadog_metric('generate', key)
+                    item = data_fn()
+                    io_stream = BytesIO()
+                    io_stream.write(ElementTree.tostring(item, encoding='utf-8'))
+                    io_stream.seek(0)
+                    cache_fixture_items_data(io_stream, domain, fixture_name, cache_bucket_prefix)
+        io_streams.append(io_stream)
 
-    if data is None:
-        with CriticalSection([key]):
-            if not overwrite_cache:
-                # re-check cache to avoid re-computing it
-                data = get_cached_fixture_items(domain, cache_bucket_prefix)
-                if data is not None:
-                    return [data]
-
-            _record_datadog_metric('generate', key)
-            items = data_fn()
-            io_data = write_fixture_items_to_io(items)
-            data = io_data.read()
-            io_data.seek(0)
-            cache_fixture_items_data(io_data, domain, fixture_name, cache_bucket_prefix)
+    combined_io_data = combine_fixture_io_streams(io_streams)
+    combined_io_data.seek(0)
+    data = combined_io_data.read()
 
     global_id = GLOBAL_USER_ID.encode('utf-8')
     b_user_id = user_id.encode('utf-8')
     return [data.replace(global_id, b_user_id)] if data else []
 
 
-def write_fixture_items_to_io(items):
+def combine_fixture_io_streams(io_streams):
     io = BytesIO()
     io.write(ITEMS_COMMENT_PREFIX)
-    io.write(six.text_type(len(items)).encode('utf-8'))
+    io.write(six.text_type(len(io_streams)).encode('utf-8'))
     io.write(b'-->')
-    for element in items:
-        io.write(ElementTree.tostring(element, encoding='utf-8'))
+    for fixture_stream in io_streams:
+        fixture_stream.seek(0)
+        io.write(fixture_stream.read())
     io.seek(0)
     return io
 
