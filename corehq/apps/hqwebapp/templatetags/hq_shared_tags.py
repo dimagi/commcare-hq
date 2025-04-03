@@ -596,7 +596,11 @@ def trans_html_attr(value):
 def html_attr(value):
     if isinstance(value, bytes):
         value = value.decode('utf-8')
-    if not isinstance(value, str):
+    try:
+        # Call _ instead of instanceof(value, str) because value might be a translated string
+        _(value)
+    except AttributeError:
+        # Value is not a string, so JSON-encode it
         value = JSON(value)
     return conditional_escape(value)
 
