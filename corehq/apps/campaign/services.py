@@ -12,6 +12,12 @@ def _get_number_of_cases(gauge):
     case_es_query = CaseSearchES().domain(domain)
     if case_type:
         case_es_query = case_es_query.case_type(case_type)
+    if gauge.case_query:
+        try:
+            case_es_query = case_es_query.xpath_query(domain, gauge.case_query)
+        # ToDo: keep it safe for now. Follow up: consider returning an error message to the user.
+        except:  # noqa: E722
+            return 0
     return case_es_query.count()
 
 
