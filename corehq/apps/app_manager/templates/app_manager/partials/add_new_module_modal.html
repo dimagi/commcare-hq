@@ -1,7 +1,11 @@
 {% load i18n %}
 
+<!-- B5 TODO: hq-add-new-module-modal is a hack, should not be duplicated.
+ It overrides a lot of the default behavior of its child classes.
+ The entire modal should be refactored to use built-in bootstrap 5 utilities. -->
+
 <div
-  class="modal fade add-new-module-modal"
+  class="modal fade hq-add-new-module-modal"
   id="add-new-module-modal"
   tabindex="-1"
   role="dialog"
