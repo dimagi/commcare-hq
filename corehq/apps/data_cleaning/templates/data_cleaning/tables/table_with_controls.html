@@ -53,6 +53,21 @@
             Records Selected
           {% endblocktrans %}
         </div>
+        <button
+          class="btn btn-outline-danger"
+          type="button"
+          x-show="numRecordsSelected > 0"
+        >
+          <i class="fa-solid fa-close"></i>
+          <span class="visually-hidden">{% trans "Clear Selection" %}</span>
+        </button>
+        <button
+          class="btn btn-outline-primary"
+          type="button"
+          x-show="numRecordsSelected > 0 && numRecordsSelected < totalRecords"
+        >
+          {% trans "Select All" %} ({{ table.page.paginator.count }})
+        </button>
       </div>
     </div>
 
