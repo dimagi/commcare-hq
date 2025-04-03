@@ -98,6 +98,14 @@ class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataC
         # todo
         return self.get(request, *args, **kwargs)
 
+    @hq_hx_action('post')
+    def select_all(self, request, *args, **kwargs):
+        """
+        Selects all records in the current filtered view.
+        """
+        # todo
+        return self.get(request, *args, **kwargs)
+
 
 class CaseCleaningTasksTableView(BaseDataCleaningTableView):
     urlname = "case_data_cleaning_tasks_table"
