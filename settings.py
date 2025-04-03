@@ -403,6 +403,8 @@ HQ_APPS = (
 
     'custom.ccqa',
 
+    'custom.mgh_epic',
+
     'corehq.extensions.app_config.ExtensionAppConfig',  # this should be last in the list
 )
 
