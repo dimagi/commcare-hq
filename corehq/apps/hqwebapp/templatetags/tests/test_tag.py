@@ -7,6 +7,7 @@ from django.template import Context, Template, TemplateSyntaxError
 from django.test import SimpleTestCase, override_settings
 
 from corehq.util.test_utils import make_make_path
+from corehq.apps.hqwebapp.exceptions import TemplateTagJSONException
 
 _make_path = make_make_path(__file__)
 
@@ -70,6 +71,46 @@ class TagTest(SimpleTestCase):
                 {'starling': 'murmuration'},
             ],
         })
+
+    def test_html_attr_string(self):
+        self.assertEqual(
+            self.render("""{% load hq_shared_tags %}{% html_attr "circus" %}"""),
+            "circus"
+        )
+
+    def test_html_attr_translated_string(self):
+        self.assertEqual(
+            self.render("""{% load hq_shared_tags %}{% html_attr _("toxic") %}"""),
+            "toxic"
+        )
+
+    def test_html_attr_number(self):
+        self.assertEqual(
+            self.render("""{% load hq_shared_tags %}{% html_attr "23" %}"""),
+            "23"
+        )
+
+    def test_html_attr_list(self):
+        self.assertEqual(
+            self.render("""{% load hq_shared_tags %}{% html_attr my_list %}""", {
+                "my_list": ["circus", "toxic", "stronger"],
+            }),
+            "[&quot;circus&quot;, &quot;toxic&quot;, &quot;stronger&quot;]"
+        )
+
+    def test_html_attr_dict(self):
+        self.assertEqual(
+            self.render("""{% load hq_shared_tags %}{% html_attr my_dict %}""", {
+                "my_dict": {"toxic": 2003, "circus": 2008}
+            }),
+            "{&quot;toxic&quot;: 2003, &quot;circus&quot;: 2008}"
+        )
+
+    def test_html_attr_obj(self):
+        with self.assertRaises(TemplateTagJSONException):
+            self.render("""{% load hq_shared_tags %}{% html_attr my_object %}""", {
+                "my_object": object(),
+            })
 
     def test_registerurl(self):
         # why does this test take 8s?
