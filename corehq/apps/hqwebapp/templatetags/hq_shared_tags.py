@@ -12,6 +12,7 @@ from django.template.base import (
 )
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils.functional import Promise
 from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
@@ -596,11 +597,8 @@ def trans_html_attr(value):
 def html_attr(value):
     if isinstance(value, bytes):
         value = value.decode('utf-8')
-    try:
-        # Call _ instead of instanceof(value, str) because value might be a translated string
-        _(value)
-    except AttributeError:
-        # Value is not a string, so JSON-encode it
+    if not isinstance(value, (str, Promise)):
+        # Value is not a string, or a lazily translated string, so JSON-encode it
         value = JSON(value)
     return conditional_escape(value)
 
