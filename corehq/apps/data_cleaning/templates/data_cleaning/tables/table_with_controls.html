@@ -57,6 +57,12 @@
           class="btn btn-outline-danger"
           type="button"
           x-show="numRecordsSelected > 0"
+          hx-post="{{ request.path_info }}{% querystring %}"
+          hq-hx-action="deselect_all"
+          hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
+          hx-swap="outerHTML"
+          hq-hx-loading="{{ table.loading_indicator_id }}"
+          hx-disable-elt="this"
         >
           <i class="fa-solid fa-close"></i>
           <span class="visually-hidden">{% trans "Clear Selection" %}</span>

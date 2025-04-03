@@ -90,6 +90,14 @@ class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataC
             self.session.deselect_multiple_records(doc_ids)
         return self.render_htmx_no_response(request, *args, **kwargs)
 
+    @hq_hx_action('post')
+    def deselect_all(self, request, *args, **kwargs):
+        """
+        De-selects all records in the current filtered view.
+        """
+        # todo
+        return self.get(request, *args, **kwargs)
+
 
 class CaseCleaningTasksTableView(BaseDataCleaningTableView):
     urlname = "case_data_cleaning_tasks_table"
