@@ -39,6 +39,6 @@ $(document).on('htmx:afterRequest', function (event) {
         // doing a refresh
         setTimeout(() => {
             htmx.ajax('GET', endpoint, {target: '#payment-verify-table'});
-        }, 2000);
+        }, 3000);
     }
 });
