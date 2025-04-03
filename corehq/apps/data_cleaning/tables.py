@@ -25,9 +25,9 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
         self.session = session
 
     @classmethod
-    def get_select_column(cls, session, request, select_row_action, select_page_action):
+    def get_select_column(cls, session, request, select_record_action, select_page_action):
         return DataCleaningHtmxSelectionColumn(
-            session, request, select_row_action, select_page_action, accessor='case_id',
+            session, request, select_record_action, select_page_action, accessor="case_id",
             attrs={
                 'td__input': {
                     "@click": (
@@ -61,8 +61,7 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
         """
         Return the number of selected records in the session.
         """
-        # todo
-        return 0
+        return self.session.get_num_selected_records()
 
 
 class CaseCleaningTasksTable(BaseHtmxTable, tables.Table):
