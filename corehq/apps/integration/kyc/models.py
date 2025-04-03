@@ -233,6 +233,7 @@ class KycUser:
             KycVerificationStatus.PENDING,
             KycVerificationStatus.PASSED,
             KycVerificationStatus.FAILED,
+            KycVerificationStatus.ERROR,
             ''
         )
         return value or KycVerificationStatus.PENDING
@@ -280,7 +281,7 @@ class KycVerificationStatus:
     # FAILED indicates a request was made to KYC Provider and the KYC failed
     FAILED = 'failed'
     # PENDING indicates KYC is yet to be initiated and in that case, verification status is returned as None
-    # as case property/field does not exist or is empty.
+    # as case property/field does not ex`ist or is empty.
     PENDING = None
     ERROR = 'error'
 
