@@ -6,12 +6,16 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
 from django.utils.translation import gettext_lazy, gettext as _
 
+from dimagi.utils.chunked import chunked
+
 from corehq.apps.case_search.const import METADATA_IN_REPORTS
 from corehq.apps.data_cleaning.exceptions import (
     UnsupportedActionException,
     UnsupportedFilterValueException,
 )
 from corehq.apps.es import CaseSearchES
+
+BULK_OPERATION_CHUNK_SIZE = 1000
 
 
 class BulkEditSessionType:
@@ -251,6 +255,28 @@ class BulkEditSession(models.Model):
 
     def deselect_multiple_records(self, doc_ids):
         return BulkEditRecord.deselect_multiple_records(self, doc_ids)
+
+    def _apply_operation_on_queryset(self, operation):
+        """
+        Perform a bulk operation on the queryset for this session.
+        :param operation: function to apply to each record (takes in doc ids as argument)
+        """
+        for doc_ids in chunked(
+            self.get_queryset().scroll_ids(), BULK_OPERATION_CHUNK_SIZE, list
+        ):
+            operation(doc_ids)
+
+    def select_all_records_in_queryset(self):
+        """
+        Select all records in the ESQuery queryset for this session.
+        """
+        self._apply_operation_on_queryset(lambda doc_ids: self.select_multiple_records(doc_ids))
+
+    def deselect_all_records_in_queryset(self):
+        """
+        Select all records in the ESQuery queryset for this session.
+        """
+        self._apply_operation_on_queryset(lambda doc_ids: self.deselect_multiple_records(doc_ids))
 
     def update_result(self, record_count, form_id=None):
         result = self.result or {}
