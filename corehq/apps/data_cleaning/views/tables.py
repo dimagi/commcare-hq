@@ -95,7 +95,7 @@ class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataC
         """
         De-selects all records in the current filtered view.
         """
-        # todo
+        self.session.deselect_all_records_in_queryset()
         return self.get(request, *args, **kwargs)
 
     @hq_hx_action('post')
@@ -103,7 +103,7 @@ class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataC
         """
         Selects all records in the current filtered view.
         """
-        # todo
+        self.session.select_all_records_in_queryset()
         return self.get(request, *args, **kwargs)
 
 
