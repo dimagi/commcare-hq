@@ -122,7 +122,7 @@ function printActiveTabToPdf() {
         jsPDF: {
             unit: 'mm',
             format: 'a4',
-            orientation: 'portrait',
+            orientation: 'landscape',
         },
     };
 
