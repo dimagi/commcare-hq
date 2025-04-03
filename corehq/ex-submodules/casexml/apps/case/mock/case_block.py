@@ -1,6 +1,5 @@
 import copy
 import numbers
-import warnings
 from datetime import datetime, date
 from xml.etree import cElementTree as ElementTree
 from casexml.apps.case.xml import V2_NAMESPACE
