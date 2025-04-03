@@ -591,6 +591,19 @@ class UserUploadRecordFilter(BaseSingleOptionFilter):
         ]
 
 
+class WebUserFilter(BaseMultipleOptionFilter):
+    slug = 'web_user'
+    label = _('Web user')
+    default_text = _('Show all')
+
+    @property
+    def options(self):
+        query = user_es.UserES().domain(self.domain).web_users()
+        return [
+            user_details for user_details in query.values_list('username', 'username')
+        ]
+
+
 def get_user_toggle(request):
     ufilter = group = individual = show_commtrack = None
     try:

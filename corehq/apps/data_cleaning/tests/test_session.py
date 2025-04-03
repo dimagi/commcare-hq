@@ -1,9 +1,11 @@
 import datetime
+import uuid
 
 from django.contrib.auth.models import User
 from django.test import TestCase
 
 from corehq.apps.data_cleaning.models import (
+    BulkEditRecord,
     BulkEditSession,
     BulkEditSessionType,
     DataType,
@@ -158,6 +160,18 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
             self.assertEqual(filters[index].prop_id, prop_id)
             self.assertEqual(filters[index].index, index)
 
+    def test_remove_column(self):
+        session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
+        column_to_remove = session.columns.all()[1]  # owner_name
+        self.assertEqual(column_to_remove.prop_id, 'owner_name')
+        session.remove_column(column_to_remove.column_id)
+        columns = session.columns.all()
+        self.assertEqual(len(columns), 5)
+        for index, prop_id in enumerate(['name', 'date_opened', 'opened_by_username',
+                                         'last_modified', '@status']):
+            self.assertEqual(columns[index].prop_id, prop_id)
+            self.assertEqual(columns[index].index, index)
+
     def test_reorder_wrong_number_of_filter_ids_raises_error(self):
         session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
         session.add_filter('watered_on', DataType.DATE, FilterMatchType.IS_NOT_MISSING)
@@ -301,8 +315,8 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         self.assertFalse(session.has_any_filtering)
 
 
-class BulkEditSessionCaseColumnTests(TestCase):
-    domain_name = 'session-test-case-columns'
+class BaseBulkEditSessionTest(TestCase):
+    domain_name = None
 
     @classmethod
     def setUpClass(cls):
@@ -324,9 +338,14 @@ class BulkEditSessionCaseColumnTests(TestCase):
         super().tearDownClass()
 
     def setUp(self):
+        super().setUp()
         self.session = BulkEditSession.new_case_session(
             self.django_user, self.domain_name, self.case_type
         )
+
+
+class BulkEditSessionCaseColumnTests(BaseBulkEditSessionTest):
+    domain_name = 'session-test-case-columns'
 
     def test_add_column(self):
         self.assertEqual(self.session.columns.count(), 6)
@@ -346,3 +365,19 @@ class BulkEditSessionCaseColumnTests(TestCase):
         self.assertEqual(new_column.label, "Owner ID")
         self.assertEqual(new_column.data_type, DataType.TEXT)
         self.assertTrue(new_column.is_system)
+
+
+class BulkEditSessionSelectionTests(BaseBulkEditSessionTest):
+    domain_name = 'session-test-selection'
+
+    def test_get_num_selected_records(self):
+        self.session.select_record(str(uuid.uuid4()))
+        self.session.select_record(str(uuid.uuid4()))
+        BulkEditRecord.objects.create(
+            session=self.session,
+            doc_id=str(uuid.uuid4()),
+            calculated_change_id=uuid.uuid4(),
+            is_selected=False,
+        )
+        num_selected_records = self.session.get_num_selected_records()
+        self.assertEqual(num_selected_records, 2)

@@ -178,10 +178,39 @@ class BulkEditSession(models.Model):
         """
         self._update_order(self.columns, 'column_id', column_ids)
 
+    def _delete_and_update_order(self, related_manager, id_field, provided_id):
+        """
+        Deletes a related object by its unique identifier and reindexes the remaining
+        related objects to maintain sequential ordering.
+
+        This is typically used for managing indexed relationships (like filters or columns)
+        that use an 'index' field to determine order.
+
+        :param related_manager: A Django RelatedManager (e.g., self.filters, self.columns)
+        :param id_field: The name of the unique identifier field (e.g., 'filter_id')
+        :param provided_id: The ID of the object to be removed
+        """
+        related_manager.get(**{id_field: provided_id}).delete()
+        remaining_ids = related_manager.values_list(id_field, flat=True)
+        self._update_order(related_manager, id_field, remaining_ids)
+
     def remove_filter(self, filter_id):
-        self.filters.get(filter_id=filter_id).delete()
-        remaining_ids = self.filters.values_list('filter_id', flat=True)
-        self.update_filter_order(remaining_ids)
+        """
+        Remove a BulkEditFilter from this session by its filter_id,
+        and update the remaining filters to maintain correct index order.
+
+        :param filter_id: UUID of the BulkEditFilter to remove
+        """
+        self._delete_and_update_order(self.filters, 'filter_id', filter_id)
+
+    def remove_column(self, column_id):
+        """
+        Remove a BulkEditColumn from this session by its column_id,
+        and update the remaining columns to maintain correct index order.
+
+        :param column_id: UUID of the BulkEditColumn to remove
+        """
+        self._delete_and_update_order(self.columns, 'column_id', column_id)
 
     def get_queryset(self):
         query = CaseSearchES().domain(self.domain).case_type(self.identifier)
@@ -204,6 +233,18 @@ class BulkEditSession(models.Model):
         for pinned_filter in self.pinned_filters.all():
             query = pinned_filter.filter_query(query)
         return query
+
+    def get_num_selected_records(self):
+        return self.records.filter(is_selected=True).count()
+
+    def is_record_selected(self, doc_id):
+        return BulkEditRecord.is_record_selected(self, doc_id)
+
+    def select_record(self, doc_id):
+        return BulkEditRecord.select_record(self, doc_id)
+
+    def deselect_record(self, doc_id):
+        return BulkEditRecord.deselect_record(self, doc_id)
 
     def update_result(self, record_count, form_id=None):
         result = self.result or {}
@@ -680,6 +721,43 @@ class BulkEditRecord(models.Model):
     is_selected = models.BooleanField(default=True)
     calculated_change_id = models.UUIDField(null=True, blank=True)
     calculated_properties = models.JSONField(null=True, blank=True)
+
+    @classmethod
+    def is_record_selected(self, session, doc_id):
+        return session.records.filter(
+            doc_id=doc_id,
+            is_selected=True,
+        ).exists()
+
+    @classmethod
+    def select_record(cls, session, doc_id):
+        try:
+            record = session.records.get(doc_id=doc_id)
+        except cls.DoesNotExist:
+            record = cls.objects.create(
+                session=session,
+                doc_id=doc_id,
+            )
+        if not record.is_selected:
+            record.is_selected = True
+            record.save()
+        return record
+
+    @classmethod
+    def deselect_record(cls, session, doc_id):
+        try:
+            record = session.records.get(doc_id=doc_id)
+        except cls.DoesNotExist:
+            return
+
+        if record.calculated_change_id is not None:
+            record.is_selected = False
+            record.save()
+        else:
+            record.delete()
+            record = None
+
+        return record
 
     @property
     def has_property_updates(self):

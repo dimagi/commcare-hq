@@ -1,4 +1,4 @@
-/* global require */
+/* globals require */
 hqDefine("app_manager/js/forms/form_designer", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         appcues = hqImport('analytix/js/appcues'),
@@ -113,7 +113,6 @@ hqDefine("app_manager/js/forms/form_designer", function () {
                 define("jquery", [], function () { return window.jQuery; });
                 define("jquery.bootstrap", ["jquery"], function () {});
                 define("underscore", [], function () { return window._; });
-                define("moment", [], function () { return window.moment; });
                 define("vellum/hqAnalytics", [], function () {
                     function workflow(message) {
                         hqImport('analytix/js/kissmetrix').track.event(message);
@@ -149,7 +148,7 @@ hqDefine("app_manager/js/forms/form_designer", function () {
                     },
                 });
 
-                require(["jquery", "jquery.vellum", "moment"], function ($) {
+                require(["jquery", "jquery.vellum"], function ($) {
                     $(function () {
                         $("#edit").hide();
                         $('#hq-footer').hide();
@@ -180,8 +179,7 @@ hqDefine("app_manager/js/forms/form_designer", function () {
                         '.fd-form-actions',
                         $('#js-fd-form-actions').html(),
                         0,
-                        function () {
-                        },
+                        function () { },
                     );
                 }
 

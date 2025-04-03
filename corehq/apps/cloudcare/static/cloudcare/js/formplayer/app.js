@@ -548,6 +548,41 @@ hqDefine("cloudcare/js/formplayer/app", [
         makeSyncRequest("interval_sync-db", {"app_id": appId});
     });
 
+    FormplayerFrontend.on("startSyncInterval", function (delayInMilliseconds) {
+        function shouldSync() {
+            const currentTime = Date.now(),
+                lastUserActivityTime =  sessionStorage.getItem("lastUserActivityTime") || 0,
+                elapsedTimeSinceLastActivity = currentTime - lastUserActivityTime,
+                isInApp = FormplayerUtils.currentUrlToObject().appId !== undefined;
+            if (elapsedTimeSinceLastActivity <= delayInMilliseconds && isInApp) {
+                return true;
+            }
+        }
+
+        if (!FormplayerFrontend.syncInterval) {
+            FormplayerFrontend.syncInterval = setInterval(function () {
+                const urlObject = FormplayerUtils.currentUrlToObject(),
+                    currentApp = AppsAPI.getAppEntity(urlObject.appId);
+                let customProperties = {};
+                if (currentApp && currentApp.attributes && currentApp.attributes.profile) {
+                    customProperties = currentApp.attributes.profile.custom_properties || {};
+                }
+                const useAggressiveSyncTiming = (customProperties[Const.POST_FORM_SYNC] === "yes");
+                if (!useAggressiveSyncTiming) {
+                    FormplayerFrontend.trigger("stopSyncInterval");
+                }
+                if (shouldSync() && FormplayerFrontend.permitIntervalSync) {
+                    FormplayerFrontend.trigger("interval_sync-db", urlObject.appId);
+                }
+            }, delayInMilliseconds);
+        }
+    });
+
+    FormplayerFrontend.on("stopSyncInterval", function () {
+        clearInterval(FormplayerFrontend.syncInterval);
+        FormplayerFrontend.syncInterval = null;
+    });
+
     /**
      * retry
      *

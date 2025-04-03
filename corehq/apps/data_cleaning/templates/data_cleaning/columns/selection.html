@@ -1,0 +1,27 @@
+{% load django_tables2 %}
+
+<form
+  class="loading-checkbox-htmx-request"
+  hx-post="{{ request.path_info }}{% querystring %}"
+  hq-hx-action="{{ hq_hx_action }}"
+  hx-trigger="change from:#{{ css_id }}"
+  hx-swap="none"
+  hx-disable-elt="#{{ css_id }}"
+>
+  <input
+    type="hidden"
+    name="record_id"
+    value="{{ value }}"
+  />
+  <input
+    id="{{ css_id }}"
+    class="form-check-input htmx-disable-on-select-page"
+    type="checkbox"
+    {% if is_checked %}
+      checked="checked"
+    {% endif %}
+    name="is_selected"
+    value="{{ value }}"
+    {{ attrs.as_html }}
+  />
+</form>
