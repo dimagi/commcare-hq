@@ -11,6 +11,7 @@ from django.http import (
 )
 from django.http.response import HttpResponseServerError
 from django.shortcuts import redirect, render
+from django.utils.datastructures import MultiValueDict
 from django.utils.html import escape
 from django.utils.safestring import SafeText
 from django.utils.translation import gettext as _
@@ -39,12 +40,16 @@ from corehq.apps.hqwebapp.decorators import (
 from corehq.apps.hqwebapp.utils.bootstrap import (
     BOOTSTRAP_5,
     get_bootstrap_version,
+    set_bootstrap_version5,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.paths import get_bootstrap5_path
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.dispatcher import ReportDispatcher
-from corehq.apps.reports.util import DatatablesPagination
+from corehq.apps.reports.util import (
+    DatatablesPagination,
+    DatatablesServerSideParams,
+)
 from corehq.apps.reports_core.exceptions import FilterException
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.saved_reports.models import ReportConfig
@@ -502,10 +507,21 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         return col
 
     def get_ajax(self, params):
+        if get_request_data(self.request).get('bs') == '5':
+            # AJAX call passes request param `bs=5` to indicate a
+            # Bootstrap 5 request, because the request could be coming
+            # from the Campaign Dashboard, not ConfigurableReportView.
+            # See campaign/js/dashboard.js
+            # TODO: Change AJAX URL in dashboard reports to call a Bootstrap 5
+            #       view. Replace with `if self.use_bootstrap5:`
+            set_bootstrap_version5()
+            return self._get_ajax_bootstrap5(params)
+        return self._get_ajax_bootstrap3(params)
+
+    def _get_ajax_bootstrap3(self, params):
         sort_column = params.get('iSortCol_0')
         sort_order = params.get('sSortDir_0', 'ASC')
         echo = int(params.get('sEcho', 1))
-        # todo update this for Bootstrap 5:
         datatables_params = DatatablesPagination.from_request_dict(params)
 
         try:
@@ -569,6 +585,80 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         }
         if total_row is not None:
             json_response['total_row'] = total_row
+        return self.render_json_response(json_response)
+
+    def _get_ajax_bootstrap5(self, params):
+        try:
+            return self._render_datatable_page_bootstrap5(params)
+
+        except UserReportsError as err:
+            if settings.DEBUG:
+                raise
+            return self.render_json_response({
+                'draw': int(params.get('draw', 1)),
+                'recordsTotal': 0,
+                'recordsFiltered': 0,
+                'data': [],
+                'error': str(err),
+            })
+
+        except TableNotFoundWarning:
+            if self.spec.report_meta.created_by_builder:
+                msg = _(
+                    'The database table backing your report does not exist yet. '
+                    'Please wait while the report is populated.'
+                )
+            else:
+                msg = _(
+                    'The database table backing your report does not exist yet. '
+                    'You must rebuild the data source before viewing the report.'
+                )
+            return self.render_json_response({'warning': msg})
+
+    def _render_datatable_page_bootstrap5(self, params):
+        data_source = self.data_source
+        if (
+            len(data_source.inner_columns) > 50
+            and not DISABLE_COLUMN_LIMIT_IN_UCR.enabled(self.domain)
+        ):
+            raise UserReportsError(
+                _('This report has too many columns to be displayed')
+            )
+
+        data_source.set_filter_values(self.filter_values)
+        datatables_params = DatatablesServerSideParams.from_request(self.request)
+        draw = int(params.get('draw', 1))
+
+        # Sort by the first sort column
+        col_ind = None
+        sort_dir = 'asc'
+        if datatables_params.order:
+            col = datatables_params.order[0]
+            col_ind = col['column']
+            sort_dir = col['dir']
+        if col_ind and draw != 1:
+            column_id = data_source.top_level_columns[col_ind].column_id
+            data_source.set_order_by([
+                (column_id, sort_dir.upper()),
+            ])
+
+        # Get current page
+        page = data_source.get_data(
+            start=datatables_params.start,
+            limit=datatables_params.length,
+        )
+        page = self.sanitize_page(page)
+        total_records = data_source.get_total_records()
+
+        # cf. https://datatables.net/manual/server-side
+        json_response = {
+            'draw': draw,
+            'recordsTotal': total_records,
+            'recordsFiltered': total_records,
+            'data': page,
+        }
+        if data_source.has_total_row:
+            json_response['total_row'] = data_source.get_total_row()
         return self.render_json_response(json_response)
 
     def _get_initial(self, request, **kwargs):
@@ -701,6 +791,28 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             }
         except DataSourceConfigurationNotFoundError:
             raise BadBuilderConfigError(DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE)
+
+
+def get_request_data(request):
+    """
+    Returns both URL params and POST data.
+
+    e.g. Given the following incoming POST request ::
+
+        requests.post('http://example.com/?foo=bar', data={'foo': 'baz'})
+
+    the Django request object ``req`` would produce ::
+
+        >>> dict(get_request_data(req))
+        {'foo': ['bar', 'baz']}
+        >>> get_request_data(req).get('foo')  # Returns the last value
+        'baz'
+
+    """
+    data = MultiValueDict()
+    data.update(request.GET)
+    data.update(request.POST)
+    return data
 
 
 # Base class for classes that provide custom rendering for UCRs
