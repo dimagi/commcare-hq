@@ -1,8 +1,10 @@
 import re
+from datetime import datetime
 from lxml.etree import Element
 from xml.etree import cElementTree as ElementTree
 
 from corehq.blobs import get_blob_db
+from corehq.apps.fixtures.models import LookupTable
 
 BAD_SLUG_PATTERN = r"([/\\<>\s])"
 
@@ -55,6 +57,10 @@ def get_index_schema_node(fixture_id, attrs_to_index):
     return node
 
 
-def clear_fixture_cache(domain):
+def clear_fixture_cache(domain, data_type_ids):
+    if isinstance(data_type_ids, str) or not hasattr(data_type_ids, '__iter__'):
+        data_type_ids = [data_type_ids]
+    LookupTable.objects.filter(id__in=data_type_ids).update(last_modified=datetime.utcnow())
     from corehq.apps.fixtures.models import FIXTURE_BUCKET
-    get_blob_db().delete(key=FIXTURE_BUCKET + '/' + domain)
+    for data_type_id in data_type_ids:
+        get_blob_db().delete(key=FIXTURE_BUCKET(data_type_id) + '/' + domain)

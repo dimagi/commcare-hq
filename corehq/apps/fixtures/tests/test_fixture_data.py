@@ -1,7 +1,9 @@
 from xml.etree import cElementTree as ElementTree
+from datetime import datetime
 
 from django.test import TestCase
 
+from casexml.apps.phone.models import SimplifiedSyncLog
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.phone.tests.utils import \
     call_fixture_generator as call_fixture_generator_raw
@@ -16,13 +18,15 @@ from corehq.apps.fixtures.models import (
     OwnerType,
     TypeField,
 )
+from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.users.models import CommCareUser
 from corehq.blobs import get_blob_db
 
 
-def call_fixture_generator(user):
+def call_fixture_generator(user, last_sync=None):
     return [ElementTree.fromstring(f) if isinstance(f, bytes) else f
-            for f in call_fixture_generator_raw(fixturegenerators.item_lists, user)]
+            for f in call_fixture_generator_raw(fixturegenerators.item_lists, user,
+                                                last_sync=last_sync)]
 
 
 class FixtureDataTest(TestCase):
@@ -75,7 +79,16 @@ class FixtureDataTest(TestCase):
             row_id=self.data_item.id,
         )
         self.ownership.save()
-        self.addCleanup(get_blob_db().delete, key=FIXTURE_BUCKET + '/' + self.domain)
+
+        self.sync_log = SimplifiedSyncLog(
+            date=datetime.utcnow(),
+            domain=self.domain,
+            user_id=self.user.user_id,
+            build_id='some-build-id'
+        )
+        self.sync_log.save()
+
+        self.addCleanup(get_blob_db().delete, key=FIXTURE_BUCKET(self.data_type.id) + '/' + self.domain)
 
     def test_xml(self):
         check_xml_line_by_line(self, """
@@ -246,10 +259,48 @@ class FixtureDataTest(TestCase):
 
         fixtures = call_fixture_generator(frank)
         self.assertEqual({item.attrib['user_id'] for item in fixtures}, {frank.user_id})
-        self.assertTrue(get_blob_db().exists(key=FIXTURE_BUCKET + '/' + self.domain))
+        self.assertTrue(get_blob_db().exists(key=FIXTURE_BUCKET(sandwich.id) + '/' + self.domain))
 
         fixtures = call_fixture_generator(sammy)
         self.assertEqual({item.attrib['user_id'] for item in fixtures}, {sammy.user_id})
+
+    def test_include_fixture_when_data_type_modified(self):
+        fixture = call_fixture_generator(self.user.to_ota_restore_user(self.domain), self.sync_log)
+        self.assertEqual(len(fixture), 0)
+
+        self.data_type.save()
+        fixture, = call_fixture_generator(self.user.to_ota_restore_user(self.domain), self.sync_log)
+        check_xml_line_by_line(self, """
+        <fixture id="item-list:district" user_id="%s">
+            <district_list>
+                <district>
+                    <state_name>Delhi_state</state_name>
+                    <district_name lang="hin">Delhi_in_HIN</district_name>
+                    <district_name lang="eng">Delhi_in_ENG</district_name>
+                    <district_id>Delhi_id</district_id>
+                </district>
+            </district_list>
+        </fixture>
+        """ % self.user.user_id, ElementTree.tostring(fixture, encoding='utf-8'))
+
+    def test_include_fixture_when_cache_is_cleared(self):
+        fixture = call_fixture_generator(self.user.to_ota_restore_user(self.domain), self.sync_log)
+        self.assertEqual(len(fixture), 0)
+
+        clear_fixture_cache(self.domain, self.data_type.id)
+        fixture, = call_fixture_generator(self.user.to_ota_restore_user(self.domain), self.sync_log)
+        check_xml_line_by_line(self, """
+        <fixture id="item-list:district" user_id="%s">
+            <district_list>
+                <district>
+                    <state_name>Delhi_state</state_name>
+                    <district_name lang="hin">Delhi_in_HIN</district_name>
+                    <district_name lang="eng">Delhi_in_ENG</district_name>
+                    <district_id>Delhi_id</district_id>
+                </district>
+            </district_list>
+        </fixture>
+        """ % self.user.user_id, ElementTree.tostring(fixture, encoding='utf-8'))
 
     def make_data_type(self, name, is_global):
         data_type = LookupTable(
@@ -263,6 +314,7 @@ class FixtureDataTest(TestCase):
             item_attributes=[],
         )
         data_type.save()
+        self.addCleanup(get_blob_db().delete, key=FIXTURE_BUCKET(data_type.id) + '/' + self.domain)
         return data_type
 
     def make_data_item(self, data_type, cost):
