@@ -157,7 +157,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     def domain(self):
         if self._domain is not None:
             return self._domain
-        return super(ConfigurableReportView, self).domain
+        return super().domain
 
     @use_daterangepicker
     @use_jquery_ui
@@ -168,7 +168,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             from corehq.apps.userreports.views import paywall_home
             return HttpResponseRedirect(paywall_home(self.domain))
         else:
-            original = super(ConfigurableReportView, self).dispatch(request, *args, **kwargs)
+            original = super().dispatch(request, *args, **kwargs)
             return original
 
     def should_redirect_to_paywall(self, request):
@@ -319,7 +319,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                 }
                 context.update(self.main_context)
                 return self.render_to_response(context)
-            return super(ConfigurableReportView, self).get(request, *args, **kwargs)
+            return super().get(request, *args, **kwargs)
         else:
             raise Http403()
 
@@ -660,7 +660,7 @@ class DownloadUCRStatusView(BaseDomainView):
 
     def get(self, request, *args, **kwargs):
         if _has_permission(self.domain, request.couch_user, self.report_config_id):
-            context = super(DownloadUCRStatusView, self).main_context
+            context = super().main_context
             context.update({
                 'domain': self.domain,
                 'download_id': kwargs['download_id'],
