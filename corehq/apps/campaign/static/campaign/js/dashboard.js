@@ -246,10 +246,10 @@ var onHideWidgetModal = function () {
 
 var onShowWidgetModal = function (event) {
     const triggerSource = event.relatedTarget;
-    if (triggerSource.id === 'edit-widget-btn') {
-        $modalTitleElement.text(editWidgetText);
-    } else {
+    if ($(triggerSource).data('source') === 'add-widget-dropdown') {
         $modalTitleElement.text(addWidgetText);
+    } else {
+        $modalTitleElement.text(editWidgetText);
     }
 };
 
