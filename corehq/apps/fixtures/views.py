@@ -100,8 +100,9 @@ def update_tables(request, domain, data_type_id=None):
             return json_response(table_json(data_type))
 
         elif request.method == 'DELETE':
+            id = data_type.id
             data_type.delete()
-            clear_fixture_cache(domain, data_type.id)
+            clear_fixture_cache(domain, id)
             return json_response({})
         elif not request.method == 'PUT':
             return HttpResponseBadRequest()

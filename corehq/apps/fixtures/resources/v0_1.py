@@ -361,8 +361,9 @@ class LookupTableItemResource(HqBaseResource):
             row = LookupTableRow.objects.get(id=kwargs['pk'])
         except LookupTableRow.DoesNotExist:
             raise NotFound('Lookup table item not found')
+        table_id = row.table.id
         row.delete()
-        clear_fixture_cache(row.domain, row.table.id)
+        clear_fixture_cache(row.domain, table_id)
         return ImmediateHttpResponse(response=HttpAccepted())
 
     def obj_create(self, bundle, request=None, **kwargs):
