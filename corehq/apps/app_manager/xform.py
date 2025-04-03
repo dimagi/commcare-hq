@@ -705,7 +705,8 @@ class XForm(WrappedNode):
     @raise_if_none("Can't find <itext>")
     def itext_node(self):
         # awful, awful hack. It will be many weeks before I can look people in the eye again.
-        return self.model_node.find('{f}itext') or self.model_node.find('itext')
+        node = self.model_node.find('{f}itext')
+        return node if node is not None else self.model_node.find('itext')
 
     @property
     def case_node(self):
