@@ -100,7 +100,7 @@ hqDefine('userreports/js/bootstrap5/base', [
         });
         $('#paramSelectorForm').submit(function (event) {
             $('#reportHint').remove();
-            $('#reportContent').removeClass('hide');
+            $('#reportContent').removeClass('d-none');
             event.preventDefault();
             reportTables.render();
         });
