@@ -711,7 +711,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                     } else {
                         this.set(savedModel);
                     }
-                } else if (attributes && attributes.columnNames) {
+                } else if (attributes) {
                     setFromAttributes(attributes);
                 }
 
