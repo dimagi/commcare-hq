@@ -31,14 +31,14 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
             attrs={
                 'td__input': {
                     "@click": (
-                        "if ($event.target.checked !== isRowSelected) {"
+                        "if ($el.checked !== isRowSelected) {"
                         # `numRecordsSelected` defined in template
-                        "  $event.target.checked ? numRecordsSelected++ : numRecordsSelected--;"
+                        "  $el.checked ? numRecordsSelected++ : numRecordsSelected--;"
                         # `pageNumRecordsSelected` defined in template
-                        "  $event.target.checked ? pageNumRecordsSelected++ : pageNumRecordsSelected--; "
+                        "  $el.checked ? pageNumRecordsSelected++ : pageNumRecordsSelected--; "
                         "} "
                         # `isRowSelected` defined in `row_attrs` in `class Meta`
-                        "isRowSelected = $event.target.checked;"
+                        "isRowSelected = $el.checked;"
                     ),
                 },
                 'th__input': {
