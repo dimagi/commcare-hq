@@ -689,7 +689,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             };
 
             const setFromAttributes = (attributes) => {
-                this.set('columnNames', attributes.columnNames);
+                this.set('columnNames', attributes.columnNames.map(n => {
+                    if (n.trim().length === 0) {
+                        return `"${n}"`;
+                    }
+                    return n;
+                }));
                 this.set('columnVisibility', Array(attributes.columnNames.length).fill(true));
                 this.set('columnCanBeVisible', getCanBeVisible(attributes));
             };
@@ -710,6 +715,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                         localStorage.removeItem(this.configStorageId);
                         setFromAttributes(attributes);
                     } else {
+                        setFromAttributes(attributes); // to set the column names
                         this.set(savedModel);
                     }
                 } else if (attributes) {
