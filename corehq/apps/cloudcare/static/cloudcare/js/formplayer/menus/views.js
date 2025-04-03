@@ -845,7 +845,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 }
             });
             const configStorageId = `${urlObject.appId}:${JSON.stringify(selectionsWithoutUuid)}:${user.username}`;
-            return CryptoJS.SHA512(configStorageId);
+            return CryptoJS.enc.Hex.stringify(CryptoJS.SHA512(configStorageId));
         },
 
         initialize: function (options) {
