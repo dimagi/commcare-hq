@@ -57,7 +57,6 @@ class TestRawDocLookup(TestCase):
             sort_key=0,
         )
         row.save()
-
         expected_doc = {
             "model": "fixtures.lookuptablerow",
             "pk": str(row.id),
@@ -72,7 +71,7 @@ class TestRawDocLookup(TestCase):
             },
         }
 
-        data = raw_doc_lookup(table.id.hex)
+        data = raw_doc_lookup(row.id.hex)
         self.assertEqual(json.loads(data["doc"]), expected_doc)
         results = {r.dbname: r.result for r in data["db_results"]}
         self.assertEqual(results["fixtures_lookuptablerow"], "found", results)
