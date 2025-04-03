@@ -58,7 +58,7 @@ def get_index_schema_node(fixture_id, attrs_to_index):
 
 
 def clear_fixture_cache(domain, data_type_ids):
-    if isinstance(data_type_ids, str):
+    if isinstance(data_type_ids, str) or not hasattr(data_type_ids, '__iter__'):
         data_type_ids = [data_type_ids]
     LookupTable.objects.filter(id__in=data_type_ids).update(last_modified=datetime.utcnow())
     from corehq.apps.fixtures.models import FIXTURE_BUCKET
