@@ -58,10 +58,6 @@ class TestRawDocLookup(TestCase):
         )
         row.save()
 
-        data = raw_doc_lookup(row.id.hex)
-        actual_doc = json.loads(data["doc"])
-        last_modified = actual_doc["fields"]["last_modified"]
-
         expected_doc = {
             "model": "fixtures.lookuptablerow",
             "pk": str(row.id),
@@ -72,12 +68,12 @@ class TestRawDocLookup(TestCase):
                     "qty": [{"value": "2", "properties": {}}],
                 },
                 "item_attributes": {"name": "iron"},
-                "last_modified": last_modified,
                 "sort_key": 0,
             },
         }
 
-        self.assertEqual(actual_doc, expected_doc)
+        data = raw_doc_lookup(table.id.hex)
+        self.assertEqual(json.loads(data["doc"]), expected_doc)
         results = {r.dbname: r.result for r in data["db_results"]}
         self.assertEqual(results["fixtures_lookuptablerow"], "found", results)
 
