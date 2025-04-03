@@ -82,8 +82,13 @@ class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataC
         """
         Selects all records on the current page.
         """
-        # todo
-        return self.get(request, *args, **kwargs)
+        select_page = request.POST.get('select_page') is not None
+        doc_ids = request.POST.getlist('recordIds')
+        if select_page:
+            self.session.select_multiple_records(doc_ids)
+        else:
+            self.session.deselect_multiple_records(doc_ids)
+        return self.render_htmx_no_response(request, *args, **kwargs)
 
 
 class CaseCleaningTasksTableView(BaseDataCleaningTableView):
