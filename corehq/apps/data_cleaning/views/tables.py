@@ -67,7 +67,7 @@ class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataC
     @hq_hx_action('post')
     def select_record(self, request, *args, **kwargs):
         """
-        Selects a single record.
+        Selects (or de-selects) a single record.
         """
         doc_id = request.POST['record_id']
         is_selected = request.POST.get('is_selected') is not None
@@ -80,7 +80,7 @@ class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataC
     @hq_hx_action('post')
     def select_page(self, request, *args, **kwargs):
         """
-        Selects all records on the current page.
+        Selects (or de-selects) all records on the current page.
         """
         select_page = request.POST.get('select_page') is not None
         doc_ids = request.POST.getlist('recordIds')
