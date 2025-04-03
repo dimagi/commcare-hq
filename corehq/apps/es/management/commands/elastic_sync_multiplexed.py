@@ -1,7 +1,7 @@
 import logging
 import time
 import gevent
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
@@ -211,7 +211,7 @@ class ESSyncUtil:
         except TaskMissing:
             raise CommandError(f"No Reindex process with {task_id} found")
 
-        start_time = datetime.utcfromtimestamp(task_info['start_time_in_millis'] / 1000)
+        start_time = datetime.fromtimestamp(task_info['start_time_in_millis'] / 1000, tz=timezone.utc)
         running_duration_seconds = task_info['running_time_in_nanos'] / 10**9
         duration = timedelta(running_duration_seconds)
 
