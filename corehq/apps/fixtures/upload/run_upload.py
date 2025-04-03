@@ -111,7 +111,7 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
     tables = Mutation()
     rows = Mutation()
     owners = Mutation()
-    ids_of_modified_tables = get_ids_of_modified_tables(tables, rows, owners)
+    ids_of_modified_tables = set()
     try:
         tables.process(
             workbook,
@@ -123,6 +123,7 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
             deleted_key=attrgetter("tag"),
         )
 
+        ids_of_modified_tables = get_ids_of_modified_tables(tables, rows, owners)
         update_progress(None)
         flush(tables, rows, owners)
     finally:
