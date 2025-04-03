@@ -120,8 +120,8 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
         user_or_case_ids = []
         for commcare_payment_case_details in object_list:
             case = wrap_case_search_hit(commcare_payment_case_details)
-            if case_prop := case.get_case_property(PaymentProperties.USER_OR_CASE_ID):
-                user_or_case_ids.append(case_prop)
+            if user_or_case_id := case.get_case_property(PaymentProperties.USER_OR_CASE_ID):
+                user_or_case_ids.append(user_or_case_id)
         return user_or_case_ids
 
     def _apply_filters(self, query):
