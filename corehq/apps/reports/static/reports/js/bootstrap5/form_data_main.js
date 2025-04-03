@@ -8,7 +8,7 @@ hqDefine("reports/js/bootstrap5/form_data_main", [
     $,
     initialPageData,
     singleForm,
-    kissmetrics
+    kissmetrics,
 ) {
     $(function () {
         singleForm.initSingleForm({

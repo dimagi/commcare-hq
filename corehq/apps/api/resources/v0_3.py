@@ -15,11 +15,6 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
 from no_exceptions.exceptions import Http400
 
-# By the time a test case is running, the resource is already instantiated,
-# so as a hack until this can be remedied, there is a global that
-# can be set to provide a mock.
-MOCK_CASE_ES_VIEW = None
-
 
 class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
     type = "case"
@@ -52,7 +47,7 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
 
     def case_es(self, domain):
         # Note that CaseESView is used only as an ES client, for `run_query` against the proper index
-        return MOCK_CASE_ES_VIEW or CaseESView(domain)
+        return CaseESView(domain)
 
     def obj_get(self, bundle, **kwargs):
         case_id = kwargs['pk']

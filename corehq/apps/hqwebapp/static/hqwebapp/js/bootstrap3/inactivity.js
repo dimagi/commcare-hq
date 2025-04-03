@@ -11,7 +11,7 @@ hqDefine('hqwebapp/js/bootstrap3/inactivity', [
     $,
     _,
     assertProperties,
-    initialPageData
+    initialPageData,
 ) {
     var log = function (message) {
         console.log("[" + (new Date()).toLocaleTimeString() + "] " + message);  // eslint-disable-line no-console
@@ -147,7 +147,7 @@ hqDefine('hqwebapp/js/bootstrap3/inactivity', [
                     selectedAppId = urlParams.appId;
                 }
             } catch (error) {
-                log("Could not parse app id out of " + window.location.hash)
+                log("Could not parse app id out of " + window.location.hash);
                 return;
             }
             var domain = initialPageData.get('domain');
@@ -161,7 +161,7 @@ hqDefine('hqwebapp/js/bootstrap3/inactivity', [
                 success: function (data) {
                     log(
                         "ping_login response: " + (data.success ? "User is logged in" : "User is logged out")
-                        + ", " + (data.new_app_version_available ? "new app version available" : "no new app version")
+                        + ", " + (data.new_app_version_available ? "new app version available" : "no new app version"),
                     );
                     if (!data.success) {
                         _.each($(".select2-hidden-accessible"), function (el) {

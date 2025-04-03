@@ -178,7 +178,8 @@ class EntriesHelper(object):
     def get_filter_xpath(module):
         filter = module.case_details.short.filter
         if filter:
-            xpath = '[%s]' % interpolate_xpath(filter)
+            case = XPath("current()")
+            xpath = '[%s]' % interpolate_xpath(filter, case_xpath=case)
         else:
             xpath = ''
         return xpath

@@ -15,7 +15,6 @@
  *    as well as a minimum length requirment (the length is configurable).
  *  - If any validation is being used, we automatically generate a suggested password that passes validation.
  */
-'use strict';
 
 hqDefine("users/js/mobile_workers",[
     'jquery',
@@ -43,9 +42,8 @@ hqDefine("users/js/mobile_workers",[
     RMI,
     zxcvbn,
     locationsWidgets,
-    customDataFields
+    customDataFields,
 ) {
-    'use strict';
     // These are used as css classes, so the values of success/warning/error need to be what they are.
     var STATUS = {
         NONE: '',

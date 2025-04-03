@@ -4,7 +4,7 @@ hqDefine("export/spec/ExportColumn.spec", [
     'export/js/models',
 ], function (
     _,
-    viewModels
+    viewModels,
 ) {
     describe('ExportColumn', function () {
         var selectedColumn,

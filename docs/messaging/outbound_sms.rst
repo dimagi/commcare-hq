@@ -6,11 +6,15 @@ The SMS framework uses a queuing architecture to make it easier to scale SMS pro
 The process to send an SMS from within the code is as follows. The only step you need to do is the first, and
 the rest happen automatically.
 
-#. Invoke one of the send_sms* functions found in `corehq.apps.sms.api <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/api.py>`_:
+#. Invoke one of the send_* functions found in `corehq.apps.sms.api <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/api.py>`_:
     send_sms
         used to send SMS to a one-way phone number represented as a string
-    send_sms_to_verified_number
-        use to send SMS to a two-way phone number represented as a PhoneNumber object
+    send_message_to_verified_number
+        use to send SMS or connect message to a two-way phone number represented as a PhoneNumber object.
+        This function is also used to send a connect message if the two way number is a
+        ConnectMessagingNumber object, but those are process directly by the
+        `ConnectID messaging backend <https://github.com/dimagi/commcare-hq/blob/master/corehq/messaging/smsbackends/connectid/backend.py>`_
+        and do not follow the rest of the processing described in this documentation
     send_sms_with_backend
         used to send SMS with a specific SMS backend
     send_sms_with_backend_name

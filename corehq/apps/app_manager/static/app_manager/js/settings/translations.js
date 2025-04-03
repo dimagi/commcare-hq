@@ -1,6 +1,14 @@
-hqDefine("app_manager/js/settings/translations", function () {
+hqDefine("app_manager/js/settings/translations", [
+    "jquery",
+    "knockout",
+    "hqwebapp/js/assert_properties",
+], function (
+    $,
+    ko,
+    assertProperties,
+) {
     var appTranslationsModel = function (options) {
-        hqImport("hqwebapp/js/assert_properties").assertRequired(options, ['baseUrl', 'format', 'lang', 'skipBlacklisted']);
+        assertProperties.assertRequired(options, ['baseUrl', 'format', 'lang', 'skipBlacklisted']);
         var self = {};
 
         self.file = ko.observable();

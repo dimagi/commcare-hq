@@ -13,12 +13,11 @@ from oauth2_provider.models import get_access_token_model
 
 from couchforms import openrosa_response
 
-from corehq import toggles
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
 from corehq.apps.receiverwrapper.views import (
-    _verify_access,
+    _has_mobile_access,
     post_api,
     secure_post,
 )
@@ -31,6 +30,7 @@ from corehq.apps.users.models import (
 from corehq.apps.users.util import normalize_username
 from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import sharded
+from corehq.util.test_utils import flag_enabled
 
 
 class FakeFile(object):
@@ -430,7 +430,6 @@ class TestAPIEndpoint(TestCase):
 
 
 @mock.patch('corehq.apps.receiverwrapper.views.is_from_formplayer')
-@mock.patch('corehq.toggles.set_toggle')
 @mock.patch('corehq.apps.receiverwrapper.views.cache.get', mock.MagicMock(return_value=None))
 @mock.patch('corehq.apps.receiverwrapper.views.cache.set', mock.MagicMock)
 class TestHasMobileAccess(TestCase):
@@ -454,25 +453,22 @@ class TestHasMobileAccess(TestCase):
         return WebUser.create(cls.domain, str(uuid.uuid4()), 'p@$$w0rd',
                               None, None, role_id=role.get_id)
 
-    def _verify_access(self, user):
-        _verify_access(self.domain, user.user_id, mock.MagicMock(couch_user=user))
+    def _has_mobile_access(self, user):
+        return _has_mobile_access(self.domain, user.user_id, mock.MagicMock(couch_user=user))
 
-    def test_formplayer_request_without_permission(self, set_toggle, is_from_formplayer):
-        is_from_formplayer.return_value = True
-        self._verify_access(self.user_without_permission)
-        set_toggle.assert_not_called()
-
-    def test_regular_request_without_permission(self, set_toggle, is_from_formplayer):
+    def test_mobile_request_with_permission(self, is_from_formplayer):
         is_from_formplayer.return_value = False
-        self._verify_access(self.user_without_permission)
-        set_toggle.assert_called_with('open_submission_endpoint', self.domain, True, toggles.NAMESPACE_DOMAIN)
+        self.assertTrue(self._has_mobile_access(self.user_with_permission))
 
-    def test_formplayer_request_with_permission(self, set_toggle, is_from_formplayer):
+    def test_formplayer_request_without_permission(self, is_from_formplayer):
         is_from_formplayer.return_value = True
-        self._verify_access(self.user_with_permission)
-        set_toggle.assert_not_called()
+        self.assertTrue(self._has_mobile_access(self.user_without_permission))
 
-    def test_regular_request_with_permission(self, set_toggle, is_from_formplayer):
+    def test_no_permission_but_whitelisted(self, is_from_formplayer):
         is_from_formplayer.return_value = False
-        self._verify_access(self.user_with_permission)
-        set_toggle.assert_not_called()
+        with flag_enabled('OPEN_SUBMISSION_ENDPOINT'):
+            self.assertTrue(self._has_mobile_access(self.user_without_permission))
+
+    def test_no_permission_no_toggle(self, is_from_formplayer):
+        is_from_formplayer.return_value = False
+        self.assertFalse(self._has_mobile_access(self.user_without_permission))

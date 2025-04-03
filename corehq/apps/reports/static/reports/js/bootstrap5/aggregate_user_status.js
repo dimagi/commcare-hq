@@ -1,15 +1,26 @@
-hqDefine("reports/js/bootstrap5/aggregate_user_status", function () {
+hqDefine("reports/js/bootstrap5/aggregate_user_status", [
+    "jquery",
+    "d3/d3.min",
+    "nvd3/nv.d3.min",
+    "hqwebapp/js/bootstrap5/main",
+    'nvd3/src/nv.d3.css',
+], function (
+    $,
+    d3,
+    nv,
+    hqMain,
+) {
     function aggregateTooltip(key, x, y, e) {
         return '<p><strong>' + key + '</strong></p>' +
            '<p>' + Math.round(e.value) + '% since ' + x + '</p>';
     }
     function addHorizontalScrollBar(div, width) {
-            $('#' + div).css({
-                'overflow-x': 'scroll'
-            });
-            $('#' + div + ' svg').css({
-                'width': width + 'px'
-            });
+        $('#' + div).css({
+            'overflow-x': 'scroll',
+        });
+        $('#' + div + ' svg').css({
+            'width': width + 'px',
+        });
     }
     function setupCharts(data, div, customTooltip) {
         nv.addGraph(function () {
@@ -60,9 +71,8 @@ hqDefine("reports/js/bootstrap5/aggregate_user_status", function () {
                 var tooltipFunction = $(this).data('is-aggregate') ? aggregateTooltip : undefined;
                 setupCharts($("#" + $(this).data('chart-data')).data("value"), $(this).data('chart-div'), tooltipFunction);
             });
-            var mainJs = hqImport("hqwebapp/js/bootstrap5/main");
             $('.hq-help-template').each(function () {
-                mainJs.transformHelpTemplate($(this), true);
+                hqMain.transformHelpTemplate($(this), true);
             });
         }
     });

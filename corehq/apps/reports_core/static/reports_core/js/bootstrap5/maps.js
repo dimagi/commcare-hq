@@ -1,5 +1,29 @@
-/*globals hqDefine */
-hqDefine('reports_core/js/bootstrap5/maps', function () {
+hqDefine('reports_core/js/bootstrap5/maps', [
+    'jquery',
+    'underscore',
+    'reports/js/bootstrap5/maps_utils',
+    'leaflet',
+], function (
+    $,
+    _,
+    mapsUtils,
+    L,
+) {
+    // Reset images needed for map markers, which don't play well with webpack.
+    // See https://github.com/Leaflet/Leaflet/issues/4968#issuecomment-483402699
+    delete L.Icon.Default.prototype._getIconUrl;
+    import('leaflet/dist/images/marker-icon-2x.png').then(function (iconRetina) {
+        import('leaflet/dist/images/marker-icon.png').then(function (icon) {
+            import('leaflet/dist/images/marker-shadow.png').then(function (shadow) {
+                L.Icon.Default.mergeOptions({
+                    iconRetinaUrl: iconRetina.default,
+                    iconUrl: icon.default,
+                    shadowUrl: shadow.default,
+                });
+            });
+        });
+    });
+
     var module = {},
         privates = {};
 
@@ -15,8 +39,8 @@ hqDefine('reports_core/js/bootstrap5/maps', function () {
         });
     };
 
-    var init_map = function (config, mapContainer) {
-        if (!privates.hasOwnProperty('map')) {
+    var initMap = function (config, mapContainer) {
+        if (!_.has(privates, 'map')) {
             mapContainer.show();
             mapContainer.empty();
             var streets = getTileLayer('mapbox/streets-v11', config.mapboxAccessToken),
@@ -37,16 +61,16 @@ hqDefine('reports_core/js/bootstrap5/maps', function () {
             privates.layerControl = L.control.layers(baseMaps);
             privates.layerControl.addTo(privates.map);
 
-            new (hqImport("reports/js/bootstrap5/maps_utils").ZoomToFitControl)().addTo(privates.map);
+            new (mapsUtils.ZoomToFitControl)().addTo(privates.map);
             // Add MapBox wordmark and correct attributes to map
             // See https://docs.mapbox.com/help/how-mapbox-works/attribution/
-            new (hqImport("reports/js/bootstrap5/maps_utils").MapBoxWordMark)().addTo(privates.map);
+            new (mapsUtils.MapBoxWordMark)().addTo(privates.map);
             // scale is now placed on the bottom right because it is easier to layout with the attributes than with the wordmark
             L.control.attribution({position: 'bottomright'}).addAttribution('&copy; <a href="http://www.mapbox.com/about/maps/">MapBox</a> | &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>').addTo(privates.map);
             L.control.scale({position: 'bottomright'}).addTo(privates.map);
 
             L.control.zoom({
-                position: 'bottomright'
+                position: 'bottomright',
             }).addTo(privates.map);
             $('#zoomtofit').css('display', 'block');
         } else {
@@ -75,13 +99,13 @@ hqDefine('reports_core/js/bootstrap5/maps', function () {
     };
 
     module.render = function (config, data, mapContainer) {
-        init_map(config, mapContainer);
+        initMap(config, mapContainer);
         initPopupTemplate(config);
 
-        var bad_re = /[a-zA-Z()]+/;
+        var badRegex = /[a-zA-Z()]+/;
         var points = _.compact(_.map(data, function (row) {
             var val = row[config.location_column_id];
-            if (val !== null && !bad_re.test(val)) {
+            if (val !== null && !badRegex.test(val)) {
                 var latlon = val.split(" ").slice(0, 2);
                 return L.marker(latlon).bindPopup(privates.template({row: row, columns: privates.columns}));
             }
@@ -91,7 +115,7 @@ hqDefine('reports_core/js/bootstrap5/maps', function () {
             privates.layerControl.addOverlay(overlay, config.layer_name);
             overlay.addTo(privates.map);
             privates.map.activeOverlay = overlay;
-            hqImport("reports/js/bootstrap5/maps_utils").zoomToAll(privates.map);
+            mapsUtils.zoomToAll(privates.map);
         }
     };
 

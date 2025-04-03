@@ -1,21 +1,16 @@
 --- 
 +++ 
-@@ -1,4 +1,4 @@
+@@ -1,64 +1,64 @@
 -{% extends "reports/bootstrap3/base_template.html" %}
 +{% extends "reports/bootstrap5/base_template.html" %}
  {% load hq_shared_tags %}
  {% load compress %}
  {% load i18n %}
-@@ -10,7 +10,7 @@
-         <script src="{% static 'ace-builds/src-min-noconflict/mode-json.js' %}"></script>
-         <script src="{% static 'ace-builds/src-min-noconflict/mode-xml.js' %}"></script>
-         <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
--        <script src="{% static 'repeaters/js/bootstrap3/repeat_record_report.js' %}"></script>
-+        <script src="{% static 'repeaters/js/bootstrap5/repeat_record_report.js' %}"></script>
-         <script src="{% static 'repeaters/js/repeat_record_report_selects.js' %}"></script>
-     {% endcompress %}
- {% endblock js %}
-@@ -18,56 +18,56 @@
+ {% load crispy_forms_tags %}
+ 
+-{% js_entry_b3 "repeaters/js/bootstrap3/repeat_record_report" %}
++{% js_entry "repeaters/js/bootstrap5/repeat_record_report" %}
+ 
  {% block filter_panel %} {{ block.super }}
    <div>
        {% if total > 0 %}
@@ -89,7 +84,7 @@
              <span class="sr-only">{% blocktrans %}Close{% endblocktrans %}</span></button>
            <h4 class="modal-title">{% blocktrans %}Confirmation{% endblocktrans %}</h4>
          </div>
-@@ -75,7 +75,7 @@
+@@ -66,7 +66,7 @@
            {% blocktrans %}Are you sure?{% endblocktrans %}
          </div>
          <div class="modal-footer">
@@ -98,7 +93,7 @@
              {% blocktrans %}No{% endblocktrans %}
            </button>
            <button type="button" id="confirm-button" data-action="" data-flag="" class="btn btn-primary">
-@@ -100,8 +100,8 @@
+@@ -91,8 +91,8 @@
      <div class="modal fade full-screen-modal" id="view-record-payload-modal" tabindex="-1" role="dialog">
          <div class="modal-dialog" role="document">
              <div class="modal-content">
@@ -109,7 +104,7 @@
                      </button>
                      <h4 class="modal-title">{% trans "Payload" %}</h4>
                  </div>
-@@ -109,7 +109,7 @@
+@@ -100,7 +100,7 @@
                      <div class="payload"></div>
                  </div>
                  <div class="modal-footer">
@@ -118,7 +113,7 @@
                      {% trans "Close" %}
                      </button>
                  </div>
-@@ -121,8 +121,8 @@
+@@ -112,8 +112,8 @@
      <div class="modal fade" id="payload-error-modal" tabindex="-1" role="dialog">
          <div class="modal-dialog" role="document">
              <div class="modal-content">
@@ -129,7 +124,7 @@
                      </button>
                      <h4 class="modal-title">{% trans "Error" %}</h4>
                  </div>
-@@ -130,7 +130,7 @@
+@@ -121,7 +121,7 @@
                      <div class="error-message"></div>
                  </div>
                  <div class="modal-footer">

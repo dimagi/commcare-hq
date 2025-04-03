@@ -11,10 +11,8 @@ hqDefine('registration/js/register_new_user', [
     ko,
     _,
     newUser,
-    initialPageData
+    initialPageData,
 ) {
-    'use strict';
-
     newUser.setOnModuleLoad(function () {
         $('.loading-form-step').fadeOut(500, function () {
             $('.step-1').fadeIn(500);
@@ -28,7 +26,7 @@ hqDefine('registration/js/register_new_user', [
     var regForm = newUser.formViewModel(
         initialPageData.get('reg_form_defaults'),
         '#registration-form-container',
-        ['step-1', 'step-2', 'final-step']
+        ['step-1', 'step-2', 'final-step'],
     );
     $('#registration-form-container').koApplyBindings(regForm);
 

@@ -1,0 +1,32 @@
+--- 
++++ 
+@@ -1,14 +1,14 @@
+-hqDefine("userreports/js/bootstrap3/configurable_report", [
++hqDefine("userreports/js/bootstrap5/configurable_report", [
+     'jquery',
+     'underscore',
+     'analytix/js/kissmetrix',
+-    'hqwebapp/js/bootstrap3/main',
++    'hqwebapp/js/bootstrap5/main',
+     'hqwebapp/js/initial_page_data',
+-    'reports/js/bootstrap3/hq_report',
+-    'reports/js/bootstrap3/report_config_models',
+-    'reports/js/bootstrap3/standard_hq_report',
++    'reports/js/bootstrap5/hq_report',
++    'reports/js/bootstrap5/report_config_models',
++    'reports/js/bootstrap5/standard_hq_report',
+     'userreports/js/report_analytix',
+-    'userreports/js/bootstrap3/base',
++    'userreports/js/bootstrap5/base',
+     'commcarehq',
+ ], function (
+     $,
+@@ -70,7 +70,7 @@
+         $("#savedReports").koApplyBindings(reportConfigsView);
+         reportConfigsView.setUserConfigurableConfigBeingViewed(reportConfigModels.reportConfig(defaultConfig));
+ 
+-        $('#email-enabled').tooltip({
++        $('#email-enabled').tooltip({  /* todo B5: js-tooltip */
+             placement: 'right',
+             html: true,
+             title: gettext("You can email a saved version<br />of this report."),

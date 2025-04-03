@@ -1,0 +1,15 @@
+--- 
++++ 
+@@ -1,10 +1,10 @@
+ 
+ 
+-hqDefine("geospatial/js/bootstrap3/geo_config", [
++hqDefine("geospatial/js/bootstrap5/geo_config", [
+     "jquery",
+     "knockout",
+     "hqwebapp/js/initial_page_data",
+-    "hqwebapp/js/bootstrap3/alert_user",
++    "hqwebapp/js/bootstrap5/alert_user",
+     "commcarehq",
+ ], function (
+     $,

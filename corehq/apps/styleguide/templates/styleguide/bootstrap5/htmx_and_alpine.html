@@ -78,14 +78,7 @@
     and JavaScript Bundlers</a>. If you don't know how to proceed after that, read further.
   </p>
   <div class="alert alert-primary">
-    <strong>Important:</strong> HTMX and Alpine can only be included on pages using Webpack as the JavaScript bundler
-    due to limitations with RequireJS. See the guide for
-    <a
-        href="https://commcare-hq.readthedocs.io/js-guide/requirejs-to-webpack.html"
-        target="_blank"
-    >Migrating RequireJS to Webpack</a> if you have an older page you would like
-    to use HTMX and Alpine on. If the page is even older (no bundler), we currently do not have a solution
-    for this.
+    <strong>Important:</strong> HTMX and Alpine can only be included on pages using Webpack.
   </div>
 
   <h2 id="usage-forms" class="pt-4">
@@ -259,22 +252,19 @@
     Loading Indicators
   </h2>
   <p>
-    You can use the <code>hx-indicator</code> attribute
-    (<a href="https://htmx.org/attributes/hx-indicator/" target="_blank">see docs here</a>)
-    to mark which element gets the <code>htmx-request</code> class appended to it during a request.
-    We've added custom styling to <code>_htmx.scss</code> to support the common states outlined
+    By default, if an element triggers an HTMX request, it will automatically get an <code>htmx-request</code>
+    CSS class applied to it. We've added custom styling to <code>_htmx.scss</code> to support the common states outlined
     later in this section.
   </p>
   <p>
-    By default, if an element triggers an HTMX request, it will automatically get the <code>htmx-request</code>
-    CSS class applied to it. No extra usage of the <code>hx-indicator</code> attribute is necessary. The
-    example submitting elements below showcase this default behavior <strong>without</strong> the need for
-    specific <code>hx-indicator</code> usage.
+    If you want to create new types of loading indicators for non-standard elements, you can explore using
+    the <code>hx-indicator</code> attribute
+    (<a href="https://htmx.org/attributes/hx-indicator/" target="_blank">see docs here</a>).
   </p>
   <p>
     It's often a great idea to pair button requests with <code>hx-disabled-elt="this"</code>
     (<a href="https://htmx.org/attributes/hx-disabled-elt/" target="_blank`">see docs for hx-disabled-elt</a>),
-    like the examples below, so that the requesting element or related element is disabled during the request.
+    like the examples below, so that the requesting <code>button</code> is disabled during the request.
   </p>
   <h3 id="button-loading" class="pt-4">
     Buttons

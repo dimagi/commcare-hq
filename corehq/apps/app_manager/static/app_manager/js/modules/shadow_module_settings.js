@@ -1,4 +1,10 @@
-hqDefine('app_manager/js/modules/shadow_module_settings', function () {
+hqDefine('app_manager/js/modules/shadow_module_settings', [
+    'knockout',
+    'underscore',
+], function (
+    ko,
+    _,
+) {
     const module = {
 
         /**

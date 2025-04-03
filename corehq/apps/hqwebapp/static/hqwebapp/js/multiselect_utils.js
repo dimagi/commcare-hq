@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine('hqwebapp/js/multiselect_utils', [
     "jquery",
     "knockout",
@@ -9,7 +9,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
     $,
     ko,
     _,
-    assertProperties
+    assertProperties,
 ) {
     var self = {};
 
@@ -28,7 +28,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
         var action = _.template(
             '<button class="btn <%-actionButtonClass %> btn-xs <%- floatClass %>" id="<%- actionButtonId %>" <% if (actionDisabled) { %> disabled <% } %>>' +
                 '<i class="<%- actionButtonIcon %>"></i> <%- actionButtonText %>' +
-            '</button>'
+            '</button>',
         );
         return action({
             actionButtonId: buttonId,
@@ -48,7 +48,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                         '<i class="fa fa-search"></i>' +
                     '</span>' +
                     '<input type="search" class="form-control search-input" id="<%- searchInputId %>" autocomplete="off" placeholder="<%- searchInputPlaceholder %>" />' +
-                '</div>'
+                '</div>',
             );
         return input({
             searchInputId: inputId,
@@ -85,12 +85,12 @@ hqDefine('hqwebapp/js/multiselect_utils', [
             selectableHeader: _renderHeader(
                 selectableHeaderTitle,
                 _renderAction(selectAllId, defaultBtnClass, 'fa fa-plus', gettext("Add All"), disableModifyAllActions),
-                _renderSearch(searchSelectableId, searchItemTitle)
+                _renderSearch(searchSelectableId, searchItemTitle),
             ),
             selectionHeader: _renderHeader(
                 selectedHeaderTitle,
                 _renderAction(removeAllId, defaultBtnClass, 'fa fa-remove', gettext("Remove All"), disableModifyAllActions),
-                _renderSearch(searchSelectedId, searchItemTitle)
+                _renderSearch(searchSelectedId, searchItemTitle),
             ),
             afterInit: function () {
                 var that = this,

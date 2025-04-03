@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/users/utils", [
     'jquery',
     'sentry_browser',
@@ -10,7 +9,7 @@ hqDefine("cloudcare/js/formplayer/users/utils", [
     Sentry,
     initialPageData,
     FormplayerFrontend,
-    UsersModels
+    UsersModels,
 ) {
     var self = {};
     self.Users = {
@@ -29,10 +28,10 @@ hqDefine("cloudcare/js/formplayer/users/utils", [
             $.cookie(
                 self.Users.restoreAsKey(
                     currentUser.domain,
-                    currentUser.username
+                    currentUser.username,
                 ),
                 currentUser.restoreAs,
-                { secure: initialPageData.get('secure_cookies') }
+                { secure: initialPageData.get('secure_cookies') },
             );
         },
         restoreAsKey: function (domain, username) {
@@ -67,7 +66,7 @@ hqDefine("cloudcare/js/formplayer/users/utils", [
     FormplayerFrontend.getChannel().reply('restoreAsUser', function (domain, username) {
         return self.Users.getRestoreAsUser(
             domain,
-            username
+            username,
         );
     });
 
@@ -82,7 +81,7 @@ hqDefine("cloudcare/js/formplayer/users/utils", [
         var user = UsersModels.getCurrentUser();
         self.Users.clearRestoreAsUser(
             user.domain,
-            user.username
+            user.username,
         );
         user.restoreAs = null;
         FormplayerFrontend.showRestoreAs(user);

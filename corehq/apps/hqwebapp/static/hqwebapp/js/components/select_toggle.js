@@ -1,4 +1,4 @@
-'use strict';
+
 /*
  * Component for displaying a selection as a set of buttons.
  * Creates an invisible <select> element to store the value and a set of buttons for the user to interact with.
@@ -29,7 +29,7 @@ hqDefine('hqwebapp/js/components/select_toggle', [
     ko,
     _,
     koComponents,
-    initialPageData
+    initialPageData,
 ) {
     const component = {
         viewModel: function (params) {

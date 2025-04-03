@@ -1,7 +1,7 @@
 --- 
 +++ 
 @@ -1,47 +1,47 @@
- 'use strict';
+ 
 -hqDefine('hqwebapp/js/bootstrap3/mobile_experience_warning', [
 +hqDefine('hqwebapp/js/bootstrap5/mobile_experience_warning', [
      "jquery",
@@ -12,9 +12,8 @@
  ], function (
      $,
      initialPageData,
--    kissmetrix
-+    kissmetrix,
-+    bootstrap
+     kissmetrix,
++    bootstrap,
  ) {
      $(function () {
  

@@ -523,7 +523,7 @@ class RestoreConfig(object):
     :param restore_user:    The restore user requesting the restore
     :param params:          The RestoreParams associated with this (see above).
     :param cache_settings:  The RestoreCacheSettings associated with this (see above).
-    :param is_async:           Whether to get the restore response using a celery task
+    :param is_async:        Whether to get the restore response using a celery task
     :param skip_fixtures:   Whether to include fixtures in the restore payload
     """
 
@@ -733,9 +733,10 @@ class RestoreConfig(object):
             with self.timing_context('RegistrationElementProvider'):
                 content.append(get_registration_element(self.restore_state.restore_user))
 
-            with self.timing_context('FixtureElementProvider'):
-                for element in get_fixture_elements(self.restore_state, self.timing_context, self.skip_fixtures):
-                    content.append(element)
+            if not self.skip_fixtures:
+                with self.timing_context('FixtureElementProvider'):
+                    for element in get_fixture_elements(self.restore_state, self.timing_context):
+                        content.append(element)
 
             with self.timing_context('CasePayloadProvider'):
                 do_livequery(self.timing_context, self.restore_state, content, async_task)

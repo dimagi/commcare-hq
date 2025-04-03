@@ -1,0 +1,126 @@
+{% load i18n %}
+
+<script type="text/html" id="js-popover-template-add-item">
+  <div class="popover popover-additem" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>
+</script>
+
+<script type="text/html" class="js-popover-template-add-item-content" data-slug="module">
+  <div>
+    <div class="pull-left">
+      <button type="button" class="popover-additem-option new-module" data-type="survey">
+        <i class="fa-regular fa-file"></i> {% trans "Surveys" %}
+        <p>{% blocktrans %}Collect data once.{% endblocktrans %}</p>
+      </button>
+    </div>
+    <div class="pull-left">
+      <button type="button" class="popover-additem-option new-module" data-type="case">
+        <i class="fa-solid fa-list-check"></i> {% trans "Case List" %}
+        <p>{% blocktrans %}Track items over time.{% endblocktrans %}</p>
+      </button>
+    </div>
+    {% if show_biometric %}
+      <div class="pull-left">
+        <button type="button" class="popover-additem-option new-module" data-type="biometrics">
+          <i class="fcc fcc-app-biometrics"></i> {% trans "Biometrics" %}
+          <p>{% blocktrans %}Identify clients by fingerprint.{% endblocktrans %}</p>
+        </button>
+      </div>
+    {% endif %}
+    {% if show_advanced %}
+      <div class="pull-left">
+        <button type="button" class="popover-additem-option new-module" data-type="advanced">
+          <i class="fa fa-flask"></i> {% trans "Advanced Menu" %}
+          <p>{% blocktrans %}Complex case management.{% endblocktrans %}</p>
+        </button>
+      </div>
+    {% endif %}
+    {% if show_report_modules %}
+      <div class="pull-left">
+        <button type="button" class="popover-additem-option new-module" data-type="report">
+          <i class="fa-regular fa-chart-bar"></i> {% trans "Report Menu" %}
+          <p>{% blocktrans %}Worker performance.{% endblocktrans %}</p>
+        </button>
+      </div>
+    {% endif %}
+    {% if show_shadow_modules %}
+      <div class="pull-left">
+        <button type="button" class="popover-additem-option new-module" data-type="shadow">
+          <i class="fa-regular fa-moon"></i> {% trans "Shadow Menu" %}
+          <p>{% blocktrans %}Mimic another menu.{% endblocktrans %}</p>
+        </button>
+      </div>
+    {% endif %}
+    {% if show_shadow_module_v1 %}
+      <div class="pull-left">
+        <button type="button" class="popover-additem-option new-module" data-type="shadow-v1">
+          <i class="fa-regular fa-moon"></i> {% trans "Shadow Menu V1" %}
+          <p>{% blocktrans %}Old style shadow menu with deprecated child behaviour{% endblocktrans %}</p>
+        </button>
+      </div>
+    {% endif %}
+    {% if show_training_modules %}
+      <div class="pull-left">
+        <button type="button" class="popover-additem-option new-module" data-type="training">
+          <i class="fa fa-graduation-cap"></i> {% trans "Training" %}
+          <p>{% blocktrans %}Content for training users.{% endblocktrans %}</p>
+        </button>
+      </div>
+    {% endif %}
+  </div>
+</script>
+
+<script type="text/html" class="js-popover-template-add-item-content" data-slug="form">
+  <div data-module-unique-id="<%- moduleUniqueId %>">
+    <% if (showSurvey) { %>
+    <div class="pull-left">
+      <button type="button" class="popover-additem-option js-new-form appnav-responsive"
+              data-case-action="none" data-type="survey" data-form-type="form">
+        <i class="fa-regular fa-file"></i> {% trans "Survey" %}
+      </button>
+    </div>
+    <% } %>
+    <% if (showTraining) { %>
+    <div class="pull-left">
+      <button type="button" class="popover-additem-option js-new-form appnav-responsive"
+              data-case-action="none" data-type="lesson" data-form-type="form">
+        <i class="fa-regular fa-file"></i> {% trans "Lesson" %}
+      </button>
+    </div>
+    <% } %>
+    <% if (showCaseForms) { %>
+    <div class="pull-left">
+      <button type="button" class="popover-additem-option js-new-form appnav-responsive"
+              data-case-action="update" data-type="followup" data-form-type="form">
+        <i class="fcc fcc-app-updateform"></i> {% trans "Followup" %}
+      </button>
+    </div>
+    <div class="pull-left">
+      <button type="button" class="popover-additem-option js-new-form appnav-responsive"
+              data-case-action="open" data-type="followup" data-form-type="form">
+        <i class="fcc fcc-app-createform"></i> {% trans "Register" %}
+      </button>
+    </div>
+    <% } %>
+    <% if (showAdvanced) { %>
+    <div class="pull-left">
+      <button type="button" class="popover-additem-option js-new-form appnav-responsive"
+              data-type="advanced" data-form-type="form">
+        <i class="fa-regular fa-file"></i> {% trans "Form" %}
+      </button>
+    </div>
+    <% } %>
+    <% if (showShadow) { %>
+    <div class="pull-left">
+      <button type="button" class="popover-additem-option js-new-form appnav-responsive"
+              data-case-action="update" data-type="shadow" data-form-type="shadow">
+        <i class="fa-regular fa-moon"></i> {% trans "Shadow Form" %}
+      </button>
+    </div>
+    <% } %>
+    <form method="post" class="hide" action="<%- newFormUrl %>">
+      {% csrf_token %}
+      <input type="hidden" name="case_action" />
+      <input type="hidden" name="form_type" />
+    </form>
+  </div>
+</script>

@@ -1,4 +1,4 @@
-'use strict';
+
 
 hqDefine("prototype/js/webpack/bootstrap3_amd",[
     'jquery',

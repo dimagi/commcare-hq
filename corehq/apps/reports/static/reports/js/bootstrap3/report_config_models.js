@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine("reports/js/bootstrap3/report_config_models", [
     'jquery',
     'knockout',
@@ -12,7 +12,7 @@ hqDefine("reports/js/bootstrap3/report_config_models", [
     _,
     googleAnalytics,
     standardHQReportModule,
-    dateRangePicker  // eslint-disable-line no-unused-vars
+    dateRangePicker,  // eslint-disable-line no-unused-vars
 ) {
     var reportConfig = function (data) {
         var self = ko.mapping.fromJS(data, {

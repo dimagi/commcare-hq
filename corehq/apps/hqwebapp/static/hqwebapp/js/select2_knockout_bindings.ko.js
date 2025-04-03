@@ -1,15 +1,15 @@
-"use strict";
+
 hqDefine("hqwebapp/js/select2_knockout_bindings.ko", [
     'jquery',
     'underscore',
     'knockout',
-    'DOMPurify/dist/purify.min',
+    'DOMPurify',
     'select2/dist/js/select2.full.min',
 ], function (
     $,
     _,
     ko,
-    DOMPurify
+    DOMPurify,
 ) {
     /**
      * Converts the bound element to a select2 widget, using the element's existing

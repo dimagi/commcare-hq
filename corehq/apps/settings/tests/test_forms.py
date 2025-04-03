@@ -1,8 +1,12 @@
-from django.test import SimpleTestCase, override_settings
-from ..forms import HQTwoFactorMethodForm, HQApiKeyForm
-from freezegun import freeze_time
 from datetime import datetime
 from zoneinfo import ZoneInfo
+
+from django.test import SimpleTestCase, override_settings
+
+from freezegun import freeze_time
+from two_factor.forms import totp
+
+from ..forms import HQApiKeyForm, HQTOTPDeviceForm, HQTwoFactorMethodForm
 
 
 @override_settings(TWO_FACTOR_CALL_GATEWAY=True, TWO_FACTOR_SMS_GATEWAY=True)
@@ -33,6 +37,32 @@ class TestHQTwoFactorMethodForm(SimpleTestCase):
     @staticmethod
     def _get_choice_values(choices):
         return {choice[0] for choice in choices}
+
+
+@freeze_time(datetime(2025, 3, 6))
+class TestHQTOTPDeviceForm(SimpleTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.key = '5D70D2'
+        cls.user = 'testuser'
+        blank_form = HQTOTPDeviceForm(cls.key, cls.user)
+        cls.valid_token = totp(blank_form.bin_key)
+
+    def test_token_is_valid(self):
+        form = HQTOTPDeviceForm(self.key, self.user, data={'token': self.valid_token})
+        self.assertTrue(form.is_valid())
+
+    def test_token_is_invalid(self):
+        invalid_token = totp(b'garbage')
+        form = HQTOTPDeviceForm(self.key, self.user, data={'token': invalid_token})
+        self.assertFalse(form.is_valid())
+
+    def test_cleaned_token_is_integer(self):
+        form = HQTOTPDeviceForm(self.key, self.user, data={'token': str(self.valid_token)})
+        form.full_clean()
+        self.assertTrue(isinstance(form.cleaned_data['token'], int))
+        self.assertTrue(form.is_valid())
 
 
 class HQApiKeyTests(SimpleTestCase):

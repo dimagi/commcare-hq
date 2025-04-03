@@ -11,20 +11,20 @@ hqDefine("data_interfaces/js/case_rule_main", [
     initialPageData,
     casePropertyInput,
     CaseRuleCriteria,
-    CaseRuleActions
+    CaseRuleActions,
 ) {
     $(function () {
         casePropertyInput.register();
 
         var criteriaModel = CaseRuleCriteria(
             initialPageData.get('criteria_initial'),
-            initialPageData.get('criteria_constants')
+            initialPageData.get('criteria_constants'),
         );
         $('#rule-criteria-panel').koApplyBindings(criteriaModel);
 
         $('#rule-actions').koApplyBindings(CaseRuleActions(
             initialPageData.get('actions_initial'),
-            criteriaModel.caseType
+            criteriaModel.caseType,
         ));
     });
 });

@@ -1,7 +1,36 @@
-'use strict';
-hqDefine('app_manager/js/app_manager', function () {
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data");
-    var module = hqImport("hqwebapp/js/bootstrap3/main").eventize({});
+
+hqDefine('app_manager/js/app_manager', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/layout',
+    'hqwebapp/js/toggles',
+    'hqwebapp/js/ui_elements/ui-element-langcode-button',
+    'analytix/js/google',
+    'analytix/js/kissmetrix',
+    'hqwebapp/js/bootstrap3/alert_user',
+    'hqwebapp/js/bootstrap3/main',
+    'app_manager/js/menu',
+    'app_manager/js/preview_app',
+    'app_manager/js/section_changer',
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+    hqLayout,
+    toggles,
+    uiElementLangcodeButton,
+    google,
+    kissmetrix,
+    alertUser,
+    hqMain,
+    appManagerMenu,
+    previewApp,
+    sectionChanger,
+) {
+    var module = hqMain.eventize({});
     var _private = {};
     _private.appendedPageTitle = "";
     _private.prependedPageTitle = "";
@@ -73,7 +102,7 @@ hqDefine('app_manager/js/app_manager', function () {
         if (module.fetchAndShowFormValidation) {
             module.fetchAndShowFormValidation();
         }
-        hqImport("hqwebapp/js/bootstrap3/main").updateDOM(update);
+        hqMain.updateDOM(update);
     };
 
     module.setupValidation = function (validationUrl) {
@@ -122,9 +151,9 @@ hqDefine('app_manager/js/app_manager', function () {
                 } else {
                     area.find('*').hide();
                     upgradeMessage.append(
-                        $('<i></i>').addClass('fa fa-arrow-left')
+                        $('<i></i>').addClass('fa fa-arrow-left'),
                     ).append(
-                        $('<span></span>').text(' Requires CommCare ' + version)
+                        $('<span></span>').text(' Requires CommCare ' + version),
                     ).appendTo(area);
                 }
             });
@@ -191,11 +220,11 @@ hqDefine('app_manager/js/app_manager', function () {
                             $form.data('clicked', 'true');
                             $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
                             if (dataType === "case") {
-                                hqImport('analytix/js/google').track.event("Added Case List Menu");
-                                hqImport('analytix/js/kissmetrix').track.event("Added Case List Menu");
+                                google.track.event("Added Case List Menu");
+                                kissmetrix.track.event("Added Case List Menu");
                             } else if (dataType === "survey") {
-                                hqImport('analytix/js/google').track.event("Added Surveys Menu");
-                                hqImport('analytix/js/kissmetrix').track.event("Added Surveys Menu");
+                                google.track.event("Added Surveys Menu");
+                                kissmetrix.track.event("Added Surveys Menu");
                             }
                             $form.submit();
                         }
@@ -236,7 +265,7 @@ hqDefine('app_manager/js/app_manager', function () {
      */
     var _initMenuItemSorting = function () {
         var MODULE_SELECTOR = ".appmanager-main-menu .module";
-        if (!hqImport('hqwebapp/js/toggles').toggleEnabled('LEGACY_CHILD_MODULES')) {
+        if (!toggles.toggleEnabled('LEGACY_CHILD_MODULES')) {
             nestChildModules();
             initChildModuleUpdateListener();
         }
@@ -394,13 +423,13 @@ hqDefine('app_manager/js/app_manager', function () {
                 method: 'POST',
                 data: data,
                 success: function () {
-                    hqImport('hqwebapp/js/bootstrap3/alert_user').alert_user(gettext("Moved successfully."), "success");
+                    alertUser.alert_user(gettext("Moved successfully."), "success");
                 },
                 error: function (xhr) {
-                    hqImport('hqwebapp/js/bootstrap3/alert_user').alert_user(xhr.responseJSON.error, "danger");
+                    alertUser.alert_user(xhr.responseJSON.error, "danger");
                 },
             });
-            hqImport("app_manager/js/menu").setPublishStatus(true);
+            appManagerMenu.setPublishStatus(true);
         }
 
     };
@@ -414,7 +443,7 @@ hqDefine('app_manager/js/app_manager', function () {
         $forms.each(function () {
             var $form = $(this),
                 $buttonHolder = $form.find('.save-button-holder'),
-                button = hqImport("hqwebapp/js/bootstrap3/main").initSaveButtonForm($form, {
+                button = hqMain.initSaveButtonForm($form, {
                     unsavedMessage: gettext("You have unsaved changes"),
                     success: function (data) {
                         var key;
@@ -433,9 +462,80 @@ hqDefine('app_manager/js/app_manager', function () {
                 });
             button.ui.appendTo($buttonHolder);
             $buttonHolder.data('button', button);
-            hqImport("app_manager/js/section_changer").attachToForm($form);
+            sectionChanger.attachToForm($form);
         });
     };
+
+    $(function () {
+        const app = initialPageData.get('app_subset');
+        module.init({
+            appVersion: app.version || -1,
+            commcareVersion: String(app.commcare_minor_release),
+            latestCommcareVersion: initialPageData.get('latest_commcare_version') || null,
+        });
+
+        $('.btn-langcode-preprocessed').each(function () {
+            uiElementLangcodeButton.new($(this), $(this).text());
+            if ($(this).hasClass('langcode-input')) {
+                var $langcodeInput = $(this).parent().find("input");
+                var that = this;
+                if ($langcodeInput) {
+                    $langcodeInput.change(function () {
+                        if ($(this).val() === "") {
+                            $(that).show();
+                        } else {
+                            $(that).hide();
+                        }
+                    });
+                }
+            }
+        });
+
+        $('[data-toggle="tooltip"]').tooltip();
+
+        // https://github.com/twitter/bootstrap/issues/6122
+        // this is necessary to get popovers to be able to extend
+        // outside the borders of their containing div
+        //
+        // http://manage.dimagi.com/default.asp?183618
+        // Firefox 40 considers hovering on a select a mouseleave event and thus kills the select
+        // dropdown. The focus and blur events are to ensure that we do not trigger overflow hidden
+        // if we are in a select
+        var inSelectElement = false,
+            $tabContent = $('.tab-content');
+        $tabContent.css('overflow', 'visible');
+        $tabContent.on('mouseenter', '.collapse', function () {
+            $(this).css('overflow','visible');
+        });
+        $tabContent.on('mouseleave', '.collapse', function () {
+            if (inSelectElement) { return; }
+            $(this).css('overflow','hidden');
+        });
+        $tabContent.on('focus', '.collapse', function () {
+            inSelectElement = true;
+        });
+        $tabContent.on('blur', '.collapse', function () {
+            inSelectElement = false;
+        });
+
+        // Handling for popup displayed when accessing a deleted app
+        $('#deleted-app-modal').modal({
+            backdrop: 'static',
+            keyboard: false,
+            show: true,
+        }).on('hide.bs.modal', function () {
+            window.location = initialPageData.reverse('dashboard_default');
+        });
+
+        // Set up app preview
+        previewApp.initPreviewWindow();
+
+        // Hide fancy app manager loading animation
+        $('.appmanager-content').fadeIn();
+        $('.appmanager-loading').fadeOut();
+
+        hqLayout.setIsAppbuilderResizing(true);
+    });
 
     return module;
 });

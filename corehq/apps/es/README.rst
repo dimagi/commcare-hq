@@ -567,7 +567,7 @@ provides the following functionality:
 Tombstone
 ---------
 
-The concept of Tombstone in the ES mulitplexer is there to be placeholder for
+The concept of Tombstone in the ES multiplexer is there to be placeholder for
 the docs that get deleted on the primary index prior to that document being
 indexed on the secondary index. It means that whenever an adapter is multiplexed
 and a document is deleted, then the secondary index will receive a tombstone

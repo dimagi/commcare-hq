@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -5,7 +5,7 @@
+@@ -5,12 +5,11 @@
  
  {% block title %}{% trans "Your session has expired" %}{% endblock %}
  
@@ -9,7 +9,13 @@
  
  {% block background_content %}
    <div class="bg-container">
-@@ -48,7 +48,7 @@
+-    <div class="bg-full-cover-fixed bg-registration b-lazy"
+-         data-src="{% static 'hqwebapp/images/molly.jpg' %}"></div>
++    <div class="bg-full-cover-fixed bg-registration"></div>
+     <div class="bg-overlay"></div>
+   </div>
+ {% endblock %}
+@@ -48,7 +47,7 @@
           id="user-login-form"
           class="ko-template"
           {% endif %}>

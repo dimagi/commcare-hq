@@ -23,7 +23,7 @@ hqDefine("export/js/create_export", [
     _,
     assertProperties,
     initialPageData,
-    kissmetricsAnalytics
+    kissmetricsAnalytics,
 ) {
     var createExportModel = function (options) {
         assertProperties.assert(options, ['drilldown_fetch_url', 'drilldown_submit_url', 'page'], ['model_type']);
@@ -271,7 +271,7 @@ hqDefine("export/js/create_export", [
                     "[BI Integration] Clicked Add Odata Feed button",
                     {
                         "Feed Type": self.modelType(),
-                    }
+                    },
                 );
                 setTimeout(self.submitNewExportForm, 250);
             } else {

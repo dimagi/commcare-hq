@@ -4,7 +4,7 @@ hqDefine("hqwebapp/spec/assert_properties_spec", [
     'hqwebapp/js/assert_properties',
 ], function (
     $,
-    lib
+    lib,
 ) {
     describe('assert_properties', function () {
         var object = {

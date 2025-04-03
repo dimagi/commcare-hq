@@ -7,7 +7,7 @@ hqDefine("app_manager/js/menu", [
     $,
     initialPageData,
     layout,
-    utils
+    utils,
 ) {
     var setPublishStatus = function (isOn) {
         if (isOn) {

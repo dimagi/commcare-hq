@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine('case_importer/js/excel_fields', [
     'jquery',
     'knockout',
@@ -8,7 +8,7 @@ hqDefine('case_importer/js/excel_fields', [
     $,
     ko,
     _,
-    levenshtein
+    levenshtein,
 ) {
     function excelFieldRows(excelFields, caseFieldSpecs, systemFields) {
         systemFields = _(systemFields);

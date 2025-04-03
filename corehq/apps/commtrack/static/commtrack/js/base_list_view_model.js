@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine("commtrack/js/base_list_view_model", [
     'jquery',
     'knockout',
@@ -8,10 +8,9 @@ hqDefine("commtrack/js/base_list_view_model", [
     $,
     ko,
     _,
-    bootstrap
+    bootstrap,
 ) {
     var BaseListViewModel = function (o) {
-        'use strict';
         var self = {};
 
         self.initialLoad = ko.observable(false);

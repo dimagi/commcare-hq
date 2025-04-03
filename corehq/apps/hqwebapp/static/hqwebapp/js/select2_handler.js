@@ -6,12 +6,11 @@ hqDefine("hqwebapp/js/select2_handler", [
 ], function (
     $,
     ko,
-    _
+    _,
 ) {
     var baseSelect2Handler = function (options) {
         // For use with BaseAsyncHandler
         // todo: documentation (biyeun)
-        'use strict';
         var self = {};
         self.fieldName = options.fieldName;
         self.placeholder = options.placeholder;

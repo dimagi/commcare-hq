@@ -39,13 +39,6 @@ class SemanticVersionProperty(StringProperty):
 
 
 class CommCareBuild(BlobMixin, Document):
-    """
-    #python manage.py shell
-    #>>> from corehq.apps.builds.models import CommCareBuild
-    #>>> build = CommCareBuild.create_from_zip('/Users/droberts/Desktop/zip/7106.zip', '1.2.dev', 7106)
-
-    """
-
     build_number = IntegerProperty()
     version = SemanticVersionProperty()
     time = DateTimeProperty()

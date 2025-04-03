@@ -6,6 +6,7 @@ from corehq.apps.locations.util import (
     location_hierarchy_config,
 )
 from corehq.apps.reports.filters.base import BaseReportFilter
+from corehq.apps.reports.util import DatatablesServerSideParams
 
 
 class AsyncLocationFilter(BaseReportFilter):
@@ -33,7 +34,7 @@ class AsyncLocationFilter(BaseReportFilter):
     def filter_context(self):
         api_root = self.api_root
         user = self.request.couch_user
-        loc_id = self.request.GET.get('location_id')
+        loc_id = DatatablesServerSideParams.get_value_from_request(self.request, 'location_id')
         if not loc_id:
             # Don't use enterprise permissions, because any location not in the current domain won't exist
             domain_membership = user.get_domain_membership(self.domain, allow_enterprise=False)
@@ -53,7 +54,7 @@ class AsyncLocationFilter(BaseReportFilter):
 
     @classmethod
     def get_value(cls, request, domain):
-        return request.GET.get('location_id')
+        return DatatablesServerSideParams.get_value_from_request(request, 'location_id')
 
 
 class OptionalAsyncLocationFilter(AsyncLocationFilter):

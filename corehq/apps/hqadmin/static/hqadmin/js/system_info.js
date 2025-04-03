@@ -10,7 +10,7 @@ hqDefine('hqadmin/js/system_info', [
     ko,
     _,
     initialPageData,
-    alertUser
+    alertUser,
 ) {
     function formatDate(datestring) {
         //parse and format the date timestamps - seconds since epoch into date object

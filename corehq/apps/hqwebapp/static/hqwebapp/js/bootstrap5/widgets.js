@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine("hqwebapp/js/bootstrap5/widgets",[
     'jquery',
     'underscore',
@@ -10,7 +10,7 @@ hqDefine("hqwebapp/js/bootstrap5/widgets",[
 ], function ($, _, MapboxGeocoder, initialPageData, tempusDominus) {
     var init = function () {
         var MAPBOX_ACCESS_TOKEN = initialPageData.get(
-            "mapbox_access_token"
+            "mapbox_access_token",
         );
         // .hqwebapp-select2 is a basic select2-based dropdown or multiselect
         _.each($(".hqwebapp-select2"), function (element) {

@@ -1,0 +1,30 @@
+--- 
++++ 
+@@ -1,8 +1,8 @@
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ 
+-{% js_entry_b3 "data_interfaces/js/find_by_id" %}
++{% js_entry "data_interfaces/js/find_by_id" %}
+ 
+ {% block page_title %}
+   {{ current_page.title }}
+@@ -22,14 +22,14 @@
+ 
+   {% if can_view_cases %}
+     <fieldset id="find-case" class="ko-template">
+-      {% include 'data_interfaces/partials/bootstrap3/find_by_id_form.html' %}
++      {% include 'data_interfaces/partials/bootstrap5/find_by_id_form.html' %}
+     </fieldset>
+     <br><br><br>
+   {% endif %}
+ 
+   {% if can_view_forms %}
+     <fieldset id="find-form" class="ko-template">
+-      {% include 'data_interfaces/partials/bootstrap3/find_by_id_form.html' %}
++      {% include 'data_interfaces/partials/bootstrap5/find_by_id_form.html' %}
+     </fieldset>
+   {% endif %}
+ {% endblock page_content %}

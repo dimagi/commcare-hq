@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine("repeaters/js/add_form_repeater", [
     'jquery',
     'hqwebapp/js/initial_page_data',

@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine("dashboard/js/dashboard", [
     'jquery',
     'knockout',
@@ -12,7 +12,7 @@ hqDefine("dashboard/js/dashboard", [
     $,
     ko,
     _,
-    initialPageData
+    initialPageData,
 ) {
     var tileModel = function (options) {
         var self = {};

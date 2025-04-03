@@ -1,10 +1,10 @@
-'use strict';
+
 hqDefine("cloudcare/js/formplayer/apps/collections", [
     'backbone',
     'cloudcare/js/formplayer/apps/models',
 ], function (
     Backbone,
-    Models
+    Models,
 ) {
     var self = Backbone.Collection.extend({
         url: "appSelects",

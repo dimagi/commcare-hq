@@ -132,9 +132,9 @@ def default_feature_rates(edition=SoftwarePlanEdition.STANDARD):
 
 @unit_testing_only
 def custom_plan_version(name='Custom software plan', edition=SoftwarePlanEdition.STANDARD,
-                        role_slug='standard_plan_v0', feature_rates=None):
+                        role_slug='standard_plan_v0', feature_rates=None, monthly_fee=0):
     plan = SoftwarePlan.objects.create(name=name, edition=edition)
-    product_rate = SoftwareProductRate.objects.create(name=name)
+    product_rate = SoftwareProductRate.objects.create(name=name, monthly_fee=monthly_fee)
     role = Role.objects.get(slug=role_slug)
     plan_version = SoftwarePlanVersion.objects.create(
         plan=plan,

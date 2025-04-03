@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy
 
 import dateutil
 from crispy_forms import layout as crispy
-from crispy_forms.helper import FormHelper
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms.bootstrap import StrictButton
 
 from corehq import privileges
@@ -1078,7 +1078,7 @@ class DatasourceExportDownloadForm(forms.Form):
 
     def __init__(self, domain, *args, **kwargs):
         super(DatasourceExportDownloadForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
+        self.helper = HQFormHelper()
 
         self.fields['data_source'].choices = self.domain_datasources(domain)
 
@@ -1094,11 +1094,13 @@ class DatasourceExportDownloadForm(forms.Form):
                     data_bind='visible: haveDatasources'
                 ),
             ),
-            StrictButton(
-                _("Download Data Export Tool query file"),
-                type="submit",
-                css_class="btn-primary",
-                data_bind="enable: haveDatasources"
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Download Data Export Tool query file"),
+                    type="submit",
+                    css_class="btn-primary",
+                    data_bind="enable: haveDatasources"
+                ),
             ),
         )
 

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from urllib.parse import urljoin
 
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseNotFound
@@ -6,7 +6,6 @@ from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
 from dateutil import tz
-from datetime import timezone
 from tastypie import fields, http
 from tastypie.exceptions import ImmediateHttpResponse
 
@@ -15,14 +14,16 @@ from corehq.apps.accounting.utils.account import (
     get_account_or_404,
     request_has_permissions_for_enterprise_admin,
 )
+from corehq.apps.analytics.tasks import record_event
 from corehq.apps.api.odata.utils import FieldMetadata
 from corehq.apps.api.odata.views import add_odata_headers
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.auth import ODataAuthentication
 from corehq.apps.api.resources.meta import get_hq_throttle
-from corehq.apps.enterprise.enterprise import (
-    EnterpriseReport,
-)
+from corehq.apps.api.keyset_paginator import KeysetPaginator
+from corehq.apps.enterprise.enterprise import EnterpriseReport
+from corehq.apps.enterprise.metric_events import ENTERPRISE_API_ACCESS
+from corehq.apps.enterprise.iterators import IterableEnterpriseFormQuery, EnterpriseFormReportConverter
 
 from corehq.apps.enterprise.tasks import generate_enterprise_report, ReportTaskProgress
 
@@ -61,7 +62,8 @@ class ODataResource(HqBaseResource):
         result['@odata.context'] = request.build_absolute_uri(path)
 
         meta = result['meta']
-        result['@odata.count'] = meta['total_count']
+        if 'total_count' in meta:
+            result['@odata.count'] = meta['total_count']
         if 'next' in meta and meta['next']:
             result['@odata.nextLink'] = request.build_absolute_uri(meta['next'])
 
@@ -140,7 +142,10 @@ class ODataResource(HqBaseResource):
         if not datetime_string:
             return None
 
-        time = datetime.strptime(datetime_string, EnterpriseReport.DATE_ROW_FORMAT)
+        if isinstance(datetime_string, str):
+            time = datetime.strptime(datetime_string, EnterpriseReport.DATE_ROW_FORMAT)
+        else:
+            time = datetime_string
         time = time.astimezone(tz.gettz('UTC'))
         return time.isoformat()
 
@@ -154,6 +159,8 @@ class ODataEnterpriseReportResource(ODataResource):
     # as the data preview and actual request perform separate queries
     RETRY_IN_PROGRESS_DELAY = 60
     RETRY_CONFLICT_DELAY = 120
+
+    COLUMN_MAP = {}  # Override with full mapping
 
     class Meta(ODataResource.Meta):
         authentication = EnterpriseODataAuthentication()
@@ -185,6 +192,9 @@ class ODataEnterpriseReportResource(ODataResource):
             return data
         elif status == ReportTaskProgress.STATUS_NEW:
             progress.start_task(self.get_report_task(request))
+            record_event(ENTERPRISE_API_ACCESS, request.couch_user, {
+                'api_type': self.REPORT_SLUG
+            })
 
         # PowerBI respects delays with only two response codes:
         # 429 (TooManyRequests) and 503 (ServiceUnavailable). Although 503 is likely more semantically
@@ -192,6 +202,15 @@ class ODataEnterpriseReportResource(ODataResource):
         # PowerBI will only retry 503 requests 3 times, whereas 429s permit 6 retries
         raise ImmediateHttpResponse(
             response=http.HttpTooManyRequests(headers={'Retry-After': self.RETRY_IN_PROGRESS_DELAY}))
+
+    def dehydrate(self, bundle):
+        for (field_name, field) in self.fields.items():
+            obj = bundle.obj[self.COLUMN_MAP[field_name]]
+            if isinstance(field, fields.DateTimeField):
+                obj = self.convert_datetime(obj)
+            bundle.data[field_name] = obj
+
+        return bundle
 
     def get_report_task(self, request):
         account = BillingAccount.get_account_by_domain(request.domain)
@@ -216,19 +235,22 @@ class DomainResource(ODataEnterpriseReportResource):
     num_web_users = fields.IntegerField()
     num_sms_last_30_days = fields.IntegerField()
     last_form_submission = fields.DateTimeField()
+    num_odata_feeds_used = fields.IntegerField(null=True)
+    num_odata_feeds_available = fields.IntegerField(null=True)
 
     REPORT_SLUG = EnterpriseReport.DOMAINS
 
-    def dehydrate(self, bundle):
-        bundle.data['domain'] = bundle.obj[6]
-        bundle.data['created_on'] = self.convert_datetime(bundle.obj[0])
-        bundle.data['num_apps'] = bundle.obj[1]
-        bundle.data['num_mobile_users'] = bundle.obj[2]
-        bundle.data['num_web_users'] = bundle.obj[3]
-        bundle.data['num_sms_last_30_days'] = bundle.obj[4]
-        bundle.data['last_form_submission'] = self.convert_datetime(bundle.obj[5])
-
-        return bundle
+    COLUMN_MAP = {
+        'domain': 8,
+        'created_on': 0,
+        'num_apps': 1,
+        'num_mobile_users': 2,
+        'num_web_users': 3,
+        'num_sms_last_30_days': 4,
+        'last_form_submission': 5,
+        'num_odata_feeds_used': 6,
+        'num_odata_feeds_available': 7,
+    }
 
     def get_primary_keys(self):
         return ('domain',)
@@ -245,14 +267,23 @@ class WebUserResource(ODataEnterpriseReportResource):
 
     REPORT_SLUG = EnterpriseReport.WEB_USERS
 
+    COLUMN_MAP = {
+        'email': 0,
+        'name': 1,
+        'role': 2,
+        'last_login': 3,
+        'last_access_date': 4,
+        'status': 5,
+        'domain': 6,
+    }
+
     def dehydrate(self, bundle):
-        bundle.data['email'] = bundle.obj[0]
-        bundle.data['name'] = self.convert_not_available(bundle.obj[1])
-        bundle.data['role'] = bundle.obj[2]
-        bundle.data['last_login'] = self.convert_datetime(self.convert_not_available(bundle.obj[3]))
-        bundle.data['last_access_date'] = self.convert_not_available(bundle.obj[4])
-        bundle.data['status'] = bundle.obj[5]
-        bundle.data['domain'] = bundle.obj[7]
+        bundle.obj[self.COLUMN_MAP['last_login']] = \
+            self.convert_not_available(bundle.obj[self.COLUMN_MAP['last_login']])
+        bundle.obj[self.COLUMN_MAP['last_access_date']] = \
+            self.convert_not_available(bundle.obj[self.COLUMN_MAP['last_access_date']])
+        bundle = super().dehydrate(bundle)
+        bundle.data['name'] = self.convert_not_available(bundle.data['name'])
 
         return bundle
 
@@ -278,19 +309,18 @@ class MobileUserResource(ODataEnterpriseReportResource):
 
     REPORT_SLUG = EnterpriseReport.MOBILE_USERS
 
-    def dehydrate(self, bundle):
-        bundle.data['username'] = bundle.obj[0]
-        bundle.data['name'] = bundle.obj[1]
-        bundle.data['email'] = bundle.obj[2]
-        bundle.data['role'] = bundle.obj[3]
-        bundle.data['created_at'] = self.convert_datetime(bundle.obj[4])
-        bundle.data['last_sync'] = self.convert_datetime(bundle.obj[5])
-        bundle.data['last_submission'] = self.convert_datetime(bundle.obj[6])
-        bundle.data['commcare_version'] = bundle.obj[7]
-        bundle.data['user_id'] = bundle.obj[8]
-        bundle.data['domain'] = bundle.obj[10]
-
-        return bundle
+    COLUMN_MAP = {
+        'username': 0,
+        'name': 1,
+        'email': 2,
+        'role': 3,
+        'created_at': 4,
+        'last_sync': 5,
+        'last_submission': 6,
+        'commcare_version': 7,
+        'user_id': 8,
+        'domain': 9,
+    }
 
     def get_primary_keys(self):
         return ('user_id',)
@@ -304,6 +334,13 @@ class SMSResource(ODataEnterpriseReportResource):
 
     REPORT_SLUG = EnterpriseReport.SMS
 
+    COLUMN_MAP = {
+        'domain': 0,
+        'num_sent': 1,
+        'num_received': 2,
+        'num_error': 3,
+    }
+
     def get_report_task(self, request):
         start_date, end_date = get_date_range_from_request(request.GET)
 
@@ -315,14 +352,6 @@ class SMSResource(ODataEnterpriseReportResource):
             start_date=start_date,
             end_date=end_date
         )
-
-    def dehydrate(self, bundle):
-        bundle.data['domain'] = bundle.obj[0]
-        bundle.data['num_sent'] = bundle.obj[1]
-        bundle.data['num_received'] = bundle.obj[2]
-        bundle.data['num_error'] = bundle.obj[3]
-
-        return bundle
 
     def get_primary_keys(self):
         return ('domain',)
@@ -346,29 +375,25 @@ class ODataFeedResource(ODataEnterpriseReportResource):
     Currently includes summary rows as well as individual reports
     '''
 
-    domain = fields.CharField(null=True)
-    num_feeds_used = fields.IntegerField(null=True)
-    num_feeds_available = fields.IntegerField(null=True)
-    report_name = fields.CharField(null=True)
-    report_rows = fields.IntegerField(null=True)
+    domain = fields.CharField()
+    report_name = fields.CharField()
+    report_rows = fields.IntegerField()
 
     REPORT_SLUG = EnterpriseReport.ODATA_FEEDS
 
-    def dehydrate(self, bundle):
-        bundle.data['num_feeds_used'] = bundle.obj[0]
-        bundle.data['num_feeds_available'] = bundle.obj[1]
-        bundle.data['report_name'] = bundle.obj[2]
-        bundle.data['report_rows'] = bundle.obj[3]
-        bundle.data['domain'] = bundle.obj[5] if len(bundle.obj) >= 5 else None
-
-        return bundle
+    COLUMN_MAP = {
+        'domain': 0,
+        'report_name': 1,
+        'report_rows': 2,
+    }
 
     def get_primary_keys(self):
-        return ('report_name',)  # very odd report that makes coming up with an actual key challenging
+        return ('domain', 'report_name',)
 
 
 class FormSubmissionResource(ODataEnterpriseReportResource):
     class Meta(ODataEnterpriseReportResource.Meta):
+        paginator_class = KeysetPaginator
         limit = 10000
         max_limit = 20000
 
@@ -376,36 +401,86 @@ class FormSubmissionResource(ODataEnterpriseReportResource):
     form_name = fields.CharField()
     submitted = fields.DateTimeField()
     app_name = fields.CharField()
-    mobile_user = fields.CharField()
+    username = fields.CharField()
     domain = fields.CharField()
 
     REPORT_SLUG = EnterpriseReport.FORM_SUBMISSIONS
 
-    def get_report_task(self, request):
-        enddate = datetime.strptime(request.GET['enddate'], '%Y-%m-%d') if 'enddate' in request.GET else None
-        startdate = datetime.strptime(request.GET['startdate'], '%Y-%m-%d') if 'startdate' in request.GET else None
+    # Because FormSubmissionResource retrieves its data from an IterableEnterpriseFormQuery rather than
+    # an enterprise report, the columns are referenced by string rather than index
+    COLUMN_MAP = {
+        'form_id': 'form_id',
+        'form_name': 'form_name',
+        'submitted': 'submitted',
+        'app_name': 'app_name',
+        'username': 'username',
+        'domain': 'domain'
+    }
+
+    def get_object_list(self, request):
+        start_date = request.GET.get('startdate', None)
+        if start_date:
+            start_date = datetime.fromisoformat(start_date).astimezone(timezone.utc)
+
+        end_date = request.GET.get('enddate', None)
+        if end_date:
+            end_date = datetime.fromisoformat(end_date).astimezone(timezone.utc)
+
         account = BillingAccount.get_account_by_domain(request.domain)
-        return generate_enterprise_report.s(
-            self.REPORT_SLUG,
-            account.id,
-            request.couch_user.username,
-            start_date=startdate,
-            end_date=enddate,
-            include_form_id=True,
-        )
 
-    def dehydrate(self, bundle):
-        bundle.data['form_id'] = bundle.obj[0]
-        bundle.data['form_name'] = bundle.obj[1]
-        bundle.data['submitted'] = self.convert_datetime(bundle.obj[2])
-        bundle.data['app_name'] = bundle.obj[3]
-        bundle.data['mobile_user'] = bundle.obj[4]
-        bundle.data['domain'] = bundle.obj[6]
+        converter = EnterpriseFormReportConverter()
+        query_kwargs = converter.get_kwargs_from_map(request.GET)
+        if converter.is_initial_query(request.GET):
+            record_event(ENTERPRISE_API_ACCESS, request.couch_user, {
+                'api_type': self.REPORT_SLUG
+            })
 
-        return bundle
+        return IterableEnterpriseFormQuery(account, converter, start_date, end_date, **query_kwargs)
 
     def get_primary_keys(self):
         return ('form_id', 'submitted',)
+
+
+class CaseManagementResource(ODataEnterpriseReportResource):
+    domain = fields.CharField()
+    num_applications = fields.IntegerField()
+    num_surveys_only = fields.IntegerField()
+    num_cases_only = fields.IntegerField()
+    num_mixed = fields.IntegerField()
+
+    REPORT_SLUG = EnterpriseReport.CASE_MANAGEMENT
+
+    COLUMN_MAP = {
+        'domain': 0,
+        'num_applications': 1,
+        'num_surveys_only': 2,
+        'num_cases_only': 3,
+        'num_mixed': 4,
+    }
+
+    def get_primary_keys(self):
+        return ('domain',)
+
+
+class DataExportReportResource(ODataEnterpriseReportResource):
+    domain = fields.CharField()
+    name = fields.CharField()
+    export_type = fields.CharField()
+    export_subtype = fields.CharField()
+    owner = fields.CharField()
+
+    REPORT_SLUG = EnterpriseReport.DATA_EXPORTS
+
+    COLUMN_MAP = {
+        'domain': 0,
+        'name': 1,
+        'export_type': 2,
+        'export_subtype': 3,
+        'owner': 4,
+    }
+
+    def get_primary_keys(self):
+        return ('domain', 'export_type', 'export_subtype', 'name')
 
 
 class TwoFactorAuthResource(ODataEnterpriseReportResource):
@@ -413,9 +488,9 @@ class TwoFactorAuthResource(ODataEnterpriseReportResource):
 
     REPORT_SLUG = EnterpriseReport.TWO_FACTOR_AUTH
 
-    def dehydrate(self, bundle):
-        bundle.data['domain_without_2fa'] = bundle.obj[0]
-        return bundle
+    COLUMN_MAP = {
+        'domain_without_2fa': 0,
+    }
 
     def get_primary_keys(self):
         return ('domain_without_2fa',)
@@ -429,18 +504,18 @@ class CommCareVersionComplianceResource(ODataEnterpriseReportResource):
 
     REPORT_SLUG = EnterpriseReport.COMMCARE_VERSION_COMPLIANCE
 
-    def dehydrate(self, bundle):
-        bundle.data['mobile_worker'] = bundle.obj[0]
-        bundle.data['domain'] = bundle.obj[1]
-        bundle.data['latest_version_available_at_submission'] = bundle.obj[2]
-        bundle.data['version_in_use'] = bundle.obj[3]
-        return bundle
+    COLUMN_MAP = {
+        'mobile_worker': 0,
+        'domain': 1,
+        'latest_version_available_at_submission': 2,
+        'version_in_use': 3,
+    }
 
     def get_primary_keys(self):
         return ('mobile_worker', 'domain',)
 
 
-class APIUsageResource(ODataEnterpriseReportResource):
+class APIKeysResource(ODataEnterpriseReportResource):
     web_user = fields.CharField()
     api_key_name = fields.CharField()
     scope = fields.CharField()
@@ -448,16 +523,58 @@ class APIUsageResource(ODataEnterpriseReportResource):
     created_date = fields.DateTimeField()
     last_used_date = fields.DateTimeField()
 
-    REPORT_SLUG = EnterpriseReport.API_USAGE
+    REPORT_SLUG = EnterpriseReport.API_KEYS
 
-    def dehydrate(self, bundle):
-        bundle.data['web_user'] = bundle.obj[0]
-        bundle.data['api_key_name'] = bundle.obj[1]
-        bundle.data['scope'] = bundle.obj[2]
-        bundle.data['expiration_date'] = self.convert_datetime(bundle.obj[3])
-        bundle.data['created_date'] = self.convert_datetime(bundle.obj[4])
-        bundle.data['last_used_date'] = self.convert_datetime(bundle.obj[5])
-        return bundle
+    COLUMN_MAP = {
+        'web_user': 0,
+        'api_key_name': 1,
+        'scope': 2,
+        'expiration_date': 3,
+        'created_date': 4,
+        'last_used_date': 5,
+    }
 
     def get_primary_keys(self):
         return ('web_user', 'api_key_name',)
+
+
+class DataForwardingResource(ODataEnterpriseReportResource):
+    domain = fields.CharField()
+    service_name = fields.CharField()
+    service_type = fields.CharField()
+    last_modified = fields.DateTimeField()
+
+    REPORT_SLUG = EnterpriseReport.DATA_FORWARDING
+
+    COLUMN_MAP = {
+        'domain': 0,
+        'service_name': 1,
+        'service_type': 2,
+        'last_modified': 3,
+    }
+
+    def get_primary_keys(self):
+        return ('domain', 'service_name', 'service_type')
+
+
+class ApplicationVersionComplianceResource(ODataEnterpriseReportResource):
+    mobile_worker = fields.CharField()
+    domain = fields.CharField()
+    application = fields.CharField()
+    latest_version_available_when_last_used = fields.CharField()
+    version_in_use = fields.CharField()
+    last_used = fields.DateTimeField()
+
+    REPORT_SLUG = EnterpriseReport.APP_VERSION_COMPLIANCE
+
+    COLUMN_MAP = {
+        'mobile_worker': 0,
+        'domain': 1,
+        'application': 2,
+        'latest_version_available_when_last_used': 3,
+        'version_in_use': 4,
+        'last_used': 5,
+    }
+
+    def get_primary_keys(self):
+        return ('mobile_worker', 'application',)

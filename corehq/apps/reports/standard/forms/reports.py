@@ -63,13 +63,13 @@ class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
     def selected_user_ids(self):
         return EMWF.user_es_query(
             self.domain,
-            self.request.GET.getlist(EMWF.slug),
+            self.get_request_param(EMWF.slug, as_list=True),
             self.request.couch_user,
         ).get_ids()
 
     @property
     def has_user_filters(self):
-        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        mobile_user_and_group_slugs = self.get_request_param(EMWF.slug, as_list=True)
         return len(mobile_user_and_group_slugs) > 0
 
     @property
@@ -86,7 +86,7 @@ class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
             param_name = f'{form_filter.slug}_{label[2]}'
             params.append(dict(
                 name=param_name,
-                value=self.request.GET.get(param_name, None)
+                value=self.get_request_param(param_name, None)
             ))
         return params
 

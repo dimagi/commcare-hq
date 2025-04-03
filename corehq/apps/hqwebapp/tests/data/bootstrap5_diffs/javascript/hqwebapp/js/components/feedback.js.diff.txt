@@ -9,12 +9,7 @@
      'knockout',
      'jquery',
      'underscore',
-@@ -24,11 +24,11 @@
-     $,
-     _,
-     initialPageData,
--    koComponents
-+    koComponents,
+@@ -28,7 +28,7 @@
  ) {
      const component = {
          viewModel: function (params) {

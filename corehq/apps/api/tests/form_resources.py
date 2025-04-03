@@ -1,6 +1,7 @@
 import json
 import uuid
 from datetime import datetime, timedelta
+from unittest.mock import patch
 
 from django.test import TestCase
 from django.urls import reverse
@@ -235,22 +236,16 @@ class TestXFormInstanceResourceQueries(APIResourceTest, ElasticTestMixin):
     resource = v0_4.XFormInstanceResource
 
     def _test_es_query(self, url_params, expected_query):
-
-        fake_xform_es = FakeFormESView()
-
-        prior_run_query = fake_xform_es.run_query
-
-        # A bit of a hack since none of Python's mocking libraries seem to do basic spies easily...
-        def mock_run_query(es_query):
-            actual = es_query['query']['bool']['filter']
-            self.checkQuery(actual, expected_query, is_raw_query=True)
-            return prior_run_query(es_query)
-
-        fake_xform_es.run_query = mock_run_query
-        v0_4.MOCK_XFORM_ES = fake_xform_es
-
         response = self._assert_auth_get_resource('%s?%s' % (self.list_endpoint, urlencode(url_params)))
         self.assertEqual(response.status_code, 200)
+        actual = self.fake_es.queries[0]['query']['bool']['filter']
+        self.checkQuery(actual, expected_query, is_raw_query=True)
+        assert len(self.fake_es.queries) == 1
+
+    def _assert_auth_get_resource(self, *args, **kw):
+        self.fake_es = FakeFormESView()
+        with patch.object(self.resource, "xform_es", lambda *a: self.fake_es):
+            return super()._assert_auth_get_resource(*args, **kw)
 
     def test_get_list_xmlns(self):
         expected = [
@@ -296,34 +291,17 @@ class TestXFormInstanceResourceQueries(APIResourceTest, ElasticTestMixin):
         Forms can be ordering ascending or descending on received_on; by default
         ascending.
         '''
-
-        fake_xform_es = FakeFormESView()
-
-        # A bit of a hack since none of Python's mocking libraries seem to do basic spies easily...
-        prior_run_query = fake_xform_es.run_query
-        prior_count_query = fake_xform_es.count_query
-        queries = []
-
-        def mock_run_query(es_query):
-            queries.append(es_query)
-            return prior_run_query(es_query)
-
-        def mock_count_query(es_query):
-            queries.append(es_query)
-            return prior_count_query(es_query)
-
-        fake_xform_es.run_query = mock_run_query
-        fake_xform_es.count_query = mock_count_query
-        v0_4.MOCK_XFORM_ES = fake_xform_es
-
-        # Runs *2* queries
+        # Runs *2* queries, but the *count_query* one is not recorded
         response = self._assert_auth_get_resource('%s?order_by=received_on' % self.list_endpoint)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(queries[0]['sort'], [{'received_on': {'missing': '_first', 'order': 'asc'}}])
-        # Runs *2* queries
+        self.assertEqual(self.fake_es.queries[0]['sort'], [{'received_on': {'missing': '_first', 'order': 'asc'}}])
+        assert len(self.fake_es.queries) == 1
+
+        # Runs *2* queries, but the *count_query* one is not recorded
         response = self._assert_auth_get_resource('%s?order_by=-received_on' % self.list_endpoint)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(queries[2]['sort'], [{'received_on': {'missing': '_last', 'order': 'desc'}}])
+        self.assertEqual(self.fake_es.queries[0]['sort'], [{'received_on': {'missing': '_last', 'order': 'desc'}}])
+        assert len(self.fake_es.queries) == 1
 
     def test_get_list_archived(self):
         expected = [
@@ -376,7 +354,10 @@ class TestXFormPillow(TestCase):
         cleaned = form_adapter.to_json(bad_appVersion)
         self.assertFalse(isinstance(cleaned['form']['meta']['appVersion'], dict))
         self.assertTrue(isinstance(cleaned['form']['meta']['appVersion'], str))
-        self.assertTrue(cleaned['form']['meta']['appVersion'], "CCODK:\"2.5.1\"(11126). v236 CC2.5b[11126] on April-15-2013")
+        self.assertTrue(
+            cleaned['form']['meta']['appVersion'],
+            "CCODK:\"2.5.1\"(11126). v236 CC2.5b[11126] on April-15-2013",
+        )
 
 
 class TestViewFormAttachment(TestCase):

@@ -13,7 +13,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.api import (
     MessageMetadata,
     add_msg_tags,
-    send_sms_to_verified_number,
+    send_message_to_verified_number,
 )
 from corehq.apps.sms.handlers.form_session import validate_answer
 from corehq.apps.sms.messages import (
@@ -107,10 +107,10 @@ def global_keyword_start(verified_number, text, msg, text_words, open_sessions):
             process_survey_keyword_actions(verified_number, k, text[6:].strip(), msg)
         else:
             message = get_message(MSG_KEYWORD_NOT_FOUND, verified_number, (keyword,))
-            send_sms_to_verified_number(verified_number, message, metadata=outbound_metadata)
+            send_message_to_verified_number(verified_number, message, metadata=outbound_metadata)
     else:
         message = get_message(MSG_START_KEYWORD_USAGE, verified_number, (text_words[0],))
-        send_sms_to_verified_number(verified_number, message, metadata=outbound_metadata)
+        send_message_to_verified_number(verified_number, message, metadata=outbound_metadata)
     return True
 
 
@@ -130,14 +130,14 @@ def global_keyword_current(verified_number, text, msg, text_words, open_sessions
 
         resp = FormplayerInterface(session.session_id, verified_number.domain).current_question()
 
-        send_sms_to_verified_number(verified_number, resp.event.text_prompt,
+        send_message_to_verified_number(verified_number, resp.event.text_prompt,
                                     metadata=outbound_metadata, events=[resp.event])
     return True
 
 
 def global_keyword_unknown(verified_number, text, msg, text_words, open_sessions):
     message = get_message(MSG_UNKNOWN_GLOBAL_KEYWORD, verified_number, (text_words[0],))
-    send_sms_to_verified_number(verified_number, message)
+    send_message_to_verified_number(verified_number, message)
     return True
 
 
@@ -308,7 +308,7 @@ def get_app_module_form(domain, app_id, form_unique_id, logged_subevent=None):
         form = app.get_form(form_unique_id)
         module = form.get_module()
         return app, module, form, False, None
-    except:
+    except:  # noqa: E722
         log_error(MessagingEvent.ERROR_CANNOT_FIND_FORM, logged_subevent)
         return None, None, None, True, MSG_FORM_NOT_FOUND
 
@@ -469,7 +469,7 @@ def clean_up_and_send_response(msg, contact, session, error_occurred, error_msg,
                 contact.doc_type, contact.get_id)
             metadata.messaging_subevent_id = response_subevent.pk
 
-        send_sms_to_verified_number(verified_number, error_msg, metadata=metadata)
+        send_message_to_verified_number(verified_number, error_msg, metadata=metadata)
         if response_subevent:
             response_subevent.completed()
 
@@ -544,9 +544,9 @@ def access_through_subcases(user, case):
 
 def user_can_access_case(user, case):
     return (
-        user_is_owner(user, case) or
-        case_is_shared(user, case) or
-        access_through_subcases(user, case)
+        user_is_owner(user, case)
+        or case_is_shared(user, case)
+        or access_through_subcases(user, case)
     )
 
 
@@ -560,7 +560,7 @@ def send_keyword_response(vn, message_id, logged_event):
         messaging_subevent_id=subevent.pk,
     )
     message = get_message(message_id, vn)
-    send_sms_to_verified_number(vn, message, metadata=metadata)
+    send_message_to_verified_number(vn, message, metadata=metadata)
     subevent.completed()
 
 

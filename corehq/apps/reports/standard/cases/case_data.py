@@ -215,8 +215,17 @@ class CaseDataView(BaseProjectReportSectionView):
             product_tuples.sort(key=lambda x: x[0])
             ledger_map[section] = product_tuples
 
+        process_repeaters_enabled = toggles.PROCESS_REPEATERS.enabled(
+            self.domain,
+            toggles.NAMESPACE_DOMAIN,
+        )
         repeat_records = [
-            RepeatRecordDisplay(record, timezone, date_format=DATE_FORMAT)
+            RepeatRecordDisplay(
+                record,
+                timezone,
+                date_format=DATE_FORMAT,
+                process_repeaters_enabled=process_repeaters_enabled,
+            )
             for record in RepeatRecord.objects.filter(domain=self.domain, payload_id=self.case_id)
         ]
 
@@ -522,7 +531,7 @@ def resave_case_view(request, domain, case_id):
     resave_case(domain, case)
     messages.success(
         request,
-        _('Case %s was successfully saved. Hopefully it will show up in all reports momentarily.' % case.name),
+        _('Case {} was successfully saved. Please allow a few minutes for the change to be reflected in all reports.').format(case.name),  # noqa: E501
     )
     return HttpResponseRedirect(reverse('case_data', args=[domain, case_id]))
 

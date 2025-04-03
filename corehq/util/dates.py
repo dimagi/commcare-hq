@@ -12,6 +12,10 @@ def unix_time(dt):
     return delta.total_seconds()
 
 
+def unix_time_in_micros(dt):
+    return int(unix_time(dt) * 1000000)
+
+
 def get_timestamp(date):
     return time.mktime(date.timetuple())
 

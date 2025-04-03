@@ -23,6 +23,7 @@ from corehq.motech.const import (
     IMPORT_FREQUENCY_MONTHLY,
     IMPORT_FREQUENCY_WEEKLY,
 )
+from corehq.motech.utils import b64_aes_cbc_decrypt
 from corehq.motech.openmrs.const import (
     OPENMRS_DATA_TYPE_MILLISECONDS,
     OPENMRS_DATA_TYPES,
@@ -129,6 +130,13 @@ class OpenmrsImporter(Document):
     @property
     def notify_addresses(self):
         return [addr for addr in re.split('[, ]+', self.notify_addresses_str) if addr]
+
+    @property
+    def plaintext_password(self):
+        if self.password == '':
+            return ''
+        ciphertext = self.password.split('$', 2)[2]
+        return b64_aes_cbc_decrypt(ciphertext)
 
     @memoized
     def get_timezone(self):

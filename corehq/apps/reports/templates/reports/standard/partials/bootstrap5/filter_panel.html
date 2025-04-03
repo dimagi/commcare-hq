@@ -1,11 +1,18 @@
 {% load hq_shared_tags %}
 {% load i18n %}
-<div class="card card-default{% if report.is_async%} d-none{% endif %}" id="reportFiltersAccordion">  {# todo B5: css:panel #}
+<div
+  class="card card-default{% if report.is_async%} d-none{% endif %}"
+  id="reportFiltersAccordion"
+>
   {% if report.show_filters %}
     <div id="reportFilters" class="card-body collapse">
       <div class="accordion-inner">
         {% block report_description %}{% endblock %}
-        <form method="get" id="paramSelectorForm" class="form form-horizontal">
+        <form
+          method="get"
+          id="paramSelectorForm"
+          class="form"
+        >
           <div id="hq-report-filters">
             {% block report_filters %}
               {% if not report.is_async %}
@@ -13,14 +20,15 @@
               {% endif %}
             {% endblock%}
           </div>
-          <div class="form-actions">
+          <div class="form-actions row mb-0">
             {% block report_filter_actions %}
               <div class="{{ report_filter_form_action_css_class }}">
-                <button type="submit" class="btn disabled"
-                        disabled="disabled"
-                        data-loading-text="{% trans "Generating Report..." %}"  {# todo B5: stateful button #}
-                        data-standard-text="{% trans "Apply" %}"  {# todo B5: stateful button #}
-                        id="apply-btn">
+                <button
+                  class="btn disabled" id="apply-btn"
+                  disabled="disabled" type="submit"
+                  data-loading-text="{% trans "Generating Report..." %}"
+                  data-standard-text="{% trans "Apply" %}"
+                >
                   {% trans "Apply" %}
                 </button>
               </div>
@@ -33,38 +41,62 @@
       {% endif %}
     </div>
   {% endif %}
+
   <div class="card-footer">
     <div class="row">
       <div class="col-sm-8">
+
         {% if report.show_filters %}
-          <a href="#reportFilters"
-             class="btn btn-outline-primary"
-             id="toggle-report-filters"
-             data-bs-toggle="collapse"
-             data-open-text="{% trans "Show Filter Options" %}"  {# todo B5: stateful button #}
-             data-close-text="{% trans "Hide Filter Options" %}">  {# todo B5: stateful button #}
+          <button
+            class="btn btn-outline-primary"
+            id="toggle-report-filters"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#reportFilters"
+            data-open-text="{% trans "Show Filter Options" %}"
+            data-close-text="{% trans "Hide Filter Options" %}"
+          >
             {% trans "Filter Options" %}
-          </a>
+          </button>
         {% endif %}
+
         {% block export %}
           {% if report.is_exportable and request.couch_user.can_download_reports %}
-            <a href="#" class="btn btn-outline-primary{% if report.needs_filters %} d-none{% endif %}" id="export-report-excel">
+            <button
+              class="btn btn-outline-primary{% if report.needs_filters %} d-none{% endif %}"
+              id="export-report-excel"
+              type="button"
+            >
               <i class="fa fa-share"></i>
               {% trans "Export to" %} {% if report.export_target %}{{ report.export_target }}{% else %}Excel{% endif %}
-            </a>
+            </button>
           {% endif %}
         {% endblock %}
+
         {% if report.is_emailable and request.couch_user.can_download_reports %}
-          <a href="#email-report-modal" class="btn btn-outline-primary{% if report.needs_filters %} d-none{% endif %}" data-bs-toggle="modal" id="email-report">
-            <i class="fa fa-envelope"></i> {% trans "Email report" %}
-          </a>
+          <button
+            class="btn btn-outline-primary{% if report.needs_filters %} d-none{% endif %}"
+            id="email-report"
+            type="button"
+            data-bs-target="#email-report-modal"
+            data-bs-toggle="modal"
+          >
+            <i class="fa fa-envelope"></i>
+            {% trans "Email report" %}
+          </button>
         {% endif %}
 
         {% if report.is_printable %}
-          <a href="#" class="btn btn-outline-primary{% if report.needs_filters %} d-none{% endif %}" id="print-report">
-            <i class="fa fa-print"></i> {% trans "Print" %}
-          </a>
+          <button
+            class="btn btn-outline-primary{% if report.needs_filters %} d-none{% endif %}"
+            id="print-report"
+            type="button"
+          >
+            <i class="fa fa-print"></i>
+            {% trans "Print" %}
+          </button>
         {% endif %}
+
       </div>
       <div id="extra-filter-info" class="col-sm-4"></div>
     </div>

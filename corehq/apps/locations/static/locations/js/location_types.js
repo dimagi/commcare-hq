@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine('locations/js/location_types', [
     'jquery',
     'knockout',
@@ -13,7 +13,7 @@ hqDefine('locations/js/location_types', [
     ko,
     _,
     initialPageData,
-    googleAnalytics
+    googleAnalytics,
 ) {
     var ROOT_LOCATION_ID = -1;
 
@@ -289,7 +289,7 @@ hqDefine('locations/js/location_types', [
             // traverse all locations upwards, include a root option
             var rootType = locationTypeModel(
                     {name: "root", pk: ROOT_LOCATION_ID},
-                    commtrackEnabled, self
+                    commtrackEnabled, self,
                 ),
                 parents = self.parents();
             parents.push(rootType);

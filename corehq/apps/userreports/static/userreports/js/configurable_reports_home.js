@@ -1,7 +1,7 @@
 hqDefine("userreports/js/configurable_reports_home", [
     'jquery',
     'underscore',
-    'DOMPurify/dist/purify.min',
+    'DOMPurify',
     'hqwebapp/js/initial_page_data',
     'select2/dist/js/select2.full.min',
     'commcarehq',
@@ -9,7 +9,7 @@ hqDefine("userreports/js/configurable_reports_home", [
     $,
     _,
     DOMPurify,
-    initialPageData
+    initialPageData,
 ) {
     var $select = $("#select2-navigation");
     $select.on('select2:select', function () {

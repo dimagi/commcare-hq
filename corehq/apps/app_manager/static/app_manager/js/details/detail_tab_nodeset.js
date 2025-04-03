@@ -1,10 +1,20 @@
+hqDefine("app_manager/js/details/detail_tab_nodeset", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "hqwebapp/js/bootstrap3/main",
+], function (
+    $,
+    ko,
+    _,
+    main,
+) {
 /**
  * This provides the UI for a case detail tab's nodeset.
  *
  * It contains a dropdown where to select the type of data,
  * currently either a child case type or a custom xpath expression.
  */
-hqDefine('app_manager/js/details/detail_tab_nodeset', function () {
     return function (options) {
         var self = {};
 
@@ -15,7 +25,7 @@ hqDefine('app_manager/js/details/detail_tab_nodeset', function () {
         self.dropdownOptions = [{name: gettext("Data Tab: Custom Expression"), value: ""}].concat(
             _.map(options.caseTypes, function (t) {
                 return {name: gettext("Data Tab: Child Cases: ") + t, value: t};
-            })
+            }),
         );
 
         self.showXpath = ko.computed(function () {
@@ -27,7 +37,7 @@ hqDefine('app_manager/js/details/detail_tab_nodeset', function () {
         self.ui = $(_.template($("#module-case-detail-tab-nodeset-template").text())());
         self.ui.koApplyBindings(self);
 
-        hqImport("hqwebapp/js/bootstrap3/main").eventize(self);
+        main.eventize(self);
         self.nodeset.subscribe(function () {
             self.fire('change');
         });

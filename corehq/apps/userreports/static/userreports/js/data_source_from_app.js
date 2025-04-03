@@ -4,7 +4,7 @@ hqDefine('userreports/js/data_source_from_app', [
     'commcarehq',
 ], function (
     $,
-    dataModel
+    dataModel,
 ) {
     $(function () {
         $("#data-source-config").koApplyBindings(dataModel);

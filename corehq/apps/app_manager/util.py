@@ -540,6 +540,11 @@ def _app_callout_templates():
         yield data
 
 
+@quickcache([], timeout=60 * 60 * 24 * 7)  # 1 week
+def app_callout_templates_ids():
+    return {t['id'] for t in next(_app_callout_templates())}
+
+
 app_callout_templates = _app_callout_templates()
 
 

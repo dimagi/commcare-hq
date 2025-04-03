@@ -390,7 +390,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
                 self.reportFilters,
                 self.lang,
                 self.languages,
-                self.changeSaveButton
+                self.changeSaveButton,
             );
             report.reportId.subscribe(function (reportId) {
                 report.display(self.defaultReportTitle(reportId));

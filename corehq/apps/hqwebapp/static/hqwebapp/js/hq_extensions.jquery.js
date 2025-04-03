@@ -1,5 +1,4 @@
 hqDefine("hqwebapp/js/hq_extensions.jquery", ["jquery"], function ($) {
-    'use strict';
     $.extend({
         postGo: function (url, params) {
             params.csrfmiddlewaretoken = $("#csrfTokenContainer").val();

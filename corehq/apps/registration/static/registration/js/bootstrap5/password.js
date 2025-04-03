@@ -11,10 +11,8 @@ hqDefine('registration/js/bootstrap5/password', [
     ko,
     _,
     zxcvbn,
-    initialPageData
+    initialPageData,
 ) {
-    'use strict';
-
     var passwordModel = function () {
         var self = {};
         self.minimumZxcvbnScore = initialPageData.get('minimumZxcvbnScore');

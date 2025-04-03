@@ -29,14 +29,12 @@ class TestCreditLines(BaseInvoiceTestCase):
     is_using_test_plans = True
     min_subscription_length = 5
 
-    @classmethod
-    def setUpClass(cls):
-        super(TestCreditLines, cls).setUpClass()
-        cls.product_rate = cls.subscription.plan_version.product_rate
-        cls.user_rate = cls.subscription.plan_version.feature_rates.filter(feature__feature_type=FeatureType.USER)[:1].get()
-
     def setUp(self):
-        super(TestCreditLines, self).setUp()
+        super().setUp()
+        self.product_rate = self.subscription.plan_version.product_rate
+        self.user_rate = self.subscription.plan_version.feature_rates.filter(
+            feature__feature_type=FeatureType.USER)[:1].get()
+
         num_active = random.randint(self.user_rate.monthly_limit + 1, self.user_rate.monthly_limit + 2)
         generator.arbitrary_commcare_users_for_domain(self.domain.name, num_active)
         num_excess = num_active - self.user_rate.monthly_limit
@@ -45,7 +43,7 @@ class TestCreditLines(BaseInvoiceTestCase):
     def tearDown(self):
         for user in self.domain.all_users():
             user.delete(self.domain.name, deleted_by=None)
-        super(TestCreditLines, self).tearDown()
+        super().tearDown()
 
     def test_product_line_item_credits(self):
         """
@@ -120,7 +118,8 @@ class TestCreditLines(BaseInvoiceTestCase):
         self._test_credit_use(rate_credit_by_subscription)
 
     def _generate_users_fee_to_credit_against(self):
-        user_rate = self.subscription.plan_version.feature_rates.filter(feature__feature_type=FeatureType.USER)[:1].get()
+        user_rate = self.subscription.plan_version.feature_rates.filter(
+            feature__feature_type=FeatureType.USER)[:1].get()
         num_active = random.randint(user_rate.monthly_limit + 1, user_rate.monthly_limit + 2)
         generator.arbitrary_commcare_users_for_domain(self.domain.name, num_active)
         num_excess = num_active - user_rate.monthly_limit

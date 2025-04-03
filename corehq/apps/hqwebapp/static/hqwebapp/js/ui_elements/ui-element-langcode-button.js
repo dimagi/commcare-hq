@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine('hqwebapp/js/ui_elements/ui-element-langcode-button', [], function () {
     var module = {};
 

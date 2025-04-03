@@ -1,10 +1,10 @@
-'use strict';
+
 hqDefine('analytix/js/logging', [
     'underscore',
     'analytix/js/initial',
 ], function (
     _,
-    initialAnalytics
+    initialAnalytics,
 ) {
 
     var _makeLevel = function (name, style) {

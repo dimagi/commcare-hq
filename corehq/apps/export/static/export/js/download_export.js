@@ -20,6 +20,7 @@ hqDefine('export/js/download_export', [
     'reports/js/util',
     'export/js/utils',
     'jquery.cookie/jquery.cookie',      // for resuming export downloads on refresh
+    'commcarehq',
 ], function (
     $,
     ko,
@@ -31,10 +32,8 @@ hqDefine('export/js/download_export', [
     kissmetricsAnalytics,
     reportFilters,
     reportUtils,
-    exportUtils
+    exportUtils,
 ) {
-    'use strict';
-
     var downloadFormModel = function (options) {
         assertProperties.assert(options, [
             'defaultDateRange',

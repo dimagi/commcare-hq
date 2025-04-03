@@ -7,7 +7,7 @@ hqDefine('export/js/utils', [
     $,
     ko,
     _,
-    constants
+    constants,
 ) {
     var getTagCSSClass = function (tag) {
         var cls = 'badge';

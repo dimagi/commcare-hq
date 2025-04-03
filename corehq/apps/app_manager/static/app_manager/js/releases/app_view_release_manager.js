@@ -31,7 +31,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
                     self.releaseLogs(
                         _.map(data.app_release_logs, function (log) {
                             return ko.mapping.fromJS(log);
-                        })
+                        }),
                     );
                     self.totalItems(data.pagination.total);
                     self.fetchState('');
@@ -103,12 +103,6 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
             setReleaseLockButtons();
         }
     }
-
-    // View changes / app diff
-    var appDiff = hqImport('app_manager/js/releases/app_diff').init('#app-diff-modal .modal-body');
-    $('#recent-changes-btn').on('click', function () {
-        appDiff.renderDiff(initialPageData.get('app_id'), initialPageData.get('latest_build_id'));
-    });
 
     // Build profiles
     var $profilesTab = $('#profiles-tab');

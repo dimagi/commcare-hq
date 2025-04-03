@@ -1,11 +1,6 @@
 {% extends "mocha/base.html" %}
 {% load hq_shared_tags %}
-
-{% requirejs_main_b5 "cloudcare/js/formplayer/spec/main" %}
-
-{% block dependencies %}
-  {% include "cloudcare/partials/dependencies.html" %}
-{% endblock %}
+{% js_entry "cloudcare/js/formplayer/spec/main" %}
 
 {% block fixtures %}
   <div id="restore-as-region"></div>
@@ -17,5 +12,4 @@
 
   {% include 'cloudcare/partials/confirmation_modal.html' %}
   {% include 'cloudcare/partials/all_templates.html' %}
-
 {% endblock %}

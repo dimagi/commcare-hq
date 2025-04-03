@@ -1,4 +1,5 @@
 import re
+from lxml.etree import Element
 from xml.etree import cElementTree as ElementTree
 
 from corehq.blobs import get_blob_db
@@ -25,12 +26,12 @@ def is_identifier_invalid(name):
     - Start with "xml"
     - Start with a number
     """
-    if (not bool(name) or name.startswith('xml')):
+    if (not name or str(name).startswith('xml')):
         return True
 
     try:
-        ElementTree.fromstring('<{} />'.format(name).encode('utf-8'))
-    except ElementTree.ParseError:
+        Element(name)
+    except (ValueError, TypeError):
         return True
 
     return False

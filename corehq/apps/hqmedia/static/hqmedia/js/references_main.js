@@ -13,7 +13,7 @@ hqDefine("hqmedia/js/references_main", [
     _,
     alertUser,
     initialPageData,
-    mediaReferenceModels
+    mediaReferenceModels,
 ) {
     function MultimediaReferenceController() {
         var self = {};

@@ -15,23 +15,21 @@
      "hqwebapp/js/hq_extensions.jquery",
      "jquery.cookie/jquery.cookie",
  ], function (
-@@ -15,7 +16,8 @@
-     modernizr,
+@@ -16,6 +17,7 @@
      initialPageData,
      alertUser,
--    googleAnalytics
-+    googleAnalytics,
-+    bootstrap
+     googleAnalytics,
++    bootstrap,
  ) {
      var eventize = function (that) {
-         'use strict';
-@@ -44,11 +46,11 @@
+         var events = {};
+@@ -42,11 +44,11 @@
          wrap = wrap === undefined ? true : wrap;
          var el = $(
              '<div class="hq-help">' +
 -                '<a href="#" tabindex="-1">' +
 +                '<a href="#" tabindex="-1" data-bs-toggle="popover">' +
-                     '<i class="fa fa-question-circle icon-question-sign"></i></a></div>'
+                     '<i class="fa fa-question-circle icon-question-sign"></i></a></div>',
          );
          _.each(['content', 'title', 'html', 'placement', 'container'], function (attr) {
 -            $('a', el).data(attr, opts[attr]);
@@ -39,7 +37,15 @@
          });
          if (wrap) {
              el.hqHelp();
-@@ -115,8 +117,6 @@
+@@ -101,6 +103,7 @@
+     ko.virtualElements.allowedBindings.allowDescendantBindings = true;
+ 
+     var initBlock = function ($elem) {
++
+         $('.submit').click(function (e) {
+             var $form = $(this).closest('.form, form'),
+                 data = $form.find('[name]').serialize(),
+@@ -110,8 +113,6 @@
              $.postGo(action, $.unparam(data));
          });
  
@@ -48,8 +54,8 @@
          $("input[type='text'], input[type='password'], textarea", $elem);
          $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
  
-@@ -129,7 +129,7 @@
-         'use strict';
+@@ -123,7 +124,7 @@
+     var updateDOM = function (update) {
          var key;
          for (key in update) {
 -            if (_.has(update, key)) {
@@ -57,7 +63,7 @@
                  $(key).text(update[key]).val(update[key]);
              }
          }
-@@ -161,7 +161,7 @@
+@@ -154,7 +155,7 @@
                      }).addClass(cssClass),
                      $saving: $('<div/>').text(SaveButton.message.SAVING).addClass('btn btn-primary disabled'),
                      $saved: $('<div/>').text(SaveButton.message.SAVED).addClass('btn btn-primary disabled'),
@@ -66,7 +72,7 @@
                      setStateWhenReady: function (state) {
                          if (this.state === 'saving') {
                              this.nextState = state;
-@@ -179,7 +179,7 @@
+@@ -172,7 +173,7 @@
                          this.$saved.detach();
                          this.$retry.detach();
                          var buttonUi = this.ui;
@@ -75,7 +81,7 @@
                              buttonUi.removeClass(v);
                          });
                          if (state === 'save') {
-@@ -207,7 +207,7 @@
+@@ -200,7 +201,7 @@
                              $.ajaxSettings.beforeSend(jqXHR, settings);
                              beforeSend.apply(this, arguments);
                          };
@@ -84,7 +90,7 @@
                              that.setState(that.nextState);
                              success.apply(this, arguments);
                          };
-@@ -255,11 +255,9 @@
+@@ -248,11 +249,9 @@
                  $(window).on('beforeunload', function () {
                      var lastParent = button.ui.parents()[button.ui.parents().length - 1];
                      if (lastParent) {
@@ -94,11 +100,11 @@
 -                            if ($('.js-unhide-on-unsaved').length > 0) {
 -                                $('.js-unhide-on-unsaved').removeClass('hide');
 -                            }
-+                            if ($('.js-unhide-on-unsaved').length > 0) $('.js-unhide-on-unsaved').removeClass('hide');
++                            if ($('.js-unhide-on-unsaved').length > 0) {$('.js-unhide-on-unsaved').removeClass('hide');}
                              return options.unsavedMessage || "";
                          }
                      }
-@@ -384,7 +382,12 @@
+@@ -376,7 +375,12 @@
          $(window).on('beforeunload', beforeUnloadCallback);
          initBlock($("body"));
  
@@ -112,7 +118,7 @@
  
          $(document).on('click', '.track-usage-link', function (e) {
              var $link = $(e.currentTarget),
-@@ -460,8 +463,13 @@
+@@ -443,8 +447,13 @@
          // EULA modal
          var eulaCookie = "gdpr_rollout";
          if (!$.cookie(eulaCookie)) {
@@ -128,7 +134,7 @@
                  $("body").addClass("has-eula");
                  $("#eula-agree").click(function () {
                      $(this).disableButton();
-@@ -469,7 +477,7 @@
+@@ -452,7 +461,7 @@
                          url: initialPageData.reverse("agree_to_eula"),
                          method: "POST",
                          success: function () {
@@ -137,7 +143,7 @@
                              $("body").removeClass("has-eula");
                          },
                          error: function (xhr) {
-@@ -485,21 +493,22 @@
+@@ -468,21 +477,22 @@
                          },
                      });
                  });

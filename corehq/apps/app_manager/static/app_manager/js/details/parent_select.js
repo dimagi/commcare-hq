@@ -15,7 +15,15 @@
  * first case. This first case will just be available to forms.
  * This is used for deduplication workflows.
  */
-hqDefine("app_manager/js/details/parent_select", function () {
+hqDefine("app_manager/js/details/parent_select", [
+    'knockout',
+    'underscore',
+    'hqwebapp/js/toggles',
+], function (
+    ko,
+    _,
+    toggles,
+) {
     return function (init) {
         var self = {};
         var defaultModule = _(init.parentModules).findWhere({
@@ -26,7 +34,7 @@ hqDefine("app_manager/js/details/parent_select", function () {
         self.parentModules = ko.observable(init.parentModules);
         self.lang = ko.observable(init.lang);
         self.langs = ko.observable(init.langs);
-        self.enableOtherOption = hqImport('hqwebapp/js/toggles').toggleEnabled('NON_PARENT_MENU_SELECTION');
+        self.enableOtherOption = toggles.toggleEnabled('NON_PARENT_MENU_SELECTION');
 
         self.selectOptions = [
             {id: 'none', text: gettext('None')},
@@ -34,7 +42,7 @@ hqDefine("app_manager/js/details/parent_select", function () {
         ];
         if (self.enableOtherOption) {
             self.selectOptions.push(
-                {id: 'other', text: gettext('Other')}
+                {id: 'other', text: gettext('Other')},
             );
         }
         var selectMode = init.active ? (init.relationship === 'parent' ? 'parent' : 'other') : 'none';

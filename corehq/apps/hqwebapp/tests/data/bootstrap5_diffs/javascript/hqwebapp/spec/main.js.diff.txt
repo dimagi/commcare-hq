@@ -1,17 +1,13 @@
 --- 
 +++ 
-@@ -1,4 +1,4 @@
--hqDefine("hqwebapp/spec/bootstrap3/main", [
-+hqDefine("hqwebapp/spec/bootstrap5/main", [
-     "mocha/js/main",
- ], function (
-     hqMocha
-@@ -7,7 +7,7 @@
-         "hqwebapp/spec/assert_properties_spec",
-         "hqwebapp/spec/bootstrap3/inactivity_spec",
-         "hqwebapp/spec/urllib_spec",
--        "hqwebapp/spec/bootstrap3/widgets_spec",
-+        "hqwebapp/spec/bootstrap5/widgets_spec",
-     ], function () {
-         hqMocha.run();
-     });
+@@ -2,8 +2,8 @@
+ 
+ import "hqwebapp/spec/assert_properties_spec";
+ import "hqwebapp/spec/email_validator_spec";
+-import "hqwebapp/spec/bootstrap3/inactivity_spec";
++import "hqwebapp/spec/bootstrap5/inactivity_spec";
+ import "hqwebapp/spec/urllib_spec";
+-import "hqwebapp/spec/bootstrap3/widgets_spec";
++import "hqwebapp/spec/bootstrap5/widgets_spec";
+ 
+ hqMocha.run();

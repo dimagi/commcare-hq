@@ -1,11 +1,11 @@
-'use strict';
+
 hqDefine('hqwebapp/js/password_validators.ko', [
     'knockout',
     'zxcvbn/dist/zxcvbn',
     'knockout-validation/dist/knockout.validation.min', // needed for ko.validation
 ], function (
     ko,
-    zxcvbn
+    zxcvbn,
 ) {
     ko.validation.rules['zxcvbnPassword'] = {
         validator: function (val, minScore, penalizedWords) {

@@ -6,7 +6,7 @@ hqDefine('locations/js/locations', [
 ], function (
     $,
     initialPageData,
-    locationModels
+    locationModels,
 ) {
     $(function () {
         const locs = initialPageData.get('locations'),

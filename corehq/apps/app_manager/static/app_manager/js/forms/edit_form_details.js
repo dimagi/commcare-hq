@@ -1,25 +1,23 @@
-/* globals $ */
-/* globals window */
-
 hqDefine('app_manager/js/forms/edit_form_details', function () {
-    'use strict';
     var module = {};
 
     module.name = ko.observable();
     module.comment = ko.observable();
-    
-    var _updateCallbackFn = function (name, comment) {};
+
+    // Callback for when comment update is successful
+    // Arguments: name, comment
+    var _updateCallbackFn = function () {};
 
     module.initName = function (name, url) {
         module.name(name);
         module.updateNameUrl = url;
     };
-    
-    module.initComment = function (comment, url) {  
+
+    module.initComment = function (comment, url) {
         module.comment(comment);
         module.updateCommentUrl = url;
     };
-    
+
     module.setUpdateCallbackFn = function (callbackFn) {
         _updateCallbackFn = callbackFn;
     };
@@ -30,13 +28,13 @@ hqDefine('app_manager/js/forms/edit_form_details', function () {
             type: 'POST',
             dataType: 'JSON',
             data: { name: module.name() },
-            success: function (data) {
+            success: function () {
                 $.ajax({
                     url: module.updateCommentUrl,
                     type: 'POST',
                     dataType: 'JSON',
                     data: { comment: module.comment() },
-                    success: function (data) {
+                    success: function () {
                         _updateCallbackFn(module.name(), module.comment());
                     },
                 });

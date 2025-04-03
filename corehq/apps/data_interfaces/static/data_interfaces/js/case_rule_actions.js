@@ -5,10 +5,9 @@ hqDefine("data_interfaces/js/case_rule_actions", [
 ], function (
     $,
     ko,
-    initialPageData
+    initialPageData,
 ) {
     var CaseRuleActions = function (initial, caseTypeObservable) {
-        'use strict';
         var self = {};
 
         self.actions = ko.observableArray();
@@ -132,7 +131,6 @@ hqDefine("data_interfaces/js/case_rule_actions", [
     };
 
     var updatePropertyDefinition = function () {
-        'use strict';
         var self = {};
 
         // This model matches up with one instance in the Django UpdateCaseDefinition.properties_to_update model attribute
@@ -144,7 +142,6 @@ hqDefine("data_interfaces/js/case_rule_actions", [
     };
 
     var customActionDefinition = function () {
-        'use strict';
         var self = {};
 
         // This model matches the Django model with the same name

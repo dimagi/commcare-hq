@@ -21,7 +21,7 @@ from corehq.apps.commtrack.xmlutil import XML
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.apps.sms.api import MessageMetadata, send_sms_to_verified_number
+from corehq.apps.sms.api import MessageMetadata, send_message_to_verified_number
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.parsers.ledgers.helpers import (
@@ -50,7 +50,7 @@ def handle(verified_contact, text, msg):
     except Exception as e:
         if settings.UNIT_TESTING or settings.DEBUG:
             raise
-        send_sms_to_verified_number(verified_contact, 'problem with stock report: %s' % str(e))
+        send_message_to_verified_number(verified_contact, 'problem with stock report: %s' % str(e))
         return True
 
     process(domain_obj.name, data)
@@ -163,7 +163,7 @@ class StockReportParser(object):
 
                 try:
                     value = int(arg)
-                except:
+                except ValueError:
                     raise SMSError('could not understand product quantity "%s"' % arg)
 
                 for product in products:
@@ -268,9 +268,9 @@ def process_transfers(E, transfers):
         if transfers[0].action in [
             const.StockActions.RECEIPTS,
         ]:
-            here, there = ('dest', 'src')
+            here, there = ('dest', 'src')  # noqa: F841
         else:
-            here, there = ('src', 'dest')
+            here, there = ('src', 'dest')  # noqa: F841
 
         attr[here] = transfers[0].case_id
 
@@ -350,7 +350,7 @@ def to_instance(data):
 
 def truncate(text, maxlen, ellipsis='...'):
     if len(text) > maxlen:
-        return text[:maxlen-len(ellipsis)] + ellipsis
+        return text[:(maxlen - len(ellipsis))] + ellipsis
     else:
         return text
 
@@ -361,7 +361,9 @@ def send_confirmation(v, data):
     static_loc = data['location']
     location_name = static_loc.name
     metadata = MessageMetadata(location_id=static_loc.get_id)
-    tx_by_action = map_reduce(lambda tx: [(tx.action_config(C).name,)], data=data['transactions'], include_docs=True)
+    tx_by_action = map_reduce(lambda tx: [(tx.action_config(C).name,)],
+                              data=data['transactions'],
+                              include_docs=True)
 
     def summarize_action(action, txs):
         return '%s %s' % (txs[0].action_config(C).keyword.upper(), ' '.join(sorted(tx.fragment() for tx in txs)))
@@ -372,4 +374,4 @@ def send_confirmation(v, data):
         ' '.join(sorted(summarize_action(a, txs) for a, txs in tx_by_action.items()))
     )
 
-    send_sms_to_verified_number(v, msg, metadata=metadata)
+    send_message_to_verified_number(v, msg, metadata=metadata)

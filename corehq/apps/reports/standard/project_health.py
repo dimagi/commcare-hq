@@ -16,7 +16,6 @@ from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.groups import GroupES
 from corehq.apps.es.users import UserES
-from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.standard import ProjectReport
@@ -286,22 +285,18 @@ class ProjectHealthDashboard(ProjectReport):
             self.report_template_path = "reports/project_health/bootstrap3/project_health_email.html"
         return super(ProjectHealthDashboard, self).template_report
 
-    @use_nvd3
-    def decorator_dispatcher(self, request, *args, **kwargs):
-        super(ProjectHealthDashboard, self).decorator_dispatcher(request, *args, **kwargs)
-
     @property
     def selected_app_id(self):
-        return self.request_params.get(SelectApplicationFilter.slug, None)
+        return self.get_request_param(SelectApplicationFilter.slug, None, from_json=True)
 
     def get_number_of_months(self):
         try:
-            return int(self.request.GET.get('months', 6))
+            return int(self.get_request_param('months', 6))
         except ValueError:
             return 6
 
     def get_group_location_ids(self):
-        params = [_f for _f in self.request.GET.getlist('grouplocationfilter') if _f]
+        params = [_f for _f in self.get_request_param('grouplocationfilter', as_list=True) if _f]
         return params
 
     def parse_group_location_params(self, param_ids):

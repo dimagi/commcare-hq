@@ -1,0 +1,68 @@
+{% extends 'reports/bootstrap5/tabular.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block reportcontent %}
+  <div id="data-interfaces-reassign-cases">
+    <div class="row">
+      <form class="card form-inline" style="margin: 1em; display: none;" data-bind="submit: onSubmit, caseActionForm: selectedCases">  {# todo B5: css-form-inline, css-well, inline-style #}
+        <label for="reassign_owner_select" class="inline">
+          {% blocktrans %}
+          <!-- ko if: selectAllMatches -->
+            {{ action_text }} {{total_cases}} selected cases to
+          <!-- /ko -->
+          <!-- ko ifnot: selectAllMatches -->
+            {{ action_text }} <span data-bind="text: selectedCount"></span> selected cases to
+          <!-- /ko -->
+          {% endblocktrans %}
+        </label>
+        <div class="checkbox" style="float:right">  {# todo B5: css-checkbox, inline-style #}
+          <label>
+            <input type="checkbox" data-bind="checked: selectAllMatches" />  {# todo B5: css-checkbox #}
+            {% trans 'Select all' %} {{total_cases}} cases
+          </label>
+        </div>
+        <span data-bind="visible: shouldShowOwners">
+          <select name="reassign_owner"  {# todo B5: css-select-form-control #}
+                  id="reassign_owner_select"
+                  style="width: 300px;"  {# todo B5: inline-style #}
+                  data-bind="optionsText: 'name',
+                             optionsValue: 'ownerid',
+                             optionsCaption: '{% trans 'Select New Owner...' %}',
+                             event: {change: changeNewOwner}"></select>
+        </span>
+        <button type="submit"
+                data-bind="hqbSubmitReady: isSubmitEnabled, visible: isSubmitEnabled"
+                class="btn btn-outline-primary disabled">{{ action_text }}</button>
+        <button type="button"
+                disabled="disabled"
+                data-bind="visible: !isSubmitEnabled()"
+                class="btn btn-outline-primary">{{ action_text }}</button>
+      </form>
+    </div>
+    {{ block.super }}
+  </div>
+{% endblock %}
+
+{% block modals %} {{ block.super }}
+  <div class="modal d-none fade" id="caseManagementStatusModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <a class="btn-close" data-bs-dismiss="modal">&times;</a>  {# todo B5: css-close #}
+          {% if action == "copy" %}
+          <h3>{% trans 'Case Copy' %}</h3>
+          {% else %}
+          <h3>{% trans 'Case Reassignment' %}</h3>
+          {% endif %}
+        </div>
+        <div class="modal-body">
+          --
+        </div>
+        <div class="modal-footer">
+          <button id="bug-report-cancel" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans 'Close' %}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

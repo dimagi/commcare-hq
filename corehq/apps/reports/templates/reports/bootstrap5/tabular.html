@@ -1,13 +1,6 @@
-{% extends report_base|default:"reports/async/bootstrap3/default.html" %} {# This template is used for both sync and async reports #}
+{% extends report_base|default:"reports/async/bootstrap5/default.html" %} {# This template is used for both sync and async reports #}
 {% load hq_shared_tags %}
 {% load i18n %}
-
-{% block js %}{{ block.super }}
-  {% if charts %}
-    <script src="{% static 'nvd3/lib/d3.v2.js' %}"></script>
-    <script src="{% static 'nvd3/nv.d3.min.js' %}"></script>
-  {% endif %}
-{% endblock %}
 
 {% block reportcontent %}
 
@@ -15,17 +8,23 @@
     {% if charts %}
       <div class="row">
         {% for chart in charts %}
-          <div id='chart_{{ report.slug }}_{{ forloop.counter }}' class="col-lg-{{ chart_span }} collapse">
-            {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}  {# todo B5: inline style #}
-            <svg style='height: {{ chart.height }}px'> </svg>  {# todo B5: inline style #}
+          <div
+            id='chart_{{ report.slug }}_{{ forloop.counter }}'
+            class="col-lg-{{ chart_span }} collapse"
+          >
+            {% if chart.title %}
+              <h4 class="text-center">{{ chart.title }}</h4>
+            {% endif %}
+            <svg style='height: {{ chart.height }}px'> </svg>
           </div>
         {% endfor %}
       </div>
     {% endif %}
   {% endblock pretable %}
-  <div class="card card-default">  {# todo B5: css:panel #}
-    <div class="card-header">
-      <h2 class="card-title">
+
+  <div class="card card-hq-report mt-3">
+    <div class="card-header py-2 px-3 m-0">
+      <h2 class="h5 m-0">
         {% if not report.needs_filters %}
           {{ report.report_title }}
           {% for subtitle in report.report_subtitles %}
@@ -36,22 +35,40 @@
         {% endif %}
       </h2>
     </div>
-    <div class="panel-body-datatable">
-      {% block reporttable %}
-        {% if report.needs_filters %}
-          {% include 'reports/partials/bootstrap5/description.html' %}
-        {% else %}
-          <table id="report_table_{{ report.slug }}" class="table table-striped datatable" width="100%" {% if pagination.filter %} data-filter="true"{% endif %}>
-            <thead>
+    {% block reporttable %}
+      {% if report.needs_filters %}
+        {% include 'reports/partials/bootstrap5/description.html' %}
+      {% else %}
+        <table
+          id="report_table_{{ report.slug }}"
+          class="table table-striped table-hq-report table-hover"
+          {% if pagination.filter %}
+            data-filter="true"
+          {% endif %}
+        >
+
+          <thead>
             {%  if report_table.headers.complex %}
               {{ report_table.headers.render_html }}
             {% else %}
               {# This method is depricated and will likely be removed once Legacy Custom Reports are moved over. #}
               <tr>
                 {% for header in report_table.headers %}
-                  <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
+                  <th
+                    {% if header.css_class %}
+                      class="{{ header.css_class }}"
+                    {% endif %}
+                    {% if not report_table.pagination.is_on %}
+                      data-sort="{{ header.sort_type }}"
+                      data-sortdir="{{ header.sort_direction }}"
+                    {% endif %}
+                  >
                     <i class="icon-white fa dt-sort-icon"></i>
-                    {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
+                    {% if header.html %}
+                      {{ header.html }}
+                    {% else %}
+                      {{ header|linebreaksbr }}
+                    {% endif %}
                     {% if header.help_text %}
                       <i class="fa fa-question-circle header-tooltip" title="{{ header.help_text }}"></i>
                     {% endif %}
@@ -59,8 +76,9 @@
                 {% endfor %}
               </tr>
             {% endif %}
-            </thead>
-            <tbody>
+          </thead>
+
+          <tbody>
             {% block tabular-body %}
               {% if report_table.pagination.is_on %}
                 <tr>
@@ -77,18 +95,20 @@
                 </tr>
               {% endfor %}
             {% endblock %}
-            </tbody>
-            {% if report_table.total_row and report_table.rows %}
-              <tfoot>
+          </tbody>
+
+          {% if report_table.total_row and report_table.rows %}
+            <tfoot>
               <tr>
                 {% for col in report_table.total_row %}
                   <td>{% if col.html != None %}{{ col.html }}{% else %}{{ col }}{% endif %}</td>
                 {% endfor %}
               </tr>
-              </tfoot>
-            {% endif %}
-            {% if report_table.statistics_rows and report_table.rows %}
-              <tfoot>
+            </tfoot>
+          {% endif %}
+
+          {% if report_table.statistics_rows and report_table.rows %}
+            <tfoot>
               {% for stats in report_table.statistics_rows %}
                 <tr>
                   {% for col in stats %}
@@ -98,26 +118,17 @@
                   {% endfor %}
                 </tr>
               {% endfor %}
-              </tfoot>
+            </tfoot>
 
-            {% endif %}
-          </table>
-        {% endif %}
-      {% endblock reporttable %}
-    </div>
+          {% endif %}
+        </table>
+      {% endif %}
+    {% endblock reporttable %}
   </div>
   {% block posttable %}{% endblock posttable %}
 {% endblock reportcontent %}
 
 {% block js-inline %} {{ block.super }}
-  <script type="text/template" id="js-template-loading-report">
-    <div class="report-loading-container">
-      <div class="report-loading">
-        <h4>{% trans "Loading Report" %}</h4>
-        <i class="fa fa-spin fa-spinner"></i>
-      </div>
-    </div>
-  </script>
   {# For custom reports, template_partial might contain javascript #}
   {% for chart in charts %}
     {% with id=forloop.counter|stringformat:"s" slug=report.slug %}

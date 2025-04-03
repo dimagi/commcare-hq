@@ -1,10 +1,7 @@
 Updating Module Syntax from AMD to ESM
 ======================================
 
-Most entry points for legacy modules that have recently been migrated from RequireJS to
-Webpack as part of the `RequireJS to Webpack Migration
-<https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/requirejs-to-webpack.rst>`__
-are eligible for this update.
+Most javascript files are eligible for this update.
 
 See the `Historical Background on Module Patterns
 <https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/module-history.rst>`__
@@ -12,8 +9,7 @@ for a more detailed discussion of module types. As a quick refresher, here are s
 
 Modified AMD (Asynchronous Module Definition)
     The legacy module type used for older JavaScript modules on HQ, identified by having an ``hqDefine``
-    statement near the top of the file. AMD was the only module type compatible with RequireJS,
-    our first JavaScript bundler. It is still needed as a format for modules required by No-Bundler pages.
+    statement near the top of the file. AMD is still needed as a format for modules required by No-Bundler pages.
 
 ESM (ES Modules)
     The newest module type with updated powerful import and export syntax. This is the module
@@ -73,20 +69,8 @@ If this module is a webpack entry point, then it is eligible for an update. In t
 The entry point can also be specified with ``js_entry_b3`` if the module is part of the Bootstrap 3 build
 of Webpack.
 
-If this module is inside a ``requirejs_main`` or ``requirejs_main_b5`` tag, then it is NOT eligible for an update.
-Instead, please first
-`migrate this module from RequireJS to Webpack <https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/requirejs-to-webpack.rst>`__
-
 Dependency Modules
 ~~~~~~~~~~~~~~~~~~
-
-If this module is a dependency of any modules that are ``requirejs_main`` entry points,
-then this module is not eligible for migration. If a module's syntax is updated when it's still
-required by RequireJS modules, then it will result in a RequireJS build failure on deploy.
-
-You can check the status of a dependency module's RequireJS usage by looking at the
-`Bootstrap 3 <https://www.commcarehq.org/static/build.b3.txt>`__ and
-`Bootstrap 5 <https://www.commcarehq.org/static/build.b5.txt>`__ module list.
 
 If this module is referenced by any ``hqImport`` calls (for instance ``hqImport('hqwebapp/js/my_module')``),
 then this module is NOT yet eligible, and must continue using the older AMD-style syntax until
@@ -111,9 +95,14 @@ Key Points
 -   ESM no longer needs to define the module name within the module itself. Instead, Webpack (our bundler) is configured
     to know how to reference this module by its filename and relative path within an application.
 -   By default, you can use the same dependency names with the ``import`` syntax. If the ``import`` statement results
-    in a Webpack Build error, look at ``webpack.common.js`` because it might require an alias. If you still have
-    a problem, check ``requirejs_config.js``, because there might have been an alias defined there that hasn't
-    been added to ``webpack.common.js``.
+    in a Webpack Build error, look at ``webpack.common.js`` because it might require an alias.
+
+Automation
+~~~~~~~~~~
+
+As a first step, you can run the `hqdefine_to_esm <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/management/commands/hqdefine_to_esm.py>`__
+management command, which will rewrite the file in place, replacing the ``hqDefine`` call with a series of
+``import`` statements.
 
 
 Example Structural Change

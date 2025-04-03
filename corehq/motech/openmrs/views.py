@@ -18,7 +18,7 @@ from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq.motech.const import PASSWORD_PLACEHOLDER
+from corehq.motech.const import PASSWORD_PLACEHOLDER, ALGO_AES_CBC
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.forms import (
     OpenmrsConfigForm,
@@ -38,7 +38,7 @@ from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.openmrs.tasks import import_patients_to_domain
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.views import AddCaseRepeaterView, EditRepeaterView
-from corehq.motech.utils import b64_aes_encrypt
+from corehq.motech.utils import b64_aes_cbc_encrypt
 
 
 @use_bootstrap5
@@ -155,7 +155,7 @@ class OpenmrsImporterView(BaseProjectSettingsView):
                 if value == PASSWORD_PLACEHOLDER:
                     continue  # Skip updating the password if it hasn't been changed.
                 else:
-                    value = b64_aes_encrypt(value)
+                    value = f'${ALGO_AES_CBC}${b64_aes_cbc_encrypt(value)}'
             elif key == 'report_params':
                 value = json.loads(value)
             elif key == 'column_map':

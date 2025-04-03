@@ -1,6 +1,13 @@
-hqDefine("reports/js/filters/case_list_explorer", ['jquery', 'underscore', 'knockout'], function ($, _, ko) {
-    'use strict';
-
+hqDefine("reports/js/filters/case_list_explorer", [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/knockout_subscribables.ko',
+], function (
+    $,
+    ko,
+    _,
+) {
     var applySuggestions = function (allSuggestions) {
         // Adds the required properties to filter the case type autocomplete dropdowns
         var self = this;
@@ -99,7 +106,7 @@ hqDefine("reports/js/filters/case_list_explorer", ['jquery', 'underscore', 'knoc
                         name: property.name(),
                         label: property.label(),
                     };
-                })
+                }),
             );
         });
 

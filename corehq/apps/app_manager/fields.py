@@ -174,7 +174,7 @@ class ApplicationDataSourceUIHelper(object):
                 optionsText: function(item){return item.text},
                 optionsValue: function(item){return item.value},
                 value: sourceId,
-                options: _.union(sourcesMap[application()][sourceType()], sourcesMap[registrySlug()][sourceType()])
+                options: sourceOptions,
             '''}
         else:
             self.application_field.widget.attrs = {'data-bind': 'value: application'}

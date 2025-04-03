@@ -1,4 +1,4 @@
-'use strict';
+
 /**
  *  Knockout Pagination Component
  *
@@ -39,7 +39,7 @@ hqDefine('hqwebapp/js/components/pagination', [
     ko,
     _,
     initialPageData,
-    koComponents
+    koComponents,
 ) {
     const component = {
         viewModel: function (params) {
@@ -97,7 +97,7 @@ hqDefine('hqwebapp/js/components/pagination', [
             self.itemsText = ko.computed(function () {
                 var lastItem = Math.min(self.currentPage() * self.perPage(), self.totalItems());
                 return _.template(
-                    params.itemsTextTemplate || gettext('Showing <%- firstItem %> to <%- lastItem %> of <%- maxItems %> entries')
+                    params.itemsTextTemplate || gettext('Showing <%- firstItem %> to <%- lastItem %> of <%- maxItems %> entries'),
                 )({
                     firstItem: self.totalItems() > 0 ? ((self.currentPage() - 1) * self.perPage()) + 1 : 0,
                     lastItem: isNaN(lastItem) ? 1 : lastItem,

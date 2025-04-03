@@ -61,8 +61,15 @@
     when deciding whether to use Crispy Forms or HTML.
   </p>
   <p>
+    Form layouts are responsive. On wide screens, labels are arranged in a column to the left and input fields are
+    arranged in a wider column to the right. In Bootstrap 5 this is referred to as
+    <a href="https://getbootstrap.com/docs/5.0/forms/layout/#horizontal-form">horizontal form</a> layout. On
+    narrow screens such as mobile devices, the layout automatically collapses to a single column with each label
+    above its corresponding input control.
+  </p>
+  <p>
     The benefit of Crispy Forms, and why you should opt for using it over bespoke HTML whenever possible,
-    is that the HTML for each form component is controlled by templates. From HTML is often affected
+    is that the HTML for each form component is controlled by templates. Form HTML is often affected
     during a front-end migration (like Bootstrap). If a bespoke HTML form was used, that HTML needs
     to be re-examined everywhere.
     However, for forms using Crispy Forms, the relevant HTML only has to be changed once in the templates,

@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy, gettext_noop
 from couchdbkit.exceptions import ResourceNotFound
 from memoized import memoized
 
+from corehq.apps.reports.util import DatatablesServerSideParams
 from couchforms.analytics import (
     get_all_xmlns_app_id_pairs_submitted_to_in_domain,
 )
@@ -142,7 +143,8 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             'all_form_retrieval_failed': self.all_form_retrieval_failed,
         })
 
-        show_advanced = self.request.GET.get('show_advanced') == 'on'
+        show_advanced = DatatablesServerSideParams.get_value_from_request(
+            self.request, 'show_advanced') == 'on'
 
         #set Default app type to active only when advanced option is not selected
         if self.display_app_type and not context['selected'] and not show_advanced:
@@ -355,7 +357,8 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @property
     def _hide_fuzzy_results(self):
-        return self.request.GET.get('%s_%s' % (self.slug, self.fuzzy_slug)) == 'yes'
+        return DatatablesServerSideParams.get_value_from_request(
+            self.request, f"{self.slug}_{self.fuzzy_slug}") == 'yes'
 
     @property
     @memoized
@@ -373,7 +376,9 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @property
     def _show_unknown(self):
-        return self.request.GET.get('%s_%s' % (self.slug, self.unknown_slug))
+        return DatatablesServerSideParams.get_value_from_request(
+            self.request, f"{self.slug}_{self.unknown_slug}"
+        )
 
     @property
     @memoized
@@ -383,7 +388,9 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     @property
     def _selected_unknown_xmlns(self):
         if self._show_unknown:
-            return self.request.GET.get('%s_%s_xmlns' % (self.slug, self.unknown_slug), '')
+            return DatatablesServerSideParams.get_value_from_request(
+                self.request, f"{self.slug}_{self.unknown_slug}_xmlns", ""
+            )
         return ''
 
     @memoized
@@ -450,7 +457,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         for param in params:
             if param['slug'] == PARAM_SLUG_APP_ID:
                 return True
-        if request.GET.get('show_advanced') == 'on':
+        if DatatablesServerSideParams.get_value_from_request(request, 'show_advanced') == 'on':
             return True
         return False
 

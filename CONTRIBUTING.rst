@@ -97,7 +97,7 @@ to see how that works.
 .. _bug reports: https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143956931/Submit+a+Support+Request
 .. _Standards and Best Practices: STANDARDS.rst
 .. _Style Guide: https://www.commcarehq.org/styleguide/
-.. _Javascript Guide: docs/js-guide/README.md
+.. _Javascript Guide: docs/js-guide/README.rst
 .. _Guide to Authoring Pull Requests: https://github.com/dimagi/open-source/blob/master/docs/Writing_PRs.md
 .. _Developers category: https://forum.dimagi.com/c/developers
 .. _CommCare Forum: https://forum.dimagi.com/
@@ -186,3 +186,26 @@ PRs that are not ready to be merged can be labeled with one of the following lab
 - Open for review: do not merge
 
 As long as either of these labels are present on the PR it will have a pending status.
+
+Reviews with CodeRabbit
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. note:: CodeRabbit is being evaluated as a code review tool for CommCare HQ.
+
+CodeRabbit is an AI-powered code reviewer that delivers context-aware feedback on pull requests within
+minutes. It provides a fresh perspective and catches issues that are often missed, enhancing the
+overall review quality. A clean CodeRabbit review does not constitute approval allowing the PR to be merged.
+
+Although not required, it's recommended that you use CodeRabbit to review your PRs, ideally before any human-reviewers
+do so. A good way to do this is creating a draft PR first, let CodeRabbit review, address the feedback, then
+convert it to a regular PR.
+
+CodeRabbit specifies a `list of commands <https://docs.coderabbit.ai/guides/commands/>`_ for managing
+the bot’s review workflow. It’s recommended that you read through the page at least once to gain some
+perspective on how CodeRabbit functions, but the main commands you’ll probably want to know about are
+the following:
+
+- `@coderabbitai review` - Triggers a review from CodeRabbit. This command will do an incremental review of the PR, meaning that CodeRabbit will only review each commit once. This command is suited for most use-cases.
+- `@coderabbitai full review` - Triggers a full review again. This command is useful for when major changes require a fresh perspective.
+- `@coderabbitai resolve` - This resolves all CodeRabbit comments and is useful for when you want to clean up
+the CodeRabbit comments.

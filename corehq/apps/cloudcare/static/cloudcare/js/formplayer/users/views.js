@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/users/views", [
     'jquery',
     'underscore',
@@ -18,7 +17,7 @@ hqDefine("cloudcare/js/formplayer/users/views", [
     FormplayerFrontend,
     formplayerUtils,
     usersModels,
-    usersUtils
+    usersUtils,
 ) {
     /**
      * RestoreAsBanner
@@ -35,9 +34,9 @@ hqDefine("cloudcare/js/formplayer/users/views", [
         },
         getTemplate: function () {
             if (this.model.restoreAs) {
-                const templateId = (this.options.smallScreen || usersModels.getCurrentUser().isAppPreview ?
-                                    "#restore-as-banner-template" :
-                                    "#restore-as-pill-template");
+                const templateId = this.options.smallScreen || usersModels.getCurrentUser().isAppPreview ?
+                    "#restore-as-banner-template" :
+                    "#restore-as-pill-template";
                 return _.template($(templateId).html() || "");
             } else {
                 return _.template("");
@@ -88,7 +87,7 @@ hqDefine("cloudcare/js/formplayer/users/views", [
             formplayerUtils.confirmationModal({
                 title: _.template(gettext('Log in as <%- username %>?'))({username: this.model.get('username')}),
                 message: _.template($('#user-data-template').html())(
-                    { user: this.model.toJSON() }
+                    { user: this.model.toJSON() },
                 ),
                 confirmText: gettext('Log in'),
                 onConfirm: function () {
@@ -97,7 +96,7 @@ hqDefine("cloudcare/js/formplayer/users/views", [
                     var loginAsNextOptions = FormplayerFrontend.getChannel().request('getLoginAsNextOptions');
                     if (loginAsNextOptions) {
                         FormplayerFrontend.trigger("clearLoginAsNextOptions");
-                        hqRequire(["cloudcare/js/formplayer/menus/controller"], function (MenusController) {
+                        import("cloudcare/js/formplayer/menus/controller").then(function (MenusController) {
                             MenusController.selectMenu(loginAsNextOptions);
                         });
                     } else {
@@ -157,7 +156,7 @@ hqDefine("cloudcare/js/formplayer/users/views", [
             const paginationOptions = formplayerUtils.paginateOptions(
                 this.model.get('page') - 1,
                 this.totalPages(),
-                this.collection.total
+                this.collection.total,
             );
             return _.extend(paginationOptions, {
                 isAppPreview: usersModels.getCurrentUser().isAppPreview,
@@ -171,7 +170,7 @@ hqDefine("cloudcare/js/formplayer/users/views", [
             formplayerUtils.navigate(
                 '/restore_as/' +
                 this.model.get('page') + '/' +
-                this.model.get('query')
+                this.model.get('query'),
             );
         },
         totalPages: function () {

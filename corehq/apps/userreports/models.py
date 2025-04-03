@@ -178,6 +178,10 @@ class DataSourceBuildInformation(DocumentSchema):
     app_version = IntegerProperty()
     # The registry_slug associated with the registry of the report.
     registry_slug = StringProperty()
+    # True if the data source has been requested for a rebuild by user
+    # or is to be built/rebuilt by HQ for a new/updated configuration
+    # and is waiting to be picked
+    awaiting = BooleanProperty(default=False)
     # True if the data source has been built, that is, if the corresponding SQL table has been populated.
     finished = BooleanProperty(default=False)
     # Start time of the most recent build SQL table celery task.
@@ -185,6 +189,7 @@ class DataSourceBuildInformation(DocumentSchema):
     # same as previous attributes but used for rebuilding tables in place
     finished_in_place = BooleanProperty(default=False)
     initiated_in_place = DateTimeProperty()
+    # rebuilt via the management command
     rebuilt_asynchronously = BooleanProperty(default=False)
 
     @property
@@ -744,6 +749,10 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         # code to give `rebuild_has_died` the benefit of the doubt.
         return self.meta.build.rebuild_failed(self._id)
 
+    @property
+    def rebuild_awaiting_or_in_progress(self):
+        return self.meta.build.awaiting or (self.meta.build.is_rebuild_in_progress and not self.rebuild_failed)
+
 
 class RegistryDataSourceConfiguration(DataSourceConfiguration):
     """This is a special data source that can contain data from
@@ -969,9 +978,17 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
                 'layer_name': {
                     'XFormInstance': _('Forms'),
                     'CommCareCase': _('Cases')
-                }.get(self.config.referenced_doc_type, "Layer"),
+                }.get(self.config.referenced_doc_type, _("Layer")),
                 'columns': [x for x in (map_col(col) for col in self.columns) if x]
             }
+
+    @property
+    def report_type(self):
+        if self.location_column_id:
+            return 'map'
+        if self.aggregation_columns != ['doc_id']:
+            return 'table'
+        return 'list'
 
     @property
     @memoized

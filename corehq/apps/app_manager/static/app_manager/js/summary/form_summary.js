@@ -48,7 +48,7 @@ hqDefine('app_manager/js/summary/form_summary',[
         var formSummaryController = formModels.formSummaryControlModel([formSummaryContent]);
         models.initVersionsBox(
             $("#version-selector"),
-            {id: initialPageData.get("app_id"), text: initialPageData.get("app_version")}
+            {id: initialPageData.get("app_id"), text: initialPageData.get("app_version")},
         );
         $("#form-summary-header").koApplyBindings(formSummaryController);
         models.initMenu([formSummaryContent], formSummaryMenu);

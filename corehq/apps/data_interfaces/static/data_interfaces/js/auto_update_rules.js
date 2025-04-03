@@ -12,7 +12,7 @@ hqDefine("data_interfaces/js/auto_update_rules", [
     ko,
     _,
     initialPageData,
-    googleAnalytics
+    googleAnalytics,
 ) {
 
     var RuleViewModel = function (data, parent) {

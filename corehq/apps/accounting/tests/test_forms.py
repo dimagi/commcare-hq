@@ -28,7 +28,6 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.accounting.tasks import (
     calculate_users_in_all_domains,
-    generate_invoices_based_on_date,
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
@@ -43,8 +42,7 @@ class TestAdjustBalanceForm(BaseInvoiceTestCase):
     def setUp(self):
         super(TestAdjustBalanceForm, self).setUp()
         invoice_date = self.subscription.date_start + relativedelta(months=1)
-        calculate_users_in_all_domains(datetime.date(invoice_date.year, invoice_date.month, 1))
-        generate_invoices_based_on_date(invoice_date)
+        self.create_invoices(datetime.date(invoice_date.year, invoice_date.month, 1))
         self.invoice = Invoice.objects.first()
 
     def tearDown(self):
@@ -130,21 +128,16 @@ class TestAdjustBalanceForm(BaseInvoiceTestCase):
 
 class TestAdjustBalanceFormForCustomerAccount(BaseInvoiceTestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super(TestAdjustBalanceFormForCustomerAccount, cls).setUpClass()
-        cls.account.is_customer_billing_account = True
-        cls.account.save()
-
     def setUp(self):
-        super(TestAdjustBalanceFormForCustomerAccount, self).setUp()
+        super().setUp()
+        self.account.is_customer_billing_account = True
+        self.account.save()
         invoice_date = self.subscription.date_start + relativedelta(months=1)
-        calculate_users_in_all_domains(datetime.date(invoice_date.year, invoice_date.month, 1))
-        generate_invoices_based_on_date(invoice_date)
+        self.create_invoices(datetime.date(invoice_date.year, invoice_date.month, 1))
         self.invoice = CustomerInvoice.objects.first()
 
     def tearDown(self):
-        super(TestAdjustBalanceFormForCustomerAccount, self).tearDown()
+        super().tearDown()
 
     def test_manual_adjustment(self):
         original_balance = self.invoice.balance

@@ -222,6 +222,7 @@ class OAuth2ClientGrantManager(AuthManager):
             self.last_token = token
 
         request_fresh_token = not self.last_token or self.last_token.get('refresh_token') is None
+        additional_headers = self.connection_settings.plaintext_custom_headers
 
         if toggles.SUPERSET_ANALYTICS.enabled(domain_name):
             if (
@@ -240,6 +241,7 @@ class OAuth2ClientGrantManager(AuthManager):
                     token_url=self.token_url,
                     auth=auth,
                     include_client_id=self.include_client_id,
+                    headers=additional_headers,
                 )
             else:
                 self.last_token = session.fetch_token(
@@ -247,7 +249,10 @@ class OAuth2ClientGrantManager(AuthManager):
                     client_id=self.client_id,
                     client_secret=self.client_secret,
                     include_client_id=self.include_client_id,
+                    headers=additional_headers,
                 )
+
+        self._check_last_token(domain_name)
 
         refresh_kwargs = {
             'client_id': self.client_id,
@@ -260,12 +265,29 @@ class OAuth2ClientGrantManager(AuthManager):
             auto_refresh_kwargs=refresh_kwargs,
             token_updater=set_last_token
         )
+
+        if additional_headers:
+            session.headers.update(additional_headers)
+
         make_session_public_only(
             session,
             domain_name,
             src='motech_oauth_send_attempt',
         )
         return session
+
+    def _check_last_token(self, domain_name):
+        if toggles.MTN_MOBILE_WORKER_VERIFICATION.enabled(domain_name):
+            # This is a workaround for a presumed issue with the MTN MoMo API sandbox where
+            # the token type is not set to 'Bearer' as expected, but rather 'access_token'.
+            # This is a temporary fix until more clarity can be gained around this.
+            is_mtn_momo_sandbox = 'sandbox.momodeveloper.mtn.com' in self.base_url
+            token_type = self.last_token.get('token_type')
+
+            if is_mtn_momo_sandbox and token_type == 'access_token':
+                new_token = self.last_token
+                new_token['token_type'] = 'Bearer'
+                self.last_token = new_token
 
 
 class OAuth2PasswordGrantManager(AuthManager):

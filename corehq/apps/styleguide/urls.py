@@ -6,6 +6,8 @@ from corehq.apps.styleguide.examples.bootstrap5.htmx_alpine_form_views import (
     FilterDemoFormView,
 )
 from corehq.apps.styleguide.examples.bootstrap5.htmx_hq_hx_action import TodoListDemoView
+from corehq.apps.styleguide.examples.bootstrap5.htmx_pagination_host_view import HtmxPaginationView
+from corehq.apps.styleguide.examples.bootstrap5.htmx_pagination_table_view import ExamplePaginatedTableView
 from corehq.apps.styleguide.views import (
     AtomsStyleGuideView,
     MainStyleGuideView,
@@ -28,6 +30,10 @@ advanced_demo_urlpatterns = [
     url(r'^htmx_todo/$', TodoListDemoView.as_view(), name=TodoListDemoView.urlname),
     url(r'^htmx_alpine_form/$', HtmxAlpineFormDemoView.as_view(), name=HtmxAlpineFormDemoView.urlname),
     url(r'^htmx_alpine_form/form/$', FilterDemoFormView.as_view(), name=FilterDemoFormView.urlname),
+    url(r'^htmx_pagination/$', HtmxPaginationView.as_view(),
+        name=HtmxPaginationView.urlname),
+    url(r'^htmx_pagination/table/$', ExamplePaginatedTableView.as_view(),
+        name=ExamplePaginatedTableView.urlname),
 ]
 
 urlpatterns = [

@@ -9,7 +9,7 @@ hqDefine("reports/js/filters/select2s", [
 ], function (
     $,
     _,
-    ko
+    ko,
 ) {
     var initSingle = function (el) {
         var $filter = $(el);

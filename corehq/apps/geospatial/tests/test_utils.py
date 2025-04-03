@@ -7,7 +7,11 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.geospatial.const import ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY, GPS_POINT_CASE_PROPERTY
+from corehq.apps.geospatial.const import (
+    ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY,
+    GPS_POINT_CASE_PROPERTY,
+    ES_REASSIGNMENT_UPDATE_OWNERS_BASE_KEY,
+)
 from corehq.apps.geospatial.models import GeoConfig
 from corehq.apps.geospatial.utils import (
     CaseOwnerUpdate,
@@ -186,8 +190,16 @@ class TestUpdateCasesOwner(TestCase):
                 owner_id=self.user_a.user_id,
                 related_case_ids=[self.related_case_2.case_id]),
         ]
-
-        update_cases_owner(self.domain, CaseOwnerUpdate.to_dict(case_owner_updates))
+        celery_task_tracker = get_celery_task_tracker(self.domain, ES_REASSIGNMENT_UPDATE_OWNERS_BASE_KEY)
+        celery_task_tracker.mark_requested()
+        update_cases_owner(
+            self.domain,
+            case_owner_updates_dict=CaseOwnerUpdate.to_dict(case_owner_updates),
+            flag_assigned_cases=False,
+            celery_task_tracker=celery_task_tracker
+        )
+        task_progress = celery_task_tracker.get_status()
+        self.assertEqual(task_progress['progress'], 100)
 
         self._refresh_cases()
         self.assertEqual(self.case_1.owner_id, self.user_b.user_id)

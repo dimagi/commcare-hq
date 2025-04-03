@@ -7,12 +7,12 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext
 
 from couchdbkit import ResourceConflict
-
-from dimagi.utils.parsing import json_format_date
 from field_audit.models import AuditAction
 
-from corehq import privileges
+from dimagi.utils.parsing import json_format_date
+
 import corehq.apps.events.tasks as attendance_tracking_tasks
+from corehq import privileges
 from corehq.apps.accounting.utils import get_privileges, log_accounting_error
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
@@ -24,12 +24,12 @@ from corehq.apps.userreports.exceptions import (
 )
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.role_utils import (
+    archive_attendance_coordinator_role_for_domain,
     archive_custom_roles_for_domain,
+    enable_attendance_coordinator_role_for_domain,
     get_custom_roles_for_domain,
     reset_initial_roles_for_domain,
     unarchive_roles_for_domain,
-    enable_attendance_coordinator_role_for_domain,
-    archive_attendance_coordinator_role_for_domain,
 )
 from corehq.const import USER_DATE_FORMAT
 from corehq.messaging.scheduling.models import (
@@ -402,8 +402,10 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
 
     @staticmethod
     def response_report_builder(project, new_plan_version):
+        from corehq.apps.userreports.dbaccessors import (
+            get_report_and_registry_report_configs_for_domain,
+        )
         from corehq.apps.userreports.tasks import rebuild_indicators
-        from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
         reports = get_report_and_registry_report_configs_for_domain(project.name)
         builder_reports = [report for report in reports if report.report_meta.created_by_builder]
         for report in builder_reports:
@@ -442,7 +444,9 @@ def _has_report_builder_add_on(plan_version):
 
 
 def _get_report_builder_reports(project):
-    from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
+    from corehq.apps.userreports.dbaccessors import (
+        get_report_and_registry_report_configs_for_domain,
+    )
     reports = get_report_and_registry_report_configs_for_domain(project.name)
     return [report for report in reports if report.report_meta.created_by_builder]
 
@@ -545,9 +549,9 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         Reminder rules will be deactivated.
         """
         num_active = (
-            len(_get_active_immediate_broadcasts(domain)) +
-            len(_get_active_scheduled_broadcasts(domain)) +
-            len(_get_active_scheduling_rules(domain))
+            len(_get_active_immediate_broadcasts(domain))
+            + len(_get_active_scheduled_broadcasts(domain))
+            + len(_get_active_scheduling_rules(domain))
         )
         if num_active > 0:
             return _fmt_alert(
@@ -568,9 +572,9 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         All Reminder rules utilizing "survey" will be deactivated.
         """
         num_survey = (
-            len(_get_active_immediate_broadcasts(domain, survey_only=True)) +
-            len(_get_active_scheduled_broadcasts(domain, survey_only=True)) +
-            len(_get_active_scheduling_rules(domain, survey_only=True))
+            len(_get_active_immediate_broadcasts(domain, survey_only=True))
+            + len(_get_active_scheduled_broadcasts(domain, survey_only=True))
+            + len(_get_active_scheduling_rules(domain, survey_only=True))
         )
         if num_survey > 0:
             return _fmt_alert(

@@ -14,9 +14,8 @@
      $,
      ko,
      _,
--    googleAnalytics
-+    googleAnalytics,
-+    bootstrap
+     googleAnalytics,
++    bootstrap,
  ) {
      // disable-on-submit is a class for form submit buttons so they're automatically disabled when the form is submitted
      $(document).on('submit', 'form', function (ev) {
@@ -40,7 +39,7 @@
      $.fn.hqHelp = function (opts) {
          var self = this;
          self.each(function (i) {
-@@ -85,22 +73,19 @@
+@@ -85,22 +73,22 @@
              if (opts) {
                  options = _.extend(options, opts);
              }
@@ -65,6 +64,9 @@
 +    };
 +
 +    $.fn.changeButtonState = function (state) {
++        if (!$(this).data('reset-text')) {
++            $(this).data('reset-text', $(this).text());
++        }
 +        $(this).text($(this).data(state + '-text'));
 +        return this;
      };

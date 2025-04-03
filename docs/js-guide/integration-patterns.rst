@@ -25,16 +25,14 @@ The data can be a template variable or a constant.
    {% initial_page_data 'defaultRows' report_table.default_rows|default:10 %}
    {% initial_page_data 'tableOptions' table_options %}
 
-Your JavaScript can then include
-``<script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>``
+Your JavaScript can then ``import initialPageData from 'hqwebapp/js/initial_page_data';``
 and access this data using the same names as in the Django template:
 
 ::
 
-   var get = hqImport('hqwebapp/js/initial_page_data').get,
-       renderReportTables = get('renderReportTables'),
-       defaultRows = get('defaultRows'),
-       tableOptions = get('tableOptions');
+   const renderReportTables = initialPageData.get('renderReportTables'),
+       defaultRows = initialPageData.get('defaultRows'),
+       tableOptions = initialPageData.get('tableOptions');
 
 When your JavaScript data is a complex object, it’s generally cleaner to
 build it in your view than to pass a lot of variables through the Django
@@ -150,9 +148,9 @@ in js
 
 ::
 
-   var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
+   import initialPageData from 'hqwebapp/js/initial_page_data';
 
-   $.get(initial_page_data.reverse('all_widget_info')).done(function () {...});
+   $.get(initialPageData.reverse('all_widget_info')).done(function () {...});
 
 As in this example, prefer inlining the call to
 ``initial_page_data.reverse`` over assigning its return value to a
@@ -172,9 +170,9 @@ in js
 
 ::
 
-   var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
+   import initialPageData from 'hqwebapp/js/initial_page_data';
    var widgetId = 'xxxx';
-   $.get(initial_page_data.reverse('more_widget_info', widgetId)).done(function () {...});
+   $.get(initialPageData.reverse('more_widget_info', widgetId)).done(function () {...});
 
 ``registerurl`` is essentially a special case of initial page data, and
 it gets messy when used in partials in the same way as initial page

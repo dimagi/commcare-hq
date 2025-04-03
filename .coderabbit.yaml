@@ -1,0 +1,40 @@
+language: en-US
+early_access: true
+reviews:
+    high_level_summary: false
+    review_status: false
+    poem: false
+    changed_files_summary: false
+    abort_on_close: true
+    instructions: >-
+      - Follow OWASP recommendations for security best practices.
+      - Do not implement custom security or cryptographic protocols.
+      - Authentication and encryption must use publicly documented standards (e.g., OAuth, SAML, AES256).
+      - Use well-established libraries for security and authentication whenever possible.
+      - External system integrations should follow best practices for handling secrets.
+      - Documentation should be close to the relevant code and use reStructuredText with autodoc.
+      - Developers use tools like `flake8`, `pylint`, `isort`, and `django-extensions` for better development practices.
+      - Requirements updates should be managed through `requirements/*.in` files and built with `make requirements`.
+
+    path_instructions:
+        - path: "**/*.js"
+          instructions: >-
+            - Review the javascript code against the google javascript style guide and point out any mismatches.
+            - User-facing language should be clear.
+            - All user-facing text must be translated using `gettext`; use `_.template` for variable-containing strings.
+            - User-facing dates and times must be in a relevant time zone, using `UserTime` or `corehq.util.timezones`.
+            - Use `<%- ... %>` in Underscore templates to HTML escape values; use `DomPurify` for escaping user input outside templates.
+            - AJAX requests must show a spinner and have an `error` callback.
+            - Naming should be consistent, avoiding different capitalizations of the same identifier.
+            - JavaScript should be modular, with explicit dependencies (except in app manager, reports, and web apps).
+            - Avoid long parameter lists; prefer kwargs-style objects and use `assert_properties` for validation.
+            - Ensure JavaScript accessing initial page data waits until the page is fully loaded to prevent race conditions.
+            - Prefer Knockout over jQuery and avoid mixing the two.
+        - path: "**/*.py"
+          instructions: >-
+            - Review the code following best practises and standards
+    path_filters: ["**/*.js", "**/*.py", "**/*.md", "**/*.rst", "**/*.html"]
+    auto_review:
+        enabled: false
+        auto_incremental_review: false
+        drafts: false

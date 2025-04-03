@@ -2,12 +2,12 @@
   <td class="module-column module-column-icon">
     <% if (imageUrl) { %>
     <div class="module-icon-image badge-container" style="background-image: url('<%- imageUrl %>');">
-      <%= _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>{# maybe-custom-badge-template output is already escaped #}
+      <span id="module-badge" class="badge bg-dark rounded-pill"><%- badgeText %></span>
     </div>
     <% } else { %>
     <div class="module-icon-container badge-container">
       <i class="fa fa-pencil module-icon" aria-hidden="true"></i>
-      <%= _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>{# maybe-custom-badge-template output is already escaped #}
+      <span id="module-badge" class="badge bg-dark rounded-pill"><%- badgeText %></span>
     </div>
     <% } %>
   </td>

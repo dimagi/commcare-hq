@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine("registry/js/registry_list", [
     'jquery',
     'underscore',
@@ -15,7 +15,7 @@ hqDefine("registry/js/registry_list", [
     ko,
     initialPageData,
     text,
-    actions
+    actions,
 ) {
 
     let OwnedDataRegistry = function (registry) {

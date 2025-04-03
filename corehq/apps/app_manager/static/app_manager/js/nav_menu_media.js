@@ -8,7 +8,7 @@ hqDefine("app_manager/js/nav_menu_media", function () {
                 item.menu_refs.image || "",
                 item.menu_refs.audio || "",
                 initialPageData.get("multimedia_object_map"),
-                item.default_file_name
+                item.default_file_name,
             );
         });
     });

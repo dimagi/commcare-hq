@@ -1,4 +1,4 @@
-"use strict";
+
 /**
  * Instantiates the Drift analytics and customer support messaging platform.
  */
@@ -13,7 +13,7 @@ hqDefine('analytix/js/drift', [
     initialAnalytics,
     logging,
     utils,
-    hubspot
+    hubspot,
 ) {
     var _get = initialAnalytics.getFn('drift'),
         _drift = {},

@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list', [
     'jquery',
     'underscore',
@@ -8,7 +8,7 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list', [
     $,
     _,
     hqMain,
-    uiInputMap
+    uiInputMap,
 ) {
     var module = {};
 

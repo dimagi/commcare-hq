@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine("registry/js/registry_actions", [
     'moment',
     'hqwebapp/js/initial_page_data',
@@ -6,7 +6,7 @@ hqDefine("registry/js/registry_actions", [
 ], function (
     moment,
     initialPageData,
-    alertUser
+    alertUser,
 ) {
     const handleError = function (response) {
         let error = gettext("An unknown error occurred. Please try again or report an issue.");
@@ -21,7 +21,7 @@ hqDefine("registry/js/registry_actions", [
             initialPageData.reverse('accept_registry_invitation'),
             registrySlug,
             gettext("Opt in successful"),
-            onSuccess
+            onSuccess,
         );
     };
 
@@ -30,7 +30,7 @@ hqDefine("registry/js/registry_actions", [
             initialPageData.reverse('reject_registry_invitation'),
             registrySlug,
             gettext("Opt out successful"),
-            onSuccess
+            onSuccess,
         );
     };
 

@@ -14,7 +14,7 @@ hqDefine('export/js/customize_export_new', [
     initialPageData,
     models,
     toggles,
-    constants
+    constants,
 ) {
     $(function () {
         var customExportView = new models.ExportInstance(
@@ -28,10 +28,10 @@ hqDefine('export/js/customize_export_new', [
                 hasOtherOwner: initialPageData.get('has_other_owner'),
                 numberOfAppsToProcess: initialPageData.get('number_of_apps_to_process'),
                 geoProperties: initialPageData.get('geo_properties'),
-            }
+            },
         );
         initialPageData.registerUrl(
-            "build_schema", "/a/---/data/export/build_full_schema/"
+            "build_schema", "/a/---/data/export/build_full_schema/",
         );
         $('#customize-export').koApplyBindings(customExportView);
         $('.export-tooltip').each(function (index, trigger) {

@@ -113,6 +113,7 @@ def rebuild_indicators(
         if not id_is_static(indicator_config_id):
             # Save the start time now in case anything goes wrong. This way we'll be
             # able to see if the rebuild started a long time ago without finishing.
+            config.meta.build.awaiting = False
             config.meta.build.initiated = datetime.utcnow()
             config.meta.build.finished = False
             config.meta.build.rebuilt_asynchronously = False
@@ -141,6 +142,7 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, source=N
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=True):
         adapter = get_indicator_adapter(config)
         if not id_is_static(indicator_config_id):
+            config.meta.build.awaiting = False
             config.meta.build.initiated_in_place = datetime.utcnow()
             config.meta.build.finished_in_place = False
             config.meta.build.rebuilt_asynchronously = False
@@ -192,8 +194,8 @@ def _report_metric_number_of_days_since_first_build(config, action):
 
 
 def _report_metric_rebuild_error(config, action):
-    from corehq.apps.userreports.views import _number_of_records_to_be_iterated_for_rebuild
-    expected_rows_to_process = _number_of_records_to_be_iterated_for_rebuild(config)
+    from corehq.apps.userreports.views import number_of_records_to_be_processed
+    expected_rows_to_process = number_of_records_to_be_processed(config)
     metrics_gauge(
         f'commcare.ucr.{action}.failed.expected_rows_to_process',
         expected_rows_to_process,
@@ -217,6 +219,9 @@ def resume_building_indicators(indicator_config_id, initiated_by=None):
     success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
     failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=True):
+        if not id_is_static(indicator_config_id):
+            config.meta.build.awaiting = False
+            config.save()
         resume_helper = DataSourceResumeHelper(config)
         adapter = get_indicator_adapter(config)
         adapter.log_table_build(

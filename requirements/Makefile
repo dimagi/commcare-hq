@@ -22,9 +22,9 @@ upgrade-requirements:
 # make upgrade-package package={package_name}
 upgrade-package: export CUSTOM_COMPILE_COMMAND=`make requirements` or `make upgrade-requirements`
 upgrade-package:
-	pip-compile --upgrade-package $(package) -qo requirements.txt requirements.in --allow-unsafe --strip-extras
-	pip-compile --upgrade-package $(package) -qo prod-requirements.txt prod-requirements.in --allow-unsafe --strip-extras
-	pip-compile --upgrade-package $(package) -qo test-requirements.txt test-requirements.in --allow-unsafe --strip-extras
-	pip-compile --upgrade-package $(package) -qo dev-requirements.txt dev-requirements.in --allow-unsafe --strip-extras
-	pip-compile --upgrade-package $(package) -qo docs-requirements.txt docs-requirements.in --allow-unsafe --strip-extras
+	pip-compile --upgrade-package '$(package)' -qo requirements.txt requirements.in --allow-unsafe --strip-extras
+	pip-compile --upgrade-package '$(package)' -qo prod-requirements.txt prod-requirements.in --allow-unsafe --strip-extras
+	pip-compile --upgrade-package '$(package)' -qo test-requirements.txt test-requirements.in --allow-unsafe --strip-extras
+	pip-compile --upgrade-package '$(package)' -qo dev-requirements.txt dev-requirements.in --allow-unsafe --strip-extras
+	pip-compile --upgrade-package '$(package)' -qo docs-requirements.txt docs-requirements.in --allow-unsafe --strip-extras
 	python ../scripts/purge-platform-pkgs.py ./*requirements.txt

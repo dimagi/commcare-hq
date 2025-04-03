@@ -34,7 +34,7 @@ from corehq.apps.enterprise.models import (
     EnterprisePermissions,
 )
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.crispy import HQModalFormHelper
+from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
 from corehq.apps.hqwebapp.utils.translation import format_html_lazy
 from corehq.apps.hqwebapp.widgets import BootstrapSwitchInput, Select2Ajax, SelectToggle
 from corehq.apps.locations.models import SQLLocation
@@ -356,7 +356,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
         self.fields['language'].label = gettext_lazy("My Language")
 
-        self.new_helper = FormHelper()
+        self.new_helper = HQFormHelper()
         self.new_helper.form_method = 'POST'
         self.new_helper.attrs = {
             'name': 'user_information',
@@ -393,10 +393,12 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
                 gettext_lazy("Basic"),
                 *basic_fields
             ),
-            twbscrispy.StrictButton(
-                gettext_lazy("Update My Information"),
-                type='submit',
-                css_class='btn-primary',
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    gettext_lazy("Update My Information"),
+                    type='submit',
+                    css_class='btn-primary',
+                )
             )
         )
 
@@ -961,14 +963,15 @@ class GroupMembershipForm(forms.Form):
         super(GroupMembershipForm, self).__init__(*args, **kwargs)
         self.fields['selected_ids'].widget.set_url(group_api_url)
 
-        self.helper = FormHelper()
-        self.helper.label_class = 'form-label'
+        self.helper = HQFormHelper()
         self.helper.form_tag = False
 
         self.helper.layout = crispy.Layout(
             crispy.Field('selected_ids'),
-            crispy.ButtonHolder(
-                Submit('submit', _('Update'))
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    Submit('submit', _('Update'))
+                )
             )
         )
 
@@ -998,15 +1001,12 @@ class MultipleSelectionForm(forms.Form):
             return super(MyView, self).dispatch(request, *args, **kwargs)
 
         # javascript
-        hqDefine("app/js/module", function() {
-            // Multiselect widget
-            $(function () {
-                var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
-                multiselect_utils.createFullMultiselectWidget('id_of_multiselect_field', {
-                    selectableHeaderTitle: gettext("Available Things"),
-                    selectedHeaderTitle: gettext("Things Selected"),
-                    searchItemTitle: gettext("Search Things..."),
-                });
+        import multiselectUtils from "hqwebapp/js/multiselect_utils";
+        $(function () {
+            multiselectUtils.createFullMultiselectWidget('id_of_multiselect_field', {
+                selectableHeaderTitle: gettext("Available Things"),
+                selectedHeaderTitle: gettext("Things Selected"),
+                searchItemTitle: gettext("Search Things..."),
             });
         });
     """
@@ -1028,16 +1028,13 @@ class MultipleSelectionForm(forms.Form):
 
         from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
         is_bootstrap5 = get_bootstrap_version() == BOOTSTRAP_5
-        submit_button_holder = crispy.ButtonHolder(Submit('submit', submit_label))
-        if not is_bootstrap5:
-            submit_button_holder = hqcrispy.FormActions(submit_button_holder)
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 fieldset_title,
                 crispy.Field('selected_ids', css_class="d-none" if is_bootstrap5 else "hide"),
             ),
-            submit_button_holder
+            hqcrispy.FormActions(crispy.ButtonHolder(Submit('submit', submit_label)))
         )
 
 
@@ -1412,18 +1409,19 @@ class AddPhoneNumberForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super(AddPhoneNumberForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_class = 'form'
+        self.helper = HQFormHelper()
         self.helper.layout = crispy.Layout(
             Fieldset(
                 _('Add a Phone Number'),
                 'form_type',
                 twbscrispy.PrependedText('phone_number', '+', type='tel', pattern=r'\d+')
             ),
-            StrictButton(
-                _('Add Number'),
-                css_class='btn-primary disable-on-submit',
-                type='submit',
+            hqcrispy.FormActions(
+                StrictButton(
+                    _('Add Number'),
+                    css_class='btn-primary disable-on-submit',
+                    type='submit',
+                )
             )
         )
         self.fields['phone_number'].label = gettext_lazy('Phone number')
@@ -1729,7 +1727,12 @@ class BaseTableauUserForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         self.domain = kwargs.pop('domain', None)
+        readonly = kwargs.pop('readonly', True)
         super(BaseTableauUserForm, self).__init__(*args, **kwargs)
+
+        if readonly:
+            self.fields['role'].widget.attrs['readonly'] = True
+            self.fields['groups'].widget.attrs['disabled'] = True
 
         self.allowed_tableau_groups = [
             TableauGroupTuple(group.name, group.id) for group in get_all_tableau_groups(self.domain)
@@ -1745,7 +1748,6 @@ class TableauUserForm(BaseTableauUserForm):
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
-        readonly = kwargs.pop('readonly', True)
         self.username = kwargs.pop('username', None)
         super(TableauUserForm, self).__init__(*args, **kwargs)
 
@@ -1754,10 +1756,6 @@ class TableauUserForm(BaseTableauUserForm):
             if group_name in user_group_names:
                 # Pre-choose groups that the user already belongs to
                 self.fields['groups'].initial.append(i)
-
-        if readonly:
-            self.fields['role'].widget.attrs['readonly'] = True
-            self.fields['groups'].widget.attrs['disabled'] = True
 
         self.helper = FormHelper()
 

@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine('accounting/js/widgets', [
     'jquery',
     'knockout',
@@ -10,7 +10,7 @@ hqDefine('accounting/js/widgets', [
     $,
     ko,
     _,
-    emailUtils
+    emailUtils,
 ) {
     var asyncSelect2Handler = function (field, multiple, handlerSlug) {
         var self = {};

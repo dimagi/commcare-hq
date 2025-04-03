@@ -15,6 +15,7 @@ hqDefine("reports/js/filters/bootstrap3/main", [
     'reports/js/filters/case_list_explorer',
     'select2/dist/js/select2.full.min',
     'reports/js/filters/case_list_explorer_knockout_bindings',
+    'hqwebapp/js/daterangepicker.config',
 ], function (
     $,
     _,
@@ -29,7 +30,7 @@ hqDefine("reports/js/filters/bootstrap3/main", [
     advancedFormsOptions,
     drilldownOptions,
     choiceListUtils,
-    caseListExplorer
+    caseListExplorer,
 ) {
     var init = function () {
         // Datespans
@@ -43,7 +44,7 @@ hqDefine("reports/js/filters/bootstrap3/main", [
                 $filterRange.createDateRangePicker(
                     reportLabels, separator,
                     $filterRange.data('startDate'),
-                    $filterRange.data('endDate')
+                    $filterRange.data('endDate'),
                 );
                 $filterRange.on('change apply', function () {
                     var dates = $(this).val().split(separator);
@@ -87,7 +88,7 @@ hqDefine("reports/js/filters/bootstrap3/main", [
                         format: 'YYYY-MM-DD',
                     },
                     singleDatePicker: true,
-                }
+                },
             );
         }
 
@@ -256,7 +257,7 @@ hqDefine("reports/js/filters/bootstrap3/main", [
                         caption_text: data.captionText,
                         css_id: data.cssId,
                         css_class: data.cssClass,
-                    }
+                    },
                 );
             }
         });

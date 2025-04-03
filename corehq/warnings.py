@@ -28,6 +28,7 @@ WHITELIST = [
     ("", "", RemovedInDjango51Warning),
 
     # warnings that can be resolved with HQ code changes
+    ("", "datetime.datetime.utcnow() is deprecated"),
     ("", "json_response is deprecated.  Use django.http.JsonResponse instead."),
     ("", "property_match are deprecated. Use boolean_expression instead."),
     ("corehq.util.validation", "metaschema specified by $schema was not found"),
@@ -65,6 +66,9 @@ WHITELIST = [
     # warnings that should not be ignored
     # note: override_action "default" causes warning to be printed on stderr
     ("django.db.backends.postgresql.base", "unable to create a connection", RuntimeWarning, "default"),
+    # This is an internal stripe-python warning that is not actionable as of now
+    # It might get resolved in the future, but for now, it is not actionable
+    ("stripe", "For internal stripe-python use only. The public interface will be removed in a future version"),
 ]
 
 

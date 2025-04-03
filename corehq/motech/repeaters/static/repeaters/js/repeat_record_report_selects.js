@@ -1,5 +1,5 @@
-'use strict';
-hqDefine('repeaters/js/repeat_record_report_selects', function () {
+
+hqDefine('repeaters/js/repeat_record_report_selects', ['jquery'], function ($) {
     const items = document.getElementsByName('xform_ids'),
         selectAll = document.getElementById('select-all'),
         selectPending = document.getElementById('select-pending'),

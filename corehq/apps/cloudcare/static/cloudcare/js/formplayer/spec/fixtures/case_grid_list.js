@@ -1,8 +1,7 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/spec/fixtures/case_grid_list", [
     "cloudcare/js/formplayer/spec/fake_formplayer",
 ], function (
-    FakeFormplayer
+    FakeFormplayer,
 ) {
     return FakeFormplayer.makeEntitiesResponse({
         "title": "New Adherence Data",

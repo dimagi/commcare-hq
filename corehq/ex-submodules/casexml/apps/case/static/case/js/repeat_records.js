@@ -3,7 +3,7 @@ hqDefine("case/js/repeat_records", [
     'hqwebapp/js/initial_page_data',
 ], function (
     $,
-    initialPageData
+    initialPageData,
 ) {
     $(function () {
         $('.requeue-record-payload').click(function () {

@@ -8,7 +8,7 @@ hqDefine("hqwebapp/js/bootstrap3/crud_paginated_list_init", [
     $,
     ko,
     initialPageData,
-    CRUDPaginatedList
+    CRUDPaginatedList,
 ) {
     var paginatedListModel = CRUDPaginatedList.CRUDPaginatedListModel(
         initialPageData.get('total'),
@@ -19,7 +19,7 @@ hqDefine("hqwebapp/js/bootstrap3/crud_paginated_list_init", [
             allowItemCreation: initialPageData.get('allow_item_creation'),
             createItemForm: initialPageData.get('create_item_form'),
             createItemFormClass: initialPageData.get('create_item_form_class'),
-        }
+        },
     );
 
     $(function () {

@@ -1,4 +1,4 @@
-'use strict';
+
 
 hqDefine('users/js/edit_web_user', [
     'jquery',
@@ -9,7 +9,7 @@ hqDefine('users/js/edit_web_user', [
 ], function (
     $,
     initialPageData,
-    customDataFields
+    customDataFields,
 ) {
     var $customDataFieldsForm = $(".custom-data-fieldset");
     if ($customDataFieldsForm.length) {

@@ -1,9 +1,9 @@
-"use strict";
+
 /* eslint-env mocha */
 hqDefine("case_importer/spec/excel_fields_spec", [
     'case_importer/js/excel_fields',
 ], function (
-    excelFields
+    excelFields,
 ) {
     describe('excel_fields', function () {
         describe('sanitizeCaseField', function () {

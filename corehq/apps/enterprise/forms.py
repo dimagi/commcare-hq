@@ -7,9 +7,9 @@ from django.utils.translation import gettext_lazy
 
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import PrependedText, StrictButton
-from crispy_forms.helper import FormHelper
 
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.export.models.export_settings import ExportFileType
 from corehq.privileges import DEFAULT_EXPORT_SETTINGS
@@ -131,16 +131,15 @@ class EnterpriseSettingsForm(forms.Form):
             kwargs['initial'].update(self.export_settings.as_dict())
 
         super(EnterpriseSettingsForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
+        self.helper = hqcrispy.HQFormHelper(self)
         self.helper.form_id = 'enterprise-settings-form'
         self.helper.form_action = reverse("edit_enterprise_settings", args=[self.domain])
-        self.helper.label_class = 'form-label'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Edit Enterprise Settings"),
-                PrependedText('restrict_domain_creation', ''),
+                hqcrispy.CheckboxField('restrict_domain_creation'),
                 crispy.Div(
-                    PrependedText('restrict_signup', '', data_bind='checked: restrictSignup'),
+                    hqcrispy.CheckboxField('restrict_signup', data_bind='checked: restrictSignup'),
                 ),
                 crispy.Div(
                     crispy.Field('restrict_signup_message'),
@@ -157,29 +156,31 @@ class EnterpriseSettingsForm(forms.Form):
                         crispy.Div(
                             crispy.Field('forms_filetype'),
                         ),
-                        PrependedText('forms_auto_convert', ''),
-                        PrependedText('forms_auto_format_cells', ''),
-                        PrependedText('forms_expand_checkbox', ''),
+                        hqcrispy.CheckboxField('forms_auto_convert'),
+                        hqcrispy.CheckboxField('forms_auto_format_cells'),
+                        hqcrispy.CheckboxField('forms_expand_checkbox'),
                     ),
                     crispy.Fieldset(
                         _("Edit Default Case Export Settings"),
                         crispy.Div(
                             crispy.Field('cases_filetype')
                         ),
-                        PrependedText('cases_auto_convert', ''),
+                        hqcrispy.CheckboxField('cases_auto_convert'),
                     ),
                     crispy.Fieldset(
                         _("Edit Default OData Export Settings"),
-                        PrependedText('odata_expand_checkbox', ''),
+                        hqcrispy.CheckboxField('odata_expand_checkbox'),
                     ),
                 )
             )
 
         self.helper.layout.append(
-            StrictButton(
-                _("Update Enterprise Settings"),
-                type="submit",
-                css_class='btn-primary',
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Update Enterprise Settings"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
             )
         )
 
@@ -286,9 +287,8 @@ class EnterpriseManageMobileWorkersForm(forms.Form):
         }
 
         super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
+        self.helper = hqcrispy.HQFormHelper(self)
         self.helper.form_id = 'emw-settings-form'
-        self.helper.label_class = 'form-label'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Manage Mobile Workers"),
@@ -298,10 +298,12 @@ class EnterpriseManageMobileWorkersForm(forms.Form):
                 ),
                 PrependedText('allow_custom_deactivation', ''),
             ),
-            StrictButton(
-                _("Update Settings"),
-                type="submit",
-                css_class='btn-primary',
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Update Settings"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
             )
         )
 

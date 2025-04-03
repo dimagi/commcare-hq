@@ -20,7 +20,7 @@ hqDefine("locations/js/location", [
     initialPageData,
     googleAnalytics,
     locationModels,
-    locationTreeModel
+    locationTreeModel,
 ) {
     $(function () {
 

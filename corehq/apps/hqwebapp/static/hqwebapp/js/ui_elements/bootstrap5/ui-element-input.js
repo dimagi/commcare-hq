@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-input', [
     'jquery',
     'hqwebapp/js/bootstrap5/main',
@@ -6,7 +6,7 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-input', [
 ], function (
     $,
     hqMain,
-    langcodeButton
+    langcodeButton,
 ) {
     var module = {};
 
@@ -59,7 +59,7 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-input', [
                 this.ui.css("position", "relative");
                 var button = langcodeButton.new(
                     $('<a href="#" class="btn btn-info btn-xs lang-text" style="position: absolute; top: 6px; right: 6px;" />'),
-                    translated.lang
+                    translated.lang,
                 );
                 this.ui.append(button.button);
                 this.setPlaceholderValue(translated.value);

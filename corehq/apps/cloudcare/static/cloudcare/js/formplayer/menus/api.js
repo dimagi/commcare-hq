@@ -1,4 +1,3 @@
-'use strict';
 /**
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
  */
@@ -7,6 +6,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
     'underscore',
     'sentry_browser',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
     'cloudcare/js/formplayer/menus/collections',
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/form_entry/errors',
@@ -22,6 +22,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
     _,
     Sentry,
     initialPageData,
+    toggles,
     Collections,
     constants,
     errors,
@@ -43,6 +44,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                 timezoneOffsetMillis = (new Date()).getTimezoneOffset() * 60 * 1000 * -1,
                 tzFromBrowser = Intl.DateTimeFormat().resolvedOptions().timeZone,
                 windowWidth = String(window.innerWidth),
+                keepAPMTraces = toggles.toggleEnabled('ACTIVATE_DATADOG_APM_TRACES'),
                 formplayerUrl = user.formplayer_url,
                 displayOptions = user.displayOptions || {},
                 defer = $.Deferred(),
@@ -72,11 +74,11 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                     appIDsFromURL: params.appId + ' / ' + params.copyOf,
                     appCollection: appCollection.models.map(
                         appItem => appItem.attributes._id + ' / ' + appItem.attributes.copy_of),
-                }
-                var errorMsg = 'The application could not be found.'
+                };
+                var errorMsg = 'The application could not be found.';
                 if (params.appId) {
                     // Likely due to a link followed from an old build.
-                    errorMsg = errorMsg + ' If you clicked on a link, that link may be outdated.'
+                    errorMsg = errorMsg + ' If you clicked on a link, that link may be outdated.';
                 }
                 if (!params.preview) {
                     // Make sure the user has access to the app
@@ -86,7 +88,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                             gettext(errorMsg),
                             false,
                             true,
-                            additionalSentryData
+                            additionalSentryData,
                         );
                         FormplayerFrontend.trigger('navigateHome');
                         defer.reject();
@@ -117,7 +119,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                                 FormplayerFrontend.trigger(
                                     'showError',
                                     response.exception,
-                                    response.type === 'html'
+                                    response.type === 'html',
                                 );
 
                                 var currentUrl = FormplayerFrontend.getCurrentRoute();
@@ -167,13 +169,13 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                         if (response.status === 423) {
                             FormplayerFrontend.trigger(
                                 'showError',
-                                errors.LOCK_TIMEOUT_ERROR
+                                errors.LOCK_TIMEOUT_ERROR,
                             );
                         } else if (response.status === 401) {
                             FormplayerFrontend.trigger(
                                 'showError',
                                 formEntryUtils.reloginErrorHtml(),
-                                true
+                                true,
                             );
                         } else if (response.statusText === 'abort') {
                             // do nothing
@@ -181,7 +183,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                             FormplayerFrontend.trigger(
                                 'showError',
                                 gettext('Unable to connect to form playing service. ' +
-                                        'Please report an issue if you continue to see this message.')
+                                        'Please report an issue if you continue to see this message.'),
                             );
                         }
                         var urlObject = formplayerUtils.currentUrlToObject();
@@ -220,6 +222,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                     "isRefreshCaseSearch": params.isRefreshCaseSearch,
                     "requestInitiatedByTag": params.requestInitiatedByTag,
                     "windowWidth": windowWidth,
+                    "keepAPMTraces": keepAPMTraces,
                 };
                 options.data = JSON.stringify(data);
                 options.url = formplayerUrl + '/' + route;

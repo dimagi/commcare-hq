@@ -9,7 +9,7 @@ hqDefine('hqwebapp/js/base_ace', [
     _,
     ko,
     ace,
-    initialPageData
+    initialPageData,
 ) {
     var self = {};
     self.editor = [];

@@ -3,10 +3,11 @@ hqDefine("reports/js/bootstrap3/datatables_config", [
     'underscore',
     'analytix/js/google',
     'datatables.bootstrap',
+    'datatables.fixedColumns',
 ], function (
     $,
     _,
-    googleAnalytics
+    googleAnalytics,
 ) {
     var HQReportDataTables = function (options) {
         var self = {};

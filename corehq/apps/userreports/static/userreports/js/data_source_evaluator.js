@@ -6,7 +6,7 @@ hqDefine('userreports/js/data_source_evaluator', [
 ], function (
     $,
     ko,
-    initialPageData
+    initialPageData,
 ) {
     var dataSourceModel = function (submitUrl) {
         var self = {};
@@ -70,7 +70,7 @@ hqDefine('userreports/js/data_source_evaluator', [
         var submitUrl = initialPageData.reverse("data_source_evaluator");
         ko.applyBindings(
             dataSourceModel(submitUrl),
-            document.getElementById('data-source-debugger')
+            document.getElementById('data-source-debugger'),
         );
     });
 });

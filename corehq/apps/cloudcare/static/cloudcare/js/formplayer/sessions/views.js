@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/sessions/views", [
     'jquery',
     'underscore',
@@ -17,7 +16,7 @@ hqDefine("cloudcare/js/formplayer/sessions/views", [
     moment,
     FormplayerFrontend,
     UsersModels,
-    utils
+    utils,
 ) {
     var SessionView = Marionette.View.extend({
         tagName: "tr",
@@ -138,10 +137,10 @@ hqDefine("cloudcare/js/formplayer/sessions/views", [
         },
         templateContext: function () {
             var paginationConfig = utils.paginateOptions(
-                    this.options.pageNumber,
-                    this.options.totalPages,
-                    this.collection.totalSessions
-                );
+                this.options.pageNumber,
+                this.options.totalPages,
+                this.collection.totalSessions,
+            );
             return _.extend(paginationConfig, {
                 total: this.collection.totalSessions,
                 totalPages: this.options.totalPages,

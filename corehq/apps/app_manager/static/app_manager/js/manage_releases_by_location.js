@@ -13,9 +13,8 @@ hqDefine('app_manager/js/manage_releases_by_location', [
     ko,
     _,
     initialPageData,
-    assertProperties
+    assertProperties,
 ) {
-    'use strict';
     $(function () {
         var enabledAppRelease = function (details) {
             var self = {};

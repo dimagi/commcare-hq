@@ -1,4 +1,4 @@
-"use strict";
+
 requirejs.config({
     baseUrl: '/static/',
     paths: {
@@ -82,10 +82,6 @@ requirejs.config({
             exports: "L",
         },
         "mapbox.js/dist/mapbox.uncompressed": { exports: "L" },
-        "nvd3/nv.d3.min": {
-            deps: ['d3/d3.min'],
-            exports: 'nv',
-        },
         "sentry_browser": { exports: "Sentry" },
     },
     wrapShim: true,

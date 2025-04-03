@@ -89,10 +89,11 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     :caption: Integrations
     :maxdepth: 1
 
-    api
+    api/index
     fhir/index
     openmrs
     value_source
+    integrations/kyc
 
 .. toctree::
     :caption: Single Sign On (SSO)

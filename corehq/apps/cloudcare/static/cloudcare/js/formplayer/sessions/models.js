@@ -1,10 +1,9 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/sessions/models", [
     'backbone',
     'cloudcare/js/formplayer/utils/utils',
 ], function (
     Backbone,
-    utils
+    utils,
 ) {
     return Backbone.Model.extend({
         isNew: function () {

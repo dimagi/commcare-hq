@@ -3,15 +3,6 @@
 {% load compress %}
 {% load i18n %}
 
-{% block stylesheets %}{{ block.super }}
-{% compress css %}
-    <link type="text/css"
-          rel="stylesheet"
-          media="all"
-          href="{% static 'nvd3-1.8.6/build/nv.d3.css' %}" />
-  {% endcompress %}
-{% endblock %}
-
 {% js_entry 'app_execution/js/workflow_charts' %}
 
 {% block page_content %}

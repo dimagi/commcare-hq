@@ -15,10 +15,9 @@ hqDefine('hqwebapp/js/bootstrap3/main', [
     modernizr,
     initialPageData,
     alertUser,
-    googleAnalytics
+    googleAnalytics,
 ) {
     var eventize = function (that) {
-        'use strict';
         var events = {};
         that.on = function (tag, callback) {
             if (events[tag] === undefined) {
@@ -40,12 +39,11 @@ hqDefine('hqwebapp/js/bootstrap3/main', [
     };
 
     var makeHqHelp = function (opts, wrap) {
-        'use strict';
         wrap = wrap === undefined ? true : wrap;
         var el = $(
             '<div class="hq-help">' +
                 '<a href="#" tabindex="-1">' +
-                    '<i class="fa fa-question-circle icon-question-sign"></i></a></div>'
+                    '<i class="fa fa-question-circle icon-question-sign"></i></a></div>',
         );
         _.each(['content', 'title', 'html', 'placement', 'container'], function (attr) {
             $('a', el).data(attr, opts[attr]);
@@ -57,7 +55,6 @@ hqDefine('hqwebapp/js/bootstrap3/main', [
     };
 
     var transformHelpTemplate = function ($template, wrap) {
-        'use strict';
         if ($template.data()) {
             var $help = makeHqHelp($template.data(), wrap);
             $help.insertAfter($template);
@@ -104,8 +101,6 @@ hqDefine('hqwebapp/js/bootstrap3/main', [
     ko.virtualElements.allowedBindings.allowDescendantBindings = true;
 
     var initBlock = function ($elem) {
-        'use strict';
-
         $('.submit').click(function (e) {
             var $form = $(this).closest('.form, form'),
                 data = $form.find('[name]').serialize(),
@@ -126,7 +121,6 @@ hqDefine('hqwebapp/js/bootstrap3/main', [
     };
 
     var updateDOM = function (update) {
-        'use strict';
         var key;
         for (key in update) {
             if (_.has(update, key)) {
@@ -136,7 +130,6 @@ hqDefine('hqwebapp/js/bootstrap3/main', [
     };
 
     var makeSaveButton = function (messageStrings, cssClass, barClass) {
-        'use strict';
         var BAR_STATE = {
             SAVE: 'savebtn-bar-save',
             SAVING: 'savebtn-bar-saving',
@@ -380,7 +373,6 @@ hqDefine('hqwebapp/js/bootstrap3/main', [
     };
 
     $(function () {
-        'use strict';
         $(window).on('beforeunload', beforeUnloadCallback);
         initBlock($("body"));
 
@@ -430,20 +422,11 @@ hqDefine('hqwebapp/js/bootstrap3/main', [
                     } else {
                         setUpAlert(alert, closedAlerts, alertCookie);
                     }
-                }
+                },
             );
         }
 
         function unsupportedBrowser() {
-            // check explicitly for Safari. Relying on browser capabilities would be preferred,
-            // but our issue with Safari is described here: https://dimagi-dev.atlassian.net/browse/SUPPORT-4778
-            // (history.replaceState raises security exceptions that aren't present in other browsers).
-            // This can be verified here: (https://jsfiddle.net/j1sxxLwy/),
-            // but it's not something that can be efficiently feature-checked
-            if (window.safari !== undefined) {
-                return true;    // found a Safari browser
-            }
-
             // Try to filter out legacy browsers like Internet Explorer.
             // We don't explicitly rely on SVG SMIL animation,
             // but it's a decent test for avoiding legacy IE.

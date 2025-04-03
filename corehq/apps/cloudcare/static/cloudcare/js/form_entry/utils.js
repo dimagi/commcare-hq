@@ -1,4 +1,3 @@
-'use strict';
 hqDefine("cloudcare/js/form_entry/utils", [
     'jquery',
     'knockout',
@@ -21,7 +20,7 @@ hqDefine("cloudcare/js/form_entry/utils", [
     cloudcareUtils,
     UsersModels,
     formEntryConst,
-    errors
+    errors,
 ) {
     var module = {
         resourceMap: undefined,
@@ -57,10 +56,10 @@ hqDefine("cloudcare/js/form_entry/utils", [
      */
     module.initialRender = function (formJSON, resourceMap, $div) {
         var defer = $.Deferred();
-        hqRequire([
-            "cloudcare/js/debugger/debugger",
-            "cloudcare/js/form_entry/form_ui",
-        ], function (Debugger, FormUI) {
+        $.when(
+            import("cloudcare/js/debugger/debugger"),
+            import("cloudcare/js/form_entry/form_ui"),
+        ).done(function (Debugger, FormUI) {
             var form = FormUI.Form(formJSON),
                 $debug = $('#cloudcare-debugger'),
                 CloudCareDebugger = Debugger.CloudCareDebuggerFormEntry,

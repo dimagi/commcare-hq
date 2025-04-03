@@ -42,6 +42,7 @@ from corehq.apps.fixtures.exceptions import (
     FixtureDownloadError,
     FixtureUploadError,
 )
+from corehq.apps.fixtures.upload.failure_messages import INVALID_NAME_ERROR
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.fixtures.models import (LookupTable, LookupTableRow,
     TypeField)
@@ -125,10 +126,7 @@ def update_tables(request, domain, data_type_id=None):
                 field_name = options['update']
             if is_identifier_invalid(field_name) and 'remove' not in method:
                 validation_errors.append(field_name)
-        validation_errors = [_(
-            "\"%s\" cannot include special characters, begin or end with a space, "
-            "or begin with \"xml\" or a number") % e for e in validation_errors
-        ]
+        validation_errors = [_(INVALID_NAME_ERROR) % repr(e) for e in validation_errors]
         if len(data_tag) < 1 or len(data_tag) > 31:
             validation_errors.append(_("Table ID must be between 1 and 31 characters."))
 
@@ -461,7 +459,7 @@ def fixture_api_upload_status(request, domain, download_id, **kwargs):
     else:
         progress = context.get('progress', {}).get('percent')
         response = {
-            'message': _("Task in progress. {}% complete").format(progress),
+            'message': _("Task in progress. %(progress)s%% complete") % {'progress': progress},
             'progress': progress,
         }
     return json_response(response)

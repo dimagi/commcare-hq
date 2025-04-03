@@ -1,4 +1,4 @@
-'use strict';
+
 /**
  * Backbone model and functions for listing and selecting CommCare apps
  */
@@ -9,7 +9,7 @@ hqDefine("cloudcare/js/formplayer/apps/api", [
 ], function (
     $,
     Collections,
-    UsersModels
+    UsersModels,
 ) {
     var appsPromiseByRestoreAs = {};
     var appsByRestoreAs = {};

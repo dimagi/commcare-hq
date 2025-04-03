@@ -144,4 +144,5 @@ enterprise_v0 = advanced_v0 + [
     privileges.GEOCODER,
     privileges.DEFAULT_EXPORT_SETTINGS,
     privileges.RELEASE_MANAGEMENT,
+    privileges.BULK_DATA_CLEANING,
 ]

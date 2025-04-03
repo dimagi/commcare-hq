@@ -15,9 +15,8 @@ hqDefine("fixtures/js/lookup-manage", [
     _,
     ko,
     assertProperties,
-    initialPageData
+    initialPageData,
 ) {
-    "use strict";
     var somethingWentWrong = $("#FailText").text();
 
     function log(x) {

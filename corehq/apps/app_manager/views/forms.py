@@ -35,7 +35,6 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 )
 from corehq.apps.app_manager.const import (
     USERCASE_PREFIX,
-    USERCASE_TYPE,
     WORKFLOW_DEFAULT,
     WORKFLOW_FORM,
     WORKFLOW_MODULE,
@@ -109,7 +108,6 @@ from corehq.apps.app_manager.xform import (
     XFormValidationError,
 )
 from corehq.apps.data_dictionary.util import (
-    add_properties_to_data_dictionary,
     get_case_property_deprecated_dict,
     get_case_property_description_dict,
 )
@@ -211,8 +209,6 @@ def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
         form.extra_actions = actions
     else:
         form.actions = actions
-    for action in actions.load_update_cases:
-        add_properties_to_data_dictionary(domain, action.case_type, list(action.case_properties.keys()))
     if advanced_actions_use_usercase(actions) and not is_usercase_in_use(domain):
         enable_usercase(domain)
 
@@ -231,10 +227,8 @@ def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
 def edit_form_actions(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
     form = app.get_form(form_unique_id)
-    module = form.get_module()
     old_load_from_form = form.actions.load_from_form
     form.actions = FormActions.wrap(json.loads(request.POST['actions']))
-    add_properties_to_data_dictionary(domain, module.case_type, list(form.actions.update_case.update.keys()))
     if old_load_from_form:
         form.actions.load_from_form = old_load_from_form
 
@@ -245,7 +239,6 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     if actions_use_usercase(form.actions):
         if not is_usercase_in_use(domain):
             enable_usercase(domain)
-        add_properties_to_data_dictionary(domain, USERCASE_TYPE, list(form.actions.usercase_update.update.keys()))
 
     response_json = {}
     app.save(response_json)

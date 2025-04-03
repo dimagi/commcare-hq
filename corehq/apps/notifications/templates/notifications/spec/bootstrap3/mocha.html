@@ -1,16 +1,9 @@
 {% extends 'mocha/base.html' %}
 {% load hq_shared_tags %}
-
-{% block dependencies %}
-  <script src="{% static 'notifications/js/bootstrap3/notifications_service.js' %}"></script>
-{% endblock %}
+{% js_entry_b3 "notifications/spec/bootstrap3/main" %}
 
 {% block fixtures %}
   <ul>
     {% include 'notifications/partials/bootstrap3/global_notifications.html' %}
   </ul>
-{% endblock %}
-
-{% block mocha_tests %}
-  <script src="{% static 'notifications/spec/bootstrap3/NotificationsService.spec.mo.js' %}"></script>
 {% endblock %}

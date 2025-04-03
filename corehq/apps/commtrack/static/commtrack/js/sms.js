@@ -6,9 +6,8 @@ hqDefine('commtrack/js/sms', [
 ], function (
     $,
     ko,
-    initialPageData
+    initialPageData,
 ) {
-    'use strict';
     function commtrackSettingsViewModel(otherSmsCodes) {
         var self = {};
         self.actions = ko.observableArray();

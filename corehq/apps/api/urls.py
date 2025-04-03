@@ -182,6 +182,7 @@ urlpatterns = [
     fixtures.v0_6.LookupTableItemResource.get_urlpattern('v2'),
     v0_5.NavigationEventAuditResource.get_urlpattern('v1'),
     v1_0.CommCareAnalyticsUserResource.get_urlpattern('v1'),
+    v1_0.InvitationResource.get_urlpattern('v1'),
 ]
 
 

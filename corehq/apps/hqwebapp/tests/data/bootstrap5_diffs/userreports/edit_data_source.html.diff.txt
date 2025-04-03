@@ -1,0 +1,205 @@
+--- 
++++ 
+@@ -1,8 +1,8 @@
+-{% extends "userreports/bootstrap3/userreports_base.html" %}
++{% extends "userreports/bootstrap5/userreports_base.html" %}
+ {% load crispy_forms_tags %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+-{% js_entry_b3 'userreports/js/bootstrap3/widgets' %}
++{% js_entry 'userreports/js/bootstrap5/widgets' %}
+ 
+ {% block page_content %}
+   {% if data_source.meta.build.is_rebuild_in_progress %}
+@@ -24,12 +24,12 @@
+     </div>
+   {% endif %}
+   {% if data_source.get_id %}
+-    <div class="btn-toolbar pull-right">
++    <div class="btn-toolbar float-end">
+       {% if use_updated_ucr_naming %}
+         <div class="btn-group">
+           <a
+             href="{% url 'preview_configurable_data_source' domain data_source.get_id %}"
+-            class="btn btn-default {% if not data_source_table_exists %}disabled{% endif %}"
++            class="btn btn-outline-primary {% if not data_source_table_exists %}disabled{% endif %}"
+             >{% trans 'Preview Custom Web Report Data' %}</a
+           >
+           {% if not data_source_table_exists %}
+@@ -45,7 +45,7 @@
+         <div class="btn-group">
+           <a
+             href="{% url 'summary_configurable_data_source' domain data_source.get_id %}"
+-            class="btn btn-default"
++            class="btn btn-outline-primary"
+             >{% trans 'Custom Web Report Source Summary' %}</a
+           >
+         </div>
+@@ -53,7 +53,7 @@
+         <div class="btn-group">
+           <a
+             href="{% url 'preview_configurable_data_source' domain data_source.get_id %}"
+-            class="btn btn-default {% if not data_source_table_exists %}disabled{% endif %}"
++            class="btn btn-outline-primary {% if not data_source_table_exists %}disabled{% endif %}"
+             >{% trans 'Preview Data' %}</a
+           >
+           {% if not data_source_table_exists %}
+@@ -69,7 +69,7 @@
+         <div class="btn-group">
+           <a
+             href="{% url 'summary_configurable_data_source' domain data_source.get_id %}"
+-            class="btn btn-default"
++            class="btn btn-outline-primary"
+             >{% trans 'Data Source Summary' %}</a
+           >
+         </div>
+@@ -79,7 +79,7 @@
+           <div>
+             <button
+               id="gtm-rebuild-ds-disabled"
+-              class="btn btn-default"
++              class="btn btn-outline-primary"
+               disabled
+             >
+               {% if use_updated_ucr_naming %}
+@@ -111,9 +111,9 @@
+           <div>
+             <a
+               id="gtm-rebuild-ds-btn"
+-              class="btn btn-default"
++              class="btn btn-outline-primary"
+               href="#confirm_rebuild"
+-              data-toggle="modal"
++              data-bs-toggle="modal"
+             >
+               {% if use_updated_ucr_naming %}
+                 {% trans 'Rebuild Custom Web Report Source' %}
+@@ -127,8 +127,8 @@
+       <div class="btn-group">
+         <button
+           type="button"
+-          class="btn btn-default dropdown-toggle"
+-          data-toggle="dropdown"
++          class="btn btn-outline-primary dropdown-toggle"
++          data-bs-toggle="dropdown"  {# todo B5: css-dropdown #}
+           aria-haspopup="true"
+           aria-expanded="false"
+         >
+@@ -181,7 +181,7 @@
+             {% endif %}
+           {% endif %}
+         </ul>
+-        <form method="post" class="hide" id="dropdown-form">
++        <form method="post" class="d-none" id="dropdown-form">
+           {% csrf_token %}
+         </form>
+       </div>
+@@ -197,21 +197,21 @@
+                 <input
+                   type="submit"
+                   value="{% trans 'Delete Custom Web Report Source' %}"
+-                  class="btn btn-danger disable-on-submit"
++                  class="btn btn-outline-danger disable-on-submit"
+                 />
+               {% else %}
+                 <input
+                   type="submit"
+                   value="{% trans 'Delete Data Source' %}"
+-                  class="btn btn-danger disable-on-submit"
++                  class="btn btn-outline-danger disable-on-submit"
+                 />
+               {% endif %}
+             </form>
+           {% else %}
+             <a
+               href="#confirm_delete"
+-              class="btn btn-danger"
+-              data-toggle="modal"
++              class="btn btn-outline-danger"
++              data-bs-toggle="modal"
+             >
+               {% if use_updated_ucr_naming %}
+                 {% trans 'Delete Custom Web Report Source' %}
+@@ -226,11 +226,11 @@
+     <div class="clearfix"></div>
+   {% endif %}
+ 
+-  <ul class="nav nav-tabs">
++  <ul class="nav nav-tabs">  {# todo B5: css-nav #}
+     <li class="active">
+-      <a data-toggle="tab" href="#tabs-configuration">Configuration</a>
++      <a data-bs-toggle="tab" href="#tabs-configuration">Configuration</a>
+     </li>
+-    <li><a data-toggle="tab" href="#tabs-usage">Usage</a></li>
++    <li><a data-bs-toggle="tab" href="#tabs-usage">Usage</a></li>
+   </ul>
+ 
+   <div class="tab-content">
+@@ -241,7 +241,7 @@
+           {% trans "This datasource is read only, any changes made can not be saved." %}
+         </div>
+       {% endif %}
+-      {% crispy form %}
++      {% crispy form %}  {# todo B5: crispy #}
+     </div>
+     <div class="tab-pane fade" id="tabs-usage">
+       {% if not used_by_reports %}
+@@ -276,8 +276,8 @@
+               <div class="modal-header">
+                 <button
+                   type="button"
+-                  class="close"
+-                  data-dismiss="modal"
++                  class="btn-close"  {# todo B5: css-close #}
++                  data-bs-dismiss="modal"
+                   aria-label="Close"
+                 >
+                   <span aria-hidden="true">&times;</span>
+@@ -309,15 +309,15 @@
+                 <div class="modal-footer">
+                   <button
+                     type="button"
+-                    class="btn btn-default"
+-                    data-dismiss="modal"
++                    class="btn btn-outline-primary"
++                    data-bs-dismiss="modal"
+                   >
+                     {% trans "Cancel" %}
+                   </button>
+                   <button
+                     type="submit"
+                     value="{% trans 'Delete Data Source' %}"
+-                    class="disable-on-submit btn btn-danger"
++                    class="disable-on-submit btn btn-outline-danger"
+                   >
+                     {% trans 'Delete Data Source' %}
+                   </button>
+@@ -334,8 +334,8 @@
+           <div class="modal-header">
+             <button
+               type="button"
+-              class="close"
+-              data-dismiss="modal"
++              class="btn-close"  {# todo B5: css-close #}
++              data-bs-dismiss="modal"
+               aria-label="Close"
+             >
+               <span aria-hidden="true">&times;</span>
+@@ -372,14 +372,14 @@
+             <div class="modal-footer">
+               <button
+                 type="button"
+-                class="btn btn-default"
+-                data-dismiss="modal"
++                class="btn btn-outline-primary"
++                data-bs-dismiss="modal"
+               >
+                 {% trans "Cancel" %}
+               </button>
+               <button
+                 id="gtm-rebuild-ds-confirm"
+-                class="disable-on-submit btn btn-danger"
++                class="disable-on-submit btn btn-outline-danger"
+                 type="submit"
+               >
+                 {% trans 'Confirm' %}

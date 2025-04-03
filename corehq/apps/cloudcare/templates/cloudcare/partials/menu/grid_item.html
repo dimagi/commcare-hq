@@ -2,7 +2,7 @@
   <div>
     <% if (imageUrl) { %>
     <div class="gridicon badge-container" style="background-image: url('<%- imageUrl %>');">
-      <%= _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>{# maybe-custom-badge-template output is already escaped #}
+      <span id="module-badge" class="badge bg-dark rounded-pill"><%- badgeText %></span>
     </div>
     <% } else { %>
     <div class="gridicon gridicon-circle badge-container">
@@ -11,7 +11,7 @@
       <% } else { %>
       <i class="fa fa-folder gridicon-icon" aria-hidden="true"></i>
       <% } %>
-      <%= _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>{# maybe-custom-badge-template output is already escaped #}
+      <span id="module-badge" class="badge bg-dark rounded-pill"><%- badgeText %></span>
     </div>
     <% } %>
     <div class="module-column-name text-center">

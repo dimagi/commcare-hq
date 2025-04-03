@@ -1,8 +1,6 @@
 hqDefine("case/js/casexml",[
     'case/js/cheapxml',
 ], function (cheapxml) {
-    'use strict';
-
     var casexml = {
         guid: function (n) {
             var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
@@ -244,9 +242,9 @@ hqDefine("case/js/casexml",[
                             $('<timeStart/>').text(timeStart),
                             $('<timeEnd/>').text(timeEnd),
                             $('<userID/>').text(options.user_id),
-                            $('<username/>').text(options.username)
+                            $('<username/>').text(options.username),
                             //                            $('<deviceID/>')
-                        )
+                        ),
                     ).append(o.toXML(options));
                     return xform;
                 };

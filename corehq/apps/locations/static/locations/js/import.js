@@ -6,7 +6,7 @@ hqDefine('locations/js/import', [
 ], function (
     $,
     ko,
-    googleAnalytics
+    googleAnalytics,
 ) {
     $(function () {
         googleAnalytics.track.click($('#download_link'), 'Organization Structure', 'Bulk Import', 'Download');
@@ -35,7 +35,7 @@ hqDefine('locations/js/import', [
         }
 
         $("#download_block").koApplyBindings(
-            consumptionOptionsViewModel($("#download_link").get(0).href)
+            consumptionOptionsViewModel($("#download_link").get(0).href),
         );
     });
 });

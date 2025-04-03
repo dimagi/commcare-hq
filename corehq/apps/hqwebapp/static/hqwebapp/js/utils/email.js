@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine('hqwebapp/js/utils/email', [], function () {
     return {
         validateEmail: function (email) {

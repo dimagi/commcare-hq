@@ -15,10 +15,8 @@ hqDefine('reports/v2/js/datagrid/columns', [
     _,
     columnFilters,
     kissmetrics,
-    initialPageData
+    initialPageData,
 ) {
-    'use strict';
-
     var columnModel = function (data) {
         var self = {};
 

@@ -23,8 +23,10 @@ from memoized import memoized
 import codecs
 
 from corehq.apps.accounting.decorators import always_allow_project_access
+from corehq.apps.analytics.tasks import record_event
 from corehq.apps.enterprise.decorators import require_enterprise_admin
 from corehq.apps.enterprise.exceptions import TooMuchRequestedDataError
+from corehq.apps.enterprise.metric_events import ENTERPRISE_REPORT_REQUEST
 from corehq.apps.enterprise.mixins import ManageMobileWorkersMixin
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.enterprise.tasks import clear_enterprise_permissions_cache_for_all_users
@@ -84,15 +86,25 @@ def platform_overview(request, domain):
 
     context.update({
         'max_date_range_days': EnterpriseFormReport.MAX_DATE_RANGE_DAYS,
-        'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user) for slug in (
-            EnterpriseReport.DOMAINS,
-            EnterpriseReport.WEB_USERS,
-            EnterpriseReport.MOBILE_USERS,
-            EnterpriseReport.FORM_SUBMISSIONS,
-            EnterpriseReport.ODATA_FEEDS,
-            EnterpriseReport.COMMCARE_VERSION_COMPLIANCE,
-            EnterpriseReport.SMS,
-        )],
+        'groups': [
+            {'name': _('Projects Overview'),
+             'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
+                        for slug in (EnterpriseReport.DOMAINS,
+                                     EnterpriseReport.FORM_SUBMISSIONS,
+                                     EnterpriseReport.SMS,)]},
+            {'name': _('User Management'),
+             'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
+                        for slug in (EnterpriseReport.WEB_USERS,
+                                     EnterpriseReport.MOBILE_USERS,
+                                     EnterpriseReport.COMMCARE_VERSION_COMPLIANCE,
+                                     EnterpriseReport.APP_VERSION_COMPLIANCE,)]},
+            {'name': _('Data Management & Export'),
+             'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
+                        for slug in (EnterpriseReport.ODATA_FEEDS,
+                                     EnterpriseReport.DATA_EXPORTS,
+                                     EnterpriseReport.DATA_FORWARDING,
+                                     EnterpriseReport.CASE_MANAGEMENT,)]},
+        ],
         'uses_date_range': [EnterpriseReport.FORM_SUBMISSIONS, EnterpriseReport.SMS],
         'metric_type': 'Platform Overview',
     })
@@ -121,10 +133,12 @@ def security_center(request, domain):
     )
 
     context.update({
-        'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user) for slug in (
-            EnterpriseReport.API_USAGE,
-            EnterpriseReport.TWO_FACTOR_AUTH,
-        )],
+        'groups': [
+            {'name': '',
+             'reports': [EnterpriseReport.create(slug, request.account.id, request.couch_user)
+                        for slug in (EnterpriseReport.API_KEYS,
+                                     EnterpriseReport.TWO_FACTOR_AUTH)]},
+        ],
         'metric_type': 'Security Center',
         'max_date_range_days': EnterpriseFormReport.MAX_DATE_RANGE_DAYS,
         'uses_date_range': [],
@@ -201,6 +215,11 @@ def enterprise_dashboard_email(request, domain, slug):
         'title': report.title,
         'email': request.couch_user.username,
     })
+
+    record_event(ENTERPRISE_REPORT_REQUEST, request.couch_user, {
+        'report_type': slug
+    })
+
     return JsonResponse({'message': message})
 
 
@@ -228,17 +247,22 @@ def enterprise_settings(request, domain):
         form = EnterpriseSettingsForm(domain=domain, account=request.account, username=request.user.username,
                                       export_settings=export_settings)
 
-    context = {
+    context = get_page_context(
+        page_url=reverse('enterprise_settings', args=(domain,)),
+        page_title=_('Enterprise Settings'),
+        page_name=_('Enterprise Settings'),
+        domain=domain,
+        section=Section(
+            _('Enterprise Console'),
+            reverse('platform_overview', args=(domain,)),
+        ),
+    )
+    context.update({
         'account': request.account,
         'accounts_email': settings.ACCOUNTS_EMAIL,
-        'domain': domain,
         'restrict_signup': request.POST.get('restrict_signup', request.account.restrict_signup),
-        'current_page': {
-            'title': _('Enterprise Settings'),
-            'page_name': _('Enterprise Settings'),
-        },
         'settings_form': form,
-    }
+    })
     return render(request, "enterprise/enterprise_settings.html", context)
 
 
@@ -346,10 +370,8 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
     def page_context(self):
         pagination_context = self.pagination_context
         pagination_context.update({
-            'stripe_options': {
-                'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
-                'stripe_cards': self.stripe_cards,
-            },
+            'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
+            'stripe_cards': self.stripe_cards,
             'payment_error_messages': PAYMENT_ERROR_MESSAGES,
             'payment_urls': {
                 'process_invoice_payment_url': reverse(
@@ -445,18 +467,23 @@ def enterprise_permissions(request, domain):
     all_domains = set(config.account.get_domains())
     ignored_domains = all_domains - set(config.domains) - {config.source_domain}
 
-    context = {
-        'domain': domain,
+    context = get_page_context(
+        page_url=reverse('enterprise_permissions', args=(domain,)),
+        page_title=_('Enterprise Permissions'),
+        page_name=_('Enterprise Permissions'),
+        domain=domain,
+        section=Section(
+            _('Enterprise Console'),
+            reverse('platform_overview', args=(domain,)),
+        ),
+    )
+    context.update({
         'all_domains': sorted(all_domains),
         'is_enabled': config.is_enabled,
         'source_domain': config.source_domain,
         'ignored_domains': sorted(list(ignored_domains)),
         'controlled_domains': sorted(config.domains),
-        'current_page': {
-            'page_name': _('Enterprise Permissions'),
-            'title': _('Enterprise Permissions'),
-        }
-    }
+    })
     return render(request, "enterprise/enterprise_permissions.html", context)
 
 

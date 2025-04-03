@@ -24,7 +24,7 @@ hqDefine("reports/js/bootstrap3/single_form", [
     kissAnalytics,
     readableForm,
     dataCorrections,
-    Clipboard
+    Clipboard,
 ) {
     var initSingleForm = function (options) {
         assertProperties.assert(options, ['instance_id', 'form_question_map', 'ordered_question_values'], ['container']);

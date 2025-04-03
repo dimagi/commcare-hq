@@ -1,9 +1,8 @@
-'use strict';
 hqDefine("cloudcare/js/formplayer/menus/controller", [
     'jquery',
     'underscore',
     'backbone',
-    'DOMPurify/dist/purify.min',
+    'DOMPurify',
     'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
@@ -17,6 +16,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
     'cloudcare/js/formplayer/menus/views/query',
     'cloudcare/js/formplayer/menus/views',
     'cloudcare/js/formplayer/menus/api',    // app:select:menus and entity:get:details
+    'cloudcare/js/gtx',
 ], function (
     $,
     _,
@@ -33,8 +33,11 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
     Collection,
     menusUtils,
     queryView,
-    views
+    views,
+    api,
+    gtx,
 ) {
+
     var selectMenu = function (options) {
 
         options.preview = UsersModels.getCurrentUser().displayOptions.singleAppMode;
@@ -52,6 +55,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
                 promise.reject();
                 return;
             }
+
+            gtx.logNavigateMenu(menuResponse);
 
             //set title of tab to application name
             if (menuResponse.breadcrumbs) {
@@ -167,6 +172,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
             FormplayerFrontend.regions.getRegion('persistentMenu').show(
                 views.PersistentMenuView({
                     collection: _toMenuCommands(menuResponse.persistentMenu, [], menuResponse.selections),
+                    sidebarEnabled: sidebarEnabled,
                 }).render());
         } else {
             FormplayerFrontend.regions.getRegion('persistentMenu').empty();
@@ -211,7 +217,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
                     disableDynamicSearch: !sessionStorage.submitPerformed,
                     groupHeaders: queryResponse.groupHeaders,
                     searchOnClear: queryResponse.searchOnClear,
-                }).render()
+                }).render(),
             );
             FormplayerFrontend.regions.getRegion('main').show(menuListView);
         } else if (menuResponse.type === constants.QUERY) {
@@ -225,7 +231,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
                     disableDynamicSearch: true,
                     groupHeaders: menuResponse.groupHeaders,
                     searchOnClear: menuResponse.searchOnClear,
-                }).render()
+                }).render(),
             );
 
             menuData["triggerEmptyCaseList"] = true;

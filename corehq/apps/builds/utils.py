@@ -90,6 +90,14 @@ def get_build_time(version, cache=None):
 
 
 def is_out_of_date(version_in_use, latest_version):
+    """
+    Check if the version in use is out of date compared to the latest version.
+    params:
+        version_in_use: str, the version in use
+        latest_version: str, the latest version
+    returns:
+        bool, True if the version in use is out of date, False otherwise
+    """
     version_in_use_tuple = _parse_version(version_in_use)
     latest_version_tuple = _parse_version(latest_version)
     if not version_in_use_tuple or not latest_version_tuple:

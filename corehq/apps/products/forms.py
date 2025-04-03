@@ -3,10 +3,10 @@ import json
 from django import forms
 from django.utils.translation import gettext_noop
 
-from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout
 
 from corehq.apps.commtrack.util import all_sms_codes
+from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 
@@ -42,9 +42,8 @@ class ProductForm(forms.Form):
         kwargs['initial']['code'] = self.product.code
 
         super(ProductForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
+        self.helper = HQFormHelper()
         self.helper.form_tag = False
-        self.helper.label_class = 'form-label'
 
         programs = Program.by_domain(self.product.domain)
         self.fields['program_id'].choices = tuple((prog.get_id, prog.name) for prog in programs)

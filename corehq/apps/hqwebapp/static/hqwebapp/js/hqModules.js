@@ -66,15 +66,16 @@ function hqDefine(path, dependencies, moduleAccessor) {
                 'jquery': '$',
                 'knockout': 'ko',
                 'underscore': '_',
-                'clipboard/dist/clipboard': 'Clipboard',
+                'clipboard/dist/clipboard': 'ClipboardJS',
+                'd3/d3.min': 'd3',
                 'ace-builds/src-min-noconflict/ace': 'ace',
                 'chai/chai': 'chai',
+                'DOMPurify': 'DOMPurify',
                 'DOMPurify/dist/purify.min': 'DOMPurify',
                 'mocha/mocha': 'mocha',
                 'moment/moment': 'moment',
                 'crypto-js/crypto-js': 'CryptoJS',
                 'hqwebapp/js/lib/modernizr': 'Modernizr',
-                'sinon/pkg/sinon': 'sinon',
             };
             if (window.USE_BOOTSTRAP5) {
                 thirdPartyGlobals['es6!hqwebapp/js/bootstrap5_loader'] = 'bootstrap';

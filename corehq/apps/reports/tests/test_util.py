@@ -9,7 +9,6 @@ from django.test import SimpleTestCase, TestCase
 from testil import eq
 from freezegun import freeze_time
 
-from corehq.apps.reports.tasks import summarize_user_counts
 from corehq.apps.reports.util import get_user_id_from_form, datespan_from_beginning
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.models import XFormInstance
@@ -49,30 +48,6 @@ class TestDateSpanFromBeginning(SimpleTestCase):
 
         self.assertEqual(datespan.startdate, datetime(year=2020, month=4, day=4))
         self.assertEqual(datespan.enddate, datetime(year=2023, month=2, day=9))
-
-
-class TestSummarizeUserCounts(SimpleTestCase):
-    def test_summarize_user_counts(self):
-        self.assertEqual(
-            summarize_user_counts({'a': 1, 'b': 10, 'c': 2}, n=0),
-            {(): 13},
-        )
-        self.assertEqual(
-            summarize_user_counts({'a': 1, 'b': 10, 'c': 2}, n=1),
-            {'b': 10, (): 3},
-        )
-        self.assertEqual(
-            summarize_user_counts({'a': 1, 'b': 10, 'c': 2}, n=2),
-            {'b': 10, 'c': 2, (): 1},
-        )
-        self.assertEqual(
-            summarize_user_counts({'a': 1, 'b': 10, 'c': 2}, n=3),
-            {'a': 1, 'b': 10, 'c': 2, (): 0},
-        )
-        self.assertEqual(
-            summarize_user_counts({'a': 1, 'b': 10, 'c': 2}, n=4),
-            {'a': 1, 'b': 10, 'c': 2, (): 0},
-        )
 
 
 class TestGetUserType(SimpleTestCase):

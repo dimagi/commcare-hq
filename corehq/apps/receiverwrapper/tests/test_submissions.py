@@ -13,6 +13,7 @@ from django.conf import settings
 
 from unittest.mock import patch
 
+from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
@@ -405,3 +406,48 @@ class SubmitFormLocallyRateLimitTest(TestCase, TestFileMixin):
         form_xml = self.get_xml('simple_form')
         submit_form_locally(form_xml, domain=self.domain, max_wait=None)
         allow_usage.assert_not_called()
+
+
+class SubmitFormLocallyTest(TestCase, TestFileMixin):
+    root = os.path.dirname(__file__)
+    file_path = ('data',)
+
+    @classmethod
+    def setUpClass(cls):
+        super(SubmitFormLocallyTest, cls).setUpClass()
+        cls.domain = 'atestdomain'
+        cls.project = create_domain(name=cls.domain)
+
+        cls.app = Application(domain=cls.domain, version=4)
+        cls.app.save()
+        cls.app_id = cls.app.get_id
+
+        cls.build = Application(domain=cls.domain, version=3)
+        cls.build.copy_of = cls.app_id
+        cls.build.save()
+        cls.build_id = cls.build.get_id
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.project.delete()
+        super(SubmitFormLocallyTest, cls).tearDownClass()
+
+    def test_build_id_as_app_id(self):
+        form_xml = self.get_xml('simple_form')
+        result = submit_form_locally(form_xml, domain=self.domain, app_id=self.build_id)
+        instance = result.xform
+        self.assertEqual(instance.app_id, self.app_id)
+        self.assertEqual(instance.build_id, self.build_id)
+
+    def test_app_id_and_build_id(self):
+        form_xml = self.get_xml('simple_form')
+        result = submit_form_locally(form_xml, domain=self.domain, app_id=self.app_id, build_id=self.build_id)
+        instance = result.xform
+        self.assertEqual(instance.app_id, self.app_id)
+        self.assertEqual(instance.build_id, self.build_id)
+
+    def test_no_app_id(self):
+        form_xml = self.get_xml('simple_form')
+        result = submit_form_locally(form_xml, domain=self.domain)
+        instance = result.xform
+        self.assertIsNone(instance.app_id)

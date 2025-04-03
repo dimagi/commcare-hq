@@ -5,7 +5,6 @@ hqDefine("export/js/datasource_export",[
 ], function ($, ko) {
 
     function datasourceExportViewModel() {
-        'use strict';
         var self = {};
 
         self.dataSource = ko.observable();

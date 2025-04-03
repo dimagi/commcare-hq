@@ -1,5 +1,5 @@
 import uuid
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 from django.contrib.messages import get_messages
 from django.http import HttpRequest
@@ -27,9 +27,13 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
 )
 from corehq.apps.userreports.reports.view import ConfigurableReportView
-from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.apps.userreports.util import (
+    get_indicator_adapter,
+    get_ucr_datasource_config_by_id,
+)
 from corehq.apps.userreports.views import (
-    _number_of_records_to_be_iterated_for_rebuild,
+    _prep_data_source_for_rebuild,
+    number_of_records_to_be_processed,
 )
 from corehq.apps.users.models import HQApiKey, HqPermissions, UserRole, WebUser
 from corehq.form_processor.models import CommCareCase
@@ -499,8 +503,8 @@ class TestDataSourceRebuild(ConfigurableReportTestMixin, TestCase):
         path = reverse("rebuild_configurable_data_source", args=(self.domain, self.data_source_config.get_id))
         return self.client.post(path)
 
-    def test_number_of_records_to_be_iterated_for_rebuild(self):
-        number_of_cases = _number_of_records_to_be_iterated_for_rebuild(self.data_source_config)
+    def test_number_of_records_to_be_processed(self):
+        number_of_cases = number_of_records_to_be_processed(self.data_source_config)
         self.assertEqual(number_of_cases, 3)
 
     def test_feature_flag(self):
@@ -508,7 +512,8 @@ class TestDataSourceRebuild(ConfigurableReportTestMixin, TestCase):
         self.assertEqual(response.status_code, 404)
 
     @flag_enabled('USER_CONFIGURABLE_REPORTS')
-    def test_successful_rebuilt(self):
+    @patch('corehq.apps.userreports.views._prep_data_source_for_rebuild')
+    def test_successful_rebuilt(self, mock_prep_data_source_for_rebuild):
         response = self._send_data_source_rebuild_request()
         self.assertEqual(response.status_code, 302)
 
@@ -517,6 +522,8 @@ class TestDataSourceRebuild(ConfigurableReportTestMixin, TestCase):
             str(messages[0]),
             'Table "foo" is now being rebuilt. Data should start showing up soon'
         )
+
+        mock_prep_data_source_for_rebuild.assert_called_once()
 
     @flag_enabled('USER_CONFIGURABLE_REPORTS')
     @flag_enabled('RESTRICT_DATA_SOURCE_REBUILD')
@@ -533,8 +540,7 @@ class TestDataSourceRebuild(ConfigurableReportTestMixin, TestCase):
                     'Rebuilt was not initiated due to high number of records this data source is expected to '
                     'iterate during a rebuild. Expected records to be processed is currently 3 '
                     'which is above the limit of 2. '
-                    'Please consider creating a new data source instead or reach out to support if '
-                    'you need to rebuild this data source.'
+                    'Please update the data source to have asynchronous processing.'
                 )
             )
 
@@ -550,6 +556,133 @@ class TestDataSourceRebuild(ConfigurableReportTestMixin, TestCase):
             str(messages[0]),
             'Table "foo" is now being rebuilt. Data should start showing up soon'
         )
+
+    @flag_enabled('USER_CONFIGURABLE_REPORTS')
+    def test_if_build_awaiting(self):
+        self.data_source_config.meta.build.awaiting = True
+        self.data_source_config.save()
+
+        response = self._send_data_source_rebuild_request()
+
+        self.assertEqual(response.status_code, 302)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(
+            str(messages[0]),
+            'Rebuilding is not available until CommCare HQ finishes building / rebuilding.'
+        )
+
+        # reset for other tests
+        self.data_source_config.meta.build.awaiting = False
+        self.data_source_config.save()
+
+
+class TestPrepDataSourceForRebuild(ConfigurableReportTestMixin, TestCase):
+    def test_prep_data_source_for_rebuild_for_non_static(self):
+        data_source_config = self._sample_data_source_config()
+        data_source_config.is_deactivated = True
+        data_source_config.meta.build.awaiting = False
+        _prep_data_source_for_rebuild(data_source_config, is_static=False)
+
+        self.assertTrue(data_source_config.meta.build.awaiting)
+        self.assertFalse(data_source_config.is_deactivated)
+
+    def test_prep_data_source_for_rebuild_for_static(self):
+        data_source_config = self._sample_data_source_config()
+        data_source_config.is_deactivated = True
+        data_source_config.meta.build.awaiting = False
+        _prep_data_source_for_rebuild(data_source_config, is_static=True)
+
+        self.assertFalse(data_source_config.meta.build.awaiting)
+        self.assertFalse(data_source_config.is_deactivated)
+
+
+class TestBuildDataSourceInPlace(ConfigurableReportTestMixin, TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.data_source_config = cls._sample_data_source_config()
+        cls.data_source_config.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._delete_everything()
+        super().tearDownClass()
+
+    def _send_build_data_source_in_place_request(self):
+        path = reverse("build_in_place", args=(self.domain, self.data_source_config.get_id))
+        return self.client.post(path)
+
+    @flag_enabled('USER_CONFIGURABLE_REPORTS')
+    @patch('corehq.apps.userreports.views._report_ucr_rebuild_metrics')
+    @patch('corehq.apps.userreports.views.rebuild_indicators_in_place')
+    @patch('corehq.apps.userreports.views._prep_data_source_for_rebuild')
+    def test_successful_rebuilt(self, mock_prep_data_source_for_rebuild, mock_rebuild_indicators_in_place,
+                                mock_report_ucr_rebuild_metrics):
+        response = self._send_build_data_source_in_place_request()
+        self.assertEqual(response.status_code, 302)
+
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(
+            str(messages[0]),
+            'Table "foo" is now being rebuilt. Data should start showing up soon'
+        )
+
+        mock_prep_data_source_for_rebuild.assert_called_once()
+        mock_rebuild_indicators_in_place.assert_has_calls([
+            call.delay(self.data_source_config.get_id, '', source='edit_data_source_build_in_place',
+                       domain=self.domain)
+        ])
+        mock_report_ucr_rebuild_metrics.assert_called_once()
+
+    @flag_enabled('USER_CONFIGURABLE_REPORTS')
+    def test_if_build_awaiting(self):
+        self.data_source_config.meta.build.awaiting = True
+        self.data_source_config.save()
+
+        response = self._send_build_data_source_in_place_request()
+
+        self.assertEqual(response.status_code, 302)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(
+            str(messages[0]),
+            'Rebuilding is not available until CommCare HQ finishes building / rebuilding.'
+        )
+
+        # reset for other tests
+        self.data_source_config.meta.build.awaiting = False
+        self.data_source_config.save()
+
+
+class TestResumeBuildingDataSource(ConfigurableReportTestMixin, TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.data_source_config = cls._sample_data_source_config()
+        cls.data_source_config.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._delete_everything()
+        super().tearDownClass()
+
+    def _send_resume_building_data_source_request(self):
+        path = reverse("resume_build", args=(self.domain, self.data_source_config.get_id))
+        return self.client.post(path)
+
+    @flag_enabled('USER_CONFIGURABLE_REPORTS')
+    @patch('corehq.apps.userreports.views.DataSourceResumeHelper')
+    @patch('corehq.apps.userreports.views.resume_building_indicators')
+    def test_awaiting_set(self, mock_resume_building_indicators, mock_helper):
+        self.data_source_config.meta.build.awaiting = False
+        self.data_source_config.save()
+
+        self._send_resume_building_data_source_request()
+
+        mock_resume_building_indicators.assert_has_calls([
+            call.delay(self.data_source_config.get_id, '')
+        ])
+        data_source_config = get_ucr_datasource_config_by_id(self.data_source_config.get_id)
+        self.assertTrue(data_source_config.meta.build.awaiting)
 
 
 class TestSubscribeToDataSource(TestCase):

@@ -1,5 +1,5 @@
-'use strict';
-hqDefine("reports/js/case_activity", function () {
+
+hqDefine("reports/js/case_activity", ['jquery'], function ($) {
 
     $(document).ajaxSuccess(function (event, xhr, settings) {
         if (settings.url.match(/reports\/async\/case_activity/)) {

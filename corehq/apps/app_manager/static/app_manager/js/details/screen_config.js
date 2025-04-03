@@ -62,14 +62,13 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     containsFixtureConfiguration: (columnType === "short" && hqImport('hqwebapp/js/toggles').toggleEnabled('FIXTURE_CASE_SELECTION')),
                     containsFilterConfiguration: columnType === "short",
                     containsCaseListLookupConfiguration: (columnType === "short" && (hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_LOOKUP') || hqImport('hqwebapp/js/toggles').toggleEnabled('BIOMETRIC_INTEGRATION'))),
-                    // TODO: Check case_search_enabled_for_domain(), not toggle. FB 225343
-                    containsSearchConfiguration: (columnType === "short" && hqImport('hqwebapp/js/toggles').toggleEnabled('SYNC_SEARCH_CASE_CLAIM')),
+                    containsSearchConfiguration: (columnType === "short" && hqImport('hqwebapp/js/initial_page_data').get('case_search_enabled')),
                     containsCustomXMLConfiguration: columnType === "short",
                     allowsTabs: columnType === 'long',
                     allowsEmptyColumns: columnType === 'long',
                     caseTileTemplateOptions: spec.caseTileTemplateOptions,
                     caseTileTemplateConfigs: spec.caseTileTemplateConfigs,
-                }
+                },
             );
             self.screens.push(screen);
             return screen;
@@ -153,7 +152,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         spec.sortRows[j].blanks,
                         spec.sortRows[j].display[self.lang],
                         false,
-                        spec.sortRows[j].sort_calculation
+                        spec.sortRows[j].sort_calculation,
                     );
                 }
             }
@@ -169,7 +168,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 $caseListLookup,
                 spec.state.short,
                 spec.lang,
-                self.shortScreen.saveButton
+                self.shortScreen.saveButton,
             );
             // Set up case search
             var caseClaimModels = hqImport("app_manager/js/details/case_claim");
@@ -180,7 +179,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 _.pick(spec, caseClaimModels.searchConfigKeys),
                 spec.lang,
                 self.shortScreen.saveButton,
-                self.filter.filterText
+                self.filter.filterText,
             );
         }
         if (spec.state.long !== undefined) {
@@ -202,7 +201,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                                 printRef.is_matched(false);
                                 printTemplateUploader.updateUploadFormUI();
                             }
-                        }
+                        },
                     );
                 },
             });

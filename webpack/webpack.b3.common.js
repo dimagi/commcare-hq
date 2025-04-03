@@ -24,8 +24,9 @@ module.exports = Object.assign({}, commonDefault, {
     resolve: {
         alias: Object.assign({}, commonDefault.resolve.alias, {
             "commcarehq": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/bootstrap3/'), 'commcarehq'),
-            "datatables": "datatables.net/js/jquery.dataTables.min",
+            "datatables": "datatables.net/js/jquery.dataTables",
             "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
+            "datatables.fixedColumns": "datatables-fixedcolumns/js/dataTables.fixedColumns",
         }),
     },
 

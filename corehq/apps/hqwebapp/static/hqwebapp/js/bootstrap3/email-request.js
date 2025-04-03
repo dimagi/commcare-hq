@@ -87,7 +87,6 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
 
         self.resetForm = function () {
             self.$formElement.find("button[type='submit']").button('reset');
-            self.$formElement.get(0).reset();
             self.cancelBtnEnabled(true);
             self.$submitBtn.button('reset');
             resetErrors();
@@ -130,14 +129,14 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
         if (issueReportModal.length) {
             issueReportModal.koApplyBindings(new EmailRequest(
                 "modalReportIssue",
-                "hqwebapp-bugReportForm"
+                "hqwebapp-bugReportForm",
             ));
         }
         const featureRequestModal = $("#modalSolutionsFeatureRequest");
         if (featureRequestModal.length) {
             featureRequestModal.koApplyBindings(new EmailRequest(
                 "modalSolutionsFeatureRequest",
-                "hqwebapp-requestReportForm"
+                "hqwebapp-requestReportForm",
             ));
         }
     });

@@ -4,11 +4,12 @@ hqDefine("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
     'knockout',
     "es6!hqwebapp/js/bootstrap5_loader",
     'jquery-ui/ui/widgets/sortable',
+    'langcodes/js/langcodes',   // $.langcodes
 ], function (
     $,
     _,
     ko,
-    bootstrap
+    bootstrap,
 ) {
     // Need this due to https://github.com/knockout/knockout/pull/2324
     // so that ko.bindingHandlers.foreach.update works properly
@@ -18,10 +19,7 @@ hqDefine("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
     ko.bindingHandlers.hqbSubmitReady = {
         update: function (element, valueAccessor) {
             var value = (valueAccessor()) ? valueAccessor()() : null;
-            if (value)
-                $(element).addClass("btn-primary").removeClass("disabled");
-            else
-                $(element).addClass("disabled").removeClass("btn-primary");
+            if (value) {$(element).addClass("btn-primary").removeClass("disabled");} else {$(element).addClass("disabled").removeClass("btn-primary");}
         },
     };
 
@@ -124,7 +122,7 @@ hqDefine("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
                             "NOT UPDATING THE SORT OF THE ACTUAL LIST! " +
                             "Did you forget to add `attr: {'data-order': _sortableOrder}` " +
                             "to the data-bind attribute of your main sorting " +
-                            "element?"
+                            "element?",
                         );
                         return;
                     }
@@ -192,7 +190,7 @@ hqDefine("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
             var list = ko.bindingHandlers.multirow_sortable.getList(valueAccessor);
             var forceUpdate = function () {
                 ko.bindingHandlers.multirow_sortable.update(
-                    element, valueAccessor, allBindingsAccessor, viewModel, bindingContext
+                    element, valueAccessor, allBindingsAccessor, viewModel, bindingContext,
                 );
             };
             list.subscribe(forceUpdate);

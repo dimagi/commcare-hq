@@ -11,10 +11,9 @@ hqDefine("hqmedia/js/media_reference_models", [
     _,
     assertProperties,
     mediaUploaders,
-    initialPageData
+    initialPageData,
 ) {
     function BaseMediaReference(ref, uploaderSlug) {
-        'use strict';
         let self = {};
 
         self.media_class = ref.media_class;
@@ -112,7 +111,6 @@ hqDefine("hqmedia/js/media_reference_models", [
     }
 
     function ImageReference(ref, uploaderSlug) {
-        'use strict';
         let self = {};
         self = BaseMediaReference(ref, uploaderSlug || "hqimage");
         self.preview_template = "image-preview-template";
@@ -127,7 +125,6 @@ hqDefine("hqmedia/js/media_reference_models", [
     ImageReference.prototype.constructor = ImageReference;
 
     function AudioReference(ref, uploaderSlug) {
-        'use strict';
         let self = {};
         self = BaseMediaReference(ref, uploaderSlug || "hqaudio");
         self.preview_template = "audio-preview-template";
@@ -138,7 +135,6 @@ hqDefine("hqmedia/js/media_reference_models", [
     AudioReference.prototype.constructor = AudioReference;
 
     function VideoReference(ref, uploaderSlug) {
-        'use strict';
         let self = {};
         self = BaseMediaReference(ref, uploaderSlug || "hqvideo");
         self.preview_template = "video-preview-template";

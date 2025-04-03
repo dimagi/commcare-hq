@@ -6,7 +6,7 @@ hqDefine("app_manager/js/nav_menu_media_common", function () {
     _.each(initialPageData.get("multimedia_upload_managers"), function (uploader, type) {
         uploaders[type] = uploadersModule.uploader(
             uploader.slug,
-            uploader.options
+            uploader.options,
         );
     });
 

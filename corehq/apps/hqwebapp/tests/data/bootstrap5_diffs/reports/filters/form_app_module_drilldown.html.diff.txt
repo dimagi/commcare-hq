@@ -29,15 +29,7 @@
            <select class="form-control"
                    id="{{ css_id }}-{{ unknown.slug }}_xmlns"
                    name="{{ slug }}_{{ unknown.slug }}_xmlns"
-@@ -72,17 +72,17 @@
-        data-is-unknown-shown='{{ unknown.show|JSON }}'
-        data-selected-unknown-form='{{ unknown.selected }}'
-        data-all-unknown-forms='{% html_attr unknown.options %}'
--       data-caption-text='{{ unknown.default_text }}'
-+       data-caption-text='{{ unknown.default_text }}'  {# todo B5: stateful button #}
-        data-css-id='{{ css_id }}'
-        data-css-class='{{ css_id }}-unknown_controls'>
-     {{ block.super }}
+@@ -79,10 +79,10 @@
    </div>
  
    {% if unknown_available or display_app_type %}

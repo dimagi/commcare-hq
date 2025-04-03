@@ -10,7 +10,7 @@ hqDefine("enterprise/js/enterprise_settings", [
     ko,
     _,
     assertProperties,
-    initialPageData
+    initialPageData,
 ) {
     var settingsFormModel = function (options) {
         assertProperties.assert(options, ['accounts_email'], ['restrict_signup', 'restricted_domains']);

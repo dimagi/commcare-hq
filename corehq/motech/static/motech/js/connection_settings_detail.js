@@ -1,4 +1,4 @@
-'use strict';
+
 hqDefine("motech/js/connection_settings_detail", [
     'jquery',
     'underscore',
@@ -7,7 +7,7 @@ hqDefine("motech/js/connection_settings_detail", [
 ], function (
     $,
     _,
-    initialPageData
+    initialPageData,
 ) {
     $(function () {
         var $authTypeSelect = $('#id_auth_type'),
@@ -23,6 +23,7 @@ hqDefine("motech/js/connection_settings_detail", [
                     'pass_credentials_in_header',
                     'include_client_id',
                     'scope',
+                    'plaintext_custom_headers',
                 ];
             if (authPreset === 'CUSTOM') {
                 _.each(customAuthPresetFields, function (field) {
@@ -129,7 +130,7 @@ hqDefine("motech/js/connection_settings_detail", [
                 .removeClass("d-none text-success")
                 .addClass("text-danger");
             $testResult.text(gettext(
-                'CommCare HQ was unable to make the request: '
+                'CommCare HQ was unable to make the request: ',
             ) + resp.statusText);
         };
 
@@ -150,6 +151,7 @@ hqDefine("motech/js/connection_settings_detail", [
                 token_url: $('#id_token_url').val(),
                 auth_preset: $('#id_auth_preset').val(),
                 skip_cert_verify: $('#id_skip_cert_verify').prop('checked'),
+                plaintext_custom_headers: $('#id_plaintext_custom_headers').val(),
             };
             $testConnectionButton.disableButton();
 

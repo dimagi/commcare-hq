@@ -6,7 +6,7 @@ hqDefine("hqwebapp/js/bootstrap3/sticky_tabs", [
     "jquery",
     "bootstrap",    // needed for $.tab
 ], function (
-    $
+    $,
 ) {
     var getHash = function () {
         if (window.location.hash) {

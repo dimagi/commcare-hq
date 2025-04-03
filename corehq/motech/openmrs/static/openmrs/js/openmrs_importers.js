@@ -12,7 +12,7 @@ hqDefine('openmrs/js/openmrs_importers', [
     ko,
     initialPageData,
     alertUser,
-    baseAce
+    baseAce,
 ) {
 
     var openmrsImporter = function (properties) {
@@ -113,7 +113,7 @@ hqDefine('openmrs/js/openmrs_importers', [
             $.post(
                 form.action,
                 {'openmrs_importers': JSON.stringify(openmrsImporters)},
-                function (data) { alertUser.alert_user(data['message'], 'success', true); }
+                function (data) { alertUser.alert_user(data['message'], 'success', true); },
             ).fail(function () { alertUser.alert_user(gettext('Unable to save OpenMRS Importers'), 'danger'); });
         };
 
@@ -131,7 +131,7 @@ hqDefine('openmrs/js/openmrs_importers', [
     $(function () {
         var viewModel = openmrsImporters(
             initialPageData.get('openmrs_importers'),
-            initialPageData.reverse('openmrs_import_now')
+            initialPageData.reverse('openmrs_import_now'),
         );
         viewModel.init();
         $('#openmrs-importers').koApplyBindings(viewModel);

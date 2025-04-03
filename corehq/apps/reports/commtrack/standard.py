@@ -59,13 +59,13 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, Datespan
     @property
     @memoized
     def active_location(self):
-        loc_id = self.request_params.get('location_id')
+        loc_id = self.get_request_param('location_id', from_json=True)
         return SQLLocation.objects.get_or_None(domain=self.domain, location_id=loc_id)
 
     @property
     @memoized
     def program_id(self):
-        prog_id = self.request_params.get('program')
+        prog_id = self.get_request_param('program', from_json=True)
         if prog_id != '':
             return prog_id
 
@@ -86,8 +86,8 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     @property
     def shared_pagination_GET_params(self):
         return [
-            {'name': 'location_id', 'value': self.request.GET.get('location_id')},
-            {'name': 'program', 'value': self.request.GET.get('program')},
+            {'name': 'location_id', 'value': self.get_request_param('location_id')},
+            {'name': 'program', 'value': self.get_request_param('program')},
         ]
 
     @cached_property
@@ -265,9 +265,9 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
     def rows(self):
         config = {
             'domain': self.domain,
-            'location_id': self.request.GET.get('location_id'),
+            'location_id': self.get_request_param('location_id'),
             'program_id': self.program_id,
-            'date': self.request.GET.get('date', None),
+            'date': self.get_request_param('date', None),
             'max_rows': 100
         }
 
@@ -328,8 +328,8 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
     def product_data(self):
         config = {
             'domain': self.domain,
-            'location_id': self.request.GET.get('location_id'),
-            'program_id': self.request.GET.get('program'),
+            'location_id': self.get_request_param('location_id'),
+            'program_id': self.get_request_param('program'),
             'aggregate': True,
             'advanced_columns': self.showing_advanced_columns(),
         }

@@ -10,7 +10,6 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.motech.const import (
     AUTH_PRESETS,
     AUTH_TYPES,
@@ -20,8 +19,10 @@ from corehq.motech.const import (
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import validate_user_input_url_for_repeaters
 from corehq.motech.utils import api_setting_matches_preset, get_endpoint_url
+from corehq.toggles import MTN_MOBILE_WORKER_VERIFICATION
 from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
+from corehq.apps.userreports.ui.fields import JsonField
 
 
 class ConnectionSettingsForm(forms.ModelForm):
@@ -70,12 +71,9 @@ class ConnectionSettingsForm(forms.ModelForm):
         required=False,
     )
     skip_cert_verify = forms.BooleanField(
-        label="",
+        label=_('Skip certificate verification'),
         help_text=_('Do not use in a production environment'),
         required=False,
-        widget=BootstrapCheckboxInput(
-            inline_label=_('Skip certificate verification'),
-        ),
     )
     notify_addresses_str = forms.CharField(
         label=_('Addresses to send notifications'),
@@ -90,6 +88,13 @@ class ConnectionSettingsForm(forms.ModelForm):
         ] + [('CUSTOM', _("(Custom)")), (None, _("(Not Applicable)"))],
         initial=None,
         required=False,
+    )
+    plaintext_custom_headers = JsonField(
+        label=_('Additional headers'),
+        required=False,
+        initial={},
+        help_text=_('A JSON object of additional headers to include on all requests'),
+        expected_type=dict,
     )
 
     class Meta:
@@ -109,6 +114,7 @@ class ConnectionSettingsForm(forms.ModelForm):
             'token_url',
             'refresh_url',
             'pass_credentials_in_header',
+            'plaintext_custom_headers',
         ]
 
     def __init__(self, domain, *args, **kwargs):
@@ -129,6 +135,8 @@ class ConnectionSettingsForm(forms.ModelForm):
                     'plaintext_client_secret': PASSWORD_PLACEHOLDER if secret else '',
                     'auth_preset': api_setting_matches_preset(kwargs['instance']),
                 })
+                if self.custom_headers_supported(domain):
+                    kwargs['initial']['plaintext_custom_headers'] = kwargs['instance'].get_custom_headers_display()
             else:
                 kwargs['initial'] = {
                     'plaintext_password': PASSWORD_PLACEHOLDER if password else '',
@@ -143,8 +151,9 @@ class ConnectionSettingsForm(forms.ModelForm):
     def helper(self):
         from corehq.motech.views import ConnectionSettingsListView
 
+        custom_headers_supported = self.custom_headers_supported(self.domain)
+
         helper = hqcrispy.HQFormHelper()
-        helper.form_class = "form-horizontal"
         helper.layout = crispy.Layout(
             crispy.Field('name'),
             crispy.Field('notify_addresses_str'),
@@ -163,28 +172,34 @@ class ConnectionSettingsForm(forms.ModelForm):
                     crispy.Field('pass_credentials_in_header'),
                     crispy.Field('include_client_id'),
                     crispy.Field('scope'),
+                    crispy.Field('plaintext_custom_headers') if custom_headers_supported else None,
                 ),
                 id="div_id_oauth_settings",
             ),
             crispy.Field('skip_cert_verify'),
-            self.test_connection_button,
-
-            twbscrispy.StrictButton(
-                _("Save"),
-                type="submit",
-                css_class="btn btn-primary",
-            ),
-            hqcrispy.LinkButton(
-                _("Cancel"),
-                reverse(
-                    ConnectionSettingsListView.urlname,
-                    kwargs={'domain': self.domain},
+            hqcrispy.FormActions(
+                self.test_connection_button,
+                twbscrispy.StrictButton(
+                    _("Save"),
+                    type="submit",
+                    css_class="btn btn-primary",
                 ),
-                css_class="btn btn-outline-primary",
+                hqcrispy.LinkButton(
+                    _("Cancel"),
+                    reverse(
+                        ConnectionSettingsListView.urlname,
+                        kwargs={'domain': self.domain},
+                    ),
+                    css_class="btn btn-outline-primary",
+                ),
             ),
         )
 
         return helper
+
+    @staticmethod
+    def custom_headers_supported(domain):
+        return MTN_MOBILE_WORKER_VERIFICATION.enabled(domain)
 
     @property
     def test_connection_button(self):
@@ -261,6 +276,9 @@ class ConnectionSettingsForm(forms.ModelForm):
         self.instance.plaintext_password = self.cleaned_data['plaintext_password']
         self.instance.plaintext_client_secret = self.cleaned_data['plaintext_client_secret']
         self.instance.last_token = None
+
+        if self.custom_headers_supported(self.domain):
+            self.instance.set_custom_headers(self.cleaned_data['plaintext_custom_headers'])
 
         new_auth_preset = self.cleaned_data['auth_preset'] in AUTH_PRESETS
         url_changed_and_preset_set = (
