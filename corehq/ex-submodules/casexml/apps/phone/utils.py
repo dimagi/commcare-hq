@@ -101,8 +101,7 @@ def cache_fixture_items_data(io_data, domain, fixure_name, key_prefix):
     try:
         kw = {"meta": db.metadb.get(
             parent_id=domain,
-            type_code=CODES.fixture,
-            name=fixure_name,
+            key=key_prefix + '/' + domain,
         )}
     except BlobMeta.DoesNotExist:
         kw = {
