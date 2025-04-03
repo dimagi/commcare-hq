@@ -139,15 +139,17 @@ def delete_report_config(report_config):
 
 
 def _ucr_view_is_safe(view_fn, *args, **kwargs):
-    return report_has_location_filter(config_id=kwargs.get('subreport_slug'),
-                                      domain=kwargs.get('domain'))
+    return report_has_location_filter(
+        config_id=kwargs.get('subreport_slug'),
+        domain=kwargs.get('domain'),
+    )
 
 
 @conditionally_location_safe(_ucr_view_is_safe)
 class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
-    section_name = gettext_noop("Reports")
+    section_name = gettext_noop('Reports')
     template_name = 'userreports/bootstrap3/configurable_report.html'
-    slug = "configurable"
+    slug = 'configurable'
     prefix = slug
     is_exportable = True
     exportable_all = False
@@ -171,6 +173,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     def dispatch(self, request, *args, **kwargs):
         if self.should_redirect_to_paywall(request):
             from corehq.apps.userreports.views import paywall_home
+
             return HttpResponseRedirect(paywall_home(self.domain))
         else:
             original = super().dispatch(request, *args, **kwargs)
@@ -178,11 +181,14 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
 
     def should_redirect_to_paywall(self, request):
         spec = self.get_spec_or_404()
-        return spec.report_meta.created_by_builder and not has_report_builder_access(request)
+        return (
+            spec.report_meta.created_by_builder
+            and not has_report_builder_access(request)
+        )
 
     @property
     def section_url(self):
-        return reverse('reports_home', args=(self.domain, ))
+        return reverse('reports_home', args=(self.domain,))
 
     @property
     def is_static(self):
@@ -196,9 +202,15 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @memoized
     def spec(self):
         if self.is_static:
-            return StaticReportConfiguration.by_id(self.report_config_id, domain=self.domain)
+            return StaticReportConfiguration.by_id(
+                self.report_config_id,
+                domain=self.domain,
+            )
         else:
-            return get_report_config_or_not_found(self.domain, self.report_config_id)
+            return get_report_config_or_not_found(
+                self.domain,
+                self.report_config_id,
+            )
 
     def get_spec_or_404(self):
         try:
@@ -226,7 +238,10 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def data_source(self):
-        report = ConfigurableReportDataSource.from_spec(self.spec, include_prefilters=True)
+        report = ConfigurableReportDataSource.from_spec(
+            self.spec,
+            include_prefilters=True,
+        )
         report.lang = self.lang
         return report
 
@@ -236,9 +251,13 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         string_type_params = [
             filter.name
             for filter in self.filters
-            if getattr(filter, 'datatype', 'string') == "string"
+            if getattr(filter, 'datatype', 'string') == 'string'
         ]
-        query_dict = self.request.GET if self.request.method == 'GET' else self.request.POST
+        query_dict = (
+            self.request.GET
+            if self.request.method == 'GET'
+            else self.request.POST
+        )
         return query_dict_to_dict(query_dict, self.domain, string_type_params)
 
     @property
@@ -252,13 +271,21 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def filter_values(self):
-        return get_filter_values(self.filters, self.request_dict, user=self.request_user)
+        return get_filter_values(
+            self.filters,
+            self.request_dict,
+            user=self.request_user,
+        )
 
     @property
     @memoized
     def filter_context(self):
         return {
-            filter.css_id: filter.context(self.request_dict, self.request_user, self.lang)
+            filter.css_id: filter.context(
+                self.request_dict,
+                self.request_user,
+                self.lang,
+            )
             for filter in self.filters
         }
 
@@ -294,7 +321,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                 return self.email_response
             elif kwargs.get('render_as') == 'excel':
                 return self.excel_response
-            elif request.GET.get('format', None) == "export":
+            elif request.GET.get('format', None) == 'export':
                 return self.export_response
             elif is_ajax(request) or request.GET.get('format', None) == 'json':
                 return self.get_ajax(self.request.GET)
@@ -361,30 +388,37 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             'headers': self.headers,
             'can_edit_report': can_edit_report(self.request, self.spec),
             'can_delete_report': can_delete_report(self.request, self.spec),
-            'referring_apps': get_referring_apps(self.domain, self.report_config_id),
+            'referring_apps': get_referring_apps(
+                self.domain,
+                self.report_config_id,
+            ),
             'has_report_builder_trial': has_report_builder_trial(self.request),
             'report_filter_form_action_css_class': CSS_ACTION_CLASS,
         }
         context.update(self.saved_report_context_data)
         context.update(self.pop_report_builder_context_data())
-        if isinstance(self.spec, ReportConfiguration) and self.spec.report_meta.builder_report_type == 'map':
+        if (
+            isinstance(self.spec, ReportConfiguration)
+            and self.spec.report_meta.builder_report_type == 'map'
+        ):
             context['report_table']['default_rows'] = 100
-        if self.request.couch_user.is_staff and hasattr(self.data_source, 'data_source'):
-            context['queries'] = self.data_source.data_source.get_query_strings()
+        ds = self.data_source
+        if self.request.couch_user.is_staff and hasattr(ds, 'data_source'):
+            context['queries'] = ds.data_source.get_query_strings()
         return context
 
     @property
     def js_options(self):
         return {
-            "domain": self.domain,
-            "slug": self.slug,
-            "subReportSlug": self.sub_slug,
-            "type": self.type,
-            "isExportable": self.is_exportable,
-            "isExportAll": self.exportable_all,
-            "isEmailable": False,       # see emailable attr above
-            "emailDefaultSubject": self.title,
-            "url": self.url,  # Used with {% initial_page_data 'override_report_render_url' True %}
+            'domain': self.domain,
+            'slug': self.slug,
+            'subReportSlug': self.sub_slug,
+            'type': self.type,
+            'isExportable': self.is_exportable,
+            'isExportAll': self.exportable_all,
+            'isEmailable': False,  # see emailable attr above
+            'emailDefaultSubject': self.title,
+            'url': self.url,  # Used with {% initial_page_data 'override_report_render_url' True %}
         }
 
     def pop_report_builder_context_data(self):
@@ -393,7 +427,9 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         be included in the template context.
         """
         return {
-            'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, [])
+            'report_builder_events': self.request.session.pop(
+                REPORT_BUILDER_EVENTS_KEY, []
+            )
         }
 
     @property
@@ -401,24 +437,38 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         def _get_context_for_saved_report(report_config):
             if report_config:
                 report_config_data = report_config.to_json()
-                report_config_data['filters'].update(report_config.get_date_range())
+                report_config_data['filters'].update(
+                    report_config.get_date_range()
+                )
                 return report_config_data
             else:
                 return ReportConfig.default()
 
         saved_report_config_id = self.request.GET.get('config_id')
-        saved_report_config = get_document_or_404(ReportConfig, self.domain, saved_report_config_id) \
-            if saved_report_config_id else None
+        saved_report_config = (
+            get_document_or_404(
+                ReportConfig, self.domain, saved_report_config_id
+            )
+            if saved_report_config_id
+            else None
+        )
 
         return {
             'report_configs': [
                 _get_context_for_saved_report(saved_report)
                 for saved_report in ReportConfig.by_domain_and_owner(
-                    self.domain, self.request.couch_user._id, report_slug=self.slug
+                    self.domain,
+                    self.request.couch_user._id,
+                    report_slug=self.slug,
                 )
             ],
-            'default_config': _get_context_for_saved_report(saved_report_config),
-            'datespan_filters': ReportConfig.datespan_filter_choices(self.datespan_filters, self.lang),
+            'default_config': _get_context_for_saved_report(
+                saved_report_config
+            ),
+            'datespan_filters': ReportConfig.datespan_filter_choices(
+                self.datespan_filters,
+                self.lang,
+            ),
         }
 
     @property
@@ -427,20 +477,21 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
 
     @property
     def datespan_filters(self):
-        return [
-            f for f in self.spec.filters
-            if f['type'] == 'date'
-        ]
+        return [f for f in self.spec.filters if f['type'] == 'date']
 
     @property
     def headers(self):
-        return DataTablesHeader(*[col.data_tables_column for col in self.data_source.inner_columns])
+        return DataTablesHeader(
+            *[col.data_tables_column for col in self.data_source.inner_columns]
+        )
 
     @classmethod
     def sanitize_page(cls, page):
         result = []
         for row in page:
-            result.append({k: cls._sanitize_column(v) for (k, v) in row.items()})
+            result.append(
+                {k: cls._sanitize_column(v) for (k, v) in row.items()}
+            )
 
         return result
 
@@ -459,51 +510,65 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
 
         try:
             data_source = self.data_source
-            if len(data_source.inner_columns) > 50 and not DISABLE_COLUMN_LIMIT_IN_UCR.enabled(self.domain):
-                raise UserReportsError(_("This report has too many columns to be displayed"))
+            if len(
+                data_source.inner_columns
+            ) > 50 and not DISABLE_COLUMN_LIMIT_IN_UCR.enabled(self.domain):
+                raise UserReportsError(
+                    _('This report has too many columns to be displayed')
+                )
             data_source.set_filter_values(self.filter_values)
 
             if sort_column and echo != 1:
-                data_source.set_order_by(
-                    [(data_source.top_level_columns[int(sort_column)].column_id, sort_order.upper())]
-                )
+                data_source.set_order_by([(
+                    data_source.top_level_columns[int(sort_column)].column_id,
+                    sort_order.upper(),
+                )])
 
-            page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
+            page = list(
+                data_source.get_data(
+                    start=datatables_params.start,
+                    limit=datatables_params.count,
+                )
+            )
             page = self.sanitize_page(page)
             total_records = data_source.get_total_records()
-            total_row = data_source.get_total_row() if data_source.has_total_row else None
+            total_row = (
+                data_source.get_total_row()
+                if data_source.has_total_row
+                else None
+            )
         except UserReportsError as e:
             if settings.DEBUG:
                 raise
-            return self.render_json_response({
-                'error_message': str(e),
-                'aaData': [],
-                'iTotalRecords': 0,
-                'iTotalDisplayRecords': 0,
-            })
+            return self.render_json_response(
+                {
+                    'error_message': str(e),
+                    'aaData': [],
+                    'iTotalRecords': 0,
+                    'iTotalDisplayRecords': 0,
+                }
+            )
         except TableNotFoundWarning:
             if self.spec.report_meta.created_by_builder:
                 msg = _(
-                    "The database table backing your report does not exist yet. "
-                    "Please wait while the report is populated."
+                    'The database table backing your report does not exist yet. '
+                    'Please wait while the report is populated.'
                 )
             else:
                 msg = _(
-                    "The database table backing your report does not exist yet. "
-                    "You must rebuild the data source before viewing the report."
+                    'The database table backing your report does not exist yet. '
+                    'You must rebuild the data source before viewing the report.'
                 )
-            return self.render_json_response({
-                'warning': msg
-            })
+            return self.render_json_response({'warning': msg})
 
         json_response = {
             'aaData': page,
-            "sEcho": params.get('sEcho', 0),
-            "iTotalRecords": total_records,
-            "iTotalDisplayRecords": total_records,
+            'sEcho': params.get('sEcho', 0),
+            'iTotalRecords': total_records,
+            'iTotalDisplayRecords': total_records,
         }
         if total_row is not None:
-            json_response["total_row"] = total_row
+            json_response['total_row'] = total_row
         return self.render_json_response(json_response)
 
     def _get_initial(self, request, **kwargs):
@@ -512,7 +577,10 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @classmethod
     def url_pattern(cls):
         from django.urls import re_path as url
-        pattern = r'^{slug}/(?P<subreport_slug>[\w\-:]+)/$'.format(slug=cls.slug)
+
+        pattern = r'^{slug}/(?P<subreport_slug>[\w\-:]+)/$'.format(
+            slug=cls.slug
+        )
         return url(pattern, cls.as_view(), name=cls.slug)
 
     @property
@@ -563,7 +631,13 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def report_export(self):
-        return ReportExport(self.domain, self.title, self.spec, self.lang, self.filter_values)
+        return ReportExport(
+            self.domain,
+            self.title,
+            self.spec,
+            self.lang,
+            self.filter_values,
+        )
 
     @property
     def export_table(self):
@@ -592,9 +666,18 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @memoized
     def export_response(self):
         download = DownloadBase()
-        res = export_ucr_async.delay(self.report_export, download.download_id, self.request.couch_user)
+        res = export_ucr_async.delay(
+            self.report_export,
+            download.download_id,
+            self.request.couch_user,
+        )
         download.set_task(res)
-        return redirect(DownloadUCRStatusView.urlname, self.domain, download.download_id, self.report_config_id)
+        return redirect(
+            DownloadUCRStatusView.urlname,
+            self.domain,
+            download.download_id,
+            self.report_config_id,
+        )
 
     @classmethod
     def sanitize_export_table(cls, table):
@@ -607,12 +690,14 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @classmethod
     def report_preview_data(cls, domain, report_config):
         try:
-            export = ReportExport(domain, report_config.title, report_config, "en", {})
+            export = ReportExport(
+                domain, report_config.title, report_config, 'en', {}
+            )
             return {
-                "table": cls.sanitize_export_table(export.get_table_data()),
-                "map_config": report_config.map_config,
-                "chart_configs": report_config.charts,
-                "aaData": cls.sanitize_page(export.get_data()),
+                'table': cls.sanitize_export_table(export.get_table_data()),
+                'map_config': report_config.map_config,
+                'chart_configs': report_config.charts,
+                'aaData': cls.sanitize_page(export.get_data()),
             }
         except DataSourceConfigurationNotFoundError:
             raise BadBuilderConfigError(DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE)
@@ -641,7 +726,9 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
             report_class = self._report_class(domain, report_config_id)
         except (BadSpecError, DocumentNotFound):
             raise Http404
-        return report_class.as_view()(request, domain=domain, subreport_slug=report_config_id, **kwargs)
+        return report_class.as_view()(
+            request, domain=domain, subreport_slug=report_config_id, **kwargs
+        )
 
     @classmethod
     def get_report(cls, domain, slug, config_id):
@@ -654,7 +741,10 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
     @classmethod
     def url_pattern(cls):
         from django.urls import re_path as url
-        pattern = r'^{slug}/(?P<subreport_slug>[\w\-:]+)/$'.format(slug=cls.slug)
+
+        pattern = r'^{slug}/(?P<subreport_slug>[\w\-:]+)/$'.format(
+            slug=cls.slug
+        )
         return url(pattern, cls.as_view(), name=cls.slug)
 
 
@@ -662,28 +752,41 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
 class DownloadUCRStatusView(BaseDomainView):
     urlname = 'download_ucr_status'
     page_title = gettext_noop('Download UCR Status')
-    section_name = gettext_noop("Reports")
+    section_name = gettext_noop('Reports')
 
     @property
     def section_url(self):
-        return reverse('reports_home', args=(self.domain, ))
+        return reverse('reports_home', args=(self.domain,))
 
     def get(self, request, *args, **kwargs):
-        if _has_permission(self.domain, request.couch_user, self.report_config_id):
+        if _has_permission(
+            self.domain, request.couch_user, self.report_config_id
+        ):
             context = super().main_context
             context.update({
                 'domain': self.domain,
                 'download_id': kwargs['download_id'],
-                'poll_url': reverse('ucr_download_job_poll',
-                                    args=[self.domain, kwargs['download_id']],
-                                    params={'config_id': self.report_config_id}),
-                'title': _("Download Report Status"),
-                'progress_text': _("Preparing report download."),
-                'error_text': _("There was an unexpected error! Please try again or report an issue."),
-                'next_url': reverse(ConfigurableReportView.slug, args=[self.domain, self.report_config_id]),
-                'next_url_text': _("Go back to report"),
+                'poll_url': reverse(
+                    'ucr_download_job_poll',
+                    args=[self.domain, kwargs['download_id']],
+                    params={'config_id': self.report_config_id},
+                ),
+                'title': _('Download Report Status'),
+                'progress_text': _('Preparing report download.'),
+                'error_text': _(
+                    'There was an unexpected error! Please try again or report an issue.'
+                ),
+                'next_url': reverse(
+                    ConfigurableReportView.slug,
+                    args=[self.domain, self.report_config_id],
+                ),
+                'next_url_text': _('Go back to report'),
             })
-            return render(request, 'hqwebapp/bootstrap3/soil_status_full.html', context)
+            return render(
+                request,
+                'hqwebapp/bootstrap3/soil_status_full.html',
+                context,
+            )
         else:
             raise Http403()
 
@@ -694,16 +797,23 @@ class DownloadUCRStatusView(BaseDomainView):
     def parent_pages(self):
         return [{
             'title': self.spec.title,
-            'url': reverse(ConfigurableReportView.slug, args=[self.domain, self.report_config_id]),
+            'url': reverse(
+                ConfigurableReportView.slug,
+                args=[self.domain, self.report_config_id],
+            ),
         }]
 
     @property
     @memoized
     def spec(self):
         if self.is_static:
-            return StaticReportConfiguration.by_id(self.report_config_id, domain=self.domain)
+            return StaticReportConfiguration.by_id(
+                self.report_config_id, domain=self.domain
+            )
         else:
-            return get_report_config_or_not_found(self.domain, self.report_config_id)
+            return get_report_config_or_not_found(
+                self.domain, self.report_config_id
+            )
 
     @property
     def is_static(self):
@@ -715,14 +825,24 @@ class DownloadUCRStatusView(BaseDomainView):
         return self.kwargs['subreport_slug']
 
 
-def _safe_download_poll(view_fn, request, domain, download_id, *args, **kwargs):
+def _safe_download_poll(
+    view_fn,
+    request,
+    domain,
+    download_id,
+    *args,
+    **kwargs,
+):
     return report_has_location_filter(request.GET.get('config_id'), domain)
 
 
 @conditionally_location_safe(_safe_download_poll)
-def ucr_download_job_poll(request, domain,
-                          download_id,
-                          template="hqwebapp/partials/shared_download_status.html"):
+def ucr_download_job_poll(
+    request,
+    domain,
+    download_id,
+    template='hqwebapp/partials/shared_download_status.html',
+):
     config_id = request.GET.get('config_id')
     if config_id and _has_permission(domain, request.couch_user, config_id):
         try:
