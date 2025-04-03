@@ -91,13 +91,13 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
 
-        context_data['user_or_cases_verification_statuses'] = self._get_user_or_cases_verification_status(
+        context_data['verification_statuses'] = self._get_verification_status(
             context_data['page_obj'].object_list
         )
 
         return context_data
 
-    def _get_user_or_cases_verification_status(self, object_list):
+    def _get_verification_status(self, object_list):
         if not self.kyc_config:
             return {}
 
