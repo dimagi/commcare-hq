@@ -87,7 +87,7 @@ class FixtureDataTest(TestCase):
         )
         self.sync_log.save()
 
-        self.addCleanup(get_blob_db().delete, key=FIXTURE_BUCKET + '/' + self.domain)
+        self.addCleanup(get_blob_db().delete, key=FIXTURE_BUCKET(self.data_type.id) + '/' + self.domain)
 
     def test_xml(self):
         check_xml_line_by_line(self, """
@@ -258,7 +258,7 @@ class FixtureDataTest(TestCase):
 
         fixtures = call_fixture_generator(frank)
         self.assertEqual({item.attrib['user_id'] for item in fixtures}, {frank.user_id})
-        self.assertTrue(get_blob_db().exists(key=FIXTURE_BUCKET + '/' + self.domain))
+        self.assertTrue(get_blob_db().exists(key=FIXTURE_BUCKET(sandwich.id) + '/' + self.domain))
 
         fixtures = call_fixture_generator(sammy)
         self.assertEqual({item.attrib['user_id'] for item in fixtures}, {sammy.user_id})
@@ -358,6 +358,7 @@ class FixtureDataTest(TestCase):
             item_attributes=[],
         )
         data_type.save()
+        self.addCleanup(get_blob_db().delete, key=FIXTURE_BUCKET(data_type.id) + '/' + self.domain)
         return data_type
 
     def make_data_item(self, data_type, cost):
