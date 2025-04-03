@@ -79,6 +79,24 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
         if len(rows.to_create) > 1000 or len(rows.to_delete) > 1000:
             flush(tables, rows, owners)
 
+    def get_ids_of_modified_tables(tables, rows, owners):
+        if not (rows.to_delete or rows.to_create
+                or owners.to_delete or owners.to_create):
+            return set()
+
+        row_table_ids = {row.table_id for row in rows.to_delete + rows.to_create}
+        owner_table_ids = set()
+
+        owner_row_ids = {owner.row_id for owner in owners.to_delete + owners.to_create}
+        for chunk in chunked(owner_row_ids, 1000, list):
+            chunk_table_ids = set(LookupTableRow.objects.filter(
+                id__in=chunk
+            ).values_list('table_id', flat=True).distinct())
+            owner_table_ids.update(chunk_table_ids)
+
+        tables_being_deleted = {table.id for table in tables.to_delete}
+        return (row_table_ids | owner_table_ids) - tables_being_deleted
+
     result = FixtureUploadResult()
     if skip_orm:
         # TODO remove when SKIP_ORM_FIXTURE_UPLOAD feature toggle is removed
@@ -93,6 +111,7 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
     tables = Mutation()
     rows = Mutation()
     owners = Mutation()
+    ids_of_modified_tables = get_ids_of_modified_tables(tables, rows, owners)
     try:
         tables.process(
             workbook,
@@ -107,7 +126,8 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
         update_progress(None)
         flush(tables, rows, owners)
     finally:
-        clear_fixture_cache(domain)
+        for table_id in ids_of_modified_tables:
+            clear_fixture_cache(domain, table_id)
     return result
 
 
