@@ -90,6 +90,18 @@ class TagTest(SimpleTestCase):
             "23"
         )
 
+    def test_html_attr_bool(self):
+        self.assertEqual(
+            self.render("""{% load hq_shared_tags %}{% html_attr True %}"""),
+            "true"
+        )
+
+    def test_html_attr_None(self):
+        self.assertEqual(
+            self.render("""{% load hq_shared_tags %}{% html_attr None %}"""),
+            "null"
+        )
+
     def test_html_attr_list(self):
         self.assertEqual(
             self.render("""{% load hq_shared_tags %}{% html_attr my_list %}""", {
