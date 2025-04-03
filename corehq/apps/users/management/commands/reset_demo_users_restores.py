@@ -35,7 +35,8 @@ class Command(BaseCommand):
             username = user_details['username']
             commcare_user = CommCareUser.get_by_user_id(user_id)
             logger.info(f"Resetting restore for demo user {username}")
-            reset_demo_user_restore(commcare_user, domain)
+            if not dry_run:
+                reset_demo_user_restore(commcare_user, domain)
             logger.info("Done!")
         logging.info('------Completed--------')
         exit(0)
