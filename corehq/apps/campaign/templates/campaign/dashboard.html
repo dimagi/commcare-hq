@@ -63,7 +63,6 @@
       <!-- Cases tab content -->
       <!-- Gauges Section -->
       <div class="row">
-        <h2>{% trans "Gauges" %}</h2>
         <div id="gauges-container-cases">
           {% for widget in gauge_widgets.cases %}
             {% include 'campaign/partials/dashboard_gauge.html' %}
@@ -73,7 +72,6 @@
       <div class="spacer"></div>
       <!-- Report and Map Section -->
       <div class="row">
-        <h2>{% trans "Reports" %}</h2>
         <div id="map-reports-container-cases">
           {% for widget in map_report_widgets.cases %}
             {% if widget.widget_type == 'DashboardMap' %}
@@ -88,7 +86,6 @@
       <!-- Users tab content -->
       <!-- Gauges Section -->
       <div class="row">
-        <h2>{% trans "Gauges" %}</h2>
         <div id="gauges-container-mobile-workers">
           {% for widget in gauge_widgets.mobile_workers %}
             {% include 'campaign/partials/dashboard_gauge.html' %}
@@ -98,7 +95,6 @@
       <div class="spacer"></div>
       <!-- Report and Map Section -->
       <div class="row">
-        <h2>{% trans "Reports" %}</h2>
         <div id="map-reports-container-mobile-workers">
           {% for widget in map_report_widgets.mobile_workers %}
             {% if widget.widget_type == 'DashboardMap' %}

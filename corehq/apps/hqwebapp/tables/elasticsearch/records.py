@@ -73,6 +73,14 @@ class CaseSearchElasticRecord(BaseElasticRecord):
     def __getitem__(self, item):
         return self.record.get(item)
 
+    @property
+    def name(self):
+        """
+        Used to populate the name attribute of an input (checkbox) in the table.
+        Used by the built-in CheckBoxColumn from django_tables2.
+        """
+        return "selected_case"
+
     @staticmethod
     def get_sorted_query(query, accessors):
         for accessor in accessors:

@@ -29,8 +29,18 @@ class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataC
     table_class = CleanCaseTable
 
     def get_table_kwargs(self):
+        extra_columns = [(
+            "selection",
+            self.table_class.get_select_column(
+                self.session,
+                self.request,
+                select_record_action="select_record",
+                select_page_action="select_page",
+            )
+        )]
+        extra_columns.extend(self.table_class.get_columns_from_session(self.session))
         return {
-            'extra_columns': self.table_class.get_columns_from_session(self.session),
+            'extra_columns': extra_columns,
             'record_kwargs': {
                 'session': self.session,
             },
@@ -53,6 +63,27 @@ class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataC
             },
         })
         return response
+
+    @hq_hx_action('post')
+    def select_record(self, request, *args, **kwargs):
+        """
+        Selects a single record.
+        """
+        doc_id = request.POST['record_id']
+        is_selected = request.POST.get('is_selected') is not None
+        if is_selected:
+            self.session.select_record(doc_id)
+        else:
+            self.session.deselect_record(doc_id)
+        return self.render_htmx_no_response(request, *args, **kwargs)
+
+    @hq_hx_action('post')
+    def select_page(self, request, *args, **kwargs):
+        """
+        Selects all records on the current page.
+        """
+        # todo
+        return self.get(request, *args, **kwargs)
 
 
 class CaseCleaningTasksTableView(BaseDataCleaningTableView):
