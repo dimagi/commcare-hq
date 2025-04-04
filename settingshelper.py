@@ -201,17 +201,6 @@ def celery_failure_handler(task, exc, task_id, args, kwargs, einfo):
         task.retry(args=args, kwargs=kwargs, exc=exc, max_retries=3, countdown=60 * 5)
 
 
-def get_allowed_websocket_channels(request, channels):
-    from django.core.exceptions import PermissionDenied
-    if request.user and request.user.is_authenticated and request.user.is_superuser:
-        return channels
-    else:
-        raise PermissionDenied(
-            'Not allowed to subscribe or to publish to websockets without '
-            'superuser permissions or domain membership!'
-        )
-
-
 def fix_logger_obfuscation(fix_logger_obfuscation_, logging_config):
     if fix_logger_obfuscation_:
         # this is here because the logging config cannot import
