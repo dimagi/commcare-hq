@@ -5,8 +5,6 @@ from uuid import uuid4
 from xml.etree import cElementTree as ElementTree
 from collections import defaultdict
 
-import six
-
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure
 from casexml.apps.case.xml import V1, V2, V2_NAMESPACE
 from casexml.apps.phone.models import get_properly_wrapped_sync_log
@@ -87,7 +85,7 @@ def get_or_cache_global_fixture(domain, user_id, cache_bucket_prefix_data_fn_pai
 def combine_fixture_io_streams(io_streams):
     io = BytesIO()
     io.write(ITEMS_COMMENT_PREFIX)
-    io.write(six.text_type(len(io_streams)).encode('utf-8'))
+    io.write(str(len(io_streams)).encode('utf-8'))
     io.write(b'-->')
     for fixture_stream in io_streams:
         fixture_stream.seek(0)
