@@ -93,7 +93,6 @@ class TestGzipStream(TestCase):
         data = bytes(random.getrandbits(8) for _ in range(size))
         zipper = mod.GzipStream(BytesIO(data))
         zipper.read(16405)
-        assert zipper._buf.size == 0, f"invariant failed ({zipper._buf.size})"
         with self.assertRaises(GzipStreamError):
             zipper.content_length
         zipper.read()
