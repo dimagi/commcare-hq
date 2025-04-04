@@ -236,7 +236,7 @@ class KycUser:
             KycVerificationStatus.ERROR,
             ''
         ):
-            value = 'invalid'
+            value = KycVerificationStatus.INVALID
         return value or KycVerificationStatus.PENDING
 
     @property
@@ -285,6 +285,7 @@ class KycVerificationStatus:
     # as case property/field does not exist or is empty.
     PENDING = None
     ERROR = 'error'
+    INVALID = 'invalid'   # indicates an invalid value was manually set by a user
 
 
 class KycVerificationFailureCause(models.TextChoices):
