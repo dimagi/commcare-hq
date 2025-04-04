@@ -11,7 +11,6 @@ from django.http import (
 )
 from django.http.response import HttpResponseServerError
 from django.shortcuts import redirect, render
-from django.utils.datastructures import MultiValueDict
 from django.utils.html import escape
 from django.utils.safestring import SafeText
 from django.utils.translation import gettext as _
@@ -40,7 +39,6 @@ from corehq.apps.hqwebapp.decorators import (
 from corehq.apps.hqwebapp.utils.bootstrap import (
     BOOTSTRAP_5,
     get_bootstrap_version,
-    set_bootstrap_version5,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.paths import get_bootstrap5_path
 from corehq.apps.locations.permissions import conditionally_location_safe
@@ -507,14 +505,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         return col
 
     def get_ajax(self, params):
-        if get_request_data(self.request).get('bs') == '5':
-            # AJAX call passes request param `bs=5` to indicate a
-            # Bootstrap 5 request, because the request could be coming
-            # from the Campaign Dashboard, not ConfigurableReportView.
-            # See campaign/js/dashboard.js
-            # TODO: Change AJAX URL in dashboard reports to call a Bootstrap 5
-            #       view. Replace with `if self.use_bootstrap5:`
-            set_bootstrap_version5()
+        if get_bootstrap_version() == BOOTSTRAP_5:
             return self._get_ajax_bootstrap5(params)
         return self._get_ajax_bootstrap3(params)
 
@@ -791,28 +782,6 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             }
         except DataSourceConfigurationNotFoundError:
             raise BadBuilderConfigError(DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE)
-
-
-def get_request_data(request):
-    """
-    Returns both URL params and POST data.
-
-    e.g. Given the following incoming POST request ::
-
-        requests.post('http://example.com/?foo=bar', data={'foo': 'baz'})
-
-    the Django request object ``req`` would produce ::
-
-        >>> dict(get_request_data(req))
-        {'foo': ['bar', 'baz']}
-        >>> get_request_data(req).get('foo')  # Returns the last value
-        'baz'
-
-    """
-    data = MultiValueDict()
-    data.update(request.GET)
-    data.update(request.POST)
-    return data
 
 
 # Base class for classes that provide custom rendering for UCRs

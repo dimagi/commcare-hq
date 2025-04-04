@@ -81,10 +81,9 @@ class DashboardReportMixin:
         return {}
 
     def _get_configurable_report_view(self, report):
-        view = ConfigurableReportView()
+        view = DashboardReportView()
         view.request = self.request
         view._domain = self.domain
-        view.is_exportable = False
         view.args = []
         view.kwargs = {
             'domain': self.domain,
@@ -156,6 +155,17 @@ class DashboardView(
                                      for i in range(0, number_of_ticks + 1)]
         config['metric_name'] = dict(GAUGE_METRICS).get(dashboard_gauge.metric, '')
         return config
+
+
+@method_decorator(login_and_domain_required, name='dispatch')
+@method_decorator(toggles.CAMPAIGN_DASHBOARD.required_decorator(), name='dispatch')
+# Allows ConfigurableReportView.get_ajax() to work with Bootstrap 5:
+@method_decorator(use_bootstrap5, name='dispatch')
+class DashboardReportView(ConfigurableReportView):
+    # Set ConfigurableReportView.url to direct dashboard reports to this view:
+    slug = 'dashboard_report'
+    # Suppress "Export to Excel" button on filter panel:
+    is_exportable = False
 
 
 @method_decorator([login_and_domain_required, require_GET], name='dispatch')
