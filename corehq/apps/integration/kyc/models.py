@@ -229,12 +229,14 @@ class KycUser:
     def kyc_verification_status(self):
         value = self.user_data.get('kyc_verification_status')
         # value can be '' when field is defined as a custom field in custom user data
-        assert value in (
+        if value not in (
             KycVerificationStatus.PENDING,
             KycVerificationStatus.PASSED,
             KycVerificationStatus.FAILED,
+            KycVerificationStatus.ERROR,
             ''
-        )
+        ):
+            value = KycVerificationStatus.INVALID
         return value or KycVerificationStatus.PENDING
 
     @property
@@ -283,6 +285,7 @@ class KycVerificationStatus:
     # as case property/field does not exist or is empty.
     PENDING = None
     ERROR = 'error'
+    INVALID = 'invalid'   # indicates an invalid value was manually set by a user
 
 
 class KycVerificationFailureCause(models.TextChoices):
