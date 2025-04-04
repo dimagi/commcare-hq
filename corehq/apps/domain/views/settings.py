@@ -50,6 +50,7 @@ from corehq.apps.domain.forms import (
     DomainMetadataForm,
     PrivacySecurityForm,
     ProjectSettingsForm,
+    IPAccessConfigForm,
     clean_password
 )
 from corehq.apps.domain.models import Domain
@@ -57,11 +58,12 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.hqwebapp.signals import clear_login_attempts
+from corehq.apps.ip_access.models import IPAccessConfig
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
 from corehq.apps.users.decorators import require_can_manage_domain_alerts
 from corehq.apps.users.models import CouchUser
-from corehq.toggles import NAMESPACE_DOMAIN
+from corehq.toggles import NAMESPACE_DOMAIN, IP_ACCESS_CONTROLS
 from corehq.toggles.models import Toggle
 from corehq.util.timezones.conversions import UserTime, ServerTime
 
@@ -268,6 +270,71 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
         if self.my_project_settings_form.is_valid():
             self.my_project_settings_form.save(self.request.couch_user, self.domain)
             messages.success(request, _("Your project settings have been saved!"))
+        return self.get(request, *args, **kwargs)
+
+
+class EditIPAccessConfigView(BaseProjectSettingsView):
+    template_name = 'domain/admin/ip_access_config.html'
+    urlname = 'ip_access_config'
+    page_title = gettext_lazy("IP Access")
+
+    @method_decorator(always_allow_project_access)
+    @method_decorator(login_and_domain_required)
+    @use_bootstrap5
+    def dispatch(self, *args, **kwargs):
+        if IP_ACCESS_CONTROLS.enabled(self.domain):
+            return super().dispatch(*args, **kwargs)
+        else:
+            raise Http404()
+
+    @property
+    @memoized
+    def form(self):
+        initial = {}
+        domain_config = self.get_ip_access_config
+        if domain_config:
+            display_spacer = ", "
+            initial.update({
+                'country_allowlist': domain_config.country_allowlist,
+                'ip_allowlist': display_spacer.join(domain_config.ip_allowlist),
+                'ip_denylist': display_spacer.join(domain_config.ip_denylist),
+                'comment': domain_config.comment
+            })
+
+        if self.request.method == 'POST':
+            return IPAccessConfigForm(self.request.POST, initial=initial)
+        return IPAccessConfigForm(initial=initial)
+
+    @property
+    def get_ip_access_config(self):
+        try:
+            return IPAccessConfig.objects.get(domain=self.domain)
+        except IPAccessConfig.DoesNotExist:
+            return None
+
+    @property
+    def page_context(self):
+        return {
+            'ip_access_config_form': self.form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.form.is_valid():
+            domain_config = self.get_ip_access_config
+            should_save = True
+            if not domain_config:
+                should_save = False
+                domain_config = IPAccessConfig()
+                domain_config.domain = self.domain
+
+            for attr, value in self.form.cleaned_data.items():
+                if value:
+                    should_save = True
+                    setattr(domain_config, attr, value)
+
+            if should_save:
+                domain_config.save()
+                messages.success(request, _("Your IP Access settings have been saved!"))
         return self.get(request, *args, **kwargs)
 
 
