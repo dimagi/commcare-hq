@@ -1,6 +1,7 @@
 {% load django_tables2 %}
 
 <form
+  class="loading-checkbox-htmx-request"
   hx-post="{{ request.path_info }}{% querystring %}"
   hq-hx-action="{{ hq_hx_action }}"
   hx-trigger="change from:#{{ css_id }}"
