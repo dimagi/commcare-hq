@@ -15,6 +15,8 @@ hqDefine("app_manager/js/forms/form_view", [
     "app_manager/js/forms/advanced/case_config_ui", // advanced modules only
     "app_manager/js/xpathValidator",
     "app_manager/js/custom_assertions",
+    "hqwebapp/js/components/pagination",
+    "hqwebapp/js/components/search_box",
     "hqwebapp/js/bootstrap3/knockout_bindings.ko",  // sortable binding
     "commcarehq",
 ], function (

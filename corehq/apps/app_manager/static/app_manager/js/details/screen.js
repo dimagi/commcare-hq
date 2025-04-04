@@ -23,6 +23,7 @@ hqDefine("app_manager/js/details/screen", [
     "hqwebapp/js/toggles",
     "app_manager/js/app_manager",
     "analytix/js/google",
+    "hqwebapp/js/components/select_toggle",
     "hqwebapp/js/bootstrap3/knockout_bindings.ko",  // sortable binding
 ], function (
     $,

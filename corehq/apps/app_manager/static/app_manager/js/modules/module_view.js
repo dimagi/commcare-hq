@@ -13,6 +13,7 @@ hqDefine("app_manager/js/modules/module_view", [
     "select2/dist/js/select2.full.min",
     "app_manager/js/nav_menu_media",
     "app_manager/js/modules/case_list_setting",
+    "hqwebapp/js/components/select_toggle",
     "hqwebapp/js/key-value-mapping",
     "app_manager/js/xpathValidator",
 ], function (

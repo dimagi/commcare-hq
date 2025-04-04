@@ -11,6 +11,8 @@ hqDefine("app_manager/js/releases/app_view_release_manager", [
     "analytix/js/google",
     "app_manager/js/releases/update_prompt",
     "hqwebapp/js/bootstrap3/widgets",
+    "hqwebapp/js/components/pagination",
+    "hqwebapp/js/components/search_box",
     "commcarehq",
 ], function (
     $,
