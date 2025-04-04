@@ -282,6 +282,19 @@ class TestKycUser(BaseKycUsersSetup):
 
         self._assert_for_verification_status(kyc_user, KycVerificationStatus.PASSED, config.provider)
 
+    def test_verification_status_invalid_value(self):
+        config = KycConfig(
+            domain=DOMAIN,
+            user_data_store=UserDataStore.CUSTOM_USER_DATA,
+        )
+        user = CommCareUser.create(
+            DOMAIN, f'test.user2@{DOMAIN}.commcarehq.org', 'Passw0rd!', None, None,
+            user_data={'kyc_verification_status': 'invalid-status'},
+        )
+        kyc_user = KycUser(config, user)
+
+        assert kyc_user.kyc_verification_status == KycVerificationStatus.INVALID
+
 
 class TestKycConfig(SimpleTestCase):
 
