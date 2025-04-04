@@ -13,6 +13,11 @@ class TestRawDocLookup(TestCase):
     def test_lookuptable_raw_doc(self):
         table = make_lookuptable()
         table.save()
+
+        data = raw_doc_lookup(table.id.hex)
+        actual_doc = json.loads(data["doc"])
+        last_modified = actual_doc["fields"]["last_modified"]
+
         expected_doc = {
             "model": "fixtures.lookuptable",
             "pk": str(table.id),
@@ -29,12 +34,12 @@ class TestRawDocLookup(TestCase):
                     }
                 ],
                 "item_attributes": ["name"],
+                'last_modified': last_modified,
                 "description": "",
             },
         }
 
-        data = raw_doc_lookup(table.id.hex)
-        self.assertEqual(json.loads(data["doc"]), expected_doc)
+        self.assertEqual(actual_doc, expected_doc)
         results = {r.dbname: r.result for r in data["db_results"]}
         self.assertEqual(results["fixtures_lookuptable"], "found", results)
 
