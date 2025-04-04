@@ -286,7 +286,7 @@ class FixtureDataTest(TestCase):
         fixture = call_fixture_generator(self.user.to_ota_restore_user(self.domain), self.sync_log)
         self.assertEqual(len(fixture), 0)
 
-        clear_fixture_cache(self.domain, self.data_type.id)
+        clear_fixture_cache(self.domain, [self.data_type.id])
         fixture, = call_fixture_generator(self.user.to_ota_restore_user(self.domain), self.sync_log)
         check_xml_line_by_line(self, """
         <fixture id="item-list:district" user_id="%s">

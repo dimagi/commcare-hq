@@ -117,7 +117,7 @@ class TestRelatedCases(TestCase, TestXmlMixin):
                             is_global=True,
                             fields=[TypeField(name="wing")])
         table.save()
-        self.addCleanup(clear_fixture_cache, self.domain, table.id)
+        self.addCleanup(clear_fixture_cache, self.domain, [table.id])
         row = LookupTableRow(
             table_id=table.id,
             domain=self.domain,

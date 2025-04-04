@@ -179,7 +179,7 @@ class LookupTableResource(HqBaseResource):
             raise NotFound('Lookup table not found')
 
         query.delete()
-        clear_fixture_cache(kwargs['domain'], kwargs['pk'])
+        clear_fixture_cache(kwargs['domain'], [kwargs['pk']])
         return ImmediateHttpResponse(response=HttpAccepted())
 
     @staticmethod
@@ -363,7 +363,7 @@ class LookupTableItemResource(HqBaseResource):
             raise NotFound('Lookup table item not found')
         table_id = row.table_id
         row.delete()
-        clear_fixture_cache(row.domain, table_id)
+        clear_fixture_cache(row.domain, [table_id])
         return ImmediateHttpResponse(response=HttpAccepted())
 
     def obj_create(self, bundle, request=None, **kwargs):
@@ -383,7 +383,7 @@ class LookupTableItemResource(HqBaseResource):
         try:
             bundle.obj.save()
         finally:
-            clear_fixture_cache(kwargs['domain'], data_type_id)
+            clear_fixture_cache(kwargs['domain'], [data_type_id])
         return bundle
 
     def obj_update(self, bundle, **kwargs):
@@ -403,7 +403,7 @@ class LookupTableItemResource(HqBaseResource):
             try:
                 bundle.obj.save()
             finally:
-                clear_fixture_cache(bundle.obj.domain, bundle.obj.table_id)
+                clear_fixture_cache(bundle.obj.domain, [bundle.obj.table_id])
 
         return bundle
 

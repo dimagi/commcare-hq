@@ -102,7 +102,7 @@ def update_tables(request, domain, data_type_id=None):
         elif request.method == 'DELETE':
             id = data_type.id
             data_type.delete()
-            clear_fixture_cache(domain, id)
+            clear_fixture_cache(domain, [id])
             return json_response({})
         elif not request.method == 'PUT':
             return HttpResponseBadRequest()
@@ -148,7 +148,7 @@ def update_tables(request, domain, data_type_id=None):
             else:
                 data_type = _create_types(
                     fields_patches, domain, data_tag, is_global, description)
-        clear_fixture_cache(domain, data_type.id)
+        clear_fixture_cache(domain, [data_type.id])
         return json_response(table_json(data_type))
 
 
