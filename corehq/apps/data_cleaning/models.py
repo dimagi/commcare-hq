@@ -782,7 +782,7 @@ class BulkEditRecord(models.Model):
         except cls.DoesNotExist:
             return
 
-        if record.calculated_change_id is not None:
+        if record.changes.count() > 0:
             record.is_selected = False
             record.save()
         else:
@@ -818,13 +818,13 @@ class BulkEditRecord(models.Model):
         session.records.filter(
             doc_id__in=doc_ids,
             is_selected=True,
-            calculated_change_id__isnull=False,
+            changes__isnull=False,
         ).update(is_selected=False)
 
         # delete all records that have no changes
         session.records.filter(
             doc_id__in=doc_ids,
-            calculated_change_id__isnull=True,
+            changes__isnull=True,
         ).delete()
 
     @property
