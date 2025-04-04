@@ -26,25 +26,26 @@
                  id="bulkPaymentBtn">
            {% trans 'Pay by Credit Card' %}
          </button>
-@@ -31,14 +31,14 @@
-       <p data-bind="visible: hasInitialLoadFinished() && totalDue()">
-         <button type="button"
-                 class="btn btn-primary"
--                data-toggle="modal"
--                data-target="#bulkWirePaymentModal"
-+                data-bs-toggle="modal"
-+                data-bs-target="#bulkWirePaymentModal"
-                 id="bulkWirePaymentBtn">
-           {% trans 'Pay by Wire' %}
-         </button>
-       </p>
+@@ -32,15 +32,15 @@
+         <p data-bind="visible: hasInitialLoadFinished() && totalDue()">
+           <button type="button"
+                   class="btn btn-primary"
+-                  data-toggle="modal"
+-                  data-target="#bulkWirePaymentModal"
++                  data-bs-toggle="modal"
++                  data-bs-target="#bulkWirePaymentModal"
+                   id="bulkWirePaymentBtn">
+             {% trans 'Pay by Wire' %}
+           </button>
+         </p>
+       {% endif %}
      {% else %}
 -      <span class="label label-default">
 +      <span class="badge text-bg-secondary">
              <i class="fa fa-info-circle"></i>
              {% trans "Not Billing Admin, Can't Make Payment" %}
          </span>
-@@ -63,33 +63,33 @@
+@@ -65,33 +65,33 @@
  
  {% block pagination_templates %}
    <script type="text/html" id="statement-row-template">
@@ -87,7 +88,7 @@
        <a class="btn btn-primary"
           data-bind="attr: { href: pdfUrl }"
           target="_blank">{% trans 'Download' %}</a>
-@@ -99,14 +99,14 @@
+@@ -101,14 +101,14 @@
    {% include 'accounting/partials/stripe_card_ko_template.html' %}
  
    <script type="text/html" id="cost-item-template">
@@ -105,7 +106,7 @@
          <div class="radio">
            <label>
              <input type="radio"
-@@ -130,7 +130,7 @@
+@@ -132,7 +132,7 @@
                Pay a portion of the balance:
              {% endblocktrans %}
              <div class="input-group">
@@ -114,7 +115,7 @@
                <input type="text"
                       class="form-control"
                       name="customPaymentAmount"
-@@ -188,12 +188,12 @@
+@@ -190,12 +190,12 @@
  
  {% block modals %}{{ block.super }}
    {% with process_invoice_payment_url as process_payment_url %}
