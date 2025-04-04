@@ -43,6 +43,10 @@ class DeviceRateLimiter:
             )
             return False
 
+        if user.is_commcare_user() and user.is_demo_user:
+            # demo users are intended to be used across devices
+            return False
+
         if self._is_formplayer(device_id):
             # do not track formplayer activity
             return False

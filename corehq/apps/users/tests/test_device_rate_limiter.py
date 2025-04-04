@@ -100,3 +100,11 @@ class TestDeviceRateLimiter(TestCase):
         device_rate_limiter.rate_limit_device(self.domain, self.user, 'existing-device-id')
         device_rate_limiter.rate_limit_device('random-domain', self.user, 'random-device')
         self.assertTrue(device_rate_limiter.rate_limit_device('random-domain', self.user, 'existing-device-id'))
+
+    def test_demo_user_activity_is_not_limited(self):
+        demo_user = CommCareUser.create(self.domain, 'test-demo-user', 'abc123', None, None)
+        demo_user.is_demo_user = True
+        demo_user.save()
+        self.addCleanup(demo_user.delete, None, None)
+        device_rate_limiter.rate_limit_device(self.domain, demo_user, 'existing-device-id')
+        self.assertFalse(device_rate_limiter.rate_limit_device(self.domain, demo_user, 'new-device-id'))
