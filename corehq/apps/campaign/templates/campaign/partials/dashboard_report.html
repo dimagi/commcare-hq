@@ -1,12 +1,16 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<div id="report-widget-{{ widget.id }}">
+<div
+  id="report-widget-{{ widget.id }}"
+  class="paginated-map-widget mb-4"  {# TODO: Where is CSS class "paginated-map-widget" defined? #}
+  data-htmx-swap-target="report-{{ widget.id }}"
+>
   <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
       <h5 class="mb-0 me-auto">{{ widget.title }}</h5>
-      {% include "campaign/partials/edit_widget_button.html" with widget_type='map' %}
-      {% include "campaign/partials/delete_widget_button.html" with widget_type='map' %}
+      {% include "campaign/partials/edit_widget_button.html" with widget_type='report' %}
+      {% include "campaign/partials/delete_widget_button.html" with widget_type='report' %}
     </div>
 
     <div class="card-body p-0">
@@ -17,7 +21,7 @@
       </div>
       <div class="row g-0">
         <div class="col-md-4 border-end">
-          <div id="map-widget-filters-{{ widget.id }}" class="p-3">
+          <div id="report-widget-filters-{{ widget.id }}" class="p-3">
             {% include "reports_core/partials/bootstrap5/filter_panel.html" %}
           </div>
         </div>
