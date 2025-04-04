@@ -291,6 +291,7 @@ class TestKycUser(BaseKycUsersSetup):
             DOMAIN, f'test.user2@{DOMAIN}.commcarehq.org', 'Passw0rd!', None, None,
             user_data={'kyc_verification_status': 'invalid-status'},
         )
+        self.addCleanup(user.delete, DOMAIN, deleted_by=None)
         kyc_user = KycUser(config, user)
 
         assert kyc_user.kyc_verification_status == KycVerificationStatus.INVALID
