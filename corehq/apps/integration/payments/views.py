@@ -2,30 +2,36 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
+
 from memoized import memoized
 
 from corehq import toggles
-from corehq.apps.es.case_search import case_property_query, wrap_case_search_hit
-from corehq.apps.integration.kyc.models import KycConfig
-from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.permissions import PAYMENTS_REPORT_PERMISSION
-from corehq.util.timezones.utils import get_timezone
-from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import CaseSearchES, filters
+from corehq.apps.es.case_search import (
+    case_property_query,
+    wrap_case_search_hit,
+)
+from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
-from corehq.apps.integration.payments.tables import PaymentsVerifyTable
-from corehq.apps.users.models import HqPermissions, WebUser
-from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
-from corehq.apps.integration.payments.services import verify_payment_cases
-from corehq.apps.integration.payments.models import MoMoConfig
-from corehq.apps.integration.payments.forms import PaymentConfigureForm
-from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
-from corehq.apps.integration.payments.filters import PaymentVerificationStatusFilter
+from corehq.apps.integration.kyc.models import KycConfig
 from corehq.apps.integration.payments.const import PaymentProperties
+from corehq.apps.integration.payments.filters import (
+    PaymentVerificationStatusFilter,
+)
+from corehq.apps.integration.payments.forms import PaymentConfigureForm
+from corehq.apps.integration.payments.models import MoMoConfig
+from corehq.apps.integration.payments.services import verify_payment_cases
+from corehq.apps.integration.payments.tables import PaymentsVerifyTable
+from corehq.apps.reports.generic import get_filter_classes
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import HqPermissions, WebUser
+from corehq.apps.users.permissions import PAYMENTS_REPORT_PERMISSION
+from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
+from corehq.util.timezones.utils import get_timezone
 
 
 class PaymentsFiltersMixin:
