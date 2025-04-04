@@ -6,6 +6,7 @@ import $ from 'jquery';
 import { RadialGauge } from 'canvas-gauges';
 import initialPageData from "hqwebapp/js/initial_page_data";
 import { Map, MapItem } from "geospatial/js/bootstrap5/models";
+import 'userreports/js/bootstrap5/base';
 import html2pdf from "html2pdf.js";
 
 Alpine.store('deleteWidgetModel', {
@@ -40,14 +41,18 @@ let $modalTitleElement = null;
 let activeTab = 'cases';
 
 $(function () {
-    // Only init case map widgets since this is the default tab
+    // Only init widgets on "cases" tab since this is the default tab
     const widgetConfigs = initialPageData.get('map_report_widgets');
     for (const widgetConfig of widgetConfigs.cases) {
         if (widgetConfig.widget_type === 'DashboardMap') {
             const mapWidget = new MapWidget(widgetConfig);
             mapWidget.initializeMap();
+        } else if (widgetConfig.widget_type === 'DashboardReport') {
+            const reportWidget = new ReportWidget(widgetConfig);
+            reportWidget.init();
         }
     }
+
     const gaugeWidgetConfigs = initialPageData.get('gauge_widgets');
     for (const gaugeWidgetConfig of gaugeWidgetConfigs.cases) {
         if (gaugeWidgetConfig.value) {
@@ -60,6 +65,7 @@ $(function () {
             }).draw();
         }
     }
+
     $('a[data-bs-toggle="tab"]').on('shown.bs.tab', tabSwitch);
     $('#print-to-pdf').on('click', printActiveTabToPdf);
 
@@ -76,7 +82,7 @@ function tabSwitch(e) {
     const tabContentId = $(e.target).attr('href');
     activeTab = getActiveTab(tabContentId);
 
-    // Only load mobile worker map widgets when tab is clicked to prevent weird map sizing behaviour
+    // Only load mobile worker widgets when tab is clicked to prevent weird map sizing behaviour
     if (!mobileWorkerWidgetsInitialized && tabContentId === '#mobile-workers-tab-content') {
         mobileWorkerWidgetsInitialized = true;
         const widgetConfigs = initialPageData.get('map_report_widgets');
@@ -84,6 +90,9 @@ function tabSwitch(e) {
             if (widgetConfig.widget_type === 'DashboardMap') {
                 const mapWidget = new MapWidget(widgetConfig);
                 mapWidget.initializeMap();
+            } else if (widgetConfig.widget_type === 'DashboardReport') {
+                const reportWidget = new ReportWidget(widgetConfig);
+                reportWidget.init();
             }
         }
 
@@ -217,6 +226,17 @@ var MapWidget = function (mapWidgetConfig) {
         self.mapInstance.addDataToSource(features);
         self.mapInstance.fitMapBounds(caseMapItems);
     }
+};
+
+var ReportWidget = function (config) {
+    let self = this;
+
+    self.init = function () {
+        // TODO: Initialize reports with per-report options, when they
+        //       support them. e.g. See branch nh/dash/report_widget_std
+        // userreportsBase.main(config.userreport_options);
+        // getStandardHQReport(config.report_options);
+    };
 };
 
 var htmxBeforeSwapWidgetForm = function (event) {
