@@ -361,7 +361,7 @@ class LookupTableItemResource(HqBaseResource):
             row = LookupTableRow.objects.get(id=kwargs['pk'])
         except LookupTableRow.DoesNotExist:
             raise NotFound('Lookup table item not found')
-        table_id = row.table.id
+        table_id = row.table_id
         row.delete()
         clear_fixture_cache(row.domain, table_id)
         return ImmediateHttpResponse(response=HttpAccepted())
@@ -403,7 +403,7 @@ class LookupTableItemResource(HqBaseResource):
             try:
                 bundle.obj.save()
             finally:
-                clear_fixture_cache(bundle.obj.domain, bundle.obj.table.id)
+                clear_fixture_cache(bundle.obj.domain, bundle.obj.table_id)
 
         return bundle
 
