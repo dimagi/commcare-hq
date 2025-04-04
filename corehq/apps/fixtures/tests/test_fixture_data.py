@@ -48,6 +48,7 @@ class FixtureDataTest(TestCase):
             item_attributes=[],
         )
         self.data_type.save()
+        self.addCleanup(get_blob_db().delete, key=FIXTURE_BUCKET(self.data_type.id) + '/' + self.domain)
 
         self.data_item = LookupTableRow(
             domain=self.domain,
@@ -87,8 +88,6 @@ class FixtureDataTest(TestCase):
             build_id='some-build-id'
         )
         self.sync_log.save()
-
-        self.addCleanup(get_blob_db().delete, key=FIXTURE_BUCKET(self.data_type.id) + '/' + self.domain)
 
     def test_xml(self):
         check_xml_line_by_line(self, """
