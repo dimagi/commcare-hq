@@ -207,7 +207,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                     $home.on('textchange', 'input', self.change)
                         // all select2's are represented by an input[type="hidden"]
                         .on('change', 'select, input[type="hidden"]', self.change)
-                        .on('click', 'a:not(.header)', self.change)
+                        .on('click', ':not(.hq-help) > a:not(.header)', self.change)
                         .on('change', 'input[type="checkbox"]', self.change);
 
                     // https://gist.github.com/mkelly12/424774/#comment-92080
