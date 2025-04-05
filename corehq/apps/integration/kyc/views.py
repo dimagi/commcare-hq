@@ -98,10 +98,10 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
             'id': kyc_user.user_id,
             'has_invalid_data': False,
             'kyc_verification_status': {
-                'status': kyc_user.get('kyc_verification_status'),
+                'status': kyc_user.kyc_verification_status,
                 'error_message': self._get_verification_error_message(kyc_user),
             },
-            'kyc_last_verified_at': kyc_user.get('kyc_last_verified_at'),
+            'kyc_last_verified_at': kyc_user.kyc_last_verified_at,
         }
         for provider_field, field in self.kyc_config.get_api_field_to_user_data_map_values().items():
             value = kyc_user.get(field)
@@ -115,7 +115,7 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
 
     @staticmethod
     def _get_verification_error_message(kyc_user):
-        verification_error = kyc_user.get('kyc_verification_error')
+        verification_error = kyc_user.kyc_verification_error
         if verification_error:
             try:
                 return KycVerificationFailureCause(verification_error).label
