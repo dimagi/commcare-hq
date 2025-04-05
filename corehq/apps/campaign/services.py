@@ -12,6 +12,8 @@ def _get_number_of_cases(gauge):
     case_es_query = CaseSearchES().domain(domain)
     if case_type:
         case_es_query = case_es_query.case_type(case_type)
+    if gauge.case_query:
+        case_es_query = case_es_query.xpath_query(domain, gauge.case_query)
     return case_es_query.count()
 
 
