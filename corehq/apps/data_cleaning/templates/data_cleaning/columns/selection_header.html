@@ -7,7 +7,14 @@
   name="select_page"
   hx-post="{{ request.path_info }}{% querystring %}"
   hq-hx-action="{{ hq_hx_action }}"
+  hq-hx-select-all='{
+    "selector": ".js-select-record-checkbox",
+    "triggerEvent": "click"
+  }'
   hx-swap="none"
   hx-disabled-elt=".htmx-disable-on-select-page"
+  hx-vals='js:{
+    recordIds: [...document.querySelectorAll(".js-select-record")].map(input => input.value)
+  }'
   {{ attrs.as_html }}
 />

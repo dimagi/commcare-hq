@@ -3,7 +3,7 @@ import uuid
 
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
-from django.db import models
+from django.db import models, transaction
 from django.utils.translation import gettext_lazy, gettext as _
 
 from corehq.apps.case_search.const import METADATA_IN_REPORTS
@@ -245,6 +245,12 @@ class BulkEditSession(models.Model):
 
     def deselect_record(self, doc_id):
         return BulkEditRecord.deselect_record(self, doc_id)
+
+    def select_multiple_records(self, doc_ids):
+        return BulkEditRecord.select_multiple_records(self, doc_ids)
+
+    def deselect_multiple_records(self, doc_ids):
+        return BulkEditRecord.deselect_multiple_records(self, doc_ids)
 
     def update_result(self, record_count, form_id=None):
         result = self.result or {}
@@ -758,6 +764,42 @@ class BulkEditRecord(models.Model):
             record = None
 
         return record
+
+    @classmethod
+    @transaction.atomic
+    def select_multiple_records(cls, session, doc_ids):
+        session.records.filter(
+            doc_id__in=doc_ids,
+            is_selected=False,
+        ).update(is_selected=True)
+
+        existing_ids = session.records.filter(
+            session=session,
+            doc_id__in=doc_ids,
+        ).values_list("doc_id", flat=True)
+
+        missing_ids = list(set(doc_ids) - set(existing_ids))
+        new_records = [
+            cls(session=session, doc_id=doc_id, is_selected=True)
+            for doc_id in missing_ids
+        ]
+        cls.objects.bulk_create(new_records)
+
+    @classmethod
+    @transaction.atomic
+    def deselect_multiple_records(cls, session, doc_ids):
+        # update is_selected to False for all selected records that have changes
+        session.records.filter(
+            doc_id__in=doc_ids,
+            is_selected=True,
+            calculated_change_id__isnull=False,
+        ).update(is_selected=False)
+
+        # delete all records that have no changes
+        session.records.filter(
+            doc_id__in=doc_ids,
+            calculated_change_id__isnull=True,
+        ).delete()
 
     @property
     def has_property_updates(self):
