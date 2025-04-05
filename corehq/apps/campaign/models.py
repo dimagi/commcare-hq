@@ -103,10 +103,10 @@ class DashboardReport(DashboardWidgetBase):
         """
         Returns the URL of the view for the user-configurable report.
 
-        e.g. http://example.org/a/test-domain/reports/configurable/abc123/
+        e.g. http://example.org/a/test-domain/reports/dashboard_report/abc123/
         """
         return absolute_reverse(
-            'configurable',
+            'dashboard_report',
             args=[self.dashboard.domain, self.report_configuration_id],
         )
 

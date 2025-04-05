@@ -20,7 +20,7 @@ var HQReportDataTables = function (options) {
     self.defaultSort = (options.defaultSort !== undefined) ? options.defaultSort : true;
     self.customSort = options.customSort || null;
     self.ajaxParams = options.ajaxParams || {};
-    self.ajaxSource = options.ajaxSource;
+    self.ajaxSource = options.ajaxSource;  // URL for AJAX calls
     self.loadingText = options.loadingText || gettext("Loading");
     self.emptyText = options.emptyText || gettext("No data available to display. " +
                                                   "Please try changing your filters.");

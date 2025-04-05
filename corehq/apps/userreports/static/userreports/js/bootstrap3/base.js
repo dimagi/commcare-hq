@@ -15,10 +15,6 @@ hqDefine('userreports/js/bootstrap3/base', [
     chartsMain,
     filtersMain,
 ) {
-    var baseUrl = initialPageData.get('url');
-    function getReportUrl() {
-        return baseUrl;
-    }
     $(function () {
         var chartSpecs = initialPageData.get('charts');
         var updateCharts = function (data) {
@@ -87,7 +83,7 @@ hqDefine('userreports/js/bootstrap3/base', [
             aoColumns: initialPageData.get('render_aoColumns'),
             autoWidth: initialPageData.get('header_auto_width'),
             customSort: initialPageData.get('custom_sort'),
-            ajaxSource: getReportUrl(),
+            ajaxSource: initialPageData.get('url'),
             ajaxMethod: initialPageData.get('ajax_method'),
             ajaxParams: function () {
                 return $('#paramSelectorForm').serializeArray();

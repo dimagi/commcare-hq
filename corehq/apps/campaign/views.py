@@ -14,9 +14,6 @@ from memoized import memoized
 from dimagi.utils.web import json_request
 
 from corehq import toggles
-from corehq.apps.campaign.const import GAUGE_METRICS
-from corehq.apps.campaign.models import Dashboard, WidgetType
-from corehq.apps.campaign.services import get_gauge_metric_value
 from corehq.apps.data_dictionary.util import get_gps_properties
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
@@ -28,6 +25,7 @@ from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.views import BaseProjectReportSectionView
+from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.form_processor.models import CommCareCase
 from corehq.util.htmx_action import (
     HqHtmxActionMixin,
@@ -35,6 +33,10 @@ from corehq.util.htmx_action import (
     hq_hx_action,
 )
 from corehq.util.timezones.utils import get_timezone
+
+from .const import GAUGE_METRICS
+from .models import Dashboard, WidgetType
+from .services import get_gauge_metric_value
 
 
 class DashboardMapFilterMixin(object):
@@ -63,10 +65,42 @@ class DashboardMapFilterMixin(object):
         return get_filter_classes(self.fields, self.request, self.domain, timezone)
 
 
+class DashboardReportMixin:
+
+    def dashboard_reports_context(self):
+        # TODO: Add context for each report
+        # context_by_id = {}
+        # for report in self.dashboard.reports.all():
+        #     view = self._get_configurable_report_view(report)
+        #     context_by_id[report.id] = view.page_context
+        # return {'context_by_id': context_by_id}
+        report = self.dashboard.reports.first()
+        if report:
+            view = self._get_configurable_report_view(report)
+            return view.page_context
+        return {}
+
+    def _get_configurable_report_view(self, report):
+        view = DashboardReportView()
+        view.request = self.request
+        view._domain = self.domain
+        view.args = []
+        view.kwargs = {
+            'domain': self.domain,
+            'slug': ConfigurableReportView.slug,
+            'subreport_slug': report.report_configuration_id,
+        }
+        return view
+
+
 @method_decorator(login_and_domain_required, name='dispatch')
 @method_decorator(toggles.CAMPAIGN_DASHBOARD.required_decorator(), name='dispatch')
 @method_decorator(use_bootstrap5, name='dispatch')
-class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
+class DashboardView(
+    BaseProjectReportSectionView,
+    DashboardMapFilterMixin,
+    DashboardReportMixin,
+):
     urlname = 'campaign_dashboard'
     page_title = gettext_lazy("Campaign Dashboard")
     template_name = 'campaign/dashboard.html'
@@ -94,6 +128,7 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
             'widget_types': WidgetType.choices,
         })
         context.update(self.dashboard_map_case_filters_context())
+        context.update(self.dashboard_reports_context())
         return context
 
     def _dashboard_gauge_configs(self):
@@ -120,6 +155,17 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
                                      for i in range(0, number_of_ticks + 1)]
         config['metric_name'] = dict(GAUGE_METRICS).get(dashboard_gauge.metric, '')
         return config
+
+
+@method_decorator(login_and_domain_required, name='dispatch')
+@method_decorator(toggles.CAMPAIGN_DASHBOARD.required_decorator(), name='dispatch')
+# Allows ConfigurableReportView.get_ajax() to work with Bootstrap 5:
+@method_decorator(use_bootstrap5, name='dispatch')
+class DashboardReportView(ConfigurableReportView):
+    # Set ConfigurableReportView.url to direct dashboard reports to this view:
+    slug = 'dashboard_report'
+    # Suppress "Export to Excel" button on filter panel:
+    is_exportable = False
 
 
 @method_decorator([login_and_domain_required, require_GET], name='dispatch')
