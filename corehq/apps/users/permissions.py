@@ -2,7 +2,7 @@ from collections import namedtuple
 
 from django.utils.translation import gettext_noop
 
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 
 FORM_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.ExcelExportReport'
@@ -10,6 +10,7 @@ DEID_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.DeidExportReport'
 CASE_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.CaseExportReport'
 ODATA_FEED_PERMISSION = 'corehq.apps.reports.standard.export.ODataFeedListView'
 SMS_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.SMSExportReport'
+PAYMENTS_REPORT_PERMISSION = 'corehq.apps.integration.payments.views.PaymentsVerificationReportView'
 
 EXPORT_PERMISSIONS = {
     FORM_EXPORT_PERMISSION,
@@ -36,6 +37,8 @@ def get_extra_permissions():
         ODataFeedListView,
     )
     from corehq.apps.export.views.download import DownloadNewSmsExportView
+    from corehq.apps.integration.payments.views import PaymentsVerificationReportView
+
     yield ReportPermission(
         FORM_EXPORT_PERMISSION, FormExportListView.page_title, lambda domain: True)
     yield ReportPermission(
@@ -48,6 +51,11 @@ def get_extra_permissions():
     yield ReportPermission(
         ODATA_FEED_PERMISSION, ODataFeedListView.page_title,
         lambda domain: domain_has_privilege(domain, privileges.ODATA_FEED)
+    )
+    yield ReportPermission(
+        PAYMENTS_REPORT_PERMISSION,
+        PaymentsVerificationReportView.page_title,
+        lambda domain: toggles.MTN_MOBILE_WORKER_VERIFICATION.enabled(domain)
     )
 
 
