@@ -51331,7 +51331,7 @@ msgstr "Ubicación Padre"
 
 #: corehq/ex-submodules/couchforms/openrosa_response.py:67
 msgid "   √   "
-msgstr "      "
+msgstr "  √    "
 
 #: corehq/ex-submodules/dimagi/utils/dates.py:306
 msgid "You have to specify both dates!"
