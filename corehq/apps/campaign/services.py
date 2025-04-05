@@ -3,7 +3,10 @@ from corehq.apps.es import CaseSearchES, FormES, UserES
 
 def get_gauge_metric_value(gauge):
     if gauge.metric in metric_function_mapping:
-        return metric_function_mapping[gauge.metric](gauge)
+        try:
+            return metric_function_mapping[gauge.metric](gauge)
+        except:  # noqa: E722
+            pass
 
 
 def _get_number_of_cases(gauge):
