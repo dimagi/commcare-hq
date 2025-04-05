@@ -536,8 +536,16 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
             'total_balance': self.total_balance,
             'show_plan': True,
             'show_overdue_invoice_modal': False,
+            'can_pay_by_wire': self.can_pay_by_wire,
         })
         return pagination_context
+
+    @property
+    def can_pay_by_wire(self):
+        return (
+            self.current_subscription is not None
+            and self.current_subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE
+        )
 
     @property
     def can_pay_invoices(self):

@@ -23,6 +23,7 @@ from memoized import memoized
 import codecs
 
 from corehq.apps.accounting.decorators import always_allow_project_access
+from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.analytics.tasks import record_event
 from corehq.apps.enterprise.decorators import require_enterprise_admin
 from corehq.apps.enterprise.exceptions import TooMuchRequestedDataError
@@ -388,9 +389,17 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
                 ),
             },
             'total_balance': self.total_balance,
-            'show_plan': False
+            'show_plan': False,
+            'can_pay_by_wire': self.can_pay_by_wire,
         })
         return pagination_context
+
+    @property
+    def can_pay_by_wire(self):
+        return (
+            self.current_subscription is not None
+            and self.current_subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE
+        )
 
     @property
     def can_pay_invoices(self):

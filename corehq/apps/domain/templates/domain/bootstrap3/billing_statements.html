@@ -28,15 +28,17 @@
           {% trans 'Pay by Credit Card' %}
         </button>
       </p>
-      <p data-bind="visible: hasInitialLoadFinished() && totalDue()">
-        <button type="button"
-                class="btn btn-primary"
-                data-toggle="modal"
-                data-target="#bulkWirePaymentModal"
-                id="bulkWirePaymentBtn">
-          {% trans 'Pay by Wire' %}
-        </button>
-      </p>
+      {% if can_pay_by_wire %}
+        <p data-bind="visible: hasInitialLoadFinished() && totalDue()">
+          <button type="button"
+                  class="btn btn-primary"
+                  data-toggle="modal"
+                  data-target="#bulkWirePaymentModal"
+                  id="bulkWirePaymentBtn">
+            {% trans 'Pay by Wire' %}
+          </button>
+        </p>
+      {% endif %}
     {% else %}
       <span class="label label-default">
             <i class="fa fa-info-circle"></i>
