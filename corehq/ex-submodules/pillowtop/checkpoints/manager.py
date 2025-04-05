@@ -2,7 +2,7 @@ from datetime import datetime
 
 from django.conf import settings
 from django.db import transaction
-from kafka.common import TopicPartition
+from kafka import TopicPartition
 
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
@@ -48,8 +48,8 @@ class PillowCheckpoint(object):
 
     def get_or_create_wrapped(self, verify_unchanged=False):
         checkpoint = get_or_create_checkpoint(self.checkpoint_id, self.sequence_format)
-        if (verify_unchanged and self._last_checkpoint and
-                str(checkpoint.sequence) != str(self._last_checkpoint.sequence)):
+        if (verify_unchanged and self._last_checkpoint
+                and str(checkpoint.sequence) != str(self._last_checkpoint.sequence)):
             raise PillowtopCheckpointReset('Checkpoint {} expected seq {} but found {} in database.'.format(
                 self.checkpoint_id, self._last_checkpoint.sequence, checkpoint.sequence,
             ))

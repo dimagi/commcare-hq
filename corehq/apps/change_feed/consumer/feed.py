@@ -4,8 +4,7 @@ from typing import Dict, Iterator, Optional
 
 from django.conf import settings
 
-from kafka import KafkaConsumer
-from kafka.common import TopicPartition
+from kafka import KafkaConsumer, TopicPartition
 
 from corehq.form_processor.document_stores import UnexpectedBackend
 from dimagi.utils.logging import notify_error
