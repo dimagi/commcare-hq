@@ -35,6 +35,6 @@ def start_pillows(pillows=None):
 
 def start_pillow(pillow_instance):
     while True:
-        print("Starting pillow %s.run()" % pillow_instance.__class__)
+        print("Starting pillow %s.run()" % pillow_instance.pillow_id)
         pillow_instance.run()
-        print("Pillow %s.run() completed, restarting" % pillow_instance.__class__)
+        print("Pillow %s.run() completed, restarting" % pillow_instance.pillow_id)
