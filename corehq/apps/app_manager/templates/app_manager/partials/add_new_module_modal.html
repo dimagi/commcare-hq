@@ -27,103 +27,25 @@
         </h4>
       </div>
       <div class="modal-body modal-flex-container">
-        <button type="button" class="new-module-option" data-type="survey">
-          <div class="panel panel-default">
-            <div class="panel-heading">{% trans "Surveys" %}</div>
-            <div class="panel-body">
-              <i class="fa-regular fa-file"></i>
-              <p>{% blocktrans %}Collect data once{% endblocktrans %}</p>
-            </div>
-          </div>
-        </button>
-        <button type="button" class="new-module-option" data-type="case">
-          <div class="panel panel-default">
-            <div class="panel-heading">{% trans "Case List" %}</div>
-            <div class="panel-body">
-              <i class="fa-solid fa-list-check"></i>
-              <p>{% blocktrans %}Track items over time{% endblocktrans %}</p>
-            </div>
-          </div>
-        </button>
+        {% include 'app_manager/partials/module_option_button.html' with module_type="survey" heading="Surveys" icon_class="fa-regular fa-file" description="Collect data once" %}
+        {% include 'app_manager/partials/module_option_button.html' with module_type="case" heading="Case List" icon_class="fa-solid fa-list-check" description="Track items over time" %}
         {% if show_biometric %}
-          <button
-            type="button"
-            class="new-module-option"
-            data-type="biometrics"
-          >
-            <div class="panel panel-default">
-              <div class="panel-heading">{% trans "Biometrics" %}</div>
-              <div class="panel-body">
-                <i class="fcc fcc-app-biometrics"></i>
-                <p>
-                  {% blocktrans %}Identify clients by fingerprint{% endblocktrans %}
-                </p>
-              </div>
-            </div>
-          </button>
+          {% include 'app_manager/partials/module_option_button.html' with module_type="biometrics" heading="Biometrics" icon_class="fcc fcc-app-biometrics" description="Identify clients by fingerprint" %}
         {% endif %}
         {% if show_advanced %}
-          <button type="button" class="new-module-option" data-type="advanced">
-            <div class="panel panel-default">
-              <div class="panel-heading">{% trans "Advanced Menu" %}</div>
-              <div class="panel-body">
-                <i class="fa fa-flask"></i>
-                <p>
-                  {% blocktrans %}Complex case management{% endblocktrans %}
-                </p>
-              </div>
-            </div>
-          </button>
+          {% include 'app_manager/partials/module_option_button.html' with module_type="advanced" heading="Advanced Menu" icon_class="fa fa-flask" description="Complex case management" %}
         {% endif %}
         {% if show_report_modules %}
-          <button type="button" class="new-module-option" data-type="report">
-            <div class="panel panel-default">
-              <div class="panel-heading">{% trans "Report Menu" %}</div>
-              <div class="panel-body">
-                <i class="fa-regular fa-chart-bar"></i>
-                <p>{% blocktrans %}Worker performance{% endblocktrans %}</p>
-              </div>
-            </div>
-          </button>
+          {% include 'app_manager/partials/module_option_button.html' with module_type="report" heading="Report Menu" icon_class="fa-regular fa-chart-bar" description="Worker performance" %}
         {% endif %}
         {% if show_shadow_modules %}
-          <button type="button" class="new-module-option" data-type="shadow">
-            <div class="panel panel-default">
-              <div class="panel-heading">{% trans "Shadow Menu" %}</div>
-              <div class="panel-body">
-                <i class="fa-regular fa-moon"></i>
-                <p>{% blocktrans %}Mimic another menu{% endblocktrans %}</p>
-              </div>
-            </div>
-          </button>
+          {% include 'app_manager/partials/module_option_button.html' with module_type="shadow" heading="Shadow Menu" icon_class="fa-regular fa-moon" description="Mimic another menu" %}
         {% endif %}
         {% if show_shadow_module_v1 %}
-          <button type="button" class="new-module-option" data-type="shadow-v1">
-            <div class="panel panel-default">
-              <div class="panel-heading">{% trans "Shadow Menu V1" %}</div>
-              <div class="panel-body">
-                <i class="fa-regular fa-moon"></i>
-                <p>
-                  {% blocktrans %}
-                    Old style shadow menu with deprecated child behaviour
-                  {% endblocktrans %}
-                </p>
-              </div>
-            </div>
-          </button>
+          {% include 'app_manager/partials/module_option_button.html' with module_type="shadow-v1" heading="Shadow Menu V1" icon_class="fa-regular fa-moon" description="Old style shadow menu with deprecated child behaviour" %}
         {% endif %}
         {% if show_training_modules %}
-          <button type="button" class="new-module-option" data-type="training">
-            <div class="panel panel-default">
-              <div class="panel-heading">{% trans "Training" %}</div>
-              <div class="panel-body">
-                <i class="fa fa-graduation-cap"></i>
-                <p>
-                  {% blocktrans %}Content for training users{% endblocktrans %}
-                </p>
-              </div>
-            </div>
-          </button>
+          {% include 'app_manager/partials/module_option_button.html' with module_type="training" heading="Training" icon_class="fa fa-graduation-cap" description="Content for training users" %}
         {% endif %}
       </div>
       <div class="modal-footer">

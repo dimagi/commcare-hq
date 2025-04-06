@@ -1,0 +1,11 @@
+{% load i18n %}
+
+<button type="button" class="new-module-option" data-type="{{ module_type }}">
+  <div class="panel panel-default">
+    <div class="panel-heading">{% trans heading %}</div>
+    <div class="panel-body">
+      <i class="{{ icon_class }}"></i>
+      <p>{% blocktrans %}{{ description }}{% endblocktrans %}</p>
+    </div>
+  </div>
+</button>
