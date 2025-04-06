@@ -134,6 +134,7 @@ class DashboardGauge(DashboardWidgetBase):
     # one of the metric from the ones available as set in GAUGE_METRICS
     # ToDo: add choices=GAUGE_METRICS once populated with relevant metrics
     metric = models.CharField(max_length=255, null=False, blank=False)
+    case_query = models.CharField(max_length=255, null=True, blank=True)
 
     # optional additional configuration set to customize gauge appearance
     configuration = JSONField(default=dict)

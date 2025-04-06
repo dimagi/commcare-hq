@@ -18,16 +18,22 @@
       {% if widget.value %}
         <canvas id="gauge-widget-{{ widget.id }}"></canvas>
       {% else %}
+        <!-- show empty gauge for 0 or None -->
         <canvas data-type="radial-gauge"></canvas>
       {% endif %}
     </div>
     <div>
       <b class="ms-2">
-        {% trans 'Metric' %} :
-        {% if widget.metric_name %}
-          {{ widget.metric_name }}
+        {% if widget.value == None %}
+          {% trans 'Failed to load gauge!' %}
         {% else %}
-          {% trans 'Unknown metric' %}
+          {% trans 'Metric' %}
+          :
+          {% if widget.metric_name %}
+            {{ widget.metric_name }}
+          {% else %}
+            {% trans 'Unknown metric' %}
+          {% endif %}
         {% endif %}
       </b>
       {% if widget.case_type %}
