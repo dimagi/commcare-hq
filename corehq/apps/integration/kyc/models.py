@@ -117,12 +117,12 @@ class KycConfig(models.Model):
             UserDataStore.USER_CASE,
         ):
             user_objs = [CommCareUser.get_by_user_id(id_) for id_ in obj_ids]
-            return [KycUser(self, user_obj) for user_obj in user_objs]
+            return [KycUser(self, user_obj) for user_obj in user_objs if user_obj]
         elif self.user_data_store == UserDataStore.OTHER_CASE_TYPE:
             assert self.other_case_type
             return [
-                KycUser(self, user_obj)
-                for user_obj in CommCareCase.objects.get_cases(obj_ids, self.domain)
+                KycUser(self, case_obj)
+                for case_obj in CommCareCase.objects.get_cases(obj_ids, self.domain)
             ]
 
     def get_api_field_to_user_data_map_values(self):

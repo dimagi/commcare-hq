@@ -3,7 +3,7 @@ from functools import cached_property
 from django.conf import settings
 from django.core.paginator import Paginator
 from django.http import HttpResponseBadRequest, JsonResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy
@@ -14,7 +14,9 @@ from memoized import memoized
 from dimagi.utils.web import json_request
 
 from corehq import toggles
+from corehq.apps.campaign.const import GAUGE_METRICS
 from corehq.apps.campaign.models import Dashboard, WidgetType
+from corehq.apps.campaign.services import get_gauge_metric_value
 from corehq.apps.data_dictionary.util import get_gps_properties
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
@@ -74,6 +76,7 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
         return reverse(self.urlname, args=[self.domain])
 
     @property
+    @memoized
     def dashboard(self):
         """
         Returns the campaign dashboard for the domain. Creates an empty
@@ -87,10 +90,36 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
         context.update({
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
             'map_report_widgets': self.dashboard.get_map_report_widgets_by_tab(),
+            'gauge_widgets': self._dashboard_gauge_configs(),
             'widget_types': WidgetType.choices,
         })
         context.update(self.dashboard_map_case_filters_context())
         return context
+
+    def _dashboard_gauge_configs(self):
+        dashboard_gauge_configs = {
+            'cases': [],
+            'mobile_workers': [],
+        }
+        for dashboard_gauge in self.dashboard.gauges.all():
+            dashboard_gauge_configs[dashboard_gauge.dashboard_tab].append(
+                self._get_gauge_config(dashboard_gauge)
+            )
+        return dashboard_gauge_configs
+
+    @staticmethod
+    def _get_gauge_config(dashboard_gauge):
+        config = dashboard_gauge.to_widget()
+        gauge_metric_value = get_gauge_metric_value(dashboard_gauge)
+        if gauge_metric_value:
+            config['value'] = gauge_metric_value
+            # set max value of dial to nearest equivalent of 100
+            config['max_value'] = 10 ** len(str(config['value']))
+            number_of_ticks = 5
+            config['major_ticks'] = [int(config['max_value'] * i / 5)
+                                     for i in range(0, number_of_ticks + 1)]
+        config['metric_name'] = dict(GAUGE_METRICS).get(dashboard_gauge.metric, '')
+        return config
 
 
 @method_decorator([login_and_domain_required, require_GET], name='dispatch')
@@ -210,24 +239,53 @@ class DashboardWidgetView(HqHtmxActionMixin, BaseDomainView):
     def save_widget(self, request, *args, **kwargs):
         self._validate_request_widget_type()
 
-        widget = self.model_class(dashboard=self.dashboard)
+        if self.widget_id:
+            widget = get_object_or_404(self.model_class, pk=self.widget_id)
+        else:
+            widget = self.model_class(dashboard=self.dashboard)
+
         form = self.form_class(self.domain, request.POST, instance=widget)
-        show_success = False
         if form.is_valid():
             form.save(commit=True)
-            show_success = True
-            form = self.form_class(self.domain)
+            return JsonResponse({'success': True})
 
         context = {
             'widget_form': form,
             'widget_type': self.widget_type,
-            'show_success': show_success,
+            'widget': widget,
         }
         return self.render_htmx_partial_response(request, self.form_template_partial_name, context)
 
     @property
     def model_class(self):
         return WidgetType.get_model_class(self.widget_type)
+
+    @hq_hx_action('get')
+    def edit_widget(self, request, *args, **kwargs):
+        self._validate_request_widget_type()
+
+        widget = get_object_or_404(self.model_class, pk=self.widget_id)
+        context = {
+            'widget_form': self.form_class(self.domain, instance=widget),
+            'widget_type': self.widget_type,
+            'widget': widget,
+        }
+        return self.render_htmx_partial_response(request, self.form_template_partial_name, context)
+
+    @cached_property
+    def widget_id(self):
+        if self.request.method == "GET":
+            return self.request.GET.get('widget_id')
+        else:
+            return self.request.POST.get('widget_id')
+
+    @hq_hx_action('post')
+    def delete_widget(self, request, *args, **kwargs):
+        self._validate_request_widget_type()
+
+        widget = get_object_or_404(self.model_class, pk=self.widget_id)
+        widget.delete()
+        return self.render_htmx_no_response(request)
 
 
 @require_GET

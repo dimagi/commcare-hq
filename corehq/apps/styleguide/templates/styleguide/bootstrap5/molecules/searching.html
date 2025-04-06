@@ -1,4 +1,7 @@
 {% extends 'styleguide/bootstrap5/base.html' %}
+{% load hq_shared_tags %}
+
+{% js_entry "styleguide/js/searching" %}
 
 {% block intro %}
   <h1 class="sg-title mb-0" id="content">Searching &amp; Filtering</h1>
@@ -82,7 +85,7 @@
     The <code>immediate</code> parameter used in this example controls whether the widget searches on every key press or only when
     the user clicks the search button or presses enter.
   </div>
-  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.search_box %}
+  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.search_box %}
 
   <h3 id="client-side" class="pt-3">
     Client-Side Only Search

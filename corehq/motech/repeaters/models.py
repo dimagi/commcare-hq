@@ -1343,7 +1343,7 @@ class RepeatRecord(models.Model):
             # data from overwriting the work of another.
             return
 
-        if self.repeater_type in ['DataSourceRepeater']:
+        if self.repeater_type in ['DataSourceRepeater', 'Dhis2EntityRepeater']:
             # separated for improved datadog reporting
             task = retry_process_datasource_repeat_record if is_retry else process_datasource_repeat_record
         else:
