@@ -25,20 +25,22 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
         self.session = session
 
     @classmethod
-    def get_select_column(cls, session, request, select_row_action, select_page_action):
+    def get_select_column(cls, session, request, select_record_action, select_page_action):
         return DataCleaningHtmxSelectionColumn(
-            session, request, select_row_action, select_page_action, accessor='case_id',
+            session, request, select_record_action, select_page_action, accessor="case_id",
             attrs={
                 'td__input': {
+                    # `pageNumRecordsSelected` defined in template
+                    "x-init": "if($el.checked) { pageNumRecordsSelected++; }",
                     "@click": (
-                        "if ($event.target.checked !== isRowSelected) {"
+                        "if ($el.checked !== isRowSelected) {"
                         # `numRecordsSelected` defined in template
-                        "  $event.target.checked ? numRecordsSelected++ : numRecordsSelected--;"
+                        "  $el.checked ? numRecordsSelected++ : numRecordsSelected--;"
                         # `pageNumRecordsSelected` defined in template
-                        "  $event.target.checked ? pageNumRecordsSelected++ : pageNumRecordsSelected--; "
+                        "  $el.checked ? pageNumRecordsSelected++ : pageNumRecordsSelected--; "
                         "} "
                         # `isRowSelected` defined in `row_attrs` in `class Meta`
-                        "isRowSelected = $event.target.checked;"
+                        "isRowSelected = $el.checked;"
                     ),
                 },
                 'th__input': {
@@ -61,8 +63,7 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
         """
         Return the number of selected records in the session.
         """
-        # todo
-        return 0
+        return self.session.get_num_selected_records()
 
 
 class CaseCleaningTasksTable(BaseHtmxTable, tables.Table):

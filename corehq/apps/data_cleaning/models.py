@@ -3,8 +3,10 @@ import uuid
 
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
-from django.db import models
+from django.db import models, transaction
 from django.utils.translation import gettext_lazy, gettext as _
+
+from dimagi.utils.chunked import chunked
 
 from corehq.apps.case_search.const import METADATA_IN_REPORTS
 from corehq.apps.data_cleaning.exceptions import (
@@ -12,6 +14,8 @@ from corehq.apps.data_cleaning.exceptions import (
     UnsupportedFilterValueException,
 )
 from corehq.apps.es import CaseSearchES
+
+BULK_OPERATION_CHUNK_SIZE = 1000
 
 
 class BulkEditSessionType:
@@ -233,6 +237,46 @@ class BulkEditSession(models.Model):
         for pinned_filter in self.pinned_filters.all():
             query = pinned_filter.filter_query(query)
         return query
+
+    def get_num_selected_records(self):
+        return self.records.filter(is_selected=True).count()
+
+    def is_record_selected(self, doc_id):
+        return BulkEditRecord.is_record_selected(self, doc_id)
+
+    def select_record(self, doc_id):
+        return BulkEditRecord.select_record(self, doc_id)
+
+    def deselect_record(self, doc_id):
+        return BulkEditRecord.deselect_record(self, doc_id)
+
+    def select_multiple_records(self, doc_ids):
+        return BulkEditRecord.select_multiple_records(self, doc_ids)
+
+    def deselect_multiple_records(self, doc_ids):
+        return BulkEditRecord.deselect_multiple_records(self, doc_ids)
+
+    def _apply_operation_on_queryset(self, operation):
+        """
+        Perform a bulk operation on the queryset for this session.
+        :param operation: function to apply to each record (takes in doc ids as argument)
+        """
+        for doc_ids in chunked(
+            self.get_queryset().scroll_ids(), BULK_OPERATION_CHUNK_SIZE, list
+        ):
+            operation(doc_ids)
+
+    def select_all_records_in_queryset(self):
+        """
+        Select all records in the ESQuery queryset for this session.
+        """
+        self._apply_operation_on_queryset(lambda doc_ids: self.select_multiple_records(doc_ids))
+
+    def deselect_all_records_in_queryset(self):
+        """
+        Select all records in the ESQuery queryset for this session.
+        """
+        self._apply_operation_on_queryset(lambda doc_ids: self.deselect_multiple_records(doc_ids))
 
     def update_result(self, record_count, form_id=None):
         result = self.result or {}
@@ -709,6 +753,79 @@ class BulkEditRecord(models.Model):
     is_selected = models.BooleanField(default=True)
     calculated_change_id = models.UUIDField(null=True, blank=True)
     calculated_properties = models.JSONField(null=True, blank=True)
+
+    @classmethod
+    def is_record_selected(self, session, doc_id):
+        return session.records.filter(
+            doc_id=doc_id,
+            is_selected=True,
+        ).exists()
+
+    @classmethod
+    def select_record(cls, session, doc_id):
+        try:
+            record = session.records.get(doc_id=doc_id)
+        except cls.DoesNotExist:
+            record = cls.objects.create(
+                session=session,
+                doc_id=doc_id,
+            )
+        if not record.is_selected:
+            record.is_selected = True
+            record.save()
+        return record
+
+    @classmethod
+    def deselect_record(cls, session, doc_id):
+        try:
+            record = session.records.get(doc_id=doc_id)
+        except cls.DoesNotExist:
+            return
+
+        if record.changes.count() > 0:
+            record.is_selected = False
+            record.save()
+        else:
+            record.delete()
+            record = None
+
+        return record
+
+    @classmethod
+    @transaction.atomic
+    def select_multiple_records(cls, session, doc_ids):
+        session.records.filter(
+            doc_id__in=doc_ids,
+            is_selected=False,
+        ).update(is_selected=True)
+
+        existing_ids = session.records.filter(
+            session=session,
+            doc_id__in=doc_ids,
+        ).values_list("doc_id", flat=True)
+
+        missing_ids = list(set(doc_ids) - set(existing_ids))
+        new_records = [
+            cls(session=session, doc_id=doc_id, is_selected=True)
+            for doc_id in missing_ids
+        ]
+        cls.objects.bulk_create(new_records)
+
+    @classmethod
+    @transaction.atomic
+    def deselect_multiple_records(cls, session, doc_ids):
+        # update is_selected to False for all selected records that have changes
+        session.records.filter(
+            doc_id__in=doc_ids,
+            is_selected=True,
+            changes__isnull=False,
+        ).update(is_selected=False)
+
+        # delete all records that have no changes
+        session.records.filter(
+            doc_id__in=doc_ids,
+            changes__isnull=True,
+        ).delete()
 
     @property
     def has_property_updates(self):

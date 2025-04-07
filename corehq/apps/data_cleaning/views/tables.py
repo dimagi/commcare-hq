@@ -34,7 +34,7 @@ class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataC
             self.table_class.get_select_column(
                 self.session,
                 self.request,
-                select_row_action="select_row",
+                select_record_action="select_record",
                 select_page_action="select_page",
             )
         )]
@@ -65,19 +65,45 @@ class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataC
         return response
 
     @hq_hx_action('post')
-    def select_row(self, request, *args, **kwargs):
+    def select_record(self, request, *args, **kwargs):
         """
-        Selects a single record.
+        Selects (or de-selects) a single record.
         """
-        # todo
-        return self.get(request, *args, **kwargs)
+        doc_id = request.POST['record_id']
+        is_selected = request.POST.get('is_selected') is not None
+        if is_selected:
+            self.session.select_record(doc_id)
+        else:
+            self.session.deselect_record(doc_id)
+        return self.render_htmx_no_response(request, *args, **kwargs)
 
     @hq_hx_action('post')
     def select_page(self, request, *args, **kwargs):
         """
-        Selects all records on the current page.
+        Selects (or de-selects) all records on the current page.
         """
-        # todo
+        select_page = request.POST.get('select_page') is not None
+        doc_ids = request.POST.getlist('recordIds')
+        if select_page:
+            self.session.select_multiple_records(doc_ids)
+        else:
+            self.session.deselect_multiple_records(doc_ids)
+        return self.render_htmx_no_response(request, *args, **kwargs)
+
+    @hq_hx_action('post')
+    def deselect_all(self, request, *args, **kwargs):
+        """
+        De-selects all records in the current filtered view.
+        """
+        self.session.deselect_all_records_in_queryset()
+        return self.get(request, *args, **kwargs)
+
+    @hq_hx_action('post')
+    def select_all(self, request, *args, **kwargs):
+        """
+        Selects all records in the current filtered view.
+        """
+        self.session.select_all_records_in_queryset()
         return self.get(request, *args, **kwargs)
 
 

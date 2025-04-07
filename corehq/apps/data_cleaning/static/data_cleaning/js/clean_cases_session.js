@@ -1,5 +1,6 @@
 import 'commcarehq';
 import 'hqwebapp/js/htmx_base';
+import 'hqwebapp/js/htmx_utils/hq_hx_select_all';
 import 'hqwebapp/js/alpinejs/directives/select2';
 import 'hqwebapp/js/alpinejs/directives/report_select2';
 import 'hqwebapp/js/alpinejs/directives/datepicker';

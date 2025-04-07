@@ -680,25 +680,38 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
 
         initialize: function (attributes) {
+            const getCanBeVisible = (attributes) => {
+                if (attributes.styles) {
+                    return attributes.styles.map(s => s.widthHint !== 0);
+                } else {
+                    return Array(attributes.columnNames.length).fill(true);
+                }
+            };
+
             const setFromAttributes = (attributes) => {
-                this.set('columnNames', attributes.columnNames);
                 this.set('columnVisibility', Array(attributes.columnNames.length).fill(true));
-                this.set('columnCanBeVisible', attributes.styles.map(s => s.widthHint !== 0));
+                this.set('columnCanBeVisible', getCanBeVisible(attributes));
+            };
+
+            const shouldInvalidateCache = (attributes, savedModel) => {
+                if (!attributes.styles) { // happens with search first.
+                    return false;
+                }
+                const canBeVisible = getCanBeVisible(attributes);
+                return canBeVisible.length !== savedModel.columnCanBeVisible.length ||
+                    canBeVisible.some((value, index) => value !== savedModel.columnCanBeVisible[index]);
             };
             if (attributes) {
                 this.configStorageId = attributes.configStorageId;
                 if (this.configStorageId && localStorage.getItem(this.configStorageId)) {
                     const savedModel = JSON.parse(localStorage.getItem(this.configStorageId));
-                    const columnCountMismatch = attributes.columnNames &&
-                        (!savedModel.columnNames ||
-                            savedModel.columnNames.length !== attributes.columnNames.length);
-                    if (columnCountMismatch) {
+                    if (shouldInvalidateCache(attributes, savedModel)) {
                         localStorage.removeItem(this.configStorageId);
                         setFromAttributes(attributes);
                     } else {
                         this.set(savedModel);
                     }
-                } else if (attributes && attributes.columnNames) {
+                } else if (attributes) {
                     setFromAttributes(attributes);
                 }
 
@@ -713,6 +726,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         saveToLocalStorage: function () {
             if (this.configStorageId) {
                 const modelData = this.toJSON();
+                delete modelData.columnNames; // we don't want to save them in case the user changes languages
                 localStorage.setItem(this.configStorageId, JSON.stringify(modelData));
             }
         },
@@ -841,7 +855,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 }
             });
             const configStorageId = `${urlObject.appId}:${JSON.stringify(selectionsWithoutUuid)}:${user.username}`;
-            return CryptoJS.SHA512(configStorageId);
+            return CryptoJS.enc.Hex.stringify(CryptoJS.SHA512(configStorageId));
         },
 
         initialize: function (options) {

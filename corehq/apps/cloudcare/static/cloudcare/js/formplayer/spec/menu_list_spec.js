@@ -1,3 +1,4 @@
+/* global before, after, afterEach */
 import sinon from "sinon";
 import Backbone from "backbone";
 import initialPageData from "hqwebapp/js/initial_page_data";
