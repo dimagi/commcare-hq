@@ -22,7 +22,7 @@ hqDefine("reports/js/bootstrap3/datatables_config", [
         self.defaultSort = (options.defaultSort !== undefined) ? options.defaultSort : true;
         self.customSort = options.customSort || null;
         self.ajaxParams = options.ajaxParams || {};
-        self.ajaxSource = options.ajaxSource;
+        self.ajaxSource = options.ajaxSource;  // URL for AJAX calls
         self.ajaxMethod = options.ajaxMethod || 'GET';
         self.loadingText = options.loadingText || "<i class='fa fa-spin fa-spinner'></i> " + gettext("Loading");
         self.loadingTemplateSelector = options.loadingTemplateSelector;
