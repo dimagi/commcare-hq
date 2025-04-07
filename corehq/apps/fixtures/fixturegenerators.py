@@ -94,9 +94,8 @@ def item_lists_by_app(app, module):
 
 def get_global_items_by_domain(domain, case_id):
     global_types = {}
-    for data_type in LookupTable.objects.by_domain(domain):
-        if data_type.is_global:
-            global_types[data_type.id] = data_type
+    for data_type in LookupTable.objects.by_domain(domain).filter(is_global=True):
+        global_types[data_type.id] = data_type
     if global_types:
         cache_bucket_prefix_data_fn_pairs = ItemListsProvider()._get_fixture_cache_bucket_to_generator_pair(
             global_types, domain)
