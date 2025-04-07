@@ -34,7 +34,7 @@ ko.bindingHandlers.xpathValidator = (function () {
             var error = '';
             if (self.xpathText()) {
                 try {
-                    xpathConfig.XPATH_CONFIG.configureHashtags(self.allowCaseHashtags).parse(value);
+                    xpathConfig.configureHashtags(self.allowCaseHashtags).parse(value);
                 } catch (e) {
                     error = e.message;
                 }

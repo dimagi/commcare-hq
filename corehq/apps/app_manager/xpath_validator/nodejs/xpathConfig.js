@@ -1,6 +1,8 @@
-import parser from "xpath/src/parser";
-import xpath from "xpath/dist/js-xpath";
-import _ from "underscore";
+if (typeof require !== 'undefined' && typeof exports !== 'undefined') {
+    var parser = require('xpath/src/parser');
+    var xpath = require('xpath/dist/js-xpath');
+    var _ = require('underscore');
+}
 
 const XPATH_CONFIG = (function () {
     function getAllowedHashtags(allowCaseHashtags) {
@@ -42,6 +44,6 @@ const XPATH_CONFIG = (function () {
     return {'configureHashtags': configureHashtags};
 }());
 
-export default {
-    XPATH_CONFIG: XPATH_CONFIG,
-};
+if (typeof require !== 'undefined' && typeof exports !== 'undefined') {
+    exports.configureHashtags = XPATH_CONFIG.configureHashtags;
+}
