@@ -214,7 +214,7 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
     reverse order.
 
     :return: A response-like object that can be used by Repeater.handle_response(),
-             RepeatRecord.handle_success() and RepeatRecord.handle_failure()
+             RepeatRecord.handle_success() and RepeatRecord.handle_server_failure()
 
 
     .. _OpenMRS REST Web Services: https://wiki.openmrs.org/display/docs/REST+Web+Services+API+For+Clients
