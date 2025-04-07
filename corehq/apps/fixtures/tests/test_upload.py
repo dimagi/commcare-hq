@@ -691,7 +691,7 @@ class TestFixtureUpload(TestCase):
 
         with patch.object(mod, "clear_fixture_cache") as mock_clear:
             self.upload([(apple_id, 'N', 'apple'), (None, 'N', 'banana')])
-            self.assertEqual(mock_clear.call_args[0][1], [table.id])
+            self.assertEqual(mock_clear.call_args[0][1], {table.id})
 
     def test_row_deleted_clears_its_table_cache(self):
         self.upload([(None, 'N', 'apple')])
@@ -700,7 +700,7 @@ class TestFixtureUpload(TestCase):
 
         with patch.object(mod, "clear_fixture_cache") as mock_clear:
             self.upload([(apple_id, 'Y', 'apple')])
-            self.assertEqual(mock_clear.call_args[0][1], [table.id])
+            self.assertEqual(mock_clear.call_args[0][1], {table.id})
 
 
 class TestLookupTableOwnershipUpload(TestCase):
@@ -833,7 +833,7 @@ class TestLookupTableOwnershipUpload(TestCase):
 
         with patch.object(mod, "clear_fixture_cache") as mock_clear:
             self.upload([(apple_id, 'N', 'apple', 'user1', 'G1', 'loc1')])
-            self.assertEqual(mock_clear.call_args[0][1], [table.id])
+            self.assertEqual(mock_clear.call_args[0][1], {table.id})
 
     def test_owner_deleted_clears_cache(self):
         """Test that removing an owner from an existing row clears that table's cache"""
@@ -843,7 +843,7 @@ class TestLookupTableOwnershipUpload(TestCase):
 
         with patch.object(mod, "clear_fixture_cache") as mock_clear:
             self.upload([(apple_id, 'N', 'apple', None, None, None)])
-            self.assertEqual(mock_clear.call_args[0][1], [table.id])
+            self.assertEqual(mock_clear.call_args[0][1], {table.id})
 
     def upload(self, rows, *, check_result=True, **kw):
         data = self.make_rows(rows)
