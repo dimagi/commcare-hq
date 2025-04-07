@@ -105,4 +105,5 @@
 {% block after_table %}
   {{ block.super }}
   {% include "data_cleaning/modals/confirm_select_all.html" with modal_id="confirm-select-all-modal" %}
+  {% include "data_cleaning/modals/select_all_not_possible.html" with modal_id="select-all-not-possible-modal" %}
 {% endblock %}
