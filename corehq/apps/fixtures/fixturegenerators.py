@@ -12,7 +12,7 @@ from casexml.apps.phone.utils import (
     combine_io_streams
 )
 from corehq.apps.fixtures.exceptions import FixtureTypeCheckError
-from corehq.apps.fixtures.models import FIXTURE_BUCKET, LookupTable, LookupTableRow
+from corehq.apps.fixtures.models import fixture_bucket, LookupTable, LookupTableRow
 from corehq.apps.products.fixtures import product_fixture_generator_json
 from corehq.apps.programs.fixtures import program_fixture_generator_json
 from corehq.util.metrics import metrics_histogram
@@ -165,7 +165,7 @@ class ItemListsProvider(FixtureProvider):
         :return: a byte string representation of the fixture
         """
         io_stream = None
-        cache_bucket_prefix = FIXTURE_BUCKET(global_type.id)
+        cache_bucket_prefix = fixture_bucket(global_type.id)
         key = '{}/{}'.format(cache_bucket_prefix, domain)
 
         if not overwrite_cache:
