@@ -14,7 +14,6 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext as _
 
 from django_prbac.utils import has_privilege
 
@@ -581,15 +580,6 @@ def registerurl(parser, original_token):
     nodelist = NodeList([FakeNode()])
 
     return AddToBlockNode(nodelist, 'registered_urls')
-
-
-@register.simple_tag
-def trans_html_attr(value):
-    if isinstance(value, bytes):
-        value = value.decode('utf-8')
-    if not isinstance(value, str):
-        value = JSON(value)
-    return conditional_escape(_(value))
 
 
 @register.simple_tag
