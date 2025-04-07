@@ -30,15 +30,17 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
             session, request, select_record_action, select_page_action, accessor="case_id",
             attrs={
                 'td__input': {
+                    # `pageNumRecordsSelected` defined in template
+                    "x-init": "if($el.checked) { pageNumRecordsSelected++ }",
                     "@click": (
-                        "if ($event.target.checked !== isRowSelected) {"
+                        "if ($el.checked !== isRowSelected) {"
                         # `numRecordsSelected` defined in template
-                        "  $event.target.checked ? numRecordsSelected++ : numRecordsSelected--;"
+                        "  $el.checked ? numRecordsSelected++ : numRecordsSelected--;"
                         # `pageNumRecordsSelected` defined in template
-                        "  $event.target.checked ? pageNumRecordsSelected++ : pageNumRecordsSelected--; "
+                        "  $el.checked ? pageNumRecordsSelected++ : pageNumRecordsSelected--; "
                         "} "
                         # `isRowSelected` defined in `row_attrs` in `class Meta`
-                        "isRowSelected = $event.target.checked;"
+                        "isRowSelected = $el.checked;"
                     ),
                 },
                 'th__input': {
