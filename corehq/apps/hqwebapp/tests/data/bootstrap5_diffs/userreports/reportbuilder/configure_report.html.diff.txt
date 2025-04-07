@@ -229,7 +229,7 @@
 +                <select-toggle data-apply-bindings="false"  {# todo B5: css-select-form-control #}
                                 params="options: [{
                                                        id: 'bar',
-                                                       text: '{% trans_html_attr "Bar" %}',
+                                                       text: '{% html_attr _("Bar") %}',
 @@ -292,7 +292,7 @@
                                                    }],
                                                    value: selectedChart"></select-toggle>

@@ -43,7 +43,7 @@
              data-bind="value: value,
                         select2: {
 @@ -106,24 +106,24 @@
-                 params="featureName: '{% trans_html_attr 'Explore Case Data' %}'"></feedback>
+                 params="featureName: '{% html_attr _('Explore Case Data') %}'"></feedback>
        <button type="button"
                data-bind="click: exportData"
 -              class="btn btn-default">
@@ -131,7 +131,7 @@
 +                <div class="col-sm-9">
                    <input type="text"
                           class="form-control"
-                          placeholder="{% trans_html_attr "Title" %}"
+                          placeholder="{% html_attr _("Title") %}"
 @@ -307,7 +307,7 @@
                <hr data-bind="visible: $root.editColumnController.showColumnFilters()
                               || $root.editColumnController.showColumnFilterPlaceholder()" />

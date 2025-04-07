@@ -136,7 +136,7 @@
 -              <a class="close" data-dismiss="alert" href="#">&times;</a>
 +            <div class="alert alert-dismissible alert-margin-top fade show{% if message.tags %} {{ message.tags }}{% endif %}">
                {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
-+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% trans_html_attr "Close" %}"></button>
++              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% html_attr _("Close") %}"></button>
              </div>
            {% endfor %}
          {% endif %}
@@ -148,7 +148,7 @@
 -               data-dismiss="alert" href="#">&times;</a>
 +          <div class="alert alert-dismissible fade show" data-bind="attr: {class: alert_class}">
              <span data-bind="html: message"></span>
-+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% trans_html_attr "Close" %}"></button>
++            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% html_attr _("Close") %}"></button>
            </div>
          </div>
        </div>

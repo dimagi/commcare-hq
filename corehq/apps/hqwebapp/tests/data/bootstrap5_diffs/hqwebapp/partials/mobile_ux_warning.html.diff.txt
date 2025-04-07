@@ -16,7 +16,7 @@
 +        <button type="button"
 +                class="btn-close"
 +                data-bs-dismiss="modal"
-+                aria-hidden="true" aria-label="{% trans_html_attr "Close" %}"></button>
++                aria-hidden="true" aria-label="{% html_attr _("Close") %}"></button>
        </div>
        <div class="modal-body">
 -        <p class="mobile-ux-lead">
@@ -61,7 +61,7 @@
 +        <button type="button"
 +                class="btn-close"
 +                data-bs-dismiss="modal"
-+                aria-hidden="true" aria-label="{% trans_html_attr "Close" %}"></button>
++                aria-hidden="true" aria-label="{% html_attr _("Close") %}"></button>
        </div>
        <div class="modal-body">
 -        <p class="mobile-ux-lead">
