@@ -16,7 +16,7 @@
             {% endblocktrans %}
           <!-- /ko -->
         </h4>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% html_attr _("Close") %}"></button>
       </div>
       <form name="drop_report" data-bind="attr: {action: deleteUrl}" method="post">
         {% csrf_token %}
