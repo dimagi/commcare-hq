@@ -1,12 +1,15 @@
 from collections import defaultdict
-from functools import partial
 from operator import attrgetter
+from io import BytesIO
 from xml.etree import cElementTree as ElementTree
 
 from casexml.apps.phone.fixtures import FixtureProvider
 from casexml.apps.phone.utils import (
     GLOBAL_USER_ID,
-    get_or_cache_global_fixture,
+    record_datadog_metric,
+    get_cached_fixture_items,
+    cache_fixture_items_data,
+    combine_io_streams
 )
 from corehq.apps.fixtures.exceptions import FixtureTypeCheckError
 from corehq.apps.fixtures.models import FIXTURE_BUCKET, LookupTable, LookupTableRow
@@ -15,6 +18,7 @@ from corehq.apps.programs.fixtures import program_fixture_generator_json
 from corehq.util.metrics import metrics_histogram
 from corehq.util.xml_utils import serialize
 from .utils import clean_fixture_field_name, get_index_schema_node
+from dimagi.utils.couch import CriticalSection
 
 LOOKUP_TABLE_FIXTURE = 'lookup_table_fixture'
 REPORT_FIXTURE = 'report_fixture'
@@ -93,16 +97,15 @@ def item_lists_by_app(app, module):
 
 
 def get_global_items_by_domain(domain, case_id):
-    global_types = {}
-    for data_type in LookupTable.objects.by_domain(domain).filter(is_global=True):
-        global_types[data_type.id] = data_type
-    if global_types:
-        cache_bucket_prefix_data_fn_pairs = ItemListsProvider()._get_fixture_cache_bucket_to_generator_pair(
-            global_types, domain)
-        return get_or_cache_global_fixture(domain,
-                                           case_id,
-                                           cache_bucket_prefix_data_fn_pairs,
-                                           '')
+    global_types = sorted(LookupTable.objects.by_domain(domain).filter(is_global=True),
+                          key=lambda global_type: global_type.tag)
+    return combine_io_streams(
+        [ItemListsProvider().get_or_cache_global_fixture(
+            domain,
+            global_type,
+        ) for global_type in global_types],
+        case_id
+    )
 
 
 class ItemListsProvider(FixtureProvider):
@@ -110,7 +113,7 @@ class ItemListsProvider(FixtureProvider):
 
     def __call__(self, restore_state):
         restore_user = restore_state.restore_user
-        global_types = {}
+        global_types = []
         user_types = {}
         should_full_sync = not restore_state.last_sync_log or not restore_state.last_sync_log.date
         if should_full_sync:
@@ -120,7 +123,7 @@ class ItemListsProvider(FixtureProvider):
                                                                        restore_state.last_sync_log.date)
         for data_type in data_types:
             if data_type.is_global:
-                global_types[data_type.id] = data_type
+                global_types.append(data_type)
             else:
                 user_types[data_type.id] = data_type
         items = []
@@ -145,25 +148,54 @@ class ItemListsProvider(FixtureProvider):
         return items
 
     def get_global_items(self, global_types, restore_state):
-        cache_bucket_prefix_data_fn_pairs = self._get_fixture_cache_bucket_to_generator_pair(
-            global_types, restore_state.restore_user.domain)
-        return get_or_cache_global_fixture(restore_state.restore_user.domain,
-                                           restore_state.restore_user.user_id,
-                                           cache_bucket_prefix_data_fn_pairs,
-                                           '',
-                                           restore_state.overwrite_cache)
+        return combine_io_streams(
+            [self.get_or_cache_global_fixture(
+                restore_state.restore_user.domain,
+                global_type,
+                restore_state.overwrite_cache
+            ) for global_type in sorted(global_types, key=lambda global_type: global_type.tag)],
+            restore_state.restore_user.user_id
+        )
 
-    def _get_fixture_cache_bucket_to_generator_pair(self, global_types, domain):
-        return [
-            (FIXTURE_BUCKET(global_type_id),
-             partial(self._get_single_global_item, global_type_id, global_type, domain))
-            for global_type_id, global_type in sorted(global_types.items(), key=lambda item: item[1].tag)
-        ]
+    def _get_or_cache_global_fixture(self, domain, global_type, overwrite_cache=False):
+        """
+        Get the fixture data for a global fixture (one that does not vary by user).
 
-    def _get_single_global_item(self, global_type_id, global_type, domain):
+        :param domain: The domain to get or cache the fixture
+        :param user_id: User's id, if this is for case restore, then pass in case id
+        :param overwrite_cache: a boolean property from RestoreState object, default is False
+        :return: a byte string representation of the fixture
+        """
+        io_stream = None
+        cache_bucket_prefix = FIXTURE_BUCKET(global_type.id)
+        key = '{}/{}'.format(cache_bucket_prefix, domain)
+
+        if not overwrite_cache:
+            io_stream = get_cached_fixture_items(domain, cache_bucket_prefix)
+            record_datadog_metric('cache_miss' if io_stream is None else 'cache_hit', key)
+            if io_stream is not None:
+                io_stream = BytesIO(io_stream)
+
+        if io_stream is None:
+            with CriticalSection([key]):
+                if not overwrite_cache:
+                    # re-check cache to avoid re-computing it
+                    io_stream = get_cached_fixture_items(domain, cache_bucket_prefix)
+                    if io_stream is not None:
+                        io_stream = BytesIO(io_stream)
+                if io_stream is None:
+                    record_datadog_metric('generate', key)
+                    item = self._get_global_item(global_type, domain)
+                    io_stream = BytesIO()
+                    io_stream.write(ElementTree.tostring(item, encoding='utf-8'))
+                    io_stream.seek(0)
+                    cache_fixture_items_data(io_stream, domain, '', cache_bucket_prefix)
+        return io_stream
+
+    def _get_global_item(self, global_type, domain):
         def get_items_by_type(data_type):
             return LookupTableRow.objects.iter_rows(domain, table_id=data_type.id)
-        return self._get_fixtures({global_type_id: global_type}, get_items_by_type, GLOBAL_USER_ID)[0]
+        return self._get_fixtures({global_type.id: global_type}, get_items_by_type, GLOBAL_USER_ID)[0]
 
     def get_user_items_and_count(self, user_types, restore_user):
         user_items_count = 0

@@ -17,7 +17,6 @@ from memoized import memoized
 from corehq.blobs import get_blob_db, CODES, NotFound
 from corehq.blobs.models import BlobMeta
 from corehq.util.metrics import metrics_counter
-from dimagi.utils.couch import CriticalSection
 
 ITEMS_COMMENT_PREFIX = b'<!--items='
 ITESM_COMMENT_REGEX = re.compile(br'(<!--items=(\d+)-->)')
@@ -31,67 +30,24 @@ ITESM_COMMENT_REGEX = re.compile(br'(<!--items=(\d+)-->)')
 GLOBAL_USER_ID = 'global-user-id-7566F038-5000-4419-B3EF-5349FB2FF2E9'
 
 
-def get_or_cache_global_fixture(domain, user_id, cache_bucket_prefix_data_fn_pairings,
-                                fixture_name, overwrite_cache=False):
+def combine_io_streams(fixture_io_streams, user_id):
     """
-    Get the fixture data for a global fixture (one that does not vary by user).
-
-    :param domain: The domain to get or cache the fixture
     :param user_id: User's id, if this is for case restore, then pass in case id
-    :param cache_bucket_prefix_data_fn_pairings: A list of tuples, each containing
-        (cache_bucket_prefix, data_fn) where:
-        - cache_bucket_prefix: The prefix for the cache bucket
-        - data_fn: Function that generates the XML fixture element
-    :param fixture_name: Name of the fixture
-    :param overwrite_cache: a boolean property from RestoreState object, default is False
     :return: list containing byte string representation of the fixture
     """
-    io_streams = []
-    for cache_bucket_prefix, data_fn in cache_bucket_prefix_data_fn_pairings:
-        io_stream = None
-        key = '{}/{}'.format(cache_bucket_prefix, domain)
-
-        if not overwrite_cache:
-            io_stream = get_cached_fixture_items(domain, cache_bucket_prefix)
-            _record_datadog_metric('cache_miss' if io_stream is None else 'cache_hit', key)
-            if io_stream is not None:
-                io_stream = BytesIO(io_stream)
-
-        if io_stream is None:
-            with CriticalSection([key]):
-                if not overwrite_cache:
-                    # re-check cache to avoid re-computing it
-                    io_stream = get_cached_fixture_items(domain, cache_bucket_prefix)
-                    if io_stream is not None:
-                        io_stream = BytesIO(io_stream)
-                if io_stream is None:
-                    _record_datadog_metric('generate', key)
-                    item = data_fn()
-                    io_stream = BytesIO()
-                    io_stream.write(ElementTree.tostring(item, encoding='utf-8'))
-                    io_stream.seek(0)
-                    cache_fixture_items_data(io_stream, domain, fixture_name, cache_bucket_prefix)
-        io_streams.append(io_stream)
-
-    combined_io_data = combine_fixture_io_streams(io_streams)
-    combined_io_data.seek(0)
-    data = combined_io_data.read()
-
-    global_id = GLOBAL_USER_ID.encode('utf-8')
-    b_user_id = user_id.encode('utf-8')
-    return [data.replace(global_id, b_user_id)] if data else []
-
-
-def combine_fixture_io_streams(io_streams):
     io = BytesIO()
     io.write(ITEMS_COMMENT_PREFIX)
-    io.write(str(len(io_streams)).encode('utf-8'))
+    io.write(str(len(fixture_io_streams)).encode('utf-8'))
     io.write(b'-->')
-    for fixture_stream in io_streams:
+    for fixture_stream in fixture_io_streams:
         fixture_stream.seek(0)
         io.write(fixture_stream.read())
     io.seek(0)
-    return io
+
+    data = io.read()
+    global_id = GLOBAL_USER_ID.encode('utf-8')
+    b_user_id = user_id.encode('utf-8')
+    return [data.replace(global_id, b_user_id)] if data else []
 
 
 def cache_fixture_items_data(io_data, domain, fixure_name, key_prefix):
@@ -121,11 +77,11 @@ def get_cached_fixture_items(domain, bucket_prefix):
 
 def clear_fixture_cache(domain, bucket_prefix):
     key = bucket_prefix + '/' + domain
-    _record_datadog_metric('cache_clear', key)
+    record_datadog_metric('cache_clear', key)
     get_blob_db().delete(key=key)
 
 
-def _record_datadog_metric(name, cache_key):
+def record_datadog_metric(name, cache_key):
     metrics_counter('commcare.fixture.{}'.format(name), tags={
         'cache_key': cache_key,
     })
