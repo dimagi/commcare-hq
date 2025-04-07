@@ -146,8 +146,9 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         # let normal response handle invalid xml
         pass
     else:
-        device_id = instance_json.get('meta', {}).get('deviceID')
-        submitting_user_id = instance_json.get('meta', {}).get('userID')
+        meta = instance_json.get('meta', {})
+        device_id = meta.get('deviceID')
+        submitting_user_id = meta.get('userID')
         submitting_user = CouchUser.get_by_user_id(submitting_user_id) if submitting_user_id else None
         should_limit = device_rate_limiter.rate_limit_device(domain, submitting_user, device_id)
         if should_limit:
