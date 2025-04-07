@@ -20,8 +20,8 @@ Alpine.store('deleteWidgetModel', {
         this.swapTargetSelector = `[data-htmx-swap-target=${type}-${id}]`;
     },
     resetData() {
-        this.widgetId = null;
-        this.widgetType = null;
+        this.id = null;
+        this.type = null;
         this.title = null;
         this.swapTargetSelector = null;
     },
