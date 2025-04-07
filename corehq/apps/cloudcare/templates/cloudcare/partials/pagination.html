@@ -21,12 +21,12 @@
             <!-- Render Previous button -->
             <% if (currentPage > 0) { %>
               <li class="page-item">
-                <a class="page-link js-page" aria-label='{% trans_html_attr "First Page" %}' tabindex="0" data-id="0">
+                <a class="page-link js-page" aria-label='{% html_attr _("First Page") %}' tabindex="0" data-id="0">
                   <span><i class="fa fa-fast-backward"></i></span>
                 </a>
               </li>
               <li>
-                <a class="page-link js-page" aria-label='{% trans_html_attr "Previous" %}' tabindex="0" data-id="<%- currentPage - 1 %>">
+                <a class="page-link js-page" aria-label='{% html_attr _("Previous") %}' tabindex="0" data-id="<%- currentPage - 1 %>">
                   <span><i class="fa fa-caret-left"></i></span>
                 </a>
               </li>
@@ -98,12 +98,12 @@
               </li>
             <% } else { %>
               <li class="page-item">
-                <a class="page-link js-page" aria-label='{% trans_html_attr "Next" %}' tabindex="0" data-id="<%- currentPage + 1 %>">
+                <a class="page-link js-page" aria-label='{% html_attr _("Next") %}' tabindex="0" data-id="<%- currentPage + 1 %>">
                   <span><i class="fa fa-caret-right"></i></span>
                 </a>
               </li>
               <li class="page-item">
-                <a class="page-link js-page" aria-label='{% trans_html_attr "Last Page" %}' tabindex="0" data-id="<%- pageCount - 1 %>">
+                <a class="page-link js-page" aria-label='{% html_attr _("Last Page") %}' tabindex="0" data-id="<%- pageCount - 1 %>">
                   <span><i class="fa fa-fast-forward"></i></span>
                 </a>
               </li>
@@ -111,7 +111,7 @@
           </ul>
           <div class="module-go-container mb-2">
             <div class="input-group input-group-lg">
-              <input type="text" class="form-control" placeholder='{% trans_html_attr "Go to page" %}' id="goText">
+              <input type="text" class="form-control" placeholder='{% html_attr _("Go to page") %}' id="goText">
               <button class="btn btn-outline-primary" type="button" id="pagination-go-button">{% trans "Go" %}</button>
             </div>
           </div>

@@ -33,7 +33,7 @@
             data-bs-toggle="collapse"
             data-bs-target="#debugger-navbar-collapse"
             aria-expanded="false"
-            aria-label="{% trans_html_attr "Toggle navigation" %}"
+            aria-label="{% html_attr _("Toggle navigation") %}"
             aria-controls="debugger-navbar-collapse">
               <i class="navbar-toggler-icon"></i>
           </button>
@@ -136,7 +136,7 @@
         id="xpath"
         class="form-control vertical-resize debugger-code at-who-input"
         name="xpath"
-        placeholder="{% trans_html_attr "XPath Expression" %}"
+        placeholder="{% html_attr _("XPath Expression") %}"
         autocomplete="off"
         spellcheck=false
         data-bind="value: xpath, event: { mouseup: onMouseUp }" ></textarea>
