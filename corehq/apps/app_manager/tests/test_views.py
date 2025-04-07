@@ -690,7 +690,7 @@ class TestViewGeneric(ViewsBase):
         'restrict_domain_creation', 'login_template', 'enterprise_mode', 'mobile_ux_cookie_name',
         'commcare_hq_names', 'langs', 'title_context_block', 'timezone', 'has_mobile_workers',
         'multimedia_state', 'bulk_app_translation_upload', 'show_training_modules', 'forloop', 'secure_cookies',
-        'IS_ANALYTICS_ENVIRONMENT',
+        'IS_ANALYTICS_ENVIRONMENT', 'description', 'heading', 'module_type', 'icon_class',
     }
 
     expected_keys_module = {
