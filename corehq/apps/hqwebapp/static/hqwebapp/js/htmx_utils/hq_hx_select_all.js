@@ -1,6 +1,6 @@
 /*
     The attribute `hq-hx-select-all` is used to select all checkboxes with the class name
-    provideded in the config object passed as a string in the attribute value.
+    provided in the config object passed as a string in the attribute value.
 
     Example:
     hx-hx-select-all='{

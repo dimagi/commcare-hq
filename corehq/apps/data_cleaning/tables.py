@@ -31,7 +31,7 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
             attrs={
                 'td__input': {
                     # `pageNumRecordsSelected` defined in template
-                    "x-init": "if($el.checked) { pageNumRecordsSelected++ }",
+                    "x-init": "if($el.checked) { pageNumRecordsSelected++; }",
                     "@click": (
                         "if ($el.checked !== isRowSelected) {"
                         # `numRecordsSelected` defined in template

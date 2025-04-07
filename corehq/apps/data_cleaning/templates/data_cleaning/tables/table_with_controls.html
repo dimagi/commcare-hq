@@ -43,7 +43,10 @@
 
     <div>
       <div class="input-group">
-        <div class="input-group-text rounded-end"> {# todo: selection UI #}
+        <div
+          class="input-group-text"
+          :class="(numRecordsSelected > 0) || 'rounded-end'"
+        >
           <i class="fa-solid fa-circle-check me-2"></i>
           <span
             class="me-1"
@@ -53,6 +56,34 @@
             Records Selected
           {% endblocktrans %}
         </div>
+        <button
+          class="btn btn-outline-danger"
+          type="button"
+          x-show="numRecordsSelected > 0"
+          :class="(numRecordsSelected > 0 && numRecordsSelected < totalRecords) || 'rounded-end'"
+          hx-post="{{ request.path_info }}{% querystring %}"
+          hq-hx-action="deselect_all"
+          hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
+          hx-swap="outerHTML"
+          hq-hx-loading="{{ table.loading_indicator_id }}"
+          hx-disable-elt="this"
+        >
+          <i class="fa-solid fa-close"></i>
+          <span class="visually-hidden">{% trans "Clear Selection" %}</span>
+        </button>
+        <button
+          class="btn btn-outline-primary"
+          type="button"
+          x-show="numRecordsSelected > 0 && numRecordsSelected < totalRecords"
+          hx-post="{{ request.path_info }}{% querystring %}"
+          hq-hx-action="select_all"
+          hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
+          hx-swap="outerHTML"
+          hq-hx-loading="{{ table.loading_indicator_id }}"
+          hx-disable-elt="this"
+        >
+          {% trans "Select All" %} ({{ table.page.paginator.count }})
+        </button>
       </div>
     </div>
 
