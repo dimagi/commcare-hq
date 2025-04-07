@@ -38,7 +38,8 @@ $(document).on('htmx:afterRequest', function (event) {
             updateVerifyButton([]);
         } else if (method === 'post') {
             const endpoint = requestPath + window.location.search;
-            htmx.ajax('get', endpoint, {target: '#kyc-verify-table'});
+            $('#kyc-verify-table').text('');
+            htmx.ajax('get', endpoint, {target: '#kyc-verify-table', indicator: '#kyc-loader'});
         }
     }
 });
