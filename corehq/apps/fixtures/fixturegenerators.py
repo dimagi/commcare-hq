@@ -97,15 +97,8 @@ def item_lists_by_app(app, module):
 
 
 def get_global_items_by_domain(domain, case_id):
-    global_types = sorted(LookupTable.objects.by_domain(domain).filter(is_global=True),
-                          key=lambda global_type: global_type.tag)
-    return combine_io_streams(
-        [ItemListsProvider().get_or_cache_global_fixture(
-            domain,
-            global_type,
-        ) for global_type in global_types],
-        case_id
-    )
+    global_types = LookupTable.objects.by_domain(domain).filter(is_global=True)
+    return ItemListsProvider().get_global_items(domain, global_types, case_id, False)
 
 
 class ItemListsProvider(FixtureProvider):
@@ -129,7 +122,9 @@ class ItemListsProvider(FixtureProvider):
         items = []
         user_items_count = 0
         if global_types:
-            global_items = self.get_global_items(global_types, restore_state)
+            global_items = self.get_global_items(restore_state.restore_user.domain, global_types,
+                                                 restore_state.restore_user.user_id,
+                                                 restore_state.overwrite_cache)
             items.extend(global_items)
         if user_types:
             user_items, user_items_count = self.get_user_items_and_count(user_types, restore_user)
@@ -147,14 +142,17 @@ class ItemListsProvider(FixtureProvider):
         )
         return items
 
-    def get_global_items(self, global_types, restore_state):
+    def get_global_items(self, domain, global_types, user_id, overwrite_cache):
+        """
+        :param user_id: User's id, if this is for case restore, then pass in case id
+        """
         return combine_io_streams(
             [self.get_or_cache_global_fixture(
-                restore_state.restore_user.domain,
+                domain,
                 global_type,
-                restore_state.overwrite_cache
+                overwrite_cache,
             ) for global_type in sorted(global_types, key=lambda global_type: global_type.tag)],
-            restore_state.restore_user.user_id
+            user_id
         )
 
     def _get_or_cache_global_fixture(self, domain, global_type, overwrite_cache=False):
