@@ -171,10 +171,10 @@
                                                  id: 'put_in_root',
                                                  options: [{
                                                     id: 'false',
-                                                    text: '{% trans_html_attr 'Display menu and then forms' %}',
+                                                    text: '{% html_attr _('Display menu and then forms') %}',
                                                  }, {
                                                     id: 'true',
-                                                    text: '{% trans_html_attr 'Display only forms' %}',
+                                                    text: '{% html_attr _('Display only forms') %}',
                                                  }],
                                                  value: '{% if module.put_in_root %}true{% else %}false{% endif %}'"></select-toggle>
                 </div>
@@ -288,7 +288,7 @@
               <label for="no_items_text" class="{% css_label_class %} control-label">
                 {% trans "Empty Case List Text" %}
                 <span class="hq-help-template" data-title="{% trans "Empty Case List Text" %}"
-                      data-content="{% trans_html_attr "Define text displayed when case list has no results." %}"
+                      data-content="{% html_attr _("Define text displayed when case list has no results.") %}"
                 ></span>
               </label>
               <div class="{% css_field_class %} commcare-feature" data-since-version="2.54">

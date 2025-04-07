@@ -60,7 +60,7 @@
               {% endif %}
               {% if app.versions|length > 1 %}
                 <div data-bind="visible: showVersions">
-                  <select name="from_app_id" class="hqwebapp-select2" placeholder="{% trans_html_attr "Latest Version" %}">
+                  <select name="from_app_id" class="hqwebapp-select2" placeholder="{% html_attr _("Latest Version") %}">
                     {% for version in app.versions %}
                       <option value="{{ version.id }}">{{ version.text }}</option>
                     {% endfor %}
