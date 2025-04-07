@@ -54,7 +54,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h4 class="modal-title">{% trans "Resume Forwarding" %}</h4>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% html_attr _("Close") %}"></button>
                     </div>
                     <form name="resume_repeater" action="{% url 'resume_repeater' domain repeater.repeater_id %}"
                           method="post">
@@ -88,7 +88,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h4 class="modal-title">{% trans "Pause Forwarding" %}</h4>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% html_attr _("Close") %}"></button>
                     </div>
                     <form name="pause_repeater" action="{% url 'pause_repeater' domain repeater.repeater_id %}"
                           method="post">
@@ -127,7 +127,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h4 class="modal-title">{% trans "Delete Configuration" %}</h4>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% html_attr _("Close") %}"></button>
                     </div>
                     <form name="drop_repeater" action="{% url 'drop_repeater' domain repeater.repeater_id %}"
                           method="post">
