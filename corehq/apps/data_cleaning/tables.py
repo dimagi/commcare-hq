@@ -5,6 +5,9 @@ from corehq.apps.data_cleaning.columns import (
     DataCleaningHtmxColumn,
     DataCleaningHtmxSelectionColumn,
 )
+from corehq.apps.data_cleaning.models import (
+    BULK_OPERATION_CHUNK_SIZE,
+)
 from corehq.apps.data_cleaning.records import EditableCaseSearchElasticRecord
 from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
 from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
@@ -12,6 +15,7 @@ from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
 
 class CleanCaseTable(BaseHtmxTable, ElasticTable):
     record_class = EditableCaseSearchElasticRecord
+    bulk_action_warning_limit = BULK_OPERATION_CHUNK_SIZE
 
     class Meta(BaseHtmxTable.Meta):
         template_name = "data_cleaning/tables/table_with_controls.html"
