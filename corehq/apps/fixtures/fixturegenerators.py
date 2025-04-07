@@ -147,7 +147,7 @@ class ItemListsProvider(FixtureProvider):
         :param user_id: User's id, if this is for case restore, then pass in case id
         """
         return combine_io_streams(
-            [self.get_or_cache_global_fixture(
+            [self._get_or_cache_global_fixture(
                 domain,
                 global_type,
                 overwrite_cache,
