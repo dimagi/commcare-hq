@@ -762,6 +762,13 @@ class BulkEditRecord(models.Model):
         ).exists()
 
     @classmethod
+    def get_unrecorded_doc_ids(cls, session, doc_ids):
+        recorded_doc_ids = session.records.filter(
+            doc_id__in=doc_ids,
+        ).values_list("doc_id", flat=True)
+        return list(set(doc_ids) - set(recorded_doc_ids))
+
+    @classmethod
     def select_record(cls, session, doc_id):
         try:
             record = session.records.get(doc_id=doc_id)
