@@ -83,7 +83,7 @@
         {% for error in errors %}
           <div class="alert alert-dismissible alert-danger">
             {{ error }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% trans_html_attr "Close" %}"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% html_attr _("Close") %}"></button>
           </div>
         {% endfor %}
       {% endfor %}
