@@ -37,7 +37,7 @@
         {% trans "Language" %}
       </label>
       <div class="{% css_field_class %} controls">
-        <select name="lang" class="form-control hqwebapp-select2" data-placeholder="{% trans_html_attr "Select a language" %}">
+        <select name="lang" class="form-control hqwebapp-select2" data-placeholder="{% html_attr _("Select a language") %}">
           <option></option>
           {% for lang in app.langs %}
             {% if lang != app.default_language %}
@@ -59,11 +59,11 @@
                            options: [
                              {
                                id: 'true',
-                               text: '{% trans_html_attr 'Only Transifex references' %}',
+                               text: '{% html_attr _('Only Transifex references') %}',
                              },
                              {
                                id: 'false',
-                               text: '{% trans_html_attr 'All translations' %}',
+                               text: '{% html_attr _('All translations') %}',
                              },
                            ],
                          "></select-toggle>

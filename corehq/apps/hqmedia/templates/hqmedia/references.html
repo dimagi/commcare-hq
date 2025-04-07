@@ -44,11 +44,11 @@
                                options: [
                                  {
                                    id: 'false',
-                                   text: '{% trans_html_attr 'All references' %}',
+                                   text: '{% html_attr _('All references') %}',
                                  },
                                  {
                                    id: 'true',
-                                   text: '{% trans_html_attr 'Only missing references' %}',
+                                   text: '{% html_attr _('Only missing references') %}',
                                  },
                                ],
                              "></select-toggle>
@@ -61,21 +61,21 @@
                                options: [
                                  {
                                    id: 'all',
-                                   text: '{% trans_html_attr 'All types' %}',
+                                   text: '{% html_attr _('All types') %}',
                                  },
                                  {
                                    id: 'CommCareImage',
-                                   text: '{% trans_html_attr 'Images' %}',
+                                   text: '{% html_attr _('Images') %}',
                                    icon: 'fa-regular fa-image',
                                  },
                                  {
                                    id: 'CommCareAudio',
-                                   text: '{% trans_html_attr 'Audio' %}',
+                                   text: '{% html_attr _('Audio') %}',
                                    icon: 'fa fa-volume-up',
                                  },
                                  {
                                    id: 'CommCareVideo',
-                                   text: '{% trans_html_attr 'Videos' %}',
+                                   text: '{% html_attr _('Videos') %}',
                                    icon: 'fa fa-video-camera',
                                  },
                                ],
@@ -85,7 +85,7 @@
             <search-box data-apply-bindings="false"
                         params="value: query,
                                 action: function() { goToPage(1); },
-                                placeholder: '{% trans_html_attr "Search for a path" %}'"></search-box>
+                                placeholder: '{% html_attr _("Search for a path") %}'"></search-box>
           </p>
           {% if app.langs|length > 1 %}
             <p>
@@ -95,7 +95,7 @@
                                options: [
                                  {
                                    id: 'all',
-                                   text: '{% trans_html_attr 'All languages' %}',
+                                   text: '{% html_attr _('All languages') %}',
                                  },
                                  {% for lang in app.langs %}
                                    {
