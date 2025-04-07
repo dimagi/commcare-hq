@@ -10,7 +10,7 @@
           <h4 class="modal-title" id="delete-phonenumber-modal-label">
             {% blocktrans with phone_number.number as number %}Delete +{{ number }} ?{% endblocktrans %}
           </h4>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% html_attr _("Close") %}"></button>
         </div>
         <form class="form form-horizontal disable-on-submit"
               name="delete_phone_number"
@@ -43,7 +43,7 @@
             <h4 class="modal-title" id="reverify-phonenumber-modal-label">
               {% blocktrans with phone_number.number as number %}Verify +{{ number }}?{% endblocktrans %}
             </h4>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% html_attr _("Close") %}"></button>
           </div>
           <form class="form form-horizontal disable-on-submit"
                 name="reverify_phone_number"
