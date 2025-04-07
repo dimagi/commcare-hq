@@ -76,18 +76,18 @@ class DashboardReportMixin:
         # return {'context_by_id': context_by_id}
         report = self.dashboard.reports.first()
         if report:
-            view = self._get_configurable_report_view(report)
+            view = self._get_dashboard_report_view(report)
             return view.page_context
         return {}
 
-    def _get_configurable_report_view(self, report):
+    def _get_dashboard_report_view(self, report):
         view = DashboardReportView()
         view.request = self.request
         view._domain = self.domain
         view.args = []
         view.kwargs = {
             'domain': self.domain,
-            'slug': ConfigurableReportView.slug,
+            'slug': DashboardReportView.slug,
             'subreport_slug': report.report_configuration_id,
         }
         return view
