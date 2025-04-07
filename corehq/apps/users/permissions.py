@@ -91,3 +91,7 @@ def has_permission_to_view_report(couch_user, domain, report_to_check):
         get_permission_name(HqPermissions.view_report),
         data=report_to_check
     )
+
+
+def can_access_payments_report(couch_user, domain):
+    return has_permission_to_view_report(couch_user, domain, PAYMENTS_REPORT_PERMISSION)
