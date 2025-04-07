@@ -16,7 +16,7 @@ hqDefine("app_manager/js/visit_scheduler", [
     appManager,
     caseConfigUtils,
     main,
-    uiElement,
+    uiElementSelect,
     utils,
 ) {
     var moduleScheduler = function (params) {

@@ -1,5 +1,6 @@
 import parser from "xpath/src/parser";
 import xpath from "xpath/dist/js-xpath";
+import _ from "underscore";
 
 const XPATH_CONFIG = (function () {
     function getAllowedHashtags(allowCaseHashtags) {
@@ -17,22 +18,22 @@ const XPATH_CONFIG = (function () {
 
     function configureHashtags(allowCaseHashtags) {
         var p = new parser.Parser();
-        p.setXPathModels = function(models) {
+        p.setXPathModels = function (models) {
             p.yy.xpathmodels = models;
         };
         var replacements = getAllowedHashtags(allowCaseHashtags);
         p.setXPathModels(xpath.makeXPathModels({
             isValidNamespace: function (namespace) {
-                return replacements.hasOwnProperty('#' + namespace);
+                return _.has(replacements, '#' + namespace);
             },
             hashtagToXPath: function (hashtagExpr) {
-                if (replacements.hasOwnProperty(hashtagExpr)) {
+                if (_.has(replacements, hashtagExpr)) {
                     return replacements[hashtagExpr];
                 } else {
                     throw new Error("Invalid hashtag " + hashtagExpr);
                 }
             },
-            toHashtag: function (xpath_) {
+            toHashtag: function (xpath_) {              // eslint-disable-line no-unused-vars
                 throw new Error("toHashtag not implemented");
             },
         }));
@@ -42,5 +43,5 @@ const XPATH_CONFIG = (function () {
 }());
 
 export default {
-    XPATH_CONFIG: XPATH_CONFIG
+    XPATH_CONFIG: XPATH_CONFIG,
 };

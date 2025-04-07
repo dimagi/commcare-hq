@@ -15,8 +15,8 @@ hqDefine("app_manager/js/app_manager_media", [
         /* This interfaces the media reference for a form or module menu
         (as an icon or image) with the upload manager.*/
         let self = {
-                isDefaultLanguage: initialPageData.get('current_language') === initialPageData.get('default_language'),
-            };
+            isDefaultLanguage: initialPageData.get('current_language') === initialPageData.get('default_language'),
+        };
 
         self.trackGoogleEvent = function () {
             google.track.event(...arguments);

@@ -1,20 +1,20 @@
 hqDefine("app_manager/js/settings/commcare_settings", [
-     "jquery",
-     "knockout",
-     "underscore",
-     "app_manager/js/app_manager",
-     "app_manager/js/section_changer",
-     "hqwebapp/js/bootstrap3/main",
-     "app_manager/js/settings/app_logos",
- ], function (
-     $,
-     ko,
-     _,
-     appManager,
-     sectionChanger,
-     main,
-     appLogos,
- ) {
+    "jquery",
+    "knockout",
+    "underscore",
+    "app_manager/js/app_manager",
+    "app_manager/js/section_changer",
+    "hqwebapp/js/bootstrap3/main",
+    "app_manager/js/settings/app_logos",
+], function (
+    $,
+    ko,
+    _,
+    appManager,
+    sectionChanger,
+    main,
+    appLogos,
+) {
     function CommcareSettings(options) {
         var self = this;
         var initialValues = options.values;

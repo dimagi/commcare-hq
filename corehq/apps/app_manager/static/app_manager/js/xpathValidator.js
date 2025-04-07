@@ -1,5 +1,6 @@
 import $ from "jquery";
 import ko from "knockout";
+import _ from "underscore";
 import xpathConfig from "app_manager/js/xpathConfig";
 
 ko.bindingHandlers.xpathValidator = (function () {
@@ -52,7 +53,7 @@ ko.bindingHandlers.xpathValidator = (function () {
             }
             var input = $(element).get(0);
             var xpathText, allowCaseHashtags, errorHtml;
-            if (value.hasOwnProperty('text')) {
+            if (_.has(value, 'text')) {
                 xpathText = value.text;
                 allowCaseHashtags = !!value.allowCaseHashtags;
                 errorHtml = value.errorHtml;
