@@ -240,7 +240,7 @@
                   <td data-bind="text: invitationDate"></td>
                   <td data-bind="text: responseDate"></td>
                   <td>
-                    <button type="button" class="btn btn-outline-primary btn-sm" data-bind="openModal: 'remove-project-space-modal'" title="{% trans_html_attr "Remove Project" %}">
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-bind="openModal: 'remove-project-space-modal'" title="{% html_attr _("Remove Project") %}">
                       <i class="fa-regular fa-trash-can"></i>
                     </button>
                   </td>
@@ -289,7 +289,7 @@
                     <span class="badge text-bg-secondary" data-bind="text: $data"></span>
                   </td>
                   <td>
-                    <button type="button" class="btn btn-outline-primary btn-sm" data-bind="visible: canDelete, openModal: 'remove-grant-modal'" title="{% trans_html_attr "Remove Grant" %}">
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-bind="visible: canDelete, openModal: 'remove-grant-modal'" title="{% html_attr _("Remove Grant") %}">
                       <i class="fa-regular fa-trash-can"></i>
                     </button>
                   </td>
@@ -330,7 +330,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h4 class="modal-title" id="remove-project-space-modal-title">{% trans "Remove Project Space" %}</h4>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% html_attr _("Close") %}"></button>
         </div>
         <div class="modal-body">
           <div class='alert alert-warning'>
@@ -361,7 +361,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h4 class="modal-title" id="add-project-space-modal-title">{% trans "Invite Project Spaces" %}</h4>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% html_attr _("Close") %}"></button>
         </div>
         <div class="modal-body">
           <div class="alert alert-info" data-bind="visible: availableInviteDomains().length">
@@ -382,9 +382,9 @@
               selectedOptions: inviteDomains,
               multiselect: {
                 properties: {
-                  selectableHeaderTitle: '{% trans_html_attr "Available" %}',
-                  selectedHeaderTitle: '{% trans_html_attr "Selected" %}',
-                  searchItemTitle: '{% trans_html_attr "Search" %}',
+                  selectableHeaderTitle: '{% html_attr _("Available") %}',
+                  selectedHeaderTitle: '{% html_attr _("Selected") %}',
+                  searchItemTitle: '{% html_attr _("Search") %}',
                 },
                 options: availableInviteDomains
               }"></select>
@@ -413,7 +413,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h4 class="modal-title" id="edit-schema-modal-title">{% trans "Edit Registry Case Types" %}</h4>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% html_attr _("Close") %}"></button>
         </div>
         <div class="modal-body">
           <div class='alert alert-info'>
@@ -455,7 +455,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h4 class="modal-title" id="create-grant-modal-title">{% trans "Grant access" %}</h4>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% html_attr _("Close") %}"></button>
         </div>
         <div class="modal-body">
           <div class="alert alert-info">
@@ -481,9 +481,9 @@
                 selectedOptions: grantDomains,
                 multiselect: {
                   properties: {
-                    selectableHeaderTitle: '{% trans_html_attr "Available" %}',
-                    selectedHeaderTitle: '{% trans_html_attr "Selected" %}',
-                    searchItemTitle: '{% trans_html_attr "Search" %}',
+                    selectableHeaderTitle: '{% html_attr _("Available") %}',
+                    selectedHeaderTitle: '{% html_attr _("Selected") %}',
+                    searchItemTitle: '{% html_attr _("Search") %}',
                   },
                   options: availableGrantDomains
                 }"></select>
@@ -507,7 +507,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h4 class="modal-title" id="remove-grant-modal-title">{% trans "Remove Grant" %}</h4>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% html_attr _("Close") %}"></button>
         </div>
         <div class="modal-body">
           {% blocktrans trimmed %}
@@ -538,7 +538,7 @@
             <strong data-bind="text: name"></strong>?
             <small>{% trans "Permanent Action" %}</small>
           </h4>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% html_attr _("Close") %}"></button>
         </div>
         <form action="{% url "delete_registry" domain registry.slug %}"
                 method="post"

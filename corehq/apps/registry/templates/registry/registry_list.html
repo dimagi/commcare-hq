@@ -60,7 +60,7 @@
               {% trans "Owner" %}
               <span class="badge" data-bind="
                 class: is_active() ? 'label-success-light' : 'label-warning-light',
-                attr: {'title': is_active() ? '{% trans_html_attr "Active" %}' : '{% trans_html_attr "Inactive" %}'}
+                attr: {'title': is_active() ? '{% html_attr _("Active" %}' : '{% html_attr _("Inactive")) %}'}
               ">
                 <i class="fa" data-bind="class: is_active() ? 'fa-play' : 'fa-pause'"></i>
               </span>
@@ -99,7 +99,7 @@
               <i class="fa-regular fa-user"></i>
               <span data-bind="text: statusText"></span>
               <span class="badge label-default-light" data-bind="
-                attr: {'title': is_active() ? '{% trans_html_attr "Active" %}' : '{% trans_html_attr "Inactive" %}'}
+                attr: {'title': is_active() ? '{% html_attr _("Active" %}' : '{% html_attr _("Inactive")) %}'}
               ">
                 <i class="fa" data-bind="class: is_active() ? 'fa-play' : 'fa-pause'"></i>
               </span>
@@ -142,7 +142,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h4 class="modal-title" id="accept-invitation-modal-title">{% trans "Accept the invitation?" %}</h4>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% html_attr _("Close") %}"></button>
         </div>
         <div class="modal-body">
           <p>
@@ -166,7 +166,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h4 class="modal-title" id="create-registry-modal-title">{% trans "Create a new Data Registry" %}</h4>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% html_attr _("Close") %}"></button>
         </div>
         <form class="form-horizontal"
                 style="margin: 0; padding: 0"
