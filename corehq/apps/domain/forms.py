@@ -242,7 +242,7 @@ class IPAccessConfigForm(forms.Form):
     )
 
     ip_denylist = forms.CharField(
-        label="Blacklisted IPs",
+        label="Denied IPs",
         required=False,
         help_text='IPs that will be denied access to your project, regardless of country of origin.',
     )
@@ -280,7 +280,7 @@ class IPAccessConfigForm(forms.Form):
 
         # Ensure an IP isn't in both lists
         if (allow_list or deny_list) and set(allow_list).intersection(set(deny_list)):
-            raise ValidationError(_("There are IP addresses in both the Allowed and Blacklisted lists. "
+            raise ValidationError(_("There are IP addresses in both the Allowed and Denied lists. "
                                     "Please ensure an IP address is only in one list at a time."))
 
         # Ensure inputs are valid IPs, checks both IPv4 and IPv6

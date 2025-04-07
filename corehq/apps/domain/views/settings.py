@@ -63,7 +63,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
 from corehq.apps.users.decorators import require_can_manage_domain_alerts
 from corehq.apps.users.models import CouchUser
-from corehq.toggles import NAMESPACE_DOMAIN, IP_ACCESS_CONTROLS
+from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.toggles.models import Toggle
 from corehq.util.timezones.conversions import UserTime, ServerTime
 
@@ -273,25 +273,24 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
+@method_decorator([
+    domain_admin_required,
+    use_bootstrap5,
+    toggles.IP_ACCESS_CONTROLS.required_decorator(),
+], name='dispatch')
 class EditIPAccessConfigView(BaseProjectSettingsView):
     template_name = 'domain/admin/ip_access_config.html'
     urlname = 'ip_access_config'
     page_title = gettext_lazy("IP Access")
 
-    @method_decorator(always_allow_project_access)
-    @method_decorator(login_and_domain_required)
-    @use_bootstrap5
     def dispatch(self, *args, **kwargs):
-        if IP_ACCESS_CONTROLS.enabled(self.domain):
-            return super().dispatch(*args, **kwargs)
-        else:
-            raise Http404()
+        return super().dispatch(*args, **kwargs)
 
     @property
     @memoized
     def form(self):
         initial = {}
-        domain_config = self.get_ip_access_config
+        domain_config = self.ip_access_config
         if domain_config:
             display_spacer = ", "
             initial.update({
@@ -305,8 +304,8 @@ class EditIPAccessConfigView(BaseProjectSettingsView):
             return IPAccessConfigForm(self.request.POST, initial=initial)
         return IPAccessConfigForm(initial=initial)
 
-    @property
-    def get_ip_access_config(self):
+    @cached_property
+    def ip_access_config(self):
         try:
             return IPAccessConfig.objects.get(domain=self.domain)
         except IPAccessConfig.DoesNotExist:
@@ -320,7 +319,7 @@ class EditIPAccessConfigView(BaseProjectSettingsView):
 
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
-            domain_config = self.get_ip_access_config
+            domain_config = self.ip_access_config
             should_save = True
             if not domain_config:
                 should_save = False
@@ -328,13 +327,14 @@ class EditIPAccessConfigView(BaseProjectSettingsView):
                 domain_config.domain = self.domain
 
             for attr, value in self.form.cleaned_data.items():
-                if value:
+                if value != getattr(domain_config, attr):
                     should_save = True
                     setattr(domain_config, attr, value)
 
             if should_save:
                 domain_config.save()
                 messages.success(request, _("Your IP Access settings have been saved!"))
+                return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 
 
