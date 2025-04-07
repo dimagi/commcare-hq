@@ -103,7 +103,7 @@
 
     <div class="datagrid-save">
       <feedback data-apply-bindings="false"
-                params="featureName: '{% trans_html_attr 'Explore Case Data' %}'"></feedback>
+                params="featureName: '{% html_attr _('Explore Case Data') %}'"></feedback>
       <button type="button"
               data-bind="click: exportData"
               class="btn btn-default">
@@ -244,7 +244,7 @@
                 params="goToPage: $root.data.goToPage,
                         slug: 'datagrid',
                         perPage: $root.data.limit,
-                        itemsTextTemplate: '{% trans_html_attr 'Showing <%- firstItem %> to <%- lastItem %> of <%- maxItems %> cases' %}',
+                        itemsTextTemplate: '{% html_attr _('Showing <%- firstItem %> to <%- lastItem %> of <%- maxItems %> cases') %}',
                         totalItems: $root.data.totalRecords"></pagination>
 
     <div class="modal fade"
@@ -278,7 +278,7 @@
                           class="form-control"
                           data-bind="value: name,
                                      select2: {
-                                       placeholder: '{% trans_html_attr "Enter Case Property" %}',
+                                       placeholder: '{% html_attr _("Enter Case Property") %}',
                                        delay: 250,
                                        allowClear: true,
                                        tags: true,
@@ -296,7 +296,7 @@
                 <div class="col-xs-9">
                   <input type="text"
                          class="form-control"
-                         placeholder="{% trans_html_attr "Title" %}"
+                         placeholder="{% html_attr _("Title") %}"
                          data-bind="textInput: title,
                                     attr: {
                                       placeholder: titlePlaceholder,
