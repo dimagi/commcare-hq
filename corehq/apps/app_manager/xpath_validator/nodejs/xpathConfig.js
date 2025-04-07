@@ -1,3 +1,4 @@
+/* globals exports, require */
 if (typeof require !== 'undefined' && typeof exports !== 'undefined') {
     var parser = require('xpath/src/parser');
     var xpath = require('xpath/dist/js-xpath');
