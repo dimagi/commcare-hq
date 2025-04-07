@@ -35,8 +35,8 @@
           {% if not data_source_table_exists %}
             <span
               class="hq-help-template"
-              data-title="{% trans_html_attr 'Preview Unavailable' %}"
-              data-content="{% trans_html_attr 'Preview unavailable until the data source table has been created.' %}"
+              data-title="{% html_attr _('Preview Unavailable') %}"
+              data-content="{% html_attr _('Preview unavailable until the data source table has been created.') %}"
               data-placement="left"
             >
             </span>
@@ -59,8 +59,8 @@
           {% if not data_source_table_exists %}
             <span
               class="hq-help-template"
-              data-title="{% trans_html_attr 'Preview Unavailable' %}"
-              data-content="{% trans_html_attr 'Preview unavailable until the data source table has been created.' %}"
+              data-title="{% html_attr _('Preview Unavailable') %}"
+              data-content="{% html_attr _('Preview unavailable until the data source table has been created.') %}"
               data-placement="left"
             >
             </span>
@@ -92,16 +92,16 @@
               {# janky: can't use a tooltip on a disabled button, so instead add a help icon and force extra space (above) so it's clear which button this is for. Todo: After bootstrap 4 upgrade there is a fix https://getbootstrap.com/docs/4.4/components/tooltips/#disabled-elements #}
               <span
                 class="hq-help-template"
-                data-title="{% trans_html_attr "Rebuild Unavailable" %}"
-                data-content="{% trans_html_attr "Fully rebuilding has been disabled for this data source. Please use the in place rebuild if necessary." %}"
+                data-title="{% html_attr _("Rebuild Unavailable") %}"
+                data-content="{% html_attr _("Fully rebuilding has been disabled for this data source. Please use the in place rebuild if necessary.") %}"
                 data-placement="left"
               >
               </span>
             {% elif data_source.rebuild_awaiting_or_in_progress %}
               <span
                 class="hq-help-template"
-                data-title="{% trans_html_attr "Rebuild Unavailable" %}"
-                data-content="{% trans_html_attr "Rebuilding is not available until CommCare HQ finishes building / rebuilding." %}"
+                data-title="{% html_attr _("Rebuild Unavailable") %}"
+                data-content="{% html_attr _("Rebuilding is not available until CommCare HQ finishes building / rebuilding.") %}"
                 data-placement="left"
               >
               </span>

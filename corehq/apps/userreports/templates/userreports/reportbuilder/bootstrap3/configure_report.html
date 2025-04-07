@@ -285,10 +285,10 @@
                 <select-toggle data-apply-bindings="false"
                                params="options: [{
                                                       id: 'bar',
-                                                      text: '{% trans_html_attr "Bar" %}',
+                                                      text: '{% html_attr _("Bar") %}',
                                                   }, {
                                                       id: 'pie',
-                                                      text: '{% trans_html_attr "Pie" %}',
+                                                      text: '{% html_attr _("Pie") %}',
                                                   }],
                                                   value: selectedChart"></select-toggle>
               </div>
