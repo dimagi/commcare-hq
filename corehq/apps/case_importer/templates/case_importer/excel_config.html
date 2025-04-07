@@ -101,10 +101,10 @@
                                            name: 'search_field',
                                            options: [{
                                                id: 'case_id',
-                                               text: '{% trans_html_attr 'Case ID' %}',
+                                               text: '{% html_attr _('Case ID') %}',
                                            }, {
                                                id: 'external_id',
-                                               text: '{% trans_html_attr 'External ID' %}',
+                                               text: '{% html_attr _('External ID') %}',
                                            }],
                                            disabled: {{ is_bulk_import|JSON }}"></select-toggle>
         </div>

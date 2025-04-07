@@ -11,7 +11,7 @@
                   params="
                     value: query,
                     action: function() { goToPage(1); },
-                    placeholder: '{% trans_html_attr "Search by filename or comment" %}'
+                    placeholder: '{% html_attr _("Search by filename or comment") %}'
                   "></search-box>
     </div>
   </h2>
@@ -51,7 +51,7 @@
         {% trans "Waiting to start" %}
         <!--/ko-->
         <!--ko if: task_status().state == $root.states.STARTED-->
-        <div class="progress" role="progressbar" aria-label="{% trans_html_attr "Upload progress" %}" aria-valuemin="0" aria-valuemax="100">
+        <div class="progress" role="progressbar" aria-label="{% html_attr _("Upload progress") %}" aria-valuemin="0" aria-valuemax="100">
           <div class="progress-bar bg-info"
                data-bind="attr: {style: 'width: ' + task_status().progress.percent + '%;'}">
                       <span><span data-bind="text: task_status().progress.percent"></span>%
@@ -88,8 +88,8 @@
         <a style="cursor: pointer" data-bind="
                       text: upload_file_name,
                       popover: {
-                          title: '{% trans_html_attr 'You may not download this file yourself' %}',
-                          content: '{% trans_html_attr 'Please ask an administrator or the user who uploaded the file for their help' %}',
+                          title: '{% html_attr _('You may not download this file yourself') %}',
+                          content: '{% html_attr _('Please ask an administrator or the user who uploaded the file for their help') %}',
                           placement: 'top'
                       }
                   "></a>

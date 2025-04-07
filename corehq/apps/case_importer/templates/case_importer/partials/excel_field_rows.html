@@ -12,7 +12,7 @@
   <td class="col-md-3">
     <select class="form-control excel_field" name="excel_field[]" data-bind="
         options: $root.excelFields,
-        optionsCaption: '{% trans_html_attr 'Select field from excel' %}',
+        optionsCaption: '{% html_attr _('Select field from excel') %}',
         value: excelField
     "></select>
   </td>
@@ -33,7 +33,7 @@
     <select class="form-control case_field" name="case_field[]" data-bind="
         visible: !isCustom(),
         options: $root.caseFieldSpecsInMenu,
-        optionsCaption: '{% trans_html_attr 'Select property name' %}',
+        optionsCaption: '{% html_attr _('Select property name') %}',
         optionsText: 'field',
         optionsValue: 'field',
         value: selectedCaseFieldOrBlank

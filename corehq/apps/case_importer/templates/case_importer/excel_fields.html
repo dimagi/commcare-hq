@@ -38,7 +38,7 @@
       {% if not is_bulk_import %}
       <legend>
         {% trans "Match Excel Columns to Case Properties" %}
-        <button type="button" class="btn btn-outline-primary float-end" id="autofill" title="{% trans_html_attr 'Reset file-to-case-property matching to default' %}">
+        <button type="button" class="btn btn-outline-primary float-end" id="autofill" title="{% html_attr _('Reset file-to-case-property matching to default') %}">
           {% trans "Reset to default matching" %}
         </button>
       </legend>
