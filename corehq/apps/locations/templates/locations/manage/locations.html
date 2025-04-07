@@ -104,7 +104,7 @@
                   id="location_search_select"
                   data-bind="value: selected_location_id"
                   class="form-select float-start"
-                  placeholder="{% trans_html_attr "Specify location" %}"
+                  placeholder="{% html_attr _("Specify location") %}"
                   name="location_search"></select>
 
           <span class="help-block">
@@ -114,7 +114,7 @@
 
         <div class="col-sm-1 col-lg-1 col-xl-1">
           <button type="button" class="btn btn-outline-primary"
-                   aria-label="{% trans_html_attr 'Clear location selection' %}"
+                   aria-label="{% html_attr _('Clear location selection') %}"
                    data-bind="visible: selected_location_id(), click: clearLocationSelection">
             <i class="fa fa-times" aria-hidden="true"></i>
           </button>
