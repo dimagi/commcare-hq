@@ -216,7 +216,7 @@
                 Delete Group "{{group_name}}"?
               {% endblocktrans %}
             </h4>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% html_attr _("Close") %}"></button>
           </div>
           <form name="delete_group" action="{% url "delete_group" domain group.get_id %}" method="post">
             {% csrf_token %}
@@ -248,7 +248,7 @@
                 Edit Settings for Group "{{ group_name }}"
               {% endblocktrans %}
             </h4>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% html_attr _("Close") %}"></button>
           </div>
           <form id="edit-group-settings" class="form form-horizontal" method="post" action="{% url "edit_group" domain group.get_id %}">
             {% csrf_token %}
@@ -264,11 +264,11 @@
                                        options: [
                                          {
                                            id: 'true',
-                                           text: '{% trans_html_attr 'On' %}',
+                                           text: '{% html_attr _('On') %}',
                                          },
                                          {
                                            id: 'false',
-                                           text: '{% trans_html_attr 'Off' %}',
+                                           text: '{% html_attr _('Off') %}',
                                          },
                                        ],
                                        {% if not is_case_sharing_enabled %}disabled: true,{% endif %}
@@ -288,10 +288,10 @@
                                        id: 'group-reporting-input',
                                        options: [{
                                            id: 'true',
-                                           text: '{% trans_html_attr 'On' %}',
+                                           text: '{% html_attr _('On') %}',
                                          }, {
                                            id: 'false',
-                                           text: '{% trans_html_attr 'Off' %}',
+                                           text: '{% html_attr _('Off') %}',
                                          }],
                                        value: '{% if group.reporting %}true{% else %}false{% endif %}'"></select-toggle>
                 <p class="help-block">{% trans "Indicate whether this group's name should appear in the group filter for reports." %}</p>
@@ -318,7 +318,7 @@
                 Change Group Type for "{{ group_name }}" to Reporting Group
               {% endblocktrans %}
             </h4>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% html_attr _("Close") %}"></button>
           </div>
           <form id="edit-group-settings"
                 class="form form-horizontal"
