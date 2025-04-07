@@ -103,8 +103,18 @@ class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataC
         """
         Selects all records in the current filtered view.
         """
-        self.session.select_all_records_in_queryset()
-        return self.get(request, *args, **kwargs)
+        response = self.get(request, *args, **kwargs)
+        if self.session.can_select_all(
+            table_num_records=response.context_data['paginator'].count
+        ):
+            self.session.select_all_records_in_queryset()
+            return response
+        response['HX-Trigger'] = json.dumps({
+            'showDataCleaningModal': {
+                'target': '#select-all-not-possible-modal',
+            },
+        })
+        return response
 
 
 class CaseCleaningTasksTableView(BaseDataCleaningTableView):

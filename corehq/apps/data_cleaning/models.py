@@ -16,6 +16,7 @@ from corehq.apps.data_cleaning.exceptions import (
 from corehq.apps.es import CaseSearchES
 
 BULK_OPERATION_CHUNK_SIZE = 1000
+MAX_RECORDED_LIMIT = 100000
 
 
 class BulkEditSessionType:
@@ -280,6 +281,41 @@ class BulkEditSession(models.Model):
         Select all records in the ESQuery queryset for this session.
         """
         self._apply_operation_on_queryset(lambda doc_ids: self.deselect_multiple_records(doc_ids))
+
+    def _get_num_unrecorded(self):
+        """
+        Return the number of records in the current queryset that do not have an
+        associated `BulkEditRecord` object.
+        :return: int
+        """
+        num_unrecorded = 0
+        for doc_ids in chunked(
+            self.get_queryset().scroll_ids(), BULK_OPERATION_CHUNK_SIZE, list
+        ):
+            num_unrecorded += len(BulkEditRecord.get_unrecorded_doc_ids(self, doc_ids))
+        return num_unrecorded
+
+    def can_select_all(self, table_num_records=None):
+        """
+        Check that, if all records are selected in the queryset,
+        the number of `BulkEditRecords` records will not exceed `MAX_RECORDED_LIMIT`.
+
+        Note: This operation might take a long time if the queryset is large.
+
+        :param table_num_records: int
+            The value from `table.paginator.count` in a `DataCleaningTableView`.
+            Specifying this can help avoid a potentially expensive query.
+
+        :return: bool - True if select_all_records_in_queryset() can be called without exceeding the limit
+        """
+        if table_num_records and table_num_records > MAX_RECORDED_LIMIT:
+            return False
+
+        num_records = self.records.count()
+        if table_num_records and table_num_records + num_records <= MAX_RECORDED_LIMIT:
+            return True
+        # the most potentially expensive query is below:
+        return num_records + self._get_num_unrecorded() <= MAX_RECORDED_LIMIT
 
     def update_result(self, record_count, form_id=None):
         result = self.result or {}
