@@ -6,7 +6,7 @@ from django.urls import reverse
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.zapier.consts import CASE_TYPE_REPEATER_CLASS_MAP, EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
-from corehq.apps.zapier.tests.test_utils import bootrap_domain_for_zapier
+from corehq.apps.zapier.tests.test_utils import bootstrap_domain_for_zapier
 from corehq.apps.zapier.views import SubscribeView, UnsubscribeView
 from corehq.motech.repeaters.models import CreateCaseRepeater, FormRepeater
 
@@ -77,7 +77,7 @@ class TestZapierIntegration(TestCase):
     def setUpClass(cls):
         super(TestZapierIntegration, cls).setUpClass()
         cls.domain = TEST_DOMAIN
-        cls.domain_object, cls.web_user, cls.api_key = bootrap_domain_for_zapier(cls.domain)
+        cls.domain_object, cls.web_user, cls.api_key = bootstrap_domain_for_zapier(cls.domain)
         cls.application = Application.new_app(cls.domain, 'Test App')
         cls.application.save()
         module = cls.application.add_module(Module.new_module("Module 1", "en"))
