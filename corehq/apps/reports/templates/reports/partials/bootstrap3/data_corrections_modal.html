@@ -30,7 +30,7 @@
                       params="value: query,
                               action: filter,
                               immediate: true,
-                              placeholder: '{% if instance %}{% trans_html_attr "Filter questions" %}{% else %}{% trans_html_attr "Filter properties" %}{% endif %}'"></search-box>
+                              placeholder: '{% if instance %}{% html_attr _("Filter questions" %}{% else %}{% html_attr _("Filter properties" %}{% endif)) %}'"></search-box>
         </div>
         <h4 class="modal-title">
           {% if instance %}{# This is a form, not a case #}
