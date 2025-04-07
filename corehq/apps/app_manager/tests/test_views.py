@@ -718,7 +718,7 @@ class TestViewGeneric(ViewsBase):
         'langs', 'details', 'None', 'CUSTOM_LOGO_URL', 'selected_form', 'slug', 'env', 'False', 'id',
         'ANALYTICS_IDS', 'STATIC_URL', 'selected_module', 'role_version', 'EULA_COMPLIANCE', 'sentry',
         'case_list_form_not_allowed_reasons', 'child_module_enabled', 'block', 'IS_ANALYTICS_ENVIRONMENT',
-        'formats_supporting_case_list_optimizations',
+        'formats_supporting_case_list_optimizations', 'description', 'heading', 'module_type', 'icon_class',
     }
 
     expected_keys_form = {
@@ -747,7 +747,7 @@ class TestViewGeneric(ViewsBase):
         'secure_cookies', 'langs', 'None', 'CUSTOM_LOGO_URL', 'allow_form_copy', 'selected_form', 'slug',
         'env', 'False', 'ANALYTICS_IDS', 'STATIC_URL', 'selected_module', 'role_version', 'is_usercase_in_use',
         'module_loads_registry_case', 'EULA_COMPLIANCE', 'sentry', 'show_shadow_modules', 'show_custom_ref',
-        'block', 'IS_ANALYTICS_ENVIRONMENT',
+        'block', 'IS_ANALYTICS_ENVIRONMENT', 'description', 'heading', 'module_type', 'icon_class',
     }
 
 
