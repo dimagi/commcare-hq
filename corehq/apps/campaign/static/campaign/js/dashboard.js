@@ -58,7 +58,7 @@ $(function () {
                 value: gaugeWidgetConfig.value,
                 maxValue: gaugeWidgetConfig.max_value,
                 majorTicks: gaugeWidgetConfig.major_ticks,
-                valueDec: 0
+                valueDec: 0,
             }).draw();
         }
     }
@@ -98,7 +98,7 @@ function tabSwitch(e) {
                 value: gaugeWidgetConfig.value,
                 maxValue: gaugeWidgetConfig.max_value,
                 majorTicks: gaugeWidgetConfig.major_ticks,
-                valueDec: 0
+                valueDec: 0,
             }).draw();
         }
     }
@@ -216,7 +216,7 @@ var MapWidget = function (mapWidgetConfig) {
     }
 };
 
-var ReportWidget = function (config) {
+var ReportWidget = function (config) {  /* eslint-disable-line no-unused-vars */
     let self = this;
 
     self.init = function () {
