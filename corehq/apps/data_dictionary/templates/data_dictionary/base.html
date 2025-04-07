@@ -156,7 +156,7 @@
           <select id="fhir-resource-types"
                   class="form-control"
                   data-bind="select2: fhirResourceTypes,
-                             optionsCaption: '{% trans_html_attr 'Select a resource type' %}',
+                             optionsCaption: '{% html_attr _('Select a resource type') %}',
                              value: fhirResourceType,
                              disable: removefhirResourceType,
                             ">
@@ -267,10 +267,10 @@
             {% if not request.is_view_only %}
             <div class="row-item-small">
               <!-- ko if: name() !== '' && !toBeDeprecated() -->
-              <button title="{% trans_html_attr 'Deprecate Group' %}"  data-bind="click: deprecateGroup" class="fa fa-archive"></button>
+              <button title="{% html_attr _('Deprecate Group') %}"  data-bind="click: deprecateGroup" class="fa fa-archive"></button>
               <!-- /ko -->
               <!-- ko if: name() !== '' && toBeDeprecated() -->
-              <button title="{% trans_html_attr 'Restore Group' %}" data-bind="click: restoreGroup" class="fa fa-undo"></button>
+              <button title="{% html_attr _('Restore Group') %}" data-bind="click: restoreGroup" class="fa fa-undo"></button>
               <!-- /ko -->
             </div>
             <div class="row-item-small"></div>
@@ -326,10 +326,10 @@
               <div class="row-item fhir-path">
                 <input class="form-control" data-bind="value: $data.fhirResourcePropPath, disable: removeFHIRResourcePropertyPath"></input>
                 <!-- ko if: fhirResourcePropPath() && !removeFHIRResourcePropertyPath() -->
-                <button title="{% trans_html_attr 'Remove Path' %}" data-bind="click: removePath" class="fa-solid fa-xmark"></button>
+                <button title="{% html_attr _('Remove Path') %}" data-bind="click: removePath" class="fa-solid fa-xmark"></button>
                 <!-- /ko -->
                 <!-- ko if: removeFHIRResourcePropertyPath() -->
-                <button title="{% trans_html_attr 'Restore Path' %}" data-bind="click: restorePath" class="fa fa-undo"></button>
+                <button title="{% html_attr _('Restore Path') %}" data-bind="click: restorePath" class="fa fa-undo"></button>
                 <!-- /ko -->
               </div>
             {% endif %}
@@ -345,7 +345,7 @@
             {% endif %}
             {% if not request.is_view_only %}
               <div class="row-item-small m-auto">
-                <button title="{% trans_html_attr 'Delete Property' %}"
+                <button title="{% html_attr _('Delete Property') %}"
                         data-bind="click: confirmDeleteProperty, visible: isSafeToDelete"
                         class="btn btn-danger">
                   <i class="fa fa-trash"></i>
@@ -354,13 +354,13 @@
               </div>
               <div class="row-item-small m-auto">
                 <!-- ko if: !deprecated() -->
-                <button id="gtm-deprecate-case-property" title="{% trans_html_attr 'Deprecate Property' %}"  data-bind="click: deprecateProperty" class="btn btn-default">
+                <button id="gtm-deprecate-case-property" title="{% html_attr _('Deprecate Property') %}"  data-bind="click: deprecateProperty" class="btn btn-default">
                   <i class="fa fa-archive"></i>
                   {% trans 'Deprecate' %}
                 </button>
                 <!-- /ko -->
                 <!-- ko if: deprecated() -->
-                <button title="{% trans_html_attr 'Restore Property' %}" data-bind="click: restoreProperty" class="btn btn-default">
+                <button title="{% html_attr _('Restore Property') %}" data-bind="click: restoreProperty" class="btn btn-default">
                   <i class="fa fa-undo"></i>
                   {% trans 'Restore' %}
                 </button>
