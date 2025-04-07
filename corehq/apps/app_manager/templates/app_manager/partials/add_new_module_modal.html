@@ -29,25 +29,25 @@
       <div class="modal-body">
         <!-- TODO: Use the b5 flexbox utilities when migrating to bootstrap 5 -->
         <div class="new-module-modal-flex-container">
-          {% include 'app_manager/partials/module_option_button.html' with module_type="survey" heading="Surveys" icon_class="fa-regular fa-file" description="Collect data once" %}
-          {% include 'app_manager/partials/module_option_button.html' with module_type="case" heading="Case List" icon_class="fa-solid fa-list-check" description="Track items over time" %}
+          {% include 'app_manager/partials/module_options/module_option_survey.html' with module_type="survey" icon_class="fa-regular fa-file" %}
+          {% include 'app_manager/partials/module_options/module_option_case.html' with module_type="case" icon_class="fa-solid fa-list-check" %}
           {% if show_biometric %}
-            {% include 'app_manager/partials/module_option_button.html' with module_type="biometrics" heading="Biometrics" icon_class="fcc fcc-app-biometrics" description="Identify clients by fingerprint" %}
+            {% include 'app_manager/partials/module_options/module_option_biometrics.html' with module_type="biometrics" icon_class="fcc fcc-app-biometrics" %}
           {% endif %}
           {% if show_advanced %}
-            {% include 'app_manager/partials/module_option_button.html' with module_type="advanced" heading="Advanced Menu" icon_class="fa fa-flask" description="Complex case management" %}
+            {% include 'app_manager/partials/module_options/module_option_advanced.html' with module_type="advanced" icon_class="fa fa-flask" %}
           {% endif %}
           {% if show_report_modules %}
-            {% include 'app_manager/partials/module_option_button.html' with module_type="report" heading="Report Menu" icon_class="fa-regular fa-chart-bar" description="Worker performance" %}
+            {% include 'app_manager/partials/module_options/module_option_report.html' with module_type="report" icon_class="fa-regular fa-chart-bar" %}
           {% endif %}
           {% if show_shadow_modules %}
-            {% include 'app_manager/partials/module_option_button.html' with module_type="shadow" heading="Shadow Menu" icon_class="fa-regular fa-moon" description="Mimic another menu" %}
+            {% include 'app_manager/partials/module_options/module_option_shadow.html' with module_type="shadow" icon_class="fa-regular fa-moon" %}
           {% endif %}
           {% if show_shadow_module_v1 %}
-            {% include 'app_manager/partials/module_option_button.html' with module_type="shadow-v1" heading="Shadow Menu V1" icon_class="fa-regular fa-moon" description="Old style shadow menu with deprecated child behaviour" %}
+            {% include 'app_manager/partials/module_options/module_option_shadow_v1.html' with module_type="shadow-v1" icon_class="fa-regular fa-moon" %}
           {% endif %}
           {% if show_training_modules %}
-            {% include 'app_manager/partials/module_option_button.html' with module_type="training" heading="Training" icon_class="fa fa-graduation-cap" description="Content for training users" %}
+            {% include 'app_manager/partials/module_options/module_option_training.html' with module_type="training" icon_class="fa fa-graduation-cap" %}
           {% endif %}
         </div>
       </div>
