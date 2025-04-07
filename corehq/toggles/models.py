@@ -1,6 +1,8 @@
 from datetime import datetime
 
 from couchdbkit import ResourceNotFound
+from django.contrib.postgres.fields import ArrayField
+from django.db import models
 
 from dimagi.ext.couchdbkit import (
     Document, DateTimeProperty, ListProperty, StringProperty
@@ -72,3 +74,24 @@ def generate_toggle_id(slug):
     # use the slug to build the ID to avoid needing couch views
     # and to make looking up in futon easier
     return '{prefix}-{slug}'.format(prefix=TOGGLE_ID_PREFIX, slug=slug)
+
+
+class ToggleAccessRestriction(models.Model):
+    """
+    Restricts access to the toggles under the tag name only to the enabled users.
+    """
+    tag_name = models.CharField(max_length=255, unique=True)
+    enabled_users = ArrayField(models.CharField(max_length=255), default=list, blank=True)
+
+    def add(self, username):
+        if username not in self.enabled_users:
+            self.enabled_users.append(username)
+            self.save()
+
+    def remove(self, username):
+        if username in self.enabled_users:
+            self.enabled_users.remove(username)
+            self.save()
+
+    def is_enabled(self, username):
+        return username in self.enabled_users
