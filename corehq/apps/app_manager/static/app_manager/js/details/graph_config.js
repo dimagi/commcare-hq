@@ -19,6 +19,7 @@ hqDefine("app_manager/js/details/graph_config", [
     "underscore",
     "hqwebapp/js/bootstrap3/main",
     "clipboard/dist/clipboard",
+    "hqwebapp/js/components/select_toggle",
 ], function (
     $,
     ko,
