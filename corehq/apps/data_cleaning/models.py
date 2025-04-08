@@ -896,6 +896,7 @@ class BulkEditRecord(models.Model):
         ).update(is_selected=True)
 
     @classmethod
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
     @transaction.atomic
     def deselect_multiple_records(cls, session, doc_ids):
         # update is_selected to False for all selected records that have changes
