@@ -16,6 +16,7 @@ hqDefine("app_manager/js/modules/module_view", [
     "hqwebapp/js/components/select_toggle",
     "hqwebapp/js/key-value-mapping",
     "app_manager/js/xpathValidator",
+    "commcarehq",
 ], function (
     $,
     ko,

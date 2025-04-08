@@ -23,6 +23,7 @@ hqDefine("app_manager/js/app_view", [
     "app_manager/js/custom_assertions",
     "hqwebapp/js/components/select_toggle",
     "hqwebapp/js/bootstrap3/knockout_bindings.ko",
+    "commcarehq",
 ], function (
     $,
     ko,
