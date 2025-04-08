@@ -223,6 +223,7 @@ class BulkEditSession(models.Model):
         """
         self._delete_and_update_order(self.filters, 'filter_id', filter_id)
 
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
     def remove_column(self, column_id):
         """
         Remove a BulkEditColumn from this session by its column_id,
@@ -230,7 +231,8 @@ class BulkEditSession(models.Model):
 
         :param column_id: UUID of the BulkEditColumn to remove
         """
-        self._delete_and_update_order(self.columns, 'column_id', column_id)
+        with transaction.atomic():
+            self._delete_and_update_order(self.columns, 'column_id', column_id)
 
     def get_queryset(self):
         query = CaseSearchES().domain(self.domain).case_type(self.identifier)
