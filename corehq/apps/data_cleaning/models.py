@@ -137,14 +137,16 @@ class BulkEditSession(models.Model):
             pinned_filter.save()
 
     def add_filter(self, prop_id, data_type, match_type, value=None):
-        BulkEditFilter.objects.create(
-            session=self,
-            index=self.filters.count(),
-            prop_id=prop_id,
-            data_type=data_type,
-            match_type=match_type,
-            value=value,
-        )
+        """
+        Add a filter to this session.
+
+        :param prop_id: string - The property ID (e.g., case property)
+        :param data_type: DataType - the data type of the property
+        :param data_type: FilterMatchType - the type of match to perform
+        :param value: string - The value to filter on
+        :return: The created BulkEditFilter
+        """
+        return BulkEditFilter.create_for_session(self, prop_id, data_type, match_type, value)
 
     def add_column(self, prop_id, label, data_type=None):
         """
@@ -559,6 +561,20 @@ class BulkEditFilter(models.Model):
 
     class Meta:
         ordering = ["index"]
+
+    @classmethod
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
+    def create_for_session(cls, session, prop_id, data_type, match_type, value=None):
+        index = session.filters.count()
+        return BulkEditFilter.objects.create(
+            session=session,
+            index=index,
+            prop_id=prop_id,
+            data_type=data_type,
+            match_type=match_type,
+            value=value,
+        )
 
     @property
     def is_editable_property(self):
