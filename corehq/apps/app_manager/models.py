@@ -3069,6 +3069,7 @@ class AdvancedModule(ModuleBase):
     case_details = SchemaProperty(DetailPair)
     product_details = SchemaProperty(DetailPair)
     case_list = SchemaProperty(CaseList)
+    show_case_list_optimization_options = BooleanProperty(default=False)
     has_schedule = BooleanProperty()
     schedule_phases = SchemaListProperty(SchedulePhase)
     get_schedule_phases = IndexedSchema.Getter('schedule_phases')
