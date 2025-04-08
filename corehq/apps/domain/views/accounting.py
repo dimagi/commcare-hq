@@ -993,7 +993,7 @@ class PlanViewBase(DomainAccountingSettings):
                 "$1000",
                 _("Unlock everything. Our most secure plan, built for managing connected systems across "
                   "locations and user profiles, featuring web apps, advanced security, and robust admin and data "
-                  "management tools. {num_users} users included.").format(num_users=250),
+                  "management tools. {num_users} users included.").format(num_users=500),
             ),
         ]
         if (
