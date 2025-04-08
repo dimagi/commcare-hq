@@ -13,6 +13,7 @@ from corehq.apps.data_cleaning.exceptions import (
     UnsupportedActionException,
     UnsupportedFilterValueException,
 )
+from corehq.apps.data_cleaning.utils.decorators import retry_on_integrity_error
 from corehq.apps.es import CaseSearchES
 
 BULK_OPERATION_CHUNK_SIZE = 1000
@@ -836,6 +837,7 @@ class BulkEditRecord(models.Model):
         return record
 
     @classmethod
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
     @transaction.atomic
     def select_multiple_records(cls, session, doc_ids):
         session.records.filter(
@@ -853,7 +855,9 @@ class BulkEditRecord(models.Model):
             cls(session=session, doc_id=doc_id, is_selected=True)
             for doc_id in missing_ids
         ]
-        cls.objects.bulk_create(new_records)
+        # using ignore_conflicts avoids IntegrityErrors if another
+        # process inserts them concurrently:
+        cls.objects.bulk_create(new_records, ignore_conflicts=True)
 
     @classmethod
     @transaction.atomic
