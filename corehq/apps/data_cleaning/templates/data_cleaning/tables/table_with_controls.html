@@ -29,7 +29,7 @@
             type="button"
             hx-post="{{ request.path_info }}{% querystring %}"
             hq-hx-action="clear_filters"
-            hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
+            hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}.table-container{% endif %}"
             hx-swap="outerHTML"
             hq-hx-loading="{{ table.loading_indicator_id }}"
             hx-disable-elt="this"
@@ -63,7 +63,7 @@
           :class="(numRecordsSelected > 0 && numRecordsSelected < totalRecords) || 'rounded-end'"
           hx-post="{{ request.path_info }}{% querystring %}"
           hq-hx-action="deselect_all"
-          hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
+          hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}.table-container{% endif %}"
           hx-swap="outerHTML"
           hq-hx-loading="{{ table.loading_indicator_id }}"
           hx-disable-elt="this"
@@ -71,21 +71,39 @@
           <i class="fa-solid fa-close"></i>
           <span class="visually-hidden">{% trans "Clear Selection" %}</span>
         </button>
-        <button
-          class="btn btn-outline-primary"
-          type="button"
-          x-show="numRecordsSelected > 0 && numRecordsSelected < totalRecords"
-          hx-post="{{ request.path_info }}{% querystring %}"
-          hq-hx-action="select_all"
-          hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
-          hx-swap="outerHTML"
-          hq-hx-loading="{{ table.loading_indicator_id }}"
-          hx-disable-elt="this"
-        >
-          {% trans "Select All" %} ({{ table.page.paginator.count }})
-        </button>
+        {% if table.page.paginator.count > table.bulk_action_warning_limit %}
+          <button
+            class="btn btn-outline-primary"
+            type="button"
+            data-bs-toggle="modal"
+            data-bs-target="#confirm-select-all-modal"
+            x-show="numRecordsSelected > 0 && numRecordsSelected < totalRecords"
+          >
+            {% trans "Select All" %} ({{ table.page.paginator.count }})
+          </button>
+        {% else %}
+          <button
+            class="btn btn-outline-primary"
+            type="button"
+            x-show="numRecordsSelected > 0 && numRecordsSelected < totalRecords"
+            hx-post="{{ request.path_info }}{% querystring %}"
+            hq-hx-action="select_all"
+            hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}.table-container{% endif %}"
+            hx-swap="outerHTML"
+            hq-hx-loading="{{ table.loading_indicator_id }}"
+            hx-disable-elt="this"
+          >
+            {% trans "Select All" %} ({{ table.page.paginator.count }})
+          </button>
+        {% endif %}
       </div>
     </div>
 
   </div>
+{% endblock %}
+
+{% block after_table %}
+  {{ block.super }}
+  {% include "data_cleaning/modals/confirm_select_all.html" with modal_id="confirm-select-all-modal" %}
+  {% include "data_cleaning/modals/select_all_not_possible.html" with modal_id="select-all-not-possible-modal" %}
 {% endblock %}

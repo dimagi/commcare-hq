@@ -5,6 +5,10 @@ from corehq.apps.data_cleaning.columns import (
     DataCleaningHtmxColumn,
     DataCleaningHtmxSelectionColumn,
 )
+from corehq.apps.data_cleaning.models import (
+    BULK_OPERATION_CHUNK_SIZE,
+    MAX_RECORDED_LIMIT,
+)
 from corehq.apps.data_cleaning.records import EditableCaseSearchElasticRecord
 from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
 from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
@@ -12,6 +16,8 @@ from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
 
 class CleanCaseTable(BaseHtmxTable, ElasticTable):
     record_class = EditableCaseSearchElasticRecord
+    bulk_action_warning_limit = BULK_OPERATION_CHUNK_SIZE
+    max_recorded_limit = MAX_RECORDED_LIMIT
 
     class Meta(BaseHtmxTable.Meta):
         template_name = "data_cleaning/tables/table_with_controls.html"
@@ -64,6 +70,13 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
         Return the number of selected records in the session.
         """
         return self.session.get_num_selected_records()
+
+    @property
+    def num_edited_records(self):
+        """
+        Return the number of edited records in the session.
+        """
+        return self.session.get_num_edited_records()
 
 
 class CaseCleaningTasksTable(BaseHtmxTable, tables.Table):
