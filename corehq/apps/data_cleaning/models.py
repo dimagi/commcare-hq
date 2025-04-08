@@ -854,7 +854,7 @@ class BulkEditRecord(models.Model):
         try:
             record = session.records.get(doc_id=doc_id)
         except cls.DoesNotExist:
-            return
+            return None
 
         if record.changes.count() > 0:
             record.is_selected = False
