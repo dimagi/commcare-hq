@@ -2163,6 +2163,10 @@ class InvoiceBase(models.Model):
     def is_wire(self):
         return False
 
+    @property
+    def can_pay_by_wire(self):
+        raise NotImplementedError()
+
     def get_domain(self):
         raise NotImplementedError()
 
@@ -2202,6 +2206,10 @@ class WireInvoice(InvoiceBase):
     @property
     def is_prepayment(self):
         return False
+
+    @property
+    def can_pay_by_wire(self):
+        return True
 
     def get_domain(self):
         return self.domain
@@ -2307,6 +2315,10 @@ class Invoice(InvoiceBase):
                 )
 
         return contact_emails
+
+    @property
+    def can_pay_by_wire(self):
+        return self.subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE
 
     @property
     def subtotal(self):
@@ -2429,6 +2441,10 @@ class CustomerInvoice(InvoiceBase):
     def get_contact_emails(self, include_domain_admins=False, filter_out_dimagi=False):
         # mimic the behavior of the regular Invoice for notification purposes
         return self.contact_emails
+
+    @property
+    def can_pay_by_wire(self):
+        return self.subscriptions.filter(plan_version__plan__edition=SoftwarePlanEdition.ENTERPRISE).exists()
 
     @property
     def subtotal(self):
@@ -2633,6 +2649,7 @@ class BillingRecordBase(models.Model):
             'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
             'accounts_email': settings.ACCOUNTS_EMAIL,
             'small_invoice_threshold': SMALL_INVOICE_THRESHOLD,
+            'can_pay_by_wire': self.invoice.can_pay_by_wire,
         }
         return context
 
@@ -2795,11 +2812,6 @@ class BillingRecord(BillingRecordBase):
         do_not_email_invoice = self.invoice.subscription.do_not_email_invoice
         return not (autogenerate or small_contracted or hidden or do_not_email_invoice)
 
-    @property
-    def can_pay_by_wire(self):
-        subscription = self.invoice.subscription
-        return subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE
-
     def is_email_throttled(self):
         month = self.invoice.date_start.month
         year = self.invoice.date_start.year
@@ -2827,7 +2839,6 @@ class BillingRecord(BillingRecordBase):
             'total_balance': total_balance,
             'is_total_balance_due': total_balance >= SMALL_INVOICE_THRESHOLD,
             'payment_status': payment_status,
-            'can_pay_by_wire': self.can_pay_by_wire,
         })
         if self.invoice.subscription.service_type == SubscriptionType.IMPLEMENTATION:
             from corehq.apps.accounting.dispatcher import (
@@ -3070,11 +3081,6 @@ class CustomerBillingRecord(BillingRecordBase):
     def should_send_email(self):
         return not self.invoice.is_hidden
 
-    @property
-    def can_pay_by_wire(self):
-        subscription = self.invoice.subscription
-        return subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE
-
     def email_context(self):
         from corehq.apps.enterprise.views import (
             EnterpriseBillingStatementsView,
@@ -3095,7 +3101,6 @@ class CustomerBillingRecord(BillingRecordBase):
             'payment_status': payment_status,
             'statements_url': absolute_reverse(
                 EnterpriseBillingStatementsView.urlname, args=[domain]),
-            'can_pay_by_wire': self.can_pay_by_wire,
         })
         if self.invoice.account.auto_pay_enabled:
             try:
@@ -3315,7 +3320,7 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
             is_customer=invoice.is_customer_invoice,
             is_prepayment=invoice.is_wire and invoice.is_prepayment,
             account_name=account_name,
-            can_pay_by_wire=self.can_pay_by_wire(invoice),
+            can_pay_by_wire=invoice.can_pay_by_wire,
         )
 
         if not invoice.is_wire:
@@ -3376,14 +3381,6 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
             'year': invoice.date_start.year,
             'month': invoice.date_start.month,
         }
-
-    @staticmethod
-    def can_pay_by_wire(invoice):
-        return (
-            invoice.is_wire
-            or (getattr(invoice, 'subscription', None)
-                and invoice.subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE)
-        )
 
     def get_data(self, invoice):
         with self.fetch_attachment(self.get_filename(invoice), stream=True) as fh:

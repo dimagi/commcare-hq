@@ -176,7 +176,7 @@ class InvoiceTemplate(object):
         self.is_customer = is_customer
         self.is_prepayment = is_prepayment
         self.account_name = account_name
-        self.can_pay_by_wire = is_wire or can_pay_by_wire
+        self.can_pay_by_wire = can_pay_by_wire
 
         self.items = []
 
