@@ -157,12 +157,17 @@ class DashboardView(
         return config
 
 
+# DashboardReportView is required until ConfigurableReportView uses
+# Bootstrap 5. This is so that the `get_ajax()` method returns report
+# data in DataTables 1.10 format for the campaign dashboard, and in
+# DataTables 1.9 format for UCRs. When UCRs use DataTables 1.10, then
+# this class can be dropped.
 @method_decorator(login_and_domain_required, name='dispatch')
 @method_decorator(toggles.CAMPAIGN_DASHBOARD.required_decorator(), name='dispatch')
-# Allows ConfigurableReportView.get_ajax() to work with Bootstrap 5:
 @method_decorator(use_bootstrap5, name='dispatch')
 class DashboardReportView(ConfigurableReportView):
-    # Set ConfigurableReportView.url to direct dashboard reports to this view:
+    # Set slug to overwrite ConfigurableReportView.slug so that
+    # ConfigurableReportView.url returns URL for DashboardReportView
     slug = 'dashboard_report'
     # Suppress "Export to Excel" button on filter panel:
     is_exportable = False
