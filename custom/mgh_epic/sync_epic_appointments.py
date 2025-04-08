@@ -7,11 +7,9 @@ import uuid
 from datetime import datetime
 from django.conf import settings
 
-from celery.schedules import crontab
 from jsonpath_ng import parse as parse_jsonpath
 from urllib.parse import urlencode
 
-from corehq.apps.celery import periodic_task
 from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 
@@ -310,12 +308,3 @@ def sync_all_appointments_domain(domain):
 
             if changes:
                 appointment_update_helper.update({'properties': case_properties_to_update})
-
-
-MGH_EPIC_DOMAINS = settings.CUSTOM_DOMAINS_BY_MODULE['custom.mgh_epic']
-
-
-@periodic_task(run_every=crontab(hour="*", minute=1), queue="background_queue")
-def sync_all_epic_appointments():
-    for domain in MGH_EPIC_DOMAINS:
-        sync_all_appointments_domain(domain)
