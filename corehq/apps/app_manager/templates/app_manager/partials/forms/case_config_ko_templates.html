@@ -234,6 +234,7 @@
           <!-- ko if: $data.type && $data.type() == "user-property" -->
             {% trans "User Case Property" %}
             <span
+                  style="position: absolute; margin-top: -2px"
                   data-bind="makeHqHelp: {
                     description: '{% blocktrans trimmed %}
                         User Case Properties allow you to store data about a web or mobile user. Saving a user
@@ -245,6 +246,7 @@
           <!-- ko if: !$data.type || $data.type() == "case-property" -->
             {% trans "Case Property" %}
             <span
+                  style="position: absolute; margin-top: -2px"
                   data-bind="makeHqHelp: {
                     description: '{% blocktrans trimmed %}
                         Saving a question as a case property makes it accessible and
