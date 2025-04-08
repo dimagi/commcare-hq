@@ -4,7 +4,7 @@ from celery.schedules import crontab
 
 from corehq.apps.celery import periodic_task
 
-import sync_all_appointments_domain
+from custom.mgh_epic.sync_epic_appointments import sync_all_appointments_domain
 
 MGH_EPIC_DOMAINS = settings.CUSTOM_DOMAINS_BY_MODULE['custom.mgh_epic']
 
@@ -13,4 +13,3 @@ MGH_EPIC_DOMAINS = settings.CUSTOM_DOMAINS_BY_MODULE['custom.mgh_epic']
 def sync_all_epic_appointments():
     for domain in MGH_EPIC_DOMAINS:
         sync_all_appointments_domain(domain)
-        
