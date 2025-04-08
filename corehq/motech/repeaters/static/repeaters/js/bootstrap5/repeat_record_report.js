@@ -5,7 +5,6 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
     'ace-builds/src-min-noconflict/ace',
     'ace-builds/src-min-noconflict/mode-json',
     'ace-builds/src-min-noconflict/mode-xml',
-    'repeaters/js/repeat_record_report_selects',
     'reports/js/bootstrap5/base',
     'reports/js/bootstrap5/tabular',
     'commcarehq',
@@ -14,11 +13,18 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
     initialPageData,
     ace,
 ) {
-    const selectAll = document.getElementById('select-all'),
-        selectPending = document.getElementById('select-pending'),
-        selectCancelled = document.getElementById('select-cancelled'),
+    const selectAllCheckbox = document.getElementById('select-all-checkbox'),
+        selectedPageInfo = document.getElementById('selected-page-info'),
+        selectedTableInfo = document.getElementById('selected-table-info'),
+        selectTableButton = document.getElementById('select-table-button'),
+        items = document.getElementsByName('record_ids'),
+        cancelButton = document.getElementById('cancel-button'),
+        requeueButton = document.getElementById('requeue-button'),
+        resendButton = document.getElementById('resend-button'),
         $popUp = $('#are-you-sure'),
         $confirmButton = $('#confirm-button');
+
+    var selectedEntireTable = false;
 
     $(function () {
         $('#report-content').on('click', '.toggle-next-attempt', function (e) {
@@ -110,41 +116,17 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
             }
         });
 
-        $('#report-content').on('click', '.resend-record-payload', function () {
-            const $btn = $(this),
-                recordId = $btn.data().recordId;
-            $btn.disableButton();
-
-            postResend($btn, {'record_id': recordId});
-        });
-
-        $('#resend-all-button').on('click', function () {
+        $('#resend-button').on('click', function () {
             setAction('resend');
             performAction('resend');
         });
 
-        $('#report-content').on('click', '.cancel-record-payload', function () {
-            const $btn = $(this),
-                recordId = $btn.data().recordId;
-            $btn.disableButton();
-
-            postOther($btn, {'record_id': recordId}, 'cancel');
-        });
-
-        $('#cancel-all-button').on('click', function () {
+        $('#cancel-button').on('click', function () {
             setAction('cancel');
             performAction('cancel');
         });
 
-        $('#report-content').on('click', '.requeue-record-payload', function () {
-            const $btn = $(this),
-                recordId = $btn.data().recordId;
-            $btn.disableButton();
-
-            postOther($btn, {'record_id': recordId}, 'requeue');
-        });
-
-        $('#requeue-all-button').on('click', function () {
+        $('#requeue-button').on('click', function () {
             setAction('requeue');
             performAction('requeue');
         });
@@ -156,28 +138,84 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
 
             $popUp.modal('hide');  /* todo B5: plugin:modal */
             if (action === 'resend') {
-                $btn = $('#resend-all-button');
+                $btn = $('#resend-button');
                 $btn.disableButton();
                 postResend($btn, requestBody);
             } else if (action === 'cancel') {
-                $btn = $('#cancel-all-button');
+                $btn = $('#cancel-button');
                 $btn.disableButton();
                 postOther($btn, requestBody, action);
             } else if (action === 'requeue') {
-                $btn = $('#requeue-all-button');
+                $btn = $('#requeue-button');
                 $btn.disableButton();
                 postOther($btn, requestBody, action);
             }
         });
 
+        $('#select-all-checkbox').on('click', function () {
+            if (selectAllCheckbox.checked) {
+                checkAllRows();
+                selectedPageInfo.classList.remove('d-none');
+                const pageSize = document.querySelectorAll("#report_table_repeat_record_report tbody tr").length;
+                document.getElementById("selected-page-count").innerText = pageSize;
+                if (pageSize >= initialPageData.get('total')) {
+                    selectTableButton.classList.add('d-none');
+                } else {
+                    selectTableButton.classList.remove('d-none');
+                }
+            } else {
+                uncheckAllRows();
+                selectedPageInfo.classList.add('d-none');
+                // just in case
+                selectedTableInfo.classList.add('d-none');
+                selectedEntireTable = false;
+            }
+            updateActionButtons();
+        });
+
+        $('#report-content').on('click', '.record-checkbox', function () {
+            resetTableSelections();
+            updateActionButtons();
+        });
+
+        $('#report-content').on('click', '#report_table_repeat_record_report_length', function () {
+            uncheckAllRows();
+            resetTableSelections();
+            updateActionButtons();
+        });
+
+        $('#report-content').on('click', '#report_table_repeat_record_report_paginate', function () {
+            uncheckAllRows();
+            resetTableSelections();
+            updateActionButtons();
+        });
+
+        $("#select-table-button").click(function () {
+            selectedEntireTable = true;
+            selectedPageInfo.classList.add('d-none');
+            selectedTableInfo.classList.remove('d-none');
+            updateActionButtons();
+        });
+
+        $("#clear-table-selection").click(function () {
+            uncheckAllRows();
+            resetTableSelections();
+            updateActionButtons();
+        });
+
+        $('body').on('DOMNodeInserted', 'tbody', function () {
+            for (const item of items) {
+                $(item).on('click', updateActionButtons);
+            }
+        });
+
         function performAction(action) {
-            const bulkSelection = bulkSelectionChecked();
             const checkedRecords = getCheckedRecords();
-            if (bulkSelection || checkedRecords.length > 0) {
-                if (bulkSelection) { setFlag(bulkSelection); }
-                // only applies to checked items, not bulk selections
-                // leaving as is to preserve behavior
-                if (isActionPossibleForCheckedItems(action, checkedRecords)) {
+            if (selectedEntireTable) {
+                hideAllWarnings();
+                $popUp.modal('show');  /* todo B5: plugin:modal */
+            } else if (checkedRecords.length > 0) {
+                if (isActionPossible(action)) {
                     hideAllWarnings();
                     $popUp.modal('show');  /* todo B5: plugin:modal */
                 } else {
@@ -188,36 +226,23 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
             }
         }
 
-        function bulkSelectionChecked() {
-            if (selectAll.checked) {
-                return 'select_all';
-            } else if (selectPending.checked) {
-                return 'select_pending';
-            } else if (selectCancelled.checked) {
-                return 'select_cancelled';
-            }
-        }
-
         function getCheckedRecords() {
-            return $.find('input[type=checkbox][name=xform_ids]:checked');
+            return $.find('input[type=checkbox][name=record_ids]:checked');
         }
 
-        function isActionPossibleForCheckedItems(action, items) {
-            for (const item of items) {
-                const id = item.getAttribute('data-id');
-                const query = `[data-record-id="${id}"][class="btn btn-default ${action}-record-payload"]`;
-                const button = document.querySelector(query);
-                if (!button) {
-                    return false;
-                }
+        function isActionPossible(action) {
+            const containsQueuedRecords = selectionContainsQueuedRecords();
+            if (containsQueuedRecords) {
+                // all we can do is cancel
+                return action === 'cancel';
+            } else {
+                // nothing is queued, so you shouldn't need to cancel
+                return ['resend', 'requeue'].includes(action);
             }
-
-            return true;
         }
 
         function getRequestBody() {
-            const bulkSelectors = [selectAll, selectPending, selectCancelled];
-            if (bulkSelectors.some(selector => selector.checked)) {
+            if (selectedEntireTable) {
                 return getBulkSelectionProperties();
             } else {
                 return getRecordIds();
@@ -228,7 +253,7 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
             return {
                 payload_id: initialPageData.get('payload_id'),
                 repeater_id: initialPageData.get('repeater_id'),
-                flag: getFlag(),
+                state: initialPageData.get('state'),
             };
         }
 
@@ -289,27 +314,72 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
             return $confirmButton.attr('data-action');
         }
 
-        function setFlag(flag) {
-            $confirmButton.attr('data-flag', flag);
-        }
-
-        function getFlag() {
-            return $confirmButton.attr('data-flag');
-        }
-
         function showWarning(reason) {
             if (reason === 'no-selection') {
-                $('#no-selection').removeClass('hide');
-                $('#not-allowed').addClass('hide');
+                $('#no-selection').removeClass('d-none');
+                $('#not-allowed').addClass('d-none');
             } else if (reason === 'not-allowed') {
-                $('#not-allowed').removeClass('hide');
-                $('#no-selection').addClass('hide');
+                $('#not-allowed').removeClass('d-none');
+                $('#no-selection').addClass('d-none');
             }
         }
 
         function hideAllWarnings() {
-            $('#no-selection').addClass('hide');
-            $('#not-allowed').addClass('hide');
+            $('#no-selection').addClass('d-none');
+            $('#not-allowed').addClass('d-none');
+        }
+
+        function checkAllRows() {
+            for (const item of items) {
+                if (item.type === 'checkbox') {
+                    item.checked = true;
+                }
+            }
+        }
+
+        function uncheckAllRows() {
+            for (const item of items) {
+                if (item.type === 'checkbox') {
+                    item.checked = false;
+                }
+            }
+        }
+
+        function updateActionButtons() {
+            const checkedRecords = getCheckedRecords();
+            if (checkedRecords.length === 0) {
+                resendButton.disabled = true;
+                requeueButton.disabled = true;
+                cancelButton.disabled = true;
+                return;
+            }
+
+            // default to no-op on cancelling a batch of records
+            // that contain some already cancelled records
+            // versus allowing no-op when queueing already queued
+            // records
+            if (selectionContainsQueuedRecords()) {
+                resendButton.disabled = true;
+                requeueButton.disabled = true;
+                cancelButton.disabled = false;
+            } else {
+                resendButton.disabled = false;
+                requeueButton.disabled = false;
+                cancelButton.disabled = true;
+            }
+        }
+
+        function selectionContainsQueuedRecords() {
+            return getCheckedRecords().some(record => {
+                return !!parseInt(record.getAttribute('is_queued'));
+            });
+        }
+
+        function resetTableSelections() {
+            selectedEntireTable = false;
+            selectAllCheckbox.checked = false;
+            selectedPageInfo.classList.add('d-none');
+            selectedTableInfo.classList.add('d-none');
         }
     });
 });
