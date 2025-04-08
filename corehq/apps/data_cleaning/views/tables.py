@@ -67,7 +67,7 @@ class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataC
     @hq_hx_action('post')
     def select_record(self, request, *args, **kwargs):
         """
-        Selects a single record.
+        Selects (or de-selects) a single record.
         """
         doc_id = request.POST['record_id']
         is_selected = request.POST.get('is_selected') is not None
@@ -80,10 +80,41 @@ class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataC
     @hq_hx_action('post')
     def select_page(self, request, *args, **kwargs):
         """
-        Selects all records on the current page.
+        Selects (or de-selects) all records on the current page.
         """
-        # todo
+        select_page = request.POST.get('select_page') is not None
+        doc_ids = request.POST.getlist('recordIds')
+        if select_page:
+            self.session.select_multiple_records(doc_ids)
+        else:
+            self.session.deselect_multiple_records(doc_ids)
+        return self.render_htmx_no_response(request, *args, **kwargs)
+
+    @hq_hx_action('post')
+    def deselect_all(self, request, *args, **kwargs):
+        """
+        De-selects all records in the current filtered view.
+        """
+        self.session.deselect_all_records_in_queryset()
         return self.get(request, *args, **kwargs)
+
+    @hq_hx_action('post')
+    def select_all(self, request, *args, **kwargs):
+        """
+        Selects all records in the current filtered view.
+        """
+        response = self.get(request, *args, **kwargs)
+        if self.session.can_select_all(
+            table_num_records=response.context_data['paginator'].count
+        ):
+            self.session.select_all_records_in_queryset()
+            return response
+        response['HX-Trigger'] = json.dumps({
+            'showDataCleaningModal': {
+                'target': '#select-all-not-possible-modal',
+            },
+        })
+        return response
 
 
 class CaseCleaningTasksTableView(BaseDataCleaningTableView):

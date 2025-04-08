@@ -5,10 +5,12 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 
 from corehq.apps.data_cleaning.models import (
+    BulkEditChange,
     BulkEditRecord,
     BulkEditSession,
     BulkEditSessionType,
     DataType,
+    EditActionType,
     FilterMatchType,
 )
 from corehq.apps.domain.shortcuts import create_domain
@@ -381,3 +383,30 @@ class BulkEditSessionSelectionTests(BaseBulkEditSessionTest):
         )
         num_selected_records = self.session.get_num_selected_records()
         self.assertEqual(num_selected_records, 2)
+
+
+class BulkEditSessionChangesTests(BaseBulkEditSessionTest):
+    domain_name = 'session-test-changes'
+
+    def _get_list_of_doc_ids(self, num):
+        return [str(uuid.uuid4()) for _ in range(num)]
+
+    def test_get_num_edited_records(self):
+        doc_ids = self._get_list_of_doc_ids(5)
+        selected_edited_doc_ids = self._get_list_of_doc_ids(5)
+        for doc_id in doc_ids + selected_edited_doc_ids:
+            record = BulkEditRecord.objects.create(
+                session=self.session,
+                doc_id=doc_id,
+                is_selected=doc_id in selected_edited_doc_ids,
+            )
+            change = BulkEditChange.objects.create(
+                session=self.session,
+                prop_id='name',
+                action_type=EditActionType.STRIP,
+            )
+            change.records.add(record)
+        selected_doc_ids = self._get_list_of_doc_ids(40)
+        self.session.select_multiple_records(selected_doc_ids)
+        num_edited_records = self.session.get_num_edited_records()
+        self.assertEqual(num_edited_records, len(doc_ids) + len(selected_edited_doc_ids))
