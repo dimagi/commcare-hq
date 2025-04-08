@@ -859,6 +859,13 @@ class BulkEditRecord(models.Model):
         # process inserts them concurrently:
         cls.objects.bulk_create(new_records, ignore_conflicts=True)
 
+        # re-update any records that might still not be marked if there
+        # were any conflicts above...
+        session.records.filter(
+            doc_id__in=doc_ids,
+            is_selected=False,
+        ).update(is_selected=True)
+
     @classmethod
     @transaction.atomic
     def deselect_multiple_records(cls, session, doc_ids):
