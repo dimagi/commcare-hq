@@ -180,7 +180,7 @@ class InvoiceReminder(UnpaidInvoiceAction):
             'date_due': invoice.date_due,
             'total_balance': fmt_dollar_amount(total),
             'plan_name': subscription.plan_version.plan.name,
-            'can_pay_by_wire': subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE
+            'can_pay_by_wire': invoice.can_pay_by_wire,
         })
         return context
 
