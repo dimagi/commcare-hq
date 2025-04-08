@@ -849,6 +849,7 @@ class BulkEditRecord(models.Model):
         return record
 
     @classmethod
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
     def deselect_record(cls, session, doc_id):
         try:
             record = session.records.get(doc_id=doc_id)
