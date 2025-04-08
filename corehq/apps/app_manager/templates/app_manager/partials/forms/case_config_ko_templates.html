@@ -344,7 +344,7 @@
       </tbody>
     </table>
     <div data-bind="if: searchAndFilter">
-      <div class="pull-right" data-bind="visible: filtered_case_properties().length">
+      <div class="pull-right" data-bind="visible: filtered_case_properties().length > per_page()">
         <pagination data-apply-bindings="false"
                     params="goToPage: goToPage,
                             perPage: per_page,
