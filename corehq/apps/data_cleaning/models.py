@@ -83,10 +83,13 @@ class BulkEditSession(models.Model):
         return case_session
 
     @classmethod
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
     def restart_case_session(cls, user, domain_name, case_type):
-        previous_session = cls.get_active_case_session(user, domain_name, case_type)
-        previous_session.delete()
-        new_session = cls.new_case_session(user, domain_name, case_type)
+        with transaction.atomic():
+            previous_session = cls.get_active_case_session(user, domain_name, case_type)
+            if previous_session:
+                previous_session.delete()
+            new_session = cls.new_case_session(user, domain_name, case_type)
         return new_session
 
     @classmethod
