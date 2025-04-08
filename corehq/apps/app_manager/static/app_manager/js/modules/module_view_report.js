@@ -8,6 +8,7 @@ hqDefine("app_manager/js/modules/module_view_report", [
     "select2/dist/js/select2.full.min",
     "app_manager/js/app_manager",
     "app_manager/js/xpathValidator",
+    "commcarehq",
 ], function (
     $,
     _,
