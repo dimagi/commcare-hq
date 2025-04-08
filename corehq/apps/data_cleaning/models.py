@@ -214,6 +214,7 @@ class BulkEditSession(models.Model):
         remaining_ids = related_manager.values_list(id_field, flat=True)
         self._update_order(related_manager, id_field, remaining_ids)
 
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
     def remove_filter(self, filter_id):
         """
         Remove a BulkEditFilter from this session by its filter_id,
@@ -221,7 +222,8 @@ class BulkEditSession(models.Model):
 
         :param filter_id: UUID of the BulkEditFilter to remove
         """
-        self._delete_and_update_order(self.filters, 'filter_id', filter_id)
+        with transaction.atomic():
+            self._delete_and_update_order(self.filters, 'filter_id', filter_id)
 
     @retry_on_integrity_error(max_retries=3, delay=0.1)
     def remove_column(self, column_id):
