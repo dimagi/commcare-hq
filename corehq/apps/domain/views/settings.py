@@ -283,9 +283,6 @@ class EditIPAccessConfigView(BaseProjectSettingsView):
     urlname = 'ip_access_config'
     page_title = gettext_lazy("IP Access")
 
-    def dispatch(self, *args, **kwargs):
-        return super().dispatch(*args, **kwargs)
-
     @property
     @memoized
     def form(self):
