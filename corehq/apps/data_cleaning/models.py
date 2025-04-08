@@ -809,13 +809,11 @@ class BulkEditRecord(models.Model):
 
     @classmethod
     def select_record(cls, session, doc_id):
-        try:
-            record = session.records.get(doc_id=doc_id)
-        except cls.DoesNotExist:
-            record = cls.objects.create(
-                session=session,
-                doc_id=doc_id,
-            )
+        record, _ = cls.objects.get_or_create(
+            session=session,
+            doc_id=doc_id,
+            defaults={'is_selected': True}
+        )
         if not record.is_selected:
             record.is_selected = True
             record.save()
