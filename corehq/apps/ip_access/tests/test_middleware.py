@@ -123,3 +123,21 @@ class TestIPAccessMiddleware(TestCase):
 
         self.assertEqual(len(self.client.session[f"hq_session_ips-{self.domain}"]), 1)
         self.assertEqual(len(self.client.session[f"hq_session_ips-{domain_2}"]), 1)
+
+    def test_session_expiration(self, is_allowed):
+        is_allowed.return_value = True
+        res = self.client.get(f'/a/{self.domain}/')
+        self.assertEqual(res.status_code, 200)
+        is_allowed.assert_called_once()
+
+        is_allowed.return_value = False
+        # This doesn't fail yet, because the check is stored on the session
+        res = self.client.get(f'/a/{self.domain}/')
+        self.assertEqual(res.status_code, 200)
+        is_allowed.assert_called_once()
+
+        self.client.session.flush()
+        self.client.login(username=self.username, password=self.password)
+        res = self.client.get(f'/a/{self.domain}/')
+        self.assertEqual(res.status_code, 451)
+        self.assertEqual(is_allowed.call_count, 2)
