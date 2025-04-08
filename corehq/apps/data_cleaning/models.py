@@ -167,11 +167,20 @@ class BulkEditSession(models.Model):
         :param provided_ids: list of UUIDs in desired order
         """
         if len(provided_ids) != related_manager.count():
-            raise ValueError("The lengths of provided_ids and existing objects do not match.")
+            raise ValueError(
+                "The lengths of provided_ids and ALL existing objects do not match. "
+                "Please provide a list of ALL existing object ids in the desired order."
+            )
+
+        instance_map = {getattr(obj, id_field): obj for obj in related_manager.all()}
         for index, object_id in enumerate(provided_ids):
-            obj = related_manager.get(**{id_field: object_id})
-            obj.index = index
-            obj.save()
+            try:
+                instance = instance_map[object_id]
+            except KeyError:
+                raise ValueError(f"Object with {id_field} {object_id} not found.")
+            instance.index = index
+
+        related_manager.bulk_update(instance_map.values(), ['index'])
 
     def update_filter_order(self, filter_ids):
         """
