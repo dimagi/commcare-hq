@@ -61,7 +61,7 @@ hqDefine('commtrack/js/products_and_programs_main', [
                     alertContainer.text(message);
                     alertContainer.removeClass("d-none");
                     var $modal = $(button).closest(".modal"),
-                        modal = bootstrap.Modal.getOrCreateInstance($modal);
+                        bootstrap.Modal.getOrCreateInstance($modal);
                     $modal.one('hidden.bs.modal', function () {
                         alertContainer.addClass("d-none");
                     });
