@@ -1331,9 +1331,8 @@ def undelete_data_source(request, domain, config_id):
 def rebuild_data_source(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
 
-    response = _redirect_response_if_build_awaiting(request, domain, config)
-    if response:
-        return response
+    if config.meta.build.awaiting:
+        return _build_awaiting_redirect_response(request, domain, config_id)
 
     if not config.asynchronous and toggles.RESTRICT_DATA_SOURCE_REBUILD.enabled(domain):
         number_of_records = number_of_records_to_be_processed(datasource_configuration=config)
@@ -1362,15 +1361,14 @@ def rebuild_data_source(request, domain, config_id):
     ))
 
 
-def _redirect_response_if_build_awaiting(request, domain, config):
-    if config.meta.build.awaiting:
-        messages.error(
-            request,
-            _('Rebuilding is not available until CommCare HQ finishes building / rebuilding.')
-        )
-        return HttpResponseRedirect(reverse(
-            EditDataSourceView.urlname, args=[domain, config.get_id]
-        ))
+def _build_awaiting_redirect_response(request, domain, config_id):
+    messages.error(
+        request,
+        _('Rebuilding is not available until CommCare HQ finishes building / rebuilding.')
+    )
+    return HttpResponseRedirect(reverse(
+        EditDataSourceView.urlname, args=[domain, config_id]
+    ))
 
 
 def _prep_data_source_for_rebuild(data_source_config, is_static):
@@ -1494,9 +1492,8 @@ def resume_building_data_source(request, domain, config_id):
 def build_data_source_in_place(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
 
-    response = _redirect_response_if_build_awaiting(request, domain, config)
-    if response:
-        return response
+    if config.meta.build.awaiting:
+        return _build_awaiting_redirect_response(request, domain, config_id)
 
     _prep_data_source_for_rebuild(config, is_static)
 
