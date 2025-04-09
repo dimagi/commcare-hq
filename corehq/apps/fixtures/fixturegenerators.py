@@ -165,11 +165,10 @@ class ItemListsProvider(FixtureProvider):
         :return: a byte string representation of the fixture
         """
         io_stream = None
-        cache_bucket_prefix = fixture_bucket(global_type.id)
-        key = '{}/{}'.format(cache_bucket_prefix, domain)
+        key = fixture_bucket(global_type.id, domain)
 
         if not overwrite_cache:
-            io_stream = get_cached_fixture_items(domain, cache_bucket_prefix)
+            io_stream = get_cached_fixture_items(key)
             record_datadog_metric('cache_miss' if io_stream is None else 'cache_hit', key)
             if io_stream is not None:
                 io_stream = BytesIO(io_stream)
@@ -178,7 +177,7 @@ class ItemListsProvider(FixtureProvider):
             with CriticalSection([key]):
                 if not overwrite_cache:
                     # re-check cache to avoid re-computing it
-                    io_stream = get_cached_fixture_items(domain, cache_bucket_prefix)
+                    io_stream = get_cached_fixture_items(key)
                     if io_stream is not None:
                         io_stream = BytesIO(io_stream)
                 if io_stream is None:
@@ -187,7 +186,7 @@ class ItemListsProvider(FixtureProvider):
                     io_stream = BytesIO()
                     io_stream.write(ElementTree.tostring(item, encoding='utf-8'))
                     io_stream.seek(0)
-                    cache_fixture_items_data(io_stream, domain, '', cache_bucket_prefix)
+                    cache_fixture_items_data(io_stream, domain, '', key)
         return io_stream
 
     def _get_global_item(self, global_type, domain):

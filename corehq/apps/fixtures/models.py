@@ -15,8 +15,8 @@ from .exceptions import FixtureVersionError
 FIXTURE_BUCKET_PREFIX = 'domain-fixtures'
 
 
-def fixture_bucket(lookup_table_id):
-    return f'{FIXTURE_BUCKET_PREFIX}-{lookup_table_id}'
+def fixture_bucket(lookup_table_id, domain):
+    return f'{FIXTURE_BUCKET_PREFIX}-{lookup_table_id}' + '/' + domain
 
 
 class LookupTableManager(models.Manager):

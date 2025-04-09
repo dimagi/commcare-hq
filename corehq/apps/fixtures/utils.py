@@ -63,4 +63,4 @@ def clear_fixture_cache(domain, data_type_ids):
     LookupTable.objects.filter(id__in=data_type_ids).update(last_modified=datetime.utcnow())
     from corehq.apps.fixtures.models import fixture_bucket
     for data_type_id in data_type_ids:
-        get_blob_db().delete(key=fixture_bucket(data_type_id) + '/' + domain)
+        get_blob_db().delete(key=fixture_bucket(data_type_id, domain))

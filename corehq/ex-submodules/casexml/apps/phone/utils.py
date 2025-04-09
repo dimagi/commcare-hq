@@ -44,12 +44,12 @@ def combine_io_streams(fixture_io_streams, user_id):
     return [bytes(data).replace(global_id, b_user_id)] if data else []
 
 
-def cache_fixture_items_data(io_data, domain, fixure_name, key_prefix):
+def cache_fixture_items_data(io_data, domain, fixure_name, key):
     db = get_blob_db()
     try:
         kw = {"meta": db.metadb.get(
             parent_id=domain,
-            key=key_prefix + '/' + domain,
+            key=key,
         )}
     except BlobMeta.DoesNotExist:
         kw = {
@@ -57,14 +57,14 @@ def cache_fixture_items_data(io_data, domain, fixure_name, key_prefix):
             "parent_id": domain,
             "type_code": CODES.fixture,
             "name": fixure_name,
-            "key": key_prefix + '/' + domain,
+            "key": key,
         }
     db.put(io_data, **kw)
 
 
-def get_cached_fixture_items(domain, bucket_prefix):
+def get_cached_fixture_items(key):
     try:
-        return get_blob_db().get(key=bucket_prefix + '/' + domain, type_code=CODES.fixture).read()
+        return get_blob_db().get(key=key, type_code=CODES.fixture).read()
     except NotFound:
         return None
 
