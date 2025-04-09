@@ -823,6 +823,13 @@ class BulkEditColumn(models.Model):
             is_system=is_system_property,
         )
 
+    @property
+    def choice_label(self):
+        """
+        Returns the human-readable option visible in a select field.
+        """
+        return self.label if self.label == self.prop_id else f"{self.label} ({self.prop_id})"
+
 
 class BulkEditRecord(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="records", on_delete=models.CASCADE)

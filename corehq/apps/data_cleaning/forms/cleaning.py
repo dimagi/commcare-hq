@@ -10,9 +10,6 @@ from crispy_forms.helper import FormHelper
 from corehq.apps.data_cleaning.models import (
     EditActionType,
 )
-from corehq.apps.data_cleaning.utils.cases import (
-    get_case_property_details,
-)
 from corehq.apps.hqwebapp.widgets import AlpineSelect, BootstrapSwitchInput
 
 
@@ -26,7 +23,11 @@ class CleanSelectedRecordsForm(forms.Form):
     """
     clean_prop_id = forms.ChoiceField(
         label=gettext_lazy("Select a property to clean"),
-        required=False
+        required=False,
+        help_text=gettext_lazy(
+            "Choices are editable case properties that are "
+            "currently visible in the table."
+        ),
     )
     clean_action = forms.ChoiceField(
         label=gettext_lazy("Data cleaning action"),
@@ -72,9 +73,11 @@ class CleanSelectedRecordsForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.session = session
 
-        property_details = get_case_property_details(self.session.domain, self.session.identifier)
+        self.editable_columns = self.session.columns.filter(is_system=False)
+        self.is_form_visible = self.editable_columns.count() > 0
+
         self.fields['clean_prop_id'].choices = [(None, None)] + [
-            (p, p) for p in sorted(property_details.keys())
+            (column.prop_id, column.choice_label) for column in self.editable_columns
         ]
 
         initial_prop_id = self.data.get('clean_prop_id')
