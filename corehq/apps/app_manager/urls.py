@@ -89,7 +89,7 @@ from corehq.apps.app_manager.views import (
     view_module_legacy,
 )
 from corehq.apps.app_manager.views.apps import move_child_modules_after_parents
-from corehq.apps.app_manager.views.modules import ExistingCaseTypesView
+from corehq.apps.app_manager.views.modules import ExistingCaseTypesView, AllCaseTypesView
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 from corehq.apps.linked_domain.views import pull_missing_multimedia
@@ -171,6 +171,7 @@ urlpatterns = [
     url(r'^schema/(?P<app_id>[\w-]+)/form/(?P<form_unique_id>[\w-]+)/$',
         get_form_data_schema, name='get_form_data_schema'),
     url(r'^new_module/(?P<app_id>[\w-]+)/$', new_module, name='new_module'),
+    url(r'^new_module/(?P<app_id>[\w-]+)/(?P<case_type>[\w-]+)/$', new_module, name='new_module_with_case_type'),
     url(r'^new_app/$', new_app, name='new_app'),
     url(r'^default_new_app/$', default_new_app, name='default_new_app'),
     url(r'^new_form/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
@@ -275,6 +276,7 @@ urlpatterns = [
     url(r'^diff/(?P<first_app_id>[\w-]+)/(?P<second_app_id>[\w-]+)/$', AppDiffView.as_view(),
         name=AppDiffView.urlname),
     url(r'existing_case_types', ExistingCaseTypesView.as_view(), name=ExistingCaseTypesView.urlname),
+    url(r'all_case_types/', AllCaseTypesView.as_view(), name=AllCaseTypesView.urlname),
 
     url(r'^', include('custom.ucla.urls')),
 ]
