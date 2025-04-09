@@ -744,9 +744,9 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
 
     @cached_property
     def rebuild_failed(self):
-        # `has_died()` returns `None` if we can't use the Flower API,
-        # and so we don't know. Treating `None` as falsy allows calling
-        # code to give `rebuild_has_died` the benefit of the doubt.
+        # `DataSourceBuildInformation.rebuild_failed()` returns `None`
+        # if we don't know whether the rebuild has failed. Calling code
+        # can give the benefit of the doubt by treating `None` as falsy.
         return self.meta.build.rebuild_failed(self._id)
 
     @property
