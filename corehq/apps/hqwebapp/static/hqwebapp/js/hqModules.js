@@ -113,20 +113,3 @@ function hqImport(path) {
     }
     return COMMCAREHQ_MODULES[path];
 }
-
-// Support require calls within a module. Best practice is to require all dependencies
-// at module definition time, but this function can be used when doing so would
-// introduce a circular dependency.
-function hqRequire(paths, callback) {       // eslint-disable-line no-unused-vars
-    if (typeof define === 'function' && define.amd && window.USE_WEBPACK) {
-        // HQ's webpack config replaces hqDefine calls with define calls,
-        // so it's important that this do nothing but pass through to require
-        require(paths, callback);   // eslint-disable-line no-undef
-    } else {
-        var args = [];
-        for (var i = 0; i < paths.length; i++) {
-            args.push(hqImport(paths[i]));
-        }
-        callback.apply(undefined, args);
-    }
-}
