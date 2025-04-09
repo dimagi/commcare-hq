@@ -2,7 +2,7 @@ hqDefine("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
     'jquery',
     'underscore',
     'knockout',
-    "es6!hqwebapp/js/bootstrap5_loader",
+    "bootstrap5",
     'jquery-ui/ui/widgets/sortable',
     'langcodes/js/langcodes',   // $.langcodes
 ], function (
