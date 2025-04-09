@@ -53,6 +53,10 @@ msgstr ""
 msgid "Other"
 msgstr ""
 
+#: corehq/apps/accounting/static/accounting/js/payment_method_handler.js
+msgid "Response from Stripe did not complete properly."
+msgstr ""
+
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
 msgid "Downgrading?"
 msgstr ""
@@ -104,6 +108,10 @@ msgid ""
 "Plan on <strong> <%- date %> </strong></p>If you have questions or if you "
 "would like to speak to us about your subscription, please reach out to <a "
 "href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>."
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js
+msgid "Free edition"
 msgstr ""
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
@@ -193,6 +201,28 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 msgid "You have unsaved changes"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid "What is a Survey Menu?"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid ""
+"Surveys are used to collect independent forms that do not need to be tracked "
+"over time. Common examples include satisfaction surveys or anonymous "
+"feedback forms."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid "What is a Case List?"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid ""
+"Case Lists are used to register and track related data (cases) over time. "
+"This data can be referenced in other forms and by other cases. Common "
+"examples include maternal health, student attendance, or crop monitoring."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view.js
@@ -3727,18 +3757,6 @@ msgstr ""
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/main.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/main.js
 msgid "There was an error deleting"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/rollout_modal.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/rollout_modal.js
-msgid ""
-"We could not turn on the new feature. You will have the opportunity to turn "
-"it on the next time you visit this page."
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/rollout_modal.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/rollout_modal.js
-msgid "We could not turn off the new feature. Please try again later."
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/validators.ko.js
