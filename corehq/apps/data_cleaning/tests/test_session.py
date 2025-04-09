@@ -182,7 +182,8 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         session.add_filter('pot_type', DataType.DATE, FilterMatchType.IS_EMPTY)
         session.add_filter('height_cm', DataType.DECIMAL, FilterMatchType.LESS_THAN_EQUAL, "11.0")
         filters = session.filters.all()
-        new_order = [filters[1].filter_id, filters[2].filter_id]
+        # the form that uses this method will always fetch a list of strings, and the field is a UUID
+        new_order = [str(filter_id) for filter_id in [filters[1].filter_id, filters[2].filter_id]]
         with self.assertRaises(ValueError):
             session.update_filter_order(new_order)
 
@@ -194,13 +195,14 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         session.add_filter('pot_type', DataType.DATE, FilterMatchType.IS_EMPTY)
         session.add_filter('height_cm', DataType.DECIMAL, FilterMatchType.LESS_THAN_EQUAL, "11.0")
         filters = session.filters.all()
-        new_order = [
+        # the form that uses this method will always fetch a list of strings, and the field is a UUID
+        new_order = [str(filter_id) for filter_id in [
             filters[1].filter_id,
             filters[0].filter_id,
             filters[2].filter_id,
             filters[4].filter_id,
             filters[3].filter_id,
-        ]
+        ]]
         session.update_filter_order(new_order)
         reordered_prop_ids = [c.prop_id for c in session.filters.all()]
         self.assertEqual(
@@ -211,21 +213,23 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
     def test_reorder_wrong_number_of_column_ids_raises_error(self):
         session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
         columns = session.columns.all()
-        new_order = [columns[1].column_id, columns[2].column_id]
+        # the form that uses this method will always fetch a list of strings, and the field is a UUID
+        new_order = [str(col_id) for col_id in [columns[1].column_id, columns[2].column_id]]
         with self.assertRaises(ValueError):
             session.update_column_order(new_order)
 
     def test_update_column_order(self):
         session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
         columns = session.columns.all()
-        new_order = [
+        # the form that uses this method will always fetch a list of strings, and the field is a UUID
+        new_order = [str(col_id) for col_id in [
             columns[1].column_id,
             columns[0].column_id,
             columns[2].column_id,
             columns[4].column_id,
             columns[5].column_id,
             columns[3].column_id,
-        ]
+        ]]
         session.update_column_order(new_order)
         reordered_prop_ids = [c.prop_id for c in session.columns.all()]
         self.assertEqual(
