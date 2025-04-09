@@ -13,6 +13,9 @@
   type="button"
   data-bs-toggle="offcanvas"
   data-bs-target="#offcanvas-configure-columns"
+  x-data="wiggleButtonModel"
+  @wiggle-configure-columns-button.window="wiggleThatButton()"
+  :class="getWiggleClasses()"
 >
   <i class="fa-solid fa-table-columns"></i> {% trans "Configure Columns" %}
 </button>
