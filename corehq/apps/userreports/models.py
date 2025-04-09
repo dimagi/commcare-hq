@@ -18,7 +18,7 @@ from django.utils.translation import gettext as _
 import requests
 import yaml
 from celery.states import FAILURE
-from couchdbkit.exceptions import BadValueError
+from couchdbkit.exceptions import BadValueError, ResourceConflict
 from django_bulk_update.helper import bulk_update as bulk_update_helper
 from jsonpath_ng.ext import parser
 from memoized import memoized
@@ -104,6 +104,7 @@ from corehq.apps.userreports.sql.util import decode_column_name
 from corehq.apps.userreports.util import (
     get_async_indicator_modify_lock_key,
     get_indicator_adapter,
+    get_ucr_datasource_config_by_id,
     wrap_report_config_by_type,
 )
 from corehq.pillows.utils import get_deleted_doc_types
@@ -752,6 +753,52 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     @property
     def rebuild_awaiting_or_in_progress(self):
         return self.meta.build.awaiting or (self.meta.build.is_rebuild_in_progress and not self.rebuild_failed)
+
+    def set_build_queued(self, *, reset_init_fin=True):
+        self.meta.build.awaiting = True
+        if reset_init_fin:
+            self.meta.build.initiated = None
+            self.meta.build.finished = False
+
+    def save_build_started(self, *, in_place=False):
+        # Save the start time now in case anything goes wrong. This way
+        # we'll be able to see if the rebuild started a long time ago
+        # without finishing.
+        start_time = datetime.utcnow()
+        self.meta.build.awaiting = False
+        if in_place:
+            self.meta.build.initiated_in_place = start_time
+            self.meta.build.finished_in_place = False
+        else:
+            self.meta.build.initiated = start_time
+            self.meta.build.finished = False
+        self.meta.build.rebuilt_asynchronously = False
+        self.save()
+
+    def save_build_finished(self, *, in_place=False):
+        if in_place:
+            self.meta.build.finished_in_place = True
+        else:
+            self.meta.build.finished = True
+
+        try:
+            self.save()
+        except ResourceConflict:
+            current_config = get_ucr_datasource_config_by_id(self._id)
+            # check that a new build has not yet started
+            if in_place:
+                if (
+                    self.meta.build.initiated_in_place
+                    == current_config.meta.build.initiated_in_place
+                ):
+                    current_config.meta.build.finished_in_place = True
+            else:
+                if (
+                    self.meta.build.initiated
+                    == current_config.meta.build.initiated
+                ):
+                    current_config.meta.build.finished = True
+            current_config.save()
 
 
 class RegistryDataSourceConfiguration(DataSourceConfiguration):

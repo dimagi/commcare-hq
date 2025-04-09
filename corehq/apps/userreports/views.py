@@ -1374,7 +1374,7 @@ def _build_awaiting_redirect_response(request, domain, config_id):
 def _prep_data_source_for_rebuild(data_source_config, is_static):
     save_config = False
     if not is_static:
-        data_source_config.meta.build.awaiting = True
+        data_source_config.set_build_queued(reset_init_fin=False)
         save_config = True
     if data_source_config.is_deactivated:
         data_source_config.is_deactivated = False
@@ -1475,7 +1475,7 @@ def resume_building_data_source(request, domain, config_id):
         )
     else:
         if not is_static:
-            config.meta.build.awaiting = True
+            config.set_build_queued(reset_init_fin=False)
             config.save()
         messages.success(
             request,
