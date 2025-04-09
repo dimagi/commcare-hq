@@ -228,13 +228,13 @@ class IPAccessConfigForm(forms.Form):
     Form for updating a project's IP Access Configuration
     """
     country_allowlist = forms.MultipleChoiceField(
-        label="Allowed Countries",
-        choices=sorted(list(COUNTRIES.items()), key=lambda x: x[0]),
+        label=_("Allowed Countries"),
+        choices=sorted(list(COUNTRIES.items()), key=lambda x: x[1]),
         required=False,
     )
 
     ip_allowlist = forms.CharField(
-        label="Allowed IPs",
+        label=_("Allowed IPs"),
         required=False,
         help_text='IPs that will be allowed access to your project, regardless of country of origin. '
                   'Please configure your list to be comma and space separated, '
@@ -242,13 +242,13 @@ class IPAccessConfigForm(forms.Form):
     )
 
     ip_denylist = forms.CharField(
-        label="Denied IPs",
+        label=_("Denied IPs"),
         required=False,
         help_text='IPs that will be denied access to your project, regardless of country of origin.',
     )
 
     comment = forms.CharField(
-        label="Additional Notes",
+        label=_("Additional Notes"),
         widget=forms.Textarea(attrs={"class": "vertical-resize"}),
         required=False
     )
@@ -279,7 +279,7 @@ class IPAccessConfigForm(forms.Form):
         deny_list = self.cleaned_data['ip_denylist'].split(", ") if self.cleaned_data['ip_denylist'] else []
 
         # Ensure an IP isn't in both lists
-        if (allow_list or deny_list) and set(allow_list).intersection(set(deny_list)):
+        if (allow_list and deny_list) and set(allow_list).intersection(set(deny_list)):
             raise ValidationError(_("There are IP addresses in both the Allowed and Denied lists. "
                                     "Please ensure an IP address is only in one list at a time."))
 

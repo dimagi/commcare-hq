@@ -324,7 +324,8 @@ class EditIPAccessConfigView(BaseProjectSettingsView):
                 domain_config.domain = self.domain
 
             for attr, value in self.form.cleaned_data.items():
-                if value != getattr(domain_config, attr):
+                current_value = getattr(domain_config, attr)
+                if value != current_value:
                     should_save = True
                     setattr(domain_config, attr, value)
 

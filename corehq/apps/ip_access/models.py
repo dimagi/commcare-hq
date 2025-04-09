@@ -27,10 +27,12 @@ class IPAccessConfig(models.Model):
 
 
 def is_in_country(ip_address, country_allowlist):
-    # If there is no countries in the allowlist, or MaxMind is not configured in the env
-    # assume all countries are allowed
-    if not country_allowlist or not settings.MAXMIND_LICENSE_KEY:
+    # If there is no countries in the allowlist, assume all countries are allowed
+    # If MaxMind is not configured in the env, default to blocking all requests
+    if not country_allowlist:
         return True
+    if not settings.MAXMIND_LICENSE_KEY:
+        return False
 
     with geoip2.webservice.Client(settings.MAXMIND_ACCOUNT_ID,
                                   settings.MAXMIND_LICENSE_KEY, host='geolite.info') as client:
