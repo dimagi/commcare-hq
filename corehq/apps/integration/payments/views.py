@@ -7,7 +7,7 @@ from memoized import memoized
 
 from corehq import toggles
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
-from corehq.apps.domain.decorators import login_required
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import CaseSearchES, filters
 from corehq.apps.es.case_search import (
@@ -93,7 +93,7 @@ class PaymentsVerificationReportView(BaseDomainView, PaymentsFiltersMixin):
         }
 
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator(login_and_domain_required, name='dispatch')
 @method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
 @method_decorator(require_payments_report_access, name='dispatch')
 class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
