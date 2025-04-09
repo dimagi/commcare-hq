@@ -260,10 +260,14 @@ class IPAccessConfigForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Edit IP Access Config"),
-                "country_allowlist",
+                crispy.Field(
+                    "country_allowlist",
+                    x_data="",
+                    x_select2="",
+                ),
                 "ip_allowlist",
                 "ip_denylist",
-                "comment"
+                "comment",
             ),
             hqcrispy.FormActions(
                 StrictButton(

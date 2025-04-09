@@ -30,6 +30,7 @@ const select2Cleanup = (el) => {
 Alpine.directive('select2', (el, { expression }, { cleanup }) => {
     /**
      * To use, add x-select2 to your select element.
+     * You must be inside an alpine component (something with x-data)
      *
      *      <select x-select2></select>
      *          or
@@ -42,7 +43,7 @@ Alpine.directive('select2', (el, { expression }, { cleanup }) => {
      *     crispy.Field(
      *         'choice_field',
      *         x_select2=json.dumps({
-     *             "placeholder: "foo",
+     *             "placeholder": "foo",
      *             ...
      *         }),
      *     ),
