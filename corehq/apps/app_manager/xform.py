@@ -2146,6 +2146,7 @@ class XForm(WrappedNode):
     def _add_scheduler_case_update(self, case_type, case_property):
         self._scheduler_case_updates[case_type].add(case_property)
 
+
 VELLUM_TYPES = {
     "AndroidIntent": {
         'tag': 'input',
@@ -2186,6 +2187,12 @@ VELLUM_TYPES = {
         'type': 'xsd:double',
         'icon': 'fcc fcc-fd-decimal',
         'editable': True,
+    },
+    "Document": {
+        'tag': 'upload',
+        'media': 'application/*,text/*',
+        'type': 'binary',
+        'icon': 'fa fa-file',
     },
     "FieldList": {
         'tag': 'group',
