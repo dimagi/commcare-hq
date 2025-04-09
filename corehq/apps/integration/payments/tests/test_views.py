@@ -17,7 +17,9 @@ from corehq.apps.integration.payments.views import (
     PaymentsVerificationTableView,
     PaymentConfigurationView,
 )
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import WebUser, HqPermissions
+from corehq.apps.users.models_role import UserRole
+from corehq.apps.users.permissions import PAYMENTS_REPORT_PERMISSION
 from corehq.motech.models import ConnectionSettings
 from corehq.util.test_utils import flag_enabled
 from corehq.apps.integration.payments.filters import BatchNumberFilter, PaymentVerifiedByFilter
@@ -42,9 +44,33 @@ class BaseTestPaymentsView(TestCase):
         )
         cls.webuser.save()
 
+        cls.user_without_access = cls.make_user_with_custom_role('test-user2', 'payments-no-access')
+        cls.user_with_access = cls.make_user_with_custom_role('test-user3', 'payments-access', True)
+
+    @classmethod
+    def make_user_with_custom_role(cls, username, role_name, has_payments_access=False):
+        user = WebUser.create(
+            domain=cls.domain,
+            username=username,
+            password=cls.password,
+            created_by=None,
+            created_via=None
+        )
+        view_report_list = [PAYMENTS_REPORT_PERMISSION] if has_payments_access else []
+        role = UserRole.create(
+            domain=cls.domain,
+            name=role_name,
+            permissions=HqPermissions(view_report_list=view_report_list),
+        )
+        user.set_role(cls.domain, role.get_qualified_id())
+        user.save()
+        return user
+
     @classmethod
     def tearDownClass(cls):
         cls.webuser.delete(None, None)
+        cls.user_without_access.delete(None, None)
+        cls.user_with_access.delete(None, None)
         cls.domain_obj.delete()
         super().tearDownClass()
 
@@ -77,6 +103,20 @@ class TestPaymentsVerificationReportView(BaseTestPaymentsView):
     def test_ff_not_enabled(self):
         response = self._make_request()
         assert response.status_code == 404
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_user_without_access(self):
+        self.client.login(username=self.user_without_access.username, password=self.password)
+        response = self.client.get(self.endpoint)
+        assert response.status_code == 403
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    @patch.object(BatchNumberFilter, 'options', [("b001", "b001")])
+    @patch.object(PaymentVerifiedByFilter, 'options', [('test-user', 'test-user')])
+    def test_user_with_access(self):
+        self.client.login(username=self.user_with_access.username, password=self.password)
+        response = self.client.get(self.endpoint)
+        assert response.status_code == 200
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
     @patch.object(BatchNumberFilter, 'options', [("b001", "b001")])
@@ -134,11 +174,23 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
 
     def test_not_logged_in(self):
         response = self._make_request(log_in=False)
-        self.assertRedirects(response, f'/accounts/login/?next={self.endpoint}')
+        self.assertRedirects(response, f"{self.login_endpoint}?next={self.endpoint}")
 
     def test_ff_not_enabled(self):
         response = self._make_request()
         assert response.status_code == 404
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_user_without_access(self):
+        self.client.login(username=self.user_without_access.username, password=self.password)
+        response = self.client.get(self.endpoint)
+        assert response.status_code == 403
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_user_with_access(self):
+        self.client.login(username=self.user_with_access.username, password=self.password)
+        response = self.client.get(self.endpoint)
+        assert response.status_code == 200
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
     def test_success(self):
@@ -317,6 +369,18 @@ class TestPaymentsConfigurationView(BaseTestPaymentsView):
     def test_ff_not_enabled(self):
         response = self._make_request()
         assert response.status_code == 404
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_user_without_access(self):
+        self.client.login(username=self.user_without_access.username, password=self.password)
+        response = self.client.get(self.endpoint)
+        assert response.status_code == 403
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_user_with_access(self):
+        self.client.login(username=self.user_with_access.username, password=self.password)
+        response = self.client.get(self.endpoint)
+        assert response.status_code == 200
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
     def test_success_get(self, *args):

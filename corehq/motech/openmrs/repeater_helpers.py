@@ -428,10 +428,11 @@ def delete_case_property(
     case_property: str,
 ):
     """
-    Delete the OpenMRS identifier on the case.
+    Drops the value of ``case_property`` on the case identified by
+    ``domain`` and ``case_id``.
     """
-    case_block_args = CaseBlock.__init__.__code__.co_varnames
-    if case_property in case_block_args:
+    deletable_case_block_kwargs = ('external_id', 'case_name')
+    if case_property in deletable_case_block_kwargs:
         case_block_kwargs = {case_property: None}
     else:
         case_block_kwargs = {"update": {case_property: None}}
