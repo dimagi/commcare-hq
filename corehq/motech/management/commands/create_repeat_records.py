@@ -4,10 +4,15 @@ import re
 from django.core.management import CommandError
 from django.core.management.base import BaseCommand
 
-from corehq.form_processor.models import CommCareCase, XFormInstance
-from corehq.motech.repeaters.models import Repeater, get_all_repeater_types
-from corehq.util.log import with_progress_bar
 from dimagi.utils.chunked import chunked
+
+from corehq.form_processor.models import CommCareCase, XFormInstance
+from corehq.motech.repeaters.models import (
+    Repeater,
+    get_all_repeater_types,
+    type_name,
+)
+from corehq.util.log import with_progress_bar
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -54,7 +59,7 @@ class Command(BaseCommand):
                     repeater_class = get_all_repeater_types()[repeater_type] if repeater_type else None
                     repeaters = get_repeaters_for_type_in_domain(
                         doc.domain,
-                        [repeater_class.__name__],
+                        [type_name(repeater_class)],
                     )
                     if repeater_name_re:
                         repeaters = [r for r in repeaters if repeater_name_re.match(r.name)]

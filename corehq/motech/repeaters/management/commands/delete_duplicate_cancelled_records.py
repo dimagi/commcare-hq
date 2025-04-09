@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand
 from memoized import memoized
 
 from corehq.motech.repeaters.const import State
-from corehq.motech.repeaters.models import Repeater, RepeatRecord
+from corehq.motech.repeaters.models import Repeater, RepeatRecord, type_name
 
 
 class Command(BaseCommand):
@@ -72,7 +72,7 @@ class Command(BaseCommand):
         duplicates_log = self.resolve_duplicates(records_by_payload_id)
 
         filename = "cancelled_{}_records-{}.csv".format(
-            repeater.__class__.__name__,
+            type_name(repeater),
             datetime.datetime.utcnow().isoformat())
         print("Writing log of changes to {}".format(filename))
         with open(filename, 'w', encoding='utf-8') as f:

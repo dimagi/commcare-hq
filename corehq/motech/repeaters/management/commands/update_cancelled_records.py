@@ -6,7 +6,7 @@ import time
 from django.core.management.base import BaseCommand
 
 from corehq.motech.repeaters.const import State
-from corehq.motech.repeaters.models import Repeater, RepeatRecord
+from corehq.motech.repeaters.models import Repeater, RepeatRecord, type_name
 
 
 class Command(BaseCommand):
@@ -108,7 +108,7 @@ class Command(BaseCommand):
 
         filename = "{}_{}_records-{}.csv".format(
             action,
-            repeater.__class__.__name__,
+            type_name(repeater),
             datetime.datetime.utcnow().strftime('%Y-%m-%d_%H.%M.%S'))
         with open(filename, 'w', encoding='utf-8') as f:
             writer = csv.writer(f)

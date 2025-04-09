@@ -8,7 +8,11 @@ from corehq.apps.zapier.consts import CASE_TYPE_REPEATER_CLASS_MAP, EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.apps.zapier.tests.test_utils import bootrap_domain_for_zapier
 from corehq.apps.zapier.views import SubscribeView, UnsubscribeView
-from corehq.motech.repeaters.models import CreateCaseRepeater, FormRepeater
+from corehq.motech.repeaters.models import (
+    CreateCaseRepeater,
+    FormRepeater,
+    type_name,
+)
 
 ZAPIER_URL = "https://zapier.com/hooks/standard/1387607/5ccf35a5a1944fc9bfdd2c94c28c9885/"
 TEST_DOMAIN = 'test-domain'
@@ -142,7 +146,7 @@ class TestZapierIntegration(TestCase):
             self.assertNotEqual(subscription.repeater_id, '')
             self.assertEqual(
                 repeater_class.objects.get(id=subscription.repeater_id).repeater_type,
-                repeater_class.__name__,
+                type_name(repeater_class),
             )
 
     def test_subscribe_error(self):

@@ -202,7 +202,7 @@ class RepeaterSuperProxy(models.Model):
 
     def save(self, *args, **kwargs):
         self.clear_caches()
-        self.repeater_type = self.__class__.__name__
+        self.repeater_type = type_name(self)
         self.name = self.name or self.connection_settings.name
         if 'update_fields' in kwargs:
             kwargs['update_fields'].extend(['repeater_type', 'name'])
@@ -286,7 +286,7 @@ class RepeaterManager(models.Manager):
             return super().get_queryset().filter(is_deleted=False)
         else:
             return super().get_queryset().filter(
-                repeater_type=repeater_obj.__class__.__name__,
+                repeater_type=type_name(repeater_obj),
                 is_deleted=False,
             )
 
@@ -620,7 +620,7 @@ class Repeater(RepeaterSuperProxy):
         (Most classes that extend CaseRepeater, and all classes that
         extend FormRepeater, use the same form.)
         """
-        return self.__class__.__name__
+        return type_name(self)
 
 
 class FormRepeater(Repeater):
@@ -1502,3 +1502,7 @@ def domain_can_forward_now(domain):
         domain_can_forward(domain)
         and not toggles.PAUSE_DATA_FORWARDING.enabled(domain)
     )
+
+
+def type_name(obj):
+    return obj.__name__ if type(obj) is type else obj.__class__.__name__

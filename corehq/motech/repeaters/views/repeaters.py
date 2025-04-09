@@ -26,7 +26,7 @@ from corehq.motech.models import ConnectionSettings
 
 from ..const import RECORD_QUEUED_STATES, State
 from ..forms import CaseRepeaterForm, FormRepeaterForm, GenericRepeaterForm
-from ..models import Repeater, RepeatRecord, get_all_repeater_types
+from ..models import Repeater, RepeatRecord, get_all_repeater_types, type_name
 
 RepeaterTypeInfo = namedtuple('RepeaterTypeInfo',
                               'class_name friendly_name has_config instances')
@@ -57,7 +57,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
 
         return [
             RepeaterTypeInfo(
-                class_name=r.__class__.__name__,
+                class_name=type_name(r),
                 friendly_name=r.friendly_name,
                 has_config=r._has_config,
                 instances=get_repeaters_with_state_counts(r),

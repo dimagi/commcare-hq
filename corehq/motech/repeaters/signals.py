@@ -18,6 +18,7 @@ from corehq.motech.repeaters.models import (
     ReferCaseRepeater,
     UpdateCaseRepeater,
     domain_can_forward,
+    type_name,
 )
 from dimagi.utils.logging import notify_exception
 
@@ -61,19 +62,19 @@ def create_repeat_records(repeater_cls, payload):
             notify_exception(None, "create_repeat_records had an error resulting in a retry")
             metrics_counter('commcare.repeaters.error_creating_record', tags={
                 'domain': payload.domain,
-                'repeater_type': repeater_cls.__name__,
+                'repeater_type': type_name(repeater_cls),
             })
             time.sleep(sleep_length)
         else:
             return
     metrics_counter('commcare.repeaters.failed_to_create_record', tags={
         'domain': payload.domain,
-        'repeater_type': repeater_cls.__name__,
+        'repeater_type': type_name(repeater_cls),
     })
 
 
 def _create_repeat_records(repeater_cls, payload, fire_synchronously=False):
-    repeater_name = f'{repeater_cls.__module__}.{repeater_cls.__name__}'
+    repeater_name = f'{repeater_cls.__module__}.{type_name(repeater_cls)}'
     if settings.REPEATERS_WHITELIST is not None and repeater_name not in settings.REPEATERS_WHITELIST:
         return
     domain = payload.domain
