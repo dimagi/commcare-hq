@@ -238,7 +238,7 @@ class TestKycVerificationTableView(BaseTestKycView):
 
     def test_not_logged_in(self):
         response = self._make_request(is_logged_in=False)
-        self.assertRedirects(response, f'/accounts/login/?next={self.endpoint}')
+        self.assertRedirects(response, f"{self.login_endpoint}?next={self.endpoint}")
 
     def test_ff_not_enabled(self):
         response = self._make_request()

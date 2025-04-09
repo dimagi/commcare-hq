@@ -40,7 +40,8 @@ class DashboardWidgetBaseForm(forms.ModelForm):
     )
     dashboard_tab = forms.ChoiceField(
         label=_('Dashboard Tab'),
-        choices=DashboardTab.choices
+        choices=DashboardTab.choices,
+        widget=forms.HiddenInput(),
     )
 
     def __init__(self, domain, *args, **kwargs):

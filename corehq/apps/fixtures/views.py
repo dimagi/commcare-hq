@@ -459,7 +459,7 @@ def fixture_api_upload_status(request, domain, download_id, **kwargs):
     else:
         progress = context.get('progress', {}).get('percent')
         response = {
-            'message': _("Task in progress. {}% complete").format(progress),
+            'message': _("Task in progress. %(progress)s%% complete") % {'progress': progress},
             'progress': progress,
         }
     return json_response(response)

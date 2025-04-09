@@ -670,11 +670,11 @@ class TestViewGeneric(ViewsBase):
         'sms_contacts', 'DEFAULT_MESSAGE_LEVELS', 'PRIVACY_EMAIL', 'user', 'privileges',
         'MAPBOX_ACCESS_TOKEN', 'release_manager', 'can_send_sms', 'tabs', 'base_template',
         'STATIC_URL', 'tab', 'smart_lang_display_enabled', 'latest_commcare_version', 'MEDIA_URL', 'element_id',
-        'app', 'BASE_MAIN', 'prompt_settings_url', 'is_remote_app', 'show_biometric', 'linked_name',
+        'app', 'prompt_settings_url', 'is_remote_app', 'show_biometric', 'linked_name',
         'selected_form', 'module', 'MINIMUM_PASSWORD_LENGTH', 'MINIMUM_ZXCVBN_SCORE',
         'SUPPORT_EMAIL', 'app_view_options', 'show_advanced', 'role_version', 'custom_assertions',
         'is_app_settings_page', 'domain_names', 'latest_version_for_build_profiles', 'ANALYTICS_CONFIG',
-        'csrf_token', 'LANGUAGE_CODE', 'app_name', 'sub', 'is_saas_environment',
+        'csrf_token', 'LANGUAGE_CODE', 'app_name', 'sub', 'is_saas_environment', 'use_js_bundler', 'js_entry',
         'selected_module', 'add_ons_layout', 'is_dimagi_environment', 'TIME_ZONE', 'env', 'add_ons',
         'show_shadow_forms', 'can_edit_apps', 'ANALYTICS_IDS', 'active_tab', 'current_url_name',
         'show_release_mode', 'application_profile_url', 'linkable_domains', 'domain_links',
@@ -690,7 +690,7 @@ class TestViewGeneric(ViewsBase):
         'restrict_domain_creation', 'login_template', 'enterprise_mode', 'mobile_ux_cookie_name',
         'commcare_hq_names', 'langs', 'title_context_block', 'timezone', 'has_mobile_workers',
         'multimedia_state', 'bulk_app_translation_upload', 'show_training_modules', 'forloop', 'secure_cookies',
-        'IS_ANALYTICS_ENVIRONMENT',
+        'IS_ANALYTICS_ENVIRONMENT', 'module_type', 'icon_class',
     }
 
     expected_keys_module = {
@@ -699,8 +699,8 @@ class TestViewGeneric(ViewsBase):
         'nav_menu_media_specifics', 'user', 'TIME_ZONE', 'domain', 'metrics_domain', 'module_brief', 'timezone',
         'active_tab', 'data_registry_enabled', 'confirm', 'messages', 'releases_active', 'show_status_page',
         'show_search_workflow', 'data_registries', 'label', 'forloop', 'show_shadow_modules',
-        'SUPPORT_EMAIL', 'valid_parents_for_child_module', 'parent_case_modules',
-        'current_url_name', 'LANGUAGE_BIDI', 'DEFAULT_MESSAGE_LEVELS', 'show_report_modules', 'BASE_MAIN',
+        'SUPPORT_EMAIL', 'valid_parents_for_child_module', 'parent_case_modules', 'use_js_bundler', 'js_entry',
+        'current_url_name', 'LANGUAGE_BIDI', 'DEFAULT_MESSAGE_LEVELS', 'show_report_modules',
         'app_id', 'request', 'MINIMUM_PASSWORD_LENGTH', 'type', 'is_saas_environment', 'show_all_projects_link',
         'enterprise_mode', 'csrf_token', 'is_dimagi_environment', 'domain_names',
         'IS_DOMAIN_BILLING_ADMIN', 'tabs', 'perms', 'show_training_modules', 'AUDIO_LABEL',
@@ -718,7 +718,7 @@ class TestViewGeneric(ViewsBase):
         'langs', 'details', 'None', 'CUSTOM_LOGO_URL', 'selected_form', 'slug', 'env', 'False', 'id',
         'ANALYTICS_IDS', 'STATIC_URL', 'selected_module', 'role_version', 'EULA_COMPLIANCE', 'sentry',
         'case_list_form_not_allowed_reasons', 'child_module_enabled', 'block', 'IS_ANALYTICS_ENVIRONMENT',
-        'formats_supporting_case_list_optimizations',
+        'formats_supporting_case_list_optimizations', 'module_type', 'icon_class',
     }
 
     expected_keys_form = {
@@ -728,15 +728,15 @@ class TestViewGeneric(ViewsBase):
         'timezone', 'root_requires_same_case', 'active_tab', 'confirm', 'messages', 'releases_active',
         'show_status_page', 'form_filter_patterns', 'form_workflows', 'label', 'forloop',
         'SUPPORT_EMAIL', 'current_url_name', 'LANGUAGE_BIDI', 'DEFAULT_MESSAGE_LEVELS', 'show_report_modules',
-        'BASE_MAIN', 'xform_languages', 'app_id', 'request', 'allow_usercase', 'MINIMUM_PASSWORD_LENGTH', 'type',
+        'xform_languages', 'app_id', 'request', 'allow_usercase', 'MINIMUM_PASSWORD_LENGTH', 'type',
         'is_saas_environment', 'show_all_projects_link', 'enterprise_mode', 'module_is_multi_select', 'csrf_token',
         'nav_form', 'xform_validation_errored', 'allow_form_filtering',
-        'is_dimagi_environment', 'domain_names', 'IS_DOMAIN_BILLING_ADMIN', 'tabs', 'perms',
+        'is_dimagi_environment', 'domain_names', 'IS_DOMAIN_BILLING_ADMIN', 'tabs', 'perms', 'js_entry',
         'show_training_modules', 'AUDIO_LABEL', 'show_shadow_module_v1', 'practice_users', 'add_ons',
         'module_icon', 'custom_instances', 'SALES_EMAIL', 'app', 'domain_links', 'form_errors', 'app_subset',
         'show_biometric', 'MINIMUM_ZXCVBN_SCORE', 'ICON_LABEL', 'app_name', 'linkable_domains', 'alerts',
         'show_shadow_forms', 'use_bootstrap5', 'form_icon', 'title_block', 'login_template', 'base_template',
-        'MEDIA_URL', 'lang', 'show_live_preview', 'latest_version_for_build_profiles',
+        'MEDIA_URL', 'lang', 'show_live_preview', 'latest_version_for_build_profiles', 'use_js_bundler',
         'edit_name_url', 'privileges', 'settings_active', 'commcare_hq_names', 'add_ons_layout',
         'limit_to_linked_domains', 'module', 'is_case_list_form', 'True', 'multimedia', 'MAPBOX_ACCESS_TOKEN',
         'xform_validation_missing', 'LANGUAGES', 'mobile_ux_cookie_name', 'allow_report_an_issue',
@@ -747,7 +747,7 @@ class TestViewGeneric(ViewsBase):
         'secure_cookies', 'langs', 'None', 'CUSTOM_LOGO_URL', 'allow_form_copy', 'selected_form', 'slug',
         'env', 'False', 'ANALYTICS_IDS', 'STATIC_URL', 'selected_module', 'role_version', 'is_usercase_in_use',
         'module_loads_registry_case', 'EULA_COMPLIANCE', 'sentry', 'show_shadow_modules', 'show_custom_ref',
-        'block', 'IS_ANALYTICS_ENVIRONMENT',
+        'block', 'IS_ANALYTICS_ENVIRONMENT', 'module_type', 'icon_class',
     }
 
 
