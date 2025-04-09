@@ -60,8 +60,8 @@ hqDefine('commtrack/js/products_and_programs_main', [
                         message = data.message || _.template(gettext("Could not <%= action %> product. Please try again later."))({action: $(button).text().toLowerCase()});
                     alertContainer.text(message);
                     alertContainer.removeClass("d-none");
-                    var $modal = $(button).closest(".modal"),
-                        bootstrap.Modal.getOrCreateInstance($modal);
+                    var $modal = $(button).closest(".modal");
+                    bootstrap.Modal.getOrCreateInstance($modal);
                     $modal.one('hidden.bs.modal', function () {
                         alertContainer.addClass("d-none");
                     });
