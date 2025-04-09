@@ -282,7 +282,7 @@ class RepeaterManager(models.Manager):
 
     def get_queryset(self):
         repeater_obj = self.model()
-        if type(repeater_obj).__name__ == "Repeater":  # TODO: Use `is`
+        if type(repeater_obj) is Repeater:
             return super().get_queryset().filter(is_deleted=False)
         else:
             return super().get_queryset().filter(
