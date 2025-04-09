@@ -20,7 +20,7 @@
      initialPageData,
      util,
      hqReportModule,
-@@ -56,7 +58,7 @@
+@@ -63,7 +65,7 @@
          var reportOptions = initialPageData.get('js_options') || {};
          if (reportOptions.slug && reportOptions.async) {
              let promise = $.Deferred();
@@ -29,7 +29,7 @@
                  var asyncHQReport = asyncHQReportModule.default({
                      standardReport: getStandard(),
                  });
-@@ -75,13 +77,19 @@
+@@ -82,13 +84,19 @@
      asyncReport = getAsync();
  
      $(function () {
