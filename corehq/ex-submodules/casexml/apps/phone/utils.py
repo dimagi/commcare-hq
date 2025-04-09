@@ -1,6 +1,5 @@
 import re
 import weakref
-from io import BytesIO
 from uuid import uuid4
 from xml.etree import cElementTree as ElementTree
 from collections import defaultdict
@@ -31,23 +30,18 @@ GLOBAL_USER_ID = 'global-user-id-7566F038-5000-4419-B3EF-5349FB2FF2E9'
 
 
 def combine_io_streams(fixture_io_streams, user_id):
-    """
-    :param user_id: User's id, if this is for case restore, then pass in case id
-    :return: list containing byte string representation of the fixture
-    """
-    io = BytesIO()
-    io.write(ITEMS_COMMENT_PREFIX)
-    io.write(str(len(fixture_io_streams)).encode('utf-8'))
-    io.write(b'-->')
+    data = bytearray()
+    data.extend(ITEMS_COMMENT_PREFIX)
+    data.extend(str(len(fixture_io_streams)).encode('utf-8'))
+    data.extend(b'-->')
+
     for fixture_stream in fixture_io_streams:
         fixture_stream.seek(0)
-        io.write(fixture_stream.read())
-    io.seek(0)
+        data.extend(fixture_stream.read())
 
-    data = io.read()
     global_id = GLOBAL_USER_ID.encode('utf-8')
     b_user_id = user_id.encode('utf-8')
-    return [data.replace(global_id, b_user_id)] if data else []
+    return [bytes(data).replace(global_id, b_user_id)] if data else []
 
 
 def cache_fixture_items_data(io_data, domain, fixure_name, key_prefix):
