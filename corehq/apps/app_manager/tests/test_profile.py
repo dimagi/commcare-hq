@@ -85,7 +85,7 @@ class ProfileTest(TestCase, TestXmlMixin):
 
     def _test_dependencies(self, profile, key, value, setting):
         node = profile.find('./features/dependencies')
-        if node:
+        if node is not None:
             app_dependencies = node.findall('./android_package')
             actual_value = [n.get('id') for n in app_dependencies]
         else:

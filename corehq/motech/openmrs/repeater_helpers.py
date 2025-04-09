@@ -1,4 +1,3 @@
-import inspect
 import re
 from collections import defaultdict
 
@@ -431,8 +430,7 @@ def delete_case_property(
     """
     Delete the OpenMRS identifier on the case.
     """
-    members = dict(inspect.getmembers(CaseBlock.__init__.__code__))
-    case_block_args = members['co_varnames']
+    case_block_args = CaseBlock.__init__.__code__.co_varnames
     if case_property in case_block_args:
         case_block_kwargs = {case_property: None}
     else:

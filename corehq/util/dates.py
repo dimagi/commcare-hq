@@ -7,7 +7,7 @@ from dimagi.utils.parsing import ISO_DATE_FORMAT, ISO_DATETIME_FORMAT
 
 
 def unix_time(dt):
-    epoch = datetime.datetime.utcfromtimestamp(0)
+    epoch = datetime.datetime.fromtimestamp(0, tz=datetime.timezone.utc).replace(tzinfo=None)
     delta = dt - epoch
     return delta.total_seconds()
 

@@ -192,7 +192,7 @@ class TestCaseHierarchy(TestCase):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
         super(TestCaseHierarchy, cls).tearDownClass()
 
-    def test_normal_index(self):
+    def normal_index(self):
         factory = CaseFactory()
         parent_id = uuid.uuid4().hex
         [cp] = factory.create_or_update_case(
@@ -211,8 +211,11 @@ class TestCaseHierarchy(TestCase):
         self.assertEqual(2, len(hierarchy))
         return hierarchy
 
+    def test_normal_index(self):
+        self.normal_index()
+
     def test_deleted_index(self):
-        hierarchy = self.test_normal_index()
+        hierarchy = self.normal_index()
         parent, child = hierarchy
 
         factory = CaseFactory()
