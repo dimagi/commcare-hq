@@ -174,10 +174,15 @@ class BulkEditSession(models.Model):
                 "Please provide a list of ALL existing object ids in the desired order."
             )
 
-        instance_map = {getattr(obj, id_field): obj for obj in related_manager.all()}
+        # NOTE: We cast the id_field to a string in the instance map to avoid UUID comparison
+        # as the forms will be sending the ids as strings, while the remove_method sends it
+        # as UUID objects.
+        instance_map = {str(getattr(obj, id_field)): obj for obj in related_manager.all()}
         for index, object_id in enumerate(provided_ids):
             try:
-                instance = instance_map[object_id]
+                # We need to cast the object_id to a string to match the instance_map keys
+                # in case the provided_ids are UUIDs.
+                instance = instance_map[str(object_id)]
             except KeyError:
                 raise ValueError(f"Object with {id_field} {object_id} not found.")
             instance.index = index
