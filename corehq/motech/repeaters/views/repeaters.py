@@ -57,7 +57,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
 
         return [
             RepeaterTypeInfo(
-                class_name=r._repeater_type,
+                class_name=r.__class__.__name__,
                 friendly_name=r.friendly_name,
                 has_config=r._has_config,
                 instances=get_repeaters_with_state_counts(r),

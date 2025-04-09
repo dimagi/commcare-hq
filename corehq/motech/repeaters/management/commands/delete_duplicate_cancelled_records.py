@@ -72,7 +72,7 @@ class Command(BaseCommand):
         duplicates_log = self.resolve_duplicates(records_by_payload_id)
 
         filename = "cancelled_{}_records-{}.csv".format(
-            repeater._repeater_type,
+            repeater.__class__.__name__,
             datetime.datetime.utcnow().isoformat())
         print("Writing log of changes to {}".format(filename))
         with open(filename, 'w', encoding='utf-8') as f:

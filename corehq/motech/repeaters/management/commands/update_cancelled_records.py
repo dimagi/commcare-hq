@@ -108,7 +108,7 @@ class Command(BaseCommand):
 
         filename = "{}_{}_records-{}.csv".format(
             action,
-            repeater._repeater_type,
+            repeater.__class__.__name__,
             datetime.datetime.utcnow().strftime('%Y-%m-%d_%H.%M.%S'))
         with open(filename, 'w', encoding='utf-8') as f:
             writer = csv.writer(f)

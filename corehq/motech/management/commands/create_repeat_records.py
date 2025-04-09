@@ -52,7 +52,10 @@ class Command(BaseCommand):
             def _get_repeaters(doc):
                 if doc.domain not in by_domain:
                     repeater_class = get_all_repeater_types()[repeater_type] if repeater_type else None
-                    repeaters = get_repeaters_for_type_in_domain(doc.domain, [repeater_class._repeater_type])
+                    repeaters = get_repeaters_for_type_in_domain(
+                        doc.domain,
+                        [repeater_class.__name__],
+                    )
                     if repeater_name_re:
                         repeaters = [r for r in repeaters if repeater_name_re.match(r.name)]
 

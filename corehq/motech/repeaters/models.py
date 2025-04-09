@@ -202,7 +202,7 @@ class RepeaterSuperProxy(models.Model):
 
     def save(self, *args, **kwargs):
         self.clear_caches()
-        self.repeater_type = self._repeater_type
+        self.repeater_type = self.__class__.__name__
         self.name = self.name or self.connection_settings.name
         if 'update_fields' in kwargs:
             kwargs['update_fields'].extend(['repeater_type', 'name'])
@@ -282,10 +282,13 @@ class RepeaterManager(models.Manager):
 
     def get_queryset(self):
         repeater_obj = self.model()
-        if type(repeater_obj).__name__ == "Repeater":
+        if type(repeater_obj).__name__ == "Repeater":  # TODO: Use `is`
             return super().get_queryset().filter(is_deleted=False)
         else:
-            return super().get_queryset().filter(repeater_type=repeater_obj._repeater_type, is_deleted=False)
+            return super().get_queryset().filter(
+                repeater_type=repeater_obj.__class__.__name__,
+                is_deleted=False,
+            )
 
     def by_domain(self, domain):
         return list(self.filter(domain=domain))
@@ -400,11 +403,6 @@ class Repeater(RepeaterSuperProxy):
 
     def get_url(self, record):
         return self.connection_settings.url
-
-    @classmethod
-    @property
-    def _repeater_type(cls):
-        return cls.__name__
 
     @property
     def repeat_records_ready(self):
@@ -622,7 +620,7 @@ class Repeater(RepeaterSuperProxy):
         (Most classes that extend CaseRepeater, and all classes that
         extend FormRepeater, use the same form.)
         """
-        return self._repeater_type
+        return self.__class__.__name__
 
 
 class FormRepeater(Repeater):
