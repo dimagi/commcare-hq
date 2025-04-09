@@ -699,7 +699,7 @@ class TestViewGeneric(ViewsBase):
         'nav_menu_media_specifics', 'user', 'TIME_ZONE', 'domain', 'metrics_domain', 'module_brief', 'timezone',
         'active_tab', 'data_registry_enabled', 'confirm', 'messages', 'releases_active', 'show_status_page',
         'show_search_workflow', 'data_registries', 'label', 'forloop', 'show_shadow_modules',
-        'SUPPORT_EMAIL', 'valid_parents_for_child_module', 'parent_case_modules',
+        'SUPPORT_EMAIL', 'valid_parents_for_child_module', 'parent_case_modules', 'use_js_bundler', 'js_entry',
         'current_url_name', 'LANGUAGE_BIDI', 'DEFAULT_MESSAGE_LEVELS', 'show_report_modules',
         'app_id', 'request', 'MINIMUM_PASSWORD_LENGTH', 'type', 'is_saas_environment', 'show_all_projects_link',
         'enterprise_mode', 'csrf_token', 'WS4REDIS_HEARTBEAT', 'is_dimagi_environment', 'domain_names',
