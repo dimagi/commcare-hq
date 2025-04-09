@@ -13,7 +13,7 @@ from botocore.vendored.requests.packages.urllib3.exceptions import (
     ProtocolError,
 )
 from celery.schedules import crontab
-from couchdbkit import ResourceConflict, ResourceNotFound
+from couchdbkit import ResourceNotFound
 
 from couchexport.models import Format
 from dimagi.utils.chunked import chunked
@@ -111,13 +111,7 @@ def rebuild_indicators(
                 raise AssertionError("Engine ID does not match adapter")
 
         if not id_is_static(indicator_config_id):
-            # Save the start time now in case anything goes wrong. This way we'll be
-            # able to see if the rebuild started a long time ago without finishing.
-            config.meta.build.awaiting = False
-            config.meta.build.initiated = datetime.utcnow()
-            config.meta.build.finished = False
-            config.meta.build.rebuilt_asynchronously = False
-            config.save()
+            config.save_build_started()
 
         skip_log = bool(limit > 0)  # don't store log for temporary report builder UCRs
         rows_count_before_rebuild = _get_rows_count_from_existing_table(adapter)
@@ -142,11 +136,7 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, source=N
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=True):
         adapter = get_indicator_adapter(config)
         if not id_is_static(indicator_config_id):
-            config.meta.build.awaiting = False
-            config.meta.build.initiated_in_place = datetime.utcnow()
-            config.meta.build.finished_in_place = False
-            config.meta.build.rebuilt_asynchronously = False
-            config.save()
+            config.save_build_started(in_place=True)
 
         rows_count_before_rebuild = _get_rows_count_from_existing_table(adapter)
         try:
@@ -265,22 +255,7 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
 
     resume_helper.clear_resume_info()
     if not id_is_static(indicator_config_id):
-        if in_place:
-            config.meta.build.finished_in_place = True
-        else:
-            config.meta.build.finished = True
-        try:
-            config.save()
-        except ResourceConflict:
-            current_config = get_ucr_datasource_config_by_id(config._id)
-            # check that a new build has not yet started
-            if in_place:
-                if config.meta.build.initiated_in_place == current_config.meta.build.initiated_in_place:
-                    current_config.meta.build.finished_in_place = True
-            else:
-                if config.meta.build.initiated == current_config.meta.build.initiated:
-                    current_config.meta.build.finished = True
-            current_config.save()
+        config.save_build_finished(in_place=in_place)
 
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True)
