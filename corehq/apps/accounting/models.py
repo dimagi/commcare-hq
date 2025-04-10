@@ -1288,7 +1288,7 @@ class Subscription(models.Model):
         cls._get_active_subscription_by_domain.clear(cls, domain_name)
 
     @property
-    def is_community(self):
+    def is_free_edition(self):
         return self.plan_version.plan.edition == SoftwarePlanEdition.FREE
 
     @property

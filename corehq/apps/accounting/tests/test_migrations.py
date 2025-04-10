@@ -11,7 +11,7 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustmentMethod,
 )
-from corehq.apps.accounting.utils.subscription import ensure_community_or_paused_subscription
+from corehq.apps.accounting.utils.subscription import ensure_free_or_paused_subscription
 from corehq.apps.domain.models import Domain
 
 
@@ -111,7 +111,7 @@ class TestExplicitUnpaidSubscriptions(TestCase):
         ))
 
     def _assign_unpaid_subscriptions(self):
-        ensure_community_or_paused_subscription(
+        ensure_free_or_paused_subscription(
             self.domain.name, self.from_date, SubscriptionAdjustmentMethod.DEFAULT_COMMUNITY
         )
 

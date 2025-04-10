@@ -44,7 +44,7 @@ def assign_explicit_unpaid_subscription(domain_name, start_date, method, account
     )
 
 
-def ensure_community_or_paused_subscription(domain_name, from_date, method, web_user=None):
+def ensure_free_or_paused_subscription(domain_name, from_date, method, web_user=None):
     if Subscription.visible_objects.filter(
         Q(date_end__gt=from_date) | Q(date_end__isnull=True),
         date_start__lte=from_date,

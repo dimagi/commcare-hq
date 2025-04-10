@@ -78,7 +78,7 @@
             data-bind="
                 css: oPricingTypeCssClass,
                 text: oPricingTypeText,
-                attr: { 'aria-hidden': oIsCommunityPlan() }
+                attr: { 'aria-hidden': oIsFreeEdition() }
             "
           ></p>
 
@@ -93,7 +93,7 @@
           {% endcomment %}
           <p
             class="plan-monthly-label"
-            data-bind="attr: { 'aria-hidden': oIsCommunityPlan() }"
+            data-bind="attr: { 'aria-hidden': oIsFreeEdition() }"
           >
             {% trans "monthly" %}
             <span data-bind="visible: oDisplayDiscountNotice"
@@ -147,7 +147,7 @@
     </div>
 
     <div
-      data-bind="visible: !oIsCurrentPlanCommunity() && !oIsNextPlanPaused() && !oIsCurrentPlanPaused()"
+      data-bind="visible: !oIsCurrentPlanFreeEdition() && !oIsNextPlanPaused() && !oIsCurrentPlanPaused()"
     >
       <a
         href="#"

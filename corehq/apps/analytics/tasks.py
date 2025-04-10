@@ -817,7 +817,7 @@ def get_subscription_properties_by_user(couch_user):
     env = get_instance_string()
 
     return {
-        '{}is_on_community_plan'.format(env): _is_one_of_editions(SoftwarePlanEdition.FREE),
+        '{}is_on_free_edition'.format(env): _is_one_of_editions(SoftwarePlanEdition.FREE),
         '{}is_on_standard_plan'.format(env): _is_one_of_editions(SoftwarePlanEdition.STANDARD),
         '{}is_on_pro_plan'.format(env): _is_one_of_editions(SoftwarePlanEdition.PRO),
         '{}is_on_pro_bono_plan'.format(env): _is_a_pro_bono_status(ProBonoStatus.YES),

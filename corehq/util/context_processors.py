@@ -275,9 +275,9 @@ def subscription_banners(request):
             context.update({
                 'num_trial_days_remaining': max(0, delta.days),
             })
-    elif request.subscription.is_community:
+    elif request.subscription.is_free_edition:
         context.update({
-            'show_community_banner': True,
+            'show_free_edition_banner': True,
         })
     return context
 
