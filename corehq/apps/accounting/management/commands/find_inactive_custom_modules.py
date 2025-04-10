@@ -69,7 +69,7 @@ class Command(BaseCommand):
                 subscription = Subscription.get_active_subscription_by_domain(domain)
                 if subscription:
                     plan = subscription.plan_version.plan.name
-                    if subscription.plan_version.plan.edition != SoftwarePlanEdition.COMMUNITY:
+                    if subscription.plan_version.plan.edition != SoftwarePlanEdition.FREE:
                         all_community = False
                 last_form_submissions.append("{}".format(get_last_form_submission_received(domain)))
             else:

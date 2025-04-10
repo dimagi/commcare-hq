@@ -8,7 +8,6 @@ from corehq.apps.accounting.models import (
     ProBonoStatus,
     SoftwarePlanEdition,
     Subscription,
-    SubscriptionAdjustment,
     SubscriptionType,
 )
 from corehq.apps.accounting.utils import clear_plan_version_cache
@@ -30,7 +29,7 @@ class TestSubscriptionProperties(TestCase):
 
         cls.community = Domain(name="community", is_active=True)
         cls.community.save()
-        cls._setup_subscription(cls.community.name, SoftwarePlanEdition.COMMUNITY)
+        cls._setup_subscription(cls.community.name, SoftwarePlanEdition.FREE)
 
         cls.enterprise = Domain(name="enterprise", is_active=True)
         cls.enterprise.save()

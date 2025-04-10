@@ -117,7 +117,7 @@ class TestExplicitUnpaidSubscriptions(TestCase):
 
     @property
     def _most_recently_created_community_plan_version(self):
-        return DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.COMMUNITY)
+        return DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.FREE)
 
     @property
     def _most_recently_created_paused_plan_version(self):

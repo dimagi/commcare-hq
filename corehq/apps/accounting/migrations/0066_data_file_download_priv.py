@@ -13,7 +13,7 @@ def _grandfather_data_file_download_priv(apps, schema_editor):
     # Data File Download / File Dropzone is Pro Plan and higher
     skip_editions = ','.join((
         SoftwarePlanEdition.PAUSED,
-        SoftwarePlanEdition.COMMUNITY,
+        SoftwarePlanEdition.FREE,
         SoftwarePlanEdition.STANDARD,
     ))
     call_command(

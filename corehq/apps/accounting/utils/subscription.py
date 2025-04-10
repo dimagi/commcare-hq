@@ -11,7 +11,7 @@ from corehq.apps.accounting.models import (
 
 def assign_explicit_unpaid_subscription(domain_name, start_date, method, account=None,
                                         web_user=None, is_paused=False):
-    plan_edition = SoftwarePlanEdition.PAUSED if is_paused else SoftwarePlanEdition.COMMUNITY
+    plan_edition = SoftwarePlanEdition.PAUSED if is_paused else SoftwarePlanEdition.FREE
     future_subscriptions = Subscription.visible_objects.filter(
         date_start__gt=start_date,
         subscriber__domain=domain_name,
@@ -57,7 +57,7 @@ def ensure_community_or_paused_subscription(domain_name, from_date, method, web_
     is_paused = Subscription.visible_objects.filter(
         subscriber__domain=domain_name,
     ).exclude(
-        plan_version__plan__edition=SoftwarePlanEdition.COMMUNITY
+        plan_version__plan__edition=SoftwarePlanEdition.FREE
     ).exists()
 
     assign_explicit_unpaid_subscription(domain_name, from_date, method,
