@@ -1,6 +1,5 @@
 import copy
 import numbers
-import warnings
 from datetime import datetime, date
 from xml.etree import cElementTree as ElementTree
 from casexml.apps.case.xml import V2_NAMESPACE
@@ -164,20 +163,23 @@ class CaseBlock(object):
             attrs = IndexAttrs(
                 node.get("case_type"),
                 node.text,
-                node.get("relationship") or 'child',
+                if_none(node.get("relationship"), 'child'),
             )
             return tag_of(node), attrs
+
+        def if_none(value, default):
+            return value if value is not None else default
 
         NS = "{%s}" % V2_NAMESPACE
         updates = {}
         fields = {"update": updates}
-        for node in case.find(NS + "create") or []:
+        for node in if_none(case.find(NS + "create"), []):
             tag = tag_of(node)
             fields["create"] = True
             if tag in cls._built_ins:
                 fields[tag] = node.text
             # can create node have date_opened child node?
-        for node in case.find(NS + "update") or []:
+        for node in if_none(case.find(NS + "update"), []):
             tag = tag_of(node)
             if tag in cls._built_ins or tag == "external_id":
                 fields[tag] = node.text
@@ -196,7 +198,7 @@ class CaseBlock(object):
         return cls(
             case_id=case.get("case_id"),
             user_id=case.get("user_id"),
-            index=dict(index_tuple(x) for x in case.find(NS + "index") or []),
+            index=dict(index_tuple(x) for x in if_none(case.find(NS + "index"), [])),
             **fields
         )
 
