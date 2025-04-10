@@ -6,6 +6,10 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
 from django.utils.translation import gettext_lazy, gettext as _
 
+from corehq.apps.es.case_search import (
+    case_property_missing,
+    exact_case_property_text_query,
+)
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.case_search.const import METADATA_IN_REPORTS
@@ -608,10 +612,10 @@ class BulkEditFilter(models.Model):
 
     def filter_query(self, query):
         filter_query_functions = {
-            FilterMatchType.IS_EMPTY: lambda q: q.empty(self.prop_id),
-            FilterMatchType.IS_NOT_EMPTY: lambda q: q.non_null(self.prop_id),
-            FilterMatchType.IS_MISSING: lambda q: q.missing(self.prop_id),
-            FilterMatchType.IS_NOT_MISSING: lambda q: q.exists(self.prop_id),
+            FilterMatchType.IS_EMPTY: lambda q: q.filter(exact_case_property_text_query(self.prop_id, '')),
+            FilterMatchType.IS_NOT_EMPTY: lambda q: q.NOT(exact_case_property_text_query(self.prop_id, '')),
+            FilterMatchType.IS_MISSING: lambda q: q.filter(case_property_missing(self.prop_id)),
+            FilterMatchType.IS_NOT_MISSING: lambda q: q.NOT(case_property_missing(self.prop_id)),
         }
         # if a property is not editable, then it can't be empty or missing
         # we need the `is_editable_property` check to avoid elasticsearch RequestErrors on system fields

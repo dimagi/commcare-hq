@@ -20,7 +20,11 @@ from corehq.apps.data_cleaning.models import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import CaseSearchES, cases as case_es
-from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.case_search import (
+    case_property_missing,
+    case_search_adapter,
+    exact_case_property_text_query,
+)
 from corehq.apps.es.client import manager
 from corehq.apps.es.groups import group_adapter
 from corehq.apps.es.tests.utils import (
@@ -142,11 +146,11 @@ class BulkEditFilterQueryTests(TestCase):
                 match_type=FilterMatchType.IS_EMPTY,
             )
             filtered_query = active_filter.filter_query(query)
-            expected_query = query.empty('soil_contents')
+            expected_query = query.filter(exact_case_property_text_query('soil_contents', ''))
             self.assertEqual(
                 filtered_query.es_query, expected_query.es_query,
                 msg=f"{data_type} failed to filter the query "
-                    f"properly for FilterMatchType.is_empty"
+                    f"properly for FilterMatchType.IS_EMPTY"
             )
 
     def test_filter_query_is_empty_system_property(self):
@@ -170,11 +174,11 @@ class BulkEditFilterQueryTests(TestCase):
                 match_type=FilterMatchType.IS_NOT_EMPTY,
             )
             filtered_query = active_filter.filter_query(query)
-            expected_query = query.non_null('soil_contents')
+            expected_query = query.NOT(exact_case_property_text_query('soil_contents', ''))
             self.assertEqual(
                 filtered_query.es_query, expected_query.es_query,
                 msg=f"{data_type} failed to filter the query "
-                    f"properly for FilterMatchType.is_empty"
+                    f"properly for FilterMatchType.IS_NOT_EMPTY"
             )
 
     def test_filter_query_is_not_empty_system_property(self):
@@ -198,11 +202,11 @@ class BulkEditFilterQueryTests(TestCase):
                 match_type=FilterMatchType.IS_MISSING,
             )
             filtered_query = active_filter.filter_query(query)
-            expected_query = query.missing('soil_contents')
+            expected_query = query.filter(case_property_missing('soil_contents'))
             self.assertEqual(
                 filtered_query.es_query, expected_query.es_query,
                 msg=f"{data_type} failed to filter the query "
-                    f"properly for FilterMatchType.is_empty"
+                    f"properly for FilterMatchType.IS_MISSING"
             )
 
     def test_filter_query_is_missing_system_property(self):
@@ -226,11 +230,11 @@ class BulkEditFilterQueryTests(TestCase):
                 match_type=FilterMatchType.IS_NOT_MISSING,
             )
             filtered_query = active_filter.filter_query(query)
-            expected_query = query.exists('soil_contents')
+            expected_query = query.NOT(case_property_missing('soil_contents'))
             self.assertEqual(
                 filtered_query.es_query, expected_query.es_query,
                 msg=f"{data_type} failed to filter the query "
-                    f"properly for FilterMatchType.is_empty"
+                    f"properly for FilterMatchType.IS_NOT_MISSING"
             )
 
     def test_filter_query_is_not_missing_system_property(self):
