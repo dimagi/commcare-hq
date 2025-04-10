@@ -151,7 +151,7 @@ def _get_form_designer_view(request, domain, app, module, form):
             request,
             app,
             request.couch_user.username,
-        ),
+        ) and False,    # TODO: False
     })
     context.update(_get_requirejs_context())
 
@@ -390,6 +390,7 @@ def _get_notification_options(request, domain, app, form):
     return notification_options
 
 
+# TODO: remove
 def _get_requirejs_context():
     requirejs = {
         'requirejs_args': 'version={}{}'.format(
