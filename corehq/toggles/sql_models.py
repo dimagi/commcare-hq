@@ -14,6 +14,10 @@ class ToggleEditPermission(models.Model):
     tag_slug = models.CharField(max_length=255, choices=TAG_SLUG_CHOICES, unique=True)
     enabled_users = ArrayField(models.CharField(max_length=255), default=list, blank=True)
 
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
     def add_users(self, usernames):
         assert isinstance(usernames, list)
         users_to_add = [username for username in usernames if username not in self.enabled_users]
