@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine('accounting/js/credits', [
     'jquery',
     'knockout',
@@ -9,7 +9,7 @@ hqDefine('accounting/js/credits', [
     $,
     ko,
     _,
-    paymentMethodHandler
+    paymentMethodHandler,
 ) {
     var creditsManager = function (products, features, paymentHandler, canPurchaseCredits) {
         var self = {};

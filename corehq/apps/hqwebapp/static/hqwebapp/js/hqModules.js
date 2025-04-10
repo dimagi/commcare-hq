@@ -57,7 +57,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
     }
 
     (function (factory) {
-        if (typeof define === 'function' && define.amd && (window.USE_REQUIREJS || window.USE_WEBPACK)) {
+        if (typeof define === 'function' && define.amd && window.USE_WEBPACK) {
             // HQ's requirejs build process (build_requirejs.py) replaces hqDefine calls with
             // define calls, so it's important that this do nothing but pass through to require
             define(path, dependencies, factory);
@@ -70,6 +70,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
                 'd3/d3.min': 'd3',
                 'ace-builds/src-min-noconflict/ace': 'ace',
                 'chai/chai': 'chai',
+                'DOMPurify': 'DOMPurify',
                 'DOMPurify/dist/purify.min': 'DOMPurify',
                 'mocha/mocha': 'mocha',
                 'moment/moment': 'moment',
@@ -117,7 +118,7 @@ function hqImport(path) {
 // at module definition time, but this function can be used when doing so would
 // introduce a circular dependency.
 function hqRequire(paths, callback) {       // eslint-disable-line no-unused-vars
-    if (typeof define === 'function' && define.amd && (window.USE_REQUIREJS || window.USE_WEBPACK)) {
+    if (typeof define === 'function' && define.amd && window.USE_WEBPACK) {
         // HQ's requirejs build process (build_requirejs.py) replaces hqRequire calls with
         // require calls, so it's important that this do nothing but pass through to require
         require(paths, callback);   // eslint-disable-line no-undef

@@ -232,10 +232,28 @@
         <th class="col-sm-1"></th>
         <th data-bind="class: saveOnlyEditedFormFieldsEnabled ? 'col-sm-3' : 'col-sm-4'">
           <!-- ko if: $data.type && $data.type() == "user-property" -->
-            {% trans "User Property" %}
+            {% trans "User Case Property" %}
+            <span
+                  style="position: absolute; margin-top: -2px"
+                  data-bind="makeHqHelp: {
+                    description: '{% blocktrans trimmed %}
+                        User Case Properties allow you to store data about a web or mobile user. Saving a user
+                        case property ensures the data is available across forms and can be updated over time.
+                      {% endblocktrans %}'
+                  }"
+            ></span>
           <!-- /ko -->
           <!-- ko if: !$data.type || $data.type() == "case-property" -->
             {% trans "Case Property" %}
+            <span
+                  style="position: absolute; margin-top: -2px"
+                  data-bind="makeHqHelp: {
+                    description: '{% blocktrans trimmed %}
+                        Saving a question as a case property makes it accessible and
+                        reusable across your application. Case properties can be tracked and updated over time.
+                      {% endblocktrans %}'
+                  }"
+            ></span>
           <!-- /ko -->
         </th>
         {% comment %} The odd style additions in this block were necessary to put the question mark
@@ -326,7 +344,7 @@
       </tbody>
     </table>
     <div data-bind="if: searchAndFilter">
-      <div class="pull-right" data-bind="visible: filtered_case_properties().length">
+      <div class="pull-right" data-bind="visible: filtered_case_properties().length > per_page()">
         <pagination data-apply-bindings="false"
                     params="goToPage: goToPage,
                             perPage: per_page,

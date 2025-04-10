@@ -31,22 +31,27 @@ class DeviceRateLimiter:
     def device_limit_per_user(self, domain):
         return SystemLimit.for_key(DEVICE_LIMIT_PER_USER_KEY, domain=domain) or DEVICE_LIMIT_PER_USER_DEFAULT
 
-    def rate_limit_device(self, domain, user_id, device_id):
+    def rate_limit_device(self, domain, user, device_id):
         """
         Returns boolean representing if this user_id + device_id combo is rate limited or not
         NOTE: calling this method will result in the device_id being added to the list of used device_ids
         """
-        if not device_id or not user_id:
+        if not device_id or not user:
             logger.info(
-                f"Unable to rate limit device activity for domain {domain}, user {user_id}, and device {device_id}"
+                f"Unable to rate limit device activity for domain {domain}, user {user.user_id if user else None},"
+                f" and device {device_id}"
             )
+            return False
+
+        if user.is_commcare_user() and user.is_demo_user:
+            # demo users are intended to be used across devices
             return False
 
         if self._is_formplayer(device_id):
             # do not track formplayer activity
             return False
 
-        key = self._get_redis_key(domain, user_id)
+        key = self._get_redis_key(domain, user.user_id)
 
         key_exists, device_exists, device_count = self._get_usage_for_device(key, device_id)
 
@@ -64,7 +69,7 @@ class DeviceRateLimiter:
         is_enabled = toggles.DEVICE_RATE_LIMITER.enabled(domain, toggles.NAMESPACE_DOMAIN)
         metrics_counter(
             'commcare.devices_per_user.rate_limited',
-            tags={'domain': domain, 'user_id': user_id, 'enabled': str(is_enabled)},
+            tags={'domain': domain, 'user_id': user.user_id, 'enabled': str(is_enabled)},
         )
         return is_enabled
 

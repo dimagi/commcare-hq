@@ -16,6 +16,10 @@ class BulkEditSessionViewMixin:
     @memoized
     def session(self):
         try:
-            return BulkEditSession.objects.get(session_id=self.session_id)
+            return BulkEditSession.objects.get(
+                user=self.request.user,
+                domain=self.domain,
+                session_id=self.session_id,
+            )
         except BulkEditSession.DoesNotExist:
             raise Http404(self.session_not_found_message)

@@ -17,8 +17,7 @@ enforce and respect the boundaries that keep us sane by following one of
 a number of patterns.
 
 We're in the process of migrating to
-`Webpack <https://webpack.js.org/>`__. Prior to the migration to Webpack,
-we were migrating No-Bundler pages to RequireJS, which has since become deprecated.
+`Webpack <https://webpack.js.org/>`__.
 Part of this ongoing process has included developing a lighter-weight
 alternative module system called ``hqDefine``, that is based on the AMD (Asynchronous
 Module Definition) format. This ``hqDefine`` variant of AMD is relevant even for
@@ -178,7 +177,7 @@ function itself is exactly the same. It’s just being passed to
 ``hqDefine`` instead of being called directly.
 
 ``hqDefine`` is an intermediate step on the way to full support for AMD
-modules, which is supported by Webpack as well as our previous bundler RequireJS.
+modules, which is supported by Webpack.
 
 ``hqDefine`` checks whether or not it is on a page that uses AMD modules and then behaves in
 one of two ways: \* If the page has been migrated, meaning it uses AMD
@@ -207,6 +206,6 @@ to match their filename.
 
 ``hqDefine`` and ``hqImport`` provide a consistent interface for both
 migrated and unmigrated pages, and that interface is also consistent
-with AMD Modules (supported by Webpack, and previously RequireJS),
+with AMD Modules (supported by Webpack),
 making it easy to eventually  “flip the switch” and remove them altogether
 once all code is compatible with Webpack.
