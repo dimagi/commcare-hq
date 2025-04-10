@@ -28,9 +28,9 @@ class Command(BaseCommand):
             query.distinct('role__slug').values_list('role__slug', flat=True)
         )
         all_plan_slugs = (
-            all_role_slugs -
-            set(MAX_PRIVILEGES) -  # no privileges should be in software plan roles, this is just a safeguard
-            set(plan_slug.strip() for plan_slug in kwargs.get('skip', '').split(','))
+            all_role_slugs
+            - set(MAX_PRIVILEGES)  # no privileges should be in software plan roles, this is just a safeguard
+            - set(plan_slug.strip() for plan_slug in kwargs.get('skip', '').split(','))
         )
 
         # make sure that these roles are not attached to SoftwarePlanEditions
