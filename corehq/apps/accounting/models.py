@@ -150,7 +150,7 @@ class FeatureType(object):
 
 
 class SoftwarePlanEdition(object):
-    COMMUNITY = "Community"
+    COMMUNITY = "Free"
     STANDARD = "Standard"
     PRO = "Pro"
     ADVANCED = "Advanced"
