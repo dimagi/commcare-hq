@@ -243,19 +243,8 @@ class BulkEditSession(models.Model):
 
     def get_queryset(self):
         query = CaseSearchES().domain(self.domain).case_type(self.identifier)
-        query = self._apply_filters(query)
+        query = BulkEditFilter.apply_filters_to_query(self, query)
         query = self._apply_pinned_filters(query)
-        return query
-
-    def _apply_filters(self, query):
-        xpath_expressions = []
-        for custom_filter in self.filters.all():
-            query = custom_filter.filter_query(query)
-            column_xpath = custom_filter.get_xpath_expression()
-            if column_xpath is not None:
-                xpath_expressions.append(column_xpath)
-        if xpath_expressions:
-            query = query.xpath_query(self.domain, " and ".join(xpath_expressions))
         return query
 
     def _apply_pinned_filters(self, query):
@@ -584,6 +573,18 @@ class BulkEditFilter(models.Model):
             match_type=match_type,
             value=value,
         )
+
+    @classmethod
+    def apply_filters_to_query(cls, session, query):
+        xpath_expressions = []
+        for custom_filter in session.filters.all():
+            query = custom_filter.filter_query(query)
+            column_xpath = custom_filter.get_xpath_expression()
+            if column_xpath is not None:
+                xpath_expressions.append(column_xpath)
+        if xpath_expressions:
+            query = query.xpath_query(session.domain, " and ".join(xpath_expressions))
+        return query
 
     @property
     def is_editable_property(self):
