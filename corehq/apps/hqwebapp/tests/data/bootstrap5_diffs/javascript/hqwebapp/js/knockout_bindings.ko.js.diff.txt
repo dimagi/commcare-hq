@@ -6,7 +6,7 @@
      'jquery',
      'underscore',
      'knockout',
-+    "es6!hqwebapp/js/bootstrap5_loader",
++    "bootstrap5",
      'jquery-ui/ui/widgets/sortable',
      'langcodes/js/langcodes',   // $.langcodes
  ], function (
@@ -17,14 +17,27 @@
  ) {
      // Need this due to https://github.com/knockout/knockout/pull/2324
      // so that ko.bindingHandlers.foreach.update works properly
-@@ -342,19 +344,15 @@
+@@ -242,8 +244,8 @@
+                 } else {
+                     // Clicking a row selects it for sorting and unselects all other rows.
+                     $(this).addClass('last-clicked').siblings().removeClass('last-clicked');
+-                    for (var i = 0; i < list().length; i++) {
+-                        list()[i].selectedForSort(false);
++                    for (var j = 0; j < list().length; j++) {
++                        list()[j].selectedForSort(false);
+                     }
+                     getExportColumnByRow($(this)).selectedForSort(true);
+                 }
+@@ -341,20 +343,16 @@
+     };
  
      ko.bindingHandlers.modal = {
-         init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+-        init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
 -            $(element).addClass('modal fade').modal({
 -                show: false,
 -            });
 -            //        ko.bindingHandlers['if'].init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
++        init: function (element, valueAccessor, allBindingsAccessor, viewModel) {
 +            viewModel.binding_modal = new bootstrap.Modal(element);
          },
          update: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
@@ -83,7 +96,7 @@
                      };
                      return clickAction;
                  };
-@@ -403,11 +408,13 @@
+@@ -403,17 +408,19 @@
  
      ko.bindingHandlers.openRemoteModal = {
          init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
@@ -100,7 +113,31 @@
                      };
                      return clickAction;
                  };
-@@ -643,7 +650,7 @@
+             ko.bindingHandlers.click.init(element, newValueAccessor, allBindingsAccessor, viewModel, bindingContext);
+         },
+-        update: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
++        update: function (element, valueAccessor) {
+             $(element).data('ajaxSource', ko.utils.unwrapObservable(valueAccessor()));
+         },
+     };
+@@ -530,7 +537,7 @@
+                 controlsDescendantBindings: true,
+             };
+         },
+-        update: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
++        update: function (element, valueAccessor) {
+             $(element).empty();
+             $(element).append(ko.unwrap(valueAccessor()));
+         },
+@@ -604,7 +611,6 @@
+     ko.bindingHandlers.paste = {
+         init: function (element, valueAccessor) {
+             ko.bindingHandlers.__copyPasteSharedInit();
+-            var callback = valueAccessor();
+             $(element).data('pasteCallback', valueAccessor());
+         },
+     };
+@@ -643,7 +649,7 @@
                  options.sanitize = false;
              }
              if (options.title || options.content) { // don't show empty popovers

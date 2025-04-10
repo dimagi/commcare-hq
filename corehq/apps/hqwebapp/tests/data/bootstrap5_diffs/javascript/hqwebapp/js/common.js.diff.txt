@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,9 +1,10 @@
+@@ -1,9 +1,9 @@
 -hqDefine("hqwebapp/js/bootstrap3/common", [
 +hqDefine("hqwebapp/js/bootstrap5/common", [
      'jquery',
@@ -8,8 +8,7 @@
      'ko.mapping',
      'underscore',
 -    'bootstrap',
-+    // the es6! loaders below (without the prefix) are necessary to fix build issues with these modules
-+    'hqwebapp/js/bootstrap5_loader',
++    'bootstrap5',
  ], function () {
      // nothing to do, this is just to define the major common dependencies for HQ
  });
