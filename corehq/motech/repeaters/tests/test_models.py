@@ -12,7 +12,6 @@ from django.utils import timezone
 
 from dateutil.parser import isoparse
 from freezegun import freeze_time
-from nose.tools import assert_in
 
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeater_helpers import RepeaterResponse
@@ -33,6 +32,7 @@ from ..models import (
     get_all_repeater_types,
     is_response,
     is_success_response,
+    type_name,
 )
 
 DOMAIN = 'test-domain'
@@ -42,7 +42,20 @@ def test_get_all_repeater_types():
     types = get_all_repeater_types()
     for cls in settings.REPEATER_CLASSES:
         name = cls.split('.')[-1]
-        assert_in(name, types)
+        assert name in types
+
+
+class Foo:
+    pass
+
+
+def test_type_name_class():
+    assert type_name(Foo) == 'Foo'
+
+
+def test_type_name_instance():
+    foo = Foo()
+    assert type_name(foo) == 'Foo'
 
 
 class RepeaterTestCase(TestCase):
