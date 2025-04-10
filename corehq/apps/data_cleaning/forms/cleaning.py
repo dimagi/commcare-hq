@@ -76,9 +76,11 @@ class CleanSelectedRecordsForm(forms.Form):
         self.editable_columns = self.session.columns.filter(is_system=False)
         self.is_form_visible = self.editable_columns.count() > 0
 
-        self.fields['clean_prop_id'].choices = [(None, None)] + [
+        property_choices = [(None, None)] + [
             (column.prop_id, column.choice_label) for column in self.editable_columns
         ]
+        self.fields['clean_prop_id'].choices = property_choices
+        self.fields['copy_from_prop_id'].choices = property_choices
 
         initial_prop_id = self.data.get('clean_prop_id')
 
