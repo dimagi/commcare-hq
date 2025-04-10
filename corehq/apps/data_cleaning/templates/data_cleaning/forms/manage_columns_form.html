@@ -12,7 +12,7 @@
         class="htmx-disable-on-remove-column"
         hx-post="{{ request.path_info }}"
         hx-target="#{{ container_id }}"
-        hx-disabled-elt="find button"
+        hx-disabled-elt=".htmx-disable-on-column-sort"
         hq-hx-action="update_column_order"
         hx-trigger="end"
       >
