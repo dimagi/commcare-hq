@@ -5,6 +5,9 @@
   type="button"
   data-bs-toggle="offcanvas"
   data-bs-target="#offcanvas-filter"
+  x-data="wiggleButtonModel"
+  @wiggle-filters-button.window="wiggleThatButton()"
+  :class="getWiggleClasses()"
 >
   <i class="fa-solid fa-filter"></i> {% trans "Filter Cases" %}
 </button>
