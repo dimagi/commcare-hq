@@ -40,9 +40,9 @@ class TestInvoice(BaseInvoiceTestCase):
 
     def setUp(self):
         super().setUp()
-        self.community = DefaultProductPlan.get_default_plan_version()
+        self.free = DefaultProductPlan.get_default_plan_version()
         generator.arbitrary_commcare_users_for_domain(
-            self.domain.name, self.community.user_limit + 1
+            self.domain.name, self.free.user_limit + 1
         )
         self.invoice_start, self.invoice_end = get_previous_month_date_range()
 
@@ -87,7 +87,7 @@ class TestInvoice(BaseInvoiceTestCase):
         self.assertRaises(Invoice.DoesNotExist,
                           lambda: Invoice.objects.get(subscription__subscriber__domain=self.domain.name))
 
-    def test_community_invoice(self):
+    def test_free_invoice(self):
         """
         For free edition domain with any charges over the free edition limit for the month of invoicing,
         make sure that an invoice is generated.
@@ -95,9 +95,9 @@ class TestInvoice(BaseInvoiceTestCase):
         today = datetime.date.today()
         generator.generate_domain_subscription(
             self.account, self.domain, self.subscription.date_start, None,
-            plan_version=self.community
+            plan_version=self.free
         )
-        generator.create_excess_community_users(self.domain)
+        generator.create_excess_free_users(self.domain)
         self.account.date_confirmed_extra_charges = today
         self.account.save()
         self.create_invoices(datetime.date(today.year, today.month, 1))
@@ -129,8 +129,8 @@ class TestInvoice(BaseInvoiceTestCase):
         domain_under_limits = generator.arbitrary_domain()
         self.addCleanup(domain_under_limits.delete)
 
-        self.assertTrue(self.community.feature_charges_exist_for_domain(self.domain))
-        self.assertFalse(self.community.feature_charges_exist_for_domain(domain_under_limits))
+        self.assertTrue(self.free.feature_charges_exist_for_domain(self.domain))
+        self.assertFalse(self.free.feature_charges_exist_for_domain(domain_under_limits))
 
     def test_date_due_not_set_small_invoice(self):
         """Date Due doesn't get set if the invoice is very small"""

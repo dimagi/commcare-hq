@@ -41,7 +41,7 @@ class TestExportUtils(TestCase, DomainSubscriptionMixin):
         if current_subscription.plan_version.plan.edition != plan:
             current_subscription.change_plan(DefaultProductPlan.get_default_plan_version(plan))
 
-    def test_default_export_settings_community_domain_returns_none(self):
+    def test_default_export_settings_free_domain_returns_none(self):
         """
         Verify FREE software plans do not have access to default export settings
         """

@@ -41,7 +41,7 @@ class TestExplicitUnpaidSubscriptions(TestCase):
         self.assertEqual(subscription.subscriber.domain, self.domain.name)
         self.assertEqual(subscription.date_start, self.from_date)
         self.assertIsNone(subscription.date_end)
-        self.assertEqual(subscription.plan_version, self._most_recently_created_community_plan_version)
+        self.assertEqual(subscription.plan_version, self._most_recently_created_free_plan_version)
         self.assertTrue(subscription.skip_invoicing_if_no_feature_charges)
 
     def test_preexisting_current_subscription(self):
@@ -116,7 +116,7 @@ class TestExplicitUnpaidSubscriptions(TestCase):
         )
 
     @property
-    def _most_recently_created_community_plan_version(self):
+    def _most_recently_created_free_plan_version(self):
         return DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.FREE)
 
     @property
