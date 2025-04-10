@@ -75,6 +75,11 @@ class CleanCasesViewAccessTest(TestCase):
             cls.domain_obj,
             role_with_permission,
         )
+        cls.user_in_domain_not_in_session = cls.make_user(
+            'domain_member2@datacleaning.org',
+            cls.domain_obj,
+            role_with_permission,
+        )
         cls.user_without_role = cls.make_user(
             'domain_member_junior@datacleaning.org',
             cls.domain_obj,
@@ -188,6 +193,25 @@ class CleanCasesViewAccessTest(TestCase):
                 response.status_code,
                 200,
                 msg=f"{view_class.__name__} should be accessible"
+            )
+
+    @privilege_enabled(BULK_DATA_CLEANING)
+    @flag_enabled('DATA_CLEANING_CASES')
+    def test_has_no_access_to_wrong_session(self):
+        self.client.login(
+            username=self.user_in_domain_not_in_session.username,
+            password=self.password
+        )
+        for view_class, args in self.all_views:
+            if self.fake_session_id in args or len(args) == 1:
+                # only test real sessions and session views
+                continue
+            url = reverse(view_class.urlname, args=args)
+            response = self.client.get(url)
+            self.assertEqual(
+                response.status_code,
+                302 if view_class == CleanCasesSessionView else 404,
+                msg=f"{view_class.__name__} should NOT be accessible"
             )
 
     @privilege_enabled(BULK_DATA_CLEANING)
