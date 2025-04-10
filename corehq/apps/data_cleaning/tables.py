@@ -51,7 +51,7 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
                 },
                 'th__input': {
                     # `pageNumRecordsSelected`, `pageTotalRecords`: defined in template
-                    ":checked": "pageNumRecordsSelected == pageTotalRecords",
+                    ":checked": "pageNumRecordsSelected == pageTotalRecords && pageTotalRecords > 0",
                 },
             },
         )
