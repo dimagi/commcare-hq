@@ -153,17 +153,6 @@ class BulkEditFilterQueryTests(TestCase):
                     f"properly for FilterMatchType.IS_EMPTY"
             )
 
-    def test_filter_query_is_empty_system_property(self):
-        query = CaseSearchES().domain(self.domain)
-        active_filter = BulkEditFilter(
-            session=self.session,
-            prop_id='last_modified',
-            data_type=DataType.DATETIME,
-            match_type=FilterMatchType.IS_EMPTY,
-        )
-        filtered_query = active_filter.filter_query(query)
-        self.assertEqual(filtered_query, query)
-
     def test_filter_query_is_not_empty(self):
         query = CaseSearchES().domain(self.domain)
         for data_type, _ in DataType.CHOICES:
@@ -180,17 +169,6 @@ class BulkEditFilterQueryTests(TestCase):
                 msg=f"{data_type} failed to filter the query "
                     f"properly for FilterMatchType.IS_NOT_EMPTY"
             )
-
-    def test_filter_query_is_not_empty_system_property(self):
-        query = CaseSearchES().domain(self.domain)
-        active_filter = BulkEditFilter(
-            session=self.session,
-            prop_id='last_modified',
-            data_type=DataType.DATETIME,
-            match_type=FilterMatchType.IS_NOT_EMPTY,
-        )
-        filtered_query = active_filter.filter_query(query)
-        self.assertEqual(filtered_query, query)
 
     def test_filter_query_is_missing(self):
         query = CaseSearchES().domain(self.domain)
@@ -209,17 +187,6 @@ class BulkEditFilterQueryTests(TestCase):
                     f"properly for FilterMatchType.IS_MISSING"
             )
 
-    def test_filter_query_is_missing_system_property(self):
-        query = CaseSearchES().domain(self.domain)
-        active_filter = BulkEditFilter(
-            session=self.session,
-            prop_id='last_modified',
-            data_type=DataType.DATETIME,
-            match_type=FilterMatchType.IS_MISSING,
-        )
-        filtered_query = active_filter.filter_query(query)
-        self.assertEqual(filtered_query, query)
-
     def test_filter_query_is_not_missing(self):
         query = CaseSearchES().domain(self.domain)
         for data_type, _ in DataType.CHOICES:
@@ -236,17 +203,6 @@ class BulkEditFilterQueryTests(TestCase):
                 msg=f"{data_type} failed to filter the query "
                     f"properly for FilterMatchType.IS_NOT_MISSING"
             )
-
-    def test_filter_query_is_not_missing_system_property(self):
-        query = CaseSearchES().domain(self.domain)
-        active_filter = BulkEditFilter(
-            session=self.session,
-            prop_id='last_modified',
-            data_type=DataType.DATETIME,
-            match_type=FilterMatchType.IS_NOT_MISSING,
-        )
-        filtered_query = active_filter.filter_query(query)
-        self.assertEqual(filtered_query, query)
 
     def filter_query_remains_unchanged_for_other_match_types(self):
         query = CaseSearchES().domain(self.domain)

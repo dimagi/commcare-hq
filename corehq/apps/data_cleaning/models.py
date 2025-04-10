@@ -586,12 +586,6 @@ class BulkEditFilter(models.Model):
         return query
 
     @property
-    def is_editable_property(self):
-        from corehq.apps.data_cleaning.utils.cases import get_case_property_details
-        property_details = get_case_property_details(self.session.domain, self.session.identifier)
-        return property_details.get(self.prop_id, {}).get('is_editable', True)
-
-    @property
     def human_readable_match_type(self):
         category = DataType.get_filter_category(self.data_type)
         match_to_text = {
@@ -617,9 +611,7 @@ class BulkEditFilter(models.Model):
             FilterMatchType.IS_MISSING: lambda q: q.filter(case_property_missing(self.prop_id)),
             FilterMatchType.IS_NOT_MISSING: lambda q: q.NOT(case_property_missing(self.prop_id)),
         }
-        # if a property is not editable, then it can't be empty or missing
-        # we need the `is_editable_property` check to avoid elasticsearch RequestErrors on system fields
-        if self.match_type in filter_query_functions and self.is_editable_property:
+        if self.match_type in filter_query_functions:
             query = filter_query_functions[self.match_type](query)
         return query
 
