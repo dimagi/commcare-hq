@@ -244,12 +244,7 @@ class BulkEditSession(models.Model):
     def get_queryset(self):
         query = CaseSearchES().domain(self.domain).case_type(self.identifier)
         query = BulkEditFilter.apply_filters_to_query(self, query)
-        query = self._apply_pinned_filters(query)
-        return query
-
-    def _apply_pinned_filters(self, query):
-        for pinned_filter in self.pinned_filters.all():
-            query = pinned_filter.filter_query(query)
+        query = BulkEditPinnedFilter.apply_filters_to_query(self, query)
         return query
 
     def get_num_selected_records(self):
@@ -747,6 +742,12 @@ class BulkEditPinnedFilter(models.Model):
                 index=index,
                 filter_type=filter_type,
             )
+
+    @classmethod
+    def apply_filters_to_query(cls, session, query):
+        for pinned_filter in session.pinned_filters.all():
+            query = pinned_filter.filter_query(query)
+        return query
 
     def get_report_filter_class(self):
         from corehq.apps.data_cleaning.filters import (
