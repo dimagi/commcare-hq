@@ -91,6 +91,7 @@ class CleanSelectedRecordsForm(forms.Form):
             "propId": initial_prop_id,
             "cleanAction": self.data.get('clean_action', EditActionType.CHOICES[0][0]),
             "findActions": [EditActionType.FIND_REPLACE],
+            "replaceActions": [EditActionType.REPLACE],
         }
 
         self.helper = FormHelper()
@@ -126,6 +127,14 @@ class CleanSelectedRecordsForm(forms.Form):
                             css_class="card-body",
                         ),
                         x_show="findActions.includes(cleanAction)",
+                        css_class="card mb-3",
+                    ),
+                    crispy.Div(
+                        crispy.Div(
+                            'replace_all_string',
+                            css_class="card-body",
+                        ),
+                        x_show="replaceActions.includes(cleanAction)",
                         css_class="card mb-3",
                     ),
                     twbscrispy.StrictButton(
