@@ -74,6 +74,13 @@ hqDefine("cloudcare/js/formplayer/app", [
         return Backbone.Radio.channel('formplayer');
     };
 
+    FormplayerFrontend.getRegion = function (region) {
+        if (!FormplayerFrontend.regions) {
+            FormplayerFrontend.regions = CloudcareUtils.getRegionContainer();
+        }
+        return FormplayerFrontend.regions.getRegion(region);
+    };
+
     FormplayerFrontend.confirmUserWantsToNavigateAwayFromForm = function () {
         if (FormplayerFrontend.unsavedFormInProgress) {
             const userConfirmedYes = window.confirm(gettext("You have a form in progress. Are you sure you want to navigate away?"));
