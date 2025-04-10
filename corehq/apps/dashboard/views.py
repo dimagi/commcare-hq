@@ -291,6 +291,6 @@ def dismiss_self_signup(request, domain):
     self_signup = SelfSignupWorkflow.get_in_progress_for_domain(domain)
     if self_signup is not None:
         self_signup.complete_workflow(SoftwarePlanEdition.FREE)
-        messages.success(request, _("Subscribed to Community Edition."))
+        messages.success(request, _("Subscribed to Free Edition."))
 
     return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
