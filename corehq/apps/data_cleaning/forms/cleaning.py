@@ -92,6 +92,7 @@ class CleanSelectedRecordsForm(forms.Form):
             "cleanAction": self.data.get('clean_action', EditActionType.CHOICES[0][0]),
             "findActions": [EditActionType.FIND_REPLACE],
             "replaceActions": [EditActionType.REPLACE],
+            "copyActions": [EditActionType.COPY_REPLACE],
         }
 
         self.helper = FormHelper()
@@ -135,6 +136,20 @@ class CleanSelectedRecordsForm(forms.Form):
                             css_class="card-body",
                         ),
                         x_show="replaceActions.includes(cleanAction)",
+                        css_class="card mb-3",
+                    ),
+                    crispy.Div(
+                        crispy.Div(
+                            crispy.Field(
+                                'copy_from_prop_id',
+                                x_select2=json.dumps({
+                                    "placeholder": _("Select a case property..."),
+                                    "dropdownParent": offcanvas_selector,
+                                }),
+                            ),
+                            css_class="card-body",
+                        ),
+                        x_show="copyActions.includes(cleanAction)",
                         css_class="card mb-3",
                     ),
                     twbscrispy.StrictButton(
