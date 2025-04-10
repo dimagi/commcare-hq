@@ -860,7 +860,7 @@ class SoftwarePlan(models.Model):
 
 class DefaultProductPlan(models.Model):
     """
-    This links a product type to its default SoftwarePlan (i.e. the Community Plan).
+    This links a product type to its default SoftwarePlan (i.e. the Free edition).
     The latest SoftwarePlanVersion that's linked to this plan will be the one used to create a new subscription if
     nothing is found for that domain.
     """

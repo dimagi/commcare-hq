@@ -89,7 +89,7 @@ class TestInvoice(BaseInvoiceTestCase):
 
     def test_community_invoice(self):
         """
-        For community-subscribed domain with any charges over the community limit for the month of invoicing,
+        For free edition domain with any charges over the free edition limit for the month of invoicing,
         make sure that an invoice is generated.
         """
         today = datetime.date.today()

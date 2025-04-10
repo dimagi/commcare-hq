@@ -43,7 +43,7 @@ class TestExportUtils(TestCase, DomainSubscriptionMixin):
 
     def test_default_export_settings_community_domain_returns_none(self):
         """
-        Verify COMMUNITY software plans do not have access to default export settings
+        Verify FREE software plans do not have access to default export settings
         """
         self.update_subscription(SoftwarePlanEdition.FREE)
         settings = get_default_export_settings_if_available(self.domain)

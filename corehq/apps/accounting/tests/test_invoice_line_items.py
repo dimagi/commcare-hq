@@ -202,7 +202,7 @@ class TestUserLineItem(BaseInvoiceTestCase):
 
     def test_community_over_limit(self):
         """
-        For a domain under community with users over the community limit, make sure that:
+        For a domain under free edition with users over the free edition limit, make sure that:
         - base_description is None
         - base_cost is 0.0
         - unit_description is not None

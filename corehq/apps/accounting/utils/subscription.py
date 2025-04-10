@@ -52,7 +52,7 @@ def ensure_community_or_paused_subscription(domain_name, from_date, method, web_
     ).exists():
         return
 
-    # if there are any subscriptions present that are not the community edition,
+    # if there are any subscriptions present that are not the free edition,
     # then the ensured plan must be PAUSED
     is_paused = Subscription.visible_objects.filter(
         subscriber__domain=domain_name,

@@ -327,14 +327,14 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
 
     @staticmethod
     def response_mobile_worker_creation(domain, new_plan_version):
-        """ Deactivates users if there are too many for a community plan """
+        """ Deactivates users if there are too many for a free plan """
         from corehq.apps.accounting.models import (
             UNLIMITED_FEATURE_USAGE,
             DefaultProductPlan,
             FeatureType,
         )
 
-        # checks for community plan
+        # checks for free plan
         if (new_plan_version != DefaultProductPlan.get_default_plan_version()):
             return True
 

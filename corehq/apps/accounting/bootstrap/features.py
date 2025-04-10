@@ -6,9 +6,9 @@ from corehq import privileges
 
 paused_v0 = []
 
-# COMMUNITY PLANS
+# FREE PLANS
 
-# Grandfathered Community Plans created prior to August 2018
+# Grandfathered Free Plans created prior to August 2018
 community_v0 = [
     privileges.PROJECT_ACCESS,
     privileges.EXCEL_DASHBOARD,
@@ -18,7 +18,7 @@ community_v0 = [
     privileges.DATA_FORWARDING,
 ]
 
-# Grandfathered Community Plans created prior to Dec 18, 2019
+# Grandfathered Free Plans created prior to Dec 18, 2019
 community_v1 = [
     privileges.PROJECT_ACCESS,
     privileges.CASE_SHARING_GROUPS,
@@ -26,7 +26,7 @@ community_v1 = [
     privileges.DATA_FORWARDING,
 ]
 
-# Current Community Plan
+# Current Free Plan
 community_v2 = [
     privileges.PROJECT_ACCESS,
     privileges.LOGIN_AS,
