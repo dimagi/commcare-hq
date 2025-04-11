@@ -140,7 +140,9 @@
 
   <hr/>
   <div id="toggle_editing_ko">
-    <div data-bind="saveButton: saveButtonTop"></div>
+    {% if can_edit_toggle %}
+      <div data-bind="saveButton: saveButtonTop"></div>
+    {% endif %}
     {% if is_random_editable %}
       <div class="input-group">
         <label for="randomness-edit">Randomness Level: </label>
@@ -164,9 +166,11 @@
             <td class="col-sm-4" style="border: 0">
               <div class="input-group">
                 <span class="input-group-btn">
-                  <button class="btn btn-default" data-bind="click: $parent.removeItem">
-                    <i class="text-danger fa-regular fa-trash-can"></i>
-                  </button>
+                  {% if can_edit_toggle %}
+                    <button class="btn btn-default" data-bind="click: $parent.removeItem">
+                      <i class="text-danger fa-regular fa-trash-can"></i>
+                    </button>
+                  {% endif %}
                 </span>
                 <input class="form-control" type="text" data-bind="value: value">
                 <!-- ko if: value() && value()[0] == '!' -->
@@ -184,12 +188,16 @@
           </tr>
         </tbody>
       </table>
-      {% for namespace in namespaces %}
-        <button class="btn btn-primary" data-bind="click: function (){ addItem('{{ namespace }}') }">
-          <i class="fa fa-plus"></i> {% trans "Add " %}{{ namespace }}
-        </button>
-      {% endfor %}
+      {% if can_edit_toggle %}
+        {% for namespace in namespaces %}
+          <button class="btn btn-primary" data-bind="click: function (){ addItem('{{ namespace }}') }">
+            <i class="fa fa-plus"></i> {% trans "Add " %}{{ namespace }}
+          </button>
+        {% endfor %}
+      {% endif %}
     {% endif %}
-    <div data-bind="saveButton: saveButtonBottom"></div>
+    {% if can_edit_toggle %}
+      <div data-bind="saveButton: saveButtonBottom"></div>
+    {% endif %}
   </div>
 {% endblock %}

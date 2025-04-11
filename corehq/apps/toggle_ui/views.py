@@ -154,6 +154,10 @@ class ToggleEditView(BasePageView):
         """
         return find_static_toggle(self.toggle_slug)
 
+    @property
+    def can_edit_toggle(self):
+        return self.static_toggle.tag in get_tags_with_edit_permission(self.request.user.username)
+
     def get_toggle(self):
         if not self.static_toggle:
             raise Http404()
@@ -169,6 +173,7 @@ class ToggleEditView(BasePageView):
         context = {
             'static_toggle': self.static_toggle,
             'toggle': toggle,
+            'can_edit_toggle': self.can_edit_toggle,
             'namespaces': namespaces,
             'usage_info': self.usage_info,
             'server_environment': settings.SERVER_ENVIRONMENT,
