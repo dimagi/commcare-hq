@@ -1,3 +1,4 @@
+from django.http import HttpRequest
 from unittest.mock import patch
 
 import pytest
@@ -21,10 +22,10 @@ DOMAIN = 'test-ip-access'
 def test_is_allowed(in_country, allowlist, denylist, expected):
     config = IPAccessConfig(
         domain=DOMAIN,
-        country_allowlist=[],  # patching this anyways
+        country_allowlist=['US'],  # patching this anyways
         ip_allowlist=allowlist,
         ip_denylist=denylist,
     )
     with patch('corehq.apps.ip_access.models.is_in_country') as is_in_country_patch:
         is_in_country_patch.return_value = in_country
-        assert config.is_allowed(IP_ADDRESS) is expected
+        assert config.is_allowed(IP_ADDRESS, HttpRequest()) is expected

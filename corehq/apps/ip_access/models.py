@@ -21,7 +21,7 @@ class IPAccessConfig(models.Model):
     def is_allowed(self, ip_address, request):
         should_check_country = True
         if not self.country_allowlist:
-            if not settings.MAXMIND_LICENSE_KEY:
+            if not settings.MAXMIND_LICENSE_KEY and not settings.UNIT_TESTING:
                 should_check_country = False
                 messages.error(request, _("Please configure the MaxMind License key for your environment."))
             elif ip_address not in self.ip_allowlist:
@@ -30,7 +30,7 @@ class IPAccessConfig(models.Model):
             ip_address not in self.ip_denylist
             and (
                 ip_address in self.ip_allowlist
-                or (should_check_country and get_ip_country(ip_address) in self.country_allowlist)
+                or (should_check_country and is_in_country(ip_address, self.country_allowlist))
             )
         )
 
@@ -41,3 +41,9 @@ def get_ip_country(ip_address):
         response = client.country(ip_address)
         metrics_counter('commcare.ip_access.check_country')
         return response.country.iso_code
+
+
+def is_in_country(ip_address, country_allowlist):
+    if get_ip_country(ip_address) in country_allowlist:
+        return True
+    return False
