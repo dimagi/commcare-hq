@@ -2,7 +2,12 @@ from django.utils.deprecation import MiddlewareMixin
 from django.utils.translation import gettext_lazy
 
 from corehq.apps.hqwebapp.views import no_permissions
-from .permissions import is_location_safe, location_restricted_response
+
+from .permissions import (
+    LocationPermissionDenied,
+    is_location_safe,
+    location_restricted_response,
+)
 
 RESTRICTED_USER_UNASSIGNED_MSG = gettext_lazy("""
 Your user role allows you to access data based on your assigned location in the
@@ -35,7 +40,11 @@ class LocationAccessMiddleware(MiddlewareMixin):
             if not is_location_safe(view_fn, request, view_args, view_kwargs):
                 return location_restricted_response(request)
             elif not user.get_sql_location(domain):
-                return no_permissions(request, message=RESTRICTED_USER_UNASSIGNED_MSG)
+                return no_permissions(
+                    request,
+                    message=RESTRICTED_USER_UNASSIGNED_MSG,
+                    exception=LocationPermissionDenied(),
+                )
 
     @classmethod
     def apply_location_access(cls, request):

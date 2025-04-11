@@ -100,7 +100,12 @@ from corehq.apps.users.util import format_username, is_dimagi_email
 from corehq.toggles import CLOUDCARE_LATEST_BUILD
 from corehq.util.context_processors import commcare_hq_names
 from corehq.util.email_event_utils import handle_email_sns_event
-from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
+from corehq.util.metrics import (
+    create_metrics_event,
+    limit_domains,
+    metrics_counter,
+    metrics_gauge,
+)
 from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
 from corehq.util.metrics.utils import sanitize_url
 from corehq.util.public_only_requests.public_only_requests import get_public_only_session
@@ -114,7 +119,6 @@ from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.logging import notify_exception, notify_error
 from dimagi.utils.web import get_url_base
-from no_exceptions.exceptions import Http403
 from soil import DownloadBase
 from soil import views as soil_views
 
@@ -332,8 +336,8 @@ def server_up(req):
 
 
 @use_bootstrap5
-def _no_permissions_message(request, template_name="403.html", message=None):
-    t = loader.get_template(template_name)
+def _no_permissions_message(request, message=None):
+    t = loader.get_template("403.html")
     return t.render(
         context={
             'MEDIA_URL': settings.MEDIA_URL,
@@ -345,16 +349,18 @@ def _no_permissions_message(request, template_name="403.html", message=None):
 
 
 @use_bootstrap5
-def no_permissions(request, redirect_to=None, template_name="403.html", message=None, exception=None):
-    """
-    403 error handler.
-    """
-    return HttpResponseForbidden(_no_permissions_message(request, template_name, message))
+def no_permissions(request, redirect_to=None, message=None, exception=None):
+    """403 error handler. Called automatically by Django on PermissionDenied
 
-
-@use_bootstrap5
-def no_permissions_exception(request, template_name="403.html", message=None):
-    return Http403(_no_permissions_message(request, template_name, message))
+    :param exception: Instance of PermissionDenied or subclass. Class name will
+    be reported to datadog.
+    """
+    metrics_counter('commcare.no_permissions.count', tags={
+        'domain': limit_domains(getattr(request, 'domain', '__other__')),
+        'exception_type': exception.__class__.__name__ if exception else 'Other',
+    })
+    message = message or getattr(exception, 'user_facing_message', None)
+    return HttpResponseForbidden(_no_permissions_message(request, message))
 
 
 @use_bootstrap5
