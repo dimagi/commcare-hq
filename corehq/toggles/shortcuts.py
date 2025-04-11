@@ -98,3 +98,25 @@ def find_domains_with_toggle_enabled(toggle):
         return []
     prefix = NAMESPACE_DOMAIN + ':'
     return [user[len(prefix):] for user in doc.enabled_users if user.startswith(prefix)]
+
+
+def get_tags_with_edit_permission(username):
+    from corehq.toggles import ALL_TAGS
+    from corehq.toggles.sql_models import ToggleEditPermission
+
+    existing_permissions = ToggleEditPermission.objects.all()
+    permission_map = {p.tag_slug: p for p in existing_permissions}
+
+    allowed_tags = []
+    for tag in ALL_TAGS:
+        permission = permission_map.get(tag.slug)
+        # User has access to the tag if no entry exists
+        if not permission or permission.is_user_enabled(username):
+            allowed_tags.append(tag)
+    return allowed_tags
+
+
+def get_toggles_with_edit_permission(username):
+    from corehq.toggles import all_toggles
+    allowed_tags = get_tags_with_edit_permission(username)
+    return [toggle for toggle in list(all_toggles()) if toggle.tag in allowed_tags]
