@@ -59,6 +59,8 @@ from corehq.util.metrics import metrics_counter
 from corehq.util.metrics.load_counters import sms_load_counter
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
+from corehq.form_processor.models import CommCareCase
+from corehq.apps.users.cases import get_owner_id, get_owner_location_id
 
 # A list of all keywords which allow registration via sms.
 # Meant to allow support for multiple languages.
@@ -120,6 +122,9 @@ def get_location_id_by_contact(domain, contact):
         return contact.location_id
     elif isinstance(contact, WebUser):
         return contact.get_location_id(domain)
+    elif isinstance(contact, CommCareCase):
+        owner_id = get_owner_id(contact)
+        return get_owner_location_id(owner_id, domain)
     else:
         return None
 
