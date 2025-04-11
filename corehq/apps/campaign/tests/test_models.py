@@ -174,7 +174,7 @@ def test_dashboard_report_ordering():
 def test_dashboard_report_url():
     dashboard = dashboard_fixture()
     report = dashboard.reports.first()
-    assert report.url == 'http://localhost:8000/a/test-domain/reports/configurable/report1/'
+    assert report.url == 'http://localhost:8000/a/test-domain/campaign/dashboard_report/report1/'
 
 
 @use(dashboard_reports)
@@ -189,7 +189,7 @@ def test_dashboard_report_widget():
         'id': 1,
         'report_configuration_id': 'report1',
         'title': 'Report 1',
-        'url': 'http://localhost:8000/a/test-domain/reports/configurable/report1/',
+        'url': 'http://localhost:8000/a/test-domain/campaign/dashboard_report/report1/',
         'widget_type': 'DashboardReport',
     }
 
@@ -219,7 +219,7 @@ def test_dashboard_map_report_widgets():
                 'id': 1,
                 'report_configuration_id': 'report1',
                 'title': 'Report 1',
-                'url': 'http://localhost:8000/a/test-domain/reports/configurable/report1/',
+                'url': 'http://localhost:8000/a/test-domain/campaign/dashboard_report/report1/',
                 'widget_type': 'DashboardReport',
             },
             {
@@ -241,7 +241,7 @@ def test_dashboard_map_report_widgets():
                 'id': 2,
                 'report_configuration_id': 'report2',
                 'title': 'Report 2',
-                'url': 'http://localhost:8000/a/test-domain/reports/configurable/report2/',
+                'url': 'http://localhost:8000/a/test-domain/campaign/dashboard_report/report2/',
                 'widget_type': 'DashboardReport',
             },
         ],
@@ -254,7 +254,7 @@ def test_dashboard_map_report_widgets():
                 'id': 3,
                 'report_configuration_id': 'report3',
                 'title': 'Report 3',
-                'url': 'http://localhost:8000/a/test-domain/reports/configurable/report3/',
+                'url': 'http://localhost:8000/a/test-domain/campaign/dashboard_report/report3/',
                 'widget_type': 'DashboardReport',
             },
             {
@@ -276,7 +276,7 @@ def test_dashboard_map_report_widgets():
                 'id': 4,
                 'report_configuration_id': 'report4',
                 'title': 'Report 4',
-                'url': 'http://localhost:8000/a/test-domain/reports/configurable/report4/',
+                'url': 'http://localhost:8000/a/test-domain/campaign/dashboard_report/report4/',
                 'widget_type': 'DashboardReport',
             },
             {
