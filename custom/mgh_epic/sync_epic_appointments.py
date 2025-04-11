@@ -110,7 +110,7 @@ def filter_appointments_by_date(appointments_entries_json, study_start_date, wee
     return appointments
 
 
-def get_epic_appointments_for_patient(fhir_id, access_token, study_start_date=None):
+def get_epic_appointments_for_patient(fhir_id, access_token, opened_on, study_start_date=None):
     if not fhir_id:
         return []
     appointments = []
@@ -130,8 +130,7 @@ def get_epic_appointments_for_patient(fhir_id, access_token, study_start_date=No
     entries = response_json['entry']
 
     if not study_start_date:
-        for entry in entries:
-            appointments.append(entry)
+        appointments = filter_appointments_by_date(entries, opened_on, 12)
     else:
         appointments = filter_appointments_by_date(entries, study_start_date, 12)
 
@@ -204,9 +203,12 @@ def sync_all_appointments_domain(domain):
         epic_appointments_to_update = []
         # Get all appointments for patient from epic
         study_start_date = patient.get_case_property('study_start_date')
+        opened_on = patient.get_case_property('opened_on')
         epic_appointment_records = get_epic_appointments_for_patient(patient_fhir_id,
                                                                      access_token,
-                                                                     study_start_date)
+                                                                     opened_on,
+                                                                     study_start_date
+                                                                     )
         for appointment in epic_appointment_records:
             appointment_resource = appointment.get('resource')
             appointment_id = appointment_resource.get('id')
