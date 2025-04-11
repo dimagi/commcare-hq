@@ -2,6 +2,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 from corehq.toggles import ALL_TAGS
+from corehq.util.quickcache import quickcache
 
 TAG_SLUG_CHOICES = [(tag.slug, tag.slug) for tag in ALL_TAGS]
 
@@ -16,9 +17,11 @@ class ToggleEditPermission(models.Model):
 
     def save(self, *args, **kwargs):
         self.full_clean()
+        ToggleEditPermission.get_by_tag_slug.clear(ToggleEditPermission, self.tag_slug)
         super().save(*args, **kwargs)
 
     @classmethod
+    @quickcache(['tag_slug'], timeout=60 * 60 * 24)
     def get_by_tag_slug(cls, tag_slug):
         try:
             return cls.objects.get(tag_slug=tag_slug)
