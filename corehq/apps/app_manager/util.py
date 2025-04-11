@@ -33,6 +33,7 @@ from corehq.apps.app_manager.const import (
 )
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
 from corehq.apps.app_manager.exceptions import (
+    AppInDifferentDomainException,
     AppManagerException,
     PracticeUserException,
     SuiteError,
@@ -650,7 +651,7 @@ def get_form_source_download_url(xform):
 
     try:
         app = get_app(xform.domain, xform.build_id)
-    except Http404:
+    except (Http404, AppInDifferentDomainException):
         return None
     if app.is_remote_app():
         return None
