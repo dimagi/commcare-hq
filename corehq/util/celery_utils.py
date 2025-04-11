@@ -127,11 +127,19 @@ def revoke_tasks(task_names, interval=5):
 
         for current_task in tasks:
             if current_task.name in task_names and current_task.id not in task_ids:
-                app.control.revoke(current_task.id, terminate=True)
+                revoke_task(current_task.id, celery_app=app)
                 task_ids.add(current_task.id)
                 print(datetime.utcnow(), 'Revoked', current_task.id, current_task.name)
 
         sleep(interval)
+
+
+def revoke_task(task_id, celery_app=None):
+    if celery_app is None:
+        app = Celery()
+        app.config_from_object('django.conf:settings', namespace='CELERY')
+
+    celery_app.control.revoke(task_id, terminate=True)
 
 
 def print_tasks(worker, task_state):
