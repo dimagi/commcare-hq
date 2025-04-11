@@ -1,8 +1,10 @@
 import geoip2.webservice
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
+from django.utils.translation import gettext as _
 
 from corehq.util.metrics import metrics_counter
 
@@ -16,29 +18,26 @@ class IPAccessConfig(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
 
-    def is_allowed(self, ip_address):
+    def is_allowed(self, ip_address, request):
+        should_check_country = True
+        if not self.country_allowlist:
+            if not settings.MAXMIND_LICENSE_KEY:
+                should_check_country = False
+                messages.error(request, _("Please configure the MaxMind License key for your environment."))
+            elif ip_address not in self.ip_allowlist:
+                return False
         return (
             ip_address not in self.ip_denylist
             and (
                 ip_address in self.ip_allowlist
-                or is_in_country(ip_address, self.country_allowlist)
+                or (should_check_country and get_ip_country(ip_address) in self.country_allowlist)
             )
         )
 
 
-def is_in_country(ip_address, country_allowlist):
-    # If there is no countries in the allowlist, assume all countries are allowed
-    # If MaxMind is not configured in the env, default to blocking all requests
-    if not country_allowlist:
-        return True
-    if not settings.MAXMIND_LICENSE_KEY:
-        return False
-
+def get_ip_country(ip_address):
     with geoip2.webservice.Client(settings.MAXMIND_ACCOUNT_ID,
                                   settings.MAXMIND_LICENSE_KEY, host='geolite.info') as client:
         response = client.country(ip_address)
         metrics_counter('commcare.ip_access.check_country')
-        if response.country.iso_code in country_allowlist:
-            return True
-        else:
-            return False
+        return response.country.iso_code

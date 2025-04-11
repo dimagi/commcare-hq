@@ -44,7 +44,7 @@ def is_valid_ip(request, domain):
         config = IPAccessConfig.objects.get(domain=domain)
     except IPAccessConfig.DoesNotExist:
         config = None
-    if not config or config.is_allowed(ip):
+    if not config or config.is_allowed(ip, request):
         request.session[allow_key].append(ip)
         return True
     else:

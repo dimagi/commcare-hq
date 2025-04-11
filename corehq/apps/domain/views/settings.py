@@ -24,7 +24,7 @@ from memoized import memoized
 
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.enterprise.mixins import ManageMobileWorkersMixin
-from dimagi.utils.web import json_response
+from dimagi.utils.web import json_response, get_ip
 
 from corehq import feature_previews, privileges, toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
@@ -58,7 +58,7 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.hqwebapp.signals import clear_login_attempts
-from corehq.apps.ip_access.models import IPAccessConfig
+from corehq.apps.ip_access.models import IPAccessConfig, get_ip_country
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
 from corehq.apps.users.decorators import require_can_manage_domain_alerts
@@ -308,6 +308,16 @@ class EditIPAccessConfigView(BaseProjectSettingsView):
         except IPAccessConfig.DoesNotExist:
             return None
 
+    @cached_property
+    def ip_country(self):
+        if settings.MAXMIND_LICENSE_KEY:
+            return get_ip_country(self.current_ip)
+        return None
+
+    @property
+    def current_ip(self):
+        return get_ip(self.request)
+
     @property
     def page_context(self):
         return {
@@ -322,17 +332,41 @@ class EditIPAccessConfigView(BaseProjectSettingsView):
                 should_save = False
                 domain_config = IPAccessConfig()
                 domain_config.domain = self.domain
-
-            for attr, value in self.form.cleaned_data.items():
-                current_value = getattr(domain_config, attr)
-                if value != current_value:
-                    should_save = True
-                    setattr(domain_config, attr, value)
-
+            if not self.form.cleaned_data["ip_allowlist"] and not self.form.cleaned_data["country_allowlist"]:
+                should_save = False
+                messages.error(request,
+                               _("You must provide either your country or your "
+                                 "current IP Address to have access to this project."))
+            else:
+                for attr, value in self.form.cleaned_data.items():
+                    current_value = getattr(domain_config, attr)
+                    if value != current_value:
+                        should_save = True
+                        if attr == "country_allowlist":
+                            if not settings.MAXMIND_LICENSE_KEY:
+                                messages.error(request,
+                                               _("The Allowed Countries field cannot be saved because MaxMind "
+                                                 "is not configured for your environment"))
+                                should_save = False
+                                continue
+                            elif (self.ip_country not in value
+                                  and self.current_ip not in self.form.cleaned_data["ip_allowlist"]):
+                                messages.error(request,
+                                               _("The form cannot be saved because you will be blocked. "
+                                                 "Please include your current country or include your "
+                                                 "current IP address in the Allowed IP field."))
+                                should_save = False
+                                break
+                        if attr == "ip_denylist" and self.current_ip in value:
+                            messages.error(request, _("You cannot put your current IP address "
+                                                      "in the Denied IPs field"))
+                            should_save = False
+                            break
+                        setattr(domain_config, attr, value)
             if should_save:
                 domain_config.save()
                 messages.success(request, _("Your IP Access settings have been saved!"))
-                return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
+            return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 
 
