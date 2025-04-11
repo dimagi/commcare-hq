@@ -8,7 +8,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     'backbone',
     'backbone.marionette',
     'markdown-it/dist/markdown-it',
-    'es6!hqwebapp/js/bootstrap5_loader',
+    'bootstrap5',
     'hqwebapp/js/initial_page_data',
     'analytix/js/appcues',
     'analytix/js/google',

@@ -56,14 +56,6 @@ module.exports = {
                     replace: 'define',
                 },
             },
-            {
-                test: /\.js$/,
-                loader: 'string-replace-loader',
-                options: {
-                    search: /\b(es6!)?hqwebapp\/js\/bootstrap5_loader\b/g,
-                    replace: 'bootstrap5',
-                },
-            },
 
             {
                 test: /modernizr\.js$/,

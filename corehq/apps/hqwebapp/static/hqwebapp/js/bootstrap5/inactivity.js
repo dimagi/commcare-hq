@@ -5,7 +5,7 @@
 hqDefine('hqwebapp/js/bootstrap5/inactivity', [
     'jquery',
     'underscore',
-    'es6!hqwebapp/js/bootstrap5_loader',
+    'bootstrap5',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
 ], function (

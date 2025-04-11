@@ -266,7 +266,7 @@ def test_flag_changed_javascript_plugins_bootstrap5():
                 "\n\nAn EXAMPLE for how to apply this change is provided below.\nPlease see docs for "
                 "further details.\n\npreviously\n```\n$('#bugReport').modal('hide');\n```\n\nnow\n```\n"
                 "const bugReportModal = new bootstrap.Modal($('#bugReport'));\nbugReportModal.hide();\n```\n\n"
-                "Hint: make sure to list `hqwebapp/js/bootstrap5_loader` as a js dependency in the file where\n"
+                "Hint: make sure to list `bootstrap5` as a js dependency in the file where\n"
                 "bootstrap is referenced.\n\nOld docs: https://getbootstrap.com/docs/3.4/javascript/#modals\n"
                 "New docs: https://getbootstrap.com/docs/5.3/components/modal/#via-javascript\n"]])
 
