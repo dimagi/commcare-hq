@@ -6,6 +6,7 @@ from django.urls import path
 
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_disabled, flag_enabled
+from urls import urlpatterns as base_urlpatterns
 
 from ..models import IPAccessConfig
 
@@ -21,7 +22,7 @@ def domain_view(request, domain):
 urlpatterns = [
     path('non_domain_view/', non_domain_view),
     path('a/<slug:domain>/', domain_view),
-]
+] + base_urlpatterns
 
 
 @override_settings(ROOT_URLCONF='corehq.apps.ip_access.tests.test_middleware')
@@ -56,7 +57,7 @@ class TestIPAccessMiddleware(TestCase):
     def test_disallowed_domain_view(self, is_allowed):
         is_allowed.return_value = False
         res = self.client.get(f'/a/{self.domain}/')
-        self.assertEqual(res.status_code, 451)
+        self.assertEqual(res.status_code, 403)
         is_allowed.assert_called_once()
 
     def test_other_domain(self, is_allowed):
@@ -139,5 +140,5 @@ class TestIPAccessMiddleware(TestCase):
         self.client.session.flush()
         self.client.login(username=self.username, password=self.password)
         res = self.client.get(f'/a/{self.domain}/')
-        self.assertEqual(res.status_code, 451)
+        self.assertEqual(res.status_code, 403)
         self.assertEqual(is_allowed.call_count, 2)
