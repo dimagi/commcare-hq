@@ -12,7 +12,7 @@ from corehq.apps.app_manager.app_schemas.app_case_metadata import (
     FormQuestionResponse,
 )
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.exceptions import XFormException
+from corehq.apps.app_manager.exceptions import AppInDifferentDomainException, XFormException
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.formdetails.exceptions import QuestionListNotFound
 from corehq.form_processor.exceptions import XFormQuestionValueNotFound
@@ -45,6 +45,10 @@ def get_questions(domain, app_id, xmlns):
     except Http404:
         raise QuestionListNotFound(
             _("No app could be found")
+        )
+    except AppInDifferentDomainException:
+        raise QuestionListNotFound(
+            _("App is in a different domain")
         )
     if not isinstance(app, Application):
         raise QuestionListNotFound(

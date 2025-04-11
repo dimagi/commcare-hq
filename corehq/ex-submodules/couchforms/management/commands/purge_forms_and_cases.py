@@ -3,6 +3,7 @@ import csv
 from django.core.management.base import BaseCommand, CommandError
 from django.http import Http404
 
+from corehq.apps.app_manager.exceptions import AppInDifferentDomainException
 from corehq.apps.app_manager.models import Application
 from casexml.apps.case.xform import get_case_ids_from_form
 from corehq.form_processor.models import CommCareCase, XFormInstance
@@ -92,7 +93,7 @@ though deletion would be re-confirmed so dont panic
             if not version_from_mapping:
                 try:
                     get_app_version = get_app(self.domain, xform.build_id).version
-                except Http404:
+                except (Http404, AppInDifferentDomainException):
                     get_app_version = None
                 if get_app_version:
                     version_from_mapping = int(get_app_version)
