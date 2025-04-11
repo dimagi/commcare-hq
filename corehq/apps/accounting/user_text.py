@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from corehq.apps.accounting.models import FeatureType, SoftwarePlanEdition
 
 DESC_BY_EDITION = {
-    SoftwarePlanEdition.COMMUNITY: {
+    SoftwarePlanEdition.FREE: {
         'name': _("Free"),
         'description': _("For practice purposes. Not intended for live projects. {} users maximum."),
     },

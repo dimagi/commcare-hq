@@ -243,9 +243,9 @@ class Command(BaseCommand):
 
     BOOTSTRAP_PLANS = [
         Role(slug='paused_plan_v0', name='Paused Plan', description=''),
-        Role(slug='community_plan_v0', name='Community Plan', description=''),
-        Role(slug='community_plan_v1', name='Community Plan', description=''),
-        Role(slug='community_plan_v2', name='Community Plan', description=''),
+        Role(slug='community_plan_v0', name='Free Edition', description=''),
+        Role(slug='community_plan_v1', name='Free Edition', description=''),
+        Role(slug='community_plan_v2', name='Free Edition', description=''),
         Role(slug='standard_plan_v0', name='Standard Plan', description=''),
         Role(slug='standard_plan_v1', name='Standard Plan', description=''),
         Role(slug='standard_plan_v2', name='Standard Plan', description=''),

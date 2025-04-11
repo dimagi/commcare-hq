@@ -70,7 +70,7 @@
           <h3 data-bind="text: oName"></h3>
 
           {% comment %}
-          We could hide this text block for Community, but instead just make
+          We could hide this text block for Free edition, but instead just make
           its contents invisible to avoid layout shifting
           {% endcomment %}
           <p
@@ -78,7 +78,7 @@
             data-bind="
                 css: oPricingTypeCssClass,
                 text: oPricingTypeText,
-                attr: { 'aria-hidden': oIsCommunityPlan() }
+                attr: { 'aria-hidden': oIsFreeEdition() }
             "
           ></p>
 
@@ -88,12 +88,12 @@
           ></p>
 
           {% comment %}
-          We could hide this text block for Community, but instead just make
+          We could hide this text block for Free edition, but instead just make
           its contents invisible to avoid layout shifting
           {% endcomment %}
           <p
             class="plan-monthly-label"
-            data-bind="attr: { 'aria-hidden': oIsCommunityPlan() }"
+            data-bind="attr: { 'aria-hidden': oIsFreeEdition() }"
           >
             {% trans "monthly" %}
             <span data-bind="visible: oDisplayDiscountNotice"
@@ -147,7 +147,7 @@
     </div>
 
     <div
-      data-bind="visible: !oIsCurrentPlanCommunity() && !oIsNextPlanPaused() && !oIsCurrentPlanPaused()"
+      data-bind="visible: !oIsCurrentPlanFreeEdition() && !oIsNextPlanPaused() && !oIsCurrentPlanPaused()"
     >
       <a
         href="#"

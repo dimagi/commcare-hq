@@ -12,7 +12,7 @@ def _grandfather_copy_cases_priv(apps, schema_editor):
 
     skip_editions = ','.join((
         SoftwarePlanEdition.PAUSED,
-        SoftwarePlanEdition.COMMUNITY,
+        SoftwarePlanEdition.FREE,
         SoftwarePlanEdition.STANDARD,
         SoftwarePlanEdition.PRO,
     ))

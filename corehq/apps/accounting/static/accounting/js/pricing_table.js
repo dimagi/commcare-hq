@@ -51,7 +51,7 @@ hqDefine('accounting/js/pricing_table', [
             return !self.oSelectedPlan() || isNextPlan || isCurrentPlan;
         });
 
-        self.oIsCurrentPlanCommunity = ko.observable(options.currentPlan === 'community');
+        self.oIsCurrentPlanFreeEdition = ko.observable(options.currentPlan === 'free');
         self.oIsCurrentPlanPaused = ko.observable(options.currentPlan === 'paused');
 
         self.oIsNextPlanPaused = ko.computed(function () {
@@ -191,7 +191,7 @@ hqDefine('accounting/js/pricing_table', [
 
     var planDisplayName = function (name) {
         const plans = {
-            'Community': gettext('Free edition'),
+            'Free': gettext('Free edition'),
             'Standard': 'Standard',
             'Pro': 'Pro',
             'Advanced': 'Advanced',
@@ -209,8 +209,8 @@ hqDefine('accounting/js/pricing_table', [
         self.oAnnualPrice = ko.observable(data.annual_price);
         self.oDescription = ko.observable(data.description);
 
-        self.oIsCommunityPlan = ko.computed(function () {
-            return self.oSlug() === 'community';
+        self.oIsFreeEdition = ko.computed(function () {
+            return self.oSlug() === 'free';
         });
 
         self.oIsCurrentPlan = ko.computed(function () {

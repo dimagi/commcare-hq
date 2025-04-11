@@ -778,7 +778,7 @@ def get_subscription_properties_by_user(couch_user):
         return (plan_version.plan.visibility != SoftwarePlanVisibility.TRIAL
                 and subscription.service_type not in NON_PAYING_SERVICE_TYPES
                 and subscription.pro_bono_status not in NON_PAYING_PRO_BONO_STATUSES
-                and plan_version.plan.edition != SoftwarePlanEdition.COMMUNITY)
+                and plan_version.plan.edition != SoftwarePlanEdition.FREE)
 
     # Note: using "yes" and "no" instead of True and False because spec calls
     # for using these values. (True is just converted to "True" in KISSmetrics)
@@ -817,7 +817,7 @@ def get_subscription_properties_by_user(couch_user):
     env = get_instance_string()
 
     return {
-        '{}is_on_community_plan'.format(env): _is_one_of_editions(SoftwarePlanEdition.COMMUNITY),
+        '{}is_on_free_edition'.format(env): _is_one_of_editions(SoftwarePlanEdition.FREE),
         '{}is_on_standard_plan'.format(env): _is_one_of_editions(SoftwarePlanEdition.STANDARD),
         '{}is_on_pro_plan'.format(env): _is_one_of_editions(SoftwarePlanEdition.PRO),
         '{}is_on_pro_bono_plan'.format(env): _is_a_pro_bono_status(ProBonoStatus.YES),

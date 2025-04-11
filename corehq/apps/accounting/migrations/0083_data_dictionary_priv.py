@@ -13,7 +13,7 @@ def _grandfather_data_dictionary_priv(apps, schema_editor):
     # DATA_DICTIONARY are Advanced Plan and higher
     skip_editions = ','.join((
         SoftwarePlanEdition.PAUSED,
-        SoftwarePlanEdition.COMMUNITY,
+        SoftwarePlanEdition.FREE,
         SoftwarePlanEdition.STANDARD,
         SoftwarePlanEdition.PRO
     ))

@@ -13,7 +13,7 @@ def _grandfather_regex_field_validation_priv(apps, schema_editor):
     # Regex Field Validation is Pro Plan and higher
     skip_editions = ','.join((
         SoftwarePlanEdition.PAUSED,
-        SoftwarePlanEdition.COMMUNITY,
+        SoftwarePlanEdition.FREE,
         SoftwarePlanEdition.STANDARD,
     ))
     call_command(

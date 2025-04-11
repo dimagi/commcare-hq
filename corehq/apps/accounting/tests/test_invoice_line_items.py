@@ -200,9 +200,9 @@ class TestUserLineItem(BaseInvoiceTestCase):
         self.assertEqual(user_line_item.subtotal, num_to_charge * self.user_rate.per_excess_fee)
         self.assertEqual(user_line_item.total, num_to_charge * self.user_rate.per_excess_fee)
 
-    def test_community_over_limit(self):
+    def test_free_over_limit(self):
         """
-        For a domain under community with users over the community limit, make sure that:
+        For a domain under free edition with users over the free edition limit, make sure that:
         - base_description is None
         - base_cost is 0.0
         - unit_description is not None
@@ -212,7 +212,7 @@ class TestUserLineItem(BaseInvoiceTestCase):
         """
         domain = generator.arbitrary_domain()
         self.addCleanup(domain.delete)
-        num_active = generator.create_excess_community_users(domain)
+        num_active = generator.create_excess_free_users(domain)
 
         account = BillingAccount.get_or_create_account_by_domain(
             domain, created_by=self.dimagi_user)[0]
@@ -221,9 +221,9 @@ class TestUserLineItem(BaseInvoiceTestCase):
         account.date_confirmed_extra_charges = today
         account.save()
 
-        community_plan = DefaultProductPlan.get_default_plan_version()
+        free_plan = DefaultProductPlan.get_default_plan_version()
         Subscription.new_domain_subscription(
-            account, domain.name, community_plan,
+            account, domain.name, free_plan,
             date_start=datetime.date(today.year, today.month, 1) - relativedelta(months=1),
         )
 
@@ -235,8 +235,8 @@ class TestUserLineItem(BaseInvoiceTestCase):
         self.assertIsNone(user_line_item.base_description)
         self.assertEqual(user_line_item.base_cost, Decimal('0.0000'))
 
-        community_plan = DefaultProductPlan.get_default_plan_version()
-        num_to_charge = num_active - community_plan.user_limit
+        free_plan = DefaultProductPlan.get_default_plan_version()
+        num_to_charge = num_active - free_plan.user_limit
         self.assertIsNotNone(user_line_item.unit_description)
         self.assertEqual(user_line_item.quantity, num_to_charge)
         self.assertEqual(user_line_item.unit_cost, self.user_rate.per_excess_fee)

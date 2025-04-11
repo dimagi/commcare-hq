@@ -13,7 +13,7 @@ def _grandfather_filtered_bulk_user_download_priv(apps, schema_editor):
     # FILTERED_BULK_USER_DOWNLOAD are Advanced Plan and higher
     skip_editions = ','.join((
         SoftwarePlanEdition.PAUSED,
-        SoftwarePlanEdition.COMMUNITY,
+        SoftwarePlanEdition.FREE,
         SoftwarePlanEdition.STANDARD,
         SoftwarePlanEdition.PRO
     ))

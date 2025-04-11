@@ -3,7 +3,7 @@ from decimal import Decimal
 from corehq.apps.accounting.models import FeatureType, SoftwarePlanEdition
 
 BOOTSTRAP_CONFIG = {
-    (SoftwarePlanEdition.COMMUNITY, False, False): {
+    (SoftwarePlanEdition.FREE, False, False): {
         'role': 'community_plan_v1',
         'product_rate_monthly_fee': Decimal('0.00'),
         'feature_rates': {

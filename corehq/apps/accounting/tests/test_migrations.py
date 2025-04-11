@@ -11,7 +11,7 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustmentMethod,
 )
-from corehq.apps.accounting.utils.subscription import ensure_community_or_paused_subscription
+from corehq.apps.accounting.utils.subscription import ensure_free_or_paused_subscription
 from corehq.apps.domain.models import Domain
 
 
@@ -41,7 +41,7 @@ class TestExplicitUnpaidSubscriptions(TestCase):
         self.assertEqual(subscription.subscriber.domain, self.domain.name)
         self.assertEqual(subscription.date_start, self.from_date)
         self.assertIsNone(subscription.date_end)
-        self.assertEqual(subscription.plan_version, self._most_recently_created_community_plan_version)
+        self.assertEqual(subscription.plan_version, self._most_recently_created_free_plan_version)
         self.assertTrue(subscription.skip_invoicing_if_no_feature_charges)
 
     def test_preexisting_current_subscription(self):
@@ -111,13 +111,13 @@ class TestExplicitUnpaidSubscriptions(TestCase):
         ))
 
     def _assign_unpaid_subscriptions(self):
-        ensure_community_or_paused_subscription(
+        ensure_free_or_paused_subscription(
             self.domain.name, self.from_date, SubscriptionAdjustmentMethod.DEFAULT_COMMUNITY
         )
 
     @property
-    def _most_recently_created_community_plan_version(self):
-        return DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.COMMUNITY)
+    def _most_recently_created_free_plan_version(self):
+        return DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.FREE)
 
     @property
     def _most_recently_created_paused_plan_version(self):

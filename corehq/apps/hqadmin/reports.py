@@ -518,7 +518,7 @@ class StaleCasesTable:
     def _get_domains(self):
         return list(set(
             Subscription.visible_objects
-            .exclude(plan_version__plan__edition=SoftwarePlanEdition.COMMUNITY)
+            .exclude(plan_version__plan__edition=SoftwarePlanEdition.FREE)
             .filter(is_active=True)
             .values_list('subscriber__domain', flat=True)
         ))
