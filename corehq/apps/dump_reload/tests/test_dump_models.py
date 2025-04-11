@@ -101,6 +101,7 @@ IGNORE_MODELS = {
     "sites.Site",
     "tastypie.ApiAccess",  # not tagged by domain
     "tastypie.ApiKey",  # not domain-specific
+    "toggles.ToggleEditPermission",
     "toggle_ui.ToggleAudit",
     "phonenumber.PhoneDevice",
     "users.Permission",
