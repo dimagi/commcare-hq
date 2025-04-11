@@ -15,7 +15,11 @@ from corehq.apps.data_cleaning.models import (
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import CaseSearchES, user_adapter, group_adapter
-from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.case_search import (
+    case_property_missing,
+    case_search_adapter,
+    exact_case_property_text_query,
+)
 from corehq.apps.es.tests.utils import (
     case_search_es_setup,
     es_test,
@@ -249,8 +253,8 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
             CaseSearchES()
             .domain(self.domain_name)
             .case_type(self.case_type)
-            .exists('watered_on')
-            .empty('pot_type')
+            .NOT(case_property_missing('watered_on'))
+            .filter(exact_case_property_text_query('pot_type', ''))
             .xpath_query(
                 self.domain_name,
                 "phonetic-match(name, 'lowkey') and num_leaves > 2 and height_cm <= 11.1"
@@ -267,7 +271,7 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
             CaseSearchES()
             .domain(self.domain_name)
             .case_type(self.case_type)
-            .exists('watered_on')
+            .NOT(case_property_missing('watered_on'))
             .OR(all_project_data_filter(self.domain_name, ['project_data']))  # default Case Owners pinned filter
         )
         self.assertEqual(query.es_query, expected_query.es_query)

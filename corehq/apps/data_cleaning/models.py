@@ -6,6 +6,10 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
 from django.utils.translation import gettext_lazy, gettext as _
 
+from corehq.apps.es.case_search import (
+    case_property_missing,
+    exact_case_property_text_query,
+)
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.case_search.const import METADATA_IN_REPORTS
@@ -243,24 +247,8 @@ class BulkEditSession(models.Model):
 
     def get_queryset(self):
         query = CaseSearchES().domain(self.domain).case_type(self.identifier)
-        query = self._apply_filters(query)
-        query = self._apply_pinned_filters(query)
-        return query
-
-    def _apply_filters(self, query):
-        xpath_expressions = []
-        for custom_filter in self.filters.all():
-            query = custom_filter.filter_query(query)
-            column_xpath = custom_filter.get_xpath_expression()
-            if column_xpath is not None:
-                xpath_expressions.append(column_xpath)
-        if xpath_expressions:
-            query = query.xpath_query(self.domain, " and ".join(xpath_expressions))
-        return query
-
-    def _apply_pinned_filters(self, query):
-        for pinned_filter in self.pinned_filters.all():
-            query = pinned_filter.filter_query(query)
+        query = BulkEditFilter.apply_filters_to_query(self, query)
+        query = BulkEditPinnedFilter.apply_filters_to_query(self, query)
         return query
 
     def get_num_selected_records(self):
@@ -585,11 +573,17 @@ class BulkEditFilter(models.Model):
             value=value,
         )
 
-    @property
-    def is_editable_property(self):
-        from corehq.apps.data_cleaning.utils.cases import get_case_property_details
-        property_details = get_case_property_details(self.session.domain, self.session.identifier)
-        return property_details.get(self.prop_id, {}).get('is_editable', True)
+    @classmethod
+    def apply_filters_to_query(cls, session, query):
+        xpath_expressions = []
+        for custom_filter in session.filters.all():
+            query = custom_filter.filter_query(query)
+            column_xpath = custom_filter.get_xpath_expression()
+            if column_xpath is not None:
+                xpath_expressions.append(column_xpath)
+        if xpath_expressions:
+            query = query.xpath_query(session.domain, " and ".join(xpath_expressions))
+        return query
 
     @property
     def human_readable_match_type(self):
@@ -612,14 +606,12 @@ class BulkEditFilter(models.Model):
 
     def filter_query(self, query):
         filter_query_functions = {
-            FilterMatchType.IS_EMPTY: lambda q: q.empty(self.prop_id),
-            FilterMatchType.IS_NOT_EMPTY: lambda q: q.non_null(self.prop_id),
-            FilterMatchType.IS_MISSING: lambda q: q.missing(self.prop_id),
-            FilterMatchType.IS_NOT_MISSING: lambda q: q.exists(self.prop_id),
+            FilterMatchType.IS_EMPTY: lambda q: q.filter(exact_case_property_text_query(self.prop_id, '')),
+            FilterMatchType.IS_NOT_EMPTY: lambda q: q.NOT(exact_case_property_text_query(self.prop_id, '')),
+            FilterMatchType.IS_MISSING: lambda q: q.filter(case_property_missing(self.prop_id)),
+            FilterMatchType.IS_NOT_MISSING: lambda q: q.NOT(case_property_missing(self.prop_id)),
         }
-        # if a property is not editable, then it can't be empty or missing
-        # we need the `is_editable_property` check to avoid elasticsearch RequestErrors on system fields
-        if self.match_type in filter_query_functions and self.is_editable_property:
+        if self.match_type in filter_query_functions:
             query = filter_query_functions[self.match_type](query)
         return query
 
@@ -746,6 +738,12 @@ class BulkEditPinnedFilter(models.Model):
                 index=index,
                 filter_type=filter_type,
             )
+
+    @classmethod
+    def apply_filters_to_query(cls, session, query):
+        for pinned_filter in session.pinned_filters.all():
+            query = pinned_filter.filter_query(query)
+        return query
 
     def get_report_filter_class(self):
         from corehq.apps.data_cleaning.filters import (
