@@ -32,7 +32,11 @@
   }
 
   .btn-confirm {
-    @include button-variant(#ffffff, $color-purple-dark, darken($color-purple-dark, 5));
+    @include button-variant(
+      #ffffff,
+      $color-purple-dark,
+      darken($color-purple-dark, 5)
+    );
     border: 1px solid #ffffff;
 
     &:active,
