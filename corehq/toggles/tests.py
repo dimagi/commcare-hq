@@ -259,7 +259,7 @@ class PredictablyRandomToggleTests(TestCase):
         self.assertFalse(toggle.enabled('darkhorse', namespace=NAMESPACE_DOMAIN))
 
 
-class DyanmicPredictablyRandomToggleTests(TestCase):
+class DynamicPredictablyRandomToggleTests(TestCase):
 
     def test_default_randomness_no_doc(self):
         for randomness in [0, .5, 1]:
