@@ -1067,10 +1067,10 @@ class PlanViewBase(DomainAccountingSettings):
         options = [
             PlanOption(
                 SoftwarePlanEdition.STANDARD,
-                "$300",
-                "$250",
+                "$120",
+                "$100",
                 _("Get started. Build secure apps for offline mobile data collection and case management. "
-                  "{num_users} users included.").format(num_users=125),
+                  "{num_users} users included.").format(num_users=50),
             ),
             PlanOption(
                 SoftwarePlanEdition.PRO,
