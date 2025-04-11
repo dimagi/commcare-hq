@@ -18,6 +18,13 @@ class ToggleEditPermission(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
+    @classmethod
+    def get_by_tag_slug(cls, tag_slug):
+        try:
+            return cls.objects.get(tag_slug=tag_slug)
+        except cls.DoesNotExist:
+            return None
+
     def add_users(self, usernames):
         assert isinstance(usernames, list)
         users_to_add = [username for username in usernames if username not in self.enabled_users]
