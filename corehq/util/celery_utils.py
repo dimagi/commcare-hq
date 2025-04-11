@@ -136,8 +136,8 @@ def revoke_tasks(task_names, interval=5):
 
 def revoke_task(task_id, celery_app=None):
     if celery_app is None:
-        app = Celery()
-        app.config_from_object('django.conf:settings', namespace='CELERY')
+        celery_app = Celery()
+        celery_app.config_from_object('django.conf:settings', namespace='CELERY')
 
     celery_app.control.revoke(task_id, terminate=True)
 
