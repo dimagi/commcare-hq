@@ -7,6 +7,8 @@ from django.test import TestCase, SimpleTestCase, override_settings
 from django.test.client import RequestFactory
 
 from corehq.toggles import (
+    ALL_TAGS,
+    all_toggles,
     NAMESPACE_USER,
     NAMESPACE_DOMAIN,
     TAG_CUSTOM,
@@ -19,6 +21,8 @@ from corehq.toggles import (
 )
 from .models import generate_toggle_id, Toggle
 from .shortcuts import (
+    get_tags_with_edit_permission,
+    get_toggles_with_edit_permission,
     namespaced_item,
     find_users_with_toggle_enabled,
     find_domains_with_toggle_enabled,
@@ -27,6 +31,7 @@ from .shortcuts import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
+from corehq.toggles.sql_models import ToggleEditPermission
 
 
 class ToggleTestCase(TestCase):
@@ -424,3 +429,32 @@ class NamespaceTests(TestCase):
         self.assertFalse(user_toggle.enabled(self.second_user.username))
         self.assertTrue(user_toggle.enabled_for_request(self.request))
         self.assertFalse(user_toggle.enabled_for_request(self.second_request))
+
+
+class TestToggleEditPermissionShortcuts(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.users = ['arthur', 'diane']
+        cls.tag_custom_edit_permission = ToggleEditPermission.objects.create(
+            tag_slug=TAG_CUSTOM.slug,
+            enabled_users=['arthur']
+        )
+        cls.addClassCleanup(cls.tag_custom_edit_permission.delete)
+
+    def test_get_tags_with_edit_permission(self):
+        allowed_tags = get_tags_with_edit_permission('arthur')
+        assert allowed_tags == ALL_TAGS
+
+        allowed_tags = get_tags_with_edit_permission('diane')
+        expected_tags = [tag for tag in ALL_TAGS if tag != TAG_CUSTOM]
+        assert allowed_tags == expected_tags
+
+    def test_get_toggles_with_edit_permission(self):
+        allowed_toggles = get_toggles_with_edit_permission('arthur')
+        assert allowed_toggles == list(all_toggles())
+
+        allowed_toggles = get_toggles_with_edit_permission('diane')
+        expected_toggles = [toggle for toggle in list(all_toggles()) if toggle.tag != TAG_CUSTOM]
+        assert allowed_toggles == expected_toggles
