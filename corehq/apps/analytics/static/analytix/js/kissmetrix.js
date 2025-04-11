@@ -1,5 +1,3 @@
-/* globals _kmq */
-
 var _kmq = window._kmq = _kmq || [];
 
 hqDefine('analytix/js/kissmetrix', [
