@@ -43,7 +43,7 @@ from corehq.toggles import (
     toggles_enabled_for_user,
 )
 from corehq.toggles.models import Toggle
-from corehq.toggles.shortcuts import namespaced_item, parse_toggle
+from corehq.toggles.shortcuts import get_tags_with_edit_permission, namespaced_item, parse_toggle
 from corehq.util import reverse
 from corehq.util.soft_assert import soft_assert
 
@@ -101,11 +101,15 @@ class ToggleListView(BasePageView):
             'page_url': self.page_url,
             'show_usage': self.show_usage,
             'toggles': toggles,
+            'editable_tags_slugs': self._editable_tags_slugs(),
             'tags': ALL_TAG_GROUPS,
             'user_counts': user_counts,
             'last_used': last_used,
             'last_modified': last_modified,
         }
+
+    def _editable_tags_slugs(self):
+        return [tag.slug for tag in get_tags_with_edit_permission(self.request.user.username)]
 
 
 @method_decorator(require_superuser_or_contractor, name='dispatch')

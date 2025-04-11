@@ -102,7 +102,13 @@
             {% endwith %}
           {% endif %}
           <td>
-            <a href="{% url "edit_toggle" toggle.slug %}" role="button" class="btn btn-primary">{% trans "Edit" %}</a>
+              <a href="{% url "edit_toggle" toggle.slug %}" role="button" class="btn btn-primary">
+                {% if toggle.tag.slug in editable_tags_slugs %}
+                  {% trans "Edit" %}
+                {% else %}
+                  {% trans "View" %}
+                {% endif %}
+              </a>
           </td>
         </tr>
       {% endfor %}
