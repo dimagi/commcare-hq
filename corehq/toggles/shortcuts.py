@@ -2,6 +2,7 @@ from couchdbkit import ResourceNotFound
 from django.conf import settings
 
 from .models import Toggle
+from corehq.util.quickcache import quickcache
 
 
 def toggle_enabled(slug, item, namespace=None):
@@ -100,6 +101,7 @@ def find_domains_with_toggle_enabled(toggle):
     return [user[len(prefix):] for user in doc.enabled_users if user.startswith(prefix)]
 
 
+@quickcache(['username'], timeout=24 * 60 * 60)
 def get_tags_with_edit_permission(username):
     from corehq.toggles import ALL_TAGS
     from corehq.toggles.sql_models import ToggleEditPermission

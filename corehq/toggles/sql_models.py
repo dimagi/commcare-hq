@@ -2,6 +2,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 from corehq.toggles import ALL_TAGS
+from corehq.toggles.shortcuts import get_tags_with_edit_permission
 
 TAG_SLUG_CHOICES = [(tag.slug, tag.slug) for tag in ALL_TAGS]
 
@@ -22,7 +23,9 @@ class ToggleEditPermission(models.Model):
         assert isinstance(usernames, list)
         users_to_add = [username for username in usernames if username not in self.enabled_users]
         if users_to_add:
-            self.enabled_users.extend(users_to_add)
+            for user in users_to_add:
+                self.enabled_users.append(user)
+                get_tags_with_edit_permission.clear(user)
             self.save()
 
     def remove_users(self, usernames):
@@ -31,6 +34,7 @@ class ToggleEditPermission(models.Model):
         if users_to_remove:
             for user in users_to_remove:
                 self.enabled_users.remove(user)
+                get_tags_with_edit_permission.clear(user)
             self.save()
 
     def is_user_enabled(self, username):
