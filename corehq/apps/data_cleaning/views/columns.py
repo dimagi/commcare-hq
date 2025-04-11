@@ -1,3 +1,4 @@
+import json
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy
 from django.views.generic import TemplateView
@@ -30,21 +31,34 @@ class ManageColumnsFormView(BulkEditSessionViewMixin,
         })
         return context
 
+    def _trigger_clean_form_refresh(self, response):
+        response['HX-Trigger'] = json.dumps({
+            'dcCleanFormRefresh': {
+                'target': '#hq-hx-clean-selected-records-form',
+            },
+        })
+        return response
+
     @hq_hx_action('post')
     def add_column(self, request, *args, **kwargs):
         column_form = AddColumnForm(self.session, request.POST)
         if column_form.is_valid():
             column_form.add_column()
             column_form = None
-        return self.get(request, column_form=column_form, *args, **kwargs)
+        response = self.get(request, column_form=column_form, *args, **kwargs)
+        if column_form is None:
+            response = self._trigger_clean_form_refresh(response)
+        return response
 
     @hq_hx_action('post')
     def update_column_order(self, request, *args, **kwargs):
         column_ids = request.POST.getlist('column_ids')
         self.session.update_column_order(column_ids)
-        return self.get(request, *args, **kwargs)
+        response = self.get(request, *args, **kwargs)
+        return self._trigger_clean_form_refresh(response)
 
     @hq_hx_action('post')
     def remove_column(self, request, *args, **kwargs):
         self.session.remove_column(request.POST['delete_id'])
-        return self.get(request, *args, **kwargs)
+        response = self.get(request, *args, **kwargs)
+        return self._trigger_clean_form_refresh(response)
