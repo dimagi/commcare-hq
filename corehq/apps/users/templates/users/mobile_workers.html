@@ -6,6 +6,16 @@
 
 {% js_entry_b3 'users/js/mobile_workers' %}
 
+{% block stylesheets %}
+  {{ block.super }}
+
+  <style>
+    .custom-data-fieldset label {
+      word-wrap: break-word;
+    }
+  </style>
+{% endblock stylesheets %}
+
 {% block page_content %}
   {% initial_page_data 'can_access_all_locations' can_access_all_locations %}
   {% initial_page_data 'can_edit_original_profile' can_edit_original_profile %}
