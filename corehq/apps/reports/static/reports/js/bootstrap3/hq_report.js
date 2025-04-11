@@ -67,8 +67,8 @@ hqDefine("reports/js/bootstrap3/hq_report", [
                             e.preventDefault();
                             if (self.isExportAll) {
                                 $.ajax({
-                                    url: getReportBaseUrl("export"),
-                                    data: getReportParams(undefined),
+                                    url: self.getReportBaseUrl("export"),
+                                    data: self.getReportParams(undefined),
                                     type: "POST",
                                     success: function () {
                                         alertUser.alert_user(gettext("Your requested Excel report will be sent " +
@@ -200,7 +200,7 @@ hqDefine("reports/js/bootstrap3/hq_report", [
             if (params.includes('query_id=')) {
                 // getting the proper params for reports with obfuscated urls (Case List Explorer)
                 $.ajax({
-                    url: getReportBaseUrl('get_or_create_hash'),
+                    url: self.getReportBaseUrl('get_or_create_hash'),
                     type: 'POST',
                     dataType: 'json',
                     async: false,
@@ -227,8 +227,8 @@ hqDefine("reports/js/bootstrap3/hq_report", [
         }
 
         function getReportRenderUrl(renderType, additionalParams) {
-            var baseUrl = getReportBaseUrl(renderType);
-            var paramString = getReportParams(additionalParams);
+            var baseUrl = self.getReportBaseUrl(renderType);
+            var paramString = self.getReportParams(additionalParams);
             return baseUrl + "?" + paramString;
         }
 
