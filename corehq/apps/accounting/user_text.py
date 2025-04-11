@@ -1,11 +1,15 @@
 from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.accounting.models import FeatureType, SoftwarePlanEdition
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import prelogin_url
 
 DESC_BY_EDITION = {
     SoftwarePlanEdition.COMMUNITY: {
         'name': _("Free"),
-        'description': _("For practice purposes. Not intended for live projects. {} users maximum."),
+        'description': _(
+            "Designed for practice purposes and not secured for live projects. Upgrade to access "
+            "full features and more users. Learn about "
+        ) + f'<a href="{prelogin_url("public_pricing")}" target="_blank">' + _("CommCare plans") + '</a>.',
     },
     SoftwarePlanEdition.STANDARD: {
         'name': _("Standard"),

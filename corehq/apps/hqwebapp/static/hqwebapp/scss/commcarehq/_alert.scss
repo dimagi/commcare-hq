@@ -32,7 +32,11 @@
   }
 
   .btn-confirm {
-    @include button-variant(#ffffff, $color-purple-dark, darken($color-purple-dark, 5));
+    @include button-variant(
+      #ffffff,
+      $color-purple-dark,
+      darken($color-purple-dark, 5)
+    );
     border: 1px solid #ffffff;
 
     &:active,
@@ -52,10 +56,15 @@
   border: none;
   border-radius: 0;
   font-size: 1.1em;
-  font-weight: bold;
 
-  a, a:link, a:visited {
+  a,
+  a:link,
+  a:visited {
     color: white;
+    text-decoration: underline;
+  }
+  a:hover {
+    color: $color-purple-dark-inverse;
   }
 
   .btn-purple,
