@@ -19,6 +19,7 @@ from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.domain.utils import log_domain_changes
 from corehq.apps.ota.rate_limiter import restore_rate_limiter
 from corehq.motech.rate_limiter import repeater_rate_limiter
+from corehq.toggles.shortcuts import get_toggles_with_edit_permission
 from dimagi.utils.web import get_ip, json_request, json_response
 
 from corehq import feature_previews, privileges, toggles
@@ -49,6 +50,7 @@ from corehq.apps.toggle_ui.views import ToggleEditView
 from corehq.apps.users.models import CouchUser
 from corehq.const import USER_CHANGE_VIA_WEB
 
+# TODO 0. Decide UI for this page 1. Refactor 2. Staging check everwhere 3. Syntax errors in html 4.Refactor earlier page (naming) 5. Prettify html
 
 class BaseInternalDomainSettingsView(BaseProjectSettingsView):
     strict_domain_fetching = True
@@ -249,6 +251,7 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
                     toggle['tag_index'],
                     toggle['label'])
 
+        editable_toggles_slug = self._get_toggles_slug_with_edit_permission()
         unsorted_toggles = [{
             'slug': toggle.slug,
             'label': toggle.label,
@@ -260,11 +263,15 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
             'tag_css_class': toggle.tag.css_class,
             'has_domain_namespace': toggles.NAMESPACE_DOMAIN in toggle.namespaces,
             'domain_enabled': toggle.enabled(self.domain, namespace=toggles.NAMESPACE_DOMAIN),
+            'can_edit': toggle.slug in editable_toggles_slug,
             'user_enabled': toggle.enabled(self.request.couch_user.username,
                                            namespace=toggles.NAMESPACE_USER),
         } for toggle in toggles.all_toggles()]
 
         return sorted(unsorted_toggles, key=_sort_key)
+
+    def _get_toggles_slug_with_edit_permission(self):
+        return [toggle.slug for toggle in get_toggles_with_edit_permission(self.request.user.username)]
 
     def _get_privileges(self):
         return sorted([

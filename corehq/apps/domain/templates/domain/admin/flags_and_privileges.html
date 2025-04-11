@@ -136,17 +136,25 @@
 
           <td class="text-center">
             <div data-bind="visible: hasDomainNamespace">
-              <button type="button"
-                      class="btn btn-outline-primary"
-                      data-bind="click: toggleEnabledState,
-                                 disable: setTogglePending,
-                                 css: {
-                                    'active': domainEnabled(),
-                                 }">
-                <i class="fa" data-bind="css: domainEnabled() ? 'fa-rocket' : 'fa-ban', hidden: setTogglePending"></i>
-                <i class="fa fa-spin fa-refresh" data-bind="visible: setTogglePending"></i>
+              <!-- ko if: canEdit -->
+                <button type="button"
+                        class="btn btn-outline-primary"
+                        data-bind="click: toggleEnabledState,
+                                   disable: setTogglePending,
+                                   css: {
+                                      'active': domainEnabled(),
+                                   }">
+                  <i class="fa" data-bind="css: domainEnabled() ? 'fa-rocket' : 'fa-ban', hidden: setTogglePending"></i>
+                  <i class="fa fa-spin fa-refresh" data-bind="visible: setTogglePending"></i>
                 <!--ko text: domainEnabled() ? 'Enabled' : 'Not Enabled' --><!--/ko-->
               </button>
+            <!--/ko-->
+            <div data-bind="if: !canEdit">
+              <button type="button" class="btn btn-outline-secondary" disabled>
+                <i class="fa" data-bind="css: domainEnabled() ? 'fa-rocket' : 'fa-ban'"></i>
+                <!--ko text: domainEnabled() ? 'Enabled' : 'Not Enabled' --><!--/ko-->
+              </button>
+            </div>
             </div>
             <div data-bind="visible: !hasDomainNamespace">---</div>
           </td>
