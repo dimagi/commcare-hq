@@ -21,7 +21,7 @@ VALID_TEST_SUITES=(
     python
     python-sharded
     python-sharded-and-javascript
-    python-elasticsearch-v5
+    python-elasticsearch-v6
 )
 
 
@@ -181,10 +181,10 @@ function _run_tests {
             # TODO make it possible to run a subset of python-sharded tests
             py_test_args+=("-msharded")
             ;;
-        python-elasticsearch-v5)
-            export ELASTICSEARCH_HOST='elasticsearch5'
-            export ELASTICSEARCH_PORT=9205
-            export ELASTICSEARCH_MAJOR_VERSION=5
+        python-elasticsearch-v6)
+            export ELASTICSEARCH_HOST='elasticsearch6'
+            export ELASTICSEARCH_PORT=9200
+            export ELASTICSEARCH_MAJOR_VERSION=6
             py_test_args+=("-mes_test")
             ;;
     esac

@@ -42,12 +42,12 @@ WHITELIST = [
         UserWarning,
     ),
     (
-        # Should be removed if fixed after upgrading to ES 6.x
+        # Should be removed  after es5 references are removed
         "elasticsearch5.connection.http_urllib3",
         "HTTPResponse.getheaders() is deprecated and will be removed in urllib3 v2.1.0."
     ),
     (
-        # This should be tested on a newer version(>2.5) of ES.Should be removed if fixed
+        # This should be tested on a newer version(>6.8) of ES.Should be removed if fixed
         "elasticsearch6.connection.http_urllib3",
         "HTTPResponse.getheaders() is deprecated and will be removed in urllib3 v2.1.0."
     ),

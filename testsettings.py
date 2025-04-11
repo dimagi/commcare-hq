@@ -2,6 +2,7 @@ import os
 from warnings import filterwarnings
 
 import settingshelper as helper
+
 assert helper.is_testing(), 'test mode is required before importing settings'
 from settings import *  # noqa: E402, F403
 
@@ -9,7 +10,7 @@ from settings import *  # noqa: E402, F403
 # if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
 #     ELASTICSEARCH_MAJOR_VERSION = int(os.environ.get('ELASTICSEARCH_MAJOR_VERSION'))
 
-ELASTICSEARCH_MAJOR_VERSION = 5
+ELASTICSEARCH_MAJOR_VERSION = 6
 
 # timeout faster in tests
 ES_SEARCH_TIMEOUT = 5
