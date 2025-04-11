@@ -7,7 +7,7 @@ DESC_BY_EDITION = {
     SoftwarePlanEdition.COMMUNITY: {
         'name': _("Free"),
         'description': _(
-            "Designed for practice purposes and intended for live projects. Upgrade to access "
+            "Designed for practice purposes and not intended for live projects. Upgrade to access "
             "full features and more users. Learn about "
         ) + f'<a href="{prelogin_url("public_pricing")}" target="_blank">' + _("CommCare plans") + '</a>.',
     },
