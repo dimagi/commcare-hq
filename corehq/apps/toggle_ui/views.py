@@ -5,7 +5,7 @@ from collections import Counter, defaultdict
 from django.conf import settings
 from django.contrib import messages
 from django.http import JsonResponse
-from django.http.response import Http404
+from django.http.response import Http404, HttpResponseForbidden
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.views.decorators.http import require_POST
@@ -189,6 +189,9 @@ class ToggleEditView(BasePageView):
         return context
 
     def post(self, request, *args, **kwargs):
+        if not self.can_edit_toggle:
+            return HttpResponseForbidden("You do not have permission to edit this toggle.")
+
         toggle = self.get_toggle()
 
         item_list = request.POST.get('item_list', [])
