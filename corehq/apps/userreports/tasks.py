@@ -483,7 +483,7 @@ def queue_async_indicators():
     # ASYNC_INDICATOR_MAX_RETRIES times
     indicators = AsyncIndicator.objects.filter(
         unsuccessful_attempts__lt=ASYNC_INDICATOR_MAX_RETRIES
-    )[: settings.ASYNC_INDICATORS_TO_QUEUE]
+    )[:settings.ASYNC_INDICATORS_TO_QUEUE]
 
     indicators_by_domain_doc_type = defaultdict(list)
     # page so that envs can have arbitrarily large
