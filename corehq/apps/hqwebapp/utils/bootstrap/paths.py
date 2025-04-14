@@ -16,7 +16,6 @@ PARENT_PATHS = {
 GRUNTFILE_PATH = COREHQ_BASE_DIR.parent / "Gruntfile.js"
 IGNORED_PATHS_BY_APP = {
     "hqwebapp": [
-        "hqwebapp/js/resource_versions.js",
         "hqwebapp/base.html",
         "hqwebapp/includes/inactivity_modal_data.html",
         "hqwebapp/includes/ui_element_js.html",
