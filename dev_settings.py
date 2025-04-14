@@ -167,7 +167,6 @@ if settingshelper.is_testing():
         "config": {
             "connect_timeout": 3,
             "read_timeout": 5,
-            "signature_version": "s3"
         },
     }
 
