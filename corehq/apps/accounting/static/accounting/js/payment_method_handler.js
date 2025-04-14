@@ -137,7 +137,7 @@ hqDefine('accounting/js/payment_method_handler', [
                 const containerId = 'stripe-card-container';
                 if (show) {
                     if (document.getElementById(containerId)) {
-                        cardElement.mount('#' + containerId);
+                        cardElement.mount('#' + formId + ' #' + containerId);
                         self.cardElementMounted = true;
                     }
                 } else {
