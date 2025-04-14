@@ -6,5 +6,12 @@
   hx-swap="outerHTML"
   hq-hx-refresh-swap="#CleanCaseTable"
 >
-  # todo clean cases form goes here
+  <form
+    hx-post="{{ request.path_info }}"
+    hx-target="#{{ container_id }}"
+    hx-disabled-elt="find button"
+    hq-hx-action="create_bulk_edit_change"
+  >
+    {% crispy cleaning_form %}
+  </form>
 </div>
