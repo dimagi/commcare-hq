@@ -169,6 +169,7 @@ class DashboardGaugeForm(DashboardWidgetBaseForm):
         fields = DashboardWidgetBaseForm.Meta.fields + [
             'case_type',
             'metric',
+            'case_query'
         ]
 
     case_type = forms.ChoiceField(
@@ -179,6 +180,11 @@ class DashboardGaugeForm(DashboardWidgetBaseForm):
     metric = forms.ChoiceField(
         label=_('Metric'),
         choices=GAUGE_METRICS
+    )
+
+    case_query = forms.CharField(
+        label=_('Case Query'),
+        required=False,
     )
 
     def __init__(self, domain, *args, **kwargs):
