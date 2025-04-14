@@ -1,0 +1,44 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div
+  id="report-widget-{{ widget.id }}"
+  class="mb-4"
+  data-htmx-swap-target="report-{{ widget.id }}"
+>
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0 me-auto">{{ widget.title }}</h5>
+      {% include "campaign/partials/edit_widget_button.html" with widget_type='report' %}
+      {% include "campaign/partials/delete_widget_button.html" with widget_type='report' %}
+    </div>
+
+    <div class="card-body p-0">
+      <div id="error-alert-{{ widget.id }}" class="alert alert-danger d-none">
+        {% blocktrans %}
+          Something went wrong while loading this widget! Please try again.
+        {% endblocktrans %}
+      </div>
+      <div class="row g-0">
+        <div class="col-md-4 border-end">
+          <div id="report-widget-filters-{{ widget.id }}" class="p-3">
+            {% include "reports_core/partials/bootstrap5/filter_panel.html" %}
+          </div>
+        </div>
+
+        <div class="col-md-8">
+          <div class="position-relative">
+            <div id="reportHint" class="alert alert-info">
+              <p>{% blocktrans %}
+                Please choose your filters and click <strong>Apply</strong> to see report data.
+              {% endblocktrans %}</p>
+            </div>
+            <div id="reportContent" class="d-none">
+              {% include "userreports/partials/bootstrap5/report_content.html" %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
