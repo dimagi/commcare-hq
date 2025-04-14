@@ -309,4 +309,5 @@ def test_dashboard_gauge_widget():
         'metric': 'number_of_cases',
         'title': 'Cases Gauge 1',
         'widget_type': 'DashboardGauge',
+        'case_query': None,
     }
