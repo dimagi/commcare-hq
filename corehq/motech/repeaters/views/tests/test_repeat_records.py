@@ -8,7 +8,7 @@ from corehq.motech.models import ConnectionSettings
 
 from .. import repeaters
 from .. import repeat_records
-from ...models import FormRepeater, RepeatRecord
+from ...models import FormRepeater, RepeatRecord, State
 
 
 class TestUtilities(SimpleTestCase):
@@ -34,14 +34,21 @@ class TestUtilities(SimpleTestCase):
             records_ids = repeat_records._get_record_ids_from_request(mock_request)
             self.assertEqual(records_ids, expected_result)
 
-    def test__get_flag(self):
+    def test__get_state(self):
         mock_request = Mock()
-        flag_values = [None, '', 'flag']
-        expected_results = ['', '', 'flag']
-        for value, expected_result in zip(flag_values, expected_results):
+        state_values = [None, 'PENDING', 'ALL']
+        expected_results = [None, State.Pending, None]
+        for value, expected_result in zip(state_values, expected_results):
             mock_request.POST.get.return_value = value
-            result = repeat_records._get_flag(mock_request)
+            result = repeat_records._get_state(mock_request)
             assert_equal(result, expected_result)
+
+    def test__get_state_raises_key_error(self):
+        mock_request = Mock()
+        state_values = ['', 'random-state']
+        for value in state_values:
+            with self.assertRaises(KeyError):
+                repeat_records._get_state(mock_request)
 
 
 class TestDomainForwardingOptionsView(TestCase):
