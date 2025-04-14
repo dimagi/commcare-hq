@@ -1,8 +1,29 @@
 /* eslint-env node */
+const fs = require('fs');
 const path = require('path');
 const webpack = require('webpack');
 const utils = require('./utils');
 const hqPlugins = require('./plugins');
+const { merge } = require('webpack-merge');
+const { emitWarning } = require('node:process');
+
+VELLUM_DEBUG_PATH = fs.realpathSync(path.resolve(__dirname, '../submodules/formdesigner'));
+VELLUM_DEBUG_CONFIG_PATH = path.resolve(VELLUM_DEBUG_PATH, 'webpack/webpack.dev.js');
+let vellumConfig = {},
+    vellumAliases = [],
+    vellumRules = [];
+try {
+    vellumConfig = require(VELLUM_DEBUG_CONFIG_PATH);
+    vellumAliases = vellumConfig.resolve.alias;
+    vellumRules = vellumConfig.module.rules;
+} catch (e) {
+    if (e.code === "MODULE_NOT_FOUND") {
+        // do nothing, vellum config isn't necessary if VELLUM_DEBUG is false
+        emitWarning("Vellum config not found at " + VELLUM_DEBUG_CONFIG_PATH);
+    } else {
+        throw e;
+    }
+}
 
 const aliases = {
     "commcarehq": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/bootstrap5/'),
@@ -26,87 +47,98 @@ const aliases = {
         'knockout_mapping.ko.min'),
 };
 
-
 module.exports = {
     entry: utils.getEntries(),
 
     module: {
         rules: [
             {
-                test: /\.css$/i,
-                use: ["style-loader", "css-loader"],
-            },
-            {
-                test: /\.less$/,
-                use: ["style-loader", "css-loader", "less-loader"],
-            },
-            {
-                test: /\.js$/,
-                loader: 'babel-loader',
-                exclude: /node_modules/,
-            },
-            {
-                test: /\.png/,
-                type: 'asset/resource',
-            },
-
-            // this rule ensures that hqDefine is renamed to define AMD module
-            // definition syntax that webpack understands
-            {
-                test: /\.js$/,
-                loader: 'string-replace-loader',
-                exclude: /node_modules/,
-                options: {
-                    search: /\bhqDefine\b/g,
-                    replace: 'define',
+                test: VELLUM_DEBUG_PATH,
+                resolve: {
+                    alias: vellumAliases,
                 },
+                rules: vellumRules,
             },
-
             {
-                test: /modernizr\.js$/,
-                loader: "webpack-modernizr-loader",
-                options: {
-                    "options": [
-                        "setClasses",
-                    ],
-                    "feature-detects": [
-                        "test/svg/smil",
-                    ],
-                },
-            },
-
-            {
-                test: /mapbox\.js\/dist\/mapbox/,
-                loader: "exports-loader",
-                options: {
-                    type: "commonjs",
-                    exports: {
-                        syntax: "single",
-                        name: "L",
+                exclude: VELLUM_DEBUG_PATH,
+                rules: [
+                    {
+                        test: /\.css$/i,
+                        use: ["style-loader", "css-loader"],
                     },
-                },
-            },
-            {
-                test: /nvd3\/nv\.d3\.min/,
-                loader: "exports-loader",
-                options: {
-                    type: "commonjs",
-                    exports: {
-                        syntax: "single",
-                        name: "nv",
+                    {
+                        test: /\.less$/,
+                        use: ["style-loader", "css-loader", "less-loader"],
                     },
-                },
-            },
-            {
-                test: /sentry\/js\/sentry/,
-                loader: "exports-loader",
-                options: {
-                    type: "commonjs",
-                    exports: {
-                        syntax: "single",
-                        name: "Sentry",
+                    {
+                        test: /\.js$/,
+                        loader: 'babel-loader',
+                        exclude: /node_modules/,
                     },
-                },
+                    {
+                        test: /\.png/,
+                        type: 'asset/resource',
+                    },
+
+                    // this rule ensures that hqDefine is renamed to define AMD module
+                    // definition syntax that webpack understands
+                    {
+                        test: /\.js$/,
+                        loader: 'string-replace-loader',
+                        exclude: /node_modules/,
+                        options: {
+                            search: /\bhqDefine\b/g,
+                            replace: 'define',
+                        },
+                    },
+
+                    {
+                        test: /modernizr\.js$/,
+                        loader: "webpack-modernizr-loader",
+                        options: {
+                            "options": [
+                                "setClasses",
+                            ],
+                            "feature-detects": [
+                                "test/svg/smil",
+                            ],
+                        },
+                    },
+
+                    {
+                        test: /mapbox\.js\/dist\/mapbox/,
+                        loader: "exports-loader",
+                        options: {
+                            type: "commonjs",
+                            exports: {
+                                syntax: "single",
+                                name: "L",
+                            },
+                        },
+                    },
+                    {
+                        test: /nvd3\/nv\.d3\.min/,
+                        loader: "exports-loader",
+                        options: {
+                            type: "commonjs",
+                            exports: {
+                                syntax: "single",
+                                name: "nv",
+                            },
+                        },
+                    },
+                    {
+                        test: /sentry\/js\/sentry/,
+                        loader: "exports-loader",
+                        options: {
+                            type: "commonjs",
+                            exports: {
+                                syntax: "single",
+                                name: "Sentry",
+                            },
+                        },
+                    },
+                ]
             },
         ],
     },
