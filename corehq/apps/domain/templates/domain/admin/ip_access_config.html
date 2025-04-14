@@ -1,0 +1,10 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% js_entry "domain/js/ip_access_config" %}
+
+{% block page_content %}
+  {% crispy ip_access_config_form %}
+{% endblock %}
