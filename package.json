@@ -35,7 +35,7 @@
         "datatables-bootstrap3": "Jowin/Datatables-Bootstrap3",
         "datatables-fixedcolumns": "DataTables/FixedColumns#3.2.0",
         "datatables.net": "1.11.3",
-        "datatables.net-bs5": "1.13.8",
+        "datatables.net-bs5": "2.2.2",
         "datatables.net-fixedcolumns-bs5": "4.3.0",
         "detectrtc": "1.4.0",
         "eonasdan-bootstrap-datetimepicker": "4.17.49",
