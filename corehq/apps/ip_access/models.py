@@ -1,10 +1,8 @@
 import geoip2.webservice
 
 from django.conf import settings
-from django.contrib import messages
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.utils.translation import gettext as _
 
 from corehq.util.metrics import metrics_counter
 
@@ -18,12 +16,11 @@ class IPAccessConfig(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
 
-    def is_allowed(self, ip_address, request):
+    def is_allowed(self, ip_address):
         should_check_country = True
         if not self.country_allowlist:
-            if not settings.MAXMIND_LICENSE_KEY and not settings.UNIT_TESTING:
+            if not settings.MAXMIND_LICENSE_KEY:
                 should_check_country = False
-                messages.error(request, _("Please configure the MaxMind License key for your environment."))
             elif ip_address not in self.ip_allowlist:
                 return False
         return (

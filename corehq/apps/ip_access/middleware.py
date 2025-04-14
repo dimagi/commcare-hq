@@ -1,9 +1,11 @@
+from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.utils.deprecation import MiddlewareMixin
 from django.utils.translation import gettext_lazy as _
 
 from dimagi.utils.web import get_ip
 
+import settings
 from corehq.toggles import IP_ACCESS_CONTROLS
 
 from .models import IPAccessConfig
@@ -44,7 +46,9 @@ def is_valid_ip(request, domain):
         config = IPAccessConfig.objects.get(domain=domain)
     except IPAccessConfig.DoesNotExist:
         config = None
-    if not config or config.is_allowed(ip, request):
+    if not config or config.is_allowed(ip):
+        if not settings.MAXMIND_LICENSE_KEY:
+            messages.error(request, _("Please configure the MaxMind License key for your environment."))
         request.session[allow_key].append(ip)
         return True
     else:

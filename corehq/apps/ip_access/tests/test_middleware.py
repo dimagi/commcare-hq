@@ -86,16 +86,14 @@ class TestIPAccessMiddleware(TestCase):
         IP_1 = "127.0.0.1"
         IP_2 = "192.0.2.10"
         is_allowed.return_value = True
-        from django.test import RequestFactory
-        request = RequestFactory().get('/a/test-ip-access-middleware/')
         res = self.client.get(f'/a/{self.domain}/', REMOTE_ADDR=IP_1)
         self.assertEqual(res.status_code, 200)
-        is_allowed.assert_called_once_with(IP_1, request)
+        is_allowed.assert_called_once_with(IP_1)
 
         res = self.client.get(f'/a/{self.domain}/', REMOTE_ADDR=IP_2)
         self.assertEqual(res.status_code, 200)
         self.assertEqual(is_allowed.call_count, 2)
-        is_allowed.assert_called_with(IP_2, request)
+        is_allowed.assert_called_with(IP_2)
 
         self.assertEqual(
             self.client.session[f"hq_session_ips-{self.domain}"],
