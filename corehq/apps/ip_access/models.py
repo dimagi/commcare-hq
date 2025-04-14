@@ -16,6 +16,14 @@ class IPAccessConfig(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
 
+    def __repr__(self):
+        return (
+            f"IPAccessConfig('{self.domain}', "
+            f"country_allowlist={self.country_allowlist}, "
+            f"ip_allowlist={self.ip_allowlist}, "
+            f"ip_denylist={self.ip_denylist})"
+        )
+
     def is_allowed(self, ip_address):
         should_check_country = True
         if not self.country_allowlist:
