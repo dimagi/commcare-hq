@@ -46,9 +46,9 @@ def is_valid_ip(request, domain):
         config = IPAccessConfig.objects.get(domain=domain)
     except IPAccessConfig.DoesNotExist:
         config = None
+    if config and not settings.MAXMIND_LICENSE_KEY:
+        messages.error(request, _("Please configure the MaxMind License key for your environment."))
     if not config or config.is_allowed(ip):
-        if not settings.MAXMIND_LICENSE_KEY:
-            messages.error(request, _("Please configure the MaxMind License key for your environment."))
         request.session[allow_key].append(ip)
         return True
     else:

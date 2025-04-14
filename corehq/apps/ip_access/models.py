@@ -3,8 +3,11 @@ import geoip2.webservice
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from corehq.util.metrics import metrics_counter
+
+from no_exceptions.exceptions import Http403
 
 
 class IPAccessConfig(models.Model):
@@ -25,27 +28,24 @@ class IPAccessConfig(models.Model):
         )
 
     def is_allowed(self, ip_address):
-        should_check_country = True
-        if not self.country_allowlist:
-            if not settings.MAXMIND_LICENSE_KEY:
-                should_check_country = False
-            elif ip_address not in self.ip_allowlist:
-                return False
-        return (
-            ip_address not in self.ip_denylist
-            and (
-                ip_address in self.ip_allowlist
-                or (should_check_country and is_in_country(ip_address, self.country_allowlist))
-            )
-        )
+        if ip_address in self.ip_denylist or (self.country_allowlist and not settings.MAXMIND_LICENSE_KEY):
+            return False
+        elif not self.country_allowlist or ip_address in self.ip_allowlist:
+            return True
+        return is_in_country(ip_address, self.country_allowlist)
 
 
 def get_ip_country(ip_address):
-    with geoip2.webservice.Client(settings.MAXMIND_ACCOUNT_ID,
-                                  settings.MAXMIND_LICENSE_KEY, host='geolite.info') as client:
-        response = client.country(ip_address)
-        metrics_counter('commcare.ip_access.check_country')
-        return response.country.iso_code
+    try:
+        with geoip2.webservice.Client(settings.MAXMIND_ACCOUNT_ID,
+                                      settings.MAXMIND_LICENSE_KEY, host='geolite.info') as client:
+            response = client.country(ip_address)
+            metrics_counter('commcare.ip_access.check_country')
+            return response.country.iso_code
+    except geoip2.errors.AuthenticationError:
+        raise Http403(_("Please provide a valid MaxMind license key and Account ID to filter IPs by country. "
+                      "If you do not have a MaxMind account, please clear the Allowed Countries field in the "
+                      "IP Access Config to access your project."))
 
 
 def is_in_country(ip_address, country_allowlist):

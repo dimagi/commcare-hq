@@ -298,7 +298,8 @@ class EditIPAccessConfigView(BaseProjectSettingsView):
             })
 
         if self.request.method == 'POST':
-            return IPAccessConfigForm(self.request.POST, initial=initial)
+            return IPAccessConfigForm(self.request.POST, initial=initial,
+                                      current_ip=self.current_ip, current_country=self.ip_country)
         return IPAccessConfigForm(initial=initial)
 
     @cached_property
@@ -332,37 +333,11 @@ class EditIPAccessConfigView(BaseProjectSettingsView):
                 should_save = False
                 domain_config = IPAccessConfig()
                 domain_config.domain = self.domain
-            if not self.form.cleaned_data["ip_allowlist"] and not self.form.cleaned_data["country_allowlist"]:
-                should_save = False
-                messages.error(request,
-                               _("You must provide either your country or your "
-                                 "current IP Address to have access to this project."))
-            else:
-                for attr, value in self.form.cleaned_data.items():
-                    current_value = getattr(domain_config, attr)
-                    if value != current_value:
-                        should_save = True
-                        if attr == "country_allowlist":
-                            if not settings.MAXMIND_LICENSE_KEY:
-                                messages.error(request,
-                                               _("The Allowed Countries field cannot be saved because MaxMind "
-                                                 "is not configured for your environment"))
-                                should_save = False
-                                continue
-                            elif (self.ip_country not in value
-                                  and self.current_ip not in self.form.cleaned_data["ip_allowlist"]):
-                                messages.error(request,
-                                               _("The form cannot be saved because you will be blocked. "
-                                                 "Please include your current country or include your "
-                                                 "current IP address in the Allowed IP field."))
-                                should_save = False
-                                break
-                        if attr == "ip_denylist" and self.current_ip in value:
-                            messages.error(request, _("You cannot put your current IP address "
-                                                      "in the Denied IPs field"))
-                            should_save = False
-                            break
-                        setattr(domain_config, attr, value)
+            for attr, value in self.form.cleaned_data.items():
+                current_value = getattr(domain_config, attr)
+                if value != current_value:
+                    should_save = True
+                    setattr(domain_config, attr, value)
             if should_save:
                 domain_config.save()
                 messages.success(request, _("Your IP Access settings have been saved!"))

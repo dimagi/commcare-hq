@@ -22,12 +22,27 @@ DOMAIN = 'test-ip-access'
     ([IP_OTHER_COUNTRY], [], [IP_ADDRESS], False),
 
     # No country specified (all allowed)
-    ([], [], [], False),  # FIXME: this should return True
+    ([], [], [], True),
     ([], [IP_ADDRESS], [], True),  # No need to allowlist without country-level
                                    # restrictions, but this should work anyways
     ([], [], [IP_ADDRESS], False),
 ])
+@patch('django.conf.settings.MAXMIND_LICENSE_KEY', 'TEST')
 def test_is_allowed(countries, allowlist, denylist, expected):
+    config = IPAccessConfig(
+        domain=DOMAIN,
+        country_allowlist=countries,
+        ip_allowlist=allowlist,
+        ip_denylist=denylist,
+    )
+    with patch('corehq.apps.ip_access.models.get_ip_country', return_value=IP_COUNTRY):
+        assert config.is_allowed(IP_ADDRESS) is expected
+
+
+@pytest.mark.parametrize("countries, allowlist, denylist, expected", [
+    ([IP_COUNTRY], [], [], False),
+])
+def test_is_allowed_no_license(countries, allowlist, denylist, expected):
     config = IPAccessConfig(
         domain=DOMAIN,
         country_allowlist=countries,
