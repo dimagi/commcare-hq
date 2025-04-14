@@ -4,6 +4,7 @@ const webpack = require('webpack');
 const utils = require('./utils');
 const hqPlugins = require('./plugins');
 
+VELLUM_BASE_PATH = path.resolve(__dirname, '../submodules/formdesigner')
 const aliases = {
     "commcarehq": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/bootstrap5/'),
         'commcarehq'),
@@ -23,6 +24,18 @@ const aliases = {
     "tempusDominus": "@eonasdan/tempus-dominus",
     "ko.mapping": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/lib/knockout_plugins/'),
         'knockout_mapping.ko.min'),
+
+    // TODO: pull in Vellum config in some way other than copying
+    'ckeditor': path.resolve(VELLUM_BASE_PATH, 'lib/ckeditor/ckeditor.js'),
+    'ckeditor-jquery': path.resolve(VELLUM_BASE_PATH, 'lib/ckeditor/adapters/jquery.js'),
+    'CryptoJS': path.resolve(VELLUM_BASE_PATH, 'lib/sha1'),
+    'diff-match-patch': path.resolve(VELLUM_BASE_PATH, 'lib/diff_match_patch'),
+    'save-button': path.resolve(VELLUM_BASE_PATH, 'lib', 'SaveButton.js'),
+    'jquery.vellum': path.resolve(VELLUM_BASE_PATH, 'src', 'main'),
+    'jstree-styles': path.resolve(VELLUM_BASE_PATH, 'node_modules/jstree/dist/themes/default/style.css'),
+    'vellum': path.resolve(VELLUM_BASE_PATH, 'src'),
+    'tests': path.resolve(VELLUM_BASE_PATH, 'tests'),
+    'static': path.resolve(VELLUM_BASE_PATH, 'tests', 'static'),
 };
 
 
@@ -31,6 +44,52 @@ module.exports = {
 
     module: {
         rules: [
+            // TODO: pull in Vellum config in some way other than copying
+            {
+                test: /\.xml$/,
+                type: 'asset/source',
+            },
+            {
+                test: /\.html$/,
+                type: 'asset/source',
+            },
+            {
+                test: /\.tsv$/,
+                type: 'asset/source',
+            },
+            {
+                test: /\.json$/,
+                type: 'json',
+            },
+            {
+                test: /\.less$/,
+                use: ["style-loader", "css-loader", "less-loader"],
+            },
+            {
+                test: /ckeditor/,
+                loader: "exports-loader",
+                options: {
+                    type: "commonjs",
+                    exports: {
+                        syntax: "single",
+                        name: "CKEDITOR",
+                    },
+                },
+            },
+            {
+                test: /XMLWriter/,
+                loader: "exports-loader",
+                options: {
+                    type: "commonjs",
+                    exports: {
+                        syntax: "single",
+                        name: "XMLWriter",
+                    },
+                },
+            },
+            // TODO: this is the end of the Vellum rules
+
+
             {
                 test: /\.css$/i,
                 use: ["style-loader", "css-loader"],
