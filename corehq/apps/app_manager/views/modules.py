@@ -1761,8 +1761,10 @@ class AllCaseTypesView(LoginAndDomainMixin, View):
     urlname = 'all_case_types'
 
     def get(self, request, domain):
+        existing_case_types = list(get_case_types_for_domain(domain))
+        existing_case_types.sort(key=str.lower)  # Sort case-insensitively
         return JsonResponse({
-            'existing_case_types': list(get_case_types_for_domain(domain)),
+            'existing_case_types': existing_case_types,
             'deprecated_case_types': list(get_data_dict_deprecated_case_types(domain))
         })
 
