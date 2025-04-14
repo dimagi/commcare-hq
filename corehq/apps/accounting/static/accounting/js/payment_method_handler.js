@@ -1,7 +1,7 @@
 /**
  *  This module requires initial page data to provide "stripe_public_key".
- *  It also requires a container with the id stripe-card-container, which is where the credit card UI will be
- *  mounted.
+ *  It also requires the given form contain a div with the class stripe-card-container,
+ *  which is where the credit card UI will be  mounted.
  */
 hqDefine('accounting/js/payment_method_handler', [
     'jquery',
@@ -134,10 +134,10 @@ hqDefine('accounting/js/payment_method_handler', [
         self.cardElementMounted = false;
         self.showOrHideStripeUI = function (show) {
             self.cardElementPromise.then(function (cardElement) {
-                const containerId = 'stripe-card-container';
+                const stripeSelector = '#' + formId + ' .stripe-card-container';
                 if (show) {
-                    if (document.getElementById(containerId)) {
-                        cardElement.mount('#' + formId + ' #' + containerId);
+                    if ($(stripeSelector).length) {
+                        cardElement.mount(stripeSelector);
                         self.cardElementMounted = true;
                     }
                 } else {
