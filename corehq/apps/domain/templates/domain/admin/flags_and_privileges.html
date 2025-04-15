@@ -89,7 +89,7 @@
         <th class="text-center text-nowrap"><!-- placeholder for flag icon --></th>
         <th>Feature</th>
         <th class="text-center text-nowrap">Enabled for me?</th>
-        <th class="text-center text-nowrap">Enabled for domain?</th>
+        <th class="text-center text-nowrap col-2">Enabled for domain?</th>
         </thead>
         <tbody data-bind="foreach: toggles">
         <tr>
@@ -147,6 +147,17 @@
                   <i class="fa fa-spin fa-refresh" data-bind="visible: setTogglePending"></i>
                 <!--ko text: domainEnabled() ? 'Enabled' : 'Not Enabled' --><!--/ko-->
               </button>
+              <span data-bind="visible: !canEdit">
+                <span
+                  class="hq-help-template"
+                  data-title="{% trans 'No Permission!' %}"
+                  data-content="{% blocktrans %}
+                    You do not have permission to modify this flag. Please
+                    contact support if you require access.
+                  {% endblocktrans %}"
+                  data-placement="right"
+                >
+              </span>
             </div>
             <div data-bind="visible: !hasDomainNamespace">---</div>
           </td>
