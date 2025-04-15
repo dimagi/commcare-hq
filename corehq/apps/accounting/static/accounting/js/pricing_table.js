@@ -45,12 +45,6 @@ hqDefine('accounting/js/pricing_table', [
 
         self.oShowAnnualPricing = ko.observable(false);
 
-        self.oRefundCss = ko.computed(function () {
-            if (self.oShowAnnualPricing()) {
-                return "show-refund";
-            }
-        });
-
         self.oIsSubmitDisabled = ko.computed(function () {
             var isCurrentPlan = self.oSelectedPlan() === self.oCurrentPlan() && !self.oNextSubscription(),
                 isNextPlan = self.oNextSubscription() && self.oSelectedPlan() === self.oNextSubscription().toLowerCase();
@@ -195,15 +189,29 @@ hqDefine('accounting/js/pricing_table', [
         return self;
     };
 
+    var planDisplayName = function (name) {
+        const plans = {
+            'Community': gettext('Free edition'),
+            'Standard': 'Standard',
+            'Pro': 'Pro',
+            'Advanced': 'Advanced',
+        };
+        return plans[name] || '';
+    };
+
     var PlanOption = function (data, parent) {
         var self = this;
 
-        self.oName = ko.observable(data.name);
+        self.oName = ko.observable(planDisplayName(data.name));
         self.oSlug = ko.observable(data.name.toLowerCase());
 
         self.oMonthlyPrice = ko.observable(data.monthly_price);
         self.oAnnualPrice = ko.observable(data.annual_price);
         self.oDescription = ko.observable(data.description);
+
+        self.oIsCommunityPlan = ko.computed(function () {
+            return self.oSlug() === 'community';
+        });
 
         self.oIsCurrentPlan = ko.computed(function () {
             return self.oSlug() === parent.oCurrentPlan();

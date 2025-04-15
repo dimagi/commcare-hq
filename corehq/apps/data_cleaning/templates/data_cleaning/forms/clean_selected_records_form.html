@@ -1,0 +1,17 @@
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+<div
+  id="{{ container_id }}"
+  hx-swap="outerHTML"
+  hq-hx-refresh-swap="#CleanCaseTable"
+>
+  <form
+    hx-post="{{ request.path_info }}"
+    hx-target="#{{ container_id }}"
+    hx-disabled-elt="find button"
+    hq-hx-action="create_bulk_edit_change"
+  >
+    {% crispy cleaning_form %}
+  </form>
+</div>

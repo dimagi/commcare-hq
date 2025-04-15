@@ -41,3 +41,8 @@ input::file-selector-button {
   @extend .btn-sm;
   @extend .btn-outline-primary;
 }
+
+.btn-wiggle {
+  animation: attention-wiggle 0.3s ease-in-out;
+  animation-iteration-count: 3;
+}

@@ -57,9 +57,9 @@ function hqDefine(path, dependencies, moduleAccessor) {
     }
 
     (function (factory) {
-        if (typeof define === 'function' && define.amd && (window.USE_REQUIREJS || window.USE_WEBPACK)) {
-            // HQ's requirejs build process (build_requirejs.py) replaces hqDefine calls with
-            // define calls, so it's important that this do nothing but pass through to require
+        if (typeof define === 'function' && define.amd && window.USE_WEBPACK) {
+            // HQ's webpack config replaces hqDefine calls with define calls,
+            // so it's important that this do nothing but pass through to require
             define(path, dependencies, factory);
         } else {
             var thirdPartyGlobals = {
@@ -78,7 +78,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
                 'hqwebapp/js/lib/modernizr': 'Modernizr',
             };
             if (window.USE_BOOTSTRAP5) {
-                thirdPartyGlobals['es6!hqwebapp/js/bootstrap5_loader'] = 'bootstrap';
+                thirdPartyGlobals['bootstrap5'] = 'bootstrap';
                 thirdPartyGlobals['tempusDominus'] = 'tempusDominus';
             }
             var args = [];
@@ -112,21 +112,4 @@ function hqImport(path) {
             'Did you include <script src="' + path + '.js"></script> on your html page?');
     }
     return COMMCAREHQ_MODULES[path];
-}
-
-// Support require calls within a module. Best practice is to require all dependencies
-// at module definition time, but this function can be used when doing so would
-// introduce a circular dependency.
-function hqRequire(paths, callback) {       // eslint-disable-line no-unused-vars
-    if (typeof define === 'function' && define.amd && (window.USE_REQUIREJS || window.USE_WEBPACK)) {
-        // HQ's requirejs build process (build_requirejs.py) replaces hqRequire calls with
-        // require calls, so it's important that this do nothing but pass through to require
-        require(paths, callback);   // eslint-disable-line no-undef
-    } else {
-        var args = [];
-        for (var i = 0; i < paths.length; i++) {
-            args.push(hqImport(paths[i]));
-        }
-        callback.apply(undefined, args);
-    }
 }

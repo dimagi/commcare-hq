@@ -1,4 +1,3 @@
-
 hqDefine('app_manager/js/app_manager', [
     'jquery',
     'knockout',
@@ -14,6 +13,8 @@ hqDefine('app_manager/js/app_manager', [
     'app_manager/js/menu',
     'app_manager/js/preview_app',
     'app_manager/js/section_changer',
+    "hqwebapp/js/components/inline_edit",   // app, menu, and form names and comments all use these
+    'commcarehq',
 ], function (
     $,
     ko,
@@ -25,12 +26,12 @@ hqDefine('app_manager/js/app_manager', [
     google,
     kissmetrix,
     alertUser,
-    hqMain,
-    appManagerMenu,
+    main,
+    menu,
     previewApp,
     sectionChanger,
 ) {
-    var module = hqMain.eventize({});
+    var module = main.eventize({});
     var _private = {};
     _private.appendedPageTitle = "";
     _private.prependedPageTitle = "";
@@ -102,7 +103,7 @@ hqDefine('app_manager/js/app_manager', [
         if (module.fetchAndShowFormValidation) {
             module.fetchAndShowFormValidation();
         }
-        hqMain.updateDOM(update);
+        main.updateDOM(update);
     };
 
     module.setupValidation = function (validationUrl) {
@@ -124,6 +125,7 @@ hqDefine('app_manager/js/app_manager', [
         _initMenuItemSorting();
         _initResponsiveMenus();
         _initAddItemPopovers();
+        _initNewModuleOptionClicks();
     };
 
     /**
@@ -173,8 +175,7 @@ hqDefine('app_manager/js/app_manager', [
             container: 'body',
             sanitize: false,
             content: function () {
-                var slug = $(this).data("slug"),
-                    template = $('.js-popover-template-add-item-content[data-slug="' + slug + '"]').text();
+                var template = $('.js-popover-template-add-item-content[data-slug="form"]').text();
                 return _.template(template)($(this).data());
             },
             html: true,
@@ -189,7 +190,6 @@ hqDefine('app_manager/js/app_manager', [
             $('.popover-additem').on('click', function (e) {
                 $(pop).popover('hide');
                 var dataType = $(e.target).closest('button').data('type'),
-                    isForm =  $(e.target).closest('button').data('form-type') !== undefined,
                     stopSubmit = $(e.target).closest('button').data('stopsubmit') === 'yes',
                     $form;
 
@@ -197,38 +197,18 @@ hqDefine('app_manager/js/app_manager', [
                     return;
                 }
 
-                if (isForm) {
-                    var caseAction =  $(e.target).closest('button').data('case-action'),
-                        $popoverContent = $(e.target).closest(".popover-content > *"),
-                        moduleId = $popoverContent.data("module-unique-id"),
-                        $trigger = $('.js-add-new-item[data-module-unique-id="' + moduleId + '"]');
+                var caseAction =  $(e.target).closest('button').data('case-action'),
+                    $popoverContent = $(e.target).closest(".popover-content > *"),
+                    moduleId = $popoverContent.data("module-unique-id"),
+                    $trigger = $('.js-add-new-item[data-module-unique-id="' + moduleId + '"]');
 
-                    $form = $popoverContent.find("form");
-                    $form.find("input[name='case_action']").val(caseAction);
-                    $form.find("input[name='form_type']").val(dataType);
-                    if (!$form.data('clicked')) {
-                        $form.data('clicked', 'true');
-                        $trigger.find(".fa-plus").removeClass("fa-plus").addClass("fa fa-refresh fa-spin");
-                        $form.submit();
-                    }
-
-                } else {
-                    $('#new-module-type').val(dataType);
-                    if ($(e.target).closest('button').data('stopsubmit') !== 'yes') {
-                        $form = $('#new-module-form');
-                        if (!$form.data('clicked')) {
-                            $form.data('clicked', 'true');
-                            $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
-                            if (dataType === "case") {
-                                google.track.event("Added Case List Menu");
-                                kissmetrix.track.event("Added Case List Menu");
-                            } else if (dataType === "survey") {
-                                google.track.event("Added Surveys Menu");
-                                kissmetrix.track.event("Added Surveys Menu");
-                            }
-                            $form.submit();
-                        }
-                    }
+                $form = $popoverContent.find("form");
+                $form.find("input[name='case_action']").val(caseAction);
+                $form.find("input[name='form_type']").val(dataType);
+                if (!$form.data('clicked')) {
+                    $form.data('clicked', 'true');
+                    $trigger.find(".fa-plus").removeClass("fa-plus").addClass("fa fa-refresh fa-spin");
+                    $form.submit();
                 }
             });
         }).on('click', function (e) {
@@ -429,7 +409,7 @@ hqDefine('app_manager/js/app_manager', [
                     alertUser.alert_user(xhr.responseJSON.error, "danger");
                 },
             });
-            appManagerMenu.setPublishStatus(true);
+            menu.setPublishStatus(true);
         }
 
     };
@@ -443,7 +423,7 @@ hqDefine('app_manager/js/app_manager', [
         $forms.each(function () {
             var $form = $(this),
                 $buttonHolder = $form.find('.save-button-holder'),
-                button = hqMain.initSaveButtonForm($form, {
+                button = main.initSaveButtonForm($form, {
                     unsavedMessage: gettext("You have unsaved changes"),
                     success: function (data) {
                         var key;
@@ -536,6 +516,51 @@ hqDefine('app_manager/js/app_manager', [
 
         hqLayout.setIsAppbuilderResizing(true);
     });
+
+    var _initNewModuleOptionClicks = function () {
+        $('.new-module-option').on('click', function () {
+            var moduleType = $(this).data('type');
+            $('#new-module-type').val(moduleType);
+            var $form = $('#new-module-form');
+            $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
+            if (moduleType === "case") {
+                google.track.event("Added Case List Menu");
+                kissmetrix.track.event("Added Case List Menu");
+            } else if (moduleType === "survey") {
+                google.track.event("Added Surveys Menu");
+                kissmetrix.track.event("Added Surveys Menu");
+            }
+
+            $('#add-new-module-modal').modal('hide');
+            $form.submit();
+        });
+
+        var hoverHelpTexts = {
+            survey: {
+                title: gettext("What is a Survey Menu?"),
+                content: gettext("Surveys are used to collect independent forms that do not need to be tracked over time. Common examples include satisfaction surveys or anonymous feedback forms."),
+            },
+            case: {
+                title: gettext("What is a Case List?"),
+                content: gettext("Case Lists are used to register and track related data (cases) over time. This data can be referenced in other forms and by other cases. Common examples include maternal health, student attendance, or crop monitoring."),
+            },
+        };
+
+        $('.new-module-option').each(function () {
+            var type = $(this).data('type');
+            if (hoverHelpTexts[type]) {
+                $(this).popover({
+                    title: hoverHelpTexts[type].title,
+                    content: hoverHelpTexts[type].content,
+                    trigger: 'hover',
+                    placement: 'auto',
+                    container: 'body',
+                    html: true,
+                });
+            }
+        });
+
+    };
 
     return module;
 });

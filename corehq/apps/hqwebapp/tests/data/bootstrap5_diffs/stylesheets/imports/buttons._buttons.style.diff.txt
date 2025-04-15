@@ -36,7 +36,7 @@
  }
  
  .btn-full-width {
-@@ -38,25 +9,35 @@
+@@ -38,25 +9,40 @@
  // Separated button groups in toolbars need more space between them,
  // since the buttons within the group have space between them
  .btn-toolbar > .btn-group-separated:not(:first-child) {
@@ -87,4 +87,9 @@
 +  @extend .btn;
 +  @extend .btn-sm;
 +  @extend .btn-outline-primary;
++}
++
++.btn-wiggle {
++  animation: attention-wiggle 0.3s ease-in-out;
++  animation-iteration-count: 3;
 +}

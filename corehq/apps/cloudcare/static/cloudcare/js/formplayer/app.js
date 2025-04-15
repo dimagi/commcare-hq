@@ -8,7 +8,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     'backbone',
     'backbone.marionette',
     'markdown-it/dist/markdown-it',
-    'es6!hqwebapp/js/bootstrap5_loader',
+    'bootstrap5',
     'hqwebapp/js/initial_page_data',
     'analytix/js/appcues',
     'analytix/js/google',
@@ -72,6 +72,13 @@ hqDefine("cloudcare/js/formplayer/app", [
 
     FormplayerFrontend.getChannel = function () {
         return Backbone.Radio.channel('formplayer');
+    };
+
+    FormplayerFrontend.getRegion = function (region) {
+        if (!FormplayerFrontend.regions) {
+            FormplayerFrontend.regions = CloudcareUtils.getRegionContainer();
+        }
+        return FormplayerFrontend.regions.getRegion(region);
     };
 
     FormplayerFrontend.confirmUserWantsToNavigateAwayFromForm = function () {

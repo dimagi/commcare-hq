@@ -54,3 +54,16 @@ def get_wrapped_owner(owner_id, support_deleted=False):
         return cls.wrap(owner_doc) if cls else None
 
     return None
+
+
+def get_owner_location_id(owner_id, domain):
+    owner = get_wrapped_owner(owner_id)
+    if not owner:
+        return None
+
+    if isinstance(owner, SQLLocation):
+        return owner.location_id
+    if isinstance(owner, CouchUser):
+        return owner.get_location_id(domain)
+
+    return None
