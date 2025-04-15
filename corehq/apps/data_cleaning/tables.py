@@ -84,6 +84,16 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
 
     @property
     @memoized
+    def num_visible_selected_records(self):
+        """
+        Return the number of selected records visible with the current set of filters.
+        """
+        if self.has_any_filtering:
+            return self.session.get_num_selected_records_in_queryset()
+        return self.num_selected_records
+
+    @property
+    @memoized
     def num_edited_records(self):
         """
         Return the number of edited records in the session.
