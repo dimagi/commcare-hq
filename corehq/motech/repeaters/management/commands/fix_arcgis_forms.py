@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 
+from lxml import etree
 from lxml.builder import E
 
 from corehq.apps.reports.formdetails.readable import (
@@ -8,6 +9,7 @@ from corehq.apps.reports.formdetails.readable import (
 )
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import XFormInstance
+from corehq.motech.repeaters.models import Repeater
 
 
 class Command(BaseCommand):
@@ -19,6 +21,7 @@ class Command(BaseCommand):
         parser.add_argument('domain')
         parser.add_argument('-i', '--form-id')
         parser.add_argument('-f', '--form-id-file')
+        parser.add_argument('-r', '--repeater-id')
         parser.add_argument('--dry-run', action='store_true')
 
     def handle(self, domain, *args, **options):
@@ -34,14 +37,23 @@ class Command(BaseCommand):
             )
             return
 
+        if options['repeater_id']:
+            repeater = Repeater.objects.get(id=options['repeater_id'])
+        else:
+            repeater = None
+
         interface = FormProcessorInterface(domain)
         if options['form_id']:
-            fix_form(domain, options['form_id'], interface, options['dry_run'])
+            form = fix_form(domain, options['form_id'], interface, options['dry_run'])
+            if form and repeater:
+                repeater.register(form)
         else:
             with open(options['form_id_file'], 'r') as form_id_file:
                 form_ids = (line.strip() for line in form_id_file.readlines())
                 for form_id in form_ids:
-                    fix_form(domain, form_id, interface, options['dry_run'])
+                    form = fix_form(domain, form_id, interface, options['dry_run'])
+                    if form and repeater:
+                        repeater.register(form)
 
 
 def fix_form(domain, form_id, interface, dry_run=False):
@@ -184,12 +196,16 @@ def fix_form(domain, form_id, interface, dry_run=False):
     xml = instance.get_xml_element()
     xml.append(arcgis_elem)
 
-    if not dry_run:
-        existing_form = XFormInstance.objects.get_with_attachments(form_id, domain)
-        existing_form, new_form = interface.processor.new_form_from_old(
-            existing_form,
-            xml,
-            None,  # `value_responses_map` param is unused
-            instance.user_id,
-        )
-        interface.save_processed_models([new_form, existing_form])
+    if dry_run:
+        print(etree.tostring(xml, pretty_print=True).decode('utf-8'))
+        return None
+
+    existing_form = XFormInstance.objects.get_with_attachments(form_id, domain)
+    existing_form, new_form = interface.processor.new_form_from_old(
+        existing_form,
+        xml,
+        None,  # `value_responses_map` param is unused
+        instance.user_id,
+    )
+    interface.save_processed_models([new_form, existing_form])
+    return new_form
