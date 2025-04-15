@@ -69,16 +69,6 @@ hqDefine("app_manager/js/forms/form_designer", [
                 }
             },
             onReady: function () {
-                if (initialPageData.get('vellum_debug') === 'dev') {
-                    var lessErrorId = "#less-error-message\\:static-style-less-hqstyle-core",
-                        lessError = $(lessErrorId);
-                    if (lessError.length) {
-                        console.log("hiding less error:", lessErrorId);     // eslint-disable-line no-console
-                        console.log(lessError.text());                      // eslint-disable-line no-console
-                        lessError.hide();
-                    }
-                }
-
                 var kissmetrixTrack = function () {};
                 if (initialPageData.get('days_since_created') === 0) {
                     kissmetrixTrack = function () {
