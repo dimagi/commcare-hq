@@ -18,7 +18,10 @@ class Command(BaseCommand):
     help = "Create repeat records for cases and forms"
 
     def add_arguments(self, parser):
-        parser.add_argument('file_path', help='Path to the list of IDs. One ID per line.')
+        parser.add_argument('-d', '--doc-id', nargs='*',
+                            help='Create records for the given doc ID(s)')
+        parser.add_argument('-f', '--file-path',
+                            help='Path to the list of IDs. One ID per line.')
         parser.add_argument('-t', '--doc-type', choices=['form', 'case'])
         parser.add_argument('--repeater-type', choices=get_all_repeater_types(),
                             help='Only create records for this repeater type')
@@ -26,9 +29,14 @@ class Command(BaseCommand):
         parser.add_argument('--repeater-name',
                             help='Only create records for repeaters whose name matches this regex')
 
-    def handle(self, file_path, *args, **options):
-        with open(file_path, 'r') as file:
-            doc_ids = [line.strip() for line in file.readlines()]
+    def handle(self, *args, **options):
+        if not (options['doc_id'] or options['file_path']):
+            raise CommandError("You must provide --doc-id or --file-path. You can provide both.")
+
+        doc_ids = options['doc_id'] or []
+        if options['file_path']:
+            with open(options['file_path'], 'r') as file:
+                doc_ids.extend([line.strip() for line in file.readlines()])
 
         repeater_type = options['repeater_type']
         repeater_id = options['repeater_id']
