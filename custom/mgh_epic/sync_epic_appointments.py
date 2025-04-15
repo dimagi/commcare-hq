@@ -203,7 +203,7 @@ def sync_all_appointments_domain(domain):
         epic_appointments_to_update = []
         # Get all appointments for patient from epic
         study_start_date = patient.get_case_property('study_start_date')
-        opened_on = patient.get_case_property('opened_on')
+        opened_on = patient.get_case_property('opened_on').strftime("%Y-%m-%d")
         epic_appointment_records = get_epic_appointments_for_patient(patient_fhir_id,
                                                                      access_token,
                                                                      opened_on,
