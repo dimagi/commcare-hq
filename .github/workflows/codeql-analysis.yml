@@ -12,6 +12,8 @@
 name: "CodeQL"
 
 on:
+  # We need to run on push too (when things are merged to master) so CodeQL has
+  # an appropriate base for comparison and can tell when issues are introduced.
   push:
     branches:
       - master
