@@ -1,8 +1,9 @@
+import pytest
+
 from unittest.mock import patch
 from django.test import SimpleTestCase
 
-import pytest
-
+from corehq.apps.domain.forms import IPAccessConfigForm
 from ..models import IPAccessConfig
 
 IP_ADDRESS = '192.0.2.10'
@@ -49,3 +50,43 @@ class NoLicenseTests(SimpleTestCase):
             ip_denylist=[],
         )
         assert config.is_allowed(IP_ADDRESS) is False
+
+
+class IPAccessConfigFormTests(SimpleTestCase):
+    def test_cant_submit_country_without_license(self):
+        post_data = self._create_form_input(country_allowlist=[IP_COUNTRY])
+        form = IPAccessConfigForm(post_data, current_ip=IP_ADDRESS, current_country=None)
+        self.assertFalse(form.is_valid())
+
+    def test_cant_submit_same_ip_in_both_lists(self):
+        post_data = self._create_form_input(ip_allowlist=IP_ADDRESS, ip_denylist=IP_ADDRESS)
+        form = IPAccessConfigForm(post_data, current_ip=IP_ADDRESS, current_country=None)
+        self.assertFalse(form.is_valid())
+
+    @patch('django.conf.settings.MAXMIND_LICENSE_KEY', 'TEST')
+    def test_cant_lock_out_self(self):
+        post_data = self._create_form_input(country_allowlist=[IP_OTHER_COUNTRY])
+        form = IPAccessConfigForm(post_data, current_ip=IP_ADDRESS, current_country=IP_COUNTRY)
+        self.assertFalse(form.is_valid())
+
+        # You can exclude your country only if you include your IP address in the allow list
+        post_data = self._create_form_input(country_allowlist=[IP_OTHER_COUNTRY], ip_allowlist=IP_ADDRESS)
+        form = IPAccessConfigForm(post_data, current_ip=IP_ADDRESS, current_country=IP_COUNTRY)
+        self.assertTrue(form.is_valid())
+
+        post_data = self._create_form_input(ip_denylist=IP_ADDRESS)
+        form = IPAccessConfigForm(post_data, current_ip=IP_ADDRESS, current_country=IP_COUNTRY)
+        self.assertFalse(form.is_valid())
+
+    def test_cant_submit_invalid_ip(self):
+        post_data = self._create_form_input(ip_denylist='Invalid.IP')
+        form = IPAccessConfigForm(post_data, current_ip=IP_ADDRESS, current_country=IP_COUNTRY)
+        self.assertFalse(form.is_valid())
+
+    def _create_form_input(self, country_allowlist=None, ip_allowlist=None, ip_denylist=None, comment=None):
+        return {
+            'country_allowlist': country_allowlist or [],
+            'ip_allowlist': ip_allowlist or '',
+            'ip_denylist': ip_denylist or '',
+            'comment': comment or ''
+        }
