@@ -55,6 +55,16 @@
           {% blocktrans %}
             Records Selected
           {% endblocktrans %}
+          {% if table.num_visible_selected_records != table.num_selected_records %}
+            <div
+              class="ms-2 ps-2 border-start inline-block text-warning"
+              data-bs-custom-class="fs-6"
+              data-bs-title="{% trans 'Some records are selected in the session but not currently visible. They will not be part of cleaning actions until all filters are removed.' %}"
+              x-tooltip=""
+            >
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+          {% endif %}
         </div>
         <button
           class="btn btn-outline-danger"
