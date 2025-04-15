@@ -1,4 +1,5 @@
 import json
+import re
 
 from django import forms
 from django.utils.translation import gettext as _, gettext_lazy
@@ -162,3 +163,52 @@ class CleanSelectedRecordsForm(forms.Form):
                 x_data=json.dumps(alpine_data_model),
             )
         )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        clean_action = cleaned_data.get("clean_action")
+
+        if clean_action == EditActionType.REPLACE:
+            if not cleaned_data.get("replace_all_string"):
+                self.add_error(
+                    "replace_all_string",
+                    _(
+                        "Please specify a value you would like to replace the existing property value with."
+                    ),
+                )
+                return cleaned_data
+
+        if clean_action == EditActionType.FIND_REPLACE:
+            # note: allow empty replace_string
+
+            find_string = cleaned_data.get("find_string")
+            if not find_string:
+                self.add_error(
+                    "find_string", _("Please specify the value you would like to find.")
+                )
+                return cleaned_data
+
+            use_regex = cleaned_data.get("use_regex")
+            if use_regex:
+                try:
+                    re.compile(find_string)
+                except re.error:
+                    self.add_error("find_string", _("Not a valid regular expression."))
+                    return cleaned_data
+
+        if clean_action == EditActionType.COPY_REPLACE:
+            copy_from_prop_id = cleaned_data.get("copy_from_prop_id")
+            if not copy_from_prop_id:
+                self.add_error(
+                    "copy_from_prop_id",
+                    _("Please select a property to copy from."),
+                )
+                return cleaned_data
+            if copy_from_prop_id == cleaned_data.get("clean_prop_id"):
+                self.add_error(
+                    "copy_from_prop_id",
+                    _("You cannot copy from the same property."),
+                )
+                return cleaned_data
+
+        return cleaned_data
