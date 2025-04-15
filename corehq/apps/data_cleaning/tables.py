@@ -68,6 +68,14 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
 
     @property
     @memoized
+    def has_any_filtering(self):
+        """
+        Return whether any filtering is applied to the session.
+        """
+        return self.session.has_any_filtering
+
+    @property
+    @memoized
     def num_selected_records(self):
         """
         Return the number of selected records in the session.
