@@ -11,7 +11,7 @@ def case_changed_receiver(sender, case, **kwargs):
         from corehq.apps.data_interfaces.tasks import run_case_update_rules_on_save
 
         if RUN_AUTO_CASE_UPDATES_ON_SAVE.enabled(case.domain):
-            run_case_update_rules_on_save.delay(case)
+            run_case_update_rules_on_save.delay(case.id, case.domain)
     except Exception as e:
         error_message = 'Exception in case update signal'
         notify_exception(None, "{msg}: {exc}".format(msg=error_message, exc=e))
