@@ -3,7 +3,6 @@ import geoip2.webservice
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.utils.translation import gettext_lazy as _
 
 from corehq.util.metrics import metrics_counter
 
@@ -28,7 +27,7 @@ class IPAccessConfig(models.Model):
         )
 
     def is_allowed(self, ip_address):
-        if ip_address in self.ip_denylist or (self.country_allowlist and not settings.MAXMIND_LICENSE_KEY):
+        if ip_address in self.ip_denylist:
             return False
         elif not self.country_allowlist or ip_address in self.ip_allowlist:
             return True
@@ -43,9 +42,9 @@ def get_ip_country(ip_address):
             metrics_counter('commcare.ip_access.check_country')
             return response.country.iso_code
     except geoip2.errors.AuthenticationError:
-        raise Http403(_("Please provide a valid MaxMind license key and Account ID to filter IPs by country. "
+        raise Http403("Please provide a valid MaxMind license key and Account ID to filter IPs by country. "
                       "If you do not have a MaxMind account, please clear the Allowed Countries field in the "
-                      "IP Access Config to access your project."))
+                      "IP Access Config to access your project.")
 
 
 def is_in_country(ip_address, country_allowlist):

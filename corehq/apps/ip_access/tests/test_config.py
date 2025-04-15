@@ -1,6 +1,9 @@
 from unittest.mock import patch
+from django.test import SimpleTestCase
 
 import pytest
+
+from no_exceptions.exceptions import Http403
 
 from ..models import IPAccessConfig
 
@@ -39,15 +42,13 @@ def test_is_allowed(countries, allowlist, denylist, expected):
         assert config.is_allowed(IP_ADDRESS) is expected
 
 
-@pytest.mark.parametrize("countries, allowlist, denylist, expected", [
-    ([IP_COUNTRY], [], [], False),
-])
-def test_is_allowed_no_license(countries, allowlist, denylist, expected):
-    config = IPAccessConfig(
-        domain=DOMAIN,
-        country_allowlist=countries,
-        ip_allowlist=allowlist,
-        ip_denylist=denylist,
-    )
-    with patch('corehq.apps.ip_access.models.get_ip_country', return_value=IP_COUNTRY):
-        assert config.is_allowed(IP_ADDRESS) is expected
+class NoLicenseTests(SimpleTestCase):
+    def test_is_allowed_no_license_with_country_list(self):
+        config = IPAccessConfig(
+            domain=DOMAIN,
+            country_allowlist=[IP_COUNTRY],
+            ip_allowlist=[],
+            ip_denylist=[],
+        )
+        with self.assertRaises(Http403):
+            config.is_allowed(IP_ADDRESS)
