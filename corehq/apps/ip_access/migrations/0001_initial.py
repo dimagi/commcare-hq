@@ -28,6 +28,7 @@ class Migration(migrations.Migration):
                     "country_allowlist",
                     django.contrib.postgres.fields.ArrayField(
                         base_field=models.CharField(max_length=2),
+                        blank=True,
                         default=list,
                         size=None,
                     ),
@@ -36,6 +37,7 @@ class Migration(migrations.Migration):
                     "ip_allowlist",
                     django.contrib.postgres.fields.ArrayField(
                         base_field=models.GenericIPAddressField(),
+                        blank=True,
                         default=list,
                         size=None,
                     ),
@@ -44,6 +46,7 @@ class Migration(migrations.Migration):
                     "ip_denylist",
                     django.contrib.postgres.fields.ArrayField(
                         base_field=models.GenericIPAddressField(),
+                        blank=True,
                         default=list,
                         size=None,
                     ),

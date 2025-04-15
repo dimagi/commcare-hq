@@ -10,9 +10,9 @@ from dimagi.utils.logging import notify_exception
 
 class IPAccessConfig(models.Model):
     domain = models.CharField(max_length=126, db_index=True, unique=True)
-    country_allowlist = ArrayField(models.CharField(max_length=2), default=list)
-    ip_allowlist = ArrayField(models.GenericIPAddressField(), default=list)
-    ip_denylist = ArrayField(models.GenericIPAddressField(), default=list)
+    country_allowlist = ArrayField(models.CharField(max_length=2), default=list, blank=True)
+    ip_allowlist = ArrayField(models.GenericIPAddressField(), default=list, blank=True)
+    ip_denylist = ArrayField(models.GenericIPAddressField(), default=list, blank=True)
     comment = models.TextField(blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
