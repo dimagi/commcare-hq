@@ -52,8 +52,10 @@ class Command(BaseCommand):
                 form_ids = (line.strip() for line in form_id_file.readlines())
                 for form_id in form_ids:
                     form = fix_form(domain, form_id, interface, options['dry_run'])
+                    self.stdout.write('.', ending='')
                     if form and repeater:
                         repeater.register(form)
+            self.stdout.write('\nDone')
 
 
 def fix_form(domain, form_id, interface, dry_run=False):
