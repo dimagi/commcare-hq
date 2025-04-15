@@ -90,8 +90,8 @@ class CleanSelectedRecordsForm(forms.Form):
         alpine_data_model = {
             "propId": initial_prop_id,
             "cleanAction": self.data.get('clean_action', EditActionType.CHOICES[0][0]),
-            "findActions": [EditActionType.FIND_REPLACE],
             "replaceActions": [EditActionType.REPLACE],
+            "findActions": [EditActionType.FIND_REPLACE],
             "copyActions": [EditActionType.COPY_REPLACE],
         }
 
@@ -122,20 +122,20 @@ class CleanSelectedRecordsForm(forms.Form):
                     ),
                     crispy.Div(
                         crispy.Div(
+                            'replace_all_string',
+                            css_class="card-body",
+                        ),
+                        x_show="replaceActions.includes(cleanAction)",
+                        css_class="card mb-3",
+                    ),
+                    crispy.Div(
+                        crispy.Div(
                             'find_string',
                             hqcrispy.CheckboxField('use_regex'),
                             'replace_string',
                             css_class="card-body",
                         ),
                         x_show="findActions.includes(cleanAction)",
-                        css_class="card mb-3",
-                    ),
-                    crispy.Div(
-                        crispy.Div(
-                            'replace_all_string',
-                            css_class="card-body",
-                        ),
-                        x_show="replaceActions.includes(cleanAction)",
                         css_class="card mb-3",
                     ),
                     crispy.Div(
