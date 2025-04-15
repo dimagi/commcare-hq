@@ -3,8 +3,6 @@ from django.test import SimpleTestCase
 
 import pytest
 
-from no_exceptions.exceptions import Http403
-
 from ..models import IPAccessConfig
 
 IP_ADDRESS = '192.0.2.10'
@@ -50,5 +48,4 @@ class NoLicenseTests(SimpleTestCase):
             ip_allowlist=[],
             ip_denylist=[],
         )
-        with self.assertRaises(Http403):
-            config.is_allowed(IP_ADDRESS)
+        assert config.is_allowed(IP_ADDRESS) is False
