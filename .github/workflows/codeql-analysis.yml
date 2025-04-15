@@ -12,13 +12,20 @@
 name: "CodeQL"
 
 on:
-#  push:
-#    branches: [ master ]
-#  pull_request:
-#    # The branches below must be a subset of the branches above
-#    branches: [ master ]
-  schedule:
-    - cron: '29 18 * * 0'
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.rst'
+      - '**/*.txt'
+  pull_request:
+    branches:
+      - master
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.rst'
+      - '**/*.txt'
 
 jobs:
   analyze:
