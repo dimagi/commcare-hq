@@ -149,13 +149,12 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
     def test_filter_by_user_input(self):
         self.restrict_user_to_assigned_locations(self.web_user)
 
+        mass_locs = SQLLocation.objects.filter_by_user_input(self.domain, "Massachusetts/")
+        self.assertIn(f'"domain" = {self.domain})', str(mass_locs.query))
+
         # User searching for higher in the hierarchy is only given the items
         # they are allowed to see
-        middlesex_locs = (
-            SQLLocation.objects
-            .filter_by_user_input(self.domain, "Massachusetts/")
-            .accessible_to_user(self.domain, self.web_user)
-        )
+        middlesex_locs = mass_locs.accessible_to_user(self.domain, self.web_user)
         self.assertItemsEqual(
             ['Middlesex', 'Cambridge', 'Somerville'],
             [loc.name for loc in middlesex_locs]

@@ -331,6 +331,7 @@ class LocationManager(LocationQueriesMixin, AdjListManager):
                     query = query.filter(
                         Q(name__icontains=part) | Q(site_code__icontains=part)
                     )
+                query = query.filter(domain=domain)
         return query
 
     def get_locations(self, location_ids):
