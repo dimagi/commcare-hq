@@ -133,6 +133,13 @@ class ElasticTableData(TableData):
     @property
     @memoized
     def _total_records(self):
+        return self.get_total_records_in_query(self.query)
+
+    @classmethod
+    def get_total_records_in_query(cls, query):
+        """
+        Returns the total number of records in the ESQuery.
+        """
         res = cls.get_es_results(query.size(0))
         if res is not None:
             return res['hits'].get('total', 0)
