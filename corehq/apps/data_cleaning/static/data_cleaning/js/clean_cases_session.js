@@ -9,6 +9,9 @@ import 'hqwebapp/js/alpinejs/directives/htmx_sortable';
 import 'hqwebapp/js/alpinejs/directives/tooltip';
 import 'data_cleaning/js/directives/dynamic_options_select2';
 
+import wiggleButton from 'hqwebapp/js/alpinejs/components/wiggle_button';
+Alpine.data('wiggleButtonModel', wiggleButton);
+
 import Alpine from 'alpinejs';
 Alpine.start();
 

@@ -12,6 +12,20 @@
   }"
 {% endblock %}
 
+{% block no_results_table %}
+  <div class="alert alert-primary">
+    {% blocktrans %}
+      No cases were found that match the current filters. Please
+      <a
+        href="#"
+        class="fw-bold"
+        @click.prevent="$dispatch('wiggle-filters-button');"
+      >adjust your filters</a>
+      and try again.
+    {% endblocktrans %}
+  </div>
+{% endblock %}
+
 {% block before_table %}
   <div class="d-flex align-items-center pb-2">
 
