@@ -254,6 +254,21 @@ class BulkEditSession(models.Model):
     def get_num_selected_records(self):
         return self.records.filter(is_selected=True).count()
 
+    def get_num_selected_records_in_queryset(self):
+        case_ids = self.records.filter(is_selected=True).values_list(
+            "doc_id", flat=True
+        )
+
+        from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTableData
+
+        num_selected_records = 0
+        for doc_ids in chunked(case_ids, BULK_OPERATION_CHUNK_SIZE, list):
+            num_selected_records += ElasticTableData.get_total_records_in_query(
+                self.get_queryset().case_ids(doc_ids)
+            )
+
+        return num_selected_records
+
     def get_num_edited_records(self):
         return self.records.filter(changes__isnull=False).count()
 
