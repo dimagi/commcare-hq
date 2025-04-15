@@ -87,7 +87,8 @@ hqDefine("app_manager/js/forms/form_designer", [
                 trackFormEvent(appcues.EVENT_TYPES.FORM_SAVE);
             },
             onReady: function () {
-                if (initialPageData.get('vellum_debug') === 'dev') {
+                if (initialPageData.get('vellum_debug')) {
+                    // TODO: is this still needed?
                     var lessErrorId = "#less-error-message\\:static-style-less-hqstyle-core",
                         lessError = $(lessErrorId);
                     if (lessError.length) {
