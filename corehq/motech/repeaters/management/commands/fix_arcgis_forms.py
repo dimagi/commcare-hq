@@ -64,6 +64,9 @@ def fix_form(domain, form_id, interface, dry_run=False):
     doesn't support.
     """
     instance = XFormInstance.objects.get_form(form_id, domain)
+    xml = instance.get_xml_element()
+    if xml.find('./indicateurs_arcgis', xml.nsmap) is not None:
+        return None  # This form is already correct
 
     # `form_data` looks like, for example:
     # [FormQuestionResponse(
@@ -193,7 +196,6 @@ def fix_form(domain, form_id, interface, dry_run=False):
             ),
         )
     )
-    xml = instance.get_xml_element()
     xml.append(arcgis_elem)
 
     if dry_run:
