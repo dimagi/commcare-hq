@@ -393,6 +393,9 @@ def set_toggle(request, toggle_slug):
     if not static_toggle:
         raise Http404()
 
+    if static_toggle.tag not in get_tags_with_edit_permission(request.user.username):
+        return HttpResponseForbidden("You do not have permission to edit this toggle.")
+
     item = request.POST['item']
     enabled = request.POST['enabled'] == 'true'
     namespace = request.POST['namespace']
