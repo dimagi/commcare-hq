@@ -177,9 +177,14 @@ def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, db=N
             rule.save(update_fields=['last_run'])
 
 
+@task(queue='background_queue', acks_late=True, ignore_result=True)
+def run_case_update_rules_on_save_ng(case_id):
+    case = CommCareCase.objects.get_case(case_id)
+    run_case_update_rules_on_save(case)
+
+
 @task(serializer='pickle', queue='background_queue', acks_late=True, ignore_result=True)
-def run_case_update_rules_on_save(case_id, domain):
-    case = CommCareCase.objects.get_case(case_id, domain)
+def run_case_update_rules_on_save(case):
     key = 'case-update-on-save-case-{case}'.format(case=case.case_id)
     with CriticalSection([key]):
         update_case = True
