@@ -49,7 +49,8 @@ class NoLicenseTests(SimpleTestCase):
             ip_allowlist=[],
             ip_denylist=[],
         )
-        assert config.is_allowed(IP_ADDRESS) is False
+        with self.assertRaises(Exception):
+            config.is_allowed(IP_ADDRESS)
 
 
 class IPAccessConfigFormTests(SimpleTestCase):
