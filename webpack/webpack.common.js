@@ -45,6 +45,11 @@ const aliases = {
     "hqwebapp/less": path.resolve(utils.getStaticPathForApp('hqwebapp', 'less')),
     "ko.mapping": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/lib/knockout_plugins/'),
         'knockout_mapping.ko.min'),
+
+    // Minified version of vellum, used when VELLUM_DEBUG is False
+    "jquery.vellum.prod": path.resolve(utils.getStaticPathForApp('app_manager', 'js/vellum/'), 'main'),
+
+    "jquery.vellum.dev": path.resolve(VELLUM_DEBUG_PATH, 'src', 'main'),
 };
 
 module.exports = {
