@@ -43,7 +43,7 @@
                     The {{ trial_length }} Day Trial includes all the features present in the
                     {{ pn }} Software Plan, which is our full set of features.
                   {% endblocktrans %}
-                {% else %}{{ plan.description }}{% endif %}</p>
+                {% else %}{{ plan.description|safe }}{% endif %}</p>
             </div>
             {% if plan.do_not_invoice and not plan.is_paused %}
               <div class="alert alert-info">
