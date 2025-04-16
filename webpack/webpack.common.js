@@ -25,6 +25,9 @@ const aliases = {
     "ko.mapping": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/lib/knockout_plugins/'),
         'knockout_mapping.ko.min'),
 
+    // Minified version of vellum, used when VELLUM_DEBUG is False
+    "main.vellum.bundle": path.resolve(utils.getStaticPathForApp('app_manager', 'js/vellum/'), 'main.vellum.bundle.js'),
+
     // TODO: pull in Vellum config in some way other than copying
     'ckeditor': path.resolve(VELLUM_BASE_PATH, 'lib/ckeditor/ckeditor.js'),
     'ckeditor-jquery': path.resolve(VELLUM_BASE_PATH, 'lib/ckeditor/adapters/jquery.js'),
