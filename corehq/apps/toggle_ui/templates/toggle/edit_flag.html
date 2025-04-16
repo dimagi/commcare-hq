@@ -172,7 +172,12 @@
                     </button>
                   {% endif %}
                 </span>
-                <input class="form-control" type="text" data-bind="value: value">
+                <input
+                  class="form-control"
+                  type="text"
+                  data-bind="value: value"
+                  {% if not can_edit_toggle %}disabled{% endif %}
+                >
                 <!-- ko if: value() && value()[0] == '!' -->
                 <span class="input-group-addon"><i class="fa fa-circle-xmark"></i></span>
                 <!-- /ko -->
