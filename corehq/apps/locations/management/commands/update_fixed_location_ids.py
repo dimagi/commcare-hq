@@ -30,8 +30,8 @@ class Command(BaseCommand):
 
     def handle(self, domain, location_id_filename, *args, **options):
         id_map = get_id_map(location_id_filename)
-        case_es_hits = iter_case_es_hits(domain, id_map.keys())
-        case_blocks = iter_case_blocks(case_es_hits, id_map)
+        cases = iter_cases(domain, id_map.keys())
+        case_blocks = iter_case_blocks(cases, id_map)
         total_case_blocks = 0
         for case_blocks_chunk in chunked(case_blocks, CASE_BLOCK_COUNT):
             total_case_blocks += len(case_blocks_chunk)
@@ -61,33 +61,31 @@ def get_id_map(location_id_filename):
         }
 
 
-def iter_case_es_hits(domain, owner_ids):
+def iter_cases(domain, owner_ids):
     """
     Yields CaseES search hits where case owners might be wrong.
     """
     for owner_ids_chunk in chunked(owner_ids, MAX_TERM_COUNT, collection=list):
-        for hit in CaseES().domain(domain).owner(owner_ids_chunk).run().hits:
-            yield hit
+        for case_id in CaseES().domain(domain).owner(owner_ids_chunk).get_ids():
+            yield CommCareCase.objects.get_case(domain=domain, case_id=case_id)
 
 
-def iter_case_blocks(case_es_hits, id_map):
-    for case_es_hit in case_es_hits:
-        current_owner_id = case_es_hit['owner_id']
-        deleted_location_id = get_previous_owner_id(case_es_hit)
-        assert deleted_location_id, \
-            f'No previous owner_id found for case {case_es_hit["_id"]}'
+def iter_case_blocks(cases, id_map):
+    for case in cases:
+        current_owner_id = case.owner_id
+        deleted_location_id = get_previous_owner_id(case)
+        assert deleted_location_id, f'No previous owner_id found for case {case.case_id}'
         correct_location_id = id_map[current_owner_id][deleted_location_id]
         if current_owner_id != correct_location_id:
-            yield get_case_block_text(case_es_hit, correct_location_id)
+            yield get_case_block_text(case, correct_location_id)
 
 
-def get_previous_owner_id(case_es_hit):
+def get_previous_owner_id(case):
     """
     Navigates the case history of the case corresponding to 'case_es_hit',
     and returns 'owner_id' prior to the form submission with deviceID in
     SCRIPT_DEVICE_IDS
     """
-    case = CommCareCase.wrap(case_es_hit)
     found = False  # Have we found the form that set the maybe-incorrect owner_id?
     transactions = sorted(case.get_form_transactions(), key=lambda t: t.server_date)
     for transaction in reversed(transactions):
@@ -105,13 +103,13 @@ def get_previous_owner_id(case_es_hit):
                 return case_update.update_block['owner_id']
 
 
-def get_case_block_text(case_es_hit, new_location_id):
+def get_case_block_text(case, new_location_id):
     """
     Returns a case block to update a case with its new location ID.
     """
     return CaseBlock(
         create=False,
-        case_id=case_es_hit['_id'],
+        case_id=case.case_id,
         owner_id=new_location_id,
         update={
             'settlement_id': new_location_id,
