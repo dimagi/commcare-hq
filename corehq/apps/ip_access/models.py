@@ -5,7 +5,6 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 from corehq.util.metrics import metrics_counter
-from dimagi.utils.logging import notify_exception
 
 
 class IPAccessConfig(models.Model):
@@ -40,10 +39,10 @@ def get_ip_country(ip_address):
             response = client.country(ip_address)
             metrics_counter('commcare.ip_access.check_country')
             return response.country.iso_code
-    except geoip2.errors.AuthenticationError:
-        notify_exception(None, "Missing or invalid MaxMind license key and Account ID. "
-                               "If you do not have a MaxMind account, please clear the Allowed Countries "
-                               "field in the IP Access Config to access your project.")
+    except geoip2.errors.AuthenticationError as e:
+        raise Exception("Missing or invalid MaxMind license key and Account ID. "
+                        "If you do not have a MaxMind account, please clear the Allowed Countries field of your "
+                        "IP Access Config in the Django Admin page to regain access your project.") from e
 
 
 def is_in_country(ip_address, country_allowlist):

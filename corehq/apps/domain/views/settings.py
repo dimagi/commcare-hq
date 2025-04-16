@@ -296,7 +296,6 @@ class EditIPAccessConfigView(BaseProjectSettingsView):
                 'ip_denylist': display_spacer.join(domain_config.ip_denylist),
                 'comment': domain_config.comment
             })
-        print(self.request.POST)
         if self.request.method == 'POST':
             return IPAccessConfigForm(self.request.POST, initial=initial,
                                       current_ip=self.current_ip, current_country=self.ip_country)
