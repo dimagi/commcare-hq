@@ -21,6 +21,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     'cloudcare/js/formplayer/users/models',
     'cloudcare/js/form_entry/web_form_session',
     'marionette.templatecache/lib/marionette.templatecache.min',    // needed for Marionette.TemplateCache
+    'cloudcare/js/gtx',
     'backbone.radio',
     'jquery.cookie/jquery.cookie',  // $.cookie
 ], function (
@@ -43,6 +44,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     UsersModels,
     WebFormSession,
     TemplateCache,
+    gtx,
 ) {
     Marionette.setRenderer(TemplateCache.render);
 
@@ -231,6 +233,7 @@ hqDefine("cloudcare/js/formplayer/app", [
             domain: data.domain,
             name: data.title,
         });
+        gtx.logStartForm(data.title);
         data.onsubmit = function (resp) {
             if (resp.status === "success") {
                 var $alert;
