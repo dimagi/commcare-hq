@@ -1,5 +1,6 @@
 import pickle
 from contextlib import contextmanager
+from unittest.mock import patch
 
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import WebUser
@@ -9,7 +10,7 @@ from ..models import (
     SQLLocation,
     get_domain_locations,
 )
-from .util import LocationHierarchyTestCase
+from .util import LocationHierarchyTestCase, setup_locations_and_types
 
 
 class BaseTestLocationQuerysetMethods(LocationHierarchyTestCase):
@@ -150,12 +151,13 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
     def test_filter_by_user_input(self):
         self.restrict_user_to_assigned_locations(self.web_user)
 
-        mass_locs = SQLLocation.objects.filter_by_user_input(self.domain, "Massachusetts/")
-        self.assertIn(f'"domain" = {self.domain})', str(mass_locs.query))
-
         # User searching for higher in the hierarchy is only given the items
         # they are allowed to see
-        middlesex_locs = mass_locs.accessible_to_user(self.domain, self.web_user)
+        middlesex_locs = (
+            SQLLocation.objects
+            .filter_by_user_input(self.domain, "Massachusetts/")
+            .accessible_to_user(self.domain, self.web_user)
+        )
         self.assertItemsEqual(
             ['Middlesex', 'Cambridge', 'Somerville'],
             [loc.name for loc in middlesex_locs]
@@ -207,6 +209,23 @@ class TestFilterByUserInput(LocationHierarchyTestCase):
         )
         self.assert_query_has_results('', all_locations)
 
+    @patch('corehq.apps.locations.models.Domain.get_by_name', lambda n: FakeDomain)
+    def test_location_in_different_domain(self):
+        setup_locations_and_types(
+            FakeDomain.name,
+            self.location_type_names,
+            [],
+            [
+                ('Middle Mass', [
+                    ('Upper Middlesex', [
+                        ('Lower Cambridge', []),
+                    ]),
+                ]),
+            ],
+        )
+
+        self.assert_query_has_results('mass/cam', ['Cambridge'])
+
 @generate_cases([  # noqa: E302
     ('Suff', ['Suffolk']),
     ('Suffolk', ['Suffolk']),
@@ -225,6 +244,11 @@ class TestFilterByUserInput(LocationHierarchyTestCase):
 ], TestFilterByUserInput)
 def test_path_query(self, querystring, expected):
     self.assert_query_has_results(querystring, expected)
+
+
+class FakeDomain:
+    name = 'other-domain'
+    commtrack_enabled = False
 
 
 @contextmanager
