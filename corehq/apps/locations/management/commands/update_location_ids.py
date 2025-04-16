@@ -22,24 +22,20 @@ class Command(BaseCommand):
         parser.add_argument('--dry-run', action='store_true')
 
     def handle(self, domain, location_id_filename, *args, **options):
-        update_owner_ids(domain, location_id_filename, options['dry_run'])
-
-
-def update_owner_ids(domain, location_id_filename, dry_run):
-    id_map = get_deleted_id_to_new_id_map(location_id_filename)
-    case_es_hits = iter_case_es_hits_with_deleted_owners(domain, id_map.keys())
-
-    for case_es_hits_chunk in chunked(case_es_hits, case_block_count):
-        case_blocks = [
-            get_case_block_text(case_es_hit, id_map[case_es_hit['owner_id']])
-            for case_es_hit in case_es_hits_chunk
-        ]
-
-        if dry_run:
-            print("Would update {} cases".format(len(case_blocks)))
-        else:
-            submit_case_blocks(case_blocks, domain, device_id=__name__)
-            print("Updated {} cases".format(len(case_blocks)))
+        id_map = get_deleted_id_to_new_id_map(location_id_filename)
+        case_es_hits = iter_case_es_hits_with_deleted_owners(domain, id_map.keys())
+        total_case_blocks = 0
+        for case_es_hits_chunk in chunked(case_es_hits, case_block_count):
+            case_blocks = [
+                get_case_block_text(case_es_hit, id_map[case_es_hit['owner_id']])
+                for case_es_hit in case_es_hits_chunk
+            ]
+            total_case_blocks += len(case_blocks)
+            if options['dry_run']:
+                self.stdout.write(f'Dry run: Total cases: {total_case_blocks}')
+            else:
+                submit_case_blocks(case_blocks, domain, device_id=__name__)
+                self.stdout.write(f'Total cases updated: {total_case_blocks}')
 
 
 def get_deleted_id_to_new_id_map(location_id_filename):
