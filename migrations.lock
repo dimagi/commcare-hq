@@ -1188,6 +1188,8 @@ telerivet
 toggle_ui
  0001_reconcile_commtrack_flags
  0002_toggleaudit
+toggles
+ 0001_toggle_edit_permission
 translations
  0001_initial
  0002_transifexblacklist
