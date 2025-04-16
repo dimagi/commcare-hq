@@ -74,7 +74,10 @@ def iter_case_blocks(cases, id_map):
     for case in cases:
         current_owner_id = case.owner_id
         deleted_location_id = get_previous_owner_id(case)
-        assert deleted_location_id, f'No previous owner_id found for case {case.case_id}'
+        if not deleted_location_id:
+            continue  # case is new, and didn't have its location changed
+        if deleted_location_id not in id_map[current_owner_id]:
+            continue  # previous owner_id was not deleted
         correct_location_id = id_map[current_owner_id][deleted_location_id]
         if current_owner_id != correct_location_id:
             yield get_case_block_text(case, correct_location_id)
