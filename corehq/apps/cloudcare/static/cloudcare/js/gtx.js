@@ -17,7 +17,7 @@ hqDefine('cloudcare/js/gtx', [
 
     const logStartForm = function (name) {
         const gtxEventData = {
-            formName: name,
+            title: name,
         };
         gtx.sendEvent("web_apps_start_form", gtxEventData);
     };
