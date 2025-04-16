@@ -9,7 +9,14 @@
     totalRecords: {{ table.page.paginator.count }},
     pageTotalRecords: {{ table.paginated_rows|length }},
     pageNumRecordsSelected: 0,
+    updateCleaningStatus(numSelected) {
+      $store.isCleaningAllowed = numSelected > 0;
+    },
   }"
+  x-init="
+    updateCleaningStatus(numRecordsSelected);
+    $watch('numRecordsSelected', updateCleaningStatus);
+  "
 {% endblock %}
 
 {% block no_results_table %}

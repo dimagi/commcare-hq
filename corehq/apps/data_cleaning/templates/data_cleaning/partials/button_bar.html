@@ -24,9 +24,16 @@
 </button>
 <button
   class="btn btn-outline-primary"
+  disabled="disabled"
   type="button"
   data-bs-toggle="offcanvas"
   data-bs-target="#offcanvas-bulk-changes"
+  x-data=""
+  :class="{
+    'btn-primary': $store.isCleaningAllowed,
+    'btn-outline-primary': !$store.isCleaningAllowed,
+  }"
+  :disabled="!$store.isCleaningAllowed"
 >
   <i class="fa-solid fa-shower"></i> {% trans "Clean Selected Cases" %}
 </button>
