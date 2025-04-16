@@ -28,6 +28,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.toggles import (
     ALL_NAMESPACES,
     ALL_TAG_GROUPS,
+    ALL_TAGS,
     NAMESPACE_DOMAIN,
     NAMESPACE_EMAIL_DOMAIN,
     NAMESPACE_USER,
@@ -109,6 +110,8 @@ class ToggleListView(BasePageView):
         }
 
     def _editable_tags_slugs(self):
+        if settings.SERVER_ENVIRONMENT == 'staging':
+            return [tag.slug for tag in ALL_TAGS]
         return [tag.slug for tag in get_tags_with_edit_permission(self.request.user.username)]
 
 
@@ -156,7 +159,10 @@ class ToggleEditView(BasePageView):
 
     @property
     def can_edit_toggle(self):
-        return self.static_toggle.tag in get_tags_with_edit_permission(self.request.user.username)
+        return (
+            settings.SERVER_ENVIRONMENT == 'staging'
+            or self.static_toggle.tag in get_tags_with_edit_permission(self.request.user.username)
+        )
 
     def get_toggle(self):
         if not self.static_toggle:
@@ -393,7 +399,10 @@ def set_toggle(request, toggle_slug):
     if not static_toggle:
         raise Http404()
 
-    if static_toggle.tag not in get_tags_with_edit_permission(request.user.username):
+    if (
+        settings.SERVER_ENVIRONMENT != 'staging'
+        and static_toggle.tag not in get_tags_with_edit_permission(request.user.username)
+    ):
         return HttpResponseForbidden("You do not have permission to edit this toggle.")
 
     item = request.POST['item']
