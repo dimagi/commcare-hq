@@ -109,6 +109,8 @@ class ToggleListView(BasePageView):
         }
 
     def _editable_toggles_slug(self):
+        if settings.SERVER_ENVIRONMENT == 'staging':
+            return [toggle.slug for toggle in list(all_toggles())]
         return [toggle.slug for toggle in get_toggles_with_edit_permission(self.request.user.username)]
 
 
@@ -156,7 +158,10 @@ class ToggleEditView(BasePageView):
 
     @property
     def can_edit_toggle(self):
-        return self.static_toggle in get_toggles_with_edit_permission(self.request.user.username)
+        return (
+            settings.SERVER_ENVIRONMENT == 'staging'
+            or self.static_toggle in get_toggles_with_edit_permission(self.request.user.username)
+        )
 
     def get_toggle(self):
         if not self.static_toggle:
@@ -393,7 +398,10 @@ def set_toggle(request, toggle_slug):
     if not static_toggle:
         raise Http404()
 
-    if static_toggle not in get_toggles_with_edit_permission(request.user.username):
+    if (
+        settings.SERVER_ENVIRONMENT != 'staging'
+        and static_toggle not in get_toggles_with_edit_permission(request.user.username)
+    ):
         return HttpResponseForbidden("You do not have permission to edit this toggle.")
 
     item = request.POST['item']

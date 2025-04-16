@@ -270,6 +270,8 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
         return sorted(unsorted_toggles, key=_sort_key)
 
     def _get_toggles_slug_with_edit_permission(self):
+        if settings.SERVER_ENVIRONMENT == 'staging':
+            return [toggle.slug for toggle in toggles.all_toggles()]
         return [toggle.slug for toggle in get_toggles_with_edit_permission(self.request.user.username)]
 
     def _get_privileges(self):
