@@ -241,6 +241,7 @@ class TestFilterByUserInput(LocationHierarchyTestCase):
     ('Middl', ['Middlesex', 'Evil Middlesex']),
     ('Middl/', ['Cambridge', 'Somerville', 'Evil Somerville', 'Cambridge', 'Somerville']),
     ('Middl/camb', ['Cambridge', 'Cambridge']),
+    ('/evil', ['Evil Somerville', 'Evil Middlesex']),
 ], TestFilterByUserInput)
 def test_path_query(self, querystring, expected):
     self.assert_query_has_results(querystring, expected)
