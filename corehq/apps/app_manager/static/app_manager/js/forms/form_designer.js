@@ -85,11 +85,8 @@ hqDefine("app_manager/js/forms/form_designer", [
 
         window.CKEDITOR_BASEPATH = initialPageData.get('CKEDITOR_BASEPATH');     // eslint-disable-line no-unused-vars, no-undef
 
-        // TODO: restore/test/remove
-        /*define("jquery", [], function () { return window.jQuery; });
-        define("jquery.bootstrap", ["jquery"], function () {});
-        define("underscore", [], function () { return window._; });
-        define("vellum/hqAnalytics", [], function () {
+        // TODO: Support this, which doesn't work with VELLUM_DEBUG either true or false
+        /*define("vellum/hqAnalytics", [], function () {
             function workflow(message) {
                 kissmetrics.track.event(message);
             }
@@ -109,13 +106,19 @@ hqDefine("app_manager/js/forms/form_designer", [
             };
         });*/
 
-        require(["jquery", "vellum/main"], function ($) {
+        const initVellum = function ($) {
             $(function () {
                 $("#edit").hide();
                 $('#hq-footer').hide();
                 $('#formdesigner').vellum(VELLUM_OPTIONS);
             });
-        });
+        };
+        console.log("Loading vellum, debug = " + !!initialPageData.get('vellum_debug'));
+        if (initialPageData.get('vellum_debug')) {
+            require(["jquery", "jquery.vellum"], initVellum);
+        } else {
+            require(["jquery", "main.vellum.bundle"], initVellum);
+        }
         kissmetrics.track.event('Entered the Form Builder');
 
         appManager.setPrependedPageTitle("\u270E ", true);
