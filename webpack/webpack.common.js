@@ -1,10 +1,30 @@
 /* eslint-env node */
+const fs = require('fs');
 const path = require('path');
 const webpack = require('webpack');
 const utils = require('./utils');
 const hqPlugins = require('./plugins');
+const { merge } = require('webpack-merge');
+const { emitWarning } = require('node:process');
 
-VELLUM_BASE_PATH = path.resolve(__dirname, '../submodules/formdesigner')
+VELLUM_DEBUG_PATH = fs.realpathSync(path.resolve(__dirname, '../submodules/formdesigner'));
+VELLUM_DEBUG_CONFIG_PATH = path.resolve(VELLUM_DEBUG_PATH, 'webpack/webpack.dev.js');
+let vellumConfig = {},
+    vellumAliases = [],
+    vellumRules = [];
+try {
+    vellumConfig = require(VELLUM_DEBUG_CONFIG_PATH);
+    vellumAliases = vellumConfig.resolve.alias;
+    vellumRules = vellumConfig.module.rules;
+} catch (e) {
+    if (e.code === "MODULE_NOT_FOUND") {
+        // do nothing, vellum config isn't necessary if VELLUM_DEBUG is false
+        emitWarning("Vellum config not found at " + VELLUM_DEBUG_CONFIG_PATH);
+    } else {
+        throw e;
+    }
+}
+
 const aliases = {
     "commcarehq": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/bootstrap5/'),
         'commcarehq'),
@@ -28,142 +48,98 @@ const aliases = {
     // Minified version of vellum, used when VELLUM_DEBUG is False
     "main.vellum.bundle": path.resolve(utils.getStaticPathForApp('app_manager', 'js/vellum/'), 'main.vellum.bundle.js'),
 
-    // TODO: pull in Vellum config in some way other than copying
-    'ckeditor': path.resolve(VELLUM_BASE_PATH, 'lib/ckeditor/ckeditor.js'),
-    'ckeditor-jquery': path.resolve(VELLUM_BASE_PATH, 'lib/ckeditor/adapters/jquery.js'),
-    'CryptoJS': path.resolve(VELLUM_BASE_PATH, 'lib/sha1'),
-    'diff-match-patch': path.resolve(VELLUM_BASE_PATH, 'lib/diff_match_patch'),
-    'save-button': path.resolve(VELLUM_BASE_PATH, 'lib', 'SaveButton.js'),
-    'jquery.vellum': path.resolve(VELLUM_BASE_PATH, 'src', 'main'),
-    'jstree-styles': path.resolve(VELLUM_BASE_PATH, 'node_modules/jstree/dist/themes/default/style.css'),
-    'vellum': path.resolve(VELLUM_BASE_PATH, 'src'),
-    'tests': path.resolve(VELLUM_BASE_PATH, 'tests'),
-    'static': path.resolve(VELLUM_BASE_PATH, 'tests', 'static'),
+    // Source version of vellum, used when VELLUM_DEBUG is True
+    'jquery.vellum': path.resolve(VELLUM_DEBUG_PATH, 'src', 'main'),
 };
-
 
 module.exports = {
     entry: utils.getEntries(),
 
     module: {
         rules: [
-            // TODO: pull in Vellum config in some way other than copying
             {
-                test: /\.xml$/,
-                type: 'asset/source',
+                test: VELLUM_DEBUG_PATH,
+                resolve: {
+                    alias: vellumAliases,
+                },
+                rules: vellumRules,
             },
             {
-                test: /\.html$/,
-                type: 'asset/source',
-            },
-            {
-                test: /\.tsv$/,
-                type: 'asset/source',
-            },
-            {
-                test: /\.json$/,
-                type: 'json',
-            },
-            {
-                test: /\.less$/,
-                use: ["style-loader", "css-loader", "less-loader"],
-            },
-            {
-                test: /ckeditor/,
-                loader: "exports-loader",
-                options: {
-                    type: "commonjs",
-                    exports: {
-                        syntax: "single",
-                        name: "CKEDITOR",
+                exclude: VELLUM_DEBUG_PATH,
+                rules: [
+                    {
+                        test: /\.css$/i,
+                        use: ["style-loader", "css-loader"],
                     },
-                },
-            },
-            {
-                test: /XMLWriter/,
-                loader: "exports-loader",
-                options: {
-                    type: "commonjs",
-                    exports: {
-                        syntax: "single",
-                        name: "XMLWriter",
+                    {
+                        test: /\.js$/,
+                        loader: 'babel-loader',
+                        exclude: /node_modules/,
                     },
-                },
-            },
-            // TODO: this is the end of the Vellum rules
-
-
-            {
-                test: /\.css$/i,
-                use: ["style-loader", "css-loader"],
-            },
-            {
-                test: /\.js$/,
-                loader: 'babel-loader',
-                exclude: /node_modules/,
-            },
-            {
-                test: /\.png/,
-                type: 'asset/resource',
-            },
-
-            // this rule ensures that hqDefine is renamed to define AMD module
-            // definition syntax that webpack understands
-            {
-                test: /\.js$/,
-                loader: 'string-replace-loader',
-                exclude: /node_modules/,
-                options: {
-                    search: /\bhqDefine\b/g,
-                    replace: 'define',
-                },
-            },
-
-            {
-                test: /modernizr\.js$/,
-                loader: "webpack-modernizr-loader",
-                options: {
-                    "options": [
-                        "setClasses",
-                    ],
-                    "feature-detects": [
-                        "test/svg/smil",
-                    ],
-                },
-            },
-
-            {
-                test: /mapbox\.js\/dist\/mapbox/,
-                loader: "exports-loader",
-                options: {
-                    type: "commonjs",
-                    exports: {
-                        syntax: "single",
-                        name: "L",
+                    {
+                        test: /\.png/,
+                        type: 'asset/resource',
                     },
-                },
-            },
-            {
-                test: /nvd3\/nv\.d3\.min/,
-                loader: "exports-loader",
-                options: {
-                    type: "commonjs",
-                    exports: {
-                        syntax: "single",
-                        name: "nv",
+
+                    // this rule ensures that hqDefine is renamed to define AMD module
+                    // definition syntax that webpack understands
+                    {
+                        test: /\.js$/,
+                        loader: 'string-replace-loader',
+                        exclude: /node_modules/,
+                        options: {
+                            search: /\bhqDefine\b/g,
+                            replace: 'define',
+                        },
                     },
-                },
-            },
-            {
-                test: /sentry\/js\/sentry/,
-                loader: "exports-loader",
-                options: {
-                    type: "commonjs",
-                    exports: {
-                        syntax: "single",
-                        name: "Sentry",
+
+                    {
+                        test: /modernizr\.js$/,
+                        loader: "webpack-modernizr-loader",
+                        options: {
+                            "options": [
+                                "setClasses",
+                            ],
+                            "feature-detects": [
+                                "test/svg/smil",
+                            ],
+                        },
                     },
-                },
+
+                    {
+                        test: /mapbox\.js\/dist\/mapbox/,
+                        loader: "exports-loader",
+                        options: {
+                            type: "commonjs",
+                            exports: {
+                                syntax: "single",
+                                name: "L",
+                            },
+                        },
+                    },
+                    {
+                        test: /nvd3\/nv\.d3\.min/,
+                        loader: "exports-loader",
+                        options: {
+                            type: "commonjs",
+                            exports: {
+                                syntax: "single",
+                                name: "nv",
+                            },
+                        },
+                    },
+                    {
+                        test: /sentry\/js\/sentry/,
+                        loader: "exports-loader",
+                        options: {
+                            type: "commonjs",
+                            exports: {
+                                syntax: "single",
+                                name: "Sentry",
+                            },
+                        },
+                    },
+                ]
             },
         ],
     },
