@@ -468,7 +468,8 @@ class ConfigurableReportPillowProcessor(BulkPillowProcessor):
                                     async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
                                 else:
                                     try:
-                                        rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
+                                        rows = adapter.get_all_values(doc, eval_context)
+                                        rows_to_save_by_adapter[adapter].extend(rows)
                                     except Exception as e:
                                         change_exceptions.append((change, e))
                                     eval_context.reset_iteration()
@@ -767,8 +768,13 @@ def get_location_pillow(pillow_id='location-ucr-pillow', include_ucrs=None,
 
 def get_kafka_ucr_registry_pillow(
     pillow_id='kafka-ucr-registry',
-    num_processes=1, process_num=0, dedicated_migration_process=False,
-    processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, ucr_configs=None, **kwargs):
+    num_processes=1,
+    process_num=0,
+    dedicated_migration_process=False,
+    processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE,
+    ucr_configs=None,
+    **kwargs,
+):
     """UCR pillow that reads from all 'case' Kafka topics and writes data into the UCR database tables
 
     Only UCRs backed by Data Registries are processed in this pillow.
