@@ -269,6 +269,30 @@ class BulkEditSession(models.Model):
 
         return num_selected_records
 
+    def _apply_change_to_selected_doc_ids(self, change, doc_ids):
+        """
+        Apply a change to the selected records with the given doc_ids.
+        :param change: BulkEditChange
+        :param doc_ids: list of doc ids
+        """
+        selected_records = BulkEditRecord.get_selected_records_with_ids(self, doc_ids)
+        change.records.add(*selected_records)
+
+    def apply_change_to_selected_records_in_queryset(self, change):
+        """
+        Apply a change to the selected records in the current queryset.
+        :param change: BulkEditChange
+        """
+        if self.has_any_filtering:
+            self._apply_operation_on_queryset(
+                lambda doc_ids: self._apply_change_to_selected_doc_ids(change, doc_ids)
+            )
+        else:
+            # If there are no filters, we can just apply the change to all selected records
+            # this will be a faster operation for larger data sets
+            selected_records = self.records.filter(is_selected=True)
+            change.records.add(*selected_records)
+
     def get_num_edited_records(self):
         return self.records.filter(changes__isnull=False).count()
 
@@ -940,6 +964,16 @@ class BulkEditRecord(models.Model):
             doc_id__in=doc_ids,
             changes__isnull=True,
         ).delete()
+
+    @classmethod
+    def get_selected_records_with_ids(self, session, doc_ids):
+        """
+        Get selected records in session with the given doc_ids.
+        :param session: BulkEditSession
+        :param doc_ids: list of doc_ids to filter
+        :return: queryset of selected records
+        """
+        return session.records.filter(doc_id__in=doc_ids, is_selected=True)
 
     @property
     def has_property_updates(self):
