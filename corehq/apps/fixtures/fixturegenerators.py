@@ -182,17 +182,18 @@ class ItemListsProvider(FixtureProvider):
                         io_stream = BytesIO(io_stream)
                 if io_stream is None:
                     record_datadog_metric('generate', key)
-                    item = self._get_global_item(global_type, domain)
+                    items = self._get_global_items(global_type, domain)
                     io_stream = BytesIO()
-                    io_stream.write(ElementTree.tostring(item, encoding='utf-8'))
+                    for item in items:
+                        io_stream.write(ElementTree.tostring(item, encoding='utf-8'))
                     io_stream.seek(0)
                     cache_fixture_items_data(io_stream, domain, '', key)
         return io_stream
 
-    def _get_global_item(self, global_type, domain):
+    def _get_global_items(self, global_type, domain):
         def get_items_by_type(data_type):
             return LookupTableRow.objects.iter_rows(domain, table_id=data_type.id)
-        return self._get_fixtures({global_type.id: global_type}, get_items_by_type, GLOBAL_USER_ID)[0]
+        return self._get_fixtures({global_type.id: global_type}, get_items_by_type, GLOBAL_USER_ID)
 
     def get_user_items_and_count(self, user_types, restore_user):
         user_items_count = 0
