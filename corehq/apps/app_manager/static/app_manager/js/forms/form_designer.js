@@ -3,7 +3,6 @@ hqDefine("app_manager/js/forms/form_designer", [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'analytix/js/appcues',
-    'analytix/js/google',
     'analytix/js/kissmetrix',
     'app_manager/js/app_manager',
     'app_manager/js/forms/edit_form_details',
@@ -13,7 +12,6 @@ hqDefine("app_manager/js/forms/form_designer", [
     _,
     initialPageData,
     appcues,
-    google,
     kissmetrics,
     appManager,
     editDetails,
@@ -114,27 +112,6 @@ hqDefine("app_manager/js/forms/form_designer", [
         // appcues to have completed its init prior to importing requirejs
         // or using it to incorporate vellum, these issues disappear.
         var initFormBuilder = function () {
-            // TODO: Support this, which doesn't work with VELLUM_DEBUG either true or false
-            /*define("vellum/hqAnalytics", [], function () {
-                function workflow(message) {
-                    kissmetrics.track.event(message);
-                }
-
-                function usage(label, group, message) {
-                    google.track.event(label, group, message);
-                }
-
-                function fbUsage(group, message) {
-                    usage("Form Builder", group, message);
-                }
-
-                return {
-                    fbUsage: fbUsage,
-                    usage: usage,
-                    workflow: workflow,
-                };
-            });*/
-
             const initVellum = function ($) {
                 $(function () {
                     $("#edit").hide();

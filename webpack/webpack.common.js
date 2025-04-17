@@ -47,6 +47,9 @@ const aliases = {
 
     // Minified version of vellum, used when VELLUM_DEBUG is False
     "main.vellum.bundle": path.resolve(utils.getStaticPathForApp('app_manager', 'js/vellum/'), 'main.vellum.bundle.js'),
+
+    // Supports hqAnalytics in vellum when VELLUM_DEBUG=False
+    "vellum/hqAnalytics": "app_manager/js/forms/form_designer_analytics",
 };
 
 module.exports = {
