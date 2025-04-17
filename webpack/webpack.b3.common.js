@@ -19,6 +19,10 @@ module.exports = Object.assign({}, commonDefault, {
         new hqPlugins.EntryChunksPlugin({
             filename: 'manifest_b3.json',
         }),
+        new webpack.NormalModuleReplacementPlugin(
+            /hqAnalytics\.js/,
+            path.resolve(utils.getStaticPathForApp('app_manager', 'js/forms/'), 'form_designer_analytics.js')
+        ),
     ],
 
     resolve: {
