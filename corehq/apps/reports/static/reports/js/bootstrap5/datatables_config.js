@@ -20,7 +20,7 @@ var HQReportDataTables = function (options) {
     self.defaultSort = (options.defaultSort !== undefined) ? options.defaultSort : true;
     self.customSort = options.customSort || null;
     self.ajaxParams = options.ajaxParams || {};
-    self.ajaxSource = options.ajaxSource;  // URL for AJAX calls
+    self.ajaxSource = options.ajaxSource;
     self.loadingText = options.loadingText || gettext("Loading");
     self.emptyText = options.emptyText || gettext("No data available to display. " +
                                                   "Please try changing your filters.");
@@ -145,7 +145,6 @@ var HQReportDataTables = function (options) {
                     return data;
                 };
 
-                /* eslint-disable-next-line no-unused-vars */
                 params.footerCallback = function (row, data, start, end, display) {
                     if ('total_row' in data) {
                         self.render_footer_row('ajax_total_row', data['total_row']);
@@ -265,7 +264,7 @@ var HQReportDataTables = function (options) {
 
 // For sorting rows
 
-function sortSpecial(a, b, asc, convert) {  /* eslint-disable-line no-unused-vars */
+function sortSpecial(a, b, asc, convert) {
     var x = convert(a);
     var y = convert(b);
 
@@ -283,7 +282,7 @@ function sortSpecial(a, b, asc, convert) {  /* eslint-disable-line no-unused-var
     return (asc ? 1 : -1) * ((x < y) ? -1 : ((x > y) ?  1 : 0));
 }
 
-function convertNum(k) {  /* eslint-disable-line no-unused-vars */
+function convertNum(k) {
     var m = k.match(/title="*([-+.0-9eE]+)/);
     if (m !== null) {
         m = +m[1];
@@ -294,7 +293,7 @@ function convertNum(k) {  /* eslint-disable-line no-unused-vars */
     return m;
 }
 
-function convertDate(k) {  /* eslint-disable-line no-unused-vars */
+function convertDate(k) {
     var m = k.match(/title="*(.+)"/);
     if (m[1] === "None") {
         return null;

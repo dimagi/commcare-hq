@@ -13,42 +13,6 @@
   {% registerurl 'api_cases_with_gps' request.domain %}
   {% initial_page_data 'map_report_widgets' map_report_widgets %}
   {% initial_page_data 'gauge_widgets' gauge_widgets %}
-  {% initial_page_data 'domain' domain %}
-
-  {# From userreports/bootstrap5/base.html #}
-  {% initial_page_data 'left_col_fixed_width' report_table.left_col.fixed.width %}
-  {% initial_page_data 'left_col_fixed_num' report_table.left_col.fixed.num %}
-  {% initial_page_data 'left_col_is_fixed' report_table.left_col.is_fixed %}
-  {% initial_page_data 'ajax_method' method %}
-  {% initial_page_data 'custom_sort' headers.custom_sort %}
-  {% initial_page_data 'render_aoColumns' headers.render_aoColumns %}
-  {% initial_page_data 'header_auto_width' headers.auto_width %}
-  {% initial_page_data 'table_show_all_rows' report_table.show_all_rows %}
-  {% initial_page_data 'table_start_at_row' report_table.start_at_row|default:0 %}
-  {% initial_page_data 'table_default_rows' report_table.default_rows|default:10 %}
-  {% initial_page_data 'report_slug' report.slug %}
-  {% initial_page_data 'MAPBOX_ACCESS_TOKEN' MAPBOX_ACCESS_TOKEN %}
-  {% initial_page_data 'map_config' report.spec.map_config %}
-  {% initial_page_data 'created_by_builder' report.spec.report_meta.created_by_builder %}
-  {% initial_page_data 'charts' report.spec.charts %}
-  {% initial_page_data 'url' url %}
-
-  {# From userreports/bootstrap5/configurable_report.html #}
-  {% registerurl 'add_report_config' domain %}{# Used by reports/js/bootstrap5/base.js #}
-  {% initial_page_data 'builder_report_type' report.spec.report_meta.builder_report_type %}
-  {% initial_page_data 'report_builder_events' report_builder_events %}
-  {% initial_page_data 'default_config' default_config %}
-  {% initial_page_data 'report_configs' report_configs %}
-  {% initial_page_data 'has_datespan' report.has_datespan %}
-  {% initial_page_data 'datespan_filters' datespan_filters %}
-  {% initial_page_data 'daterangepicker-show-clear' 'true'%}
-  {% if request.datespan %}
-    {% initial_page_data 'startdate' datespan.startdate|date:"Y-m-d" %}
-    {% initial_page_data 'enddate' datespan.enddate|date:"Y-m-d" %}
-  {% endif %}
-  {% initial_page_data 'type' report.type %}
-  {% initial_page_data 'js_options' js_options %}
-  {% initial_page_data 'override_report_render_url' True %}
 
   <div id="delete-widget-alert" class="alert alert-success d-none">
     {% trans "Widget has been deleted successfully!" %}
@@ -112,8 +76,6 @@
           {% for widget in map_report_widgets.cases %}
             {% if widget.widget_type == 'DashboardMap' %}
               {% include 'campaign/partials/dashboard_map.html' %}
-            {% elif widget.widget_type == 'DashboardReport' %}
-              {% include 'campaign/partials/dashboard_report.html' %}
             {% endif %}
           {% endfor %}
         </div>
@@ -137,8 +99,6 @@
           {% for widget in map_report_widgets.mobile_workers %}
             {% if widget.widget_type == 'DashboardMap' %}
               {% include 'campaign/partials/dashboard_map.html' %}
-            {% elif widget.widget_type == 'DashboardReport' %}
-              {% include 'campaign/partials/dashboard_report.html' %}
             {% endif %}
           {% endfor %}
         </div>
