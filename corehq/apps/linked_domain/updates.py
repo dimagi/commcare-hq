@@ -384,7 +384,8 @@ def update_fixture(domain_link, tag, is_pull=False, overwrite=False):
     ) for master_item in master_results["data_items"])
     for chunk in chunked(rows, 1000, list):
         LookupTableRow.objects.bulk_create(chunk)
-    clear_fixture_cache(domain_link.linked_domain, [linked_data_type.id])
+
+    clear_fixture_cache(domain_link.linked_domain)
 
 
 #TODO: Limit the scope of this atomicity. Ideally, we fetch and prep the data prior to entering the atomic block

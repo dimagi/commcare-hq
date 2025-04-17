@@ -77,6 +77,7 @@ class TestRelatedCases(TestCase, TestXmlMixin):
         domain_obj = create_domain(self.domain)
 
         self.addCleanup(domain_obj.delete)
+        self.addCleanup(clear_fixture_cache, self.domain)
 
         location_type = LocationType.objects.create(domain=self.domain, name="Top", code="top")
         location = SQLLocation.objects.create(domain=self.domain, name="Top Location", location_type=location_type)
@@ -108,6 +109,7 @@ class TestRelatedCases(TestCase, TestXmlMixin):
         domain_obj = create_domain(self.domain)
 
         self.addCleanup(domain_obj.delete)
+        self.addCleanup(clear_fixture_cache, self.domain)
 
         table_tag = "atable"
 
@@ -117,7 +119,6 @@ class TestRelatedCases(TestCase, TestXmlMixin):
                             is_global=True,
                             fields=[TypeField(name="wing")])
         table.save()
-        self.addCleanup(clear_fixture_cache, self.domain, [table.id])
         row = LookupTableRow(
             table_id=table.id,
             domain=self.domain,
