@@ -6,21 +6,22 @@ from django.utils.translation import gettext as _
 import psycopg2
 import sqlalchemy
 from memoized import memoized
-from sqlalchemy.exc import ProgrammingError, OperationalError
+from sqlalchemy.exc import OperationalError, ProgrammingError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.schema import Index, PrimaryKeyConstraint
 
-from corehq.apps.userreports.adapter import IndicatorAdapter
-from corehq.apps.userreports.exceptions import (
+from corehq.sql_db.connections import connection_manager
+from corehq.util.test_utils import unit_testing_only
+
+from ..adapter import IndicatorAdapter
+from ..exceptions import (
     ColumnNotFoundError,
     TableRebuildError,
     translate_programming_error,
 )
-from corehq.apps.userreports.sql.columns import column_to_sql
-from corehq.apps.userreports.util import get_table_name
-from corehq.sql_db.connections import connection_manager
-from corehq.util.test_utils import unit_testing_only
-from corehq.apps.userreports.util import register_data_source_row_change
+from ..util import get_table_name, register_data_source_row_change
+from .columns import column_to_sql
+
 logger = logging.getLogger(__name__)
 
 
@@ -349,7 +350,7 @@ class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
         orig_exception = getattr(exception, 'orig', None)
         if orig_exception and isinstance(orig_exception, psycopg2.IntegrityError):
             if orig_exception.pgcode == psycopg2.errorcodes.NOT_NULL_VIOLATION:
-                from corehq.apps.userreports.models import InvalidUCRData
+                from ..models import InvalidUCRData
                 InvalidUCRData.objects.get_or_create(
                     doc_id=doc['_id'],
                     indicator_config_id=self.config._id,

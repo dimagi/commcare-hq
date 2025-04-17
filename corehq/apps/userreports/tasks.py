@@ -27,28 +27,6 @@ from corehq.apps.change_feed.data_sources import (
     get_document_store_for_doc_type,
 )
 from corehq.apps.reports.util import send_report_download_email
-from corehq.apps.userreports.const import (
-    ASYNC_INDICATOR_CHUNK_SIZE,
-    ASYNC_INDICATOR_MAX_RETRIES,
-    ASYNC_INDICATOR_QUEUE_TIME,
-    UCR_CELERY_QUEUE,
-    UCR_INDICATOR_CELERY_QUEUE,
-)
-from corehq.apps.userreports.exceptions import (
-    DataSourceConfigurationNotFoundError,
-)
-from corehq.apps.userreports.models import (
-    AsyncIndicator,
-    DataSourceActionLog,
-    id_is_static,
-)
-from corehq.apps.userreports.rebuild import DataSourceResumeHelper
-from corehq.apps.userreports.specs import EvaluationContext
-from corehq.apps.userreports.util import (
-    get_async_indicator_modify_lock_key,
-    get_indicator_adapter,
-    get_ucr_datasource_config_by_id,
-)
 from corehq.elastic import ESError
 from corehq.util.context_managers import notify_someone
 from corehq.util.decorators import serial_task
@@ -62,6 +40,23 @@ from corehq.util.metrics.const import MPM_LIVESUM, MPM_MAX, MPM_MIN
 from corehq.util.queries import paginated_queryset
 from corehq.util.timer import TimingContext
 from corehq.util.view_utils import reverse
+
+from .const import (
+    ASYNC_INDICATOR_CHUNK_SIZE,
+    ASYNC_INDICATOR_MAX_RETRIES,
+    ASYNC_INDICATOR_QUEUE_TIME,
+    UCR_CELERY_QUEUE,
+    UCR_INDICATOR_CELERY_QUEUE,
+)
+from .exceptions import DataSourceConfigurationNotFoundError
+from .models import AsyncIndicator, DataSourceActionLog, id_is_static
+from .rebuild import DataSourceResumeHelper
+from .specs import EvaluationContext
+from .util import (
+    get_async_indicator_modify_lock_key,
+    get_indicator_adapter,
+    get_ucr_datasource_config_by_id,
+)
 
 celery_task_logger = logging.getLogger('celery.task')
 
@@ -184,7 +179,7 @@ def _report_metric_number_of_days_since_first_build(config, action):
 
 
 def _report_metric_rebuild_error(config, action):
-    from corehq.apps.userreports.views import number_of_records_to_be_processed
+    from .views import number_of_records_to_be_processed
     expected_rows_to_process = number_of_records_to_be_processed(config)
     metrics_gauge(
         f'commcare.ucr.{action}.failed.expected_rows_to_process',
@@ -260,7 +255,7 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True)
 def delete_data_source_task(domain, config_id):
-    from corehq.apps.userreports.views import delete_data_source_shared
+    from .views import delete_data_source_shared
     delete_data_source_shared(domain, config_id)
 
 

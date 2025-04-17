@@ -52,11 +52,16 @@ from corehq.apps.cachehq.mixins import (
 )
 from corehq.apps.domain.models import AllowedUCRExpressionSettings
 from corehq.apps.registry.helper import DataRegistryHelper
-from corehq.apps.userreports.app_manager.data_source_meta import (
+from corehq.pillows.utils import get_deleted_doc_types
+from corehq.sql_db.connections import UCR_ENGINE_ID, connection_manager
+from corehq.util.couch import DocumentNotFound, get_document_or_not_found
+from corehq.util.quickcache import quickcache
+
+from .app_manager.data_source_meta import (
     REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES,
 )
-from corehq.apps.userreports.columns import get_expanded_column_config
-from corehq.apps.userreports.const import (
+from .columns import get_expanded_column_config
+from .const import (
     ALL_EXPRESSION_TYPES,
     DATA_SOURCE_TYPE_AGGREGATE,
     DATA_SOURCE_TYPE_STANDARD,
@@ -66,7 +71,7 @@ from corehq.apps.userreports.const import (
     UCR_SQL_BACKEND,
     VALID_REFERENCED_DOC_TYPES,
 )
-from corehq.apps.userreports.dbaccessors import (
+from .dbaccessors import (
     get_all_registry_data_source_ids,
     get_datasources_for_domain,
     get_number_of_registry_report_configs_by_data_source,
@@ -75,7 +80,7 @@ from corehq.apps.userreports.dbaccessors import (
     get_registry_report_configs_for_domain,
     get_report_configs_for_domain,
 )
-from corehq.apps.userreports.exceptions import (
+from .exceptions import (
     BadSpecError,
     DataSourceConfigurationNotFoundError,
     DuplicateColumnIdError,
@@ -84,33 +89,29 @@ from corehq.apps.userreports.exceptions import (
     StaticDataSourceConfigurationNotFoundError,
     ValidationError,
 )
-from corehq.apps.userreports.expressions.factory import ExpressionFactory
-from corehq.apps.userreports.extension_points import (
+from .expressions.factory import ExpressionFactory
+from .extension_points import (
     static_ucr_data_source_paths,
     static_ucr_report_paths,
 )
-from corehq.apps.userreports.filters.factory import FilterFactory
-from corehq.apps.userreports.indicators import CompoundIndicator
-from corehq.apps.userreports.indicators.factory import IndicatorFactory
-from corehq.apps.userreports.reports.factory import (
+from .filters.factory import FilterFactory
+from .indicators import CompoundIndicator
+from .indicators.factory import IndicatorFactory
+from .reports.factory import (
     ChartFactory,
     ReportColumnFactory,
     ReportOrderByFactory,
 )
-from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
-from corehq.apps.userreports.reports.filters.specs import FilterSpec
-from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
-from corehq.apps.userreports.sql.util import decode_column_name
-from corehq.apps.userreports.util import (
+from .reports.filters.factory import ReportFilterFactory
+from .reports.filters.specs import FilterSpec
+from .specs import EvaluationContext, FactoryContext
+from .sql.util import decode_column_name
+from .util import (
     get_async_indicator_modify_lock_key,
     get_indicator_adapter,
     get_ucr_datasource_config_by_id,
     wrap_report_config_by_type,
 )
-from corehq.pillows.utils import get_deleted_doc_types
-from corehq.sql_db.connections import UCR_ENGINE_ID, connection_manager
-from corehq.util.couch import DocumentNotFound, get_document_or_not_found
-from corehq.util.quickcache import quickcache
 
 ID_REGEX_CHECK = re.compile(r"^[\w\-:]+$")
 
@@ -998,9 +999,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
     @property
     @memoized
     def cached_data_source(self):
-        from corehq.apps.userreports.reports.data_source import (
-            ConfigurableReportDataSource,
-        )
+        from .reports.data_source import ConfigurableReportDataSource
         return ConfigurableReportDataSource.from_spec(self).data_source
 
     @property
@@ -1065,9 +1064,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
         return langs
 
     def validate(self, required=True):
-        from corehq.apps.userreports.reports.data_source import (
-            ConfigurableReportDataSource,
-        )
+        from .reports.data_source import ConfigurableReportDataSource
 
         def _check_for_duplicates(supposedly_unique_list, error_msg):
             # http://stackoverflow.com/questions/9835762/find-and-list-duplicates-in-python-list
