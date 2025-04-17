@@ -263,6 +263,22 @@ class FixtureDataTest(TestCase):
         fixtures = call_fixture_generator(sammy)
         self.assertEqual({item.attrib['user_id'] for item in fixtures}, {sammy.user_id})
 
+    def test_indexed_global_fixture(self):
+        sandwich = self.make_data_type("sandwich", is_global=True)
+        sandwich.fields[0].is_indexed=True
+        sandwich.save()
+        self.make_data_item(sandwich, "7.39")
+
+        fixtures = call_fixture_generator(self.user.to_ota_restore_user(self.domain))
+        self.assertEqual(
+            [(node.tag, node.attrib['id']) for node in fixtures],
+            [
+                ('schema', 'item-list:sandwich-index'),
+                # ('fixture', 'item-list:sandwich-index'),  # FIXME - this should show up here
+                ('fixture', 'item-list:district'),
+            ]
+        )
+
     def test_include_fixture_when_data_type_modified(self):
         fixture = call_fixture_generator(self.user.to_ota_restore_user(self.domain), self.sync_log)
         self.assertEqual(len(fixture), 0)
