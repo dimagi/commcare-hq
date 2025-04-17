@@ -265,7 +265,7 @@ class FixtureDataTest(TestCase):
 
     def test_indexed_global_fixture(self):
         sandwich = self.make_data_type("sandwich", is_global=True)
-        sandwich.fields[0].is_indexed=True
+        sandwich.fields[0].is_indexed = True
         sandwich.save()
         self.make_data_item(sandwich, "7.39")
 
@@ -274,7 +274,7 @@ class FixtureDataTest(TestCase):
             [(node.tag, node.attrib['id']) for node in fixtures],
             [
                 ('schema', 'item-list:sandwich-index'),
-                # ('fixture', 'item-list:sandwich-index'),  # FIXME - this should show up here
+                ('fixture', 'item-list:sandwich-index'),
                 ('fixture', 'item-list:district'),
             ]
         )
