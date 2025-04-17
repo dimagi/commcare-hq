@@ -50,6 +50,9 @@ const aliases = {
     "jquery.vellum.prod": path.resolve(utils.getStaticPathForApp('app_manager', 'js/vellum/'), 'main'),
 
     "jquery.vellum.dev": path.resolve(VELLUM_DEBUG_PATH, 'src', 'main'),
+
+    // Supports hqAnalytics in vellum when VELLUM_DEBUG=False
+    "vellum/hqAnalytics": "app_manager/js/forms/form_designer_analytics",
 };
 
 module.exports = {
