@@ -180,7 +180,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
         required=False,
         label="",
         widget=forms.HiddenInput(),
-        help_text=help_text.ANALYTICS
+        help_text=help_text.COMMCARE_ANALYTICS
     )
 
     def __init__(self, domain, data_source_config, read_only, *args, **kwargs):
