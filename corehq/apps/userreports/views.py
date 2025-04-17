@@ -1204,12 +1204,16 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
         try:
             if self.edit_form.is_valid():
                 config = self.edit_form.save(commit=True)
-                messages.success(request, _('Data source "{}" saved!').format(
+                message_list = [_('Data source "{}" saved.').format(
                     config.display_name
-                ))
-                messages.success(request, _(
-                    'This data source will be built / rebuilt automatically by CommCare HQ.'
-                ))
+                )]
+                if config.meta.build.awaiting:
+                    message_list.append(_(
+                        'This data source will be built / rebuilt automatically by CommCare HQ.'
+                    ))
+                else:
+                    message_list.append(_('This change does not require a rebuild.'))
+                messages.success(request, ' '.join(message_list))
                 if self.config_id is None:
                     return HttpResponseRedirect(reverse(
                         EditDataSourceView.urlname, args=[self.domain, config._id])
