@@ -73,8 +73,8 @@
           <td>{{ domains | join:", " }}</td>
         </tr>
         </tbody>
+      </table>
     {% endfor %}
-    </table>
   {% endif %}
 
   {% if static_toggle.relevant_environments %}
@@ -127,11 +127,12 @@
       {% blocktrans %}
         This feature flag also requires the following flags to be enabled:
       {% endblocktrans %}
+      </p>
       <ul>
         {% for dependency in static_toggle.parent_toggles %}
           <li><a href="{% url "edit_toggle" dependency.slug %}" target="_blank">{{ dependency.label }}</a></li>
         {% endfor %}
-      </ul></p>
+      </ul>
       <p>{% blocktrans %}
         Enabling this feature flag will automatically enable the flags listed above.
       {% endblocktrans %}</p>
