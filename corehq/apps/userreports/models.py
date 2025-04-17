@@ -800,10 +800,6 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
                     current_config.meta.build.finished = True
             current_config.save()
 
-    def save_build_not_required(self):
-        self.meta.build.awaiting = False
-        self.save()
-
 
 class RegistryDataSourceConfiguration(DataSourceConfiguration):
     """This is a special data source that can contain data from

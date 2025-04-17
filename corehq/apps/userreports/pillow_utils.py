@@ -78,8 +78,6 @@ def migrate_tables_with_logging(engine, diffs, table_names, adapters_by_table):
     migration_diffs = [diff for diff in diffs if diff.table_name in table_names]
     for table in table_names:
         adapter = adapters_by_table[table]
-        if not adapter.config.is_static:
-            adapter.config.save_build_not_required()
         pillow_logging.info("[rebuild] Using config: %r", adapter.config)
         pillow_logging.info("[rebuild] sqlalchemy metadata: %r", get_metadata(adapter.engine_id).tables[table])
         pillow_logging.info("[rebuild] sqlalchemy table: %r", adapter.get_table())
