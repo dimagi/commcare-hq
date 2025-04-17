@@ -341,6 +341,21 @@ class DataSourceFilterInterpolationTest(SimpleTestCase):
 
 class DataSourceConfigurationTests(TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        for domain, table_id in [
+            ('foo', 'foo1'),
+            ('foo', 'foo2'),
+            ('bar', 'bar1')
+        ]:
+            config = DataSourceConfiguration(
+                domain=domain,
+                table_id=table_id,
+                referenced_doc_type='XFormInstance')
+            config.save()
+            cls.addClassCleanup(config.delete)
+
     def test_by_domain_returns_relevant_datasource_configs(self):
         results = DataSourceConfiguration.by_domain('foo')
         self.assertEqual(len(results), 2)
@@ -384,18 +399,6 @@ class DataSourceConfigurationTests(TestCase):
     def test_create_requires_doc_type(self):
         with self.assertRaises(BadValueError):
             DataSourceConfiguration(domain='domain', table_id='table').save()
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        for domain, table_id in [('foo', 'foo1'), ('foo', 'foo2'),
-                                 ('bar', 'bar1')]:
-            config = DataSourceConfiguration(
-                domain=domain,
-                table_id=table_id,
-                referenced_doc_type='XFormInstance')
-            config.save()
-            cls.addClassCleanup(config.delete)
 
 
 @patch('corehq.apps.userreports.models.AllowedUCRExpressionSettings.disallowed_ucr_expressions',
