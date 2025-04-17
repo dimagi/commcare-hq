@@ -103,10 +103,6 @@ def rebuild_table(adapter, diffs=None):
         adapter.log_table_rebuild_skipped(source='pillowtop', diffs=diff_dicts)
         return
 
-    if not config.is_static:
-        config.set_build_queued(reset_init_fin=False)
-        config.save()
-
     rebuild_indicators.delay(
         adapter.config.get_id,
         source='pillowtop',
