@@ -54,7 +54,6 @@ from corehq.apps.app_manager.views.utils import (
 from corehq.apps.cloudcare.utils import should_show_preview_app
 from corehq.apps.domain.decorators import track_domain_request
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
-from corehq.apps.hqwebapp.templatetags.hq_shared_tags import cachebuster
 
 logger = logging.getLogger(__name__)
 
@@ -148,7 +147,6 @@ def _get_form_designer_view(request, domain, app, module, form):
             request.couch_user.username,
         ),
     })
-    context.update(_get_requirejs_context())
 
     response = render(request, "app_manager/form_designer.html", context)
     set_lang_cookie(response, context['lang'])
@@ -366,20 +364,3 @@ def _get_core_context_scheduler_data_nodes(module, form):
             if getattr(f, 'schedule', False) and f.schedule.enabled
         ])
     return scheduler_data_nodes
-
-
-def _get_requirejs_context():
-    requirejs = {
-        'requirejs_args': 'version={}{}'.format(
-            cachebuster("app_manager/js/vellum/src/main-components.js"),
-            cachebuster("app_manager/js/vellum/src/local-deps.js")
-        ),
-    }
-    if not settings.VELLUM_DEBUG:
-        requirejs_url = "app_manager/js/vellum/src"
-    elif settings.VELLUM_DEBUG == "dev-min":
-        requirejs_url = "formdesigner/_build/src"
-    else:
-        requirejs_url = "formdesigner/src"
-    requirejs['requirejs_url'] = requirejs_url
-    return requirejs
