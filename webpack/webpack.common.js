@@ -7,19 +7,23 @@ const hqPlugins = require('./plugins');
 const { merge } = require('webpack-merge');
 const { emitWarning } = require('node:process');
 
-VELLUM_DEBUG_PATH = fs.realpathSync(path.resolve(__dirname, '../submodules/formdesigner'));
-VELLUM_DEBUG_CONFIG_PATH = path.resolve(VELLUM_DEBUG_PATH, 'webpack/webpack.dev.js');
-let vellumConfig = {},
-    vellumAliases = [],
-    vellumRules = [];
+let entries = utils.getEntries();
+
+const VELLUM_PATH = utils.getStaticPathForApp('app_manager', 'js/vellum/');
+const VELLUM_CONFIG_PATH = path.resolve(VELLUM_PATH, 'webpack/webpack.prod.js');
+const vellumConfig = require(VELLUM_CONFIG_PATH);
+entries["vellum.prod"] = vellumConfig.entry.main;
+
+const VELLUM_DEBUG_PATH = fs.realpathSync(path.resolve(__dirname, '../submodules/formdesigner'));
+const VELLUM_DEBUG_CONFIG_PATH = path.resolve(VELLUM_DEBUG_PATH, 'webpack/webpack.dev.js');
+let vellumDebugConfig = {};
 try {
-    vellumConfig = require(VELLUM_DEBUG_CONFIG_PATH);
-    vellumAliases = vellumConfig.resolve.alias;
-    vellumRules = vellumConfig.module.rules;
+    vellumDebugConfig = require(VELLUM_DEBUG_CONFIG_PATH);
+    entries["vellum.dev"] = vellumDebugConfig.entry.main;
 } catch (e) {
     if (e.code === "MODULE_NOT_FOUND") {
-        // do nothing, vellum config isn't necessary if VELLUM_DEBUG is false
-        emitWarning("Vellum config not found at " + VELLUM_DEBUG_CONFIG_PATH);
+        // do nothing, vellum debug config isn't necessary if VELLUM_DEBUG is false
+        emitWarning("Vellum debug config not found at " + VELLUM_DEBUG_CONFIG_PATH);
     } else {
         throw e;
     }
@@ -46,25 +50,52 @@ const aliases = {
         'knockout_mapping.ko.min'),
 
     // Minified version of vellum, used when VELLUM_DEBUG is False
-    "main.vellum.bundle": path.resolve(utils.getStaticPathForApp('app_manager', 'js/vellum/'), 'main.vellum.bundle.js'),
+    //"main.vellum.bundle": path.resolve(utils.getStaticPathForApp('app_manager', 'js/vellum/'), 'main.vellum.bundle.js'),
 
     // Source version of vellum, used when VELLUM_DEBUG is True
-    'jquery.vellum': path.resolve(VELLUM_DEBUG_PATH, 'src', 'main'),
+    //'jquery.vellum': path.resolve(VELLUM_DEBUG_PATH, 'src', 'main'),
+
+    // Replace main.vellum.bundle and jquery.vellum?
+    //"vellum.prod": vellumConfig.entry.main.import,
+    "vellum.dev": vellumDebugConfig.entry?.main?.import,
 };
 
+/**
+ *  Consider:
+ *  - add entry point for vellum prod
+ *  - for that entry, use the output options from vellum prod config (clean, path, and filename attributes)
+ *  - in form_designer.js, check vellum_debug and then use one of two aliases for vellum (set them up above, they'll point to different directories)
+ *
+ *  Then, running `yarn dev` in HQ will build vellum prod
+ *        running `yarn dev` in Vellum will build vellum dev
+ *        running `yarn build` in Vellum will build vellum prod
+ *        vellum-to-hq will still copy over everything, although it no longer really needs to un `yarn build` in vellum since prod vellum will get built by HQ
+ *
+ *  Then, NormalModuleReplacementPlugin should work regardless of the value of vellum_debug.
+ *
+ *  Maybe make a dev mode for vellum-to-hq so I can stop commenting things out.
+ */
 module.exports = {
-    entry: utils.getEntries(),
+    entry: entries,
 
     module: {
         rules: [
             {
-                test: VELLUM_DEBUG_PATH,
+                test: VELLUM_PATH,
                 resolve: {
-                    alias: vellumAliases,
+                    alias: vellumConfig.resolve.alias,
                 },
-                rules: vellumRules,
+                rules: vellumConfig.module.rules,
             },
             {
+                test: VELLUM_DEBUG_PATH,
+                resolve: {
+                    alias: vellumDebugConfig.resolve?.alias,
+                },
+                rules: vellumDebugConfig.module?.rules,
+            },
+            {
+                exclude: [VELLUM_PATH, VELLUM_DEBUG_PATH],
                 exclude: VELLUM_DEBUG_PATH,
                 rules: [
                     {

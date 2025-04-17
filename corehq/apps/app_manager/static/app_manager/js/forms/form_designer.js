@@ -153,9 +153,11 @@ hqDefine("app_manager/js/forms/form_designer", [
             };
             console.log("Loading vellum, debug = " + !!initialPageData.get('vellum_debug'));
             if (initialPageData.get('vellum_debug')) {
-                require(["jquery", "jquery.vellum"], initVellum);
+                //require(["jquery", "jquery.vellum"], initVellum);
+                require(["jquery", "vellum.dev"], initVellum);
             } else {
-                require(["jquery", "main.vellum.bundle"], initVellum);
+                //require(["jquery", "main.vellum.bundle"], initVellum);
+                //require(["jquery", "vellum.prod"], initVellum);
             }
             kissmetrics.track.event('Entered the Form Builder');
 
