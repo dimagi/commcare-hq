@@ -65,7 +65,43 @@
       <p>{% blocktrans %}Please choose your filters above and click <strong>Apply</strong> to see report data.{% endblocktrans %}</p>
     </div>
     <div id="reportContent" class="d-none">
-      {% include "userreports/partials/bootstrap5/report_content.html" %}
+      {% block reportcharts %}
+        <section id="chart-container" style="display: none;">  {# todo B5: inline-style #}
+        </section>
+        <section id="chart-warning" class="alert alert-warning d-none">
+          {% blocktrans %}
+            Charts cannot be displayed with more than 25 categories. Please filter the data or change your report to limit the number of rows.
+          {% endblocktrans %}
+        </section>
+        <section id="map-container" style="display: none;" >  {# todo B5: inline-style #}
+        </section>
+        <div id="zoomtofit" class="leaflet-control-layers" style="display: none;">  {# todo B5: inline-style #}
+          <div id="zoomtofit-target" class="zoomtofit leaflet-control-layers-toggle" title="{% trans "Fit all data into view" %}"></div>
+        </div>
+
+        <div id="report-info" class="alert alert-info d-none">
+          {% blocktrans %}
+            Note:
+          {% endblocktrans %}
+          <span id="info-message"></span>
+        </div>
+      {% endblock %}
+      {% block reporttable %}
+        <div class="card ">  {# todo B5: css-panel #}
+          <div class="card-header">
+            <h4>{{ report.title }}</h4>
+          </div>
+          <div class="card-body hq-datatable-container">
+            <table id="report_table_{{ report.slug }}" class="table table-striped">
+              <thead>
+              {{ headers.render_html }}
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {% endblock reporttable %}
     </div>
 
     {% if queries %}

@@ -28,16 +28,9 @@ hqDefine("reports/js/bootstrap3/standard_hq_report", [
         });
 
         if (initialPageData.get('override_report_render_url')) {
-            reportOptions.getReportBaseUrl = function (renderType) {
-                return reportOptions.url + "?format=" + renderType;
-            };
-            reportOptions.getReportParams = function () {
-                return util.urlSerialize($('#paramSelectorForm'), ['format']);
-            };
             reportOptions.getReportRenderUrl = function (renderType) {
-                var baseUrl = self.getReportBaseUrl(renderType);
-                var paramString = self.getReportParams();
-                return baseUrl + "&" + paramString;
+                var params = util.urlSerialize($('#paramSelectorForm'), ['format']);
+                return window.location.pathname + "?format=" + renderType + "&" + params;
             };
         }
 
