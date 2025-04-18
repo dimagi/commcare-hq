@@ -3,6 +3,7 @@ import weakref
 from uuid import uuid4
 from xml.etree import cElementTree as ElementTree
 from collections import defaultdict
+from io import BytesIO
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure
 from casexml.apps.case.xml import V1, V2, V2_NAMESPACE
@@ -29,19 +30,16 @@ ITESM_COMMENT_REGEX = re.compile(br'(<!--items=(\d+)-->)')
 GLOBAL_USER_ID = 'global-user-id-7566F038-5000-4419-B3EF-5349FB2FF2E9'
 
 
-def combine_io_streams(fixture_io_streams, user_id):
-    data = bytearray()
-    data.extend(ITEMS_COMMENT_PREFIX)
-    data.extend(str(len(fixture_io_streams)).encode('utf-8'))
-    data.extend(b'-->')
-
-    for fixture_stream in fixture_io_streams:
-        fixture_stream.seek(0)
-        data.extend(fixture_stream.read())
-
-    global_id = GLOBAL_USER_ID.encode('utf-8')
-    b_user_id = user_id.encode('utf-8')
-    return [bytes(data).replace(global_id, b_user_id)] if data else []
+def write_fixture_items_to_io(items):
+    io = BytesIO()
+    if len(items) > 1:
+        io.write(ITEMS_COMMENT_PREFIX)
+        io.write(str(len(items)).encode('utf-8'))
+        io.write(b'-->')
+    for element in items:
+        io.write(ElementTree.tostring(element, encoding='utf-8'))
+    io.seek(0)
+    return io
 
 
 def cache_fixture_items_data(io_data, domain, fixure_name, key):

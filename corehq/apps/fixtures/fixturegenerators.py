@@ -9,7 +9,7 @@ from casexml.apps.phone.utils import (
     record_datadog_metric,
     get_cached_fixture_items,
     cache_fixture_items_data,
-    combine_io_streams
+    write_fixture_items_to_io,
 )
 from corehq.apps.fixtures.exceptions import FixtureTypeCheckError
 from corehq.apps.fixtures.models import fixture_bucket, LookupTable, LookupTableRow
@@ -146,16 +146,16 @@ class ItemListsProvider(FixtureProvider):
         """
         :param user_id: User's id, if this is for case restore, then pass in case id
         """
-        return combine_io_streams(
-            [self._get_or_cache_global_fixture(
+        return [fixture for fixture in [
+            self._get_or_cache_global_fixture(
                 domain,
                 global_type,
+                user_id,
                 overwrite_cache,
-            ) for global_type in sorted(global_types, key=lambda global_type: global_type.tag)],
-            user_id
-        )
+            ) for global_type in sorted(global_types, key=lambda global_type: global_type.tag)
+        ] if fixture != b'']
 
-    def _get_or_cache_global_fixture(self, domain, global_type, overwrite_cache=False):
+    def _get_or_cache_global_fixture(self, domain, global_type, user_id, overwrite_cache=False):
         """
         Get the fixture data for a global fixture (one that does not vary by user).
 
@@ -183,12 +183,13 @@ class ItemListsProvider(FixtureProvider):
                 if io_stream is None:
                     record_datadog_metric('generate', key)
                     items = self._get_global_items(global_type, domain)
-                    io_stream = BytesIO()
-                    for item in items:
-                        io_stream.write(ElementTree.tostring(item, encoding='utf-8'))
-                    io_stream.seek(0)
+                    io_stream = write_fixture_items_to_io(items)
                     cache_fixture_items_data(io_stream, domain, '', key)
-        return io_stream
+
+        data = io_stream.getvalue()
+        global_id = GLOBAL_USER_ID.encode('utf-8')
+        b_user_id = user_id.encode('utf-8')
+        return data.replace(global_id, b_user_id)
 
     def _get_global_items(self, global_type, domain):
         def get_items_by_type(data_type):
