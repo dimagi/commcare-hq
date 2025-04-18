@@ -6,6 +6,21 @@
   hx-swap="outerHTML"
   hq-hx-refresh-swap="#CleanCaseTable"
 >
+  {% if change %}
+    <div
+      class="alert alert-success alert-dismissible fade show"
+      role="alert"
+    >
+      {# todo: make this more descriptive #}
+      {% blocktrans with change.records.count as num_records %}
+        {{ num_records }} records have been cleaned.
+      {% endblocktrans %}
+      <button
+        type="button" class="btn-close" aria-label="{% trans "Close" %}"
+        data-bs-dismiss="alert"
+      ></button>
+    </div>
+  {% endif %}
   {% if cleaning_form.is_form_visible %}
     <form
       hx-post="{{ request.path_info }}"

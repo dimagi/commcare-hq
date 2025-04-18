@@ -9,6 +9,7 @@ from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 
 from corehq.apps.data_cleaning.models import (
+    BulkEditChange,
     EditActionType,
 )
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -212,3 +213,26 @@ class CleanSelectedRecordsForm(forms.Form):
                 return cleaned_data
 
         return cleaned_data
+
+    def create_bulk_edit_change(self):
+        prop_id = self.cleaned_data["clean_prop_id"]
+        action_type = self.cleaned_data["clean_action"]
+        change_kwargs = {
+            EditActionType.REPLACE: {
+                "replace_string": self.cleaned_data["replace_all_string"],
+            },
+            EditActionType.FIND_REPLACE: {
+                "find_string": self.cleaned_data["find_string"],
+                "replace_string": self.cleaned_data["replace_string"],
+                "use_regex": self.cleaned_data["use_regex"],
+            },
+            EditActionType.COPY_REPLACE: {
+                "copy_from_prop_id": self.cleaned_data["copy_from_prop_id"],
+            },
+        }.get(action_type, {})
+        return BulkEditChange.objects.create(
+            session=self.session,
+            prop_id=prop_id,
+            action_type=action_type,
+            **change_kwargs,
+        )
