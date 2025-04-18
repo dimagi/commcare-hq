@@ -658,8 +658,9 @@ class TestRepeaterModelMethods(RepeaterTestCase):
             domain=DOMAIN, case_id=case_id, case_type='some_case', owner_id='abcd'
         )
         repeat_record = self.repeater.register(payload, fire_synchronously=True)
-        from corehq.motech.repeaters.tests.test_models_slow import ResponseMock
-        resp = ResponseMock(status_code=200, reason='OK')
+        resp = ResponseMock()
+        resp.status_code = 200
+        resp.reason = 'OK'
         # Basic test checks if send_request is called
         with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
             simple_request.return_value = resp
