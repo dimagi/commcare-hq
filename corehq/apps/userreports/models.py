@@ -759,9 +759,16 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         return self.meta.build.awaiting or (self.meta.build.is_rebuild_in_progress and not self.rebuild_failed)
 
     def set_rebuild_flags(self):
+        """
+        Sets rebuild flags based on whether a build is required.
+
+        If a build is in progress, and diffs require a rebuild, then the
+        awaiting flag is set. If a build is already awaiting, and diffs
+        do not require a rebuild, then the awaiting flag remains set.
+        """
         from .rebuild import get_table_diffs
 
-        if not self.rebuild_awaiting_or_in_progress:
+        if not self.meta.build.awaiting:
             engine = connection_manager.get_engine(self.engine_id)
             table_name = get_table_name(self.domain, self.table_id)
             engine_metadata = get_metadata(self.engine_id)
