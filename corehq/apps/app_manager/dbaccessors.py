@@ -8,7 +8,10 @@ from couchdbkit.exceptions import DocTypeError, ResourceNotFound
 
 from dimagi.utils.couch.database import iter_docs
 
-from corehq.apps.app_manager.exceptions import BuildNotFoundException
+from corehq.apps.app_manager.exceptions import (
+    AppInDifferentDomainException,
+    BuildNotFoundException,
+)
 from corehq.apps.es import AppES
 from corehq.apps.es.aggregations import NestedAggregation, TermsAggregation
 from corehq.util.quickcache import quickcache
@@ -247,7 +250,13 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
             app = get_latest_released_app_doc(domain, app_id) or app
 
     if domain and app['domain'] != domain:
-        raise Http404()
+        raise AppInDifferentDomainException(
+            _("App {app_id} is in domain {app_domain} but requested from domain {requested_domain}").format(
+                app_id=app_id,
+                app_domain=app['domain'],
+                requested_domain=domain
+            )
+        )
     try:
         return wrap_app(app, wrap_cls=wrap_cls)
     except DocTypeError:

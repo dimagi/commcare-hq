@@ -78,7 +78,7 @@ from django.db import models, router
 from django.db.models.base import Deferred
 from django.dispatch import receiver
 from django.utils import timezone
-from django.utils.functional import cached_property
+from django.utils.functional import cached_property, classproperty
 from django.utils.translation import gettext_lazy as _
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -392,9 +392,8 @@ class Repeater(RepeaterSuperProxy):
     def get_url(self, record):
         return self.connection_settings.url
 
-    @classmethod
-    @property
-    def _repeater_type(cls):
+    @classproperty
+    def _repeater_type(cls):  # noqa: N805
         return cls.__name__
 
     @property
@@ -1346,7 +1345,7 @@ class RepeatRecord(models.Model):
             # data from overwriting the work of another.
             return
 
-        if self.repeater_type in ['DataSourceRepeater']:
+        if self.repeater_type in ['DataSourceRepeater', 'Dhis2EntityRepeater']:
             # separated for improved datadog reporting
             task = retry_process_datasource_repeat_record if is_retry else process_datasource_repeat_record
         else:

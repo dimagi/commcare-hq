@@ -505,6 +505,7 @@ fixtures
  0008_sqllookuptables
  0009_remove_lookuptablerowowner_couch_id
  0010_lookuptable_is_synced
+ 0011_lookuptable_last_modified
 form_processor
  0001_initial
  0002_xformattachmentsql
@@ -672,6 +673,8 @@ integration
  0010_alter_kycconfig_api_field_to_user_data_map
  0011_remove_kycconfig_connection_settings
  0012_momoconfig
+ip_access
+ 0001_initial
 ivr
  0001_initial
  0002_call_app_id
@@ -808,6 +811,7 @@ phonelog
  0012_server_date_not_null
  0013_delete_olddevicereportentry
  0014_auto_20170718_2039
+ 0015_devicereportentry_android_version_and_more
 phonenumber
  0001_squashed_0001_initial (10 squashed migrations)
 pillow_retry
@@ -1186,6 +1190,8 @@ telerivet
 toggle_ui
  0001_reconcile_commtrack_flags
  0002_toggleaudit
+toggles
+ 0001_toggle_edit_permission
 translations
  0001_initial
  0002_transifexblacklist

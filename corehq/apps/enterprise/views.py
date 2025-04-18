@@ -23,6 +23,7 @@ from memoized import memoized
 import codecs
 
 from corehq.apps.accounting.decorators import always_allow_project_access
+from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.analytics.tasks import record_event
 from corehq.apps.enterprise.decorators import require_enterprise_admin
 from corehq.apps.enterprise.exceptions import TooMuchRequestedDataError
@@ -370,10 +371,8 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
     def page_context(self):
         pagination_context = self.pagination_context
         pagination_context.update({
-            'stripe_options': {
-                'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
-                'stripe_cards': self.stripe_cards,
-            },
+            'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
+            'stripe_cards': self.stripe_cards,
             'payment_error_messages': PAYMENT_ERROR_MESSAGES,
             'payment_urls': {
                 'process_invoice_payment_url': reverse(
@@ -390,9 +389,17 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
                 ),
             },
             'total_balance': self.total_balance,
-            'show_plan': False
+            'show_plan': False,
+            'can_pay_by_wire': self.can_pay_by_wire,
         })
         return pagination_context
+
+    @property
+    def can_pay_by_wire(self):
+        return (
+            self.current_subscription is not None
+            and self.current_subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE
+        )
 
     @property
     def can_pay_invoices(self):

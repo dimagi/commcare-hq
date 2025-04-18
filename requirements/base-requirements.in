@@ -47,6 +47,7 @@ elasticsearch5>=5.0.0,<6.0.0
 elasticsearch6>=6.0.0,<7.0.0
 ethiopian-date-converter
 eulxml
+geoip2  # USH - used for IPAccessMiddleware
 gevent>=24.11.1
 greenlet
 gunicorn
@@ -98,8 +99,7 @@ requests
 schema
 sentry-sdk
 sh
-# Package has an unfixed issue https://github.com/danthedeckie/simpleeval/issues/90 Can use that once https://github.com/danthedeckie/simpleeval/pull/91 is merged
-simpleeval @ git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
+simpleeval
 simplejson
 six
 socketpool

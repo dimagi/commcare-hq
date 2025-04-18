@@ -60,7 +60,11 @@ class CleanCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
     @memoized
     def session(self):
         # overriding mixin so that DoesNotExist can be raised in self.get() and we can redirect
-        return BulkEditSession.objects.get(session_id=self.session_id)
+        return BulkEditSession.objects.get(
+            user=self.request.user,
+            domain=self.domain,
+            session_id=self.session_id
+        )
 
     @property
     def case_type(self):
@@ -85,8 +89,10 @@ class CleanCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
 
     @property
     def page_context(self):
+        from django.conf import settings
         return {
             "session_id": self.session_id,
+            "show_temporary_save": settings.SERVER_ENVIRONMENT == settings.LOCAL_SERVER_ENVIRONMENT,
         }
 
 

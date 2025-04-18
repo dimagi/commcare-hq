@@ -59,7 +59,8 @@ msgstr "Type de Compte"
 #: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/geospatial/filters.py
-#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
 #: corehq/apps/linked_domain/filters.py
 #: corehq/apps/reports/filters/commtrack.py
 #: corehq/apps/reports/filters/users.py
@@ -195,8 +196,7 @@ msgstr "Prix Réduits"
 msgid "Is Hidden"
 msgstr "Est caché"
 
-#: corehq/apps/accounting/filters.py corehq/apps/data_cleaning/models.py
-#: corehq/apps/enterprise/enterprise.py
+#: corehq/apps/accounting/filters.py corehq/apps/enterprise/enterprise.py
 #: corehq/apps/reports/standard/cases/basic.py
 msgid "Created By"
 msgstr "Créé par"
@@ -252,7 +252,7 @@ msgid "Visibility"
 msgstr "Visibilité"
 
 #: corehq/apps/accounting/filters.py corehq/apps/domain/views/accounting.py
-#: corehq/apps/enterprise/views.py
+#: corehq/apps/enterprise/views.py corehq/apps/integration/payments/tables.py
 msgid "Payment Status"
 msgstr "Statut du Paiement"
 
@@ -383,16 +383,12 @@ msgid "Funding Source"
 msgstr "Source de financement"
 
 #: corehq/apps/accounting/forms.py
-#, fuzzy
-#| msgid "Exclude from automated downgrade process"
 msgid "Exclude from automated pause process"
-msgstr "Exclure du processus automatisé de déclassement"
+msgstr ""
 
 #: corehq/apps/accounting/forms.py
-#, fuzzy
-#| msgid "Justify why \"Do Not Invoice\""
 msgid "Justify why \"Skip Auto Pause\""
-msgstr "Justifier pourquoi \"Ne pas facturer\""
+msgstr ""
 
 #: corehq/apps/accounting/forms.py
 msgid "Please select an account other than the current account to transfer to."
@@ -498,7 +494,7 @@ msgstr "Un nom est requis pour ce nouveau rôle."
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/users/user_data.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
-#: corehq/apps/data_cleaning/models.py corehq/apps/data_cleaning/utils/cases.py
+#: corehq/apps/data_cleaning/utils/cases.py
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_interfaces/forms.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
@@ -512,7 +508,8 @@ msgstr "Un nom est requis pour ce nouveau rôle."
 #: corehq/apps/events/views.py
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 #: corehq/apps/locations/forms.py
 #: corehq/apps/registry/templates/registry/registry_list.html
 #: corehq/apps/reminders/templates/reminders/keyword.html
@@ -1100,8 +1097,10 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
+#: corehq/apps/campaign/templates/campaign/partials/delete_widget_confirmation_modal.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
@@ -1126,8 +1125,10 @@ msgstr ""
 #: corehq/apps/export/templates/export/partials/export_list_create_export_modal.html
 #: corehq/apps/export/templates/export/partials/feed_filter_modal.html
 #: corehq/apps/export/templates/export/partials/table.html
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
-#: corehq/apps/geospatial/templates/geospatial/partials/delete_saved_area_modal.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
 #: corehq/apps/groups/templates/groups/group_members.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
@@ -1518,20 +1519,13 @@ msgstr ""
 "585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "    Your %(plan_name)s Billing Statement is now available for "
-#| "%(month_name)s.\n"
+#, python-format
 msgid ""
 "\n"
 "    Your %(month_name)s Billing Statement is now available for Customer\n"
 "    Account %(account_name)s.\n"
 "  "
 msgstr ""
-"\n"
-"Votre %(plan_name)s relevé de facturation est maintenant disponible pour "
-"%(month_name)s.\n"
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
@@ -1550,7 +1544,7 @@ msgstr "État Numero"
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/data_cleaning/models.py corehq/apps/data_cleaning/tables.py
+#: corehq/apps/data_cleaning/tables.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_run_history.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
@@ -1643,17 +1637,7 @@ msgstr "Crédits restant du compte"
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "        Please note that the due date for this %(month_name)s payment has "
-#| "been\n"
-#| "        postponed, as the amount due this month is less than $100. "
-#| "However as\n"
-#| "        your total balance is now beyond $100, please note that you have "
-#| "to pay\n"
-#| "        your balance within the next 30 days.\n"
-#| "        "
+#, python-format
 msgid ""
 "\n"
 "        Please note that the due date for this %(month_name)s payment has "
@@ -1665,11 +1649,6 @@ msgid ""
 "        your balance within the next 30 days.\n"
 "      "
 msgstr ""
-"\n"
-"Veuillez noter que la date limite pour %(month_name)s le paiement a été\n"
-"reportée, car la somme due ce mois est inférieure à 100$. Cependant, \n"
-"comme votre solde total est est maintenant au delà de 100 $, veuillez noter "
-"que vous devez payer votre solde dans les 30 prochains jours."
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
@@ -1705,44 +1684,43 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
+#: corehq/apps/accounting/templates/accounting/email/customer_invoice.txt
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "    To pay this bill, you can either choose a credit card or wire "
-#| "payment:\n"
-#| "        - To pay by credit card, please go to your Billing Statements "
-#| "page, click\n"
-#| "          on the green \"Make Payment\" button in front of your unpaid "
-#| "invoice(s),\n"
-#| "          and fill in the amount you want to pay as well as your credit "
-#| "card\n"
-#| "          details.\n"
-#| "        - To pay by wire, find Dimagi's bank account details on your "
-#| "invoice.\n"
-#| "          Please include the invoice number in your wire payment and make "
-#| "sure to\n"
-#| "          send an email to %(accounts_email)s after you have made the "
-#| "payment,\n"
-#| "          mentioning the date of the payment, the amount, the invoice "
-#| "number, and\n"
-#| "          the project space.\n"
-#| "    "
+#: corehq/apps/accounting/templates/accounting/email/invoice.txt
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
+msgid "You can pay this bill by credit card or by wire:"
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
+#: corehq/apps/accounting/templates/accounting/email/customer_invoice.txt
+#: corehq/apps/accounting/templates/accounting/email/invoice.html
+#: corehq/apps/accounting/templates/accounting/email/invoice.txt
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
+msgid "You can pay this bill by credit card:"
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
+#: corehq/apps/accounting/templates/accounting/email/invoice.html
+#, python-format
 msgid ""
 "\n"
-"      You can pay this bill by credit card or by wire:\n"
-"      <ul>\n"
-"        <li>\n"
-"          To pay by credit card, please go to your\n"
-"          <a href=\"%(statements_url)s\">Billing Statements</a> page, click "
+"        To pay by credit card, please go to your\n"
+"        <a href=\"%(statements_url)s\">Billing Statements</a> page, click "
 "on\n"
-"          the green \"Make Payment\" button in front of your unpaid "
+"        the green \"Make Payment\" button in front of your unpaid "
 "invoice(s),\n"
-"          and fill in the amount you want to pay as well as your credit "
-"card\n"
-"          details.\n"
-"        </li>\n"
-"        <li>\n"
+"        and fill in the amount you want to pay as well as your credit card\n"
+"        details.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
+#: corehq/apps/accounting/templates/accounting/email/invoice.html
+#, python-format
+msgid ""
+"\n"
 "          To pay by wire, find Dimagi's bank account details on your "
 "invoice.\n"
 "          Please include the invoice number in your wire payment and make "
@@ -1751,34 +1729,12 @@ msgid ""
 "          payment, mentioning the date of the payment, the amount, the "
 "invoice\n"
 "          number, and the project space.\n"
-"        </li>\n"
-"      </ul>\n"
-"    "
+"        "
 msgstr ""
-"\n"
-"Vous pouvez payer cette facture par carte de crédit ou virement bancaire:\n"
-"-Pour payer par carte de crédit, dirigez vous vers la page des relevés de "
-"facturation, cliquez sur le bouton vert \"Faire un paiement\" situé devant "
-"la liste de facture(s) non payée(s) et remplissez le montant que vous "
-"désirez payer accompagné des détails de votre carte de crédit. \n"
-"- Pour payer par virement bancaire, retrouvez les détails du compte bancaire "
-"de Dimagi sur votre facture. Surtout, n'oubliez pas d'inclure le numéro de "
-"la facture dans votre virement et d'envoyer un email à %(accounts_email)s "
-"après avoir fait le paiement en mentionnant la date du paiement, le montant, "
-"le numéro de facture et le nom de l'espace projet. "
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "        Please note that the due date for this payment has been "
-#| "postponed, as\n"
-#| "        the amount due this month is less than $100.  You will start "
-#| "receiving\n"
-#| "        reminder emails for payments once your total balance reaches "
-#| "$100.\n"
-#| "    "
+#, python-format
 msgid ""
 "\n"
 "        Please note that the due date for this payment has been postponed, "
@@ -1790,11 +1746,6 @@ msgid ""
 "        balance reaches $%(small_invoice_threshold)s.\n"
 "      "
 msgstr ""
-"\n"
-"Veuillez noter que la date limite pour le paiement a été reportée, car \n"
-"la somme due ce mois est inférieure à 100$. Vous allez recevoir \n"
-"des courriels de rappel pour les paiements une fois que votre solde atteint "
-"100$."
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
@@ -1843,22 +1794,12 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "    Statement From:\n"
-#| "    CommCare HQ and the corporation Dimagi, Inc.\n"
-#| "    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 msgid ""
 "\n"
 "    Statement From: CommCare HQ and the corporation Dimagi, Inc. 585\n"
 "    Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 "  "
 msgstr ""
-"\n"
-"Facture de: \n"
-"CommCare HQ and the corporation Dimagi, \n"
-"Inc. 585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA\n"
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.txt
 #, python-format
@@ -1889,17 +1830,7 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.txt
 #: corehq/apps/accounting/templates/accounting/email/invoice.txt
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "        Please note that the due date for this %(month_name)s payment has "
-#| "been\n"
-#| "        postponed, as the amount due this month is less than $100. "
-#| "However as\n"
-#| "        your total balance is now beyond $100, please note that you have "
-#| "to pay\n"
-#| "        your balance within the next 30 days.\n"
-#| "        "
+#, python-format
 msgid ""
 "\n"
 "        Please note that the due date for this %(month_name)s payment has "
@@ -1911,11 +1842,6 @@ msgid ""
 "        your balance within the next 30 days.\n"
 "        "
 msgstr ""
-"\n"
-"Veuillez noter que la date limite pour %(month_name)s le paiement a été\n"
-"reportée, car la somme due ce mois est inférieure à 100$. Cependant, \n"
-"comme votre solde total est est maintenant au delà de 100 $, veuillez noter "
-"que vous devez payer votre solde dans les 30 prochains jours."
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.txt
 #: corehq/apps/accounting/templates/accounting/email/invoice.txt
@@ -1941,10 +1867,8 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.txt
 #: corehq/apps/accounting/templates/accounting/email/invoice.txt
-#, python-format
 msgid ""
 "\n"
-"    To pay this bill, you can either choose a credit card or wire payment:\n"
 "        - To pay by credit card, please go to your Billing Statements page, "
 "click\n"
 "          on the green \"Make Payment\" button in front of your unpaid "
@@ -1952,6 +1876,14 @@ msgid ""
 "          and fill in the amount you want to pay as well as your credit "
 "card\n"
 "          details.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/customer_invoice.txt
+#: corehq/apps/accounting/templates/accounting/email/invoice.txt
+#, python-format
+msgid ""
+"\n"
 "        - To pay by wire, find Dimagi's bank account details on your "
 "invoice.\n"
 "          Please include the invoice number in your wire payment and make "
@@ -1961,32 +1893,12 @@ msgid ""
 "          mentioning the date of the payment, the amount, the invoice "
 "number, and\n"
 "          the project space.\n"
-"    "
+"      "
 msgstr ""
-"\n"
-"Vous pouvez payer cette facture par carte de crédit ou virement bancaire:\n"
-"-Pour payer par carte de crédit, dirigez vous vers la page des relevés de "
-"facturation, cliquez sur le bouton vert \"Faire un paiement\" situé devant "
-"la liste de facture(s) non payée(s) et remplissez le montant que vous "
-"désirez payer accompagné des détails de votre carte de crédit. \n"
-"- Pour payer par virement bancaire, retrouvez les détails du compte bancaire "
-"de Dimagi sur votre facture. Surtout, n'oubliez pas d'inclure le numéro de "
-"la facture dans votre virement et d'envoyer un email à %(accounts_email)s "
-"après avoir fait le paiement en mentionnant la date du paiement, le montant, "
-"le numéro de facture et le nom de l'espace projet. "
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.txt
 #: corehq/apps/accounting/templates/accounting/email/invoice.txt
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "        Please note that the due date for this payment has been "
-#| "postponed, as\n"
-#| "        the amount due this month is less than $100.  You will start "
-#| "receiving\n"
-#| "        reminder emails for payments once your total balance reaches "
-#| "$100.\n"
-#| "    "
+#, python-format
 msgid ""
 "\n"
 "        Please note that the due date for this payment has been postponed, "
@@ -1997,11 +1909,6 @@ msgid ""
 "%(small_invoice_threshold)s.\n"
 "    "
 msgstr ""
-"\n"
-"Veuillez noter que la date limite pour le paiement a été reportée, car \n"
-"la somme due ce mois est inférieure à 100$. Vous allez recevoir \n"
-"des courriels de rappel pour les paiements une fois que votre solde atteint "
-"100$."
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.txt
 #: corehq/apps/accounting/templates/accounting/email/invoice.txt
@@ -2153,24 +2060,15 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/downgrade.html
 #: corehq/apps/accounting/templates/accounting/email/downgrade_warning.html
 #: corehq/apps/accounting/templates/accounting/email/overdue_notice.html
-#, fuzzy
-#| msgid "To see the full list of unpaid invoices you can follow this link: "
 msgid ""
 "\n"
 "    To see the full list of unpaid invoices you can follow this link:\n"
 "  "
 msgstr ""
-"Pour une liste complète des factures impayées, veuillez suivre ce lien."
 
 #: corehq/apps/accounting/templates/accounting/email/downgrade.html
 #: corehq/apps/accounting/templates/accounting/email/downgrade_warning.html
 #: corehq/apps/accounting/templates/accounting/email/overdue_notice.html
-#, fuzzy
-#| msgid ""
-#| "As a reminder, payments can be made via credit card, Electronic Fund "
-#| "Transfer (EFT), or check by following these <a href=\"https://confluence."
-#| "dimagi.com/display/commcarepublic/"
-#| "How+to+Pay+by+Credit+Card+or+Wire+Payment\">instructions</a>."
 msgid ""
 "\n"
 "      As a reminder, payments can be made via credit card, Electronic Fund\n"
@@ -2182,16 +2080,8 @@ msgid ""
 "      >.\n"
 "    "
 msgstr ""
-"Pour rappel, les paiements peuvent se faire par carte de credit, par réseau "
-"électronique de transfert (Electronic Fund Transfer, EFT), ou par chèque en "
-"suivant ceci <a href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"How+to+Pay+by+Credit+Card+or+Wire+Payment\">instructions</a>."
 
 #: corehq/apps/accounting/templates/accounting/email/downgrade.html
-#, fuzzy
-#| msgid ""
-#| "After you have paid the unpaid invoices you can re-subscribe to your plan "
-#| "here: "
 msgid ""
 "\n"
 "    After you have paid the unpaid invoices you can re-subscribe to your "
@@ -2199,8 +2089,6 @@ msgid ""
 "    here:\n"
 "  "
 msgstr ""
-"Après avoir payé les factures impayées vous pouvez vous souscrire a nouveau "
-"à votre plan ici:"
 
 #: corehq/apps/accounting/templates/accounting/email/downgrade.html
 #: corehq/apps/accounting/templates/accounting/email/downgrade_warning.html
@@ -2279,11 +2167,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/downgrade_warning.html
 #: corehq/apps/accounting/templates/accounting/email/overdue_notice.html
-#, fuzzy
-#| msgid ""
-#| "You can also pre-pay for several months at any time by following <a "
-#| "href=\"https://confluence.dimagi.com/display/commcarepublic/"
-#| "CommCare+Pricing+FAQs#CommCarePricingFAQs-Pre-payment\">these steps</a>."
 msgid ""
 "\n"
 "      You can also pre-pay for several months at any time by following\n"
@@ -2294,9 +2177,6 @@ msgid ""
 "      >.\n"
 "    "
 msgstr ""
-"Vous pouvez également pré payé pour plusieurs mois a tout moment en suiviant "
-"<a href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"CommCare+Pricing+FAQs#CommCarePricingFAQs-Pre-payment\">ces étapes</a>."
 
 #: corehq/apps/accounting/templates/accounting/email/downgrade_warning.txt
 #, python-format
@@ -2330,20 +2210,13 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "    Your %(plan_name)s Billing Statement is now available for "
-#| "%(month_name)s.\n"
+#, python-format
 msgid ""
 "\n"
 "    Your %(plan_name)s Billing Statement is now available for\n"
 "    %(month_name)s.\n"
 "  "
 msgstr ""
-"\n"
-"Votre %(plan_name)s relevé de facturation est maintenant disponible pour "
-"%(month_name)s.\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
@@ -2426,8 +2299,10 @@ msgstr ""
 #: corehq/apps/accounting/views.py corehq/apps/app_execution/forms.py
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/enterprise/enterprise.py
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 #: corehq/apps/hqadmin/reports.py
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
@@ -2700,91 +2575,37 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
+#, python-format
 msgid ""
 "\n"
-"    You can pay this bill by credit card or by wire:\n"
-"  "
+"      To pay by credit card, please go to your\n"
+"      <a href=\"%(statements_url)s\">Billing Statements</a> page, click on\n"
+"      the green \"Make Payment\" button in front of your unpaid invoice(s),\n"
+"      and fill in the amount you want to pay as well as your credit card\n"
+"      details.\n"
+"    "
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #, python-format
 msgid ""
 "\n"
-"      To pay by credit card, please go to your\n"
-"      <a href=\"%(statements_url)s\">Billing Statements</a> page, click on "
-"the\n"
-"      green \"Make Payment\" button in front of your unpaid invoice(s), and "
-"fill\n"
-"      in the amount you want to pay as well as your credit card details.\n"
-"    "
+"        To pay by wire, find Dimagi's bank account details on your invoice.\n"
+"        Please include the invoice number in your wire payment and make "
+"sure\n"
+"        to send an email to %(accounts_email)s after you have made the\n"
+"        payment, mentioning the date of the payment, the amount, the "
+"invoice\n"
+"        number, and the project space.\n"
+"      "
 msgstr ""
-
-#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "    To pay this bill, you can either choose a credit card or wire "
-#| "payment:\n"
-#| "        - To pay by credit card, please go to your Billing Statements "
-#| "page, click\n"
-#| "          on the green \"Make Payment\" button in front of your unpaid "
-#| "invoice(s),\n"
-#| "          and fill in the amount you want to pay as well as your credit "
-#| "card\n"
-#| "          details.\n"
-#| "        - To pay by wire, find Dimagi's bank account details on your "
-#| "invoice.\n"
-#| "          Please include the invoice number in your wire payment and make "
-#| "sure to\n"
-#| "          send an email to %(accounts_email)s after you have made the "
-#| "payment,\n"
-#| "          mentioning the date of the payment, the amount, the invoice "
-#| "number, and\n"
-#| "          the project space.\n"
-#| "    "
-msgid ""
-"\n"
-"      To pay by wire, find Dimagi's bank account details on your invoice. "
-"Please\n"
-"      include the invoice number in your wire payment and make sure to send "
-"an\n"
-"      email to %(invoicing_contact_email)s after you have made the payment,\n"
-"      mentioning the date of the payment, the amount, the invoice number, "
-"and\n"
-"      the project space.\n"
-"    "
-msgstr ""
-"\n"
-"Vous pouvez payer cette facture par carte de crédit ou virement bancaire:\n"
-"-Pour payer par carte de crédit, dirigez vous vers la page des relevés de "
-"facturation, cliquez sur le bouton vert \"Faire un paiement\" situé devant "
-"la liste de facture(s) non payée(s) et remplissez le montant que vous "
-"désirez payer accompagné des détails de votre carte de crédit. \n"
-"- Pour payer par virement bancaire, retrouvez les détails du compte bancaire "
-"de Dimagi sur votre facture. Surtout, n'oubliez pas d'inclure le numéro de "
-"la facture dans votre virement et d'envoyer un email à %(accounts_email)s "
-"après avoir fait le paiement en mentionnant la date du paiement, le montant, "
-"le numéro de facture et le nom de l'espace projet. "
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 msgid "Best Regards,"
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "%(greeting)s\n"
-#| "\n"
-#| "Your %(plan_name)s Billing Statement is now available for "
-#| "%(month_name)s.\n"
-#| "\n"
-#| "Statement No.: %(statement_number)s\n"
-#| "Project Space: %(domain)s\n"
-#| "Software Plan: %(plan_name)s\n"
-#| "Status: %(payment_status)s\n"
-#| "Amount Due this Month: %(amount_due)s\n"
-#| "Total Balance: %(total_balance)s\n"
+#, python-format
 msgid ""
 "\n"
 "Dear %(domain_or_account)s administrator, this is a reminder that your\n"
@@ -2798,18 +2619,6 @@ msgid ""
 "Amount Due this Month: %(amount_due)s\n"
 "Total Balance: %(total_balance)s\n"
 msgstr ""
-"\n"
-"%(greeting)s\n"
-"\n"
-"Votre %(plan_name)s relevé de facturation est maintenant disponible pour "
-"%(month_name)s.\n"
-"\n"
-"No. de facturation: %(statement_number)s\n"
-"Espace de projet: %(domain)s\n"
-"Plan d'abonnement: %(plan_name)s\n"
-"Statut: %(payment_status)s\n"
-"Montant dû ce mois: %(amount_due)s\n"
-"Solde: %(total_balance)s\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
 #, python-format
@@ -2829,62 +2638,28 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "    To pay this bill, you can either choose a credit card or wire "
-#| "payment:\n"
-#| "        - To pay by credit card, please go to your Billing Statements "
-#| "page, click\n"
-#| "          on the green \"Make Payment\" button in front of your unpaid "
-#| "invoice(s),\n"
-#| "          and fill in the amount you want to pay as well as your credit "
-#| "card\n"
-#| "          details.\n"
-#| "        - To pay by wire, find Dimagi's bank account details on your "
-#| "invoice.\n"
-#| "          Please include the invoice number in your wire payment and make "
-#| "sure to\n"
-#| "          send an email to %(accounts_email)s after you have made the "
-#| "payment,\n"
-#| "          mentioning the date of the payment, the amount, the invoice "
-#| "number, and\n"
-#| "          the project space.\n"
-#| "    "
 msgid ""
 "\n"
-"To pay this bill, you can either choose a credit card or wire payment:\n"
-"    - To pay by credit card, please go to your Billing Statements page, "
-"click\n"
+"  - To pay by credit card, please go to your Billing Statements page, click\n"
 "    on the green \"Make Payment\" button in front of your unpaid "
 "invoice(s),\n"
 "    and fill in the amount you want to pay as well as your credit card\n"
 "    details.\n"
-"    - To pay by wire, find Dimagi's bank account details on your invoice.\n"
+msgstr ""
+
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
+#, python-format
+msgid ""
+"\n"
+"  - To pay by wire, find Dimagi's bank account details on your invoice.\n"
 "    Please include the invoice number in your wire payment and make sure to\n"
 "    send an email to %(accounts_email)s after you have made the payment,\n"
 "    mentioning the date of the payment, the amount, the invoice number, and\n"
 "    the project space.\n"
 msgstr ""
-"\n"
-"Vous pouvez payer cette facture par carte de crédit ou virement bancaire:\n"
-"-Pour payer par carte de crédit, dirigez vous vers la page des relevés de "
-"facturation, cliquez sur le bouton vert \"Faire un paiement\" situé devant "
-"la liste de facture(s) non payée(s) et remplissez le montant que vous "
-"désirez payer accompagné des détails de votre carte de crédit. \n"
-"- Pour payer par virement bancaire, retrouvez les détails du compte bancaire "
-"de Dimagi sur votre facture. Surtout, n'oubliez pas d'inclure le numéro de "
-"la facture dans votre virement et d'envoyer un email à %(accounts_email)s "
-"après avoir fait le paiement en mentionnant la date du paiement, le montant, "
-"le numéro de facture et le nom de l'espace projet. "
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "    Thank you for using %(plan_name)s. If you have any questions, please "
-#| "don't\n"
-#| "    hesitate to contact %(invoicing_contact_email)s.\n"
+#, python-format
 msgid ""
 "\n"
 "Thank you for using %(plan_name)s. If you have any questions, please don't\n"
@@ -2894,9 +2669,6 @@ msgid ""
 "The CommCare HQ Team\n"
 "www.commcarehq.org\n"
 msgstr ""
-"\n"
-"Merci d'avoir choisi %(plan_name)s. Si vous avez encore des questions, "
-"n'hésitez pas à nous contacter %(invoicing_contact_email)s.\n"
 
 #: corehq/apps/accounting/templates/accounting/email/overdue_notice.html
 #, python-format
@@ -2910,12 +2682,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/overdue_notice.html
-#, fuzzy
-#| msgid ""
-#| "As a reminder, payments can be made via credit card, Electronic Fund "
-#| "Transfer (EFT), or check by following these <a href=\"https://confluence."
-#| "dimagi.com/display/commcarepublic/"
-#| "How+to+Pay+by+Credit+Card+or+Wire+Payment\">instructions</a>."
 msgid ""
 "\n"
 "      As a reminder, payments can be made via credit card, Electronic Fund\n"
@@ -2927,17 +2693,8 @@ msgid ""
 "      >.\n"
 "    "
 msgstr ""
-"Pour rappel, les paiements peuvent se faire par carte de credit, par réseau "
-"électronique de transfert (Electronic Fund Transfer, EFT), ou par chèque en "
-"suivant ceci <a href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"How+to+Pay+by+Credit+Card+or+Wire+Payment\">instructions</a>."
 
 #: corehq/apps/accounting/templates/accounting/email/overdue_notice.html
-#, fuzzy
-#| msgid ""
-#| "You can also pre-pay for several months at any time by following <a "
-#| "href=\"https://confluence.dimagi.com/display/commcarepublic/"
-#| "CommCare+Pricing+FAQs#CommCarePricingFAQs-Pre-payment\">these steps</a>."
 msgid ""
 "\n"
 "      You can also pre-pay for several months at any time by following\n"
@@ -2948,9 +2705,6 @@ msgid ""
 "      >.\n"
 "    "
 msgstr ""
-"Vous pouvez également pré payé pour plusieurs mois a tout moment en suiviant "
-"<a href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"CommCare+Pricing+FAQs#CommCarePricingFAQs-Pre-payment\">ces étapes</a>."
 
 #: corehq/apps/accounting/templates/accounting/email/overdue_notice.html
 #, python-format
@@ -3555,21 +3309,6 @@ msgstr "Traitement de votre demande"
 
 #: corehq/apps/accounting/templates/accounting/partials/new_stripe_card_template.html
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
-msgid "Card Number"
-msgstr "Numéro de Carte "
-
-#: corehq/apps/accounting/templates/accounting/partials/new_stripe_card_template.html
-msgctxt "Check digits of credit card"
-msgid "CVC"
-msgstr "CVC"
-
-#: corehq/apps/accounting/templates/accounting/partials/new_stripe_card_template.html
-#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
-msgid "Expiration"
-msgstr "Expiration"
-
-#: corehq/apps/accounting/templates/accounting/partials/new_stripe_card_template.html
-#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
 msgid "Use this card to autopay"
 msgstr "Utiliser cette carte pour paiement automatique"
 
@@ -3594,7 +3333,8 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 #: corehq/apps/geospatial/forms.py
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 #: corehq/apps/groups/templates/groups/group_members.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
@@ -3683,10 +3423,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
-msgid "CVC"
-msgstr "CVC"
-
-#: corehq/apps/accounting/templates/accounting/partials/stripe_card_ko_template.html
 msgid "Save card for later"
 msgstr "Enregistrer la carte pour plus tard "
 
@@ -3762,7 +3498,8 @@ msgstr "Émission de rapport..."
 #: corehq/apps/accounting/templates/accounting/report_filter_actions.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/pinned_filter_form.html
 #: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/filter_panel.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/filter_panel.html
 #: corehq/apps/reports/templates/reports/standard/partials/bootstrap3/filter_panel.html
@@ -3781,13 +3518,12 @@ msgid "Upgrade / Downgrade"
 msgstr "Mise à jour / Rétrograder"
 
 #: corehq/apps/accounting/user_text.py
-msgid "Community"
-msgstr "Communauté "
+msgid "Free"
+msgstr "Gratuit"
 
 #: corehq/apps/accounting/user_text.py
 msgid ""
-"For projects in a pilot phase with a small group (up to {}) of mobile users "
-"that only need very basic CommCare features."
+"For practice purposes. Not intended for live projects. {} users maximum."
 msgstr ""
 
 #: corehq/apps/accounting/user_text.py corehq/apps/enterprise/enterprise.py
@@ -3796,8 +3532,8 @@ msgstr "Standard"
 
 #: corehq/apps/accounting/user_text.py
 msgid ""
-"For programs with one-time data collection needs, simple case management "
-"workflows, and basic M&E requirements. ({} mobile workers included)"
+"Get started. Build secure apps for offline mobile data collection and case "
+"management. {} users included."
 msgstr ""
 
 #: corehq/apps/accounting/user_text.py
@@ -3806,9 +3542,8 @@ msgstr "Professionnel"
 
 #: corehq/apps/accounting/user_text.py
 msgid ""
-"For programs with complex case management needs, field staff collaborating "
-"on tasks, and M&E teams that need to clean and report on data. ({} mobile "
-"workers included)"
+"Beyond the basics. Unlock reporting, case sharing, and hands-on support. {} "
+"users included."
 msgstr ""
 
 #: corehq/apps/accounting/user_text.py
@@ -3823,9 +3558,9 @@ msgstr "Avancés"
 
 #: corehq/apps/accounting/user_text.py
 msgid ""
-"For programs with distributed field staff, facility-based workflows, and "
-"advanced security needs. Also for M&E teams integrating data with 3rd party "
-"analytics. ({} mobile workers included)"
+"Unlock everything. Our most secure plan, built for managing connected "
+"systems across locations and user profiles, featuring web apps, advanced "
+"security, and robust admin and data management tools. {} users included."
 msgstr ""
 
 #: corehq/apps/accounting/user_text.py corehq/apps/enterprise/interface.py
@@ -3890,11 +3625,10 @@ msgid "USD %s"
 msgstr "USD %s"
 
 #: corehq/apps/accounting/utils/unpaid_invoice.py
-#, fuzzy, python-brace-format
-#| msgid "CommCare Billing Statement 30 days Overdue for {}"
+#, python-brace-format
 msgid ""
 "Your CommCare Billing Statement for {account_name} is due in {num_days} days"
-msgstr "Relevé de facturation CommCare 30 jours de retard pour {}"
+msgstr ""
 
 #: corehq/apps/accounting/utils/unpaid_invoice.py
 msgid "Oh no! Your CommCare subscription for {} has been paused"
@@ -3917,10 +3651,8 @@ msgid "subscription for {}"
 msgstr ""
 
 #: corehq/apps/accounting/utils/unpaid_invoice.py
-#, fuzzy
-#| msgid "CommCare Billing Statement 30 days Overdue for {}"
 msgid "CommCare Billing Statement {} days Overdue for {}"
-msgstr "Relevé de facturation CommCare 30 jours de retard pour {}"
+msgstr ""
 
 #: corehq/apps/accounting/views.py corehq/apps/domain/views/accounting.py
 msgid "Could not obtain billing statement. An issue has been submitted."
@@ -4398,7 +4130,8 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
@@ -4558,6 +4291,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/models.py
 #: corehq/apps/domain/templates/error.html
 #: corehq/apps/integration/templates/integration/web_app_integration_err.html
+#: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
 #: corehq/apps/reports/standard/monitoring.py corehq/apps/sms/filters.py
 #: corehq/apps/sms/models.py corehq/messaging/scheduling/views.py
@@ -4805,6 +4539,13 @@ msgstr ""
 
 #: corehq/apps/app_manager/app_strings.py
 msgid "Create a new Case"
+msgstr ""
+
+#: corehq/apps/app_manager/dbaccessors.py
+#, python-brace-format
+msgid ""
+"App {app_id} is in domain {app_domain} but requested from domain "
+"{requested_domain}"
 msgstr ""
 
 #: corehq/apps/app_manager/dbaccessors.py
@@ -5337,7 +5078,6 @@ msgstr "L'identifiant de l'utilisateur"
 
 #: corehq/apps/app_manager/models.py
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/mobile_report_configs.html
-#: corehq/apps/campaign/templates/campaign/dashboard.html
 #: corehq/apps/dashboard/views.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
@@ -6023,7 +5763,8 @@ msgstr "Non"
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #: corehq/apps/domain/views/accounting.py corehq/apps/enterprise/views.py
 #: corehq/apps/export/templates/export/partials/table.html
-#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
 #: corehq/apps/reports/standard/monitoring.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
@@ -7220,6 +6961,8 @@ msgstr "Installer CommCare"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/select_all_not_possible.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/offcanvas.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
@@ -7238,7 +6981,8 @@ msgstr "Installer CommCare"
 #: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
@@ -7274,77 +7018,6 @@ msgid "Close"
 msgstr "Fermer"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/add_item_templates.html
-msgid "Surveys"
-msgstr "Enquêtes"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/add_item_templates.html
-msgid "Collect data once."
-msgstr "Recueillir des données une fois."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/add_item_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
-#: corehq/apps/app_manager/views/modules.py
-#: corehq/apps/reports/standard/cases/basic.py
-msgid "Case List"
-msgstr "Liste de dossiers"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/add_item_templates.html
-msgid "Track items over time."
-msgstr "Suivre les données au fil du temps. "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/add_item_templates.html
-msgid "Biometrics"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/add_item_templates.html
-msgid "Identify clients by fingerprint."
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/add_item_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
-msgid "Advanced Menu"
-msgstr "Menu avancé"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/add_item_templates.html
-msgid "Complex case management."
-msgstr "Gestion des dossiers complexes"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/add_item_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
-msgid "Report Menu"
-msgstr "Menu de rapports"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/add_item_templates.html
-msgid "Worker performance."
-msgstr "Performance des utilisateurs."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/add_item_templates.html
-#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
-msgid "Shadow Menu"
-msgstr "Menu ombre"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/add_item_templates.html
-msgid "Mimic another menu."
-msgstr "Imiter un autre menu."
-
-#: corehq/apps/app_manager/templates/app_manager/partials/add_item_templates.html
-msgid "Shadow Menu V1"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/add_item_templates.html
-msgid "Old style shadow menu with deprecated child behaviour"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/add_item_templates.html
-msgid "Training"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/add_item_templates.html
-msgid "Content for training users."
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/add_item_templates.html
 #: corehq/apps/app_manager/views/forms.py
 #: corehq/apps/app_manager/views/modules.py corehq/apps/reminders/forms.py
 #: corehq/apps/sms/filters.py
@@ -7369,6 +7042,18 @@ msgstr "S'inscrire"
 #: corehq/apps/app_manager/templates/app_manager/partials/add_item_templates.html
 msgid "Shadow Form"
 msgstr "Formulaire d'ombre"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/add_new_module_modal.html
+msgid "Create a New Menu"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/add_new_module_modal.html
+msgid "Please note you will not be able to change menu type later."
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/appnav_menu_header.html
+msgid "Application Settings"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/appnav_menu_header.html
 msgid "Updates Available to Publish"
@@ -8466,6 +8151,8 @@ msgstr "Étiquette de dossier"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_case_type.html
+#: corehq/apps/campaign/forms.py
+#: corehq/apps/campaign/templates/campaign/partials/dashboard_gauge.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #: corehq/apps/data_cleaning/forms/setup.py corehq/apps/data_cleaning/tables.py
@@ -8481,7 +8168,8 @@ msgstr "Étiquette de dossier"
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/templates/export/partials/table.html
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 #: corehq/apps/reports/filters/select.py
 #: corehq/apps/reports/standard/cases/basic.py
 #: corehq/apps/reports/v2/filters/case_report.py
@@ -8494,6 +8182,14 @@ msgstr "Type de Dossier"
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "from"
 msgstr "de"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
+#: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_case.html
+#: corehq/apps/app_manager/views/modules.py
+#: corehq/apps/reports/standard/cases/basic.py
+msgid "Case List"
+msgstr "Liste de dossiers"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Please select a case type."
@@ -8690,16 +8386,12 @@ msgid "Add Property"
 msgstr "Ajouter une propriété"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
-#, fuzzy
-#| msgid "Match Excel Columns to Case Properties"
 msgid "Save Questions to Case Properties"
-msgstr "Faire correspondre les colonnes Excel aux propriétés de dossier"
+msgstr "Enregistrer les questions dans les propriétés de dossier."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
-#, fuzzy
-#| msgid "Remove User Properties"
 msgid "Save Questions to User Properties"
-msgstr "Supprimer les propriétés d'utilisateur "
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid ""
@@ -8718,10 +8410,21 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
-#, fuzzy
-#| msgid "User Properties"
-msgid "User Property"
-msgstr "Propriétés de l'utilisateur"
+msgid "User Case Property"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
+msgid ""
+"User Case Properties allow you to store data about a web or mobile user. "
+"Saving a user case property ensures the data is available across forms and "
+"can be updated over time."
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
+msgid ""
+"Saving a question as a case property makes it accessible and reusable across "
+"your application. Case properties can be tracked and updated over time."
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid "Save Only If Edited"
@@ -8761,10 +8464,8 @@ msgid "Add Case Property"
 msgstr "Ajouter une propriété de dossier"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
-#, fuzzy
-#| msgid "Add Case Property"
 msgid "Add User Property"
-msgstr "Ajouter une propriété de dossier"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid ""
@@ -9150,6 +8851,7 @@ msgstr "Reactualiser"
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/multi_select_continue_button.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
@@ -9241,20 +8943,21 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/appnav_menu.html
 msgid ""
 "\n"
-"                    <p>\n"
-"                        Sub-menus are now displayed nested under their "
-"parent menu. The order\n"
-"                        of your menus has been changed to reflect that.\n"
-"                    </p>\n"
-"                    <p>\n"
-"                        Click \"Rearrange\" to make this change permanent.  "
-"You won't be able to modify the order of your menus until you do so.\n"
-"                    </p>\n"
-"                    <p>\n"
-"                        Please contact support or report an issue if you "
-"have any concerns.\n"
-"                    </p>\n"
-"                    "
+"            <p>\n"
+"              Sub-menus are now displayed nested under their parent menu. "
+"The\n"
+"              order of your menus has been changed to reflect that.\n"
+"            </p>\n"
+"            <p>\n"
+"              Click \"Rearrange\" to make this change permanent. You won't "
+"be able\n"
+"              to modify the order of your menus until you do so.\n"
+"            </p>\n"
+"            <p>\n"
+"              Please contact support or report an issue if you have any\n"
+"              concerns.\n"
+"            </p>\n"
+"          "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/appnav_menu.html
@@ -9300,6 +9003,21 @@ msgid "Survey Menu"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
+#: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_report.html
+msgid "Report Menu"
+msgstr "Menu de rapports"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
+#: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_advanced.html
+msgid "Advanced Menu"
+msgstr "Menu avancé"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
+#: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_shadow.html
+msgid "Shadow Menu"
+msgstr "Menu ombre"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
 msgid "menu"
 msgstr ""
 
@@ -9326,6 +9044,78 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/mobile_ucr_v1_warning.html
 msgid "Warning"
 msgstr "Avertissement"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_advanced.html
+msgid ""
+"\n"
+"    Complex case management\n"
+"  "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_biometrics.html
+msgid "Biometrics"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_biometrics.html
+msgid ""
+"\n"
+"    Identify clients by fingerprint\n"
+"  "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_case.html
+msgid ""
+"\n"
+"    Track items over time\n"
+"  "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_report.html
+msgid ""
+"\n"
+"    Worker performance\n"
+"  "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_shadow.html
+msgid ""
+"\n"
+"    Mimic another menu\n"
+"  "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_shadow_v1.html
+msgid "Shadow Menu V1"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_shadow_v1.html
+msgid ""
+"\n"
+"    Old style shadow menu with deprecated child behaviour\n"
+"  "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_survey.html
+msgid "Surveys"
+msgstr "Enquêtes"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_survey.html
+msgid ""
+"\n"
+"    Collect data once\n"
+"  "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_training.html
+msgid "Training"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_training.html
+msgid ""
+"\n"
+"    Content for training users\n"
+"  "
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/module_session_endpoint.html
 msgid ""
@@ -10535,6 +10325,7 @@ msgid "Add Annotation"
 msgstr "Ajouter une annotation"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/mobile_report_configs.html
+#: corehq/apps/campaign/forms.py corehq/apps/campaign/models.py
 #: corehq/apps/linked_domain/const.py corehq/apps/registry/models.py
 #: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
 #: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
@@ -10543,6 +10334,7 @@ msgid "Report"
 msgstr "Rapport"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/mobile_report_configs.html
+#: corehq/apps/campaign/forms.py
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/views.py
 #: corehq/apps/domain/templates/domain/admin/feature_previews.html
@@ -11421,6 +11213,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/case_search/models.py
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/config_modal.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 #: corehq/apps/domain/forms.py
@@ -11574,6 +11367,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid "Select All"
 msgstr "Tout sélectionner"
@@ -12417,8 +12211,61 @@ msgid "user's location's parent [location]"
 msgstr "site d'utilisateur [site]"
 
 #: corehq/apps/campaign/const.py
-msgid "Total number of cases"
+msgid "Number of cases"
 msgstr ""
+
+#: corehq/apps/campaign/const.py
+msgid "Number of mobile workers"
+msgstr ""
+
+#: corehq/apps/campaign/const.py
+msgid "Number of active mobile workers"
+msgstr ""
+
+#: corehq/apps/campaign/const.py
+msgid "Number of inactive web users"
+msgstr ""
+
+#: corehq/apps/campaign/const.py
+msgid "Number of forms submitted by mobile workers"
+msgstr ""
+
+#: corehq/apps/campaign/forms.py
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
+#: corehq/apps/reports/views.py
+msgid "Title"
+msgstr "Titre"
+
+#: corehq/apps/campaign/forms.py
+msgid "Dashboard Tab"
+msgstr ""
+
+#: corehq/apps/campaign/forms.py
+msgid "submit"
+msgstr ""
+
+#: corehq/apps/campaign/forms.py
+msgid "Geo Case Property"
+msgstr ""
+
+#: corehq/apps/campaign/forms.py corehq/apps/geospatial/forms.py
+msgid ""
+"The name of the case property storing the geo-location data of your cases."
+msgstr ""
+
+#: corehq/apps/campaign/forms.py
+#: corehq/apps/campaign/templates/campaign/partials/dashboard_gauge.html
+msgid "Metric"
+msgstr ""
+
+#: corehq/apps/campaign/models.py
+msgid "Gauge"
+msgstr ""
+
+#: corehq/apps/campaign/models.py
+msgid "Map"
+msgstr "Carte"
 
 #: corehq/apps/campaign/templates/campaign/dashboard.html
 #: corehq/apps/campaign/views.py
@@ -12426,14 +12273,100 @@ msgid "Campaign Dashboard"
 msgstr ""
 
 #: corehq/apps/campaign/templates/campaign/dashboard.html
-msgid "Gauges"
+msgid "Widget has been deleted successfully!"
+msgstr ""
+
+#: corehq/apps/campaign/templates/campaign/dashboard.html
+msgid "Export to PDF"
+msgstr ""
+
+#: corehq/apps/campaign/templates/campaign/dashboard.html
+msgid ""
+"\n"
+"      There was an error while exporting to PDF! Please try again, and "
+"contact\n"
+"      support if the issue persists.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/campaign/templates/campaign/partials/add_widget_button.html
+msgid "Add Widget"
+msgstr ""
+
+#: corehq/apps/campaign/templates/campaign/partials/dashboard_gauge.html
+msgid "Unknown metric"
 msgstr ""
 
 #: corehq/apps/campaign/templates/campaign/partials/dashboard_map.html
+#: corehq/apps/campaign/templates/campaign/partials/dashboard_report.html
 msgid ""
 "\n"
 "          Something went wrong while loading this widget! Please try again.\n"
 "        "
+msgstr ""
+
+#: corehq/apps/campaign/templates/campaign/partials/dashboard_report.html
+#, fuzzy
+#| msgid ""
+#| "Please choose your filters above and click <strong>Apply</strong> to see "
+#| "report data."
+msgid ""
+"\n"
+"                Please choose your filters and click <strong>Apply</strong> "
+"to see report data.\n"
+"              "
+msgstr ""
+"Veuillez choisir les filtres ci-dessus et cliquer sur <strong>Appliquer</"
+"strong> pour voir les données de rapport."
+
+#: corehq/apps/campaign/templates/campaign/partials/delete_widget_button.html
+#: corehq/apps/campaign/templates/campaign/partials/delete_widget_confirmation_modal.html
+msgid "Delete Widget"
+msgstr ""
+
+#: corehq/apps/campaign/templates/campaign/partials/delete_widget_confirmation_modal.html
+msgid "Are you sure you want to delete this widget?"
+msgstr ""
+
+#: corehq/apps/campaign/templates/campaign/partials/delete_widget_confirmation_modal.html
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
+#: corehq/apps/integration/templates/payments/partials/payments_confirmation_modal.html
+#: corehq/apps/reports/templates/reports/bootstrap3/notification_unsubscribe.html
+#: corehq/apps/reports/templates/reports/bootstrap5/notification_unsubscribe.html
+#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
+msgid "Confirm"
+msgstr "Confirmer"
+
+#: corehq/apps/campaign/templates/campaign/partials/edit_widget_button.html
+msgid "Edit Widget"
+msgstr ""
+
+#: corehq/apps/campaign/templates/campaign/partials/widget_modal.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/clean_cases_session.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/partials/loading_indicator.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5_htmx.html
+#: corehq/apps/hqwebapp/views.py
+#: corehq/apps/integration/templates/kyc/kyc_verify_report.html
+#: corehq/apps/integration/templates/payments/payments_verify_report.html
+#: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/htmx_pagination.html
+#: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/main.html
+#: corehq/messaging/scheduling/templates/scheduling/dashboard.html
+msgid "Loading..."
+msgstr "Téléchargement en cours..."
+
+#: corehq/apps/campaign/templates/campaign/partials/widget_modal.html
+msgid "Saved! Reloading, please wait.."
+msgstr ""
+
+#: corehq/apps/campaign/views.py
+msgid "Requested widget type is not supported"
+msgstr ""
+
+#: corehq/apps/campaign/views.py
+msgid "case_type param is required"
 msgstr ""
 
 #: corehq/apps/case_importer/base.py
@@ -13613,11 +13546,25 @@ msgstr "Montrer tout le menu"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
 #: corehq/apps/export/templates/export/partials/table.html
-#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid "Select"
 msgstr "Sélectionner"
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/config.html
+msgid "Column Configuration"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/config_modal.html
+msgid "Please Select at least one column."
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/config_modal.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/pinned_filter_form.html
+msgid "Reset"
+msgstr "Réinitialiser"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/detail.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/no_items_text.html
@@ -14560,6 +14507,103 @@ msgstr ""
 msgid "Please add case owners to filter the list of cases."
 msgstr ""
 
+#: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid "Select a file to upload"
+msgid "Select a property to clean"
+msgstr "Sélectionner un fichier à uploader."
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid ""
+"Choices are editable case properties that are currently visible in the table."
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid "Data Dictionary"
+msgid "Data cleaning action"
+msgstr "Dictionnaire de données"
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid "Find:"
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid "Use xpath expression"
+msgid "Use regular expression"
+msgstr "Utiliser une expression xpath"
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid "Replace"
+msgid "Replace with:"
+msgstr "Remplacer"
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid "Replace existing value with:"
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid "Case property"
+msgid "Copy from property:"
+msgstr "Propriété de Cas"
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid ""
+"The value from this property will replace the value from the selected "
+"property at the top."
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid "Set case property"
+msgid "Select a case property..."
+msgstr "Définir une propriété de dossier"
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid "Select Application..."
+msgid "Select a cleaning action..."
+msgstr "Sélectionner une application..."
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid "View Changes"
+msgid "Preview Changes"
+msgstr "Afficher les Modifications"
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid ""
+"Please specify a value you would like to replace the existing property value "
+"with."
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid "Please specify at least one action."
+msgid "Please specify the value you would like to find."
+msgstr "Veuillez spécifier au moins une action."
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid "Must be a valid xpath expression."
+msgid "Not a valid regular expression."
+msgstr "Doit être une expression xpath valide"
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid "Please select a property."
+msgid "Please select a property to copy from."
+msgstr "Veuillez sélectionner une propriété"
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid "to the value from other case property"
+msgid "You cannot copy from the same property."
+msgstr "à la valeur de l'autre propriété de dossier"
+
 #: corehq/apps/data_cleaning/forms/columns.py
 #: corehq/apps/data_cleaning/forms/filters.py
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -14579,6 +14623,28 @@ msgstr ""
 msgid "Add Column"
 msgstr ""
 
+#: corehq/apps/data_cleaning/forms/columns.py
+msgid "Please specify a label for the column."
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/columns.py
+#: corehq/apps/data_cleaning/forms/filters.py
+msgid "Please specify a data type."
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/columns.py
+msgid "Please specify a case property."
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/columns.py
+msgid "This case property is already a column."
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/columns.py
+#, python-brace-format
+msgid "Incorrect data type for '{prop_id}', should be '{expected_data_type}'"
+msgstr ""
+
 #: corehq/apps/data_cleaning/forms/filters.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
@@ -14596,10 +14662,6 @@ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #: corehq/apps/data_cleaning/forms/filters.py
 msgid "Please select a case property to filter on."
-msgstr ""
-
-#: corehq/apps/data_cleaning/forms/filters.py
-msgid "Please specify a data type."
 msgstr ""
 
 #: corehq/apps/data_cleaning/forms/filters.py
@@ -14858,32 +14920,8 @@ msgstr ""
 
 #: corehq/apps/data_cleaning/models.py
 #: corehq/apps/data_cleaning/templatetags/data_cleaning.py
-#, fuzzy
-#| msgid "(unknown)"
 msgid "unknown"
-msgstr "(inconnu)"
-
-#: corehq/apps/data_cleaning/models.py corehq/apps/data_cleaning/utils/cases.py
-#: corehq/apps/data_interfaces/interfaces.py
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
-#: corehq/apps/registry/templates/registry/registry_list.html
-#: corehq/apps/reports/standard/cases/basic.py
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
-#: corehq/ex-submodules/casexml/apps/case/views.py
-msgid "Owner"
-msgstr "Propriétaire"
-
-#: corehq/apps/data_cleaning/models.py
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
-#: corehq/ex-submodules/casexml/apps/case/views.py
-msgid "Opened On"
-msgstr "Ouvert le"
-
-#: corehq/apps/data_cleaning/models.py corehq/apps/data_cleaning/utils/cases.py
-msgid "Last Modified On"
-msgstr ""
+msgstr "inconnu"
 
 #: corehq/apps/data_cleaning/models.py
 msgid "Find & Replace"
@@ -14941,25 +14979,32 @@ msgstr ""
 msgid "Recent Tasks"
 msgstr ""
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/clean_cases_session.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/partials/loading_indicator.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5_htmx.html
-#: corehq/apps/hqwebapp/views.py
-#: corehq/apps/integration/templates/kyc/kyc_verify_report.html
-#: corehq/apps/integration/templates/payments/payments_verify_report.html
-#: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/htmx_pagination.html
-#: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/main.html
-#: corehq/messaging/scheduling/templates/scheduling/dashboard.html
-msgid "Loading..."
-msgstr "Téléchargement en cours..."
-
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
-#: corehq/apps/registry/models.py corehq/apps/sms/models.py
-#: corehq/motech/repeaters/const.py
+#: corehq/apps/integration/payments/const.py corehq/apps/registry/models.py
+#: corehq/apps/sms/models.py corehq/motech/repeaters/const.py
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Pending"
 msgstr "En attente"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+msgid "No editible case properties are visible"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+msgid ""
+"\n"
+"        Please\n"
+"        <a\n"
+"          href=\"#\"\n"
+"          class=\"fw-bold\"\n"
+"          data-bs-dismiss=\"offcanvas\"\n"
+"          @click.prevent=\"$dispatch('wiggle-configure-columns-button');\"\n"
+"        >Configure Columns</a>\n"
+"        to include editible case properties in the column list in\n"
+"        order to clean the selected cases.\n"
+"      "
+msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/partials/active_session_exists.html
 msgid ""
@@ -14969,11 +15014,72 @@ msgid ""
 "  "
 msgstr ""
 
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/pinned_filter_form.html
-#, fuzzy
-#| msgid "Resend"
-msgid "Reset"
-msgstr "Renvoyer "
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
+msgid "Confirm Action"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_select_all.html
+#, python-format
+msgid ""
+"\n"
+"    Select %(num_records)s Cases\n"
+"  "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_select_all.html
+#, python-format
+msgid ""
+"\n"
+"      Are you sure you want to select %(num_records)s cases?\n"
+"    "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_select_all.html
+msgid ""
+"\n"
+"      This operation might take a long time.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/select_all_not_possible.html
+#, python-format
+msgid ""
+"\n"
+"    Unable to select %(num_records)s cases\n"
+"  "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/select_all_not_possible.html
+#, python-format
+msgid ""
+"\n"
+"        Cannot select or actively edit more than %(max_recorded_limit)s "
+"cases in a session.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/select_all_not_possible.html
+msgid ""
+"\n"
+"        Please either apply your previewed edits, or add filters to select "
+"fewer cases.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/select_all_not_possible.html
+#, python-format
+msgid ""
+"\n"
+"        Cannot select more than %(max_recorded_limit)s cases in a session.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/select_all_not_possible.html
+msgid ""
+"\n"
+"        Please add filters to select fewer cases.\n"
+"      "
+msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/button_bar.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/offcanvas.html
@@ -14991,6 +15097,19 @@ msgid "Clean Selected Cases"
 msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+msgid ""
+"\n"
+"      No cases were found that match the current filters. Please\n"
+"      <a\n"
+"        href=\"#\"\n"
+"        class=\"fw-bold\"\n"
+"        @click.prevent=\"$dispatch('wiggle-filters-button');\"\n"
+"      >adjust your filters</a>\n"
+"      and try again.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 #, python-format
 msgid ""
 "\n"
@@ -14999,16 +15118,18 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
-#, fuzzy
-#| msgid "User Filters"
 msgid "Clear Filters"
-msgstr "Filtres d'utilisateur"
+msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 msgid ""
 "\n"
-"            0 Records Selected\n"
+"            Records Selected\n"
 "          "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+msgid "Clear Selection"
 msgstr ""
 
 #: corehq/apps/data_cleaning/utils/cases.py corehq/apps/geospatial/reports.py
@@ -15042,6 +15163,10 @@ msgid "Closed On"
 msgstr "Fermé le"
 
 #: corehq/apps/data_cleaning/utils/cases.py
+msgid "Last Modified On"
+msgstr ""
+
+#: corehq/apps/data_cleaning/utils/cases.py
 msgid "Closed By"
 msgstr ""
 
@@ -15052,6 +15177,19 @@ msgstr ""
 #: corehq/apps/data_cleaning/utils/cases.py
 msgid "Opened By"
 msgstr ""
+
+#: corehq/apps/data_cleaning/utils/cases.py
+#: corehq/apps/data_interfaces/interfaces.py
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+#: corehq/apps/registry/templates/registry/registry_list.html
+#: corehq/apps/reports/standard/cases/basic.py
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
+#: corehq/ex-submodules/casexml/apps/case/views.py
+msgid "Owner"
+msgstr "Propriétaire"
 
 #: corehq/apps/data_cleaning/utils/cases.py
 msgid "Closed By User ID"
@@ -15065,21 +15203,21 @@ msgstr ""
 msgid "Last Modified (UTC)"
 msgstr ""
 
+#: corehq/apps/data_cleaning/views/cleaning.py
+msgid "Cannot load clean selected records form, session was not found."
+msgstr ""
+
 #: corehq/apps/data_cleaning/views/columns.py
-#, fuzzy
-#| msgid "One or more of the locations was not found."
 msgid "Cannot retrieve columns, session was not found."
-msgstr "Un ou plusieurs sites n'ont pas été trouvé(s)."
+msgstr ""
 
 #: corehq/apps/data_cleaning/views/filters.py
 msgid "Cannot retrieve pinned filters, session was not found."
 msgstr ""
 
 #: corehq/apps/data_cleaning/views/filters.py
-#, fuzzy
-#| msgid "Case with the given external id was not found."
 msgid "Cannot retrieve filters, session was not found."
-msgstr "Le dossier avec l'identifiant externe fourni n'a pas été trouvé. "
+msgstr ""
 
 #: corehq/apps/data_cleaning/views/main.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/data_corrections_modal.html
@@ -15103,10 +15241,8 @@ msgid "Case Type \"{case_type}\""
 msgstr ""
 
 #: corehq/apps/data_cleaning/views/main.py
-#, fuzzy
-#| msgid "Cases were successfully added:"
 msgid "Caches successfully cleared."
-msgstr "Les dossiers ont été ajoutés avec succès :"
+msgstr ""
 
 #: corehq/apps/data_cleaning/views/main.py
 msgid "Session saved."
@@ -15293,7 +15429,10 @@ msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/tests/test_util.py
-#: corehq/apps/data_dictionary/util.py corehq/apps/export/forms.py
+#: corehq/apps/data_dictionary/util.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+#: corehq/apps/export/forms.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
@@ -15388,16 +15527,6 @@ msgid ""
 "            </p>\n"
 "          "
 msgstr ""
-
-#: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
-#: corehq/apps/geospatial/templates/geospatial/partials/delete_saved_area_modal.html
-#: corehq/apps/integration/templates/payments/partials/payments_confirmation_modal.html
-#: corehq/apps/reports/templates/reports/bootstrap3/notification_unsubscribe.html
-#: corehq/apps/reports/templates/reports/bootstrap5/notification_unsubscribe.html
-#: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
-msgid "Confirm"
-msgstr "Confirmer"
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 msgid "Deprecate GPS property"
@@ -15756,9 +15885,12 @@ msgstr "Transférer"
 
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/data_interfaces/views.py corehq/apps/geospatial/reports.py
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
-#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
 #: corehq/apps/reports/v2/reports/explore_case_data.py
 msgid "Case Name"
 msgstr "Nom de dossier"
@@ -16096,12 +16228,6 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
 msgid "Edit Column"
 msgstr "Modifier la colonne"
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
-#: corehq/apps/reports/views.py
-msgid "Title"
-msgstr "Titre"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/explore_case_data.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/explore_case_data.html
@@ -16580,7 +16706,8 @@ msgstr "Date de la propriété de dossier (avancé)"
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 #: corehq/apps/events/forms.py corehq/apps/events/views.py
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 #: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
 #: corehq/apps/locations/templates/locations/manage/location.html
 #: corehq/apps/locations/templates/locations/manage/locations.html
@@ -16927,7 +17054,8 @@ msgid "You have no cases in your group."
 msgstr "Votre groupe ne contient aucun dossier."
 
 #: corehq/apps/data_interfaces/views.py
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 msgid "Loading cases..."
 msgstr "Chargement de dossiers..."
 
@@ -17743,6 +17871,8 @@ msgid "Renew Plan"
 msgstr "Renouveler l'abonnement"
 
 #: corehq/apps/domain/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
 msgid "Email To"
 msgstr "Courriel à"
 
@@ -18519,9 +18649,15 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/billing_statements.html
 #: corehq/apps/domain/templates/domain/bootstrap5/billing_statements.html
+msgid " Pay a portion of the balance: "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/bootstrap3/billing_statements.html
+#: corehq/apps/domain/templates/domain/bootstrap5/billing_statements.html
 msgid ""
 "\n"
-"              Pay a portion of the balance:\n"
+"              Please enter an amount that's between $0.50 and\n"
+"              $<span data-bind=\"text: balance\"></span>.\n"
 "            "
 msgstr ""
 
@@ -18529,8 +18665,12 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap5/billing_statements.html
 msgid ""
 "\n"
-"              Please enter an amount that's between $0.50 and $<span data-"
-"bind=\"text: balance\"></span>.\n"
+"              You can't enter an amount between $<span\n"
+"                data-bind=\"text: maxPartialAmount\"\n"
+"              ></span>\n"
+"              and $<span data-bind=\"text: balance\"></span> because the "
+"next\n"
+"              transfer will be below the minimum amount of $0.50.\n"
 "            "
 msgstr ""
 
@@ -18538,19 +18678,8 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap5/billing_statements.html
 msgid ""
 "\n"
-"              You can't enter an amount between $<span data-bind=\"text: "
-"maxPartialAmount\"></span>\n"
-"              and $<span data-bind=\"text: balance\"></span> because\n"
-"              the next transfer will be below the minimum amount of $0.50.\n"
-"            "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/bootstrap3/billing_statements.html
-#: corehq/apps/domain/templates/domain/bootstrap5/billing_statements.html
-msgid ""
-"\n"
-"      Payment for Statement No. <span data-bind=\"text: invoiceNumber\"></"
-"span>\n"
+"      Payment for Statement No.\n"
+"      <span data-bind=\"text: invoiceNumber\"></span>\n"
 "    "
 msgstr ""
 
@@ -18565,9 +18694,9 @@ msgid "Bulk Payment"
 msgstr "Paiement de masse"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/billing_statements.html
-#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/billing_statements.html
-#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
 msgid "Thank you for your payment!"
 msgstr "Merci pour votre paiement!"
 
@@ -18575,10 +18704,10 @@ msgstr "Merci pour votre paiement!"
 #: corehq/apps/domain/templates/domain/bootstrap5/billing_statements.html
 msgid ""
 "\n"
-"      Thank you for your upcoming wire payment.\n"
-"      An invoice with your total balance and the instructions to do the wire "
-"payment\n"
-"      has just been sent to your email address.\n"
+"      Thank you for your upcoming wire payment. An invoice with your total\n"
+"      balance and the instructions to do the wire payment has just been "
+"sent\n"
+"      to your email address.\n"
 "    "
 msgstr ""
 
@@ -18883,11 +19012,15 @@ msgstr "Crédits restants"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
 msgid "Prepay by Credit Card"
 msgstr "Prépayé par carte de crédit"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
 msgid "Generate Prepayment Invoice"
 msgstr "Générer une facture de paiement anticipé"
 
@@ -18942,43 +19075,6 @@ msgstr "Inclus dans le Plan Logiciel "
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 msgid "Current Usage"
 msgstr "Utilisation actuelle "
-
-#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
-#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-msgid "Prepayment Amount"
-msgstr "Montant du pré-paiement "
-
-#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
-#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-msgid ""
-"One credit is equivalent to one USD. Credits are applied to monthly invoices"
-msgstr ""
-"Un crédit équivaut à un USD. Les crédits sont appliqués aux factures "
-"mensuelles"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
-#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-msgid ""
-"\n"
-"                Please enter an amount that's either $0 or  greater than "
-"$0.5\n"
-"              "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
-#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-msgid "Total Credits"
-msgstr "Total des crédits"
-
-#: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
-#: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
-msgid ""
-"\n"
-"      Thank you! You will receive an invoice via email with instructions for "
-"wire payment.\n"
-"      Please include the invoice ID in the wire payment details.\n"
-"    "
-msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/data_migration_in_progress.html
 #: corehq/apps/domain/templates/domain/bootstrap5/data_migration_in_progress.html
@@ -19105,7 +19201,11 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
-msgid "90 day refund policy"
+#, python-format
+msgid ""
+"\n"
+"          %(days)s day refund policy\n"
+"        "
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
@@ -19169,8 +19269,9 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
 msgid ""
 "\n"
-"              You will lose access to your project space, but you will be\n"
-"              able to re-subscribe anytime in the future.\n"
+"              You will lose access to your project space, but you will be "
+"able\n"
+"              to re-subscribe anytime in the future.\n"
 "            "
 msgstr ""
 
@@ -19204,8 +19305,8 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
 msgid ""
 "\n"
-"            You will not be allowed to un-pause your project until\n"
-"            these invoices are paid.\n"
+"            You will not be allowed to un-pause your project until these\n"
+"            invoices are paid.\n"
 "          "
 msgstr ""
 
@@ -19214,9 +19315,9 @@ msgstr ""
 msgid ""
 "\n"
 "        Your subscription will be pausing on\n"
-"        <span data-bind=\"text: oStartDateAfterMinimumSubscription\"></span> "
-"unless\n"
-"        you select a different plan above.\n"
+"        <span data-bind=\"text: oStartDateAfterMinimumSubscription\"></"
+"span>\n"
+"        unless you select a different plan above.\n"
 "      "
 msgstr ""
 
@@ -19226,18 +19327,10 @@ msgid ""
 "\n"
 "        Your subscription will be downgrading to\n"
 "        <span data-bind=\"text: oNextSubscription\"></span> on\n"
-"        <span data-bind=\"text: oStartDateAfterMinimumSubscription\"></span> "
-"unless\n"
-"        you select a different plan above.\n"
+"        <span data-bind=\"text: oStartDateAfterMinimumSubscription\"></"
+"span>\n"
+"        unless you select a different plan above.\n"
 "      "
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
-#: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
-msgid ""
-"\n"
-"          You are currently on the FREE CommCare Community plan.\n"
-"        "
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
@@ -19666,6 +19759,65 @@ msgstr "pour choisir une licence Creative Commons."
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Prepayment Amount"
+msgstr "Montant du pré-paiement "
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid ""
+"\n"
+"        One credit is equivalent to one USD.\n"
+"        Credits are applied to monthly invoices.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid ""
+" Please enter an amount that's either $0 or\n"
+"              greater than $0.50 "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Total Credits"
+msgstr "Total des crédits"
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Prepayment Start Date"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Prepayment End Date"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Credit Label"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Unit Cost"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Quantity"
+msgstr "Quantité"
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid ""
+" Thank you! You will receive an invoice via email with\n"
+"  instructions for wire payment. Please include the invoice ID in the wire\n"
+"  payment details. "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
 msgid "Wire Payment Information"
 msgstr "Information sur paiement par virement bancaire "
 
@@ -19674,19 +19826,25 @@ msgstr "Information sur paiement par virement bancaire "
 msgid ""
 "\n"
 "                Dimagi accepts wire payments via ACH and wire transfer. You "
-"will receive an invoice via email with bank information and instructions for "
-"wire payment. Please include the Invoice # in the wire payment memo or note "
-"field.\n"
-"                <a href=\"https://confluence.dimagi.com/display/"
-"commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment\" "
-"target=\"_blank\">More information...</a>\n"
+"will\n"
+"                receive an invoice via email with bank information and\n"
+"                instructions for wire payment. Please include the Invoice # "
+"in\n"
+"                the wire payment memo or note field.\n"
+"                <a\n"
+"                  href=\"https://confluence.dimagi.com/display/"
+"commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment\"\n"
+"                  target=\"_blank\"\n"
+"                  >More information...</a\n"
+"                >\n"
 "              "
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Invoice Recipients"
-msgstr "Destinataires de la facture"
+#: corehq/apps/reports/forms.py
+msgid "Additional Recipients"
+msgstr "Destinataires supplémentaires"
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
@@ -20427,6 +20585,18 @@ msgid "There was an error processing your request. Please try again."
 msgstr ""
 
 #: corehq/apps/domain/views/accounting.py
+msgid "Prepayment end date must be after start date."
+msgstr ""
+
+#: corehq/apps/domain/views/accounting.py
+msgid "Unit cost must be a decimal number greater than 0."
+msgstr ""
+
+#: corehq/apps/domain/views/accounting.py
+msgid "Quantity must be a whole number greater than 0."
+msgstr ""
+
+#: corehq/apps/domain/views/accounting.py
 msgid "Dimagi Internal Subscription Management"
 msgstr "Gestion des suscription interne de Dimagi"
 
@@ -20437,22 +20607,33 @@ msgstr ""
 "organisation."
 
 #: corehq/apps/domain/views/accounting.py
+#, python-brace-format
 msgid ""
-"For programs with one-time data collection needs, simple case management "
-"workflows, and basic M&E requirements."
+"Get started. Build secure apps for offline mobile data collection and case "
+"management. {num_users} users included."
 msgstr ""
 
 #: corehq/apps/domain/views/accounting.py
+#, python-brace-format
 msgid ""
-"For programs with complex case management needs, field staff collaborating "
-"on tasks, and M&E teams that need to clean and report on data."
+"Beyond the basics. Unlock reporting, case sharing, and hands-on support. "
+"{num_users} users included."
 msgstr ""
 
 #: corehq/apps/domain/views/accounting.py
+#, python-brace-format
 msgid ""
-"For programs with distributed field staff, facility-based workflows, and "
-"advanced security needs. Also for M&E teams integrating data with 3rd party "
-"analytics."
+"Unlock everything. Our most secure plan, built for managing connected "
+"systems across locations and user profiles, featuring web apps, advanced "
+"security, and robust admin and data management tools. {num_users} users "
+"included."
+msgstr ""
+
+#: corehq/apps/domain/views/accounting.py
+#, python-brace-format
+msgid ""
+"For practice purposes. Not intended for live projects. {num_users} users "
+"maximum."
 msgstr ""
 
 #: corehq/apps/domain/views/accounting.py
@@ -23734,7 +23915,8 @@ msgid "Export Form Data"
 msgstr ""
 
 #: corehq/apps/export/views/list.py
-#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
 msgid "Export"
 msgstr "Télécharger"
 
@@ -24563,7 +24745,7 @@ msgstr "Une erreur inconnue est survenue."
 
 #: corehq/apps/fixtures/views.py
 #, python-format
-msgid "Task in progress. {}% complete"
+msgid "Task in progress. %(progress)s%% complete"
 msgstr ""
 
 #: corehq/apps/fixtures/views.py
@@ -24611,11 +24793,6 @@ msgstr ""
 
 #: corehq/apps/geospatial/forms.py
 msgid "Fetch case location data from property"
-msgstr ""
-
-#: corehq/apps/geospatial/forms.py
-msgid ""
-"The name of the case property storing the geo-location data of your cases."
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
@@ -24857,58 +25034,70 @@ msgstr ""
 msgid "Link"
 msgstr "Lien"
 
-#: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_grouping_map.html
 msgid "Lock Map"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_grouping_map.html
 msgid "Unlock Map"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_grouping_map.html
 msgid "Export Groups"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_grouping_map.html
 msgid "Summary of Case Clustering Map"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_grouping_map.html
 msgid "Total number of clusters"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_grouping_map.html
 msgid "Maximum cases per cluster"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_grouping_map.html
 msgid "Minimum cases per cluster"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_grouping_map.html
 msgid "Select Case Groups to View"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_grouping_map.html
 msgid "Show Only Selected Groups on Map"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_grouping_map.html
 msgid "Show All Groups"
 msgstr "Afficher tous les groupes"
 
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 msgid ""
 "\n"
 "        Case reassignment request in progress. Please be patient.\n"
 "      "
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 msgid "Mobile Worker Filters"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
 msgid ""
 "\n"
 "          <strong\n"
@@ -24921,34 +25110,40 @@ msgid ""
 "        "
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 msgid "Show mobile workers on the map"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 msgid ""
 "\n"
 "                Only users at this location will be shown on the map.\n"
 "              "
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 #: corehq/apps/reports/templates/reports/standard/partials/bootstrap3/filter_panel.html
 #: corehq/apps/reports/templates/reports/standard/partials/bootstrap5/filter_panel.html
 msgid "Hide Filter Options"
 msgstr "Masquer les options de filtre"
 
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 #: corehq/apps/reports/templates/reports/standard/partials/bootstrap3/filter_panel.html
 #: corehq/apps/reports/templates/reports/standard/partials/bootstrap5/filter_panel.html
 msgid "Show Filter Options"
 msgstr "Options de filtre d'affichage"
 
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 msgid "Running disbursement algorithm..."
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 msgid ""
 "\n"
 "        We couldn't match every case to a user with the current "
@@ -24965,54 +25160,66 @@ msgid ""
 "      "
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 msgid ""
 "\n"
 "      Previous disbursement was cleared.\n"
 "    "
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 msgid "Disbursement parameters"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 msgid "Layers"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 msgid "Review Results"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 msgid "Accept Results"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 msgid "Selected Mobile Workers"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 msgid "Mobile Workers on Map"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 msgid "All Mobile Workers on Map"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 msgid "Selected Cases"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 msgid "Cases on Map"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
 msgid "All Cases on Map"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 msgid ""
 "\n"
 "                    Mobile workers that do not have any associated GPS "
@@ -25020,30 +25227,36 @@ msgid ""
 "                "
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 msgid ""
 "\n"
 "            Changes have been saved successfully!\n"
 "        "
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 msgid "Users without GPS Data"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 msgid "Latitude"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 msgid "Longitude"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 msgid "Enter latitude..."
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 msgid ""
 "\n"
 "                                        The value should be a number between "
@@ -25051,11 +25264,13 @@ msgid ""
 "                                    "
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 msgid "Enter longitude..."
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 msgid ""
 "\n"
 "                                        The value should be a number between "
@@ -25063,15 +25278,17 @@ msgid ""
 "                                    "
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 msgid "Capture on Map"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 msgid "Loading users..."
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 msgid ""
 "\n"
 "                  <strong>There was an issue retrieving data from the server."
@@ -25083,7 +25300,7 @@ msgid ""
 "                "
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 msgid ""
 "\n"
 "                  <strong>There was an issue submitting data to the server.</"
@@ -25095,39 +25312,48 @@ msgid ""
 "                "
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 msgid "Create New Case"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 msgid "Save Case"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 msgid "Capturing location for:"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 msgid "Enter new case name..."
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 msgid "A case name is required"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 msgid "A case type is required"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/gps_capture_view.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture_view.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture_view.html
 msgid "Update Case Data"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/gps_capture_view.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture_view.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture_view.html
 msgid "Update Mobile Worker Data"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/gps_capture_view.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture_view.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture_view.html
 msgid ""
 "\n"
 "            To create new Mobile Workers navigate to the Mobile Workers page "
@@ -25135,19 +25361,182 @@ msgid ""
 "          "
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/gps_capture_view.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture_view.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture_view.html
 msgid ""
 "\n"
 "            Navigate there.\n"
 "            "
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/partials/delete_saved_area_modal.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
+msgid ""
+"\n"
+"          <strong\n"
+"            >There was an issue retrieving mobile workers from the\n"
+"            server.</strong\n"
+"          >\n"
+"          If this problem continues, please\n"
+"          <a href=\"#modalReportIssue\" data-bs-toggle=\"modal\">report an "
+"issue</a>.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+msgid ""
+"\n"
+"                  <strong>There was an issue retrieving data from the server."
+"</strong>\n"
+"                  Please check your internet connection.\n"
+"                  If this problem continues, please\n"
+"                  <a href=\"#modalReportIssue\" data-bs-"
+"toggle=\"modal\">report an issue</a>.\n"
+"                "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+msgid ""
+"\n"
+"                  <strong>There was an issue submitting data to the server.</"
+"strong>\n"
+"                  Please check your internet connection.\n"
+"                  If this problem continues, please\n"
+"                  <a href=\"#modalReportIssue\" data-bs-"
+"toggle=\"modal\">report an issue</a>.\n"
+"                "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
 msgid "Are you sure you want to delete this saved area?"
 msgstr ""
 
-#: corehq/apps/geospatial/templates/geospatial/partials/delete_saved_area_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
 msgid "You are about to delete this saved area"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
+msgid "Review Assignment Results"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
+msgid ""
+"\n"
+"            All potential cases for each mobile worker will be pre-selected "
+"and\n"
+"            de-selecting a case will remove it from final assignments once "
+"the\n"
+"            \"Assign\" button is clicked.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
+msgid "Assignment Status"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
+#: corehq/apps/locations/forms.py corehq/apps/reports/filters/select.py
+#: corehq/apps/reports_core/filters.py
+#: corehq/apps/userreports/reports/filters/choice_providers.py
+#: corehq/apps/userreports/tests/test_choice_provider.py
+#: corehq/apps/users/forms.py
+msgid "Show All"
+msgstr "Afficher tous"
+
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
+msgid "Assigned Only"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
+msgid "Unassigned Only"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
+msgid "Select mobile worker for case assignment"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
+msgid "Potential Mobile Worker"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
+msgid "Mobile Worker Primary Location"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
+msgid "Include related cases"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
+msgid "Assign Cases"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
+msgid "Unassign Cases"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
+#: corehq/apps/registration/forms.py
+msgid "Finish"
+msgstr "Fin"
+
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/saved_polygon_filter.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/saved_polygon_filter.html
+msgid "Filter by Saved Area"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/saved_polygon_filter.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/saved_polygon_filter.html
+msgid "Export Area"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/saved_polygon_filter.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/saved_polygon_filter.html
+msgid "Delete Area"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/saved_polygon_filter.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/saved_polygon_filter.html
+msgid "Save Area"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/saved_polygon_filter.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/saved_polygon_filter.html
+msgid "Run Disbursement"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/saved_polygon_filter.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/saved_polygon_filter.html
+msgid ""
+"\n"
+"          Please\n"
+"          <a href=\"\">refresh the page</a>\n"
+"          to apply the polygon filtering changes.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/saved_polygon_filter.html
+#: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/saved_polygon_filter.html
+msgid ""
+"\n"
+"          There are too many polygons on the map. Please remove some before "
+"refreshing the page, otherwise the\n"
+"          newly added polygons will be lost.\n"
+"        "
 msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/partials/index_alert.html
@@ -25178,109 +25567,6 @@ msgid ""
 "        Existing cases in the domain are being processed to be available in\n"
 "        Microplanning reports. Please be patient.\n"
 "      "
-msgstr ""
-
-#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-msgid "Review Assignment Results"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-msgid ""
-"\n"
-"            All potential cases for each mobile worker will be pre-selected "
-"and\n"
-"            de-selecting a case will remove it from final assignments once "
-"the\n"
-"            \"Assign\" button is clicked.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-msgid "Assignment Status"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-#: corehq/apps/locations/forms.py corehq/apps/reports/filters/select.py
-#: corehq/apps/reports_core/filters.py
-#: corehq/apps/userreports/reports/filters/choice_providers.py
-#: corehq/apps/userreports/tests/test_choice_provider.py
-#: corehq/apps/users/forms.py
-msgid "Show All"
-msgstr "Afficher tous"
-
-#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-msgid "Assigned Only"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-msgid "Unassigned Only"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-msgid "Select mobile worker for case assignment"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-msgid "Potential Mobile Worker"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-msgid "Mobile Worker Primary Location"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-msgid "Include related cases"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-msgid "Assign Cases"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-msgid "Unassign Cases"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/geospatial/partials/review_assignment_modal.html
-#: corehq/apps/registration/forms.py
-msgid "Finish"
-msgstr "Fin"
-
-#: corehq/apps/geospatial/templates/geospatial/partials/saved_polygon_filter.html
-msgid "Filter by Saved Area"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/geospatial/partials/saved_polygon_filter.html
-msgid "Export Area"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/geospatial/partials/saved_polygon_filter.html
-msgid "Delete Area"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/geospatial/partials/saved_polygon_filter.html
-msgid "Save Area"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/geospatial/partials/saved_polygon_filter.html
-msgid "Run Disbursement"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/geospatial/partials/saved_polygon_filter.html
-msgid ""
-"\n"
-"          Please\n"
-"          <a href=\"\">refresh the page</a>\n"
-"          to apply the polygon filtering changes.\n"
-"        "
-msgstr ""
-
-#: corehq/apps/geospatial/templates/geospatial/partials/saved_polygon_filter.html
-msgid ""
-"\n"
-"          There are too many polygons on the map. Please remove some before "
-"refreshing the page, otherwise the\n"
-"          newly added polygons will be lost.\n"
-"        "
 msgstr ""
 
 #: corehq/apps/geospatial/views.py
@@ -25774,7 +26060,7 @@ msgstr ""
 msgid "Confirm the username"
 msgstr ""
 
-#: corehq/apps/hqadmin/forms.py
+#: corehq/apps/hqadmin/forms.py corehq/apps/integration/payments/filters.py
 msgid "Verified by"
 msgstr ""
 
@@ -27134,49 +27420,6 @@ msgstr ""
 msgid "Add Credits or Modify Subscription"
 msgstr ""
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/rollout_modal.html
-#, python-format
-msgid ""
-"\n"
-"\n"
-"          <div class=\"modal-header\">\n"
-"            <h4 class=\"modal-title\">\n"
-"              %(name)s Available!\n"
-"            </h4>\n"
-"          </div>\n"
-"\n"
-"          <div class=\"modal-body\">\n"
-"            <p>\n"
-"              We're about to release a new look for the app builder.\n"
-"              <a href=\"https://www.dimagi.com/blog/commcare-feature-update-"
-"new-app-manager/\">\n"
-"                Check it out here.\n"
-"              </a>\n"
-"            </p>\n"
-"            <p>\n"
-"              These changes will be rolled out permanently in <strong>July</"
-"strong>, but if\n"
-"              you'd like, you can turn them on now.\n"
-"            </p>\n"
-"            <div class=\"row\">\n"
-"              <div class=\"col-sm-6 text-center\">\n"
-"                <button class=\"btn btn-lg btn-primary btn-full-width flag-"
-"enable\">\n"
-"                  Yes, turn on %(name)s!\n"
-"                </button>\n"
-"              </div>\n"
-"              <div class=\"col-sm-6 text-center\">\n"
-"                <button class=\"btn btn-lg btn-default btn-full-width flag-"
-"snooze\">\n"
-"                  No, remind me later\n"
-"                </button>\n"
-"              </div>\n"
-"            </div>\n"
-"          </div>\n"
-"\n"
-"        "
-msgstr ""
-
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/rollout_revert_modal.html
 #, python-format
 msgid ""
@@ -27203,49 +27446,6 @@ msgid ""
 "              </div>\n"
 "            </div>\n"
 "          </div>\n"
-"        "
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/rollout_modal.html
-#, python-format
-msgid ""
-"\n"
-"\n"
-"          <div class=\"modal-header\">\n"
-"            <h4 class=\"modal-title\">\n"
-"              %(name)s Available!\n"
-"            </h4>\n"
-"          </div>\n"
-"\n"
-"          <div class=\"modal-body\">\n"
-"            <p>\n"
-"              We're about to release a new look for the app builder.\n"
-"              <a href=\"https://www.dimagi.com/blog/commcare-feature-update-"
-"new-app-manager/\">\n"
-"                Check it out here.\n"
-"              </a>\n"
-"            </p>\n"
-"            <p>\n"
-"              These changes will be rolled out permanently in <strong>July</"
-"strong>, but if\n"
-"              you'd like, you can turn them on now.\n"
-"            </p>\n"
-"            <div class=\"row\">\n"
-"              <div class=\"col-md-6 text-center\">\n"
-"                <button class=\"btn btn-lg btn-primary btn-full-width flag-"
-"enable\">\n"
-"                  Yes, turn on %(name)s!\n"
-"                </button>\n"
-"              </div>\n"
-"              <div class=\"col-md-6 text-center\">\n"
-"                <button class=\"btn btn-lg btn-outline-primary btn-full-"
-"width flag-snooze\">\n"
-"                  No, remind me later\n"
-"                </button>\n"
-"              </div>\n"
-"            </div>\n"
-"          </div>\n"
-"\n"
 "        "
 msgstr ""
 
@@ -27288,10 +27488,8 @@ msgid "HTMX Request: Server Error Encountered"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
-#, fuzzy
-#| msgid "Additional Recipients"
 msgid "Additional Details"
-msgstr "Destinataires supplémentaires"
+msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/htmx/error_modal.html
 msgid "HTMX Event Error"
@@ -27301,7 +27499,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"  Encountered error \"%(htmx_error)s\" while performing action %(action)s.\n"
+"  Encountered error \"%(error_message)s\" while performing action "
+"%(action)s.\n"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/domain_list_dropdown.html
@@ -28241,9 +28440,13 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/pending_plan_notice.html
+msgid "Permanently dismiss this alert"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/pending_plan_notice.html
 msgid ""
 "\n"
-"          Your subscription is pending plan selection.\n"
+"          You're using the free edition of CommCare for practice purposes.\n"
 "        "
 msgstr ""
 
@@ -28251,20 +28454,13 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"          Please <a href=\"%(change_plan_url)s\">select a plan</a> to get "
-"started with your CommCare subscription.\n"
-"          <br/>\n"
-"          For now, enjoy free Community Edition access to CommCare with "
-"limited features.\n"
+"          With a 5-user limit, it's not intended for active programs.<br />\n"
+"          <a href=\"%(change_plan_url)s\">Upgrade</a> to a paid plan to "
+"boost\n"
+"          security, expand your team, access expert support, and unlock the "
+"full\n"
+"          power of CommCare.\n"
 "        "
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/pending_plan_notice.html
-msgid "Prefer to stay with Community Edition instead?"
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/pending_plan_notice.html
-msgid "Don't show this banner again."
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/shared_download_status.html
@@ -28290,6 +28486,12 @@ msgid ""
 "remaining\">trial</a> of CommCare %(trial_edition)s Edition.\n"
 "    "
 msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5.html
+#, fuzzy
+#| msgid "No transaction found"
+msgid "No results found."
+msgstr "Aucune transaction trouvée"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5.html
 #, python-format
@@ -28609,7 +28811,9 @@ msgid "User information on HQ does not match with KYC provider."
 msgstr ""
 
 #: corehq/apps/integration/kyc/models.py
-msgid "Network error occurred. Please reach out to support."
+msgid ""
+"Network error occurred. Please try again, or reach out to support if the "
+"issue persists."
 msgstr ""
 
 #: corehq/apps/integration/kyc/models.py
@@ -28617,6 +28821,7 @@ msgid "API error occurred. Please reach out to support."
 msgstr ""
 
 #: corehq/apps/integration/kyc/tables.py
+#: corehq/apps/integration/payments/tables.py
 msgid "KYC Status"
 msgstr ""
 
@@ -28639,8 +28844,49 @@ msgid "KYC Configuration"
 msgstr ""
 
 #: corehq/apps/integration/kyc/views.py
+msgid "Unknown error"
+msgstr ""
+
+#: corehq/apps/integration/kyc/views.py
 #: corehq/apps/integration/templates/kyc/kyc_verify_report.html
 msgid "KYC Report"
+msgstr ""
+
+#: corehq/apps/integration/payments/const.py
+msgid "Requested"
+msgstr ""
+
+#: corehq/apps/integration/payments/const.py
+msgid "Request failed"
+msgstr ""
+
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/sms/templates/sms/phone_number_filter.html
+msgid "Verification Status"
+msgstr "Statut de vérification"
+
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/reports/filters/users.py corehq/apps/reports_core/filters.py
+#: corehq/apps/userreports/reports/filters/factory.py
+msgid "Show all"
+msgstr "Afficher tous"
+
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/integration/payments/tables.py
+#: corehq/apps/sms/templates/sms/phone_number_filter.html
+msgid "Verified"
+msgstr "Vérifié"
+
+#: corehq/apps/integration/payments/filters.py
+msgid "Unverified"
+msgstr ""
+
+#: corehq/apps/integration/payments/filters.py
+msgid "Batch number"
+msgstr ""
+
+#: corehq/apps/integration/payments/filters.py
+msgid "Payment status"
 msgstr ""
 
 #: corehq/apps/integration/payments/forms.py corehq/motech/dhis2/forms.py
@@ -28664,6 +28910,26 @@ msgstr ""
 
 #: corehq/apps/integration/payments/models.py
 msgid "Live"
+msgstr ""
+
+#: corehq/apps/integration/payments/services.py
+msgid "Something went wrong"
+msgstr ""
+
+#: corehq/apps/integration/payments/services.py
+msgid "Payment request failed"
+msgstr ""
+
+#: corehq/apps/integration/payments/services.py
+msgid "Invalid payee details"
+msgstr ""
+
+#: corehq/apps/integration/payments/services.py
+msgid "Payment has not been verified"
+msgstr ""
+
+#: corehq/apps/integration/payments/services.py
+msgid "Payment has already been requested"
 msgstr ""
 
 #: corehq/apps/integration/payments/tables.py
@@ -28690,6 +28956,14 @@ msgstr ""
 
 #: corehq/apps/integration/payments/tables.py
 msgid "Payer Message"
+msgstr ""
+
+#: corehq/apps/integration/payments/tables.py
+msgid "Verified By"
+msgstr ""
+
+#: corehq/apps/integration/payments/tables.py
+msgid "Unavailable"
 msgstr ""
 
 #: corehq/apps/integration/payments/views.py
@@ -28853,7 +29127,7 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"      Failed to verify %(fail_count)s rows!\n"
+"      Failed to verify %(failure_count)s rows!\n"
 "    "
 msgstr ""
 
@@ -28863,6 +29137,15 @@ msgstr ""
 
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
 msgid "Fail"
+msgstr ""
+
+#: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
+#: corehq/motech/repeaters/templates/repeaters/repeaters.html
+msgid "Invalid"
+msgstr ""
+
+#: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
+msgid "The status has been manually set to an invalid value. Please re-verify."
 msgstr ""
 
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
@@ -28882,6 +29165,7 @@ msgstr ""
 msgid ""
 "\n"
 "      Successfully submitted %(success_count)s records for payments!\n"
+"      Verification status for these will be refreshed in a few seconds.\n"
 "    "
 msgstr ""
 
@@ -33213,6 +33497,10 @@ msgstr ""
 msgid "Upload by {username} at {time}"
 msgstr ""
 
+#: corehq/apps/reports/filters/users.py
+msgid "Web user"
+msgstr ""
+
 #: corehq/apps/reports/formdetails/readable.py
 msgid "This form is not associated with an app"
 msgstr "Le formulaire n'est pas associé à une application"
@@ -33285,10 +33573,6 @@ msgstr "Objet"
 #: corehq/apps/reports/forms.py
 msgid "Send to me"
 msgstr "Me l'envoyer"
-
-#: corehq/apps/reports/forms.py
-msgid "Additional Recipients"
-msgstr "Destinataires supplémentaires"
 
 #: corehq/apps/reports/forms.py
 msgid "Report notes"
@@ -36003,11 +36287,6 @@ msgid "Quarter"
 msgstr "Quart"
 
 #: corehq/apps/reports_core/filters.py
-#: corehq/apps/userreports/reports/filters/factory.py
-msgid "Show all"
-msgstr "Afficher tous"
-
-#: corehq/apps/reports_core/filters.py
 msgid "Numeric Filter"
 msgstr "Filtre numérique"
 
@@ -37793,20 +38072,12 @@ msgid "Show Contacts"
 msgstr "Afficher les contacts"
 
 #: corehq/apps/sms/templates/sms/phone_number_filter.html
-msgid "Verification Status"
-msgstr "Statut de vérification"
-
-#: corehq/apps/sms/templates/sms/phone_number_filter.html
 msgid "Not Verified or Already In Use"
 msgstr "Non vérifié ou déjà en cours d'utilisation"
 
 #: corehq/apps/sms/templates/sms/phone_number_filter.html
 msgid "Verification Pending"
 msgstr "Vérification en cours"
-
-#: corehq/apps/sms/templates/sms/phone_number_filter.html
-msgid "Verified"
-msgstr "Vérifié"
 
 #: corehq/apps/sms/templates/sms/wall.html
 msgid "Request Access to Messaging Features"
@@ -39472,6 +39743,11 @@ msgstr ""
 msgid "Date of Birth"
 msgstr ""
 
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
+#: corehq/ex-submodules/casexml/apps/case/views.py
+msgid "Opened On"
+msgstr "Ouvert le"
+
 #: corehq/apps/styleguide/examples/bootstrap5/multiselect_form.py
 msgid "Team"
 msgstr ""
@@ -41107,30 +41383,6 @@ msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/bootstrap3/base.html
 #: corehq/apps/userreports/templates/userreports/bootstrap5/base.html
-msgid ""
-"\n"
-"            Charts cannot be displayed with more than 25 categories. Please "
-"filter the data or change your report to limit the number of rows.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/bootstrap3/base.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/base.html
-#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
-#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
-msgid "Fit all data into view"
-msgstr "Ajuster tous les données dans l'affichage"
-
-#: corehq/apps/userreports/templates/userreports/bootstrap3/base.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/base.html
-msgid ""
-"\n"
-"            Note:\n"
-"          "
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/bootstrap3/base.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/base.html
 msgid "Base Query/Queries"
 msgstr ""
 
@@ -41793,6 +42045,30 @@ msgstr ""
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap5/property_list_configuration.html
 msgid "Filter Value should not be blank."
 msgstr "La valeur du filtre ne devrait pas être vide."
+
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/report_content.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/report_content.html
+msgid ""
+"\n"
+"      Charts cannot be displayed with more than 25 categories. Please filter "
+"the data or change your report to limit the number of rows.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/report_content.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/report_content.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
+msgid "Fit all data into view"
+msgstr "Ajuster tous les données dans l'affichage"
+
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/report_content.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/report_content.html
+msgid ""
+"\n"
+"      Note:\n"
+"    "
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/partials/build_in_progress_warning.html
 msgid "You can try clicking \"Advanced\" and choosing \"Resume Build\"."
@@ -48595,10 +48871,6 @@ msgid "Failure"
 msgstr "Echec"
 
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
-msgid "Invalid"
-msgstr ""
-
-#: corehq/motech/repeaters/templates/repeaters/repeaters.html
 msgid "You haven't configured any services to forward to yet."
 msgstr ""
 
@@ -50008,6 +50280,3 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
-
-#~ msgid "Your prepayment invoice"
-#~ msgstr "Facture de votre paiement anticipé"

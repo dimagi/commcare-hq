@@ -83,6 +83,9 @@ class LookupTable(models.Model):
     item_attributes = models.JSONField(default=list)
     description = models.CharField(max_length=255, default="")
     is_synced = models.BooleanField(default=False)
+    # last_modified is also updated when a related LookupTableRow
+    # or LookupTableRowOwner is created, updated, or deleted
+    last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
         app_label = 'fixtures'

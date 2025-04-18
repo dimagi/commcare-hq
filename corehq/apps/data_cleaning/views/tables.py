@@ -12,7 +12,10 @@ from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
-from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
+from corehq.apps.hqwebapp.tables.pagination import (
+    HtmxInvalidPageRedirectMixin,
+    SelectablePaginatedTableView,
+)
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 
 
@@ -24,13 +27,28 @@ class BaseDataCleaningTableView(LoginAndDomainMixin, DomainViewMixin, Selectable
     pass
 
 
-class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataCleaningTableView):
+class CleanCasesTableView(BulkEditSessionViewMixin,
+                          HtmxInvalidPageRedirectMixin, HqHtmxActionMixin, BaseDataCleaningTableView):
     urlname = "data_cleaning_cases_table"
     table_class = CleanCaseTable
 
+    def get_host_url(self):
+        from corehq.apps.data_cleaning.views.main import CleanCasesSessionView
+        return reverse(CleanCasesSessionView.urlname, args=(self.domain, self.session_id,))
+
     def get_table_kwargs(self):
+        extra_columns = [(
+            "selection",
+            self.table_class.get_select_column(
+                self.session,
+                self.request,
+                select_record_action="select_record",
+                select_page_action="select_page",
+            )
+        )]
+        extra_columns.extend(self.table_class.get_columns_from_session(self.session))
         return {
-            'extra_columns': self.table_class.get_columns_from_session(self.session),
+            'extra_columns': extra_columns,
             'record_kwargs': {
                 'session': self.session,
             },
@@ -50,6 +68,58 @@ class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataC
             },
             'dcFilterRefresh': {
                 'target': '#hq-hx-active-filters',
+            },
+        })
+        return response
+
+    @hq_hx_action('post')
+    def select_record(self, request, *args, **kwargs):
+        """
+        Selects (or de-selects) a single record.
+        """
+        doc_id = request.POST['record_id']
+        is_selected = request.POST.get('is_selected') is not None
+        if is_selected:
+            self.session.select_record(doc_id)
+        else:
+            self.session.deselect_record(doc_id)
+        return self.render_htmx_no_response(request, *args, **kwargs)
+
+    @hq_hx_action('post')
+    def select_page(self, request, *args, **kwargs):
+        """
+        Selects (or de-selects) all records on the current page.
+        """
+        select_page = request.POST.get('select_page') is not None
+        doc_ids = request.POST.getlist('recordIds')
+        if select_page:
+            self.session.select_multiple_records(doc_ids)
+        else:
+            self.session.deselect_multiple_records(doc_ids)
+        return self.render_htmx_no_response(request, *args, **kwargs)
+
+    @hq_hx_action('post')
+    def deselect_all(self, request, *args, **kwargs):
+        """
+        De-selects all records in the current filtered view.
+        """
+        self.session.deselect_all_records_in_queryset()
+        return self.get(request, *args, **kwargs)
+
+    @hq_hx_action('post')
+    def select_all(self, request, *args, **kwargs):
+        """
+        Selects all records in the current filtered view.
+        """
+        response = self.get(request, *args, **kwargs)
+        if self.session.can_select_all(
+            table_num_records=response.context_data['paginator'].count
+        ):
+            self.session.select_all_records_in_queryset()
+            return response
+        response['HX-Trigger'] = json.dumps({
+            'showDataCleaningModal': {
+                'target': '#select-all-not-possible-modal',
             },
         })
         return response

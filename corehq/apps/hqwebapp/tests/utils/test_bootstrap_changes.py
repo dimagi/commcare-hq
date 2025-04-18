@@ -62,12 +62,12 @@ def test_make_select_form_control_renames_bootstrap5():
 
 
 def test_make_template_tag_renames_bootstrap5():
-    line = """        {% requirejs_main "data_dictionary/js/data_dictionary" %}\n"""
+    line = """        {% js_entry_b3 "data_dictionary/js/data_dictionary" %}\n"""
     final_line, renames = make_template_tag_renames(
         line, get_spec('bootstrap_3_to_5')
     )
-    eq(final_line, """        {% requirejs_main_b5 "data_dictionary/js/data_dictionary" %}\n""")
-    eq(renames, ['renamed requirejs_main to requirejs_main_b5'])
+    eq(final_line, """        {% js_entry "data_dictionary/js/data_dictionary" %}\n""")
+    eq(renames, ['renamed js_entry_b3 to js_entry'])
 
 
 def test_make_data_attribute_renames_bootstrap5():
@@ -152,34 +152,34 @@ def test_make_template_dependency_renames_extends():
     eq(renames, ['renamed bootstrap3 to bootstrap5'])
 
 
-def test_check_bootstrap3_references_in_template_requirejs():
-    line = """    {% requirejs_main 'hqwebapp/bootstrap3/foo' %}\n"""
+def test_check_bootstrap3_references_in_template_webpack():
+    line = """    {% js_entry_b3 'hqwebapp/bootstrap3/foo' %}\n"""
     issues = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
-    eq(issues, ["This template references a bootstrap 3 requirejs file. "
-                "It should also use requirejs_main_b5 instead of requirejs_main."])
+    eq(issues, ["This template references a bootstrap 3 webpack entry point. "
+                "It should also use js_entry instead of js_entry_b3."])
 
 
-def test_make_template_dependency_renames_requirejs():
-    line = """    {% requirejs_main 'hqwebapp/js/bootstrap3/foo' %}\n"""
+def test_make_template_dependency_renames_webpack():
+    line = """    {% js_entry_b3 'hqwebapp/js/bootstrap3/foo' %}\n"""
     final_line, renames = make_template_dependency_renames(
         line, get_spec('bootstrap_3_to_5')
     )
-    eq(final_line, """    {% requirejs_main 'hqwebapp/js/bootstrap5/foo' %}\n""")
+    eq(final_line, """    {% js_entry_b3 'hqwebapp/js/bootstrap5/foo' %}\n""")
     eq(renames, ['renamed bootstrap3 to bootstrap5'])
 
 
-def test_check_bootstrap3_references_in_template_requirejs_b5():
-    line = """    {% requirejs_main_b5 'hqwebapp/js-test/bootstrap3/foo' %}\n"""
+def test_check_bootstrap3_references_in_template_js_entry():
+    line = """    {% js_entry 'hqwebapp/js-test/bootstrap3/foo' %}\n"""
     issues = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
-    eq(issues, ['This template references a bootstrap 3 requirejs file.'])
+    eq(issues, ['This template references a bootstrap 3 webpack entry point.'])
 
 
-def test_make_template_dependency_renames_requirejs_b5():
-    line = """    {% requirejs_main_b5 'hqwebapp/js-test/bootstrap3/foo' %}\n"""
+def test_make_template_dependency_renames_js_entry():
+    line = """    {% js_entry 'hqwebapp/js-test/bootstrap3/foo' %}\n"""
     final_line, renames = make_template_dependency_renames(
         line, get_spec('bootstrap_3_to_5')
     )
-    eq(final_line, """    {% requirejs_main_b5 'hqwebapp/js-test/bootstrap5/foo' %}\n""")
+    eq(final_line, """    {% js_entry 'hqwebapp/js-test/bootstrap5/foo' %}\n""")
     eq(renames, ['renamed bootstrap3 to bootstrap5'])
 
 
@@ -213,10 +213,10 @@ def test_make_template_dependency_renames_include():
     eq(renames, ['renamed bootstrap3 to bootstrap5'])
 
 
-def test_flag_requirejs_main_references_in_template():
-    line = """    {% requirejs_main 'hqwebapp/js/foo' %}\n"""
+def test_flag_js_entry_b3_references_in_template():
+    line = """    {% js_entry_b3 'hqwebapp/js/foo' %}\n"""
     issues = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
-    eq(issues, ['This template should use requirejs_main_b5 instead of requirejs_main.'])
+    eq(issues, ['This template should use js_entry instead of js_entry_b3.'])
 
 
 def test_flag_any_bootstrap3_references_in_template():
@@ -266,7 +266,7 @@ def test_flag_changed_javascript_plugins_bootstrap5():
                 "\n\nAn EXAMPLE for how to apply this change is provided below.\nPlease see docs for "
                 "further details.\n\npreviously\n```\n$('#bugReport').modal('hide');\n```\n\nnow\n```\n"
                 "const bugReportModal = new bootstrap.Modal($('#bugReport'));\nbugReportModal.hide();\n```\n\n"
-                "Hint: make sure to list `hqwebapp/js/bootstrap5_loader` as a js dependency in the file where\n"
+                "Hint: make sure to list `bootstrap5` as a js dependency in the file where\n"
                 "bootstrap is referenced.\n\nOld docs: https://getbootstrap.com/docs/3.4/javascript/#modals\n"
                 "New docs: https://getbootstrap.com/docs/5.3/components/modal/#via-javascript\n"]])
 
