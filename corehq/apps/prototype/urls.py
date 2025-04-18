@@ -13,4 +13,8 @@ urlpatterns = [
         name='prototype_example_knockout_pagination'),
     url(r'^example/data/$', example.example_paginated_data,
         name='prototype_example_paginated_data'),
+    url(r'^example/today.ics/$', example.generate_ics,
+        name='prototype_example_ics'),
+    url(r'^example/email/today.ics/$', example.email_ics,
+        name='prototype_example_email_ics')
 ]
