@@ -1932,7 +1932,7 @@ class DetailColumn(IndexedSchema):
         return self.format == 'invisible'
 
     def supports_optimizations(self):
-        return self.format in FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS
+        return self.useXpathExpression and self.format in FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS
 
 
 class SortElement(IndexedSchema):
