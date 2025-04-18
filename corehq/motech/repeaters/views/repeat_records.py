@@ -66,10 +66,9 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.process_repeaters_enabled = toggles.PROCESS_REPEATERS.enabled(
-            self.domain,
-            toggles.NAMESPACE_DOMAIN,
-        )
+        self.backoff_repeaters_enabled = toggles.PROCESS_REPEATERS.enabled(
+            self.domain, toggles.NAMESPACE_DOMAIN
+        ) and toggles.BACKOFF_REPEATERS.enabled(self.domain, toggles.NAMESPACE_DOMAIN)
 
     def _make_cancel_payload_button(self, record_id):
         return format_html('''
@@ -196,7 +195,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             record,
             self.timezone,
             date_format='%b %d, %Y %H:%M:%S %Z',
-            process_repeaters_enabled=self.process_repeaters_enabled,
+            backoff_repeaters_enabled=self.backoff_repeaters_enabled,
         )
         checkbox = format_html(
             '<input type="checkbox" class="xform-checkbox" data-id="{}" name="xform_ids"/>',
