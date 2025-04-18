@@ -314,7 +314,9 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
                 header={'en': 'CachedProperty'},
                 model='case',
                 field="prop1",
+                useXpathExpression=True,
                 optimization='cache',
+
             )
         ]
 
@@ -325,12 +327,16 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
           <field>
             <header>
               <text>
-                <locale id="m0.case_short.case_prop1_1.header"/>
+                <locale id="m0.case_short.case_calculated_property_1.header"/>
               </text>
             </header>
             <template>
               <text>
-                <xpath function="prop1"/>
+                <xpath function="$calculated_property">
+                  <variable name="calculated_property">
+                    <xpath function="prop1"/>
+                  </variable>
+                </xpath>
               </text>
             </template>
           </field>
@@ -356,6 +362,7 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
                 header={'en': 'CachedProperty'},
                 model='case',
                 field="prop1",
+                useXpathExpression=True,
                 optimization='cache',
             )
         ]
@@ -367,12 +374,16 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
           <field>
             <header>
               <text>
-                <locale id="m0.case_short.case_prop1_1.header"/>
+                <locale id="m0.case_short.case_calculated_property_1.header"/>
               </text>
             </header>
             <template>
               <text>
-                <xpath function="prop1"/>
+                <xpath function="$calculated_property">
+                  <variable name="calculated_property">
+                    <xpath function="prop1"/>
+                  </variable>
+                </xpath>
               </text>
             </template>
           </field>
@@ -399,6 +410,7 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
                 header={'en': 'CachedProperty'},
                 model='case',
                 field="prop1",
+                useXpathExpression=True,
                 optimization='cache',
             )
         ]
@@ -410,12 +422,16 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
               <field>
                 <header>
                   <text>
-                    <locale id="m0.case_short.case_prop1_1.header"/>
+                    <locale id="m0.case_short.case_calculated_property_1.header"/>
                   </text>
                 </header>
                 <template>
                   <text>
-                    <xpath function="prop1"/>
+                    <xpath function="$calculated_property">
+                      <variable name="calculated_property">
+                        <xpath function="prop1"/>
+                      </variable>
+                    </xpath>
                   </text>
                 </template>
               </field>
@@ -442,18 +458,21 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
                 header={'en': 'CachedProperty'},
                 model='case',
                 field="prop1",
+                useXpathExpression=True,
                 optimization='cache',
             ),
             DetailColumn(
                 header={'en': 'lazyLoadedProperty'},
                 model='case',
                 field="prop2",
+                useXpathExpression=True,
                 optimization='lazy_load',
             ),
             DetailColumn(
                 header={'en': 'Cached&LazyLoadedProperty'},
                 model='case',
                 field="prop3",
+                useXpathExpression=True,
                 optimization='cache_and_lazy_load',
             ),
         ]
@@ -465,12 +484,16 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
           <field cache_enabled="true">
             <header>
               <text>
-                <locale id="m0.case_short.case_prop1_1.header"/>
+                <locale id="m0.case_short.case_calculated_property_1.header"/>
               </text>
             </header>
             <template>
               <text>
-                <xpath function="prop1"/>
+                <xpath function="$calculated_property">
+                  <variable name="calculated_property">
+                    <xpath function="prop1"/>
+                  </variable>
+                </xpath>
               </text>
             </template>
           </field>
@@ -488,12 +511,16 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
           <field lazy_loading="true">
             <header>
               <text>
-                <locale id="m0.case_short.case_prop2_2.header"/>
+                <locale id="m0.case_short.case_calculated_property_2.header"/>
               </text>
             </header>
             <template>
               <text>
-                <xpath function="prop2"/>
+                <xpath function="$calculated_property">
+                  <variable name="calculated_property">
+                    <xpath function="prop2"/>
+                  </variable>
+                </xpath>
               </text>
             </template>
           </field>
@@ -511,12 +538,16 @@ class SuiteTest(SimpleTestCase, SuiteMixin):
           <field cache_enabled="true" lazy_loading="true">
             <header>
               <text>
-                <locale id="m0.case_short.case_prop3_3.header"/>
+                <locale id="m0.case_short.case_calculated_property_3.header"/>
               </text>
             </header>
             <template>
               <text>
-                <xpath function="prop3"/>
+                <xpath function="$calculated_property">
+                  <variable name="calculated_property">
+                    <xpath function="prop3"/>
+                  </variable>
+                </xpath>
               </text>
             </template>
           </field>
