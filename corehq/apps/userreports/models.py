@@ -57,7 +57,7 @@ from corehq.sql_db.connections import UCR_ENGINE_ID, connection_manager
 from corehq.util.couch import DocumentNotFound, get_document_or_not_found
 from corehq.util.quickcache import quickcache
 
-from .alembic_diffs import DiffTypes
+from .alembic_diffs import get_tables_to_rebuild
 from .app_manager.data_source_meta import (
     REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES,
 )
@@ -773,11 +773,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
             table_name = get_table_name(self.domain, self.table_id)
             engine_metadata = get_metadata(self.engine_id)
             diffs = get_table_diffs(engine, [table_name], engine_metadata)
-            tables_to_rebuild = {
-                diff.table_name
-                for diff in diffs
-                if diff.type in DiffTypes.TYPES_FOR_REBUILD
-            }
+            tables_to_rebuild = get_tables_to_rebuild(diffs)
             if table_name in tables_to_rebuild:
                 self.set_build_queued()
             else:
