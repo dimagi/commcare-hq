@@ -70,10 +70,14 @@ hqDefine("app_manager/js/app_view", function () {
                             $modal.find(".select-all").click(function (e) {
                                 allSelected = !allSelected;
                                 $(e.currentTarget).text(allSelected ? gettext("Select None") : gettext("Select All"));
-                                $ul.find("input:checkbox").prop('checked', allSelected);
+                                $ul.find("input:checkbox:enabled").prop('checked', allSelected);
                             });
                             _.each(toggles, function (toggle) {
                                 $ul.append(template(toggle));
+                                // TODO A better way to do this ?
+                                if (toggle.can_edit == false) {
+                                    $('#non_editable_flags').removeClass('d-none');
+                                }
                             });
                             $modal.modal().one("click", ".btn-primary", function () {
                                 $(this).disableButton();
