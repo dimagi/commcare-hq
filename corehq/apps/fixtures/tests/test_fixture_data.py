@@ -24,9 +24,18 @@ from corehq.blobs import get_blob_db
 
 
 def call_fixture_generator(user, last_sync=None):
-    return [ElementTree.fromstring(f) if isinstance(f, bytes) else f
-            for f in call_fixture_generator_raw(fixturegenerators.item_lists, user,
-                                                last_sync=last_sync)]
+    raw = call_fixture_generator_raw(fixturegenerators.item_lists, user,
+                                    last_sync=last_sync)
+    res = []
+    for f in raw:
+        if isinstance(f, bytes):
+            wrapped_f = b'<root>' + f + b'</root>'
+            root = ElementTree.fromstring(wrapped_f)
+            for child in root:
+                res.append(child)
+        else:
+            res.append(f)
+    return res
 
 
 class FixtureDataTest(TestCase):
