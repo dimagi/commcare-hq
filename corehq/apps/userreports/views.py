@@ -1212,7 +1212,11 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
                         'This data source will be built / rebuilt automatically by CommCare HQ.'
                     ))
                 else:
-                    message_list.append(_('This change does not require a rebuild.'))
+                    message_list.append(_(
+                        'CommCare HQ will not perform a data source rebuild '
+                        'for the changes made. Please initiate one manually '
+                        'if needed.'
+                    ))
                 messages.success(request, ' '.join(message_list))
                 if self.config_id is None:
                     return HttpResponseRedirect(reverse(
