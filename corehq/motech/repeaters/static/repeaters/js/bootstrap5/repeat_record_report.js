@@ -354,16 +354,16 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
                 return;
             }
 
+            // resending is always an option
+            resendButton.disabled = false;
             // default to no-op on cancelling a batch of records
             // that contain some already cancelled records
             // versus allowing no-op when queueing already queued
             // records
             if (selectionContainsQueuedRecords()) {
-                resendButton.disabled = true;
                 requeueButton.disabled = true;
                 cancelButton.disabled = false;
             } else {
-                resendButton.disabled = false;
                 requeueButton.disabled = false;
                 cancelButton.disabled = true;
             }
