@@ -27,7 +27,7 @@ class TestZapierCreateCaseAction(TestCase):
         cls.domain_object = Domain.get_or_create_with_name('fruit', is_active=True)
         cls.domain = cls.domain_object.name
         account = BillingAccount.get_or_create_account_by_domain(cls.domain, created_by="automated-test")[0]
-        plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.STANDARD)
+        plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.PRO)
         subscription = Subscription.new_domain_subscription(account, cls.domain, plan)
         subscription.is_active = True
         subscription.save()
