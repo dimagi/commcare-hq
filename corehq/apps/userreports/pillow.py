@@ -6,35 +6,43 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 
-from corehq.apps.change_feed.consumer.feed import (
-    KafkaChangeFeed,
-    KafkaCheckpointEventHandler,
-)
-from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC, CASE_TOPICS
-from corehq.apps.domain.dbaccessors import get_domain_ids_by_names
-from corehq.apps.domain_migration_flags.api import all_domains_with_migrations_in_progress
-from corehq.apps.userreports.const import KAFKA_TOPICS
-from corehq.apps.userreports.data_source_providers import (
-    DynamicDataSourceProvider,
-    StaticDataSourceProvider, RegistryDataSourceProvider,
-)
-from corehq.apps.userreports.exceptions import (
-    UserReportsWarning,
-)
-from corehq.apps.userreports.models import AsyncIndicator
-from corehq.apps.userreports.pillow_utils import rebuild_sql_tables
-from corehq.apps.userreports.specs import EvaluationContext
-from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.pillows.base import is_couch_change_for_sql_domain
-from corehq.util.metrics import metrics_counter, metrics_histogram_timer
-from corehq.util.timer import TimingContext
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.exceptions import PillowConfigError
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import BulkPillowProcessor
-from pillowtop.utils import ensure_document_exists, ensure_matched_revisions, bulk_fetch_changes_docs
+from pillowtop.utils import (
+    bulk_fetch_changes_docs,
+    ensure_document_exists,
+    ensure_matched_revisions,
+)
+
+from corehq.apps.change_feed.consumer.feed import (
+    KafkaChangeFeed,
+    KafkaCheckpointEventHandler,
+)
+from corehq.apps.change_feed.topics import CASE_TOPICS
+from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC
+from corehq.apps.domain.dbaccessors import get_domain_ids_by_names
+from corehq.apps.domain_migration_flags.api import (
+    all_domains_with_migrations_in_progress,
+)
+from corehq.pillows.base import is_couch_change_for_sql_domain
+from corehq.util.metrics import metrics_counter, metrics_histogram_timer
+from corehq.util.timer import TimingContext
+
+from .const import KAFKA_TOPICS
+from .data_source_providers import (
+    DynamicDataSourceProvider,
+    RegistryDataSourceProvider,
+    StaticDataSourceProvider,
+)
+from .exceptions import UserReportsWarning
+from .models import AsyncIndicator
+from .pillow_utils import rebuild_sql_tables
+from .specs import EvaluationContext
+from .util import get_indicator_adapter
 
 REBUILD_CHECK_INTERVAL = 3 * 60 * 60  # in seconds
 LONG_UCR_LOGGING_THRESHOLD = 0.5
@@ -460,7 +468,8 @@ class ConfigurableReportPillowProcessor(BulkPillowProcessor):
                                     async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
                                 else:
                                     try:
-                                        rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
+                                        rows = adapter.get_all_values(doc, eval_context)
+                                        rows_to_save_by_adapter[adapter].extend(rows)
                                     except Exception as e:
                                         change_exceptions.append((change, e))
                                     eval_context.reset_iteration()
@@ -759,8 +768,13 @@ def get_location_pillow(pillow_id='location-ucr-pillow', include_ucrs=None,
 
 def get_kafka_ucr_registry_pillow(
     pillow_id='kafka-ucr-registry',
-    num_processes=1, process_num=0, dedicated_migration_process=False,
-    processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, ucr_configs=None, **kwargs):
+    num_processes=1,
+    process_num=0,
+    dedicated_migration_process=False,
+    processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE,
+    ucr_configs=None,
+    **kwargs,
+):
     """UCR pillow that reads from all 'case' Kafka topics and writes data into the UCR database tables
 
     Only UCRs backed by Data Registries are processed in this pillow.

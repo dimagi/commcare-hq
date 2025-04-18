@@ -11,7 +11,22 @@
  
  {% block page_content %}
    {% if data_source.meta.build.is_rebuild_in_progress %}
-@@ -24,12 +24,12 @@
+@@ -12,24 +12,24 @@
+         {% if data_source.rebuild_failed %}
+           {% trans "Populating your report did not complete successfully." %}
+         {% elif data_source.meta.build.is_rebuilding %}
+-          {% trans "Please note that this data source is being rebuilt." %}
++          {% trans "Please note that this datasource is being rebuilt." %}
+         {% elif data_source.meta.build.is_rebuilding_in_place %}
+-          {% trans "Please note that this data source is being rebuilt in place." %}
++          {% trans "Please note that this datasource is being rebuilt in place." %}
+         {% endif %}
+       </h4>
+     </div>
+   {% elif data_source.meta.build.awaiting %}
+     <div class="alert alert-info">
+-      {% trans "Please note that this data source is yet to be built / rebuilt by CommCare HQ." %}
++      {% trans "Please note that this datasource is yet be built / rebuilt by CommCare HQ." %}
      </div>
    {% endif %}
    {% if data_source.get_id %}
@@ -135,8 +150,12 @@
    </ul>
  
    <div class="tab-content">
-@@ -241,7 +241,7 @@
-           {% trans "This datasource is read only, any changes made can not be saved." %}
+@@ -238,10 +238,10 @@
+     <div class="tab-pane fade in active" id="tabs-configuration">
+       {% if read_only %}
+         <div class="alert alert-info">
+-          {% trans "This data source is read only, any changes made can not be saved." %}
++          {% trans "This datasource is read only, any changes made can not be saved." %}
          </div>
        {% endif %}
 -      {% crispy form %}
@@ -144,6 +163,15 @@
      </div>
      <div class="tab-pane fade" id="tabs-usage">
        {% if not used_by_reports %}
+@@ -249,7 +249,7 @@
+           {% trans "Datasource currently unused" %}
+         </div>
+       {% else %}
+-        <p>{% trans "Reports dependent on this data source" %}</p>
++        <p>{% trans "Reports dependent on this datasource" %}</p>
+         <ul>
+           {% for report in used_by_reports %}
+             <li>
 @@ -276,8 +276,8 @@
                <div class="modal-header">
                  <button
