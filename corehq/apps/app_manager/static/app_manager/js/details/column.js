@@ -296,6 +296,7 @@ hqDefine("app_manager/js/details/column", [
         self.setSupportOptimizations = function () {
             let optimizationsSupported = (
                 screen.showCaseListOptimizations &&
+                self.useXpathExpression &&
                 self.format.val() &&
                 initialPageData.get('formats_supporting_case_list_optimizations').includes(self.format.val())
             );
