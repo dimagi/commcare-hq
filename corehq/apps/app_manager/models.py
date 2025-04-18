@@ -1931,6 +1931,7 @@ class DetailColumn(IndexedSchema):
     def invisible(self):
         return self.format == 'invisible'
 
+    @property
     def supports_optimizations(self):
         return self.useXpathExpression and self.format in FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS
 
