@@ -560,21 +560,13 @@ class Repeater(RepeaterSuperProxy):
         elif is_traefik_proxy_404(result):
             return repeat_record.handle_server_failure(result)
         elif result.status_code == HTTPStatus.TOO_MANY_REQUESTS:
-            self.handle_too_many_requests_response()
-            return repeat_record.handle_server_failure(result)  # Retry
+            # TODO:
+            #   self.max_workers = ceil(self.num_workers / 2)
+            #   self.save()
+            return repeat_record.handle_server_failure(result)  # Current behavior
         else:
             message = format_response(result)
             return repeat_record.handle_payload_error(message)
-
-    def handle_too_many_requests_response(self):
-        """
-        If the remote service sends a 429 Too Many Requests response
-        then reduce the number of workers sending payloads in parallel.
-        """
-        if self.num_workers > 1:
-            Repeater.objects.filter(id=self.repeater_id).update(
-                max_workers=self.num_workers // 2
-            )
 
     def get_headers(self, repeat_record):
         # to be overridden
