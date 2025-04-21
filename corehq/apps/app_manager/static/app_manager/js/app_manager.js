@@ -562,6 +562,14 @@ hqDefine('app_manager/js/app_manager', [
                     placeholder: gettext("Add a case type or look for an existing one"),
                     allowClear: true,
                     width: '100%',
+                    createTag: function (params) {
+                        // Replace spaces with underscore
+                        var term = params.term.replace(/ /g, '_');
+                        return {
+                            id: term,
+                            text: term,
+                        };
+                    },
                 });
 
                 $.ajax({
@@ -580,8 +588,7 @@ hqDefine('app_manager/js/app_manager', [
                 });
 
                 $caseType.on('change', function () {
-                    var value = $(this).val();
-                    var valueNoSpaces = value ? value.replace(/ /g, '_') : '';
+                    var valueNoSpaces = $(this).val();
                     var $formGroup = $(this).closest('.form-group');
                     var $help = $('#new_case_type_help');
                     var $error = $('#new_case_type_error');
@@ -635,12 +642,9 @@ hqDefine('app_manager/js/app_manager', [
 
             var $caseTypeInput = $('#new_case_type');
             var value = $caseTypeInput.val();
-            var valueNoSpaces = value.replace(/ /g, '_');
-
-            $caseTypeInput.val(valueNoSpaces);
 
             var $form = $('#new-module-form');
-            $('#new-case-type').val(valueNoSpaces);
+            $('#new-case-type').val(value);
 
             $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
             $('#define-case-type-modal').modal('hide');
