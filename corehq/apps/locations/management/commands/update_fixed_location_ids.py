@@ -1,4 +1,5 @@
 import csv
+from collections import defaultdict
 
 from django.core.management.base import BaseCommand
 
@@ -30,7 +31,8 @@ class Command(BaseCommand):
 
     def handle(self, domain, location_id_filename, *args, **options):
         id_map = get_id_map(location_id_filename)
-        cases = iter_cases(domain, id_map.keys())
+        current_owner_ids = id_map.keys()
+        cases = iter_cases(domain, current_owner_ids)
         case_blocks = iter_case_blocks(cases, id_map)
         total_case_blocks = 0
         for case_blocks_chunk in chunked(case_blocks, CASE_BLOCK_COUNT):
@@ -46,6 +48,7 @@ def get_id_map(location_id_filename):
     """
     Returns a map of {'maybe wrong ID': {'deleted ID': 'new ID'}}.
     """
+    id_map = defaultdict(dict)
     with open(location_id_filename, 'r') as location_id_file:
         reader = csv.DictReader(location_id_file)
         # CSV columns:
@@ -53,12 +56,10 @@ def get_id_map(location_id_filename):
         #   site code. Some (not all) cases will need to be corrected.
         # * "deleted_id": The ID of the deleted location
         # * "true location_id": The correct location ID
-        return {
-            row['id used by the first script']: {
-                row['deleted_id']: row['true location_id'],
-            }
-            for row in reader
-        }
+        for row in reader:
+            dict_ = id_map[row['id used by the first script']]
+            dict_[row['deleted_id']] = row['true location_id']
+    return id_map
 
 
 def iter_cases(domain, owner_ids):
@@ -76,8 +77,9 @@ def iter_case_blocks(cases, id_map):
         deleted_location_id = get_previous_owner_id(case)
         if not deleted_location_id:
             continue  # case is new, and didn't have its location changed
-        if deleted_location_id not in id_map[current_owner_id]:
-            continue  # previous owner_id was not deleted
+        assert deleted_location_id in id_map[current_owner_id], (
+            f"Case '{case.case_id}' owner_id '{deleted_location_id}' missing "
+        )
         correct_location_id = id_map[current_owner_id][deleted_location_id]
         if current_owner_id != correct_location_id:
             yield get_case_block_text(case, correct_location_id)
@@ -100,10 +102,11 @@ def get_previous_owner_id(case):
         xform_instance = transaction.form
         case_updates = get_case_updates(xform_instance, for_case=case.case_id)
         for case_update in case_updates:
-            if 'owner_id' in case_update.create_block:
-                return case_update.create_block['owner_id']
             if 'owner_id' in case_update.update_block:
                 return case_update.update_block['owner_id']
+            if 'owner_id' in case_update.create_block:
+                return case_update.create_block['owner_id']
+    return None
 
 
 def get_case_block_text(case, new_location_id):
