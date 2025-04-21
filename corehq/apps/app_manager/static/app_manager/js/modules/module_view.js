@@ -157,15 +157,15 @@ hqDefine("app_manager/js/modules/module_view", [
             } else {
                 hideCaseTypeDeprecatedWarning();
             }
-            if (!valueNoSpaces.match(/^[\w-]*$/g)) {
+            if (appManager.valueIncludeInvalidCharacters(valueNoSpaces)) {
                 $el.closest('.form-group').addClass('has-error');
                 showCaseTypeError(
-                    gettext("Case types can only include the characters a-z, 0-9, '-' and '_'"),
+                    appManager.invalidCharErrorMsg,
                 );
-            } else if (valueNoSpaces === 'commcare-user' && moduleType !== 'advanced') {
+            } else if (appManager.valueIsReservedWord(valueNoSpaces) && moduleType !== 'advanced') {
                 $el.closest('.form-group').addClass('has-error');
                 showCaseTypeError(
-                    gettext("'commcare-user' is a reserved case type. Please change the case type"),
+                    appManager.reservedWordErrorMsg,
                 );
 
             } else {
