@@ -1,7 +1,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-<!-- B5 TODO: Rewrite this modal to use B5 built-in utility -->
 <div
   class="modal fade define-case-type-modal"
   tabindex="-1"
@@ -10,7 +9,7 @@
 >
   <div class="modal-dialog" role="document">
     <div class="modal-content">
-      <div class="modal-header">
+      <div class="modal-header" style="border-bottom: 1px solid lightgray;">
         <button
           type="button"
           class="close"
@@ -29,34 +28,36 @@
             >{% trans "Please define a case type for your case list." %}</strong
           >
         </h4>
-        <div class="form-group" id="new_case_type_form_group">
-          <label class="control-label">
-            {% trans "Case Type" %}
-            {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
-              <span
-                class="hq-help-template"
-                data-title="{% trans "Case Type" %}"
-                data-content="{% trans "The name for the type of case you are tracking (e.g. “pregnancy,” “farm,” “household,” etc.). All cases you register in this case list will be this type of case. Other case lists with the same case type will use the same set of case(s)." %}"
-              ></span>
-            {% else %}
-              <span
-                class="hq-help-template"
-                data-title="{% trans "Case Type" %}"
-                data-content="{% trans "The name for the type of case you are tracking (e.g. “pregnancy,” “farm,” “household,” etc.). All cases you register in this case list will be this type of case, and only cases of this type will show in the case list. Other case lists with the same case type will use the same set of cases." %}"
-              ></span>
-            {% endif %}
-          </label>
-          <div class="new-case-type-dropdown-container">
-            <select
-              class="form-control new-case-type-dropdown"
-              id="new_case_type"
-              name="new_case_type"
-            >
-              <option value=""></option>
-            </select>
-            <div class="help-block" id="new_case_type_error"></div>
-            <div class="help-block" id="new_case_type_help">
-              {% trans "* You can change the Case Type later by going to the menu settings page" %}
+        <div class="form-horizontal" style="margin-top: 30px;">
+          <div class="form-group" id="new_case_type_form_group">
+            <label class="control-label col-sm-3">
+              {% trans "Case Type" %}
+              {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
+                <span
+                  class="hq-help-template"
+                  data-title="{% trans "Case Type" %}"
+                  data-content="{% trans "The name for the type of case you are tracking (e.g. “pregnancy,” “farm,” “household,” etc.). All cases you register in this case list will be this type of case. Other case lists with the same case type will use the same set of case(s)." %}"
+                ></span>
+              {% else %}
+                <span
+                  class="hq-help-template"
+                  data-title="{% trans "Case Type" %}"
+                  data-content="{% trans "The name for the type of case you are tracking (e.g. “pregnancy,” “farm,” “household,” etc.). All cases you register in this case list will be this type of case, and only cases of this type will show in the case list. Other case lists with the same case type will use the same set of cases." %}"
+                ></span>
+              {% endif %}
+            </label>
+            <div class="new-case-type-dropdown-container col-sm-6">
+              <select
+                class="form-control new-case-type-dropdown"
+                id="new_case_type"
+                name="new_case_type"
+              >
+                <option value=""></option>
+              </select>
+              <div class="help-block" id="new_case_type_error"></div>
+              <div class="help-block" id="new_case_type_help">
+                {% trans "* You can change the Case Type later by going to the menu settings page" %}
+              </div>
             </div>
           </div>
         </div>
