@@ -629,10 +629,7 @@ hqDefine('app_manager/js/app_manager', [
             var value = $caseTypeInput.val();
             var valueNoSpaces = value.replace(/ /g, '_');
 
-            // If validation passes, update the value and submit the form
-            if (value !== valueNoSpaces) {
-                $caseTypeInput.val(valueNoSpaces);
-            }
+            $caseTypeInput.val(valueNoSpaces);
 
             var $form = $('#new-module-form');
             $('#new-case-type').val(valueNoSpaces);
