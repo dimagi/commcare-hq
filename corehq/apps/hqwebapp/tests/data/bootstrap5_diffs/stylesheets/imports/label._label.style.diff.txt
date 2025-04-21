@@ -40,7 +40,7 @@
 +  background-color: $cc-att-pos-mid;
  }
  
- .label-plan-community {
+ .label-plan-free {
 -  background-color: @gray;
 +  background-color: $gray;
  }

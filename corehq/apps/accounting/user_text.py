@@ -4,7 +4,7 @@ from corehq.apps.accounting.models import FeatureType, SoftwarePlanEdition
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import prelogin_url
 
 DESC_BY_EDITION = {
-    SoftwarePlanEdition.COMMUNITY: {
+    SoftwarePlanEdition.FREE: {
         'name': _("Free"),
         'description': _(
             "Designed for practice purposes and not intended for live projects. Upgrade to access "
