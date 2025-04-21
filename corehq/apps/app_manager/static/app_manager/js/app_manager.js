@@ -583,12 +583,14 @@ hqDefine('app_manager/js/app_manager', [
                     var value = $(this).val();
                     var valueNoSpaces = value ? value.replace(/ /g, '_') : '';
                     var $formGroup = $(this).closest('.form-group');
-                    var help = $('#new_case_type_help');
+                    var $help = $('#new_case_type_help');
+                    var $error = $('#new_case_type_error');
                     var $createBtn = $('#case-type-create-btn');
 
                     // Reset error states
                     $formGroup.removeClass('has-error');
-                    help.text(gettext("* You can change the Case Type later by going to the menu settings page"));
+                    $help.show();
+                    $error.hide();
                     $createBtn.prop('disabled', false);
 
                     if (!valueNoSpaces) {
@@ -598,21 +600,27 @@ hqDefine('app_manager/js/app_manager', [
 
                     if (module.valueIncludeInvalidCharacters(valueNoSpaces)) {
                         $formGroup.addClass('has-error');
-                        help.text(module.invalidCharErrorMsg);
+                        $error.text(module.invalidCharErrorMsg);
+                        $error.show();
+                        $help.hide();
                         $createBtn.prop('disabled', true);
                         return;
                     }
 
                     if (module.valueIsReservedWord(valueNoSpaces)) {
                         $formGroup.addClass('has-error');
-                        help.text(module.reservedWordErrorMsg);
+                        $error.text(module.reservedWordErrorMsg);
+                        $error.show();
+                        $help.hide();
                         $createBtn.prop('disabled', true);
                         return;
                     }
 
                     if (self.deprecatedCaseTypes().includes(valueNoSpaces)) {
                         $formGroup.addClass('has-error');
-                        help.text(module.deprecatedCaseTypeErrorMsg);
+                        $error.text(module.deprecatedCaseTypeErrorMsg);
+                        $error.show();
+                        $help.hide();
                         $createBtn.prop('disabled', true);
                         return;
                     }
