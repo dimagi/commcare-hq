@@ -559,10 +559,8 @@ hqDefine('app_manager/js/app_manager', [
 
                         // Add existing case types as options
                         existingCaseTypes.forEach(function (caseType) {
-                            if (caseType !== 'user-owner-mapping-case') {
-                                var option = new Option(caseType, caseType, false, false);
-                                $caseType.append(option);
-                            }
+                            var option = new Option(caseType, caseType, false, false);
+                            $caseType.append(option);
                         });
                     },
                 });
