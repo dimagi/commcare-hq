@@ -635,7 +635,7 @@ hqDefine('app_manager/js/app_manager', [
             }
 
             var $form = $('#new-module-form');
-            $form.append('<input type="hidden" name="case_type" value="' + valueNoSpaces + '" />');
+            $('#new-case-type').val(valueNoSpaces);
 
             $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
             $('#define-case-type-modal').modal('hide');
