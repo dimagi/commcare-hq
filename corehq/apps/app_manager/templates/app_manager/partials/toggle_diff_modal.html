@@ -12,16 +12,17 @@
       <div class="modal-body form-horizontal">
         <p>
           {% blocktrans %}
-            The following features are not turned on in the domain to which you're copying.
-            Select any that you wish to copy along with this application.
+            The following features are not turned on in the domain to which
+            you're copying. Select any that you wish to copy along with this
+            application.
           {% endblocktrans %}
         </p>
         <div id="non_editable_flags" class="alert alert-info d-none">
           <i class="fa fa-info-circle"></i>
-            {% blocktrans %}
-              You do not have permission to copy the disabled flags. Please contact
-              support if you require access to these flags.
-            {% endblocktrans %}
+          {% blocktrans %}
+            You do not have permission to copy the disabled flags. Please
+            contact support if you require access to these flags.
+          {% endblocktrans %}
         </div>
         <div>
           <button class="btn btn-default btn-xs select-all">
@@ -31,7 +32,9 @@
         <ul class="list-unstyled"></ul>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+        <button class="btn btn-default" data-dismiss="modal">
+          {% trans "Cancel" %}
+        </button>
         <button class="btn btn-primary">{% trans "Copy" %}</button>
       </div>
     </div>
@@ -40,7 +43,7 @@
     <li class="checkbox">
       <label>
         <input type="checkbox" data-slug="<%- slug %>" />
-        <span class='label label-<%- tag_css_class %>'><%- tag_name %></span>
+        <span class="label label-<%- tag_css_class %>"><%- tag_name %></span>
         <%- label %>
       </label>
     </li>
