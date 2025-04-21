@@ -109,11 +109,13 @@ def main():
 
 def build_vellum(path, branch, test=True):
     git = get_git(path)
+    '''
     require_clean_working_tree(git, path)
     print("Checkout and fetch {} {}".format(path, branch))
     git.checkout(branch)
     git.fetch()
     require_branch_up_to_date(git, branch, context=path)
+    '''
 
     print("Building Vellum...")
     make_args = ("test",) if test else ()
@@ -140,19 +142,23 @@ def print_vellum_changes(old_vellum_rev, path):
 
 def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target):
     git = get_git(path)
+    '''
     require_clean_working_tree(git, path)
 
     print("Checkout and fetch HQ {}".format(branch))
     git.checkout(branch)
     git.fetch()
+    '''
 
     hq_vellum = join(path, "corehq/apps/app_manager/static/app_manager/js/", target)
+    '''
     if branch != "master":
         print("git reset --hard origin/" + base_branch)
         git.reset("--hard", "origin/" + base_branch)
         assert hq_vellum.startswith(path), (path, hq_vellum)
     else:
         require_branch_up_to_date(git, "master", context=path)
+    '''
     old_vellum_rev = get_old_vellum_rev(hq_vellum)
 
     print("Overwriting HQ Vellum with new build")
@@ -160,6 +166,7 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target):
     sh.mkdir(hq_vellum)
     vellum_tar = join(vellum_dir, VELLUM_TAR)
     sh.tar("xf", vellum_tar, "-C", hq_vellum)
+    return
     git.add("--all", hq_vellum)
 
     message = "{}:{}".format(target, vellum_rev)
@@ -196,6 +203,7 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target):
 
 
 def fix_staging(path, push):
+    return
     git = get_git(path)
     git.checkout("-B", "vellum-staging", "origin/vellum-staging")
     code = subprocess.call([
