@@ -250,7 +250,7 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
                     toggle['tag_index'],
                     toggle['label'])
 
-        editable_tags_slugs = self._editable_tags_slugs()
+        editable_tags_slugs = _editable_tags_slugs(self.request.user)
         unsorted_toggles = [{
             'slug': toggle.slug,
             'label': toggle.label,
@@ -269,11 +269,6 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
 
         return sorted(unsorted_toggles, key=_sort_key)
 
-    def _editable_tags_slugs(self):
-        if settings.SERVER_ENVIRONMENT == 'staging':
-            return [tag.slug for tag in toggles.ALL_TAGS]
-        return [tag.slug for tag in get_tags_with_edit_permission(self.request.user.username)]
-
     def _get_privileges(self):
         return sorted([
             (privileges.Titles.get_name_from_privilege(privilege),
@@ -287,6 +282,12 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
             'toggles': self._get_toggles(),
             'privileges': self._get_privileges(),
         }
+
+
+def _editable_tags_slugs(user):
+    if settings.SERVER_ENVIRONMENT == 'staging':
+        return [tag.slug for tag in toggles.ALL_TAGS]
+    return [tag.slug for tag in get_tags_with_edit_permission(user.username)]
 
 
 @method_decorator(always_allow_project_access, name='dispatch')
@@ -473,6 +474,7 @@ def toggle_diff(request, domain):
     params = json_request(request.GET)
     other_domain = params.get('domain')
     diff = []
+    editable_tags_slugs = _editable_tags_slugs(request.user)
     if Domain.get_by_name(other_domain):
         diff = [{
             'slug': t.slug,
@@ -481,6 +483,7 @@ def toggle_diff(request, domain):
             'tag_name': _('Preview'),
             'tag_css_class': 'default',
             'tag_index': -1,
+            'can_edit': True,
         } for t in feature_previews.all_previews() if _can_copy_toggle(t, request.domain, other_domain)]
         diff.extend([{
             'slug': t.slug,
@@ -489,6 +492,7 @@ def toggle_diff(request, domain):
             'tag_name': t.tag.name,
             'tag_css_class': t.tag.css_class,
             'tag_index': t.tag.index,
+            'can_edit': t.tag.slug in editable_tags_slugs,
         } for t in toggles.all_toggles() if _can_copy_toggle(t, request.domain, other_domain)])
         diff.sort(key=lambda x: (x['tag_index'], x['label']))
     return json_response(diff)

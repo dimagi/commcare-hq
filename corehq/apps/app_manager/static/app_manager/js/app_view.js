@@ -103,10 +103,14 @@ hqDefine("app_manager/js/app_view", [
                             $modal.find(".select-all").click(function (e) {
                                 allSelected = !allSelected;
                                 $(e.currentTarget).text(allSelected ? gettext("Select None") : gettext("Select All"));
-                                $ul.find("input:checkbox").prop('checked', allSelected);
+                                $ul.find("input:checkbox:enabled").prop('checked', allSelected);
                             });
                             _.each(toggles, function (toggle) {
-                                $ul.append(template(toggle));
+                                var $item = $(template(toggle));
+                                if (toggle.can_edit === false) {
+                                    $item.find('input').prop('disabled', true);
+                                }
+                                $ul.append($item);
                             });
                             $modal.modal().one("click", ".btn-primary", function () {
                                 $(this).disableButton();
