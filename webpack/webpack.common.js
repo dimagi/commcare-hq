@@ -7,24 +7,6 @@ const hqPlugins = require('./plugins');
 const { merge } = require('webpack-merge');
 const { emitWarning } = require('node:process');
 
-VELLUM_DEBUG_PATH = fs.realpathSync(path.resolve(__dirname, '../submodules/formdesigner'));
-VELLUM_DEBUG_CONFIG_PATH = path.resolve(VELLUM_DEBUG_PATH, 'webpack/webpack.dev.js');
-let vellumConfig = {},
-    vellumAliases = [],
-    vellumRules = [];
-try {
-    vellumConfig = require(VELLUM_DEBUG_CONFIG_PATH);
-    vellumAliases = vellumConfig.resolve.alias;
-    vellumRules = vellumConfig.module.rules;
-} catch (e) {
-    if (e.code === "MODULE_NOT_FOUND") {
-        // do nothing, vellum config isn't necessary if VELLUM_DEBUG is false
-        emitWarning("Vellum config not found at " + VELLUM_DEBUG_CONFIG_PATH);
-    } else {
-        throw e;
-    }
-}
-
 const aliases = {
     "commcarehq": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/bootstrap5/'),
         'commcarehq'),
@@ -49,23 +31,56 @@ const aliases = {
     "main.vellum.bundle": path.resolve(utils.getStaticPathForApp('app_manager', 'js/vellum/'), 'main.vellum.bundle.js'),
 
     // Source version of vellum, used when VELLUM_DEBUG is True
-    'jquery.vellum': path.resolve(VELLUM_DEBUG_PATH, 'src', 'main'),
+    // This value is unused but necessary for the webpack build to run.
+    // When VELLUM_DEBUG is True, the value is overwritten below.
+    "jquery.vellum": path.resolve(utils.getStaticPathForApp('app_manager', 'js/vellum/'), 'main.vellum.bundle.js'),
 };
+
+// TODO: extract this into a separate file
+let VELLUM_DEBUG_PATH = null,
+    vellumDebugRule = {};
+try {
+    VELLUM_DEBUG_PATH = fs.realpathSync(path.resolve(__dirname, '../submodules/formdesigner'));
+} catch (e) {
+    if (e.code === "ENOENT") {
+        // This is expected if VELLUM_DEBUG is False
+        emitWarning("Vellum directory not found at " + VELLUM_DEBUG_PATH);
+    } else {
+        throw e;
+    }
+}
+if (VELLUM_DEBUG_PATH) {
+    VELLUM_DEBUG_CONFIG_PATH = path.resolve(VELLUM_DEBUG_PATH, 'webpack/webpack.dev.js');
+    try {
+        const vellumConfig = require(VELLUM_DEBUG_CONFIG_PATH);
+        vellumDebugRule = {
+            test: VELLUM_DEBUG_PATH,
+            resolve: {
+                alias: vellumConfig.resolve.alias,
+            },
+            rules: vellumConfig.module.rules,
+        };
+
+        // Source version of vellum, used when VELLUM_DEBUG is True
+        aliases['jquery.vellum'] = path.resolve(VELLUM_DEBUG_PATH, 'src', 'main');
+    } catch (e) {
+        if (e.code === "MODULE_NOT_FOUND") {
+            // This is expected if VELLUM_DEBUG is False
+            emitWarning("Vellum config not found at " + VELLUM_DEBUG_CONFIG_PATH);
+        } else {
+            throw e;
+        }
+    }
+}
 
 module.exports = {
     entry: utils.getEntries(),
 
     module: {
         rules: [
+            vellumDebugRule,
             {
-                test: VELLUM_DEBUG_PATH,
-                resolve: {
-                    alias: vellumAliases,
-                },
-                rules: vellumRules,
-            },
-            {
-                exclude: VELLUM_DEBUG_PATH,
+                exclude: VELLUM_DEBUG_PATH || [],
                 rules: [
                     {
                         test: /\.css$/i,
