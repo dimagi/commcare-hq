@@ -14,7 +14,7 @@ def _grandfather_export_ownership_priv(apps, schema_editor):
     # EXPORT_MULTISORT are Standard Plan and higher
     skip_editions = ','.join((
         SoftwarePlanEdition.PAUSED,
-        SoftwarePlanEdition.COMMUNITY,
+        SoftwarePlanEdition.FREE,
         SoftwarePlanEdition.STANDARD,
     ))
     call_command(

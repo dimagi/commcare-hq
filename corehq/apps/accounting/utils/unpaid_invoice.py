@@ -194,7 +194,7 @@ class Downgrade(UnpaidInvoiceAction):
     def is_subscription_eligible_for_process(subscription):
         return (
             subscription.plan_version.plan.edition not in [
-                SoftwarePlanEdition.COMMUNITY,
+                SoftwarePlanEdition.FREE,
                 SoftwarePlanEdition.PAUSED,
             ] and not subscription.skip_auto_downgrade
         )

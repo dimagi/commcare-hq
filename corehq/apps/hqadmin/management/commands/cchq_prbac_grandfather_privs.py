@@ -19,19 +19,22 @@ class Command(BaseCommand):
         skipped_editions = []
         if skip_edition:
             skipped_editions = skip_edition.split(',')
+            if not _confirm_community_deprecated(skipped_editions, noinput=noinput):
+                return
+
             query = query.exclude(plan__edition__in=skipped_editions)
 
         all_role_slugs = set(
             query.distinct('role__slug').values_list('role__slug', flat=True)
         )
         all_plan_slugs = (
-            all_role_slugs -
-            set(MAX_PRIVILEGES) -  # no privileges should be in software plan roles, this is just a safeguard
-            set(plan_slug.strip() for plan_slug in kwargs.get('skip', '').split(','))
+            all_role_slugs
+            - set(MAX_PRIVILEGES)  # no privileges should be in software plan roles, this is just a safeguard
+            - set(plan_slug.strip() for plan_slug in kwargs.get('skip', '').split(','))
         )
 
         # make sure that these roles are not attached to SoftwarePlanEditions
-        # that they aren't meant to be attached to. e.g. thw pro_plan_v1 role
+        # that they aren't meant to be attached to. e.g. the pro_plan_v1 role
         # attached to a SoftwarePlanVersion under the Advanced edition.
         # see https://dimagi-dev.atlassian.net/browse/SAASP-10124
         all_plan_slugs = [
@@ -88,6 +91,17 @@ class Command(BaseCommand):
             help="Verbose logging",
             default=True,
         )
+
+
+def _confirm_community_deprecated(skipped_editions, noinput=False):
+    if 'Community' in skipped_editions and 'Free' not in skipped_editions and not noinput:
+        community_deprecated_msg = (
+            "Community Edition was changed to Free Edition in April 2025.\n"
+            "You should probably replace 'Community' with 'Free', or include both to be on the safe side."
+            "\nProceed anyway?"
+        )
+        return _confirm(community_deprecated_msg)
+    return True
 
 
 def _confirm(msg):
