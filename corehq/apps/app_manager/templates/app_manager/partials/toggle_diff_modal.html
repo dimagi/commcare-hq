@@ -16,6 +16,13 @@
             Select any that you wish to copy along with this application.
           {% endblocktrans %}
         </p>
+        <div id="non_editable_flags" class="alert alert-info d-none">
+          <i class="fa fa-info-circle"></i>
+            {% blocktrans %}
+              You do not have permission to copy the disabled flags. Please contact
+              support if you require access to these flags.
+            {% endblocktrans %}
+        </div>
         <div>
           <button class="btn btn-default btn-xs select-all">
             {% trans "Select All" %}

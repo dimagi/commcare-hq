@@ -112,6 +112,11 @@ hqDefine("app_manager/js/app_view", [
                                 }
                                 $ul.append($item);
                             });
+
+                            if (_.any(toggles, t => !t.can_edit)) {
+                                $('#non_editable_flags').removeClass('d-none');
+                            }
+
                             $modal.modal().one("click", ".btn-primary", function () {
                                 $(this).disableButton();
                                 var slugs = _.map($modal.find(":checked"), function (c) {
