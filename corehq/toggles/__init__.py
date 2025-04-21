@@ -1251,14 +1251,6 @@ ECD_PREVIEW_ENTERPRISE_DOMAINS = StaticToggle(
     'domains that are Advanced or Pro and have undergone the ECD migration.'
 )
 
-CASE_API_V0_6 = StaticToggle(
-    'case_api_v0_6',
-    'Enable the v0.6 Case API',
-    TAG_SOLUTIONS_LIMITED,
-    namespaces=[NAMESPACE_DOMAIN],
-    save_fn=_ensure_search_index_is_enabled,
-)
-
 ACTION_TIMES_API = StaticToggle(
     'action_times_api',
     'Enable the Action Times API',
