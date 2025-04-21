@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
@@ -13,6 +14,7 @@ from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.linked_domain.models import DomainLink
+from corehq.toggles.shortcuts import get_toggles_with_edit_permission
 
 from .dbaccessors import get_all_built_app_ids_and_versions
 from .models import LATEST_APK_VALUE, LATEST_APP_VALUE
@@ -55,6 +57,7 @@ class CopyApplicationForm(forms.Form):
     toggles = forms.CharField(required=False, widget=forms.HiddenInput, max_length=5000)
 
     def __init__(self, from_domain, app, *args, **kwargs):
+        self.request_user = kwargs.pop('request_user', None)
         super(CopyApplicationForm, self).__init__(*args, **kwargs)
         fields = ['domain', 'name', 'toggles', 'build_id']
         self.from_domain = from_domain
@@ -93,7 +96,21 @@ class CopyApplicationForm(forms.Form):
             if link and link[0].master_domain != self.from_domain:
                 raise forms.ValidationError(
                     "The target project space is already linked to a different domain")
+
+        if self.cleaned_data['toggles'] and settings.SERVER_ENVIRONMENT != 'staging':
+            self._check_edit_permission_for_toggles()
+
         return self.cleaned_data
+
+    def _check_edit_permission_for_toggles(self):
+        toggle_slugs = set(self.cleaned_data['toggles'].split(','))
+        editable_toggle_slugs = {
+           toggle.slug for toggle in get_toggles_with_edit_permission(self.request_user.username)
+        }
+        if not toggle_slugs.issubset(editable_toggle_slugs):
+            raise forms.ValidationError(
+                _("You do not have permission to copy this application with the selected toggles.")
+            )
 
 
 class PromptUpdateSettingsForm(forms.Form):

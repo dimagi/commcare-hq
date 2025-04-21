@@ -111,3 +111,10 @@ def get_tags_with_edit_permission(username):
         if not permission or permission.is_user_enabled(username):
             allowed_tags.append(tag)
     return allowed_tags
+
+
+def get_toggles_with_edit_permission(username):
+    from corehq.toggles import all_toggles
+
+    allowed_tags = get_tags_with_edit_permission(username)
+    return [toggle for toggle in list(all_toggles()) if toggle.tag in allowed_tags]

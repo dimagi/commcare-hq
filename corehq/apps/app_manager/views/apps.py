@@ -443,7 +443,7 @@ def app_source(request, domain, app_id):
 def copy_app(request, domain):
     app_id = request.POST.get('app')
     app = get_app(domain, app_id)
-    form = CopyApplicationForm(domain, app, request.POST)
+    form = CopyApplicationForm(domain, app, request.POST, request_user=request.user)
     if not form.is_valid():
         from corehq.apps.app_manager.views.view_generic import view_generic
         return view_generic(request, domain, app_id, copy_app_form=form)
