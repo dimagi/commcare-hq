@@ -1,29 +1,10 @@
 /* eslint-env node */
-const fs = require('fs');
 const path = require('path');
 const webpack = require('webpack');
 const utils = require('./utils');
 const hqPlugins = require('./plugins');
 const { merge } = require('webpack-merge');
-const { emitWarning } = require('node:process');
-
-VELLUM_DEBUG_PATH = fs.realpathSync(path.resolve(__dirname, '../submodules/formdesigner'));
-VELLUM_DEBUG_CONFIG_PATH = path.resolve(VELLUM_DEBUG_PATH, 'webpack/webpack.dev.js');
-let vellumConfig = {},
-    vellumAliases = [],
-    vellumRules = [];
-try {
-    vellumConfig = require(VELLUM_DEBUG_CONFIG_PATH);
-    vellumAliases = vellumConfig.resolve.alias;
-    vellumRules = vellumConfig.module.rules;
-} catch (e) {
-    if (e.code === "MODULE_NOT_FOUND") {
-        // do nothing, vellum config isn't necessary if VELLUM_DEBUG is false
-        emitWarning("Vellum config not found at " + VELLUM_DEBUG_CONFIG_PATH);
-    } else {
-        throw e;
-    }
-}
+const vellumUtils = require('./vellumUtils');
 
 const aliases = {
     "commcarehq": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/bootstrap5/'),
@@ -45,30 +26,17 @@ const aliases = {
     "hqwebapp/less": path.resolve(utils.getStaticPathForApp('hqwebapp', 'less')),
     "ko.mapping": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/lib/knockout_plugins/'),
         'knockout_mapping.ko.min'),
-
-    // Minified version of vellum, used when VELLUM_DEBUG is False
-    "jquery.vellum.prod": path.resolve(utils.getStaticPathForApp('app_manager', 'js/vellum/'), 'main'),
-
-    "jquery.vellum.dev": path.resolve(VELLUM_DEBUG_PATH, 'src', 'main'),
-
-    // Supports hqAnalytics in vellum when VELLUM_DEBUG=False
-    "vellum/hqAnalytics": "app_manager/js/forms/form_designer_analytics",
 };
 
+const vellumDebugDir = vellumUtils.getDebugDir();
 module.exports = {
     entry: utils.getEntries(),
 
     module: {
         rules: [
+            vellumUtils.getDebugRule(),
             {
-                test: VELLUM_DEBUG_PATH,
-                resolve: {
-                    alias: vellumAliases,
-                },
-                rules: vellumRules,
-            },
-            {
-                exclude: VELLUM_DEBUG_PATH,
+                exclude: vellumDebugDir || [],
                 rules: [
                     {
                         test: /\.css$/i,
@@ -167,7 +135,7 @@ module.exports = {
     },
 
     resolve: {
-        alias: utils.getAllAliases(aliases),
+        alias: utils.getAllAliases(Object.assign(aliases, vellumUtils.getAliases())),
     },
 
     snapshot: {
