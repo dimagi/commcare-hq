@@ -119,6 +119,20 @@ hqDefine('app_manager/js/app_manager', [
         }
     };
 
+    module.valueIncludeInvalidCharacters = function (valueNoSpaces) {
+        return !valueNoSpaces.match(/^[\w-]*$/g);
+    };
+
+    module.invalidCharErrorMsg = gettext("Case types can only include the characters a-z, 0-9, '-' and '_'");
+
+    module.valueIsReservedWord = function (valueNoSpaces) {
+        return valueNoSpaces === 'commcare-user' || valueNoSpaces === 'user-owner-mapping-case';
+    };
+
+    module.reservedWordErrorMsg = gettext("This is a reserved case type. Please choose another name.");
+
+    module.deprecatedCaseTypeErrorMsg = gettext("This case type has been deprecated in the Data Dictionary.");
+
     module.init = function (args) {
         _initCommcareVersion(args);
         _initSaveButtons();
@@ -582,23 +596,23 @@ hqDefine('app_manager/js/app_manager', [
                         return;
                     }
 
-                    if (!valueNoSpaces.match(/^[\w-]*$/g)) {
+                    if (module.valueIncludeInvalidCharacters(valueNoSpaces)) {
                         $formGroup.addClass('has-error');
-                        help.text(gettext("Case types can only include the characters a-z, 0-9, '-' and '_'"));
+                        help.text(module.invalidCharErrorMsg);
                         $createBtn.prop('disabled', true);
                         return;
                     }
 
-                    if (valueNoSpaces === 'commcare-user') {
+                    if (module.valueIsReservedWord(valueNoSpaces)) {
                         $formGroup.addClass('has-error');
-                        help.text(gettext("'commcare-user' is a reserved case type. Please change the case type"));
+                        help.text(module.reservedWordErrorMsg);
                         $createBtn.prop('disabled', true);
                         return;
                     }
 
                     if (self.deprecatedCaseTypes().includes(valueNoSpaces)) {
                         $formGroup.addClass('has-error');
-                        help.text(gettext("This case type has been deprecated in the Data Dictionary."));
+                        help.text(module.deprecatedCaseTypeErrorMsg);
                         $createBtn.prop('disabled', true);
                         return;
                     }
