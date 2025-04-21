@@ -6,9 +6,9 @@ from corehq import privileges
 
 paused_v0 = []
 
-# COMMUNITY PLANS
+# FREE PLANS
 
-# Grandfathered Community Plans created prior to August 2018
+# Grandfathered Free Plans created prior to August 2018
 community_v0 = [
     privileges.PROJECT_ACCESS,
     privileges.EXCEL_DASHBOARD,
@@ -18,7 +18,7 @@ community_v0 = [
     privileges.DATA_FORWARDING,
 ]
 
-# Grandfathered Community Plans created prior to Dec 18, 2019
+# Grandfathered Free Plans created prior to Dec 18, 2019
 community_v1 = [
     privileges.PROJECT_ACCESS,
     privileges.CASE_SHARING_GROUPS,
@@ -26,7 +26,7 @@ community_v1 = [
     privileges.DATA_FORWARDING,
 ]
 
-# Current Community Plan
+# Current Free Plan
 community_v2 = [
     privileges.PROJECT_ACCESS,
     privileges.LOGIN_AS,
@@ -53,7 +53,7 @@ standard_v0 = community_v0 + [
     privileges.PRACTICE_MOBILE_WORKERS,
 ]
 
-# Current Standard Plan
+# Grandfathered Standard Plans created prior to Apr 22, 2025
 standard_v1 = community_v2 + [
     privileges.LOOKUP_TABLES,
     privileges.ROLE_BASED_ACCESS,
@@ -67,6 +67,25 @@ standard_v1 = community_v2 + [
     privileges.EXCEL_DASHBOARD,
     privileges.DAILY_SAVED_EXPORT,
     privileges.ZAPIER_INTEGRATION,
+    privileges.PRACTICE_MOBILE_WORKERS,
+    privileges.FORM_LINK_WORKFLOW,
+    privileges.PHONE_APK_HEARTBEAT,
+    privileges.FORM_CASE_IDS_CASE_IMPORTER,
+    privileges.EXPORT_MULTISORT,
+]
+
+# Current Standard Plan
+standard_v2 = community_v2 + [
+    privileges.LOOKUP_TABLES,
+    privileges.ROLE_BASED_ACCESS,
+    privileges.OUTBOUND_SMS,
+    privileges.REMINDERS_FRAMEWORK,
+    privileges.CUSTOM_SMS_GATEWAY,
+    privileges.BULK_CASE_MANAGEMENT,
+    privileges.BULK_USER_MANAGEMENT,
+    privileges.ALLOW_EXCESS_USERS,
+    privileges.EXCEL_DASHBOARD,
+    privileges.DAILY_SAVED_EXPORT,
     privileges.PRACTICE_MOBILE_WORKERS,
     privileges.FORM_LINK_WORKFLOW,
     privileges.PHONE_APK_HEARTBEAT,
@@ -92,7 +111,7 @@ pro_v0 = standard_v0 + [
 ]
 
 # Current Pro Plan
-pro_v1 = standard_v1 + [
+pro_v1 = standard_v2 + [
     privileges.DATA_FORWARDING,
     privileges.API_ACCESS,
     privileges.CUSTOM_REPORTS,
@@ -110,6 +129,8 @@ pro_v1 = standard_v1 + [
     privileges.EXPORT_OWNERSHIP,
     privileges.CASE_LIST_EXPLORER,
     privileges.CASE_DEDUPE,
+    privileges.USERCASE,
+    privileges.ZAPIER_INTEGRATION,
 ]
 
 
