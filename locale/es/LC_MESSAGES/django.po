@@ -1702,28 +1702,7 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "    To pay this bill, you can either choose a credit card or wire "
-#| "payment:\n"
-#| "        - To pay by credit card, please go to your Billing Statements "
-#| "page, click\n"
-#| "          on the green \"Make Payment\" button in front of your unpaid "
-#| "invoice(s),\n"
-#| "          and fill in the amount you want to pay as well as your credit "
-#| "card\n"
-#| "          details.\n"
-#| "        - To pay by wire, find Dimagi's bank account details on your "
-#| "invoice.\n"
-#| "          Please include the invoice number in your wire payment and make "
-#| "sure to\n"
-#| "          send an email to %(accounts_email)s after you have made the "
-#| "payment,\n"
-#| "          mentioning the date of the payment, the amount, the invoice "
-#| "number, and\n"
-#| "          the project space.\n"
-#| "    "
+#, python-format
 msgid ""
 "\n"
 "          To pay by wire, find Dimagi's bank account details on your "
@@ -1736,22 +1715,6 @@ msgid ""
 "          number, and the project space.\n"
 "        "
 msgstr ""
-"\n"
-"Usted puede pagar esta factura por medio de tarjeta de crédito o "
-"transferencia: \n"
-"- Para pagar por medio de tarjeta de crédito, ingrese a la página de Estados "
-"de Cuenta, haga clic \n"
-"en el botón verde de \"Realizar pago\" delante de la(s) facturas pendientes "
-"de pago \n"
-"e ingrese la cantidad que desea pagar y los datos de su tarjeta de "
-"crédito. \n"
-"- Para pagar por medio de transferencia, puede encontrar los datos bancarios "
-"de Dimagi en su factura. Por favor incluya el número de factura en su pago "
-"por transferencia y asegúrese de \n"
-"enviar un correo electrónico a %(accounts_email)s después de realizar el "
-"pago. \n"
-"Incluya la fecha del pago, el monto, el número de factura y el espacio del "
-"proyecto. "
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
@@ -1902,28 +1865,7 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.txt
 #: corehq/apps/accounting/templates/accounting/email/invoice.txt
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "    To pay this bill, you can either choose a credit card or wire "
-#| "payment:\n"
-#| "        - To pay by credit card, please go to your Billing Statements "
-#| "page, click\n"
-#| "          on the green \"Make Payment\" button in front of your unpaid "
-#| "invoice(s),\n"
-#| "          and fill in the amount you want to pay as well as your credit "
-#| "card\n"
-#| "          details.\n"
-#| "        - To pay by wire, find Dimagi's bank account details on your "
-#| "invoice.\n"
-#| "          Please include the invoice number in your wire payment and make "
-#| "sure to\n"
-#| "          send an email to %(accounts_email)s after you have made the "
-#| "payment,\n"
-#| "          mentioning the date of the payment, the amount, the invoice "
-#| "number, and\n"
-#| "          the project space.\n"
-#| "    "
+#, python-format
 msgid ""
 "\n"
 "        - To pay by wire, find Dimagi's bank account details on your "
@@ -1937,22 +1879,6 @@ msgid ""
 "          the project space.\n"
 "      "
 msgstr ""
-"\n"
-"Usted puede pagar esta factura por medio de tarjeta de crédito o "
-"transferencia: \n"
-"- Para pagar por medio de tarjeta de crédito, ingrese a la página de Estados "
-"de Cuenta, haga clic \n"
-"en el botón verde de \"Realizar pago\" delante de la(s) facturas pendientes "
-"de pago \n"
-"e ingrese la cantidad que desea pagar y los datos de su tarjeta de "
-"crédito. \n"
-"- Para pagar por medio de transferencia, puede encontrar los datos bancarios "
-"de Dimagi en su factura. Por favor incluya el número de factura en su pago "
-"por transferencia y asegúrese de \n"
-"enviar un correo electrónico a %(accounts_email)s después de realizar el "
-"pago. \n"
-"Incluya la fecha del pago, el monto, el número de factura y el espacio del "
-"proyecto. "
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.txt
 #: corehq/apps/accounting/templates/accounting/email/invoice.txt
@@ -2642,28 +2568,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "    To pay this bill, you can either choose a credit card or wire "
-#| "payment:\n"
-#| "        - To pay by credit card, please go to your Billing Statements "
-#| "page, click\n"
-#| "          on the green \"Make Payment\" button in front of your unpaid "
-#| "invoice(s),\n"
-#| "          and fill in the amount you want to pay as well as your credit "
-#| "card\n"
-#| "          details.\n"
-#| "        - To pay by wire, find Dimagi's bank account details on your "
-#| "invoice.\n"
-#| "          Please include the invoice number in your wire payment and make "
-#| "sure to\n"
-#| "          send an email to %(accounts_email)s after you have made the "
-#| "payment,\n"
-#| "          mentioning the date of the payment, the amount, the invoice "
-#| "number, and\n"
-#| "          the project space.\n"
-#| "    "
+#, python-format
 msgid ""
 "\n"
 "        To pay by wire, find Dimagi's bank account details on your invoice.\n"
@@ -2675,22 +2580,6 @@ msgid ""
 "        number, and the project space.\n"
 "      "
 msgstr ""
-"\n"
-"Usted puede pagar esta factura por medio de tarjeta de crédito o "
-"transferencia: \n"
-"- Para pagar por medio de tarjeta de crédito, ingrese a la página de Estados "
-"de Cuenta, haga clic \n"
-"en el botón verde de \"Realizar pago\" delante de la(s) facturas pendientes "
-"de pago \n"
-"e ingrese la cantidad que desea pagar y los datos de su tarjeta de "
-"crédito. \n"
-"- Para pagar por medio de transferencia, puede encontrar los datos bancarios "
-"de Dimagi en su factura. Por favor incluya el número de factura en su pago "
-"por transferencia y asegúrese de \n"
-"enviar un correo electrónico a %(accounts_email)s después de realizar el "
-"pago. \n"
-"Incluya la fecha del pago, el monto, el número de factura y el espacio del "
-"proyecto. "
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 msgid "Best Regards,"
@@ -2740,28 +2629,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "    To pay this bill, you can either choose a credit card or wire "
-#| "payment:\n"
-#| "        - To pay by credit card, please go to your Billing Statements "
-#| "page, click\n"
-#| "          on the green \"Make Payment\" button in front of your unpaid "
-#| "invoice(s),\n"
-#| "          and fill in the amount you want to pay as well as your credit "
-#| "card\n"
-#| "          details.\n"
-#| "        - To pay by wire, find Dimagi's bank account details on your "
-#| "invoice.\n"
-#| "          Please include the invoice number in your wire payment and make "
-#| "sure to\n"
-#| "          send an email to %(accounts_email)s after you have made the "
-#| "payment,\n"
-#| "          mentioning the date of the payment, the amount, the invoice "
-#| "number, and\n"
-#| "          the project space.\n"
-#| "    "
+#, python-format
 msgid ""
 "\n"
 "  - To pay by wire, find Dimagi's bank account details on your invoice.\n"
@@ -2770,22 +2638,6 @@ msgid ""
 "    mentioning the date of the payment, the amount, the invoice number, and\n"
 "    the project space.\n"
 msgstr ""
-"\n"
-"Usted puede pagar esta factura por medio de tarjeta de crédito o "
-"transferencia: \n"
-"- Para pagar por medio de tarjeta de crédito, ingrese a la página de Estados "
-"de Cuenta, haga clic \n"
-"en el botón verde de \"Realizar pago\" delante de la(s) facturas pendientes "
-"de pago \n"
-"e ingrese la cantidad que desea pagar y los datos de su tarjeta de "
-"crédito. \n"
-"- Para pagar por medio de transferencia, puede encontrar los datos bancarios "
-"de Dimagi en su factura. Por favor incluya el número de factura en su pago "
-"por transferencia y asegúrese de \n"
-"enviar un correo electrónico a %(accounts_email)s después de realizar el "
-"pago. \n"
-"Incluya la fecha del pago, el monto, el número de factura y el espacio del "
-"proyecto. "
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
 #, python-format
@@ -3644,7 +3496,7 @@ msgstr "Subir de plan/Bajar de plan"
 
 #: corehq/apps/accounting/user_text.py
 msgid "Free"
-msgstr ""
+msgstr "Gratis"
 
 #: corehq/apps/accounting/user_text.py
 msgid ""
@@ -4673,6 +4525,13 @@ msgstr ""
 
 #: corehq/apps/app_manager/app_strings.py
 msgid "Create a new Case"
+msgstr ""
+
+#: corehq/apps/app_manager/dbaccessors.py
+#, python-brace-format
+msgid ""
+"App {app_id} is in domain {app_domain} but requested from domain "
+"{requested_domain}"
 msgstr ""
 
 #: corehq/apps/app_manager/dbaccessors.py
@@ -7252,20 +7111,16 @@ msgid "Shadow Form"
 msgstr "Formulario Sombra"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/add_new_module_modal.html
-#, fuzzy
-#| msgid "Create a new"
 msgid "Create a New Menu"
-msgstr "Crear uno nuevo"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/add_new_module_modal.html
 msgid "Please note you will not be able to change menu type later."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/appnav_menu_header.html
-#, fuzzy
-#| msgid "Application Status"
 msgid "Application Settings"
-msgstr "Estado de la Aplicación"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/appnav_menu_header.html
 msgid "Updates Available to Publish"
@@ -8624,10 +8479,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
-#, fuzzy
-#| msgid "Case Property"
 msgid "User Case Property"
-msgstr "Propiedad del Caso"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 msgid ""
@@ -9260,13 +9113,11 @@ msgid "Warning"
 msgstr "Advertencia"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_advanced.html
-#, fuzzy
-#| msgid "Complex case management."
 msgid ""
 "\n"
 "    Complex case management\n"
 "  "
-msgstr "Manejo de casos complejo."
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_biometrics.html
 msgid "Biometrics"
@@ -9280,31 +9131,25 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_case.html
-#, fuzzy
-#| msgid "Track items over time."
 msgid ""
 "\n"
 "    Track items over time\n"
 "  "
-msgstr "De seguimiento a ítems a lo largo del tiempo."
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_report.html
-#, fuzzy
-#| msgid "Worker performance."
 msgid ""
 "\n"
 "    Worker performance\n"
 "  "
-msgstr "Desempeño del Trabajador."
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_shadow.html
-#, fuzzy
-#| msgid "Mimic another menu."
 msgid ""
 "\n"
 "    Mimic another menu\n"
 "  "
-msgstr "Imitar otro menú."
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_shadow_v1.html
 msgid "Shadow Menu V1"
@@ -9322,13 +9167,11 @@ msgid "Surveys"
 msgstr "Encuestas"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_survey.html
-#, fuzzy
-#| msgid "Collect data once."
 msgid ""
 "\n"
 "    Collect data once\n"
 "  "
-msgstr "Recopile datos una vez."
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_training.html
 msgid "Training"
@@ -12532,11 +12375,26 @@ msgid "Unknown metric"
 msgstr ""
 
 #: corehq/apps/campaign/templates/campaign/partials/dashboard_map.html
+#: corehq/apps/campaign/templates/campaign/partials/dashboard_report.html
 msgid ""
 "\n"
 "          Something went wrong while loading this widget! Please try again.\n"
 "        "
 msgstr ""
+
+#: corehq/apps/campaign/templates/campaign/partials/dashboard_report.html
+#, fuzzy
+#| msgid ""
+#| "Please choose your filters above and click <strong>Apply</strong> to see "
+#| "report data."
+msgid ""
+"\n"
+"                Please choose your filters and click <strong>Apply</strong> "
+"to see report data.\n"
+"              "
+msgstr ""
+"Por favor elija sus filtros arriba y haga clic en<strong>Aplicar</strong> "
+"para ver los datos del reporte."
 
 #: corehq/apps/campaign/templates/campaign/partials/delete_widget_button.html
 #: corehq/apps/campaign/templates/campaign/partials/delete_widget_confirmation_modal.html
@@ -13771,16 +13629,12 @@ msgid "Select"
 msgstr "Seleccione"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/config.html
-#, fuzzy
-#| msgid "Configuration"
 msgid "Column Configuration"
-msgstr "Configuración"
+msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/config_modal.html
-#, fuzzy
-#| msgid "Please specify at least one action."
 msgid "Please Select at least one column."
-msgstr "Por favor especifique por lo menos una acción."
+msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/config_modal.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/pinned_filter_form.html
@@ -14729,6 +14583,103 @@ msgstr ""
 msgid "Please add case owners to filter the list of cases."
 msgstr ""
 
+#: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid "Select a file to upload"
+msgid "Select a property to clean"
+msgstr "Seleccione un archivo a cargar"
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid ""
+"Choices are editable case properties that are currently visible in the table."
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid "Data Dictionary"
+msgid "Data cleaning action"
+msgstr "Diccionario de Datos"
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid "Find:"
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid "Use xpath expression"
+msgid "Use regular expression"
+msgstr "Utilizar la expresión xpath"
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid "Replace"
+msgid "Replace with:"
+msgstr "Reemplazar"
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid "Replace existing value with:"
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid "Case property"
+msgid "Copy from property:"
+msgstr "Propiedad del caso"
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid ""
+"The value from this property will replace the value from the selected "
+"property at the top."
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid "Set case property"
+msgid "Select a case property..."
+msgstr "Establecer propiedad del caso"
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid "Select Application..."
+msgid "Select a cleaning action..."
+msgstr "Seleccione una Aplicación..."
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid "View Changes"
+msgid "Preview Changes"
+msgstr "Ver Cambios"
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid ""
+"Please specify a value you would like to replace the existing property value "
+"with."
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid "Please specify at least one action."
+msgid "Please specify the value you would like to find."
+msgstr "Por favor especifique por lo menos una acción."
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid "Must be a valid xpath expression."
+msgid "Not a valid regular expression."
+msgstr "Debe ser una expresión xpath válida"
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid "Please select a property."
+msgid "Please select a property to copy from."
+msgstr "Por favor seleccione una propiedad."
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid "to the value from other case property"
+msgid "You cannot copy from the same property."
+msgstr "al valor de otra propiedad del caso"
+
 #: corehq/apps/data_cleaning/forms/columns.py
 #: corehq/apps/data_cleaning/forms/filters.py
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -15112,6 +15063,25 @@ msgstr ""
 msgid "Pending"
 msgstr "Pendientes"
 
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+msgid "No editible case properties are visible"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+msgid ""
+"\n"
+"        Please\n"
+"        <a\n"
+"          href=\"#\"\n"
+"          class=\"fw-bold\"\n"
+"          data-bs-dismiss=\"offcanvas\"\n"
+"          @click.prevent=\"$dispatch('wiggle-configure-columns-button');\"\n"
+"        >Configure Columns</a>\n"
+"        to include editible case properties in the column list in\n"
+"        order to clean the selected cases.\n"
+"      "
+msgstr ""
+
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/partials/active_session_exists.html
 msgid ""
 "\n"
@@ -15121,10 +15091,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
-#, fuzzy
-#| msgid "Confirm Account"
 msgid "Confirm Action"
-msgstr "Confirme Cuenta"
+msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_select_all.html
 #, python-format
@@ -15135,13 +15103,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_select_all.html
-#, fuzzy, python-format
-#| msgid "Are you sure you want to remove this users's membership?"
+#, python-format
 msgid ""
 "\n"
 "      Are you sure you want to select %(num_records)s cases?\n"
 "    "
-msgstr "¿Esta seguro de que quiere remover esta membresía de usuario?"
+msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_select_all.html
 msgid ""
@@ -15206,6 +15173,19 @@ msgid "Clean Selected Cases"
 msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+msgid ""
+"\n"
+"      No cases were found that match the current filters. Please\n"
+"      <a\n"
+"        href=\"#\"\n"
+"        class=\"fw-bold\"\n"
+"        @click.prevent=\"$dispatch('wiggle-filters-button');\"\n"
+"      >adjust your filters</a>\n"
+"      and try again.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 #, python-format
 msgid ""
 "\n"
@@ -15225,10 +15205,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
-#, fuzzy
-#| msgid "Numeric Selection"
 msgid "Clear Selection"
-msgstr "Selección Numérica"
+msgstr ""
 
 #: corehq/apps/data_cleaning/utils/cases.py corehq/apps/geospatial/reports.py
 #: corehq/apps/userreports/reports/builder/forms.py
@@ -15299,6 +15277,10 @@ msgstr ""
 
 #: corehq/apps/data_cleaning/utils/cases.py
 msgid "Last Modified (UTC)"
+msgstr ""
+
+#: corehq/apps/data_cleaning/views/cleaning.py
+msgid "Cannot load clean selected records form, session was not found."
 msgstr ""
 
 #: corehq/apps/data_cleaning/views/columns.py
@@ -28568,6 +28550,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5.html
+#, fuzzy
+#| msgid "No transaction found"
+msgid "No results found."
+msgstr "No se encuentra la transacción"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5.html
 #, python-format
 msgid ""
 "\n"
@@ -29036,10 +29024,8 @@ msgid "Verified By"
 msgstr ""
 
 #: corehq/apps/integration/payments/tables.py
-#, fuzzy
-#| msgid "No longer available"
 msgid "Unavailable"
-msgstr "Ya no está disponible"
+msgstr ""
 
 #: corehq/apps/integration/payments/views.py
 #: corehq/apps/integration/templates/payments/payments_verify_report.html
@@ -41420,30 +41406,6 @@ msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/bootstrap3/base.html
 #: corehq/apps/userreports/templates/userreports/bootstrap5/base.html
-msgid ""
-"\n"
-"            Charts cannot be displayed with more than 25 categories. Please "
-"filter the data or change your report to limit the number of rows.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/bootstrap3/base.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/base.html
-#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
-#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
-msgid "Fit all data into view"
-msgstr "Muestre todos los datos en la vista"
-
-#: corehq/apps/userreports/templates/userreports/bootstrap3/base.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/base.html
-msgid ""
-"\n"
-"            Note:\n"
-"          "
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/bootstrap3/base.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/base.html
 msgid "Base Query/Queries"
 msgstr ""
 
@@ -42107,6 +42069,42 @@ msgstr "Texto no puede estar en blanco"
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap5/property_list_configuration.html
 msgid "Filter Value should not be blank."
 msgstr "El Valor del Filtro no debe estar vacío."
+
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/report_content.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/report_content.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    Charts cannot be displayed with more than 25 "
+#| "categories.\n"
+#| "                    Once you Save and View report, you will be able to "
+#| "filter the data to limit the number of rows.\n"
+#| "                  "
+msgid ""
+"\n"
+"      Charts cannot be displayed with more than 25 categories. Please filter "
+"the data or change your report to limit the number of rows.\n"
+"    "
+msgstr ""
+"\n"
+"No se pueden visualizar gráficas con más de 25 categorías. Una vez haya "
+"Guardado y Visualizado el reporte, podrá filtrar los datos para limitar el "
+"número de filas. "
+
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/report_content.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/report_content.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
+msgid "Fit all data into view"
+msgstr "Muestre todos los datos en la vista"
+
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/report_content.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/report_content.html
+msgid ""
+"\n"
+"      Note:\n"
+"    "
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/partials/build_in_progress_warning.html
 msgid "You can try clicking \"Advanced\" and choosing \"Resume Build\"."
@@ -50314,19 +50312,3 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
-
-#~ msgid "Card Number"
-#~ msgstr "Número de Tarjeta"
-
-#~ msgctxt "Check digits of credit card"
-#~ msgid "CVC"
-#~ msgstr "CVC"
-
-#~ msgid "Expiration"
-#~ msgstr "Vencimiento"
-
-#~ msgid "CVC"
-#~ msgstr "CVC"
-
-#~ msgid "Community"
-#~ msgstr "Comunidad"

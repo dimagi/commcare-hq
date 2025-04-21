@@ -6,7 +6,7 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/bootstrap5/alert_user",
     "analytix/js/google",
-    "es6!hqwebapp/js/bootstrap5_loader",
+    "bootstrap5",
     "hqwebapp/js/hq_extensions.jquery",
     "jquery.cookie/jquery.cookie",
 ], function (

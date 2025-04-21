@@ -4305,6 +4305,13 @@ msgid "Create a new Case"
 msgstr ""
 
 #: corehq/apps/app_manager/dbaccessors.py
+#, python-brace-format
+msgid ""
+"App {app_id} is in domain {app_domain} but requested from domain "
+"{requested_domain}"
+msgstr ""
+
+#: corehq/apps/app_manager/dbaccessors.py
 msgid "Build for version requested not found"
 msgstr ""
 
@@ -11852,10 +11859,19 @@ msgid "Unknown metric"
 msgstr ""
 
 #: corehq/apps/campaign/templates/campaign/partials/dashboard_map.html
+#: corehq/apps/campaign/templates/campaign/partials/dashboard_report.html
 msgid ""
 "\n"
 "          Something went wrong while loading this widget! Please try again.\n"
 "        "
+msgstr ""
+
+#: corehq/apps/campaign/templates/campaign/partials/dashboard_report.html
+msgid ""
+"\n"
+"                Please choose your filters and click <strong>Apply</strong> "
+"to see report data.\n"
+"              "
 msgstr ""
 
 #: corehq/apps/campaign/templates/campaign/partials/delete_widget_button.html
@@ -14010,6 +14026,79 @@ msgstr ""
 msgid "Please add case owners to filter the list of cases."
 msgstr ""
 
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid "Select a property to clean"
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid ""
+"Choices are editable case properties that are currently visible in the table."
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid "Data cleaning action"
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid "Find:"
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid "Use regular expression"
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid "Replace with:"
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid "Replace existing value with:"
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid "Copy from property:"
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid ""
+"The value from this property will replace the value from the selected "
+"property at the top."
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid "Select a case property..."
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid "Select a cleaning action..."
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid "Preview Changes"
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid ""
+"Please specify a value you would like to replace the existing property value "
+"with."
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid "Please specify the value you would like to find."
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid "Not a valid regular expression."
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid "Please select a property to copy from."
+msgstr ""
+
+#: corehq/apps/data_cleaning/forms/cleaning.py
+msgid "You cannot copy from the same property."
+msgstr ""
+
 #: corehq/apps/data_cleaning/forms/columns.py
 #: corehq/apps/data_cleaning/forms/filters.py
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -14393,6 +14482,25 @@ msgstr ""
 msgid "Pending"
 msgstr ""
 
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+msgid "No editible case properties are visible"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+msgid ""
+"\n"
+"        Please\n"
+"        <a\n"
+"          href=\"#\"\n"
+"          class=\"fw-bold\"\n"
+"          data-bs-dismiss=\"offcanvas\"\n"
+"          @click.prevent=\"$dispatch('wiggle-configure-columns-button');\"\n"
+"        >Configure Columns</a>\n"
+"        to include editible case properties in the column list in\n"
+"        order to clean the selected cases.\n"
+"      "
+msgstr ""
+
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/partials/active_session_exists.html
 msgid ""
 "\n"
@@ -14402,10 +14510,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
-#, fuzzy
-#| msgid "Conditions"
 msgid "Confirm Action"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_select_all.html
 #, python-format
@@ -14483,6 +14589,19 @@ msgstr ""
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/button_bar.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/offcanvas.html
 msgid "Clean Selected Cases"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+msgid ""
+"\n"
+"      No cases were found that match the current filters. Please\n"
+"      <a\n"
+"        href=\"#\"\n"
+"        class=\"fw-bold\"\n"
+"        @click.prevent=\"$dispatch('wiggle-filters-button');\"\n"
+"      >adjust your filters</a>\n"
+"      and try again.\n"
+"    "
 msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
@@ -14577,6 +14696,10 @@ msgstr ""
 
 #: corehq/apps/data_cleaning/utils/cases.py
 msgid "Last Modified (UTC)"
+msgstr ""
+
+#: corehq/apps/data_cleaning/views/cleaning.py
+msgid "Cannot load clean selected records form, session was not found."
 msgstr ""
 
 #: corehq/apps/data_cleaning/views/columns.py
@@ -27584,6 +27707,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5.html
+msgid "No results found."
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5.html
 #, python-format
 msgid ""
 "\n"
@@ -40093,30 +40220,6 @@ msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/bootstrap3/base.html
 #: corehq/apps/userreports/templates/userreports/bootstrap5/base.html
-msgid ""
-"\n"
-"            Charts cannot be displayed with more than 25 categories. Please "
-"filter the data or change your report to limit the number of rows.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/bootstrap3/base.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/base.html
-#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
-#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
-msgid "Fit all data into view"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/bootstrap3/base.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/base.html
-msgid ""
-"\n"
-"            Note:\n"
-"          "
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/bootstrap3/base.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/base.html
 msgid "Base Query/Queries"
 msgstr ""
 
@@ -40770,6 +40873,30 @@ msgstr ""
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap3/property_list_configuration.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap5/property_list_configuration.html
 msgid "Filter Value should not be blank."
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/report_content.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/report_content.html
+msgid ""
+"\n"
+"      Charts cannot be displayed with more than 25 categories. Please filter "
+"the data or change your report to limit the number of rows.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/report_content.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/report_content.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
+msgid "Fit all data into view"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/report_content.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/report_content.html
+msgid ""
+"\n"
+"      Note:\n"
+"    "
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/partials/build_in_progress_warning.html
