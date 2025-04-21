@@ -96,7 +96,8 @@ def create_properties_for_case_types(domain, case_type_to_prop):
         try:
             case_type_obj = current_case_types[case_type]
         except KeyError:
-            case_type_obj = CaseType.objects.create(domain=domain, name=case_type)
+            case_type_obj = CaseType(domain=domain, name=case_type)
+            case_type_obj.save()  # save() method clears cache
 
         for prop in props:
             # don't add any properites to parent cases
