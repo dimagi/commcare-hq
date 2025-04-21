@@ -171,7 +171,6 @@ urlpatterns = [
     url(r'^schema/(?P<app_id>[\w-]+)/form/(?P<form_unique_id>[\w-]+)/$',
         get_form_data_schema, name='get_form_data_schema'),
     url(r'^new_module/(?P<app_id>[\w-]+)/$', new_module, name='new_module'),
-    url(r'^new_module/(?P<app_id>[\w-]+)/(?P<case_type>[\w-]+)/$', new_module, name='new_module_with_case_type'),
     url(r'^new_app/$', new_app, name='new_app'),
     url(r'^default_new_app/$', default_new_app, name='default_new_app'),
     url(r'^new_form/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',

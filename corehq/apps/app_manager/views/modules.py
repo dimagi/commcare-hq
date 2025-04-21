@@ -1543,7 +1543,7 @@ def validate_module_for_build(request, domain, app_id, module_unique_id, ajax=Tr
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def new_module(request, domain, app_id, case_type=None):
+def new_module(request, domain, app_id):
     "Adds a module to an app"
     app = get_app(domain, app_id)
     from corehq.apps.app_manager.views.utils import get_default_followup_form_xml
