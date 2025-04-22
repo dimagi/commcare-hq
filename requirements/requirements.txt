@@ -370,7 +370,7 @@ pydantic-core==2.23.4
     # via pydantic
 pydantic-settings==2.5.2
     # via oic
-pygithub==1.55
+pygithub==2.6.1
     # via -r base-requirements.in
 pyjwkest==1.4.2
     # via oic
@@ -533,6 +533,7 @@ typing-extensions==4.12.2
     #   kombu
     #   pydantic
     #   pydantic-core
+    #   pygithub
     #   qrcode
     #   stripe
 tzdata==2025.1
@@ -547,6 +548,7 @@ urllib3==1.26.19
     #   elasticsearch5
     #   elasticsearch6
     #   py-kissmetrics
+    #   pygithub
     #   requests
     #   sentry-sdk
 user-agents==2.2.0

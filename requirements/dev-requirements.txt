@@ -479,7 +479,7 @@ pycryptodomex==3.19.1
     #   pyjwkest
 pyflakes==3.3.2
     # via flake8
-pygithub==1.55
+pygithub==2.6.1
     # via -r base-requirements.in
 pygments==2.15.0
     # via
@@ -722,6 +722,7 @@ typing-extensions==4.12.2
     #   jwcrypto
     #   kombu
     #   oic
+    #   pygithub
     #   qrcode
     #   stripe
 tzdata==2025.1
@@ -737,6 +738,7 @@ urllib3==1.26.19
     #   elasticsearch5
     #   elasticsearch6
     #   py-kissmetrics
+    #   pygithub
     #   requests
     #   sentry-sdk
 user-agents==2.2.0
