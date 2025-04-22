@@ -17,7 +17,7 @@ class TestESQueryProfilerMixin(SimpleTestCase):
             # `search_class` is not defined
 
         with pytest.raises(
-            NotImplementedError,
+            ValueError,
             match='^You must define a search_class attribute.'
         ):
             ProfiledReport()

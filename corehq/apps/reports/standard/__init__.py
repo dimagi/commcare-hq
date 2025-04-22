@@ -354,7 +354,7 @@ class ESQueryProfilerMixin(object):
         super().__init__(*args, **kwargs)
         if self.profiler_enabled:
             if not self.search_class:
-                raise NotImplementedError("You must define a search_class attribute.")
+                raise ValueError("You must define a search_class attribute.")
             self.profiler = ESQueryProfiler(
                 name=self.profiler_name,
                 search_class=self.search_class,
