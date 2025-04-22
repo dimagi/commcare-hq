@@ -12,11 +12,7 @@ from corehq.sql_db.fields import CharIdField
 from corehq.util.jsonattrs import AttrsDict, AttrsList, list_of
 from .exceptions import FixtureVersionError
 
-FIXTURE_BUCKET_PREFIX = 'domain-fixtures'
-
-
-def fixture_bucket(lookup_table_id, domain):
-    return f'{FIXTURE_BUCKET_PREFIX}-{lookup_table_id}' + '/' + domain
+FIXTURE_BUCKET = 'domain-fixtures'
 
 
 class LookupTableManager(models.Manager):
@@ -30,9 +26,6 @@ class LookupTableManager(models.Manager):
 
     def domain_tag_exists(self, domain_name, tag):
         return self.filter(domain=domain_name, tag=tag).exists()
-
-    def get_tables_modified_since(self, domain, since_datetime):
-        return self.filter(domain=domain, last_modified__gt=since_datetime)
 
 
 @define
