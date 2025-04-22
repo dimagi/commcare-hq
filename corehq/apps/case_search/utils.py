@@ -37,7 +37,7 @@ from corehq.apps.case_search.models import (
     CaseSearchConfig,
     extract_search_request_config,
 )
-from corehq.apps.es import case_search
+from corehq.apps.es import HQESQuery, case_search
 from corehq.apps.es import cases as case_es
 from corehq.apps.es import filters, queries
 from corehq.apps.es.case_search import (
@@ -59,15 +59,10 @@ from corehq.util.quickcache import quickcache
 
 @dataclass
 class CaseSearchProfiler(ESQueryProfiler):
+    search_class: HQESQuery = CaseSearchES
     name: str = 'Case Search'
     primary_count: int = 0
     related_count: int = 0
-
-    def __post_init__(self):
-        super().__post_init__()
-        # For some reason defining the default value in the dataclass doesn't work
-        # so we do it here
-        self.search_class = CaseSearchES
 
 
 def time_function():
