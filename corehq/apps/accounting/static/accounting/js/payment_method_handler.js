@@ -136,7 +136,7 @@ hqDefine('accounting/js/payment_method_handler', [
             self.cardElementPromise.then(function (cardElement) {
                 const stripeSelector = '#' + formId + ' .stripe-card-container';
                 if (show) {
-                    if ($(stripeSelector).length) {
+                    if ($(stripeSelector).length && !self.cardElementMounted) {
                         cardElement.mount(stripeSelector);
                         self.cardElementMounted = true;
                     }
