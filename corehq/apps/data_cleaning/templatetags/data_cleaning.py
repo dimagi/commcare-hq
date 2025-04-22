@@ -80,10 +80,15 @@ def has_edits(edited_value):
     return edited_value is not Ellipsis
 
 
-@register.filter
-def is_editable_column(bound_column):
+def _validate_htmx_column(bound_column):
     if not isinstance(bound_column.column, DataCleaningHtmxColumn):
         raise template.TemplateSyntaxError(
-            f"Expected a DataCleaningHtmxColumn, got {type(bound_column.column)}"
+            f"Expected bound_column.column to be a DataCleaningHtmxColumn, "
+            f"got {type(bound_column.column)} instead."
         )
+
+
+@register.filter
+def is_editable_column(bound_column):
+    _validate_htmx_column(bound_column)
     return not bound_column.column.column_spec.is_system
