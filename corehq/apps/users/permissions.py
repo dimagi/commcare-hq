@@ -55,7 +55,7 @@ def get_extra_permissions():
     yield ReportPermission(
         PAYMENTS_REPORT_PERMISSION,
         PaymentsVerificationReportView.page_title,
-        lambda domain: toggles.MTN_MOBILE_WORKER_VERIFICATION.enabled(domain)
+        lambda domain: toggles.MTN_MOBILE_WORKER_VERIFICATION.enabled(domain.name)
     )
 
 
