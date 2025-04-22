@@ -103,7 +103,7 @@ def main():
             vellum_rev = build_vellum(vellum_dir, vellum_branch, not args.no_test, args.dev_mode)
 
         update_hq(hq_dir, hq_branch, args.hq_base, vellum_dir, vellum_rev, args.push, args.target, args.dev_mode)
-        if args.mode == "master" and args.fix_staging:
+        if args.mode == "master" and args.fix_staging and not args.dev_mode:
             fix_staging(hq_dir, args.push)
     except sh.ErrorReturnCode as err:
         print("Aborted due to error: {}".format(err))
