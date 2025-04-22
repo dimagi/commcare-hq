@@ -998,6 +998,16 @@ class BulkEditRecord(models.Model):
             self.calculated_change_id is None or self.changes.last().change_id != self.calculated_change_id
         )
 
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
+    def reset_changes(self, prop_id):
+        change = BulkEditChange.objects.create(
+            session=self.session,
+            prop_id=prop_id,
+            action_type=EditActionType.RESET,
+        )
+        change.records.add(self)
+
     def get_edited_case_properties(self, case):
         """
         Returns a dictionary of properties that have been edited by related BulkEditChanges.

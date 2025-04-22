@@ -159,7 +159,8 @@ class CleanCasesTableView(BulkEditSessionViewMixin,
         Effectively resets/removes any changes made to a record's prop_id.
         """
         doc_id, column = self._get_cell_request_details(request)
-        # todo actually reset the changes
+        edit_record = self.session.records.get(doc_id=doc_id)
+        edit_record.reset_changes(column.prop_id)
         return self._render_table_cell_response(
             doc_id, column, request, *args, **kwargs
         )
