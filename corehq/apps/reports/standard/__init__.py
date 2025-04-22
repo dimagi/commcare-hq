@@ -10,12 +10,14 @@ import dateutil
 from memoized import memoized
 
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_boolean
 
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.es.profiling import ESQueryProfiler
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
+from corehq.apps.reports.const import LONG_RUNNING_CLE_THRESHOLD
 from corehq.apps.reports.dispatcher import (
     CustomProjectReportDispatcher,
     ProjectReportDispatcher,
@@ -368,6 +370,35 @@ class ESQueryProfilerMixin(object):
     def debug_mode(self):
         debug_enabled = string_to_boolean(self.request.GET.get('debug'))
         return debug_enabled and self.request.couch_user.is_superuser
+
+    @property
+    def json_dict(self):
+        ret = super().json_dict
+        if self.profiler_enabled and self.profiler.debug_mode:
+            ret["report_timing_profile"] = self.profiler.timing_context.to_dict()
+        return ret
+
+    @property
+    def json_response(self):
+        if not self.profiler_enabled:
+            return super().json_response
+
+        # Timing profile is calculated if self.profiler_enabled. Report
+        # long-running timings to Sentry for follow-up
+        start_time = datetime.now()
+        with self.profiler.timing_context:
+            response = super().json_response
+
+        elapsed_seconds = round((datetime.now() - start_time).total_seconds(), 1)
+        if elapsed_seconds > LONG_RUNNING_CLE_THRESHOLD:
+            self.profiler.timing_context.add_to_sentry_breadcrumbs()
+            request_dict = dict(self.request.GET.lists())
+
+            notify_exception(None, "LongRunningReport", details={
+                'request_dict': request_dict,
+            })
+
+        return response
 
 
 def profile(name=None):

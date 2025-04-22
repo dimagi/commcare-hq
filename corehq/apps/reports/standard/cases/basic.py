@@ -1,16 +1,11 @@
-from datetime import datetime
-
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
 from memoized import memoized
 
-from dimagi.utils.logging import notify_exception
-
 from corehq.apps.es import cases as case_es
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.api import ReportDataSource
-from corehq.apps.reports.const import LONG_RUNNING_CLE_THRESHOLD
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
@@ -251,23 +246,3 @@ class CaseListReport(CaseListMixin, ProjectReport, ReportDataSource):
                 display.modified_on,
                 display.closed_display
             ]
-
-    @property
-    def json_response(self):
-        if not self.profiler_enabled:
-            return super().json_response
-
-        start_time = datetime.now()
-        with self.profiler.timing_context:
-            response = super().json_response
-
-        elapsed_seconds = round((datetime.now() - start_time).total_seconds(), 1)
-        if elapsed_seconds > LONG_RUNNING_CLE_THRESHOLD:
-            self.profiler.timing_context.add_to_sentry_breadcrumbs()
-            request_dict = dict(self.request.GET.lists())
-
-            notify_exception(None, "LongRunningReport", details={
-                'request_dict': request_dict,
-            })
-
-        return response
