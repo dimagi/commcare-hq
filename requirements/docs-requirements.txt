@@ -66,7 +66,6 @@ cffi==1.14.3
     # via
     #   cryptography
     #   csiphash
-    #   pynacl
 chardet==5.2.0
     # via reportlab
 charset-normalizer==3.1.0
@@ -97,7 +96,6 @@ cryptography==43.0.1
     #   -r base-requirements.in
     #   jwcrypto
     #   oic
-    #   pyjwt
     #   pyopenssl
 csiphash==0.0.5
     # via -r base-requirements.in
@@ -115,9 +113,7 @@ defusedxml==0.7.1
     #   -r base-requirements.in
     #   oic
 deprecated==1.2.10
-    # via
-    #   opentelemetry-api
-    #   pygithub
+    # via opentelemetry-api
 diff-match-patch==20241021
     # via -r base-requirements.in
 dimagi-memoized==1.1.3
@@ -396,8 +392,6 @@ pydantic-core==2.23.4
     # via pydantic
 pydantic-settings==2.5.2
     # via oic
-pygithub==2.6.1
-    # via -r base-requirements.in
 pygments==2.15.0
     # via sphinx
 pyjwkest==1.4.2
@@ -405,10 +399,7 @@ pyjwkest==1.4.2
 pyjwt==2.7.0
     # via
     #   -r base-requirements.in
-    #   pygithub
     #   twilio
-pynacl==1.5.0
-    # via pygithub
 pyopenssl==24.2.1
     # via -r docs-requirements.in
 pyphonetics==0.5.3
@@ -470,7 +461,6 @@ requests==2.32.3
     #   dropbox
     #   geoip2
     #   oic
-    #   pygithub
     #   pyjwkest
     #   requests-oauthlib
     #   requests-toolbelt
@@ -589,7 +579,6 @@ typing-extensions==4.12.2
     #   kombu
     #   pydantic
     #   pydantic-core
-    #   pygithub
     #   qrcode
     #   stripe
 tzdata==2025.1
@@ -605,7 +594,6 @@ urllib3==1.26.19
     #   elasticsearch5
     #   elasticsearch6
     #   py-kissmetrics
-    #   pygithub
     #   requests
     #   sentry-sdk
 user-agents==2.2.0
