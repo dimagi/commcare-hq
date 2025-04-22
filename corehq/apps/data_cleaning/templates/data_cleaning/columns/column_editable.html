@@ -1,0 +1,9 @@
+{% load i18n %}
+{% load data_cleaning %}
+
+{% edited_value record column as edited_value %}
+
+{{ value }}
+{% if edited_value|has_edits %}
+{{ edited_value }}
+{% endif %}
