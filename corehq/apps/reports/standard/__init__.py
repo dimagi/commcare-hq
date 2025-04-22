@@ -353,9 +353,11 @@ class ESQueryProfilerMixin(object):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.profiler_enabled:
+            if not self.search_class:
+                raise NotImplementedError("You must define a search_class attribute.")
             self.profiler = ESQueryProfiler(
                 name=self.profiler_name,
-                search_class=self._get_search_class(),
+                search_class=self.search_class,
                 debug_mode=self.debug_mode,
             )
             self.search_class = self.profiler.get_search_class(slug=self.__class__.__name__)
@@ -366,11 +368,6 @@ class ESQueryProfilerMixin(object):
     def debug_mode(self):
         debug_enabled = string_to_boolean(self.request.GET.get('debug'))
         return debug_enabled and self.request.couch_user.is_superuser
-
-    def _get_search_class(self):
-        if not self.search_class:
-            raise NotImplementedError("You must define a search_class attribute.")
-        return self.search_class
 
 
 def profile(name=None):
