@@ -40,22 +40,22 @@ def get_extra_permissions():
     from corehq.apps.integration.payments.views import PaymentsVerificationReportView
 
     yield ReportPermission(
-        FORM_EXPORT_PERMISSION, FormExportListView.page_title, lambda domain: True)
+        FORM_EXPORT_PERMISSION, FormExportListView.page_title, lambda domain_obj: True)
     yield ReportPermission(
         DEID_EXPORT_PERMISSION, gettext_noop("Export De-Identified Data"),
-        lambda domain: domain_has_privilege(domain, privileges.DEIDENTIFIED_DATA))
+        lambda domain_obj: domain_has_privilege(domain_obj, privileges.DEIDENTIFIED_DATA))
     yield ReportPermission(
         CASE_EXPORT_PERMISSION, CaseExportListView.page_title, lambda domain: True)
     yield ReportPermission(
         SMS_EXPORT_PERMISSION, DownloadNewSmsExportView.page_title, lambda domain: True)
     yield ReportPermission(
         ODATA_FEED_PERMISSION, ODataFeedListView.page_title,
-        lambda domain: domain_has_privilege(domain, privileges.ODATA_FEED)
+        lambda domain_obj: domain_has_privilege(domain_obj, privileges.ODATA_FEED)
     )
     yield ReportPermission(
         PAYMENTS_REPORT_PERMISSION,
         PaymentsVerificationReportView.page_title,
-        lambda domain: toggles.MTN_MOBILE_WORKER_VERIFICATION.enabled(domain.name)
+        lambda domain_obj: toggles.MTN_MOBILE_WORKER_VERIFICATION.enabled(domain_obj.name)
     )
 
 
