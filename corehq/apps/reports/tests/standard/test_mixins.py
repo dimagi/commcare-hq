@@ -107,9 +107,7 @@ class TestESQueryProfilerMixin(SimpleTestCase):
                 super().__init__(*args, **kwargs)
 
         report = ProfiledReport()
-        assert report.should_profile is report.profiler
-        # Note assertion is the same when profiler_enabled = False (below)
-        assert report.profiler_enabled == bool(report.should_profile)
+        assert report.profiler is not None
 
     def test_profiler_enabled_false(self):
 
@@ -122,7 +120,4 @@ class TestESQueryProfilerMixin(SimpleTestCase):
                 super().__init__(*args, **kwargs)
 
         report = ProfiledReport()
-        assert report.should_profile is False
         assert report.profiler is None
-        # Note assertion is the same when profiler_enabled = True (above)
-        assert report.profiler_enabled == bool(report.should_profile)

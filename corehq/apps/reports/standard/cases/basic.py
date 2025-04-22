@@ -1,4 +1,3 @@
-import contextlib
 from datetime import datetime
 
 from django.utils.translation import gettext as _
@@ -259,7 +258,7 @@ class CaseListReport(CaseListMixin, ProjectReport, ReportDataSource):
             return super().json_response
 
         start_time = datetime.now()
-        with self.profiler.timing_context if self.should_profile else contextlib.nullcontext():
+        with self.profiler.timing_context:
             response = super().json_response
 
         elapsed_seconds = round((datetime.now() - start_time).total_seconds(), 1)

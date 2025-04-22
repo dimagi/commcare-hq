@@ -366,10 +366,6 @@ class ESQueryProfilerMixin(object):
         return self._profiler
 
     @property
-    def should_profile(self):
-        return self.profiler_enabled and self.profiler
-
-    @property
     def debug_mode(self):
         debug_enabled = string_to_boolean(self.request.GET.get('debug'))
         return debug_enabled and self.request.couch_user.is_superuser
@@ -388,7 +384,7 @@ def profile(name=None):
     def decorator(func):
         @wraps(func)
         def wrapper(obj, *args, **kwargs):
-            if obj.should_profile:
+            if obj.profiler_enabled:
                 with obj.profiler.timing_context(name):
                     return func(obj, *args, **kwargs)
             return func(obj, *args, **kwargs)
