@@ -1,3 +1,4 @@
+import json
 from django import template
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
@@ -5,6 +6,7 @@ from django.utils.translation import gettext as _
 
 from corehq.apps.data_cleaning.columns import DataCleaningHtmxColumn
 from corehq.apps.data_cleaning.models import DataType
+from corehq.apps.hqwebapp.tables.elasticsearch.records import BaseElasticRecord
 
 register = template.Library()
 
@@ -92,3 +94,27 @@ def _validate_htmx_column(bound_column):
 def is_editable_column(bound_column):
     _validate_htmx_column(bound_column)
     return not bound_column.column.column_spec.is_system
+
+
+@register.simple_tag
+def cell_request_params(record, bound_column):
+    """
+    Returns the parameters for making a "cell request" to the main
+    HTMX table view.
+
+    :param record:
+        subclass of BaseElasticRecord
+    :param bound_column:
+        `BoundColumn` instance, with a `DataCleaningHtmxColumn` as `column`
+    """
+    if not isinstance(record, BaseElasticRecord):
+        raise template.TemplateSyntaxError(
+            f"Expected an instance of BaseElasticRecord, got {type(record)} instead."
+        )
+    _validate_htmx_column(bound_column)
+    return json.dumps(
+        {
+            "record_id": record.record_id,
+            "column_id": str(bound_column.column.column_spec.column_id),
+        }
+    )

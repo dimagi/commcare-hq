@@ -251,6 +251,16 @@ class BulkEditSession(models.Model):
         query = BulkEditPinnedFilter.apply_filters_to_query(self, query)
         return query
 
+    def get_document_from_queryset(self, doc_id):
+        """
+        Get the CaseES doc from the queryset for this session.
+        # todo update for FormES later
+
+        :param doc_id: the id of the document (case / form)
+        :return: the raw document from elasticsearch
+        """
+        return self.get_queryset().case_ids([doc_id]).run().hits[0]
+
     def get_num_selected_records(self):
         return self.records.filter(is_selected=True).count()
 
