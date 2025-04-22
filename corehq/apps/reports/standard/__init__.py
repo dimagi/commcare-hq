@@ -10,6 +10,7 @@ import dateutil
 from memoized import memoized
 
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.parsing import string_to_boolean
 
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.es.profiling import ESQueryProfiler
@@ -370,8 +371,8 @@ class ESQueryProfilerMixin(object):
 
     @property
     def debug_mode(self):
-        debug_enabled = self.request.GET.get('debug', 'false')
-        return debug_enabled == 'true' and self.request.couch_user.is_superuser
+        debug_enabled = string_to_boolean(self.request.GET.get('debug'))
+        return debug_enabled and self.request.couch_user.is_superuser
 
     def _get_search_class(self):
         if not self.search_class:
