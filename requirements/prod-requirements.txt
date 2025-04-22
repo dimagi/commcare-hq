@@ -59,7 +59,7 @@ celery==5.2.7
     #   -r base-requirements.in
     #   django-celery-results
     #   flower
-certifi==2024.7.4
+certifi==2025.1.31
     # via
     #   -r prod-requirements.in
     #   requests
