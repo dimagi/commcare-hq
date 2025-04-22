@@ -553,7 +553,7 @@ hqDefine('app_manager/js/app_manager', [
                     title: hoverHelpTexts[type].title,
                     content: hoverHelpTexts[type].content,
                     trigger: 'hover',
-                    placement: 'auto',
+                    placement: 'bottom',
                     container: 'body',
                     html: true,
                 });
