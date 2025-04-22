@@ -44,7 +44,7 @@ beautifulsoup4==4.12.2
     # via -r base-requirements.in
 billiard==3.6.4.0
     # via celery
-bleach==6.1.0
+bleach[css]==6.1.0
     # via -r base-requirements.in
 boto3==1.24.96
     # via -r base-requirements.in
@@ -59,7 +59,7 @@ celery==5.2.7
     #   -r base-requirements.in
     #   django-celery-results
     #   flower
-certifi==2024.7.4
+certifi==2025.1.31
     # via
     #   -r prod-requirements.in
     #   requests
@@ -410,7 +410,7 @@ pygments==2.15.0
     # via ipython
 pyjwkest==1.4.2
     # via oic
-pyjwt==2.7.0
+pyjwt[crypto]==2.7.0
     # via
     #   -r base-requirements.in
     #   msal
