@@ -1,6 +1,5 @@
 from collections import defaultdict
 from operator import attrgetter
-from io import BytesIO
 from xml.etree import cElementTree as ElementTree
 
 from casexml.apps.phone.fixtures import FixtureProvider
@@ -164,29 +163,26 @@ class ItemListsProvider(FixtureProvider):
         :param overwrite_cache: a boolean property from RestoreState object, default is False
         :return: a byte string representation of the fixture
         """
-        io_stream = None
+        data = None
         key = fixture_bucket(global_type.id, domain)
 
         if not overwrite_cache:
-            io_stream = get_cached_fixture_items(key)
-            record_datadog_metric('cache_miss' if io_stream is None else 'cache_hit', key)
-            if io_stream is not None:
-                io_stream = BytesIO(io_stream)
+            data = get_cached_fixture_items(key)
+            record_datadog_metric('cache_miss' if data is None else 'cache_hit', key)
 
-        if io_stream is None:
+        if data is None:
             with CriticalSection([key]):
                 if not overwrite_cache:
                     # re-check cache to avoid re-computing it
-                    io_stream = get_cached_fixture_items(key)
-                    if io_stream is not None:
-                        io_stream = BytesIO(io_stream)
-                if io_stream is None:
-                    record_datadog_metric('generate', key)
-                    items = self._get_global_items(global_type, domain)
-                    io_stream = write_fixture_items_to_io(items)
-                    cache_fixture_items_data(io_stream, domain, '', key)
+                    data = get_cached_fixture_items(key)
+                    if data is not None:
+                        return data
+                record_datadog_metric('generate', key)
+                items = self._get_global_items(global_type, domain)
+                io_data = write_fixture_items_to_io(items)
+                data = io_data.getvalue()
+                cache_fixture_items_data(io_data, domain, '', key)
 
-        data = io_stream.getvalue()
         global_id = GLOBAL_USER_ID.encode('utf-8')
         b_user_id = user_id.encode('utf-8')
         return data.replace(global_id, b_user_id)
