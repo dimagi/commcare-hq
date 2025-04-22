@@ -861,6 +861,13 @@ class BulkEditColumn(models.Model):
         )
 
     @property
+    def slug(self):
+        """
+        Returns a slugified version of the prop_id.
+        """
+        return self.prop_id.replace("@", "")
+
+    @property
     def choice_label(self):
         """
         Returns the human-readable option visible in a select field.

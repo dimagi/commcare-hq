@@ -65,8 +65,9 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
     def get_columns_from_session(cls, session):
         visible_columns = []
         for column_spec in session.columns.all():
-            slug = column_spec.prop_id.replace('@', '')
-            visible_columns.append((slug, DataCleaningHtmxColumn(column_spec)))
+            visible_columns.append(
+                (column_spec.slug, DataCleaningHtmxColumn(column_spec))
+            )
         return visible_columns
 
     @property
