@@ -26,13 +26,22 @@ class CleanSelectedRecordsFormView(BulkEditSessionViewMixin,
         context.update({
             'container_id': 'clean-selected-records',
             'cleaning_form': kwargs.pop('cleaning_form', None) or CleanSelectedRecordsForm(self.session),
+            'change': kwargs.pop('change', None),
         })
         return context
 
     @hq_hx_action('post')
     def create_bulk_edit_change(self, request, *args, **kwargs):
         cleaning_form = CleanSelectedRecordsForm(self.session, request.POST)
+        change = None
         if cleaning_form.is_valid():
-            # todo
+            from django.conf import settings
+
+            # temporarily disallow QA to accidentally create bulk edit changes
+            # that they cannot see
+            if settings.SERVER_ENVIRONMENT == settings.LOCAL_SERVER_ENVIRONMENT:
+                change = cleaning_form.create_bulk_edit_change()
+                self.session.apply_change_to_selected_records_in_queryset(change)
+
             cleaning_form = None
-        return self.get(request, cleaning_form=cleaning_form, *args, **kwargs)
+        return self.get(request, cleaning_form=cleaning_form, change=change, *args, **kwargs)
