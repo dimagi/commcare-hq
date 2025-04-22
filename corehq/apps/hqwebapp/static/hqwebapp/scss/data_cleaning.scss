@@ -11,15 +11,15 @@
 .dc-diff-before,
 .dc-diff-after {
   border: 1px solid white;
-  margin: $spacer *.13;
-  padding-right: $spacer *.5;
+  margin: $spacer * 0.13;
+  padding-right: $spacer * 0.5;
   vertical-align: middle;
 
   &::before {
     display: inline-block;
     color: $white;
     line-height: 12px;
-    padding: $spacer *.25 $spacer *.5;
+    padding: $spacer * 0.25 $spacer * 0.5;
   }
 }
 
@@ -47,7 +47,7 @@
   display: block;
   background-color: transparent;
   cursor: text;
-  transition: background-color .5s ease-in-out;
+  transition: background-color 0.5s ease-in-out;
   position: relative;
   padding: $spacer * 0.5;
   margin: $spacer * -0.5;
@@ -57,24 +57,24 @@
     right: 0;
     top: calc(50% - 12px);
     opacity: 0;
-    transition: opacity .5s ease-in-out;
+    transition: opacity 0.5s ease-in-out;
   }
 
   .dc-inline-edit-action-text {
     background-color: $white;
-    padding: $spacer * .25;
+    padding: $spacer * 0.25;
     white-space: nowrap;
-    $_offset: $spacer * .6;
+    $_offset: $spacer * 0.6;
     top: calc(50% - $_offset);
     right: $spacer * 0.25;
     font-size: 10px;
-    line-height: $spacer * .75;
+    line-height: $spacer * 0.75;
     text-transform: uppercase;
     font-weight: bold;
   }
 
   &:hover {
-    background-color: rgba(0, 0, 0, .06);
+    background-color: rgba(0, 0, 0, 0.06);
   }
 
   &:hover .dc-inline-edit-action {
