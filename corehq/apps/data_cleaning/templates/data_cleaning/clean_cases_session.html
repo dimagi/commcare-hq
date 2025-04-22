@@ -1,8 +1,20 @@
 {% extends "hqwebapp/bootstrap5/base_navigation.html" %}
 {% load hq_shared_tags %}
 {% load django_tables2 %}
+{% load compress %}
 {% load i18n %}
 {% js_entry "data_cleaning/js/clean_cases_session" %}
+
+{% block stylesheets %}
+  {% compress css %}
+    <link
+      type="text/scss"
+      rel="stylesheet"
+      media="all"
+      href="{% static "hqwebapp/scss/data_cleaning.scss" %}"
+    />
+  {% endcompress %}
+{% endblock stylesheets %}
 
 {% block content %}
   {% breadcrumbs current_page section current_page.parents %}

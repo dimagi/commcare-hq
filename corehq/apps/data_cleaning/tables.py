@@ -23,6 +23,9 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
 
     class Meta(BaseHtmxTable.Meta):
         template_name = "data_cleaning/tables/table_with_controls.html"
+        attrs = {
+            "class": "table table-striped align-middle",
+        }
         row_attrs = {
             "x-data": "{ isRowSelected: $el.querySelector('input[type=checkbox]').checked }",
             ":class": "{ 'table-primary': isRowSelected }",

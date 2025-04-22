@@ -3,6 +3,7 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
+from corehq.apps.data_cleaning.columns import DataCleaningHtmxColumn
 from corehq.apps.data_cleaning.models import DataType
 
 register = template.Library()
@@ -45,3 +46,44 @@ def dc_data_type_icon(data_type):
             context
         )
     )
+
+
+@register.simple_tag
+def edited_value(record, bound_column):
+    """
+    Returns the Edited value of a record based on
+    the `BoundColumn` information.
+
+    We return `Ellipsis` if the value is not set in the `edited_properties`
+    dictionary. This is because the original value can be made `None`
+    by the cleaning actions, and we want to be able to reflect that value.
+
+    :params record:
+        EditableCaseSearchElasticRecord instance
+    :params bound_column:
+        BoundColumn instance
+    :returns:
+        The edited value of the record based on the
+        `BoundColumn` information.
+    :rtype:
+        str | Ellipsis
+    """
+    return record.edited_properties.get(bound_column.name, Ellipsis)
+
+
+@register.filter
+def has_edits(edited_value):
+    """
+    Returns whether the edited_value has any edits or not based on
+    whether its value is `Ellipsis`
+    """
+    return edited_value is not Ellipsis
+
+
+@register.filter
+def is_editable_column(bound_column):
+    if not isinstance(bound_column.column, DataCleaningHtmxColumn):
+        raise template.TemplateSyntaxError(
+            f"Expected a DataCleaningHtmxColumn, got {type(bound_column.column)}"
+        )
+    return not bound_column.column.column_spec.is_system
