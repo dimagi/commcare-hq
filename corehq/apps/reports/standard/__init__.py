@@ -8,11 +8,11 @@ from django.utils.translation import gettext_noop
 
 import dateutil
 from memoized import memoized
-from corehq.apps.reports.forms import EmailReportForm
 
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.casegroups.models import CommCareCaseGroup
+from corehq.apps.es.profiling import ESQueryProfiler
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 from corehq.apps.reports.dispatcher import (
@@ -22,11 +22,11 @@ from corehq.apps.reports.dispatcher import (
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.filters.users import UserTypeFilter
+from corehq.apps.reports.forms import EmailReportForm
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.users.models import CommCareUser
 from corehq.util.timezones.conversions import ServerTime
-from corehq.apps.es.profiling import ESQueryProfiler
 
 
 class ProjectReport(GenericReportView):

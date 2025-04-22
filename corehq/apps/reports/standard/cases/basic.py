@@ -1,14 +1,17 @@
 import contextlib
 from datetime import datetime
+
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
-from dimagi.utils.logging import notify_exception
 
 from memoized import memoized
+
+from dimagi.utils.logging import notify_exception
 
 from corehq.apps.es import cases as case_es
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.api import ReportDataSource
+from corehq.apps.reports.const import LONG_RUNNING_CLE_THRESHOLD
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
@@ -29,7 +32,6 @@ from corehq.apps.reports.standard.cases.utils import (
 )
 from corehq.elastic import ESError
 from corehq.util.es.elasticsearch import TransportError
-from corehq.apps.reports.const import LONG_RUNNING_CLE_THRESHOLD
 
 from .data_sources import CaseDisplayES
 

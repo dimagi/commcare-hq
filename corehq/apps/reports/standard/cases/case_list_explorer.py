@@ -6,8 +6,8 @@ from memoized import memoized
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.case_search.const import (
     COMPUTED_METADATA,
-    INDEXED_METADATA_BY_KEY,
     DOCS_LINK_CASE_LIST_EXPLORER,
+    INDEXED_METADATA_BY_KEY,
 )
 from corehq.apps.case_search.exceptions import CaseFilterError
 from corehq.apps.case_search.utils import get_case_id_sort_block
