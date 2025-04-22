@@ -40,7 +40,7 @@ beautifulsoup4==4.10.0
     # via -r base-requirements.in
 billiard==3.6.4.0
     # via celery
-bleach==6.1.0
+bleach[css]==6.1.0
     # via -r base-requirements.in
 boto3==1.24.96
     # via -r base-requirements.in
@@ -400,11 +400,11 @@ pydantic-core==2.23.4
     # via pydantic
 pydantic-settings==2.5.2
     # via oic
-pygithub==1.55
+pygithub==2.6.1
     # via -r base-requirements.in
 pyjwkest==1.4.2
     # via oic
-pyjwt==2.7.0
+pyjwt[crypto]==2.7.0
     # via
     #   -r base-requirements.in
     #   msal
@@ -597,6 +597,7 @@ typing-extensions==4.12.2
     #   kombu
     #   pydantic
     #   pydantic-core
+    #   pygithub
     #   qrcode
     #   stripe
 tzdata==2025.1
@@ -611,6 +612,7 @@ urllib3==1.26.19
     #   elasticsearch5
     #   elasticsearch6
     #   py-kissmetrics
+    #   pygithub
     #   requests
     #   sentry-sdk
 user-agents==2.2.0
