@@ -606,30 +606,26 @@ hqDefine('app_manager/js/app_manager', [
                         return;
                     }
 
-                    if (module.valueIncludeInvalidCharacters(valueNoSpaces)) {
+                    function displayError(errorMsg) {
                         $formGroup.addClass('has-error');
-                        $error.text(module.invalidCharErrorMsg);
+                        $error.text(errorMsg);
                         $error.show();
                         $help.hide();
                         $createBtn.prop('disabled', true);
+                    }
+
+                    if (module.valueIncludeInvalidCharacters(valueNoSpaces)) {
+                        displayError(module.invalidCharErrorMsg);
                         return;
                     }
 
                     if (module.valueIsReservedWord(valueNoSpaces)) {
-                        $formGroup.addClass('has-error');
-                        $error.text(module.reservedWordErrorMsg);
-                        $error.show();
-                        $help.hide();
-                        $createBtn.prop('disabled', true);
+                        displayError(module.reservedWordErrorMsg);
                         return;
                     }
 
                     if (self.deprecatedCaseTypes().includes(valueNoSpaces)) {
-                        $formGroup.addClass('has-error');
-                        $error.text(module.deprecatedCaseTypeErrorMsg);
-                        $error.show();
-                        $help.hide();
-                        $createBtn.prop('disabled', true);
+                        displayError(module.deprecatedCaseTypeErrorMsg);
                         return;
                     }
                 });
