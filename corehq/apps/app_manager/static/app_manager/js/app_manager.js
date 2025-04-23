@@ -641,7 +641,9 @@ hqDefine('app_manager/js/app_manager', [
             var value = $caseTypeInput.val();
 
             var $form = $('#new-module-form');
-            $('#new-case-type').val(value);
+            // This input element lives in appnav_menu.html, so we need to update it here
+            let newCaseTypeHiddenInput = $('#new-case-type');
+            newCaseTypeHiddenInput.val(value);
 
             $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
             $('#define-case-type-modal').modal('hide');
