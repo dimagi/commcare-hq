@@ -119,6 +119,20 @@ hqDefine('app_manager/js/app_manager', [
         }
     };
 
+    module.valueIncludeInvalidCharacters = function (valueNoSpaces) {
+        return !valueNoSpaces.match(/^[\w-]*$/g);
+    };
+
+    module.invalidCharErrorMsg = gettext("Case types can only include the characters a-z, 0-9, '-' and '_'");
+
+    module.valueIsReservedWord = function (valueNoSpaces) {
+        return valueNoSpaces === 'commcare-user' || valueNoSpaces === 'user-owner-mapping-case';
+    };
+
+    module.reservedWordErrorMsg = gettext("This is a reserved case type. Please choose another name.");
+
+    module.deprecatedCaseTypeErrorMsg = gettext("This case type has been deprecated in the Data Dictionary.");
+
     module.init = function (args) {
         _initCommcareVersion(args);
         _initSaveButtons();
@@ -518,21 +532,133 @@ hqDefine('app_manager/js/app_manager', [
     });
 
     var _initNewModuleOptionClicks = function () {
+        var self = {};
+        self.deprecatedCaseTypes = ko.observableArray();
+
         $('.new-module-option').on('click', function () {
             var moduleType = $(this).data('type');
             $('#new-module-type').val(moduleType);
             var $form = $('#new-module-form');
-            $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
-            if (moduleType === "case") {
-                google.track.event("Added Case List Menu");
-                kissmetrix.track.event("Added Case List Menu");
-            } else if (moduleType === "survey") {
-                google.track.event("Added Surveys Menu");
-                kissmetrix.track.event("Added Surveys Menu");
-            }
 
-            $('#add-new-module-modal').modal('hide');
+            if (moduleType === "case") {
+                $('#add-new-module-modal').modal('hide');
+                $('#define-case-type-modal').modal('show');
+            } else {
+                if (moduleType === "survey") {
+                    google.track.event("Added Surveys Menu");
+                    kissmetrix.track.event("Added Surveys Menu");
+                }
+                $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
+                $('#add-new-module-modal').modal('hide');
+                $form.submit();
+            }
+        });
+
+        $('#define-case-type-modal').on('show.bs.modal', function () {
+            var $caseType = $('#new-case-type-dropdown');
+            if (!$caseType.data('select2')) {
+                $caseType.select2({
+                    tags: true,
+                    placeholder: gettext("Add a case type or look for an existing one"),
+                    allowClear: true,
+                    width: '100%',
+                    createTag: function (params) {
+                        // Replace spaces with underscore
+                        var term = params.term.replace(/ /g, '_');
+                        return {
+                            id: term,
+                            text: term,
+                        };
+                    },
+                });
+
+                // Write ajax here not in the Select2 init so that we send ajax request only once
+                $.ajax({
+                    method: 'GET',
+                    url: initialPageData.reverse('all_case_types'),
+                    success: function (data) {
+                        var existingCaseTypes = data.existing_case_types;
+                        self.deprecatedCaseTypes(data.deprecated_case_types);
+
+                        // Add existing case types as options
+                        existingCaseTypes.forEach(function (caseType) {
+                            var option = new Option(caseType, caseType, false, false);
+                            $caseType.append(option);
+                        });
+                    },
+                });
+
+                $caseType.on('change', function () {
+                    var valueNoSpaces = $(this).val();
+                    var $formGroup = $(this).closest('.form-group');
+                    var $help = $('#new-case-type-help');
+                    var $error = $('#new-case-type-error');
+                    var $createBtn = $('#case-type-create-btn');
+
+                    // Reset error states
+                    $formGroup.removeClass('has-error');
+                    $help.show();
+                    $error.hide();
+                    $createBtn.prop('disabled', false);
+
+                    if (!valueNoSpaces) {
+                        $createBtn.prop('disabled', true);
+                        return;
+                    }
+
+                    function displayError(errorMsg) {
+                        $formGroup.addClass('has-error');
+                        $error.text(errorMsg);
+                        $error.show();
+                        $help.hide();
+                        $createBtn.prop('disabled', true);
+                    }
+
+                    if (module.valueIncludeInvalidCharacters(valueNoSpaces)) {
+                        displayError(module.invalidCharErrorMsg);
+                        return;
+                    }
+
+                    if (module.valueIsReservedWord(valueNoSpaces)) {
+                        displayError(module.reservedWordErrorMsg);
+                        return;
+                    }
+
+                    if (self.deprecatedCaseTypes().includes(valueNoSpaces)) {
+                        displayError(module.deprecatedCaseTypeErrorMsg);
+                        return;
+                    }
+                });
+            }
+        });
+
+        // Handle "Create Application" button click
+        $('#case-type-create-btn').on('click', function () {
+            google.track.event("Added Case List Menu");
+            kissmetrix.track.event("Added Case List Menu");
+
+            var $caseTypeInput = $('#new-case-type-dropdown');
+            var value = $caseTypeInput.val();
+
+            var $form = $('#new-module-form');
+            // This input element lives in appnav_menu.html, so we need to update it here
+            let newCaseTypeHiddenInput = $('#new-case-type');
+            newCaseTypeHiddenInput.val(value);
+
+            $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
+            $('#define-case-type-modal').modal('hide');
             $form.submit();
+        });
+
+        // Handle "Go Back" button click
+        $('#case-type-go-back-btn').on('click', function () {
+            $('#define-case-type-modal').modal('hide');
+            $('#add-new-module-modal').modal('show');
+        });
+
+        // Clear selection when modal is hidden
+        $('#define-case-type-modal').on('hidden.bs.modal', function () {
+            $('#new-case-type-dropdown').val(null).trigger('change');
         });
 
         var hoverHelpTexts = {

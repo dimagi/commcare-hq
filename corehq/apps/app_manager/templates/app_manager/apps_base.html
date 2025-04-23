@@ -68,6 +68,7 @@
     {% initial_page_data 'add_ons_layout' add_ons_layout %}
     {% registerurl 'current_app_version' domain app.id %}
     {% registerurl "new_form" domain app.id "---" %}
+    {% registerurl "all_case_types" domain %}
     {% block pre_form_content %}{% endblock %}
     {% block form-view %}{% endblock %}
     {% include 'app_manager/partials/add_item_templates.html' %}
@@ -94,6 +95,7 @@
   {% include "hqwebapp/bootstrap3/rollout_revert_modal.html" %}
   {% include 'app_manager/partials/confirm_delete_app.html' %}
   {% include 'app_manager/partials/add_new_module_modal.html' %}
+  {% include 'app_manager/partials/define_case_type_modal.html' %}
 {% endblock modals %}
 
 {% block page_row_classes %}appmanager-content-row{% endblock %}
