@@ -228,13 +228,13 @@ class IPAccessConfigForm(forms.Form):
     Form for updating a project's IP Access Configuration
     """
     country_allowlist = forms.MultipleChoiceField(
-        label="Allowed Countries",
-        choices=sorted(list(COUNTRIES.items()), key=lambda x: x[0]),
+        label=_("Allowed Countries"),
+        choices=sorted(list(COUNTRIES.items()), key=lambda x: x[1]),
         required=False,
     )
 
     ip_allowlist = forms.CharField(
-        label="Allowed IPs",
+        label=_("Allowed IPs"),
         required=False,
         help_text='IPs that will be allowed access to your project, regardless of country of origin. '
                   'Please configure your list to be comma and space separated, '
@@ -242,18 +242,20 @@ class IPAccessConfigForm(forms.Form):
     )
 
     ip_denylist = forms.CharField(
-        label="Blacklisted IPs",
+        label=_("Denied IPs"),
         required=False,
         help_text='IPs that will be denied access to your project, regardless of country of origin.',
     )
 
     comment = forms.CharField(
-        label="Additional Notes",
+        label=_("Additional Notes"),
         widget=forms.Textarea(attrs={"class": "vertical-resize"}),
         required=False
     )
 
     def __init__(self, *args, domain, **kwargs):
+        self.current_ip = kwargs.pop('current_ip', None)
+        self.current_country = kwargs.pop('current_country', None)
         super(IPAccessConfigForm, self).__init__(*args, **kwargs)
         self.helper = hqcrispy.HQFormHelper(self)
         self.helper.form_id = 'ip-access-config-form'
@@ -283,9 +285,9 @@ class IPAccessConfigForm(forms.Form):
         deny_list = self.cleaned_data['ip_denylist'].split(", ") if self.cleaned_data['ip_denylist'] else []
 
         # Ensure an IP isn't in both lists
-        if (allow_list or deny_list) and set(allow_list).intersection(set(deny_list)):
-            raise ValidationError(_("There are IP addresses in both the Allowed and Blacklisted lists. "
-                                    "Please ensure an IP address is only in one list at a time."))
+        if (allow_list and deny_list) and set(allow_list).intersection(set(deny_list)):
+            self.add_error('ip_allowlist', _("There are IP addresses in both the Allowed and Denied lists. "
+                                             "Please ensure an IP address is only in one list at a time."))
 
         # Ensure inputs are valid IPs, checks both IPv4 and IPv6
         for ip in allow_list + deny_list:
@@ -297,6 +299,17 @@ class IPAccessConfigForm(forms.Form):
         self.cleaned_data['ip_allowlist'] = allow_list
         self.cleaned_data['ip_denylist'] = deny_list
 
+        # Additional validation
+        if self.cleaned_data['country_allowlist']:
+            if not settings.MAXMIND_LICENSE_KEY:
+                self.add_error('country_allowlist', _("The Allowed Countries field cannot be saved because "
+                                                      "MaxMind is not configured for your environment"))
+            elif (self.current_country and self.current_country not in self.cleaned_data['country_allowlist']
+                  and self.current_ip not in self.cleaned_data['ip_allowlist']):
+                self.add_error('country_allowlist', _("Please add your own country or IP to the Allowed IPs field "
+                                                      "to avoid being locked out."))
+        if self.current_ip in self.cleaned_data['ip_denylist']:
+            self.add_error('ip_denylist', _("You cannot put your current IP address in the Denied IPs field"))
         return self.cleaned_data
 
 

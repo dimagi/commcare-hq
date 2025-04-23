@@ -3,15 +3,25 @@ import uuid
 
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
-from django.db import models
+from django.db import models, transaction
 from django.utils.translation import gettext_lazy, gettext as _
+
+from corehq.apps.es.case_search import (
+    case_property_missing,
+    exact_case_property_text_query,
+)
+from dimagi.utils.chunked import chunked
 
 from corehq.apps.case_search.const import METADATA_IN_REPORTS
 from corehq.apps.data_cleaning.exceptions import (
     UnsupportedActionException,
     UnsupportedFilterValueException,
 )
+from corehq.apps.data_cleaning.utils.decorators import retry_on_integrity_error
 from corehq.apps.es import CaseSearchES
+
+BULK_OPERATION_CHUNK_SIZE = 1000
+MAX_RECORDED_LIMIT = 100000
 
 
 class BulkEditSessionType:
@@ -77,10 +87,13 @@ class BulkEditSession(models.Model):
         return case_session
 
     @classmethod
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
     def restart_case_session(cls, user, domain_name, case_type):
-        previous_session = cls.get_active_case_session(user, domain_name, case_type)
-        previous_session.delete()
-        new_session = cls.new_case_session(user, domain_name, case_type)
+        with transaction.atomic():
+            previous_session = cls.get_active_case_session(user, domain_name, case_type)
+            if previous_session:
+                previous_session.delete()
+            new_session = cls.new_case_session(user, domain_name, case_type)
         return new_session
 
     @classmethod
@@ -128,14 +141,16 @@ class BulkEditSession(models.Model):
             pinned_filter.save()
 
     def add_filter(self, prop_id, data_type, match_type, value=None):
-        BulkEditFilter.objects.create(
-            session=self,
-            index=self.filters.count(),
-            prop_id=prop_id,
-            data_type=data_type,
-            match_type=match_type,
-            value=value,
-        )
+        """
+        Add a filter to this session.
+
+        :param prop_id: string - The property ID (e.g., case property)
+        :param data_type: DataType - the data type of the property
+        :param data_type: FilterMatchType - the type of match to perform
+        :param value: string - The value to filter on
+        :return: The created BulkEditFilter
+        """
+        return BulkEditFilter.create_for_session(self, prop_id, data_type, match_type, value)
 
     def add_column(self, prop_id, label, data_type=None):
         """
@@ -158,11 +173,25 @@ class BulkEditSession(models.Model):
         :param provided_ids: list of UUIDs in desired order
         """
         if len(provided_ids) != related_manager.count():
-            raise ValueError("The lengths of provided_ids and existing objects do not match.")
+            raise ValueError(
+                "The lengths of provided_ids and ALL existing objects do not match. "
+                "Please provide a list of ALL existing object ids in the desired order."
+            )
+
+        # NOTE: We cast the id_field to a string in the instance map to avoid UUID comparison
+        # as the forms will be sending the ids as strings, while the remove_method sends it
+        # as UUID objects.
+        instance_map = {str(getattr(obj, id_field)): obj for obj in related_manager.all()}
         for index, object_id in enumerate(provided_ids):
-            obj = related_manager.get(**{id_field: object_id})
-            obj.index = index
-            obj.save()
+            try:
+                # We need to cast the object_id to a string to match the instance_map keys
+                # in case the provided_ids are UUIDs.
+                instance = instance_map[str(object_id)]
+            except KeyError:
+                raise ValueError(f"Object with {id_field} {object_id} not found.")
+            instance.index = index
+
+        related_manager.bulk_update(instance_map.values(), ['index'])
 
     def update_filter_order(self, filter_ids):
         """
@@ -194,6 +223,7 @@ class BulkEditSession(models.Model):
         remaining_ids = related_manager.values_list(id_field, flat=True)
         self._update_order(related_manager, id_field, remaining_ids)
 
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
     def remove_filter(self, filter_id):
         """
         Remove a BulkEditFilter from this session by its filter_id,
@@ -201,8 +231,10 @@ class BulkEditSession(models.Model):
 
         :param filter_id: UUID of the BulkEditFilter to remove
         """
-        self._delete_and_update_order(self.filters, 'filter_id', filter_id)
+        with transaction.atomic():
+            self._delete_and_update_order(self.filters, 'filter_id', filter_id)
 
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
     def remove_column(self, column_id):
         """
         Remove a BulkEditColumn from this session by its column_id,
@@ -210,32 +242,69 @@ class BulkEditSession(models.Model):
 
         :param column_id: UUID of the BulkEditColumn to remove
         """
-        self._delete_and_update_order(self.columns, 'column_id', column_id)
+        with transaction.atomic():
+            self._delete_and_update_order(self.columns, 'column_id', column_id)
 
     def get_queryset(self):
         query = CaseSearchES().domain(self.domain).case_type(self.identifier)
-        query = self._apply_filters(query)
-        query = self._apply_pinned_filters(query)
+        query = BulkEditFilter.apply_filters_to_query(self, query)
+        query = BulkEditPinnedFilter.apply_filters_to_query(self, query)
         return query
 
-    def _apply_filters(self, query):
-        xpath_expressions = []
-        for custom_filter in self.filters.all():
-            query = custom_filter.filter_query(query)
-            column_xpath = custom_filter.get_xpath_expression()
-            if column_xpath is not None:
-                xpath_expressions.append(column_xpath)
-        if xpath_expressions:
-            query = query.xpath_query(self.domain, " and ".join(xpath_expressions))
-        return query
+    def get_document_from_queryset(self, doc_id):
+        """
+        Get the CaseES doc from the queryset for this session.
+        # todo update for FormES later
 
-    def _apply_pinned_filters(self, query):
-        for pinned_filter in self.pinned_filters.all():
-            query = pinned_filter.filter_query(query)
-        return query
+        :param doc_id: the id of the document (case / form)
+        :return: the raw document from elasticsearch
+        """
+        return self.get_queryset().case_ids([doc_id]).run().hits[0]
 
     def get_num_selected_records(self):
         return self.records.filter(is_selected=True).count()
+
+    def get_num_selected_records_in_queryset(self):
+        case_ids = self.records.filter(is_selected=True).values_list(
+            "doc_id", flat=True
+        )
+
+        from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTableData
+
+        num_selected_records = 0
+        for doc_ids in chunked(case_ids, BULK_OPERATION_CHUNK_SIZE, list):
+            num_selected_records += ElasticTableData.get_total_records_in_query(
+                self.get_queryset().case_ids(doc_ids)
+            )
+
+        return num_selected_records
+
+    def _apply_change_to_selected_doc_ids(self, change, doc_ids):
+        """
+        Apply a change to the selected records with the given doc_ids.
+        :param change: BulkEditChange
+        :param doc_ids: list of doc ids
+        """
+        selected_records = BulkEditRecord.get_selected_records_with_ids(self, doc_ids)
+        change.records.add(*selected_records)
+
+    def apply_change_to_selected_records_in_queryset(self, change):
+        """
+        Apply a change to the selected records in the current queryset.
+        :param change: BulkEditChange
+        """
+        if self.has_any_filtering:
+            self._apply_operation_on_queryset(
+                lambda doc_ids: self._apply_change_to_selected_doc_ids(change, doc_ids)
+            )
+        else:
+            # If there are no filters, we can just apply the change to all selected records
+            # this will be a faster operation for larger data sets
+            selected_records = self.records.filter(is_selected=True)
+            change.records.add(*selected_records)
+
+    def get_num_edited_records(self):
+        return self.records.filter(changes__isnull=False).count()
 
     def is_record_selected(self, doc_id):
         return BulkEditRecord.is_record_selected(self, doc_id)
@@ -245,6 +314,69 @@ class BulkEditSession(models.Model):
 
     def deselect_record(self, doc_id):
         return BulkEditRecord.deselect_record(self, doc_id)
+
+    def select_multiple_records(self, doc_ids):
+        return BulkEditRecord.select_multiple_records(self, doc_ids)
+
+    def deselect_multiple_records(self, doc_ids):
+        return BulkEditRecord.deselect_multiple_records(self, doc_ids)
+
+    def _apply_operation_on_queryset(self, operation):
+        """
+        Perform a bulk operation on the queryset for this session.
+        :param operation: function to apply to each record (takes in doc ids as argument)
+        """
+        for doc_ids in chunked(
+            self.get_queryset().scroll_ids(), BULK_OPERATION_CHUNK_SIZE, list
+        ):
+            operation(doc_ids)
+
+    def select_all_records_in_queryset(self):
+        """
+        Select all records in the ESQuery queryset for this session.
+        """
+        self._apply_operation_on_queryset(lambda doc_ids: self.select_multiple_records(doc_ids))
+
+    def deselect_all_records_in_queryset(self):
+        """
+        Select all records in the ESQuery queryset for this session.
+        """
+        self._apply_operation_on_queryset(lambda doc_ids: self.deselect_multiple_records(doc_ids))
+
+    def _get_num_unrecorded(self):
+        """
+        Return the number of records in the current queryset that do not have an
+        associated `BulkEditRecord` object.
+        :return: int
+        """
+        num_unrecorded = 0
+        for doc_ids in chunked(
+            self.get_queryset().scroll_ids(), BULK_OPERATION_CHUNK_SIZE, list
+        ):
+            num_unrecorded += len(BulkEditRecord.get_unrecorded_doc_ids(self, doc_ids))
+        return num_unrecorded
+
+    def can_select_all(self, table_num_records=None):
+        """
+        Check that, if all records are selected in the queryset,
+        the number of `BulkEditRecords` records will not exceed `MAX_RECORDED_LIMIT`.
+
+        Note: This operation might take a long time if the queryset is large.
+
+        :param table_num_records: int
+            The value from `table.paginator.count` in a `DataCleaningTableView`.
+            Specifying this can help avoid a potentially expensive query.
+
+        :return: bool - True if select_all_records_in_queryset() can be called without exceeding the limit
+        """
+        if table_num_records and table_num_records > MAX_RECORDED_LIMIT:
+            return False
+
+        num_records = self.records.count()
+        if table_num_records and table_num_records + num_records <= MAX_RECORDED_LIMIT:
+            return True
+        # the most potentially expensive query is below:
+        return num_records + self._get_num_unrecorded() <= MAX_RECORDED_LIMIT
 
     def update_result(self, record_count, form_id=None):
         result = self.result or {}
@@ -476,11 +608,31 @@ class BulkEditFilter(models.Model):
     class Meta:
         ordering = ["index"]
 
-    @property
-    def is_editable_property(self):
-        from corehq.apps.data_cleaning.utils.cases import get_case_property_details
-        property_details = get_case_property_details(self.session.domain, self.session.identifier)
-        return property_details.get(self.prop_id, {}).get('is_editable', True)
+    @classmethod
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
+    def create_for_session(cls, session, prop_id, data_type, match_type, value=None):
+        index = session.filters.count()
+        return BulkEditFilter.objects.create(
+            session=session,
+            index=index,
+            prop_id=prop_id,
+            data_type=data_type,
+            match_type=match_type,
+            value=value,
+        )
+
+    @classmethod
+    def apply_filters_to_query(cls, session, query):
+        xpath_expressions = []
+        for custom_filter in session.filters.all():
+            query = custom_filter.filter_query(query)
+            column_xpath = custom_filter.get_xpath_expression()
+            if column_xpath is not None:
+                xpath_expressions.append(column_xpath)
+        if xpath_expressions:
+            query = query.xpath_query(session.domain, " and ".join(xpath_expressions))
+        return query
 
     @property
     def human_readable_match_type(self):
@@ -503,14 +655,12 @@ class BulkEditFilter(models.Model):
 
     def filter_query(self, query):
         filter_query_functions = {
-            FilterMatchType.IS_EMPTY: lambda q: q.empty(self.prop_id),
-            FilterMatchType.IS_NOT_EMPTY: lambda q: q.non_null(self.prop_id),
-            FilterMatchType.IS_MISSING: lambda q: q.missing(self.prop_id),
-            FilterMatchType.IS_NOT_MISSING: lambda q: q.exists(self.prop_id),
+            FilterMatchType.IS_EMPTY: lambda q: q.filter(exact_case_property_text_query(self.prop_id, '')),
+            FilterMatchType.IS_NOT_EMPTY: lambda q: q.NOT(exact_case_property_text_query(self.prop_id, '')),
+            FilterMatchType.IS_MISSING: lambda q: q.filter(case_property_missing(self.prop_id)),
+            FilterMatchType.IS_NOT_MISSING: lambda q: q.NOT(case_property_missing(self.prop_id)),
         }
-        # if a property is not editable, then it can't be empty or missing
-        # we need the `is_editable_property` check to avoid elasticsearch RequestErrors on system fields
-        if self.match_type in filter_query_functions and self.is_editable_property:
+        if self.match_type in filter_query_functions:
             query = filter_query_functions[self.match_type](query)
         return query
 
@@ -638,6 +788,12 @@ class BulkEditPinnedFilter(models.Model):
                 filter_type=filter_type,
             )
 
+    @classmethod
+    def apply_filters_to_query(cls, session, query):
+        for pinned_filter in session.pinned_filters.all():
+            query = pinned_filter.filter_query(query)
+        return query
+
     def get_report_filter_class(self):
         from corehq.apps.data_cleaning.filters import (
             CaseOwnersPinnedFilter,
@@ -714,6 +870,20 @@ class BulkEditColumn(models.Model):
             is_system=is_system_property,
         )
 
+    @property
+    def slug(self):
+        """
+        Returns a slugified version of the prop_id.
+        """
+        return self.prop_id.replace("@", "")
+
+    @property
+    def choice_label(self):
+        """
+        Returns the human-readable option visible in a select field.
+        """
+        return self.label if self.label == self.prop_id else f"{self.label} ({self.prop_id})"
+
 
 class BulkEditRecord(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="records", on_delete=models.CASCADE)
@@ -730,27 +900,33 @@ class BulkEditRecord(models.Model):
         ).exists()
 
     @classmethod
+    def get_unrecorded_doc_ids(cls, session, doc_ids):
+        recorded_doc_ids = session.records.filter(
+            doc_id__in=doc_ids,
+        ).values_list("doc_id", flat=True)
+        return list(set(doc_ids) - set(recorded_doc_ids))
+
+    @classmethod
     def select_record(cls, session, doc_id):
-        try:
-            record = session.records.get(doc_id=doc_id)
-        except cls.DoesNotExist:
-            record = cls.objects.create(
-                session=session,
-                doc_id=doc_id,
-            )
+        record, _ = cls.objects.get_or_create(
+            session=session,
+            doc_id=doc_id,
+            defaults={'is_selected': True}
+        )
         if not record.is_selected:
             record.is_selected = True
             record.save()
         return record
 
     @classmethod
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
     def deselect_record(cls, session, doc_id):
         try:
             record = session.records.get(doc_id=doc_id)
         except cls.DoesNotExist:
-            return
+            return None
 
-        if record.calculated_change_id is not None:
+        if record.changes.count() > 0:
             record.is_selected = False
             record.save()
         else:
@@ -759,11 +935,78 @@ class BulkEditRecord(models.Model):
 
         return record
 
+    @classmethod
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
+    def select_multiple_records(cls, session, doc_ids):
+        session.records.filter(
+            doc_id__in=doc_ids,
+            is_selected=False,
+        ).update(is_selected=True)
+
+        existing_ids = session.records.filter(
+            session=session,
+            doc_id__in=doc_ids,
+        ).values_list("doc_id", flat=True)
+
+        missing_ids = list(set(doc_ids) - set(existing_ids))
+        new_records = [
+            cls(session=session, doc_id=doc_id, is_selected=True)
+            for doc_id in missing_ids
+        ]
+        # using ignore_conflicts avoids IntegrityErrors if another
+        # process inserts them concurrently:
+        cls.objects.bulk_create(new_records, ignore_conflicts=True)
+
+        # re-update any records that might still not be marked if there
+        # were any conflicts above...
+        session.records.filter(
+            doc_id__in=doc_ids,
+            is_selected=False,
+        ).update(is_selected=True)
+
+    @classmethod
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
+    def deselect_multiple_records(cls, session, doc_ids):
+        # update is_selected to False for all selected records that have changes
+        session.records.filter(
+            doc_id__in=doc_ids,
+            is_selected=True,
+            changes__isnull=False,
+        ).update(is_selected=False)
+
+        # delete all records that have no changes
+        session.records.filter(
+            doc_id__in=doc_ids,
+            changes__isnull=True,
+        ).delete()
+
+    @classmethod
+    def get_selected_records_with_ids(self, session, doc_ids):
+        """
+        Get selected records in session with the given doc_ids.
+        :param session: BulkEditSession
+        :param doc_ids: list of doc_ids to filter
+        :return: queryset of selected records
+        """
+        return session.records.filter(doc_id__in=doc_ids, is_selected=True)
+
     @property
     def has_property_updates(self):
         return self.changes.count() > 0 and (
             self.calculated_change_id is None or self.changes.last().change_id != self.calculated_change_id
         )
+
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
+    def reset_changes(self, prop_id):
+        change = BulkEditChange.objects.create(
+            session=self.session,
+            prop_id=prop_id,
+            action_type=EditActionType.RESET,
+        )
+        change.records.add(self)
 
     def get_edited_case_properties(self, case):
         """
@@ -778,7 +1021,12 @@ class BulkEditRecord(models.Model):
 
         properties = {}
         for change in self.changes.all():
-            properties[change.prop_id] = change.edited_value(case, edited_properties=properties)
+            if change.action_type == EditActionType.RESET:
+                del properties[change.prop_id]
+            else:
+                properties[change.prop_id] = change.edited_value(
+                    case, edited_properties=properties
+                )
         self.calculated_properties = properties
         self.calculated_change_id = self.changes.last().change_id
         self.save()

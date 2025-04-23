@@ -150,7 +150,7 @@ class FeatureType(object):
 
 
 class SoftwarePlanEdition(object):
-    COMMUNITY = "Community"
+    FREE = "Free"
     STANDARD = "Standard"
     PRO = "Pro"
     ADVANCED = "Advanced"
@@ -159,7 +159,7 @@ class SoftwarePlanEdition(object):
     MANAGED_HOSTING = "Managed Hosting"
     PAUSED = "Paused"
     CHOICES = (
-        (COMMUNITY, COMMUNITY),
+        (FREE, FREE),
         (STANDARD, STANDARD),
         (PRO, PRO),
         (ADVANCED, ADVANCED),
@@ -170,7 +170,7 @@ class SoftwarePlanEdition(object):
     )
     SELF_SERVICE_ORDER = [
         PAUSED,
-        COMMUNITY,
+        FREE,
         STANDARD,
         PRO,
         ADVANCED,
@@ -860,12 +860,12 @@ class SoftwarePlan(models.Model):
 
 class DefaultProductPlan(models.Model):
     """
-    This links a product type to its default SoftwarePlan (i.e. the Community Plan).
+    This links a product type to its default SoftwarePlan (i.e. the Free edition).
     The latest SoftwarePlanVersion that's linked to this plan will be the one used to create a new subscription if
     nothing is found for that domain.
     """
     edition = models.CharField(
-        default=SoftwarePlanEdition.COMMUNITY,
+        default=SoftwarePlanEdition.FREE,
         choices=SoftwarePlanEdition.CHOICES,
         max_length=25,
     )
@@ -886,7 +886,7 @@ class DefaultProductPlan(models.Model):
                                  is_report_builder_enabled=False, is_annual_plan=False):
         if not edition:
             edition = (SoftwarePlanEdition.ENTERPRISE if settings.ENTERPRISE_MODE
-                       else SoftwarePlanEdition.COMMUNITY)
+                       else SoftwarePlanEdition.FREE)
         try:
             default_product_plan = DefaultProductPlan.objects.select_related('plan').get(
                 edition=edition, is_trial=is_trial,
@@ -983,7 +983,7 @@ class SoftwarePlanVersion(models.Model):
 
         def _default_description(plan, monthly_limit):
             if plan.edition in [
-                SoftwarePlanEdition.COMMUNITY,
+                SoftwarePlanEdition.FREE,
                 SoftwarePlanEdition.STANDARD,
                 SoftwarePlanEdition.PRO,
                 SoftwarePlanEdition.ADVANCED,
@@ -1288,8 +1288,8 @@ class Subscription(models.Model):
         cls._get_active_subscription_by_domain.clear(cls, domain_name)
 
     @property
-    def is_community(self):
-        return self.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY
+    def is_free_edition(self):
+        return self.plan_version.plan.edition == SoftwarePlanEdition.FREE
 
     @property
     def allowed_attr_changes(self):
@@ -2163,6 +2163,10 @@ class InvoiceBase(models.Model):
     def is_wire(self):
         return False
 
+    @property
+    def can_pay_by_wire(self):
+        raise NotImplementedError()
+
     def get_domain(self):
         raise NotImplementedError()
 
@@ -2202,6 +2206,10 @@ class WireInvoice(InvoiceBase):
     @property
     def is_prepayment(self):
         return False
+
+    @property
+    def can_pay_by_wire(self):
+        return True
 
     def get_domain(self):
         return self.domain
@@ -2307,6 +2315,10 @@ class Invoice(InvoiceBase):
                 )
 
         return contact_emails
+
+    @property
+    def can_pay_by_wire(self):
+        return self.subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE
 
     @property
     def subtotal(self):
@@ -2429,6 +2441,10 @@ class CustomerInvoice(InvoiceBase):
     def get_contact_emails(self, include_domain_admins=False, filter_out_dimagi=False):
         # mimic the behavior of the regular Invoice for notification purposes
         return self.contact_emails
+
+    @property
+    def can_pay_by_wire(self):
+        return self.subscriptions.filter(plan_version__plan__edition=SoftwarePlanEdition.ENTERPRISE).exists()
 
     @property
     def subtotal(self):
@@ -2633,6 +2649,7 @@ class BillingRecordBase(models.Model):
             'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
             'accounts_email': settings.ACCOUNTS_EMAIL,
             'small_invoice_threshold': SMALL_INVOICE_THRESHOLD,
+            'can_pay_by_wire': self.invoice.can_pay_by_wire,
         }
         return context
 
@@ -3302,7 +3319,8 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
             is_wire=invoice.is_wire,
             is_customer=invoice.is_customer_invoice,
             is_prepayment=invoice.is_wire and invoice.is_prepayment,
-            account_name=account_name
+            account_name=account_name,
+            can_pay_by_wire=invoice.can_pay_by_wire,
         )
 
         if not invoice.is_wire:

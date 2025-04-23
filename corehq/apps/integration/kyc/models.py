@@ -117,12 +117,12 @@ class KycConfig(models.Model):
             UserDataStore.USER_CASE,
         ):
             user_objs = [CommCareUser.get_by_user_id(id_) for id_ in obj_ids]
-            return [KycUser(self, user_obj) for user_obj in user_objs]
+            return [KycUser(self, user_obj) for user_obj in user_objs if user_obj]
         elif self.user_data_store == UserDataStore.OTHER_CASE_TYPE:
             assert self.other_case_type
             return [
-                KycUser(self, user_obj)
-                for user_obj in CommCareCase.objects.get_cases(obj_ids, self.domain)
+                KycUser(self, case_obj)
+                for case_obj in CommCareCase.objects.get_cases(obj_ids, self.domain)
             ]
 
     def get_api_field_to_user_data_map_values(self):
@@ -229,12 +229,14 @@ class KycUser:
     def kyc_verification_status(self):
         value = self.user_data.get('kyc_verification_status')
         # value can be '' when field is defined as a custom field in custom user data
-        assert value in (
+        if value not in (
             KycVerificationStatus.PENDING,
             KycVerificationStatus.PASSED,
             KycVerificationStatus.FAILED,
+            KycVerificationStatus.ERROR,
             ''
-        )
+        ):
+            value = KycVerificationStatus.INVALID
         return value or KycVerificationStatus.PENDING
 
     @property
@@ -283,6 +285,7 @@ class KycVerificationStatus:
     # as case property/field does not exist or is empty.
     PENDING = None
     ERROR = 'error'
+    INVALID = 'invalid'   # indicates an invalid value was manually set by a user
 
 
 class KycVerificationFailureCause(models.TextChoices):

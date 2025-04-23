@@ -1,5 +1,3 @@
-/* globals _kmq */
-
 var _kmq = window._kmq = _kmq || [];
 
 hqDefine('analytix/js/kissmetrix', [
@@ -182,7 +180,7 @@ hqDefine('analytix/js/kissmetrix', [
     */
     _ready.done(function () {
         trackOutboundLink("#cta-trial-days-remaining", "clicked on Days Remaining CTA in trial banner", {});
-        trackOutboundLink("#cta-community-sub", "clicked on Subscribe to Professional Plan in Community Banner", {});
+        trackOutboundLink("#cta-free-sub", "clicked on Subscribe to Professional Plan in Free Edition Banner", {});
     });
 
     return {

@@ -75,6 +75,12 @@
     ></button>
   </div>
   <div class="offcanvas-body">
-    <p>todo</p>
+    <div
+      id="hq-hx-clean-selected-records-form"
+      hx-get="{% url "data_cleaning_clean_selected_records_form" domain session_id %}"
+      hx-trigger="load, dcCleanFormRefresh"
+    >
+      {% include "data_cleaning/partials/loading_indicator.html" %}
+    </div>
   </div>
 </div>

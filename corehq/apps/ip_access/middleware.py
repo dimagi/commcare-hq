@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django.core.exceptions import PermissionDenied
 from django.utils.deprecation import MiddlewareMixin
 from django.utils.translation import gettext_lazy as _
 
@@ -8,7 +8,11 @@ from corehq.toggles import IP_ACCESS_CONTROLS
 
 from .models import IPAccessConfig
 
-MSG = _("You cannot access this page from your current IP address")
+
+class IPPermissionDenied(PermissionDenied):
+    user_facing_message = _(
+        "You cannot access this page from your current IP address"
+    )
 
 
 class IPAccessMiddleware(MiddlewareMixin):
@@ -19,7 +23,7 @@ class IPAccessMiddleware(MiddlewareMixin):
 
         domain = view_kwargs['domain']
         if IP_ACCESS_CONTROLS.enabled(domain) and not is_valid_ip(request, domain):
-            return HttpResponse(MSG, status=451)
+            raise IPPermissionDenied()
 
 
 def is_valid_ip(request, domain):

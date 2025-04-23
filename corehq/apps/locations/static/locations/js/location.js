@@ -3,7 +3,7 @@ hqDefine("locations/js/location", [
     'jquery',
     'knockout',
     'underscore',
-    'es6!hqwebapp/js/bootstrap5_loader',
+    'bootstrap5',
     'hqwebapp/js/initial_page_data',
     'analytix/js/google',
     'locations/js/location_drilldown',

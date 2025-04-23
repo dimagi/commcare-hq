@@ -12,13 +12,22 @@
 name: "CodeQL"
 
 on:
-#  push:
-#    branches: [ master ]
-#  pull_request:
-#    # The branches below must be a subset of the branches above
-#    branches: [ master ]
-  schedule:
-    - cron: '29 18 * * 0'
+  # We need to run on push too (when things are merged to master) so CodeQL has
+  # an appropriate base for comparison and can tell when issues are introduced.
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.rst'
+      - '**/*.txt'
+  pull_request:
+    branches:
+      - master
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.rst'
+      - '**/*.txt'
 
 jobs:
   analyze:
@@ -51,8 +60,8 @@ jobs:
             # Vellum assets are compiled from another repo that's scanned separately
             - 'corehq/apps/app_manager/static/app_manager/js/vellum/'
             # Couch views are a special case
-            - '**/_design/**.js'
-            - 'corehq/couchapps/**.js'
+            - '**/_design/**/*.js'
+            - 'corehq/couchapps/**/*.js'
 
     # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
     # If this step fails, then you should remove it and run the build manually (see below)

@@ -2,6 +2,7 @@ import json
 
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from corehq.apps.data_cleaning.columns import DataCleaningHtmxColumn
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
 from corehq.apps.data_cleaning.models import BulkEditSession
 from corehq.apps.data_cleaning.tables import (
@@ -12,7 +13,10 @@ from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
-from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
+from corehq.apps.hqwebapp.tables.pagination import (
+    HtmxInvalidPageRedirectMixin,
+    SelectablePaginatedTableView,
+)
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 
 
@@ -24,9 +28,14 @@ class BaseDataCleaningTableView(LoginAndDomainMixin, DomainViewMixin, Selectable
     pass
 
 
-class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataCleaningTableView):
+class CleanCasesTableView(BulkEditSessionViewMixin,
+                          HtmxInvalidPageRedirectMixin, HqHtmxActionMixin, BaseDataCleaningTableView):
     urlname = "data_cleaning_cases_table"
     table_class = CleanCaseTable
+
+    def get_host_url(self):
+        from corehq.apps.data_cleaning.views.main import CleanCasesSessionView
+        return reverse(CleanCasesSessionView.urlname, args=(self.domain, self.session_id,))
 
     def get_table_kwargs(self):
         extra_columns = [(
@@ -67,7 +76,7 @@ class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataC
     @hq_hx_action('post')
     def select_record(self, request, *args, **kwargs):
         """
-        Selects a single record.
+        Selects (or de-selects) a single record.
         """
         doc_id = request.POST['record_id']
         is_selected = request.POST.get('is_selected') is not None
@@ -80,10 +89,81 @@ class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataC
     @hq_hx_action('post')
     def select_page(self, request, *args, **kwargs):
         """
-        Selects all records on the current page.
+        Selects (or de-selects) all records on the current page.
         """
-        # todo
+        select_page = request.POST.get('select_page') is not None
+        doc_ids = request.POST.getlist('recordIds')
+        if select_page:
+            self.session.select_multiple_records(doc_ids)
+        else:
+            self.session.deselect_multiple_records(doc_ids)
+        return self.render_htmx_no_response(request, *args, **kwargs)
+
+    @hq_hx_action('post')
+    def deselect_all(self, request, *args, **kwargs):
+        """
+        De-selects all records in the current filtered view.
+        """
+        self.session.deselect_all_records_in_queryset()
         return self.get(request, *args, **kwargs)
+
+    @hq_hx_action('post')
+    def select_all(self, request, *args, **kwargs):
+        """
+        Selects all records in the current filtered view.
+        """
+        response = self.get(request, *args, **kwargs)
+        if self.session.can_select_all(
+            table_num_records=response.context_data['paginator'].count
+        ):
+            self.session.select_all_records_in_queryset()
+            return response
+        response['HX-Trigger'] = json.dumps({
+            'showDataCleaningModal': {
+                'target': '#select-all-not-possible-modal',
+            },
+        })
+        return response
+
+    def _render_table_cell_response(self, doc_id, column, request, *args, **kwargs):
+        """
+        Returns an a partial HttpResponse for the table cell,
+        using the `DataCleaningHtmxColumn` template and context.
+        """
+        record = self.table_class.record_class(
+            self.session.get_document_from_queryset(doc_id),
+            self.request,
+            session=self.session,
+        )
+        table = self.table_class(session=self.session, data=self.session.get_queryset())
+        context = DataCleaningHtmxColumn.get_htmx_partial_response_context(
+            column,
+            record,
+            table,
+        )
+        return self.render_htmx_partial_response(
+            request, DataCleaningHtmxColumn.template_name, context
+        )
+
+    def _get_cell_request_details(self, request):
+        """
+        Returns the details of the cell request.
+        """
+        doc_id = request.POST["record_id"]
+        column = self.session.columns.get(column_id=request.POST["column_id"])
+        return doc_id, column
+
+    @hq_hx_action("post")
+    def cell_reset_changes(self, request, *args, **kwargs):
+        """
+        Effectively resets/removes any changes made to a record's prop_id.
+        """
+        doc_id, column = self._get_cell_request_details(request)
+        edit_record = self.session.records.get(doc_id=doc_id)
+        edit_record.reset_changes(column.prop_id)
+        return self._render_table_cell_response(
+            doc_id, column, request, *args, **kwargs
+        )
 
 
 class CaseCleaningTasksTableView(BaseDataCleaningTableView):

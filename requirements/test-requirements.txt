@@ -56,7 +56,7 @@ celery==5.2.7
     # via
     #   -r base-requirements.in
     #   django-celery-results
-certifi==2024.7.4
+certifi==2025.1.31
     # via
     #   requests
     #   sentry-sdk
@@ -64,7 +64,6 @@ cffi==1.14.3
     # via
     #   cryptography
     #   csiphash
-    #   pynacl
 chardet==5.2.0
     # via reportlab
 charset-normalizer==3.1.0
@@ -118,9 +117,7 @@ defusedxml==0.7.1
     #   -r base-requirements.in
     #   oic
 deprecated==1.2.10
-    # via
-    #   opentelemetry-api
-    #   pygithub
+    # via opentelemetry-api
 diff-match-patch==20241021
     # via -r base-requirements.in
 dimagi-memoized==1.1.3
@@ -298,7 +295,7 @@ jsonschema==4.17.3
     # via -r base-requirements.in
 jwcrypto==1.5.6
     # via django-oauth-toolkit
-kafka-python==1.4.7
+kafka-python==2.1.4
     # via -r base-requirements.in
 kombu==5.4.2
     # via celery
@@ -400,18 +397,13 @@ pydantic-core==2.23.4
     # via pydantic
 pydantic-settings==2.5.2
     # via oic
-pygithub==1.55
-    # via -r base-requirements.in
 pyjwkest==1.4.2
     # via oic
 pyjwt==2.7.0
     # via
     #   -r base-requirements.in
     #   msal
-    #   pygithub
     #   twilio
-pynacl==1.5.0
-    # via pygithub
 pyphonetics==0.5.3
     # via -r base-requirements.in
 pypng==0.20220715.0
@@ -488,7 +480,6 @@ requests==2.32.3
     #   geoip2
     #   msal
     #   oic
-    #   pygithub
     #   pyjwkest
     #   requests-mock
     #   requests-oauthlib
@@ -512,7 +503,7 @@ sentry-sdk==2.8.0
     # via -r base-requirements.in
 sh==2.0.3
     # via -r base-requirements.in
-simpleeval @ git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
+simpleeval==1.0.3
     # via -r base-requirements.in
 simplejson==3.17.6
     # via
@@ -545,7 +536,7 @@ socketpool==0.5.3
     # via -r base-requirements.in
 soupsieve==2.0.1
     # via beautifulsoup4
-sqlagg==0.17.2
+sqlagg==0.18.0
     # via -r base-requirements.in
 sqlalchemy==1.3.19
     # via
@@ -615,8 +606,6 @@ urllib3==1.26.19
     #   sentry-sdk
 user-agents==2.2.0
     # via django-user-agents
-uwsgi==2.0.22
-    # via -r test-requirements.in
 vine==5.1.0
     # via
     #   amqp
