@@ -555,7 +555,7 @@ hqDefine('app_manager/js/app_manager', [
         });
 
         $('#define-case-type-modal').on('show.bs.modal', function () {
-            var $caseType = $('#new-case-type');
+            var $caseType = $('#new-case-type-dropdown');
             if (!$caseType.data('select2')) {
                 $caseType.select2({
                     tags: true,
