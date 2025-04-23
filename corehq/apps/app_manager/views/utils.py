@@ -491,6 +491,7 @@ SHADOW_MODULE_PROPERTIES_TO_COPY = [
     ('task_list', deepcopy),
     ('parent_select', None),
     ('search_config', None),
+    ('show_case_list_optimization_options', None),
 ]
 
 

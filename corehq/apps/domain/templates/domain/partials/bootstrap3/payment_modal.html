@@ -279,7 +279,8 @@
             data-bind="template: {
                            data: newCard,
                            name: 'select-new-stripe-card-template',
-                           if: mustCreateNewCard
+                           if: mustCreateNewCard,
+                           afterRender: showOrHideStripeUI,
                        }"
           ></div>
 
@@ -287,7 +288,8 @@
             data-bind="template: {
                            data: $data,
                            name: 'select-stripe-card-template',
-                           if: canSelectCard
+                           if: canSelectCard,
+                           afterRender: showOrHideStripeUI,
                        }"
           ></div>
           <!-- /ko -->

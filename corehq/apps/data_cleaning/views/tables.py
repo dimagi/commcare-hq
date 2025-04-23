@@ -12,7 +12,10 @@ from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
-from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
+from corehq.apps.hqwebapp.tables.pagination import (
+    HtmxInvalidPageRedirectMixin,
+    SelectablePaginatedTableView,
+)
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 
 
@@ -24,9 +27,14 @@ class BaseDataCleaningTableView(LoginAndDomainMixin, DomainViewMixin, Selectable
     pass
 
 
-class CleanCasesTableView(BulkEditSessionViewMixin, HqHtmxActionMixin, BaseDataCleaningTableView):
+class CleanCasesTableView(BulkEditSessionViewMixin,
+                          HtmxInvalidPageRedirectMixin, HqHtmxActionMixin, BaseDataCleaningTableView):
     urlname = "data_cleaning_cases_table"
     table_class = CleanCaseTable
+
+    def get_host_url(self):
+        from corehq.apps.data_cleaning.views.main import CleanCasesSessionView
+        return reverse(CleanCasesSessionView.urlname, args=(self.domain, self.session_id,))
 
     def get_table_kwargs(self):
         extra_columns = [(

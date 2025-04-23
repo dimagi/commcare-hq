@@ -5562,13 +5562,3 @@ msgstr "¡Incorrecto! La respuesta es:"
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr ""
-
-#~ msgid ""
-#~ "We could not turn on the new feature. You will have the opportunity to "
-#~ "turn it on the next time you visit this page."
-#~ msgstr ""
-#~ "No pudimos activar la nueva función. Tendrá la oportunidad de usarla la "
-#~ "próxima vez que visite esta página."
-
-#~ msgid "We could not turn off the new feature. Please try again later."
-#~ msgstr "No pudimos apagar la nueva función. Por favor intente más tarde."

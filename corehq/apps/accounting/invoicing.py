@@ -324,7 +324,7 @@ class CustomerAccountInvoiceFactory(object):
 
     def create_invoice(self):
         for sub in self.account.subscription_set.filter(do_not_invoice=False):
-            if (not sub.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY
+            if (not sub.plan_version.plan.edition == SoftwarePlanEdition.FREE
                     and should_create_invoice(sub, sub.subscriber.domain, self.date_start, self.date_end)):
                 self.subscriptions[sub.plan_version].append(sub)
         if not self.subscriptions:

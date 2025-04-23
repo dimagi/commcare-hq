@@ -1,3 +1,5 @@
+from memoized import memoized
+
 from django.utils.translation import gettext_lazy
 from django_tables2 import columns, tables
 
@@ -21,6 +23,9 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
 
     class Meta(BaseHtmxTable.Meta):
         template_name = "data_cleaning/tables/table_with_controls.html"
+        attrs = {
+            "class": "table table-striped align-middle",
+        }
         row_attrs = {
             "x-data": "{ isRowSelected: $el.querySelector('input[type=checkbox]').checked }",
             ":class": "{ 'table-primary': isRowSelected }",
@@ -65,6 +70,15 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
         return visible_columns
 
     @property
+    @memoized
+    def has_any_filtering(self):
+        """
+        Return whether any filtering is applied to the session.
+        """
+        return self.session.has_any_filtering
+
+    @property
+    @memoized
     def num_selected_records(self):
         """
         Return the number of selected records in the session.
@@ -72,6 +86,17 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
         return self.session.get_num_selected_records()
 
     @property
+    @memoized
+    def num_visible_selected_records(self):
+        """
+        Return the number of selected records visible with the current set of filters.
+        """
+        if self.has_any_filtering:
+            return self.session.get_num_selected_records_in_queryset()
+        return self.num_selected_records
+
+    @property
+    @memoized
     def num_edited_records(self):
         """
         Return the number of edited records in the session.

@@ -1,10 +1,9 @@
-
 hqDefine('commtrack/js/products_and_programs_main', [
     'jquery',
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'es6!hqwebapp/js/bootstrap5_loader',
+    'bootstrap5',
     'commtrack/js/base_list_view_model',
     'hqwebapp/js/bootstrap5/widgets',   // "Additional Information" on product page uses a .hqwebapp-select2
     'hqwebapp/js/bootstrap5/knockout_bindings.ko',  // fadeVisible
@@ -61,8 +60,8 @@ hqDefine('commtrack/js/products_and_programs_main', [
                         message = data.message || _.template(gettext("Could not <%= action %> product. Please try again later."))({action: $(button).text().toLowerCase()});
                     alertContainer.text(message);
                     alertContainer.removeClass("d-none");
-                    var $modal = $(button).closest(".modal"),
-                        modal = bootstrap.Modal.getOrCreateInstance($modal);
+                    var $modal = $(button).closest(".modal");
+                    bootstrap.Modal.getOrCreateInstance($modal);
                     $modal.one('hidden.bs.modal', function () {
                         alertContainer.addClass("d-none");
                     });

@@ -1067,10 +1067,10 @@ class PlanViewBase(DomainAccountingSettings):
         options = [
             PlanOption(
                 SoftwarePlanEdition.STANDARD,
-                "$300",
-                "$250",
+                "$120",
+                "$100",
                 _("Get started. Build secure apps for offline mobile data collection and case management. "
-                  "{num_users} users included.").format(num_users=125),
+                  "{num_users} users included.").format(num_users=50),
             ),
             PlanOption(
                 SoftwarePlanEdition.PRO,
@@ -1090,11 +1090,11 @@ class PlanViewBase(DomainAccountingSettings):
         ]
         if (
             self.current_subscription is not None
-            and self.current_subscription.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY
+            and self.current_subscription.plan_version.plan.edition == SoftwarePlanEdition.FREE
         ):
             options.insert(
                 0, PlanOption(
-                    SoftwarePlanEdition.COMMUNITY,
+                    SoftwarePlanEdition.FREE,
                     "Free",
                     "Free",
                     _("For practice purposes. Not intended for live projects. "
@@ -1173,7 +1173,7 @@ class PlanViewBase(DomainAccountingSettings):
             'editions': [
                 edition.lower()
                 for edition in [
-                    SoftwarePlanEdition.COMMUNITY,
+                    SoftwarePlanEdition.FREE,
                     SoftwarePlanEdition.STANDARD,
                     SoftwarePlanEdition.PRO,
                     SoftwarePlanEdition.ADVANCED,
@@ -1677,7 +1677,7 @@ class SubscriptionRenewalView(PlanViewBase, SubscriptionMixin):
         context = super(SubscriptionRenewalView, self).page_context
 
         if self.current_edition in [
-            SoftwarePlanEdition.COMMUNITY,
+            SoftwarePlanEdition.FREE,
             SoftwarePlanEdition.PAUSED,
         ]:
             raise Http404()

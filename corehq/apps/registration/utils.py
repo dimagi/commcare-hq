@@ -20,7 +20,7 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustmentMethod,
 )
 from corehq.apps.accounting.utils.subscription import (
-    ensure_community_or_paused_subscription,
+    ensure_free_or_paused_subscription,
 )
 from corehq.apps.analytics.tasks import (
     HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID,
@@ -219,7 +219,7 @@ def _setup_subscription(domain_name, user, company_name):
         # All subscription objects related to the domain must be created
         # within this transaction block so they are discarded if an
         # error occurs.
-        ensure_community_or_paused_subscription(
+        ensure_free_or_paused_subscription(
             domain_name, date.today(), SubscriptionAdjustmentMethod.USER,
             web_user=user.username,
         )

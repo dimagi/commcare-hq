@@ -14,38 +14,29 @@
    {% initial_page_data 'stripe_cards' stripe_cards %}
    {% initial_page_data 'stripe_public_key' stripe_public_key %}
    {% initial_page_data 'payment_urls' payment_urls %}
-@@ -25,8 +25,8 @@
+@@ -24,8 +24,8 @@
+       <button
+         type="button"
+         class="btn btn-primary"
+-        data-toggle="modal"
+-        data-target="#bulkPaymentModal"
++        data-bs-toggle="modal"
++        data-bs-target="#bulkPaymentModal"
+         id="bulkPaymentBtn"
+       >
+         {% trans 'Pay by Credit Card' %}
+@@ -36,8 +36,8 @@
          <button
            type="button"
            class="btn btn-primary"
 -          data-toggle="modal"
--          data-target="#bulkPaymentModal"
+-          data-target="#bulkWirePaymentModal"
 +          data-bs-toggle="modal"
-+          data-bs-target="#bulkPaymentModal"
-           id="bulkPaymentBtn"
++          data-bs-target="#bulkWirePaymentModal"
+           id="bulkWirePaymentBtn"
          >
-           {% trans 'Pay by Credit Card' %}
-@@ -37,8 +37,8 @@
-           <button
-             type="button"
-             class="btn btn-primary"
--            data-toggle="modal"
--            data-target="#bulkWirePaymentModal"
-+            data-bs-toggle="modal"
-+            data-bs-target="#bulkWirePaymentModal"
-             id="bulkWirePaymentBtn"
-           >
-             {% trans 'Pay by Wire' %}
-@@ -46,7 +46,7 @@
-         </p>
-       {% endif %}
-     {% else %}
--      <span class="label label-default">
-+      <span class="badge text-bg-secondary">
-         <i class="fa fa-info-circle"></i>
-         {% trans "Not Billing Admin, Can't Make Payment" %}
-       </span>
-@@ -79,21 +79,21 @@
+           {% trans 'Pay by Wire' %}
+@@ -72,21 +72,21 @@
  {% block pagination_templates %}
    <script type="text/html" id="statement-row-template">
      <td
@@ -72,24 +63,17 @@
        <span
          data-bind="text: payment_status, attr: {class: payment_class}"
        ></span>
-@@ -102,20 +102,20 @@
-         <button
-           type="button"
-           class="btn btn-primary payment-button"
--          data-toggle="modal"
--          data-target="#paymentModal"
-+          data-bs-toggle="modal"
-+          data-bs-target="#paymentModal"
-         >
-           {% trans 'Make Payment' %}
-         </button>
-       {% else %}
--        <span class="label label-default">
-+        <span class="badge text-bg-secondary">
-           <i class="fa fa-info-circle"></i>
-           {% trans "Not Billing Admin, Can't Make Payment" %}
-         </span>
-       {% endif %}
+@@ -94,14 +94,14 @@
+       <button
+         type="button"
+         class="btn btn-primary payment-button"
+-        data-toggle="modal"
+-        data-target="#paymentModal"
++        data-bs-toggle="modal"
++        data-bs-target="#paymentModal"
+       >
+         {% trans 'Make Payment' %}
+       </button>
        <!-- /ko -->
      </td>
 -    <td class="col-sm-2">
@@ -97,7 +81,7 @@
        <a
          class="btn btn-primary"
          data-bind="attr: { href: pdfUrl }"
-@@ -128,16 +128,16 @@
+@@ -114,16 +114,16 @@
    {% include 'accounting/partials/stripe_card_ko_template.html' %}
  
    <script type="text/html" id="cost-item-template">
@@ -117,7 +101,7 @@
          <div class="radio">
            <label>
              <input
-@@ -163,7 +163,7 @@
+@@ -149,7 +149,7 @@
              />
              {% blocktrans %} Pay a portion of the balance: {% endblocktrans %}
              <div class="input-group">
@@ -126,7 +110,7 @@
                <input
                  type="text"
                  class="form-control"
-@@ -232,12 +232,12 @@
+@@ -218,12 +218,12 @@
  {% block modals %}
    {{ block.super }}
    {% with process_invoice_payment_url as process_payment_url %}

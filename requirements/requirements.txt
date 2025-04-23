@@ -9,6 +9,7 @@ aiohappyeyeballs==2.3.4
 aiohttp==3.10.11
     # via
     #   aiohttp-retry
+    #   geoip2
     #   twilio
 aiohttp-retry==2.8.3
     # via twilio
@@ -53,7 +54,7 @@ celery==5.2.7
     # via
     #   -r base-requirements.in
     #   django-celery-results
-certifi==2024.7.4
+certifi==2025.1.31
     # via
     #   requests
     #   sentry-sdk
@@ -222,6 +223,8 @@ future==0.18.3
     # via
     #   pyjwkest
     #   pyseeyou
+geoip2==5.0.1
+    # via -r base-requirements.in
 gevent==24.11.1
     # via
     #   -r base-requirements.in
@@ -298,6 +301,8 @@ markupsafe==3.0.2
     #   jinja2
     #   mako
     #   werkzeug
+maxminddb==2.6.3
+    # via geoip2
 msal==1.28.0
     # via -r sso-requirements.in
 multidict==6.0.5
@@ -365,7 +370,7 @@ pydantic-core==2.23.4
     # via pydantic
 pydantic-settings==2.5.2
     # via oic
-pygithub==1.55
+pygithub==2.6.1
     # via -r base-requirements.in
 pyjwkest==1.4.2
     # via oic
@@ -433,6 +438,7 @@ requests==2.32.3
     #   datadog
     #   django-oauth-toolkit
     #   dropbox
+    #   geoip2
     #   msal
     #   oic
     #   pygithub
@@ -527,6 +533,7 @@ typing-extensions==4.12.2
     #   kombu
     #   pydantic
     #   pydantic-core
+    #   pygithub
     #   qrcode
     #   stripe
 tzdata==2025.1
@@ -541,6 +548,7 @@ urllib3==1.26.19
     #   elasticsearch5
     #   elasticsearch6
     #   py-kissmetrics
+    #   pygithub
     #   requests
     #   sentry-sdk
 user-agents==2.2.0
