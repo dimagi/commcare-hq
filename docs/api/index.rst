@@ -29,8 +29,9 @@ You can browse and test the Data APIs using the `CommCare API Explorer <https://
 
     application-structure
     form-data
-    case-data
-    list-cases
+    cases-v1
+    cases-v2
+    bulk-upload-cases
     list-forms
     list-groups
     list-mobile-workers
