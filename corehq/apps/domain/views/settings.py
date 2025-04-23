@@ -16,6 +16,7 @@ from django.utils.http import urlsafe_base64_decode
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
+from django.views.generic.base import TemplateView
 
 from couchdbkit import ResourceNotFound
 from django_prbac.decorators import requires_privilege_raise404
@@ -63,7 +64,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
 from corehq.apps.users.decorators import require_can_manage_domain_alerts
 from corehq.apps.users.models import CouchUser
-from corehq.toggles import NAMESPACE_DOMAIN, IP_ACCESS_CONTROLS
+from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.toggles.models import Toggle
 from corehq.util.timezones.conversions import UserTime, ServerTime
 
@@ -273,19 +274,15 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
-class EditIPAccessConfigView(BaseProjectSettingsView):
+class EditIPAccessConfigView(TemplateView):
     template_name = 'domain/admin/ip_access_config.html'
     urlname = 'ip_access_config'
-    page_title = gettext_lazy("IP Access")
 
     @method_decorator(always_allow_project_access)
     @method_decorator(login_and_domain_required)
     @use_bootstrap5
     def dispatch(self, *args, **kwargs):
-        if IP_ACCESS_CONTROLS.enabled(self.domain):
-            return super().dispatch(*args, **kwargs)
-        else:
-            raise Http404()
+        return super().dispatch(*args, **kwargs)
 
     @property
     @memoized
@@ -302,21 +299,20 @@ class EditIPAccessConfigView(BaseProjectSettingsView):
             })
 
         if self.request.method == 'POST':
-            return IPAccessConfigForm(self.request.POST, initial=initial)
-        return IPAccessConfigForm(initial=initial)
+            return IPAccessConfigForm(self.request.POST, initial=initial, domain=self.request.domain)
+        return IPAccessConfigForm(initial=initial, domain=self.request.domain)
 
     @property
     def get_ip_access_config(self):
         try:
-            return IPAccessConfig.objects.get(domain=self.domain)
+            return IPAccessConfig.objects.get(domain=self.request.domain)
         except IPAccessConfig.DoesNotExist:
             return None
 
-    @property
-    def page_context(self):
-        return {
-            'ip_access_config_form': self.form,
-        }
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({'ip_access_config_form': self.form})
+        return context
 
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
@@ -325,7 +321,7 @@ class EditIPAccessConfigView(BaseProjectSettingsView):
             if not domain_config:
                 should_save = False
                 domain_config = IPAccessConfig()
-                domain_config.domain = self.domain
+                domain_config.domain = self.request.domain
 
             for attr, value in self.form.cleaned_data.items():
                 if value:
@@ -383,6 +379,8 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
     @property
     def page_context(self):
         return {
+            'page_title': self.page_title,
+            #'should_show_ip_config':
             'privacy_form': self.privacy_form
         }
 

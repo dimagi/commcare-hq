@@ -1,6 +1,56 @@
 {% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% js_entry "hqwebapp/js/htmx_and_alpine" %}
+
+{% block page_title %}
+  {{ page_title }}
+{% endblock %}
 
 {% block page_content %}
-  {% crispy privacy_form %}
+  <ul class="nav nav-tabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button
+        id="general-privacy-tab"
+        class="nav-link active"
+        type="button"
+        role="tab" aria-controls="general-privacy-pane" aria-selected="true"
+        data-bs-toggle="tab"
+        data-bs-target="#general-privacy-pane"
+      >
+        {% trans 'Edit Privacy Settings' %}
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button
+        id="ip-access-tab"
+        class="nav-link"
+        type="button"
+        role="tab" aria-controls="ip-access-pane" aria-selected="false"
+        data-bs-toggle="tab"
+        data-bs-target="#ip-access-pane"
+        hx-get="{% url 'ip_access_config' domain %}"
+        hx-target="#ip-access-pane"
+      >
+        {% trans 'Configure IP Access' %}
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content p-2" id="tab-content-seasons">
+    <div
+      id="general-privacy-pane"
+      class="tab-pane fade show active"
+      role="tabpanel" aria-labelledby="general-privacy-tab" tabindex="0"
+    >
+        {% crispy privacy_form %}
+    </div>
+    <div
+      id="ip-access-pane"
+      class="tab-pane fade"
+      role="tabpanel" aria-labelledby="ip-access-tab" tabindex="0"
+    >
+    </div>
+  </div>
 {% endblock %}

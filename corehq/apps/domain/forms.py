@@ -253,22 +253,19 @@ class IPAccessConfigForm(forms.Form):
         required=False
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, domain, **kwargs):
         super(IPAccessConfigForm, self).__init__(*args, **kwargs)
         self.helper = hqcrispy.HQFormHelper(self)
         self.helper.form_id = 'ip-access-config-form'
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _("Edit IP Access Config"),
-                crispy.Field(
-                    "country_allowlist",
-                    x_data="",
-                    x_select2="",
-                ),
-                "ip_allowlist",
-                "ip_denylist",
-                "comment",
+            crispy.Field(
+                "country_allowlist",
+                x_data="",
+                x_select2="",
             ),
+            "ip_allowlist",
+            "ip_denylist",
+            "comment",
             hqcrispy.FormActions(
                 StrictButton(
                     _("Update IP Access Config"),
@@ -277,6 +274,9 @@ class IPAccessConfigForm(forms.Form):
                 )
             )
         )
+        from corehq.apps.domain.views import EditIPAccessConfigView
+        self.helper.attrs = {'hx-post': reverse(EditIPAccessConfigView.urlname, args=[domain]),
+                             'hx-swap': "outerHTML"}
 
     def clean(self):
         allow_list = self.cleaned_data['ip_allowlist'].split(", ") if self.cleaned_data['ip_allowlist'] else []
@@ -1052,10 +1052,7 @@ class PrivacySecurityForm(forms.Form):
 
         self.helper = hqcrispy.HQFormHelper(self)
         self.helper.layout = Layout(
-            crispy.Fieldset(
-                _('Edit Privacy Settings'),
-                *fields
-            ),
+            *fields,
             hqcrispy.FormActions(
                 StrictButton(
                     _('Update Privacy Settings'),
