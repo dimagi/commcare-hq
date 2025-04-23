@@ -26,10 +26,11 @@
         </div>
         <div class="ms-2">
           <button
-            class="btn btn-outline-danger btn-sm htmx-loading"
+            class="btn btn-outline-danger btn-sm"
             type="button"
           >
             <i class="fa fa-close"></i>
+            <span class="visually-hidden">{% trans "Reset Changes" %}</span>
           </button>
         </div>
       </div>
@@ -55,12 +56,13 @@
         name="newValue"
       />
       <button
-        class="btn btn-primary htmx-loading"
+        class="btn btn-primary"
         type="submit"
         disabled="disabled"  {# todo implement inline edit submission #}
         @click="isSubmitting = true"
       >
         <i class="fa fa-check"></i>
+        <span class="visually-hidden">{% trans "Apply Edit" %}</span>
       </button>
       <button
         class="btn btn-outline-danger"
@@ -69,6 +71,7 @@
         @click="isEditing = false"
       >
         <i class="fa fa-close"></i>
+        <span class="visually-hidden">{% trans "Cancel Edit" %}</span>
       </button>
   </div>
 </div>

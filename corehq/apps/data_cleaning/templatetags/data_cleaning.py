@@ -7,6 +7,7 @@ from corehq.apps.data_cleaning.columns import DataCleaningHtmxColumn
 from corehq.apps.data_cleaning.models import DataType
 
 register = template.Library()
+NO_VALUE = Ellipsis
 
 
 @register.filter
@@ -54,9 +55,10 @@ def edited_value(record, bound_column):
     Returns the Edited value of a record based on
     the `BoundColumn` information.
 
-    We return `Ellipsis` if the value is not set in the `edited_properties`
-    dictionary. This is because the original value can be made `None`
-    by the cleaning actions, and we want to be able to reflect that value.
+    We return `NO_VALUE` set to `Ellipsis` if the value is not set in
+    the `edited_properties` dictionary. This is because the original value
+    can be made `None` by the cleaning actions, and we want to be
+    able to reflect that value.
 
     :params record:
         EditableCaseSearchElasticRecord instance
@@ -68,7 +70,7 @@ def edited_value(record, bound_column):
     :rtype:
         str | Ellipsis
     """
-    return record.edited_properties.get(bound_column.name, Ellipsis)
+    return record.edited_properties.get(bound_column.name, NO_VALUE)
 
 
 @register.filter
@@ -77,7 +79,7 @@ def has_edits(edited_value):
     Returns whether the edited_value has any edits or not based on
     whether its value is `Ellipsis`
     """
-    return edited_value is not Ellipsis
+    return edited_value is not NO_VALUE
 
 
 @register.filter
