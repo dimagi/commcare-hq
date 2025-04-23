@@ -30,10 +30,10 @@ class Command(BaseCommand):
                     changes_made |= self.update_version(user.last_device, 'commcare_version')
                     for device in user.devices:
                         changes_made |= self.update_version(device, 'commcare_version')
-                if getattr(user.reporting_metadata, 'submissions', None):
+                if getattr(user.reporting_metadata, 'last_submissions', None):
                     changes_made |= self.update_version(user.reporting_metadata.last_submission_for_user,
                                                         'commcare_version')
-                    for submission in user.reporting_metadata.submissions:
+                    for submission in user.reporting_metadata.last_submissions:
                         changes_made |= self.update_version(submission, 'commcare_version')
                 if changes_made:
                     CommCareUser.save_docs([user])
