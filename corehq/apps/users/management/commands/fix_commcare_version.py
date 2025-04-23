@@ -14,12 +14,7 @@ class Command(BaseCommand):
     def update_commcare_version(self):
         total_update = 0
         total_users = 0
-        is_domain_active = filters.term('is_active', True)
-        active_domains = (
-            DomainES().filter(is_domain_active)
-            .terms_aggregation('name.exact', 'domain')
-            .size(0).run().aggregations.domain.keys
-        )
+        active_domains = DomainES().is_active().values_list('name', flat=True)
 
         for domain in with_progress_bar(active_domains, len(active_domains)):
             total_users_in_domain = get_mobile_user_count(domain)
