@@ -32,6 +32,17 @@ const vellumDebugDir = vellumUtils.getDebugDir();
 module.exports = {
     entry: utils.getEntries(),
 
+    externals: [
+        function ({ context, request }, callback) {
+            if (vellumDebugDir && context.startsWith(vellumDebugDir)) {
+                if (request.match(/\bbootstrap\b/)) {
+                    return callback(null, 'global bootstrap');
+                }
+            }
+            callback();
+        },
+    ],
+
     module: {
         rules: [
             vellumUtils.getDebugRule(),
