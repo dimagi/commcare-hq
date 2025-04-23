@@ -12,10 +12,8 @@ from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard import (
-    ESQueryProfilerMixin,
     ProjectReport,
     ProjectReportParametersMixin,
-    profile,
 )
 from corehq.apps.reports.standard.cases.filters import CaseSearchFilter
 from corehq.apps.reports.standard.cases.utils import (
@@ -30,7 +28,7 @@ from corehq.util.es.elasticsearch import TransportError
 from .data_sources import CaseDisplayES
 
 
-class CaseListMixin(ESQueryProfilerMixin, ElasticProjectInspectionReport, ProjectReportParametersMixin):
+class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin):
     fields = [
         'corehq.apps.reports.filters.case_list.CaseListFilter',
         'corehq.apps.reports.filters.select.CaseTypeFilter',
@@ -122,7 +120,6 @@ class CaseListMixin(ESQueryProfilerMixin, ElasticProjectInspectionReport, Projec
                         raise BadRequestError()
             raise e
 
-    @profile("ES query")
     def _run_es_query(self):
         return self._build_query().run().raw
 

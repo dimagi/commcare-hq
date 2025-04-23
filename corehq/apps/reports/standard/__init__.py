@@ -349,7 +349,7 @@ class ESQueryProfilerMixin(object):
 
     """
     profiler_enabled = False
-    profiler_name = 'Case List'
+    profiler_name = 'Elasticsearch Query Profiler'
     search_class = None
 
     def __init__(self, *args, **kwargs):

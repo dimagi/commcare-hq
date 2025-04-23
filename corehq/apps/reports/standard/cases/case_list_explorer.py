@@ -20,7 +20,7 @@ from corehq.apps.reports.filters.select import (
     CaseTypeFilter,
     SelectOpenCloseFilter,
 )
-from corehq.apps.reports.standard import profile
+from corehq.apps.reports.standard import profile, ESQueryProfilerMixin
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import SafeCaseDisplay
 from corehq.apps.reports.standard.cases.filters import (
@@ -55,7 +55,11 @@ class XpathCaseSearchFilterMixin(object):
 
 
 @location_safe
-class CaseListExplorer(CaseListReport, XpathCaseSearchFilterMixin):
+class CaseListExplorer(
+    ESQueryProfilerMixin,
+    CaseListReport,
+    XpathCaseSearchFilterMixin,
+):
     name = _('Case List Explorer')
     slug = 'case_list_explorer'
     search_class = CaseSearchES
@@ -93,6 +97,10 @@ class CaseListExplorer(CaseListReport, XpathCaseSearchFilterMixin):
         )
         with timer:
             return super(CaseListExplorer, self).es_results
+
+    @profile("ES query")
+    def _run_es_query(self):
+        return super()._run_es_query()
 
     def _build_query(self, sort=True):
         query = super(CaseListExplorer, self)._build_query()
