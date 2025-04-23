@@ -23,6 +23,22 @@
     <div>
       {% include "data_cleaning/partials/button_bar.html" %}
     </div>
+    <div class="ps-3">
+      <div class="form-check form-switch">
+        <input
+          id="show-whitespaces-switch"
+          class="form-check-input"
+          type="checkbox"
+          role="switch"
+          name="show_whitespaces"
+          x-data=""  {# needed to activate x-model below #}
+          x-model="$store.showWhitespaces"
+        />
+        <label class="form-check-label" for="show-whitespaces-switch">
+          {% trans "Show Whitespaces" %}
+        </label>
+      </div>
+    </div>
   </div>
   <div
     class="mx-3"
