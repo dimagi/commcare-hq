@@ -172,6 +172,7 @@ class ItemListsProvider(FixtureProvider):
             record_datadog_metric('cache_miss' if io_stream is None else 'cache_hit', key)
             if io_stream is not None:
                 io_stream = BytesIO(io_stream)
+                data = io_stream.getvalue()
 
         if io_stream is None:
             with CriticalSection([key]):
@@ -180,13 +181,14 @@ class ItemListsProvider(FixtureProvider):
                     io_stream = get_cached_fixture_items(key)
                     if io_stream is not None:
                         io_stream = BytesIO(io_stream)
+                        data = io_stream.getvalue()
                 if io_stream is None:
                     record_datadog_metric('generate', key)
                     items = self._get_global_items(global_type, domain)
                     io_stream = write_fixture_items_to_io(items)
+                    data = io_stream.getvalue()
                     cache_fixture_items_data(io_stream, domain, '', key)
 
-        data = io_stream.getvalue()
         global_id = GLOBAL_USER_ID.encode('utf-8')
         b_user_id = user_id.encode('utf-8')
         return data.replace(global_id, b_user_id)
