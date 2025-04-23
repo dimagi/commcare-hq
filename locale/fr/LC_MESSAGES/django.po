@@ -817,19 +817,19 @@ msgstr[1] ""
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
 msgid ""
-"Community plans include %(monthly_limit)s Mobile Workers by default. Because "
-"you have %(num_extra)d extra Mobile Worker, all your project's Mobile "
-"Workers will be deactivated. You can re-activate these manually after "
-"downgrade. Each active Mobile Worker over %(monthly_limit)s will result in "
-"an additional charge of USD %(excess_fee)s, totalling USD %(monthly_total)s "
-"per month."
+"Free plans include %(monthly_limit)s Mobile Workers by default. Because you "
+"have %(num_extra)d extra Mobile Worker, all your project's Mobile Workers "
+"will be deactivated. You can re-activate these manually after downgrade. "
+"Each active Mobile Worker over %(monthly_limit)s will result in an "
+"additional charge of USD %(excess_fee)s, totalling USD %(monthly_total)s per "
+"month."
 msgid_plural ""
-"Community plans include %(monthly_limit)s Mobile Workers by default. Because "
-"you have %(num_extra)d extra Mobile Workers, all your project's Mobile "
-"Workers will be deactivated. You can re-activate these manually after "
-"downgrade. Each active Mobile Worker over %(monthly_limit)s will result in "
-"an additional charge of USD %(excess_fee)s, totalling USD %(monthly_total)s "
-"per month."
+"Free plans include %(monthly_limit)s Mobile Workers by default. Because you "
+"have %(num_extra)d extra Mobile Workers, all your project's Mobile Workers "
+"will be deactivated. You can re-activate these manually after downgrade. "
+"Each active Mobile Worker over %(monthly_limit)s will result in an "
+"additional charge of USD %(excess_fee)s, totalling USD %(monthly_total)s per "
+"month."
 msgstr[0] ""
 msgstr[1] ""
 
@@ -1918,7 +1918,7 @@ msgid ""
 "      Transfer (EFT), or check by following these\n"
 "      <a\n"
 "        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
-"pages/2143956507/Payment+Methods+Instructions\"\n"
+"pages/2143955299/Subscription+Management+Billing#Payment-Methods\"\n"
 "        >instructions</a\n"
 "      >.\n"
 "    "
@@ -1969,8 +1969,8 @@ msgid ""
 "%(statements_url)s\n"
 "As a reminder, payments can be made via credit card, Electronic Fund "
 "Transfer (EFT), or check by following the instructions at https://dimagi."
-"atlassian.net/wiki/spaces/commcarepublic/pages/2143956507/"
-"Payment+Methods+Instructions\n"
+"atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/"
+"Subscription+Management+Billing#Payment-Methods\n"
 "After you have paid the unpaid invoices you can re-subscribe to your plan "
 "here: %(subscription_url)s\n"
 "\n"
@@ -2038,8 +2038,8 @@ msgid ""
 "%(statements_url)s\n"
 "As a reminder, payments can be made via credit card, Electronic Fund "
 "Transfer (EFT), or check by following the instructions at https://dimagi."
-"atlassian.net/wiki/spaces/commcarepublic/pages/2143956507/"
-"Payment+Methods+Instructions\n"
+"atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/"
+"Subscription+Management+Billing#Payment-Methods\n"
 "You can also pre-pay for several months at any time by following the steps "
 "at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143950358/"
 "CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing\n"
@@ -2534,8 +2534,8 @@ msgid ""
 "%(statements_url)s\n"
 "As a reminder, payments can be made via credit card, Electronic Fund "
 "Transfer (EFT), or check by following the instructions at https://dimagi."
-"atlassian.net/wiki/spaces/commcarepublic/pages/2143956507/"
-"Payment+Methods+Instructions\n"
+"atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/"
+"Subscription+Management+Billing#Payment-Methods\n"
 "You can also pre-pay for several months at any time by following the steps "
 "at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143950358/"
 "CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing\n"
@@ -2977,8 +2977,8 @@ msgid ""
 "\n"
 "          Once you subscribe to a paid plan, you will be able to pause your "
 "subscription after 30 days,\n"
-"          but you will no longer be able to downgrade to the CommCare "
-"Community plan.\n"
+"          but you will no longer be able to downgrade to the CommCare Free "
+"edition.\n"
 "        "
 msgstr ""
 
@@ -3296,7 +3296,12 @@ msgstr ""
 
 #: corehq/apps/accounting/user_text.py
 msgid ""
-"For practice purposes. Not intended for live projects. {} users maximum."
+"Designed for practice purposes and not intended for live projects. Upgrade "
+"to access full features and more users. Learn about "
+msgstr ""
+
+#: corehq/apps/accounting/user_text.py
+msgid "CommCare plans"
 msgstr ""
 
 #: corehq/apps/accounting/user_text.py corehq/apps/enterprise/enterprise.py
@@ -6649,6 +6654,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/select_all_not_possible.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/offcanvas.html
@@ -11444,15 +11450,6 @@ msgstr ""
 msgid "Multimedia size comparison is only available for app builds"
 msgstr ""
 
-#: corehq/apps/app_manager/views/notifications.py
-msgid "This form has been opened for editing by {}."
-msgstr ""
-
-#: corehq/apps/app_manager/views/notifications.py
-msgid ""
-"This form has been updated by {}. Reload the page to see the latest changes."
-msgstr ""
-
 #: corehq/apps/app_manager/views/releases.py
 msgid ""
 "Please disable any enabled profiles/location restriction to un-release this "
@@ -11855,19 +11852,10 @@ msgid "Unknown metric"
 msgstr ""
 
 #: corehq/apps/campaign/templates/campaign/partials/dashboard_map.html
-#: corehq/apps/campaign/templates/campaign/partials/dashboard_report.html
 msgid ""
 "\n"
 "          Something went wrong while loading this widget! Please try again.\n"
 "        "
-msgstr ""
-
-#: corehq/apps/campaign/templates/campaign/partials/dashboard_report.html
-msgid ""
-"\n"
-"                Please choose your filters and click <strong>Apply</strong> "
-"to see report data.\n"
-"              "
 msgstr ""
 
 #: corehq/apps/campaign/templates/campaign/partials/delete_widget_button.html
@@ -14015,7 +14003,7 @@ msgid "Visit CommCare's knowledge base"
 msgstr ""
 
 #: corehq/apps/dashboard/views.py
-msgid "Subscribed to Community Edition."
+msgid "Subscribed to Free Edition."
 msgstr ""
 
 #: corehq/apps/data_cleaning/filters.py
@@ -14470,12 +14458,30 @@ msgstr ""
 msgid "Recent Tasks"
 msgstr ""
 
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/column_editable.html
+#: corehq/apps/styleguide/templates/styleguide/htmx_todo/item.html
+msgid "Edit Value"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/column_system.html
+#: corehq/apps/sms/views.py
+msgid "System"
+msgstr ""
+
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/task_status.html
 #: corehq/apps/integration/payments/const.py corehq/apps/registry/models.py
 #: corehq/apps/sms/models.py corehq/motech/repeaters/const.py
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Pending"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+#, python-format
+msgid ""
+"\n"
+"        %(num_records)s records have been cleaned.\n"
+"      "
 msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
@@ -14617,6 +14623,12 @@ msgid ""
 "\n"
 "            Records Selected\n"
 "          "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+msgid ""
+"Some records are selected in the session but not currently visible. They "
+"will not be part of cleaning actions until all filters are removed."
 msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
@@ -16769,6 +16781,52 @@ msgid "Update My Settings"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+msgid "Allowed Countries"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Allowed IPs"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Denied IPs"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Additional Notes"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Edit IP Access Config"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Update IP Access Config"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"There are IP addresses in both the Allowed and Denied lists. Please ensure "
+"an IP address is only in one list at a time."
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"The Allowed Countries field cannot be saved because MaxMind is not "
+"configured for your environment"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"Please add your own country or IP to the Allowed IPs field to avoid being "
+"locked out."
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "You cannot put your current IP address in the Denied IPs field"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
 msgid "The user being transferred to does not exist"
 msgstr ""
 
@@ -18018,11 +18076,6 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap3/billing_statements.html
 #: corehq/apps/domain/templates/domain/bootstrap5/billing_statements.html
 msgid "Pay by Wire"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/bootstrap3/billing_statements.html
-#: corehq/apps/domain/templates/domain/bootstrap5/billing_statements.html
-msgid "Not Billing Admin, Can't Make Payment"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/billing_statements.html
@@ -20222,6 +20275,14 @@ msgstr ""
 
 #: corehq/apps/domain/views/settings.py
 msgid "Your project settings have been saved!"
+msgstr ""
+
+#: corehq/apps/domain/views/settings.py
+msgid "IP Access"
+msgstr ""
+
+#: corehq/apps/domain/views/settings.py
+msgid "Your IP Access settings have been saved!"
 msgstr ""
 
 #: corehq/apps/domain/views/settings.py
@@ -27635,13 +27696,15 @@ msgid ""
 "  "
 msgstr ""
 
-#: corehq/apps/hqwebapp/templates/hqwebapp/partials/community_banner.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/free_edition_banner.html
 #, python-format
 msgid ""
 "\n"
-"    You are on the CommCare Community Plan.\n"
-"    <a href=\"%(url_sub)s\" id=\"cta-community-sub\">Subscribe to a "
-"professional plan</a>.\n"
+"    You're using the free edition of CommCare intended only for practice\n"
+"    purposes.\n"
+"    <a href=\"%(url_sub)s\" id=\"cta-community-sub\">Upgrade to a plan</a> "
+"for\n"
+"    full access.\n"
 "  "
 msgstr ""
 
@@ -28457,6 +28520,10 @@ msgstr ""
 
 #: corehq/apps/integration/views.py
 msgid "Could not update Callout Settings"
+msgstr ""
+
+#: corehq/apps/ip_access/middleware.py
+msgid "You cannot access this page from your current IP address"
 msgstr ""
 
 #: corehq/apps/linked_domain/const.py
@@ -32573,6 +32640,10 @@ msgstr ""
 
 #: corehq/apps/reports/formdetails/readable.py
 msgid "No app could be found"
+msgstr ""
+
+#: corehq/apps/reports/formdetails/readable.py
+msgid "App is in a different domain"
 msgstr ""
 
 #: corehq/apps/reports/formdetails/readable.py
@@ -37114,10 +37185,6 @@ msgstr ""
 msgid "All Time"
 msgstr ""
 
-#: corehq/apps/sms/views.py
-msgid "System"
-msgstr ""
-
 #: corehq/apps/sms/views.py corehq/tabs/tabclasses.py
 msgid "SMS Connectivity"
 msgstr ""
@@ -38907,10 +38974,6 @@ msgid ""
 "      "
 msgstr ""
 
-#: corehq/apps/styleguide/templates/styleguide/htmx_todo/item.html
-msgid "Edit Value"
-msgstr ""
-
 #: corehq/apps/styleguide/templates/styleguide/htmx_todo/main.html
 msgid "To-Do"
 msgstr ""
@@ -40216,6 +40279,30 @@ msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/bootstrap3/base.html
 #: corehq/apps/userreports/templates/userreports/bootstrap5/base.html
+msgid ""
+"\n"
+"            Charts cannot be displayed with more than 25 categories. Please "
+"filter the data or change your report to limit the number of rows.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/base.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
+#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
+msgid "Fit all data into view"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/base.html
+msgid ""
+"\n"
+"            Note:\n"
+"          "
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap3/base.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/base.html
 msgid "Base Query/Queries"
 msgstr ""
 
@@ -40359,19 +40446,17 @@ msgid "Populating your report did not complete successfully."
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
-msgid "Please note that this datasource is being rebuilt."
+msgid "Please note that this data source is being rebuilt."
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
-msgid "Please note that this datasource is being rebuilt in place."
+msgid "Please note that this data source is being rebuilt in place."
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
 msgid ""
-"Please note that this datasource is yet be built / rebuilt by CommCare HQ."
+"Please note that this data source is yet to be built / rebuilt by CommCare "
+"HQ."
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
@@ -40436,8 +40521,7 @@ msgid "Delete Data Source"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
-msgid "This datasource is read only, any changes made can not be saved."
+msgid "This data source is read only, any changes made can not be saved."
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
@@ -40446,8 +40530,7 @@ msgid "Datasource currently unused"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
-msgid "Reports dependent on this datasource"
+msgid "Reports dependent on this data source"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/bootstrap3/edit_data_source.html
@@ -40815,6 +40898,27 @@ msgstr ""
 msgid "Aggregate Data Sources"
 msgstr ""
 
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
+msgid "Please note that this datasource is being rebuilt."
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
+msgid "Please note that this datasource is being rebuilt in place."
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
+msgid ""
+"Please note that this datasource is yet be built / rebuilt by CommCare HQ."
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
+msgid "This datasource is read only, any changes made can not be saved."
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/bootstrap5/edit_data_source.html
+msgid "Reports dependent on this datasource"
+msgstr ""
+
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap3/delete_report_button.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap5/delete_report_button.html
 msgid "Delete Custom Web Report"
@@ -40869,30 +40973,6 @@ msgstr ""
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap3/property_list_configuration.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap5/property_list_configuration.html
 msgid "Filter Value should not be blank."
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/report_content.html
-#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/report_content.html
-msgid ""
-"\n"
-"      Charts cannot be displayed with more than 25 categories. Please filter "
-"the data or change your report to limit the number of rows.\n"
-"    "
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/report_content.html
-#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/report_content.html
-#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
-#: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
-msgid "Fit all data into view"
-msgstr ""
-
-#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/report_content.html
-#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/report_content.html
-msgid ""
-"\n"
-"      Note:\n"
-"    "
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/partials/build_in_progress_warning.html
@@ -41341,7 +41421,7 @@ msgstr ""
 #: corehq/apps/userreports/ui/help_text.py
 msgid ""
 "Enabling this will let this data source and the data be imported into "
-"Analytics"
+"CommCare Analytics"
 msgstr ""
 
 #: corehq/apps/userreports/views.py
@@ -41447,11 +41527,17 @@ msgid "Data source created for '{}'"
 msgstr ""
 
 #: corehq/apps/userreports/views.py
-msgid "Data source \"{}\" saved!"
+msgid "Data source \"{}\" saved."
 msgstr ""
 
 #: corehq/apps/userreports/views.py
 msgid "This data source will be built / rebuilt automatically by CommCare HQ."
+msgstr ""
+
+#: corehq/apps/userreports/views.py
+msgid ""
+"CommCare HQ will not perform a data source rebuild for the changes made. "
+"Please initiate one manually if needed."
 msgstr ""
 
 #: corehq/apps/userreports/views.py
