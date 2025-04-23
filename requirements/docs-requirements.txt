@@ -44,7 +44,7 @@ beautifulsoup4==4.12.2
     # via -r base-requirements.in
 billiard==3.6.4.0
     # via celery
-bleach==6.1.0
+bleach[css]==6.1.0
     # via -r base-requirements.in
 boto3==1.24.96
     # via -r base-requirements.in
@@ -402,7 +402,7 @@ pygments==2.15.0
     # via sphinx
 pyjwkest==1.4.2
     # via oic
-pyjwt==2.7.0
+pyjwt[crypto]==2.7.0
     # via
     #   -r base-requirements.in
     #   pygithub
@@ -550,7 +550,7 @@ sphinxcontrib-serializinghtml==1.1.5
     # via sphinx
 sqlagg==0.18.0
     # via -r base-requirements.in
-sqlalchemy==1.3.19
+sqlalchemy==1.3.24
     # via
     #   -r base-requirements.in
     #   alembic
