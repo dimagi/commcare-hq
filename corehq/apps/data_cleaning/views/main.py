@@ -89,10 +89,8 @@ class CleanCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
 
     @property
     def page_context(self):
-        from django.conf import settings
         return {
             "session_id": self.session_id,
-            "show_temporary_save": settings.SERVER_ENVIRONMENT == settings.LOCAL_SERVER_ENVIRONMENT,
         }
 
 

@@ -22,18 +22,6 @@
     <h1 class="fs-3 pe-3 py-3 m-0">{{ current_page.page_name }}</h1>
     <div>
       {% include "data_cleaning/partials/button_bar.html" %}
-      {% if show_temporary_save %}
-        <form
-          method="POST"
-          action="{% url "save_case_session" domain session_id %}"
-          class="float-end mx-3"
-        >
-          {% csrf_token %}
-          <button type="submit" class="btn btn-success">
-            <i class="fa fa-hippo"></i> Save
-          </button>
-        </form>
-      {% endif %}
     </div>
   </div>
   <div
