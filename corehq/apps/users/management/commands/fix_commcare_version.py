@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 from corehq.apps.users.dbaccessors import get_all_user_rows, get_mobile_user_count
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.util.log import with_progress_bar
-from corehq.apps.es import DomainES, filters
+from corehq.apps.es import DomainES
 
 
 class Command(BaseCommand):
