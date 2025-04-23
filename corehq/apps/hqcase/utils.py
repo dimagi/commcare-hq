@@ -7,14 +7,18 @@ from django.utils.translation import gettext_lazy
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import property_changed_in_action
-from couchexport.deid import deid_date, deid_ID
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.case_search.const import INDEXED_METADATA_BY_KEY
 from corehq.apps.data_interfaces.deduplication import DEDUPE_XMLNS
 from corehq.apps.es import filters
 from corehq.apps.es.cases import CaseES
-from corehq.apps.export.const import DEID_DATE_TRANSFORM, DEID_ID_TRANSFORM
+from corehq.apps.export.const import (
+    DEID_DATE_TRANSFORM,
+    DEID_ID_TRANSFORM,
+    DEID_TRANSFORM_FUNCTIONS,
+)
+from corehq.apps.export.utils import get_deid_transform_function
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.exceptions import CaseNotFound, MissingFormXml
@@ -293,9 +297,11 @@ def get_deidentified_data(case, censor_data):
 
             censored_value = ''
             if transform == DEID_DATE_TRANSFORM:
+                deid_date = get_deid_transform_function(DEID_TRANSFORM_FUNCTIONS[DEID_DATE_TRANSFORM])
                 censored_value = deid_date(case_value, None, key=case.case_id)
             if transform == DEID_ID_TRANSFORM:
-                censored_value = deid_ID(case_value, None)
+                deid_id = get_deid_transform_function(DEID_TRANSFORM_FUNCTIONS[DEID_ID_TRANSFORM])
+                censored_value = deid_id(case_value, case)
 
             if is_case_property:
                 props[attr_or_prop] = censored_value
