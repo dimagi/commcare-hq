@@ -9,9 +9,9 @@ from django.utils.translation import gettext_noop
 import dateutil
 from memoized import memoized
 
+from corehq import toggles
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.parsing import string_to_boolean
 
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.es.profiling import ESQueryProfiler
@@ -368,7 +368,10 @@ class ESQueryProfilerMixin(object):
 
     @property
     def debug_mode(self):
-        debug_enabled = string_to_boolean(self.request.GET.get('debug'))
+        debug_enabled = toggles.REPORT_TIMING_PROFILING.enabled(
+            self.request.couch_user.username,
+            namespace=toggles.NAMESPACE_USER,
+        )
         return debug_enabled and self.request.couch_user.is_superuser
 
     @property
