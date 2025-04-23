@@ -9,12 +9,13 @@
 >
   <div class="modal-dialog" role="document">
     <div class="modal-content">
+      <!-- B5 TODO: Replace inline styles with B5 utility classes -->
       <div class="modal-header" style="border-bottom: 1px solid lightgray;">
         <button
           type="button"
           class="close"
           data-dismiss="modal"
-          aria-label="Close"
+          aria-label="{% trans 'Close' %}"
         >
           <span aria-hidden="true">&times;</span>
         </button>
@@ -46,9 +47,9 @@
                 ></span>
               {% endif %}
             </label>
-            <div class="new-case-type-dropdown-container col-sm-6">
+            <div class="col-sm-6">
               <select
-                class="form-control new-case-type-dropdown"
+                class="form-control"
                 id="new_case_type"
                 name="new_case_type"
               >

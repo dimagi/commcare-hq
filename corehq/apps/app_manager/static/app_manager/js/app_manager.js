@@ -572,6 +572,7 @@ hqDefine('app_manager/js/app_manager', [
                     },
                 });
 
+                // Write ajax here not in the Select2 init so that we send ajax request only once
                 $.ajax({
                     method: 'GET',
                     url: initialPageData.reverse('all_case_types'),
@@ -657,7 +658,7 @@ hqDefine('app_manager/js/app_manager', [
             $('#add-new-module-modal').modal('show');
         });
 
-        // Clear selection when modal is closed
+        // Clear selection when modal is hidden
         $('#define-case-type-modal').on('hidden.bs.modal', function () {
             $('#new_case_type').val(null).trigger('change');
         });
