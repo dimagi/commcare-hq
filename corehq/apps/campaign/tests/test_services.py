@@ -4,7 +4,7 @@ from unittest.mock import patch
 from corehq.apps.campaign.services import get_gauge_metric_value
 
 Dashboard = namedtuple('Dashboard', ['domain'])
-Gauge = namedtuple('Gauge', ['dashboard', 'case_type', 'metric'])
+Gauge = namedtuple('Gauge', ['dashboard', 'case_type', 'metric', 'case_query'])
 
 
 @patch('corehq.apps.campaign.services.CaseSearchES')
@@ -16,6 +16,7 @@ def test_get_number_of_cases_without_case_type(case_search_es_patch):
         dashboard=dashboard,
         metric='number_of_cases',
         case_type='',
+        case_query=None,
     )
 
     get_gauge_metric_value(gauge)
@@ -33,6 +34,7 @@ def test_get_number_of_cases_with_case_type(case_search_es_patch):
         dashboard=dashboard,
         metric='number_of_cases',
         case_type='test_case_type',
+        case_query=None,
     )
 
     get_gauge_metric_value(gauge)
@@ -52,6 +54,7 @@ def test_get_number_of_mobile_workers(user_es_patch):
         dashboard=dashboard,
         metric='number_of_mobile_workers',
         case_type='',
+        case_query=None,
     )
 
     get_gauge_metric_value(gauge)
@@ -71,6 +74,7 @@ def test_get_number_of_active_mobile_workers(user_es_patch):
         dashboard=dashboard,
         metric='number_of_active_mobile_workers',
         case_type='',
+        case_query=None,
     )
 
     get_gauge_metric_value(gauge)
@@ -91,6 +95,7 @@ def test_get_number_of_inactive_mobile_workers(user_es_patch):
         dashboard=dashboard,
         metric='number_of_inactive_mobile_workers',
         case_type='',
+        case_query=None,
     )
 
     get_gauge_metric_value(gauge)
@@ -111,6 +116,7 @@ def test_get_number_of_forms_submitted_by_mobile_workers(form_es_patch):
         dashboard=dashboard,
         metric='number_of_forms_submitted_by_mobile_workers',
         case_type='',
+        case_query=None,
     )
 
     get_gauge_metric_value(gauge)
