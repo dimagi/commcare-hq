@@ -38,7 +38,7 @@ attrs==23.1.0
     #   jsonschema
 beautifulsoup4==4.10.0
     # via -r base-requirements.in
-billiard==3.6.4.0
+billiard==4.2.1
     # via celery
 bleach==6.1.0
     # via -r base-requirements.in
@@ -52,7 +52,7 @@ build==1.2.2.post1
     # via pip-tools
 bytecode==0.14.2
     # via ddtrace
-celery==5.2.7
+celery==5.4.0
     # via
     #   -r base-requirements.in
     #   django-celery-results
@@ -437,6 +437,7 @@ python-dateutil==2.8.2
     # via
     #   -r base-requirements.in
     #   botocore
+    #   celery
     #   django-tastypie
     #   faker
     #   freezegun
@@ -451,9 +452,7 @@ python-mimeparse==2.0.0
 python3-saml==1.12.0
     # via -r sso-requirements.in
 pytz==2024.1
-    # via
-    #   -r base-requirements.in
-    #   celery
+    # via -r base-requirements.in
 pyyaml==6.0.2
     # via -r base-requirements.in
 pyzxcvbn==0.8.0
@@ -601,7 +600,9 @@ typing-extensions==4.12.2
     #   qrcode
     #   stripe
 tzdata==2025.1
-    # via kombu
+    # via
+    #   celery
+    #   kombu
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
