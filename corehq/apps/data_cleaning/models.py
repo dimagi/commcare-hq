@@ -251,6 +251,16 @@ class BulkEditSession(models.Model):
         query = BulkEditPinnedFilter.apply_filters_to_query(self, query)
         return query
 
+    def get_document_from_queryset(self, doc_id):
+        """
+        Get the CaseES doc from the queryset for this session.
+        # todo update for FormES later
+
+        :param doc_id: the id of the document (case / form)
+        :return: the raw document from elasticsearch
+        """
+        return self.get_queryset().case_ids([doc_id]).run().hits[0]
+
     def get_num_selected_records(self):
         return self.records.filter(is_selected=True).count()
 
@@ -861,6 +871,13 @@ class BulkEditColumn(models.Model):
         )
 
     @property
+    def slug(self):
+        """
+        Returns a slugified version of the prop_id.
+        """
+        return self.prop_id.replace("@", "")
+
+    @property
     def choice_label(self):
         """
         Returns the human-readable option visible in a select field.
@@ -981,6 +998,16 @@ class BulkEditRecord(models.Model):
             self.calculated_change_id is None or self.changes.last().change_id != self.calculated_change_id
         )
 
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
+    def reset_changes(self, prop_id):
+        change = BulkEditChange.objects.create(
+            session=self.session,
+            prop_id=prop_id,
+            action_type=EditActionType.RESET,
+        )
+        change.records.add(self)
+
     def get_edited_case_properties(self, case):
         """
         Returns a dictionary of properties that have been edited by related BulkEditChanges.
@@ -994,7 +1021,12 @@ class BulkEditRecord(models.Model):
 
         properties = {}
         for change in self.changes.all():
-            properties[change.prop_id] = change.edited_value(case, edited_properties=properties)
+            if change.action_type == EditActionType.RESET:
+                del properties[change.prop_id]
+            else:
+                properties[change.prop_id] = change.edited_value(
+                    case, edited_properties=properties
+                )
         self.calculated_properties = properties
         self.calculated_change_id = self.changes.last().change_id
         self.save()

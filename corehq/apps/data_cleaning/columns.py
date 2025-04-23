@@ -1,4 +1,8 @@
-from django_tables2.columns import TemplateColumn, CheckBoxColumn
+from django_tables2.columns import (
+    TemplateColumn,
+    CheckBoxColumn,
+    BoundColumn,
+)
 from django_tables2.utils import AttributeDict
 
 from corehq.toggles import mark_safe
@@ -22,6 +26,25 @@ class DataCleaningHtmxColumn(TemplateColumn):
             *args, **kwargs
         )
         self.column_spec = column_spec
+
+    @classmethod
+    def get_htmx_partial_response_context(cls, column_spec, record, table):
+        """
+        Returns the context needed for rendering the
+        `DataCleaningHtmxColumn` template as an HTMX partial response.
+
+        :param column_spec: BulkEditColumn
+        :param record: EditableCaseSearchElasticRecord (or similar)
+        :param table: CleanCaseTable (or similar)
+        """
+        column = cls(column_spec)
+        bound_column = BoundColumn(table, column, column_spec.slug)
+        value = record[column_spec.prop_id]
+        return {
+            "column": bound_column,
+            "record": record,
+            "value": value,
+        }
 
 
 class DataCleaningHtmxSelectionColumn(CheckBoxColumn):

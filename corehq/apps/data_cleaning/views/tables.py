@@ -2,6 +2,7 @@ import json
 
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from corehq.apps.data_cleaning.columns import DataCleaningHtmxColumn
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
 from corehq.apps.data_cleaning.models import BulkEditSession
 from corehq.apps.data_cleaning.tables import (
@@ -123,6 +124,46 @@ class CleanCasesTableView(BulkEditSessionViewMixin,
             },
         })
         return response
+
+    def _render_table_cell_response(self, doc_id, column, request, *args, **kwargs):
+        """
+        Returns an a partial HttpResponse for the table cell,
+        using the `DataCleaningHtmxColumn` template and context.
+        """
+        record = self.table_class.record_class(
+            self.session.get_document_from_queryset(doc_id),
+            self.request,
+            session=self.session,
+        )
+        table = self.table_class(session=self.session, data=self.session.get_queryset())
+        context = DataCleaningHtmxColumn.get_htmx_partial_response_context(
+            column,
+            record,
+            table,
+        )
+        return self.render_htmx_partial_response(
+            request, DataCleaningHtmxColumn.template_name, context
+        )
+
+    def _get_cell_request_details(self, request):
+        """
+        Returns the details of the cell request.
+        """
+        doc_id = request.POST["record_id"]
+        column = self.session.columns.get(column_id=request.POST["column_id"])
+        return doc_id, column
+
+    @hq_hx_action("post")
+    def cell_reset_changes(self, request, *args, **kwargs):
+        """
+        Effectively resets/removes any changes made to a record's prop_id.
+        """
+        doc_id, column = self._get_cell_request_details(request)
+        edit_record = self.session.records.get(doc_id=doc_id)
+        edit_record.reset_changes(column.prop_id)
+        return self._render_table_cell_response(
+            doc_id, column, request, *args, **kwargs
+        )
 
 
 class CaseCleaningTasksTableView(BaseDataCleaningTableView):

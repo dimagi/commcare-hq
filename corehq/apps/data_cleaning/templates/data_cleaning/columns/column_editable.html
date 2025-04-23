@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load django_tables2 %}
 {% load data_cleaning %}
 
 {% edited_value record column as edited_value %}
@@ -28,6 +29,12 @@
           <button
             class="btn btn-outline-danger btn-sm"
             type="button"
+            hx-post="{{ request.path_info }}{% querystring %}"
+            hq-hx-action="cell_reset_changes"
+            hx-vals="{% cell_request_params record column %}"
+            hx-target="closest .editable-column-container"
+            hx-swap="outerHTML"
+            hx-disabled-elt="this"
           >
             <i class="fa fa-close"></i>
             <span class="visually-hidden">{% trans "Reset Changes" %}</span>
