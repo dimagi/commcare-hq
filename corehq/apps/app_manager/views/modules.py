@@ -1590,10 +1590,7 @@ def new_module(request, domain, app_id):
                 followup.requires = "case"
                 followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
             case_type = request.POST.get('case_type', None)
-            if case_type:
-                module.case_type = case_type
-            else:
-                _init_module_case_type(module)
+            _init_module_case_type(module, case_type)
         else:
             form_id = 0
             app.new_form(module_id, _("Survey"), lang)
@@ -1617,14 +1614,17 @@ def new_module(request, domain, app_id):
         return back_to_main(request, domain, app_id=app_id)
 
 
-# Set initial module case type, copying from another module in the same app
-def _init_module_case_type(module):
-    app = module.get_app()
-    app_case_types = [m.case_type for m in app.modules if m.case_type]
-    if len(app_case_types):
-        module.case_type = app_case_types[0]
+# Set initial module case type, copying from another module in the same app if no case type is provided
+def _init_module_case_type(module, case_type=None):
+    if case_type:
+        module.case_type = case_type
     else:
-        module.case_type = 'case'
+        app = module.get_app()
+        app_case_types = [m.case_type for m in app.modules if m.case_type]
+        if len(app_case_types):
+            module.case_type = app_case_types[0]
+        else:
+            module.case_type = 'case'
 
 
 def _init_biometrics_enroll_module(app, lang):
