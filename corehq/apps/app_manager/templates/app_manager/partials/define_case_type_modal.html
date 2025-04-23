@@ -28,7 +28,7 @@
           {% trans "Please define a case type for your case list." %}
         </p>
         <div class="form-horizontal" style="margin-top: 30px;">
-          <div class="form-group" id="new_case_type_form_group">
+          <div class="form-group">
             <label class="control-label col-sm-3">
               {% trans "Case Type" %}
               {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
@@ -48,13 +48,13 @@
             <div class="col-sm-6">
               <select
                 class="form-control"
-                id="new_case_type"
-                name="new_case_type"
+                id="new-case-type-dropdown"
+                name="new-case-type-dropdown"
               >
                 <option value=""></option>
               </select>
-              <div class="help-block" id="new_case_type_error"></div>
-              <div class="help-block" id="new_case_type_help">
+              <div class="help-block" id="new-case-type-error"></div>
+              <div class="help-block" id="new-case-type-help">
                 {% trans "* You can change the Case Type later by going to the menu settings page" %}
               </div>
             </div>

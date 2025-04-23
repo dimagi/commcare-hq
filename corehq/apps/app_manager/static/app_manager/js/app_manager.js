@@ -555,7 +555,7 @@ hqDefine('app_manager/js/app_manager', [
         });
 
         $('#define-case-type-modal').on('show.bs.modal', function () {
-            var $caseType = $('#new_case_type');
+            var $caseType = $('#new-case-type');
             if (!$caseType.data('select2')) {
                 $caseType.select2({
                     tags: true,
@@ -591,8 +591,8 @@ hqDefine('app_manager/js/app_manager', [
                 $caseType.on('change', function () {
                     var valueNoSpaces = $(this).val();
                     var $formGroup = $(this).closest('.form-group');
-                    var $help = $('#new_case_type_help');
-                    var $error = $('#new_case_type_error');
+                    var $help = $('#new-case-type-help');
+                    var $error = $('#new-case-type-error');
                     var $createBtn = $('#case-type-create-btn');
 
                     // Reset error states
@@ -637,7 +637,7 @@ hqDefine('app_manager/js/app_manager', [
             google.track.event("Added Case List Menu");
             kissmetrix.track.event("Added Case List Menu");
 
-            var $caseTypeInput = $('#new_case_type');
+            var $caseTypeInput = $('#new-case-type-dropdown');
             var value = $caseTypeInput.val();
 
             var $form = $('#new-module-form');
@@ -656,7 +656,7 @@ hqDefine('app_manager/js/app_manager', [
 
         // Clear selection when modal is hidden
         $('#define-case-type-modal').on('hidden.bs.modal', function () {
-            $('#new_case_type').val(null).trigger('change');
+            $('#new-case-type-dropdown').val(null).trigger('change');
         });
 
         var hoverHelpTexts = {
