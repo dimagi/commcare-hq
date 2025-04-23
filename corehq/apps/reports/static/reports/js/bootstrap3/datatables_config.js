@@ -153,6 +153,9 @@ hqDefine("reports/js/bootstrap3/datatables_config", [
                                     self.render_footer_row('ajax_stat_row-' + i, data.statistics_rows[i]);
                                 }
                             }
+                            if ('report_timing_profile' in data) {
+                                self.renderTimingProfile(data.report_timing_profile);
+                            }
                             applyBootstrapMagic();
                             if (self.successCallbacks) {
                                 for (i = 0; i < self.successCallbacks.length; i++) {
@@ -277,6 +280,65 @@ hqDefine("reports/js/bootstrap3/datatables_config", [
                 });
             });
         };  // end of self.render
+
+        self.renderTimingProfile = function (reportTimingProfile) {
+            var $timingProfile = $('#report-timing-profile');
+            if (!reportTimingProfile) {
+                $timingProfile.empty();
+                return;
+            }
+            // Create the main container
+            var html = `
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    <h4 class="panel-title">
+                      Report Timing Profile:
+                      ${reportTimingProfile.name}
+                      (${reportTimingProfile.duration.toFixed(2)}s)
+                    </h4>
+                  </div>
+                  <div class="panel-body">
+                    ${renderTimingNode(reportTimingProfile)}
+                  </div>
+                </div>`;
+            $timingProfile.html(html);
+        };
+
+        function renderTimingNode(node) {
+            if (!node.subs || node.subs.length === 0) {
+                return '';
+            }
+
+            var html = '<div class="timing-block">';
+
+            // Sort sub-nodes by duration (descending)
+            node.subs.sort(function(a, b) {
+                return b.duration - a.duration;
+            });
+
+            for (var i = 0; i < node.subs.length; i++) {
+                var sub = node.subs[i];
+                // Ensure reasonable width
+                var percentWidth = Math.max(Math.min(sub.percent_parent, 100), 10);
+
+                html += `
+                    <div class="timing-node" style="width: ${percentWidth}%;">
+                      <div class="timing-node-content">
+                        <div class="timing-node-header">${sub.name}</div>
+                        <div class="timing-node-details">
+                          ${sub.duration.toFixed(3)}s
+                          (${sub.percent_parent.toFixed(1)}% of parent,
+                          ${sub.percent_total.toFixed(1)}% of total)
+                        </div>`;
+
+                // Render children recursively
+                if (sub.subs && sub.subs.length > 0) {
+                    html += `<div class="timing-children">${renderTimingNode(sub)}</div>`;
+                }
+                html += '</div></div>';
+            }
+            return html + '</div>';
+        }
 
         return self;
     };
