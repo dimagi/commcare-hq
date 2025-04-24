@@ -5,21 +5,19 @@
 
 .dc-diff-view {
   font-family: $font-family-monospace;
+  font-size: $font-size-base * .95;
   letter-spacing: 1px;
 }
 
 .dc-diff-before,
 .dc-diff-after {
   border: 1px solid white;
-  margin: $spacer * 0.13;
-  padding-right: $spacer * 0.5;
-  vertical-align: middle;
+  margin: $spacer * 0.15;
 
-  &::before {
-    display: inline-block;
+  .dc-diff-icon {
     color: $white;
-    line-height: 12px;
-    padding: $spacer * 0.25 $spacer * 0.5;
+    padding: $spacer * 0.15 $spacer * 0.4;
+    cursor: help;
   }
 }
 
@@ -27,9 +25,8 @@
   background-color: $red-100;
   border-color: $red-500;
 
-  &::before {
+  .dc-diff-icon {
     background-color: $red-500;
-    content: "-";
   }
 }
 
@@ -37,9 +34,8 @@
   background-color: $green-100;
   border-color: $green-500;
 
-  &::before {
+  .dc-diff-icon {
     background-color: $green-500;
-    content: "+";
   }
 }
 
