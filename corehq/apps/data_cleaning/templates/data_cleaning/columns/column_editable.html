@@ -28,7 +28,7 @@
               <i class="fa-solid fa-minus"></i>
             </div>
             <div class="align-self-center ms-1 me-2">
-              {{ value }}
+              {% display_dc_value value %}
             </div>
           </div>
           <div class="d-flex align-items-stretch dc-diff-after">
@@ -41,7 +41,7 @@
               <i class="fa-solid fa-plus"></i>
             </div>
             <div class="align-self-center ms-1 me-2">
-              {{ edited_value }}
+              {% display_dc_value edited_value %}
             </div>
           </div>
         </div>
@@ -62,7 +62,7 @@
         </div>
       </div>
     {% else %}
-      {{ value }}
+      {% display_dc_value value %}
     {% endif %}
     <button
       class="btn btn-link btn-sm dc-inline-edit-action"
