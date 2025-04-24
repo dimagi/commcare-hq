@@ -402,18 +402,26 @@ class BulkEditSessionChangesTests(BaseBulkEditSessionTest):
     def test_get_num_edited_records(self):
         doc_ids = self._get_list_of_doc_ids(5)
         selected_edited_doc_ids = self._get_list_of_doc_ids(5)
+        records = []
+        changes = []
         for doc_id in doc_ids + selected_edited_doc_ids:
             record = BulkEditRecord.objects.create(
                 session=self.session,
                 doc_id=doc_id,
                 is_selected=doc_id in selected_edited_doc_ids,
             )
+            records.append(record)
             change = BulkEditChange.objects.create(
                 session=self.session,
                 prop_id='name',
                 action_type=EditActionType.STRIP,
             )
             change.records.add(record)
+            changes.append(change)
+
+        # ensure that if a record has multiple changes, those changes aren't counted
+        changes[1].records.add(records[0], records[5])
+        changes[4].records.add(records[2])
         selected_doc_ids = self._get_list_of_doc_ids(40)
         self.session.select_multiple_records(selected_doc_ids)
         num_edited_records = self.session.get_num_edited_records()
