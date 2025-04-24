@@ -107,11 +107,20 @@ hqDefine("users/js/mobile_workers",[
         self.is_active.subscribe(function (newValue) {
             var urlName = newValue ? 'activate_commcare_user' : 'deactivate_commcare_user',
                 $modal = $('#' + (newValue ? 'activate_' : 'deactivate_') + self.user_id());
+            toggleActive($modal, urlName, self.user_id());
+        });
 
+        self.is_connect_link_active.subscribe(function (newValue) {
+            const urlName = newValue ? 'activate_connectid_link' : 'deactivate_connectid_link';
+            const $modal = $(`#${urlName}_${self.username()}`);
+            toggleActive($modal, urlName, self.username());
+        });
+
+        function toggleActive($modal, urlName, userIdOrName) {
             $modal.find(".btn").addSpinnerToButton();
             $.ajax({
                 method: 'POST',
-                url: initialPageData.reverse(urlName, self.user_id()),
+                url: initialPageData.reverse(urlName, userIdOrName),
                 success: function (data) {
                     $modal.modal('hide');
                     if (data.success) {
@@ -125,7 +134,7 @@ hqDefine("users/js/mobile_workers",[
                     self.action_error(gettext("Issue communicating with server. Try again."));
                 },
             });
-        });
+        }
 
         self.sendConfirmationEmail = function () {
             var urlName = 'send_confirmation_email';
