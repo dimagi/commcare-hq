@@ -560,7 +560,7 @@ class SetUserPasswordForm(SetPasswordForm):
         else:
             submitButton = hqcrispy.FormActions(
                 crispy.ButtonHolder(
-                    Submit('submit', _('Reset Password'), 
+                    Submit('submit', _('Reset Password'),
                            **({'disabled': 'disabled'} if has_connect_id_link else {}))
                 )
             )
