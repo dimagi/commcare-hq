@@ -562,6 +562,7 @@ hqDefine('app_manager/js/app_manager', [
                     placeholder: gettext("Add a case type or look for an existing one"),
                     allowClear: true,
                     width: '100%',
+                    dropdownParent: $('#define-case-type-modal'),
                     createTag: function (params) {
                         // Replace spaces with underscore
                         var term = params.term.replace(/ /g, '_');
