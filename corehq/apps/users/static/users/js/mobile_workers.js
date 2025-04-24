@@ -73,6 +73,7 @@ hqDefine("users/js/mobile_workers",[
             phone_number: '',
             is_active: true,
             is_account_confirmed: true,
+            is_connect_link_active: null,
             deactivate_after_date: '',
         });
 

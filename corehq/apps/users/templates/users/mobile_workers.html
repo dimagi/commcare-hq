@@ -285,6 +285,9 @@
             {% if two_stage_user_confirmation %}
             <th class="col-xs-2" data-bind="visible: deactivatedOnly()">{% trans 'Status' %}</th>
             {% endif %}
+            {% if request|toggle_enabled:"COMMCARE_CONNECT" %}
+              <th class="col-xs-2">{% trans 'Connect ID Status' %}</th>
+            {% endif %}
             {% if not request.is_view_only %}<th class="col-xs-2">{% trans 'Action' %}</th>{% endif %}
           </tr>
           </thead>
