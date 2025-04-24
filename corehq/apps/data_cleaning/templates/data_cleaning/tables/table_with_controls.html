@@ -14,6 +14,7 @@
     },
   }"
   x-init="
+    $store.editDetails.update({{ table.num_edited_records }});
     updateCleaningStatus(numRecordsSelected);
     $watch('numRecordsSelected', updateCleaningStatus);
   "
@@ -35,6 +36,36 @@
 
 {% block before_table %}
   <div class="d-flex align-items-center pb-2">
+
+    <div
+      class="pe-2"
+      x-show="$store.editDetails.numEditedRecords > 0"
+    >
+      <div class="input-group">
+        <div class="input-group-text">
+          <i class="fa-solid fa-pencil me-2"></i>
+          {% trans "Edits" %}
+          <span
+            class="ms-2 badge text-bg-secondary"
+            data-bs-title="{% trans "number of cases edited" %}"
+            x-tooltip=""
+            x-text="$store.editDetails.numEditedRecords"
+          ></span>
+        </div>
+        <button class="btn btn-outline-danger" type="button">
+          <i class="fa-solid fa-close"></i>
+          {% trans "Clear" %}
+        </button>
+        <button class="btn btn-outline-secondary" type="button">
+          <i class="fa-solid fa-undo"></i>
+          {% trans "Undo" %}
+        </button>
+        <button class="btn btn-success" type="button">
+          <i class="fa-solid fa-check-double"></i>
+          {% trans "Apply" %}
+        </button>
+      </div>
+    </div>
 
     {% if table.has_any_filtering %}
       <div class="pe-2">

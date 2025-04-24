@@ -14,6 +14,12 @@ Alpine.data('wiggleButtonModel', wiggleButton);
 
 Alpine.store('isCleaningAllowed', false);
 Alpine.store('showWhitespaces', false);
+Alpine.store('editDetails', {
+    numEditedRecords: 0,
+    update(numEditedRecords) {
+        this.numEditedRecords = numEditedRecords;
+    },
+});
 
 import Alpine from 'alpinejs';
 Alpine.start();
@@ -21,4 +27,8 @@ Alpine.start();
 document.body.addEventListener("showDataCleaningModal", function (event) {
     const modal = new Modal(event.detail.elt);
     modal.show();
+});
+
+document.body.addEventListener("updateEditDetails", function (event) {
+    Alpine.store('editDetails').update(event.detail.numEditedRecords);
 });
