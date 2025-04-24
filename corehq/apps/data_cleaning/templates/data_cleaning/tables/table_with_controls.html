@@ -14,7 +14,7 @@
     },
   }"
   x-init="
-    $store.editDetails.update({{ table.num_edited_records }});
+    $store.editDetails.update({{ table.edit_details }});
     updateCleaningStatus(numRecordsSelected);
     $watch('numRecordsSelected', updateCleaningStatus);
   "
@@ -39,7 +39,7 @@
 
     <div
       class="pe-2"
-      x-show="$store.editDetails.numEditedRecords > 0"
+      x-show="$store.editDetails.numRecordsEdited > 0"
     >
       <div class="input-group">
         <div class="input-group-text">
@@ -49,7 +49,7 @@
             class="ms-2 badge text-bg-secondary"
             data-bs-title="{% trans "number of cases with an edit history" %}"
             x-tooltip=""
-            x-text="$store.editDetails.numEditedRecords"
+            x-text="$store.editDetails.numRecordsEdited"
           ></span>
         </div>
         <button
