@@ -1,4 +1,3 @@
-'use strict';
 /**
  * Model for a column in the Display Properties section of case list/detail.
  *
@@ -11,11 +10,35 @@
  * set of properties that match python's DetailTab model. The screen model
  * is responsible for creating the tab "columns" and injecting them into itself.
  */
-hqDefine("app_manager/js/details/column", function () {
-    const uiElementInput = hqImport('hqwebapp/js/ui_elements/bootstrap3/ui-element-input');
-    const uiElementKeyValueMapping = hqImport('hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping');
-    const uiElementSelect = hqImport('hqwebapp/js/ui_elements/bootstrap3/ui-element-select');
-    const initialPageData = hqImport('hqwebapp/js/initial_page_data');
+hqDefine("app_manager/js/details/column", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "hqwebapp/js/initial_page_data",
+    "hqwebapp/js/bootstrap3/main",
+    "app_manager/js/details/utils",
+    "hqwebapp/js/ui_elements/bootstrap3/ui-element-input",
+    "hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping",
+    "hqwebapp/js/ui_elements/ui-element-langcode-button",
+    "hqwebapp/js/ui_elements/bootstrap3/ui-element-select",
+    "app_manager/js/details/detail_tab_nodeset",
+    "app_manager/js/details/graph_config",
+    "analytix/js/google",
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+    main,
+    Utils,
+    uiElementInput,
+    uiElementKeyValueMapping,
+    uiElementLangcodeButton,
+    uiElementSelect,
+    detailTabNodeset,
+    graphConfig,
+    google,
+) {
     const microCaseImageName = 'cc_case_image';
 
     return function (col, screen) {
@@ -24,11 +47,11 @@ hqDefine("app_manager/js/details/column", function () {
             column extras: enum, late_flag
         */
         const self = {};
-        hqImport("hqwebapp/js/bootstrap3/main").eventize(self);
+        self.$ = $;     // make $ available to data bindings, where it's used in sorting elements
+        main.eventize(self);
         self.original = JSON.parse(JSON.stringify(col));
 
         // Set defaults for normal (non-tab) column attributes
-        const Utils = hqImport('app_manager/js/details/utils');
         const defaults = {
             calc_xpath: ".",
             enum: [],
@@ -81,6 +104,31 @@ hqDefine("app_manager/js/details/column", function () {
         });
         self.tileColumnStart = ko.observable(self.original.grid_x + 1 || 1); // converts from 0 to 1-based for UI
         self.tileColumnOptions = _.range(1, self.tileColumnMax());
+
+        let optimizationOptions = [
+            {
+                value: "",
+                label: "---",
+            },
+            {
+                value: "cache",
+                label: gettext('Cache'),
+            },
+            {
+                value: "lazy_load",
+                label: gettext('Lazy Load'),
+            },
+            {
+                value: "cache_and_lazy_load",
+                label: gettext('Cache & Lazy Load'),
+            },
+        ];
+        if (screen.showCaseListOptimizations) {
+            self.optimizationSelectElement = uiElementSelect.new(
+                optimizationOptions,
+            ).val(self.original.optimization || "");
+            self.$optimizationSelectElement = $('<div/>').append(self.optimizationSelectElement.ui);
+        }
         self.tileWidth = ko.observable(self.original.width || self.tileRowMax() - 1);
         self.tileWidthOptions = ko.computed(function () {
             return _.range(1, self.tileColumnMax() + 1 - (self.tileColumnStart() || 1));
@@ -142,6 +190,9 @@ hqDefine("app_manager/js/details/column", function () {
             self.field = uiElementInput.new(self.original.field);
         }
         self.field.setIcon(icon);
+        self.getFieldHtml = function (value) {
+            return Utils.getFieldHtml(value);
+        };
 
         // Make it possible to observe changes to self.field
         // note self observableVal is read only!
@@ -163,7 +214,7 @@ hqDefine("app_manager/js/details/column", function () {
                     lang = self.screen.langs[i];
                     if (self.original.header[lang]) {
                         visibleVal = self.original.header[lang] +
-                            hqImport('hqwebapp/js/ui_elements/ui-element-langcode-button').LANG_DELIN +
+                            uiElementLangcodeButton.LANG_DELIN +
                             lang;
                         break;
                     }
@@ -172,7 +223,7 @@ hqDefine("app_manager/js/details/column", function () {
             self.header = uiElementInput.new().val(invisibleVal);
             self.header.setVisibleValue(visibleVal);
 
-            self.nodeset_extra = hqImport("app_manager/js/details/detail_tab_nodeset")(_.extend({
+            self.nodeset_extra = detailTabNodeset(_.extend({
                 caseTypes: self.screen.childCaseTypes,
             }, _.pick(self.original, ['nodeset', 'nodesetCaseType', 'nodesetFilter'])));
 
@@ -201,6 +252,7 @@ hqDefine("app_manager/js/details/column", function () {
 
         self.saveAttempted = ko.observable(false);
         self.useXpathExpression = self.original.useXpathExpression;
+        self.warningText = Utils.fieldFormatWarningMessage;
         self.showWarning = ko.computed(function () {
             if (self.useXpathExpression) {
                 return false;
@@ -240,6 +292,16 @@ hqDefine("app_manager/js/details/column", function () {
         }
 
         self.format = uiElementSelect.new(menuOptions).val(self.original.format || null);
+        self.supportsOptimizations = ko.observable(false);
+        self.setSupportOptimizations = function () {
+            let optimizationsSupported = (
+                screen.showCaseListOptimizations &&
+                self.format.val() &&
+                initialPageData.get('formats_supporting_case_list_optimizations').includes(self.format.val())
+            );
+            self.supportsOptimizations(optimizationsSupported);
+        };
+        self.setSupportOptimizations();
 
         (function () {
             const o = {
@@ -255,8 +317,7 @@ hqDefine("app_manager/js/details/column", function () {
             };
             self.enum_extra = uiElementKeyValueMapping.new(o);
         }());
-        const graphConfigurationUiElement = hqImport('app_manager/js/details/graph_config').graphConfigurationUiElement;
-        self.graph_extra = graphConfigurationUiElement({
+        self.graph_extra = graphConfig.graphConfigurationUiElement({
             childCaseTypes: self.screen.childCaseTypes,
             fixtures: self.screen.fixtures,
             lang: self.lang,
@@ -358,6 +419,9 @@ hqDefine("app_manager/js/details/column", function () {
         ], function (element) {
             self[element].on('change', fireChange);
         });
+        if (self.optimizationSelectElement) {
+            self.optimizationSelectElement.on('change', fireChange);
+        }
         self.case_tile_field.subscribe(fireChange);
         self.tileRowStart.subscribe(fireChange);
         self.tileColumnStart.subscribe(fireChange);
@@ -382,6 +446,7 @@ hqDefine("app_manager/js/details/column", function () {
             }
 
             self.coordinatesVisible(!_.contains(['address', 'address-popup', 'invisible'], self.format.val()));
+            self.setSupportOptimizations();
             // Prevent self from running on page load before init
             if (self.format.ui.parent().length > 0) {
                 self.date_extra.ui.detach();
@@ -460,13 +525,14 @@ hqDefine("app_manager/js/details/column", function () {
         // because self way the events are not fired during the initialization
         // of the page.
         self.format.$edit_view.on("change", function (event) {
-            hqImport('analytix/js/google').track.event('Case List Config', 'Display Format', event.target.value);
+            google.track.event('Case List Config', 'Display Format', event.target.value);
         });
         self.serialize = function () {
             const column = self.original;
             column.field = self.field.val();
             column.header[self.lang] = self.header.val();
             column.format = self.format.val();
+            column.optimization = self.supportsOptimizations() ? self.optimizationSelectElement.val() : null;
             column.date_format = self.date_extra.val();
             column.enum = self.enum_extra.getItems();
             column.endpoint_action_id = self.action_form_extra.val() === "-1" ? null : self.action_form_extra.val();

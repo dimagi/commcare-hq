@@ -15,8 +15,8 @@ from corehq.motech.models import (
     RequestLogEntry,
 )
 from corehq.motech.requests import get_basic_requests
-from corehq.motech.utils import b64_aes_encrypt
 from corehq.util import as_json_text, as_text
+from corehq.util.test_utils import flag_enabled
 
 TEST_API_URL = 'http://example.com:9080/api/'
 TEST_API_USERNAME = 'admin'
@@ -201,13 +201,6 @@ class ConnectionSettingsPropertiesTests(SimpleTestCase):
         cs.last_token = token
         self.assertEqual(cs.last_token, token)
 
-    def test_last_token_getter_decrypts_ecb(self):
-        cs = ConnectionSettings()
-        token = {'key': 'value'}
-        plaintext = json.dumps(token)
-        cs.last_token_aes = b64_aes_encrypt(plaintext)
-        self.assertEqual(cs.last_token, token)
-
     def test_password_getter_returns(self):
         cs = ConnectionSettings()
         cs.password = 'secret'
@@ -222,6 +215,54 @@ class ConnectionSettingsPropertiesTests(SimpleTestCase):
         cs = ConnectionSettings()
         cs.last_token_aes = ''
         self.assertIsNone(cs.last_token)
+
+    def test_set_custom_headers_encrypts_no_ff(self):
+        cs = ConnectionSettings()
+        cs.set_custom_headers({"secret-header": "top secret"})
+        self.assertIsNone(cs.custom_headers)
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_set_custom_headers_encrypts(self):
+        cs = ConnectionSettings()
+        cs.set_custom_headers({"secret-header": "top secret"})
+        self.assertTrue(cs.custom_headers["secret-header"].startswith(f'${ALGO_AES_CBC}$'))
+
+    def test_get_custom_headers_decrypts_no_ff(self):
+        cs = ConnectionSettings()
+        cs.set_custom_headers({"secret-header": "top secret"})
+        self.assertEqual(cs.plaintext_custom_headers, {})
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_get_custom_headers_decrypts(self):
+        cs = ConnectionSettings()
+        cs.set_custom_headers({"secret-header": "top secret"})
+        self.assertEqual(cs.plaintext_custom_headers, {"secret-header": "top secret"})
+
+    def test_get_custom_header_display_hides_header_values_no_ff(self):
+        cs = ConnectionSettings()
+        cs.set_custom_headers({"secret-header": "top secret"})
+        self.assertEqual(cs.get_custom_headers_display(), {})
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_get_custom_header_display_hides_header_values(self):
+        cs = ConnectionSettings()
+        cs.set_custom_headers({"secret-header": "top secret"})
+        self.assertEqual(cs.get_custom_headers_display(), {"secret-header": PASSWORD_PLACEHOLDER})
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_remove_a_custom_header(self):
+        cs = ConnectionSettings()
+        cs.set_custom_headers({"secret-header": "top secret", "secret-header-2": "top secret 2"})
+        self.assertEqual(
+            cs.plaintext_custom_headers,
+            {"secret-header": "top secret", "secret-header-2": "top secret 2"}
+        )
+
+        cs.set_custom_headers({"secret-header": "top secret", "secret-header-3": "top secret 3"})
+        self.assertEqual(
+            cs.plaintext_custom_headers,
+            {"secret-header": "top secret", "secret-header-3": "top secret 3"}
+        )
 
 
 class NotifyAddressesTests(SimpleTestCase):

@@ -1,6 +1,7 @@
+/* eslint-env mocha */
 import $ from "jquery";
 import _ from "underscore";
-import sinon from "sinon/pkg/sinon";
+import sinon from "sinon";
 
 import initialPageData from "hqwebapp/js/initial_page_data";
 import releasesModels from "app_manager/js/releases/releases";
@@ -110,12 +111,12 @@ describe('App Releases', function () {
             this.server.respondWith(
                 "GET",
                 new RegExp(savedAppModel.URL_TYPES.SHORT_ODK_MEDIA_URL),
-                [200, { "Content-type": "text/html" }, 'http://bit.ly/media/']
+                [200, { "Content-type": "text/html" }, 'http://bit.ly/media/'],
             );
             this.server.respondWith(
                 "GET",
                 new RegExp(savedAppModel.URL_TYPES.SHORT_ODK_URL),
-                [200, { "Content-type": "text/html" }, 'http://bit.ly/nomedia/']
+                [200, { "Content-type": "text/html" }, 'http://bit.ly/nomedia/'],
             );
         });
 

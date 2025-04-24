@@ -316,6 +316,7 @@ DOMAIN_DELETE_OPERATIONS = [
     DjangoUserRelatedModelDeletion('otp_totp', 'TOTPDevice', 'user__username'),
     DjangoUserRelatedModelDeletion('phonenumber', 'PhoneDevice', 'user__username'),
     DjangoUserRelatedModelDeletion('users', 'HQApiKey', 'user__username'),
+    DjangoUserRelatedModelDeletion('data_cleaning', 'BulkEditSession', 'user__username'),
     CustomDeletion('auth', _delete_django_users, ['User']),
     ModelDeletion('products', 'SQLProduct', 'domain'),
     ModelDeletion('locations', 'SQLLocation', 'domain'),
@@ -370,6 +371,13 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('data_analytics', 'DomainMetrics', 'domain'),
     ModelDeletion('data_analytics', 'GIRRow', 'domain_name'),
     ModelDeletion('data_analytics', 'MALTRow', 'domain_name'),
+    ModelDeletion('data_cleaning', 'BulkEditSession', 'domain', [
+        'BulkEditFilter',
+        'BulkEditPinnedFilter',
+        'BulkEditColumn',
+        'BulkEditRecord',
+        'BulkEditChange',
+    ]),
     ModelDeletion('data_dictionary', 'CaseType', 'domain', [
         'CaseProperty',
         'CasePropertyGroup',
@@ -400,6 +408,8 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('integration', 'HmacCalloutSettings', 'domain'),
     ModelDeletion('integration', 'SimprintsIntegration', 'domain'),
     ModelDeletion('integration', 'KycConfig', 'domain'),
+    ModelDeletion('integration', 'MoMoConfig', 'domain'),
+    ModelDeletion('ip_access', 'IPAccessConfig', 'domain'),
     ModelDeletion('linked_domain', 'DomainLink', 'linked_domain', ['DomainLinkHistory']),
     CustomDeletion('scheduling', _delete_sms_content_events_schedules, [
         'SMSContent', 'EmailContent', 'SMSSurveyContent',
@@ -494,6 +504,11 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('geospatial', 'GeoConfig', 'domain'),
     ModelDeletion('email', 'EmailSettings', 'domain'),
     ModelDeletion('hqmedia', 'LogoForSystemEmailsReference', 'domain'),
+    ModelDeletion('campaign', 'Dashboard', 'domain', extra_models=[
+        'DashboardMap',
+        'DashboardReport',
+        'DashboardGauge'
+    ]),
 ]
 
 

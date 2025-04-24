@@ -14,6 +14,7 @@ $breadcrumb-height: 36px;
 $cloudcare-nav-height: 30px;
 $minimized-debugger-height: 30px;
 
+@import "cloudcare-variables";
 @import "formplayer-webapp/content";
 @import "formplayer-webapp/navbar";
 @import "formplayer-webapp/breadcrumbs";

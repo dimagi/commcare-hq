@@ -11,7 +11,7 @@ from corehq.util.timezones.utils import get_timezone
 
 class BaseElasticRecord(ABC):
 
-    def __init__(self, record, request):
+    def __init__(self, record, request, **kwargs):
         self.record = record
         self.request = request
 
@@ -35,6 +35,15 @@ class BaseElasticRecord(ABC):
     def verbose_name_plural(self):
         """
         The full (plural) human-friendly name for the data.
+
+        :return: string
+        """
+
+    @property
+    @abstractmethod
+    def record_id(self):
+        """
+        Return the primary id of the record
 
         :return: string
         """
@@ -63,15 +72,32 @@ class CaseSearchElasticRecord(BaseElasticRecord):
     verbose_name = gettext_lazy("case")
     verbose_name_plural = gettext_lazy("cases")
 
-    def __init__(self, record, request):
+    def __init__(self, record, request, **kwargs):
         record = SafeCaseDisplay(
             wrap_case_search_hit(record),
             get_timezone(request, request.domain)
         )
-        super().__init__(record, request)
+        super().__init__(record, request, **kwargs)
 
     def __getitem__(self, item):
         return self.record.get(item)
+
+    @property
+    def name(self):
+        """
+        Used to populate the name attribute of an input (checkbox) in the table.
+        Used by the built-in CheckBoxColumn from django_tables2.
+        """
+        return "selected_case"
+
+    @property
+    def record_id(self):
+        """
+        Return the primary id of the record
+
+        :return: string
+        """
+        return self.record.case.case_id
 
     @staticmethod
     def get_sorted_query(query, accessors):

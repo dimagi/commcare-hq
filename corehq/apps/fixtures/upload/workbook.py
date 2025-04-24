@@ -263,17 +263,9 @@ class _FixtureTableDefinition(object):
                     raise FixtureUploadError([error_message])
             return is_indexed
 
-        def is_number(text):
-            text = str(text)
-            try:
-                float(text)
-                return True
-            except ValueError:
-                return False
-
         for i, field_name in enumerate(field_names):
-            if is_number(field_name):
-                message = _(FAILURE_MESSAGES['invalid_field_name_numerical']).format(
+            if is_identifier_invalid(field_name):
+                message = _(FAILURE_MESSAGES['invalid_field_name']).format(
                     i=i + 1,
                     val=field_name,
                 )

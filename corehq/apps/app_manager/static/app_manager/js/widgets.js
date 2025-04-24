@@ -9,7 +9,7 @@ hqDefine("app_manager/js/widgets", [
     $,
     _,
     assertProperties,
-    initialPageData
+    initialPageData,
 ) {
     var initVersionDropdown = function ($select, options) {
         options = options || {};

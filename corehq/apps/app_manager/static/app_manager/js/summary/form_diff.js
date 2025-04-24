@@ -105,11 +105,11 @@ hqDefine('app_manager/js/summary/form_diff',[
         $("#form-summary-header").koApplyBindings(formSummaryController);
         models.initVersionsBox(
             $("#first-version-selector"),
-            {id: initialPageData.get("first.app_id"), text: initialPageData.get("first.app_version")}
+            {id: initialPageData.get("first.app_id"), text: initialPageData.get("first.app_version")},
         );
         models.initVersionsBox(
             $("#second-version-selector"),
-            {id: initialPageData.get("second.app_id"), text: initialPageData.get("second.app_version")}
+            {id: initialPageData.get("second.app_id"), text: initialPageData.get("second.app_version")},
         );
 
         models.initMenu([firstFormSummaryContent, secondFormSummaryContent], formSummaryMenu);

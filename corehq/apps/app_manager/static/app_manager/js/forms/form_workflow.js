@@ -59,7 +59,7 @@ hqDefine("app_manager/js/forms/form_workflow", [
                 link.xpath,
                 link.uniqueId,
                 self,
-                link.datums
+                link.datums,
             );
         }));
     };
@@ -210,7 +210,7 @@ hqDefine("app_manager/js/forms/form_workflow", [
                 String(Math.random()).slice(2),  // random id
                 gettext("Manual Linking Datums"),
                 gettext("Set datums required to navigate to the selected form or menu"),
-                {key: gettext("Datum ID"), value: gettext("XPath Expression")}  // placeholders
+                {key: gettext("Datum ID"), value: gettext("XPath Expression")},  // placeholders
             );
             const datumsDict = {};
             _.each(datums, function (datum) {
@@ -241,7 +241,7 @@ hqDefine("app_manager/js/forms/form_workflow", [
                 function (data) {
                     self.datums(self.wrap_datums(data));
                 },
-                "json"
+                "json",
             ).fail(function () {
                 self.datumsFetched(false);
                 self.datumsError(true);

@@ -6,7 +6,9 @@ hqDefine("app_manager/js/releases/releases", [
     "analytix/js/kissmetrix",
     "app_manager/js/download_async_modal",
     "hqwebapp/js/initial_page_data",
+    "app_manager/js/app_manager",
     "app_manager/js/menu",
+    "hqwebapp/js/bootstrap3/knockout_bindings.ko",      // openModal binding
 ], function (
     $,
     ko,
@@ -15,6 +17,7 @@ hqDefine("app_manager/js/releases/releases", [
     kissmetrix,
     downloadAsyncModal,
     initialPageData,
+    appManager,
     menu,
 ) {
     function savedAppModel(appData, releasesMain) {
@@ -44,6 +47,9 @@ hqDefine("app_manager/js/releases/releases", [
         });
         self.app_code = ko.observable(null);
         self.failed_url_generation = ko.observable(false);
+        self.allowOfflineInstall = ko.observable(function () {
+            return appManager.versionGE(self.build_spec.version(), '2.13.0');
+        });
         self.build_profile = ko.observable('');
 
         self.base_url = function () {
@@ -209,7 +215,7 @@ hqDefine("app_manager/js/releases/releases", [
 
         self.download_application_zip = function (multimediaOnly, buildProfile) {
             releasesMain.download_application_zip(
-                self.id(), multimediaOnly, buildProfile, self.download_targeted_version()
+                self.id(), multimediaOnly, buildProfile, self.download_targeted_version(),
             );
         };
 
@@ -336,11 +342,16 @@ hqDefine("app_manager/js/releases/releases", [
             return initialPageData.reverse.apply(null, arguments);
         };
         self.webAppsUrl = function (idObservable, copyOf) {
-            var url = initialPageData.reverse("formplayer_main"),
-                data = {
-                    appId: ko.utils.unwrapObservable(idObservable),
-                    copyOf: copyOf,
-                };
+            const buildId = ko.utils.unwrapObservable(idObservable);
+            var url = initialPageData.reverse(
+                "formplayer_main_view_build",
+                copyOf,
+                buildId,
+            );
+            var data = {
+                appId: buildId,
+                copyOf: copyOf,
+            };
 
             return url + '#' + encodeURI(JSON.stringify(data));
         };
@@ -386,7 +397,7 @@ hqDefine("app_manager/js/releases/releases", [
                     self.savedApps(
                         _.map(data.apps, function (app) {
                             return savedAppModel(app, self);
-                        })
+                        }),
                     );
                     self.totalItems(data.pagination.total);
                     self.fetchState('');

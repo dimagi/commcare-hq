@@ -66,14 +66,14 @@ class ElasticTable(tables.Table):
     """
     record_class = BaseElasticRecord
 
-    def __init__(self, **kwargs):
+    def __init__(self, record_kwargs=None, **kwargs):
         data = kwargs.pop('data')
         if not ElasticTableData.validate(data):
             raise ValueError(
                 "Please ensure that `data` is a subclass of ESQuery. "
                 "Otherwise, do not inherit from ElasticTable."
             )
-        data = ElasticTableData(data)
+        data = ElasticTableData(data, record_kwargs or {})
         super().__init__(data=data, **kwargs)
 
 
@@ -87,8 +87,9 @@ class ElasticTableData(TableData):
     `django_tables2`.
     """
 
-    def __init__(self, query):
+    def __init__(self, query, record_kwargs):
         self.query = query
+        self.record_kwargs = record_kwargs
         self._length = None
         super().__init__([])  # init sets self.data to this value
 
@@ -102,8 +103,8 @@ class ElasticTableData(TableData):
             raise ValueError("'stop' must be greater than 'start'")
         size = stop - start
         page_query = self.query.start(start).size(size)
-        results = self._get_es_results(page_query)
-        self.data = [self.table.record_class(record, self.table.request)
+        results = self.get_es_results(page_query)
+        self.data = [self.table.record_class(record, self.table.request, **self.record_kwargs)
                      for record in results['hits'].get('hits', [])]
         return self.data
 
@@ -132,14 +133,21 @@ class ElasticTableData(TableData):
     @property
     @memoized
     def _total_records(self):
-        res = self._get_es_results(self.query.size(0))
+        return self.get_total_records_in_query(self.query)
+
+    @classmethod
+    def get_total_records_in_query(cls, query):
+        """
+        Returns the total number of records in the ESQuery.
+        """
+        res = cls.get_es_results(query.size(0))
         if res is not None:
             return res['hits'].get('total', 0)
         else:
             return 0
 
     @staticmethod
-    def _get_es_results(query):
+    def get_es_results(query):
         try:
             return query.run().raw
         except ESError as e:

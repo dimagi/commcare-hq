@@ -1,15 +1,52 @@
-hqDefine("app_manager/js/modules/module_view", function () {
+hqDefine("app_manager/js/modules/module_view", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "analytix/js/kissmetrix",
+    "hqwebapp/js/initial_page_data",
+    "app_manager/js/app_manager",
+    "app_manager/js/details/screen_config",
+    "app_manager/js/modules/shadow_module_settings",
+    "hqwebapp/js/toggles",
+    "app_manager/js/visit_scheduler",   // advanced modules only
+    "app_manager/js/custom_assertions",
+    "select2/dist/js/select2.full.min",
+    "app_manager/js/nav_menu_media",
+    "app_manager/js/modules/case_list_setting",
+    "hqwebapp/js/components/select_toggle",
+    "hqwebapp/js/key-value-mapping",
+    "app_manager/js/xpathValidator",
+    "commcarehq",
+], function (
+    $,
+    ko,
+    _,
+    kissmetrix,
+    initialPageData,
+    appManager,
+    screenConfig,
+    shadowModuleSettings,
+    toggles,
+    VisitScheduler,
+) {
     $(function () {
+        // Module name
+        $(document).on("inline-edit-save", function (e, data) {
+            if (_.has(data.update, '.variable-module_name')) {
+                appManager.updatePageTitle(data.update['.variable-module_name']);
+                appManager.updateDOM(data.update);
+            }
+        });
+
         $('.case-type-dropdown').select2();
         $('.overwrite-danger').on("click", function () {
-            hqImport('analytix/js/kissmetrix').track.event("Overwrite Case Lists/Case Details");
+            kissmetrix.track.event("Overwrite Case Lists/Case Details");
         });
-        var initialPageData = hqImport('hqwebapp/js/initial_page_data'),
-            moduleBrief = initialPageData.get('module_brief'),
+        var moduleBrief = initialPageData.get('module_brief'),
             moduleType = moduleBrief.module_type,
             options = initialPageData.get('js_options') || {};
 
-        hqImport('app_manager/js/app_manager').setAppendedPageTitle(gettext("Menu Settings"));
+        appManager.setAppendedPageTitle(gettext("Menu Settings"));
         // Set up details
         if (moduleBrief.case_type) {
             var details = initialPageData.get('details');
@@ -40,7 +77,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     multimedia: initialPageData.get('multimedia_object_map'),
                 };
                 _.extend(detailScreenConfigOptions, options.search_config);
-                var detailScreenConfig = hqImport("app_manager/js/details/screen_config")(detailScreenConfigOptions);
+                var detailScreenConfig = screenConfig(detailScreenConfigOptions);
 
                 var $listHome = $("#" + detail.type + "-detail-screen-config-tab");
                 $listHome.koApplyBindings(detailScreenConfig);
@@ -111,7 +148,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
             if (!valueNoSpaces) {
                 $el.closest('.form-group').addClass('has-error');
                 showCaseTypeError(
-                    gettext("Case type is required.")
+                    gettext("Case type is required."),
                 );
                 return;
             }
@@ -120,15 +157,15 @@ hqDefine("app_manager/js/modules/module_view", function () {
             } else {
                 hideCaseTypeDeprecatedWarning();
             }
-            if (!valueNoSpaces.match(/^[\w-]*$/g)) {
+            if (appManager.valueIncludeInvalidCharacters(valueNoSpaces)) {
                 $el.closest('.form-group').addClass('has-error');
                 showCaseTypeError(
-                    gettext("Case types can only include the characters a-z, 0-9, '-' and '_'")
+                    appManager.invalidCharErrorMsg,
                 );
-            } else if (valueNoSpaces === 'commcare-user' && moduleType !== 'advanced') {
+            } else if (appManager.valueIsReservedWord(valueNoSpaces) && moduleType !== 'advanced') {
                 $el.closest('.form-group').addClass('has-error');
                 showCaseTypeError(
-                    gettext("'commcare-user' is a reserved case type. Please change the case type")
+                    appManager.reservedWordErrorMsg,
                 );
 
             } else {
@@ -170,6 +207,15 @@ hqDefine("app_manager/js/modules/module_view", function () {
         if (lazyloadCaseListFields.length > 0) {
             lazyloadCaseListFields.koApplyBindings({
                 lazy_load_case_list_fields: ko.observable(initialPageData.get('lazy_load_case_list_fields')),
+            });
+        }
+
+        var $showCaseListOptimizationsElement = $('#show_case_list_optimization_options');
+        if ($showCaseListOptimizationsElement.length) {
+            $showCaseListOptimizationsElement.koApplyBindings({
+                show_case_list_optimization_options: ko.observable(
+                    initialPageData.get('show_case_list_optimization_options'),
+                ),
             });
         }
 
@@ -233,7 +279,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
             var caseListForm = caseListFormModel(
                 caseListFormOptions ? caseListFormOptions.form.form_id : null,
                 caseListFormOptions ? caseListFormOptions.options : [],
-                caseListFormOptions ? caseListFormOptions.form.post_form_workflow : 'default'
+                caseListFormOptions ? caseListFormOptions.form.post_form_workflow : 'default',
             );
             $('#case-list-form').koApplyBindings(caseListForm);
 
@@ -246,18 +292,16 @@ hqDefine("app_manager/js/modules/module_view", function () {
 
         if (moduleType === 'shadow') {
             // Shadow module checkboxes for including/excluding forms
-            var ShadowModule = hqImport('app_manager/js/modules/shadow_module_settings').ShadowModule,
-                shadowOptions = initialPageData.get('shadow_module_options');
-            $('#sourceModuleForms').koApplyBindings(new ShadowModule(
+            const shadowOptions = initialPageData.get('shadow_module_options');
+            $('#sourceModuleForms').koApplyBindings(new shadowModuleSettings.ShadowModule(
                 shadowOptions.modules,
                 shadowOptions.source_module_id,
                 shadowOptions.excluded_form_ids,
                 shadowOptions.form_session_endpoints,
-                shadowOptions.shadow_module_version
+                shadowOptions.shadow_module_version,
             ));
         } else if (moduleType === 'advanced') {
-            if (moduleBrief.has_schedule || hqImport('hqwebapp/js/toggles').toggleEnabled('VISIT_SCHEDULER')) {
-                var VisitScheduler = hqImport('app_manager/js/visit_scheduler');
+            if (moduleBrief.has_schedule || toggles.toggleEnabled('VISIT_SCHEDULER')) {
                 var visitScheduler = VisitScheduler.moduleScheduler({
                     home: $('#module-scheduler'),
                     saveUrl: initialPageData.reverse('edit_schedule_phases'),
@@ -273,8 +317,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
             });
         }
 
-        var setupValidation = hqImport('app_manager/js/app_manager').setupValidation;
-        setupValidation(initialPageData.reverse('validate_module_for_build'));
+        appManager.setupValidation(initialPageData.reverse('validate_module_for_build'));
 
         // show display style options only when module configured to show module and then forms
         var $menuMode = $('#put_in_root');

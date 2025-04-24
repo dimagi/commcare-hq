@@ -12,7 +12,7 @@ hqDefine('app_manager/js/summary/models',[
     'hqwebapp/js/layout',
     'app_manager/js/widgets',       // version dropdown
     'analytix/js/kissmetrix',
-    'DOMPurify/dist/purify.min',
+    'DOMPurify',
 ], function ($, ko, _, utils, initialPageData, assertProperties, hqLayout, widgets, kissmetricsAnalytics, DOMPurify) {
     var menuItemModel = function (options) {
         assertProperties.assert(options, ['unique_id', 'name', 'icon'], ['subitems', 'has_errors', 'has_changes']);
@@ -157,7 +157,7 @@ hqDefine('app_manager/js/summary/models',[
                 }[attribute],
                 content = "<dl>" + _getPopoverText(
                     gettext("Case Property") + " " + loadOrSave + " " + gettext(change['type']),
-                    gettext("Case Property") + " <strong>" + caseProperty + "</strong> " + gettext("of Case Type") + " <strong>" + caseType + "</strong> " + gettext(change['type'])
+                    gettext("Case Property") + " <strong>" + caseProperty + "</strong> " + gettext("of Case Type") + " <strong>" + caseType + "</strong> " + gettext(change['type']),
                 ) + "</dl>";
 
             return _.defaults({

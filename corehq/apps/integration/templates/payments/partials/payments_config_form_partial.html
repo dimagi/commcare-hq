@@ -1,0 +1,26 @@
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+<div id="payments-configure-form">
+  {% if show_success %}
+    <div class="alert alert-success alert-dismissable fade show" role="alert">
+      {% blocktrans %}
+        Configuration saved successfully!
+      {% endblocktrans %}
+      <button
+        type="button"
+        class="btn-close float-end"
+        data-bs-dismiss="alert"
+        aria-label="{% trans Close %}"
+      ></button>
+    </div>
+  {% endif %}
+
+  <form
+    hx-post="{{ request.path_info }}"
+    hx-target="#payments-configure-form"
+    hx-swap="outerHTML"
+  >
+    {% crispy payments_config_form %}
+  </form>
+</div>

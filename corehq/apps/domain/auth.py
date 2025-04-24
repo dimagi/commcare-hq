@@ -157,7 +157,7 @@ def basic_or_api_key(realm=''):
         def wrapper(request, *args, **kwargs):
             username, password = get_username_and_password_from_request(request)
             if username and password:
-                request.check_for_password_as_api_key = True
+                request.check_for_api_key_as_password = True
                 user = authenticate(username=username, password=password, request=request)
                 if user is not None and user.is_active:
                     request.user = user
@@ -212,7 +212,7 @@ def formplayer_as_user_auth(view):
 class ApiKeyFallbackBackend(object):
 
     def authenticate(self, request, username, password):
-        if not getattr(request, 'check_for_password_as_api_key', False):
+        if not getattr(request, 'check_for_api_key_as_password', False):
             return None
 
         try:

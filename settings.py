@@ -148,6 +148,7 @@ MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
     'corehq.middleware.SecureCookiesMiddleware',
     'corehq.middleware.SelectiveSessionMiddleware',
+    'corehq.apps.ip_access.middleware.IPAccessMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -235,7 +236,6 @@ DEFAULT_APPS = (
     'django_tables2',
     'two_factor',
     'two_factor.plugins.phonenumber',
-    'ws4redis',
     'statici18n',
     'django_user_agents',
     'oauth2_provider',
@@ -244,6 +244,9 @@ DEFAULT_APPS = (
 SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
 RECAPTCHA_PRIVATE_KEY = ''
 RECAPTCHA_PUBLIC_KEY = ''
+
+MAXMIND_ACCOUNT_ID = ''
+MAXMIND_LICENSE_KEY = ''
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3to5'
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap3to5"
@@ -272,12 +275,14 @@ HQ_APPS = (
     'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
     'corehq.apps.enterprise',
+    'corehq.apps.experiments',
     'corehq.apps.formplayer_api',
     'corehq.apps.hqadmin.app_config.HqAdminModule',
     'corehq.apps.hqcase',
     'corehq.apps.hqwebapp.apps.HqWebAppConfig',
     'corehq.apps.hqmedia',
     'corehq.apps.integration',
+    'corehq.apps.ip_access',
     'corehq.apps.linked_domain',
     'corehq.apps.locations',
     'corehq.apps.products',
@@ -300,6 +305,7 @@ HQ_APPS = (
     'corehq.apps.data_dictionary',
     'corehq.apps.analytics',
     'corehq.apps.callcenter',
+    'corehq.apps.campaign',
     'corehq.apps.change_feed',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
@@ -391,8 +397,6 @@ HQ_APPS = (
     # custom reports
     'custom.reports.mc',
     'custom.ucla',
-
-    'custom.common',
 
     'custom.hki',
     'custom.bha',
@@ -636,12 +640,6 @@ DEFAULT_REPEATER_WORKERS = 7
 # guardrail to prevent one repeater from hogging repeat_record_queue
 # workers and to ensure that repeaters are iterated fairly.
 MAX_REPEATER_WORKERS = 79
-
-# websockets config
-WEBSOCKET_URL = '/ws/'
-WS4REDIS_PREFIX = 'ws'
-WSGI_APPLICATION = 'ws4redis.django_runserver.application'
-WS4REDIS_ALLOWED_CHANNELS = helper.get_allowed_websocket_channels
 
 
 TEST_RUNNER = 'testrunner.TwoStageTestRunner'
@@ -1165,12 +1163,16 @@ CONNECTID_MESSAGE_URL = 'http://localhost:8080/messaging/send_fcm/'
 MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
 MAX_MOBILE_UCR_SIZE = 100000  # max number of rows allowed when syncing a mobile UCR
 
-DEVICE_LIMIT_PER_USER = 10  # number of devices allowed per user per minute
-INCREASED_DEVICE_LIMIT_PER_USER = 100  # value when INCREASE_DEVICE_LIMIT_PER_USER ff is enabled
-ENABLE_DEVICE_RATE_LIMITER = False
-
 # used by periodic tasks that delete soft deleted data older than PERMANENT_DELETION_WINDOW days
 PERMANENT_DELETION_WINDOW = 30  # days
+
+# Used by `corehq.apps.integration.kyc`. Override in localsettings.py
+MTN_KYC_CONNECTION_SETTINGS = {
+    'url': 'https://dev.api.chenosis.io/',
+    'token_url': 'https://dev.api.chenosis.io/oauth/client/accesstoken',
+    'client_id': 'test',
+    'client_secret': 'password',
+}
 
 
 try:
@@ -1290,7 +1292,6 @@ TEMPLATES = [
                 'corehq.util.context_processors.subscription_banners',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.js_toggles',
-                'corehq.util.context_processors.websockets_override',
                 'corehq.util.context_processors.commcare_hq_names',
                 'corehq.util.context_processors.emails',
                 'corehq.util.context_processors.status_page',

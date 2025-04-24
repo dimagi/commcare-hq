@@ -4,6 +4,7 @@ from django.conf import settings
 from django.http import Http404
 
 from corehq import toggles
+from corehq.apps.app_manager.exceptions import AppInDifferentDomainException
 from dimagi.utils.parsing import string_to_utc_datetime
 
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -104,7 +105,7 @@ def mark_has_submission(domain, build_id):
     app = None
     try:
         app = get_app(domain, build_id)
-    except Http404:
+    except (Http404, AppInDifferentDomainException):
         pass
 
     if app and not app.has_submissions:

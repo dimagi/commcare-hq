@@ -6,7 +6,7 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/bootstrap5/alert_user",
     "analytix/js/google",
-    "es6!hqwebapp/js/bootstrap5_loader",
+    "bootstrap5",
     "hqwebapp/js/hq_extensions.jquery",
     "jquery.cookie/jquery.cookie",
 ], function (
@@ -431,15 +431,6 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
         }
 
         function unsupportedBrowser() {
-            // check explicitly for Safari. Relying on browser capabilities would be preferred,
-            // but our issue with Safari is described here: https://dimagi-dev.atlassian.net/browse/SUPPORT-4778
-            // (history.replaceState raises security exceptions that aren't present in other browsers).
-            // This can be verified here: (https://jsfiddle.net/j1sxxLwy/),
-            // but it's not something that can be efficiently feature-checked
-            if (window.safari !== undefined) {
-                return true;    // found a Safari browser
-            }
-
             // Try to filter out legacy browsers like Internet Explorer.
             // We don't explicitly rely on SVG SMIL animation,
             // but it's a decent test for avoiding legacy IE.

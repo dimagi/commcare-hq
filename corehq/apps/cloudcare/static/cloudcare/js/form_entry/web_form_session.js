@@ -10,6 +10,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
     'cloudcare/js/form_entry/form_ui',
     'cloudcare/js/formplayer/utils/utils',
     'cloudcare/js/formplayer/users/models',
+    'cloudcare/js/gtx',
 ], function (
     $,
     ko,
@@ -22,6 +23,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
     formUI,
     utils,
     UsersModels,
+    gtx,
 ) {
     function WebFormSession(params) {
         var self = {};
@@ -543,6 +545,11 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                         function (resp) {
                             form.isSubmitting(false);
                             if (resp.status === 'success') {
+                                const gtxEventData = {
+                                    title: form.title(),
+                                    breadcrumbs: form.breadcrumbs() ? form.breadcrumbs().join(">") : "",
+                                };
+                                gtx.logFormSubmit(gtxEventData);
                                 self.onsubmit(resp);
                             } else {
                                 $.each(resp.errors, function (ix, error) {

@@ -231,7 +231,7 @@ class BaseConfigView(BaseGeospatialView):
 
 class GeospatialConfigPage(BaseConfigView):
     urlname = "geospatial_settings"
-    template_name = "geospatial/settings.html"
+    template_name = "geospatial/bootstrap3/settings.html"
 
     page_name = _("Configuration Settings")
 
@@ -260,7 +260,7 @@ class GeospatialConfigPage(BaseConfigView):
 
 class GPSCaptureView(BaseGeospatialView):
     urlname = 'gps_capture'
-    template_name = 'geospatial/gps_capture_view.html'
+    template_name = 'geospatial/bootstrap3/gps_capture_view.html'
 
     page_name = _("Manage GPS Data")
     section_name = _("Data")
@@ -399,6 +399,12 @@ class GetPaginatedCases(CaseListMixin):
         case_data = []
         for case_obj in cases:
             lat, lon = get_lat_lon_from_dict(case_obj.case_json, location_prop_name)
+
+            # There might be a few moments where GPS data is saved for a case but the ES index hasn't
+            # updated yet, and so will still show as missing data in the ES query. For these instances,
+            #  we can simply filter them out here.
+            if show_cases_with_missing_gps_data_only and (lat or lon):
+                continue
             case_data.append(
                 {
                     'id': case_obj.case_id,

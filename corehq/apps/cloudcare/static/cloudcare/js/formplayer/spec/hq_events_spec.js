@@ -1,4 +1,4 @@
-import sinon from "sinon/pkg/sinon";
+import sinon from "sinon";
 import FormplayerFrontend from "cloudcare/js/formplayer/app";
 import hqEvents from "cloudcare/js/formplayer/hq_events";
 

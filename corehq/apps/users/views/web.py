@@ -283,7 +283,7 @@ def delete_invitation(request, domain):
     invitation = Invitation.objects.get(uuid=uuid)
     if not user_can_access_invite(domain, request.couch_user, invitation):
         return location_restricted_response(request)
-    invitation.delete()
+    invitation.delete(deleted_by=request.couch_user.user_id)
     return JsonResponse({'status': 'ok'})
 
 

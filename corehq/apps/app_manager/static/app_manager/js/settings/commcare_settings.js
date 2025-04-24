@@ -1,7 +1,21 @@
-/* globals Clipboard */
-hqDefine('app_manager/js/settings/commcare_settings', function () {
+hqDefine("app_manager/js/settings/commcare_settings", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "app_manager/js/app_manager",
+    "app_manager/js/section_changer",
+    "hqwebapp/js/bootstrap3/main",
+    "app_manager/js/settings/app_logos",
+], function (
+    $,
+    ko,
+    _,
+    appManager,
+    sectionChanger,
+    main,
+    appLogos,
+) {
     function CommcareSettings(options) {
-        var app_manager = hqImport('app_manager/js/app_manager');
         var self = this;
         var initialValues = options.values;
         self.sections = options.sections;
@@ -14,9 +28,9 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
             return ko.mapping.fromJS(d);
         }));
         self.customProperties.sort(function (left, right) {
-            return left.key() == right.key() ? 0 : (left.key() < right.key() ? -1 : 1);
+            return left.key() === right.key() ? 0 : (left.key() < right.key() ? -1 : 1);
         });
-        self.customPropertiesCollapse = hqImport("app_manager/js/section_changer").shouldCollapse("app-settings", "custom-properties", false);
+        self.customPropertiesCollapse = sectionChanger.shouldCollapse("app-settings", "custom-properties", false);
 
         self.settings = [];
         self.settingsIndex = {};
@@ -37,7 +51,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
 
         self.settingsIndex.$parent = {};
         for (var attr in initialValues.$parent) {
-            if (initialValues.$parent.hasOwnProperty(attr)) {
+            if (_.has(initialValues.$parent, attr)) {
                 self.settingsIndex.$parent[attr] = (function (attrib) {
                     return {
                         visibleValue: function () {
@@ -50,7 +64,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
 
         self.parseCondition = function (condition) {
             var parts = condition ? condition.split('||') : [],
-                parse_part = /\{([\$\w]+)\.([\w\-]+)\}=('([\w\-\/]*)'|(true)|(false))/,
+                parsePart = /\{([$\w]+)\.([\w-]+)\}=('([\w\-/]*)'|(true)|(false))/,
                 result,
                 type,
                 setting,
@@ -58,7 +72,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                 i,
                 conditions = [];
             for (i = 0; i < parts.length; i += 1) {
-                result = parse_part.exec(parts[i]);
+                result = parsePart.exec(parts[i]);
                 if (result === null) {
                     console.error("Unable to parse '" + parts[i] + "'");
                 } else {
@@ -79,7 +93,9 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
             }
             return {
                 check: function () {
-                    var i, c, results = [];
+                    var i,
+                        c,
+                        results = [];
 
                     for (i = 0; i < conditions.length; i += 1) {
                         c = conditions[i];
@@ -98,8 +114,6 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                         } else {
                             return false;
                         }
-                    } else {
-                        return true;
                     }
 
                     return true;
@@ -137,10 +151,10 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                 return self.parseCondition(setting.requires);
             });
             setting.versionOK = ko.computed(function () {
-                return app_manager.checkCommcareVersion(setting.requiredVersion().setting);
+                return appManager.checkCommcareVersion(setting.requiredVersion().setting);
             });
             setting.optionOK = ko.computed(function () {
-                return app_manager.checkCommcareVersion(setting.requiredVersion().option);
+                return appManager.checkCommcareVersion(setting.requiredVersion().option);
             });
             setting.enabled = ko.computed(function () {
                 var condition = setting.parsedCondition();
@@ -150,20 +164,20 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                 var optionOK = setting.optionOK();
                 if (!setting.enabled() || !optionOK) {
                     if (!optionOK) {
-                        var upgrade_text;
+                        let upgradeText;
                         if (setting.versionOK()) {
-                            upgrade_text = gettext('Upgrade to CommCare %s for this option!');
+                            upgradeText = gettext('Upgrade to CommCare %s for this option!');
                         } else {
-                            upgrade_text = gettext('Upgrade to CommCare %s!');
+                            upgradeText = gettext('Upgrade to CommCare %s!');
                         }
-                        return interpolate(upgrade_text, [setting.requiredVersion().option]);
+                        return interpolate(upgradeText, [setting.requiredVersion().option]);
                     } else {
                         var condition = setting.parsedCondition();
                         var names = _(condition.settings).map(function (setting) {
                             return setting.name;
                         });
-                        uniqueNames = names.filter(function (elem, pos) {
-                            return names.indexOf(elem) == pos;
+                        const uniqueNames = names.filter(function (elem, pos) {
+                            return names.indexOf(elem) === pos;
                         });
                         return gettext('Auto-set by ') + uniqueNames.join(', ');
                     }
@@ -189,7 +203,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                     }
                 }
                 if (!setting.versionOK()) {
-                    if (setting.disabled_default != null) {
+                    if (setting.disabled_default) {
                         return setting.disabled_default;
                     }
                 }
@@ -272,7 +286,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                     return setting.visible();
                 });
             });
-            section.collapse = hqImport("app_manager/js/section_changer").shouldCollapse("app-settings", section.id, section.collapse);
+            section.collapse = sectionChanger.shouldCollapse("app-settings", section.id, section.collapse);
             section.isVisible = ko.computed(function () {
                 return section.always_show !== false;
             });
@@ -325,20 +339,20 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                 type: 'post',
                 dataType: 'json',
                 success: function (data) {
-                    app_manager.updateDOM(data.update);
+                    appManager.updateDOM(data.update);
                 },
             };
         });
 
         var $saveContainer = $("#settings-save-btn");
-        self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
+        self.saveButton = main.initSaveButton({
             unsavedMessage: gettext("You have unsaved settings."),
             save: function () {
                 self.saveButton.ajax(self.saveOptions());
             },
         });
         self.saveButton.ui.appendTo($saveContainer);
-        hqImport("app_manager/js/section_changer").attachToForm($saveContainer);
+        sectionChanger.attachToForm($saveContainer);
 
         self.onAddCustomProperty = function () {
             self.customProperties.push({ key: ko.observable(), value: ko.observable() });
@@ -355,7 +369,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
         self.options = ko.observable(self.getOptions(
             ko.utils.unwrapObservable(self.values),
             ko.utils.unwrapObservable(self.value_names),
-            [self['default']]
+            [self['default']],
         ));
         self.selectOption = function (selectedOption) {
             if (selectedOption) {
@@ -370,8 +384,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                     if (self.options()[i].value === visibleValue) {
                         retu = self.options()[i];
                         if (!retu) {
-                            console.error(self.type + '.' + self.id, retu);
-                            throw {};
+                            throw new Error(self.type + '.' + self.id + ', ' + retu);
                         }
                         return retu;
                     }
@@ -396,7 +409,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
         self.options = ko.observable(self.getOptions(
             ko.utils.unwrapObservable(self.values),
             ko.utils.unwrapObservable(self.value_names),
-            self['default']  // multiSelect default is an array
+            self['default'],  // multiSelect default is an array
         ));
 
         self.selectOptions = function (selectedOptions) {
@@ -440,9 +453,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                 return !!(self.visibleValue() === self.values[0]);
             },
             write: function (value) {
-                self.visibleValue(
-                    value ? self.values[0] : self.values[1]
-                );
+                self.visibleValue(value ? self.values[0] : self.values[1]);
             },
         });
         self.showDisabledCheckbox = ko.computed(function () {
@@ -454,7 +465,6 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
     };
 
     CommcareSettings.widgets.build_spec = function (self, settingsIndex) {
-        var app_manager = hqImport('app_manager/js/app_manager');
         function update(appVersion) {
             var major = appVersion.split('/')[0].split('.')[0];
             var opts = self.options_map[major];
@@ -467,7 +477,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
         self.widget_template = 'CommcareSettings.widgets.select';
         self.visibleValue.subscribe(function () {
             var majorVersion = self.visibleValue().split('/')[0].split('.').slice(0,2).join('.');
-            app_manager.setCommcareVersion(majorVersion);
+            appManager.setCommcareVersion(majorVersion);
         });
         settingsIndex["hq"]["application_version"].value.subscribe(function (appVersion) {
             update(appVersion);
@@ -477,7 +487,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
     };
 
     CommcareSettings.widgets.image_uploader = function (self) {
-        self.manager = hqImport("app_manager/js/settings/app_logos").LogoManager;
+        self.manager = appLogos.LogoManager;
         self.slug = "hq_" + self.id;
         self.href = "#" + self.slug;
         self.path = self.manager.getPathFromSlug(self.slug);
@@ -515,7 +525,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
     CommcareSettings.widgets.text_input = CommcareSettings.widgets.select;
 
     $(function () {
-        hqImport('app_manager/js/app_manager').setPrependedPageTitle(gettext("Settings"));
+        appManager.setPrependedPageTitle(gettext("Settings"));
     });
 
     return {

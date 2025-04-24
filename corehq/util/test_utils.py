@@ -127,7 +127,7 @@ class TestFileMixin(object):
         return cls.get_file(name, '.xml', override_path).encode('utf-8')
 
 
-class flag_enabled(object):
+class flag_enabled:
     """
     Decorate test methods with this to mock the lookup
 
@@ -153,7 +153,8 @@ class flag_enabled(object):
 
     def __call__(self, fn):
         for patch in self.patches:
-            fn = patch(fn)
+            with disable_overpatch(patch):
+                fn = patch(fn)
         return fn
 
     def __enter__(self):
@@ -169,6 +170,40 @@ class flag_disabled(flag_enabled):
     enabled = False
 
 
+@contextmanager
+def disable_overpatch(patch_obj):
+    """Prevent class decorator from masking method decorator"""
+    def apply_to(patch):
+        def decorate_callable(func):
+            key = getkey(patch)
+            if any(key == getkey(p) for p in getattr(func, "patchings", [])):
+                # do not decorate if already patched
+                return func
+            return real_decorate_callable(func)
+
+        def copy():
+            return apply_to(real_copy())
+
+        real_decorate_callable = patch.decorate_callable
+        real_copy = patch.copy
+        patch.decorate_callable = decorate_callable
+        patch.copy = copy
+        patches.append(patch)
+        return patch
+
+    def getkey(patch):
+        return patch.getter(), patch.attribute
+
+    patches = []
+    apply_to(patch_obj)
+    try:
+        yield
+    finally:
+        for patch in patches:
+            del patch.decorate_callable
+            del patch.copy
+
+
 class privilege_enabled:
     """
     A decorator and context manager to enable a privilege for a domain
@@ -178,13 +213,14 @@ class privilege_enabled:
     supported, add it to ``self.imports``.
     """
     imports = (
+        'corehq.apps.app_manager.app_strings.domain_has_privilege',
+        'corehq.apps.data_cleaning.decorators.domain_has_privilege',
+        'corehq.apps.export.views.list.domain_has_privilege',
         'corehq.apps.users.landing_pages.domain_has_privilege',
         'corehq.apps.users.permissions.domain_has_privilege',
         'corehq.apps.users.views.mobile.users.domain_has_privilege',
-        'django_prbac.decorators.has_privilege',
-        'corehq.apps.export.views.list.domain_has_privilege',
         'corehq.pillows.case_search.domain_has_privilege',
-        'corehq.apps.app_manager.app_strings.domain_has_privilege',
+        'django_prbac.decorators.has_privilege',
     )
 
     def __init__(self, privilege_slug):

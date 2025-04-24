@@ -15,7 +15,7 @@
       <div data-bind="css: {'has-error': !allowed()}">
             <textarea name="form_filter" class="form-control" data-bind="
                     xpathValidator: {text: formFilter, allowCaseHashtags: true,
-                                     errorHtml: $('#formFilterXpathErrorHtml').html()}
+                                     errorHtml: document.getElementById('formFilterXpathErrorHtml').innerHTML}
             "></textarea>
         <div class="help-block" data-bind="visible: !allowed()">
           <span data-bind="visible: caseReferenceNotAllowed">

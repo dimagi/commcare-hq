@@ -466,7 +466,7 @@
 +                    applyBootstrapMagic();
 +                    if ('context' in data) {
 +                        let iconPath = data['icon_path'] || $(".base-maps-data").data("icon_path");
-+                        hqRequire(["reports/js/bootstrap5/maps_utils"], function (mapsUtils) {
++                        import("reports/js/bootstrap5/maps_utils").then(function (mapsUtils) {
 +                            mapsUtils.load(data['context'], iconPath);
 +                        });
 +                    }

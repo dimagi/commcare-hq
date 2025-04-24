@@ -9,7 +9,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import IntegrityError, models, transaction
-from django.db.models import F, Q
+from django.db.models import F, OuterRef, Q, Subquery
 from django.db.models.manager import Manager
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -19,10 +19,7 @@ import jsonfield
 import stripe
 from django_prbac.models import Role
 from memoized import memoized
-from corehq.apps.accounting.utils.stripe import charge_through_stripe
 
-from corehq.apps.domain.shortcuts import publish_domain_saved
-from corehq.apps.users.dbaccessors import get_active_web_usernames_by_domain, get_web_user_count
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -31,6 +28,10 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.web import get_site_domain
 
+from corehq.apps.accounting.const import (
+    EXCHANGE_RATE_DECIMAL_PLACES,
+    SMALL_INVOICE_THRESHOLD,
+)
 from corehq.apps.accounting.emails import (
     send_self_start_subscription_alert,
     send_subscription_change_alert,
@@ -54,7 +55,6 @@ from corehq.apps.accounting.subscription_changes import (
     DomainUpgradeActionHandler,
 )
 from corehq.apps.accounting.utils import (
-    EXCHANGE_RATE_DECIMAL_PLACES,
     ensure_domain_instance,
     fmt_dollar_amount,
     get_account_name_from_default_name,
@@ -68,9 +68,15 @@ from corehq.apps.accounting.utils import (
     quantize_accounting_decimal,
     self_signup_workflow_in_progress,
 )
+from corehq.apps.accounting.utils.stripe import charge_through_stripe
 from corehq.apps.domain import UNKNOWN_DOMAIN
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import publish_domain_saved
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.users.dbaccessors import (
+    get_active_web_usernames_by_domain,
+    get_web_user_count,
+)
 from corehq.apps.users.models import WebUser
 from corehq.apps.users.util import is_dimagi_email
 from corehq.blobs.mixin import CODES, BlobMixin
@@ -81,12 +87,10 @@ from corehq.util.mixin import ValidateModelMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
-from django.db.models import OuterRef, Subquery
 
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
 MAX_INVOICE_COMMUNICATIONS = 5
-SMALL_INVOICE_THRESHOLD = 100
 
 UNLIMITED_FEATURE_USAGE = -1
 
@@ -146,7 +150,7 @@ class FeatureType(object):
 
 
 class SoftwarePlanEdition(object):
-    COMMUNITY = "Community"
+    FREE = "Free"
     STANDARD = "Standard"
     PRO = "Pro"
     ADVANCED = "Advanced"
@@ -155,7 +159,7 @@ class SoftwarePlanEdition(object):
     MANAGED_HOSTING = "Managed Hosting"
     PAUSED = "Paused"
     CHOICES = (
-        (COMMUNITY, COMMUNITY),
+        (FREE, FREE),
         (STANDARD, STANDARD),
         (PRO, PRO),
         (ADVANCED, ADVANCED),
@@ -166,7 +170,7 @@ class SoftwarePlanEdition(object):
     )
     SELF_SERVICE_ORDER = [
         PAUSED,
-        COMMUNITY,
+        FREE,
         STANDARD,
         PRO,
         ADVANCED,
@@ -341,10 +345,12 @@ class PreOrPostPay(object):
 
 class CommunicationType(object):
     OTHER = "OTHER"
+    INVOICE_REMINDER = "INVOICE_REMINDER"
     OVERDUE_INVOICE = "OVERDUE_INVOICE"
     DOWNGRADE_WARNING = "DOWNGRADE_WARNING"
     CHOICES = (
         (OTHER, "other"),
+        (INVOICE_REMINDER, "Invoice Reminder"),
         (OVERDUE_INVOICE, "Overdue Invoice"),
         (DOWNGRADE_WARNING, "Subscription Pause Warning"),
     )
@@ -551,7 +557,9 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
     def _send_autopay_card_removed_email(self, new_user, domain):
         """Sends an email to the old autopayer for this account telling them {new_user} is now the autopayer"""
-        from corehq.apps.domain.views.accounting import EditExistingBillingAccountView
+        from corehq.apps.domain.views.accounting import (
+            EditExistingBillingAccountView,
+        )
         old_username = self.auto_pay_user
         subject = _("Your card is no longer being used to auto-pay for {billing_account}").format(
             billing_account=self.name)
@@ -583,7 +591,9 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
     def _send_autopay_card_added_email(self, domain):
         """Sends an email to the new autopayer for this account telling them they are now the autopayer"""
-        from corehq.apps.domain.views.accounting import EditExistingBillingAccountView
+        from corehq.apps.domain.views.accounting import (
+            EditExistingBillingAccountView,
+        )
         subject = _("Your card is being used to auto-pay for {billing_account}").format(
             billing_account=self.name)
         web_user = WebUser.get_by_username(self.auto_pay_user)
@@ -850,12 +860,12 @@ class SoftwarePlan(models.Model):
 
 class DefaultProductPlan(models.Model):
     """
-    This links a product type to its default SoftwarePlan (i.e. the Community Plan).
+    This links a product type to its default SoftwarePlan (i.e. the Free edition).
     The latest SoftwarePlanVersion that's linked to this plan will be the one used to create a new subscription if
     nothing is found for that domain.
     """
     edition = models.CharField(
-        default=SoftwarePlanEdition.COMMUNITY,
+        default=SoftwarePlanEdition.FREE,
         choices=SoftwarePlanEdition.CHOICES,
         max_length=25,
     )
@@ -876,7 +886,7 @@ class DefaultProductPlan(models.Model):
                                  is_report_builder_enabled=False, is_annual_plan=False):
         if not edition:
             edition = (SoftwarePlanEdition.ENTERPRISE if settings.ENTERPRISE_MODE
-                       else SoftwarePlanEdition.COMMUNITY)
+                       else SoftwarePlanEdition.FREE)
         try:
             default_product_plan = DefaultProductPlan.objects.select_related('plan').get(
                 edition=edition, is_trial=is_trial,
@@ -966,11 +976,14 @@ class SoftwarePlanVersion(models.Model):
 
     @property
     def user_facing_description(self):
-        from corehq.apps.accounting.user_text import DESC_BY_EDITION, FEATURE_TYPE_TO_NAME
+        from corehq.apps.accounting.user_text import (
+            DESC_BY_EDITION,
+            FEATURE_TYPE_TO_NAME,
+        )
 
         def _default_description(plan, monthly_limit):
             if plan.edition in [
-                SoftwarePlanEdition.COMMUNITY,
+                SoftwarePlanEdition.FREE,
                 SoftwarePlanEdition.STANDARD,
                 SoftwarePlanEdition.PRO,
                 SoftwarePlanEdition.ADVANCED,
@@ -1257,7 +1270,7 @@ class Subscription(models.Model):
         from corehq.apps.accounting.mixins import get_overdue_invoice
 
         super(Subscription, self).save(*args, **kwargs)
-        Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
+        Subscription.clear_caches(self.subscriber.domain)
         get_overdue_invoice.clear(self.subscriber.domain)
 
         domain = Domain.get_by_name(self.subscriber.domain)
@@ -1268,11 +1281,15 @@ class Subscription(models.Model):
 
     def delete(self, *args, **kwargs):
         super(Subscription, self).delete(*args, **kwargs)
-        Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
+        Subscription.clear_caches(self.subscriber.domain)
+
+    @classmethod
+    def clear_caches(cls, domain_name):
+        cls._get_active_subscription_by_domain.clear(cls, domain_name)
 
     @property
-    def is_community(self):
-        return self.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY
+    def is_free_edition(self):
+        return self.plan_version.plan.edition == SoftwarePlanEdition.FREE
 
     @property
     def allowed_attr_changes(self):
@@ -1876,7 +1893,9 @@ class Subscription(models.Model):
                 if BillingContactInfo.objects.filter(account=self.account).exists() else []
             )
             if not billing_contact_emails:
-                from corehq.apps.accounting.views import ManageBillingAccountView
+                from corehq.apps.accounting.views import (
+                    ManageBillingAccountView,
+                )
                 _soft_assert_contact_emails_missing(
                     False,
                     'Billing Account for project %s is missing client contact emails: %s' % (
@@ -2144,6 +2163,10 @@ class InvoiceBase(models.Model):
     def is_wire(self):
         return False
 
+    @property
+    def can_pay_by_wire(self):
+        raise NotImplementedError()
+
     def get_domain(self):
         raise NotImplementedError()
 
@@ -2183,6 +2206,10 @@ class WireInvoice(InvoiceBase):
     @property
     def is_prepayment(self):
         return False
+
+    @property
+    def can_pay_by_wire(self):
+        return True
 
     def get_domain(self):
         return self.domain
@@ -2288,6 +2315,10 @@ class Invoice(InvoiceBase):
                 )
 
         return contact_emails
+
+    @property
+    def can_pay_by_wire(self):
+        return self.subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE
 
     @property
     def subtotal(self):
@@ -2410,6 +2441,10 @@ class CustomerInvoice(InvoiceBase):
     def get_contact_emails(self, include_domain_admins=False, filter_out_dimagi=False):
         # mimic the behavior of the regular Invoice for notification purposes
         return self.contact_emails
+
+    @property
+    def can_pay_by_wire(self):
+        return self.subscriptions.filter(plan_version__plan__edition=SoftwarePlanEdition.ENTERPRISE).exists()
 
     @property
     def subtotal(self):
@@ -2591,8 +2626,12 @@ class BillingRecordBase(models.Model):
             })
 
     def email_context(self):
-        from corehq.apps.domain.views.accounting import DomainBillingStatementsView
-        from corehq.apps.domain.views.settings import DefaultProjectSettingsView
+        from corehq.apps.domain.views.accounting import (
+            DomainBillingStatementsView,
+        )
+        from corehq.apps.domain.views.settings import (
+            DefaultProjectSettingsView,
+        )
 
         month_name = self.invoice.date_start.strftime("%B")
         domain = self.invoice.get_domain()
@@ -2609,6 +2648,8 @@ class BillingRecordBase(models.Model):
                 DomainBillingStatementsView.urlname, args=[domain]),
             'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
             'accounts_email': settings.ACCOUNTS_EMAIL,
+            'small_invoice_threshold': SMALL_INVOICE_THRESHOLD,
+            'can_pay_by_wire': self.invoice.can_pay_by_wire,
         }
         return context
 
@@ -2682,6 +2723,11 @@ class WireBillingRecord(BillingRecordBase):
     def is_email_throttled():
         return False
 
+    def email_context(self):
+        context = super().email_context()
+        context.update({'date_due': self.invoice.date_due})
+        return context
+
     def email_subject(self):
         month_name = self.invoice.date_start.strftime("%B")
         return "Your %(month)s Bulk Billing Statement for Project Space %(domain)s" % {
@@ -2704,7 +2750,22 @@ class WirePrepaymentBillingRecord(WireBillingRecord):
         proxy = True
 
     def email_subject(self):
-        return _("Your prepayment invoice")
+        account = self.invoice.account
+        if account is not None and account.is_customer_billing_account:
+            account_or_domain = account
+        else:
+            account_or_domain = self.invoice.get_domain()
+
+        if self.invoice.date_due is not None:
+            subject = _(
+                "CommCare Subscription Prepayment Invoice for {account_or_domain} due {due_date}"
+            ).format(account_or_domain=account_or_domain, due_date=self.invoice.date_due)
+        else:
+            subject = _(
+                "CommCare Subscription Prepayment Invoice for {account_or_domain}"
+            ).format(account_or_domain=account_or_domain)
+
+        return subject
 
     def can_view_statement(self, web_user):
         return web_user.is_domain_admin(self.invoice.get_domain())
@@ -2780,7 +2841,9 @@ class BillingRecord(BillingRecordBase):
             'payment_status': payment_status,
         })
         if self.invoice.subscription.service_type == SubscriptionType.IMPLEMENTATION:
-            from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
+            from corehq.apps.accounting.dispatcher import (
+                AccountingAdminInterfaceDispatcher,
+            )
             context.update({
                 'salesforce_contract_id': self.invoice.subscription.salesforce_contract_id,
                 'billing_account': self.invoice.subscription.account.name,
@@ -3019,7 +3082,9 @@ class CustomerBillingRecord(BillingRecordBase):
         return not self.invoice.is_hidden
 
     def email_context(self):
-        from corehq.apps.enterprise.views import EnterpriseBillingStatementsView
+        from corehq.apps.enterprise.views import (
+            EnterpriseBillingStatementsView,
+        )
         context = super(CustomerBillingRecord, self).email_context()
         is_small_invoice = self.invoice.balance < SMALL_INVOICE_THRESHOLD
         payment_status = (_("Paid")
@@ -3254,7 +3319,8 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
             is_wire=invoice.is_wire,
             is_customer=invoice.is_customer_invoice,
             is_prepayment=invoice.is_wire and invoice.is_prepayment,
-            account_name=account_name
+            account_name=account_name,
+            can_pay_by_wire=invoice.can_pay_by_wire,
         )
 
         if not invoice.is_wire:
@@ -3283,12 +3349,11 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
                     )
 
         if invoice.is_wire and invoice.is_prepayment:
-            unit_cost = 1
             applied_credit = 0
             for item in invoice.items:
                 template.add_item(item['type'],
-                                  item['amount'],
-                                  unit_cost,
+                                  item['quantity'],
+                                  item['unit_cost'],
                                   item['amount'],
                                   applied_credit,
                                   item['amount'])

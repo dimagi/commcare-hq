@@ -3,6 +3,7 @@ hqDefine("hqwebapp/js/bootstrap3/knockout_bindings.ko", [
     'underscore',
     'knockout',
     'jquery-ui/ui/widgets/sortable',
+    'langcodes/js/langcodes',   // $.langcodes
 ], function (
     $,
     _,

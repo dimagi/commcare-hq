@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,18 +1,15 @@
+@@ -1,19 +1,16 @@
  {% load i18n %}
  
  <div id="unsupported-browser"
@@ -15,10 +15,11 @@
 -    {% blocktrans %}
 -        We recommend
 -        <a href="https://www.google.com/chrome">Chrome</a>
--        or <a href="http://www.mozilla.org/">Firefox</a>.
+-        , <a href="http://www.mozilla.org/">Firefox</a>.
+-        or <a href="https://www.apple.com/safari/">Safari</a>.
 -    {% endblocktrans %}
 -    </p>
--</div>+     role="alert"
++     role="alert"
 +     class="alert alert-danger rounded-0 d-none">
 +  <i class="fa-solid fa-triangle-exclamation"></i>
 +  <strong>
@@ -27,6 +28,7 @@
 +  {% blocktrans %}
 +    We recommend
 +    <a href="https://www.google.com/chrome" class="alert-link">Chrome</a>
-+    or <a href="http://www.mozilla.org/" class="alert-link">Firefox</a>.
++    , <a href="http://www.mozilla.org/" class="alert-link">Firefox</a>
++    or <a href="https://www.apple.com/safari/" class="alert-link">Safari</a>.
 +  {% endblocktrans %}
-+</div>
+ </div>

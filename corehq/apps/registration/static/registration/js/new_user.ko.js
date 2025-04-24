@@ -6,9 +6,9 @@ hqDefine('registration/js/new_user.ko', [
     'analytix/js/kissmetrix',
     'analytix/js/appcues',
     'hqwebapp/js/initial_page_data',
+    'intl-tel-input/build/js/intlTelInput.min',
     'jquery-ui/ui/effect',
     'jquery-ui/ui/effects/effect-slide',
-    'intl-tel-input/build/js/intlTelInput.min',
     'hqwebapp/js/password_validators.ko',
 ], function (
     $,
@@ -18,6 +18,7 @@ hqDefine('registration/js/new_user.ko', [
     kissmetrics,
     appcues,
     initialPageData,
+    intlTelInput,
 ) {
     var module = {};
 
@@ -216,6 +217,10 @@ hqDefine('registration/js/new_user.ko', [
         self.isPersonaChoiceOtherNeeded = ko.computed(function () {
             return self.eulaConfirmed() && self.isPersonaChoiceOther() && !self.personaOther();
         });
+        self.isPersonaChoiceProfessional = ko.computed(function () {
+            return self.isPersonaChoiceChosen()
+                && !(self.isPersonaChoiceOther() || self.personaChoice() === 'Personal');
+        });
         self.isPersonaValid = ko.computed(function () {
             if (!self.hasPersonaFields) {
                 return true;
@@ -224,6 +229,21 @@ hqDefine('registration/js/new_user.ko', [
                    && (!self.isPersonaChoiceOther() || self.isPersonaChoiceOtherPresent());
         });
 
+        // For 'Organization or Company' Field
+        self.hasCompanyNameField = $(containerSelector).find("[name='company_name']").length;
+        self.companyName = ko.observable(defaults.company_name)
+            .extend({
+                required: {
+                    message: gettext("Please list your organization or company name."),
+                    params: true,
+                },
+            });
+        self.requireCompanyName = ko.computed(function () {
+            return self.hasCompanyNameField && self.isPersonaChoiceProfessional();
+        });
+        self.isCompanyNameValid = ko.computed(function () {
+            return !self.requireCompanyName() || self.companyName.isValid();
+        });
 
         // ---------------------------------------------------------------------
         // Form Functionality
@@ -252,6 +272,11 @@ hqDefine('registration/js/new_user.ko', [
                 _.extend(data, {
                     persona: self.personaChoice(),
                     persona_other: self.isPersonaChoiceOther() ? self.personaOther() : '',
+                });
+            }
+            if (self.requireCompanyName()) {
+                _.extend(data, {
+                    company_name: self.companyName(),
                 });
             }
             return data;
@@ -289,6 +314,7 @@ hqDefine('registration/js/new_user.ko', [
         self.isStepTwoValid = ko.computed(function () {
             return self.projectName() !== undefined
                 && self.projectName.isValid()
+                && self.isCompanyNameValid()
                 && self.isPersonaValid()
                 && self.eulaConfirmed();
         });
@@ -430,21 +456,22 @@ hqDefine('registration/js/new_user.ko', [
             module.submitAttemptFn = callback;
         },
         setPhoneNumberInput: function (inputSelector) {
-            var $number = $(inputSelector);
-            $number.intlTelInput({
-                separateDialCode: true,
-                utilsScript: initialPageData.get('number_utils_script'),
-                initialCountry: "auto",
-                geoIpLookup: function (success) {
-                    $.get("https://ipinfo.io", function () {}, "jsonp").always(function (resp) {
-                        var countryCode = (resp && resp.country) ? resp.country : "";
-                        if (!countryCode) {
-                            countryCode = "us";
-                        }
-                        success(countryCode);
-                    });
-                },
-            });
+            var $number = $(inputSelector),
+                numberWidget = intlTelInput($number[0], {
+                    containerClass: "w-100",
+                    separateDialCode: true,
+                    loadUtils: () => import("intl-tel-input/utils"),
+                    initialCountry: "auto",
+                    geoIpLookup: function (success) {
+                        $.get("https://ipinfo.io", function () {}, "jsonp").always(function (resp) {
+                            var countryCode = (resp && resp.country) ? resp.country : "";
+                            if (!countryCode) {
+                                countryCode = "us";
+                            }
+                            success(countryCode);
+                        });
+                    },
+                });
             $number.keydown(function (e) {
                 // prevents non-numeric numbers from being entered.
                 // from http://stackoverflow.com/questions/995183/how-to-allow-only-numeric-0-9-in-html-inputbox-using-jquery
@@ -465,7 +492,7 @@ hqDefine('registration/js/new_user.ko', [
                 }
             });
             module.getPhoneNumberFn = function () {
-                return $number.intlTelInput("getNumber");
+                return numberWidget.getNumber();
             };
         },
         initRMI: function (rmiUrl) {

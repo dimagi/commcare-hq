@@ -7,9 +7,13 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from django.core.management.base import BaseCommand
 
+from corehq.apps.formplayer_api.tasks import (
+    get_users_for_priming,
+    get_prime_restore_user_params,
+    prime_formplayer_db_for_user,
+)
 from corehq.apps.users.models import CouchUser
 from corehq.util.argparse_types import validate_range
-from custom.covid.tasks import get_users_for_priming, get_prime_restore_user_params, prime_formplayer_db_for_user
 
 
 class Command(BaseCommand):

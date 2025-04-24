@@ -35,6 +35,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
 )
 from corehq.apps.reports.cache import request_cache
+from corehq.apps.reports.const import EXPORT_PAGE_LIMIT
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.dates import DatespanFilter
@@ -1132,6 +1133,7 @@ class GenericTabularReport(GenericReportView):
 
         table = headers.as_export_table
         self.exporting_as_excel = True
+        self.pagination.count = EXPORT_PAGE_LIMIT
         rows = (_unformat_row(row) for row in self.export_rows)
         table = chain(table, rows)
         if self.total_row:

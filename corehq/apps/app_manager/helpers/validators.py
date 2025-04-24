@@ -40,6 +40,7 @@ from corehq.apps.app_manager.exceptions import (
     XFormValidationFailed,
 )
 from corehq.apps.app_manager.suite_xml.features.case_tiles import case_tile_template_config
+from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.util import (
     app_callout_templates,
     module_case_hierarchy_has_circular_reference,
@@ -635,8 +636,8 @@ class ModuleDetailValidatorMixin(object):
                 })
         if self.module.case_list_filter:
             try:
-                # test filter is valid, while allowing for advanced user hacks like "foo = 1][bar = 2"
-                case_list_filter = interpolate_xpath('dummy[' + self.module.case_list_filter + ']')
+                # get_filter_xpath returns a filter like `[age > 5]`, so prefix it
+                case_list_filter = 'dummy' + EntriesHelper.get_filter_xpath(self.module)
                 etree.XPath(case_list_filter)
             except (etree.XPathSyntaxError, CaseXPathValidationError):
                 errors.append({

@@ -10,7 +10,7 @@ CommcareTranslationChecker>=0.9.7
 cryptography>=43.0.1
 csiphash
 datadog
-ddtrace
+ddtrace>=2.21.0
 decorator==5.1.1  # required by django-digest
 defusedxml
 diff-match-patch
@@ -47,8 +47,8 @@ elasticsearch5>=5.0.0,<6.0.0
 elasticsearch6>=6.0.0,<7.0.0
 ethiopian-date-converter
 eulxml
-firebase-admin  # India Division - used for FCM Push Notifications
-gevent
+geoip2  # USH - used for IPAccessMiddleware
+gevent>=24.11.1
 greenlet
 gunicorn
 haversine  # SolTech - Used in Geospatial features
@@ -58,7 +58,7 @@ iso8601
 Jinja2
 jsonfield
 jsonobject-couchdbkit
-jsonobject>=2.0.0
+jsonobject>=2.3.1
 # jsonpath-ng with support for "wherenot" operator, and building documents
 # Upgrade when changes merged upstream
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
@@ -72,36 +72,33 @@ pulp  # Used in Geospatial features to solve routing problems - SolTech
 openpyxl
 packaging
 phonenumberslite
-pickle5  # For Pythons pre 3.8.3. Can be removed when no environment will ever revert to < 3.8
 Pillow
 polib
 prometheus-client
 psycogreen
-psycopg2
+psycopg2>=2.9.10
 py-KISSmetrics
 pycryptodome>=3.6.6  # security update
-PyGithub
 python-dateutil
 python-imap
 pyphonetics
 python-magic
 pytz
 pyjwt
-PyYAML
+PyYAML>=6.0.2
 hl7apy
 pyzxcvbn
 qrcode
 quickcache
 redis
-reportlab
+reportlab==4.3.0
 requests_oauthlib
 requests_toolbelt
 requests
 schema
 sentry-sdk
 sh
-# Package has an unfixed issue https://github.com/danthedeckie/simpleeval/issues/90 Can use that once https://github.com/danthedeckie/simpleeval/pull/91 is merged
-simpleeval @ git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
+simpleeval
 simplejson
 six
 socketpool

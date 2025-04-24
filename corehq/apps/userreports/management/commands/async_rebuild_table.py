@@ -36,6 +36,8 @@ class Command(BaseCommand):
         parser.add_argument('--start_date', type=date_type,
                             help='Rebuild on forms received or cases updated on or after this date (inclusive).'
                                  'Format YYYY-MM-DD.')
+        parser.add_argument('--open_only', action='store_true',
+                            help='Rebuild open cases only')
 
     def handle(self, domain, type_, case_type_or_xmlns, data_source_ids, **options):
         assert type_ in ('xform', 'case')
@@ -55,6 +57,7 @@ class Command(BaseCommand):
         self.case_type_or_xmlns = case_type_or_xmlns
         self.bulk = options['bulk']
         self.database = options['database']
+        self.open_only = options['open_only']
 
         self.config_ids = [config._id for config in configs]
         ids = []
@@ -106,6 +109,8 @@ class Command(BaseCommand):
             )
             if start_date:
                 cases = cases.filter(server_modified_on__gte=start_date)
+            if self.open_only:
+                cases = cases.filter(closed=False)
             return cases.values_list('case_id', flat=True)
         elif self.referenced_type == XFORM_DOC_TYPE:
             forms = (

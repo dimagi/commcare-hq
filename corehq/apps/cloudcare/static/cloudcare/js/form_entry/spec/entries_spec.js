@@ -1,5 +1,5 @@
 import _ from "underscore";
-import sinon from "sinon/pkg/sinon";
+import sinon from "sinon";
 import moment from "moment";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import constants from "cloudcare/js/form_entry/const";

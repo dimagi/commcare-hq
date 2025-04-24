@@ -1,7 +1,7 @@
 hqDefine('hqwebapp/js/bootstrap5/email-request', [
     "jquery",
     "knockout",
-    "es6!hqwebapp/js/bootstrap5_loader",
+    "bootstrap5",
     "hqwebapp/js/bootstrap5/hq.helpers",
 ], function ($, ko, bootstrap) {
     var EmailRequest = function (modalId, formId) {
@@ -88,7 +88,6 @@ hqDefine('hqwebapp/js/bootstrap5/email-request', [
 
         self.resetForm = function () {
             self.$formElement.find("button[type='submit']").changeButtonState('reset');
-            self.$formElement.get(0).reset();
             self.cancelBtnEnabled(true);
             self.$submitBtn.changeButtonState('reset');
             resetErrors();

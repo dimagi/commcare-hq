@@ -3,10 +3,9 @@ hqDefine('app_manager/js/download_async_modal', [
     'underscore',
 ], function (
     $,
-    _
+    _,
 ) {
     var asyncDownloader = function ($el) {
-        "use strict";
         var self = {};
         self.POLL_FREQUENCY = 1500; //ms
         self.ERROR_MESSAGE = gettext("Sorry, something went wrong with the download. " +

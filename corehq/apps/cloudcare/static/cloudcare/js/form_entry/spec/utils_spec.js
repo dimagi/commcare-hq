@@ -2,6 +2,7 @@ import initialPageData from "hqwebapp/js/initial_page_data";
 import * as fixtures from "cloudcare/js/form_entry/spec/fixtures";
 import formUI from "cloudcare/js/form_entry/form_ui";
 import utils from "cloudcare/js/form_entry/utils";
+import Levenshtein from "fast-levenshtein/levenshtein";
 
 describe('Formplayer utils', function () {
     it('Should determine if two answers are equal', function () {
@@ -57,5 +58,13 @@ describe('Formplayer utils', function () {
         assert.equal(utils.getBroadcastContainer(textInRepeatGroup), repeatGroup);
 
         initialPageData.unregister("toggles_dict");
+    });
+
+    it('Should verify basic Levenshtein calculations for use in comboboxes', function () {
+        assert.equal(Levenshtein.get("mark", "mark"), 0);
+        assert.equal(Levenshtein.get("mark", "mar"), 1);
+        assert.equal(Levenshtein.get("maron", "maroon"), 1);
+        assert.equal(Levenshtein.get("moon", "maroon"), 2);
+        assert.equal(Levenshtein.get("will", "wilt"), 1);
     });
 });

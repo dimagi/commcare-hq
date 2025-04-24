@@ -1,5 +1,6 @@
 import warnings
 from datetime import datetime
+from functools import wraps
 
 from django.core.cache import cache
 from django.urls import reverse
@@ -25,6 +26,7 @@ from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.users.models import CommCareUser
 from corehq.util.timezones.conversions import ServerTime
+from corehq.apps.es.profiling import ESQueryProfiler
 
 
 class ProjectReport(GenericReportView):
@@ -305,3 +307,75 @@ class MonthYearMixin(object):
             return int(value)
         else:
             return datetime.utcnow().year
+
+
+class ESQueryProfilerMixin(object):
+    """Mixin for profiling Elasticsearch queries.
+
+    This mixin provides timing and profiling capabilities methods in report classes.
+
+    Attributes:
+        profiler_enabled (bool): Must be set to True to enable profiling
+        profiler_name (str): Name of the report to be used in profiling output
+
+    Usage:
+        There are two ways to capture timing information:
+
+        1. Using the decorator:
+            >>> from corehq.apps.reports.standard import profile
+            >>> class MyReport(...):
+            ...     @profile('Method Name')
+            ...     def my_method(self):
+            ...         pass
+
+        2. Using the context manager:
+            >>> def my_method(self):
+            ...     with self.profiler.timing_context('Method Name'):
+            ...         pass
+
+    Notes:
+        The appropriate report class must have profiler_enabled and profiler_name
+        attributes set for the profiling functionality to work.
+    """
+    profiler_enabled = False
+    profiler_name = 'Case List'
+    search_class = None
+    _profiler = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.profiler_enabled:
+            self._profiler = ESQueryProfiler(
+                name=self.profiler_name,
+                search_class=self._get_search_class(),
+            )
+            self.search_class = self.profiler.get_search_class(slug=self.__class__.__name__)
+
+    @property
+    def profiler(self):
+        return self._profiler
+
+    @property
+    def should_profile(self):
+        return self.profiler_enabled and self.profiler
+
+    def _get_search_class(self):
+        if not self.search_class:
+            raise NotImplementedError("You must define a search_class attribute.")
+        return self.search_class
+
+
+def profile(name=None):
+    """
+    This decorator wraps the given function with a timing context. The results will
+    be labeled by `name`.
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(obj, *args, **kwargs):
+            if obj.should_profile:
+                with obj.profiler.timing_context(name):
+                    return func(obj, *args, **kwargs)
+            return func(obj, *args, **kwargs)
+        return wrapper
+    return decorator

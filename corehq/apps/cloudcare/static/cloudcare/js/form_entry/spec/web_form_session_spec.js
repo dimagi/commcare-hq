@@ -1,4 +1,4 @@
-import sinon from "sinon/pkg/sinon";
+import sinon from "sinon";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import constants from "cloudcare/js/form_entry/const";
 import errors from "cloudcare/js/form_entry/errors";

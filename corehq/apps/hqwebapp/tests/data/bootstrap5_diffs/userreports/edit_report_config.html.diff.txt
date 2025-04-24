@@ -1,0 +1,69 @@
+--- 
++++ 
+@@ -1,16 +1,16 @@
+-{% extends "userreports/bootstrap3/userreports_base.html" %}
++{% extends "userreports/bootstrap5/userreports_base.html" %}
+ {% load crispy_forms_tags %}
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ 
+-{% js_entry_b3 "userreports/js/edit_report_config" %}
++{% js_entry "userreports/js/edit_report_config" %}
+ 
+ {% block page_content %}
+-  <div class="pull-right page-actions-toolbar">
++  <div class="float-end page-actions-toolbar">
+     <div class="btn-toolbar">
+       {% if report.get_id %}
+         <div class="btn-group">
+-          <a href="{% url 'configurable' domain report.get_id %}" class="btn btn-default">
++          <a href="{% url 'configurable' domain report.get_id %}" class="btn btn-outline-primary">
+             {% if use_updated_ucr_naming %}
+               {% trans "View Custom Web Report" %}
+             {% else %}
+@@ -19,7 +19,7 @@
+           </a>
+         </div>
+         <div class="btn-group">
+-          <a href="{% url 'edit_configurable_data_source' domain report.config_id %}" class="btn btn-default">
++          <a href="{% url 'edit_configurable_data_source' domain report.config_id %}" class="btn btn-outline-primary">
+             {% if use_updated_ucr_naming %}
+                 {% trans 'View Custom Web Report Source' %}
+             {% else %}
+@@ -29,7 +29,7 @@
+         </div>
+         <div class="btn-group">
+           <a href="{% url 'configurable_report_json' domain report.get_id %}"
+-             class="btn btn-default track-usage-link"
++             class="btn btn-outline-primary track-usage-link"
+              data-category="UCR"
+              data-action="View Source"
+              data-label="Report Config">
+@@ -41,22 +41,22 @@
+           </a>
+         </div>
+         {% if not report.is_static%}
+-          {% include 'userreports/partials/bootstrap3/delete_report_button.html' with report_id=report.get_id %}
++          {% include 'userreports/partials/bootstrap5/delete_report_button.html' with report_id=report.get_id %}
+         {% endif %}
+       {% endif %}
+     </div>
+   </div>
+   <div class="clearfix"></div>
+ 
+-  <ul class="nav nav-tabs">
+-    <li class="active"><a data-toggle="tab" href="#tabs-configuration">{% trans "Configuration" %}</a></li>
+-    <li><a data-toggle="tab" href="#tabs-usage">{% trans "Usage" %}</a></li>
++  <ul class="nav nav-tabs">  {# todo B5: css-nav #}
++    <li class="active"><a data-bs-toggle="tab" href="#tabs-configuration">{% trans "Configuration" %}</a></li>
++    <li><a data-bs-toggle="tab" href="#tabs-usage">{% trans "Usage" %}</a></li>
+   </ul>
+ 
+   <div class="tab-content">
+     <div class="tab-pane fade in active" id="tabs-configuration">
+       <div class="spacer"></div>
+-      {% crispy form %}
++      {% crispy form %}  {# todo B5: crispy #}
+     </div>
+     <div class="tab-pane fade" id="tabs-usage">
+       <div class="spacer"></div>

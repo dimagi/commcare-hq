@@ -155,30 +155,6 @@
     </span>
 </script>
 
-<script type="text/html" id="CommcareSettings.widgets.text_input">
-  <span data-bind="template: 'CommcareSettings.widgets.select'"></span>
-  <aside id="custom-keys-help" data-bind="visible: visibleValue() === 'custom-keys'">
-        <span>Customize through
-            <a href="#" data-bind="click: function () {$('#custom-keys-example').slideToggle()}">{% trans "User Interface Translations" %}</a>.
-        </span>
-    <div id="custom-keys-example" style="display: none;">
-      <h6>Example:</h6>
-      <div class="row">
-        <div class="col-sm-9">polish.TextField.charactersKey1</div><div class="col-sm-3">.,</div>
-        <div class="col-sm-9">polish.TextField.charactersKey2</div><div class="col-sm-3">abc2</div>
-        <div class="col-sm-9">polish.TextField.charactersKey3</div><div class="col-sm-3">def3</div>
-        <div class="col-sm-9">polish.TextField.charactersKey4</div><div class="col-sm-3">ghi4</div>
-        <div class="col-sm-9">polish.TextField.charactersKey5</div><div class="col-sm-3">jkl5</div>
-        <div class="col-sm-9">polish.TextField.charactersKey6</div><div class="col-sm-3">mno6</div>
-        <div class="col-sm-9">polish.TextField.charactersKey7</div><div class="col-sm-3">pqrs7</div>
-        <div class="col-sm-9">polish.TextField.charactersKey8</div><div class="col-sm-3">tuv8</div>
-        <div class="col-sm-9">polish.TextField.charactersKey9</div><div class="col-sm-3">wxyz9</div>
-        <div class="col-sm-9">polish.TextField.charactersKey0</div><div class="col-sm-3"> 0</div>
-      </div>
-    </div>
-  </aside>
-</script>
-
 <div class="tabbable">
   <ul class="nav nav-tabs sticky-tabs">
     {% if is_linked_app %}

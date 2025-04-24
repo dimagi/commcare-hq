@@ -1,0 +1,17 @@
+--- 
++++ 
+@@ -1,11 +1,11 @@
+-hqDefine('userreports/js/bootstrap3/report_config', [
++hqDefine('userreports/js/bootstrap5/report_config', [
+     'jquery',
+     'knockout',
+     'underscore',
+     'analytix/js/kissmetrix',
+-    'hqwebapp/js/bootstrap3/main',
++    'hqwebapp/js/bootstrap5/main',
+     'reports_core/js/charts',
+-    'reports_core/js/bootstrap3/maps',
++    'reports_core/js/bootstrap5/maps',
+     'userreports/js/builder_view_models',
+     'userreports/js/constants',
+     'userreports/js/report_analytix',

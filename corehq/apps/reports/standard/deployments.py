@@ -22,6 +22,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_brief_apps_in_domain,
 )
+from corehq.apps.app_manager.exceptions import AppInDifferentDomainException
 from corehq.apps.es import UserES, filters
 from corehq.apps.es.aggregations import (
     DateHistogram,
@@ -177,9 +178,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             sort_dir = col['dir']
             dt_column_obj = self.headers.header[col_ind]
             sort_prop = getattr(dt_column_obj, sort_prop_name) or dt_column_obj.prop_name
-            if col_ind == 0:
-                # this feels like a bit of a hack, but kept it in from the original sorting block
-                # prior to bootstrap 5 migration. could use a second look in the future
+            if self.primary_sort_prop is None:
+                # default the primary sort prop to the first column in the params list
                 self.primary_sort_prop = sort_prop
             if self.selected_app_id:
                 sort_dict = self._get_selected_app_sort_dict(sort_prop, sort_dir)
@@ -378,7 +378,13 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             if last_build:
                 build_version = last_build.get('build_version') or build_version
                 if last_build.get('app_id'):
-                    app_name = self.get_app_name(last_build['app_id'])
+                    try:
+                        # For web users who are hopping into multiple apps in different domains,
+                        # we should not fail the whole report if one of the app names is not found.
+                        # We should skip the entry for that user as it did not belong to the requested domain.
+                        app_name = self.get_app_name(last_build['app_id'])
+                    except AppInDifferentDomainException:
+                        continue
                 if self.show_build_profile:
                     last_build_profile_id = last_build.get('build_profile_id')
                     if last_build_profile_id:

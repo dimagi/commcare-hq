@@ -32,6 +32,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 )
 from corehq.apps.app_manager.const import (
     CASE_LIST_FILTER_LOCATIONS_FIXTURE,
+    FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS,
     MOBILE_UCR_VERSION_1,
     REGISTRY_WORKFLOW_LOAD_CASE,
     REGISTRY_WORKFLOW_SMART_LINK,
@@ -122,6 +123,7 @@ from corehq.apps.hqmedia.views import ProcessDetailPrintTemplateUploadView
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.analytics.esaccessors import (
+    get_all_case_types_for_domain,
     get_case_types_for_domain_es
 )
 from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
@@ -161,6 +163,7 @@ def get_module_view_context(request, app, module, lang=None):
             {'test': assertion.test, 'text': assertion.text.get(lang)}
             for assertion in module.custom_assertions
         ],
+        'formats_supporting_case_list_optimizations': FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS,
     }
     module_brief = {
         'id': module.id,
@@ -685,6 +688,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "case_list_session_endpoint_id": None,
         'custom_assertions': None,
         'lazy_load_case_list_fields': None,
+        'show_case_list_optimization_options': None,
     }
 
     if attr not in attributes:
@@ -842,6 +846,11 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
 
     if should_edit('lazy_load_case_list_fields'):
         module["lazy_load_case_list_fields"] = request.POST.get("lazy_load_case_list_fields") == 'true'
+
+    if should_edit('show_case_list_optimization_options') and app.supports_case_list_optimizations:
+        module["show_case_list_optimization_options"] = request.POST.get(
+            "show_case_list_optimization_options"
+        ) == 'true'
 
     if should_edit('custom_assertions'):
         module.custom_assertions = validate_custom_assertions(
@@ -1580,8 +1589,8 @@ def new_module(request, domain, app_id):
                 followup = app.new_form(module_id, _("Followup Form"), lang, attachment=attachment)
                 followup.requires = "case"
                 followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
-
-            _init_module_case_type(module)
+            case_type = request.POST.get('case_type', None)
+            _init_module_case_type(module, case_type)
         else:
             form_id = 0
             app.new_form(module_id, _("Survey"), lang)
@@ -1605,14 +1614,17 @@ def new_module(request, domain, app_id):
         return back_to_main(request, domain, app_id=app_id)
 
 
-# Set initial module case type, copying from another module in the same app
-def _init_module_case_type(module):
-    app = module.get_app()
-    app_case_types = [m.case_type for m in app.modules if m.case_type]
-    if len(app_case_types):
-        module.case_type = app_case_types[0]
+# Set initial module case type, copying from another module in the same app if no case type is provided
+def _init_module_case_type(module, case_type=None):
+    if case_type:
+        module.case_type = case_type
     else:
-        module.case_type = 'case'
+        app = module.get_app()
+        app_case_types = [m.case_type for m in app.modules if m.case_type]
+        if len(app_case_types):
+            module.case_type = app_case_types[0]
+        else:
+            module.case_type = 'case'
 
 
 def _init_biometrics_enroll_module(app, lang):
@@ -1741,6 +1753,18 @@ class ExistingCaseTypesView(LoginAndDomainMixin, View):
     def get(self, request, domain):
         return JsonResponse({
             'existing_case_types': list(get_case_types_for_domain_es(domain)),
+            'deprecated_case_types': list(get_data_dict_deprecated_case_types(domain))
+        })
+
+
+class AllCaseTypesView(LoginAndDomainMixin, View):
+    urlname = 'all_case_types'
+
+    def get(self, request, domain):
+        existing_case_types = list(get_all_case_types_for_domain(domain))
+        existing_case_types.sort(key=str.lower)  # Sort case-insensitively
+        return JsonResponse({
+            'existing_case_types': existing_case_types,
             'deprecated_case_types': list(get_data_dict_deprecated_case_types(domain))
         })
 

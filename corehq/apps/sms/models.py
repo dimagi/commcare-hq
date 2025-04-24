@@ -12,6 +12,7 @@ from django.utils.translation import gettext_lazy, gettext_noop, gettext as _
 import jsonfield
 
 from dimagi.utils.couch import CriticalSection
+from django.utils.functional import cached_property
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.locations.models import SQLLocation
@@ -605,12 +606,16 @@ class ConnectMessagingNumber:
 
     @property
     def phone_number(self):
-        return self.user_link.channel_id
+        return self.messaging_channel
 
-    @property
+    @cached_property
     def user_link(self):
         django_user = self.owner.get_django_user()
         return ConnectIDUserLink.objects.get(commcare_user=django_user)
+
+    @cached_property
+    def messaging_channel(self):
+        return self.user_link.messaging_channel
 
     @property
     def backend(self):
@@ -1110,11 +1115,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_EMAIL_BOUNCED = 'EMAIL_BOUNCED'
     ERROR_EMAIL_GATEWAY = 'EMAIL_GATEWAY_ERROR'
     ERROR_NO_FCM_TOKENS = 'NO_FCM_TOKENS'
-    ERROR_FCM_NOT_AVAILABLE = 'FCM_NOT_AVAILABLE'
-    ERROR_FCM_UNSUPPORTED_RECIPIENT = 'FCM_UNSUPPORTED_RECIPIENT'
-    ERROR_FCM_NO_ACTION = "FCM_NO_ACTION"
-    ERROR_FCM_NOTIFICATION_FAILURE = "FCM_NOTIFICATION_FAILURE"
-    ERROR_FCM_DOMAIN_NOT_ENABLED = 'FCM_DOMAIN_NOT_ENABLED'
     FILTER_MISMATCH = 'FILTER_MISMATCH'
 
     ERROR_MESSAGES = {
@@ -1172,11 +1172,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         ERROR_EMAIL_BOUNCED: gettext_noop("Email Bounced"),
         ERROR_EMAIL_GATEWAY: gettext_noop("Email Gateway Error"),
         ERROR_NO_FCM_TOKENS: gettext_noop("No FCM tokens found for recipient."),
-        ERROR_FCM_NOT_AVAILABLE: gettext_noop("FCM not available on this environment."),
-        ERROR_FCM_UNSUPPORTED_RECIPIENT: gettext_noop("FCM is supported for Mobile Workers only."),
-        ERROR_FCM_NO_ACTION: gettext_noop("No action selected for the FCM Data message type."),
-        ERROR_FCM_NOTIFICATION_FAILURE: gettext_noop("Failure while sending FCM notifications to the devices."),
-        ERROR_FCM_DOMAIN_NOT_ENABLED: gettext_noop("Domain is not enabled for FCM Push Notifications"),
         FILTER_MISMATCH: gettext_noop("Recipient did not match filters:")
     }
 

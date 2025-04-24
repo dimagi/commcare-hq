@@ -1,6 +1,6 @@
 hqDefine("notifications/spec/bootstrap5/NotificationsService.spec.mo", [
     'jquery',
-    'sinon/pkg/sinon',
+    'sinon',
     'notifications/js/bootstrap5/notifications_service',
 ], function (
     $,
@@ -29,7 +29,7 @@ hqDefine("notifications/spec/bootstrap5/NotificationsService.spec.mo", [
             };
 
         var fakePromise = new FakePromise({});
-        sinon.stub($, 'ajax', fakePromise.mock);
+        sinon.stub($, 'ajax').callsFake(fakePromise.mock);
 
         it('Initialization', function () {
             var csrfToken = $("#csrfTokenContainer").val();
