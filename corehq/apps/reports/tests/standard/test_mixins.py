@@ -1,4 +1,5 @@
 from unittest.mock import Mock
+
 from django.test import SimpleTestCase
 
 import pytest
@@ -6,6 +7,7 @@ import pytest
 from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es.profiling import ESQueryProfiler
 from corehq.apps.reports.standard import ESQueryProfilerMixin
+from corehq.util.test_utils import flag_enabled
 
 
 class TestESQueryProfilerMixin(SimpleTestCase):
@@ -38,6 +40,7 @@ class TestESQueryProfilerMixin(SimpleTestCase):
         assert report.profiler.search_class is CaseSearchES
         assert issubclass(report.search_class, report.profiler.search_class)
 
+    @flag_enabled('REPORT_TIMING_PROFILING')
     def test_debug_mode_not_superuser(self):
 
         class ProfiledReport(ESQueryProfilerMixin):
@@ -45,15 +48,13 @@ class TestESQueryProfilerMixin(SimpleTestCase):
             search_class = CaseSearchES
 
             def __init__(self, *args, **kwargs):
-                self.request = Mock(
-                    GET={'debug': 'true'},
-                    couch_user=Mock(is_superuser=False),
-                )
+                self.request = Mock(couch_user=Mock(is_superuser=False))
                 super().__init__(*args, **kwargs)
 
         report = ProfiledReport()
         assert report.debug_mode is False
 
+    @flag_enabled('REPORT_TIMING_PROFILING')
     def test_debug_mode_true(self):
 
         class ProfiledReport(ESQueryProfilerMixin):
@@ -61,27 +62,24 @@ class TestESQueryProfilerMixin(SimpleTestCase):
             search_class = CaseSearchES
 
             def __init__(self, *args, **kwargs):
-                self.request = Mock(
-                    GET={'debug': 'true'},
-                    couch_user=Mock(is_superuser=True),
-                )
+                self.request = Mock(couch_user=Mock(is_superuser=True))
                 super().__init__(*args, **kwargs)
 
         report = ProfiledReport()
         assert report.debug_mode is True
 
-    def test_debug_mode_not_boolean(self):
+    def test_debug_mode_toggle_disabled(self):
 
         class ProfiledReport(ESQueryProfilerMixin):
             profiler_enabled = True
             search_class = CaseSearchES
 
             def __init__(self, *args, **kwargs):
-                self.request = Mock(GET={'debug': 'yeah-not-so-much-bro'})
+                self.request = Mock(couch_user=Mock(is_superuser=True))
                 super().__init__(*args, **kwargs)
 
-        with pytest.raises(ValueError):
-            ProfiledReport()
+        report = ProfiledReport()
+        assert report.debug_mode is False
 
     def test_profiler_none(self):
 
