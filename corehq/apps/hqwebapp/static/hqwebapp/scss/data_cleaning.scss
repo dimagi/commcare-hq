@@ -3,6 +3,26 @@
 @import "variables";
 @import "variables-dark";
 
+.dc-value {
+  position: relative;
+
+  .dc-value-info {
+    background-color: $gray-800;
+    color: $white;
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    padding: 0 $spacer * 0.25;
+    transition: opacity 0.5s ease-in-out;
+  }
+  &:hover .dc-value-info {
+    display: block;
+    opacity: 1;
+  }
+}
+
 .dc-diff-view {
   font-family: $font-family-monospace;
   font-size: $font-size-base * .95;
@@ -19,6 +39,14 @@
     padding: $spacer * 0.15 $spacer * 0.4;
     cursor: help;
   }
+
+  .dc-value-null {
+    min-width: 38px;
+  }
+
+  .dc-value-empty {
+    min-width: 42px;
+  }
 }
 
 .dc-diff-before {
@@ -28,6 +56,15 @@
   .dc-diff-icon {
     background-color: $red-500;
   }
+
+  .dc-value-null {
+    color: $red-500;
+  }
+
+  .dc-value .dc-value-info {
+    background-color: $red-100;
+    color: $red-500;
+  }
 }
 
 .dc-diff-after {
@@ -36,6 +73,15 @@
 
   .dc-diff-icon {
     background-color: $green-500;
+  }
+
+  .dc-value-null {
+    color: $green-500;
+  }
+
+  .dc-value .dc-value-info {
+    background-color: $green-100;
+    color: $green-500;
   }
 }
 
