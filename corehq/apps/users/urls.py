@@ -58,9 +58,11 @@ from .views.mobile.users import (
     UploadCommCareUsers,
     UserUploadStatusView,
     activate_commcare_user,
+    activate_connectid_link,
     count_commcare_users,
     count_web_users,
     deactivate_commcare_user,
+    deactivate_connectid_link,
     delete_commcare_user,
     demo_restore_job_poll,
     download_commcare_users,
@@ -157,6 +159,16 @@ urlpatterns = [
     url(r'^commcare/account/(?P<couch_user_id>[ \w-]+)/groups/$', update_user_groups, name='update_user_groups'),
     url(r'^commcare/activate/(?P<user_id>[ \w-]+)/$', activate_commcare_user, name='activate_commcare_user'),
     url(r'^commcare/deactivate/(?P<user_id>[ \w-]+)/$', deactivate_commcare_user, name='deactivate_commcare_user'),
+    url(
+        r'^commcare/activate_connectid_link/(?P<username>[ \w-]+)/$',
+        activate_connectid_link,
+        name='activate_connectid_link'
+    ),
+    url(
+        r'^commcare/deactivate_connectid_link/(?P<username>[ \w-]+)/$',
+        deactivate_connectid_link,
+        name='deactivate_connectid_link'
+    ),
     url(
         r'^commcare/send_confirmation_email/(?P<user_id>[ \w-]+)/$',
         send_confirmation_email,
