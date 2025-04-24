@@ -16,13 +16,33 @@
     @dblclick="isEditing = !isSubmitting"
   >
     {% if edited_value|has_edits %}
-      <div class="d-flex align-items-center">
+      <div class="d-flex align-items-center me-3">
         <div class="dc-diff-view">
-          <div class="dc-diff-before">
-            {{ value }}
+          <div class="d-flex align-items-stretch dc-diff-before">
+            <div
+              class="dc-diff-icon"
+              x-tooltip=""
+              data-bs-custom-class="fs-6"
+              data-bs-title="{% trans "stored value" %}"
+            >
+              <i class="fa-solid fa-minus"></i>
+            </div>
+            <div class="align-self-center ms-1 me-2">
+              {% display_dc_value value %}
+            </div>
           </div>
-          <div class="dc-diff-after">
-            {{ edited_value }}
+          <div class="d-flex align-items-stretch dc-diff-after">
+            <div
+              class="dc-diff-icon"
+              x-tooltip=""
+              data-bs-custom-class="fs-6"
+              data-bs-title="{% trans "changed value" %}"
+            >
+              <i class="fa-solid fa-plus"></i>
+            </div>
+            <div class="align-self-center ms-1 me-2">
+              {% display_dc_value edited_value %}
+            </div>
           </div>
         </div>
         <div class="ms-2">
@@ -42,7 +62,7 @@
         </div>
       </div>
     {% else %}
-      {{ value }}
+      {% display_dc_value value %}
     {% endif %}
     <button
       class="btn btn-link btn-sm dc-inline-edit-action"
@@ -80,5 +100,6 @@
         <i class="fa fa-close"></i>
         <span class="visually-hidden">{% trans "Cancel Edit" %}</span>
       </button>
+    </div>
   </div>
 </div>

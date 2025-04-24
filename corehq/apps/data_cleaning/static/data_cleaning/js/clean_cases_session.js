@@ -13,6 +13,7 @@ import wiggleButton from 'hqwebapp/js/alpinejs/components/wiggle_button';
 Alpine.data('wiggleButtonModel', wiggleButton);
 
 Alpine.store('isCleaningAllowed', false);
+Alpine.store('showWhitespaces', false);
 
 import Alpine from 'alpinejs';
 Alpine.start();
