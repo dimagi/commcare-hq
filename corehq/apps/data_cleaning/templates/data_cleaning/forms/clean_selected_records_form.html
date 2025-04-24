@@ -25,7 +25,7 @@
     <div
       class="alert alert-warning"
       role="alert"
-      x-show="$store.editDetails.showApplyWarning"
+      x-show="$store.editDetails.showApplyWarning && !$store.editDetails.isSessionAtChangeLimit"
     >
       <h5>
         {% trans "Performance might be impacted..." %}
@@ -42,9 +42,23 @@
       hx-target="#{{ container_id }}"
       hx-disabled-elt="find button"
       hq-hx-action="create_bulk_edit_change"
+      x-show="!$store.editDetails.isSessionAtChangeLimit"
     >
       {% crispy cleaning_form %}
     </form>
+    <div
+      class="alert alert-warning"
+      x-show="$store.editDetails.isSessionAtChangeLimit"
+    >
+      <h5>
+        {% trans "Edit history is too large..." %}
+      </h5>
+      <p>
+        {% blocktrans %}
+          The edit history for this session is too large to support new bulk edits.
+          You can either apply the current edits, undo edits, or clear the edit history to start over.
+        {% endblocktrans%}
+      </p>
   {% else %}
     <div class="alert alert-primary">
       <h5>{% trans "No editible case properties are visible" %}</h5>

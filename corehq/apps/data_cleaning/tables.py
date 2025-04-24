@@ -11,6 +11,7 @@ from corehq.apps.data_cleaning.columns import (
 from corehq.apps.data_cleaning.models import (
     BULK_OPERATION_CHUNK_SIZE,
     MAX_RECORDED_LIMIT,
+    MAX_SESSION_CHANGES,
 )
 from corehq.apps.data_cleaning.records import EditableCaseSearchElasticRecord
 from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
@@ -132,11 +133,13 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
         The keys are:
             - numRecordsEdited: the number of records edited
             - numRecordsOverLimit: the number of records that have reached the maximum number of changes
+            - isSessionAtChangeLimit: whether the session has reached the maximum number of changes
         """
         change_counts = change_counts or session.get_change_counts()
         return {
             "numRecordsEdited": change_counts["num_records_edited"],
             "numRecordsOverLimit": change_counts["num_records_at_max_changes"],
+            "isSessionAtChangeLimit": session.get_num_changes() >= MAX_SESSION_CHANGES,
         }
 
     @property
