@@ -23,6 +23,7 @@ from corehq.apps.es import CaseSearchES
 BULK_OPERATION_CHUNK_SIZE = 1000
 MAX_RECORDED_LIMIT = 100000
 MAX_RECORD_CHANGES = 20
+MAX_SESSION_CHANGES = 200
 
 
 class BulkEditSessionType:
@@ -324,6 +325,9 @@ class BulkEditSession(models.Model):
                 "pk", filter=models.Q(num_changes__gte=MAX_RECORD_CHANGES)
             ),
         )
+
+    def get_num_changes(self):
+        return self.changes.count()
 
     def is_record_selected(self, doc_id):
         return BulkEditRecord.is_record_selected(self, doc_id)
