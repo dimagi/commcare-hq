@@ -1,3 +1,5 @@
+import random
+
 from typing import Optional
 
 from django.core.exceptions import ValidationError
@@ -306,3 +308,99 @@ class WebUserUpdates(UserUpdates):
 
     def _reset_locations(self, location_ids):
         self.user.reset_locations(self.domain, location_ids, commit=False)
+
+
+def _update_user_role(num):
+    return num > 2
+
+
+def _update_location(num):
+    return num > 3
+
+
+def _update_user_data(num):
+    return num > 4
+
+
+def _update_tableau_role(num):
+    return num > 5
+
+
+def _update_tableau_groups(num):
+    return num > 6
+
+
+FIELD_TYPES = ['role', 'location', 'user_data', 'tableau_role', 'tableau_groups']
+
+
+PRECOMPUTED_LOOKUP = {
+    'role': _update_user_role,
+    'location': _update_location,
+    'user_data': _update_user_data,
+    'tableau_role': _update_tableau_role,
+    'tableau_groups': _update_tableau_groups,
+}
+
+
+def test_precomputed(field, value):
+    update_fn = PRECOMPUTED_LOOKUP.get(field)
+    return update_fn(value)
+
+
+def test_dictionary_lookup(field, value):
+    update_fn = {
+        'role': _update_user_role,
+        'location': _update_location,
+        'user_data': _update_user_data,
+        'tableau_role': _update_tableau_role,
+        'tableau_groups': _update_tableau_groups,
+    }.get(field)
+
+    if not update_fn:
+        raise UpdateUserException(_("Attempted to update unknown or non-editable field '{}'").format(field))
+    return update_fn(value)
+
+
+def test_conditional_lookup(field, value):
+    update_fn = None
+
+    if field == 'role':
+        update_fn = _update_user_role
+    elif field == 'location':
+        update_fn = _update_location
+    elif field == 'user_data':
+        update_fn = _update_user_data
+    elif field == 'tableau_role':
+        update_fn = _update_tableau_role
+    elif field == 'tableau_groups':
+        update_fn = _update_tableau_groups
+    else:
+        raise UpdateUserException(_("Attempted to update unknown or non-editable field '{}'").format(field))
+
+    return update_fn(value)
+
+
+def test_operation(op):
+    field = FIELD_TYPES[random.randrange(len(FIELD_TYPES))]
+    value = random.randrange(10)
+
+    return op(field, value)
+
+
+def time_operation(func):
+    import timeit
+
+    elapsed = timeit.timeit(lambda: test_operation(func))
+    print(f'{func.__name__} took: {elapsed}')
+
+
+def time_dictionary_lookup():
+    time_operation(test_dictionary_lookup)
+
+
+def time_precomputed_lookup():
+    time_operation(test_precomputed)
+
+
+def time_conditional_lookup():
+    time_operation(test_conditional_lookup)
