@@ -1,3 +1,4 @@
+import json
 from memoized import memoized
 
 from django.utils.translation import gettext_lazy
@@ -115,6 +116,38 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
             - num_records_at_max_changes: the number of records that have reached the maximum number of changes
         """
         return self.session.get_change_counts()
+
+    @staticmethod
+    def get_edit_details(session, change_counts=None):
+        """
+        Return a dictionary of edit details for the Alpine.store.
+        This includes the number of records edited and the number of records
+        that have reached the maximum number of changes.
+
+        This is a staticmethod so that the TableHostView can also call this.
+
+        `change_counts` is optional and will be fetched from the session if not provided,
+        it allows us to memoize the change_counts for additional references in the table's template.
+
+        The keys are:
+            - numRecordsEdited: the number of records edited
+            - numRecordsOverLimit: the number of records that have reached the maximum number of changes
+        """
+        change_counts = change_counts or session.get_change_counts()
+        return {
+            "numRecordsEdited": change_counts["num_records_edited"],
+            "numRecordsOverLimit": change_counts["num_records_at_max_changes"],
+        }
+
+    @property
+    @memoized
+    def edit_details(self):
+        """
+        Return a JSON dump of the result of get_edit_details.
+        This is used to pass the edit details to the Alpine store.
+        This is a property so that it can be memoized and used in the template.
+        """
+        return json.dumps(self.get_edit_details(self.session, self.change_counts))
 
 
 class CaseCleaningTasksTable(BaseHtmxTable, tables.Table):

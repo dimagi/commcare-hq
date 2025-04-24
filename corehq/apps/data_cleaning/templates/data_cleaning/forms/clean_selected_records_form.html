@@ -22,6 +22,21 @@
     </div>
   {% endif %}
   {% if cleaning_form.is_form_visible %}
+    <div
+      class="alert alert-warning"
+      role="alert"
+      x-show="$store.editDetails.showApplyWarning"
+    >
+      <h5>
+        {% trans "Performance might be impacted..." %}
+      </h5>
+      <p>
+        {% blocktrans %}
+          Some cases have a large number of edits. You can continue to preview new bulk edits,
+          but some pages may take longer to load.
+        {% endblocktrans %}
+      </p>
+    </div>
     <form
       hx-post="{{ request.path_info }}"
       hx-target="#{{ container_id }}"

@@ -148,7 +148,7 @@ class CleanCasesTableView(BulkEditSessionViewMixin,
             {
                 "updateEditDetails": {
                     "target": "body",
-                    "numEditedRecords": self.session.get_num_edited_records(),
+                    "editDetails": self.table_class.get_edit_details(self.session),
                 },
             }
         )
