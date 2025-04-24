@@ -1050,6 +1050,19 @@ class EditActionType:
     MAKE_NULL = 'make_null'
     RESET = 'reset'
 
+    DB_CHOICES = (
+        (REPLACE, REPLACE),
+        (FIND_REPLACE, FIND_REPLACE),
+        (COPY_REPLACE, COPY_REPLACE),
+        (STRIP, STRIP),
+        (TITLE_CASE, TITLE_CASE),
+        (UPPER_CASE, UPPER_CASE),
+        (LOWER_CASE, LOWER_CASE),
+        (MAKE_EMPTY, MAKE_EMPTY),
+        (MAKE_NULL, MAKE_NULL),
+        (RESET, RESET),
+    )
+
     CHOICES = (
         (REPLACE, gettext_lazy("Replace")),
         (FIND_REPLACE, gettext_lazy("Find & Replace")),
@@ -1060,7 +1073,7 @@ class EditActionType:
         (LOWER_CASE, gettext_lazy("Make Lower Case")),
         (MAKE_EMPTY, gettext_lazy("Make Value Empty")),
         (MAKE_NULL, gettext_lazy("Make Value NULL")),
-        (RESET, gettext_lazy("Undo All Edits")),
+        (RESET, gettext_lazy("Reset Changes")),
     )
 
 
@@ -1072,7 +1085,7 @@ class BulkEditChange(models.Model):
     prop_id = models.CharField(max_length=255)  # case property or form question_id
     action_type = models.CharField(
         max_length=12,
-        choices=EditActionType.CHOICES,
+        choices=EditActionType.DB_CHOICES,
     )
     find_string = models.TextField(null=True, blank=True)
     replace_string = models.TextField(null=True, blank=True)
