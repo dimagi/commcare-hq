@@ -293,7 +293,7 @@ var HQReportDataTables = function (options) {
         var html = '<div class="timing-block">';
 
         // Sort sub-nodes by duration (descending)
-        node.subs.sort(function(a, b) {
+        node.subs.sort(function (a, b) {
             return b.duration - a.duration;
         });
 
