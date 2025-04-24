@@ -304,7 +304,12 @@ class BulkEditSession(models.Model):
             change.records.add(*selected_records)
 
     def get_num_edited_records(self):
-        return self.records.filter(changes__isnull=False).count()
+        return (
+            self.records.filter(changes__isnull=False)
+            .values("doc_id")
+            .distinct()
+            .count()
+        )
 
     def is_record_selected(self, doc_id):
         return BulkEditRecord.is_record_selected(self, doc_id)
