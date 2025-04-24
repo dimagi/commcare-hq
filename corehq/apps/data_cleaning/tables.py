@@ -97,12 +97,24 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
         return self.num_selected_records
 
     @property
-    @memoized
     def num_edited_records(self):
         """
         Return the number of edited records in the session.
         """
-        return self.session.get_num_edited_records()
+        return self.change_counts["num_records_edited"]
+
+    @property
+    @memoized
+    def change_counts(self):
+        """
+        A dictionary of "change_counts" for the session.
+        This includes the number of records edited and the number of records
+        that have reached the maximum number of changes.
+        The keys are:
+            - num_records_edited: the number of records edited
+            - num_records_at_max_changes: the number of records that have reached the maximum number of changes
+        """
+        return self.session.get_change_counts()
 
 
 class CaseCleaningTasksTable(BaseHtmxTable, tables.Table):

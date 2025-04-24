@@ -22,6 +22,7 @@ from corehq.apps.es import CaseSearchES
 
 BULK_OPERATION_CHUNK_SIZE = 1000
 MAX_RECORDED_LIMIT = 100000
+MAX_RECORD_CHANGES = 20
 
 
 class BulkEditSessionType:
@@ -303,12 +304,25 @@ class BulkEditSession(models.Model):
             selected_records = self.records.filter(is_selected=True)
             change.records.add(*selected_records)
 
-    def get_num_edited_records(self):
-        return (
-            self.records.filter(changes__isnull=False)
-            .values("doc_id")
-            .distinct()
-            .count()
+    def get_change_counts(self):
+        """
+        Get the details of the number of records with changes, and the number
+        of records that have more than `MAX_RECORD_CHANGES` changes associated with it.
+
+        This is an aggregated query to reduce the number of db hits, since
+        both num_records_edited and num_records_at_max_changes are always used
+        together and are related in structure.
+
+        :return: dict {
+            'num_records_edited': int - number of records with changes
+            'num_records_at_max_changes': int - number of records at or above `MAX_RECORD_CHANGES`
+        }
+        """
+        return self.records.annotate(num_changes=models.Count("changes")).aggregate(
+            num_records_edited=models.Count("pk", filter=models.Q(num_changes__gt=0)),
+            num_records_at_max_changes=models.Count(
+                "pk", filter=models.Q(num_changes__gte=MAX_RECORD_CHANGES)
+            ),
         )
 
     def is_record_selected(self, doc_id):
