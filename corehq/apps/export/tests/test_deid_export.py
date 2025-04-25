@@ -36,3 +36,13 @@ class TestDeIdHash(TestCase):
         deid_with_dict = DeIdHash.get_deid(value, doc_dict)
         deid_with_obj = DeIdHash.get_deid(value, doc_obj)
         self.assertEqual(deid_with_dict, deid_with_obj)
+
+    def test_prefers_domain_from_kwarg(self):
+        value = 'somedatavalue'
+        doc_dict = {'domain': 'dict-domain'}
+        doc_obj = SimpleNamespace(domain='obj-domain')
+        kwarg_domain = 'the-real-domain'
+
+        deid_with_dict = DeIdHash.get_deid(value, doc_dict, domain=kwarg_domain)
+        deid_with_obj = DeIdHash.get_deid(value, doc_obj, domain=kwarg_domain)
+        self.assertEqual(deid_with_dict, deid_with_obj)
