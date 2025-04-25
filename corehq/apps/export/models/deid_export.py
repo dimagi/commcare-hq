@@ -12,8 +12,21 @@ class DeIdHash(models.Model):
     domain = models.TextField(max_length=255, db_index=True)
 
     @classmethod
-    def get_deid(cls, value, doc):
-        domain = doc['domain'] if isinstance(doc, dict) else doc.domain
+    def get_deid(cls, value, doc, domain=None):
+        if not value and not doc:
+            return None
+
+        try:
+            domain = (domain if domain is not None
+                      else doc['domain'] if isinstance(doc, dict)
+                      else doc.domain)
+        except (AttributeError, KeyError):
+            # this should only happen with bad form data, so don't try to de-identify anything
+
+            # don't catch it for now, we want to see if this still comes up after domain is passed in
+            # return None
+            raise
+
         salt = cls._get_salt(domain)
         return DeidGenerator(value, salt).random_hash()
 
