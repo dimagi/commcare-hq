@@ -23,7 +23,7 @@ class JSONPath(object):
                 pass
 
 
-def deid_date(val, doc, key_path='form/case/@case_id|form/case/case_id|_id', key=None):
+def deid_date(val, doc, key_path='form/case/@case_id|form/case/case_id|_id', key=None, domain=None):
     if key is None and doc:
         key = JSONPath(key_path).search(doc)
     if not key or not val:

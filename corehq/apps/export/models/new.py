@@ -300,9 +300,9 @@ class ExportColumn(DocumentSchema):
         assert base_path == self.item.path[:len(base_path)], "ExportItem's path doesn't start with the base_path"
         # Get the path from the doc root to the desired ExportItem
         path = [x.name for x in self.item.path[len(base_path):]]
-        return self._transform(NestedDictGetter(path)(doc), doc, transform_dates)
+        return self._transform(NestedDictGetter(path)(doc), doc, transform_dates, domain)
 
-    def _transform(self, value, doc, transform_dates):
+    def _transform(self, value, doc, transform_dates, domain):
         """
         Transform the given value with the transform specified in self.item.transform.
         Also transform dates if the transform_dates flag is true.
@@ -332,7 +332,7 @@ class ExportColumn(DocumentSchema):
         if self.deid_transform:
             try:
                 transform_function = get_deid_transform_function(DEID_TRANSFORM_FUNCTIONS[self.deid_transform])
-                value = transform_function(value, doc)
+                value = transform_function(value, doc, domain=domain)
             except ValueError:
                 # Unable to convert the string to a date
                 pass
