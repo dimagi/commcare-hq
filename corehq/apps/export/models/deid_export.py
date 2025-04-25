@@ -13,7 +13,12 @@ class DeIdHash(models.Model):
 
     @classmethod
     def get_deid(cls, value, doc):
-        domain = doc['domain'] if isinstance(doc, dict) else doc.domain
+        try:
+            domain = doc['domain'] if isinstance(doc, dict) else doc.domain
+        except (AttributeError, KeyError):
+            # this should only happen with bad form data, so don't try to de-identify anything
+            return None
+
         salt = cls._get_salt(domain)
         return DeidGenerator(value, salt).random_hash()
 
