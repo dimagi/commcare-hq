@@ -6,6 +6,10 @@ from corehq.apps.export.models import DeIdHash
 
 
 class TestDeIdHash(TestCase):
+    def test_deid_output_format(self):
+        deid = DeIdHash.get_deid('somedatavalue', {'domain': 'test-domain'})
+        self.assertRegex(deid, '[A-Z0-9]{10}')
+
     def test_deid_unique_by_domain(self):
         value = 'somedatavalue'
 
