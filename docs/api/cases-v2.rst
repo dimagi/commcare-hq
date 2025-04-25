@@ -287,14 +287,6 @@ described below.
 |                                  | those where it’s set to the      |
 |                                  | empty string.                    |
 +----------------------------------+----------------------------------+
-| query                            | Submit a valid `Case Search      |
-|                                  | Query                            |
-|                                  | Language <https://dimagi-de      |
-|                                  | v.atlassian.net/wiki/display/saa |
-|                                  | s/Case+Search+Query+Language>`__ |
-|                                  | query. Mirrors the “Search” box  |
-|                                  | in the Case List Explorer        |
-+----------------------------------+----------------------------------+
 
 Return value is a list of cases, each serialized as described in
 "`Single Case Serialization Format`_".
