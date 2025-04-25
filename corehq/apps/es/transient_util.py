@@ -54,7 +54,7 @@ def iter_doc_adapters():
 
 def iter_index_cnames():
     from corehq.apps.es import canonical_name_adapter_map
-    yield from canonical_name_adapter_map
+    yield from canonical_name_adapter_map()
 
 
 def populate_doc_adapter_map():
