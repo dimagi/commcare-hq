@@ -7,7 +7,7 @@ from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.tests.utils import es_test, populate_user_index
 from corehq.apps.es.users import user_adapter
-from corehq.apps.locations.tests.util import delete_all_locations, make_loc
+from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.users.dbaccessors import (
     count_invitations_by_filters,
     count_mobile_users_by_filters,
@@ -47,8 +47,10 @@ class AllCommCareUsersTest(TestCase):
         hard_delete_deleted_users()
         cls.ccdomain = Domain(name='cc_user_domain')
         cls.ccdomain.save()
+        cls.addClassCleanup(cls.ccdomain.delete)
         cls.other_domain = Domain(name='other_domain')
         cls.other_domain.save()
+        cls.addClassCleanup(cls.other_domain.delete)
         bootstrap_location_types(cls.ccdomain.name)
 
         initialize_domain_with_default_roles(cls.ccdomain.name)
@@ -58,6 +60,7 @@ class AllCommCareUsersTest(TestCase):
         cls.loc1 = make_loc('spain', domain=cls.ccdomain.name, type="district")
         cls.loc2 = make_loc('madagascar', domain=cls.ccdomain.name, type="district")
 
+        cls.addClassCleanup(delete_all_users)
         cls.ccuser_1 = CommCareUser.create(
             domain=cls.ccdomain.name,
             username='ccuser_1',
@@ -127,14 +130,6 @@ class AllCommCareUsersTest(TestCase):
         cls.ccuser_inactive.is_active = False
         cls.ccuser_inactive.save()
         cls.ccuser_inactive.set_location(cls.loc2)
-
-    @classmethod
-    def tearDownClass(cls):
-        delete_all_users()
-        delete_all_locations()
-        cls.ccdomain.delete()
-        cls.other_domain.delete()
-        super(AllCommCareUsersTest, cls).tearDownClass()
 
     def test_get_users_by_filters(self):
         populate_user_index([
