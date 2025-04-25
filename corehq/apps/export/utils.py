@@ -4,7 +4,7 @@ from couchdbkit import ResourceNotFound
 
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.export.const import (
-    DEID_DATE_TRANSFORM, DEID_ID_TRANSFORM, DEID_TRANSFORM_FUNCTIONS
+    DEID_DATE_TRANSFORM, DEID_ID_TRANSFORM,
 )
 from corehq.privileges import DAILY_SAVED_EXPORT, DEFAULT_EXPORT_SETTINGS, EXCEL_DASHBOARD
 from corehq.toggles import MESSAGE_LOG_METADATA
@@ -75,9 +75,9 @@ def get_transform_function(func_name):
 
 
 def get_deid_transform_function(func_name):
-    if func_name == DEID_TRANSFORM_FUNCTIONS[DEID_DATE_TRANSFORM]:
+    if func_name == DEID_DATE_TRANSFORM:
         import couchexport.deid as module
         return getattr(module, func_name)
-    elif func_name == DEID_TRANSFORM_FUNCTIONS[DEID_ID_TRANSFORM]:
+    elif func_name == DEID_ID_TRANSFORM:
         from corehq.apps.export.models import DeIdHash
         return DeIdHash.get_deid
