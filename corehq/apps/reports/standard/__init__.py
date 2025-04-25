@@ -362,7 +362,11 @@ class ESQueryProfilerMixin(object):
                 search_class=self.search_class,
                 debug_mode=self.debug_mode,
             )
-            self.search_class = self.profiler.get_search_class(slug=self.__class__.__name__)
+            # Replace the report's search_class so that queries are
+            # profiled when the report executes searches. Use the report
+            # class's name to identify the profile.
+            identifier = self.__class__.__name__
+            self.search_class = self.profiler.get_profiled_search_class(identifier)
         else:
             self.profiler = None
 

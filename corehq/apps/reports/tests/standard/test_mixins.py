@@ -35,9 +35,11 @@ class TestESQueryProfilerMixin(SimpleTestCase):
                 super().__init__(*args, **kwargs)
 
         report = ProfiledReport()
+        # ESQueryProfilerMixin replaces `report.search_class` with one
+        # that wraps the original and profiles query execution times.
         assert report.search_class.__name__ == 'ProfiledSearchClass'
         assert isinstance(report.profiler, ESQueryProfiler)
-        assert report.profiler.search_class is CaseSearchES
+        assert report.profiler.search_class is ProfiledReport.search_class
         assert issubclass(report.search_class, report.profiler.search_class)
 
     @flag_enabled('REPORT_TIMING_PROFILING')

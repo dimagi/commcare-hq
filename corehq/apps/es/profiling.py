@@ -41,7 +41,7 @@ class ESQueryProfiler:
         """
         self.timing_context = TimingContext(self.name)
 
-    def get_search_class(self, slug=None):
+    def get_profiled_search_class(self, slug=None):
         """
         Returns a wrapped version of the search class that automatically
         profiles query execution times.
