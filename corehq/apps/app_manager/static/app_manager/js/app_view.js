@@ -81,7 +81,9 @@ hqDefine("app_manager/js/app_view", [
             var $submit = $(this),
                 $form = $submit.closest("form"),
                 domain = $form.find("#id_domain").val(),
-                $modal = $("#copy-toggles");
+                $modal = $("#copy-toggles"),
+                selectAllText = gettext("Select All"),
+                selectNoneText = gettext("Select None");
 
             if (!isCopyApplicationFormValid($form)) {
                 return false;
@@ -99,10 +101,13 @@ hqDefine("app_manager/js/app_view", [
                         if (toggles.length) {
                             var template = _.template($modal.find("script").html()),
                                 $ul = $modal.find("ul").html(""),
-                                allSelected = false;
-                            $modal.find(".select-all").click(function (e) {
+                                allSelected = false,
+                                $selectAll = $modal.find(".select-all");
+
+                            $selectAll.text(selectAllText);
+                            $selectAll.click(function (e) {
                                 allSelected = !allSelected;
-                                $(e.currentTarget).text(allSelected ? gettext("Select None") : gettext("Select All"));
+                                $(e.currentTarget).text(allSelected ? selectNoneText : selectAllText);
                                 $ul.find("input:checkbox:enabled").prop('checked', allSelected);
                             });
                             _.each(toggles, function (toggle) {
