@@ -109,8 +109,7 @@ class LocationFixtureProvider(FixtureProvider):
         if not self.serializer.should_sync(restore_user, restore_state.params.app):
             return []
 
-        # This just calls get_location_fixture_queryset but is memoized to the user
-        locations_queryset = restore_user.get_locations_to_sync()
+        locations_queryset = get_location_fixture_queryset(restore_user)
         if not should_sync_locations(restore_state.last_sync_log, locations_queryset, restore_state):
             return []
 
