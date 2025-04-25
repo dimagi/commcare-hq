@@ -70,6 +70,8 @@ from corehq.apps.export.const import (
     CASE_EXPORT,
     CASE_ID_TO_LINK,
     CASE_NAME_TRANSFORM,
+    DEID_DATE_TRANSFORM,
+    DEID_ID_TRANSFORM,
     DEID_TRANSFORM_FUNCTIONS,
     EMPTY_VALUE,
     EXCEL_MAX_SHEET_NAME_LENGTH,
@@ -300,9 +302,9 @@ class ExportColumn(DocumentSchema):
         assert base_path == self.item.path[:len(base_path)], "ExportItem's path doesn't start with the base_path"
         # Get the path from the doc root to the desired ExportItem
         path = [x.name for x in self.item.path[len(base_path):]]
-        return self._transform(NestedDictGetter(path)(doc), doc, transform_dates)
+        return self._transform(NestedDictGetter(path)(doc), doc, transform_dates, domain)
 
-    def _transform(self, value, doc, transform_dates):
+    def _transform(self, value, doc, transform_dates, domain):
         """
         Transform the given value with the transform specified in self.item.transform.
         Also transform dates if the transform_dates flag is true.
@@ -330,12 +332,16 @@ class ExportColumn(DocumentSchema):
             transform_function = get_transform_function(TRANSFORM_FUNCTIONS[self.item.transform])
             value = transform_function(value, doc)
         if self.deid_transform:
-            try:
-                transform_function = get_deid_transform_function(self.deid_transform)
-                value = transform_function(value, doc)
-            except ValueError:
-                # Unable to convert the string to a date
-                pass
+            if self.deid_transform == DEID_DATE_TRANSFORM:
+                deid_date = get_deid_transform_function(DEID_DATE_TRANSFORM)
+                try:
+                    value = deid_date(value, doc)
+                except ValueError:
+                    # Unable to convert the string to a date
+                    pass
+            elif self.deid_transform == DEID_ID_TRANSFORM:
+                deid_id = get_deid_transform_function(DEID_ID_TRANSFORM)
+                value = deid_id(value, doc, domain=domain)
         if value is None:
             value = MISSING_VALUE
 
@@ -3051,7 +3057,8 @@ class StockFormExportColumn(ExportColumn):
         return self._transform(
             NestedDictGetter(path[stock_type_path_index + 1:])(new_doc),
             new_doc,
-            transform_dates
+            transform_dates,
+            domain,
         )
 
 
