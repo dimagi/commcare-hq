@@ -280,7 +280,7 @@ class ExportColumn(DocumentSchema):
     help_text = StringProperty()
 
     # A transforms that deidentifies the value
-    deid_transform = StringProperty(choices=list(DEID_TRANSFORM_FUNCTIONS))
+    deid_transform = StringProperty(choices=DEID_TRANSFORM_FUNCTIONS)
 
     def get_value(self, domain, doc_id, doc, base_path, transform_dates=False, row_index=None, split_column=False):
         """
@@ -331,7 +331,7 @@ class ExportColumn(DocumentSchema):
             value = transform_function(value, doc)
         if self.deid_transform:
             try:
-                transform_function = get_deid_transform_function(DEID_TRANSFORM_FUNCTIONS[self.deid_transform])
+                transform_function = get_deid_transform_function(self.deid_transform)
                 value = transform_function(value, doc)
             except ValueError:
                 # Unable to convert the string to a date
