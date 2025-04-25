@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,340 +1,308 @@
+@@ -1,402 +1,370 @@
 -hqDefine("reports/js/bootstrap3/datatables_config", [
 -    'jquery',
 -    'underscore',
@@ -32,6 +32,61 @@
 -        if (self.loadingTemplateSelector !== undefined) {
 -            var loadingTemplate = _.template($(self.loadingTemplateSelector).html() || self.loadingText);
 -            self.loadingText = loadingTemplate({});
+-        }
+-        self.emptyText = options.emptyText || gettext("No data available to display. " +
+-                                                      "Please try changing your filters.");
+-        self.errorText = options.errorText || "<span class='label label-danger'>" + gettext("Sorry!") + "</span> " +
+-                         gettext("There was an error with your query, it has been logged, please try another query.");
+-        self.badRequestErrorText = options.badRequestErrorText || options.errorText ||
+-                                   "<span class='label label-danger'>" + gettext("Sorry!") + "</span> " +
+-                                   gettext("Your search query is invalid, please adjust the formatting and try again.");
+-        self.fixColumns = !!(options.fixColumns);
+-        self.fixColsNumLeft = options.fixColsNumLeft || 1;
+-        self.fixColsWidth = options.fixColsWidth || 100;
+-        self.show_pagination = (options.show_pagination === undefined) ? true : options.bPaginate;
+-        self.aaSorting = options.aaSorting || null;
+-        // a list of functions to call back to after ajax.
+-        // see user configurable charts for an example usage
+-        self.successCallbacks = options.successCallbacks;
+-        self.errorCallbacks = options.errorCallbacks;
+-        self.includeFilter = options.includeFilter || false;
+-        self.datatable = null;
+-        self.rendered = false;
+-
+-        self.render_footer_row = (function () {
+-            var $dataTableElem = $(self.dataTableElem);
+-            return function (id, row) {
+-                if ($dataTableElem.find('tfoot').length === 0) {
+-                    var $row = $dataTableElem.find('#' + id);
+-                    if ($row.length === 0) {
+-                        $row = $('<tfoot />');
+-                        $dataTableElem.append($row);
+-                    }
+-                    $row.html('');
+-                    for (var i = 0; i < row.length; i++) {
+-                        $row.append('<td>' + row[i] + '</td>');
+-                    }
+-                }
+-            };
+-        })();
+-
+-        self.render = function () {
+-            if (self.rendered) {
+-                $(self.dataTableElem).each(function () {
+-                    if ($.fn.dataTable.versionCheck) {
+-                        // $.fn.dataTable.versionCheck does not exist prior to 1.10
+-                        $(this).DataTable().ajax.reload();
+-                    } else {
+-                        $(this).dataTable().fnReloadAjax();
+-                    }
+-                });
+-                return;
+-            }
+-
+-            self.rendered = true;
+-
+-            $('[data-datatable-highlight-closest]').each(function () {
+-                $(this).closest($(this).attr('data-datatable-highlight-closest')).addClass('active');
 +import $ from 'jquery';
 +
 +import 'datatables.net/js/jquery.dataTables';
@@ -102,64 +157,7 @@
 +                } else {
 +                    $(this).dataTable().fnReloadAjax();
 +                }
-+            });
-+            return;
-         }
--        self.emptyText = options.emptyText || gettext("No data available to display. " +
--                                                      "Please try changing your filters.");
--        self.errorText = options.errorText || "<span class='label label-danger'>" + gettext("Sorry!") + "</span> " +
--                         gettext("There was an error with your query, it has been logged, please try another query.");
--        self.badRequestErrorText = options.badRequestErrorText || options.errorText ||
--                                   "<span class='label label-danger'>" + gettext("Sorry!") + "</span> " +
--                                   gettext("Your search query is invalid, please adjust the formatting and try again.");
--        self.fixColumns = !!(options.fixColumns);
--        self.fixColsNumLeft = options.fixColsNumLeft || 1;
--        self.fixColsWidth = options.fixColsWidth || 100;
--        self.show_pagination = (options.show_pagination === undefined) ? true : options.bPaginate;
--        self.aaSorting = options.aaSorting || null;
--        // a list of functions to call back to after ajax.
--        // see user configurable charts for an example usage
--        self.successCallbacks = options.successCallbacks;
--        self.errorCallbacks = options.errorCallbacks;
--        self.includeFilter = options.includeFilter || false;
--        self.datatable = null;
--        self.rendered = false;
--
--        self.render_footer_row = (function () {
--            var $dataTableElem = $(self.dataTableElem);
--            return function (id, row) {
--                if ($dataTableElem.find('tfoot').length === 0) {
--                    var $row = $dataTableElem.find('#' + id);
--                    if ($row.length === 0) {
--                        $row = $('<tfoot />');
--                        $dataTableElem.append($row);
--                    }
--                    $row.html('');
--                    for (var i = 0; i < row.length; i++) {
--                        $row.append('<td>' + row[i] + '</td>');
--                    }
--                }
--            };
--        })();
--
--        self.render = function () {
--            if (self.rendered) {
--                $(self.dataTableElem).each(function () {
--                    if ($.fn.dataTable.versionCheck) {
--                        // $.fn.dataTable.versionCheck does not exist prior to 1.10
--                        $(this).DataTable().ajax.reload();
--                    } else {
--                        $(this).dataTable().fnReloadAjax();
--                    }
--                });
--                return;
--            }
--
--            self.rendered = true;
--
--            $('[data-datatable-highlight-closest]').each(function () {
--                $(this).closest($(this).attr('data-datatable-highlight-closest')).addClass('active');
--            });
+             });
 -            function applyBootstrapMagic() {
 -                $('[data-datatable-tooltip]').each(function () {
 -                    $(this).tooltip({
@@ -227,6 +225,9 @@
 -                                for (i = 0; i < data.statistics_rows.length; i++) {
 -                                    self.render_footer_row('ajax_stat_row-' + i, data.statistics_rows[i]);
 -                                }
+-                            }
+-                            if ('report_timing_profile' in data) {
+-                                self.renderTimingProfile(data.report_timing_profile);
 -                            }
 -                            applyBootstrapMagic();
 -                            if (self.successCallbacks) {
@@ -349,6 +350,8 @@
 -                }
 -                $(".dataTables_length select").change(function () {
 -                    $(self.dataTableElem).trigger('hqreport.tabular.lengthChange', $(this).val());
++            return;
++        }
 +
 +        self.rendered = true;
 +
@@ -364,27 +367,40 @@
              });
 -        };  // end of self.render
 -
--        return self;
--    };
+-        self.renderTimingProfile = function (reportTimingProfile) {
+-            var $timingProfile = $('#report-timing-profile');
+-            if (!reportTimingProfile) {
+-                $timingProfile.empty();
+-                return;
+-            }
+-            // Create the main container
+-            var html = `
+-                <div class="panel panel-default">
+-                  <div class="panel-heading">
+-                    <h4 class="panel-title">
+-                      Report Timing Profile:
+-                      ${reportTimingProfile.name}
+-                      (${reportTimingProfile.duration.toFixed(2)}s)
+-                    </h4>
+-                  </div>
+-                  <div class="panel-body">
+-                    ${renderTimingNode(reportTimingProfile)}
+-                  </div>
+-                </div>`;
+-            $timingProfile.html(html);
+-        };
 -
--    $.extend($.fn.dataTableExt.oStdClasses, {
--        "sSortAsc": "header headerSortAsc",
--        "sSortDesc": "header headerSortDesc",
--        "sSortable": "header headerSort",
--    });
+-        function renderTimingNode(node) {
+-            if (!node.subs || node.subs.length === 0) {
+-                return '';
+-            }
 -
--    // For sorting rows
+-            var html = '<div class="timing-block">';
 -
--    function sortSpecial(a, b, asc, convert) {
--        var x = convert(a);
--        var y = convert(b);
--
--        // sort nulls at end regardless of current sort direction
--        if (x === null && y === null) {
--            return 0;
-         }
--        if (x === null) {
--            return 1;
+-            // Sort sub-nodes by duration (descending)
+-            node.subs.sort(function (a, b) {
+-                return b.duration - a.duration;
++        }
 +        applyBootstrapMagic();
 +
 +        var dataTablesDom = "frt<'d-flex mb-1'<'p-2 ps-3'i><'p-2 ps-0'l><'ms-auto p-2 pe-3'p>>";
@@ -454,6 +470,9 @@
 +                            self.render_footer_row('ajax_stat_row-' + i, data.statistics_rows[i]);
 +                        }
 +                    }
++                    if ('report_timing_profile' in data) {
++                        self.renderTimingProfile(data.report_timing_profile);
++                    }
 +                };
 +
 +                params.drawCallback = function () {
@@ -520,8 +539,33 @@
 +                    datatable.fnAdjustColumnSizing();
 +                    self._lengthsSeen.push(length);
 +                }
-+            });
-+
+             });
+ 
+-            for (var i = 0; i < node.subs.length; i++) {
+-                var sub = node.subs[i];
+-                // Ensure reasonable width
+-                var percentWidth = Math.max(Math.min(sub.percent_parent, 100), 10);
+-
+-                html += `
+-                    <div class="timing-node" style="width: ${percentWidth}%;">
+-                      <div class="timing-node-content">
+-                        <div class="timing-node-header">${sub.name}</div>
+-                        <div class="timing-node-details">
+-                          ${sub.duration.toFixed(3)}s
+-                          (${sub.percent_parent.toFixed(1)}% of parent,
+-                          ${sub.percent_total.toFixed(1)}% of total)
+-                        </div>`;
+-
+-                // Render children recursively
+-                if (sub.subs && sub.subs.length > 0) {
+-                    html += `<div class="timing-children">${renderTimingNode(sub)}</div>`;
+-                }
+-                html += '</div></div>';
+-            }
+-            return html + '</div>';
+-        }
+-
+-        return self;
 +            var $dataTablesFilter = $(".dataTables_filter");
 +            if ($dataTablesFilter && $("#extra-filter-info")) {
 +                if ($dataTablesFilter.length > 1) {
@@ -559,36 +603,48 @@
 +        });
 +    };  // end of self.render
 +
-+    return self;
-+};
-+
-+// For sorting rows
-+
-+function sortSpecial(a, b, asc, convert) {
-+    var x = convert(a);
-+    var y = convert(b);
-+
-+    // sort nulls at end regardless of current sort direction
-+    if (x === null && y === null) {
-+        return 0;
-+    }
-+    if (x === null) {
-+        return 1;
-+    }
-+    if (y === null) {
-+        return -1;
-+    }
-+
-+    return (asc ? 1 : -1) * ((x < y) ? -1 : ((x > y) ?  1 : 0));
-+}
-+
-+function convertNum(k) {
-+    var m = k.match(/title="*([-+.0-9eE]+)/);
-+    if (m !== null) {
-+        m = +m[1];
-+        if (isNaN(m)) {
-+            m = null;
-         }
++    self.renderTimingProfile = function (reportTimingProfile) {
++        var $timingProfile = $('#report-timing-profile');
++        if (!reportTimingProfile) {
++            $timingProfile.empty();
++            return;
++        }
++        // Create the main container
++        var html = `
++            <div class="panel panel-default">
++              <div class="panel-heading">
++                <h4 class="panel-title">
++                  Report Timing Profile:
++                  ${reportTimingProfile.name}
++                  (${reportTimingProfile.duration.toFixed(2)}s)
++                </h4>
++              </div>
++              <div class="panel-body">
++                ${renderTimingNode(reportTimingProfile)}
++              </div>
++            </div>`;
++        $timingProfile.html(html);
+     };
+ 
+-    $.extend($.fn.dataTableExt.oStdClasses, {
+-        "sSortAsc": "header headerSortAsc",
+-        "sSortDesc": "header headerSortDesc",
+-        "sSortable": "header headerSort",
+-    });
+-
+-    // For sorting rows
+-
+-    function sortSpecial(a, b, asc, convert) {
+-        var x = convert(a);
+-        var y = convert(b);
+-
+-        // sort nulls at end regardless of current sort direction
+-        if (x === null && y === null) {
+-            return 0;
+-        }
+-        if (x === null) {
+-            return 1;
+-        }
 -        if (y === null) {
 -            return -1;
 -        }
@@ -627,6 +683,72 @@
 -        HQReportDataTables: function (options) { return new HQReportDataTables(options); },
 -    };
 -});
++    function renderTimingNode(node) {
++        if (!node.subs || node.subs.length === 0) {
++            return '';
++        }
++
++        var html = '<div class="timing-block">';
++
++        // Sort sub-nodes by duration (descending)
++        node.subs.sort(function (a, b) {
++            return b.duration - a.duration;
++        });
++
++        for (var i = 0; i < node.subs.length; i++) {
++            var sub = node.subs[i];
++            // Ensure reasonable width
++            var percentWidth = Math.max(Math.min(sub.percent_parent, 100), 10);
++
++            html += `
++                <div class="timing-node" style="width: ${percentWidth}%;">
++                  <div class="timing-node-content">
++                    <div class="timing-node-header">${sub.name}</div>
++                    <div class="timing-node-details">
++                      ${sub.duration.toFixed(3)}s
++                      (${sub.percent_parent.toFixed(1)}% of parent,
++                      ${sub.percent_total.toFixed(1)}% of total)
++                    </div>`;
++
++            // Render children recursively
++            if (sub.subs && sub.subs.length > 0) {
++                html += `<div class="timing-children">${renderTimingNode(sub)}</div>`;
++            }
++            html += '</div></div>';
++        }
++        return html + '</div>';
++    }
++
++    return self;
++};
++
++// For sorting rows
++
++function sortSpecial(a, b, asc, convert) {
++    var x = convert(a);
++    var y = convert(b);
++
++    // sort nulls at end regardless of current sort direction
++    if (x === null && y === null) {
++        return 0;
++    }
++    if (x === null) {
++        return 1;
++    }
++    if (y === null) {
++        return -1;
++    }
++
++    return (asc ? 1 : -1) * ((x < y) ? -1 : ((x > y) ?  1 : 0));
++}
++
++function convertNum(k) {
++    var m = k.match(/title="*([-+.0-9eE]+)/);
++    if (m !== null) {
++        m = +m[1];
++        if (isNaN(m)) {
++            m = null;
++        }
 +    }
 +    return m;
 +}

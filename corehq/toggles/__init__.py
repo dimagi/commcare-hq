@@ -2357,6 +2357,12 @@ USER_HISTORY_REPORT = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/User+History+Report",
 )
 
+REPORT_TIMING_PROFILING = StaticToggle(
+    'report_timing_profiling',
+    'Report timing profiling is visible in reports that have a profiler enabled.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
+)
 
 COWIN_INTEGRATION = StaticToggle(
     'cowin_integration',
