@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 
-from corehq.apps.es import const
+from corehq.apps.es import canonical_name_adapter_map, const
 from corehq.apps.es.client import manager
 from corehq.apps.es.transient_util import doc_adapter_from_cname
 
@@ -32,7 +32,6 @@ class Command(BaseCommand):
         parser.add_argument('changelog', help="Changelog entry for the upgrade that outlines reindex steps")
 
     def handle(self, current_es_version, changelog, **kwargs):
-        from corehq.apps.es import canonical_name_adapter_map
         if manager.elastic_major_version != current_es_version:
             print(f"""
                 Skipping Reindex verify checks!
@@ -106,7 +105,6 @@ class Command(BaseCommand):
         """
         Returns a tuple of missing primary and secondary index names
         """
-        from corehq.apps.es import canonical_name_adapter_map
         missing_primary = []
         missing_secondary = []
         for cname in canonical_name_adapter_map().keys():
