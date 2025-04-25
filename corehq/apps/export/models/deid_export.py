@@ -12,8 +12,14 @@ class DeIdHash(models.Model):
     domain = models.TextField(max_length=255, db_index=True)
 
     @classmethod
-    def get_deid(cls, value, doc):
-        domain = doc['domain'] if isinstance(doc, dict) else doc.domain
+    def get_deid(cls, value, doc, domain=None):
+        if not value and not doc:
+            # this means bad data, which can occur with repeat groups in forms from mobile
+            return None
+
+        domain = (domain if domain is not None
+                  else doc['domain'] if isinstance(doc, dict)
+                  else doc.domain)
         salt = cls._get_salt(domain)
         return DeidGenerator(value, salt).random_hash()
 

@@ -16,7 +16,6 @@ from corehq.apps.es.cases import CaseES
 from corehq.apps.export.const import (
     DEID_DATE_TRANSFORM,
     DEID_ID_TRANSFORM,
-    DEID_TRANSFORM_FUNCTIONS,
 )
 from corehq.apps.export.utils import get_deid_transform_function
 from corehq.apps.receiverwrapper.util import submit_form_locally
@@ -297,10 +296,10 @@ def get_deidentified_data(case, censor_data):
 
             censored_value = ''
             if transform == DEID_DATE_TRANSFORM:
-                deid_date = get_deid_transform_function(DEID_TRANSFORM_FUNCTIONS[DEID_DATE_TRANSFORM])
+                deid_date = get_deid_transform_function(DEID_DATE_TRANSFORM)
                 censored_value = deid_date(case_value, None, key=case.case_id)
             if transform == DEID_ID_TRANSFORM:
-                deid_id = get_deid_transform_function(DEID_TRANSFORM_FUNCTIONS[DEID_ID_TRANSFORM])
+                deid_id = get_deid_transform_function(DEID_ID_TRANSFORM)
                 censored_value = deid_id(case_value, case)
 
             if is_case_property:
