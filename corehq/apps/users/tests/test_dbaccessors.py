@@ -1,4 +1,5 @@
 from datetime import datetime
+from unittest.mock import patch
 
 from django.test import TestCase
 
@@ -39,6 +40,7 @@ from corehq.apps.users.role_utils import initialize_domain_with_default_roles
 class AllCommCareUsersTest(TestCase):
 
     @classmethod
+    @patch('corehq.apps.users.tasks.remove_users_test_cases', lambda *a: None)
     def setUpClass(cls):
         super(AllCommCareUsersTest, cls).setUpClass()
         delete_all_users()
