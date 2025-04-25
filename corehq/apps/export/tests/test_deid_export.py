@@ -22,10 +22,12 @@ class TestDeIdHash(TestCase):
         self.assertEqual(deid_one, deid_two)
 
     def test_none_is_a_deidentifiable_value(self):
-        value = None
-
-        deid = DeIdHash.get_deid(value, {'domain': 'test-domain'})
+        deid = DeIdHash.get_deid(None, {'domain': 'test-domain'})
         self.assertIsNotNone(deid)
+
+    def test_no_value_no_doc_returns_none(self):
+        deid = DeIdHash.get_deid(None, {}, domain='irrelevant-domain')
+        self.assertIsNone(deid)
 
     def test_uses_domain_from_dict_or_object(self):
         value = 'somedatavalue'

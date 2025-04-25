@@ -13,6 +13,10 @@ class DeIdHash(models.Model):
 
     @classmethod
     def get_deid(cls, value, doc, domain=None):
+        if not value and not doc:
+            # this means bad data, which can occur with repeat groups in forms from mobile
+            return None
+
         domain = (domain if domain is not None
                   else doc['domain'] if isinstance(doc, dict)
                   else doc.domain)
