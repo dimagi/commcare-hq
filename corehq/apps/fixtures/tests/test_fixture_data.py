@@ -2,6 +2,7 @@ from xml.etree import cElementTree as ElementTree
 from datetime import datetime
 
 from django.test import TestCase
+from django.conf import settings
 
 from casexml.apps.phone.models import SimplifiedSyncLog
 from casexml.apps.case.tests.util import check_xml_line_by_line
@@ -21,6 +22,7 @@ from corehq.apps.fixtures.models import (
 from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.users.models import CommCareUser
 from corehq.blobs import get_blob_db
+from corehq.blobs.tests.util import TemporaryS3BlobDB
 
 
 def call_fixture_generator(user, last_sync=None):
@@ -283,6 +285,24 @@ class FixtureDataTest(TestCase):
             [(node.tag, node.attrib['id']) for node in fixtures],
             [
                 ('schema', 'item-list:sandwich-index'),
+                ('fixture', 'item-list:sandwich-index'),
+                ('fixture', 'item-list:district'),
+            ]
+        )
+
+    def test_simulate_s3_blob(self):
+        config = settings.S3_BLOB_DB_SETTINGS
+        db = TemporaryS3BlobDB(config)
+        self.addCleanup(db.close)
+
+        sandwich = self.make_data_type("sandwich", is_global=True)
+        sandwich.save()
+        self.make_data_item(sandwich, "7.39")
+
+        fixtures = call_fixture_generator(self.user.to_ota_restore_user(self.domain))
+        self.assertEqual(
+            [(node.tag, node.attrib['id']) for node in fixtures],
+            [
                 ('fixture', 'item-list:sandwich-index'),
                 ('fixture', 'item-list:district'),
             ]
