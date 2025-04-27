@@ -142,6 +142,10 @@ def run_case_update_rules_for_domain(domain, now=None):
     domain_rules = AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
     all_rule_case_types = set(domain_rules.values_list('case_type', flat=True))
 
+    domain_obj = Domain.get_by_name(domain)
+    max_allowed_updates = domain_obj.auto_case_update_limit or settings.MAX_RULE_UPDATES_IN_ONE_RUN
+
+    total_updates = 0
     for case_type in all_rule_case_types:
         run_record = DomainCaseRuleRun.objects.create(
             domain=domain,
@@ -152,7 +156,14 @@ def run_case_update_rules_for_domain(domain, now=None):
         )
 
         for db in get_db_aliases_for_partitioned_query():
-            run_case_update_rules_for_domain_and_db.delay(domain, now, run_record.pk, case_type, db=db)
+            result = run_case_update_rules_for_domain_and_db.delay(domain, now, run_record.pk,
+                                                                   case_type, total_updates, db=db)
+            updates = result.get()
+            total_updates += updates
+            if total_updates >= max_allowed_updates:
+                break
+        if total_updates >= max_allowed_updates:
+            break
 
 
 @serial_task(
@@ -162,19 +173,22 @@ def run_case_update_rules_for_domain(domain, now=None):
     queue='case_rule_queue',
     serializer='pickle',
 )
-def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, db=None):
+def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, curr_updates,
+                                            db=None):
     rules = list(
         AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE).filter(case_type=case_type)
     )
 
     modified_before = AutomaticUpdateRule.get_boundary_date(rules, now)
     iterator = AutomaticUpdateRule.iter_cases(domain, case_type, db=db, modified_lte=modified_before)
-    run = iter_cases_and_run_rules(domain, iterator, rules, now, run_id, case_type, db)
+    run = iter_cases_and_run_rules(domain, iterator, rules, now, run_id, case_type, db,
+                                   curr_updates=curr_updates)
 
     if run.status == DomainCaseRuleRun.STATUS_FINISHED:
         for rule in rules:
             rule.last_run = now
             rule.save(update_fields=['last_run'])
+    return run.num_updates if DomainCaseRuleRun.STATUS_FINISHED else 0
 
 
 @task(queue='background_queue', acks_late=True, ignore_result=True)
