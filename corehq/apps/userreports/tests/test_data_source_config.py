@@ -59,7 +59,7 @@ class TestDataSourceConfigAllowedExpressionsValidation(TestCase):
             "type": "property_name"
         }
         cls.config = DataSourceConfiguration.wrap(cls.config)
-        return super().setUpClass()
+        super().setUpClass()
 
     def test_raises_when_domain_has_no_permission(self):
         self.config.domain = 'domain_nopermission'
