@@ -614,9 +614,9 @@ class TestFlagsAndPrivilegesViewAccess(TestCase):
         self.assertEqual(response.status_code, 302)
 
     @patch('corehq.apps.domain.views.internal.toggles')
-    @patch('corehq.apps.domain.views.internal.get_tags_with_edit_permission')
-    def test_edit_toggles_access(self, mocked_get_tags_with_edit_permission, mocked_toggles, *args):
-        mocked_get_tags_with_edit_permission.return_value = [self.tag]
+    @patch('corehq.apps.domain.views.internal.get_editable_toggle_tags_for_user')
+    def test_edit_toggles_access(self, mocked_get_editable_toggle_tags_for_user, mocked_toggles, *args):
+        mocked_get_editable_toggle_tags_for_user.return_value = [self.tag]
         mocked_toggles.all_toggles.return_value = [
             StaticToggle(slug='flag_1', label='Flag 1', tag=self.tag),
             StaticToggle(slug='flag_2', label='Flag 2', tag=self.tag),

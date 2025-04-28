@@ -200,9 +200,9 @@ class TestToggleListViewAccess(BaseTestToggleView):
         response = self.client.get(self.endpoint)
         self.assertEqual(response.status_code, 302)
 
-    @patch('corehq.apps.toggle_ui.views.get_tags_with_edit_permission')
-    def test_editable_toggles_access(self, mocked_get_tags_with_edit_permission):
-        mocked_get_tags_with_edit_permission.return_value = [
+    @patch('corehq.apps.toggle_ui.views.get_editable_toggle_tags_for_user')
+    def test_editable_toggles_access(self, mocked_get_editable_toggle_tags_for_user):
+        mocked_get_editable_toggle_tags_for_user.return_value = [
             Tag(slug='editable_tag_1', name='Editable Tag 1', css_class='success', description='test'),
             Tag(slug='editable_tag_2', name='Editable Tag 2', css_class='success', description='test'),
         ]
@@ -234,15 +234,10 @@ class TestToggleEditViewAccess(BaseTestToggleView):
         response = self.client.get(self.endpoint)
         self.assertEqual(response.status_code, 302)
 
-    @patch('corehq.apps.toggle_ui.views.get_tags_with_edit_permission')
+    @patch('corehq.apps.toggle_ui.views.can_user_edit_tag', return_value=True)
     @patch('corehq.apps.toggle_ui.views.find_static_toggle')
-    def test_view_toggle_with_access(
-        self,
-        mocked_find_static_toggle,
-        mocked_get_tags_with_edit_permission
-    ):
+    def test_view_toggle_with_access(self, mocked_find_static_toggle, *args):
         mocked_find_static_toggle.return_value = self.static_toggle
-        mocked_get_tags_with_edit_permission.return_value = [self.static_toggle.tag]
 
         self.client.login(username=self.superuser.username, password='password')
         response = self.client.get(self.endpoint)
@@ -250,7 +245,7 @@ class TestToggleEditViewAccess(BaseTestToggleView):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context['can_edit_toggle'])
 
-    @patch('corehq.apps.toggle_ui.views.get_tags_with_edit_permission', return_value=[])
+    @patch('corehq.apps.toggle_ui.views.can_user_edit_tag', return_value=False)
     @patch('corehq.apps.toggle_ui.views.find_static_toggle')
     def test_view_toggle_with_no_access(self, mocked_find_static_toggle, *args):
         mocked_find_static_toggle.return_value = self.static_toggle
@@ -261,22 +256,17 @@ class TestToggleEditViewAccess(BaseTestToggleView):
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.context['can_edit_toggle'])
 
-    @patch('corehq.apps.toggle_ui.views.get_tags_with_edit_permission')
+    @patch('corehq.apps.toggle_ui.views.can_user_edit_tag', return_value=True)
     @patch('corehq.apps.toggle_ui.views.find_static_toggle')
-    def test_edit_toggle_with_access(
-        self,
-        mocked_find_static_toggle,
-        mocked_get_tags_with_edit_permission
-    ):
+    def test_edit_toggle_with_access(self, mocked_find_static_toggle, *args):
         mocked_find_static_toggle.return_value = self.static_toggle
-        mocked_get_tags_with_edit_permission.return_value = [self.static_toggle.tag]
 
         self.client.login(username=self.superuser.username, password='password')
         response = self.client.post(self.endpoint)
 
         self.assertEqual(response.status_code, 200)
 
-    @patch('corehq.apps.toggle_ui.views.get_tags_with_edit_permission', return_value=[])
+    @patch('corehq.apps.toggle_ui.views.can_user_edit_tag', return_value=False)
     @patch('corehq.apps.toggle_ui.views.find_static_toggle')
     def test_edit_toggle_with_no_access(self, mocked_find_static_toggle, *args):
         mocked_find_static_toggle.return_value = self.static_toggle
@@ -298,15 +288,10 @@ class TestSetToggleViewAccess(BaseTestToggleView):
     def _sample_request_data():
         return {'item': 'basic_ff', 'namespace': NAMESPACE_DOMAIN, 'enabled': True}
 
-    @patch('corehq.apps.toggle_ui.views.get_tags_with_edit_permission')
+    @patch('corehq.apps.toggle_ui.views.can_user_edit_tag', return_value=True)
     @patch('corehq.apps.toggle_ui.views.find_static_toggle')
-    def test_set_toggle_with_access(
-        self,
-        mocked_find_static_toggle,
-        mocked_get_tags_with_edit_permission
-    ):
+    def test_set_toggle_with_access(self, mocked_find_static_toggle, *args):
         mocked_find_static_toggle.return_value = self.static_toggle
-        mocked_get_tags_with_edit_permission.return_value = [self.static_toggle.tag]
 
         self.client.login(username=self.superuser.username, password='password')
         response = self.client.post(self.endpoint, data=self._sample_request_data())
@@ -318,7 +303,7 @@ class TestSetToggleViewAccess(BaseTestToggleView):
         response = self.client.post(self.endpoint, data=self._sample_request_data())
         self.assertEqual(response.status_code, 302)
 
-    @patch('corehq.apps.toggle_ui.views.get_tags_with_edit_permission', return_value=[])
+    @patch('corehq.apps.toggle_ui.views.can_user_edit_tag', return_value=False)
     @patch('corehq.apps.toggle_ui.views.find_static_toggle')
     def test_set_toggle_with_no_access(self, mocked_find_static_toggle, *args):
         mocked_find_static_toggle.return_value = self.static_toggle
