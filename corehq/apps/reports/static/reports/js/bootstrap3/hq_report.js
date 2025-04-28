@@ -286,7 +286,7 @@ hqDefine("reports/js/bootstrap3/hq_report", [
         function trackReportPageEnter() {
             switch (self.slug) {
                 case 'submit_history':
-                    kissmetrics.track.event('Visited Submit History Page');
+                    kissmetrics.track.event('Visited Submission History Page');
                     break;
                 case 'case_list':
                     kissmetrics.track.event('Visited Case List Page');
