@@ -1,41 +1,33 @@
 import csv
 import re
 from collections import namedtuple
-from typing import Iterable, Optional, TypedDict
+from dataclasses import dataclass
+from typing import Iterable, Optional
 
 from django.core.management.base import BaseCommand
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 
-Location = namedtuple('Location', 'id site_code dip_name script_code')
-country = Location(
-    id='abc123',
-    site_code='nambia',
-    dip_name='Nambia',
-    script_code='nambia',
-)
-location_cache: dict[str, Location] = {
-    'nambia·foo·bar·baz': Location(
-        id='def456',
-        site_code='baz_bar_foo_settlement',
-        dip_name='Baz',
-        script_code='nambia·foo·bar·baz',
-    ),
-}
+
+UserRow = namedtuple('UserRow', 'state lga ward settlement username')
 
 
-UserRecord = namedtuple('UserRecord', 'state lga ward settlement username')
-# No need to cache more than one user. They are repeated on consecutive rows.
-last_commcare_user: Optional[CommCareUser] = None
+ScriptCode = str
 
 
-UserCorrection = TypedDict('UserCorrection', {
-    'username': str,
-    'user_id': str,
-    'location_codes': list[str],
-})
-last_correction: Optional[UserCorrection] = None
+@dataclass
+class Location:
+    id: str
+    site_code: str
+    dip_name: str
+    script_code: ScriptCode
+
+
+@dataclass
+class UserSettlements:
+    user: CommCareUser
+    settlements: list[Location]
 
 
 class LocationError(ValueError):
@@ -46,10 +38,30 @@ class UserError(ValueError):
     pass
 
 
-class UserLocationError(Exception):
-    def __init__(self, correction: UserCorrection, *args, **kwargs):
-        self.correction = correction
-        super().__init__(*args, **kwargs)
+class UserLocationError(ValueError):
+    pass
+
+
+location_cache: dict[ScriptCode, Location] = {
+    'nambia·foo·bar·baz': Location(
+        id='def456',
+        site_code='baz_bar_foo_settlement',
+        dip_name='Baz',
+        script_code='nambia·foo·bar·baz',
+    ),
+}
+
+
+# No need to cache more than one user. They are repeated in consecutive rows.
+last_commcare_user: Optional[CommCareUser] = None
+
+
+country = Location(
+    id='abc123',
+    site_code='nambia',
+    dip_name='Nambia',
+    script_code='nambia',
+)
 
 
 class Command(BaseCommand):
@@ -65,44 +77,42 @@ class Command(BaseCommand):
         parser.add_argument('users_csv')
 
     def handle(self, domain, users_csv, *args, **options):
-        global last_correction
+        no_errors = True
 
-        for user in iter_users(users_csv):
-            # Find location
+        for user_settlements in iter_user_settlements(domain, users_csv):
             try:
-                state = get_location(domain, user.state, country)
-                lga = get_location(domain, user.lga, state)
-                ward = get_location(domain, user.ward, lga)
-                settlement = get_location(domain, user.settlement, ward)
-            except LocationError as err:
-                self.stderr.write(str(err))
-                continue
-
-            # Output corrections
-            try:
-                confirm_user_location(domain, user, settlement)
-            except UserError as err:
-                self.stderr.write(str(err))
-                continue
-            except UserLocationError as err:
-                if last_correction is None:
+                confirm_user_settlements(user_settlements)
+            except UserLocationError:
+                if no_errors:
+                    no_errors = False
                     self.stdout.write(user_import_headers)
-                    last_correction = err.correction
-                elif last_correction['username'] == err.correction['username']:
-                    last_correction['location_codes'].extend(
-                        err.correction['location_codes']
-                    )
-                else:
-                    row = get_user_import_row(last_correction)
-                    self.stdout.write(row)
-                    last_correction = err.correction
-
-        if last_correction is not None:
-            row = get_user_import_row(last_correction)
-            self.stdout.write(row)
+                row = get_user_import_row(user_settlements)
+                self.stdout.write(row)
 
 
-def iter_users(csv_filename: str) -> Iterable[UserRecord]:
+def iter_user_settlements(
+    domain: str,
+    csv_filename: str
+) -> Iterable[UserSettlements]:
+    user_settlements = None
+    for row in iter_user_rows(csv_filename):
+        user = get_commcare_user(domain, row.username)
+        state = get_location(domain, row.state, country)
+        lga = get_location(domain, row.lga, state)
+        ward = get_location(domain, row.ward, lga)
+        settlement = get_location(domain, row.settlement, ward)
+        if user_settlements is None:
+            user_settlements = UserSettlements(user, [settlement])
+        elif user_settlements.user.user_id != user.user_id:
+            yield user_settlements
+            user_settlements = UserSettlements(user, [settlement])
+        else:
+            user_settlements.settlements.append(settlement)
+    if user_settlements is not None:
+        yield user_settlements
+
+
+def iter_user_rows(csv_filename: str) -> Iterable[UserRow]:
     username_re = re.compile(r'^[A-Z]{2}/[A-Z]{3}[0-9]+$')
     last_full_row = {}
     with open(csv_filename, 'r') as csv_file:
@@ -122,7 +132,7 @@ def iter_users(csv_filename: str) -> Iterable[UserRecord]:
             ):
                 full_row['Username'] = last_full_row['Username']
 
-            yield UserRecord(**{k.lower(): v for k, v in full_row.items()})
+            yield UserRow(**{k.lower(): v for k, v in full_row.items()})
             last_full_row = full_row
 
 
@@ -148,37 +158,28 @@ def get_location(domain: str, name: str, parent: Location) -> Location:
     return location_cache[script_code]
 
 
-def get_commcare_user(domain: str, user: UserRecord) -> CommCareUser:
+def get_commcare_user(domain: str, row_username: str) -> CommCareUser:
     global last_commcare_user
 
-    username = f'{user.username.lower()}@{domain}.commcarehq.org'
+    username = f'{row_username.lower()}@{domain}.commcarehq.org'
     if last_commcare_user is None or last_commcare_user.username != username:
         commcare_user = CommCareUser.get_by_username(username)
         if commcare_user is None:
-            raise UserError(f"User '{user.username}' not found")
+            raise UserError(f"User '{row_username}' not found")
         if commcare_user.domain != domain:
-            raise UserError(f"User '{user.username}' not in domain '{domain}'")
+            raise UserError(f"User '{row_username}' not in domain '{domain}'")
         last_commcare_user = commcare_user
 
     return last_commcare_user
 
 
-def confirm_user_location(
-    domain: str,
-    user: UserRecord,
-    settlement: Location,
-) -> None:
-    commcare_user = get_commcare_user(domain, user)
-    if settlement.id not in commcare_user.assigned_location_ids:
-        correction = UserCorrection(**{
-            'username': commcare_user.raw_username,
-            'user_id': commcare_user.user_id,
-            'location_codes': [settlement.site_code],
-        })
-        raise UserLocationError(
-            correction,
-            f"User '{user.username}' not in settlement '{settlement!r}'"
-        )
+def confirm_user_settlements(user_settlements: UserSettlements) -> None:
+    user = user_settlements.user
+    for location in user_settlements.settlements:
+        if location.id not in user.assigned_location_ids:
+            raise UserLocationError(
+                f"User '{user.raw_username}' not in location '{location!r}'"
+            )
 
 
 user_import_headers = ','.join(
@@ -187,11 +188,11 @@ user_import_headers = ','.join(
 )
 
 
-def get_user_import_row(correction: UserCorrection) -> str:
-    location_codes = correction['location_codes']
+def get_user_import_row(user_settlements: UserSettlements) -> str:
+    site_codes = [loc.site_code for loc in user_settlements.settlements]
     # Pad with empty strings
-    location_codes += [''] * (8 - len(correction['location_codes']))
+    site_codes += [''] * (8 - len(user_settlements.settlements))
     return ','.join([
-        correction['username'],
-        correction['user_id'],
-    ] + location_codes)
+        user_settlements.user.raw_username,
+        user_settlements.user.user_id,
+    ] + site_codes)
