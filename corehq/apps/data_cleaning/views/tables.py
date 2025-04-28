@@ -130,6 +130,11 @@ class CleanCasesTableView(BulkEditSessionViewMixin,
         # todo: this is a placeholder
         return self.get(request, *args, **kwargs)
 
+    @hq_hx_action("post")
+    def clear_all_changes(self, request, *args, **kwargs):
+        # todo: this is a placeholder
+        return self.get(request, *args, **kwargs)
+
     def _render_table_cell_response(self, doc_id, column, request, *args, **kwargs):
         """
         Returns an a partial HttpResponse for the table cell,
