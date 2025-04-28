@@ -33,8 +33,9 @@ last_commcare_user: Optional[CommCareUser] = None
 UserCorrection = TypedDict('UserCorrection', {
     'username': str,
     'user_id': str,
-    'location_code': str,
+    'location_codes': list[str],
 })
+last_correction: Optional[UserCorrection] = None
 
 
 class LocationError(ValueError):
@@ -64,18 +65,8 @@ class Command(BaseCommand):
         parser.add_argument('users_csv')
 
     def handle(self, domain, users_csv, *args, **options):
-        self.stdout.write(
-            'username,'
-            'user_id,'
-            'location_code 1,'
-            'location_code 2,'
-            'location_code 3,'
-            'location_code 4,'
-            'location_code 5,'
-            'location_code 6,'
-            'location_code 7,'
-            'location_code 8'
-        )
+        global last_correction
+
         for user in iter_users(users_csv):
             # Find location
             try:
@@ -94,12 +85,21 @@ class Command(BaseCommand):
                 self.stderr.write(str(err))
                 continue
             except UserLocationError as err:
-                row = ','.join([
-                    err.correction['username'],
-                    err.correction['user_id'],
-                    err.correction['location_code'],
-                ])
-                self.stdout.write(row)
+                if last_correction is None:
+                    self.stdout.write(user_import_headers)
+                    last_correction = err.correction
+                elif last_correction['username'] == err.correction['username']:
+                    last_correction['location_codes'].extend(
+                        err.correction['location_codes']
+                    )
+                else:
+                    row = get_user_import_row(last_correction)
+                    self.stdout.write(row)
+                    last_correction = err.correction
+
+        if last_correction is not None:
+            row = get_user_import_row(last_correction)
+            self.stdout.write(row)
 
 
 def iter_users(csv_filename: str) -> Iterable[UserRecord]:
@@ -173,9 +173,25 @@ def confirm_user_location(
         correction = UserCorrection(**{
             'username': commcare_user.username,
             'user_id': commcare_user.user_id,
-            'location_code': settlement.site_code,
+            'location_codes': [settlement.site_code],
         })
         raise UserLocationError(
             correction,
             f"User '{user.username}' not in settlement '{settlement!r}'"
         )
+
+
+user_import_headers = ','.join(
+    ['username', 'user_id']
+    + [f'location_code {i}' for i in range(1, 9)]
+)
+
+
+def get_user_import_row(correction: UserCorrection) -> str:
+    location_codes = correction['location_codes']
+    # Pad with empty strings
+    location_codes += [''] * (8 - len(correction['location_codes']))
+    return ','.join([
+        correction['username'],
+        correction['user_id'],
+    ] + location_codes)
