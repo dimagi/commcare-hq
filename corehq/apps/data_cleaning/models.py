@@ -1027,7 +1027,8 @@ class BulkEditRecord(models.Model):
         properties = {}
         for change in self.changes.all():
             if change.action_type == EditActionType.RESET:
-                del properties[change.prop_id]
+                if change.prop_id in properties:
+                    del properties[change.prop_id]
             else:
                 properties[change.prop_id] = change.edited_value(
                     case, edited_properties=properties
