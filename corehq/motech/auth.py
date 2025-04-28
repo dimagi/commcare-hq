@@ -1,7 +1,7 @@
 import re
 from corehq import toggles
 from typing import TYPE_CHECKING, Optional
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 from django.utils.translation import gettext_lazy as _
 
@@ -281,7 +281,7 @@ class OAuth2ClientGrantManager(AuthManager):
             # This is a workaround for a presumed issue with the MTN MoMo API sandbox where
             # the token type is not set to 'Bearer' as expected, but rather 'access_token'.
             # This is a temporary fix until more clarity can be gained around this.
-            is_mtn_momo_sandbox = 'sandbox.momodeveloper.mtn.com' in self.base_url
+            is_mtn_momo_sandbox = urlparse(self.base_url).hostname == 'sandbox.momodeveloper.mtn.com'
             token_type = self.last_token.get('token_type')
 
             if is_mtn_momo_sandbox and token_type == 'access_token':

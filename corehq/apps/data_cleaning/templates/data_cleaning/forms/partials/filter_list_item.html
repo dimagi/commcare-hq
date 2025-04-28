@@ -33,13 +33,13 @@
     </div>
     <div class="p-2 align-self-center">
       <button
-        class="btn btn-outline-danger btn-sm"
+        class="btn btn-outline-danger btn-sm htmx-disable-on-delete-filter htmx-disable-on-filter-sort"
         type="button"
         name="delete_id"
         value="{{ filter.filter_id }}"
         hx-post="{{ request.path_info }}"
         hq-hx-action="delete_filter"
-        hx-disabled-elt="this"
+        hx-disabled-elt=".htmx-disable-on-delete-filter"
         hx-target="#{{ container_id }}"
       >
         <i class="fa-solid fa-close"></i>

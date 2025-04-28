@@ -27,6 +27,7 @@ from .shortcuts import set_toggle, toggle_enabled
 @attrs(frozen=True)
 class Tag:
     name = attrib(type=str)
+    slug = attrib(type=str)
     css_class = attrib(type=str)
     description = attrib(type=str)
 
@@ -37,6 +38,7 @@ class Tag:
 
 TAG_CUSTOM = Tag(
     name='One-Off / Custom',
+    slug='custom',
     css_class='warning',
     description="This feature flag was created for one specific project. "
                 "Please don't enable it for any other projects. "
@@ -44,28 +46,33 @@ TAG_CUSTOM = Tag(
 )
 TAG_DEPRECATED = Tag(
     name='Deprecated',
+    slug='deprecated',
     css_class='danger',
     description="This feature flag is being removed. "
                 "Do not add any new projects to this list.",
 )
 TAG_PRODUCT = Tag(
     name='Product',
+    slug='product',
     css_class='success',
     description="This is a core-product feature that you should feel free to "
                 "use.  We've feature-flagged until release.",
 )
 TAG_PREVIEW = Tag(
     name='Preview',
+    slug='preview',
     css_class='default',
     description='',
 )
 TAG_RELEASE = Tag(
     name='Release',
+    slug='release',
     css_class='release',
     description='This is a feature that is in the process of being released.',
 )
 TAG_SAAS_CONDITIONAL = Tag(
     name='SaaS - Conditional Use',
+    slug='saas_conditional',
     css_class='primary',
     description="When enabled, “SaaS - Conditional Use” feature flags will be fully supported by the SaaS team. "
                 "Please confirm with the SaaS Product team before enabling “SaaS - Conditional Use” flags for an external "  # noqa: E501
@@ -73,12 +80,14 @@ TAG_SAAS_CONDITIONAL = Tag(
 )
 TAG_SOLUTIONS = Tag(
     name='Solutions',
+    slug='solutions',
     css_class='info',
     description="These features are only available for our services projects. This may affect support and "
                 "pricing when the project is transitioned to a subscription."
 )
 TAG_SOLUTIONS_OPEN = Tag(
     name='Solutions - Open Use',
+    slug='solutions_open',
     css_class='info',
     description="These features are only available for our services projects. This may affect support and "
                 "pricing when the project is transitioned to a subscription. Open Use Solutions Feature Flags can be "  # noqa: E501
@@ -86,6 +95,7 @@ TAG_SOLUTIONS_OPEN = Tag(
 )
 TAG_SOLUTIONS_CONDITIONAL = Tag(
     name='Solutions - Conditional Use',
+    slug='solutions_conditional',
     css_class='info',
     description="These features are only available for our services projects. This may affect support and "
                 "pricing when the project is transitioned to a subscription. Conditional Use Solutions Feature Flags can be "  # noqa: E501
@@ -93,6 +103,7 @@ TAG_SOLUTIONS_CONDITIONAL = Tag(
 )
 TAG_SOLUTIONS_LIMITED = Tag(
     name='Solutions - Limited Use',
+    slug='solutions_limited',
     css_class='info',
     description=mark_safe(  # nosec: no user input
         'These features are only available for our services projects. This '
@@ -105,6 +116,7 @@ TAG_SOLUTIONS_LIMITED = Tag(
 )
 TAG_INTERNAL = Tag(
     name='Internal Engineering Tools',
+    slug='solutions_internal',
     css_class='default',
     description="These are tools for our engineering team to use to manage the product",
 )
@@ -1239,14 +1251,6 @@ ECD_PREVIEW_ENTERPRISE_DOMAINS = StaticToggle(
     'domains that are Advanced or Pro and have undergone the ECD migration.'
 )
 
-CASE_API_V0_6 = StaticToggle(
-    'case_api_v0_6',
-    'Enable the v0.6 Case API',
-    TAG_SOLUTIONS_LIMITED,
-    namespaces=[NAMESPACE_DOMAIN],
-    save_fn=_ensure_search_index_is_enabled,
-)
-
 ACTION_TIMES_API = StaticToggle(
     'action_times_api',
     'Enable the Action Times API',
@@ -2124,6 +2128,13 @@ DOMAIN_PERMISSIONS_MIRROR = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/Enterprise+Permissions',
 )
 
+IP_ACCESS_CONTROLS = StaticToggle(
+    'ip_access_controls',
+    "USH: IP access controls - control project access by country and by individual IP",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
     'show_build_profile_in_app_status',
     'Show build profile installed on phone tracked via heartbeat request in App Status Report',
@@ -2346,6 +2357,12 @@ USER_HISTORY_REPORT = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/User+History+Report",
 )
 
+REPORT_TIMING_PROFILING = StaticToggle(
+    'report_timing_profiling',
+    'Report timing profiling is visible in reports that have a profiler enabled.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
+)
 
 COWIN_INTEGRATION = StaticToggle(
     'cowin_integration',
@@ -3025,13 +3042,6 @@ MTN_MOBILE_WORKER_VERIFICATION = StaticToggle(
 ACTIVATE_DATADOG_APM_TRACES = StaticToggle(
     slug='activate_datadog_apm_traces',
     label='USH: Turn on Datadog APM traces for a project.',
-    tag=TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
-)
-
-USH_DISABLE_INTERVAL_SYNC = StaticToggle(
-    slug='ush_disable_interval_sync',
-    label='Disable interval sync',
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )

@@ -5,7 +5,7 @@ import 'reports/js/bootstrap5/base';
 import $ from 'jquery';
 import { RadialGauge } from 'canvas-gauges';
 import initialPageData from "hqwebapp/js/initial_page_data";
-import { Map, MapItem } from "geospatial/js/bootstrap3/models";
+import { Map, MapItem } from "geospatial/js/bootstrap5/models";
 import html2pdf from "html2pdf.js";
 
 Alpine.store('deleteWidgetModel', {
@@ -20,8 +20,8 @@ Alpine.store('deleteWidgetModel', {
         this.swapTargetSelector = `[data-htmx-swap-target=${type}-${id}]`;
     },
     resetData() {
-        this.widgetId = null;
-        this.widgetType = null;
+        this.id = null;
+        this.type = null;
         this.title = null;
         this.swapTargetSelector = null;
     },
@@ -36,6 +36,8 @@ const modalTitleSelector = '.modal-title';
 const addWidgetText = gettext('Add Widget');
 const editWidgetText = gettext('Edit Widget');
 let $modalTitleElement = null;
+
+let activeTab = 'cases';
 
 $(function () {
     // Only init case map widgets since this is the default tab
@@ -65,12 +67,14 @@ $(function () {
     $(widgetModalSelector).on('hidden.bs.modal', onHideWidgetModal);
     $(widgetModalSelector).on('show.bs.modal', onShowWidgetModal);
     $(widgetModalSelector).on('htmx:beforeSwap', htmxBeforeSwapWidgetForm);
+    $(widgetModalSelector).on('htmx:configRequest', widgetHtmxConfigRequestHandler);
 
     $('#delete-widget-confirmation-modal').on('htmx:afterRequest', afterDeleteWidgetRequest);
 });
 
 function tabSwitch(e) {
     const tabContentId = $(e.target).attr('href');
+    activeTab = getActiveTab(tabContentId);
 
     // Only load mobile worker map widgets when tab is clicked to prevent weird map sizing behaviour
     if (!mobileWorkerWidgetsInitialized && tabContentId === '#mobile-workers-tab-content') {
@@ -95,6 +99,13 @@ function tabSwitch(e) {
         }
     }
 }
+
+var getActiveTab = function (tabContentId) {
+    if (tabContentId === '#mobile-workers-tab-content') {
+        return 'mobile_workers';
+    }
+    return 'cases';
+};
 
 function printActiveTabToPdf() {
     const activeTabId = $('.nav-tabs .nav-link.active').attr('href');
@@ -122,7 +133,7 @@ function printActiveTabToPdf() {
         jsPDF: {
             unit: 'mm',
             format: 'a4',
-            orientation: 'portrait',
+            orientation: 'landscape',
         },
     };
 
@@ -235,10 +246,17 @@ var onHideWidgetModal = function () {
 
 var onShowWidgetModal = function (event) {
     const triggerSource = event.relatedTarget;
-    if (triggerSource.id === 'edit-widget-btn') {
-        $modalTitleElement.text(editWidgetText);
-    } else {
+    if ($(triggerSource).data('source') === 'add-widget-dropdown') {
         $modalTitleElement.text(addWidgetText);
+    } else {
+        $modalTitleElement.text(editWidgetText);
+    }
+};
+
+var widgetHtmxConfigRequestHandler = function (event) {
+    const requestMethod = event.detail.verb;
+    if (requestMethod === 'post') {
+        event.detail.parameters['dashboard_tab'] = activeTab;
     }
 };
 

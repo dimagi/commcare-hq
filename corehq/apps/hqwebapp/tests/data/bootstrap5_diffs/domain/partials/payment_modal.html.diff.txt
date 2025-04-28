@@ -160,7 +160,7 @@
                  <input
                    type="text"
                    data-bind="value: wireAdditionalEmails"
-@@ -304,8 +304,8 @@
+@@ -306,8 +306,8 @@
            <button
              type="button"
              data-bind="visible: paymentIsNotComplete"
@@ -171,7 +171,7 @@
            >
              {% trans "Cancel" %}
            </button>
-@@ -326,15 +326,15 @@
+@@ -328,15 +328,15 @@
              data-bind="text: submitBtnText"
              disabled="disabled"
            ></button>

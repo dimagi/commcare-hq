@@ -2,7 +2,7 @@ from collections import namedtuple
 
 from django.utils.translation import gettext_noop
 
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 
 FORM_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.ExcelExportReport'
@@ -10,6 +10,7 @@ DEID_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.DeidExportReport'
 CASE_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.CaseExportReport'
 ODATA_FEED_PERMISSION = 'corehq.apps.reports.standard.export.ODataFeedListView'
 SMS_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.SMSExportReport'
+PAYMENTS_REPORT_PERMISSION = 'corehq.apps.integration.payments.views.PaymentsVerificationReportView'
 
 EXPORT_PERMISSIONS = {
     FORM_EXPORT_PERMISSION,
@@ -36,18 +37,25 @@ def get_extra_permissions():
         ODataFeedListView,
     )
     from corehq.apps.export.views.download import DownloadNewSmsExportView
+    from corehq.apps.integration.payments.views import PaymentsVerificationReportView
+
     yield ReportPermission(
-        FORM_EXPORT_PERMISSION, FormExportListView.page_title, lambda domain: True)
+        FORM_EXPORT_PERMISSION, FormExportListView.page_title, lambda domain_obj: True)
     yield ReportPermission(
         DEID_EXPORT_PERMISSION, gettext_noop("Export De-Identified Data"),
-        lambda domain: domain_has_privilege(domain, privileges.DEIDENTIFIED_DATA))
+        lambda domain_obj: domain_has_privilege(domain_obj, privileges.DEIDENTIFIED_DATA))
     yield ReportPermission(
         CASE_EXPORT_PERMISSION, CaseExportListView.page_title, lambda domain: True)
     yield ReportPermission(
         SMS_EXPORT_PERMISSION, DownloadNewSmsExportView.page_title, lambda domain: True)
     yield ReportPermission(
         ODATA_FEED_PERMISSION, ODataFeedListView.page_title,
-        lambda domain: domain_has_privilege(domain, privileges.ODATA_FEED)
+        lambda domain_obj: domain_has_privilege(domain_obj, privileges.ODATA_FEED)
+    )
+    yield ReportPermission(
+        PAYMENTS_REPORT_PERMISSION,
+        PaymentsVerificationReportView.page_title,
+        lambda domain_obj: toggles.MTN_MOBILE_WORKER_VERIFICATION.enabled(domain_obj.name)
     )
 
 
@@ -83,3 +91,7 @@ def has_permission_to_view_report(couch_user, domain, report_to_check):
         get_permission_name(HqPermissions.view_report),
         data=report_to_check
     )
+
+
+def can_access_payments_report(couch_user, domain):
+    return has_permission_to_view_report(couch_user, domain, PAYMENTS_REPORT_PERMISSION)

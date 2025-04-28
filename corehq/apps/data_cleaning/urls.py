@@ -1,5 +1,8 @@
 from django.urls import re_path as url
 
+from corehq.apps.data_cleaning.views.cleaning import (
+    CleanSelectedRecordsFormView,
+)
 from corehq.apps.data_cleaning.views.columns import (
     ManageColumnsFormView,
 )
@@ -36,6 +39,8 @@ urlpatterns = [
         name=PinnedFilterFormView.urlname),
     url(r'^session/(?P<session_id>[\w\-]+)/columns/$', ManageColumnsFormView.as_view(),
         name=ManageColumnsFormView.urlname),
+    url(r'^session/(?P<session_id>[\w\-]+)/clean/$', CleanSelectedRecordsFormView.as_view(),
+        name=CleanSelectedRecordsFormView.urlname),
     url(r'^session/(?P<session_id>[\w\-]+)/clear/$', clear_session_caches,
         name="data_cleaning_clear_session_caches"),
     url(r'^cases/save/(?P<session_id>[\w\-]+)/$', save_case_session, name='save_case_session'),

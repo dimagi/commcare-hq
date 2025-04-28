@@ -813,14 +813,16 @@ class RestoreConfig(object):
             extra_tags = {}
             if timer.name in RESTORE_SEGMENTS:
                 segment = RESTORE_SEGMENTS[timer.name]
+                segment_timer_buckets = timer_buckets
             elif timer.name.startswith('fixture:'):
                 segment = 'fixture'
+                segment_timer_buckets = (0.25, 0.5, 1, 5, 20, 60, 120, 300, 600)
                 extra_tags = {'fixture': timer.name.split(':')[1]}
 
             if segment:
                 metrics_histogram(
                     'commcare.restores.{}.duration.seconds'.format(segment), timer.duration,
-                    bucket_tag='duration', buckets=timer_buckets, bucket_unit='s',
+                    bucket_tag='duration', buckets=segment_timer_buckets, bucket_unit='s',
                     tags={**tags, **extra_tags}
                 )
 

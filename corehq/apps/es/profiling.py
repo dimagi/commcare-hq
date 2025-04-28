@@ -6,24 +6,27 @@ from corehq.apps.es.es_query import HQESQuery
 @dataclass
 class ESQueryProfiler:
     """
-    A profiler for gathering timing and profiling data on functions that may or may not contain
-    Elasticsearch queries.
+    A profiler for gathering timing and profiling data on functions that
+    may or may not contain Elasticsearch queries.
 
-    This is particularly useful for profiling workflows involving multiple ES queries
-    and other operations. For profiling a single ES query, you can simply use `query.enable_profiling`.
-    However, when profiling a broader workflow, the outermost `with timing_context` block
-    should be chosen carefully, as it represents the total evaluation time being measured.
+    This is particularly useful for profiling workflows involving
+    multiple ES queries and other operations. For profiling a single ES
+    query, you can simply use ``query.enable_profiling``. However, when
+    profiling a broader workflow, the outermost ``with timing_context``
+    block should be chosen carefully, as it represents the total
+    evaluation time being measured.
 
     Attributes:
-        search_class (HQESQuery): The ES query class to be profiled (any subclass of HQESQuery).
-        name (str): A label for the profiler instance, defaults to 'Query Profiler'.
-        debug_mode (bool): Enables ES profiling details when set to True.
-        queries (list): Stores profiling data for individual queries when in debug mode.
-        _query_number (int): Tracks the number of queries executed within the profiler.
-
-    Methods:
-        get_search_class(slug=None): Returns a wrapped version of the search class
-            that automatically profiles query execution times.
+        search_class (HQESQuery):
+            The ES query class to be profiled (any subclass of HQESQuery).
+        name (str):
+            A label for the profiler instance, defaults to 'Query Profiler'.
+        debug_mode (bool):
+            Enables ES profiling details when set to True.
+        queries (list):
+            Stores profiling data for individual queries when in debug mode.
+        _query_number (int):
+            Tracks the number of queries executed within the profiler.
     """
 
     search_class: HQESQuery = HQESQuery
@@ -33,13 +36,31 @@ class ESQueryProfiler:
     _query_number: int = 0
 
     def __post_init__(self):
+        """
+        Initialize the timing context for the profiler.
+        """
         self.timing_context = TimingContext(self.name)
 
-    def get_search_class(self, slug=None):
+    def get_profiled_search_class(self, slug=None):
+        """
+        Returns a wrapped version of the search class that automatically
+        profiles query execution times.
+
+        :param slug: Optional identifier for the query being profiled
+        :return: A subclass of the original search class with profiling
+                 capabilities
+        """
         profiler = self
 
         class ProfiledSearchClass(self.search_class):
             def run(self):
+                """
+                Overrides the run method of the search class to add profiling
+                capabilities.
+
+                :return: The query results with profiling data if debug_mode
+                         is enabled
+                """
                 profiler._query_number += 1
                 if profiler.debug_mode:
                     self.es_query['profile'] = True

@@ -1,4 +1,8 @@
-from django_tables2.columns import TemplateColumn, CheckBoxColumn
+from django_tables2.columns import (
+    TemplateColumn,
+    CheckBoxColumn,
+    BoundColumn,
+)
 from django_tables2.utils import AttributeDict
 
 from corehq.toggles import mark_safe
@@ -23,26 +27,45 @@ class DataCleaningHtmxColumn(TemplateColumn):
         )
         self.column_spec = column_spec
 
+    @classmethod
+    def get_htmx_partial_response_context(cls, column_spec, record, table):
+        """
+        Returns the context needed for rendering the
+        `DataCleaningHtmxColumn` template as an HTMX partial response.
+
+        :param column_spec: BulkEditColumn
+        :param record: EditableCaseSearchElasticRecord (or similar)
+        :param table: CleanCaseTable (or similar)
+        """
+        column = cls(column_spec)
+        bound_column = BoundColumn(table, column, column_spec.slug)
+        value = record[column_spec.prop_id]
+        return {
+            "column": bound_column,
+            "record": record,
+            "value": value,
+        }
+
 
 class DataCleaningHtmxSelectionColumn(CheckBoxColumn):
     template_column = "data_cleaning/columns/selection.html"
     template_header = "data_cleaning/columns/selection_header.html"
     select_page_checkbox_id = "id-select-page-checkbox"
 
-    def __init__(self, session, request, select_row_action, select_page_action, *args, **kwargs):
+    def __init__(self, session, request, select_record_action, select_page_action, *args, **kwargs):
         """
         Defines a django_tables2 compatible column that handles selecting
         records in a data cleaning session.
 
         :param session: BulkEditSession instance
         :param request: a django request object from the session view
-        :param select_row_action: the hq_hx_action from the session view for selecting a row
+        :param select_record_action: the hq_hx_action from the session view for selecting a row
         :param select_page_action: the hq_hx_action from the session view for selecting all records in a page
         """
         super().__init__(*args, **kwargs)
         self.session = session
         self.request = request
-        self.select_row_action = select_row_action
+        self.select_record_action = select_record_action
         self.select_page_action = select_page_action
         self.attrs['th'] = {
             'class': 'select-header',
@@ -77,7 +100,7 @@ class DataCleaningHtmxSelectionColumn(CheckBoxColumn):
             render_to_string(
                 self.template_column,
                 {
-                    'hq_hx_action': self.select_row_action,
+                    'hq_hx_action': self.select_record_action,
                     'is_checked': self.is_checked(value, record),
                     'value': value,
                     'css_id': self.get_selected_record_checkbox_id(value),
@@ -90,5 +113,4 @@ class DataCleaningHtmxSelectionColumn(CheckBoxColumn):
         )
 
     def is_checked(self, value, record):
-        # todo
-        return False
+        return self.session.is_record_selected(value)

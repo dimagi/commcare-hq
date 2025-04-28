@@ -254,10 +254,10 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
             }
         else:
             deactivation_triggers = {}
-        for n, user in enumerate(get_mobile_users_by_filters(current_domain, user_filters)):
-            group_memoizer = load_memoizer(current_domain)
+        group_memoizer = load_memoizer(current_domain)
+        for user in get_mobile_users_by_filters(current_domain, user_filters):
             group_names = sorted([
-                group_memoizer.get(id).name for id in Group.by_user_id(user.user_id, wrap=False)
+                group.name for group in group_memoizer.by_user_id(user.user_id)
             ], key=alphanumeric_sort_key)
 
             user_dict = make_mobile_user_dict(

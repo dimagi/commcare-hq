@@ -14,6 +14,7 @@ hqDefine('locations/js/search', [
             ajax: {
                 url: locationSearchUrl,
                 dataType: 'json',
+                delay: 500,
                 data: function (params) {
                     return {
                         q: params.term,
