@@ -337,6 +337,9 @@ class BulkEditSession(models.Model):
         last_change = self.changes.last()
         return last_change and last_change.records.count() > 1
 
+    def undo_last_change(self):
+        self.changes.last().delete()
+
     def is_record_selected(self, doc_id):
         return BulkEditRecord.is_record_selected(self, doc_id)
 
