@@ -201,7 +201,7 @@ class ToggleEditView(BasePageView):
 
     def post(self, request, *args, **kwargs):
         if not self.can_edit_toggle:
-            return HttpResponseForbidden("You do not have permission to edit this toggle.")
+            return HttpResponseForbidden("You do not have permission to edit this Feature Flag.")
 
         toggle = self.get_toggle()
 
@@ -408,7 +408,7 @@ def set_toggle(request, toggle_slug):
         settings.SERVER_ENVIRONMENT != 'staging'
         and can_user_edit_tag(request.user.username, static_toggle.tag)
     ):
-        return HttpResponseForbidden("You do not have permission to edit this toggle.")
+        return HttpResponseForbidden("You do not have permission to edit this Feature Flag.")
 
     item = request.POST['item']
     enabled = request.POST['enabled'] == 'true'
