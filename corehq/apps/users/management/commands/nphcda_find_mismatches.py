@@ -171,7 +171,7 @@ def confirm_user_location(
     commcare_user = get_commcare_user(domain, user)
     if settlement.id not in commcare_user.assigned_location_ids:
         correction = UserCorrection(**{
-            'username': commcare_user.username,
+            'username': commcare_user.raw_username,
             'user_id': commcare_user.user_id,
             'location_codes': [settlement.site_code],
         })
