@@ -1,5 +1,6 @@
 from django.urls import re_path as url
 
+from corehq.apps.data_cleaning.views.summary import ChangesSummaryView
 from corehq.apps.data_cleaning.views.cleaning import (
     CleanSelectedRecordsFormView,
 )
@@ -33,6 +34,8 @@ urlpatterns = [
         name=CleanCasesSessionView.urlname),
     url(r'^cases/(?P<session_id>[\w\-]+)/table/$', CleanCasesTableView.as_view(),
         name=CleanCasesTableView.urlname),
+    url(r'^cases/(?P<session_id>[\w\-]+)/summary/$', ChangesSummaryView.as_view(),
+        name=ChangesSummaryView.urlname),
     url(r'^session/(?P<session_id>[\w\-]+)/filters/$', ManageFiltersFormView.as_view(),
         name=ManageFiltersFormView.urlname),
     url(r'^session/(?P<session_id>[\w\-]+)/filters/pinned/$', PinnedFilterFormView.as_view(),
