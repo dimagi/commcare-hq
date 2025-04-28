@@ -16,11 +16,11 @@ country = Location(
     script_code='nambia',
 )
 location_cache: dict[str, Location] = {
-    'nambia|foo|bar|baz': Location(
+    'nambia·foo·bar·baz': Location(
         id='def456',
         site_code='baz_bar_foo_settlement',
         dip_name='Baz',
-        script_code='nambia|foo|bar|baz',
+        script_code='nambia·foo·bar·baz',
     ),
 }
 
@@ -129,7 +129,7 @@ def iter_users(csv_filename: str) -> Iterable[UserRecord]:
 def get_location(domain: str, name: str, parent: Location) -> Location:
     # Modifies the value of location_cache
 
-    script_code = f'{parent.script_code}|{name.lower()}'
+    script_code = f'{parent.script_code}·{name.lower()}'
     if script_code not in location_cache:
         sql_parent = SQLLocation.objects.get(domain=domain, location_id=parent.id)
         sql_locations = sql_parent.children.filter(name__iexact=name).all()
