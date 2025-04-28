@@ -44,7 +44,12 @@ from corehq.toggles import (
     toggles_enabled_for_user,
 )
 from corehq.toggles.models import Toggle
-from corehq.toggles.shortcuts import get_editable_toggle_tags_for_user, namespaced_item, parse_toggle
+from corehq.toggles.shortcuts import (
+    can_user_edit_tag,
+    get_editable_toggle_tags_for_user,
+    namespaced_item,
+    parse_toggle,
+)
 from corehq.util import reverse
 from corehq.util.soft_assert import soft_assert
 
@@ -161,7 +166,7 @@ class ToggleEditView(BasePageView):
     def can_edit_toggle(self):
         return (
             settings.SERVER_ENVIRONMENT == 'staging'
-            or self.static_toggle.tag in get_editable_toggle_tags_for_user(self.request.user.username)
+            or can_user_edit_tag(self.request.user.username, self.static_toggle.tag)
         )
 
     def get_toggle(self):
@@ -401,7 +406,7 @@ def set_toggle(request, toggle_slug):
 
     if (
         settings.SERVER_ENVIRONMENT != 'staging'
-        and static_toggle.tag not in get_editable_toggle_tags_for_user(request.user.username)
+        and can_user_edit_tag(request.user.username, static_toggle.tag)
     ):
         return HttpResponseForbidden("You do not have permission to edit this toggle.")
 
