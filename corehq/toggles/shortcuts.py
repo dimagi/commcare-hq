@@ -100,7 +100,7 @@ def find_domains_with_toggle_enabled(toggle):
     return [user[len(prefix):] for user in doc.enabled_users if user.startswith(prefix)]
 
 
-def get_tags_with_edit_permission(username):
+def get_editable_toggle_tags_for_user(username):
     from corehq.toggles import ALL_TAGS
     from corehq.toggles.sql_models import ToggleEditPermission
 

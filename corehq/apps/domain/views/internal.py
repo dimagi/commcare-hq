@@ -19,7 +19,7 @@ from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.domain.utils import log_domain_changes
 from corehq.apps.ota.rate_limiter import restore_rate_limiter
 from corehq.motech.rate_limiter import repeater_rate_limiter
-from corehq.toggles.shortcuts import get_tags_with_edit_permission
+from corehq.toggles.shortcuts import get_editable_toggle_tags_for_user
 from dimagi.utils.web import get_ip, json_request, json_response
 
 from corehq import feature_previews, privileges, toggles
@@ -272,7 +272,7 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
     def _editable_tags_slugs(self):
         if settings.SERVER_ENVIRONMENT == 'staging':
             return [tag.slug for tag in toggles.ALL_TAGS]
-        return [tag.slug for tag in get_tags_with_edit_permission(self.request.user.username)]
+        return [tag.slug for tag in get_editable_toggle_tags_for_user(self.request.user.username)]
 
     def _get_privileges(self):
         return sorted([

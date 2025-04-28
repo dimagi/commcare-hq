@@ -20,7 +20,7 @@ from corehq.toggles import (
 )
 from .models import generate_toggle_id, Toggle
 from .shortcuts import (
-    get_tags_with_edit_permission,
+    get_editable_toggle_tags_for_user,
     namespaced_item,
     find_users_with_toggle_enabled,
     find_domains_with_toggle_enabled,
@@ -442,9 +442,9 @@ class TestToggleEditPermissionShortcuts(TestCase):
         cls.addClassCleanup(cls.tag_custom_edit_permission.delete)
 
     def test_get_tags_with_edit_permission(self):
-        allowed_tags = get_tags_with_edit_permission('arthur')
+        allowed_tags = get_editable_toggle_tags_for_user('arthur')
         assert allowed_tags == ALL_TAGS
 
-        allowed_tags = get_tags_with_edit_permission('diane')
+        allowed_tags = get_editable_toggle_tags_for_user('diane')
         expected_tags = [tag for tag in ALL_TAGS if tag != TAG_CUSTOM]
         assert allowed_tags == expected_tags
