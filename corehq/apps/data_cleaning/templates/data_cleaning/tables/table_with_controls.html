@@ -56,7 +56,13 @@
           <i class="fa-solid fa-close"></i>
           {% trans "Clear" %}
         </button>
-        <button class="btn btn-outline-secondary" type="button">
+        <button
+          class="btn btn-outline-secondary"
+          type="button"
+          data-bs-toggle="modal"
+          data-bs-target="#confirm-undo-modal"
+          @click="$dispatch('updateUndoSummaryMessage');"
+        >
           <i class="fa-solid fa-undo"></i>
           {% trans "Undo" %}
         </button>
@@ -168,4 +174,5 @@
   {{ block.super }}
   {% include "data_cleaning/modals/confirm_select_all.html" with modal_id="confirm-select-all-modal" %}
   {% include "data_cleaning/modals/select_all_not_possible.html" with modal_id="select-all-not-possible-modal" %}
+  {% include "data_cleaning/modals/confirm_undo.html" with modal_id="confirm-undo-modal" confirm_button_class="btn-secondary" %}
 {% endblock %}

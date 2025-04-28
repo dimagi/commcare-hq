@@ -125,6 +125,11 @@ class CleanCasesTableView(BulkEditSessionViewMixin,
         })
         return response
 
+    @hq_hx_action("post")
+    def undo_last_change(self, request, *args, **kwargs):
+        # todo: this is a placeholder
+        return self.get(request, *args, **kwargs)
+
     def _render_table_cell_response(self, doc_id, column, request, *args, **kwargs):
         """
         Returns an a partial HttpResponse for the table cell,

@@ -8,7 +8,7 @@ from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
-from corehq.util.htmx_action import HqHtmxActionMixin
+from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 
 
 @method_decorator([
@@ -23,3 +23,12 @@ class ChangesSummaryView(BulkEditSessionViewMixin,
     def get(self, request, *args, **kwargs):
         # this view can only be POSTed to and accessed at specific hq_hx_action endpoints
         raise Http404()
+
+    @hq_hx_action('post')
+    def undo_changes_summary(self, request, *args, **kwargs):
+        # todo: render summary context
+        return self.render_htmx_partial_response(
+            request,
+            "data_cleaning/summary/undo_changes.html",
+            {},
+        )
