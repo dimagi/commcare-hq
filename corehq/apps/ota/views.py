@@ -100,6 +100,7 @@ def restore(request, domain, app_id=None):
 
     response, timing_context = get_restore_response(
         domain, request.couch_user, app_id, **get_restore_params(request, domain))
+    timing_context.add_to_sentry_breadcrumbs()
     return response
 
 
