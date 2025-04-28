@@ -329,6 +329,14 @@ class BulkEditSession(models.Model):
     def get_num_changes(self):
         return self.changes.count()
 
+    def is_undo_multiple(self):
+        """
+        Check if the last change in the session affects multiple records.
+        :return: bool - True if the last change affects multiple records
+        """
+        last_change = self.changes.last()
+        return last_change and last_change.records.count() > 1
+
     def is_record_selected(self, doc_id):
         return BulkEditRecord.is_record_selected(self, doc_id)
 

@@ -140,6 +140,7 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
             "numRecordsEdited": change_counts["num_records_edited"],
             "numRecordsOverLimit": change_counts["num_records_at_max_changes"],
             "isSessionAtChangeLimit": session.get_num_changes() >= MAX_SESSION_CHANGES,
+            "isUndoMultiple": session.is_undo_multiple(),
         }
 
     @property

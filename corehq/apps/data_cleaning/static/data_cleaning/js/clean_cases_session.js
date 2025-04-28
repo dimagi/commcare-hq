@@ -18,10 +18,12 @@ Alpine.store('editDetails', {
     numRecordsEdited: 0,
     showApplyWarning: false,
     isSessionAtChangeLimit: false,
+    isUndoMultiple: false,
     update(details) {
         this.numRecordsEdited = details.numRecordsEdited;
         this.showApplyWarning = details.numRecordsOverLimit > 0;
         this.isSessionAtChangeLimit = details.isSessionAtChangeLimit;
+        this.isUndoMultiple = details.isUndoMultiple;
     },
 });
 
