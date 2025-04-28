@@ -406,7 +406,7 @@ def set_toggle(request, toggle_slug):
 
     if (
         settings.SERVER_ENVIRONMENT != 'staging'
-        and can_user_edit_tag(request.user.username, static_toggle.tag)
+        and not can_user_edit_tag(request.user.username, static_toggle.tag)
     ):
         return HttpResponseForbidden("You do not have permission to edit this feature flag.")
 
