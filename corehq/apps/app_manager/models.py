@@ -4564,7 +4564,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         if user and user.days_since_created == 0:
             track_workflow(user.get_email(), 'Saved the App Builder within first 24 hours')
         send_hubspot_form(HUBSPOT_SAVED_APP_FORM_ID, request)
-        refresh_data_dictionary_from_app.delay(self.domain, self.get_id)
         if self.copy_of:
             cache.delete('app_build_cache_{}_{}'.format(self.domain, self.get_id))
 
@@ -4573,6 +4572,8 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         if increment_version:
             self.version = self.version + 1 if self.version else 1
         super(ApplicationBase, self).save(**params)
+
+        refresh_data_dictionary_from_app.delay(self.domain, self.get_id)
 
         if response_json is not None:
             if 'update' not in response_json:
