@@ -120,7 +120,8 @@ class TemporaryS3BlobDB(TemporaryBlobDBMixin, S3BlobDB):
         summaries = s3_bucket.objects.all()
         for page in summaries.pages():
             objects = [{"Key": o.key} for o in page]
-            s3_bucket.delete_objects(Delete={"Objects": objects})
+            if objects:
+                s3_bucket.delete_objects(Delete={"Objects": objects})
         s3_bucket.delete()
 
 
