@@ -69,6 +69,7 @@ from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.metrics import limit_domains, metrics_histogram, limit_tags
 from corehq.util.quickcache import quickcache
+from corehq.util.timer import set_request_duration_reporting_threshold
 
 from .case_restore import get_case_restore_response
 from .models import DeviceLogRequest, MobileRecoveryMeasure, SerialIdBucket
@@ -90,6 +91,7 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 @handle_401_response
 @mobile_auth_or_formplayer
 @check_domain_mobile_access
+@set_request_duration_reporting_threshold(seconds=300)
 def restore(request, domain, app_id=None):
     """
     We override restore because we have to supply our own
