@@ -1,29 +1,39 @@
 import csv
 import re
 from collections import namedtuple
-from typing import Iterable, TypedDict
+from typing import Iterable, Optional, TypedDict
 
 from django.core.management.base import BaseCommand
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 
-
-Location = namedtuple('Location', 'id name code')
-country = Location('abc123', 'Nambia', 'nambia')
-location_cache = {
-    'nambia|foo|bar|baz': 'def456',
+Location = namedtuple('Location', 'id site_code dip_name script_code')
+country = Location(
+    id='abc123',
+    site_code='nambia',
+    dip_name='Nambia',
+    script_code='nambia',
+)
+location_cache: dict[str, Location] = {
+    'nambia|foo|bar|baz': Location(
+        id='def456',
+        site_code='baz_bar_foo_settlement',
+        dip_name='Baz',
+        script_code='nambia|foo|bar|baz',
+    ),
 }
 
 
 UserRecord = namedtuple('UserRecord', 'state lga ward settlement username')
-user_cache = {}
+# No need to cache more than one user. They are repeated on consecutive rows.
+last_commcare_user: Optional[CommCareUser] = None
 
 
 UserCorrection = TypedDict('UserCorrection', {
     'username': str,
     'user_id': str,
-    'location_id 1': str,
+    'location_code': str,
 })
 
 
@@ -54,7 +64,18 @@ class Command(BaseCommand):
         parser.add_argument('users_csv')
 
     def handle(self, domain, users_csv, *args, **options):
-        self.stdout.write('username,user_id,location_id 1')
+        self.stdout.write(
+            'username,'
+            'user_id,'
+            'location_code 1,'
+            'location_code 2,'
+            'location_code 3,'
+            'location_code 4,'
+            'location_code 5,'
+            'location_code 6,'
+            'location_code 7,'
+            'location_code 8'
+        )
         for user in iter_users(users_csv):
             # Find location
             try:
@@ -76,7 +97,7 @@ class Command(BaseCommand):
                 row = ','.join([
                     err.correction['username'],
                     err.correction['user_id'],
-                    err.correction['location_id 1'],
+                    err.correction['location_code'],
                 ])
                 self.stdout.write(row)
 
@@ -86,15 +107,15 @@ def iter_users(csv_filename: str) -> Iterable[UserRecord]:
     last_full_row = {}
     with open(csv_filename, 'r') as csv_file:
         for row in csv.DictReader(csv_file):
-            # Skip blank rows
-            if not any(v for v in row.values()):
+            # Skip rows where the Settlement value is blank
+            if not row['Settlement']:
                 continue
             # Replace blank values with their previous value
             full_row = {
                 k: v if v else last_full_row[k]
                 for k, v in row.items()
             }
-            # Fix username
+            # Fix abbreviated Username value
             if (
                 not username_re.match(full_row['Username'])
                 and last_full_row['Username'].endswith(full_row['Username'])
@@ -106,31 +127,40 @@ def iter_users(csv_filename: str) -> Iterable[UserRecord]:
 
 
 def get_location(domain: str, name: str, parent: Location) -> Location:
-    code = f'{parent.code}|{name.lower()}'
-    if code not in location_cache:
+    # Modifies the value of location_cache
+
+    script_code = f'{parent.script_code}|{name.lower()}'
+    if script_code not in location_cache:
         sql_parent = SQLLocation.objects.get(domain=domain, location_id=parent.id)
         sql_locations = sql_parent.children.filter(name__iexact=name).all()
         if len(sql_locations) == 1:
-            location_cache[code] = sql_locations[0].location_id
+            location_cache[script_code] = Location(
+                id=sql_locations[0].location_id,
+                site_code=sql_locations[0].site_code,
+                dip_name=name,
+                script_code=script_code,
+            )
         elif len(sql_locations) > 1:
             raise LocationError(f"Multiple locations found for '{name}' under {parent!r}")
         else:
             raise LocationError(f"No location found for '{name}' under {parent!r}")
 
-    return Location(location_cache[code], name, code)
+    return location_cache[script_code]
 
 
 def get_commcare_user(domain: str, user: UserRecord) -> CommCareUser:
-    if user.username not in user_cache:
-        full_username = f'{user.username.lower()}@{domain}.commcarehq.org'
-        commcare_user = CommCareUser.get_by_username(full_username)
+    global last_commcare_user
+
+    username = f'{user.username.lower()}@{domain}.commcarehq.org'
+    if last_commcare_user is None or last_commcare_user.username != username:
+        commcare_user = CommCareUser.get_by_username(username)
         if commcare_user is None:
             raise UserError(f"User '{user.username}' not found")
         if commcare_user.domain != domain:
             raise UserError(f"User '{user.username}' not in domain '{domain}'")
-        user_cache[user.username] = commcare_user
+        last_commcare_user = commcare_user
 
-    return user_cache[user.username]
+    return last_commcare_user
 
 
 def confirm_user_location(
@@ -143,7 +173,7 @@ def confirm_user_location(
         correction = UserCorrection(**{
             'username': commcare_user.username,
             'user_id': commcare_user.user_id,
-            'location_id 1': settlement.id,
+            'location_code': settlement.site_code,
         })
         raise UserLocationError(
             correction,
