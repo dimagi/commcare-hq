@@ -41,3 +41,12 @@ class ChangesSummaryView(BulkEditSessionViewMixin,
             "data_cleaning/summary/clear_changes.html",
             {},
         )
+
+    @hq_hx_action('post')
+    def apply_changes_summary(self, request, *args, **kwargs):
+        # todo: render summary context
+        return self.render_htmx_partial_response(
+            request,
+            "data_cleaning/summary/apply_changes.html",
+            {},
+        )

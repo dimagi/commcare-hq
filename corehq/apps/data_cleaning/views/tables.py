@@ -126,6 +126,11 @@ class CleanCasesTableView(BulkEditSessionViewMixin,
         return response
 
     @hq_hx_action("post")
+    def apply_all_changes(self, request, *args, **kwargs):
+        # todo: this is a placeholder
+        return self.get(request, *args, **kwargs)
+
+    @hq_hx_action("post")
     def undo_last_change(self, request, *args, **kwargs):
         # todo: this is a placeholder
         return self.get(request, *args, **kwargs)

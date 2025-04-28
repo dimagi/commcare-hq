@@ -72,7 +72,13 @@
           <i class="fa-solid fa-undo"></i>
           {% trans "Undo" %}
         </button>
-        <button class="btn btn-success" type="button">
+        <button
+          class="btn btn-success"
+          type="button"
+          data-bs-toggle="modal"
+          data-bs-target="#confirm-apply-modal"
+          @click="$dispatch('updateApplySummaryMessage');"
+        >
           <i class="fa-solid fa-check-double"></i>
           {% trans "Apply" %}
         </button>
@@ -182,4 +188,5 @@
   {% include "data_cleaning/modals/select_all_not_possible.html" with modal_id="select-all-not-possible-modal" %}
   {% include "data_cleaning/modals/confirm_undo.html" with modal_id="confirm-undo-modal" confirm_button_class="btn-secondary" %}
   {% include "data_cleaning/modals/confirm_clear.html" with modal_id="confirm-clear-modal" confirm_button_class="btn-danger" %}
+  {% include "data_cleaning/modals/confirm_apply.html" with modal_id="confirm-apply-modal" confirm_button_class="btn-success" %}
 {% endblock %}
