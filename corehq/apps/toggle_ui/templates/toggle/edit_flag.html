@@ -183,6 +183,19 @@
       </div>
     {% endif %}
     {% if allows_items %}
+      {% if not can_edit_toggle %}
+        <div class="alert alert-info">
+          <h5>
+            <i class="fa fa-info-circle"></i> {% trans "Why can't I edit?" %}
+          </h5>
+          <p>
+            {% blocktrans %}
+              You do not have permission to modify this flag. Please contact
+              support if you require access.
+            {% endblocktrans %}
+          </p>
+        </div>
+      {% endif %}
       <h4>
         {% trans "Enabled toggle items" %}
         {% if is_random %}
@@ -258,18 +271,6 @@
     {% endif %}
     {% if can_edit_toggle %}
       <div data-bind="saveButton: saveButtonBottom"></div>
-    {% else %}
-      <div class="alert alert-info">
-        <h5>
-          <i class="fa fa-info-circle"></i> {% trans "Why can't I edit?" %}
-        </h5>
-        <p>
-          {% blocktrans %}
-            You do not have permission to modify this flag. Please contact
-            support if you require access.
-          {% endblocktrans %}
-        </p>
-      </div>
     {% endif %}
   </div>
 {% endblock %}
