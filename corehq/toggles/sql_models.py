@@ -21,7 +21,7 @@ class ToggleEditPermission(models.Model):
         super().save(*args, **kwargs)
 
     @classmethod
-    @quickcache(['tag_slug'], timeout=60 * 60 * 24)
+    @quickcache(['tag_slug'], timeout=60 * 60 * 24 * 7)
     def get_by_tag_slug(cls, tag_slug):
         try:
             return cls.objects.get(tag_slug=tag_slug)
