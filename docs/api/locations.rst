@@ -86,6 +86,9 @@ Locations can be filtered by the following attributes as request parameters:
    * - ``site_code``
      - Site code for the location
      - ``?site_code=boston``
+   * - ``location_type_code``
+     - The location's type code
+     - ``?location_type_code=city``
    * - ``last_modified.gte``
      - Locations last modified on or after a specific date or datetime
      - ``?last_modified.gte=2024-01-01``

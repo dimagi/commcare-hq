@@ -454,6 +454,7 @@ class TestV0_6LocationsList(APIResourceTest):
             'massachusetts', 'middlesex', 'somerville', 'suffolk',
         ]),
         ('last_modified.gt=2025-03-31&last_modified.lte=2025-03-30', []),
+        ('location_type_code=county', ['middlesex', 'suffolk']),
     ])
     def test_api_filters(self, querystring, expected):
         url = f"{self.list_endpoint}?{querystring}"
