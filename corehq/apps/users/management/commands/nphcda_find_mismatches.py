@@ -10,6 +10,9 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 
 
+LOCATION_COLUMNS = 24
+
+
 UserRow = namedtuple('UserRow', 'state lga ward settlement username')
 
 
@@ -184,14 +187,14 @@ def confirm_user_settlements(user_settlements: UserSettlements) -> None:
 
 user_import_headers = ','.join(
     ['username', 'user_id']
-    + [f'location_code {i}' for i in range(1, 9)]
+    + [f'location_code {i}' for i in range(1, LOCATION_COLUMNS + 1)]
 )
 
 
 def get_user_import_row(user_settlements: UserSettlements) -> str:
     site_codes = [loc.site_code for loc in user_settlements.settlements]
     # Pad with empty strings
-    site_codes += [''] * (8 - len(user_settlements.settlements))
+    site_codes += [''] * (LOCATION_COLUMNS - len(user_settlements.settlements))
     return ','.join([
         user_settlements.user.raw_username,
         user_settlements.user.user_id,
