@@ -6,6 +6,7 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
@@ -545,17 +546,17 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             loc_name = user_loc_dict.get(loc_id)
             if loc_id == primary_location_id:
                 formatted_loc_names.insert(
-                    0, f'<strong>{loc_name}</strong>'
+                    0, format_html('<strong>{}</strong>', loc_name)
                 )
             else:
-                formatted_loc_names.append(loc_name)
+                formatted_loc_names.append(format_html('{}', loc_name))
 
-        formatted_str = ', '.join(formatted_loc_names[:4])
+        formatted_str = mark_safe(', '.join(formatted_loc_names[:4]))
         html_nodes = [
-            f'<span class="locations-list">{formatted_str}</span>',
+            format_html('<span class="locations-list">{}</span>', formatted_str)
         ]
         if len(formatted_loc_names) > 4:
-            all_str = ', '.join(formatted_loc_names)
+            all_str = mark_safe(', '.join(formatted_loc_names))
             view_controls_html_nodes = [
                 f'<span class="loc-view-control">{_("...See more")}</span>',
                 f'<span class="loc-view-control" style="display:none">{_("...Collapse")}</span>',
@@ -564,7 +565,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 f'<span class="all-locations-list" style="display:none">{all_str}</span>',
                 f'<a href="#" class="toggle-all-locations">{"".join(view_controls_html_nodes)}</a>',
             ]
-        return format_html(f'<div>{"".join(html_nodes)}</div>')
+        return format_html('<div>{}</div>', mark_safe("".join(html_nodes)))
 
 
 def format_commcare_version(app_version_info):

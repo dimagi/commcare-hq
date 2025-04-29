@@ -200,5 +200,11 @@ class TestApplicationStatusReport(TestCase):
         )
         self.assertEqual(
             formatted_assigned_location_names,
-            ''
+            '<div>'
+            '<span class="locations-list">'
+            '<strong>Location 2</strong>, '
+            'Location 1, '
+            'Location 3 {Special Character}'
+            '</span>'
+            '</div>'
         )
