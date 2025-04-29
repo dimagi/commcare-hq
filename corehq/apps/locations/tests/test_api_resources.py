@@ -7,7 +7,7 @@ from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.locations.resources import v0_5, v0_6
 from corehq.util.test_utils import generate_cases
 
-from .util import LocationHierarchyTestCase, setup_locations_and_types
+from .util import setup_locations_and_types
 
 
 class LocationTypeV0_5Test(APIResourceTest):
