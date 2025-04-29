@@ -1363,31 +1363,27 @@ hqDefine("cloudcare/js/form_entry/entries", [
                 entry = new InfoEntry(question, {});
                 break;
             case constants.BINARY:
-                if (!toggles.toggleEnabled('WEB_APPS_UPLOAD_QUESTIONS')) {
-                    // do nothing, fall through to unsupported
-                } else {
-                    switch (question.control()) {
-                        case constants.CONTROL_IMAGE_CHOOSE:
-                            if (question.stylesContains(constants.SIGNATURE)) {
-                                entry = new SignatureEntry(question, {});
-                                break;
-                            }
-                            entry = new ImageEntry(question, {
-                                broadcastStyles: broadcastStyles,
-                            });
+                switch (question.control()) {
+                    case constants.CONTROL_IMAGE_CHOOSE:
+                        if (question.stylesContains(constants.SIGNATURE)) {
+                            entry = new SignatureEntry(question, {});
                             break;
-                        case constants.CONTROL_AUDIO_CAPTURE:
-                            entry = new AudioEntry(question, {
-                                broadcastStyles: broadcastStyles,
-                            });
-                            break;
-                        case constants.CONTROL_VIDEO_CAPTURE:
-                            entry = new VideoEntry(question, {
-                                broadcastStyles: broadcastStyles,
-                            });
-                            break;
-                        // any other control types are unsupported
-                    }
+                        }
+                        entry = new ImageEntry(question, {
+                            broadcastStyles: broadcastStyles,
+                        });
+                        break;
+                    case constants.CONTROL_AUDIO_CAPTURE:
+                        entry = new AudioEntry(question, {
+                            broadcastStyles: broadcastStyles,
+                        });
+                        break;
+                    case constants.CONTROL_VIDEO_CAPTURE:
+                        entry = new VideoEntry(question, {
+                            broadcastStyles: broadcastStyles,
+                        });
+                        break;
+                    // any other control types are unsupported
                 }
         }
         if (!entry) {
