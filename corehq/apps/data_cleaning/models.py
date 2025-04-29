@@ -337,6 +337,12 @@ class BulkEditSession(models.Model):
         last_change = self.changes.last()
         return last_change and last_change.records.count() > 1
 
+    def purge_records(self):
+        """
+        Delete all records that do not have changes or are not selected.
+        """
+        self.records.filter(is_selected=False, changes__isnull=True).delete()
+
     def undo_last_change(self):
         self.changes.last().delete()
 
