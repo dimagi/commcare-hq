@@ -34,7 +34,7 @@
         </button>
         {% block modal_continue_button %}
           <button
-            class="btn btn-primary"
+            class="btn {% if confirm_button_class %}{{ confirm_button_class }}{% else %}btn-primary{% endif %}"
             type="button"
             data-bs-dismiss="modal"
             {% block modal_continue_attrs %}{% endblock %}
