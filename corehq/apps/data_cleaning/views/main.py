@@ -1,5 +1,3 @@
-from celery import uuid
-from datetime import datetime
 from memoized import memoized
 
 from django.contrib import messages
@@ -7,12 +5,11 @@ from django.shortcuts import redirect
 from django.http import StreamingHttpResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET
 from django.utils.translation import gettext_lazy, gettext as _
 
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
 from corehq.apps.data_cleaning.models import BulkEditSession
-from corehq.apps.data_cleaning.tasks import commit_data_cleaning
 from corehq.apps.data_cleaning.utils.cases import clear_caches_case_data_cleaning
 from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -100,23 +97,6 @@ def clear_session_caches(request, domain, session_id):
     session = BulkEditSession.objects.get(session_id=session_id)
     clear_caches_case_data_cleaning(session.domain, session.identifier)
     messages.success(request, _("Caches successfully cleared."))
-    return redirect(reverse(CleanCasesMainView.urlname, args=(domain,)))
-
-
-@login_and_domain_required
-@require_POST
-@require_bulk_data_cleaning_cases
-def save_case_session(request, domain, session_id):
-    session = BulkEditSession.objects.get(session_id=session_id)
-
-    task_id = uuid()
-    session.task_id = task_id
-    session.committed_on = datetime.utcnow()
-    session.save()
-
-    commit_data_cleaning.apply_async((session_id,), task_id=task_id)
-
-    messages.success(request, _("Session saved."))
     return redirect(reverse(CleanCasesMainView.urlname, args=(domain,)))
 
 
