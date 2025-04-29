@@ -89,6 +89,9 @@ Locations can be filtered by the following attributes as request parameters:
    * - ``location_type_code``
      - The location's type code
      - ``?location_type_code=city``
+   * - ``parent_location_id``
+     - The UUID of the location's direct parent
+     - ``?parent_location_id=5ce87caa-a739-4a61-a0cb-559f84a9b4b7``
    * - ``last_modified.gte``
      - Locations last modified on or after a specific date or datetime
      - ``?last_modified.gte=2024-01-01``

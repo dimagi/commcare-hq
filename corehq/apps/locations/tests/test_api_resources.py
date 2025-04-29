@@ -442,6 +442,8 @@ class TestV0_6LocationsList(APIResourceTest):
                 [],
                 cls.location_structure,
             )
+            cls.locations['Middlesex'].location_id = 'middlesex_uuid'
+            cls.locations['Middlesex'].save()
 
         with freeze_time(datetime(2025, 4, 1)):
             cls.locations['Boston'].save()
@@ -455,6 +457,7 @@ class TestV0_6LocationsList(APIResourceTest):
         ]),
         ('last_modified.gt=2025-03-31&last_modified.lte=2025-03-30', []),
         ('location_type_code=county', ['middlesex', 'suffolk']),
+        ('parent_location_id=middlesex_uuid', ['cambridge', 'somerville']),
     ])
     def test_api_filters(self, querystring, expected):
         url = f"{self.list_endpoint}?{querystring}"

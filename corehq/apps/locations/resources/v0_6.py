@@ -58,6 +58,8 @@ class LocationResource(v0_5.LocationResource):
         orm_filters = {}
         if code := filters.get('location_type_code', None):
             orm_filters['location_type__code'] = code
+        if parent_id := filters.get('parent_location_id', None):
+            orm_filters['parent__location_id'] = parent_id
 
         # Turn last_modified.gte to last_modified__gte
         filters = {'__'.join(k.split('.')): v for k, v in filters.items()}
