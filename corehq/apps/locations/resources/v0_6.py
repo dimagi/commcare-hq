@@ -46,8 +46,16 @@ class LocationResource(v0_5.LocationResource):
             'location_data',
         }
         filtering = {
-            "domain": ('exact',),
+            "domain": ['exact'],
+            'site_code': ['exact'],
+            'last_modified': ['gt', 'gte', 'lt', 'lte'],
         }
+
+    def build_filters(self, filters=None, **kwargs):
+        if filters:
+            # Turn last_modified.gte to last_modified__gte
+            filters = {'__'.join(k.split('.')): v for k, v in filters.items()}
+        return super().build_filters(filters, **kwargs)
 
     def dehydrate(self, bundle):
         if bundle.obj.parent:

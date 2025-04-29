@@ -1,8 +1,13 @@
+from datetime import datetime
+
+from freezegun import freeze_time
+
 from corehq.apps.api.tests.utils import APIResourceTest
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.locations.resources import v0_5, v0_6
+from corehq.util.test_utils import generate_cases
 
-from .util import setup_locations_and_types
+from .util import LocationHierarchyTestCase, setup_locations_and_types
 
 
 class LocationTypeV0_5Test(APIResourceTest):
@@ -409,3 +414,51 @@ class LocationV0_6Test(APIResourceTest):
         self.assertEqual(response.json(),
                          {'error': "Could not update: could not find location with"
                                    f" given ID {unknown_location_id} on the domain."})
+
+
+class TestV0_6LocationsList(APIResourceTest):
+    api_name = 'v0.6'
+    resource = v0_6.LocationResource
+    location_type_names = ['state', 'county', 'city']
+    location_structure = [
+        ('Massachusetts', [
+            ('Middlesex', [
+                ('Cambridge', []),
+                ('Somerville', []),
+            ]),
+            ('Suffolk', [
+                ('Boston', []),
+            ])
+        ])
+    ]
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        with freeze_time(datetime(2025, 1, 1)):
+            cls.location_types, cls.locations = setup_locations_and_types(
+                cls.domain.name,
+                cls.location_type_names,
+                [],
+                cls.location_structure,
+            )
+
+        with freeze_time(datetime(2025, 4, 1)):
+            cls.locations['Boston'].save()
+            cls.locations['Cambridge'].save()
+
+    @generate_cases([
+        ('site_code=boston', ['boston']),
+        ('last_modified.gte=2025-03-31', ['boston', 'cambridge']),
+        ('last_modified.gte=2020-01-01&last_modified.lt=2025-03-31', [
+            'massachusetts', 'middlesex', 'somerville', 'suffolk',
+        ]),
+        ('last_modified.gt=2025-03-31&last_modified.lte=2025-03-30', []),
+    ])
+    def test_api_filters(self, querystring, expected):
+        url = f"{self.list_endpoint}?{querystring}"
+        response = self._assert_auth_get_resource(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertItemsEqual([
+            loc['site_code'] for loc in response.json()['objects']
+        ], expected)
