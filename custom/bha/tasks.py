@@ -1,7 +1,5 @@
 from datetime import datetime
 
-from django.conf import settings
-
 from celery.schedules import crontab
 from dateutil.relativedelta import relativedelta
 
@@ -13,8 +11,6 @@ from corehq.apps.formplayer_api.tasks import (
     get_users_for_priming,
 )
 
-
-RATE_LIMIT = getattr(settings, 'USH_PRIME_RESTORE_RATE_LIMIT', 100)
 
 # Include users that have synced in the last week
 SYNC_WINDOW_HOURS = 24 * 7
