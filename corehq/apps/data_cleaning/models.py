@@ -343,8 +343,11 @@ class BulkEditSession(models.Model):
         """
         self.records.filter(is_selected=False, changes__isnull=True).delete()
 
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
     def undo_last_change(self):
         self.changes.last().delete()
+        self.purge_records()
 
     def is_record_selected(self, doc_id):
         return BulkEditRecord.is_record_selected(self, doc_id)
