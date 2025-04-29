@@ -42,6 +42,9 @@ def commit_data_cleaning(bulk_edit_session_id):
     session.completed_on = datetime.now()
     session.save()
 
+    session.changes.all().delete()
+    session.records.all().delete()
+
     return form_ids
 
 

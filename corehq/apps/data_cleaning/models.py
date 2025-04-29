@@ -308,6 +308,14 @@ class BulkEditSession(models.Model):
             selected_records = self.records.filter(is_selected=True)
             change.records.add(*selected_records)
 
+    @property
+    def num_changed_records(self):
+        if not self.committed_on:
+            raise RuntimeError(
+                "Session not committed yet. Please commit the session first or use get_change_counts()"
+            )
+        return self.result['record_count'] if self.completed_on else self.records.count()
+
     def get_change_counts(self):
         """
         Get the details of the number of records with changes, and the number
