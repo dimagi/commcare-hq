@@ -529,15 +529,17 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         user = CouchUser.wrap_correctly(user_es_doc)
         if not user.get_location_ids(self.domain):
             return '---'
-        return self._get_formatted_assigned_location_names(user, user_loc_dict)
+        assigned_location_ids = user.get_location_ids(self.domain)
+        primary_location_id = user.get_location_id(self.domain)
+        return self._get_formatted_assigned_location_names(primary_location_id, assigned_location_ids,
+                                                           user_loc_dict)
 
-    def _get_formatted_assigned_location_names(self, user, user_loc_dict):
+    @staticmethod
+    def _get_formatted_assigned_location_names(primary_location_id, assigned_location_ids, user_loc_dict):
         """
         Create an HTML formatted string of the given assigned location names.
         The primary location will be highlighted in bold.
         """
-        assigned_location_ids = user.get_location_ids(self.domain)
-        primary_location_id = user.get_location_id(self.domain)
         formatted_loc_names = []
         for loc_id in assigned_location_ids:
             loc_name = user_loc_dict.get(loc_id)
