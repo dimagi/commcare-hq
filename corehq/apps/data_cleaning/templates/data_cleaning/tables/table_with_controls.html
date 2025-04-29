@@ -72,7 +72,7 @@
           @click="$dispatch('updateUndoSummaryMessage');"
         >
           <i class="fa-solid fa-undo"></i>
-          {% trans "Undo" %}
+          {% trans "Undo" %} {# note: undo for multiple records #}
         </button>
         <button
           class="btn btn-outline-secondary"
@@ -86,7 +86,7 @@
           x-show="!$store.editDetails.isUndoMultiple"
         >
           <i class="fa-solid fa-undo"></i>
-          {% trans "Undo" %}
+          {% trans "Undo" %} {# note: undo for  single record #}
         </button>
 
         <button
