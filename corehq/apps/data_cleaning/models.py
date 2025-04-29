@@ -1003,6 +1003,10 @@ class BulkEditRecord(models.Model):
             self.calculated_change_id is None or self.changes.last().change_id != self.calculated_change_id
         )
 
+    @property
+    def should_reset_changes(self):
+        return self.changes.count() == 0 and self.calculated_change_id is not None
+
     @retry_on_integrity_error(max_retries=3, delay=0.1)
     @transaction.atomic
     def reset_changes(self, prop_id):
@@ -1021,13 +1025,20 @@ class BulkEditRecord(models.Model):
         if case.case_id != self.doc_id:
             raise ValueError("case.case_id doesn't match record.doc_id")
 
+        if self.should_reset_changes:
+            self.calculated_properties = None
+            self.calculated_change_id = None
+            self.save()
+            return {}
+
         if not self.has_property_updates:
             return self.calculated_properties or {}
 
         properties = {}
         for change in self.changes.all():
             if change.action_type == EditActionType.RESET:
-                del properties[change.prop_id]
+                if change.prop_id in properties:
+                    del properties[change.prop_id]
             else:
                 properties[change.prop_id] = change.edited_value(
                     case, edited_properties=properties
