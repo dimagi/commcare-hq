@@ -30,7 +30,9 @@ class ChangesSummaryView(BulkEditSessionViewMixin,
         return self.render_htmx_partial_response(
             request,
             "data_cleaning/summary/undo_changes.html",
-            {},
+            {
+                "change": self.session.changes.last(),
+            },
         )
 
     @hq_hx_action('post')
