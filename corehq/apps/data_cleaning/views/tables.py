@@ -132,7 +132,7 @@ class CleanCasesTableView(BulkEditSessionViewMixin,
 
     @hq_hx_action("post")
     def undo_last_change(self, request, *args, **kwargs):
-        # todo: this is a placeholder
+        self.session.undo_last_change()
         return self.get(request, *args, **kwargs)
 
     @hq_hx_action("post")

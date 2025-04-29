@@ -329,6 +329,26 @@ class BulkEditSession(models.Model):
     def get_num_changes(self):
         return self.changes.count()
 
+    def is_undo_multiple(self):
+        """
+        Check if the last change in the session affects multiple records.
+        :return: bool - True if the last change affects multiple records
+        """
+        last_change = self.changes.last()
+        return last_change and last_change.records.count() > 1
+
+    def purge_records(self):
+        """
+        Delete all records that do not have changes or are not selected.
+        """
+        self.records.filter(is_selected=False, changes__isnull=True).delete()
+
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
+    def undo_last_change(self):
+        self.changes.last().delete()
+        self.purge_records()
+
     def is_record_selected(self, doc_id):
         return BulkEditRecord.is_record_selected(self, doc_id)
 
