@@ -441,10 +441,6 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
         cls.loc_fields.save()
         cls.field_slugs = [f.slug for f in cls.loc_fields.get_fields()]
 
-    def setUp(self):
-        # this works around the fact that get_locations_to_sync is memoized on OTARestoreUser
-        self.user = self.user._couch_user.to_ota_restore_user(self.domain)
-
     @classmethod
     def tearDownClass(cls):
         cls.loc_fields.delete()
