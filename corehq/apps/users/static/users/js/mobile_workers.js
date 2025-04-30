@@ -111,16 +111,18 @@ hqDefine("users/js/mobile_workers",[
         });
 
         self.is_connect_link_active.subscribe(function (newValue) {
-            const urlName = newValue ? 'activate_connectid_link' : 'deactivate_connectid_link';
-            const $modal = $(`#${urlName}_${self.username()}`);
-            toggleActive($modal, urlName, self.username());
+            const urlName = 'set_connectid_link_status';
+            const modalNamePrefix = newValue ? 'activate_connectid_link' : 'deactivate_connectid_link';
+            const $modal = $(`#${modalNamePrefix}_${self.username()}`);
+            toggleActive($modal, urlName, self.username(), { is_active: newValue });
         });
 
-        function toggleActive($modal, urlName, userIdOrName) {
+        function toggleActive($modal, urlName, userIdOrName, bodyData = {}) {
             $modal.find(".btn").addSpinnerToButton();
             $.ajax({
                 method: 'POST',
                 url: initialPageData.reverse(urlName, userIdOrName),
+                data: bodyData,
                 success: function (data) {
                     $modal.modal('hide');
                     if (data.success) {
