@@ -26,7 +26,6 @@ class ChangesSummaryView(BulkEditSessionViewMixin,
 
     @hq_hx_action('post')
     def undo_changes_summary(self, request, *args, **kwargs):
-        # todo: render summary context
         return self.render_htmx_partial_response(
             request,
             "data_cleaning/summary/undo_changes.html",
@@ -37,11 +36,13 @@ class ChangesSummaryView(BulkEditSessionViewMixin,
 
     @hq_hx_action('post')
     def clear_changes_summary(self, request, *args, **kwargs):
-        # todo: render summary context
         return self.render_htmx_partial_response(
             request,
             "data_cleaning/summary/clear_changes.html",
-            {},
+            {
+                "changes": self.session.changes.all(),
+                "num_changes": self.session.get_num_changes(),
+            },
         )
 
     @hq_hx_action('post')
