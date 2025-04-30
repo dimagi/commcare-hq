@@ -1,3 +1,4 @@
+import doctest
 import tempfile
 from contextlib import contextmanager
 from inspect import cleandoc
@@ -118,6 +119,13 @@ class TestGetCommCareUser(TestCase):
                 call(username1),
                 call(username2),
             ]
+
+
+def test_doctests():
+    import corehq.apps.users.management.commands.nphcda_find_mismatches as module
+
+    results = doctest.testmod(module)
+    assert results.failed == 0
 
 
 @contextmanager

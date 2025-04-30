@@ -14,6 +14,8 @@ UserRow = namedtuple('UserRow', 'state lga ward settlement username')
 
 
 ScriptCode = str
+IDMap = dict[str, str]
+IDSet = set[str]
 
 
 @dataclass
@@ -78,15 +80,17 @@ class Command(BaseCommand):
 
     def handle(self, domain, users_csv, *args, **options):
         for user_settlements in iter_user_settlements(domain, users_csv):
-            try:
-                location_id_map = map_mismatches(domain, user_settlements)
-            except UserLocationError as err:
-                self.stderr.write(str(err))
+            if not has_changes(user_settlements):
                 continue
-            if not location_id_map:
-                continue
-
-            output = get_output(user_settlements.user, location_id_map)
+            location_id_map, unmapped_old_ids, unmapped_new_ids = (
+                map_mismatches(domain, user_settlements)
+            )
+            output = get_output(
+                user_settlements.user.raw_username,
+                location_id_map,
+                unmapped_old_ids,
+                unmapped_new_ids,
+            )
             self.stdout.write(output)
 
 
@@ -139,7 +143,8 @@ def iter_user_rows(csv_filename: str) -> Iterable[UserRow]:
 def get_location(domain: str, name: str, parent: Location) -> Location:
     # Modifies the value of location_cache
 
-    script_code = f'{parent.script_code}·{name.lower()}'
+    name = lower_one_space(name)
+    script_code = f'{parent.script_code}·{name}'
     if script_code not in location_cache:
         sql_parent = SQLLocation.objects.get(domain=domain, location_id=parent.id)
         sql_locations = sql_parent.children.filter(name__iexact=name).all()
@@ -173,49 +178,79 @@ def get_commcare_user(domain: str, row_username: str) -> CommCareUser:
     return last_commcare_user
 
 
+def has_changes(user_settlements: UserSettlements) -> bool:
+    assigned_location_ids = set(user_settlements.user.assigned_location_ids)
+    settlement_ids = {loc.id for loc in user_settlements.settlements}
+    return assigned_location_ids != settlement_ids
+
+
 def map_mismatches(
     domain: str,
     user_settlements: UserSettlements,
-) -> dict[str, str]:
+) -> tuple[IDMap, IDSet, IDSet]:
     assigned_location_ids = set(user_settlements.user.assigned_location_ids)
     settlement_ids = {loc.id for loc in user_settlements.settlements}
-    if assigned_location_ids == settlement_ids:
-        # No mismatches
-        return {}
-
     old_location_ids = assigned_location_ids - settlement_ids
     new_location_ids = settlement_ids - assigned_location_ids
-    if len(old_location_ids) == len(new_location_ids) == 1:
-        # One mismatch, obvious mapping
-        return {old_location_ids.pop(): new_location_ids.pop()}
+    new_ids_by_dip_name = {
+        lower_one_space(loc.dip_name): loc.id
+        for loc in user_settlements.settlements
+        if loc.id in new_location_ids
+    }
 
-    if len(old_location_ids) == len(new_location_ids):
-        # Try to map by dip_name
-        new_ids_by_dip_name = {
-            loc.dip_name: loc.id
-            for loc in user_settlements.settlements
-            if loc.id in new_location_ids
-        }
-        old_ids_by_loc_name = {}
-        for loc_id in old_location_ids:
-            loc = SQLLocation.objects.get(domain=domain, location_id=loc_id)
-            old_ids_by_loc_name[loc.name] = loc_id
-        if new_ids_by_dip_name.keys() == old_ids_by_loc_name.keys():
-            return {
-                old_ids_by_loc_name[name]: new_ids_by_dip_name[name]
-                for name in new_ids_by_dip_name.keys()
-            }
+    location_id_map = {}
+    old_sql_locations = SQLLocation.objects.filter(
+        domain=domain,
+        location_id__in=old_location_ids,
+    ).all()
+    for sql_loc in old_sql_locations:
+        if new_id := new_ids_by_dip_name.get(lower_one_space(sql_loc.name)):
+            # DIP name for settlement matches name of old location
+            location_id_map[sql_loc.location_id] = new_id
+            old_location_ids.remove(sql_loc.location_id)
+            new_location_ids.remove(new_id)
 
-    raise UserLocationError(
-        f'Unable to map locations for user {user_settlements.user.raw_username}: '
-        f'{old_location_ids} -> {new_location_ids}'
-    )
+    return location_id_map, old_location_ids, new_location_ids
 
 
-def get_output(user, location_id_map):
-    return '\n'.join(
-        [f'{user.raw_username}:'] + [
-            f'    {old_id} -> {new_id}'
+def lower_one_space(string: str) -> str:
+    """
+    Lowercase a string and replace multiple spaces with a single space.
+
+    >>> lower_one_space('FoO   BaR')
+    'foo bar'
+
+    """
+    return re.sub(r'\s+', ' ', string).strip().lower()
+
+
+def get_output(
+    username: str,
+    location_id_map: IDMap,
+    unmapped_old_ids: IDSet,
+    unmapped_new_ids: IDSet,
+) -> str:
+    lines = [f'{username}:']
+    if location_id_map:
+        lines += [
+            '    Old location to new location: '
+        ] + [
+            f'        {old_id} -> {new_id}'
             for old_id, new_id in location_id_map.items()
         ]
-    )
+    if unmapped_old_ids:
+        lines += [
+            '    UNMAPPED OLD LOCATIONS: '
+        ] + [
+            f'        {old_id}'
+            for old_id in unmapped_old_ids
+        ]
+    if unmapped_new_ids:
+        lines += [
+            '    New locations: '
+        ] + [
+            f'        {new_id}'
+            for new_id in unmapped_new_ids
+        ]
+
+    return '\n'.join(lines)
