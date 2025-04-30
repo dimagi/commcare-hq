@@ -144,10 +144,7 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
     )
 
     data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
-    used_props_by_case_type = get_used_props_by_case_type(domain, case_type_name)
     geo_case_prop = get_geo_case_property(domain)
-
-    used_props = used_props_by_case_type.get(case_type.name, [])
 
     for group_id, props in itertools.groupby(properties_queryset, key=attrgetter("group_id")):
         props = list(props)
@@ -160,7 +157,7 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
                 'fhir_resource_prop_path': fhir_resource_prop_by_case_prop.get(prop),
                 'name': prop.name,
                 'deprecated': prop.deprecated,
-                'is_safe_to_delete': prop.name not in used_props and prop.name != geo_case_prop,
+                'is_safe_to_delete': prop.name != geo_case_prop,
                 'index': prop.index,
             }
             if data_validation_enabled:

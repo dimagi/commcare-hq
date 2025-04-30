@@ -267,12 +267,17 @@ var propertyListItem = function (
     });
 
     self.confirmDeleteProperty = function () {
-        const $modal = $("#delete-case-prop-modal").modal('show');
-        $("#delete-case-prop-name").text(self.name);
-        $("#delete-case-prop-btn").off("click").on("click", () => {
-            self.deleted(true);
-            $modal.modal('hide');
-        });
+        const countCasesUrl = initialPageData.reverse('count_cases_for_case_type', self.caseType)
+        $.getJSON(countCasesUrl, {case_property: self.name}, function (data) {
+            const $modal = $("#delete-case-prop-modal").modal('show');
+            $("#delete-case-prop-name").text(self.name);
+            const case_text = data.count == 1 ? gettext("case") : gettext("cases")
+            $("#delete-case-prop-count").text(data.count + " " + case_text);
+            $("#delete-case-prop-btn").off("click").on("click", () => {
+                self.deleted(true);
+                $modal.modal('hide');
+            });
+        })
     };
 
     subscribePropObservable(self.description);
