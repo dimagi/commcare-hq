@@ -47,6 +47,9 @@ Locations can be filtered by the following attributes as request parameters:
    * - ``site_code``
      - Site code for the location
      - ``?site_code=boston``
+   * - ``name``
+     - The location's name (case sensitive)
+     - ``?name=Boston``
    * - ``location_type_code``
      - The location's type code
      - ``?location_type_code=city``

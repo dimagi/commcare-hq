@@ -48,6 +48,7 @@ class LocationResource(v0_5.LocationResource):
         }
         filtering = {
             "domain": ['exact'],
+            'name': ['exact'],
             'site_code': ['exact'],
             'last_modified': ['gt', 'gte', 'lt', 'lte'],
         }

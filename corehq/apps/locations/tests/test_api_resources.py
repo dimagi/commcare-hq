@@ -470,19 +470,21 @@ class TestV0_6LocationsList(APIResourceTest):
             cls.locations['Cambridge'].save()
 
     @generate_cases([
-        ('site_code=boston', ['boston']),
-        ('last_modified.gte=2025-03-31', ['boston', 'cambridge']),
+        ('name=boston', []),
+        ('name=Boston', ['Boston']),
+        ('site_code=boston', ['Boston']),
+        ('last_modified.gte=2025-03-31', ['Boston', 'Cambridge']),
         ('last_modified.gte=2020-01-01&last_modified.lt=2025-03-31', [
-            'massachusetts', 'middlesex', 'somerville', 'suffolk',
+            'Massachusetts', 'Middlesex', 'Somerville', 'Suffolk',
         ]),
         ('last_modified.gt=2025-03-31&last_modified.lte=2025-03-30', []),
-        ('location_type_code=county', ['middlesex', 'suffolk']),
-        ('parent_location_id=middlesex_uuid', ['cambridge', 'somerville']),
+        ('location_type_code=county', ['Middlesex', 'Suffolk']),
+        ('parent_location_id=middlesex_uuid', ['Cambridge', 'Somerville']),
     ])
     def test_api_filters(self, querystring, expected):
         url = f"{self.list_endpoint}?{querystring}"
         response = self._assert_auth_get_resource(url)
         self.assertEqual(response.status_code, 200)
         self.assertItemsEqual([
-            loc['site_code'] for loc in response.json()['objects']
+            loc['name'] for loc in response.json()['objects']
         ], expected)
