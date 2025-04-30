@@ -186,3 +186,61 @@ class TestApplicationStatusReport(TestCase):
         rows = report.rows
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0][0], 'mobile_worker2')
+
+    def test_get_formatted_assigned_location_names(self):
+        user_loc_dict = {
+            '1': 'Location 1',
+            '2': 'Location 2 {Special Character In Primary}',
+            '3': 'Location 3 {Special Character}'
+        }
+        formatted_assigned_location_names = ApplicationStatusReport._get_formatted_assigned_location_names(
+            '2',
+            ['1', '2', '3'],
+            user_loc_dict
+        )
+        self.assertEqual(
+            formatted_assigned_location_names,
+            '<div>'
+            '<span class="locations-list">'
+            '<strong>Location 2 {Special Character In Primary}</strong>, '
+            'Location 1, '
+            'Location 3 {Special Character}'
+            '</span>'
+            '</div>'
+        )
+
+    def test_get_formatted_assigned_location_names_with_overflow(self):
+        user_loc_dict = {
+            '1': 'Location 1',
+            '2': 'Location 2 {Special Character In Primary}',
+            '3': 'Location 3 {Special Character}',
+            '4': 'Location 4',
+            '5': 'Location 5'
+        }
+        formatted_assigned_location_names = ApplicationStatusReport._get_formatted_assigned_location_names(
+            '2',
+            ['1', '2', '3', '4', '5'],
+            user_loc_dict
+        )
+        self.assertEqual(
+            formatted_assigned_location_names,
+            '<div>'
+            '<span class="locations-list">'
+            '<strong>Location 2 {Special Character In Primary}</strong>, '
+            'Location 1, '
+            'Location 3 {Special Character}, '
+            'Location 4'
+            '</span>'
+            '<span class="all-locations-list" style="display:none">'
+            '<strong>Location 2 {Special Character In Primary}</strong>, '
+            'Location 1, '
+            'Location 3 {Special Character}, '
+            'Location 4, '
+            'Location 5'
+            '</span>'
+            '<a href="#" class="toggle-all-locations">'
+            '<span class="loc-view-control">...See more</span>'
+            '<span class="loc-view-control" style="display:none">...Collapse</span>'
+            '</a>'
+            '</div>'
+        )
