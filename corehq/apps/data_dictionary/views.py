@@ -39,6 +39,8 @@ from corehq.apps.data_dictionary.util import (
     update_url_query_params,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.es import CaseSearchES
+from corehq.apps.es.case_search import case_property_missing
 from corehq.apps.geospatial.utils import get_geo_case_property
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -58,6 +60,18 @@ from .bulk import (
     FHIR_RESOURCE_TYPE_MAPPING_SHEET,
     process_bulk_upload,
 )
+
+
+@login_and_domain_required
+@requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
+def count_cases_for_case_type(request, domain, case_type_name):
+    case_property = request.GET.get('case_property', '')
+    if case_property:
+        query = CaseSearchES().domain(domain).case_type(case_type_name)
+        case_count = query.NOT(case_property_missing(case_property)).count()
+    else:
+        case_count = CaseSearchES().domain(domain).case_type(case_type_name).count()
+    return JsonResponse({"count": case_count})
 
 
 @login_and_domain_required
