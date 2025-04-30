@@ -14,6 +14,8 @@ from corehq.apps.data_dictionary.models import (
     CaseType,
 )
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es import case_search_adapter
 from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 from corehq.apps.users.models import HqPermissions, WebUser
 from corehq.apps.users.models_role import UserRole
@@ -485,6 +487,7 @@ class DataDictionaryJsonTest(DataDictionaryViewTestBase):
         self.assertEqual(response.json(), expected_response)
 
 
+@es_test(requires=[case_search_adapter], setup_class=True)
 @patch('corehq.apps.data_dictionary.views.get_case_type_app_module_count', return_value={})
 @patch('corehq.apps.data_dictionary.views.get_used_props_by_case_type', return_value={})
 @flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
