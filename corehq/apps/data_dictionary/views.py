@@ -33,7 +33,6 @@ from corehq.apps.data_dictionary.models import (
 from corehq.apps.data_dictionary.util import (
     delete_case_property,
     get_data_dict_props_by_case_type,
-    get_used_props_by_case_type,
     save_case_property,
     save_case_property_group,
     update_url_query_params,

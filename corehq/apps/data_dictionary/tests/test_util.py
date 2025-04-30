@@ -17,7 +17,6 @@ from corehq.apps.data_dictionary.util import (
     get_case_property_label_dict,
     get_column_headings,
     get_data_dict_deprecated_case_types,
-    get_used_props_by_case_type,
     get_values_hints_dict,
     is_case_type_deprecated,
     is_case_type_or_prop_name_valid,
@@ -386,25 +385,6 @@ class UsedPropsByCaseTypeTest(TestCase):
             case_name=name,
             update=props,
         )
-
-    def test_get_used_props_by_case_type(self):
-        used_props_by_case_type = get_used_props_by_case_type(self.domain)
-        self.assertEqual(len(used_props_by_case_type), 3)
-
-        # No props were passed to this case type, so should only contain metadata
-        # properties which we are not concerned about
-        metadata_props = set(used_props_by_case_type['no-props'])
-
-        props = set(used_props_by_case_type['case-type']) - metadata_props
-        self.assertEqual({'prop', 'other-prop'}, props)
-        props = set(used_props_by_case_type['other-case-type']) - metadata_props
-        self.assertEqual({'prop', 'foobar'}, props)
-
-    def test_get_used_props_by_case_type_with_case_type_param(self):
-        used_props_by_case_type = get_used_props_by_case_type(self.domain, 'case-type')
-        self.assertEqual(len(used_props_by_case_type), 1)
-        props = set(used_props_by_case_type['case-type'])
-        self.assertTrue(props.issuperset({'prop', 'other-prop'}))
 
 
 class TestUpdateUrlQueryParams(SimpleTestCase):
