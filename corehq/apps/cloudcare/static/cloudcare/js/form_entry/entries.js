@@ -1099,10 +1099,24 @@ hqDefine("cloudcare/js/form_entry/entries", [
         };
 
         self.resizeCanvas = function () {
-            var aspectRatio = 4,
-                width = self.$wrapper.width() - 2; // otherwise misaligned by 2px
+            const data = self.signaturePad.toData();
+            const aspectRatio = 4;
+            const oldWidth = self.$canvas[0].width;
+            const width = self.$wrapper.width() - 2; // otherwise misaligned by 2px
+            const scale = width / oldWidth;
             self.$canvas[0].width = width;
             self.$canvas[0].height = width / aspectRatio;
+
+            const scaledData = JSON.parse(JSON.stringify(data));
+            for (let i = 0; i < scaledData.length; i++) {
+                const stroke = scaledData[i];
+                for (let j = 0; j < stroke.points.length; j++) {
+                    const point = stroke.points[j];
+                    point.x = point.x * scale;
+                    point.y = point.y * scale;
+                }
+            }
+            self.signaturePad.fromData(scaledData);
         };
     }
     SignatureEntry.prototype = Object.create(FileEntry.prototype);
