@@ -1,21 +1,25 @@
 import csv
+import json
 import re
 from collections import namedtuple
+from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Iterable, Optional
+from itertools import zip_longest
+from typing import Iterable, Optional, TypedDict
 
 from django.core.management.base import BaseCommand
+
+import xlwt
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 
-
-UserRow = namedtuple('UserRow', 'state lga ward settlement username')
-
-
 ScriptCode = str
 IDMap = dict[str, str]
-IDSet = set[str]
+IDList = list[str]
+
+
+UserRow = namedtuple('UserRow', 'state lga ward settlement username')
 
 
 @dataclass
@@ -30,6 +34,13 @@ class Location:
 class UserSettlements:
     user: CommCareUser
     settlements: list[Location]
+
+
+class UserChanges(TypedDict):
+    username: str
+    location_map: IDMap
+    unmapped_old_locations: IDList
+    unmapped_new_locations: IDList
 
 
 class LocationError(ValueError):
@@ -77,21 +88,42 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('domain')
         parser.add_argument('users_csv')
+        parser.add_argument('-o', '--output-xlsx', type=str)
 
     def handle(self, domain, users_csv, *args, **options):
-        for user_settlements in iter_user_settlements(domain, users_csv):
-            if not has_changes(user_settlements):
-                continue
-            location_id_map, unmapped_old_ids, unmapped_new_ids = (
-                map_mismatches(domain, user_settlements)
-            )
-            output = get_output(
-                user_settlements.user.raw_username,
-                location_id_map,
-                unmapped_old_ids,
-                unmapped_new_ids,
-            )
-            self.stdout.write(output)
+        if options['output_xlsx']:
+            with get_worksheet(options['output_xlsx']) as sheet:
+                row_by_ref = [1]  # Allow `write_to_sheet` to increment by ref
+                for user_changes in iter_all_user_changes(domain, users_csv):
+                    write_to_sheet(sheet, row_by_ref, user_changes)
+        else:
+            for user_changes in iter_all_user_changes(domain, users_csv):
+                self.stdout.write(json.dumps(user_changes, indent=4))
+
+
+@contextmanager
+def get_worksheet(xlsx_filename):
+    workbook = xlwt.Workbook()
+    sheet = workbook.add_sheet('User Location Changes')
+    for col, heading in enumerate([
+        'Username',
+        'Map from old ID',
+        'Map to new ID',
+        'Unmapped old IDs',
+        'Unmapped new IDs',
+    ]):
+        sheet.write(0, col, heading)
+    try:
+        yield sheet
+    finally:
+        workbook.save(xlsx_filename)
+
+
+def iter_all_user_changes(domain: str, users_csv: str) -> Iterable[UserChanges]:
+    for user_settlements in iter_user_settlements(domain, users_csv):
+        if not has_changes(user_settlements):
+            continue
+        yield get_user_changes(domain, user_settlements)
 
 
 def iter_user_settlements(
@@ -184,10 +216,10 @@ def has_changes(user_settlements: UserSettlements) -> bool:
     return assigned_location_ids != settlement_ids
 
 
-def map_mismatches(
+def get_user_changes(
     domain: str,
     user_settlements: UserSettlements,
-) -> tuple[IDMap, IDSet, IDSet]:
+) -> UserChanges:
     assigned_location_ids = set(user_settlements.user.assigned_location_ids)
     settlement_ids = {loc.id for loc in user_settlements.settlements}
     old_location_ids = assigned_location_ids - settlement_ids
@@ -210,7 +242,12 @@ def map_mismatches(
             old_location_ids.remove(sql_loc.location_id)
             new_location_ids.remove(new_id)
 
-    return location_id_map, old_location_ids, new_location_ids
+    return UserChanges(
+        username=user_settlements.user.raw_username,
+        location_map=location_id_map,
+        unmapped_old_locations=list(old_location_ids),
+        unmapped_new_locations=list(new_location_ids),
+    )
 
 
 def lower_one_space(string: str) -> str:
@@ -224,33 +261,20 @@ def lower_one_space(string: str) -> str:
     return re.sub(r'\s+', ' ', string).strip().lower()
 
 
-def get_output(
-    username: str,
-    location_id_map: IDMap,
-    unmapped_old_ids: IDSet,
-    unmapped_new_ids: IDSet,
-) -> str:
-    lines = [f'{username}:']
-    if location_id_map:
-        lines += [
-            '    Old location to new location: '
-        ] + [
-            f'        {old_id} -> {new_id}'
-            for old_id, new_id in location_id_map.items()
-        ]
-    if unmapped_old_ids:
-        lines += [
-            '    UNMAPPED OLD LOCATIONS: '
-        ] + [
-            f'        {old_id}'
-            for old_id in unmapped_old_ids
-        ]
-    if unmapped_new_ids:
-        lines += [
-            '    New locations: '
-        ] + [
-            f'        {new_id}'
-            for new_id in unmapped_new_ids
-        ]
-
-    return '\n'.join(lines)
+def write_to_sheet(
+    sheet: xlwt.Worksheet,
+    row_by_ref: list[int],
+    user_changes: UserChanges,
+) -> None:
+    rows = zip_longest(
+        [user_changes['username']],
+        user_changes['location_map'].keys(),
+        user_changes['location_map'].values(),
+        user_changes['unmapped_old_locations'],
+        user_changes['unmapped_new_locations'],
+        fillvalue='',
+    )
+    for row in rows:
+        for col, value in enumerate(row):
+            sheet.write(row_by_ref[0], col, value)
+        row_by_ref[0] += 1
