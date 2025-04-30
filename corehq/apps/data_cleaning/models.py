@@ -1144,6 +1144,39 @@ class BulkEditChange(models.Model):
     class Meta:
         ordering = ["created_on"]
 
+    @property
+    def action_title(self):
+        """
+        Returns a human-readable title of the action.
+        """
+        return dict(EditActionType.CHOICES).get(self.action_type, _("Unknown action"))
+
+    @property
+    def action_detail(self):
+        """
+        Returns a human-readable detail of the action.
+        To be read as {{ action_title }} {{ action_detail }}
+        """
+        if self.action_type == EditActionType.REPLACE:
+            return _('value with "{replace_string}".').format(
+                replace_string=self.replace_string,
+            )
+        elif self.action_type == EditActionType.FIND_REPLACE:
+            return _('"{find_string}" with "{replace_string}"{use_regex}.').format(
+                find_string=self.find_string,
+                replace_string=self.replace_string,
+                use_regex=_(" (using regex)") if self.use_regex else "",
+            )
+        elif self.action_type == EditActionType.COPY_REPLACE:
+            return _('from case property "{copy_from_prop_id}".').format(
+                copy_from_prop_id=self.copy_from_prop_id,
+            )
+        return ""
+
+    @property
+    def num_records(self):
+        return self.records.count()
+
     def edited_value(self, case, edited_properties=None):
         """
         Note: `BulkEditChange`s can be chained/layered. In order to properly chain
