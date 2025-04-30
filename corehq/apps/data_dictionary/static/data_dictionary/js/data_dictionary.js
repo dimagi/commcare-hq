@@ -403,7 +403,6 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
                         caseTypeData.is_deprecated,
                         caseTypeData.module_count,
                         data.geo_case_property,
-                        caseTypeData.is_safe_to_delete,
                         changeSaveButton,
                         resetSaveButton,
                         dataUrl
@@ -473,6 +472,15 @@ var dataDictionaryModel = function (dataUrl, casePropertyUrl, typeChoices, fhirR
 
     self.restoreCaseType = function () {
         self.deprecateOrRestoreCaseType(false);
+    };
+
+    self.confirmDeleteType = function () {
+        const countCasesUrl = initialPageData.reverse('count_cases_for_case_type', self.activeCaseType())
+        $.getJSON(countCasesUrl, function (data) {
+            $("#delete-case-type-modal").modal('show');
+            const case_text = data.count == 1 ? gettext("case") : gettext("cases")
+            $("#delete-case-type-count").text(data.count + " " + case_text);
+        })
     };
 
     self.deprecateOrRestoreCaseType = function (shouldDeprecate) {

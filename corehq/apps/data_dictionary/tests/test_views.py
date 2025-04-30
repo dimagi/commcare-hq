@@ -446,7 +446,6 @@ class DataDictionaryJsonTest(DataDictionaryViewTestBase):
                 {
                     "name": cls.case_type_obj.name,
                     "fhir_resource_type": cls.fhir_resource_name if fhir_enabled else None,
-                    "is_safe_to_delete": True,
                     "is_deprecated": False,
                     "module_count": 0,
                     "properties_count": cls.case_type_obj.properties.count(),
@@ -459,7 +458,6 @@ class DataDictionaryJsonTest(DataDictionaryViewTestBase):
                 {
                     "name": cls.deprecated_case_type_obj.name,
                     "fhir_resource_type": None,
-                    "is_safe_to_delete": True,
                     "is_deprecated": True,
                     "module_count": 0,
                     "properties_count": cls.deprecated_case_type_obj.properties.count(),

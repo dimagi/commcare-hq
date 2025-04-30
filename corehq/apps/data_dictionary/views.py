@@ -86,19 +86,16 @@ def data_dictionary_json_case_types(request, domain):
         queryset = queryset.filter(is_deprecated=False)
 
     case_type_app_module_count = get_case_type_app_module_count(domain)
-    used_props_by_case_type = get_used_props_by_case_type(domain)
     geo_case_prop = get_geo_case_property(domain)
     case_types_data = []
     for case_type in queryset:
         module_count = case_type_app_module_count.get(case_type.name, 0)
-        used_props = used_props_by_case_type.get(case_type.name, [])
         case_types_data.append({
             "name": case_type.name,
             "fhir_resource_type": fhir_resource_type_name_by_case_type.get(case_type),
             "is_deprecated": case_type.is_deprecated,
             "module_count": module_count,
             "properties_count": case_type.properties_count,
-            "is_safe_to_delete": len(used_props) == 0,
         })
     return JsonResponse({
         'case_types': case_types_data,
