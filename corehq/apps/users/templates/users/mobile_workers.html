@@ -401,17 +401,17 @@
                   <span
                     class="label label-info"
                     data-bind="visible: is_connect_link_active() === true"
-                    >{% trans 'Linked' %}</span
+                    >{% trans 'Active' %}</span
                   >
                   <span
                     class="label label-danger"
                     data-bind="visible: is_connect_link_active() === false"
-                    >{% trans 'Not Linked' %}</span
+                    >{% trans 'Inactive' %}</span
                   >
                   <span
                     class="label label-warning"
                     data-bind="visible: is_connect_link_active() === null"
-                    >{% trans 'Pending' %}</span
+                    >{% trans 'Not Linked' %}</span
                   >
                 </td>
               {% endif %}
