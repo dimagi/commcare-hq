@@ -10,9 +10,6 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 
 
-LOCATION_COLUMNS = 24
-
-
 UserRow = namedtuple('UserRow', 'state lga ward settlement username')
 
 
@@ -80,17 +77,17 @@ class Command(BaseCommand):
         parser.add_argument('users_csv')
 
     def handle(self, domain, users_csv, *args, **options):
-        no_errors = True
-
         for user_settlements in iter_user_settlements(domain, users_csv):
             try:
-                confirm_user_settlements(user_settlements)
-            except UserLocationError:
-                if no_errors:
-                    no_errors = False
-                    self.stdout.write(user_import_headers)
-                row = get_user_import_row(user_settlements)
-                self.stdout.write(row)
+                location_id_map = map_mismatches(domain, user_settlements)
+            except UserLocationError as err:
+                self.stderr.write(str(err))
+                continue
+            if not location_id_map:
+                continue
+
+            output = get_output(user_settlements.user, location_id_map)
+            self.stdout.write(output)
 
 
 def iter_user_settlements(
@@ -176,26 +173,49 @@ def get_commcare_user(domain: str, row_username: str) -> CommCareUser:
     return last_commcare_user
 
 
-def confirm_user_settlements(user_settlements: UserSettlements) -> None:
-    user = user_settlements.user
-    for location in user_settlements.settlements:
-        if location.id not in user.assigned_location_ids:
-            raise UserLocationError(
-                f"User '{user.raw_username}' not in location '{location!r}'"
-            )
+def map_mismatches(
+    domain: str,
+    user_settlements: UserSettlements,
+) -> dict[str, str]:
+    assigned_location_ids = set(user_settlements.user.assigned_location_ids)
+    settlement_ids = {loc.id for loc in user_settlements.settlements}
+    if assigned_location_ids == settlement_ids:
+        # No mismatches
+        return {}
+
+    old_location_ids = assigned_location_ids - settlement_ids
+    new_location_ids = settlement_ids - assigned_location_ids
+    if len(old_location_ids) == len(new_location_ids) == 1:
+        # One mismatch, obvious mapping
+        return {old_location_ids.pop(): new_location_ids.pop()}
+
+    if len(old_location_ids) == len(new_location_ids):
+        # Try to map by dip_name
+        new_ids_by_dip_name = {
+            loc.dip_name: loc.id
+            for loc in user_settlements.settlements
+            if loc.id in new_location_ids
+        }
+        old_ids_by_loc_name = {}
+        for loc_id in old_location_ids:
+            loc = SQLLocation.objects.get(domain=domain, location_id=loc_id)
+            old_ids_by_loc_name[loc.name] = loc_id
+        if new_ids_by_dip_name.keys() == old_ids_by_loc_name.keys():
+            return {
+                old_ids_by_loc_name[name]: new_ids_by_dip_name[name]
+                for name in new_ids_by_dip_name.keys()
+            }
+
+    raise UserLocationError(
+        f'Unable to map locations for user {user_settlements.user.raw_username}: '
+        f'{old_location_ids} -> {new_location_ids}'
+    )
 
 
-user_import_headers = ','.join(
-    ['username', 'user_id']
-    + [f'location_code {i}' for i in range(1, LOCATION_COLUMNS + 1)]
-)
-
-
-def get_user_import_row(user_settlements: UserSettlements) -> str:
-    site_codes = [loc.site_code for loc in user_settlements.settlements]
-    # Pad with empty strings
-    site_codes += [''] * (LOCATION_COLUMNS - len(user_settlements.settlements))
-    return ','.join([
-        user_settlements.user.raw_username,
-        user_settlements.user.user_id,
-    ] + site_codes)
+def get_output(user, location_id_map):
+    return '\n'.join(
+        [f'{user.raw_username}:'] + [
+            f'    {old_id} -> {new_id}'
+            for old_id, new_id in location_id_map.items()
+        ]
+    )
