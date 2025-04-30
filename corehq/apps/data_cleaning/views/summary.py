@@ -26,7 +26,6 @@ class ChangesSummaryView(BulkEditSessionViewMixin,
 
     @hq_hx_action('post')
     def undo_changes_summary(self, request, *args, **kwargs):
-        # todo: render summary context
         return self.render_htmx_partial_response(
             request,
             "data_cleaning/summary/undo_changes.html",
