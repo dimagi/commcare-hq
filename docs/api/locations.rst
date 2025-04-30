@@ -14,9 +14,9 @@ List Locations
 
     GET https://www.commcarehq.org/a/[domain]/api/location/v1/
 
-**Input Parameters (v1)**
-
 Locations can be filtered by the following attributes as request parameters:
+
+**Input Parameters (v1)**
 
 .. list-table::
    :header-rows: 1
@@ -35,6 +35,37 @@ Locations can be filtered by the following attributes as request parameters:
      - Latitude coordinate of the location
    * - ``longitude``
      - Longitude coordinate of the location
+
+**Input Parameters (v2)**
+
+.. list-table::
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Example
+   * - ``site_code``
+     - Site code for the location
+     - ``?site_code=boston``
+   * - ``location_type_code``
+     - The location's type code
+     - ``?location_type_code=city``
+   * - ``parent_location_id``
+     - The UUID of the location's direct parent
+     - ``?parent_location_id=5ce87caa-a739-4a61-a0cb-559f84a9b4b7``
+   * - ``last_modified.gte``
+     - Locations last modified on or after a specific date or datetime
+     - ``?last_modified.gte=2024-01-01``
+   * - ``last_modified.gt``
+     - Locations last modified after a specific date or datetime
+     - ``?last_modified.gt=2024-01-01``
+   * - ``last_modified.lt``
+     - Locations last modified before a specific date or datetime
+     - ``?last_modified.lt=2024-01-01``
+   * - ``last_modified.lte``
+     - Locations last modified on or before a specific date or datetime
+     - ``?last_modified.lte=2024-01-01``
+
 
 **Sample JSON Output (v1)**
 
@@ -70,10 +101,10 @@ Locations can be filtered by the following attributes as request parameters:
 
 **v2**
 
-The main distinctions between the v1 and v2 GET endpoints are that v2:
-
-- Removes a few fields and adds a few fields from the response (there is no ``external_id`` with v2, for example, but there is ``parent_location_id``).
-- Currently does not allow filtering on the list endpoint.
+The main distinction between the v1 and v2 GET endpoints is the serialization
+format. V2 Removes a few defunct fields and adds some new ones. It also provides
+IDs and/or codes of related locations and types, while v1 gave URLs that could
+be used to access those types.
 
 For the list endpoint, the "meta" section will look the same and the locations will still be in a list called "objects". But an individual location object will look like:
 
