@@ -66,6 +66,12 @@ Locations can be filtered by the following attributes as request parameters:
      - Locations last modified on or before a specific date or datetime
      - ``?last_modified.lte=2024-01-01``
 
+v2 can also be ordered by ``last_modified`` from oldest to newest with the
+parameter ``order_by=last_modified``, or from newest to oldest with
+``order_by=-last_modified``. This can be used in conjunction with the
+``last_modified.gte`` parameter to only fetch locations modified since your last
+data pull.
+
 
 **Sample JSON Output (v1)**
 

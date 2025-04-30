@@ -415,6 +415,26 @@ class LocationV0_6Test(APIResourceTest):
                          {'error': "Could not update: could not find location with"
                                    f" given ID {unknown_location_id} on the domain."})
 
+    def test_ordering(self):
+
+        def assert_ordering(url, expected):
+            response = self._assert_auth_get_resource(url)
+            self.assertEqual([
+                loc['site_code'] for loc in response.json()['objects']
+            ], expected)
+
+        assert_ordering(f"{self.list_endpoint}?order_by=last_modified", [
+            'colorado', 'denver', 'south_park',
+        ])
+        assert_ordering(f"{self.list_endpoint}?order_by=-last_modified", [
+            'south_park', 'denver', 'colorado',
+        ])
+
+        self.location1.save()  # touch colorado so it comes last
+        assert_ordering(f"{self.list_endpoint}?order_by=last_modified", [
+            'denver', 'south_park', 'colorado',
+        ])
+
 
 class TestV0_6LocationsList(APIResourceTest):
     api_name = 'v0.6'

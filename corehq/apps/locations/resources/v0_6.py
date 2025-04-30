@@ -30,6 +30,7 @@ class LocationResource(v0_5.LocationResource):
         max_limit = 5000
         queryset = SQLLocation.active_objects.all()
         detail_uri_name = 'location_id'
+        ordering = ['last_modified']
         authentication = RequirePermissionAuthentication(HqPermissions.edit_locations)
         list_allowed_methods = ['get', 'post', 'patch']
         detail_allowed_methods = ['get', 'put']
