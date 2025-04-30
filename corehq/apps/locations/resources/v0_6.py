@@ -54,16 +54,14 @@ class LocationResource(v0_5.LocationResource):
         }
 
     def build_filters(self, filters=None, **kwargs):
-        if not filters:
-            return {}
-
-        # Turn last_modified.gte to last_modified__gte
-        filters = {'__'.join(k.split('.')): v for k, v in filters.items()}
         orm_filters = {}
-        if code := filters.pop('location_type_code', None):
-            orm_filters['location_type__code'] = code
-        if parent_id := filters.pop('parent_location_id', None):
-            orm_filters['parent__location_id'] = parent_id
+        if filters:
+            # Turn last_modified.gte to last_modified__gte
+            filters = {'__'.join(k.split('.')): v for k, v in filters.items()}
+            if code := filters.pop('location_type_code', None):
+                orm_filters['location_type__code'] = code
+            if parent_id := filters.pop('parent_location_id', None):
+                orm_filters['parent__location_id'] = parent_id
 
         return {
             **super().build_filters(filters, **kwargs),
