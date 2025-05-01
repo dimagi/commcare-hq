@@ -93,19 +93,6 @@
       {% endif %}
     {% endif %}
 
-    {% if request.use_multiselect %}
-      {% compress css %}
-        <link type="text/css"
-              rel="stylesheet"
-              media="screen"
-              href="{% static "multiselect/css/multi-select.css" %}" />
-        <link type="text/less"
-              rel="stylesheet"
-              media="screen"
-              href="{% static "hqwebapp/less/components/multiselect/multiselect.less" %}" />
-      {% endcompress %}
-    {% endif %}
-
     <script>
       window.USE_BOOTSTRAP5 = {{ use_bootstrap5|BOOL }};
     </script>

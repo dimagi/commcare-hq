@@ -1,10 +1,11 @@
-
 hqDefine('hqwebapp/js/multiselect_utils', [
     "jquery",
     "knockout",
     "underscore",
     "hqwebapp/js/assert_properties",
     "multiselect/js/jquery.multi-select",
+    "multiselect/css/multi-select.css",
+    "hqwebapp/less/components/multiselect/multiselect.less",
 ], function (
     $,
     ko,
