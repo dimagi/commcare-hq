@@ -186,9 +186,9 @@ def sync_all_appointments_domain(domain):
         patient_helper = CaseHelper(case=patient, domain=domain)
         patient_fhir_id = patient.get_case_property('fhir_id')
         if not patient_fhir_id:
-            given = patient.get_case_property('given_name')
-            family = patient.get_case_property('family_name')
-            birthdate = patient.get_case_property('birthdate')
+            given = patient.get_case_property('first_name')
+            family = patient.get_case_property('last_name')
+            birthdate = patient.get_case_property('dob')
             if given and family and birthdate:
                 patient_fhir_id = get_patient_fhir_id(given, family, birthdate, access_token)
 
