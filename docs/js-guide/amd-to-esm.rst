@@ -69,23 +69,6 @@ If this module is a webpack entry point, then it is eligible for an update. In t
 The entry point can also be specified with ``js_entry_b3`` if the module is part of the Bootstrap 3 build
 of Webpack.
 
-Dependency Modules
-~~~~~~~~~~~~~~~~~~
-
-If this module is referenced by any ``hqImport`` calls (for instance ``hqImport('hqwebapp/js/my_module')``),
-then this module is NOT yet eligible, and must continue using the older AMD-style syntax until
-the ``hqImport`` statements are no longer needed. See the
-`JS Bundler Migration Guide <https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/migrating.rst>`__ for
-how to proceed in this case.
-
-Slightly Different Syntax
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If the AMD-style module looks a bit different than the syntax above--for instance, the list of dependencies are missing or
-``hqImport`` and/or global variables can be found in the main body of the module--then this module must be
-`migrated to use a JS Bundler <https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/migrating.rst>`__.
-
-
 Step 2: Update the Module Syntax
 --------------------------------
 
