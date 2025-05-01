@@ -26,7 +26,7 @@ function percent() {
 ## Main script
 
 command=${1:-""}
-help="Pass TODO to list the files that have yet to be migrated. list-esm to list ESM formatted files"
+help="Pass list-no-esm to list the files still using hqDefine, or list-esm to list ESM formatted files"
 
 jsTotalCount=$(echo $(list-js | wc -l))
 noEsmJsTotalCount=$(echo $(list-no-esm-js | wc -l))
@@ -37,6 +37,11 @@ case $command in
   "list-esm" )
     echo "These files use ESM syntax:"
     list-esm-js | sed 's/^/  /'
+    ;;
+
+  "list-no-esm" )
+    echo "These files do not use ESM syntax:"
+    list-no-esm-js | sed 's/^/  /'
     ;;
 
   # For use with static_analysis management command
