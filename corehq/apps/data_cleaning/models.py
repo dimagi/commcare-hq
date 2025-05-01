@@ -296,6 +296,7 @@ class BulkEditSession(models.Model):
         record = BulkEditRecord.get_record_for_inline_editing(self, doc_id)
         BulkEditChange.apply_inline_edit(record, prop_id, value)
 
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
     def _attach_change_to_records(self, change, doc_ids=None):
         """
         :param change: BulkEditChange
@@ -307,7 +308,6 @@ class BulkEditSession(models.Model):
             selected_records = self.records.filter(doc_id__in=doc_ids, is_selected=True)
         change.records.add(*selected_records)
 
-    @retry_on_integrity_error(max_retries=3, delay=0.1)
     @transaction.atomic
     def apply_change_to_selected_records_in_queryset(self, change):
         """
