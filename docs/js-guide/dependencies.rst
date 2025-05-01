@@ -157,17 +157,6 @@ instead relying on globals like ``ko`` (for Knockout.js) in the example below.
    });
 
 
-How do I know if I’m working with Webpack?
-------------------------------------------------------------
-
-You are likely working with Webpack.
-However, one major areas has **not** been migrated: app manager.
-
-The easiest way to determine if a page is using either Webpack is to
-open the JavaScript console on that page and type ``window.USE_WEBPACK``, which will return
-``true`` if the page is using Webpack. If it is undefined, then the page is
-a no-bundler page.
-
 ES Modules (ESM)
 ~~~~~~~~~~~~~~~~
 
