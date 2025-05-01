@@ -231,13 +231,17 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
         }
 
         function isActionPossible(action) {
+            if (action === 'resend') {
+                // all actions are possible for resending
+                return true;
+            }
             const containsQueuedRecords = selectionContainsQueuedRecords();
             if (containsQueuedRecords) {
-                // all we can do is cancel
+                // don't allow requeueing queued records
                 return action === 'cancel';
             } else {
-                // nothing is queued, so you shouldn't need to cancel
-                return ['resend', 'requeue'].includes(action);
+                // nothing is queued, so there is nothing to cancel
+                return action === 'requeue'
             }
         }
 
