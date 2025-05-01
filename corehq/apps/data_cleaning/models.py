@@ -1,6 +1,9 @@
 import re
 import uuid
 
+from celery import uuid as celery_uuid
+from datetime import datetime, timezone
+
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
@@ -305,6 +308,14 @@ class BulkEditSession(models.Model):
             selected_records = self.records.filter(is_selected=True)
             change.records.add(*selected_records)
 
+    @property
+    def num_changed_records(self):
+        if not self.committed_on:
+            raise RuntimeError(
+                "Session not committed yet. Please commit the session first or use get_change_counts()"
+            )
+        return self.result['record_count'] if self.completed_on else self.records.count()
+
     def get_change_counts(self):
         """
         Get the details of the number of records with changes, and the number
@@ -328,6 +339,41 @@ class BulkEditSession(models.Model):
 
     def get_num_changes(self):
         return self.changes.count()
+
+    def is_undo_multiple(self):
+        """
+        Check if the last change in the session affects multiple records.
+        :return: bool - True if the last change affects multiple records
+        """
+        last_change = self.changes.last()
+        return last_change and last_change.records.count() > 1
+
+    def purge_records(self):
+        """
+        Delete all records that do not have changes or are not selected.
+        """
+        self.records.filter(is_selected=False, changes__isnull=True).delete()
+
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
+    def undo_last_change(self):
+        self.changes.last().delete()
+        self.purge_records()
+
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
+    def clear_all_changes(self):
+        self.changes.all().delete()
+        self.purge_records()
+
+    def prepare_session_for_commit(self):
+        """
+        Prepare the session for commit by generating a task id
+        and setting the committed_on date.
+        """
+        self.task_id = celery_uuid()
+        self.committed_on = datetime.now(timezone.utc).replace(tzinfo=None)
+        self.save()
 
     def is_record_selected(self, doc_id):
         return BulkEditRecord.is_record_selected(self, doc_id)
@@ -1123,6 +1169,39 @@ class BulkEditChange(models.Model):
 
     class Meta:
         ordering = ["created_on"]
+
+    @property
+    def action_title(self):
+        """
+        Returns a human-readable title of the action.
+        """
+        return dict(EditActionType.CHOICES).get(self.action_type, _("Unknown action"))
+
+    @property
+    def action_detail(self):
+        """
+        Returns a human-readable detail of the action.
+        To be read as {{ action_title }} {{ action_detail }}
+        """
+        if self.action_type == EditActionType.REPLACE:
+            return _('value with "{replace_string}".').format(
+                replace_string=self.replace_string,
+            )
+        elif self.action_type == EditActionType.FIND_REPLACE:
+            return _('"{find_string}" with "{replace_string}"{use_regex}.').format(
+                find_string=self.find_string,
+                replace_string=self.replace_string,
+                use_regex=_(" (using regex)") if self.use_regex else "",
+            )
+        elif self.action_type == EditActionType.COPY_REPLACE:
+            return _('from case property "{copy_from_prop_id}".').format(
+                copy_from_prop_id=self.copy_from_prop_id,
+            )
+        return ""
+
+    @property
+    def num_records(self):
+        return self.records.count()
 
     def edited_value(self, case, edited_properties=None):
         """

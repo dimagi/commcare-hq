@@ -108,7 +108,10 @@ to see how that works.
 
 Updating requirements
 ---------------------
-To update requirements edit:
+
+Python
+~~~~~~
+To update python requirements, edit:
 
 * ``requirements/requirements.in`` for packages for all environments
 
@@ -120,9 +123,21 @@ To update requirements edit:
 
 and run ``make requirements``.
 
-To upgrade all requirements to their latest allowed version you can run
+To upgrade all requirements to their latest allowed version, you can run
 ``make upgrade-requirements``—this usually results in a large number of upgrades
 and is not something we can merge easily, but it is sometimes a useful exploratory first step.
+
+Javascript
+~~~~~~~~~~
+To update javascript requirements, edit ``package.json``:
+
+* ``dependencies`` for dependencies needed for all environments
+
+* ``devDependencies`` for developer environments only
+
+and run ``yarn install``.
+
+Commit the changes to ``package.json`` along with the updates to ``yarn.lock``.
 
 PR labels
 ---------

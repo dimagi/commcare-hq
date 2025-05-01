@@ -5,4 +5,8 @@
     The following edit will be undone:
   {% endblocktrans %}
 </p>
-{# todo list most recent edit #}
+{% if change %}
+  <div class="list-group">
+    {% include "data_cleaning/summary/partial/change_detail.html" with change=change %}
+  </div>
+{% endif %}
