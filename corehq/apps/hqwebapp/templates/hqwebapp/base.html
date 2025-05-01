@@ -137,41 +137,6 @@
           <script src="{% static 'jquery.cookie/jquery.cookie.js' %}"></script>
           <script src="{% static 'jquery.rmi/jquery.rmi.js' %}"></script>
       {% endcompress %}
-      {% if request.use_jquery_ui %}
-        {% compress js %}
-            <!-- this defines jquery ui ($.ui) so this MUST come first -->
-            <script src="{% static 'jquery-ui/ui/version.js' %}"></script>
-
-            <!-- all files originally in core.js, as that file now requires use of an AMD and it will be deprecated in 1.13 -->
-            <script src="{% static 'jquery-ui/ui/data.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/disable-selection.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/focusable.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/form.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/ie.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/keycode.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/labels.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/plugin.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/safe-active-element.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/safe-blur.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/scroll-parent.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/tabbable.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/unique-id.js' %}"></script>
-
-            <script src="{% static 'jquery-ui/ui/position.js' %}"></script>
-
-            <!-- Individual widgets and interactions -->
-            <script src="{% static 'jquery-ui/ui/widget.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/widgets/mouse.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/widgets/menu.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/widgets/autocomplete.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/widgets/button.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/widgets/datepicker.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/widgets/draggable.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/widgets/resizable.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/widgets/droppable.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/widgets/sortable.js' %}"></script>
-        {% endcompress %}
-      {% endif %}
       {% if use_bootstrap5 %}
         <script src="{% static "bootstrap5/dist/js/bootstrap.bundle.min.js" %}"></script>
       {% else %}
@@ -242,23 +207,6 @@
             <script src="{% static 'hqwebapp/js/bootstrap3/inactivity.js' %}"></script>
         {% endcompress %}
       {% endif %}
-    {% endif %}
-
-    {# Up here because if daterangepicker is called from within a form widget, #}
-    {# the javascript requiring the config file is run before js-inline #}
-    {% if request.use_daterangepicker and not use_js_bundler and not use_bootstrap5 %}
-      {% compress js %}
-        <script src="{% static 'moment/moment.js' %}"></script>
-        <script src="{% static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/daterangepicker.config.js' %}"></script>
-      {% endcompress %}
-    {% endif %}
-
-    {% if request.use_tempusdominus and not use_js_bundler and use_bootstrap5 %}
-      {% compress js %}
-        <script src="{% static '@popperjs/core/dist/umd/popper.min.js' %}"></script>
-        <script src="{% static '@eonasdan/tempus-dominus/dist/js/tempus-dominus.min.js' %}"></script>
-      {% endcompress %}
     {% endif %}
 
     {% block head %}
@@ -479,45 +427,6 @@
       {% compress js %}
         <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
       {% endcompress %}
-    {% endif %}
-
-    {% if request.use_datatables and not use_js_bundler %}
-      {% if use_bootstrap5 %}
-        {% compress js %}
-          <script src="{% static 'datatables.net/js/jquery.dataTables.min.js' %}"></script>
-          <script src="{% static 'datatables.net-bs5/js/dataTables.bootstrap5.min.js' %}"></script>
-          <script src="{% static 'datatables.net-fixedcolumns/js/dataTables.fixedColumns.min.js' %}"></script>
-          <script src="{% static 'datatables.net-fixedcolumns-bs5/js/fixedColumns.bootstrap5.min.js' %}"></script>
-        {% endcompress %}
-      {% else %}
-        {% compress js %}
-          <script src="{% static 'datatables.net/js/jquery.dataTables.min.js' %}"></script>
-          <script src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js' %}"></script>
-          <script src="{% static 'datatables-bootstrap3/BS3/assets/js/datatables.js' %}"></script>
-        {% endcompress %}
-      {% endif %}
-    {% endif %}
-
-    {% if request.use_timepicker and not use_js_bundler and not use_bootstrap5 %}
-      {% compress js %}
-        <script src="{% static 'bootstrap-timepicker/js/bootstrap-timepicker.js' %}"></script>
-      {% endcompress %}
-    {% endif %}
-
-    {% if request.use_multiselect and not use_js_bundler %}
-      {% compress js %}
-        <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/multiselect_utils.js' %}"></script>
-      {% endcompress %}
-    {% endif %}
-
-    {% if request.use_ko_validation and not use_js_bundler %}
-      <script src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
-      {% if use_bootstrap5 %}
-        <script src="{% static 'hqwebapp/js/bootstrap5/validators.ko.js' %}"></script>
-      {% else %}
-        <script src="{% static 'hqwebapp/js/bootstrap3/validators.ko.js' %}"></script>
-      {% endif %}
     {% endif %}
 
     {% if show_overdue_invoice_modal and not use_js_bundler %}
