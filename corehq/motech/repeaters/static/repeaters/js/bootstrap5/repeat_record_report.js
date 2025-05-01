@@ -241,7 +241,7 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
                 return action === 'cancel';
             } else {
                 // nothing is queued, so there is nothing to cancel
-                return action === 'requeue'
+                return action === 'requeue';
             }
         }
 
