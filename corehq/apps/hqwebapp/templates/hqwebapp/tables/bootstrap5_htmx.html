@@ -33,7 +33,7 @@
 
 {% block select-per-page-attr %}
   name="{{ table.per_page_field }}"
-  hx-get="{{ request.path_info }}"
+  hx-get="{{ request.path_info }}{% querystring %}"
   hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}.table-container{% endif %}"
   hx-swap="outerHTML"
   hq-hx-loading="{{ table.loading_indicator_id }}"
