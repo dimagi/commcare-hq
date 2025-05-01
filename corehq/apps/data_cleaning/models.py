@@ -284,6 +284,18 @@ class BulkEditSession(models.Model):
 
         return num_selected_records
 
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
+    def apply_inline_edit(self, doc_id, prop_id, value):
+        """
+        Edit the value of a property for a document in this session.
+        :param doc_id: the id of the document (case / form)
+        :param prop_id: the property id to edit
+        :param value: the new value to set
+        """
+        record = BulkEditRecord.get_record_for_inline_editing(self, doc_id)
+        BulkEditChange.apply_inline_edit(record, prop_id, value)
+
     def _apply_change_to_selected_doc_ids(self, change, doc_ids):
         """
         Apply a change to the selected records with the given doc_ids.
@@ -954,6 +966,20 @@ class BulkEditRecord(models.Model):
     calculated_properties = models.JSONField(null=True, blank=True)
 
     @classmethod
+    def get_record_for_inline_editing(cls, session, doc_id):
+        """
+        :param session: BulkEditSession
+        :param doc_id: the id of the document (case / form)
+        :return: BulkEditRecord
+        """
+        record, _ = cls.objects.get_or_create(
+            session=session,
+            doc_id=doc_id,
+            defaults={'is_selected': False}
+        )
+        return record
+
+    @classmethod
     def is_record_selected(self, session, doc_id):
         return session.records.filter(
             doc_id=doc_id,
@@ -1161,6 +1187,24 @@ class BulkEditChange(models.Model):
 
     class Meta:
         ordering = ["created_on"]
+
+    @classmethod
+    def apply_inline_edit(cls, record, prop_id, value):
+        """
+        Apply an inline edit to a record.
+        :param record: BulkEditRecord
+        :param prop_id: the id of the property to edit
+        :param value: the new value for the property
+        :return: BulkEditChange
+        """
+        change = cls.objects.create(
+            session=record.session,
+            prop_id=prop_id,
+            action_type=EditActionType.REPLACE,
+            replace_string=value,
+        )
+        change.records.add(record)
+        return change
 
     @property
     def action_title(self):

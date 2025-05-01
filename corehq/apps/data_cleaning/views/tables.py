@@ -210,7 +210,8 @@ class CleanCasesTableView(BulkEditSessionViewMixin,
         Commits the inline edit action for a cell.
         """
         doc_id, column = self._get_cell_request_details(request)
-        # placeholder
+        value = request.POST["newValue"]
+        self.session.apply_inline_edit(doc_id, column.prop_id, value)
         return self._render_table_cell_response(
             doc_id, column, request, *args, **kwargs
         )
