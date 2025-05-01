@@ -306,7 +306,16 @@ class BulkEditSession(models.Model):
             selected_records = self.records.filter(is_selected=True)
         else:
             selected_records = self.records.filter(doc_id__in=doc_ids, is_selected=True)
-        change.records.add(*selected_records)
+
+        # M2M relationships don't support bulk_create, so we need to access the through model
+        # to properly batch this action
+        if selected_records:
+            through = BulkEditChange.records.through
+            rows = [
+                through(bulkeditchange_id=change.pk, bulkeditrecord_id=record.pk)
+                for record in selected_records
+            ]
+            through.objects.bulk_create(rows, ignore_conflicts=True)
 
     @transaction.atomic
     def apply_change_to_selected_records(self, change):
