@@ -26,12 +26,6 @@ function list-js-without-hqDefine() {
   list-no-esm-js | xargs grep -L 'hqDefine'
 }
 
-# Partial indicator of RequireJS work left: how many js files don't yet use
-# the variation of hqDefine that specifies dependencies?
-function list-js-without-requirejs() {
-  list-no-esm-js | xargs grep -L 'hqDefine.*\['
-}
-
 # The other indicator of RequireJS work left: how many HTML files still have script tags?
 function list-html-with-external-scripts() {
   list-html | xargs grep -l 'script.*src='
@@ -47,7 +41,7 @@ function percent() {
 ## Main script
 
 command=${1:-""}
-help="Pass list-hqdefine, list-requirejs, or list-requirejs-html to list the files that have yet to be migrated. list-esm to list ESM formatted files"
+help="Pass list-hqdefine or list-requirejs-html to list the files that have yet to be migrated. list-esm to list ESM formatted files"
 
 jsTotalCount=$(echo $(list-js | wc -l))
 noEsmJsTotalCount=$(echo $(list-no-esm-js | wc -l))
@@ -64,11 +58,6 @@ case $command in
   "list-hqdefine" )
     echo "The following files do not use hqDefine:"
     list-js-without-hqDefine | sed 's/^/  /'
-    ;;
-
-  "list-requirejs" )
-    echo "The following modules do not specify their dependencies:"
-    list-js-without-requirejs | sed 's/^/  /'
     ;;
 
   "list-requirejs-html" )
@@ -89,9 +78,6 @@ case $command in
 
     unmigratedCount=$(echo $(list-js-without-hqDefine | wc -l))
     echo "$(percent $unmigratedCount $noEsmJsTotalCount) of non-ESM JS files use hqDefine"
-
-    unmigratedCount=$(echo $(list-js-without-requirejs | wc -l))
-    echo "$(percent $unmigratedCount $noEsmJsTotalCount) of non-ESM JS files specify their dependencies"
 
     unmigratedCount=$(echo $(list-html-with-external-scripts | wc -l))
     echo "$(percent $unmigratedCount $htmlTotalCount) of HTML files are free of script tags"
