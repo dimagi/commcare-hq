@@ -17,10 +17,6 @@ from corehq.apps.reports.standard import (
 )
 from corehq.apps.reports.standard.cases.filters import CaseSearchFilter
 from corehq.apps.reports.standard.cases.utils import (
-    all_project_data_filter,
-    deactivated_case_owners,
-    get_case_owners,
-    query_location_restricted_cases,
     query_with_case_owners_filters,
 )
 from corehq.elastic import ESError
@@ -99,14 +95,6 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
 
     def _run_es_query(self):
         return self._build_query().run().raw
-
-    @property
-    @memoized
-    def case_owners(self):
-        mobile_user_and_group_slugs = self.get_request_param(EMWF.slug, as_list=True)
-        return get_case_owners(
-            self.request.can_access_all_locations, self.domain, mobile_user_and_group_slugs
-        )
 
     def get_case(self, row):
         if '_source' in row:
