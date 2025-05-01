@@ -197,13 +197,6 @@ Troubleshooting
 Troubleshooting migration issues
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When debugging Webpack issues, the first question is whether or not
-the page you’re on has been migrated. You can find out by checking the
-value of ``window.USE_WEBPACK`` in the browser console. If this is ``false``,
-then the page has not been migrated yet.
-
-Common issues on Webpack pages:
-
 - JS error like
   ``$(...).something is not a function``: this indicates there’s a missing
   dependency. Typically “something” is either ``select2`` or a jQuery UI
