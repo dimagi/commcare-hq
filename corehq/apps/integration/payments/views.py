@@ -26,6 +26,7 @@ from corehq.apps.integration.payments.forms import PaymentConfigureForm
 from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.apps.integration.payments.services import verify_payment_cases
 from corehq.apps.integration.payments.tables import PaymentsVerifyTable
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.reports.standard.cases.utils import query_with_case_owners_filters
 from corehq.apps.users.decorators import require_permission
@@ -71,6 +72,7 @@ require_payments_report_access = require_permission(
 )
 
 
+@location_safe
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
 @method_decorator(require_payments_report_access, name='dispatch')
@@ -95,6 +97,7 @@ class PaymentsVerificationReportView(BaseDomainView, PaymentsFiltersMixin):
         }
 
 
+@location_safe
 @method_decorator(login_and_domain_required, name='dispatch')
 @method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
 @method_decorator(require_payments_report_access, name='dispatch')
