@@ -12,11 +12,10 @@ hqDefine("sms/js/settings", [
     $,
     ko,
     initialPageData,
-    select2Handler
+    select2Handler,
 ) {
     $(function () {
         function dayTimeWindow(day, startTime, endTime, timeInputRelationship) {
-            'use strict';
             var self = {};
             self.day = ko.observable(day);
             self.start_time = ko.observable(startTime);
@@ -33,13 +32,12 @@ hqDefine("sms/js/settings", [
             };
 
             self.time_input_relationship = ko.observable(
-                timeInputRelationship || self.time_input_relationship_initial()
+                timeInputRelationship || self.time_input_relationship_initial(),
             );
             return self;
         }
 
         function settingsViewModel(initial) {
-            'use strict';
             var self = {};
 
             self.use_default_sms_response = ko.observable();
@@ -54,12 +52,12 @@ hqDefine("sms/js/settings", [
             self.sms_mobile_worker_registration_enabled = ko.observable();
             self.sms_case_registration_owner_id = settingsSelect2Handler(
                 initial.sms_case_registration_owner_id,
-                'sms_case_registration_owner_id'
+                'sms_case_registration_owner_id',
             );
             self.sms_case_registration_owner_id.init();
             self.sms_case_registration_user_id = settingsSelect2Handler(
                 initial.sms_case_registration_user_id,
-                'sms_case_registration_user_id'
+                'sms_case_registration_user_id',
             );
             self.sms_case_registration_user_id.init();
             self.override_daily_outbound_sms_limit = ko.observable();
@@ -152,8 +150,8 @@ hqDefine("sms/js/settings", [
                                 window.day,
                                 window.start_time,
                                 window.end_time,
-                                window.time_input_relationship
-                            )
+                                window.time_input_relationship,
+                            ),
                         );
                     }
                 } else {
@@ -168,8 +166,8 @@ hqDefine("sms/js/settings", [
                                 window.day,
                                 window.start_time,
                                 window.end_time,
-                                window.time_input_relationship
-                            )
+                                window.time_input_relationship,
+                            ),
                         );
                     }
                 } else {
@@ -207,7 +205,7 @@ hqDefine("sms/js/settings", [
         };
 
         var settingsModel = settingsViewModel(
-            initialPageData.get("current_values")
+            initialPageData.get("current_values"),
         );
         $('#sms-settings-form').koApplyBindings(settingsModel);
         settingsModel.init();
