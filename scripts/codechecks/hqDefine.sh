@@ -16,10 +16,6 @@ function list-esm-js() {
   list-js | xargs grep -l '^import.*;'
 }
 
-function list-html() {
-  find corehq custom -name '*.html' | grep -v 'vellum'
-}
-
 ## Count files that haven't met migration criteria
 
 function list-js-without-hqDefine() {
@@ -41,7 +37,6 @@ help="Pass list-hqdefine to list the files that have yet to be migrated. list-es
 jsTotalCount=$(echo $(list-js | wc -l))
 noEsmJsTotalCount=$(echo $(list-no-esm-js | wc -l))
 esmJsTotalCount=$((jsTotalCount - noEsmJsTotalCount))
-htmlTotalCount=$(echo $(list-html | wc -l))
 
 case $command in
 
