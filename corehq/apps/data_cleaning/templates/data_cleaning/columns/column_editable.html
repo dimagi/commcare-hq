@@ -110,7 +110,10 @@
           class="btn btn-outline-danger"
           type="button"
           :disabled="isSubmitting"
-          @click="isEditing = false"
+          @click="
+            isEditing = false;
+            cellValue = initialValue;
+          "
         >
           <i class="fa fa-close"></i>
           <span class="visually-hidden">{% trans "Cancel Edit" %}</span>
