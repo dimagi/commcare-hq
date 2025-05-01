@@ -221,17 +221,12 @@ def query_with_case_owners_filters(
     mobile_user_and_group_slugs
 ):
     case_owner_filters = []
-    if (
-        can_access_all_locations
-        and EMWF.show_project_data(mobile_user_and_group_slugs)
-    ):
-        case_owner_filters.append(all_project_data_filter(domain, mobile_user_and_group_slugs))
 
-    if (
-        can_access_all_locations
-        and EMWF.show_deactivated_data(mobile_user_and_group_slugs)
-    ):
-        case_owner_filters.append(deactivated_case_owners(domain))
+    if can_access_all_locations:
+        if EMWF.show_project_data(mobile_user_and_group_slugs):
+            case_owner_filters.append(all_project_data_filter(domain, mobile_user_and_group_slugs))
+        if EMWF.show_deactivated_data(mobile_user_and_group_slugs):
+            case_owner_filters.append(deactivated_case_owners(domain))
 
     # Only show explicit matches
     if (
