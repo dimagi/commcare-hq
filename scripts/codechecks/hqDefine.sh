@@ -51,6 +51,7 @@ help="Pass list-hqdefine, list-requirejs, or list-requirejs-html to list the fil
 
 jsTotalCount=$(echo $(list-js | wc -l))
 noEsmJsTotalCount=$(echo $(list-no-esm-js | wc -l))
+esmJsTotalCount=$((jsTotalCount - noEsmJsTotalCount))
 htmlTotalCount=$(echo $(list-html | wc -l))
 
 case $command in
@@ -77,9 +78,8 @@ case $command in
 
   # For use with static_analysis management command
   "static-analysis" )
-    withoutHqDefineCount=$(echo $(list-js-without-hqDefine | wc -l))
-    withoutRequireJsCount=$(echo $(list-js-without-requirejs | wc -l))
-    echo "$withoutHqDefineCount $(($withoutRequireJsCount - $withoutHqDefineCount)) $(($noEsmJsTotalCount - $withoutRequireJsCount))"
+    noEsmCount=$(echo $(list-no-esm-js | wc -l))
+    echo "$esmJsTotalCount $noEsmJsTotalCount"
     ;;
 
   "")
