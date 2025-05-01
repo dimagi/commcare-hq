@@ -75,7 +75,7 @@
                  } else {
                      showWarning('not-allowed');
                  }
-@@ -277,7 +277,7 @@
+@@ -281,7 +281,7 @@
                      } else {
                          btn.text(gettext('Failed'));
                          btn.addClass('btn-danger');
@@ -84,7 +84,7 @@
                          $('#payload-error-modal .error-message').text(response.failure_reason);
                      }
                  },
-@@ -316,17 +316,17 @@
+@@ -320,17 +320,17 @@
  
          function showWarning(reason) {
              if (reason === 'no-selection') {
@@ -108,7 +108,7 @@
          }
  
          function checkAllRows() {
-@@ -378,8 +378,8 @@
+@@ -382,8 +382,8 @@
          function resetTableSelections() {
              selectedEntireTable = false;
              selectAllCheckbox.checked = false;
