@@ -14,7 +14,6 @@ import yaml
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 
-ScriptCode = str
 IDMap = dict[str, str]
 IDList = list[str]
 
@@ -23,17 +22,9 @@ UserRow = namedtuple('UserRow', 'state lga ward settlement username')
 
 
 @dataclass
-class Location:
-    id: str
-    site_code: str
-    dip_name: str
-    script_code: ScriptCode
-
-
-@dataclass
 class UserSettlements:
     user: CommCareUser
-    settlements: list[Location]
+    settlements: list[SQLLocation]
 
 
 class UserChanges(TypedDict):
@@ -55,26 +46,17 @@ class UserLocationError(ValueError):
     pass
 
 
-location_cache: dict[ScriptCode, Location] = {
-    'nambia·foo·bar·baz': Location(
-        id='def456',
-        site_code='baz_bar_foo_settlement',
-        dip_name='Baz',
-        script_code='nambia·foo·bar·baz',
-    ),
+code_to_location_id = {
+    'katsina·faskari·maigora': '24fc6b0f63af4cb1b8153d00e6a3ae1a',
 }
+location_cache: dict[str, SQLLocation] = {}
 
 
 # No need to cache more than one user. They are repeated in consecutive rows.
 last_commcare_user: Optional[CommCareUser] = None
 
 
-country = Location(
-    id='abc123',
-    site_code='nambia',
-    dip_name='Nambia',
-    script_code='nambia',
-)
+country_id = '8a5dd963b891448f87edbe8edb8dfc69'
 
 
 class Command(BaseCommand):
@@ -133,10 +115,19 @@ def iter_user_settlements(
     user_settlements = None
     for row in iter_user_rows(csv_filename):
         user = get_commcare_user(domain, row.username)
-        state = get_location(domain, row.state, country)
-        lga = get_location(domain, row.lga, state)
-        ward = get_location(domain, row.ward, lga)
-        settlement = get_location(domain, row.settlement, ward)
+
+        state_code = get_code(row.state)
+        state = get_location_by_code(domain, state_code, country_id)
+
+        lga_code = get_code(row.state, row.lga)
+        lga = get_location_by_code(domain, lga_code, state.location_id)
+
+        ward_code = get_code(row.state, row.lga, row.ward)
+        ward = get_location_by_code(domain, ward_code, lga.location_id)
+
+        settlement_code = get_code(row.state, row.lga, row.ward, row.settlement)
+        settlement = get_location_by_code(domain, settlement_code, ward.location_id)
+
         if user_settlements is None:
             user_settlements = UserSettlements(user, [settlement])
         elif user_settlements.user.user_id != user.user_id:
@@ -172,27 +163,55 @@ def iter_user_rows(csv_filename: str) -> Iterable[UserRow]:
             last_full_row = full_row
 
 
-def get_location(domain: str, name: str, parent: Location) -> Location:
+def get_location_by_code(
+    domain: str,
+    code: str,
+    parent_location_id: str,
+) -> SQLLocation:
+    # Modifies the value of code_to_location_id, location_cache
+    if code in code_to_location_id:
+        return get_location(domain, code_to_location_id[code])
+
+    name = get_location_name(code)
+    parent = get_location(domain, parent_location_id)
+    locations = parent.children.filter(name__iexact=name).all()
+    if len(locations) == 1:
+        code_to_location_id[code] = locations[0].location_id
+        location_cache[locations[0].location_id] = locations[0]
+        return locations[0]
+    elif len(locations) > 1:
+        raise LocationError(f"Multiple locations found for '{name}' under {parent!r}")
+    else:
+        raise LocationError(f"No location found for '{name}' under {parent!r}")
+
+
+def get_location(domain: str, location_id: str) -> SQLLocation:
     # Modifies the value of location_cache
 
-    name = lower_one_space(name)
-    script_code = f'{parent.script_code}·{name}'
-    if script_code not in location_cache:
-        sql_parent = SQLLocation.objects.get(domain=domain, location_id=parent.id)
-        sql_locations = sql_parent.children.filter(name__iexact=name).all()
-        if len(sql_locations) == 1:
-            location_cache[script_code] = Location(
-                id=sql_locations[0].location_id,
-                site_code=sql_locations[0].site_code,
-                dip_name=name,
-                script_code=script_code,
-            )
-        elif len(sql_locations) > 1:
-            raise LocationError(f"Multiple locations found for '{name}' under {parent!r}")
-        else:
-            raise LocationError(f"No location found for '{name}' under {parent!r}")
+    if location_id not in location_cache:
+        location = SQLLocation.objects.get(domain=domain, location_id=location_id)
+        location_cache[location_id] = location
+    return location_cache[location_id]
 
-    return location_cache[script_code]
+
+def iter_locations(
+        domain: str,
+        location_ids: Iterable[str],
+) -> Iterable[SQLLocation]:
+    # Modifies the value of location_cache
+
+    cache_misses = []
+    for location_id in location_ids:
+        if location_id in location_cache:
+            yield location_cache[location_id]
+        else:
+            cache_misses.append(location_id)
+    for location in SQLLocation.objects.filter(
+        domain=domain,
+        location_id__in=cache_misses,
+    ).all():
+        location_cache[location.location_id] = location
+        yield location
 
 
 def get_commcare_user(domain: str, row_username: str) -> CommCareUser:
@@ -212,7 +231,7 @@ def get_commcare_user(domain: str, row_username: str) -> CommCareUser:
 
 def has_changes(user_settlements: UserSettlements) -> bool:
     assigned_location_ids = set(user_settlements.user.assigned_location_ids)
-    settlement_ids = {loc.id for loc in user_settlements.settlements}
+    settlement_ids = {loc.location_id for loc in user_settlements.settlements}
     return assigned_location_ids != settlement_ids
 
 
@@ -221,25 +240,20 @@ def get_user_changes(
     user_settlements: UserSettlements,
 ) -> UserChanges:
     assigned_location_ids = set(user_settlements.user.assigned_location_ids)
-    settlement_ids = {loc.id for loc in user_settlements.settlements}
+    settlement_ids = {loc.location_id for loc in user_settlements.settlements}
     old_location_ids = assigned_location_ids - settlement_ids
     new_location_ids = settlement_ids - assigned_location_ids
-    new_ids_by_dip_name = {
-        lower_one_space(loc.dip_name): loc.id
+    new_ids_by_name = {
+        lower_one_space(loc.name): loc.location_id
         for loc in user_settlements.settlements
-        if loc.id in new_location_ids
+        if loc.location_id in new_location_ids
     }
 
     location_id_map = {}
-    old_sql_locations = SQLLocation.objects.filter(
-        domain=domain,
-        location_id__in=old_location_ids,
-    ).all()
-    for sql_loc in old_sql_locations:
-        if new_id := new_ids_by_dip_name.get(lower_one_space(sql_loc.name)):
-            # DIP name for settlement matches name of old location
-            location_id_map[sql_loc.location_id] = new_id
-            old_location_ids.remove(sql_loc.location_id)
+    for loc in iter_locations(domain, list(old_location_ids)):
+        if new_id := new_ids_by_name.get(lower_one_space(loc.name)):
+            location_id_map[loc.location_id] = new_id
+            old_location_ids.remove(loc.location_id)
             new_location_ids.remove(new_id)
 
     return UserChanges(
@@ -248,6 +262,32 @@ def get_user_changes(
         unmapped_old_locations=list(old_location_ids),
         unmapped_new_locations=list(new_location_ids),
     )
+
+
+def get_code(*args: str) -> str:
+    """
+    Get the code for a location from the names of its parent locations.
+
+    >>> get_code('Katsina')
+    'katsina'
+    >>> get_code('Katsina', 'Faskari', 'Maigora')
+    'katsina·faskari·maigora'
+
+    """
+    return '·'.join([lower_one_space(name) for name in args])
+
+
+def get_location_name(code: str) -> str:
+    """
+    Get the name of a location from its code.
+
+    >>> get_location_name('katsina')
+    'Katsina'
+    >>> get_location_name('katsina·faskari·maigora')
+    'Maigora'
+
+    """
+    return code.split('·')[-1].capitalize()
 
 
 def lower_one_space(string: str) -> str:
