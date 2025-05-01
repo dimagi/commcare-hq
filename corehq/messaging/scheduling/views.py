@@ -37,7 +37,6 @@ from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_jquery_ui,
-    use_timepicker,
 )
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.sms.filters import EventStatusFilter, EventTypeFilter
@@ -450,7 +449,6 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
     @use_jquery_ui
-    @use_timepicker
     def dispatch(self, *args, **kwargs):
         return super(CreateScheduleView, self).dispatch(*args, **kwargs)
 
@@ -787,7 +785,6 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
     @use_jquery_ui
-    @use_timepicker
     def dispatch(self, *args, **kwargs):
         return super(CreateConditionalAlertView, self).dispatch(*args, **kwargs)
 
