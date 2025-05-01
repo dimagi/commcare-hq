@@ -75,18 +75,6 @@ def use_timepicker(view_func):
     return set_request_flag(view_func, 'use_timepicker')
 
 
-def use_ko_validation(view_func):
-    """Use this decorator to use knockout validation in knockout forms
-
-    Example Tag Usage:
-
-    @use_ko_validation
-    def dispatch(self, request, *args, **kwargs):
-        return super(MyView, self).dispatch(request, *args, **kwargs)
-    """
-    return set_request_flag(view_func, 'use_ko_validation')
-
-
 def use_bootstrap5(view_func):
     """Use this decorator on the dispatch method of a TemplateView subclass
     to enable Boostrap 5 features for the included template.
