@@ -2,13 +2,17 @@ import doctest
 import tempfile
 from contextlib import contextmanager
 from inspect import cleandoc
+from io import StringIO
 from typing import Iterator
-from unittest.mock import patch, call
+from unittest.mock import call, patch
 
 from django.test import SimpleTestCase, TestCase
 
+import yaml
+
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.management.commands.nphcda_find_mismatches import (
+    UserChanges,
     UserRow,
     get_commcare_user,
     iter_user_rows,
@@ -119,6 +123,66 @@ class TestGetCommCareUser(TestCase):
                 call(username1),
                 call(username2),
             ]
+
+
+def test_yaml_output():
+    all_user_changes = (uc for uc in [
+        UserChanges(
+            username='FO/BAZ001',
+            location_map={'abc123': 'def456'},
+            unmapped_old_locations=[],
+            unmapped_new_locations=[],
+        ),
+        UserChanges(
+            username='FO/BAZ002',
+            location_map={},
+            unmapped_old_locations=['abc123'],
+            unmapped_new_locations=[],
+        ),
+        UserChanges(
+            username='FO/BAZ003',
+            location_map={},
+            unmapped_old_locations=[],
+            unmapped_new_locations=['def456'],
+        ),
+        UserChanges(
+            username='FO/BAZ004',
+            location_map={'abc123': 'def456'},
+            unmapped_old_locations=['abc456'],
+            unmapped_new_locations=['def789'],
+        ),
+    ])
+    with StringIO() as f:
+        yaml.dump_all(all_user_changes, f)
+        f.seek(0)
+        output = f.read()
+    assert output == cleandoc("""
+        location_map:
+          abc123: def456
+        unmapped_new_locations: []
+        unmapped_old_locations: []
+        username: FO/BAZ001
+        ---
+        location_map: {}
+        unmapped_new_locations: []
+        unmapped_old_locations:
+        - abc123
+        username: FO/BAZ002
+        ---
+        location_map: {}
+        unmapped_new_locations:
+        - def456
+        unmapped_old_locations: []
+        username: FO/BAZ003
+        ---
+        location_map:
+          abc123: def456
+        unmapped_new_locations:
+        - def789
+        unmapped_old_locations:
+        - abc456
+        username: FO/BAZ004
+        """) + '\n'
 
 
 def test_doctests():

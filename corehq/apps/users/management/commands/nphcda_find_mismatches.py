@@ -1,15 +1,15 @@
 import csv
-import json
 import re
 from collections import namedtuple
 from contextlib import contextmanager
 from dataclasses import dataclass
-from itertools import zip_longest
+from itertools import chain, zip_longest
 from typing import Iterable, Optional, TypedDict
 
 from django.core.management.base import BaseCommand
 
 import xlwt
+import yaml
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
@@ -97,8 +97,8 @@ class Command(BaseCommand):
                 for user_changes in iter_all_user_changes(domain, users_csv):
                     write_to_sheet(sheet, row_by_ref, user_changes)
         else:
-            for user_changes in iter_all_user_changes(domain, users_csv):
-                self.stdout.write(json.dumps(user_changes, indent=4))
+            all_user_changes = iter_all_user_changes(domain, users_csv)
+            yaml.dump_all(all_user_changes, self.stdout)
 
 
 @contextmanager
@@ -266,13 +266,16 @@ def write_to_sheet(
     row_by_ref: list[int],
     user_changes: UserChanges,
 ) -> None:
-    rows = zip_longest(
-        [user_changes['username']],
-        user_changes['location_map'].keys(),
-        user_changes['location_map'].values(),
-        user_changes['unmapped_old_locations'],
-        user_changes['unmapped_new_locations'],
-        fillvalue='',
+    rows = chain(
+        zip_longest(
+            [user_changes['username']],
+            user_changes['location_map'].keys(),
+            user_changes['location_map'].values(),
+            user_changes['unmapped_old_locations'],
+            user_changes['unmapped_new_locations'],
+            fillvalue='',
+        ),
+        (('', '', '', '', ''),)  # Empty row
     )
     for row in rows:
         for col, value in enumerate(row):
