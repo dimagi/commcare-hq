@@ -305,11 +305,14 @@ class BulkEditSession(models.Model):
         selected_records = BulkEditRecord.get_selected_records_with_ids(self, doc_ids)
         change.records.add(*selected_records)
 
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
     def apply_change_to_selected_records_in_queryset(self, change):
         """
         Apply a change to the selected records in the current queryset.
-        :param change: BulkEditChange
+        :param change: BulkEditChange - an UNSAVED instance
         """
+        change.save()  # save the change in the atomic block, rather than the form
         if self.has_any_filtering:
             self._apply_operation_on_queryset(
                 lambda doc_ids: self._apply_change_to_selected_doc_ids(change, doc_ids)
