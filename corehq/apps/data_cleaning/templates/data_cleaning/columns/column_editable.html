@@ -79,6 +79,7 @@
     x-show="isEditing"
     x-data="{
       cellValue: {% get_cell_value value edited_value %},
+      initialValue: {% get_cell_value value edited_value %},
     }"
   >
     <form
@@ -99,7 +100,7 @@
         <button
           class="btn btn-primary"
           type="submit"
-          disabled="disabled"  {# todo implement inline edit submission #}
+          :disabled="cellValue === initialValue"
           @click="isSubmitting = true"
         >
           <i class="fa fa-check"></i>
