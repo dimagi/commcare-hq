@@ -10,6 +10,7 @@ from django.core.management.base import BaseCommand
 
 import xlwt
 import yaml
+from xlwt import XFStyle
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
@@ -75,30 +76,12 @@ class Command(BaseCommand):
     def handle(self, domain, users_csv, *args, **options):
         if options['output_xlsx']:
             with get_worksheet(options['output_xlsx']) as sheet:
-                row_by_ref = [1]  # Allow `write_to_sheet` to increment by ref
+                row_by_ref = [1]  # Allow write_to_sheet() to increment by ref
                 for user_changes in iter_all_user_changes(domain, users_csv):
                     write_to_sheet(sheet, row_by_ref, user_changes)
         else:
             all_user_changes = iter_all_user_changes(domain, users_csv)
             yaml.dump_all(all_user_changes, self.stdout)
-
-
-@contextmanager
-def get_worksheet(xlsx_filename):
-    workbook = xlwt.Workbook()
-    sheet = workbook.add_sheet('User Location Changes')
-    for col, heading in enumerate([
-        'Username',
-        'Map from old ID',
-        'Map to new ID',
-        'Unmapped old IDs',
-        'Unmapped new IDs',
-    ]):
-        sheet.write(0, col, heading)
-    try:
-        yield sheet
-    finally:
-        workbook.save(xlsx_filename)
 
 
 def iter_all_user_changes(domain: str, users_csv: str) -> Iterable[UserChanges]:
@@ -185,12 +168,14 @@ def get_location_by_code(
         raise LocationError(f"No location found for '{name}' under {parent!r}")
 
 
-def get_location(domain: str, location_id: str) -> SQLLocation:
+def get_location(domain: Optional[str], location_id: str) -> SQLLocation:
     # Modifies the value of location_cache
 
     if location_id not in location_cache:
-        location = SQLLocation.objects.get(domain=domain, location_id=location_id)
-        location_cache[location_id] = location
+        queryset = SQLLocation.objects.filter(location_id=location_id)
+        if domain:
+            queryset = queryset.filter(domain=domain)
+        location_cache[location_id] = queryset.get()
     return location_cache[location_id]
 
 
@@ -301,6 +286,28 @@ def lower_one_space(string: str) -> str:
     return re.sub(r'\s+', ' ', string).strip().lower()
 
 
+@contextmanager
+def get_worksheet(xlsx_filename):
+    heading_style = XFStyle()
+    heading_style.font.height = 0x00DC  # 220 (11pt)
+    heading_style.font.bold = True
+
+    workbook = xlwt.Workbook()
+    sheet = workbook.add_sheet('User Location Changes')
+    for col, heading in enumerate([
+        'Username',
+        'Map from old location',
+        'Map to new location',
+        'Unmapped old locations',
+        'Unmapped new locations',
+    ]):
+        sheet.write(0, col, heading, style=heading_style)
+    try:
+        yield sheet
+    finally:
+        workbook.save(xlsx_filename)
+
+
 def write_to_sheet(
     sheet: xlwt.Worksheet,
     row_by_ref: list[int],
@@ -309,15 +316,34 @@ def write_to_sheet(
     rows = chain(
         zip_longest(
             [user_changes['username']],
-            user_changes['location_map'].keys(),
-            user_changes['location_map'].values(),
-            user_changes['unmapped_old_locations'],
-            user_changes['unmapped_new_locations'],
+            iter_long_settlement_names(user_changes['location_map'].keys()),
+            iter_long_settlement_names(user_changes['location_map'].values()),
+            iter_long_settlement_names(user_changes['unmapped_old_locations']),
+            iter_long_settlement_names(user_changes['unmapped_new_locations']),
             fillvalue='',
         ),
         (('', '', '', '', ''),)  # Empty row
     )
     for row in rows:
         for col, value in enumerate(row):
+
             sheet.write(row_by_ref[0], col, value)
         row_by_ref[0] += 1
+
+
+def iter_long_settlement_names(settlement_ids):
+    for settlement_id in settlement_ids:
+        yield long_settlement_name(settlement_id)
+
+
+def long_settlement_name(settlement_id):
+    settlement = location_cache[settlement_id]
+    ward = get_location(None, settlement.parent_location_id)
+    lga = get_location(None, ward.parent_location_id)
+    state = get_location(None, lga.parent_location_id)
+    return ' · '.join([
+        state.name,
+        lga.name,
+        ward.name,
+        f'{settlement.name} «{settlement_id}»'
+    ])
