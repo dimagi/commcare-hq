@@ -13,35 +13,23 @@
  * Modules MUST have a name, and SHOULD be given the name of the javascript file in
  * which they reside, and SHOULD be themselves simple javascript objects.
  *
- * Modules are defined with hqDefine, and "imported" (referenced) with hqImport. Example:
- *
  * Define the module. Note that as a convention, the module name should match the file path
  * but exclude the .js extension.
  *   // myapp/static/myapp/js/utils.js
- *   hqDefine('myapp/js/utils', function () {
+ *   hqDefine('myapp/js/utils', [], function () {
  *      var module = {};
  *      module.util1 = function () {...};
  *      module.util2 = function () {...};
  *      return module;
  *   });
  *
- * Include the module source on your page:
- *   // myapp/templates/myapp/page.html
- *   ...
- *   <script src="myapp/js/utils.js"></script>
- *   ...
- *
- * Reference the module in other code (either directly in the template or in another
- * file/module):
- *
- *   var utils = hqImport('myapp/js/utils');
- *   ... utils.util1() ...
- *   ... utils.util2() ...
- *
- * You can also use the following idiom to effectively import only one property or
- * function:
- *
- *   var util1 = hqImport('myapp/js/utils').util1;
+ * Reference the module in another hqDefine module:
+ *   // myapp/static/myapp/js/app.js
+ *   hqDefine('myapp/js/app', ['myapp/js/utils'], function (utils) {
+ *      ...
+ *      utils.util1();
+ *      ...
+ *   });
  */
 
 var COMMCAREHQ_MODULES = {};
@@ -80,7 +68,11 @@ function hqDefine(path, dependencies, moduleAccessor) {
         for (var i = 0; i < dependencies.length; i++) {
             var dependency = dependencies[i];
             if (Object.hasOwn(COMMCAREHQ_MODULES, dependency)) {
-                args[i] = hqImport(dependency);
+                args[i] = COMMCAREHQ_MODULES[dependency];
+                if (args[i] === undefined) {
+                    throw new Error("The module '" + dependency + "' has not yet been defined.\n\n" +
+                        'Did you include <script src="' + dependency + '.js"></script> on your html page?');
+                }
             } else if (Object.hasOwn(thirdPartyGlobals, dependency)) {
                 args[i] = window[thirdPartyGlobals[dependency]];
             }
@@ -97,13 +89,4 @@ function hqDefine(path, dependencies, moduleAccessor) {
 }
 if (typeof define === 'undefined') {
     define = hqDefine;      // eslint-disable-line no-global-assign
-}
-
-// For use only with modules that are never used in a requirejs context.
-function hqImport(path) {
-    if (COMMCAREHQ_MODULES[path] === undefined) {
-        throw new Error("The module '" + path + "' has not yet been defined.\n\n" +
-            'Did you include <script src="' + path + '.js"></script> on your html page?');
-    }
-    return COMMCAREHQ_MODULES[path];
 }

@@ -124,11 +124,7 @@ please see `Migrating Modules from AMD to ESM
 Modified AMD Legacy Modules
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Modified AMD-style modules are used both on bundler pages and no-bundler pages.
-
-To differentiate between the two, look at the module's ``hqDefine`` call at the top of the file.
-
-Modules in this format used with Webpack will look like the following,
+Modified AMD-style modules look like this,
 with all dependencies loaded as part of ``hqDefine``:
 
 ::
@@ -141,18 +137,6 @@ with all dependencies loaded as part of ``hqDefine``:
        initialPageData
    ) {
        var myObservable = ko.observable(initialPageData.get("thing"));
-       ...
-   });
-
-In no-bundler areas of the codebase, "transition" AMD modules look like the following,
-having no dependency list and no function parameters.
-Additionally, HQ modules are loaded using ``hqImport`` in the body, and third-party libraries aren't declared at all,
-instead relying on globals like ``ko`` (for Knockout.js) in the example below.
-
-::
-
-   hqDefine("my_app/js/my_file", function () {
-       var myObservable = ko.observable(hqImport("hqwebapp/js/initial_page_data").get("thing"));
        ...
    });
 
@@ -231,51 +215,6 @@ parameter to the ``hqDefine`` callback:
        ...
        myDependency.myFunction();
    });
-
-
-No-Bundler Pages
-~~~~~~~~~~~~~~~~
-
-.. note::
-
-    No-Bundler pages are pages that do not have a Webpack entry point.
-    New pages should never be created without a ``js_entry`` entry point.
-
-    Eventually, the remaining pages in this category will be modularized properly to integrate with Webpack
-    as part of the `JS Bundler Migration
-    <https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/migrating.rst>`__.
-
-    Also note that these pages are **only** compatible with legacy modified AMD modules. ESM modules
-    do not work here.
-
-In your HTML template, add a script tag to your new dependency. Your
-template likely already has scripts included in a ``js`` block:
-
-::
-
-   {% block js %}{{ block.super }}
-     ...
-     <script src="{% static 'hqwebapp/js/my_new_dependency.js' %}"></script>
-   {% endblock js %}
-
-In your JavaScript file, use ``hqImport`` to get access to your new
-dependency:
-
-::
-
-   hqDefine("my_app/js/my_module", function () {
-       ...
-       var myDependency = hqImport("hqwebapp/js/my_new_dependency");
-       myDependency.myFunction();
-   });
-
-Do **not** add the dependency list and parameters from the modified AMD style or
-use `hqImport` on ESM formatted modules. It's
-easy to introduce bugs that won’t be visible until the module is
-actually migrated, and migrations are harder when they have pre-existing
-bugs. See the `troubleshooting section of the JS Bundler Migration
-Guide <https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/migrating.rst#troubleshooting>`__
-if you’re curious about the kinds of issues that crop up.
 
 
 My python tests are failing because of javascript
