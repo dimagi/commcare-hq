@@ -197,7 +197,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             ConfigurableReportView,
             CustomConfigurableReportDispatcher,
         )
-        from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
+        from corehq.apps.microplanning.dispatchers import CaseManagementMapDispatcher
 
         dispatchers = [
             ProjectReportDispatcher,

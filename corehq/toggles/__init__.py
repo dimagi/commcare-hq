@@ -2611,9 +2611,9 @@ ATTENDANCE_TRACKING = StaticToggle(
 
 
 def _handle_geospatial_es_index(domain, is_enabled):
-    from corehq.apps.geospatial.tasks import index_es_docs_with_location_props
-    from corehq.apps.geospatial.utils import get_celery_task_tracker
-    from corehq.apps.geospatial.const import ES_INDEX_TASK_HELPER_BASE_KEY
+    from corehq.apps.microplanning.tasks import index_es_docs_with_location_props
+    from corehq.apps.microplanning.utils import get_celery_task_tracker
+    from corehq.apps.microplanning.const import ES_INDEX_TASK_HELPER_BASE_KEY
 
     if is_enabled:
         celery_task_tracker = get_celery_task_tracker(domain, ES_INDEX_TASK_HELPER_BASE_KEY)
@@ -2942,7 +2942,7 @@ INCREASED_MAX_SEARCH_RESULTS = StaticToggle(
 
 SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM = StaticToggle(
     slug='support_road_network_disbursement_algorithm',
-    label='Add Road Network disbursement algorithm on geospatial settings page',
+    label='Add Road Network disbursement algorithm on microplanning settings page',
     tag=TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
     description='Add support for the Road Network disbursement algorithm for the Geospatial feature',

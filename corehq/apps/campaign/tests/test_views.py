@@ -22,7 +22,7 @@ from corehq.apps.campaign.views import (
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
+from corehq.apps.microplanning.const import GPS_POINT_CASE_PROPERTY
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.tests.utils import create_case
 from corehq.util.test_utils import flag_enabled

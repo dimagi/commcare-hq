@@ -47,7 +47,7 @@ from corehq.apps.events.views import (
     EventsView,
 )
 from corehq.apps.case_search.views import CSQLFixtureExpressionView
-from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
+from corehq.apps.microplanning.dispatchers import CaseManagementMapDispatcher
 from corehq.apps.hqadmin.reports import (
     DeployHistoryReport,
     UserAuditReport,
@@ -117,7 +117,7 @@ from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
 from corehq.apps.users.models import HqPermissions
-from corehq.apps.geospatial.views import (
+from corehq.apps.microplanning.views import (
     GeospatialConfigPage,
     GPSCaptureView,
 )
