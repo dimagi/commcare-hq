@@ -57,47 +57,41 @@ function hqDefine(path, dependencies, moduleAccessor) {
     }
 
     (function (factory) {
-        if (typeof define === 'function' && define.amd && window.USE_WEBPACK) {
-            // HQ's webpack config replaces hqDefine calls with define calls,
-            // so it's important that this do nothing but pass through to require
-            define(path, dependencies, factory);
+        var thirdPartyGlobals = {
+            'jquery': '$',
+            'knockout': 'ko',
+            'underscore': '_',
+            'clipboard/dist/clipboard': 'ClipboardJS',
+            'd3/d3.min': 'd3',
+            'ace-builds/src-min-noconflict/ace': 'ace',
+            'chai/chai': 'chai',
+            'DOMPurify': 'DOMPurify',
+            'DOMPurify/dist/purify.min': 'DOMPurify',
+            'mocha/mocha': 'mocha',
+            'moment/moment': 'moment',
+            'crypto-js/crypto-js': 'CryptoJS',
+            'hqwebapp/js/lib/modernizr': 'Modernizr',
+        };
+        if (window.USE_BOOTSTRAP5) {
+            thirdPartyGlobals['bootstrap5'] = 'bootstrap';
+            thirdPartyGlobals['tempusDominus'] = 'tempusDominus';
+        }
+        var args = [];
+        for (var i = 0; i < dependencies.length; i++) {
+            var dependency = dependencies[i];
+            if (Object.hasOwn(COMMCAREHQ_MODULES, dependency)) {
+                args[i] = hqImport(dependency);
+            } else if (Object.hasOwn(thirdPartyGlobals, dependency)) {
+                args[i] = window[thirdPartyGlobals[dependency]];
+            }
+        }
+        if (!Object.hasOwn(COMMCAREHQ_MODULES, path)) {
+            if (path.match(/\.js$/)) {
+                throw new Error("Error in '" + path + "': module names should not end in .js.");
+            }
+            COMMCAREHQ_MODULES[path] = factory.apply(undefined, args);
         } else {
-            var thirdPartyGlobals = {
-                'jquery': '$',
-                'knockout': 'ko',
-                'underscore': '_',
-                'clipboard/dist/clipboard': 'ClipboardJS',
-                'd3/d3.min': 'd3',
-                'ace-builds/src-min-noconflict/ace': 'ace',
-                'chai/chai': 'chai',
-                'DOMPurify': 'DOMPurify',
-                'DOMPurify/dist/purify.min': 'DOMPurify',
-                'mocha/mocha': 'mocha',
-                'moment/moment': 'moment',
-                'crypto-js/crypto-js': 'CryptoJS',
-                'hqwebapp/js/lib/modernizr': 'Modernizr',
-            };
-            if (window.USE_BOOTSTRAP5) {
-                thirdPartyGlobals['bootstrap5'] = 'bootstrap';
-                thirdPartyGlobals['tempusDominus'] = 'tempusDominus';
-            }
-            var args = [];
-            for (var i = 0; i < dependencies.length; i++) {
-                var dependency = dependencies[i];
-                if (Object.hasOwn(COMMCAREHQ_MODULES, dependency)) {
-                    args[i] = hqImport(dependency);
-                } else if (Object.hasOwn(thirdPartyGlobals, dependency)) {
-                    args[i] = window[thirdPartyGlobals[dependency]];
-                }
-            }
-            if (!Object.hasOwn(COMMCAREHQ_MODULES, path)) {
-                if (path.match(/\.js$/)) {
-                    throw new Error("Error in '" + path + "': module names should not end in .js.");
-                }
-                COMMCAREHQ_MODULES[path] = factory.apply(undefined, args);
-            } else {
-                throw new Error("The module '" + path + "' has already been defined elsewhere.");
-            }
+            throw new Error("The module '" + path + "' has already been defined elsewhere.");
         }
     }(moduleAccessor));
 }
