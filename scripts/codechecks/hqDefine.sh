@@ -16,12 +16,6 @@ function list-esm-js() {
   list-js | xargs grep -l '^import.*;'
 }
 
-## Count files that haven't met migration criteria
-
-function list-js-without-hqDefine() {
-  list-no-esm-js | xargs grep -L 'hqDefine'
-}
-
 ## Calculate migrated percentage for given statistic
 function percent() {
   result=$(echo "100 - $1 * 100 / $2" | bc)
@@ -32,7 +26,7 @@ function percent() {
 ## Main script
 
 command=${1:-""}
-help="Pass list-hqdefine to list the files that have yet to be migrated. list-esm to list ESM formatted files"
+help="Pass TODO to list the files that have yet to be migrated. list-esm to list ESM formatted files"
 
 jsTotalCount=$(echo $(list-js | wc -l))
 noEsmJsTotalCount=$(echo $(list-no-esm-js | wc -l))
@@ -45,11 +39,6 @@ case $command in
     list-esm-js | sed 's/^/  /'
     ;;
 
-  "list-hqdefine" )
-    echo "The following files do not use hqDefine:"
-    list-js-without-hqDefine | sed 's/^/  /'
-    ;;
-
   # For use with static_analysis management command
   "static-analysis" )
     noEsmCount=$(echo $(list-no-esm-js | wc -l))
@@ -59,9 +48,6 @@ case $command in
   "")
     # No command passed; print total migration progress
     echo
-
-    unmigratedCount=$(echo $(list-js-without-hqDefine | wc -l))
-    echo "$(percent $unmigratedCount $noEsmJsTotalCount) of non-ESM JS files use hqDefine"
 
     unmigratedCount=$(echo $(list-no-esm-js | wc -l))
     echo "$(percent $unmigratedCount $jsTotalCount) of JS files use ESM format"
