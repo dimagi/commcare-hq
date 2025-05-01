@@ -75,12 +75,18 @@
     </button>
   </div>
 
-  <div x-show="isEditing">
+  <div
+    x-show="isEditing"
+    x-data="{
+      cellValue: {% get_cell_value value edited_value %},
+    }"
+  >
     <div class="input-group">
       <input
         class="form-control"
         type="text"
         name="newValue"
+        x-model="cellValue"
       />
       <button
         class="btn btn-primary"

@@ -128,6 +128,12 @@ def cell_request_params(record, bound_column):
 
 
 @register.simple_tag
+def get_cell_value(value, edited_value):
+    assigned_value = edited_value if has_edits(edited_value) else value
+    return json.dumps(assigned_value)
+
+
+@register.simple_tag
 def display_dc_value(value):
     """
     Returns a template that "styles" the value for display in the
