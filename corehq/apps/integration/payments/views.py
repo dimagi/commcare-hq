@@ -27,6 +27,7 @@ from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.apps.integration.payments.services import verify_payment_cases
 from corehq.apps.integration.payments.tables import PaymentsVerifyTable
 from corehq.apps.reports.generic import get_filter_classes
+from corehq.apps.reports.standard.cases.utils import query_with_case_owners_filters
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions, WebUser
 from corehq.apps.users.permissions import PAYMENTS_REPORT_PERMISSION
@@ -103,6 +104,14 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
 
     def get_queryset(self):
         query = CaseSearchES().domain(self.request.domain).case_type(MOMO_PAYMENT_CASE_TYPE)
+        mobile_user_and_group_slugs = self.request.GET.getlist('mobile_user_and_group_slugs')
+        query = query_with_case_owners_filters(
+            query,
+            self.request.domain,
+            self.request.couch_user,
+            self.request.can_access_all_locations,
+            mobile_user_and_group_slugs
+        )
         query = self._apply_filters(query)
         return query
 
