@@ -13,9 +13,10 @@ from urllib.parse import urlencode
 from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 
-OAUTH_TEST_URL = "https://stage-ws-interconnect-fhir.partners.org/Interconnect-FHIR-MU-TST/oauth2/token"
-PATIENT_TEST_URL = "https://stage-ws-interconnect-fhir.partners.org/Interconnect-FHIR-MU-TST/api/FHIR/R4/Patient"
-APPOINTMENT_TEST_URL = "https://stage-ws-interconnect-fhir.partners.org/Interconnect-FHIR-MU-TST/api/FHIR/R4/Appointment"
+
+OAUTH_URL = "https://ws-interconnect-fhir.partners.org/Interconnect-FHIR-MU-PRD/oauth2/token"
+PATIENT_URL = "https://ws-interconnect-fhir.partners.org/Interconnect-FHIR-MU-PRD/api/FHIR/R4/Patient"
+APPOINTMENT_URL = "https://ws-interconnect-fhir.partners.org/Interconnect-FHIR-MU-PRD/api/FHIR/R4/Appointment"
 
 
 def handle_response(response):
@@ -37,7 +38,7 @@ def generate_epic_jwt():
     payload = {
         "iss": settings.EPIC_CLIENT_ID,
         "sub": settings.EPIC_CLIENT_ID,
-        "aud": OAUTH_TEST_URL,
+        "aud": OAUTH_URL,
         "jti": jti,
         "exp": exp
     }
@@ -54,7 +55,7 @@ def request_epic_access_token():
         "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
         "client_assertion": generate_epic_jwt()
     }
-    url = OAUTH_TEST_URL
+    url = OAUTH_URL
     response = requests.post(url, data=data, headers=headers)
     response_json = handle_response(response)
 
@@ -62,7 +63,7 @@ def request_epic_access_token():
 
 
 def get_patient_fhir_id(given_name, family_name, birthdate, access_token):
-    base_url = PATIENT_TEST_URL
+    base_url = PATIENT_URL
     params = {
         'birthdate': birthdate,
         'family': family_name,
@@ -117,7 +118,7 @@ def get_epic_appointments_for_patient(fhir_id, access_token, opened_on, study_st
     headers = {
         'authorization': f'Bearer {access_token}',
     }
-    base_url = APPOINTMENT_TEST_URL
+    base_url = APPOINTMENT_URL
     params = {
         'patient': fhir_id,
         'service-category': 'appointment',
