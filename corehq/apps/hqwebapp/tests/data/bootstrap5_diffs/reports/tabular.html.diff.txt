@@ -125,7 +125,7 @@
                {% for stats in report_table.statistics_rows %}
                  <tr>
                    {% for col in stats %}
-@@ -91,13 +118,12 @@
+@@ -91,26 +118,17 @@
                    {% endfor %}
                  </tr>
                {% endfor %}
@@ -142,9 +142,7 @@
 +      {% endif %}
 +    {% endblock reporttable %}
    </div>
-   {% block posttable %}
-     <div id="report-timing-profile"></div>
-@@ -105,14 +131,6 @@
+   {% block posttable %}{% endblock posttable %}
  {% endblock reportcontent %}
  
  {% block js-inline %} {{ block.super }}

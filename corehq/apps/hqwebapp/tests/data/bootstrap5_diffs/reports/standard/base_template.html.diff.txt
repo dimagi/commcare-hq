@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,28 +1,32 @@
+@@ -1,24 +1,26 @@
 -{% extends "hqwebapp/bootstrap3/two_column.html" %}
 +{% extends "hqwebapp/bootstrap5/two_column.html" %}
  {% load compress %}
@@ -27,26 +27,16 @@
 -          rel="stylesheet"
 -          media="all"
 -          href="{% static 'reports/less/reports.less' %}" />
--    <link type="text/css"
--          rel="stylesheet"
--          media="all"
--          href="{% static 'reports/css/timing-profile.css' %}" />
 +    <link
 +      type="text/scss"
 +      rel="stylesheet"
 +      media="all"
 +      href="{% static 'reports/scss/reports.scss' %}"
 +    />
-+    <link
-+      type="text/css"
-+      rel="stylesheet"
-+      media="all"
-+      href="{% static 'reports/css/timing-profile.css' %}"
-+    />
    {% endcompress %}
    {% include 'reports/partials/filters_css.html' %}
  
-@@ -32,22 +36,33 @@
+@@ -28,22 +30,33 @@
  {% block title %}{{ report.title|default:"Project Reports" }}{% endblock %}
  
  {% block page_breadcrumbs %}
@@ -96,7 +86,7 @@
  {% endblock %}
  
  {% block page_content %}
-@@ -72,19 +87,18 @@
+@@ -68,19 +81,18 @@
    {% initial_page_data 'slug' report.slug %}
  
    {% block filter_panel %}
@@ -122,7 +112,7 @@
              <h4 class="modal-title">
                {% trans "Email report:" %}
                {{ datespan.startdate|date:"Y-m-d" }}
-@@ -93,15 +107,21 @@
+@@ -89,15 +101,21 @@
                {% endif %}
                {{ datespan.enddate|date:"Y-m-d" }}
              </h4>
@@ -146,7 +136,7 @@
        <h4>{% trans 'Notice' %}</h4>
        <p>{{ report.special_notice }}</p>
      </div>
-@@ -111,7 +131,7 @@
+@@ -107,7 +125,7 @@
        {% block reportcontent %}
        {% endblock %}
      {% else %}
