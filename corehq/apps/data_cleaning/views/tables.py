@@ -220,7 +220,7 @@ class CaseCleaningTasksTableView(BaseDataCleaningTableView):
             "committed_on": session.committed_on,
             "completed_on": session.completed_on,
             "case_type": session.identifier,
-            "case_count": session.records.count(),
+            "case_count": session.num_changed_records,
             "percent": session.percent_complete,
             "form_ids_url": reverse('download_form_ids', args=(session.domain, session.session_id)),
             "has_form_ids": bool(len(session.form_ids)),
