@@ -36,6 +36,7 @@ from corehq.util.timezones.utils import get_timezone
 
 class PaymentsFiltersMixin:
     fields = [
+        'corehq.apps.integration.payments.filters.PaymentCaseListFilter',
         'corehq.apps.integration.payments.filters.PaymentVerificationStatusFilter',
         'corehq.apps.integration.payments.filters.BatchNumberFilter',
         'corehq.apps.integration.payments.filters.PaymentVerifiedByFilter',
