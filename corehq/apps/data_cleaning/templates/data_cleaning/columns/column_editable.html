@@ -2,7 +2,7 @@
 {% load django_tables2 %}
 {% load data_cleaning %}
 
-{% edited_value record column as edited_value %}
+{% get_edited_value record column as edited_value %}
 <div
   class="editable-column-container"
   x-data="{

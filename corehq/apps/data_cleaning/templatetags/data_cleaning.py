@@ -57,7 +57,7 @@ def dc_data_type_icon(data_type):
 
 
 @register.simple_tag
-def edited_value(record, bound_column):
+def get_edited_value(record, bound_column):
     """
     Returns the Edited value of a record based on
     the `BoundColumn` information.
