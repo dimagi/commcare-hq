@@ -26,11 +26,6 @@ function list-js-without-hqDefine() {
   list-no-esm-js | xargs grep -L 'hqDefine'
 }
 
-# The other indicator of RequireJS work left: how many HTML files still have script tags?
-function list-html-with-external-scripts() {
-  list-html | xargs grep -l 'script.*src='
-}
-
 ## Calculate migrated percentage for given statistic
 function percent() {
   result=$(echo "100 - $1 * 100 / $2" | bc)
@@ -41,7 +36,7 @@ function percent() {
 ## Main script
 
 command=${1:-""}
-help="Pass list-hqdefine or list-requirejs-html to list the files that have yet to be migrated. list-esm to list ESM formatted files"
+help="Pass list-hqdefine to list the files that have yet to be migrated. list-esm to list ESM formatted files"
 
 jsTotalCount=$(echo $(list-js | wc -l))
 noEsmJsTotalCount=$(echo $(list-no-esm-js | wc -l))
@@ -60,11 +55,6 @@ case $command in
     list-js-without-hqDefine | sed 's/^/  /'
     ;;
 
-  "list-requirejs-html" )
-    echo "The following templates still have external script tags:"
-    list-html-with-external-scripts | sed 's/^/  /'
-    ;;
-
   # For use with static_analysis management command
   "static-analysis" )
     noEsmCount=$(echo $(list-no-esm-js | wc -l))
@@ -73,14 +63,10 @@ case $command in
 
   "")
     # No command passed; print total migration progress
-    # Don't bother printing the HTML external script percentage as a metric; it's misleading
     echo
 
     unmigratedCount=$(echo $(list-js-without-hqDefine | wc -l))
     echo "$(percent $unmigratedCount $noEsmJsTotalCount) of non-ESM JS files use hqDefine"
-
-    unmigratedCount=$(echo $(list-html-with-external-scripts | wc -l))
-    echo "$(percent $unmigratedCount $htmlTotalCount) of HTML files are free of script tags"
 
     unmigratedCount=$(echo $(list-no-esm-js | wc -l))
     echo "$(percent $unmigratedCount $jsTotalCount) of JS files use ESM format"
