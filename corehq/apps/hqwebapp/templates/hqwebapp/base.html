@@ -184,7 +184,21 @@
         <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
         <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
       {% endcompress %}
-      {% include 'analytics/analytics_js.html' %}
+
+      {% compress js %}
+        {# analytix is purposely the dir name because some adblockers regex* against *analytics* #}
+        <script src="{% static 'analytix/js/initial.js' %}"></script>
+        <script src="{% static 'analytix/js/utils.js' %}"></script>
+        <script src="{% static 'analytix/js/logging.js' %}"></script>
+        <script src="{% static 'analytix/js/google.js' %}"></script>
+        {# kissmetrix is the filename because some adblockers regex *kissmetrics* #}
+        <script src="{% static 'analytix/js/kissmetrix.js' %}"></script>
+        <script src="{% static 'analytix/js/hubspot.js' %}"></script>
+        <script src="{% static 'analytix/js/drift.js' %}"></script>
+        <script src="{% static 'analytix/js/appcues.js' %}"></script>
+        {# gtx is the filename because some adblockers blocks 'gtm.js' #}
+        <script src="{% static 'analytix/js/gtx.js' %}"></script>
+      {% endcompress %}
 
       <script src="{% static 'knockout/build/output/knockout-latest.js' %}"></script>{# already minified #}
       {% if use_bootstrap5 %}
