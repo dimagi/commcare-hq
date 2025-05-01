@@ -204,6 +204,17 @@ class CleanCasesTableView(BulkEditSessionViewMixin,
             doc_id, column, request, *args, **kwargs
         )
 
+    @hq_hx_action("post")
+    def cell_inline_edit(self, request, *args, **kwargs):
+        """
+        Commits the inline edit action for a cell.
+        """
+        doc_id, column = self._get_cell_request_details(request)
+        # placeholder
+        return self._render_table_cell_response(
+            doc_id, column, request, *args, **kwargs
+        )
+
 
 class CaseCleaningTasksTableView(BaseDataCleaningTableView):
     urlname = "case_data_cleaning_tasks_table"

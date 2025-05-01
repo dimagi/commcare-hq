@@ -81,31 +81,40 @@
       cellValue: {% get_cell_value value edited_value %},
     }"
   >
-    <div class="input-group">
-      <input
-        class="form-control"
-        type="text"
-        name="newValue"
-        x-model="cellValue"
-      />
-      <button
-        class="btn btn-primary"
-        type="submit"
-        disabled="disabled"  {# todo implement inline edit submission #}
-        @click="isSubmitting = true"
-      >
-        <i class="fa fa-check"></i>
-        <span class="visually-hidden">{% trans "Apply Edit" %}</span>
-      </button>
-      <button
-        class="btn btn-outline-danger"
-        type="button"
-        :disabled="isSubmitting"
-        @click="isEditing = false"
-      >
-        <i class="fa fa-close"></i>
-        <span class="visually-hidden">{% trans "Cancel Edit" %}</span>
-      </button>
-    </div>
+    <form
+      hx-post="{{ request.path_info }}{% querystring %}"
+      hq-hx-action="cell_inline_edit"
+      hx-vals="{% cell_request_params record column %}"
+      hx-target="closest .editable-column-container"
+      hx-swap="outerHTML"
+      hx-disabled-elt="find button"
+    >
+      <div class="input-group">
+        <input
+          class="form-control"
+          type="text"
+          name="newValue"
+          x-model="cellValue"
+        />
+        <button
+          class="btn btn-primary"
+          type="submit"
+          disabled="disabled"  {# todo implement inline edit submission #}
+          @click="isSubmitting = true"
+        >
+          <i class="fa fa-check"></i>
+          <span class="visually-hidden">{% trans "Apply Edit" %}</span>
+        </button>
+        <button
+          class="btn btn-outline-danger"
+          type="button"
+          :disabled="isSubmitting"
+          @click="isEditing = false"
+        >
+          <i class="fa fa-close"></i>
+          <span class="visually-hidden">{% trans "Cancel Edit" %}</span>
+        </button>
+      </div>
+    </form>
   </div>
 </div>
