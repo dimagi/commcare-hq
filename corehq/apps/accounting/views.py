@@ -123,7 +123,7 @@ from corehq.apps.domain.views.accounting import (
     DomainBillingStatementsView,
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.views import (
     BaseSectionPageView,
     CRUDPaginatedViewMixin,
@@ -587,10 +587,6 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
         FeatureRateAsyncHandler,
         SoftwareProductRateAsyncHandler,
     ]
-
-    @use_multiselect
-    def dispatch(self, request, *args, **kwargs):
-        return super(EditSoftwarePlanView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized

@@ -64,7 +64,6 @@ from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_daterangepicker,
     use_jquery_ui,
-    use_multiselect,
 )
 from corehq.apps.hqwebapp.doc_info import DocInfo, get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
@@ -685,7 +684,6 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     template_name = 'reports/bootstrap3/edit_scheduled_report.html'
 
     @method_decorator(require_permission(HqPermissions.download_reports))
-    @use_multiselect
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(ScheduledReportsView, self).dispatch(request, *args, **kwargs)

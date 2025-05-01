@@ -33,20 +33,6 @@ def use_jquery_ui(view_func):
     return set_request_flag(view_func, 'use_jquery_ui')
 
 
-def use_multiselect(view_func):
-    """Use this decorator on the dispatch method of a TemplateView subclass
-    to enable the inclusion of the multiselect library at the base template
-    level.
-
-    Example:
-
-    @use_multiselect
-    def dispatch(self, request, *args, **kwargs):
-        return super(MyView, self).dispatch(request, *args, **kwargs)
-    """
-    return set_request_flag(view_func, 'use_multiselect')
-
-
 def use_datatables(view_func):
     """Use this decorator on the dispatch method of a TemplateView subclass
     to enable the inclusion of the datatables library at the base template

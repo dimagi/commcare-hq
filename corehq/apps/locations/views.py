@@ -30,7 +30,7 @@ from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
 from corehq.apps.domain.decorators import domain_admin_required, api_auth
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.crispy import make_form_readonly
-from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_jquery_ui, use_multiselect, waf_allow
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_jquery_ui, waf_allow
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.locations.const import LOCK_LOCATIONS_TIMEOUT
@@ -686,7 +686,6 @@ class NewLocationView(BaseEditLocationView):
     urlname = 'create_location'
     page_title = gettext_noop("New Location")
 
-    @use_multiselect
     @method_decorator(require_can_edit_locations)
     @method_decorator(check_pending_locations_import(redirect=True))
     def dispatch(self, request, *args, **kwargs):
@@ -765,7 +764,6 @@ class EditLocationView(BaseEditLocationView):
     page_title = gettext_noop("Edit Location")
     creates_new_location = False
 
-    @use_multiselect
     @method_decorator(check_pending_locations_import(redirect=True))
     @method_decorator(can_edit_or_view_location)
     def dispatch(self, request, *args, **kwargs):

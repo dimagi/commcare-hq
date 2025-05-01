@@ -64,7 +64,6 @@ from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_daterangepicker,
     use_jquery_ui,
-    use_multiselect,
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
@@ -274,10 +273,6 @@ class UserConfigReportsHomeView(BaseUserConfigReportsView):
 
 class BaseEditConfigReportView(BaseUserConfigReportsView):
     template_name = 'userreports/bootstrap3/edit_report_config.html'
-
-    @use_multiselect
-    def dispatch(self, *args, **kwargs):
-        return super().dispatch(*args, **kwargs)
 
     @property
     def report_id(self):
@@ -526,7 +521,6 @@ class ConfigureReport(ReportBuilderView):
 
     @use_jquery_ui
     @use_datatables
-    @use_multiselect
     def dispatch(self, request, *args, **kwargs):
         if self.existing_report:
             self.source_type = get_source_type_from_report_config(self.existing_report)

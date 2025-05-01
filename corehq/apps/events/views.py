@@ -8,7 +8,7 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqcase.case_helper import CaseHelper
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
@@ -158,7 +158,6 @@ class EventCreateView(BaseEventView):
 
     page_title = _("Add Attendance Tracking Event")
 
-    @use_multiselect
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(EventCreateView, self).dispatch(request, *args, **kwargs)
@@ -226,7 +225,6 @@ class EventEditView(EventCreateView):
     page_title = _("Edit Attendance Tracking Event")
     event_obj = None
 
-    @use_multiselect
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         try:
@@ -342,7 +340,6 @@ class AttendeeEditView(BaseEventView):
     def page_url(self):
         return reverse(self.urlname, args=(self.domain, self.attendee_id))
 
-    @use_multiselect
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         self.attendee_id = kwargs['attendee_id']
