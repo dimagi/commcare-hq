@@ -22,10 +22,6 @@ function list-html() {
 
 ## Count files that haven't met migration criteria
 
-function list-html-with-inline-scripts() {
-  list-html | xargs grep -l '<script>'
-}
-
 function list-js-without-hqDefine() {
   list-no-esm-js | xargs grep -L 'hqDefine'
 }
@@ -51,18 +47,13 @@ function percent() {
 ## Main script
 
 command=${1:-""}
-help="Pass list-script, list-hqdefine, list-requirejs, or list-requirejs-html to list the files that have yet to be migrated. list-esm to list ESM formatted files"
+help="Pass list-hqdefine, list-requirejs, or list-requirejs-html to list the files that have yet to be migrated. list-esm to list ESM formatted files"
 
 jsTotalCount=$(echo $(list-js | wc -l))
 noEsmJsTotalCount=$(echo $(list-no-esm-js | wc -l))
 htmlTotalCount=$(echo $(list-html | wc -l))
 
 case $command in
-
-  "list-script" )
-    echo "The following templates still have inline script tags:"
-    list-html-with-inline-scripts | sed 's/^/  /'
-    ;;
 
   "list-esm" )
     echo "These files use ESM syntax:"
@@ -95,9 +86,6 @@ case $command in
     # No command passed; print total migration progress
     # Don't bother printing the HTML external script percentage as a metric; it's misleading
     echo
-
-    unmigratedCount=$(echo $(list-html-with-inline-scripts | wc -l))
-    echo "$(percent $unmigratedCount $htmlTotalCount) of HTML files are free of inline scripts"
 
     unmigratedCount=$(echo $(list-js-without-hqDefine | wc -l))
     echo "$(percent $unmigratedCount $noEsmJsTotalCount) of non-ESM JS files use hqDefine"
