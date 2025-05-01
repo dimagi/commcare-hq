@@ -35,7 +35,7 @@ class CleanSelectedRecordsFormView(BulkEditSessionViewMixin,
         cleaning_form = CleanSelectedRecordsForm(self.session, request.POST)
         change = None
         if cleaning_form.is_valid():
-            change = cleaning_form.create_bulk_edit_change()
+            change = cleaning_form.get_bulk_edit_change()
             self.session.apply_change_to_selected_records_in_queryset(change)
             cleaning_form = None
         return self.get(request, cleaning_form=cleaning_form, change=change, *args, **kwargs)

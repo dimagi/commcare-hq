@@ -214,7 +214,7 @@ class CleanSelectedRecordsForm(forms.Form):
 
         return cleaned_data
 
-    def create_bulk_edit_change(self):
+    def get_bulk_edit_change(self):
         prop_id = self.cleaned_data["clean_prop_id"]
         action_type = self.cleaned_data["clean_action"]
         if action_type == EditActionType.REPLACE:
@@ -233,7 +233,7 @@ class CleanSelectedRecordsForm(forms.Form):
             }
         else:
             action_options = {}
-        return BulkEditChange.objects.create(
+        return BulkEditChange(
             session=self.session,
             prop_id=prop_id,
             action_type=action_type,
