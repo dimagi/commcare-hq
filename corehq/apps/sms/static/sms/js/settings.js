@@ -7,6 +7,7 @@ hqDefine("sms/js/settings", [
     'bootstrap-timepicker/js/bootstrap-timepicker',
     'hqwebapp/js/bootstrap3/widgets', //multi-emails
     'commcarehq',
+    'bootstrap-timepicker/less/timepicker.less',
 ], function (
     $,
     ko,
