@@ -314,6 +314,7 @@ class BulkEditSession(models.Model):
         Apply a change to the selected records in the current queryset.
         :param change: BulkEditChange - an UNSAVED instance
         """
+        assert change.session == self
         change.save()  # save the change in the atomic block, rather than the form
         if self.has_any_filtering:
             self._apply_operation_on_queryset(
