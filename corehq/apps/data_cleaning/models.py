@@ -309,10 +309,10 @@ class BulkEditSession(models.Model):
         change.records.add(*selected_records)
 
     @transaction.atomic
-    def apply_change_to_selected_records_in_queryset(self, change):
+    def apply_change_to_selected_records(self, change):
         """
-        Apply a change to the selected records in the current queryset.
         :param change: BulkEditChange - an UNSAVED instance
+        :return: BulkEditChange - the saved instance
         """
         assert change.session == self
         change.save()  # save the change in the atomic block, rather than the form
@@ -324,6 +324,7 @@ class BulkEditSession(models.Model):
             # If there are no filters, we can just apply the change to all selected records
             # this will be a faster operation for larger data sets
             self._attach_change_to_records(change)
+        return change
 
     @property
     def num_changed_records(self):
