@@ -78,24 +78,6 @@ def use_bootstrap5(view_func):
     return get_wrapped_view(view_func, lambda r: set_bootstrap_version5())
 
 
-def use_tempusdominus(view_func):
-    """Use this decorator on the dispatch method of a TemplateView subclass
-    to include CSS for Tempus Dominus (Date and/or Time picking widget).
-    NOTE: Only available for Bootstrap 5 pages!
-
-    Example:
-        @use_tempusdominus
-        def dispatch(self, request, *args, **kwargs):
-            return super().dispatch(request, *args, **kwargs)
-
-    Or alternatively:
-        @method_decorator(use_tempusdominus, name='dispatch')
-        class MyViewClass(MyViewSubclass):
-            ...
-    """
-    return set_request_flag(view_func, 'use_tempusdominus')
-
-
 def waf_allow(kind, hard_code_pattern=None):
     """
     Using this decorator simply registers a function for later use
