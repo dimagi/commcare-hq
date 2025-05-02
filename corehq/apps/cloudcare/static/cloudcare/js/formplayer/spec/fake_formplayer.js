@@ -1,3 +1,17 @@
+/**
+ * Generates mock formplayer responses. Use as a fake for queryFormplayer.
+ *
+ * This does not support many of the options that can be passed to the real queryFormplayer.
+ * It primarily fakes the selections logic.
+ *
+ * This contains one app, which has the following structure:
+ *      m0: a menu that does not use cases
+ *          m0-f0
+ *      m1: a menu that uses cases
+ *          m1-f0: a form that updates a case
+ *  No menus use display-only forms.
+ */
+
 import _ from "underscore";
 import AssertProperties from "hqwebapp/js/assert_properties";
 
