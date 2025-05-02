@@ -34,9 +34,6 @@ from corehq.apps.accounting.decorators import (
 from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.decorators import (
-    use_jquery_ui,
-)
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.sms.filters import EventStatusFilter, EventTypeFilter
 from corehq.apps.sms.models import (
@@ -446,7 +443,6 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
     read_only_mode = False
 
     @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
-    @use_jquery_ui
     def dispatch(self, *args, **kwargs):
         return super(CreateScheduleView, self).dispatch(*args, **kwargs)
 
@@ -778,7 +774,6 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
         return format_html(_('For information on Conditional Alerts, see the {} help page.'), link)
 
     @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
-    @use_jquery_ui
     def dispatch(self, *args, **kwargs):
         return super(CreateConditionalAlertView, self).dispatch(*args, **kwargs)
 

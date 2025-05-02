@@ -63,9 +63,6 @@ from corehq.apps.domain.views.base import BaseDomainView, DomainViewMixin
 from corehq.apps.groups.models import Group
 from corehq.apps.hqadmin.views.users import BaseAdminSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.decorators import (
-    use_jquery_ui,
-)
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.reminders.util import get_two_way_number_for_recipient
@@ -1646,7 +1643,6 @@ class SMSLanguagesView(BaseMessagingSectionView):
     template_name = "sms/languages.html"
     page_title = gettext_noop("Languages")
 
-    @use_jquery_ui
     @method_decorator(domain_admin_required)
     def dispatch(self, *args, **kwargs):
         return super(SMSLanguagesView, self).dispatch(*args, **kwargs)

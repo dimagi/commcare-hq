@@ -37,9 +37,7 @@
   {{ block.super }}
   <!--
       jQuery UI needs to be included before Bootstrap's JavaScript, otherwise the two
-      tooltip widgets conflict. The B3 base template takes care of that when you use the
-      @use_jquery_ui decorator, but app manager doesn't, so instead include only the pieces
-      actually used in app manager (no tooltip).
+      tooltip widgets conflict. Include only the pieces actually used in app manager (no tooltip).
   -->
   {% compress js %}
     <!-- this defines jquery ui ($.ui) so this MUST come first -->

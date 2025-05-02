@@ -108,7 +108,6 @@ from corehq.apps.domain.views.settings import (
     BaseProjectSettingsView,
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.views import BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
@@ -965,7 +964,6 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
 
     @method_decorator(always_allow_project_access)
     @method_decorator(require_superuser)
-    @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(InternalSubscriptionManagementView, self).dispatch(request, *args, **kwargs)
 

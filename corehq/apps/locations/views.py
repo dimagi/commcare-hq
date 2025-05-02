@@ -30,7 +30,7 @@ from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
 from corehq.apps.domain.decorators import domain_admin_required, api_auth
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.crispy import make_form_readonly
-from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_jquery_ui, waf_allow
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, waf_allow
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.locations.const import LOCK_LOCATIONS_TIMEOUT
@@ -201,7 +201,6 @@ class LocationsListView(BaseLocationView):
     page_title = gettext_noop("Organization Structure")
     template_name = 'locations/manage/locations.html'
 
-    @use_jquery_ui
     @method_decorator(use_bootstrap5)
     @method_decorator(check_pending_locations_import())
     @method_decorator(require_can_edit_or_view_locations)
@@ -314,7 +313,6 @@ class LocationTypesView(BaseDomainView):
     def section_url(self):
         return reverse(LocationsListView.urlname, args=[self.domain])
 
-    @use_jquery_ui
     @method_decorator(use_bootstrap5)
     @method_decorator(can_edit_location_types)
     @method_decorator(require_can_edit_locations)

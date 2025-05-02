@@ -40,7 +40,6 @@ from corehq.apps.data_dictionary.util import (
 )
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.geospatial.utils import get_geo_case_property
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.decorators import require_permission
@@ -492,7 +491,6 @@ class DataDictionaryView(BaseProjectDataView):
     urlname = 'data_dictionary'
 
     @method_decorator(login_and_domain_required)
-    @use_jquery_ui
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_DICTIONARY))
     @method_decorator(require_permission(HqPermissions.edit_data_dict,
                                          view_only_permission=HqPermissions.view_data_dict))
@@ -522,7 +520,6 @@ class UploadDataDictionaryView(BaseProjectDataView):
     urlname = 'upload_data_dict'
 
     @method_decorator(login_and_domain_required)
-    @use_jquery_ui
     @method_decorator(requires_privilege(privileges.DATA_DICTIONARY))
     @method_decorator(require_permission(HqPermissions.edit_data_dict))
     def dispatch(self, request, *args, **kwargs):

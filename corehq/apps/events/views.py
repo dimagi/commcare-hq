@@ -8,7 +8,6 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqcase.case_helper import CaseHelper
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
@@ -158,10 +157,6 @@ class EventCreateView(BaseEventView):
 
     page_title = _("Add Attendance Tracking Event")
 
-    @use_jquery_ui
-    def dispatch(self, request, *args, **kwargs):
-        return super(EventCreateView, self).dispatch(request, *args, **kwargs)
-
     @property
     def page_name(self):
         return _("Add New Event")
@@ -225,7 +220,6 @@ class EventEditView(EventCreateView):
     page_title = _("Edit Attendance Tracking Event")
     event_obj = None
 
-    @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         try:
             self.event_obj = Event.objects.get(
@@ -281,7 +275,6 @@ class AttendeesListView(JSONResponseMixin, BaseEventView):
     empty_notification = _("You have no attendees")
     loading_message = _("Loading attendees")
 
-    @use_jquery_ui
     def dispatch(self, *args, **kwargs):
         # The FF check is temporary till the full feature is released
         toggle_enabled = toggles.ATTENDANCE_TRACKING.enabled(self.domain)
@@ -340,7 +333,6 @@ class AttendeeEditView(BaseEventView):
     def page_url(self):
         return reverse(self.urlname, args=(self.domain, self.attendee_id))
 
-    @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         self.attendee_id = kwargs['attendee_id']
         return super().dispatch(request, *args, **kwargs)

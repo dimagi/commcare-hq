@@ -60,9 +60,6 @@ from corehq.apps.domain.decorators import api_auth, login_and_domain_required
 from corehq.apps.domain.models import AllowedUCRExpressionSettings, Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import CaseSearchES, FormES
-from corehq.apps.hqwebapp.decorators import (
-    use_jquery_ui,
-)
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils.html import safe_replace
@@ -515,7 +512,6 @@ class ConfigureReport(ReportBuilderView):
     report_title = '{}'
     existing_report = None
 
-    @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         if self.existing_report:
             self.source_type = get_source_type_from_report_config(self.existing_report)
