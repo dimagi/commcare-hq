@@ -21,7 +21,6 @@ describe('Entries', function () {
         initialPageData.register(
             "toggles_dict",
             {
-                WEB_APPS_UPLOAD_QUESTIONS: true,
                 WEB_APPS_ANCHORED_SUBMIT: false,
             },
         );
