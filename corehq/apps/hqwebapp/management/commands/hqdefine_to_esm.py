@@ -22,9 +22,18 @@ class Command(BaseCommand):
     dedent_size = 4
 
     def add_arguments(self, parser):
-        parser.add_argument('filename', help='File to migrate')
+        parser.add_argument(
+            'filenames',
+            help='Files to migrate',
+            nargs='+',
+        )
 
-    def handle(self, filename, **options):
+    def handle(self, filenames, **options):
+        for filename in filenames:
+            self.migrate(filename)
+
+    def migrate(self, filename):
+        logger.info(f"Reading {filename}")
         if not os.path.exists(filename):
             raise CommandError(f"Could not find {filename}")
 
