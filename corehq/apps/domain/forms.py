@@ -984,8 +984,8 @@ class PrivacySecurityForm(forms.Form):
             "Secure Submissions prevents others from impersonating your mobile workers. "
             "This setting requires all deployed applications to be using secure "
             "submissions as well. "
-            "<a href='https://help.commcarehq.org/display/commcarepublic/Project+Space+Settings'>"
-            "Read more about secure submissions here</a>"))
+            "<a href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2367226200/"
+            "Project+Settings+Overview'>Read more about secure submissions here</a>"))
     )
     secure_sessions = BooleanField(
         label=gettext_lazy("Shorten Inactivity Timeout"),
