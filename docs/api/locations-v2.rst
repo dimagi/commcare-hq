@@ -1,9 +1,8 @@
-Location APIs
-=============
+Location API v2
+===============
 
-Version v1 is read-only. It allows you to list locations and get location details.
-
-Version v2 has the same read-only list and details endpoints as v1 with just a few updates and adds the ability to create and update locations, one at a time or in bulk.
+V2 of the Location API updates the serilization used in v1 and adds the ability
+to create and update locations, one at a time or in bulk.
 
 List Locations
 --------------
@@ -12,29 +11,9 @@ List Locations
 
 .. code-block:: text
 
-    GET https://www.commcarehq.org/a/[domain]/api/location/v1/
+    GET https://www.commcarehq.org/a/[domain]/api/location/v2/
 
 Locations can be filtered by the following attributes as request parameters:
-
-**Input Parameters (v1)**
-
-.. list-table::
-   :header-rows: 1
-
-   * - Name
-     - Description
-   * - ``site_code``
-     - Site code for the location
-   * - ``external_id``
-     - External identifier for the location
-   * - ``created_at``
-     - Timestamp when the location was created
-   * - ``last_modified``
-     - Timestamp of the last modification
-   * - ``latitude``
-     - Latitude coordinate of the location
-   * - ``longitude``
-     - Longitude coordinate of the location
 
 **Input Parameters (v2)**
 
@@ -44,6 +23,9 @@ Locations can be filtered by the following attributes as request parameters:
    * - Name
      - Description
      - Example
+   * - ``format``
+     - Data format returned, defaults to xml
+     - ```?format=json``
    * - ``site_code``
      - Site code for the location
      - ``?site_code=boston``
@@ -69,53 +51,14 @@ Locations can be filtered by the following attributes as request parameters:
      - Locations last modified on or before a specific date or datetime
      - ``?last_modified.lte=2024-01-01``
 
-v2 can also be ordered by ``last_modified`` from oldest to newest with the
+The API can also be ordered by ``last_modified`` from oldest to newest with the
 parameter ``order_by=last_modified``, or from newest to oldest with
 ``order_by=-last_modified``. This can be used in conjunction with the
 ``last_modified.gte`` parameter to only fetch locations modified since your last
 data pull.
 
 
-**Sample JSON Output (v1)**
-
-.. code-block:: json
-
-    {
-      "meta": {
-        "limit": 20,
-        "next": null,
-        "offset": 0,
-        "previous": null,
-        "total_count": 2
-      },
-      "objects": [
-        {
-          "created_at": "2023-05-09T16:10:47.225938",
-          "domain": "[domain]",
-          "external_id": null,
-          "id": 1,
-          "last_modified": "2023-05-09T16:10:47.225947",
-          "latitude": null,
-          "location_data": {},
-          "location_id": "f373a6837c1243938abfc56618cce88b",
-          "location_type": "https://www.commcarehq.org/a/[domain]/api/location_type/v1/1/",
-          "longitude": null,
-          "name": "Namibia",
-          "parent": null,
-          "resource_uri": "https://www.commcarehq.org/a/[domain]/api/location/v1/f373a6837c1243938abfc56618cce88b/",
-          "site_code": "namibia"
-        }
-      ]
-    }
-
-**v2**
-
-The main distinction between the v1 and v2 GET endpoints is the serialization
-format. V2 Removes a few defunct fields and adds some new ones. It also provides
-IDs and/or codes of related locations and types, while v1 gave URLs that could
-be used to access those types.
-
-For the list endpoint, the "meta" section will look the same and the locations will still be in a list called "objects". But an individual location object will look like:
+**Sample JSON Output**
 
 .. code-block:: json
 
@@ -135,7 +78,6 @@ For the list endpoint, the "meta" section will look the same and the locations w
         "site_code": "fairfax_county"
     }
 
-Also notice how compared to v1, the v2 location data has just the ``location_id``, no resource URL.
 
 Location Details
 ----------------
@@ -144,39 +86,17 @@ Location Details
 
 .. code-block:: text
 
-    GET https://www.commcarehq.org/a/[domain]/api/location/v1/[location_id]
+    GET https://www.commcarehq.org/a/[domain]/api/location/v2/[location_id]
 
-**Sample JSON Output (v1)**
+This will output the same information displayed above, but for a single location
 
-.. code-block:: json
-
-    {
-      "created_at": "2023-05-09T16:10:47.225938",
-      "domain": "[domain]",
-      "external_id": null,
-      "id": 1,
-      "last_modified": "2023-05-09T16:10:47.225947",
-      "latitude": null,
-      "location_data": {},
-      "location_id": "f373a6837c1243938abfc56618cce88b",
-      "location_type": "https://www.commcarehq.org/a/[domain]/api/location_type/v1/1/",
-      "longitude": null,
-      "name": "Namibia",
-      "parent": null,
-      "resource_uri": "https://www.commcarehq.org/a/[domain]/api/location/v1/f373a6837c1243938abfc56618cce88b/",
-      "site_code": "namibia"
-    }
-
-**v2**
-
-You can get the details for an individual location using v2 as well. See the v2 section of the list documentation above for information on what single location object serialization looks like in v2.
 
 Create Location (Individual)
 ----------------------------
 
 **Description**
 
-Create an individual location. Available from version v2.
+Create an individual location.
 
 **Base URL**
 
@@ -227,7 +147,7 @@ Update Location (Individual)
 
 **Description**
 
-Allows editing an individual location. Available from version v2.
+Allows editing an individual location.
 
 **Base URL**
 
@@ -275,7 +195,8 @@ Create and Update Locations (in Bulk)
 
 **Description**
 
-Version v2 allows you to create and update locations in bulk. Even though the method is PATCH, you can also create locations as well as update using this method.
+You may also create and update locations in bulk. Even though the method is
+PATCH, you can also create locations as well as update using this method.
 
 **Base URL**
 
@@ -317,74 +238,3 @@ When creating a location via this method, the API uses the same validation as th
 With this request body, the first dictionary will create a location called "Newtown", and update a location with the ID ``eea759ae08044807be749f665a1fd39a`` to have the name "Springfield".
 
 Lastly, the PATCH request is atomic. Meaning if validation fails for a single location in the request, none of the locations will be created or updated.
-
-List Location Types
--------------------
-
-**Description**
-
-Retrieves a list of location types available in the specified domain.
-
-**Base URL**
-
-.. code-block:: text
-
-    GET https://www.commcarehq.org/a/[domain]/api/location_type/v1/
-
-
-**Sample JSON Output**
-
-.. code-block:: json
-
-    {
-      "meta": {
-        "limit": 20,
-        "next": null,
-        "offset": 0,
-        "previous": null,
-        "total_count": 1
-      },
-      "objects": [
-        {
-          "administrative": true,
-          "code": "country",
-          "domain": "[domain]",
-          "id": 1,
-          "name": "Country",
-          "parent": null,
-          "resource_uri": "https://www.commcarehq.org/a/[domain]/api/location_type/v1/1/",
-          "shares_cases": false,
-          "view_descendants": false
-        }
-      ]
-    }
-
-Location Type Details
----------------------
-
-**Description**
-
-Retrieves details for a specific location type.
-
-**Base URL**
-
-.. code-block:: text
-
-    GET https://www.commcarehq.org/a/[domain]/api/location_type/v1/[id]
-
-
-**Sample JSON Output**
-
-.. code-block:: json
-
-    {
-      "administrative": true,
-      "code": "country",
-      "domain": "[domain]",
-      "id": 1,
-      "name": "Country",
-      "parent": null,
-      "resource_uri": "https://www.commcarehq.org/a/[domain]/api/location_type/v1/1/",
-      "shares_cases": false,
-      "view_descendants": false
-    }
