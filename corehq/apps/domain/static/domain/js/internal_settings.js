@@ -5,6 +5,7 @@ hqDefine("domain/js/internal_settings", [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/multiselect_utils',
     'jquery-ui/ui/widgets/datepicker',
+    'jquery-ui-built-themes/redmond/jquery-ui.min.css',
     'commcarehq',
 ], function (
     $,

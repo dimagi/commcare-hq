@@ -4,6 +4,7 @@ hqDefine("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
     'knockout',
     "bootstrap5",
     'jquery-ui/ui/widgets/sortable',
+    'jquery-ui-built-themes/redmond/jquery-ui.min.css',
     'langcodes/js/langcodes',   // $.langcodes
 ], function (
     $,

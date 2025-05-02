@@ -53,15 +53,6 @@
             href="{% static 'select2/dist/css/select2.min.css' %}" />
     {% endcompress %}
 
-    {% if request.use_jquery_ui %}
-      {% compress css %}
-        <link type="text/css"
-              rel="stylesheet"
-              media="screen"
-              href="{% static "jquery-ui-built-themes/redmond/jquery-ui.min.css" %}" />
-      {% endcompress %}
-    {% endif %}
-
     <script>
       window.USE_BOOTSTRAP5 = {{ use_bootstrap5|BOOL }};
     </script>

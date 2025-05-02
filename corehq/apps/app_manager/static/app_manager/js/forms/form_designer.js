@@ -8,6 +8,7 @@ hqDefine("app_manager/js/forms/form_designer", [
     'app_manager/js/app_manager',
     'app_manager/js/forms/edit_form_details',
     'jquery-ui/ui/widgets/sortable',
+    'jquery-ui-built-themes/redmond/jquery-ui.min.css',
 ], function (
     $,
     _,
