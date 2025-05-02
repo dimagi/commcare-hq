@@ -44,25 +44,33 @@ class Command(BaseCommand):
         self.init_parser()
         imports = []
         arguments = []
-        line_index = 0
+        line_index = -1
         while self.in_hqdefine_block:
+            line_index += 1
             if line_index >= len(lines):
                 self.fail_parsing()
 
             line = lines[line_index]
-            line_index += 1
 
-            if self.update_parser_location(line):
+            if self.update_parser_location(line, line_index):
                 if self.in_arguments:
-                    arguments.extend(self.parse_one_line_arguments(line))
+                    arguments.extend(self.parse_one_line_arguments(line, line_index))
                 continue
             if self.in_imports:
                 imports.append(self.parse_import(line))
             elif self.in_arguments:
                 arguments.append(self.parse_argument(line))
+        line_index += 1
 
         # Rewrite file
         with open(filename, 'w') as fout:
+            # Repeat any pre-code comments
+            if self.hqdefine_index:
+                for line in lines[:self.hqdefine_index]:
+                    if self.is_use_strict(line):
+                        continue
+                    fout.write(line)
+
             # Move commcarehq to the top
             if "commcarehq" in [i[0] for i in imports]:
                 fout.write('import "commcarehq";\n')
@@ -131,15 +139,16 @@ class Command(BaseCommand):
             return (item, comment)
         logger.warning(f"Could not parse {description} from line: {line}")
 
-    def parse_one_line_arguments(self, line):
+    def parse_one_line_arguments(self, line, index):
         match = re.search(r'function\s*\((.*)\)', line)
         if match:
-            self.update_parser_location(line)
+            self.update_parser_location(line, index)
             arguments = match.group(1)
             return [arg.strip() for arg in arguments.split(',')]
         return []
 
     def init_parser(self):
+        self.hqdefine_index = 0
         self.in_hqdefine_block = True
         self.in_imports = False
         self.in_arguments = False
@@ -153,10 +162,11 @@ class Command(BaseCommand):
             status = "before imports block"
         raise CommandError(f"Could not parse file. Ran out of code {status}.")
 
-    def update_parser_location(self, line):
+    def update_parser_location(self, line, index):
         if self.is_use_strict(line):
             return line
         if self.is_hqdefine_open(line):
+            self.hqdefine_index = index
             self.in_imports = True
             return line
         if self.in_imports and 'function' in line:
