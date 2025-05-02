@@ -27,6 +27,11 @@ class UserSettlements:
     user: CommCareUser
     settlements: list[SQLLocation]
 
+    def has_changes(self) -> bool:
+        assigned_location_ids = set(self.user.assigned_location_ids)
+        settlement_ids = {loc.location_id for loc in self.settlements}
+        return assigned_location_ids != settlement_ids
+
 
 class UserChanges(TypedDict):
     username: str
@@ -86,7 +91,7 @@ class Command(BaseCommand):
 
 def iter_all_user_changes(domain: str, users_csv: str) -> Iterable[UserChanges]:
     for user_settlements in iter_user_settlements(domain, users_csv):
-        if not has_changes(user_settlements):
+        if not user_settlements.has_changes():
             continue
         yield get_user_changes(domain, user_settlements)
 
@@ -212,12 +217,6 @@ def get_commcare_user(domain: str, row_username: str) -> CommCareUser:
         last_commcare_user = commcare_user
 
     return last_commcare_user
-
-
-def has_changes(user_settlements: UserSettlements) -> bool:
-    assigned_location_ids = set(user_settlements.user.assigned_location_ids)
-    settlement_ids = {loc.location_id for loc in user_settlements.settlements}
-    return assigned_location_ids != settlement_ids
 
 
 def get_user_changes(
