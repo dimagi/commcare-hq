@@ -4,21 +4,6 @@ from functools import wraps
 from corehq.apps.hqwebapp.utils.bootstrap import set_bootstrap_version5
 
 
-def use_daterangepicker(view_func):
-    """Use this decorator on the dispatch method of a TemplateView subclass
-    to enable the inclusion of the daterangepicker library at the base template
-    level.
-
-    Example:
-
-    @use_daterangepicker
-    def dispatch(self, request, *args, **kwargs):
-        return super(MyView, self).dispatch(request, *args, **kwargs)
-    """
-
-    return set_request_flag(view_func, 'use_daterangepicker')
-
-
 def use_jquery_ui(view_func):
     """Use this decorator on the dispatch method of a TemplateView subclass
     to enable the inclusion of the jquery-ui library at the base template

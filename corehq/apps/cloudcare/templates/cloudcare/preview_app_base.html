@@ -24,15 +24,6 @@
           href="{% static 'cloudcare/scss/formplayer-common.scss' %}"/>
   {% endcompress %}
 
-  {% if request.use_daterangepicker %}
-    {% compress css %}
-      <link type="text/css"
-            rel="stylesheet"
-            media="screen"
-            href="{% static "bootstrap-daterangepicker/daterangepicker.css" %}" />
-    {% endcompress %}
-  {% endif %}
-
   {% block css %}{% endblock %}
 
   <link type="text/css"

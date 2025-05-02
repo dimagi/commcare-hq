@@ -29,7 +29,6 @@ from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
-    use_daterangepicker,
     use_jquery_ui,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.paths import get_bootstrap5_path
@@ -838,7 +837,6 @@ class GenericReportView(object):
 
     @use_jquery_ui
     @use_datatables
-    @use_daterangepicker
     def decorator_dispatcher(self, request, *args, **kwargs):
         """
         Decorate this method in your report subclass and call super to make sure

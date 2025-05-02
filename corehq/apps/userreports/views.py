@@ -62,7 +62,6 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import CaseSearchES, FormES
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
-    use_daterangepicker,
     use_jquery_ui,
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
@@ -343,7 +342,6 @@ class ReportBuilderView(BaseDomainView):
 
     @method_decorator(require_permission(HqPermissions.edit_reports))
     @cls_to_view_login_and_domain
-    @use_daterangepicker
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
         return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
