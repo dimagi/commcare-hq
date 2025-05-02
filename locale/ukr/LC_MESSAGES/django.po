@@ -1,36 +1,26 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-# Translators:
-# Antonio Cardoso Martins <digiplan@netvisao.pt>, 2005
-# Balzamon, 2015
-# Dimagi Dev <devops@dimagi.com>, 2022
-# Elisio Andre Martins Catana <eacatana@netvisao.pt>, 2005
-# esoergel, 2015
-# esoergel, 2015
-# Kalman Kemenczy <kkemenczy@novell.com>, 2006
-# Kéménczy Kálmán, 2006
-# Kéménczy Kálmán <kkemenczy@novell.com>, 2006
-# lego37yoon <lego37yoon@outlook.com>, 2014
-# Łukasz Wyszomirski <lwyszomirski@gmail.com>, 2015
-# Marcel Hilzinger <marcel.hilzinger@suselinux.hu>, 2004
-# Zé <ze@mandriva.org>, 2010-2011
-# Zsolt Bölöny <bolony.zsolt@gmail.com>, 2013
 #: corehq/motech/repeaters/forms.py
+#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: CommCare HQ\n"
+"Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"PO-Revision-Date: 2014-03-24 22:36+0000\n"
-"Last-Translator: Zsolt Bölöny <bolony.zsolt@gmail.com>, 2013\n"
-"Language-Team: Hindi (http://app.transifex.com/dimagi/commcare-hq/language/"
-"hi/)\n"
-"Language: hi\n"
+"POT-Creation-Date: 2025-05-02 16:52+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=4; plural=(n % 1 == 0 && n % 10 == 1 && n % 100 != "
+"11 ? 0 : n % 1 == 0 && n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % "
+"100 > 14) ? 1 : n % 1 == 0 && (n % 10 ==0 || (n % 10 >=5 && n % 10 <=9) || "
+"(n % 100 >=11 && n % 100 <=14 )) ? 2: 3);\n"
 
 #: corehq/apps/accounting/filters.py
 msgid "Account Type"
@@ -113,7 +103,7 @@ msgstr ""
 #: corehq/apps/accounting/filters.py corehq/apps/sso/forms.py
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
 msgid "Active Status"
-msgstr "सक्रिय स्थिति"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py
 msgid "Customer Billing Account"
@@ -141,7 +131,7 @@ msgstr ""
 
 #: corehq/apps/accounting/filters.py
 msgid "Trial Status"
-msgstr "परीक्षण की स्थिति"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py
 msgid "Show All Subscriptions (including trials)"
@@ -176,7 +166,7 @@ msgstr ""
 
 #: corehq/apps/accounting/filters.py
 msgid "Is Hidden"
-msgstr "छिपा है"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py corehq/apps/enterprise/enterprise.py
 #: corehq/apps/reports/standard/cases/basic.py
@@ -514,7 +504,7 @@ msgstr ""
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 #: corehq/motech/views.py custom/abt/reports/late_pmt_2020.py
 msgid "Name"
-msgstr "नाम"
+msgstr ""
 
 #: corehq/apps/accounting/forms.py corehq/apps/accounting/models.py
 msgid "Company / Organization"
@@ -3527,7 +3517,7 @@ msgstr ""
 #: corehq/apps/aggregate_ucrs/column_specs.py
 #: corehq/apps/reports/standard/monitoring.py
 msgid "Average"
-msgstr "औसत "
+msgstr ""
 
 #: corehq/apps/aggregate_ucrs/column_specs.py
 msgid "Count"
@@ -5495,7 +5485,7 @@ msgstr ""
 #: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
 #: custom/inddex/filters.py
 msgid "No"
-msgstr "नहीं"
+msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
@@ -5988,7 +5978,7 @@ msgstr ""
 #: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
 #: custom/inddex/filters.py
 msgid "Yes"
-msgstr "हॉ"
+msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "disabled"
@@ -6282,7 +6272,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/case_summary.html
 msgid "Case Details"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/download_index.html
 msgid "Revoke restriction"
@@ -6303,7 +6293,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
 msgid "Manage Case"
-msgstr "Diagnóstico de Casos"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
 msgid ""
@@ -7525,7 +7515,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/build_profiles_select.html
 #: corehq/apps/domain/forms.py corehq/apps/reports/standard/deployments.py
 msgid "Build Profile"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bulk_upload_app_translations.html
 msgid "Select a language."
@@ -7883,7 +7873,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Conditions"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "Display the Product Stock for this Supply Point after it is selected"
@@ -8481,7 +8471,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "Due"
-msgstr "बॉकी"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_visit_scheduler.html
 msgid "after the last visit"
@@ -9428,7 +9418,7 @@ msgstr ""
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap3/property_list_configuration.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap5/property_list_configuration.html
 msgid "N/A"
-msgstr "लागु नही"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_setting.html
 msgid "Label for Case List Menu Item"
@@ -9805,7 +9795,7 @@ msgstr ""
 #: corehq/apps/styleguide/templates/styleguide/htmx_todo/main.html
 #: corehq/apps/users/views/mobile/users.py
 msgid "Done"
-msgstr "समाप्त"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 #: corehq/apps/data_interfaces/forms.py corehq/apps/data_interfaces/views.py
@@ -11062,7 +11052,7 @@ msgstr ""
 #: corehq/motech/repeaters/const.py
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Empty"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/app_manager/templatetags/xforms_extras.py
 #: corehq/apps/reports/filters/forms.py
@@ -12645,11 +12635,11 @@ msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 msgid "Case Metadata"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 msgid "Case Type:"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 msgid "Owner ID:"
@@ -12663,11 +12653,11 @@ msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 msgid "Property name"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 msgid "Property value"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 msgid "Clause"
@@ -12679,7 +12669,7 @@ msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 msgid "Remove Characters"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 msgid "Add input"
@@ -12731,11 +12721,11 @@ msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 msgid "Properties"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 msgid "Indices"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 msgid "Score"
@@ -13677,7 +13667,7 @@ msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html
 msgid "Profiles"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 msgid "Add a Field"
@@ -14113,7 +14103,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
 msgid "Add Filter"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/data_cleaning/forms/filters.py
 msgid "Please select a case property to filter on."
@@ -14406,16 +14396,12 @@ msgstr ""
 
 #: corehq/apps/data_cleaning/models.py
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/column_editable.html
-#, fuzzy
-#| msgid "Remove Characters"
 msgid "Reset Changes"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/data_cleaning/models.py
-#, fuzzy
-#| msgid "Unknown user"
 msgid "Unknown action"
-msgstr "अनजान उपयोगकर्ता"
+msgstr ""
 
 #: corehq/apps/data_cleaning/models.py
 #, python-brace-format
@@ -14461,10 +14447,8 @@ msgid "Show Whitespaces"
 msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/column_editable.html
-#, fuzzy
-#| msgid "Property value"
 msgid "stored value"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/column_editable.html
 msgid "changed value"
@@ -16901,12 +16885,12 @@ msgstr ""
 
 #: corehq/apps/domain/calculations.py corehq/apps/users/views/mobile/users.py
 msgid "yes"
-msgstr "हॉ"
+msgstr ""
 
 #: corehq/apps/domain/calculations.py corehq/apps/users/views/mobile/users.py
 #: corehq/messaging/scheduling/forms.py
 msgid "no"
-msgstr "नहीं"
+msgstr ""
 
 #: corehq/apps/domain/decorators.py
 #, python-brace-format
@@ -18268,7 +18252,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap3/billing_statements.html
 #: corehq/apps/domain/templates/domain/bootstrap5/billing_statements.html
 msgid "Payment Amount"
-msgstr "नकद मिला"
+msgstr ""
 
 #: corehq/apps/domain/templates/domain/bootstrap3/billing_statements.html
 #: corehq/apps/domain/templates/domain/bootstrap5/billing_statements.html
@@ -21166,7 +21150,7 @@ msgstr ""
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html
 msgid "Disable Enterprise Permissions"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html
 msgid ""
@@ -21175,7 +21159,7 @@ msgstr ""
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html
 msgid "Select the controlling project space"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/enterprise/templates/enterprise/enterprise_permissions.html
 #, python-format
@@ -21236,7 +21220,7 @@ msgstr ""
 
 #: corehq/apps/enterprise/views.py corehq/reports.py corehq/tabs/tabclasses.py
 msgid "User Management"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/enterprise/views.py
 msgid "Data Management & Export"
@@ -21267,7 +21251,7 @@ msgstr ""
 
 #: corehq/apps/enterprise/views.py
 msgid "Enterprise permissions have been disabled."
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/enterprise/views.py
 msgid "Could not add {}."
@@ -21279,7 +21263,7 @@ msgstr ""
 
 #: corehq/apps/enterprise/views.py
 msgid "Could not remove {}."
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/enterprise/views.py
 msgid "{} is now excluded from enterprise permissions."
@@ -24531,7 +24515,7 @@ msgstr ""
 
 #: corehq/apps/geospatial/reports.py
 msgid "name"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/geospatial/reports.py
 msgid "Case Clustering Map"
@@ -29543,7 +29527,7 @@ msgstr ""
 
 #: corehq/apps/locations/forms.py
 msgid "Workers at Location"
-msgstr "Casos IRA Tratados"
+msgstr ""
 
 #: corehq/apps/locations/forms.py
 msgid "Specify Workers at this Location"
@@ -30187,7 +30171,7 @@ msgstr ""
 
 #: corehq/apps/locations/views.py
 msgid "Download Organization Structure Status"
-msgstr "Diagnóstico de Casos"
+msgstr ""
 
 #: corehq/apps/locations/views.py
 msgid "Go back to organization download"
@@ -30195,7 +30179,7 @@ msgstr ""
 
 #: corehq/apps/locations/views.py
 msgid "Preparing organization structure download."
-msgstr "Diagnóstico de Casos"
+msgstr ""
 
 #: corehq/apps/locations/views.py corehq/apps/userreports/reports/view.py
 #: corehq/apps/users/views/__init__.py corehq/apps/users/views/mobile/users.py
@@ -31467,7 +31451,7 @@ msgstr ""
 
 #: corehq/apps/registry/models.py
 msgid "Rejected"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/registry/models.py
 msgid "Invitation Accepted"
@@ -32501,7 +32485,7 @@ msgstr ""
 
 #: corehq/apps/reports/filters/case_list.py
 msgid "[Project Data]"
-msgstr "Casos IRA Tratados"
+msgstr ""
 
 #: corehq/apps/reports/filters/case_list.py
 msgid "Add case owners to filter this report."
@@ -39259,7 +39243,7 @@ msgstr ""
 
 #: corehq/apps/translations/app_translations/upload_app.py
 msgid "No issues found with the workbook."
-msgstr "Criança com problemas de malnutrição"
+msgstr ""
 
 #: corehq/apps/translations/app_translations/upload_app.py
 msgid "App Translations Discrepancies for {}"
@@ -39770,7 +39754,7 @@ msgstr ""
 
 #: corehq/apps/translations/templates/translations/blacklist_translations.html
 msgid "App"
-msgstr "Casos IRA Tratados"
+msgstr ""
 
 #: corehq/apps/translations/templates/translations/blacklist_translations.html
 msgid "Module"
@@ -41218,7 +41202,7 @@ msgstr ""
 #: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
 #: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
 msgid "Indicators"
-msgstr "संकेतक"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap3/configure_report.html
 #: corehq/apps/userreports/templates/userreports/reportbuilder/bootstrap5/configure_report.html
@@ -42473,7 +42457,7 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/edit_commcare_user.html
 msgid "Security"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/users/templates/users/edit_commcare_user.html
 msgid "User Metadata"
@@ -47513,7 +47497,7 @@ msgstr ""
 
 #: corehq/motech/repeaters/forms.py
 msgid "Unknown user"
-msgstr "अनजान उपयोगकर्ता"
+msgstr ""
 
 #: corehq/motech/repeaters/models.py corehq/tabs/tabclasses.py
 msgid "Forward Forms"
@@ -48546,7 +48530,7 @@ msgstr ""
 
 #: custom/inddex/filters.py
 msgid "Gender"
-msgstr "बच्चे का लिंग "
+msgstr ""
 
 #: custom/inddex/filters.py
 msgid "Male"
