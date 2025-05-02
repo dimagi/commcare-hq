@@ -69,7 +69,7 @@ Request & Response Details
      - The location id of the primary location, it must be one of the locations
      - 26fc44e2792b4f2fa8ef86178f0a958e
    * - locations
-     - A list of location_ids that the mobile worker will be assigned to. Location id can be acquired by `Location API <locations.rst>`_.
+     - A list of location_ids that the mobile worker will be assigned to.
      - ["26fc44e2792b4f2fa8ef86178f0a958e", "c1b029932ed442a6a846a4ea10e46a78"]
 
 
@@ -188,7 +188,7 @@ Request & Response Details
      - The location id of the primary location, it must be one of the locations. To remove the primary_location, pass an empty string.
      - 26fc44e2792b4f2fa8ef86178f0a958e
    * - locations
-     - A list of location_ids that the mobile worker will be assigned to. Location id can be acquired by `Location API <locations.rst>`_. To remove all assigned locations, pass an empty array.
+     - A list of location_ids that the mobile worker will be assigned to. To remove all assigned locations, pass an empty array.
      - ["26fc44e2792b4f2fa8ef86178f0a958e", "c1b029932ed442a6a846a4ea10e46a78"]
 
 **Sample Input**
