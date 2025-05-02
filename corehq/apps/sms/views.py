@@ -64,7 +64,6 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqadmin.views.users import BaseAdminSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import (
-    use_datatables,
     use_jquery_ui,
 )
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -626,10 +625,6 @@ class ChatOverSMSView(BaseMessagingSectionView):
     urlname = 'chat_contacts'
     template_name = 'sms/chat_contacts.html'
     page_title = _("Chat over SMS")
-
-    @use_datatables
-    def dispatch(self, *args, **kwargs):
-        return super(ChatOverSMSView, self).dispatch(*args, **kwargs)
 
 
 def get_case_contact_info(domain_obj, case_ids):

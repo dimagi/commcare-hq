@@ -35,7 +35,6 @@ from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import (
-    use_datatables,
     use_jquery_ui,
 )
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -317,7 +316,6 @@ class BroadcastListView(BaseMessagingSectionView):
     ACTION_DELETE_SCHEDULED_BROADCAST = 'delete_scheduled_broadcast'
 
     @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
-    @use_datatables
     def dispatch(self, *args, **kwargs):
         return super(BroadcastListView, self).dispatch(*args, **kwargs)
 
@@ -619,10 +617,6 @@ class ConditionalAlertListView(ConditionalAlertBaseView):
     ACTION_DEACTIVATE = 'deactivate'
     ACTION_DELETE = 'delete'
     ACTION_RESTART = 'restart'
-
-    @use_datatables
-    def dispatch(self, *args, **kwargs):
-        return super(ConditionalAlertListView, self).dispatch(*args, **kwargs)
 
     @cached_property
     def limit_rule_restarts(self):

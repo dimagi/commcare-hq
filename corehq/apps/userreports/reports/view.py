@@ -32,7 +32,6 @@ from corehq.apps.domain.decorators import track_domain_request
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import (
-    use_datatables,
     use_jquery_ui,
 )
 from corehq.apps.locations.permissions import conditionally_location_safe
@@ -159,7 +158,6 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         return super().domain
 
     @use_jquery_ui
-    @use_datatables
     @track_domain_request(calculated_prop='cp_n_viewed_ucr_reports')
     def dispatch(self, request, *args, **kwargs):
         if self.should_redirect_to_paywall(request):
