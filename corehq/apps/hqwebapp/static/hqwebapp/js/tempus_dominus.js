@@ -10,6 +10,7 @@ hqDefine("hqwebapp/js/tempus_dominus", [
     'popper',
     'tempusDominus',
     'hqwebapp/js/initial_page_data',
+    '@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css',
 ], function (
     _,
     Popper,

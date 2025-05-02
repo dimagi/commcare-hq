@@ -3,10 +3,10 @@ hqDefine("reports/js/bootstrap5/edit_scheduled_report", [
     "underscore",
     "analytix/js/google",
     "hqwebapp/js/initial_page_data",
-    "hqwebapp/js/toggles",
     "hqwebapp/js/multiselect_utils",
     "hqwebapp/js/bootstrap5/widgets",  // autocomplete widget for email recipient list
     "jquery-ui/ui/widgets/datepicker",
+    "jquery-ui-built-themes/redmond/jquery-ui.min.css",
     'hqwebapp/js/components/select_toggle',
     "commcarehq",
 ], function (
@@ -14,7 +14,6 @@ hqDefine("reports/js/bootstrap5/edit_scheduled_report", [
     _,
     googleAnalytics,
     initialPageData,
-    toggles,
     multiselectUtils,
 ) {
     var addOptionsToSelect = function ($select, optList, selectedVal) {

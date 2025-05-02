@@ -4,17 +4,17 @@ hqDefine('sms/js/chat_contacts', [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'datatables.bootstrap',
+    'datatables-bootstrap3/BS3/assets/css/datatables.css',
     'commcarehq',
 ], function (
     $,
     ko,
     _,
-    initialPageData
+    initialPageData,
 ) {
     var contactListTable = null;
 
     function filterViewModel() {
-        'use strict';
         var self = {};
 
         self.filterText = ko.observable();
@@ -40,7 +40,7 @@ hqDefine('sms/js/chat_contacts', [
                             '<a target="_blank" href="<%- href %>"><%- content %></a>' +
                             '<span class="btn btn-primary pull-right" ' +
                                   'onClick="window.open(\'<%- url %>\', \'_blank\', \'location=no,menubar=no,scrollbars=no,status=no,toolbar=no,height=400,width=400\');">' +
-                            '<%- chat %> <i class="fa fa-share"></i></span>'
+                            '<%- chat %> <i class="fa fa-share"></i></span>',
                         )({
                             href: row[4],
                             content: row[0],

@@ -5,6 +5,7 @@ hqDefine('accounting/js/base_subscriptions_main', [
     'accounting/js/widgets',
     'accounting/js/credits_tab',
     'jquery-ui/ui/widgets/datepicker',
+    'jquery-ui-built-themes/redmond/jquery-ui.min.css',
     'commcarehq',
 ], function (
     $,

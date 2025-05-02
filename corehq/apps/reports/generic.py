@@ -27,11 +27,6 @@ from dimagi.utils.web import json_request, json_response
 
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
-from corehq.apps.hqwebapp.decorators import (
-    use_datatables,
-    use_daterangepicker,
-    use_jquery_ui,
-)
 from corehq.apps.hqwebapp.utils.bootstrap.paths import get_bootstrap5_path
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.const import EXPORT_PAGE_LIMIT
@@ -836,21 +831,16 @@ class GenericReportView(object):
         """
         return []
 
-    @use_jquery_ui
-    @use_datatables
-    @use_daterangepicker
     def decorator_dispatcher(self, request, *args, **kwargs):
         """
         Decorate this method in your report subclass and call super to make sure
-        appropriate decorators are used to render the page and its javascript
-        libraries.
+        appropriate decorators are used to render the page.
 
         example:
 
         class MyNewReport(GenericReport):
             ...
 
-            @use_jquery_ui
             def decorator_dispatcher(self, request, *args, **kwargs):
                 super(MyNewReport, self).decorator_dispatcher(request, *args, **kwargs)
 
