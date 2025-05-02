@@ -74,11 +74,11 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('domain')
         parser.add_argument('users_csv')
-        parser.add_argument('-o', '--output-xlsx', type=str)
+        parser.add_argument('-o', '--output-xls', type=str)
 
     def handle(self, domain, users_csv, *args, **options):
-        if options['output_xlsx']:
-            with get_worksheet(options['output_xlsx']) as sheet:
+        if options['output_xls']:
+            with get_worksheet(options['output_xls']) as sheet:
                 row_by_ref = [1]  # Allow write_to_sheet() to increment by ref
                 for user_changes in iter_all_user_changes(domain, users_csv):
                     write_to_sheet(sheet, row_by_ref, user_changes)
@@ -284,7 +284,7 @@ def lower_one_space(string: str) -> str:
 
 
 @contextmanager
-def get_worksheet(xlsx_filename):
+def get_worksheet(xls_filename):
     heading = xlwt.XFStyle()
     heading.font.height = 0x00DC  # 220 (11pt)
     heading.font.bold = True
@@ -299,7 +299,7 @@ def get_worksheet(xlsx_filename):
     try:
         yield sheet
     finally:
-        workbook.save(xlsx_filename)
+        workbook.save(xls_filename)
 
 
 def write_to_sheet(
