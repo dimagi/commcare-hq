@@ -1,4 +1,3 @@
-import $ from "jquery";
 import lib from "hqwebapp/js/assert_properties";
 
 describe('assert_properties', function () {
