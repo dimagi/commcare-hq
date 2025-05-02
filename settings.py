@@ -66,12 +66,15 @@ USE_TZ = False
 LANGUAGE_CODE = 'en-us'
 
 LANGUAGES = (
+    ('ar', 'Arabic'),
     ('en', 'English'),
     ('es', 'Spanish'),
     ('fra', 'French'),  # we need this alias
     ('hin', 'Hindi'),
-    ('sw', 'Swahili'),
+    ('ita', 'Italian'),
     ('por', 'Portuguese'),
+    ('sw', 'Swahili'),
+    ('ukr', 'Ukrainian'),
 )
 
 STATICI18N_FILENAME_FUNCTION = 'statici18n.utils.legacy_filename'
