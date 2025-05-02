@@ -327,45 +327,6 @@ var HQReportDataTables = function (options) {
     return self;
 };
 
-// For sorting rows
-
-function sortSpecial(a, b, asc, convert) {
-    var x = convert(a);
-    var y = convert(b);
-
-    // sort nulls at end regardless of current sort direction
-    if (x === null && y === null) {
-        return 0;
-    }
-    if (x === null) {
-        return 1;
-    }
-    if (y === null) {
-        return -1;
-    }
-
-    return (asc ? 1 : -1) * ((x < y) ? -1 : ((x > y) ?  1 : 0));
-}
-
-function convertNum(k) {
-    var m = k.match(/title="*([-+.0-9eE]+)/);
-    if (m !== null) {
-        m = +m[1];
-        if (isNaN(m)) {
-            m = null;
-        }
-    }
-    return m;
-}
-
-function convertDate(k) {
-    var m = k.match(/title="*(.+)"/);
-    if (m[1] === "None") {
-        return null;
-    }
-    return new Date(m[1]);
-}
-
 export default {
     HQReportDataTables: function (options) {
         return new HQReportDataTables(options);
