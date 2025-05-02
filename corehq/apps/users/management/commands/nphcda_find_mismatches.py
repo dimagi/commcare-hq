@@ -3,14 +3,12 @@ import re
 from collections import namedtuple
 from contextlib import contextmanager
 from dataclasses import dataclass
-from itertools import chain, zip_longest
-from typing import Iterable, Optional, TypedDict
+from typing import Generator, Iterable, Optional, TypedDict
 
 from django.core.management.base import BaseCommand
 
 import xlwt
 import yaml
-from xlwt import XFStyle
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
@@ -287,20 +285,17 @@ def lower_one_space(string: str) -> str:
 
 @contextmanager
 def get_worksheet(xlsx_filename):
-    heading_style = XFStyle()
-    heading_style.font.height = 0x00DC  # 220 (11pt)
-    heading_style.font.bold = True
+    heading = xlwt.XFStyle()
+    heading.font.height = 0x00DC  # 220 (11pt)
+    heading.font.bold = True
 
     workbook = xlwt.Workbook()
     sheet = workbook.add_sheet('User Location Changes')
-    for col, heading in enumerate([
-        'Username',
-        'Map from old location',
-        'Map to new location',
-        'Unmapped old locations',
-        'Unmapped new locations',
-    ]):
-        sheet.write(0, col, heading, style=heading_style)
+    sheet.write(0, 0, 'Username', style=heading)
+    sheet.write_merge(0, 0, 1, 5, 'Map from old location', style=heading)
+    sheet.write_merge(0, 0, 6, 10, 'Map to new location', style=heading)
+    sheet.write_merge(0, 0, 11, 15, 'Unmapped old locations', style=heading)
+    sheet.write_merge(0, 0, 16, 20, 'Unmapped new locations', style=heading)
     try:
         yield sheet
     finally:
@@ -312,37 +307,45 @@ def write_to_sheet(
     row_by_ref: list[int],
     user_changes: UserChanges,
 ) -> None:
-    rows = chain(
-        zip_longest(
-            [user_changes['username']],
-            iter_long_settlement_names(user_changes['location_map'].keys()),
-            iter_long_settlement_names(user_changes['location_map'].values()),
-            iter_long_settlement_names(user_changes['unmapped_old_locations']),
-            iter_long_settlement_names(user_changes['unmapped_new_locations']),
-            fillvalue='',
-        ),
-        (('', '', '', '', ''),)  # Empty row
-    )
-    for row in rows:
+    for row in user_changes_to_rows(user_changes):
         for col, value in enumerate(row):
-
             sheet.write(row_by_ref[0], col, value)
         row_by_ref[0] += 1
 
 
-def iter_long_settlement_names(settlement_ids):
-    for settlement_id in settlement_ids:
-        yield long_settlement_name(settlement_id)
+def user_changes_to_rows(user_changes: UserChanges) -> Generator[list, None, None]:
+    num_rows = max(
+        1,
+        len(user_changes['location_map']),
+        len(user_changes['unmapped_old_locations']),
+        len(user_changes['unmapped_new_locations']),
+    ) + 1  # +1 for the empty row at the end
+    map_from = (loc_id for loc_id in user_changes['location_map'].keys())
+    map_to = (loc_id for loc_id in user_changes['location_map'].values())
+    old_ids = (loc_id for loc_id in user_changes['unmapped_old_locations'])
+    new_ids = (loc_id for loc_id in user_changes['unmapped_new_locations'])
+    for i in range(num_rows):
+        row = [
+            user_changes['username'] if i == 0 else ''
+        ]
+        row.extend(settlement_columns(next(map_from, None)))
+        row.extend(settlement_columns(next(map_to, None)))
+        row.extend(settlement_columns(next(old_ids, None)))
+        row.extend(settlement_columns(next(new_ids, None)))
+        yield row
 
 
-def long_settlement_name(settlement_id):
+def settlement_columns(settlement_id: Optional[str]) -> tuple:
+    if settlement_id is None:
+        return '', '', '', '', ''
     settlement = location_cache[settlement_id]
     ward = get_location(None, settlement.parent_location_id)
     lga = get_location(None, ward.parent_location_id)
     state = get_location(None, lga.parent_location_id)
-    return ' · '.join([
+    return (
         state.name,
         lga.name,
         ward.name,
-        f'{settlement.name} «{settlement_id}»'
-    ])
+        settlement.name,
+        settlement_id,
+    )
