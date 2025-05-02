@@ -148,7 +148,7 @@ var HQReportDataTables = function (options) {
                     return data;
                 };
 
-                params.footerCallback = function (row, data, start, end, display) {
+                params.footerCallback = function (row, data, start, end, display) {     // eslint-disable-line no-unused-vars
                     if ('total_row' in data) {
                         self.render_footer_row('ajax_total_row', data['total_row']);
                     }
