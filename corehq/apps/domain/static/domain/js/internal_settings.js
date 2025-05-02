@@ -12,7 +12,7 @@ hqDefine("domain/js/internal_settings", [
     ko,
     _,
     initialPageData,
-    multiselectUtils
+    multiselectUtils,
 ) {
     var areas = initialPageData.get('areas');
 
@@ -63,7 +63,7 @@ hqDefine("domain/js/internal_settings", [
         });
 
         var internalSettingsView = internalSettingsViewModel(
-            initialPageData.get("current_values")
+            initialPageData.get("current_values"),
         );
         $('#update-project-info').koApplyBindings(internalSettingsView);
 
