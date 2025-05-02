@@ -4,6 +4,32 @@ Location API v2
 V2 of the Location API updates the serilization used in v1 and adds the ability
 to create and update locations, one at a time or in bulk.
 
+Data format
+-----------
+
+Individual locations are presented with the same serialization format in each endpoint
+
+**Sample JSON Output**
+
+.. code-block:: json
+
+    {
+        "domain": "dimagi-test",
+        "last_modified": "2024-03-11T19:29:16.845849",
+        "latitude": "31.4100000000",
+        "location_data": {
+            "pop": "1001"
+        },
+        "location_id": "68e65fbc2dc840ff8bf03849e57aca88",
+        "location_type_code": "county",
+        "location_type_name": "County",
+        "longitude": null,
+        "name": "Fairfax County",
+        "parent_location_id": "41b0bdfbae20428e9435ae8c3dcd22e7",
+        "site_code": "fairfax_county"
+    }
+
+
 List Locations
 --------------
 
@@ -57,27 +83,20 @@ parameter ``order_by=last_modified``, or from newest to oldest with
 ``last_modified.gte`` parameter to only fetch locations modified since your last
 data pull.
 
-
-**Sample JSON Output**
+**Sample JSON output**
 
 .. code-block:: json
 
     {
-        "domain": "dimagi-test",
-        "last_modified": "2024-03-11T19:29:16.845849",
-        "latitude": "31.4100000000",
-        "location_data": {
-            "pop": "1001"
-        },
-        "location_id": "68e65fbc2dc840ff8bf03849e57aca88",
-        "location_type_code": "county",
-        "location_type_name": "County",
-        "longitude": null,
-        "name": "Fairfax County",
-        "parent_location_id": "41b0bdfbae20428e9435ae8c3dcd22e7",
-        "site_code": "fairfax_county"
+      "meta": {
+        "limit": 20,
+        "next": null,
+        "offset": 0,
+        "previous": null,
+        "total_count": 2
+      },
+      "objects": ["<array of location objects>"]
     }
-
 
 Location Details
 ----------------
@@ -87,8 +106,6 @@ Location Details
 .. code-block:: text
 
     GET https://www.commcarehq.org/a/[domain]/api/location/v2/[location_id]
-
-This will output the same information displayed above, but for a single location
 
 
 Create Location (Individual)
