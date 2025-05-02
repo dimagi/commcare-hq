@@ -1073,9 +1073,15 @@ hqDefine("cloudcare/js/form_entry/entries", [
             self.$input = $('#' + self.entryId);
             self.$canvas = $('#' + self.entryId + '-canvas');
             self.$wrapper = $('#' + self.entryId + '-wrapper');
+            self.widthAtDataCapture = self.$canvas[0].width;
+            self.signatureData = null;
 
             self.signaturePad = new SignaturePad(self.$canvas[0]);
-            self.signaturePad.addEventListener('endStroke', () => { self.answerCanvasData(); });
+            self.signaturePad.addEventListener('endStroke', () => {
+                self.answerCanvasData();
+                self.widthAtDataCapture = self.$canvas[0].width;
+                self.signatureData = self.signaturePad.toData();
+            });
 
             new ResizeObserver(() => {
                 self.resizeCanvas();
@@ -1101,10 +1107,24 @@ hqDefine("cloudcare/js/form_entry/entries", [
         };
 
         self.resizeCanvas = function () {
-            var aspectRatio = 4,
-                width = self.$wrapper.width() - 2; // otherwise misaligned by 2px
+            const aspectRatio = 4;
+            const width = self.$wrapper.width() - 2; // otherwise misaligned by 2px
+            const scale = width / self.widthAtDataCapture;
             self.$canvas[0].width = width;
             self.$canvas[0].height = width / aspectRatio;
+
+            if (self.signatureData) {
+                const scaledData = JSON.parse(JSON.stringify(self.signatureData));
+                for (let i = 0; i < scaledData.length; i++) {
+                    const stroke = scaledData[i];
+                    for (let j = 0; j < stroke.points.length; j++) {
+                        const point = stroke.points[j];
+                        point.x = point.x * scale;
+                        point.y = point.y * scale;
+                    }
+                }
+                self.signaturePad.fromData(scaledData);
+            }
         };
     }
     SignatureEntry.prototype = Object.create(FileEntry.prototype);
