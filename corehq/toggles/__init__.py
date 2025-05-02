@@ -998,14 +998,6 @@ WEB_APPS_DOMAIN_BANNER = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/USH%3A+Show+current+domain+in+web+apps+Login+As+banner',
 )
 
-WEB_APPS_UPLOAD_QUESTIONS = FeatureRelease(
-    'web_apps_upload_questions',
-    'USH: Support image, audio, and video questions in Web Apps',
-    TAG_RELEASE,
-    namespaces=[NAMESPACE_DOMAIN],
-    owner='Jenny Schweers',
-)
-
 LOCATION_FIELD_USER_PROVISIONING = FeatureRelease(
     'location_field_user_provisioning',
     'USH: Holding feature flag for various works relating to the location field',
