@@ -4,6 +4,7 @@ hqDefine('sms/js/chat_contacts', [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'datatables.bootstrap',
+    'datatables-bootstrap3/BS3/assets/css/datatables.css',
     'commcarehq',
 ], function (
     $,

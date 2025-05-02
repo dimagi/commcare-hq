@@ -4,6 +4,9 @@ import 'datatables.net/js/jquery.dataTables';
 import 'datatables.net-fixedcolumns/js/dataTables.fixedColumns';
 import 'datatables.net-fixedcolumns-bs5/js/fixedColumns.bootstrap5';
 
+import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';
+import 'datatables.net-fixedcolumns-bs5/css/fixedColumns.bootstrap5.min.css';
+
 import _ from 'underscore';
 import googleAnalytics from 'analytix/js/google';
 import {Tooltip} from 'bootstrap5';
