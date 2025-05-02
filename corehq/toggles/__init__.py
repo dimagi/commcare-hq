@@ -1425,12 +1425,12 @@ COMMTRACK = StaticToggle(
     "CommCare Supply",
     TAG_DEPRECATED,
     description=(
-        '<a href="https://help.commcarehq.org/display/commtrack/CommCare+Supply+Home">CommCare Supply</a> '
+        '<a href="https://dimagi.atlassian.net/wiki/spaces/commtrack/overview">CommCare Supply</a> '
         "is a logistics and supply chain management module. It is designed "
         "to improve the management, transport, and resupply of a variety of "
         "goods and materials, from medication to food to bednets. <br/>"
     ),
-    help_link='https://help.commcarehq.org/display/commtrack/CommCare+Supply+Home',
+    help_link='https://dimagi.atlassian.net/wiki/spaces/commtrack/overview',
     namespaces=[NAMESPACE_DOMAIN],
     save_fn=_commtrackify,
 )
