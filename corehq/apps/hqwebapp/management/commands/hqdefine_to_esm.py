@@ -103,7 +103,10 @@ class Command(BaseCommand):
                 if self.is_use_strict(line) or self.is_hqdefine_close(line):
                     continue
 
-                fout.write(self.dedent(line))
+                line = self.dedent(line)
+                if line.startswith("return "):
+                    line = "export default" + line[len("return"):]
+                fout.write(line)
 
         logger.info(f"Rewrote {filename}")
 
