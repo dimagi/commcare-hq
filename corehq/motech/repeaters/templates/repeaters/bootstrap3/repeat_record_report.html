@@ -3,6 +3,7 @@
 {% load compress %}
 {% load i18n %}
 {% load crispy_forms_tags %}
+{% load humanize %}
 {% js_entry_b3 "repeaters/js/bootstrap3/repeat_record_report" %}
 
 {% block filter_panel %}
@@ -52,18 +53,19 @@
     {% blocktrans %}This action is not allowed for some of the selected payloads{% endblocktrans %}
   </div>
   <div id="selected-page-info" class="alert alert-info hide">
-    {% blocktrans with state_label=state.label.lower %}
+    {% blocktrans with state_label=state.label.lower formatted_total=total|intcomma %}
       All <b><span id="selected-page-count"></span></b> records on this page are
       selected.
       <button id="select-table-button" role="button" class="btn btn-default">
-        Select all <b>{{ total }}</b> {{ state_label }} records in this table
+        Select all <b>{{ formatted_total }}</b> {{ state_label }} records in
+        this table
       </button>
     {% endblocktrans %}
   </div>
   <div id="selected-table-info" class="alert alert-info hide">
-    {% blocktrans with state_label=state.label.lower %}
-      All <b>{{ total }}</b> {{ state_label }} records in this table are
-      selected.
+    {% blocktrans with state_label=state.label.lower formatted_total=total|intcomma %}
+      All <b>{{ formatted_total }}</b> {{ state_label }} records in this table
+      are selected.
       <button id="clear-table-selection" role="button" class="btn btn-default">
         Clear selection
       </button>
