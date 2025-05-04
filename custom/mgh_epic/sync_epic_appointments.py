@@ -138,18 +138,6 @@ def get_epic_appointments_for_patient(fhir_id, access_token, opened_on, study_st
     return appointments
 
 
-def convert_date_and_time_to_utc_timestamp(date, time):
-    date_time = date + "T" + time
-    utc_zone = dateutil.tz.gettz('UTC')
-    # Hardcoded for MGH study
-    local_zone = dateutil.tz.gettz('America/New_York')
-    local_datetime = datetime.fromisoformat(date_time)
-    local_datetime = local_datetime.replace(tzinfo=local_zone)
-    utc_datetime = local_datetime.astimezone(utc_zone)
-    utc_iso_format = utc_datetime.strftime('%Y-%m-%dT%H:%M:%SZ')
-
-    return utc_iso_format
-
 
 def convert_utc_timestamp_to_date_and_time(utc_timestamp):
     utc_zone = dateutil.tz.gettz('UTC')
