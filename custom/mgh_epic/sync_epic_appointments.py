@@ -1,10 +1,10 @@
-import dateutil
 import requests
 import jwt
+import pytz
 import time
 import uuid
 
-from datetime import datetime, timezone
+from datetime import datetime
 from django.conf import settings
 
 from jsonpath_ng import parse as parse_jsonpath
@@ -12,6 +12,7 @@ from urllib.parse import urlencode
 
 from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
+from corehq.util.timezones.conversions import ServerTime
 
 
 OAUTH_URL = "https://ws-interconnect-fhir.partners.org/Interconnect-FHIR-MU-PRD/oauth2/token"
@@ -138,11 +139,10 @@ def get_epic_appointments_for_patient(fhir_id, access_token, opened_on, study_st
 
 
 def convert_utc_timestamp_to_date_and_time(utc_timestamp):
-    utc_zone = timezone.utc
-    local_zone = dateutil.tz.gettz('America/New_York')
+    local_zone = pytz.timezone('US/Eastern')
     utc_datetime = datetime.fromisoformat(utc_timestamp.replace('Z', ''))
-    utc_datetime = utc_datetime.replace(tzinfo=utc_zone)
-    local_datetime = utc_datetime.astimezone(local_zone)
+    utc_datetime = utc_datetime.replace(tzinfo=None)
+    local_datetime = ServerTime(utc_datetime).user_time(local_zone).done()
     date = local_datetime.strftime('%Y-%m-%d')
     time = local_datetime.strftime('%H:%M')
 
