@@ -20,10 +20,9 @@ APPOINTMENT_URL = "https://ws-interconnect-fhir.partners.org/Interconnect-FHIR-M
 
 
 def handle_response(response):
-    if response.status_code == 200:
+    if 200 <= response.status_code < 300:
         return response.json()
-    elif response.status_code >= 400:
-        response.raise_for_status()
+    response.raise_for_status()
 
 
 def generate_epic_jwt():
