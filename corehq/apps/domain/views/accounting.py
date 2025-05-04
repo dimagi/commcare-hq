@@ -108,7 +108,6 @@ from corehq.apps.domain.views.settings import (
     BaseProjectSettingsView,
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.views import BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
@@ -536,8 +535,16 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
             'total_balance': self.total_balance,
             'show_plan': True,
             'show_overdue_invoice_modal': False,
+            'can_pay_by_wire': self.can_pay_by_wire,
         })
         return pagination_context
+
+    @property
+    def can_pay_by_wire(self):
+        return (
+            self.current_subscription is not None
+            and self.current_subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE
+        )
 
     @property
     def can_pay_invoices(self):
@@ -957,7 +964,6 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
 
     @method_decorator(always_allow_project_access)
     @method_decorator(require_superuser)
-    @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(InternalSubscriptionManagementView, self).dispatch(request, *args, **kwargs)
 
@@ -1056,31 +1062,44 @@ class PlanViewBase(DomainAccountingSettings):
 
     @property
     def plan_options(self):
-        return [
+        options = [
             PlanOption(
                 SoftwarePlanEdition.STANDARD,
-                "$300",
-                "$250",
-                _("For programs with one-time data collection needs, simple "
-                  "case management workflows, and basic M&E requirements."),
+                "$120",
+                "$100",
+                _("Get started. Build secure apps for offline mobile data collection and case management. "
+                  "{num_users} users included.").format(num_users=50),
             ),
             PlanOption(
                 SoftwarePlanEdition.PRO,
                 "$600",
                 "$500",
-                _("For programs with complex case management needs, field "
-                  "staff collaborating on tasks, and M&E teams that need to "
-                  "clean and report on data."),
+                _("Beyond the basics. Unlock reporting, case sharing, and hands-on support. "
+                  "{num_users} users included.").format(num_users=250),
             ),
             PlanOption(
                 SoftwarePlanEdition.ADVANCED,
                 "$1200",
                 "$1000",
-                _("For programs with distributed field staff, facility-based "
-                  "workflows, and advanced security needs. Also for M&E teams "
-                  "integrating data with 3rd party analytics."),
+                _("Unlock everything. Our most secure plan, built for managing connected systems across "
+                  "locations and user profiles, featuring web apps, advanced security, and robust admin and data "
+                  "management tools. {num_users} users included.").format(num_users=500),
             ),
         ]
+        if (
+            self.current_subscription is not None
+            and self.current_subscription.plan_version.plan.edition == SoftwarePlanEdition.FREE
+        ):
+            options.insert(
+                0, PlanOption(
+                    SoftwarePlanEdition.FREE,
+                    "Free",
+                    "Free",
+                    _("For practice purposes. Not intended for live projects. "
+                      "{num_users} users maximum.").format(num_users=5),
+                )
+            )
+        return options
 
     @property
     def start_date_after_minimum_subscription(self):
@@ -1152,7 +1171,7 @@ class PlanViewBase(DomainAccountingSettings):
             'editions': [
                 edition.lower()
                 for edition in [
-                    SoftwarePlanEdition.COMMUNITY,
+                    SoftwarePlanEdition.FREE,
                     SoftwarePlanEdition.STANDARD,
                     SoftwarePlanEdition.PRO,
                     SoftwarePlanEdition.ADVANCED,
@@ -1656,7 +1675,7 @@ class SubscriptionRenewalView(PlanViewBase, SubscriptionMixin):
         context = super(SubscriptionRenewalView, self).page_context
 
         if self.current_edition in [
-            SoftwarePlanEdition.COMMUNITY,
+            SoftwarePlanEdition.FREE,
             SoftwarePlanEdition.PAUSED,
         ]:
             raise Http404()

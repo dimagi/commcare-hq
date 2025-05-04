@@ -5,7 +5,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 
 from corehq import toggles
-from corehq.apps.domain.decorators import login_required
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
@@ -74,7 +74,7 @@ class KycConfigurationView(HqHtmxActionMixin, BaseDomainView):
         return self.render_htmx_partial_response(request, self.form_template_partial_name, context)
 
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator(login_and_domain_required, name='dispatch')
 @method_decorator(toggles.KYC_VERIFICATION.required_decorator(), name='dispatch')
 class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
     urlname = 'kyc_verify_table'

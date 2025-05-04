@@ -5,15 +5,22 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 
 from corehq.apps.data_cleaning.models import (
+    BulkEditChange,
     BulkEditRecord,
     BulkEditSession,
     BulkEditSessionType,
     DataType,
+    EditActionType,
     FilterMatchType,
+    MAX_RECORD_CHANGES,
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import CaseSearchES, user_adapter, group_adapter
-from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.case_search import (
+    case_property_missing,
+    case_search_adapter,
+    exact_case_property_text_query,
+)
 from corehq.apps.es.tests.utils import (
     case_search_es_setup,
     es_test,
@@ -180,7 +187,8 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         session.add_filter('pot_type', DataType.DATE, FilterMatchType.IS_EMPTY)
         session.add_filter('height_cm', DataType.DECIMAL, FilterMatchType.LESS_THAN_EQUAL, "11.0")
         filters = session.filters.all()
-        new_order = [filters[1].filter_id, filters[2].filter_id]
+        # the form that uses this method will always fetch a list of strings, and the field is a UUID
+        new_order = [str(filter_id) for filter_id in [filters[1].filter_id, filters[2].filter_id]]
         with self.assertRaises(ValueError):
             session.update_filter_order(new_order)
 
@@ -192,13 +200,14 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
         session.add_filter('pot_type', DataType.DATE, FilterMatchType.IS_EMPTY)
         session.add_filter('height_cm', DataType.DECIMAL, FilterMatchType.LESS_THAN_EQUAL, "11.0")
         filters = session.filters.all()
-        new_order = [
+        # the form that uses this method will always fetch a list of strings, and the field is a UUID
+        new_order = [str(filter_id) for filter_id in [
             filters[1].filter_id,
             filters[0].filter_id,
             filters[2].filter_id,
             filters[4].filter_id,
             filters[3].filter_id,
-        ]
+        ]]
         session.update_filter_order(new_order)
         reordered_prop_ids = [c.prop_id for c in session.filters.all()]
         self.assertEqual(
@@ -209,21 +218,23 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
     def test_reorder_wrong_number_of_column_ids_raises_error(self):
         session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
         columns = session.columns.all()
-        new_order = [columns[1].column_id, columns[2].column_id]
+        # the form that uses this method will always fetch a list of strings, and the field is a UUID
+        new_order = [str(col_id) for col_id in [columns[1].column_id, columns[2].column_id]]
         with self.assertRaises(ValueError):
             session.update_column_order(new_order)
 
     def test_update_column_order(self):
         session = BulkEditSession.new_case_session(self.django_user, self.domain_name, self.case_type)
         columns = session.columns.all()
-        new_order = [
+        # the form that uses this method will always fetch a list of strings, and the field is a UUID
+        new_order = [str(col_id) for col_id in [
             columns[1].column_id,
             columns[0].column_id,
             columns[2].column_id,
             columns[4].column_id,
             columns[5].column_id,
             columns[3].column_id,
-        ]
+        ]]
         session.update_column_order(new_order)
         reordered_prop_ids = [c.prop_id for c in session.columns.all()]
         self.assertEqual(
@@ -243,8 +254,8 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
             CaseSearchES()
             .domain(self.domain_name)
             .case_type(self.case_type)
-            .exists('watered_on')
-            .empty('pot_type')
+            .NOT(case_property_missing('watered_on'))
+            .filter(exact_case_property_text_query('pot_type', ''))
             .xpath_query(
                 self.domain_name,
                 "phonetic-match(name, 'lowkey') and num_leaves > 2 and height_cm <= 11.1"
@@ -261,7 +272,7 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
             CaseSearchES()
             .domain(self.domain_name)
             .case_type(self.case_type)
-            .exists('watered_on')
+            .NOT(case_property_missing('watered_on'))
             .OR(all_project_data_filter(self.domain_name, ['project_data']))  # default Case Owners pinned filter
         )
         self.assertEqual(query.es_query, expected_query.es_query)
@@ -381,3 +392,50 @@ class BulkEditSessionSelectionTests(BaseBulkEditSessionTest):
         )
         num_selected_records = self.session.get_num_selected_records()
         self.assertEqual(num_selected_records, 2)
+
+
+class BulkEditSessionChangesTests(BaseBulkEditSessionTest):
+    domain_name = 'session-test-changes'
+
+    def _get_list_of_doc_ids(self, num):
+        return [str(uuid.uuid4()) for _ in range(num)]
+
+    def test_get_change_counts(self):
+        doc_ids = self._get_list_of_doc_ids(MAX_RECORD_CHANGES)
+        selected_edited_doc_ids = self._get_list_of_doc_ids(MAX_RECORD_CHANGES)
+        records = []
+        changes = []
+        for doc_id in doc_ids + selected_edited_doc_ids:
+            record = BulkEditRecord.objects.create(
+                session=self.session,
+                doc_id=doc_id,
+                is_selected=doc_id in selected_edited_doc_ids,
+            )
+            records.append(record)
+            change = BulkEditChange.objects.create(
+                session=self.session,
+                prop_id='name',
+                action_type=EditActionType.STRIP,
+            )
+            change.records.add(record)
+            changes.append(change)
+
+        # ensure that if a record has multiple changes, those changes aren't counted
+        changes[1].records.add(records[0], records[5])
+        changes[4].records.add(records[2])
+
+        # ensure that one record is over the limit
+        for change in changes[1:MAX_RECORD_CHANGES]:
+            change.records.add(records[MAX_RECORD_CHANGES])
+
+        selected_doc_ids = self._get_list_of_doc_ids(40)
+        self.session.select_multiple_records(selected_doc_ids)
+        change_counts = self.session.get_change_counts()
+        self.assertEqual(
+            change_counts["num_records_edited"],
+            len(doc_ids) + len(selected_edited_doc_ids),
+        )
+        self.assertEqual(
+            records[MAX_RECORD_CHANGES].changes.count(), MAX_RECORD_CHANGES
+        )
+        self.assertEqual(change_counts["num_records_at_max_changes"], 1)

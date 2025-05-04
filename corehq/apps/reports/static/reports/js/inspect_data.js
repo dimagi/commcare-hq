@@ -53,7 +53,7 @@ hqDefine("reports/js/inspect_data", [
 
         if (document.location.href.match(/reports\/submit_history/)) {
             $(document).on('click', 'td.view-form-link', function () {
-                kissAnalytics.track.event("Clicked View Form in Submit History Report");
+                kissAnalytics.track.event("Clicked View Form in Submission History Report");
             });
             var submitHistoryFilterSelector = "#paramSelectorForm select[name='emw']",
                 originalSubmitHistorySelection = {};
@@ -64,7 +64,7 @@ hqDefine("reports/js/inspect_data", [
             });
 
             $(document).on('click', '#apply-filters', function () {
-                kissAnalytics.track.event("[Submit History Report] Clicked Apply", {
+                kissAnalytics.track.event("[Submission History Report] Clicked Apply", {
                     "filters": generateFiltersForAnalytics(submitHistoryFilterSelector, userTypes, originalSubmitHistorySelection),
                 });
             });

@@ -67,7 +67,8 @@ class BlobMeta(PartitionedModel, Model):
         unique_together = [
             # HACK work around unique=True implies db_index=True
             # https://code.djangoproject.com/ticket/24082
-            # Avoid extra varchar_pattern_ops index
+            # Avoid extra varchar_pattern_ops index while still maintaining
+            # an index for exact matches. We don't need varchar_pattern_ops
             # since we do not do LIKE queries on these
             # https://stackoverflow.com/a/50926644/10840
             ("key",),

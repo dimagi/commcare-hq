@@ -20,6 +20,7 @@ def _get_all_unpaid_saas_invoices():
         is_hidden=False,
         subscription__service_type=SubscriptionType.PRODUCT,
         date_paid__isnull=True,
+        balance__gt=0,
     )
 
 

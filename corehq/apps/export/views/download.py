@@ -61,7 +61,7 @@ from corehq.apps.export.views.utils import (
     ExportsPermissionsManager,
     case_type_or_app_limit_exceeded
 )
-from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_tempusdominus
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import media_export_is_too_big
@@ -158,7 +158,6 @@ class BaseDownloadExportView(BaseProjectDataView):
     export_filter_class = None
 
     @use_bootstrap5
-    @use_tempusdominus
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)

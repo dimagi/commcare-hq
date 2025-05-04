@@ -1,6 +1,7 @@
 import 'commcarehq';
 import $ from 'jquery';
 import _ from 'underscore';
+import 'htmx.org';
 
 import ace from 'ace-builds/src-min-noconflict/ace';
 import 'ace-builds/src-min-noconflict/mode-django';
@@ -11,7 +12,7 @@ import 'ace-builds/src-min-noconflict/mode-python';
 import 'hqwebapp/js/bootstrap5/main';
 import 'hqwebapp/js/bootstrap5/widgets';
 import initialPageData from 'hqwebapp/js/initial_page_data';
-import { Tooltip } from 'hqwebapp/js/bootstrap5_loader';
+import { Tooltip } from 'bootstrap5';
 
 $(function () {
     ace.config.set('basePath', initialPageData.get('ace_base_path'));

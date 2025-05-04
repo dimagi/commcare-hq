@@ -12,15 +12,13 @@ from django.http import (
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.urls import NoReverseMatch
+from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext
-from django.utils.html import conditional_escape
 
 from celery.utils.log import get_task_logger
 from memoized import memoized
 
-from corehq.apps.hqwebapp.utils.bootstrap.paths import get_bootstrap5_path
-from corehq.util.timezones.utils import get_timezone
 from couchexport.export import export_from_tables, get_writer
 from couchexport.shortcuts import export_response
 from dimagi.utils.modules import to_function
@@ -29,11 +27,7 @@ from dimagi.utils.web import json_request, json_response
 
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
-from corehq.apps.hqwebapp.decorators import (
-    use_datatables,
-    use_daterangepicker,
-    use_jquery_ui,
-)
+from corehq.apps.hqwebapp.utils.bootstrap.paths import get_bootstrap5_path
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.const import EXPORT_PAGE_LIMIT
 from corehq.apps.reports.datatables import DataTablesHeader
@@ -46,6 +40,7 @@ from corehq.apps.reports.util import (
 )
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.users.models import CouchUser
+from corehq.util.timezones.utils import get_timezone
 from corehq.util.view_utils import absolute_reverse, request_as_dict, reverse
 
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
@@ -836,21 +831,16 @@ class GenericReportView(object):
         """
         return []
 
-    @use_jquery_ui
-    @use_datatables
-    @use_daterangepicker
     def decorator_dispatcher(self, request, *args, **kwargs):
         """
         Decorate this method in your report subclass and call super to make sure
-        appropriate decorators are used to render the page and its javascript
-        libraries.
+        appropriate decorators are used to render the page.
 
         example:
 
         class MyNewReport(GenericReport):
             ...
 
-            @use_jquery_ui
             def decorator_dispatcher(self, request, *args, **kwargs):
                 super(MyNewReport, self).decorator_dispatcher(request, *args, **kwargs)
 

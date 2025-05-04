@@ -18,7 +18,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.hqcase.utils import AUTO_UPDATE_XMLNS
 from corehq.apps.users.models import CouchUser
-from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.apps.case_importer.do_import import SubmitCaseBlockHandler, RowAndCase
 from corehq.motech.repeaters.const import State
 from corehq.motech.repeaters.models import RepeatRecord
@@ -175,6 +175,12 @@ def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, db=N
         for rule in rules:
             rule.last_run = now
             rule.save(update_fields=['last_run'])
+
+
+@task(queue='background_queue', acks_late=True, ignore_result=True)
+def run_case_update_rules_on_save_ng(case_id):
+    case = CommCareCase.objects.get_case(case_id)
+    run_case_update_rules_on_save(case)
 
 
 @task(serializer='pickle', queue='background_queue', acks_late=True, ignore_result=True)

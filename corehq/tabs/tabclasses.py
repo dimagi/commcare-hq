@@ -36,6 +36,7 @@ from corehq.apps.data_cleaning.decorators import bulk_data_cleaning_enabled_for_
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import ManageReleasesByLocation
+from corehq.apps.domain.views.settings import EditIPAccessConfigView, EditMyProjectSettingsView
 from corehq.apps.email.views import EmailSMTPSettingsView
 from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from corehq.apps.enterprise.views import ManageEnterpriseMobileWorkersView
@@ -92,6 +93,7 @@ from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.permissions import (
     can_download_data_files,
     can_view_sms_exports,
+    can_access_payments_report,
 )
 from corehq.feature_previews import (
     EXPLORE_CASE_DATA_PREVIEW,
@@ -1084,7 +1086,10 @@ class ProjectDataTab(UITab):
 
     @cached_property
     def _can_view_payments_integration(self):
-        return toggles.MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain)
+        return (
+            toggles.MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain)
+            and can_access_payments_report(self.couch_user, self.domain)
+        )
 
     def _get_payments_verification_views(self):
         from corehq.apps.integration.payments.views import PaymentsVerificationReportView
@@ -2071,11 +2076,16 @@ class ProjectSettingsTab(UITab):
                 }
             ])
 
-        from corehq.apps.domain.views.settings import EditMyProjectSettingsView
         project_info.append({
             'title': _(EditMyProjectSettingsView.page_title),
             'url': reverse(EditMyProjectSettingsView.urlname, args=[self.domain])
         })
+
+        if toggles.IP_ACCESS_CONTROLS.enabled(self.domain):
+            project_info.append({
+                'title': _(EditIPAccessConfigView.page_title),
+                'url': reverse(EditIPAccessConfigView.urlname, args=[self.domain])
+            })
 
         items.append((_('Project Information'), project_info))
 

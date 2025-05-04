@@ -6,6 +6,7 @@ hqDefine("events/js/new_event", [
     "locations/js/widgets",
     "hqwebapp/js/bootstrap3/widgets",
     "jquery-ui/ui/widgets/datepicker",
+    "jquery-ui-built-themes/redmond/jquery-ui.min.css",
     "commcarehq",
 ], function (
     $,

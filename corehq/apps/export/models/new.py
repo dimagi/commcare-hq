@@ -23,6 +23,7 @@ from jsonobject.exceptions import BadValueError
 from memoized import memoized
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
+from corehq.apps.app_manager.exceptions import AppInDifferentDomainException
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
 from dimagi.ext.couchdbkit import (
@@ -1839,7 +1840,7 @@ class ExportDataSchema(Document):
     def _reorder_schema_from_app(cls, current_schema, app_id, identifier):
         try:
             app = get_app(current_schema.domain, app_id)
-        except Http404:
+        except (Http404, AppInDifferentDomainException):
             return current_schema
 
         if isinstance(app, RemoteApp):
