@@ -4,7 +4,7 @@ import jwt
 import time
 import uuid
 
-from datetime import datetime
+from datetime import datetime, timezone
 from django.conf import settings
 
 from jsonpath_ng import parse as parse_jsonpath
@@ -138,9 +138,8 @@ def get_epic_appointments_for_patient(fhir_id, access_token, opened_on, study_st
     return appointments
 
 
-
 def convert_utc_timestamp_to_date_and_time(utc_timestamp):
-    utc_zone = dateutil.tz.gettz('UTC')
+    utc_zone = timezone.utc
     local_zone = dateutil.tz.gettz('America/New_York')
     utc_datetime = datetime.fromisoformat(utc_timestamp.replace('Z', ''))
     utc_datetime = utc_datetime.replace(tzinfo=utc_zone)
