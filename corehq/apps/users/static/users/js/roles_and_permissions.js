@@ -1,7 +1,6 @@
 import "commcarehq";
 import $ from "jquery";
 import ko from "knockout";
-import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import userRoles from "users/js/roles";
 import "hqwebapp/js/bootstrap3/knockout_bindings.ko";  // for roles modal

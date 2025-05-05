@@ -2,7 +2,6 @@ import $ from "jquery";
 import _ from "underscore";
 import ko from "knockout";
 import toggles from "hqwebapp/js/toggles";
-import alertUser from "hqwebapp/js/bootstrap3/alert_user";
 import privileges from "hqwebapp/js/privileges";
 
 let selectPermissionModel = function (id, permissionModel, text) {
