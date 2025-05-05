@@ -198,8 +198,7 @@ class OpenaiTranslator(LLMTranslator):
             try:
                 return _call_openai_client()
             except Exception as e:
-                print(f"Error calling OpenAI API via client: {e}")
-                raise e
+                raise Exception("OpenAI API call failed") from e
 
     def _call_llm_http(self, system_prompt, user_message):
         # We might not use this method at all, but it was useful in testing other LLM clients
@@ -230,8 +229,7 @@ class OpenaiTranslator(LLMTranslator):
             result = response.json()
             return result["choices"][0]["message"]["content"]
         except Exception as e:
-            print(f"Error making HTTP request to OpenAI API: {e}")
-            raise e
+            raise Exception("Error making HTTP request to OpenAI API") from e
 
 
 class PoTranslationFormat(TranslationFormat):
@@ -260,7 +258,7 @@ class PoTranslationFormat(TranslationFormat):
             return polib.pofile(self.file_path)
         except FileNotFoundError:
             """If the file is not found, we will return an empty list."""
-            raise FileNotFoundError(f"File {self.file_path} not found.")
+            raise FileNotFoundError(f"File {self.file_path} not found.") from None
 
     @property
     def untranslated_messages(self):
