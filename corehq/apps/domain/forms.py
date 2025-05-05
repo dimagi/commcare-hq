@@ -582,7 +582,7 @@ class DomainGlobalSettingsForm(forms.Form):
     )
 
     connect_messaging_channel_name = CharField(
-        label=gettext_lazy("Connect Messaging Channel Nmae"),
+        label=gettext_lazy("Connect Messaging Channel Name"),
         required=False,
         help_text=gettext_lazy("Name of the channel created in connect messaging.")
     )
