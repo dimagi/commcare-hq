@@ -558,8 +558,14 @@ class Command(BaseCommand):
             default=10,
             help='Number of batches to process in parallel (default: 10)'
         )
+        parser.add_argument(
+            '--check-and-remove-errors',
+            action='store_true',
+            help='Check for errors in the PO files after translation and remove them (default: False)'
+        )
 
     def handle(self, *args, **options):
+        self.check_and_remove_errors = options['check_and_remove_errors']
         model = options['model']
         langs = options['langs'] or [lang[0] for lang in settings.LANGUAGES]
         batch_size = options['batch_size']
@@ -605,8 +611,10 @@ class Command(BaseCommand):
             lang=lang,
             translation_format=translation_format
         )
-
         untranslated = translation_format.load_input()
+        if self.check_and_remove_errors:
+            translation_format.check_and_remove_errored_messages(po_file_path)
+            return
         if not untranslated:
             self.stdout.write(f"No untranslated messages found for {lang}")
             return
