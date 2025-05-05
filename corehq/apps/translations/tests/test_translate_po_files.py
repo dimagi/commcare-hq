@@ -1,5 +1,10 @@
 import json
+import os
+import subprocess
+import tempfile
 from unittest.mock import MagicMock, patch
+
+import polib
 
 from corehq.apps.translations.management.commands.translate_po_files import (
     LLMTranslator,
@@ -370,3 +375,76 @@ def test_end_to_end_flow(mock_polib):
         translation = translator.translate(to_be_translated[0])
 
         assert translation == {"0": "Hola", "1": "Mundo"}
+
+
+def test_extract_errored_msgstr_ids():
+    po_format = PoTranslationFormat("dummy.po")
+    error_output = (
+        "dummy.po:10: some error message\n"
+        "dummy.po:15: warning: some warning message\n"
+        "dummy.po:20: another error message\n"
+        "dummy.po:25: yet another error message :with a reason\n"
+    )
+    result = po_format._extract_errored_msgstr_ids(error_output)
+    assert 10 in result
+    assert 20 in result
+    assert 25 in result
+    assert 15 not in result
+    assert result[10] == "some error message"
+    assert result[20] == "another error message"
+    assert result[25] == "yet another error message : with a reason"
+
+
+def test_run_msgfmt_returns_stderr():
+    with tempfile.NamedTemporaryFile("w", delete=False) as tmp:
+        tmp.write('msgid "Hello"\nmsgstr "Hola"\n')
+        tmp_path = tmp.name
+    po_format = PoTranslationFormat(tmp_path)
+    fake_stderr = "fake error output"
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=["msgfmt", "--check", "-o", "/dev/null", tmp_path],
+            returncode=1,
+            stdout="",
+            stderr=fake_stderr
+        )
+        result = po_format._run_msgfmt(tmp_path)
+        assert result == fake_stderr
+    os.remove(tmp_path)
+
+
+def test_remove_errored_translations():
+
+    po_content = (
+        'msgid "A"\n'
+        'msgstr "a"\n\n'
+        'msgid "B"\n'
+        'msgstr "b"\n\n'
+        'msgid "C"\n'
+        'msgstr "c"\n'
+    )
+    with tempfile.NamedTemporaryFile("w", delete=False, suffix=".po") as tmp:
+        tmp.write(po_content)
+        po_file_path = tmp.name
+
+    # Find the line numbers of each msgstr in the file
+    msgstr_lines = []
+    with open(po_file_path) as f:
+        for i, line in enumerate(f, 1):
+            if line.startswith('msgstr'):
+                msgstr_lines.append(i)
+
+    line_num_error_map = {
+        msgstr_lines[1]: "error at B",
+        msgstr_lines[2]: "error at C"
+    }
+
+    po_format = PoTranslationFormat(po_file_path)
+    with patch("corehq.apps.translations.management.commands.translate_po_files.polib.pofile", wraps=polib.pofile):
+        po_format._remove_errored_translations(line_num_error_map)
+
+    updated_po = polib.pofile(po_file_path)
+    assert updated_po[0].msgstr == "a"
+    assert updated_po[1].msgstr == ""
+    assert updated_po[2].msgstr == ""
+    os.remove(po_file_path)
