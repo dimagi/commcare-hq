@@ -23,8 +23,8 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
         resendButton = document.getElementById('resend-button'),
         $popUp = $('#are-you-sure'),
         $confirmButton = $('#confirm-button'),
-        payload_id = initialPageData.get('payload_id'),
-        repeater_id = initialPageData.get('repeater_id');
+        payloadId = initialPageData.get('payload_id'),
+        repeaterId = initialPageData.get('repeater_id');
 
     var selectedEntireTable = false;
 
@@ -219,8 +219,8 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
 
         function getBulkSelectionProperties() {
             return {
-                payload_id: payload_id,
-                repeater_id: repeater_id,
+                payload_id: payloadId,
+                repeater_id: repeaterId,
                 state: initialPageData.get('state'),
             };
         }
@@ -303,7 +303,7 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
         }
 
         function updateActionButtons() {
-            const disallowBulkAction = payload_id === "" && repeater_id === "" && selectedEntireTable;
+            const disallowBulkAction = payloadId === "" && repeaterId === "" && selectedEntireTable;
             const checkedRecords = getCheckedRecords();
             if (checkedRecords.length === 0 || disallowBulkAction) {
                 resendButton.disabled = true;

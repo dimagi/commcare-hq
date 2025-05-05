@@ -36,8 +36,8 @@ class TestUtilities(SimpleTestCase):
 
     def test__get_state(self):
         mock_request = Mock()
-        state_values = [None, 'PENDING', 'ALL']
-        expected_results = [None, State.Pending, None]
+        state_values = [None, 'PENDING']
+        expected_results = [None, State.Pending]
         for value, expected_result in zip(state_values, expected_results):
             mock_request.POST.get.return_value = value
             result = repeat_records._get_state(mock_request)
@@ -45,7 +45,7 @@ class TestUtilities(SimpleTestCase):
 
     def test__get_state_raises_key_error(self):
         mock_request = Mock()
-        state_values = ['', 'random-state']
+        state_values = ['', 'ALL']
         for value in state_values:
             with self.assertRaises(KeyError):
                 repeat_records._get_state(mock_request)
