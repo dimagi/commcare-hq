@@ -17,13 +17,15 @@ from corehq.util.metrics.load_counters import case_load_counter
 
 @task(queue='case_import_queue')
 def commit_data_cleaning(bulk_edit_session_id):
-    session = BulkEditSession.objects.get(session_id=bulk_edit_session_id)
-    if session.committed_on is not None:
-        # another task is already processing this session
-        return []
-
-    session.committed_on = timezone.now()
-    session.save()
+    with transaction.atomic():
+        updated = BulkEditSession.objects.filter(
+            session_id=bulk_edit_session_id,
+            committed_on__isnull=True
+        ).update(committed_on=timezone.now())
+        if not updated:
+            # another task is already processing this session
+            return []
+        session = BulkEditSession.objects.get(session_id=bulk_edit_session_id)
 
     _purge_ui_data_from_session(session)
 
