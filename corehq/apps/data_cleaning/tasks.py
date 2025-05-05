@@ -40,13 +40,18 @@ def commit_data_cleaning(bulk_edit_session_id):
         form_ids.append(xform.form_id)
         session.update_result(len(records), xform.form_id)
 
-    session.completed_on = datetime.now()
-    session.save()
-
-    session.changes.all().delete()
-    session.records.all().delete()
+    _complete_session(session)
 
     return form_ids
+
+
+@retry_on_integrity_error(max_retries=3, delay=0.1)
+@transaction.atomic
+def _complete_session(session):
+    session.completed_on = datetime.now()
+    session.save()
+    session.changes.all().delete()
+    session.records.all().delete()
 
 
 @retry_on_integrity_error(max_retries=3, delay=0.1)
