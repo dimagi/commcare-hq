@@ -23739,7 +23739,7 @@ msgstr ""
 #: corehq/apps/enterprise/enterprise.py
 #, python-format
 msgid "% of Domains using Case Management"
-msgstr "% доменів, що використовують керування кейсами"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "# Applications"
@@ -23780,7 +23780,7 @@ msgstr "Відповідність версії CommCare"
 #: corehq/apps/enterprise/enterprise.py
 #, python-format
 msgid "% of Mobile Workers on the Latest CommCare Version"
-msgstr "% мобільних працівників на останній версії CommCare"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py corehq/apps/hqwebapp/doc_info.py
 #: corehq/apps/sms/models.py corehq/apps/sms/views.py
@@ -47764,7 +47764,7 @@ msgstr "Кількість користувачів досягла ліміту 
 #: corehq/apps/users/models.py
 #, python-format
 msgid "User count has reached 90% of the Plan limit for {}"
-msgstr "Кількість користувачів досягла 90% ліміту плану для {}"
+msgstr ""
 
 #: corehq/apps/users/permissions.py
 msgid "Export De-Identified Data"

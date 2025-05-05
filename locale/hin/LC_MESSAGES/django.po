@@ -23583,7 +23583,7 @@ msgstr "त्रुटि: बहुत अधिक निर्यात। �
 #: corehq/apps/enterprise/enterprise.py
 #, python-format
 msgid "% of Domains using Case Management"
-msgstr "केस प्रबंधन का उपयोग करने वाले डोमेन का %"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "# Applications"
@@ -23624,7 +23624,7 @@ msgstr "CommCare संस्करण अनुपालन"
 #: corehq/apps/enterprise/enterprise.py
 #, python-format
 msgid "% of Mobile Workers on the Latest CommCare Version"
-msgstr "नवीनतम CommCare संस्करण पर मोबाइल वर्कर्स का %"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py corehq/apps/hqwebapp/doc_info.py
 #: corehq/apps/sms/models.py corehq/apps/sms/views.py
@@ -47488,7 +47488,7 @@ msgstr "{} के लिए प्लान सीमा पर उपयोग�
 #: corehq/apps/users/models.py
 #, python-format
 msgid "User count has reached 90% of the Plan limit for {}"
-msgstr "{} के लिए प्लान सीमा का 90% उपयोगकर्ता संख्या पहुँच गई है"
+msgstr ""
 
 #: corehq/apps/users/permissions.py
 msgid "Export De-Identified Data"

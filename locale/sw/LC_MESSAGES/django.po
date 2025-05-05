@@ -23665,7 +23665,7 @@ msgstr ""
 #: corehq/apps/enterprise/enterprise.py
 #, python-format
 msgid "% of Domains using Case Management"
-msgstr "% ya Maeneo yanayotumia Usimamizi wa Kesi"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
 msgid "# Applications"
@@ -23706,7 +23706,7 @@ msgstr "Uzingatiaji wa Toleo la CommCare"
 #: corehq/apps/enterprise/enterprise.py
 #, python-format
 msgid "% of Mobile Workers on the Latest CommCare Version"
-msgstr "% ya Wafanyakazi wa Simu kwenye Toleo Jipya la CommCare"
+msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py corehq/apps/hqwebapp/doc_info.py
 #: corehq/apps/sms/models.py corehq/apps/sms/views.py
@@ -47697,7 +47697,7 @@ msgstr "Idadi ya watumiaji imefikia kikomo cha Mpango kwa {}"
 #: corehq/apps/users/models.py
 #, python-format
 msgid "User count has reached 90% of the Plan limit for {}"
-msgstr "Idadi ya watumiaji imefikia 90% ya kikomo cha Mpango kwa {}"
+msgstr ""
 
 #: corehq/apps/users/permissions.py
 msgid "Export De-Identified Data"
