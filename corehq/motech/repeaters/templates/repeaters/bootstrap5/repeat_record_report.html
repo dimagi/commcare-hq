@@ -54,7 +54,7 @@
     {% blocktrans %}This action is not allowed for some of the selected payloads{% endblocktrans %}
   </div>
   <div id="selected-page-info" class="alert alert-info hide">
-    {% blocktrans with state_label=state.label.lower formatted_total=total|intcomma %}
+    {% blocktrans with formatted_total=total|intcomma %}
       All <b><span id="selected-page-count"></span></b> records on this page are
       selected.
       <button
@@ -62,15 +62,13 @@
         role="button"
         class="btn btn-outline-primary"
       >
-        Select all <b>{{ formatted_total }}</b> {{ state_label }} records in
-        this table
+        Select all <b>{{ formatted_total }}</b> records in this table
       </button>
     {% endblocktrans %}
   </div>
   <div id="selected-table-info" class="alert alert-info hide">
-    {% blocktrans with state_label=state.label.lower formatted_total=total|intcomma %}
-      All <b>{{ formatted_total }}</b> {{ state_label }} records in this table
-      are selected.
+    {% blocktrans with formatted_total=total|intcomma %}
+      All <b>{{ formatted_total }}</b> records in this table are selected.
       <button
         id="clear-table-selection"
         role="button"

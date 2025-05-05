@@ -63,7 +63,7 @@
      {% blocktrans %}This action is not allowed for some of the selected payloads{% endblocktrans %}
    </div>
    <div id="selected-page-info" class="alert alert-info hide">
-     {% blocktrans with state_label=state.label.lower formatted_total=total|intcomma %}
+     {% blocktrans with formatted_total=total|intcomma %}
        All <b><span id="selected-page-count"></span></b> records on this page are
        selected.
 -      <button id="select-table-button" role="button" class="btn btn-default">
@@ -72,13 +72,13 @@
 +        role="button"
 +        class="btn btn-outline-primary"
 +      >
-         Select all <b>{{ formatted_total }}</b> {{ state_label }} records in
-         this table
+         Select all <b>{{ formatted_total }}</b> records in this table
        </button>
-@@ -66,7 +71,11 @@
-     {% blocktrans with state_label=state.label.lower formatted_total=total|intcomma %}
-       All <b>{{ formatted_total }}</b> {{ state_label }} records in this table
-       are selected.
+     {% endblocktrans %}
+@@ -64,7 +69,11 @@
+   <div id="selected-table-info" class="alert alert-info hide">
+     {% blocktrans with formatted_total=total|intcomma %}
+       All <b>{{ formatted_total }}</b> records in this table are selected.
 -      <button id="clear-table-selection" role="button" class="btn btn-default">
 +      <button
 +        id="clear-table-selection"
@@ -88,7 +88,7 @@
          Clear selection
        </button>
      {% endblocktrans %}
-@@ -75,8 +84,9 @@
+@@ -73,8 +82,9 @@
      <div class="modal-dialog">
        <div class="modal-content">
          <div class="modal-header">
@@ -100,7 +100,7 @@
              <span class="sr-only"
                >{% blocktrans %}Close{% endblocktrans %}</span
              >
-@@ -89,7 +99,11 @@
+@@ -87,7 +97,11 @@
            {% blocktrans %}Are you sure?{% endblocktrans %}
          </div>
          <div class="modal-footer">
@@ -113,7 +113,7 @@
              {% blocktrans %}No{% endblocktrans %}
            </button>
            <button
-@@ -129,13 +143,14 @@
+@@ -127,13 +141,14 @@
      <div class="modal-dialog" role="document">
        <div class="modal-content">
          <div class="modal-header">
@@ -133,7 +133,7 @@
            </button>
            <h4 class="modal-title">{% trans "Payload" %}</h4>
          </div>
-@@ -143,7 +158,11 @@
+@@ -141,7 +156,11 @@
            <div class="payload"></div>
          </div>
          <div class="modal-footer">
@@ -146,7 +146,7 @@
              {% trans "Close" %}
            </button>
          </div>
-@@ -156,13 +175,14 @@
+@@ -154,13 +173,14 @@
      <div class="modal-dialog" role="document">
        <div class="modal-content">
          <div class="modal-header">
@@ -166,7 +166,7 @@
            </button>
            <h4 class="modal-title">{% trans "Error" %}</h4>
          </div>
-@@ -170,7 +190,11 @@
+@@ -168,7 +188,11 @@
            <div class="error-message"></div>
          </div>
          <div class="modal-footer">

@@ -222,7 +222,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             total=total,
             payload_id=self.payload_id,
             repeater_id=self.repeater_id,
-            state=self.state.label.upper() if self.state else 'ALL',
+            state=self.state.label.upper() if self.state else None,
         )
         return context
 
@@ -296,13 +296,13 @@ class RepeatRecordView(View):
 
     def post(self, request, domain):
         # Retriggers a repeat record
-        if _get_state(request):
+        if request.POST.get('record_id'):
+            _schedule_task_without_state(request, domain, 'resend')
+        else:
             try:
                 _schedule_task_with_state(request, domain, 'resend')
             except BulkActionMissingParameters:
                 return _missing_parameters_response()
-        else:
-            _schedule_task_without_state(request, domain, 'resend')
         return JsonResponse({'success': True})
 
 
@@ -310,13 +310,13 @@ class RepeatRecordView(View):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def cancel_repeat_record(request, domain):
-    if _get_state(request) in [State.Pending, State.Fail]:
+    if request.POST.get('record_id'):
+        _schedule_task_without_state(request, domain, 'cancel')
+    else:
         try:
             _schedule_task_with_state(request, domain, 'cancel')
         except BulkActionMissingParameters:
             return _missing_parameters_response()
-    else:
-        _schedule_task_without_state(request, domain, 'cancel')
 
     return HttpResponse('OK')
 
@@ -325,13 +325,13 @@ def cancel_repeat_record(request, domain):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def requeue_repeat_record(request, domain):
-    if _get_state(request) in [State.Cancelled, State.InvalidPayload]:
+    if request.POST.get('record_id'):
+        _schedule_task_without_state(request, domain, 'requeue')
+    else:
         try:
             _schedule_task_with_state(request, domain, 'requeue')
         except BulkActionMissingParameters:
             return _missing_parameters_response()
-    else:
-        _schedule_task_without_state(request, domain, 'requeue')
 
     return HttpResponse('OK')
 
@@ -353,10 +353,10 @@ def _get_record_ids_from_request(request):
 
 def _get_state(request: HttpRequest) -> str:
     state_from_request = request.POST.get('state')
-    if state_from_request is None:
+    if not state_from_request:
         return None
     state = State.state_for_key(state_from_request)
-    if state is None and state_from_request != 'ALL':
+    if not state:
         raise KeyError(f"{state_from_request} is not a valid option for RepeatRecord.State")
     return state
 
