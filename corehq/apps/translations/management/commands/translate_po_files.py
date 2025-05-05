@@ -654,6 +654,7 @@ class Command(BaseCommand):
                 self.stderr.write(f"Error in batch processing: {str(e)}")
 
         translation_format.save_output()
+        translation_format.check_and_remove_errored_messages(po_file_path)
         self.stdout.write(
             f"Completed translation for {lang}. "
             f"Successfully processed {completed_batches}/{total_batches} batches."
