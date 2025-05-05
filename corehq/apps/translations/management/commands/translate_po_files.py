@@ -574,7 +574,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.check_and_remove_errors = options['check_and_remove_errors']
         model = options['model']
-        langs = options['langs'] or [lang[0] for lang in settings.LANGUAGES]
+        langs = options['langs'] or [lang[0] for lang in settings.LANGUAGES if lang[0] != 'en']
         batch_size = options['batch_size']
         parallel_batches = options['parallel_batches']
 
