@@ -69,7 +69,6 @@ from corehq.apps.hqcase.utils import (
     resave_case,
     submit_case_blocks,
 )
-from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.doc_info import get_case_url, get_form_url
 from corehq.apps.hqwebapp.templatetags.proptable_tags import (
     DisplayConfig,
