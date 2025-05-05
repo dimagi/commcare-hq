@@ -419,6 +419,110 @@ class PoTranslationFormat(TranslationFormat):
         return "Response: JSON object on the following format: " \
                "{\"0\":\"translated_message for key 0\", \"1\":\"translated_message for key 1\", ...}"
 
+    def check_and_remove_errored_messages(self, lang_path):
+        """
+        Checks PO files using gettext's msgfmt and removes translations that are problematic.
+        These problematic translations are those that cause errors during compilemessages or runtime.
+        """
+        error_output = self._run_msgfmt(lang_path)
+        if not error_output:
+            print(f"No errors found in the PO file - {lang_path}")
+            return
+        line_num_error_map = self._extract_errored_msgstr_ids(error_output)
+        if line_num_error_map:
+            self._remove_errored_translations(line_num_error_map)
+
+    def _run_msgfmt(self, lang_path):
+        """
+        Runs the gettext `msgfmt` command and returns any erroring msgstrs.
+        Returns:
+            str: The error output from the compilemessages command
+        """
+        try:
+            args = ['msgfmt', '--check', '-o', '/dev/null', lang_path]
+            result = subprocess.run(
+                args,
+                capture_output=True,
+                text=True,
+                check=False
+            )
+            return result.stderr
+        except Exception as e:
+            print(f"Error running compilemessages: {e}")
+            return ""
+
+    def _extract_errored_msgstr_ids(self, error_output):
+        line_num_error_map = {}
+
+        for line in error_output.splitlines():
+            # Error format: <filename>:<line_number>:<error_message>
+            # Warning format: <filename>:<line_number>: warning<warning_message>
+            error_parts = line.split(':')
+            if len(error_parts) == 3 or len(error_parts) == 4:
+                if error_parts[2].strip() == 'warning':
+                    # Ignore warnings
+                    continue
+                line_num = int(error_parts[1].strip())
+                line_num_error_map[line_num] = ": ".join(error_parts[2:]).strip()
+        print(f"Line num error map: {line_num_error_map}")
+        return line_num_error_map
+
+    def _remove_errored_translations(self, line_num_error_map):
+        """
+        Removes translations for the specified message IDs.
+        Since we have line numbers of msgstrs that are causing errors. In `polib`
+        there is no way to get the msgid for a given line number.
+        So this function uses following approach:
+
+            1. Load the PO file again and sort the message objects by linenum.
+            2. Iterate over the sorted message objects and check if the errored line number
+            is in between the current and next msgid.
+            3. If it is, remove the translation and get the next errored line number.
+            4. If we run out of errored line numbers, break the loop.
+            5. Save the PO file.
+
+        Args:
+            line_num_error_map (dict): A dict of line numbers and error messages
+        """
+        count = 0
+        errored_msgstr_line_nums = sorted(line_num_error_map.keys())
+        msg_str_lin_num = errored_msgstr_line_nums.pop(0)
+
+        total_translations = len(self.all_message_objects)
+        # After the translations file is saved, the linenumbers are changed.
+        # So we need to load the file again and sort the message objects by linenum.
+        all_translations = polib.pofile(self.file_path)
+        sorted_message_objects = sorted(all_translations, key=lambda x: x.linenum)
+
+        for index, entry in enumerate(sorted_message_objects):
+            try:
+                current_msgid_line_num = entry.linenum
+                if index == total_translations - 1:
+                    next_msgid_line_num = sys.maxsize
+                else:
+                    next_msgid_line_num = sorted_message_objects[index + 1].linenum
+                if current_msgid_line_num < msg_str_lin_num < next_msgid_line_num:
+                    print("--------------------------------")
+                    print("Removing translation")
+                    print(f"Error: {line_num_error_map[msg_str_lin_num]}")
+                    print(f"msgid: {entry.msgid} at line {current_msgid_line_num}")
+                    print(f"msgstr: {entry.msgstr}")
+                    print("--------------------------------")
+                    entry.msgstr = ""
+                    count += 1
+                    if len(errored_msgstr_line_nums) > 0:
+                        msg_str_lin_num = errored_msgstr_line_nums.pop(0)
+                    else:
+                        break
+            except Exception as e:
+                print(f"Error removing translation for {entry.msgid} at line {current_msgid_line_num}: {e}")
+
+        print("Remaining Problematic Translations", errored_msgstr_line_nums)
+
+        if count > 0:
+            print(f"Removed {count} problematic translations")
+            all_translations.save()
+
 
 class Command(BaseCommand):
     help = 'Translate PO files using LLM models'
