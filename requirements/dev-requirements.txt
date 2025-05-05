@@ -723,7 +723,7 @@ ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
     # via pyphonetics
-urllib3==1.26.19
+urllib3==1.26.20
     # via
     #   -r docs-requirements.in
     #   botocore
