@@ -230,6 +230,10 @@ class OpenaiTranslator(LLMTranslator):
 
 
 class PoTranslationFormat(TranslationFormat):
+    """
+    Translation format for PO files. The class expects gettext installed in the system.
+    As it uses gettext's msgfmt command to check for errors in the PO file.
+    """
 
     def __init__(self, file_path):
         self.file_path = file_path
