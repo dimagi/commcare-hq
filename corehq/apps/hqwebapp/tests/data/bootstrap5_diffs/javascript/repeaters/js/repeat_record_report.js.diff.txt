@@ -16,6 +16,27 @@
      'commcarehq',
  ], function (
      $,
+@@ -120,17 +120,17 @@
+ 
+         $('#resend-button').on('click', function () {
+             setAction('resend');
+-            $popUp.modal('show');
++            $popUp.modal('show');  /* todo B5: plugin:modal */
+         });
+ 
+         $('#cancel-button').on('click', function () {
+             setAction('cancel');
+-            $popUp.modal('show');
++            $popUp.modal('show');  /* todo B5: plugin:modal */
+         });
+ 
+         $('#requeue-button').on('click', function () {
+             setAction('requeue');
+-            $popUp.modal('show');
++            $popUp.modal('show');  /* todo B5: plugin:modal */
+         });
+ 
+         $('#confirm-button').on('click', function () {
 @@ -138,7 +138,7 @@
                  action = getAction();
              let $btn;
@@ -61,21 +82,7 @@
              updateActionButtons();
          });
  
-@@ -215,11 +215,11 @@
-             const checkedRecords = getCheckedRecords();
-             if (selectedEntireTable) {
-                 hideAllWarnings();
--                $popUp.modal('show');
-+                $popUp.modal('show');  /* todo B5: plugin:modal */
-             } else if (checkedRecords.length > 0) {
-                 if (isActionPossible(action)) {
-                     hideAllWarnings();
--                    $popUp.modal('show');
-+                    $popUp.modal('show');  /* todo B5: plugin:modal */
-                 } else {
-                     showWarning('not-allowed');
-                 }
-@@ -283,7 +283,7 @@
+@@ -251,7 +251,7 @@
                      } else {
                          btn.text(gettext('Failed'));
                          btn.addClass('btn-danger');
@@ -84,31 +91,7 @@
                          $('#payload-error-modal .error-message').text(response.failure_reason);
                      }
                  },
-@@ -322,17 +322,17 @@
- 
-         function showWarning(reason) {
-             if (reason === 'no-selection') {
--                $('#no-selection').removeClass('hide');
--                $('#not-allowed').addClass('hide');
-+                $('#no-selection').removeClass('d-none');
-+                $('#not-allowed').addClass('d-none');
-             } else if (reason === 'not-allowed') {
--                $('#not-allowed').removeClass('hide');
--                $('#no-selection').addClass('hide');
-+                $('#not-allowed').removeClass('d-none');
-+                $('#no-selection').addClass('d-none');
-             }
-         }
- 
-         function hideAllWarnings() {
--            $('#no-selection').addClass('hide');
--            $('#not-allowed').addClass('hide');
-+            $('#no-selection').addClass('d-none');
-+            $('#not-allowed').addClass('d-none');
-         }
- 
-         function checkAllRows() {
-@@ -385,8 +385,8 @@
+@@ -338,8 +338,8 @@
          function resetTableSelections() {
              selectedEntireTable = false;
              selectAllCheckbox.checked = false;

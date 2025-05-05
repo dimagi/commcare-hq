@@ -56,12 +56,6 @@
       </div>
     {% endif %}
   </div>
-  <div id="no-selection" class="alert alert-warning d-none">
-    {% blocktrans %}Please select at least one payload{% endblocktrans %}
-  </div>
-  <div id="not-allowed" class="alert alert-warning d-none">
-    {% blocktrans %}This action is not allowed for some of the selected payloads{% endblocktrans %}
-  </div>
   <div id="selected-page-info" class="alert alert-info hide">
     {% blocktrans with formatted_total=total|intcomma %}
       All <b><span id="selected-page-count"></span></b> records on this page are

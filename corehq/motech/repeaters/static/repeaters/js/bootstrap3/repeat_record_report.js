@@ -120,17 +120,17 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
 
         $('#resend-button').on('click', function () {
             setAction('resend');
-            performAction('resend');
+            $popUp.modal('show');
         });
 
         $('#cancel-button').on('click', function () {
             setAction('cancel');
-            performAction('cancel');
+            $popUp.modal('show');
         });
 
         $('#requeue-button').on('click', function () {
             setAction('requeue');
-            performAction('requeue');
+            $popUp.modal('show');
         });
 
         $('#confirm-button').on('click', function () {
@@ -211,40 +211,8 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
             }
         });
 
-        function performAction(action) {
-            const checkedRecords = getCheckedRecords();
-            if (selectedEntireTable) {
-                hideAllWarnings();
-                $popUp.modal('show');
-            } else if (checkedRecords.length > 0) {
-                if (isActionPossible(action)) {
-                    hideAllWarnings();
-                    $popUp.modal('show');
-                } else {
-                    showWarning('not-allowed');
-                }
-            } else {
-                showWarning('no-selection');
-            }
-        }
-
         function getCheckedRecords() {
             return $.find('input[type=checkbox][name=record_ids]:checked');
-        }
-
-        function isActionPossible(action) {
-            if (action === 'resend') {
-                // all actions are possible for resending
-                return true;
-            }
-            const containsQueuedRecords = selectionContainsQueuedRecords();
-            if (containsQueuedRecords) {
-                // don't allow requeueing queued records
-                return action === 'cancel';
-            } else {
-                // nothing is queued, so there is nothing to cancel
-                return action === 'requeue';
-            }
         }
 
         function getRequestBody() {
@@ -318,21 +286,6 @@ hqDefine('repeaters/js/bootstrap3/repeat_record_report', [
 
         function getAction() {
             return $confirmButton.attr('data-action');
-        }
-
-        function showWarning(reason) {
-            if (reason === 'no-selection') {
-                $('#no-selection').removeClass('hide');
-                $('#not-allowed').addClass('hide');
-            } else if (reason === 'not-allowed') {
-                $('#not-allowed').removeClass('hide');
-                $('#no-selection').addClass('hide');
-            }
-        }
-
-        function hideAllWarnings() {
-            $('#no-selection').addClass('hide');
-            $('#not-allowed').addClass('hide');
         }
 
         function checkAllRows() {
