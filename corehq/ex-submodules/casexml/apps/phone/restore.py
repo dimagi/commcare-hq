@@ -606,7 +606,7 @@ class RestoreConfig(object):
                                     status=412)  # precondition failed
         except CannotRestoreException as e:
             response = get_simple_response_xml(str(e), ResponseNature.OTA_RESTORE_ERROR)
-            response = HttpResponse(response, content_type="text/xml; charset=utf-8", status=400)
+            response = HttpResponse(response, content_type="text/xml; charset=utf-8", status=406)
 
         if not is_async:
             self._record_timing(response.status_code)
