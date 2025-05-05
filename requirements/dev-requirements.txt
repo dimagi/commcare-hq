@@ -251,7 +251,7 @@ executing==2.0.1
     # via stack-data
 fakecouch==0.0.15
     # via -r test-requirements.in
-faker==32.1.0
+faker==37.1.0
     # via -r test-requirements.in
 fixture==1.5.11
     # via -r dev-requirements.in
@@ -516,7 +516,6 @@ python-dateutil==2.8.2
     #   botocore
     #   celery
     #   django-tastypie
-    #   faker
     #   freezegun
 python-imap==1.0.0
     # via -r base-requirements.in
@@ -709,7 +708,6 @@ typing-extensions==4.12.2
     #   bytecode
     #   ddtrace
     #   django-countries
-    #   faker
     #   jwcrypto
     #   kombu
     #   oic
@@ -718,6 +716,7 @@ typing-extensions==4.12.2
 tzdata==2025.1
     # via
     #   celery
+    #   faker
     #   kombu
 ua-parser==0.10.0
     # via user-agents
