@@ -29,12 +29,15 @@ def commit_data_cleaning(bulk_edit_session_id):
 
     _purge_ui_data_from_session(session)
 
+    all_cleaned_records = session.records.all()
+
     form_ids = []
     case_index = 0
     session.update_result(0)
     count_cases = case_load_counter("bulk_case_cleaning", session.domain)
+
     while case_index < session.records.count():
-        records = session.records.all()[case_index:case_index + CASEBLOCK_CHUNKSIZE]
+        records = all_cleaned_records[case_index:case_index + CASEBLOCK_CHUNKSIZE]
         case_index += CASEBLOCK_CHUNKSIZE
         blocks = _create_case_blocks(session, records)
         xform = _submit_case_blocks(session, blocks)
