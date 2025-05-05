@@ -97,7 +97,7 @@ def test_openai_translator_supported_models():
         assert "gpt-4" in models
         assert "gpt-4o" in models
         assert "gpt-4o-mini" in models
-        assert "gpt-3.5-turbo" in models
+        assert "gpt-4.1" in models
 
 
 def test_openai_translator_call_llm():

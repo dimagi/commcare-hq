@@ -158,7 +158,7 @@ class TranslationFormat(abc.ABC):
 class OpenaiTranslator(LLMTranslator):
     @property
     def supported_models(self):
-        return ["gpt-4o-mini", "gpt-4o", "gpt-4", "gpt-3.5-turbo"]
+        return ["gpt-4o-mini", "gpt-4o", "gpt-4", "gpt-4.1"]
 
     def __init__(self, api_key, model, lang, translation_format):
         super().__init__(api_key, model, lang, translation_format)
@@ -427,8 +427,8 @@ class Command(BaseCommand):
         parser.add_argument(
             '--model',
             type=str,
-            required=True,
-            help='LLM model to use for translation (e.g., gpt-4o-mini, gpt-4o, gpt-4, gpt-3.5-turbo)'
+            default='gpt-4.1',
+            help='LLM model to use for translation (e.g., gpt-4o-mini, gpt-4o, gpt-4.1)'
         )
         parser.add_argument(
             '--langs',
