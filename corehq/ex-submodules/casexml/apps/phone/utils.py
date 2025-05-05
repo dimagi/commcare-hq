@@ -29,7 +29,7 @@ ITESM_COMMENT_REGEX = re.compile(br'(<!--items=(\d+)-->)')
 # This is an optimization to avoid an extra XML parse/serialize cycle.
 GLOBAL_USER_ID = 'global-user-id-7566F038-5000-4419-B3EF-5349FB2FF2E9'
 
-
+print("test commit diff with get_blob_db in file")
 def write_fixture_items_to_io(items):
     io = BytesIO()
     if len(items) > 1:
