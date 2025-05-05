@@ -7,9 +7,10 @@
 hqDefine("app_manager/js/details/utils", [
     "jquery",
     "underscore",
-    "DOMPurify/dist/purify.min",
+    "DOMPurify",
     "hqwebapp/js/toggles",
     "hqwebapp/js/initial_page_data",
+    "select2/dist/js/select2.full.min",
 ], function (
     $,
     _,

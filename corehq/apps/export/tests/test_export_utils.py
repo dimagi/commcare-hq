@@ -23,7 +23,7 @@ class TestExportUtils(TestCase, DomainSubscriptionMixin):
         self.account.save()
         subscription = Subscription.new_domain_subscription(
             self.account, self.domain.name,
-            DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.COMMUNITY),
+            DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.FREE),
             date_start=date.today() - timedelta(days=3)
         )
         subscription.is_active = True
@@ -41,11 +41,11 @@ class TestExportUtils(TestCase, DomainSubscriptionMixin):
         if current_subscription.plan_version.plan.edition != plan:
             current_subscription.change_plan(DefaultProductPlan.get_default_plan_version(plan))
 
-    def test_default_export_settings_community_domain_returns_none(self):
+    def test_default_export_settings_free_domain_returns_none(self):
         """
-        Verify COMMUNITY software plans do not have access to default export settings
+        Verify FREE software plans do not have access to default export settings
         """
-        self.update_subscription(SoftwarePlanEdition.COMMUNITY)
+        self.update_subscription(SoftwarePlanEdition.FREE)
         settings = get_default_export_settings_if_available(self.domain)
         self.assertIsNone(settings)
 

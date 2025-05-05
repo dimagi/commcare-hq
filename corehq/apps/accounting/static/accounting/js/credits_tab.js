@@ -1,10 +1,10 @@
-"use strict";
+
 hqDefine("accounting/js/credits_tab", [
     'jquery',
     'knockout',
 ], function (
     $,
-    ko
+    ko,
 ) {
     $(function () {
         var $form = $('#credit-form');

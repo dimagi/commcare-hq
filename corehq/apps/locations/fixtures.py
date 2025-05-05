@@ -109,8 +109,7 @@ class LocationFixtureProvider(FixtureProvider):
         if not self.serializer.should_sync(restore_user, restore_state.params.app):
             return []
 
-        # This just calls get_location_fixture_queryset but is memoized to the user
-        locations_queryset = restore_user.get_locations_to_sync()
+        locations_queryset = get_location_fixture_queryset(restore_user)
         if not should_sync_locations(restore_state.last_sync_log, locations_queryset, restore_state):
             return []
 
@@ -250,13 +249,11 @@ def get_location_fixture_queryset(user):
         return get_domain_locations(user.domain).prefetch_related('location_type')
 
     user_locations = user.get_sql_locations(user.domain)
+    user_location_pks = list(user_locations.order_by().values_list("pk", flat=True))
 
-    if user_locations.query.is_empty():
-        return user_locations
-
-    user_location_ids = list(user_locations.order_by().values_list("id", flat=True))
-
-    return _location_queryset_helper(user.domain, user_location_ids)
+    if not user_location_pks:
+        return SQLLocation.objects.none()
+    return _location_queryset_helper(user.domain, user_location_pks)
 
 
 def _location_queryset_helper(domain, location_pks):

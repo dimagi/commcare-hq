@@ -1,9 +1,9 @@
 Location APIs
 =============
 
-The Location API is available from version v0.5. Version v0.5 is read-only. It allows you to list locations and get location details.
+Version v1 is read-only. It allows you to list locations and get location details.
 
-Version v0.6 has the same read-only list and details endpoints as v0.5 with just a few updates and adds the ability to create and update locations, one at a time or in bulk.
+Version v2 has the same read-only list and details endpoints as v1 with just a few updates and adds the ability to create and update locations, one at a time or in bulk.
 
 List Locations
 --------------
@@ -12,11 +12,11 @@ List Locations
 
 .. code-block:: text
 
-    GET https://www.commcarehq.org/a/[domain]/api/[version]/location/
-
-**Input Parameters (v0.5)**
+    GET https://www.commcarehq.org/a/[domain]/api/location/v1/
 
 Locations can be filtered by the following attributes as request parameters:
+
+**Input Parameters (v1)**
 
 .. list-table::
    :header-rows: 1
@@ -36,7 +36,47 @@ Locations can be filtered by the following attributes as request parameters:
    * - ``longitude``
      - Longitude coordinate of the location
 
-**Sample JSON Output (v0.5)**
+**Input Parameters (v2)**
+
+.. list-table::
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Example
+   * - ``site_code``
+     - Site code for the location
+     - ``?site_code=boston``
+   * - ``name``
+     - The location's name (case sensitive)
+     - ``?name=Boston``
+   * - ``location_type_code``
+     - The location's type code
+     - ``?location_type_code=city``
+   * - ``parent_location_id``
+     - The UUID of the location's direct parent
+     - ``?parent_location_id=5ce87caa-a739-4a61-a0cb-559f84a9b4b7``
+   * - ``last_modified.gte``
+     - Locations last modified on or after a specific date or datetime
+     - ``?last_modified.gte=2024-01-01``
+   * - ``last_modified.gt``
+     - Locations last modified after a specific date or datetime
+     - ``?last_modified.gt=2024-01-01``
+   * - ``last_modified.lt``
+     - Locations last modified before a specific date or datetime
+     - ``?last_modified.lt=2024-01-01``
+   * - ``last_modified.lte``
+     - Locations last modified on or before a specific date or datetime
+     - ``?last_modified.lte=2024-01-01``
+
+v2 can also be ordered by ``last_modified`` from oldest to newest with the
+parameter ``order_by=last_modified``, or from newest to oldest with
+``order_by=-last_modified``. This can be used in conjunction with the
+``last_modified.gte`` parameter to only fetch locations modified since your last
+data pull.
+
+
+**Sample JSON Output (v1)**
 
 .. code-block:: json
 
@@ -58,22 +98,22 @@ Locations can be filtered by the following attributes as request parameters:
           "latitude": null,
           "location_data": {},
           "location_id": "f373a6837c1243938abfc56618cce88b",
-          "location_type": "https://www.commcarehq.org/a/[domain]/api/v0.5/location_type/1/",
+          "location_type": "https://www.commcarehq.org/a/[domain]/api/location_type/v1/1/",
           "longitude": null,
           "name": "Namibia",
           "parent": null,
-          "resource_uri": "https://www.commcarehq.org/a/[domain]/api/v0.5/location/f373a6837c1243938abfc56618cce88b/",
+          "resource_uri": "https://www.commcarehq.org/a/[domain]/api/location/v1/f373a6837c1243938abfc56618cce88b/",
           "site_code": "namibia"
         }
       ]
     }
 
-**v0.6**
+**v2**
 
-The main distinctions between the v0.5 and v0.6 GET endpoints are that v0.6:
-
-- Removes a few fields and adds a few fields from the response (there is no ``external_id`` with v0.6, for example, but there is ``parent_location_id``).
-- Currently does not allow filtering on the list endpoint.
+The main distinction between the v1 and v2 GET endpoints is the serialization
+format. V2 Removes a few defunct fields and adds some new ones. It also provides
+IDs and/or codes of related locations and types, while v1 gave URLs that could
+be used to access those types.
 
 For the list endpoint, the "meta" section will look the same and the locations will still be in a list called "objects". But an individual location object will look like:
 
@@ -95,7 +135,7 @@ For the list endpoint, the "meta" section will look the same and the locations w
         "site_code": "fairfax_county"
     }
 
-Also notice how compared to v0.5, the v0.6 location data has just the ``location_id``, no resource URL.
+Also notice how compared to v1, the v2 location data has just the ``location_id``, no resource URL.
 
 Location Details
 ----------------
@@ -104,9 +144,9 @@ Location Details
 
 .. code-block:: text
 
-    GET https://www.commcarehq.org/a/[domain]/api/[version]/location/[location_id]
+    GET https://www.commcarehq.org/a/[domain]/api/location/v1/[location_id]
 
-**Sample JSON Output (v0.5)**
+**Sample JSON Output (v1)**
 
 .. code-block:: json
 
@@ -119,30 +159,30 @@ Location Details
       "latitude": null,
       "location_data": {},
       "location_id": "f373a6837c1243938abfc56618cce88b",
-      "location_type": "https://www.commcarehq.org/a/[domain]/api/v0.5/location_type/1/",
+      "location_type": "https://www.commcarehq.org/a/[domain]/api/location_type/v1/1/",
       "longitude": null,
       "name": "Namibia",
       "parent": null,
-      "resource_uri": "https://www.commcarehq.org/a/[domain]/api/v0.5/location/f373a6837c1243938abfc56618cce88b/",
+      "resource_uri": "https://www.commcarehq.org/a/[domain]/api/location/v1/f373a6837c1243938abfc56618cce88b/",
       "site_code": "namibia"
     }
 
-**v0.6**
+**v2**
 
-You can get the details for an individual location using v0.6 as well. See the v0.6 section of the list documentation above for information on what single location object serialization looks like in v0.6.
+You can get the details for an individual location using v2 as well. See the v2 section of the list documentation above for information on what single location object serialization looks like in v2.
 
 Create Location (Individual)
 ----------------------------
 
 **Description**
 
-Create an individual location. Available from version v0.6.
+Create an individual location. Available from version v2.
 
 **Base URL**
 
 .. code-block:: text
 
-    POST https://www.commcarehq.org/a/[domain]/api/[version]/location/
+    POST https://www.commcarehq.org/a/[domain]/api/location/v2/
 
 **Required Fields**
 
@@ -187,13 +227,13 @@ Update Location (Individual)
 
 **Description**
 
-Allows editing an individual location. Available from version v0.6.
+Allows editing an individual location. Available from version v2.
 
 **Base URL**
 
 .. code-block:: text
 
-    PUT https://www.commcarehq.org/a/[domain]/api/[version]/location/[location_id]
+    PUT https://www.commcarehq.org/a/[domain]/api/location/v2/[location_id]
 
 **Editable Fields**
 
@@ -235,13 +275,13 @@ Create and Update Locations (in Bulk)
 
 **Description**
 
-Version v0.6 allows you to create and update locations in bulk. Even though the method is PATCH, you can also create locations as well as update using this method.
+Version v2 allows you to create and update locations in bulk. Even though the method is PATCH, you can also create locations as well as update using this method.
 
 **Base URL**
 
 .. code-block:: text
 
-    PATCH https://www.commcarehq.org/a/[domain]/api/[version]/location/
+    PATCH https://www.commcarehq.org/a/[domain]/api/location/v2/
 
 The request body should be a list of locations, with each location as a JSON dictionary (if you are using JSON). The list should be called ``objects``. Include ``location_id`` in the dictionary if you want to update a location, and don’t include it if you want to create a location.
 
@@ -289,7 +329,7 @@ Retrieves a list of location types available in the specified domain.
 
 .. code-block:: text
 
-    GET https://www.commcarehq.org/a/[domain]/api/[version]/location_type/
+    GET https://www.commcarehq.org/a/[domain]/api/location_type/v1/
 
 
 **Sample JSON Output**
@@ -312,7 +352,7 @@ Retrieves a list of location types available in the specified domain.
           "id": 1,
           "name": "Country",
           "parent": null,
-          "resource_uri": "https://www.commcarehq.org/a/[domain]/api/v0.5/location_type/1/",
+          "resource_uri": "https://www.commcarehq.org/a/[domain]/api/location_type/v1/1/",
           "shares_cases": false,
           "view_descendants": false
         }
@@ -330,7 +370,7 @@ Retrieves details for a specific location type.
 
 .. code-block:: text
 
-    GET https://www.commcarehq.org/a/[domain]/api/[version]/location_type/[id]
+    GET https://www.commcarehq.org/a/[domain]/api/location_type/v1/[id]
 
 
 **Sample JSON Output**
@@ -344,7 +384,7 @@ Retrieves details for a specific location type.
       "id": 1,
       "name": "Country",
       "parent": null,
-      "resource_uri": "https://www.commcarehq.org/a/[domain]/api/v0.5/location_type/1/",
+      "resource_uri": "https://www.commcarehq.org/a/[domain]/api/location_type/v1/1/",
       "shares_cases": false,
       "view_descendants": false
     }

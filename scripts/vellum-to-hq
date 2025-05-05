@@ -49,6 +49,8 @@ def main():
              "This does nothing when mode is 'master'.")
     parser.add_argument("--no-make", action="store_true",
         help="Skip Vellum build (mutually exclusive with --no-test).")
+    parser.add_argument("--dev-mode", action="store_true",
+        help="Skip git checks and do not commit anything.")
     parser.add_argument("--no-test", action="store_true",
         help="Build Vellum, but do not run tests (mutually exclusive with --no-make).")
     parser.add_argument("--push", action="store_true",
@@ -98,22 +100,23 @@ def main():
                 if ok != "ok":
                     sys.exit("Aborted.")
         else:
-            vellum_rev = build_vellum(vellum_dir, vellum_branch, not args.no_test)
+            vellum_rev = build_vellum(vellum_dir, vellum_branch, not args.no_test, args.dev_mode)
 
-        update_hq(hq_dir, hq_branch, args.hq_base, vellum_dir, vellum_rev, args.push, args.target)
-        if args.mode == "master" and args.fix_staging:
+        update_hq(hq_dir, hq_branch, args.hq_base, vellum_dir, vellum_rev, args.push, args.target, args.dev_mode)
+        if args.mode == "master" and args.fix_staging and not args.dev_mode:
             fix_staging(hq_dir, args.push)
     except sh.ErrorReturnCode as err:
         print("Aborted due to error: {}".format(err))
 
 
-def build_vellum(path, branch, test=True):
+def build_vellum(path, branch, test=True, dev_mode=False):
     git = get_git(path)
-    require_clean_working_tree(git, path)
-    print("Checkout and fetch {} {}".format(path, branch))
-    git.checkout(branch)
-    git.fetch()
-    require_branch_up_to_date(git, branch, context=path)
+    if not dev_mode:
+        require_clean_working_tree(git, path)
+        print("Checkout and fetch {} {}".format(path, branch))
+        git.checkout(branch)
+        git.fetch()
+        require_branch_up_to_date(git, branch, context=path)
 
     print("Building Vellum...")
     make_args = ("test",) if test else ()
@@ -138,21 +141,23 @@ def print_vellum_changes(old_vellum_rev, path):
     print(git('log', '--oneline', '--grep', 'Merge', old_vellum_rev + "..HEAD"))
 
 
-def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target):
+def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target, dev_mode):
     git = get_git(path)
-    require_clean_working_tree(git, path)
 
-    print("Checkout and fetch HQ {}".format(branch))
-    git.checkout(branch)
-    git.fetch()
+    if not dev_mode:
+        require_clean_working_tree(git, path)
+        print("Checkout and fetch HQ {}".format(branch))
+        git.checkout(branch)
+        git.fetch()
 
     hq_vellum = join(path, "corehq/apps/app_manager/static/app_manager/js/", target)
-    if branch != "master":
-        print("git reset --hard origin/" + base_branch)
-        git.reset("--hard", "origin/" + base_branch)
-        assert hq_vellum.startswith(path), (path, hq_vellum)
-    else:
-        require_branch_up_to_date(git, "master", context=path)
+    if not dev_mode:
+        if branch != "master":
+            print("git reset --hard origin/" + base_branch)
+            git.reset("--hard", "origin/" + base_branch)
+            assert hq_vellum.startswith(path), (path, hq_vellum)
+        else:
+            require_branch_up_to_date(git, "master", context=path)
     old_vellum_rev = get_old_vellum_rev(hq_vellum)
 
     print("Overwriting HQ Vellum with new build")
@@ -160,6 +165,10 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target):
     sh.mkdir(hq_vellum)
     vellum_tar = join(vellum_dir, VELLUM_TAR)
     sh.tar("xf", vellum_tar, "-C", hq_vellum)
+
+    if dev_mode:
+        return
+
     git.add("--all", hq_vellum)
 
     message = "{}:{}".format(target, vellum_rev)

@@ -8,6 +8,7 @@ hqDefine("app_manager/js/releases/releases", [
     "hqwebapp/js/initial_page_data",
     "app_manager/js/app_manager",
     "app_manager/js/menu",
+    "hqwebapp/js/bootstrap3/knockout_bindings.ko",      // openModal binding
 ], function (
     $,
     ko,
@@ -214,7 +215,7 @@ hqDefine("app_manager/js/releases/releases", [
 
         self.download_application_zip = function (multimediaOnly, buildProfile) {
             releasesMain.download_application_zip(
-                self.id(), multimediaOnly, buildProfile, self.download_targeted_version()
+                self.id(), multimediaOnly, buildProfile, self.download_targeted_version(),
             );
         };
 
@@ -396,7 +397,7 @@ hqDefine("app_manager/js/releases/releases", [
                     self.savedApps(
                         _.map(data.apps, function (app) {
                             return savedAppModel(app, self);
-                        })
+                        }),
                     );
                     self.totalItems(data.pagination.total);
                     self.fetchState('');

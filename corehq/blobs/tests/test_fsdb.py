@@ -88,7 +88,8 @@ class _BlobDBTests(object):
         self.assertTrue(self.db.delete(key=meta.key), 'delete failed')
         with self.assertRaises(mod.NotFound):
             self.db.get(meta=meta)
-        return meta
+        if _is_overridden(self.test_delete):
+            return meta
 
     def test_bulk_delete(self):
         metas = [
@@ -106,7 +107,8 @@ class _BlobDBTests(object):
             with self.assertRaises(mod.NotFound):
                 self.db.get(meta=meta)
 
-        return metas
+        if _is_overridden(self.test_bulk_delete):
+            return metas
 
     def test_delete_no_args(self):
         meta = self.db.put(BytesIO(b"content"), meta=self.new_meta())
@@ -119,7 +121,8 @@ class _BlobDBTests(object):
     def test_empty_attachment_name(self):
         meta = self.db.put(BytesIO(b"content"), meta=self.new_meta())
         self.assertNotIn(".", meta.key)
-        return meta
+        if _is_overridden(self.test_empty_attachment_name):
+            return meta
 
     def test_put_with_colliding_blob_id(self):
         meta = self.new_meta()
@@ -152,6 +155,10 @@ class _BlobDBTests(object):
         self.db.expire("test", "abc")  # should not raise error
         with self.assertRaises(mod.NotFound):
             self.db.get(key="abc", type_code=CODES.tempfile)
+
+
+def _is_overridden(method):
+    return method.__code__ != getattr(_BlobDBTests, method.__name__).__code__
 
 
 @generate_cases([

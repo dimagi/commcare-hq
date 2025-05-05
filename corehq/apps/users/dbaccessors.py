@@ -163,7 +163,7 @@ def _get_users_by_filters(domain, user_type, user_filters, count_only=False):
         query = _get_es_query(domain, user_type, user_filters)
         if count_only:
             return query.count()
-        user_ids = query.scroll_ids()
+        user_ids = list(query.scroll_ids())
         return map(CouchUser.wrap_correctly, iter_docs(CommCareUser.get_db(), user_ids))
 
 

@@ -17,6 +17,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import connection, models, router
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.translation import override as override_language
 from django.utils.translation import gettext as _
@@ -3380,13 +3381,22 @@ class ConnectIDUserLink(models.Model):
     class Meta:
         unique_together = ('domain', 'commcare_user')
 
-    @property
+    @cached_property
     def messaging_key(self):
         key = generate_aes_key().decode("utf-8")
         messaging_key, _ = ConnectIDMessagingKey.objects.get_or_create(
             connectid_user_link=self, domain=self.domain, active=True, defaults={"key": key}
         )
         return messaging_key
+
+    @cached_property
+    def messaging_channel(self):
+        # inline to prevent circular import
+        from corehq.messaging.smsbackends.connectid.backend import ConnectBackend
+
+        if self.channel_id is None:
+            ConnectBackend().create_channel(self)
+        return self.channel_id
 
 
 class ConnectIDMessagingKey(models.Model):

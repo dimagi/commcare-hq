@@ -2,6 +2,7 @@ hqDefine("sms/js/compose",[
     "jquery",
     "hqwebapp/js/bootstrap3/widgets",
     "jquery-ui/ui/widgets/sortable",
+    "jquery-ui-built-themes/redmond/jquery-ui.min.css",
     "commcarehq",
 ], function ($) {
     $(function () {

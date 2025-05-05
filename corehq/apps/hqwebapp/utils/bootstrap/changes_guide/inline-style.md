@@ -11,3 +11,5 @@ Some common replacements:
 * Layouts achieved using inline styling can sometimes be replaced with usage of flex. See https://getbootstrap.com/docs/5.0/utilities/flex/
 
 See all of Bootstrap 5's utility classes: https://getbootstrap.com/docs/5.0/utilities/
+
+For styles that can't be replaced with utility classes, page-specific styles go in Sass files under `hqwebapp`. An example is [this file](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/cloudcare/scss/formplayer-common/query.scss) for styles specific to the Web Apps search screen.

@@ -3,9 +3,6 @@ from corehq.apps.celery import task
 
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.data_cleaning.models import (
-    BulkEditColumn,
-    BulkEditColumnFilter,
-    BulkEditPinnedFilter,
     BulkEditSession,
 )
 from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
@@ -20,9 +17,13 @@ def commit_data_cleaning(bulk_edit_session_id):
     session = BulkEditSession.objects.get(session_id=bulk_edit_session_id)
 
     # Delete UI-only models
-    BulkEditColumnFilter.objects.filter(session=session).delete()
-    BulkEditPinnedFilter.objects.filter(session=session).delete()
-    BulkEditColumn.objects.filter(session=session).delete()
+    session.filters.all().delete()
+    session.pinned_filters.all().delete()
+    session.columns.all().delete()
+
+    # deselect all the records and purge the records without changes
+    session.deselect_all_records_in_queryset()
+    session.purge_records()
 
     form_ids = []
     case_index = 0
@@ -40,6 +41,9 @@ def commit_data_cleaning(bulk_edit_session_id):
 
     session.completed_on = datetime.now()
     session.save()
+
+    session.changes.all().delete()
+    session.records.all().delete()
 
     return form_ids
 

@@ -52,25 +52,25 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
 from corehq.apps.export.models import CaseExportDataSchema
 from corehq.apps.export.utils import is_occurrence_deleted
+from corehq.apps.hqcase.case_deletion_utils import (
+    AffectedForm,
+    DeleteCase,
+    DeleteForm,
+    FormAffectedCases,
+    ReopenedCase,
+    get_all_cases_from_form,
+    get_deduped_ordered_forms_for_case,
+    get_or_create_affected_case,
+    prepare_case_for_deletion,
+)
 from corehq.apps.hqcase.utils import (
     CASEBLOCK_CHUNKSIZE,
     EDIT_FORM_XMLNS,
     resave_case,
     submit_case_blocks,
 )
-from corehq.apps.hqcase.case_deletion_utils import (
-    AffectedForm,
-    DeleteCase,
-    DeleteForm,
-    FormAffectedCases,
-    get_all_cases_from_form,
-    get_or_create_affected_case,
-    get_deduped_ordered_forms_for_case,
-    ReopenedCase,
-    prepare_case_for_deletion,
-)
 from corehq.apps.hqwebapp.decorators import use_datatables
-from corehq.apps.hqwebapp.doc_info import get_form_url, get_case_url
+from corehq.apps.hqwebapp.doc_info import get_case_url, get_form_url
 from corehq.apps.hqwebapp.templatetags.proptable_tags import (
     DisplayConfig,
     get_table_as_rows,
@@ -81,7 +81,10 @@ from corehq.apps.locations.permissions import (
     user_can_access_case,
 )
 from corehq.apps.products.models import SQLProduct
-from corehq.apps.reports.display import xmlns_to_name, xmlns_to_name_for_case_deletion
+from corehq.apps.reports.display import (
+    xmlns_to_name,
+    xmlns_to_name_for_case_deletion,
+)
 from corehq.apps.reports.exceptions import TooManyCasesError
 from corehq.apps.reports.tasks import _soft_delete_cases_and_forms
 from corehq.apps.reports.view_helpers import case_hierarchy_context
@@ -99,8 +102,8 @@ from corehq.form_processor.models import (
     UserRequestedRebuild,
     XFormInstance,
 )
-from corehq.form_processor.models.forms import TempFormCache
 from corehq.form_processor.models.cases import TempCaseCache
+from corehq.form_processor.models.forms import TempFormCache
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.views.repeat_record_display import (
     RepeatRecordDisplay,
@@ -151,7 +154,6 @@ class CaseDataView(BaseProjectReportSectionView):
     http_method_names = ['get']
 
     @method_decorator(require_case_view_permission)
-    @use_datatables
     def dispatch(self, request, *args, **kwargs):
         if not self.case_instance:
             messages.info(request,

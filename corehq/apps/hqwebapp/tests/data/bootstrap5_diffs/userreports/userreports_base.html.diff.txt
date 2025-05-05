@@ -1,0 +1,64 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
+ {% load compress %}
+ {% load i18n %}
+ {% load crispy_forms_tags %}
+@@ -7,7 +7,7 @@
+ {% block page_navigation %}
+   {% initial_page_data 'useUpdatedUcrNaming' use_updated_ucr_naming %}
+   <h2 class="text-hq-nav-header">{% trans "Tools" %}</h2>
+-  <ul class="nav nav-hq-sidebar">
++  <ul class="nav nav-hq-sidebar">  {# todo B5: css-nav #}
+     {% if use_updated_ucr_naming %}
+       <li>
+         <a href="{% url 'configurable_reports_home' domain %}">
+@@ -98,14 +98,14 @@
+   </ul>
+ 
+   <h2 class="text-hq-nav-header">{% trans "Edit Reports" %}</h2>
+-  <ul class="nav nav-hq-sidebar">
++  <ul class="nav nav-hq-sidebar">  {# todo B5: css-nav #}
+     {% with report as selected_report %}
+       {% for report in reports %}
+         <li {% if report.get_id == selected_report.get_id %} class="active"{% endif %}>
+           <a href="{% url 'edit_configurable_report' domain report.get_id %}"  title="{{ report.title }}" class='report-nav'>
+             {{ report.title }}
+             {% if report.is_static %}
+-              <span class="label label-default">static</span>
++              <span class="badge text-bg-secondary">static</span>
+             {% endif %}
+           </a>
+         </li>
+@@ -121,17 +121,17 @@
+     {% endif %}
+ 
+   </h2>
+-  <ul class="nav nav-hq-sidebar">
++  <ul class="nav nav-hq-sidebar">  {# todo B5: css-nav #}
+     {% with data_source as selected_data_source %}
+       {% for data_source in data_sources %}
+         <li{% if data_source.get_id == selected_data_source.get_id %} class="active"{% endif %}>
+           <a href="{% url 'edit_configurable_data_source' domain data_source.get_id %}">
+             {{ data_source.display_name }}
+             {% if data_source.is_static %}
+-              <span class="label label-default">static</span>
++              <span class="badge text-bg-secondary">static</span>
+             {% endif %}
+             {% if data_source.is_deactivated %}
+-              <span class="label label-default">deactivated</span>
++              <span class="badge text-bg-secondary">deactivated</span>
+             {% endif %}
+           </a>
+         </li>
+@@ -140,7 +140,7 @@
+   </ul>
+   {% if request|toggle_enabled:"AGGREGATE_UCRS" %}
+     <h2 class="text-hq-nav-header">{% trans "Aggregate Data Sources" %}</h2>
+-    <ul class="nav nav-hq-sidebar">
++    <ul class="nav nav-hq-sidebar">  {# todo B5: css-nav #}
+       {% with aggregate_table as selected_aggregate_ucr %}
+         {% for aggregate_ucr in aggregate_data_sources %}
+           <li {% if aggregate_ucr.id == selected_aggregate_ucr.id %} class="active"{% endif %}>

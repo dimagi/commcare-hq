@@ -372,7 +372,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('data_analytics', 'GIRRow', 'domain_name'),
     ModelDeletion('data_analytics', 'MALTRow', 'domain_name'),
     ModelDeletion('data_cleaning', 'BulkEditSession', 'domain', [
-        'BulkEditColumnFilter',
+        'BulkEditFilter',
         'BulkEditPinnedFilter',
         'BulkEditColumn',
         'BulkEditRecord',
@@ -409,6 +409,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('integration', 'SimprintsIntegration', 'domain'),
     ModelDeletion('integration', 'KycConfig', 'domain'),
     ModelDeletion('integration', 'MoMoConfig', 'domain'),
+    ModelDeletion('ip_access', 'IPAccessConfig', 'domain'),
     ModelDeletion('linked_domain', 'DomainLink', 'linked_domain', ['DomainLinkHistory']),
     CustomDeletion('scheduling', _delete_sms_content_events_schedules, [
         'SMSContent', 'EmailContent', 'SMSSurveyContent',
@@ -505,6 +506,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('campaign', 'Dashboard', 'domain', extra_models=[
         'DashboardMap',
         'DashboardReport',
+        'DashboardGauge'
     ]),
 ]
 

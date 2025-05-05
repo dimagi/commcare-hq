@@ -2,7 +2,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
     'jquery',
     'knockout',
     'underscore',
-    'DOMPurify/dist/purify.min',
+    'DOMPurify',
     'moment',
     'fast-levenshtein/levenshtein',
     'hqwebapp/js/initial_page_data',
@@ -784,6 +784,8 @@ hqDefine("cloudcare/js/form_entry/entries", [
      */
     function DateTimeEntryBase(question, options) {
         var self = this;
+        self.templateType = 'datetime';
+        self.datetimeIconClass = "fcc fcc-fd-datetime";
 
         EntrySingleAnswer.call(self, question, options);
 
@@ -818,7 +820,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
     DateTimeEntryBase.prototype.serverFormat = undefined;
 
     function DateEntry(question, options) {
-        this.templateType = 'date';
+        this.datetimeIconClass = "fa-solid fa-calendar-days";
         DateTimeEntryBase.call(this, question, options);
     }
     DateEntry.prototype = Object.create(DateTimeEntryBase.prototype);
@@ -831,7 +833,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
     };
 
     function TimeEntry(question, options) {
-        this.templateType = 'time';
+        this.datetimeIconClass = "fa-regular fa-clock";
         if (question.style) {
             if (question.stylesContains(constants.TIME_12_HOUR)) {
                 this.clientFormat = 'h:mm A';
@@ -1071,9 +1073,15 @@ hqDefine("cloudcare/js/form_entry/entries", [
             self.$input = $('#' + self.entryId);
             self.$canvas = $('#' + self.entryId + '-canvas');
             self.$wrapper = $('#' + self.entryId + '-wrapper');
+            self.widthAtDataCapture = self.$canvas[0].width;
+            self.signatureData = null;
 
             self.signaturePad = new SignaturePad(self.$canvas[0]);
-            self.signaturePad.addEventListener('endStroke', () => { self.answerCanvasData(); });
+            self.signaturePad.addEventListener('endStroke', () => {
+                self.answerCanvasData();
+                self.widthAtDataCapture = self.$canvas[0].width;
+                self.signatureData = self.signaturePad.toData();
+            });
 
             new ResizeObserver(() => {
                 self.resizeCanvas();
@@ -1099,10 +1107,24 @@ hqDefine("cloudcare/js/form_entry/entries", [
         };
 
         self.resizeCanvas = function () {
-            var aspectRatio = 4,
-                width = self.$wrapper.width() - 2; // otherwise misaligned by 2px
+            const aspectRatio = 4;
+            const width = self.$wrapper.width() - 2; // otherwise misaligned by 2px
+            const scale = width / self.widthAtDataCapture;
             self.$canvas[0].width = width;
             self.$canvas[0].height = width / aspectRatio;
+
+            if (self.signatureData) {
+                const scaledData = JSON.parse(JSON.stringify(self.signatureData));
+                for (let i = 0; i < scaledData.length; i++) {
+                    const stroke = scaledData[i];
+                    for (let j = 0; j < stroke.points.length; j++) {
+                        const point = stroke.points[j];
+                        point.x = point.x * scale;
+                        point.y = point.y * scale;
+                    }
+                }
+                self.signaturePad.fromData(scaledData);
+            }
         };
     }
     SignatureEntry.prototype = Object.create(FileEntry.prototype);
@@ -1363,31 +1385,27 @@ hqDefine("cloudcare/js/form_entry/entries", [
                 entry = new InfoEntry(question, {});
                 break;
             case constants.BINARY:
-                if (!toggles.toggleEnabled('WEB_APPS_UPLOAD_QUESTIONS')) {
-                    // do nothing, fall through to unsupported
-                } else {
-                    switch (question.control()) {
-                        case constants.CONTROL_IMAGE_CHOOSE:
-                            if (question.stylesContains(constants.SIGNATURE)) {
-                                entry = new SignatureEntry(question, {});
-                                break;
-                            }
-                            entry = new ImageEntry(question, {
-                                broadcastStyles: broadcastStyles,
-                            });
+                switch (question.control()) {
+                    case constants.CONTROL_IMAGE_CHOOSE:
+                        if (question.stylesContains(constants.SIGNATURE)) {
+                            entry = new SignatureEntry(question, {});
                             break;
-                        case constants.CONTROL_AUDIO_CAPTURE:
-                            entry = new AudioEntry(question, {
-                                broadcastStyles: broadcastStyles,
-                            });
-                            break;
-                        case constants.CONTROL_VIDEO_CAPTURE:
-                            entry = new VideoEntry(question, {
-                                broadcastStyles: broadcastStyles,
-                            });
-                            break;
-                        // any other control types are unsupported
-                    }
+                        }
+                        entry = new ImageEntry(question, {
+                            broadcastStyles: broadcastStyles,
+                        });
+                        break;
+                    case constants.CONTROL_AUDIO_CAPTURE:
+                        entry = new AudioEntry(question, {
+                            broadcastStyles: broadcastStyles,
+                        });
+                        break;
+                    case constants.CONTROL_VIDEO_CAPTURE:
+                        entry = new VideoEntry(question, {
+                            broadcastStyles: broadcastStyles,
+                        });
+                        break;
+                    // any other control types are unsupported
                 }
         }
         if (!entry) {

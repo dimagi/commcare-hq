@@ -1,4 +1,3 @@
-from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
@@ -80,8 +79,7 @@ class SetupCaseSessionFormView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActio
 
     def render_session_redirect(self, session):
         from corehq.apps.data_cleaning.views.main import CleanCasesSessionView
-        response = HttpResponse(_("Starting Data Cleaning Session..."))
-        response['HX-Redirect'] = reverse(
-            CleanCasesSessionView.urlname, args=(self.domain, session.session_id, )
+        return self.render_htmx_redirect(
+            reverse(CleanCasesSessionView.urlname, args=(self.domain, session.session_id, )),
+            response_message=_("Starting Data Cleaning Session...")
         )
-        return response

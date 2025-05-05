@@ -13,7 +13,7 @@ from corehq.apps.data_cleaning.exceptions import UnsupportedFilterValueException
 from corehq.apps.data_cleaning.models import (
     DataType,
     FilterMatchType,
-    BulkEditColumnFilter,
+    BulkEditFilter,
 )
 from corehq.apps.data_cleaning.utils.cases import get_case_property_details
 from corehq.apps.hqwebapp.widgets import AlpineSelect
@@ -33,7 +33,7 @@ class DynamicMultipleChoiceField(forms.MultipleChoiceField):
         return True
 
 
-class AddColumnFilterForm(forms.Form):
+class AddFilterForm(forms.Form):
     prop_id = forms.ChoiceField(
         label=gettext_lazy("Case Property"),
         required=False
@@ -100,7 +100,7 @@ class AddColumnFilterForm(forms.Form):
             (p, p) for p in sorted(property_details.keys()) if p not in EXCLUDED_FILTERED_PROPERTIES
         ]
 
-        initial_prop_id = self._get_initial_value('prop_id')
+        initial_prop_id = self.data.get('prop_id')
         is_initial_editable = (
             property_details[initial_prop_id]['is_editable'] if initial_prop_id else True
         )
@@ -108,7 +108,7 @@ class AddColumnFilterForm(forms.Form):
         offcanvas_selector = "#offcanvas-filter"
 
         alpine_data_model = {
-            "dataType": self._get_initial_value(
+            "dataType": self.data.get(
                 'data_type', DataType.CASE_CHOICES[0][0]
             ),
             "propId": initial_prop_id,
@@ -128,16 +128,16 @@ class AddColumnFilterForm(forms.Form):
             "multiSelectDataTypes": DataType.FILTER_CATEGORY_DATA_TYPES[
                 DataType.FILTER_CATEGORY_MULTI_SELECT
             ],
-            "textMatchType": self._get_initial_value(
+            "textMatchType": self.data.get(
                 'text_match_type', FilterMatchType.TEXT_CHOICES[0][0]
             ),
-            "numberMatchType": self._get_initial_value(
+            "numberMatchType": self.data.get(
                 'number_match_type', FilterMatchType.NUMBER_CHOICES[0][0]
             ),
-            "dateMatchType": self._get_initial_value(
+            "dateMatchType": self.data.get(
                 'date_match_type', FilterMatchType.DATE_CHOICES[0][0]
             ),
-            "multiSelectMatchType": self._get_initial_value(
+            "multiSelectMatchType": self.data.get(
                 'multi_select_match_type', FilterMatchType.MULTI_SELECT_CHOICES[0][0]
             ),
             "matchTypesWithNoValue": [
@@ -162,131 +162,129 @@ class AddColumnFilterForm(forms.Form):
                     })
                 ),
                 crispy.Div(
-                    crispy.Field(
-                        'data_type',
-                        x_model="dataType",
-                    ),
-                    x_show="isEditable",
-                ),
-                crispy.Div(
-                    crispy.Field(
-                        'text_match_type',
-                        x_select2=json.dumps({
-                            "dropdownParent": offcanvas_selector,
-                        }),
-                        **({
-                            "@select2change": "textMatchType = $event.detail",
-                        })
+                    crispy.Div(
+                        crispy.Field(
+                            'data_type',
+                            x_model="dataType",
+                        ),
+                        x_show="isEditable",
                     ),
                     crispy.Div(
                         crispy.Field(
-                            'text_value',
-                            autocomplete="off",
+                            'text_match_type',
+                            x_select2=json.dumps({
+                                "dropdownParent": offcanvas_selector,
+                            }),
+                            **({
+                                "@select2change": "textMatchType = $event.detail",
+                            })
                         ),
-                        x_show="!matchTypesWithNoValue.includes(textMatchType)"
-                    ),
-                    x_show="textDataTypes.includes(dataType)",
-                ),
-                crispy.Div(
-                    crispy.Field(
-                        'number_match_type',
-                        x_select2=json.dumps({
-                            "dropdownParent": offcanvas_selector,
-                        }),
-                        **({
-                            "@select2change": "numberMatchType = $event.detail",
-                        })
-                    ),
-                    crispy.Div(
-                        crispy.Field(
-                            'number_value',
-                            autocomplete="off",
-                        ),
-                        x_show="!matchTypesWithNoValue.includes(numberMatchType)"
-                    ),
-                    x_show="numberDataTypes.includes(dataType)",
-                ),
-                crispy.Div(
-                    crispy.Field(
-                        'date_match_type',
-                        x_select2=json.dumps({
-                            "dropdownParent": offcanvas_selector,
-                        }),
-                        **({
-                            "@select2change": "dateMatchType = $event.detail",
-                        })
-                    ),
-                    crispy.Div(
-                        twbscrispy.AppendedText(
-                            'date_value',
-                            mark_safe(  # nosec: no user input
-                                '<i class="fa-solid fa-calendar-days"></i>'
+                        crispy.Div(
+                            crispy.Field(
+                                'text_value',
+                                autocomplete="off",
                             ),
-                            x_datepicker=json.dumps({
-                                "container": offcanvas_selector,
-                                "useInputGroup": True,
-                            }),
+                            x_show="!matchTypesWithNoValue.includes(textMatchType)"
                         ),
-                        x_show="!matchTypesWithNoValue.includes(dateMatchType) "
-                               "&& dateTypes.includes(dataType)"
-                    ),
-                    crispy.Div(
-                        twbscrispy.AppendedText(
-                            'datetime_value',
-                            mark_safe(  # nosec: no user input
-                                '<i class="fcc fcc-fd-datetime"></i>'
-                            ),
-                            x_datepicker=json.dumps({
-                                "datetime": True,
-                                "container": offcanvas_selector,
-                                "useInputGroup": True,
-                            }),
-                        ),
-                        x_show="!matchTypesWithNoValue.includes(dateMatchType) "
-                               "&& datetimeTypes.includes(dataType)"
-                    ),
-                    x_show="dateDataTypes.includes(dataType)",
-                ),
-                crispy.Div(
-                    crispy.Field(
-                        'multi_select_match_type',
-                        x_select2=json.dumps({
-                            "dropdownParent": offcanvas_selector,
-                        }),
-                        **({
-                            "@select2change": "multiSelectMatchType = $event.detail",
-                        })
+                        x_show="textDataTypes.includes(dataType)",
                     ),
                     crispy.Div(
                         crispy.Field(
-                            'multi_select_value',
-                            x_init="$watch("
-                                   "  'propId',"
-                                   "  value => $dispatch('updateAddFilterPropId', { value: value })"
-                                   ")",
-                            x_dynamic_options_select2=json.dumps({
-                                "details": property_details,
-                                "eventName": 'updateAddFilterPropId',
-                                "initialPropId": initial_prop_id,
+                            'number_match_type',
+                            x_select2=json.dumps({
+                                "dropdownParent": offcanvas_selector,
                             }),
+                            **({
+                                "@select2change": "numberMatchType = $event.detail",
+                            })
                         ),
-                        x_show="!matchTypesWithNoValue.includes(multiSelectMatchType)",
+                        crispy.Div(
+                            crispy.Field(
+                                'number_value',
+                                autocomplete="off",
+                            ),
+                            x_show="!matchTypesWithNoValue.includes(numberMatchType)"
+                        ),
+                        x_show="numberDataTypes.includes(dataType)",
+                    ),
+                    crispy.Div(
+                        crispy.Field(
+                            'date_match_type',
+                            x_select2=json.dumps({
+                                "dropdownParent": offcanvas_selector,
+                            }),
+                            **({
+                                "@select2change": "dateMatchType = $event.detail",
+                            })
+                        ),
+                        crispy.Div(
+                            twbscrispy.AppendedText(
+                                'date_value',
+                                mark_safe(  # nosec: no user input
+                                    '<i class="fa-solid fa-calendar-days"></i>'
+                                ),
+                                x_datepicker=json.dumps({
+                                    "container": offcanvas_selector,
+                                    "useInputGroup": True,
+                                }),
+                            ),
+                            x_show="!matchTypesWithNoValue.includes(dateMatchType) "
+                                   "&& dateTypes.includes(dataType)"
+                        ),
+                        crispy.Div(
+                            twbscrispy.AppendedText(
+                                'datetime_value',
+                                mark_safe(  # nosec: no user input
+                                    '<i class="fcc fcc-fd-datetime"></i>'
+                                ),
+                                x_datepicker=json.dumps({
+                                    "datetime": True,
+                                    "container": offcanvas_selector,
+                                    "useInputGroup": True,
+                                }),
+                            ),
+                            x_show="!matchTypesWithNoValue.includes(dateMatchType) "
+                                   "&& datetimeTypes.includes(dataType)"
+                        ),
+                        x_show="dateDataTypes.includes(dataType)",
+                    ),
+                    crispy.Div(
+                        crispy.Field(
+                            'multi_select_match_type',
+                            x_select2=json.dumps({
+                                "dropdownParent": offcanvas_selector,
+                            }),
+                            **({
+                                "@select2change": "multiSelectMatchType = $event.detail",
+                            })
+                        ),
+                        crispy.Div(
+                            crispy.Field(
+                                'multi_select_value',
+                                x_init="$watch("
+                                       "  'propId',"
+                                       "  value => $dispatch('updateAddFilterPropId', { value: value })"
+                                       ")",
+                                x_dynamic_options_select2=json.dumps({
+                                    "details": property_details,
+                                    "eventName": 'updateAddFilterPropId',
+                                    "initialPropId": initial_prop_id,
+                                }),
+                            ),
+                            x_show="!matchTypesWithNoValue.includes(multiSelectMatchType)",
 
+                        ),
+                        x_show="multiSelectDataTypes.includes(dataType)",
                     ),
-                    x_show="multiSelectDataTypes.includes(dataType)",
-                ),
-                twbscrispy.StrictButton(
-                    _("Add Filter"),
-                    type="submit",
-                    css_class="btn-primary",
+                    twbscrispy.StrictButton(
+                        _("Add Filter"),
+                        type="submit",
+                        css_class="btn-primary",
+                    ),
+                    x_show="propId",
                 ),
                 x_data=json.dumps(alpine_data_model),
             ),
-        )
-
-    def _get_initial_value(self, field_name, default_value=None):
-        return self.data.get(
-            field_name, self.fields[field_name].initial or default_value
         )
 
     def clean_prop_id(self):
@@ -306,7 +304,7 @@ class AddColumnFilterForm(forms.Form):
             self.add_error('data_type', _("Please specify a data type."))
             return cleaned_data
 
-        category = self.get_data_type_category(data_type)
+        category = DataType.get_filter_category(data_type)
         clean_fn = {
             DataType.FILTER_CATEGORY_TEXT: lambda x: self._clean_text_filter(x),
             DataType.FILTER_CATEGORY_NUMBER: lambda x: self._clean_number_filter(x),
@@ -320,18 +318,12 @@ class AddColumnFilterForm(forms.Form):
 
         return clean_fn(cleaned_data)
 
-    @staticmethod
-    def get_data_type_category(data_type):
-        for category, valid_data_types in DataType.FILTER_CATEGORY_DATA_TYPES.items():
-            if data_type in valid_data_types:
-                return category
-
     def _clean_text_filter(self, cleaned_data):
         match_type = self._clean_required_match_type('text_match_type', cleaned_data)
         value = self._clean_value_for_match_type('text_value', cleaned_data, match_type)
         if value is not None:
             try:
-                BulkEditColumnFilter.get_quoted_value(value)
+                BulkEditFilter.get_quoted_value(value)
             except UnsupportedFilterValueException:
                 self.add_error('text_value', _("This value cannot contain both single quotes (') "
                                                "and double quotes (\") at the same time."))
@@ -402,10 +394,18 @@ class AddColumnFilterForm(forms.Form):
         cleaned_data['match_type'] = match_type
         cleaned_data['value'] = value
         # one last check
-        if not BulkEditColumnFilter.is_data_and_match_type_valid(
+        if not BulkEditFilter.is_data_and_match_type_valid(
             match_type, data_type
         ):
             self.add_error('data_type', _("Data type '{}' cannot have match type '{}'.").format(
                 data_type, match_type
             ))
         return cleaned_data
+
+    def create_filter(self):
+        self.session.add_filter(
+            self.cleaned_data['prop_id'],
+            self.cleaned_data['data_type'],
+            self.cleaned_data['match_type'],
+            self.cleaned_data['value']
+        )

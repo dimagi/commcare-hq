@@ -14,7 +14,7 @@ def _grandfather_application_error_report_priv(apps, schema_editor):
     # APPLICATION_ERROR_REPORT is only Enterprise Plan
     skip_editions = ','.join((
         SoftwarePlanEdition.PAUSED,
-        SoftwarePlanEdition.COMMUNITY,
+        SoftwarePlanEdition.FREE,
         SoftwarePlanEdition.STANDARD,
         SoftwarePlanEdition.PRO,
         SoftwarePlanEdition.ADVANCED,

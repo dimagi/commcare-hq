@@ -1,4 +1,5 @@
 from datetime import datetime
+from unittest.mock import patch
 
 from django.test import TestCase
 
@@ -6,7 +7,7 @@ from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.tests.utils import es_test, populate_user_index
 from corehq.apps.es.users import user_adapter
-from corehq.apps.locations.tests.util import delete_all_locations, make_loc
+from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.users.dbaccessors import (
     count_invitations_by_filters,
     count_mobile_users_by_filters,
@@ -39,14 +40,17 @@ from corehq.apps.users.role_utils import initialize_domain_with_default_roles
 class AllCommCareUsersTest(TestCase):
 
     @classmethod
+    @patch('corehq.apps.users.tasks.remove_users_test_cases', lambda *a: None)
     def setUpClass(cls):
         super(AllCommCareUsersTest, cls).setUpClass()
         delete_all_users()
         hard_delete_deleted_users()
         cls.ccdomain = Domain(name='cc_user_domain')
         cls.ccdomain.save()
+        cls.addClassCleanup(cls.ccdomain.delete)
         cls.other_domain = Domain(name='other_domain')
         cls.other_domain.save()
+        cls.addClassCleanup(cls.other_domain.delete)
         bootstrap_location_types(cls.ccdomain.name)
 
         initialize_domain_with_default_roles(cls.ccdomain.name)
@@ -56,6 +60,7 @@ class AllCommCareUsersTest(TestCase):
         cls.loc1 = make_loc('spain', domain=cls.ccdomain.name, type="district")
         cls.loc2 = make_loc('madagascar', domain=cls.ccdomain.name, type="district")
 
+        cls.addClassCleanup(delete_all_users)
         cls.ccuser_1 = CommCareUser.create(
             domain=cls.ccdomain.name,
             username='ccuser_1',
@@ -126,14 +131,6 @@ class AllCommCareUsersTest(TestCase):
         cls.ccuser_inactive.save()
         cls.ccuser_inactive.set_location(cls.loc2)
 
-    @classmethod
-    def tearDownClass(cls):
-        delete_all_users()
-        delete_all_locations()
-        cls.ccdomain.delete()
-        cls.other_domain.delete()
-        super(AllCommCareUsersTest, cls).tearDownClass()
-
     def test_get_users_by_filters(self):
         populate_user_index([
             self.ccuser_1.to_json(),
@@ -144,15 +141,15 @@ class AllCommCareUsersTest(TestCase):
         ])
 
         def usernames(users):
-            return [u.username for u in users]
+            return sorted(u.username for u in users)
 
         # if no filters are passed, should return all users of given type in the domain
-        self.assertItemsEqual(
+        self.assertEqual(
             usernames(get_mobile_users_by_filters(self.ccdomain.name, {})),
             usernames([self.ccuser_2, self.ccuser_1, self.ccuser_inactive])
         )
         self.assertEqual(count_mobile_users_by_filters(self.ccdomain.name, {}), 3)
-        self.assertItemsEqual(
+        self.assertEqual(
             usernames(get_web_users_by_filters(self.ccdomain.name, {})),
             usernames([self.web_user, self.location_restricted_web_user])
         )
@@ -160,41 +157,41 @@ class AllCommCareUsersTest(TestCase):
         self.assertEqual(count_web_users_by_filters(self.ccdomain.name, {}), 2)
 
         # query_string search
-        self.assertItemsEqual(
-            get_all_user_search_query(self.ccdomain.name[0:2]).get_ids(),
-            [
+        self.assertEqual(
+            sorted(get_all_user_search_query(self.ccdomain.name[0:2]).get_ids()),
+            sorted([
                 self.ccuser_1._id, self.ccuser_2._id, self.web_user._id,
                 self.location_restricted_web_user._id, self.ccuser_inactive._id
-            ]
+            ])
         )
 
-        self.assertItemsEqual(
+        self.assertEqual(
             get_all_user_search_query(self.ccuser_1.username).get_ids(),
             [self.ccuser_1._id]
         )
 
         # can search by username
         filters = {'search_string': 'user_1'}
-        self.assertItemsEqual(
+        self.assertEqual(
             usernames(get_mobile_users_by_filters(self.ccdomain.name, filters)),
             [self.ccuser_1.username]
         )
         self.assertEqual(count_mobile_users_by_filters(self.ccdomain.name, filters), 1)
 
         filters = {'search_string': 'webuser'}
-        self.assertItemsEqual(
+        self.assertEqual(
             usernames(get_web_users_by_filters(self.ccdomain.name, filters)),
             [self.web_user.username]
         )
         self.assertEqual(count_web_users_by_filters(self.ccdomain.name, filters), 1)
 
         filters = {'search_string': 'notwebuser'}
-        self.assertItemsEqual(usernames(get_mobile_users_by_filters(self.ccdomain.name, filters)), [])
+        self.assertEqual(usernames(get_mobile_users_by_filters(self.ccdomain.name, filters)), [])
         self.assertEqual(count_mobile_users_by_filters(self.ccdomain.name, filters), 0)
 
         # can search by role_id
         filters = {'role_id': self.custom_role.get_id}
-        self.assertItemsEqual(
+        self.assertEqual(
             usernames(get_mobile_users_by_filters(self.ccdomain.name, filters)),
             [self.ccuser_2.username]
         )
@@ -202,7 +199,7 @@ class AllCommCareUsersTest(TestCase):
 
         # can search by location
         filters = {'location_id': self.loc1._id}
-        self.assertItemsEqual(
+        self.assertEqual(
             usernames(get_mobile_users_by_filters(self.ccdomain.name, filters)),
             [self.ccuser_1.username]
         )
@@ -211,19 +208,19 @@ class AllCommCareUsersTest(TestCase):
 
         # can search by active status
         filters = {'user_active_status': False, 'location_id': self.loc2._id}
-        self.assertItemsEqual(
+        self.assertEqual(
             usernames(get_mobile_users_by_filters(self.ccdomain.name, filters)),
             [self.ccuser_inactive.username]
         )
 
         filters = {'user_active_status': True}
-        self.assertItemsEqual(
+        self.assertEqual(
             usernames(get_mobile_users_by_filters(self.ccdomain.name, filters)),
             [self.ccuser_1.username, self.ccuser_2.username]
         )
 
         filters = {'user_active_status': None}
-        self.assertItemsEqual(
+        self.assertEqual(
             usernames(get_mobile_users_by_filters(self.ccdomain.name, filters)),
             [self.ccuser_1.username, self.ccuser_2.username, self.ccuser_inactive.username]
         )

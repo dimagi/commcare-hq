@@ -3,6 +3,7 @@ hqDefine("app_manager/js/releases/language_profiles", [
     "knockout",
     "underscore",
     "hqwebapp/js/bootstrap3/main",
+    "select2/dist/js/select2.full.min",
 ], function (
     $,
     ko,

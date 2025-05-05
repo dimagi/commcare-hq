@@ -28,10 +28,10 @@ from django_prbac.models import Grant, Role
 from memoized import memoized
 
 from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
-from corehq.apps.accounting.utils.downgrade import downgrade_eligible_domains
 from corehq.apps.accounting.utils.invoicing import (
-    get_oldest_unpaid_invoice_over_threshold,
+    get_oldest_overdue_invoice_over_threshold,
 )
+from corehq.apps.accounting.utils.unpaid_invoice import Downgrade
 from corehq.apps.sso.tasks import auto_deactivate_removed_sso_users
 from corehq.toggles import ACCOUNTING_TESTING_TOOLS
 
@@ -123,7 +123,6 @@ from corehq.apps.domain.views.accounting import (
     DomainBillingStatementsView,
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.views import (
     BaseSectionPageView,
     CRUDPaginatedViewMixin,
@@ -304,10 +303,6 @@ class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
         Select2BillingInfoHandler,
     ]
 
-    @use_jquery_ui  # for datepicker
-    def dispatch(self, request, *args, **kwargs):
-        return super(NewSubscriptionView, self).dispatch(request, *args, **kwargs)
-
     @property
     @memoized
     def account_id(self):
@@ -376,10 +371,6 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
     async_handlers = [
         Select2BillingInfoHandler,
     ]
-
-    @use_jquery_ui  # for datepicker
-    def dispatch(self, request, *args, **kwargs):
-        return super(EditSubscriptionView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -588,10 +579,6 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
         SoftwareProductRateAsyncHandler,
     ]
 
-    @use_multiselect
-    def dispatch(self, request, *args, **kwargs):
-        return super(EditSoftwarePlanView, self).dispatch(request, *args, **kwargs)
-
     @property
     @memoized
     def plan(self):
@@ -668,10 +655,6 @@ class SoftwarePlanVersionView(AccountingSectionView):
     urlname = 'software_plan_version'
     page_title = 'Plan Version'
     template_name = 'accounting/plan_version.html'
-
-    @use_jquery_ui  # for datepicker
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         if self.upgrade_subscriptions_form.is_valid():
@@ -1285,7 +1268,7 @@ class TriggerDowngradeView(BaseTriggerAccountingTestView):
             return self.async_response
         if self.trigger_form.is_valid():
             domain = self.trigger_form.cleaned_data['domain']
-            overdue_invoice, _ = get_oldest_unpaid_invoice_over_threshold(
+            overdue_invoice, _ = get_oldest_overdue_invoice_over_threshold(
                 datetime.date.today(),
                 domain
             )
@@ -1295,7 +1278,7 @@ class TriggerDowngradeView(BaseTriggerAccountingTestView):
                     f'No overdue invoices were found for project "{domain}"',
                 )
             else:
-                downgrade_eligible_domains(only_downgrade_domain=domain)
+                Downgrade.run_action(only_downgrade_domain=domain)
                 messages.success(
                     request,
                     f'Successfully triggered the downgrade process '

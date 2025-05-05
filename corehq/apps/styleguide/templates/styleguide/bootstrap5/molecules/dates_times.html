@@ -1,6 +1,8 @@
 {% extends 'styleguide/bootstrap5/base.html' %}
 {% load hq_shared_tags %}
 
+{% js_entry "styleguide/js/dates_times" %}
+
 {% block intro %}
   <h1 class="sg-title mb-0" id="content">Dates &amp; Times</h1>
   <p class="sg-lead">
@@ -38,16 +40,14 @@
     Bootstrap 3 to 5.
   </p>
   <p>
-    There are also references to the jQuery UI <code>datepicker</code> plugin, the <code>timpicker</code> plugin
+    There are also references to the jQuery UI <code>datepicker</code> plugin, the <code>timepicker</code> plugin
     (from the abandoned <code>bootstrap-timepicker</code> project), and <code>daterangepicker</code> (from
     <code>bootstrap-daterangepicker</code>) in Bootstrap 3 pages. All of these should be replaced with Tempus Dominus
     during the migration of a page from Bootstrap 3 to 5.
   </p>
   <div class="alert alert-primary">
-    <strong>Important Usage Note:</strong> To use Tempus Dominus on a page, you will need to apply the
-    <code>@use_tempusdominus</code> decorator to your view to ensure that the CSS (on all views) and javascript
-    (on non-requirejs views) are included.
-    If you are using requirejs, make sure that <code>tempusDominus</code> is in your list of dependencies.
+    <strong>Important Usage Note:</strong> Make sure to import <code>TempusDominus</code> from
+    <code>@eonasdan/tempus-dominus</code> in javascript, as in the examples on this page.
   </div>
 
   <h2 id="simple-date" class="pt-4">
@@ -57,8 +57,6 @@
     If you are in need of a simple date picker widget that returns a format in <code>YYYY-MM-DD</code>, then
     your best option is to add the <code>date-picker</code> CSS class to any text <code>input</code> and
     make sure that <code>hqwebapp/js/bootstrap5/widgets</code> is included as part of your javascript dependencies.
-    Additionally, you will want to use the <code>@use_tempusdominus</code> decorator on the view using the widget
-    to ensure the CSS is loaded to the page properly.
   </p>
   <p>
     The <code>hqwebapp/js/bootstrap5/widgets</code> module when loaded to a page will look for <code>input</code> fields
@@ -74,7 +72,7 @@
     the clock component. See the project's <a href="https://getdatepicker.com/6/options/" target="_blank">documentation</a>
     for additional guidance.
   </p>
-  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.date_only %}
+  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.date_only %}
 
   <h2 id="date-and-time" class="pt-4">
     Date &amp; Time
@@ -84,7 +82,7 @@
     See the project's <a href="https://getdatepicker.com/6/options/" target="_blank">documentation</a>
     for additional guidance.
   </p>
-  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.tempus_dominus %}
+  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.tempus_dominus %}
 
   <h2 id="time-only" class="pt-4">
     Time Only
@@ -99,11 +97,11 @@
     <code>bootstrap-timepicker</code> plugin. The example below should be a good starting point to use as a drop-in
     replacement for that widget.
   </div>
-  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.time_only %}
+  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.time_only %}
   <p>
     If you want a time-picker in 24-hour format, the example below provides a good starting point.
   </p>
-  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.time_only_24 %}
+  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.time_only_24 %}
 
   <h2 id="date-range" class="pt-4">
     Date Range
@@ -116,5 +114,5 @@
     For additional guidance, see the <a href="https://getdatepicker.com/6/options/" target="_blank">documentation</a>
     for Tempus Dominus.
   </p>
-  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.date_range %}
+  {% include 'styleguide/bootstrap5/html_js_example.html' with content=examples.date_range %}
 {% endblock content %}

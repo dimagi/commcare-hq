@@ -7,9 +7,15 @@ from corehq.apps.data_cleaning.models import (
     BulkEditSession,
 )
 from corehq.apps.data_cleaning.utils.cases import clear_caches_case_data_cleaning
+from corehq.apps.data_cleaning.views.cleaning import (
+    CleanSelectedRecordsFormView,
+)
+from corehq.apps.data_cleaning.views.columns import (
+    ManageColumnsFormView,
+)
 from corehq.apps.data_cleaning.views.filters import (
     PinnedFilterFormView,
-    ColumnFilterFormView,
+    ManageFiltersFormView,
 )
 from corehq.apps.data_cleaning.views.main import (
     CleanCasesMainView,
@@ -69,6 +75,11 @@ class CleanCasesViewAccessTest(TestCase):
             cls.domain_obj,
             role_with_permission,
         )
+        cls.user_in_domain_not_in_session = cls.make_user(
+            'domain_member2@datacleaning.org',
+            cls.domain_obj,
+            role_with_permission,
+        )
         cls.user_without_role = cls.make_user(
             'domain_member_junior@datacleaning.org',
             cls.domain_obj,
@@ -95,13 +106,20 @@ class CleanCasesViewAccessTest(TestCase):
             (CleanCasesTableView, (cls.domain_name, cls.fake_session_id,)),
             (PinnedFilterFormView, (cls.domain_name, cls.real_session_id,)),
             (PinnedFilterFormView, (cls.domain_name, cls.fake_session_id,)),
-            (ColumnFilterFormView, (cls.domain_name, cls.real_session_id,)),
-            (ColumnFilterFormView, (cls.domain_name, cls.fake_session_id,)),
+            (ManageFiltersFormView, (cls.domain_name, cls.real_session_id,)),
+            (ManageFiltersFormView, (cls.domain_name, cls.fake_session_id,)),
+            (ManageColumnsFormView, (cls.domain_name, cls.real_session_id,)),
+            (ManageColumnsFormView, (cls.domain_name, cls.fake_session_id,)),
+            (ManageFiltersFormView, (cls.domain_name, cls.fake_session_id,)),
+            (CleanSelectedRecordsFormView, (cls.domain_name, cls.real_session_id,)),
+            (CleanSelectedRecordsFormView, (cls.domain_name, cls.fake_session_id,)),
         ]
         cls.views_not_found_with_invalid_session = [
             CleanCasesTableView,
             PinnedFilterFormView,
-            ColumnFilterFormView,
+            ManageFiltersFormView,
+            ManageColumnsFormView,
+            CleanSelectedRecordsFormView,
         ]
 
         clear_caches_case_data_cleaning(cls.domain_name)
@@ -175,6 +193,25 @@ class CleanCasesViewAccessTest(TestCase):
                 response.status_code,
                 200,
                 msg=f"{view_class.__name__} should be accessible"
+            )
+
+    @privilege_enabled(BULK_DATA_CLEANING)
+    @flag_enabled('DATA_CLEANING_CASES')
+    def test_has_no_access_to_wrong_session(self):
+        self.client.login(
+            username=self.user_in_domain_not_in_session.username,
+            password=self.password
+        )
+        for view_class, args in self.all_views:
+            if self.fake_session_id in args or len(args) == 1:
+                # only test real sessions and session views
+                continue
+            url = reverse(view_class.urlname, args=args)
+            response = self.client.get(url)
+            self.assertEqual(
+                response.status_code,
+                302 if view_class == CleanCasesSessionView else 404,
+                msg=f"{view_class.__name__} should NOT be accessible"
             )
 
     @privilege_enabled(BULK_DATA_CLEANING)

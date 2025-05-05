@@ -57,6 +57,15 @@
                      .addClass('btn-primary')
                      .removeClass('disabled')
                      .prop('disabled', false);
+@@ -188,7 +188,7 @@
+                 // This is necessary for pages that contain multiple filter panels, since we are using CSS IDs.
+                 const submitButton = $(e.target).closest('#reportFilters').find(self.filterSubmitSelector);
+                 $(submitButton)
+-                    .button('reset')
++                    .changeButtonState('reset')
+                     .addClass('btn-primary')
+                     .removeClass('disabled')
+                     .prop('disabled', false);
 @@ -257,16 +257,16 @@
  
              self.sendEmail = function () {
