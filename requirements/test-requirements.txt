@@ -223,7 +223,7 @@ exceptiongroup==1.1.1
     # via pytest
 fakecouch==0.0.15
     # via -r test-requirements.in
-faker==32.1.0
+faker==37.1.0
     # via -r test-requirements.in
 flaky==3.8.1
     # via -r test-requirements.in
@@ -431,7 +431,6 @@ python-dateutil==2.9.0.post0
     #   botocore
     #   celery
     #   django-tastypie
-    #   faker
     #   freezegun
 python-dotenv==1.0.1
     # via pydantic-settings
@@ -582,7 +581,6 @@ typing-extensions==4.12.2
     #   bytecode
     #   ddtrace
     #   django-countries
-    #   faker
     #   jwcrypto
     #   kombu
     #   pydantic
@@ -592,6 +590,7 @@ typing-extensions==4.12.2
 tzdata==2025.1
     # via
     #   celery
+    #   faker
     #   kombu
 ua-parser==0.10.0
     # via user-agents
