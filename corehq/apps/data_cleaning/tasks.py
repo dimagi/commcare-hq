@@ -1,6 +1,6 @@
-from datetime import datetime
 from corehq.apps.celery import task
 
+from django.utils import timezone
 from django.db import transaction
 
 from casexml.apps.case.mock import CaseBlock
@@ -22,7 +22,7 @@ def commit_data_cleaning(bulk_edit_session_id):
         # another task is already processing this session
         return []
 
-    session.committed_on = datetime.now()
+    session.committed_on = timezone.now()
     session.save()
 
     _purge_ui_data_from_session(session)
@@ -48,7 +48,7 @@ def commit_data_cleaning(bulk_edit_session_id):
 @retry_on_integrity_error(max_retries=3, delay=0.1)
 @transaction.atomic
 def _complete_session(session):
-    session.completed_on = datetime.now()
+    session.completed_on = timezone.now()
     session.save()
     session.changes.all().delete()
     session.records.all().delete()
