@@ -163,8 +163,9 @@ class OpenaiTranslator(LLMTranslator):
     def __init__(self, api_key, model, lang, translation_format):
         super().__init__(api_key, model, lang, translation_format)
         try:
-            from openai import OpenAI
-            self.client = OpenAI(api_key=api_key)
+            import openai
+            self.openai = openai
+            self.client = openai.OpenAI(api_key=api_key)
         except ImportError:
             self.client = None
             print("OpenAI Python package not found, will use HTTP requests instead.")
@@ -172,11 +173,12 @@ class OpenaiTranslator(LLMTranslator):
         self.api_base = "https://api.openai.com/v1"
 
     def _call_llm(self, system_prompt, user_message):
-        if self.client is None:
-            return self._call_llm_http(system_prompt, user_message)
-        try:
+
+        @retry_with_exponential_backoff(max_retries=5, errors=(self.openai.RateLimitError,))
+        def _call_openai_client(backup_model=None):
+            model = backup_model or self.model
             response = self.client.chat.completions.create(
-                model=self.model,
+                model=model,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_message}
@@ -185,6 +187,11 @@ class OpenaiTranslator(LLMTranslator):
                 response_format={"type": "json_object"}
             )
             return response.choices[0].message.content
+
+        if self.client is None:
+            return self._call_llm_http(system_prompt, user_message)
+        try:
+            return _call_openai_client()
         except Exception as e:
             print(f"Error calling OpenAI API via client: {e}")
             raise e
