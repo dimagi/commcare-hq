@@ -1,6 +1,5 @@
 import "commcarehq";
 import $ from "jquery";
-import ko from "knockout";
 import { Tooltip } from "bootstrap5";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import models from "export/js/models";

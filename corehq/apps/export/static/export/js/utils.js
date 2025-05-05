@@ -1,6 +1,4 @@
 import $ from "jquery";
-import ko from "knockout";
-import _ from "underscore";
 import constants from "export/js/const";
 
 var getTagCSSClass = function (tag) {
