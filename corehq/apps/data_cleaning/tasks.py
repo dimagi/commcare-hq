@@ -1,7 +1,10 @@
 from datetime import datetime
 from corehq.apps.celery import task
 
+from django.db import transaction
+
 from casexml.apps.case.mock import CaseBlock
+from corehq.apps.data_cleaning.utils.decorators import retry_on_integrity_error
 from corehq.apps.data_cleaning.models import (
     BulkEditSession,
 )
@@ -22,14 +25,7 @@ def commit_data_cleaning(bulk_edit_session_id):
     session.committed_on = datetime.now()
     session.save()
 
-    # Delete UI-only models
-    session.filters.all().delete()
-    session.pinned_filters.all().delete()
-    session.columns.all().delete()
-
-    # deselect all the records and purge the records without changes
-    session.deselect_all_records_in_queryset()
-    session.purge_records()
+    _purge_ui_data_from_session(session)
 
     form_ids = []
     case_index = 0
@@ -52,6 +48,22 @@ def commit_data_cleaning(bulk_edit_session_id):
     session.records.all().delete()
 
     return form_ids
+
+
+@retry_on_integrity_error(max_retries=3, delay=0.1)
+@transaction.atomic
+def _purge_ui_data_from_session(session):
+    """
+    Purges all UI-only data from the session.
+    """
+    # Delete UI-only models
+    session.filters.all().delete()
+    session.pinned_filters.all().delete()
+    session.columns.all().delete()
+
+    # deselect all the records and purge the records without changes
+    session.deselect_all_records_in_queryset()
+    session.purge_records()
 
 
 def _create_case_blocks(session, records):
