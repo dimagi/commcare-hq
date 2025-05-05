@@ -15,7 +15,9 @@ class Command(BaseCommand):
         HQ_TO_DJANGO_MAP = {
             'fra': 'fr',
             'hin': 'hi',
+            'ita': 'it',
             'por': 'pt',
+            'ukr': 'uk',
         }
 
         def _get_django_home():
