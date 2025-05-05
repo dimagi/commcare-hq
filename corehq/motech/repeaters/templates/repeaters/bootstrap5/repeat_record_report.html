@@ -43,6 +43,15 @@
             <i class="fa fa-times"></i>
             {% trans 'Cancel' %}
           </button>
+          <span
+            class="hq-help-template"
+            data-title="{% trans 'Bulk Actions' %}"
+            data-content="{% blocktrans %}
+              You must filter to a specific repeater or payload in order to take
+              an action on the entire table.
+            {% endblocktrans %}"
+            data-placement="right"
+          ></span>
         </div>
       </div>
     {% endif %}

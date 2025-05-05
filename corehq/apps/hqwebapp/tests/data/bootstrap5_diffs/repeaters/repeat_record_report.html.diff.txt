@@ -50,7 +50,7 @@
              disabled="true"
              title="{% trans 'Cancel selected records' %}"
            >
-@@ -46,17 +47,21 @@
+@@ -55,17 +56,21 @@
        </div>
      {% endif %}
    </div>
@@ -75,7 +75,7 @@
          Select all <b>{{ formatted_total }}</b> records in this table
        </button>
      {% endblocktrans %}
-@@ -64,7 +69,11 @@
+@@ -73,7 +78,11 @@
    <div id="selected-table-info" class="alert alert-info hide">
      {% blocktrans with formatted_total=total|intcomma %}
        All <b>{{ formatted_total }}</b> records in this table are selected.
@@ -88,7 +88,7 @@
          Clear selection
        </button>
      {% endblocktrans %}
-@@ -73,8 +82,9 @@
+@@ -82,8 +91,9 @@
      <div class="modal-dialog">
        <div class="modal-content">
          <div class="modal-header">
@@ -100,7 +100,7 @@
              <span class="sr-only"
                >{% blocktrans %}Close{% endblocktrans %}</span
              >
-@@ -87,7 +97,11 @@
+@@ -96,7 +106,11 @@
            {% blocktrans %}Are you sure?{% endblocktrans %}
          </div>
          <div class="modal-footer">
@@ -113,7 +113,7 @@
              {% blocktrans %}No{% endblocktrans %}
            </button>
            <button
-@@ -127,13 +141,14 @@
+@@ -136,13 +150,14 @@
      <div class="modal-dialog" role="document">
        <div class="modal-content">
          <div class="modal-header">
@@ -133,7 +133,7 @@
            </button>
            <h4 class="modal-title">{% trans "Payload" %}</h4>
          </div>
-@@ -141,7 +156,11 @@
+@@ -150,7 +165,11 @@
            <div class="payload"></div>
          </div>
          <div class="modal-footer">
@@ -146,7 +146,7 @@
              {% trans "Close" %}
            </button>
          </div>
-@@ -154,13 +173,14 @@
+@@ -163,13 +182,14 @@
      <div class="modal-dialog" role="document">
        <div class="modal-content">
          <div class="modal-header">
@@ -166,7 +166,7 @@
            </button>
            <h4 class="modal-title">{% trans "Error" %}</h4>
          </div>
-@@ -168,7 +188,11 @@
+@@ -177,7 +197,11 @@
            <div class="error-message"></div>
          </div>
          <div class="modal-footer">

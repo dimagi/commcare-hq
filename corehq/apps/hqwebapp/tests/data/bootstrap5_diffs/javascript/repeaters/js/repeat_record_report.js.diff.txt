@@ -16,7 +16,7 @@
      'commcarehq',
  ], function (
      $,
-@@ -136,7 +136,7 @@
+@@ -138,7 +138,7 @@
                  action = getAction();
              let $btn;
  
@@ -25,7 +25,7 @@
              if (action === 'resend') {
                  $btn = $('#resend-button');
                  $btn.disableButton();
-@@ -155,19 +155,19 @@
+@@ -157,19 +157,19 @@
          $('#select-all-checkbox').on('click', function () {
              if (selectAllCheckbox.checked) {
                  checkAllRows();
@@ -50,7 +50,7 @@
                  selectedEntireTable = false;
              }
              updateActionButtons();
-@@ -192,8 +192,8 @@
+@@ -194,8 +194,8 @@
  
          $("#select-table-button").click(function () {
              selectedEntireTable = true;
@@ -61,7 +61,7 @@
              updateActionButtons();
          });
  
-@@ -213,11 +213,11 @@
+@@ -215,11 +215,11 @@
              const checkedRecords = getCheckedRecords();
              if (selectedEntireTable) {
                  hideAllWarnings();
@@ -75,7 +75,7 @@
                  } else {
                      showWarning('not-allowed');
                  }
-@@ -281,7 +281,7 @@
+@@ -283,7 +283,7 @@
                      } else {
                          btn.text(gettext('Failed'));
                          btn.addClass('btn-danger');
@@ -84,7 +84,7 @@
                          $('#payload-error-modal .error-message').text(response.failure_reason);
                      }
                  },
-@@ -320,17 +320,17 @@
+@@ -322,17 +322,17 @@
  
          function showWarning(reason) {
              if (reason === 'no-selection') {
@@ -108,7 +108,7 @@
          }
  
          function checkAllRows() {
-@@ -382,8 +382,8 @@
+@@ -385,8 +385,8 @@
          function resetTableSelections() {
              selectedEntireTable = false;
              selectAllCheckbox.checked = false;
