@@ -2,7 +2,7 @@
 set -euo pipefail  # bash strict mode - exit on hard failures
 
 # Based on this confluence page:
-# https://confluence.dimagi.com/display/commcarehq/Internationalization+and+Localization+-+Transifex+Translations
+# https://dimagi.atlassian.net/wiki/spaces/saas/pages/2146607277/Internationalization+and+Localization+-+Transifex+Translations
 
 function abort () {
     echo $@
@@ -60,7 +60,7 @@ if [[ ! `command -v tx` || ! -f ~/.transifexrc ]]
 then
     echo "It looks like you haven't yet configured transifex."
     echo "Please visit the wiki page for instructions on how to do so:"
-    echo "https://confluence.dimagi.com/display/commcarehq/Internationalization+and+Localization+-+Transifex+Translations"
+    echo "https://dimagi.atlassian.net/wiki/spaces/saas/pages/2146607277/Internationalization+and+Localization+-+Transifex+Translations"
     abort
 fi
 
