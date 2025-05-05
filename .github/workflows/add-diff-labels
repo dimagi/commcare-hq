@@ -1,0 +1,45 @@
+name: Label PR if get_blob_db is used
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  label-if-get-blob-db-used:
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for full history to do git diff with base
+
+      - name: Get list of files changed in the PR
+        id: file_list
+        run: |
+          FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD)
+          echo "FILES=$FILES" >> $GITHUB_OUTPUT
+
+      - name: Search for get_blob_db in modified files
+        id: grep_check
+        run: |
+          FOUND=false
+          for file in ${{ steps.file_list.outputs.FILES }}; do
+            if [[ -f "$file" ]] && grep -q "get_blob_db" "$file"; then
+              FOUND=true
+              break
+            fi
+          done
+          echo "FOUND=$FOUND" >> $GITHUB_OUTPUT
+
+      - name: Add label to PR if found
+        if: steps.grep_check.outputs.FOUND == 'true'
+        run: |
+          gh pr edit "$PR_URL" --add-label "blob-db-usage"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
