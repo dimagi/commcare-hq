@@ -107,6 +107,8 @@ def test_openai_translator_supported_models():
 
 def test_openai_translator_call_llm():
     mock_client = MagicMock()
+    mock_openai = MagicMock()
+    mock_openai.RateLimitError = Exception
 
     translation_format = MockTranslationFormat()
     translator = OpenaiTranslator(
@@ -116,8 +118,10 @@ def test_openai_translator_call_llm():
         translation_format=translation_format
     )
     translator.client = mock_client
+    translator.openai = mock_openai
 
     with patch.object(translator, 'client') as mock_client:
+
         mock_client.return_value = mock_client
         mock_response = MagicMock()
         mock_response.choices[0].message.content = json.dumps(["Message numero 1", "Message numero 2"])
@@ -364,6 +368,8 @@ def test_end_to_end_flow(mock_polib):
         lang="es",
         translation_format=translation_format
     )
+    translator.openai = MagicMock()
+    translator.openai.RateLimitError = Exception
 
     with patch.object(translator, 'client') as mock_client:
         mock_client.return_value = mock_client

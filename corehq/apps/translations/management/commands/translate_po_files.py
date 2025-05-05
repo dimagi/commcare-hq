@@ -170,6 +170,7 @@ class OpenaiTranslator(LLMTranslator):
             self.openai = openai
             self.client = openai.OpenAI(api_key=api_key)
         except ImportError:
+            self.openai = None
             self.client = None
             print("OpenAI Python package not found, will use HTTP requests instead.")
 
@@ -177,27 +178,28 @@ class OpenaiTranslator(LLMTranslator):
 
     def _call_llm(self, system_prompt, user_message):
 
-        @retry_with_exponential_backoff(max_retries=5, errors=(self.openai.RateLimitError,))
-        def _call_openai_client(backup_model=None):
-            model = backup_model or self.model
-            response = self.client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_message}
-                ],
-                temperature=0.2,
-                response_format={"type": "json_object"}
-            )
-            return response.choices[0].message.content
-
         if self.client is None:
             return self._call_llm_http(system_prompt, user_message)
-        try:
-            return _call_openai_client()
-        except Exception as e:
-            print(f"Error calling OpenAI API via client: {e}")
-            raise e
+        else:
+            @retry_with_exponential_backoff(max_retries=5, errors=(self.openai.RateLimitError,))
+            def _call_openai_client(backup_model=None):
+                model = backup_model or self.model
+                response = self.client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_message}
+                    ],
+                    temperature=0.2,
+                    response_format={"type": "json_object"}
+                )
+                return response.choices[0].message.content
+
+            try:
+                return _call_openai_client()
+            except Exception as e:
+                print(f"Error calling OpenAI API via client: {e}")
+                raise e
 
     def _call_llm_http(self, system_prompt, user_message):
         # We might not use this method at all, but it was useful in testing other LLM clients
