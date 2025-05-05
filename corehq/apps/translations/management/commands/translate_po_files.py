@@ -13,6 +13,49 @@ import requests
 from memoized import memoized
 
 
+def retry_with_exponential_backoff(
+    initial_delay=1, exponential_base=2, jitter=True, max_retries=10, errors=(Exception,)
+):
+    """
+    :param initial_delay: initial delay in seconds
+    :param exponential_base: exponential base for the delay
+    :param jitter: whether to add randomness to the delay
+    :param max_retries: maximum number of retries
+    :param errors: tuple of errors to catch
+    This approach has been inspired by the approaches suggested in
+    https://github.com/openai/openai-cookbook/blob/main/examples/How_to_handle_rate_limits.ipynb
+    We are adding exponential backoff on retries and also a backup model to use
+    if the primary model is rate limited.
+
+    TODO - As of now we are only using OpenAI, so backup model is hardcoded
+    We can make it more generic by having it as a property of the LLMTranslator class.
+    """
+
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            num_retries = 0
+            delay = initial_delay
+
+            while True:
+                try:
+                    return func(*args, **kwargs)
+                except errors:
+                    num_retries += 1
+                    if num_retries == 1:
+                        print("Rate limit error, retrying with backup model: gpt-4o")
+                        return func(*args, **kwargs, backup_model='gpt-4o')
+                    if num_retries > max_retries:
+                        raise Exception(
+                            f"Maximum number of retries ({max_retries}) exceeded."
+                        )
+                    delay *= exponential_base * (1 + jitter * random.random())
+                    gevent.sleep(delay)
+                except Exception as e:
+                    raise Exception("Error calling LLM") from e
+        return wrapper
+    return decorator
+
+
 @memoized
 def langcode_to_langname_map():
     langs = settings.LANGUAGES
