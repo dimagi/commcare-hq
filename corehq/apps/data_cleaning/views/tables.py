@@ -1,5 +1,7 @@
 import json
 
+from celery import uuid as celery_uuid
+
 from django.contrib import messages
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -132,7 +134,8 @@ class CleanCasesTableView(BulkEditSessionViewMixin,
 
     @hq_hx_action("post")
     def apply_all_changes(self, request, *args, **kwargs):
-        self.session.prepare_session_for_commit()
+        self.session.task_id = celery_uuid()
+        self.session.save()
         commit_data_cleaning.apply_async(
             args=(self.session.session_id,),
             task_id=self.session.task_id

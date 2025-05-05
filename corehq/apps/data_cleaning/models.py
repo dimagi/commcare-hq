@@ -1,9 +1,6 @@
 import re
 import uuid
 
-from celery import uuid as celery_uuid
-from datetime import datetime, timezone
-
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
@@ -392,15 +389,6 @@ class BulkEditSession(models.Model):
     def clear_all_changes(self):
         self.changes.all().delete()
         self.purge_records()
-
-    def prepare_session_for_commit(self):
-        """
-        Prepare the session for commit by generating a task id
-        and setting the committed_on date.
-        """
-        self.task_id = celery_uuid()
-        self.committed_on = datetime.now(timezone.utc).replace(tzinfo=None)
-        self.save()
 
     def is_record_selected(self, doc_id):
         return BulkEditRecord.is_record_selected(self, doc_id)

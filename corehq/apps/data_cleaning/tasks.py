@@ -15,6 +15,12 @@ from corehq.util.metrics.load_counters import case_load_counter
 @task(queue='case_import_queue')
 def commit_data_cleaning(bulk_edit_session_id):
     session = BulkEditSession.objects.get(session_id=bulk_edit_session_id)
+    if session.committed_on is not None:
+        # another task is already processing this session
+        return []
+
+    session.committed_on = datetime.now()
+    session.save()
 
     # Delete UI-only models
     session.filters.all().delete()
