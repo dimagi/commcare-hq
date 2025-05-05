@@ -315,7 +315,7 @@ iso8601==2.0.0
     # via -r base-requirements.in
 isodate==0.6.1
     # via python3-saml
-isort==5.10.1
+isort==6.0.1
     # via -r dev-requirements.in
 jedi==0.18.1
     # via ipython
