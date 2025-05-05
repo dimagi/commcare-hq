@@ -1,8 +1,8 @@
 import "commcarehq";
 import nv from "jquery";
 import moment from "moment/moment";
-import "d3/d3.min";
-import "nvd3/nv.d3.latest.min";  // version 1.1.10 has a bug that affects line charts with multiple series
+import d3 from "d3/d3.min";
+import nv from "nvd3/nv.d3.latest.min";  // version 1.1.10 has a bug that affects line charts with multiple series
 import "nvd3-1.8.6/build/nv.d3.css";
 
 
