@@ -71,7 +71,7 @@
                  selectedEntireTable = false;
              }
              updateActionButtons();
-@@ -194,8 +194,8 @@
+@@ -190,8 +190,8 @@
  
          $("#select-table-button").click(function () {
              selectedEntireTable = true;
@@ -82,7 +82,7 @@
              updateActionButtons();
          });
  
-@@ -251,7 +251,7 @@
+@@ -245,7 +245,7 @@
                      } else {
                          btn.text(gettext('Failed'));
                          btn.addClass('btn-danger');
@@ -90,8 +90,8 @@
 +                        $('#payload-error-modal').modal('show');  /* todo B5: plugin:modal */
                          $('#payload-error-modal .error-message').text(response.failure_reason);
                      }
-                 },
-@@ -338,8 +338,8 @@
+                     resetPage();
+@@ -336,8 +336,8 @@
          function resetTableSelections() {
              selectedEntireTable = false;
              selectAllCheckbox.checked = false;
@@ -100,5 +100,5 @@
 +            selectedPageInfo.classList.add('d-none');
 +            selectedTableInfo.classList.add('d-none');
          }
-     });
- });
+ 
+         function resetPage() {

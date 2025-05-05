@@ -181,15 +181,11 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
         });
 
         $('#report-content').on('click', '#report_table_repeat_record_report_length', function () {
-            uncheckAllRows();
-            resetTableSelections();
-            updateActionButtons();
+            resetPage();
         });
 
         $('#report-content').on('click', '#report_table_repeat_record_report_paginate', function () {
-            uncheckAllRows();
-            resetTableSelections();
-            updateActionButtons();
+            resetPage();
         });
 
         $("#select-table-button").click(function () {
@@ -200,9 +196,7 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
         });
 
         $("#clear-table-selection").click(function () {
-            uncheckAllRows();
-            resetTableSelections();
-            updateActionButtons();
+            resetPage();
         });
 
         $('body').on('DOMNodeInserted', 'tbody', function () {
@@ -254,11 +248,13 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
                         $('#payload-error-modal').modal('show');  /* todo B5: plugin:modal */
                         $('#payload-error-modal .error-message').text(response.failure_reason);
                     }
+                    resetPage();
                 },
                 error: function () {
                     btn.removeSpinnerFromButton();
                     btn.text(gettext('Failed to send'));
                     btn.addClass('btn-danger');
+                    resetPage();
                 },
             });
         }
@@ -271,11 +267,13 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
                     btn.removeSpinnerFromButton();
                     btn.text(gettext('Success!'));
                     btn.addClass('btn-success');
+                    resetPage();
                 },
                 error: function () {
                     btn.removeSpinnerFromButton();
                     btn.text(gettext('Failed to cancel'));
                     btn.addClass('btn-danger');
+                    resetPage();
                 },
             });
         }
@@ -340,6 +338,12 @@ hqDefine('repeaters/js/bootstrap5/repeat_record_report', [
             selectAllCheckbox.checked = false;
             selectedPageInfo.classList.add('d-none');
             selectedTableInfo.classList.add('d-none');
+        }
+
+        function resetPage() {
+            uncheckAllRows();
+            resetTableSelections();
+            updateActionButtons();
         }
     });
 });
