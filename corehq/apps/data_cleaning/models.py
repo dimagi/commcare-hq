@@ -462,6 +462,8 @@ class BulkEditSession(models.Model):
         # the most potentially expensive query is below:
         return num_records + self._get_num_unrecorded() <= MAX_RECORDED_LIMIT
 
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
     def update_result(self, record_count, form_id=None):
         result = self.result or {}
 
