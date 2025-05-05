@@ -26,7 +26,9 @@ from corehq.apps.integration.payments.forms import PaymentConfigureForm
 from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.apps.integration.payments.services import verify_payment_cases
 from corehq.apps.integration.payments.tables import PaymentsVerifyTable
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.generic import get_filter_classes
+from corehq.apps.reports.standard.cases.utils import query_with_case_owners_filters
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions, WebUser
 from corehq.apps.users.permissions import PAYMENTS_REPORT_PERMISSION
@@ -36,6 +38,7 @@ from corehq.util.timezones.utils import get_timezone
 
 class PaymentsFiltersMixin:
     fields = [
+        'corehq.apps.integration.payments.filters.PaymentCaseListFilter',
         'corehq.apps.integration.payments.filters.PaymentVerificationStatusFilter',
         'corehq.apps.integration.payments.filters.BatchNumberFilter',
         'corehq.apps.integration.payments.filters.PaymentVerifiedByFilter',
@@ -69,6 +72,7 @@ require_payments_report_access = require_permission(
 )
 
 
+@location_safe
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
 @method_decorator(require_payments_report_access, name='dispatch')
@@ -93,6 +97,7 @@ class PaymentsVerificationReportView(BaseDomainView, PaymentsFiltersMixin):
         }
 
 
+@location_safe
 @method_decorator(login_and_domain_required, name='dispatch')
 @method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
 @method_decorator(require_payments_report_access, name='dispatch')
@@ -102,6 +107,14 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
 
     def get_queryset(self):
         query = CaseSearchES().domain(self.request.domain).case_type(MOMO_PAYMENT_CASE_TYPE)
+        mobile_user_and_group_slugs = self.request.GET.getlist('mobile_user_and_group_slugs')
+        query = query_with_case_owners_filters(
+            query,
+            self.request.domain,
+            self.request.couch_user,
+            self.request.can_access_all_locations,
+            mobile_user_and_group_slugs
+        )
         query = self._apply_filters(query)
         return query
 
