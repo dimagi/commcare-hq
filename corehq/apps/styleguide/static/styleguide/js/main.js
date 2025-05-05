@@ -1,6 +1,7 @@
 import 'commcarehq';
 import $ from 'jquery';
 import _ from 'underscore';
+import 'htmx.org';
 
 import ace from 'ace-builds/src-min-noconflict/ace';
 import 'ace-builds/src-min-noconflict/mode-django';

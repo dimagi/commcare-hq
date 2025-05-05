@@ -559,7 +559,7 @@ hqDefine('app_manager/js/app_manager', [
             if (!$caseType.data('select2')) {
                 $caseType.select2({
                     tags: true,
-                    placeholder: gettext("Add a case type or look for an existing one"),
+                    placeholder: gettext("Add a new case type or use an existing one"),
                     allowClear: true,
                     width: '100%',
                     dropdownParent: $('#define-case-type-modal'),

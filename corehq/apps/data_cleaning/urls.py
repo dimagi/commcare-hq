@@ -1,5 +1,6 @@
 from django.urls import re_path as url
 
+from corehq.apps.data_cleaning.views.summary import ChangesSummaryView
 from corehq.apps.data_cleaning.views.cleaning import (
     CleanSelectedRecordsFormView,
 )
@@ -15,7 +16,6 @@ from corehq.apps.data_cleaning.views.main import (
     CleanCasesSessionView,
     clear_session_caches,
     download_form_ids,
-    save_case_session,
 )
 from corehq.apps.data_cleaning.views.tables import (
     CleanCasesTableView,
@@ -33,6 +33,8 @@ urlpatterns = [
         name=CleanCasesSessionView.urlname),
     url(r'^cases/(?P<session_id>[\w\-]+)/table/$', CleanCasesTableView.as_view(),
         name=CleanCasesTableView.urlname),
+    url(r'^cases/(?P<session_id>[\w\-]+)/summary/$', ChangesSummaryView.as_view(),
+        name=ChangesSummaryView.urlname),
     url(r'^session/(?P<session_id>[\w\-]+)/filters/$', ManageFiltersFormView.as_view(),
         name=ManageFiltersFormView.urlname),
     url(r'^session/(?P<session_id>[\w\-]+)/filters/pinned/$', PinnedFilterFormView.as_view(),
@@ -43,6 +45,5 @@ urlpatterns = [
         name=CleanSelectedRecordsFormView.urlname),
     url(r'^session/(?P<session_id>[\w\-]+)/clear/$', clear_session_caches,
         name="data_cleaning_clear_session_caches"),
-    url(r'^cases/save/(?P<session_id>[\w\-]+)/$', save_case_session, name='save_case_session'),
     url(r'^form_ids/(?P<session_id>[\w\-]+)/$', download_form_ids, name='download_form_ids'),
 ]

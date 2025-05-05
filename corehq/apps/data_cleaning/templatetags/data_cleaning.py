@@ -57,7 +57,7 @@ def dc_data_type_icon(data_type):
 
 
 @register.simple_tag
-def edited_value(record, bound_column):
+def get_edited_value(record, bound_column):
     """
     Returns the Edited value of a record based on
     the `BoundColumn` information.
@@ -125,6 +125,12 @@ def cell_request_params(record, bound_column):
             "column_id": str(bound_column.column.column_spec.column_id),
         }
     )
+
+
+@register.simple_tag
+def get_cell_value(value, edited_value):
+    assigned_value = edited_value if has_edits(edited_value) else value
+    return json.dumps(assigned_value)
 
 
 @register.simple_tag

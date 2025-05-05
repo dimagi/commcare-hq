@@ -14,7 +14,7 @@
     },
   }"
   x-init="
-    $store.editDetails.update({{ table.num_edited_records }});
+    $store.editDetails.update({{ table.edit_details }});
     updateCleaningStatus(numRecordsSelected);
     $watch('numRecordsSelected', updateCleaningStatus);
   "
@@ -39,7 +39,7 @@
 
     <div
       class="pe-2"
-      x-show="$store.editDetails.numEditedRecords > 0"
+      x-show="$store.editDetails.numRecordsEdited > 0"
     >
       <div class="input-group">
         <div class="input-group-text">
@@ -49,18 +49,53 @@
             class="ms-2 badge text-bg-secondary"
             data-bs-title="{% trans "number of cases with an edit history" %}"
             x-tooltip=""
-            x-text="$store.editDetails.numEditedRecords"
+            x-text="$store.editDetails.numRecordsEdited"
           ></span>
         </div>
-        <button class="btn btn-outline-danger" type="button">
+        <button
+          class="btn btn-outline-danger"
+          type="button"
+          data-bs-toggle="modal"
+          data-bs-target="#confirm-clear-modal"
+          @click="$dispatch('updateClearSummaryMessage');"
+        >
           <i class="fa-solid fa-close"></i>
           {% trans "Clear" %}
         </button>
-        <button class="btn btn-outline-secondary" type="button">
+
+        <button
+          class="btn btn-outline-secondary"
+          type="button"
+          data-bs-toggle="modal"
+          data-bs-target="#confirm-undo-modal"
+          x-show="$store.editDetails.isUndoMultiple"
+          @click="$dispatch('updateUndoSummaryMessage');"
+        >
           <i class="fa-solid fa-undo"></i>
-          {% trans "Undo" %}
+          {% trans "Undo" %} {# note: undo for multiple records #}
         </button>
-        <button class="btn btn-success" type="button">
+        <button
+          class="btn btn-outline-secondary"
+          type="button"
+          hx-post="{{ request.path_info }}{% querystring %}"
+          hq-hx-action="undo_last_change"
+          hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}.table-container{% endif %}"
+          hx-swap="outerHTML"
+          hq-hx-loading="{{ table.loading_indicator_id }}"
+          hx-disable-elt="this"
+          x-show="!$store.editDetails.isUndoMultiple"
+        >
+          <i class="fa-solid fa-undo"></i>
+          {% trans "Undo" %} {# note: undo for a single record #}
+        </button>
+
+        <button
+          class="btn btn-success"
+          type="button"
+          data-bs-toggle="modal"
+          data-bs-target="#confirm-apply-modal"
+          @click="$dispatch('updateApplySummaryMessage');"
+        >
           <i class="fa-solid fa-check-double"></i>
           {% trans "Apply" %}
         </button>
@@ -168,4 +203,7 @@
   {{ block.super }}
   {% include "data_cleaning/modals/confirm_select_all.html" with modal_id="confirm-select-all-modal" %}
   {% include "data_cleaning/modals/select_all_not_possible.html" with modal_id="select-all-not-possible-modal" %}
+  {% include "data_cleaning/modals/confirm_undo.html" with modal_id="confirm-undo-modal" confirm_button_class="btn-secondary" %}
+  {% include "data_cleaning/modals/confirm_clear.html" with modal_id="confirm-clear-modal" confirm_button_class="btn-danger" %}
+  {% include "data_cleaning/modals/confirm_apply.html" with modal_id="confirm-apply-modal" confirm_button_class="btn-success" %}
 {% endblock %}

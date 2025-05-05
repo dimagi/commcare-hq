@@ -4,6 +4,7 @@ hqDefine("reports/js/bootstrap3/datatables_config", [
     'analytix/js/google',
     'datatables.bootstrap',
     'datatables.fixedColumns',
+    'datatables-bootstrap3/BS3/assets/css/datatables.css',
 ], function (
     $,
     _,

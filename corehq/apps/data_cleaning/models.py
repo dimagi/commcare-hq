@@ -1,6 +1,9 @@
 import re
 import uuid
 
+from celery import uuid as celery_uuid
+from datetime import datetime, timezone
+
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
@@ -22,6 +25,8 @@ from corehq.apps.es import CaseSearchES
 
 BULK_OPERATION_CHUNK_SIZE = 1000
 MAX_RECORDED_LIMIT = 100000
+MAX_RECORD_CHANGES = 20
+MAX_SESSION_CHANGES = 200
 
 
 class BulkEditSessionType:
@@ -279,6 +284,18 @@ class BulkEditSession(models.Model):
 
         return num_selected_records
 
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
+    def apply_inline_edit(self, doc_id, prop_id, value):
+        """
+        Edit the value of a property for a document in this session.
+        :param doc_id: the id of the document (case / form)
+        :param prop_id: the property id to edit
+        :param value: the new value to set
+        """
+        record = BulkEditRecord.get_record_for_inline_editing(self, doc_id)
+        BulkEditChange.apply_inline_edit(record, prop_id, value)
+
     def _apply_change_to_selected_doc_ids(self, change, doc_ids):
         """
         Apply a change to the selected records with the given doc_ids.
@@ -303,13 +320,72 @@ class BulkEditSession(models.Model):
             selected_records = self.records.filter(is_selected=True)
             change.records.add(*selected_records)
 
-    def get_num_edited_records(self):
-        return (
-            self.records.filter(changes__isnull=False)
-            .values("doc_id")
-            .distinct()
-            .count()
+    @property
+    def num_changed_records(self):
+        if not self.committed_on:
+            raise RuntimeError(
+                "Session not committed yet. Please commit the session first or use get_change_counts()"
+            )
+        return self.result['record_count'] if self.completed_on else self.records.count()
+
+    def get_change_counts(self):
+        """
+        Get the details of the number of records with changes, and the number
+        of records that have more than `MAX_RECORD_CHANGES` changes associated with it.
+
+        This is an aggregated query to reduce the number of db hits, since
+        both num_records_edited and num_records_at_max_changes are always used
+        together and are related in structure.
+
+        :return: dict {
+            'num_records_edited': int - number of records with changes
+            'num_records_at_max_changes': int - number of records at or above `MAX_RECORD_CHANGES`
+        }
+        """
+        return self.records.annotate(num_changes=models.Count("changes")).aggregate(
+            num_records_edited=models.Count("pk", filter=models.Q(num_changes__gt=0)),
+            num_records_at_max_changes=models.Count(
+                "pk", filter=models.Q(num_changes__gte=MAX_RECORD_CHANGES)
+            ),
         )
+
+    def get_num_changes(self):
+        return self.changes.count()
+
+    def is_undo_multiple(self):
+        """
+        Check if the last change in the session affects multiple records.
+        :return: bool - True if the last change affects multiple records
+        """
+        last_change = self.changes.last()
+        return last_change and last_change.records.count() > 1
+
+    def purge_records(self):
+        """
+        Delete all records that do not have changes or are not selected.
+        """
+        self.records.filter(is_selected=False, changes__isnull=True).delete()
+
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
+    def undo_last_change(self):
+        self.changes.last().delete()
+        self.purge_records()
+
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
+    def clear_all_changes(self):
+        self.changes.all().delete()
+        self.purge_records()
+
+    def prepare_session_for_commit(self):
+        """
+        Prepare the session for commit by generating a task id
+        and setting the committed_on date.
+        """
+        self.task_id = celery_uuid()
+        self.committed_on = datetime.now(timezone.utc).replace(tzinfo=None)
+        self.save()
 
     def is_record_selected(self, doc_id):
         return BulkEditRecord.is_record_selected(self, doc_id)
@@ -898,6 +974,20 @@ class BulkEditRecord(models.Model):
     calculated_properties = models.JSONField(null=True, blank=True)
 
     @classmethod
+    def get_record_for_inline_editing(cls, session, doc_id):
+        """
+        :param session: BulkEditSession
+        :param doc_id: the id of the document (case / form)
+        :return: BulkEditRecord
+        """
+        record, _ = cls.objects.get_or_create(
+            session=session,
+            doc_id=doc_id,
+            defaults={'is_selected': False}
+        )
+        return record
+
+    @classmethod
     def is_record_selected(self, session, doc_id):
         return session.records.filter(
             doc_id=doc_id,
@@ -1003,6 +1093,10 @@ class BulkEditRecord(models.Model):
             self.calculated_change_id is None or self.changes.last().change_id != self.calculated_change_id
         )
 
+    @property
+    def should_reset_changes(self):
+        return self.changes.count() == 0 and self.calculated_change_id is not None
+
     @retry_on_integrity_error(max_retries=3, delay=0.1)
     @transaction.atomic
     def reset_changes(self, prop_id):
@@ -1021,13 +1115,20 @@ class BulkEditRecord(models.Model):
         if case.case_id != self.doc_id:
             raise ValueError("case.case_id doesn't match record.doc_id")
 
+        if self.should_reset_changes:
+            self.calculated_properties = None
+            self.calculated_change_id = None
+            self.save()
+            return {}
+
         if not self.has_property_updates:
             return self.calculated_properties or {}
 
         properties = {}
         for change in self.changes.all():
             if change.action_type == EditActionType.RESET:
-                del properties[change.prop_id]
+                if change.prop_id in properties:
+                    del properties[change.prop_id]
             else:
                 properties[change.prop_id] = change.edited_value(
                     case, edited_properties=properties
@@ -1050,6 +1151,19 @@ class EditActionType:
     MAKE_NULL = 'make_null'
     RESET = 'reset'
 
+    DB_CHOICES = (
+        (REPLACE, REPLACE),
+        (FIND_REPLACE, FIND_REPLACE),
+        (COPY_REPLACE, COPY_REPLACE),
+        (STRIP, STRIP),
+        (TITLE_CASE, TITLE_CASE),
+        (UPPER_CASE, UPPER_CASE),
+        (LOWER_CASE, LOWER_CASE),
+        (MAKE_EMPTY, MAKE_EMPTY),
+        (MAKE_NULL, MAKE_NULL),
+        (RESET, RESET),
+    )
+
     CHOICES = (
         (REPLACE, gettext_lazy("Replace")),
         (FIND_REPLACE, gettext_lazy("Find & Replace")),
@@ -1060,7 +1174,7 @@ class EditActionType:
         (LOWER_CASE, gettext_lazy("Make Lower Case")),
         (MAKE_EMPTY, gettext_lazy("Make Value Empty")),
         (MAKE_NULL, gettext_lazy("Make Value NULL")),
-        (RESET, gettext_lazy("Undo All Edits")),
+        (RESET, gettext_lazy("Reset Changes")),
     )
 
 
@@ -1072,7 +1186,7 @@ class BulkEditChange(models.Model):
     prop_id = models.CharField(max_length=255)  # case property or form question_id
     action_type = models.CharField(
         max_length=12,
-        choices=EditActionType.CHOICES,
+        choices=EditActionType.DB_CHOICES,
     )
     find_string = models.TextField(null=True, blank=True)
     replace_string = models.TextField(null=True, blank=True)
@@ -1081,6 +1195,57 @@ class BulkEditChange(models.Model):
 
     class Meta:
         ordering = ["created_on"]
+
+    @classmethod
+    def apply_inline_edit(cls, record, prop_id, value):
+        """
+        Apply an inline edit to a record.
+        :param record: BulkEditRecord
+        :param prop_id: the id of the property to edit
+        :param value: the new value for the property
+        :return: BulkEditChange
+        """
+        change = cls.objects.create(
+            session=record.session,
+            prop_id=prop_id,
+            action_type=EditActionType.REPLACE,
+            replace_string=value,
+        )
+        change.records.add(record)
+        return change
+
+    @property
+    def action_title(self):
+        """
+        Returns a human-readable title of the action.
+        """
+        return dict(EditActionType.CHOICES).get(self.action_type, _("Unknown action"))
+
+    @property
+    def action_detail(self):
+        """
+        Returns a human-readable detail of the action.
+        To be read as {{ action_title }} {{ action_detail }}
+        """
+        if self.action_type == EditActionType.REPLACE:
+            return _('value with "{replace_string}".').format(
+                replace_string=self.replace_string,
+            )
+        elif self.action_type == EditActionType.FIND_REPLACE:
+            return _('"{find_string}" with "{replace_string}"{use_regex}.').format(
+                find_string=self.find_string,
+                replace_string=self.replace_string,
+                use_regex=_(" (using regex)") if self.use_regex else "",
+            )
+        elif self.action_type == EditActionType.COPY_REPLACE:
+            return _('from case property "{copy_from_prop_id}".').format(
+                copy_from_prop_id=self.copy_from_prop_id,
+            )
+        return ""
+
+    @property
+    def num_records(self):
+        return self.records.count()
 
     def edited_value(self, case, edited_properties=None):
         """

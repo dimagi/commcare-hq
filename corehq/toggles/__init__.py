@@ -998,14 +998,6 @@ WEB_APPS_DOMAIN_BANNER = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/USH%3A+Show+current+domain+in+web+apps+Login+As+banner',
 )
 
-WEB_APPS_UPLOAD_QUESTIONS = FeatureRelease(
-    'web_apps_upload_questions',
-    'USH: Support image, audio, and video questions in Web Apps',
-    TAG_RELEASE,
-    namespaces=[NAMESPACE_DOMAIN],
-    owner='Jenny Schweers',
-)
-
 LOCATION_FIELD_USER_PROVISIONING = FeatureRelease(
     'location_field_user_provisioning',
     'USH: Holding feature flag for various works relating to the location field',
@@ -2277,14 +2269,6 @@ CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
     default_randomness=0.001
 )
 
-PRIME_FORMPLAYER_DBS = StaticToggle(
-    'prime_formplayer_dbs',
-    'USH: Control which domains will be included in the prime formplayer task runs',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/saas/Prime+Formplayer+DBS"
-)
-
 PRIME_FORMPLAYER_DBS_BHA = StaticToggle(
     'prime_formplayer_dbs_bha',
     'USH-BHA: Control which domains will be included in the prime formplayer task runs',
@@ -2533,7 +2517,7 @@ SMS_USE_LATEST_DEV_APP = FeatureRelease(
 
 VIEW_FORM_ATTACHMENT = StaticToggle(
     'view_form_attachments',
-    'Allow users on the domain to view form attachments without having to have the report Submit History permission.',  # noqa: E501
+    'Allow users on the domain to view form attachments without having to have the report Submission History permission.',  # noqa: E501
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )

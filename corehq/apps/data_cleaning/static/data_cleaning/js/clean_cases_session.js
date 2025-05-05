@@ -15,9 +15,15 @@ Alpine.data('wiggleButtonModel', wiggleButton);
 Alpine.store('isCleaningAllowed', false);
 Alpine.store('showWhitespaces', false);
 Alpine.store('editDetails', {
-    numEditedRecords: 0,
-    update(numEditedRecords) {
-        this.numEditedRecords = numEditedRecords;
+    numRecordsEdited: 0,
+    showApplyWarning: false,
+    isSessionAtChangeLimit: false,
+    isUndoMultiple: false,
+    update(details) {
+        this.numRecordsEdited = details.numRecordsEdited;
+        this.showApplyWarning = details.numRecordsOverLimit > 0;
+        this.isSessionAtChangeLimit = details.isSessionAtChangeLimit;
+        this.isUndoMultiple = details.isUndoMultiple;
     },
 });
 
@@ -30,5 +36,5 @@ document.body.addEventListener("showDataCleaningModal", function (event) {
 });
 
 document.body.addEventListener("updateEditDetails", function (event) {
-    Alpine.store('editDetails').update(event.detail.numEditedRecords);
+    Alpine.store('editDetails').update(event.detail.editDetails);
 });

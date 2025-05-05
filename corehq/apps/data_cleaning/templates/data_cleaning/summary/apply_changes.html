@@ -1,0 +1,20 @@
+{% load i18n %}
+
+{% if changes %}
+  <p class="lead">
+    {# prettier-ignore-start #}
+    {% blocktrans count count=num_changes %}
+      One edit will be applied.
+    {% plural %}
+      A total of {{ num_changes }} edits will be applied.
+    {% endblocktrans %}
+    {# prettier-ignore-end #}
+  </p>
+  {% include "data_cleaning/summary/partial/change_history.html" with changes=changes group_id="apply-changes-accordion-group" accordion_id="apply-changes-details" %}
+{% else %}
+  <p class="lead">
+    {% blocktrans %}
+      The following edits will be applied...
+    {% endblocktrans %}
+  </p>
+{% endif %}

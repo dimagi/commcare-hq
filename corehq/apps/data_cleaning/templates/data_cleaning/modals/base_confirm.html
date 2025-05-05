@@ -8,7 +8,7 @@
   aria-hidden="true"
   data-bs-backdrop="static"
 >
-  <div class="modal-dialog" role="document">
+  <div class="modal-dialog modal-dialog-scrollable" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <h4 id="{{ modal_id }}-label" class="modal-title">
@@ -34,7 +34,7 @@
         </button>
         {% block modal_continue_button %}
           <button
-            class="btn btn-primary"
+            class="btn {% if confirm_button_class %}{{ confirm_button_class }}{% else %}btn-primary{% endif %}"
             type="button"
             data-bs-dismiss="modal"
             {% block modal_continue_attrs %}{% endblock %}
