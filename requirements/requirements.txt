@@ -382,7 +382,7 @@ pyrsistent==0.17.3
     # via jsonschema
 pyseeyou==1.0.2
     # via transifex-python
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
     # via
     #   -r base-requirements.in
     #   botocore

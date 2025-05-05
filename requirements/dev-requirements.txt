@@ -510,7 +510,7 @@ pytest-django==4.8.0
     # via -r test-requirements.in
 pytest-unmagic==1.0.0
     # via -r test-requirements.in
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
     # via
     #   -r base-requirements.in
     #   botocore
