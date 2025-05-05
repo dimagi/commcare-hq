@@ -547,7 +547,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--batch-size',
             type=int,
-            default=30,
+            default=50,
             help='Number of messages to translate in each batch (default: 30)'
         )
         parser.add_argument(
@@ -559,7 +559,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--parallel-batches',
             type=int,
-            default=10,
+            default=15,
             help='Number of batches to process in parallel (default: 10)'
         )
         parser.add_argument(
