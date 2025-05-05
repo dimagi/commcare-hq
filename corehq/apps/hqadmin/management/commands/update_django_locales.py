@@ -13,6 +13,7 @@ class Command(BaseCommand):
         # if we were feeling ambitious we could get this from something more
         # formal/standard, but this seems totally workable for our needs
         HQ_TO_DJANGO_MAP = {
+            'ara': 'ar',
             'fra': 'fr',
             'hin': 'hi',
             'ita': 'it',

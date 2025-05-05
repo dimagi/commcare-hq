@@ -66,7 +66,7 @@ USE_TZ = False
 LANGUAGE_CODE = 'en-us'
 
 LANGUAGES = (
-    ('ar', 'Arabic'),
+    ('ara', 'Arabic'),
     ('en', 'English'),
     ('es', 'Spanish'),
     ('fra', 'French'),  # we need this alias
