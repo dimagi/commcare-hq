@@ -1,4 +1,4 @@
-import "commcarehq";
+import "commcarehq";    // IMPORTANT :: this has to be included with any Bootstrap 3 entry point
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
