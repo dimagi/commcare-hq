@@ -82,9 +82,9 @@ def commit_data_cleaning(self, bulk_edit_session_id):
             continue
 
         num_records = len(record_batch)
-        count_cases(value=num_records * 2)       # 1 read + 1 write per case
-        form_ids.append(xform.form_id)
+        count_cases(value=num_records * 2)  # 1 read + 1 write per case
         session.update_result(num_records, xform.form_id)
+        form_ids.append(xform.form_id)
 
     session.completed_on = timezone.now()
     session.save()
