@@ -810,6 +810,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         self.save()
 
     def save_build_finished(self, *, in_place=False):
+        self.meta.build.awaiting = False
         if in_place:
             self.meta.build.finished_in_place = True
         else:
