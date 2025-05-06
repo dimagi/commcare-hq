@@ -128,3 +128,9 @@ dependencies = [
 Homepage = "https://commcarehq.org"
 Documentation = "https://commcare-hq.readthedocs.io"
 Repository = "https://github.com/dimagi/commcare-hq"
+
+[dependency-groups]
+sso = [
+    "msal",
+    "python3-saml",
+]
