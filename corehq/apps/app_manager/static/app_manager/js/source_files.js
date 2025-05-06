@@ -1,7 +1,5 @@
 import "commcarehq";
 import $ from "jquery";
-import _ from "underscore";
-import ko from "knockout";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import multimediaSizeUtil from "app_manager/js/multimedia_size_util";
 import "app_manager/js/widgets";  // version dropdown

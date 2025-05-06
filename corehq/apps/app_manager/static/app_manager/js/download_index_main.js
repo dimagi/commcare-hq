@@ -1,7 +1,6 @@
 import "commcarehq";
 import $ from "jquery";
 import _ from "underscore";
-import ko from "knockout";
 import baseAce from "hqwebapp/js/base_ace";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import multimediaSizeUtil from "app_manager/js/multimedia_size_util";

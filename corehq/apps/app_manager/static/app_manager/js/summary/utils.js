@@ -1,4 +1,3 @@
-import $ from "jquery";
 import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
 

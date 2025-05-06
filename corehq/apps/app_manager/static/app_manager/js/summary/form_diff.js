@@ -1,9 +1,7 @@
 import "commcarehq";
 import $ from "jquery";
 import _ from "underscore";
-import ko from "knockout";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import assertProperties from "hqwebapp/js/assert_properties";
 import models from "app_manager/js/summary/models";
 import formModels from "app_manager/js/summary/form_models";
 import utils from "app_manager/js/summary/utils";
