@@ -40,7 +40,7 @@ def commit_data_cleaning(self, bulk_edit_session_id):
 
     record_iter = session.records.iterator()
     for record_batch in chunked(record_iter, CASEBLOCK_CHUNKSIZE):
-        blocks = _create_case_blocks(session, record_batch)
+        blocks, errored_doc_ids = _create_case_blocks(session, record_batch)
         if not blocks:
             _log_unusual_empty_case_block(session, record_batch)
             continue
@@ -55,7 +55,11 @@ def commit_data_cleaning(self, bulk_edit_session_id):
         count_cases(value=num_records * 2)  # 1 read + 1 write per case
         session.update_result(num_records, xform.form_id)
         form_ids.append(xform.form_id)
-        _prune_completed_records(session, doc_ids=[record.doc_id for record in record_batch])
+        _prune_completed_records(
+            session,
+            completed_doc_ids=[record.doc_id for record in record_batch],
+            errored_doc_ids=errored_doc_ids,
+        )
 
     session.completed_on = timezone.now()
     session.save(update_fields=['completed_on'])
@@ -96,12 +100,14 @@ def _purge_ui_data_from_session(session):
     session.purge_records()
 
 
-def _prune_completed_records(session, doc_ids):
-    session.records.filter(doc_id__in=doc_ids).delete()
+def _prune_completed_records(session, completed_doc_ids, errored_doc_ids):
+    ids_to_delete = set(completed_doc_ids) - set(errored_doc_ids)
+    session.records.filter(doc_id__in=ids_to_delete).delete()
 
 
 def _create_case_blocks(session, records):
     blocks = []
+    errored_doc_ids = []
     case_ids = [rec.doc_id for rec in records]
     cases = {c.case_id: c for c in CommCareCase.objects.get_cases(case_ids, session.domain)}
     for record in records:
@@ -109,6 +115,7 @@ def _create_case_blocks(session, records):
         try:
             update = record.get_edited_case_properties(case)
         except Exception as error:  # todo: catch specific errors seen with case interactions
+            errored_doc_ids.append(record.doc_id)
             _record_case_block_creation_error(session, error, record.doc_id)
             continue
         if update:
@@ -117,7 +124,7 @@ def _create_case_blocks(session, records):
                 case_id=record.doc_id,
                 update=update,
             ))
-    return blocks
+    return blocks, errored_doc_ids
 
 
 def _submit_case_blocks(session, blocks):
