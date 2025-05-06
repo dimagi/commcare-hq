@@ -3,6 +3,8 @@ from corehq.apps.celery import task
 from django.utils import timezone
 from django.db.models import Q
 
+from dimagi.utils.chunked import chunked
+
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.data_cleaning.models import (
     BulkEditSession,
@@ -42,17 +44,17 @@ def commit_data_cleaning(self, bulk_edit_session_id):
     session.purge_records()
 
     form_ids = []
-    case_index = 0
     session.update_result(0)
     count_cases = case_load_counter("bulk_case_cleaning", session.domain)
-    while case_index < session.records.count():
-        records = session.records.all()[case_index:case_index + CASEBLOCK_CHUNKSIZE]
-        case_index += CASEBLOCK_CHUNKSIZE
-        blocks = _create_case_blocks(session, records)
+
+    record_iter = session.records.order_by('pk').iterator()
+    for record_batch in chunked(record_iter, CASEBLOCK_CHUNKSIZE):
+        blocks = _create_case_blocks(session, record_batch)
         xform = _submit_case_blocks(session, blocks)
-        count_cases(value=len(records) * 2)       # 1 read + 1 write per case
+        num_records = len(record_batch)
+        count_cases(value=num_records * 2)       # 1 read + 1 write per case
         form_ids.append(xform.form_id)
-        session.update_result(len(records), xform.form_id)
+        session.update_result(num_records, xform.form_id)
 
     session.completed_on = timezone.now()
     session.save()
