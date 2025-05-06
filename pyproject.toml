@@ -144,6 +144,14 @@ docs = [
     "pyOpenSSL", # CI builds fail without OpenSSL
     "urllib3<=1.26.20", # fix doc tests AssertionError: Current app already created
 ]
+prod = [
+    "flower",
+    "setproctitle",
+    "ipython", # for nicer django shell experience
+    "idna",
+    "certifi",
+    {include-group = "sso"},
+]
 sso = [
     "msal",
     "python3-saml",
