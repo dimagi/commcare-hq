@@ -52,6 +52,7 @@ def commit_data_cleaning(self, bulk_edit_session_id):
     form_ids = []
     session.update_result(0)
     count_cases = case_load_counter("bulk_case_cleaning", session.domain)
+    errored_doc_ids = []
 
     record_iter = session.records.order_by('pk').iterator()
     for record_batch in chunked(record_iter, CASEBLOCK_CHUNKSIZE):
@@ -63,7 +64,23 @@ def commit_data_cleaning(self, bulk_edit_session_id):
                 'record_batch': [record.doc_id for record in record_batch],
             })
             continue
-        xform = _submit_case_blocks(session, blocks)
+
+        try:
+            xform = _submit_case_blocks(session, blocks)
+        except Exception as e:
+            errored_doc_ids.extend([record.doc_id for record in record_batch])
+            session.update_result(0, error={
+                'error': str(e),
+                'doc_ids': [record.doc_id for record in record_batch],
+            })
+            logger.error("commit_data_cleaning: error submitting case blocks", extra={
+                'session_id': session.session_id,
+                'domain': session.domain,
+                'error': str(e),
+                'doc_ids': [record.doc_id for record in record_batch],
+            })
+            continue
+
         num_records = len(record_batch)
         count_cases(value=num_records * 2)       # 1 read + 1 write per case
         form_ids.append(xform.form_id)
