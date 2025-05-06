@@ -481,7 +481,7 @@ class BulkEditSession(models.Model):
             result['percent'] = result['record_count'] * 100 / self.records.count()
 
         self.result = result
-        self.save()
+        self.save(update_fields=['result'])
 
 
 class DataType:
