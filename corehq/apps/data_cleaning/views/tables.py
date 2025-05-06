@@ -132,11 +132,7 @@ class CleanCasesTableView(BulkEditSessionViewMixin,
 
     @hq_hx_action("post")
     def apply_all_changes(self, request, *args, **kwargs):
-        self.session.prepare_session_for_commit()
-        commit_data_cleaning.apply_async(
-            args=(self.session.session_id,),
-            task_id=self.session.task_id
-        )
+        commit_data_cleaning.delay(self.session.session_id)
         messages.success(
             request,
             _("Changes applied. Check the Recent Tasks table for progress.")

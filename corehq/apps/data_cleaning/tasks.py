@@ -1,6 +1,9 @@
 from datetime import datetime
 from corehq.apps.celery import task
 
+from django.utils import timezone
+from django.db.models import Q
+
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.data_cleaning.models import (
     BulkEditSession,
@@ -12,8 +15,22 @@ from corehq.form_processor.models import CommCareCase
 from corehq.util.metrics.load_counters import case_load_counter
 
 
-@task(queue='case_import_queue')
-def commit_data_cleaning(bulk_edit_session_id):
+@task(bind=True, queue='case_import_queue', acks_late=True)
+def commit_data_cleaning(self, bulk_edit_session_id):
+    updated = BulkEditSession.objects.filter(
+        session_id=bulk_edit_session_id,
+        completed_on__isnull=True,
+    ).filter(
+        Q(task_id__isnull=True)  # never claimed
+        | Q(task_id=self.request.id)  # or already claimed by *this* worker
+    ).update(
+        task_id=self.request.id,
+        committed_on=timezone.now(),
+    )
+    if not updated:
+        # either someone else has it, or it's already completed
+        return []
+
     session = BulkEditSession.objects.get(session_id=bulk_edit_session_id)
 
     # Delete UI-only models
