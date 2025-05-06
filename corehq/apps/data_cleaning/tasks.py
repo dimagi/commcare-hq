@@ -124,18 +124,9 @@ def _create_case_blocks(session, records, errored_doc_ids):
         case = cases[record.doc_id]
         try:
             update = record.get_edited_case_properties(case)
-        except Exception as e:
+        except Exception as error:  # todo: catch specific errors seen with case interactions
             errored_doc_ids.append(record.doc_id)
-            session.update_result(0, error={
-                'error': str(e),
-                'doc_id': record.doc_id,
-            })
-            logger.error("commit_data_cleaning: error getting edited case properties", extra={
-                'session_id': session.session_id,
-                'domain': session.domain,
-                'error': str(e),
-                'doc_id': record.doc_id,
-            })
+            _record_case_block_creation_error(session, error, record.doc_id)
             continue
         if update:
             blocks.append(CaseBlock(
@@ -156,3 +147,16 @@ def _submit_case_blocks(session, blocks):
         username_to_user_id(session.user.username),
         device_id=__name__ + ".data_cleaning",
     )[0]
+
+
+def _record_case_block_creation_error(session, error, doc_id):
+    session.update_result(0, error={
+        'error': str(error),
+        'doc_id': doc_id,
+    })
+    logger.error("commit_data_cleaning: error getting edited case properties", extra={
+        'session_id': session.session_id,
+        'domain': session.domain,
+        'error': str(error),
+        'doc_id': doc_id,
+    })
