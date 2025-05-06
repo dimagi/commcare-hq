@@ -1,4 +1,3 @@
-from datetime import datetime
 from corehq.apps.celery import task
 
 from django.utils import timezone
@@ -56,7 +55,7 @@ def commit_data_cleaning(self, bulk_edit_session_id):
         session.update_result(len(records), xform.form_id)
         session.save()
 
-    session.completed_on = datetime.now()
+    session.completed_on = timezone.now()
     session.save()
 
     session.changes.all().delete()
