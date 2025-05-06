@@ -7,7 +7,6 @@ from django.test import TestCase, SimpleTestCase, override_settings
 from django.test.client import RequestFactory
 
 from corehq.toggles import (
-    ALL_TAGS,
     NAMESPACE_USER,
     NAMESPACE_DOMAIN,
     TAG_CUSTOM,
