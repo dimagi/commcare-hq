@@ -113,7 +113,8 @@ ENUM_IMAGE = FeaturePreview(
         "For example, to show that a case is late, "
         'display a red square instead of "late: yes".'
     ),
-    help_link='https://help.commcarehq.org/display/commcarepublic/Adding+Icons+in+Case+List+and+Case+Detail+screen'
+    help_link=('https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143945372/'
+               'Application+Icons#Adding-Icons-in-Case-List-and-Case-Detail-screen')
 )
 
 CONDITIONAL_ENUM = FeaturePreview(
