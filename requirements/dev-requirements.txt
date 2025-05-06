@@ -48,7 +48,7 @@ beautifulsoup4==4.10.0
     # via -r base-requirements.in
 billiard==4.2.1
     # via celery
-bleach==6.1.0
+bleach[css]==6.1.0
     # via -r base-requirements.in
 boto3==1.24.96
     # via -r base-requirements.in
@@ -271,7 +271,7 @@ future==0.18.3
     #   pyseeyou
 geoip2==5.0.1
     # via -r base-requirements.in
-gevent==24.11.1
+gevent==25.4.2
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
@@ -280,7 +280,7 @@ git-build-branch==0.1.16
     # via -r dev-requirements.in
 gnureadline==8.1.2
     # via -r dev-requirements.in
-greenlet==3.1.1
+greenlet==3.2.1
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
@@ -482,7 +482,7 @@ pygments==2.15.0
     #   sphinx
 pyjwkest==1.4.2
     # via oic
-pyjwt==2.7.0
+pyjwt[crypto]==2.7.0
     # via
     #   -r base-requirements.in
     #   msal
