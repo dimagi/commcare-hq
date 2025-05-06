@@ -1,5 +1,3 @@
-
-import moment from "moment";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import alertUser from "hqwebapp/js/bootstrap5/alert_user";
 

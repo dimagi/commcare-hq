@@ -1,7 +1,5 @@
-
 import moment from "moment";
 import ko from "knockout";
-import initialPageData from "hqwebapp/js/initial_page_data";
 import actions from "registry/js/registry_actions";
 import hqTempusDominus from "hqwebapp/js/tempus_dominus";
 import "hqwebapp/js/components/pagination";

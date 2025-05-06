@@ -1,8 +1,5 @@
-
-
 import "commcarehq";
 import $ from "jquery";
-import _ from "underscore";
 import ko from "knockout";
 import alertUser from "hqwebapp/js/bootstrap5/alert_user";
 
