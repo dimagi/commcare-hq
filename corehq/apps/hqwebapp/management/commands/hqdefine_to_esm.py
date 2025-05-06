@@ -147,7 +147,7 @@ class Command(BaseCommand):
         if match:
             self.update_parser_location(line, index)
             arguments = match.group(1)
-            return [arg.strip() for arg in arguments.split(',')]
+            return [(arg.strip(), '') for arg in arguments.split(',')]
         return []
 
     def init_parser(self):
