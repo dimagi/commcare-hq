@@ -3,7 +3,7 @@ from corehq.apps.celery import task
 
 from django.utils import timezone
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Count
 
 from dimagi.utils.chunked import chunked
 
@@ -86,11 +86,7 @@ def commit_data_cleaning(self, bulk_edit_session_id):
         session.update_result(num_records, xform.form_id)
         form_ids.append(xform.form_id)
 
-    session.completed_on = timezone.now()
-    session.save()
-
-    session.changes.all().delete()
-    session.records.all().delete()
+    _prune_records_and_complete_session(session, errored_doc_ids)
 
     return form_ids
 
@@ -102,6 +98,18 @@ def _purge_ui_data_from_session(session):
     session.pinned_filters.all().delete()
     session.columns.all().delete()
     session.purge_records()
+
+
+@retry_on_integrity_error(max_retries=3, delay=0.1)
+@transaction.atomic
+def _prune_records_and_complete_session(session, errored_doc_ids):
+    # remove errored records from session
+    session.records.exclude(doc_id__in=errored_doc_ids).delete()
+    # delete any change with zero remaining records
+    session.changes.annotate(num_records=Count('records')).filter(num_records=0).delete()
+
+    session.completed_on = timezone.now()
+    session.save(update_fields=['completed_on'])
 
 
 def _create_case_blocks(session, records):
