@@ -100,9 +100,11 @@ def _purge_ui_data_from_session(session):
     session.purge_records()
 
 
+@transaction.atomic
 def _prune_completed_records(session, completed_doc_ids, errored_doc_ids):
     ids_to_delete = set(completed_doc_ids) - set(errored_doc_ids)
     session.records.filter(doc_id__in=ids_to_delete).delete()
+    session.changes.filter(records__isnull=True).delete()
 
 
 def _create_case_blocks(session, records):
