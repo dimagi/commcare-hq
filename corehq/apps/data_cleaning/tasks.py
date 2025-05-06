@@ -41,6 +41,11 @@ def commit_data_cleaning(self, bulk_edit_session_id):
 
     session = BulkEditSession.objects.get(session_id=bulk_edit_session_id)
 
+    logger.info("commit_data_cleaning: starting", extra={
+        'session_id': session.session_id,
+        'domain': session.domain,
+    })
+
     session.deselect_all_records_in_queryset()  # already in an atomic, retry block
     _purge_ui_data_from_session(session)
 
