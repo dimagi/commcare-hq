@@ -44,7 +44,7 @@ beautifulsoup4==4.12.2
     # via -r base-requirements.in
 billiard==4.2.1
     # via celery
-bleach==6.1.0
+bleach[css]==6.1.0
     # via -r base-requirements.in
 boto3==1.24.96
     # via -r base-requirements.in
@@ -400,7 +400,7 @@ pyjwt==2.7.0
     # via
     #   -r base-requirements.in
     #   twilio
-pyopenssl==24.2.1
+pyopenssl==25.0.0
     # via -r docs-requirements.in
 pyphonetics==0.5.3
     # via -r base-requirements.in
@@ -579,6 +579,7 @@ typing-extensions==4.12.2
     #   kombu
     #   pydantic
     #   pydantic-core
+    #   pyopenssl
     #   qrcode
     #   stripe
 tzdata==2025.1
