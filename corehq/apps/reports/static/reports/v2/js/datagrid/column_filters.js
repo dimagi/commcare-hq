@@ -1,4 +1,3 @@
-import $ from "jquery";
 import _ from "underscore";
 import ko from "knockout";
 

@@ -1,6 +1,4 @@
 import $ from "jquery";
-import ko from "knockout";
-import _ from "underscore";
 import context from "reports/v2/js/context";
 import datagrid from "reports/v2/js/bootstrap5/datagrid";
 import "hqwebapp/js/components/bootstrap5/feedback";

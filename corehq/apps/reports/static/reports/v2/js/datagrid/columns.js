@@ -2,7 +2,6 @@
  * todo add docstring
  */
 
-import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
 import columnFilters from "reports/v2/js/datagrid/column_filters";

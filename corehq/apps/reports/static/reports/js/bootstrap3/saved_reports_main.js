@@ -1,6 +1,5 @@
 import "commcarehq";
 import $ from "jquery";
-import ko from "knockout";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import reportConfigModels from "reports/js/bootstrap3/report_config_models";
 import scheduledReports from "reports/js/scheduled_reports_list";
