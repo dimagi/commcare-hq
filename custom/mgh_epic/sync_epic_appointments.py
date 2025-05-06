@@ -151,6 +151,32 @@ def sync_all_appointments_domain(domain):
         access_token = request_epic_access_token()
     except Exception:
         return None
+
+    def _get_appointment_resource_values(appointment_resource):
+        appointment_dict = {}
+        description = appointment_resource.get('description') or 'NO DESCRIPTION LISTED'
+        appointment_dict.update({"appointment_description": description})
+        appointment_dict.update({"appointment_fhir_timestamp": appointment_resource.get('start')})
+        appointment_date, appointment_time = convert_utc_timestamp_to_date_and_time(
+            appointment_dict.get("appointment_fhir_timestamp"))
+        appointment_dict.update({"appointment_date": appointment_date})
+        appointment_dict.update({"appointment_time": appointment_time})
+        appointment_dict.update({"appointment_fhir_id": appointment_resource.get('id')})
+        reason = ''
+        practitioner = ''
+        for p in appointment_resource.get('participant'):
+            actor = p.get('actor')
+            if actor and actor.get('reference') is not None and 'Practitioner' in actor.get('reference'):
+                practitioner = actor.get('display')
+                break
+        reason_code = appointment_resource.get('reasonCode')
+        if reason_code and reason_code[0] is not None:
+            reason = reason_code[0].get('text')
+        appointment_dict.update({"reason": reason})
+        appointment_dict.update({"practitioner": practitioner})
+
+        return appointment_dict
+
     # get all patient case ids for domain
     patient_case_ids = CommCareCase.objects.get_open_case_ids_in_domain_by_type(domain, 'patient')
     # get all patient cases
