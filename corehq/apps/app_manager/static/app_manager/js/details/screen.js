@@ -719,4 +719,4 @@ export default function (spec, config, options) {
     };
 
     return self;
-};
+}

@@ -27,4 +27,4 @@ export default function (filterText, saveButton) {
         return null;
     };
     return self;
-};
+}

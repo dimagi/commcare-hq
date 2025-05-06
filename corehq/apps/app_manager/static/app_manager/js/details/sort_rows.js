@@ -5,7 +5,6 @@
  * each map to a display property column and have
  * sorting-related attributes like direction.
  */
-import $ from "jquery";
 import ko from "knockout";
 import uiElementSelect from "hqwebapp/js/ui_elements/bootstrap3/ui-element-select";
 import Utils from "app_manager/js/details/utils";

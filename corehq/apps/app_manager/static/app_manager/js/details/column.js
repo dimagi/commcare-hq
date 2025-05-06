@@ -570,4 +570,4 @@ export default function (col, screen) {
     };
 
     return self;
-};
+}

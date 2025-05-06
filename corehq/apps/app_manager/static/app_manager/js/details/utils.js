@@ -4,7 +4,6 @@
  *
  * Depends on `add_ons` being available in initial page data
  */
-import $ from "jquery";
 import _ from "underscore";
 import DOMPurify from "DOMPurify";
 import toggles from "hqwebapp/js/toggles";

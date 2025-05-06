@@ -17,4 +17,4 @@ export default function (init) {
         return defaultOption.concat(columns);
     });
     return self;
-};
+}

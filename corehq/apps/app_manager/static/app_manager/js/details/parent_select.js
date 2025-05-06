@@ -87,4 +87,4 @@ export default function (init) {
         return options;
     });
     return self;
-};
+}
