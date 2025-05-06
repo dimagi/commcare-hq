@@ -1,7 +1,5 @@
 import "commcarehq";
 import $ from "jquery";
-import ko from "knockout";
-import _ from "underscore";
 import emailUtils from "hqwebapp/js/utils/email";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import models from "sso/js/models";
