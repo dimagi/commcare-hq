@@ -1,10 +1,8 @@
 --- 
 +++ 
-@@ -1,10 +1,9 @@
+@@ -1,8 +1,7 @@
 -import "commcarehq";
  import $ from "jquery";
- import ko from "knockout";
- import _ from "underscore";
  import context from "reports/v2/js/context";
 -import datagrid from "reports/v2/js/bootstrap3/datagrid";
 -import "hqwebapp/js/components/bootstrap3/feedback";
