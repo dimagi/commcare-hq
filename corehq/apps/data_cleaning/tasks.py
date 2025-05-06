@@ -1,3 +1,4 @@
+import logging
 from corehq.apps.celery import task
 
 from django.utils import timezone
@@ -17,6 +18,8 @@ from corehq.apps.users.util import username_to_user_id
 from corehq.form_processor.models import CommCareCase
 from corehq.util.metrics.load_counters import case_load_counter
 
+logger = logging.getLogger(__name__)
+
 
 @task(bind=True, queue='case_import_queue', acks_late=True)
 def commit_data_cleaning(self, bulk_edit_session_id):
@@ -31,7 +34,9 @@ def commit_data_cleaning(self, bulk_edit_session_id):
         committed_on=timezone.now(),
     )
     if not updated:
-        # either someone else has it, or it's already completed
+        logger.info("commit_data_cleaning: dropped task to avoid duplicaton", extra={
+            'session_id': bulk_edit_session_id,
+        })
         return []
 
     session = BulkEditSession.objects.get(session_id=bulk_edit_session_id)
