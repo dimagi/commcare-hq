@@ -1,0 +1,8 @@
+{% load i18n %}
+{% load data_cleaning %}
+
+<div class="dc-value" x-show="!$store.showWhitespaces">{{ value }}</div>
+
+<div class="dc-value dc-value-whitespaces" x-show="$store.showWhitespaces">
+  {% whitespaces value %}
+</div>

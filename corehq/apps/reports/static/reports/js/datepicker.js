@@ -1,6 +1,7 @@
 hqDefine("reports/js/datepicker", [
     'jquery',
     'jquery-ui/ui/widgets/datepicker',
+    'jquery-ui-built-themes/redmond/jquery-ui.min.css',
 ], function (
     $,
 ) {

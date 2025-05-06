@@ -3274,6 +3274,7 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/report_filter_actions.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/pinned_filter_form.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 #: corehq/apps/enterprise/templates/enterprise/partials/date_range_modal.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
@@ -6653,6 +6654,7 @@ msgid "Install CommCare"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/odk_install.html
+#: corehq/apps/app_manager/templates/app_manager/partials/define_case_type_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_view_modals.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/style_configuration_modal.html
@@ -7580,6 +7582,82 @@ msgstr ""
 msgid "XPath Function"
 msgstr ""
 
+#: corehq/apps/app_manager/templates/app_manager/partials/define_case_type_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
+#: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_case.html
+#: corehq/apps/app_manager/views/modules.py
+#: corehq/apps/reports/standard/cases/basic.py
+msgid "Case List"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/define_case_type_modal.html
+msgid "Please define a case type for your case list."
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/define_case_type_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_case_type.html
+#: corehq/apps/campaign/forms.py
+#: corehq/apps/campaign/templates/campaign/partials/dashboard_gauge.html
+#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/data_cleaning/forms/setup.py corehq/apps/data_cleaning/tables.py
+#: corehq/apps/data_cleaning/utils/cases.py
+#: corehq/apps/data_dictionary/views.py corehq/apps/data_interfaces/forms.py
+#: corehq/apps/data_interfaces/interfaces.py
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_run_history.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_run_history.html
+#: corehq/apps/data_interfaces/views.py
+#: corehq/apps/export/templates/export/customize_export_new.html
+#: corehq/apps/export/templates/export/partials/table.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
+#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+#: corehq/apps/reports/filters/select.py
+#: corehq/apps/reports/standard/cases/basic.py
+#: corehq/apps/reports/v2/filters/case_report.py
+#: corehq/ex-submodules/casexml/apps/case/views.py
+#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
+#: corehq/motech/openmrs/forms.py
+msgid "Case Type"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/define_case_type_modal.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_case_type.html
+msgid ""
+"The name for the type of case you are tracking (e.g. “pregnancy,” “farm,” "
+"“household,” etc.). All cases you register in this case list will be this "
+"type of case. Other case lists with the same case type will use the same set "
+"of case(s)."
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/define_case_type_modal.html
+msgid ""
+"The name for the type of case you are tracking (e.g. “pregnancy,” “farm,” "
+"“household,” etc.). All cases you register in this case list will be this "
+"type of case, and only cases of this type will show in the case list. Other "
+"case lists with the same case type will use the same set of cases."
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/define_case_type_modal.html
+msgid "* You can change the Case Type later by going to the menu settings page"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/define_case_type_modal.html
+#: corehq/apps/data_cleaning/forms/setup.py
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
+msgid "Go Back"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/define_case_type_modal.html
+msgid "Create Case List"
+msgstr ""
+
 #: corehq/apps/app_manager/templates/app_manager/partials/download_async_modal.html
 msgid "Downloading Your File"
 msgstr ""
@@ -7846,45 +7924,7 @@ msgid "Case Tag"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_case_type.html
-#: corehq/apps/campaign/forms.py
-#: corehq/apps/campaign/templates/campaign/partials/dashboard_gauge.html
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/case_search/templates/case_search/case_search.html
-#: corehq/apps/data_cleaning/forms/setup.py corehq/apps/data_cleaning/tables.py
-#: corehq/apps/data_cleaning/utils/cases.py
-#: corehq/apps/data_dictionary/views.py corehq/apps/data_interfaces/forms.py
-#: corehq/apps/data_interfaces/interfaces.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_run_history.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_run_history.html
-#: corehq/apps/data_interfaces/views.py
-#: corehq/apps/export/templates/export/customize_export_new.html
-#: corehq/apps/export/templates/export/partials/table.html
-#: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
-#: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
-#: corehq/apps/reports/filters/select.py
-#: corehq/apps/reports/standard/cases/basic.py
-#: corehq/apps/reports/v2/filters/case_report.py
-#: corehq/ex-submodules/casexml/apps/case/views.py
-#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
-#: corehq/motech/openmrs/forms.py
-msgid "Case Type"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 msgid "from"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
-#: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
-#: corehq/apps/app_manager/templates/app_manager/partials/module_options/module_option_case.html
-#: corehq/apps/app_manager/views/modules.py
-#: corehq/apps/reports/standard/cases/basic.py
-msgid "Case List"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
@@ -10085,14 +10125,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_filter.html
 msgid "XPath expression"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_case_type.html
-msgid ""
-"The name for the type of case you are tracking (e.g. “pregnancy,” “farm,” "
-"“household,” etc.). All cases you register in this case list will be this "
-"type of case. Other case lists with the same case type will use the same set "
-"of case(s)."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_case_type.html
@@ -13141,6 +13173,8 @@ msgstr ""
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/entry_signature.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_clear.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/domain/forms.py corehq/apps/sms/templates/sms/chat_contacts.html
 msgid "Clear"
@@ -14235,12 +14269,6 @@ msgstr ""
 msgid "Start Session"
 msgstr ""
 
-#: corehq/apps/data_cleaning/forms/setup.py
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
-msgid "Go Back"
-msgstr ""
-
 #: corehq/apps/data_cleaning/models.py
 msgid "Phone Number or Numeric ID"
 msgstr ""
@@ -14439,8 +14467,11 @@ msgid "Make Value NULL"
 msgstr ""
 
 #: corehq/apps/data_cleaning/models.py
-msgid "Undo All Edits"
-msgstr ""
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/column_editable.html
+#, fuzzy
+#| msgid "Remove Characters"
+msgid "Reset Changes"
+msgstr "Manejo de Casos"
 
 #: corehq/apps/data_cleaning/tables.py
 msgid "Committed On"
@@ -14462,9 +14493,31 @@ msgstr ""
 msgid "Recent Tasks"
 msgstr ""
 
+#: corehq/apps/data_cleaning/templates/data_cleaning/clean_cases_session.html
+msgid "Show Whitespaces"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/column_editable.html
+#, fuzzy
+#| msgid "Property value"
+msgid "stored value"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/column_editable.html
+msgid "changed value"
+msgstr ""
+
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/column_editable.html
 #: corehq/apps/styleguide/templates/styleguide/htmx_todo/item.html
 msgid "Edit Value"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/column_editable.html
+msgid "Apply Edit"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/column_editable.html
+msgid "Cancel Edit"
 msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/column_system.html
@@ -14480,12 +14533,47 @@ msgstr ""
 msgid "Pending"
 msgstr ""
 
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/values/empty.html
+msgid "EMPTY"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/values/null.html
+msgid "NULL"
+msgstr ""
+
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
 #, python-format
 msgid ""
 "\n"
 "        %(num_records)s records have been cleaned.\n"
 "      "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+msgid "Performance might be impacted..."
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+msgid ""
+"\n"
+"          Some cases have a large number of edits. You can continue to "
+"preview new bulk edits,\n"
+"          but some pages may take longer to load.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+msgid "Edit history is too large..."
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+msgid ""
+"\n"
+"          The edit history for this session is too large to support new bulk "
+"edits.\n"
+"          You can either apply the current edits, undo edits, or clear the "
+"edit history to start over.\n"
+"        "
 msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
@@ -14519,6 +14607,18 @@ msgstr ""
 msgid "Confirm Action"
 msgstr ""
 
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_apply.html
+msgid "Apply all edits?"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_apply.html
+msgid "Apply All Edits"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_clear.html
+msgid "Clear all edits?"
+msgstr ""
+
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_select_all.html
 #, python-format
 msgid ""
@@ -14540,6 +14640,16 @@ msgid ""
 "\n"
 "      This operation might take a long time.\n"
 "    "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_undo.html
+msgid "Undo edit for multiple cases?"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_undo.html
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#: corehq/apps/reports/views.py
+msgid "Undo"
 msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/select_all_not_possible.html
@@ -14597,6 +14707,27 @@ msgstr ""
 msgid "Clean Selected Cases"
 msgstr ""
 
+#: corehq/apps/data_cleaning/templates/data_cleaning/summary/apply_changes.html
+msgid ""
+"\n"
+"    The following edits will be applied:\n"
+"  "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/summary/clear_changes.html
+msgid ""
+"\n"
+"    The following edits will be cleared:\n"
+"  "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/summary/undo_changes.html
+msgid ""
+"\n"
+"    The following edit will be undone:\n"
+"  "
+msgstr ""
+
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 msgid ""
 "\n"
@@ -14608,6 +14739,14 @@ msgid ""
 "      >adjust your filters</a>\n"
 "      and try again.\n"
 "    "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+msgid "Edits"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+msgid "number of cases with an edit history"
 msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
@@ -14637,6 +14776,18 @@ msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 msgid "Clear Selection"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templatetags/data_cleaning.py
+msgid "space"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templatetags/data_cleaning.py
+msgid "new line"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templatetags/data_cleaning.py
+msgid "tab"
 msgstr ""
 
 #: corehq/apps/data_cleaning/utils/cases.py corehq/apps/geospatial/reports.py
@@ -14761,6 +14912,10 @@ msgstr ""
 
 #: corehq/apps/data_cleaning/views/setup.py
 msgid "Starting Data Cleaning Session..."
+msgstr ""
+
+#: corehq/apps/data_cleaning/views/summary.py
+msgid "Cannot retrieve summary, session was not found."
 msgstr ""
 
 #: corehq/apps/data_dictionary/bulk.py
@@ -33224,7 +33379,7 @@ msgid "Unable to view case"
 msgstr ""
 
 #: corehq/apps/reports/standard/inspect.py
-msgid "Submit History"
+msgid "Submission History"
 msgstr ""
 
 #: corehq/apps/reports/standard/inspect.py
@@ -35259,10 +35414,6 @@ msgstr ""
 #: corehq/apps/reports/views.py
 #, python-format
 msgid "Can't archive documents of type %s. How did you get here??"
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid "Undo"
 msgstr ""
 
 #: corehq/apps/reports/views.py

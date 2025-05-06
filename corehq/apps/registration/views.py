@@ -38,7 +38,6 @@ from corehq.apps.domain.exceptions import (
 )
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import Domain, LicenseAgreement
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_ko_validation
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.registration.forms import (
     DomainRegistrationForm,
@@ -261,8 +260,6 @@ class UserRegistrationView(BasePageView):
     urlname = 'register_user'
     template_name = 'registration/register_new_user.html'
 
-    @use_jquery_ui
-    @use_ko_validation
     @method_decorator(transaction.atomic)
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:

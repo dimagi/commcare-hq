@@ -1,7 +1,7 @@
 --- 
 +++ 
 @@ -3,16 +3,16 @@
-     also in the single form view page that's accessible from the submit history report or the "View standalone
+     also in the single form view page that's accessible from the submission history report or the "View standalone
      form" button when looking at a form in case history.
  */
 -hqDefine("reports/js/bootstrap3/single_form", [
