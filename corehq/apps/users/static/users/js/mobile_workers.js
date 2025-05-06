@@ -41,28 +41,28 @@ var STATUS = {
     DISABLED: 'disabled',
 };
 
-    var rmi = function () {};
-    var userModel = function (options) {
-        options = options || {};
-        options = _.defaults(options, {
-            creation_status: STATUS.NONE,
-            creation_error: "",
-            username: '',
-            first_name: '',
-            last_name: '',
-            location_id: '',
-            password: '',
-            user_id: '',
-            force_account_confirmation: false,
-            email: '',
-            send_account_confirmation_email: false,
-            force_account_confirmation_by_sms: false,
-            phone_number: '',
-            is_active: true,
-            is_account_confirmed: true,
-            is_connect_link_active: null,
-            deactivate_after_date: '',
-        });
+var rmi = function () {};
+var userModel = function (options) {
+    options = options || {};
+    options = _.defaults(options, {
+        creation_status: STATUS.NONE,
+        creation_error: "",
+        username: '',
+        first_name: '',
+        last_name: '',
+        location_id: '',
+        password: '',
+        user_id: '',
+        force_account_confirmation: false,
+        email: '',
+        send_account_confirmation_email: false,
+        force_account_confirmation_by_sms: false,
+        phone_number: '',
+        is_active: true,
+        is_account_confirmed: true,
+        is_connect_link_active: null,
+        deactivate_after_date: '',
+    });
 
     var self = ko.mapping.fromJS(options);
     self.custom_fields = customDataFields.customDataFieldsEditor({
@@ -91,39 +91,39 @@ var STATUS = {
         return initialPageData.reverse('edit_commcare_user', self.user_id());
     });
 
-        self.is_active.subscribe(function (newValue) {
-            var urlName = newValue ? 'activate_commcare_user' : 'deactivate_commcare_user',
-                $modal = $('#' + (newValue ? 'activate_' : 'deactivate_') + self.user_id());
-            toggleActive($modal, urlName, self.user_id());
-        });
+    self.is_active.subscribe(function (newValue) {
+        var urlName = newValue ? 'activate_commcare_user' : 'deactivate_commcare_user',
+            $modal = $('#' + (newValue ? 'activate_' : 'deactivate_') + self.user_id());
+        toggleActive($modal, urlName, self.user_id());
+    });
 
-        self.is_connect_link_active.subscribe(function (newValue) {
-            const urlName = 'set_connectid_link_status';
-            const modalNamePrefix = newValue ? 'activate_connectid_link' : 'deactivate_connectid_link';
-            const $modal = $(`#${modalNamePrefix}_${self.username()}`);
-            toggleActive($modal, urlName, self.username(), { is_active: newValue });
-        });
+    self.is_connect_link_active.subscribe(function (newValue) {
+        const urlName = 'set_connectid_link_status';
+        const modalNamePrefix = newValue ? 'activate_connectid_link' : 'deactivate_connectid_link';
+        const $modal = $(`#${modalNamePrefix}_${self.username()}`);
+        toggleActive($modal, urlName, self.username(), { is_active: newValue });
+    });
 
-        function toggleActive($modal, urlName, userIdOrName, bodyData = {}) {
-            $modal.find(".btn").addSpinnerToButton();
-            $.ajax({
-                method: 'POST',
-                url: initialPageData.reverse(urlName, userIdOrName),
-                data: bodyData,
-                success: function (data) {
-                    $modal.modal('hide');
-                    if (data.success) {
-                        self.action_error('');
-                    } else {
-                        self.action_error(data.error);
-                    }
-                },
-                error: function () {
-                    $modal.modal('hide');
-                    self.action_error(gettext("Issue communicating with server. Try again."));
-                },
-            });
-        }
+    function toggleActive($modal, urlName, userIdOrName, bodyData = {}) {
+        $modal.find(".btn").addSpinnerToButton();
+        $.ajax({
+            method: 'POST',
+            url: initialPageData.reverse(urlName, userIdOrName),
+            data: bodyData,
+            success: function (data) {
+                $modal.modal('hide');
+                if (data.success) {
+                    self.action_error('');
+                } else {
+                    self.action_error(data.error);
+                }
+            },
+            error: function () {
+                $modal.modal('hide');
+                self.action_error(gettext("Issue communicating with server. Try again."));
+            },
+        });
+    }
 
     self.sendConfirmationEmail = function () {
         var urlName = 'send_confirmation_email';
