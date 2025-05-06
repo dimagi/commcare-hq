@@ -1,6 +1,5 @@
 import "commcarehq";
 import $ from "jquery";
-import ko from "knockout";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import stripeCardManager from "accounting/js/stripe_card_manager";
 import "accounting/js/widgets";

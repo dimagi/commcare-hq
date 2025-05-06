@@ -4,7 +4,7 @@ hqDefine("domain/js/internal_calculations", [
     'commcarehq',
 ], function (
     $,
-    initialPageData
+    initialPageData,
 ) {
     function loadCalculation($group) {
         var $btn = $group.find('.load-calc-btn');

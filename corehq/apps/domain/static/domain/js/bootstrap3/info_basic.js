@@ -12,10 +12,10 @@ $(function () {
     $('#id_call_center_enabled').change(function () {
         var type = $('#id_call_center_type').closest('.control-group');
         var caseOwner = $('#id_call_center_case_owner').closest(
-            '.control-group'
+            '.control-group',
         );
         var caseType = $('#id_call_center_case_type').closest(
-            '.control-group'
+            '.control-group',
         );
         if ($(this).is(':checked')) {
             type.removeClass('hide');
