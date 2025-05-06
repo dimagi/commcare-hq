@@ -214,25 +214,28 @@ class CleanSelectedRecordsForm(forms.Form):
 
         return cleaned_data
 
-    def create_bulk_edit_change(self):
+    def get_bulk_edit_change(self):
         prop_id = self.cleaned_data["clean_prop_id"]
         action_type = self.cleaned_data["clean_action"]
-        change_kwargs = {
-            EditActionType.REPLACE: {
+        if action_type == EditActionType.REPLACE:
+            action_options = {
                 "replace_string": self.cleaned_data["replace_all_string"],
-            },
-            EditActionType.FIND_REPLACE: {
+            }
+        elif action_type == EditActionType.FIND_REPLACE:
+            action_options = {
                 "find_string": self.cleaned_data["find_string"],
                 "replace_string": self.cleaned_data["replace_string"],
                 "use_regex": self.cleaned_data["use_regex"],
-            },
-            EditActionType.COPY_REPLACE: {
+            }
+        elif action_type == EditActionType.COPY_REPLACE:
+            action_options = {
                 "copy_from_prop_id": self.cleaned_data["copy_from_prop_id"],
-            },
-        }.get(action_type, {})
-        return BulkEditChange.objects.create(
+            }
+        else:
+            action_options = {}
+        return BulkEditChange(
             session=self.session,
             prop_id=prop_id,
             action_type=action_type,
-            **change_kwargs,
+            **action_options,
         )
