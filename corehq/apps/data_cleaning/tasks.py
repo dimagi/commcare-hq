@@ -22,20 +22,7 @@ logger = logging.getLogger(__name__)
 
 @task(bind=True, queue='case_import_queue')
 def commit_data_cleaning(self, bulk_edit_session_id):
-    updated = BulkEditSession.objects.filter(
-        session_id=bulk_edit_session_id,
-        completed_on__isnull=True,
-    ).filter(
-        Q(task_id__isnull=True)  # never claimed
-        | Q(task_id=self.request.id)  # or already claimed by *this* worker
-    ).update(
-        task_id=self.request.id,
-        committed_on=timezone.now(),
-    )
-    if not updated:
-        logger.info("commit_data_cleaning: dropped task to avoid duplicaton", extra={
-            'session_id': bulk_edit_session_id,
-        })
+    if not _claim_bulk_edit_session_for_task(self, bulk_edit_session_id):
         return []
 
     session = BulkEditSession.objects.get(session_id=bulk_edit_session_id)
@@ -83,6 +70,25 @@ def commit_data_cleaning(self, bulk_edit_session_id):
     })
 
     return form_ids
+
+
+def _claim_bulk_edit_session_for_task(task, bulk_edit_session_id):
+    updated = BulkEditSession.objects.filter(
+        session_id=bulk_edit_session_id,
+        completed_on__isnull=True,
+    ).filter(
+        Q(task_id__isnull=True)  # never claimed
+        | Q(task_id=task.request.id)  # or already claimed by *this* worker
+    ).update(
+        task_id=task.request.id,
+        committed_on=timezone.now(),
+    )
+    if not updated:
+        logger.info("commit_data_cleaning: dropped task to avoid duplication", extra={
+            'session_id': bulk_edit_session_id,
+        })
+        return False
+    return True
 
 
 @transaction.atomic
