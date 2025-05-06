@@ -8,7 +8,6 @@ from django.db.models import Q, Count
 from dimagi.utils.chunked import chunked
 
 from casexml.apps.case.mock import CaseBlock
-from corehq.apps.data_cleaning.utils.decorators import retry_on_integrity_error
 from corehq.apps.data_cleaning.models import (
     BulkEditSession,
 )
@@ -95,7 +94,6 @@ def _purge_ui_data_from_session(session):
     session.purge_records()
 
 
-@retry_on_integrity_error(max_retries=3, delay=0.1)
 @transaction.atomic
 def _prune_records_and_complete_session(session, errored_doc_ids):
     # remove errored records from session
