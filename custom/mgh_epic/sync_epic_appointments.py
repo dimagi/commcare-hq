@@ -4,7 +4,7 @@ import pytz
 import time
 import uuid
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.conf import settings
 
 from jsonpath_ng import parse as parse_jsonpath
@@ -94,20 +94,17 @@ def filter_appointments_by_date(appointments_entries_json, study_start_date, wee
     :return: A list of json entries
     """
     appointments = []
-    path = parse_jsonpath('$.resource.start')
+    study_start_datetime = datetime.strptime(study_start_date, "%Y-%m-%d")
+    study_end_datetime = study_start_datetime + timedelta(weeks=weeks_from_start_date)
     for entry in appointments_entries_json:
-        matches = path.find(entry)
-        if matches:
-            entry_start = matches[0].value
+        entry_start = entry.get("resource", {}).get("start")
+        if entry_start:
             local_appointment_date, local_appointment_time = convert_utc_timestamp_to_date_and_time(entry_start)
-            study_start_datetime = datetime.strptime(study_start_date, "%Y-%m-%d")
             local_appointment_datetime = datetime.strptime(local_appointment_date, "%Y-%m-%d")
 
-            difference = local_appointment_datetime - study_start_datetime
-            difference_in_weeks = difference.days // 7
-
-            if (difference_in_weeks > -1 and difference_in_weeks <= weeks_from_start_date):
+            if (study_start_datetime <= local_appointment_datetime <= study_end_datetime):
                 appointments.append(entry)
+
     return appointments
 
 
