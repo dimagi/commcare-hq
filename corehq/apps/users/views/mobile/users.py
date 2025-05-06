@@ -919,7 +919,7 @@ def set_connectid_link_status(request, domain, username):
         return HttpResponse(status=400)
     complete_username = get_complete_username(username, domain)
     connect_link = ConnectIDUserLink.objects.get(commcare_user__username=complete_username)
-    connect_link.is_active = bool(is_active)
+    connect_link.is_active = (is_active == 'true')
     connect_link.save()
     return HttpResponse(status=200)
 
