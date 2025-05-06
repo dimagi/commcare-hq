@@ -230,26 +230,13 @@ def sync_all_appointments_domain(domain):
         # Add new appointments to commcare
         for appointment in epic_appointments_to_add:
             appointment_create_helper = CaseHelper(domain=domain)
+            new_appointment_dict = {}
             appointment_resource = appointment.get('resource')
             if appointment_resource is not None:
-                appointment_description = appointment_resource.get('description') or 'NO DESCRIPTION LISTED'
-                appointment_fhir_timestamp = appointment_resource.get('start')
-                appointment_date, appointment_time = convert_utc_timestamp_to_date_and_time(
-                    appointment_fhir_timestamp)
-                appointment_fhir_id = appointment_resource.get('id')
-                reason = ''
-                practitioner = ''
-                for p in appointment_resource.get('participant'):
-                    actor = p.get('actor')
-                    if actor and actor.get('reference') is not None and 'Practitioner' in actor.get('reference'):
-                        practitioner = actor.get('display')
-                        break
-                reason_code = appointment_resource.get('reasonCode')
-                if reason_code and reason_code[0] is not None:
-                    reason = reason_code[0].get('text')
+                new_appointment_dict = _get_appointment_resource_values(appointment_resource)
             host_case_id = patient.get_case_property('case_id')
             appointment_case_data = {
-                'case_name': f'[{appointment_fhir_timestamp}]: {appointment_description}',
+                'case_name': f'[{new_appointment_dict.get("appointment_fhir_timestamp")}]: {new_appointment_dict.get("appointment_description")}',
                 'case_type': 'appointment',
                 'indices': {
                     'patient': {
@@ -259,14 +246,14 @@ def sync_all_appointments_domain(domain):
                     }
                 },
                 'properties': {
-                    'appointment_description': appointment_description,
-                    'appointment_fhir_timestamp': appointment_fhir_timestamp,
-                    'appointment_date': appointment_date,
-                    'appointment_time': appointment_time,
+                    'appointment_description': new_appointment_dict.get("appointment_description"),
+                    'appointment_fhir_timestamp': new_appointment_dict.get("appointment_fhir_timestamp"),
+                    'appointment_date': new_appointment_dict.get("appointment_date"),
+                    'appointment_time': new_appointment_dict.get("appointment_time"),
                     'patient_fhir_id': patient_fhir_id,
-                    'fhir_id': appointment_fhir_id,
-                    'reason': reason,
-                    'practitioner': practitioner
+                    'fhir_id': new_appointment_dict.get("appointment_fhir_id"),
+                    'reason': new_appointment_dict.get("reason"),
+                    'practitioner': new_appointment_dict.get("practitioner")
                 }
             }
             appointment_create_helper.create_case(appointment_case_data)
@@ -276,28 +263,15 @@ def sync_all_appointments_domain(domain):
             epic_properties_map = {}
             appointment_resource = appointment.get('resource')
             if appointment_resource is not None:
-                appointment_description = appointment_resource.get('description') or 'NO DESCRIPTION LISTED'
-                appointment_fhir_timestamp = appointment_resource.get('start')
-                appointment_date, appointment_time = convert_utc_timestamp_to_date_and_time(
-                    appointment_fhir_timestamp)
-                appointment_fhir_id = appointment_resource.get('id')
-                reason = ''
-                practitioner = ''
-                for p in appointment_resource.get('participant'):
-                    actor = p.get('actor')
-                    if actor and actor.get('reference') is not None and 'Practitioner' in actor.get('reference'):
-                        practitioner = actor.get('display')
-                        break
-                reason_code = appointment_resource.get('reasonCode')
-                if reason_code and reason_code[0] is not None:
-                    reason = reason_code[0].get('text')
+                update_appointment_dict = _get_appointment_resource_values(appointment_resource)
+
                 epic_properties_map.update({
-                    'appointment_description': appointment_description,
-                    'appointment_fhir_timestamp': appointment_fhir_timestamp,
-                    'practitioner': practitioner,
-                    'reason': reason
+                    'appointment_description': update_appointment_dict.get("appointment_description"),
+                    'appointment_fhir_timestamp': update_appointment_dict.get("appointment_fhir_timestamp"),
+                    'practitioner': update_appointment_dict.get("practitioner"),
+                    'reason': update_appointment_dict.get("reason")
                 })
-            appointment_case = appointment_map.get(appointment_fhir_id)
+            appointment_case = appointment_map.get(update_appointment_dict.get("appointment_fhir_id"))
             appointment_update_helper = CaseHelper(case=appointment_case, domain=domain)
             case_properties_to_update = {}
             changes = False
