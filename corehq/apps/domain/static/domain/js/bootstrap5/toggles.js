@@ -14,14 +14,14 @@ hqDefine('domain/js/bootstrap5/toggles', [
     _,
     initialPageData,
     alertUser,
-    assertProperties
+    assertProperties,
 ) {
 
     var Toggle = function (data) {
         assertProperties.assert(data, [
             'slug', 'label', 'description', 'help_link', 'tag', 'tag_index',
             'tag_css_class', 'tag_description', 'domain_enabled',
-            'user_enabled', 'has_domain_namespace',
+            'user_enabled', 'has_domain_namespace', 'can_edit',
         ]);
 
         var self = {};
@@ -36,6 +36,7 @@ hqDefine('domain/js/bootstrap5/toggles', [
         self.userEnabled = ko.observable(data['user_enabled']);
         self.hasDomainNamespace = data['has_domain_namespace'];
         self.editLink = initialPageData.reverse('edit_toggle', self.slug);
+        self.canEdit = data['can_edit'];
 
         self.expanded = ko.observable(false);
         self.showHideDescription = function () { self.expanded(!self.expanded()); };
