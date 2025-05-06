@@ -40,7 +40,7 @@ beautifulsoup4==4.12.2
     # via -r base-requirements.in
 billiard==4.2.1
     # via celery
-bleach==6.1.0
+bleach[css]==6.1.0
     # via -r base-requirements.in
 boto3==1.24.96
     # via -r base-requirements.in
@@ -324,7 +324,7 @@ packaging==24.2
     #   gunicorn
 parsimonious==0.10.0
     # via pyseeyou
-phonenumberslite==8.12.48
+phonenumberslite==9.0.4
     # via -r base-requirements.in
 pillow==11.1.0
     # via
@@ -369,7 +369,7 @@ pydantic-settings==2.5.2
     # via oic
 pyjwkest==1.4.2
     # via oic
-pyjwt==2.7.0
+pyjwt[crypto]==2.7.0
     # via
     #   -r base-requirements.in
     #   msal
