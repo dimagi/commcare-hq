@@ -67,18 +67,10 @@ def commit_data_cleaning(self, bulk_edit_session_id):
 
         try:
             xform = _submit_case_blocks(session, blocks)
-        except Exception as e:
-            errored_doc_ids.extend([record.doc_id for record in record_batch])
-            session.update_result(0, error={
-                'error': str(e),
-                'doc_ids': [record.doc_id for record in record_batch],
-            })
-            logger.error("commit_data_cleaning: error submitting case blocks", extra={
-                'session_id': session.session_id,
-                'domain': session.domain,
-                'error': str(e),
-                'doc_ids': [record.doc_id for record in record_batch],
-            })
+        except Exception as error:  # todo: catch specific errors seen with submitting case blocks
+            doc_ids = [record.doc_id for record in record_batch]
+            errored_doc_ids.extend(doc_ids)
+            _record_submission_error(session, error, doc_ids)
             continue
 
         num_records = len(record_batch)
@@ -159,4 +151,17 @@ def _record_case_block_creation_error(session, error, doc_id):
         'domain': session.domain,
         'error': str(error),
         'doc_id': doc_id,
+    })
+
+
+def _record_submission_error(session, error, doc_ids):
+    session.update_result(0, error={
+        'error': str(error),
+        'doc_ids': doc_ids,
+    })
+    logger.error("commit_data_cleaning: error submitting case blocks", extra={
+        'session_id': session.session_id,
+        'domain': session.domain,
+        'error': str(error),
+        'doc_ids': doc_ids,
     })
