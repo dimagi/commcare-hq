@@ -46,7 +46,6 @@ def commit_data_cleaning(self, bulk_edit_session_id):
         'domain': session.domain,
     })
 
-    session.deselect_all_records_in_queryset()  # already in an atomic, retry block
     _purge_ui_data_from_session(session)
 
     form_ids = []
@@ -87,9 +86,9 @@ def commit_data_cleaning(self, bulk_edit_session_id):
     return form_ids
 
 
-@retry_on_integrity_error(max_retries=3, delay=0.1)
 @transaction.atomic
 def _purge_ui_data_from_session(session):
+    session.deselect_all_records_in_queryset()
     session.filters.all().delete()
     session.pinned_filters.all().delete()
     session.columns.all().delete()
