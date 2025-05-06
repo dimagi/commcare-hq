@@ -87,6 +87,10 @@ def commit_data_cleaning(self, bulk_edit_session_id):
         form_ids.append(xform.form_id)
 
     _prune_records_and_complete_session(session, errored_doc_ids)
+    logger.info("commit_data_cleaning: completed", extra={
+        'session_id': session.session_id,
+        'domain': session.domain,
+    })
 
     return form_ids
 
