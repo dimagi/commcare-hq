@@ -38,7 +38,7 @@ def commit_data_cleaning(self, bulk_edit_session_id):
     session.update_result(0)
     count_cases = case_load_counter("bulk_case_cleaning", session.domain)
 
-    record_iter = session.records.order_by('pk').iterator()
+    record_iter = session.records.iterator()
     for record_batch in chunked(record_iter, CASEBLOCK_CHUNKSIZE):
         blocks = _create_case_blocks(session, record_batch)
         if not blocks:
