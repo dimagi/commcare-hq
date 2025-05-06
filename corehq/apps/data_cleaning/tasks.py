@@ -3,7 +3,7 @@ from corehq.apps.celery import task
 
 from django.utils import timezone
 from django.db import transaction
-from django.db.models import Q, Count
+from django.db.models import Q
 
 from dimagi.utils.chunked import chunked
 
@@ -37,11 +37,10 @@ def commit_data_cleaning(self, bulk_edit_session_id):
     form_ids = []
     session.update_result(0)
     count_cases = case_load_counter("bulk_case_cleaning", session.domain)
-    errored_doc_ids = []
 
     record_iter = session.records.order_by('pk').iterator()
     for record_batch in chunked(record_iter, CASEBLOCK_CHUNKSIZE):
-        blocks = _create_case_blocks(session, record_batch, errored_doc_ids)
+        blocks = _create_case_blocks(session, record_batch)
         if not blocks:
             logger.info("commit_data_cleaning: no cases needed an update in a batch", extra={
                 'session_id': session.session_id,
@@ -53,17 +52,18 @@ def commit_data_cleaning(self, bulk_edit_session_id):
         try:
             xform = _submit_case_blocks(session, blocks)
         except Exception as error:  # todo: catch specific errors seen with submitting case blocks
-            doc_ids = [record.doc_id for record in record_batch]
-            errored_doc_ids.extend(doc_ids)
-            _record_submission_error(session, error, doc_ids)
+            _record_submission_error(session, error, record_batch)
             continue
 
         num_records = len(record_batch)
         count_cases(value=num_records * 2)  # 1 read + 1 write per case
         session.update_result(num_records, xform.form_id)
         form_ids.append(xform.form_id)
+        _prune_completed_records(session, doc_ids=[record.doc_id for record in record_batch])
 
-    _prune_records_and_complete_session(session, errored_doc_ids)
+    session.completed_on = timezone.now()
+    session.save(update_fields=['completed_on'])
+
     logger.info("commit_data_cleaning: completed", extra={
         'session_id': session.session_id,
         'domain': session.domain,
@@ -100,18 +100,11 @@ def _purge_ui_data_from_session(session):
     session.purge_records()
 
 
-@transaction.atomic
-def _prune_records_and_complete_session(session, errored_doc_ids):
-    # remove errored records from session
-    session.records.exclude(doc_id__in=errored_doc_ids).delete()
-    # delete any change with zero remaining records
-    session.changes.annotate(num_records=Count('records')).filter(num_records=0).delete()
-
-    session.completed_on = timezone.now()
-    session.save(update_fields=['completed_on'])
+def _prune_completed_records(session, doc_ids):
+    session.records.filter(doc_id__in=doc_ids).delete()
 
 
-def _create_case_blocks(session, records, errored_doc_ids):
+def _create_case_blocks(session, records):
     blocks = []
     case_ids = [rec.doc_id for rec in records]
     cases = {c.case_id: c for c in CommCareCase.objects.get_cases(case_ids, session.domain)}
@@ -120,7 +113,6 @@ def _create_case_blocks(session, records, errored_doc_ids):
         try:
             update = record.get_edited_case_properties(case)
         except Exception as error:  # todo: catch specific errors seen with case interactions
-            errored_doc_ids.append(record.doc_id)
             _record_case_block_creation_error(session, error, record.doc_id)
             continue
         if update:
@@ -157,7 +149,8 @@ def _record_case_block_creation_error(session, error, doc_id):
     })
 
 
-def _record_submission_error(session, error, doc_ids):
+def _record_submission_error(session, error, record_batch):
+    doc_ids = [record.doc_id for record in record_batch]
     session.update_result(0, error={
         'error': str(error),
         'doc_ids': doc_ids,
