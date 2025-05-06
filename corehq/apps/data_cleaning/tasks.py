@@ -42,11 +42,7 @@ def commit_data_cleaning(self, bulk_edit_session_id):
     for record_batch in chunked(record_iter, CASEBLOCK_CHUNKSIZE):
         blocks = _create_case_blocks(session, record_batch)
         if not blocks:
-            logger.info("commit_data_cleaning: no cases needed an update in a batch", extra={
-                'session_id': session.session_id,
-                'domain': session.domain,
-                'record_batch': [record.doc_id for record in record_batch],
-            })
+            _log_unusual_empty_case_block(session, record_batch)
             continue
 
         try:
@@ -134,6 +130,14 @@ def _submit_case_blocks(session, blocks):
         username_to_user_id(session.user.username),
         device_id=__name__ + ".data_cleaning",
     )[0]
+
+
+def _log_unusual_empty_case_block(session, record_batch):
+    logger.info("commit_data_cleaning: no cases needed an update in a batch", extra={
+        'session_id': session.session_id,
+        'domain': session.domain,
+        'record_batch': [record.doc_id for record in record_batch],
+    })
 
 
 def _record_case_block_creation_error(session, error, doc_id):
