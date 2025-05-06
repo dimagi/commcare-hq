@@ -1,7 +1,7 @@
 --- 
 +++ 
 @@ -1,13 +1,13 @@
--hqDefine("geospatial/js/bootstrap3/case_grouping_map", [
+-hqDefine("microplanning/js/bootstrap3/case_grouping_map", [
 +hqDefine("geospatial/js/bootstrap5/case_grouping_map", [
      "jquery",
      "knockout",

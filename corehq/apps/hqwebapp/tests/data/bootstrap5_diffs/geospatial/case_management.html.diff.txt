@@ -79,8 +79,8 @@
        </button>
      </div>
    </div>
--  {% include 'geospatial/partials/bootstrap3/saved_polygon_filter.html' with uses_disbursement='true' %}
-+  {% include 'geospatial/partials/bootstrap5/saved_polygon_filter.html' with uses_disbursement='true' %}
+-  {% include 'microplanning/partials/bootstrap3/saved_polygon_filter.html' with uses_disbursement='true' %}
++  {% include 'microplanning/partials/bootstrap5/saved_polygon_filter.html' with uses_disbursement='true' %}
    <div id="disbursement-spinner">
      <h4
        id="loading"
@@ -111,7 +111,7 @@
      </span>
      <!-- /ko -->
    </div>
--  <div id="geospatial-map" style="height: 500px">
+-  <div id="microplanning-map" style="height: 500px">
 +  <div id="geospatial-map" style="height: 500px">  {# todo B5: inline-style #}
      <div id="layer-toggle-menu" class="btn-group-vertical hidden">
        <h4 class="text-center">{% trans 'Layers' %}</h4>

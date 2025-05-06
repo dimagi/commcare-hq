@@ -3,7 +3,7 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% js_entry 'geospatial/js/bootstrap5/geo_config' %}
+{% js_entry 'microplanning/js/bootstrap5/geo_config' %}
 
 {% block page_content %}
 {% initial_page_data 'config' config %}
@@ -12,8 +12,8 @@
 {% initial_page_data 'min_max_grouping_name' min_max_grouping_name %}
 {% initial_page_data 'road_network_algorithm_slug' road_network_algorithm_slug %}
 
-  <form id="geospatial-config-form" class="form-horizontal disable-on-submit ko-template" method="post">
-    {% include 'geospatial/partials/index_alert.html' %}
+  <form id="microplanning-config-form" class="form-horizontal disable-on-submit ko-template" method="post">
+    {% include 'microplanning/partials/index_alert.html' %}
     {% crispy form %}  {# todo B5: crispy #}
   </form>
 {% endblock %}

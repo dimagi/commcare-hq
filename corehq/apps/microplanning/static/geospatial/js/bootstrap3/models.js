@@ -1,10 +1,10 @@
 
-hqDefine('geospatial/js/bootstrap3/models', [
+hqDefine('microplanning/js/bootstrap3/models', [
     'jquery',
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'geospatial/js/utils',
+    'microplanning/js/utils',
     'hqwebapp/js/bootstrap3/alert_user',
     'mapbox-gl',
     '@mapbox/mapbox-gl-draw',
@@ -623,7 +623,7 @@ hqDefine('geospatial/js/bootstrap3/models', [
 
         self.mapObj = mapObj;
 
-        // TODO: This can be moved to geospatial JS (specific functionality)
+        // TODO: This can be moved to microplanning JS (specific functionality)
         self.btnRunDisbursementDisabled = ko.computed(function () {
             return !self.mapObj.caseMapItems().length || !self.mapObj.userMapItems().length;
         });

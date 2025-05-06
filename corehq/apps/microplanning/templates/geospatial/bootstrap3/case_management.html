@@ -2,7 +2,7 @@
 {% load i18n %}
 
 {% block reportcontent %}
-  {% include 'geospatial/partials/index_alert.html' %}
+  {% include 'microplanning/partials/index_alert.html' %}
   {% if reassignment_task_status %}
     <div class="alert alert-info">
       {% blocktrans %}
@@ -87,7 +87,7 @@
       </button>
     </div>
   </div>
-  {% include 'geospatial/partials/bootstrap3/saved_polygon_filter.html' with uses_disbursement='true' %}
+  {% include 'microplanning/partials/bootstrap3/saved_polygon_filter.html' with uses_disbursement='true' %}
   <div id="disbursement-spinner">
     <h4
       id="loading"
@@ -139,7 +139,7 @@
     </span>
     <!-- /ko -->
   </div>
-  <div id="geospatial-map" style="height: 500px">
+  <div id="microplanning-map" style="height: 500px">
     <div id="layer-toggle-menu" class="btn-group-vertical hidden">
       <h4 class="text-center">{% trans 'Layers' %}</h4>
     </div>
@@ -182,7 +182,7 @@
           data-bind="visible: assignmentAjaxInProgress"
         ></i>
       </button>
-      {% include 'geospatial/partials/bootstrap3/review_assignment_modal.html' %}
+      {% include 'microplanning/partials/bootstrap3/review_assignment_modal.html' %}
     </div>
     <div id="user-modals" class="pull-right">
       <button

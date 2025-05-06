@@ -15,7 +15,7 @@ from corehq.apps.microplanning.views import (
     CasesReassignmentView,
     GeoPolygonDetailView,
     GeoPolygonListView,
-    GeospatialConfigPage,
+    MicroplanningConfigPage,
     GPSCaptureView,
 )
 from corehq.apps.locations.models import LocationType, SQLLocation
@@ -25,7 +25,7 @@ from corehq.form_processor.tests.utils import create_case
 from corehq.util.test_utils import flag_enabled
 
 
-class BaseGeospatialViewClass(TestCase):
+class BaseMicroplanningViewClass(TestCase):
     domain = 'test-domain'
 
     @classmethod
@@ -108,7 +108,7 @@ class GeoConfigViewTestClass(TestCase):
 
     def _make_post(self, data):
         self.client.login(username=self.username, password=self.password)
-        url = reverse(GeospatialConfigPage.urlname, args=(self.domain,))
+        url = reverse(MicroplanningConfigPage.urlname, args=(self.domain,))
         return self.client.post(url, data)
 
     @staticmethod
@@ -220,7 +220,7 @@ class GeoConfigViewTestClass(TestCase):
 
 
 @es_test(requires=[case_adapter], setup_class=True)
-class TestGPSCaptureView(BaseGeospatialViewClass):
+class TestGPSCaptureView(BaseMicroplanningViewClass):
     urlname = GPSCaptureView.urlname
 
     def test_no_access(self):
@@ -241,7 +241,7 @@ class TestGPSCaptureView(BaseGeospatialViewClass):
 
 @flag_enabled('MICROPLANNING')
 @es_test(requires=[case_search_adapter, user_adapter], setup_class=True)
-class TestGetPaginatedCasesOrUsers(BaseGeospatialViewClass):
+class TestGetPaginatedCasesOrUsers(BaseMicroplanningViewClass):
     urlname = 'get_paginated_cases_or_users'
 
     @classmethod
@@ -328,7 +328,7 @@ class TestGetPaginatedCasesOrUsers(BaseGeospatialViewClass):
 
 
 @es_test(requires=[user_adapter], setup_class=True)
-class TestGetUsersWithGPS(BaseGeospatialViewClass):
+class TestGetUsersWithGPS(BaseMicroplanningViewClass):
     urlname = 'get_users_with_gps'
 
     @classmethod
@@ -417,7 +417,7 @@ class TestGetUsersWithGPS(BaseGeospatialViewClass):
         self.assertEqual(user_data[0]['gps_point'], '12.34 45.67')
 
 
-class TestGeoPolygonListView(BaseGeospatialViewClass):
+class TestGeoPolygonListView(BaseMicroplanningViewClass):
     urlname = GeoPolygonListView.urlname
 
     def setUp(self):
@@ -502,7 +502,7 @@ class TestGeoPolygonListView(BaseGeospatialViewClass):
         )
 
 
-class TestGeoPolygonDetailView(BaseGeospatialViewClass):
+class TestGeoPolygonDetailView(BaseMicroplanningViewClass):
     urlname = GeoPolygonDetailView.urlname
 
     def setUp(self):
@@ -581,7 +581,7 @@ def _sample_geojson_data(name='test-2'):
 
 
 @es_test(requires=[case_search_adapter, user_adapter])
-class TestCasesReassignmentView(BaseGeospatialViewClass):
+class TestCasesReassignmentView(BaseMicroplanningViewClass):
     urlname = CasesReassignmentView.urlname
 
     def setUp(self):

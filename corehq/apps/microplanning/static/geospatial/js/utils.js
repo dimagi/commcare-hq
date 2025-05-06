@@ -1,5 +1,5 @@
 
-hqDefine('geospatial/js/utils', [
+hqDefine('microplanning/js/utils', [
     'mapbox-gl',
     'underscore',
 ], function (

@@ -1,11 +1,11 @@
-hqDefine("geospatial/js/bootstrap3/case_grouping_map", [
+hqDefine("microplanning/js/bootstrap3/case_grouping_map", [
     "jquery",
     "knockout",
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/bootstrap3/alert_user',
-    'geospatial/js/bootstrap3/models',
-    'geospatial/js/utils',
+    'microplanning/js/bootstrap3/models',
+    'microplanning/js/utils',
     'mapbox-gl/dist/mapbox-gl',
     'reports/js/bootstrap3/base',
     'hqwebapp/js/select2_knockout_bindings.ko',

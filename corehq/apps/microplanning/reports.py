@@ -107,7 +107,7 @@ class CaseManagementMap(BaseCaseMapReport):
     force_page_size = True
 
     def default_report_url(self):
-        return reverse('geospatial_default', args=[self.request.project.name])
+        return reverse('microplanning_default', args=[self.request.project.name])
 
     @property
     def template_context(self):

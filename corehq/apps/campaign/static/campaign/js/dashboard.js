@@ -5,7 +5,7 @@ import 'reports/js/bootstrap5/base';
 import $ from 'jquery';
 import { RadialGauge } from 'canvas-gauges';
 import initialPageData from "hqwebapp/js/initial_page_data";
-import { Map, MapItem } from "geospatial/js/bootstrap5/models";
+import { Map, MapItem } from "microplanning/js/bootstrap5/models";
 import html2pdf from "html2pdf.js";
 
 Alpine.store('deleteWidgetModel', {
@@ -260,7 +260,7 @@ var widgetHtmxConfigRequestHandler = function (event) {
     }
 };
 
-// TODO Use alert_js instead after geospatial bootstrap5 migration
+// TODO Use alert_js instead after microplanning bootstrap5 migration
 var afterDeleteWidgetRequest = function (event) {
     const responseStatus = event.detail.xhr.status;
     if (responseStatus === 200) {

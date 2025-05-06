@@ -17,7 +17,7 @@ from corehq.apps.microplanning.utils import (
 )
 from corehq.apps.microplanning.management.commands.index_utils import process_batch
 
-from settings import MAX_GEOSPATIAL_INDEX_DOC_LIMIT
+from settings import MAX_MICROPLANNING_INDEX_DOC_LIMIT
 
 
 @task(queue="background_queue", ignore_result=True)
@@ -45,7 +45,7 @@ def index_es_docs_with_location_props(domain):
     geo_case_prop = get_geo_case_property(domain)
     query = case_query_for_missing_geopoint_val(domain, geo_case_prop)
     doc_count = query.count()
-    if doc_count > MAX_GEOSPATIAL_INDEX_DOC_LIMIT:
+    if doc_count > MAX_MICROPLANNING_INDEX_DOC_LIMIT:
         celery_task_tracker.mark_as_error(error_slug='TOO_MANY_CASES')
         return
 

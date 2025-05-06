@@ -3,7 +3,7 @@
 @@ -1,14 +1,14 @@
  
  
--hqDefine("geospatial/js/bootstrap3/case_management", [
+-hqDefine("microplanning/js/bootstrap3/case_management", [
 +hqDefine("geospatial/js/bootstrap5/case_management", [
      "jquery",
      "underscore",

@@ -34,7 +34,7 @@ from corehq.apps.es import CaseSearchES, UserES
 from corehq.apps.es.users import missing_or_empty_user_data_property
 from corehq.apps.microplanning.exceptions import CaseReassignmentValidationError, GeoPolygonValidationError
 from corehq.apps.microplanning.filters import GPSDataFilter
-from corehq.apps.microplanning.forms import GeospatialConfigForm
+from corehq.apps.microplanning.forms import MicroplanningConfigForm
 from corehq.apps.microplanning.reports import CaseManagementMap
 from corehq.apps.microplanning.tasks import geo_cases_reassignment_update_owners
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
@@ -69,11 +69,11 @@ from .utils import (
 )
 
 
-def geospatial_default(request, *args, **kwargs):
+def microplanning_default(request, *args, **kwargs):
     return HttpResponseRedirect(CaseManagementMap.get_url(*args, **kwargs))
 
 
-class BaseGeospatialView(BaseDomainView):
+class BaseMicroplanningView(BaseDomainView):
 
     @property
     def main_context(self):
@@ -180,7 +180,7 @@ class GeoPolygonDetailView(BaseDomainView):
         })
 
 
-class BaseConfigView(BaseGeospatialView):
+class BaseConfigView(BaseMicroplanningView):
     section_name = _("Data")
 
     @method_decorator(toggles.MICROPLANNING.required_decorator())
@@ -229,13 +229,13 @@ class BaseConfigView(BaseGeospatialView):
         return self.get(request, *args, **kwargs)
 
 
-class GeospatialConfigPage(BaseConfigView):
-    urlname = "geospatial_settings"
+class MicroplanningConfigPage(BaseConfigView):
+    urlname = "microplanning_settings"
     template_name = "microplanning/bootstrap3/settings.html"
 
     page_name = _("Configuration Settings")
 
-    form_class = GeospatialConfigForm
+    form_class = MicroplanningConfigForm
 
     @property
     def page_context(self):
@@ -249,7 +249,7 @@ class GeospatialConfigPage(BaseConfigView):
         if GPS_POINT_CASE_PROPERTY not in gps_case_props_deprecated_state:
             gps_case_props_deprecated_state[GPS_POINT_CASE_PROPERTY] = False
         context.update({
-            'config': self.config.as_dict(fields=GeospatialConfigForm.Meta.fields),
+            'config': self.config.as_dict(fields=MicroplanningConfigForm.Meta.fields),
             'gps_case_props_deprecated_state': gps_case_props_deprecated_state,
             'target_grouping_name': GeoConfig.TARGET_SIZE_GROUPING,
             'min_max_grouping_name': GeoConfig.MIN_MAX_GROUPING,
@@ -258,7 +258,7 @@ class GeospatialConfigPage(BaseConfigView):
         return context
 
 
-class GPSCaptureView(BaseGeospatialView):
+class GPSCaptureView(BaseMicroplanningView):
     urlname = 'gps_capture'
     template_name = 'microplanning/bootstrap3/gps_capture_view.html'
 

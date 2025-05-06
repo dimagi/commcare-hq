@@ -7,14 +7,14 @@
  {% load crispy_forms_tags %}
  {% load i18n %}
  
--{% js_entry_b3 'geospatial/js/bootstrap3/geo_config' %}
-+{% js_entry 'geospatial/js/bootstrap5/geo_config' %}
+-{% js_entry_b3 'microplanning/js/bootstrap3/geo_config' %}
++{% js_entry 'microplanning/js/bootstrap5/geo_config' %}
  
  {% block page_content %}
  {% initial_page_data 'config' config %}
 @@ -14,6 +14,6 @@
  
-   <form id="geospatial-config-form" class="form-horizontal disable-on-submit ko-template" method="post">
+   <form id="microplanning-config-form" class="form-horizontal disable-on-submit ko-template" method="post">
      {% include 'geospatial/partials/index_alert.html' %}
 -    {% crispy form %}
 +    {% crispy form %}  {# todo B5: crispy #}

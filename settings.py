@@ -2115,4 +2115,4 @@ CRISPY_FAIL_SILENTLY = not DEBUG
 # NOTE: if you are adding a new setting that you intend to have other environments override,
 # make sure you add it before localsettings are imported (from localsettings import *)
 
-MAX_GEOSPATIAL_INDEX_DOC_LIMIT = 1000000
+MAX_MICROPLANNING_INDEX_DOC_LIMIT = 1000000

@@ -1,6 +1,6 @@
 
 
-hqDefine("geospatial/js/bootstrap3/geo_config", [
+hqDefine("microplanning/js/bootstrap3/geo_config", [
     "jquery",
     "knockout",
     "hqwebapp/js/initial_page_data",
@@ -89,6 +89,6 @@ hqDefine("geospatial/js/bootstrap3/geo_config", [
     };
 
     $(function () {
-        $('#geospatial-config-form').koApplyBindings(geoConfigViewModel(initialPageData));
+        $('#microplanning-config-form').koApplyBindings(geoConfigViewModel(initialPageData));
     });
 });

@@ -8,7 +8,7 @@
  {% load hq_shared_tags %}
  
  {% block reportcontent %}
-   {% include 'geospatial/partials/index_alert.html' %}
+   {% include 'microplanning/partials/index_alert.html' %}
 -  <div class="row panel">
 -    <div class="col col-md-3 col-lg-2">
 +  <div class="row card">  {# todo B5: css-panel #}
@@ -42,7 +42,7 @@
      </div>
    </div>
  
--  {% include 'geospatial/partials/bootstrap3/saved_polygon_filter.html' with uses_disbursement='false' %}
+-  {% include 'microplanning/partials/bootstrap3/saved_polygon_filter.html' with uses_disbursement='false' %}
 -  <div id="case-grouping-map" style="height: 500px"></div>
 +  {% include 'geospatial/partials/bootstrap5/saved_polygon_filter.html' with uses_disbursement='false' %}
 +  <div id="case-grouping-map" style="height: 500px"></div>  {# todo B5: inline-style #}

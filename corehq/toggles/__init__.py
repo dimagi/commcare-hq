@@ -2610,7 +2610,7 @@ ATTENDANCE_TRACKING = StaticToggle(
 )
 
 
-def _handle_geospatial_es_index(domain, is_enabled):
+def _handle_microplanning_es_index(domain, is_enabled):
     from corehq.apps.microplanning.tasks import index_es_docs_with_location_props
     from corehq.apps.microplanning.utils import get_celery_task_tracker
     from corehq.apps.microplanning.const import ES_INDEX_TASK_HELPER_BASE_KEY
@@ -2629,7 +2629,7 @@ MICROPLANNING = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description='Additional views will be added allowing for visually viewing '
                 'and assigning cases on a map.',
-    save_fn=_handle_geospatial_es_index,
+    save_fn=_handle_microplanning_es_index,
 
 )
 
@@ -2945,7 +2945,7 @@ SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM = StaticToggle(
     label='Add Road Network disbursement algorithm on microplanning settings page',
     tag=TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
-    description='Add support for the Road Network disbursement algorithm for the Geospatial feature',
+    description='Add support for the Road Network disbursement algorithm for the Microplanning feature',
 )
 
 USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION = StaticToggle(

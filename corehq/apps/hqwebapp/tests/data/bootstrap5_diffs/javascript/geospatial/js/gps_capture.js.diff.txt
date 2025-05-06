@@ -1,8 +1,8 @@
 --- 
 +++ 
 @@ -1,4 +1,4 @@
--hqDefine("geospatial/js/bootstrap3/gps_capture", [
-+hqDefine("geospatial/js/bootstrap5/gps_capture", [
+-hqDefine("microplanning/js/bootstrap3/gps_capture", [
++hqDefine("microplanning/js/bootstrap5/gps_capture", [
      "jquery",
      "knockout",
      'underscore',

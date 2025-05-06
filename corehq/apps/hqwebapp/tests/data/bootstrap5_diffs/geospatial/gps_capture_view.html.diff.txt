@@ -1,13 +1,13 @@
 --- 
 +++ 
 @@ -1,9 +1,9 @@
--{% extends "geospatial/bootstrap3/base_template.html" %}
-+{% extends "geospatial/bootstrap5/base_template.html" %}
+-{% extends "microplanning/bootstrap3/base_template.html" %}
++{% extends "microplanning/bootstrap5/base_template.html" %}
  {% load compress %}
  {% load i18n %}
  {% load hq_shared_tags %}
  
--{% js_entry_b3 "geospatial/js/bootstrap3/gps_capture" %}
+-{% js_entry_b3 "microplanning/js/bootstrap3/gps_capture" %}
 +{% js_entry "geospatial/js/bootstrap5/gps_capture" %}
  
   {% block stylesheets %}

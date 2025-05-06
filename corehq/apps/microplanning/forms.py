@@ -20,7 +20,7 @@ LOCATION_SOURCE_OPTIONS = [
 ]
 
 
-class GeospatialConfigForm(forms.ModelForm):
+class MicroplanningConfigForm(forms.ModelForm):
     RADIAL_ALGORITHM_OPTION = (GeoConfig.RADIAL_ALGORITHM, _('Radial Algorithm'))
     ROAD_NETWORK_ALGORITHM_OPTION = (GeoConfig.ROAD_NETWORK_ALGORITHM, _('Road Network Algorithm'))
 

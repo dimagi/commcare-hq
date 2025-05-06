@@ -234,15 +234,15 @@ var propertyListItem = function (
 
     self.deprecateProperty = function () {
         if (toggles.toggleEnabled('MICROPLANNING') && self.isGeoCaseProp()) {
-            self.confirmGeospatialDeprecation();
+            self.confirmMicroplanningDeprecation();
         } else {
             self.deprecated(true);
         }
     };
 
-    self.confirmGeospatialDeprecation = function () {
-        const $modal = $("#deprecate-geospatial-prop-modal").modal('show');
-        $("#deprecate-geospatial-prop-btn").off('click').on('click', function () {
+    self.confirmMicroplanningDeprecation = function () {
+        const $modal = $("#deprecate-microplanning-prop-modal").modal('show');
+        $("#deprecate-microplanning-prop-btn").off('click').on('click', function () {
             self.deprecated(true);
             $modal.modal('hide');
         });

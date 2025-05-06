@@ -4,7 +4,7 @@
 {% load hq_shared_tags %}
 
 {% block reportcontent %}
-  {% include 'geospatial/partials/index_alert.html' %}
+  {% include 'microplanning/partials/index_alert.html' %}
   <div class="row card">  {# todo B5: css-panel #}
     <div class="col col-lg-3 col-xl-2">
       <span id="lock-groups-controls">
@@ -42,7 +42,7 @@
     </div>
   </div>
 
-  {% include 'geospatial/partials/bootstrap5/saved_polygon_filter.html' with uses_disbursement='false' %}
+  {% include 'microplanning/partials/bootstrap5/saved_polygon_filter.html' with uses_disbursement='false' %}
   <div id="case-grouping-map" style="height: 500px"></div>  {# todo B5: inline-style #}
 
   <div class="panel-body-datatable">

@@ -133,7 +133,7 @@
   {% initial_page_data 'typeChoices' question_types %}
   {% initial_page_data 'fhirResourceTypes' fhir_resource_types %}
   {% initial_page_data 'read_only_mode' request.is_view_only %}
-  {% url 'geospatial_settings' domain as geospatial_settings_url %}
+  {% url 'microplanning_settings' domain as microplanning_settings_url %}
   <div id="case-type-error" class="alert alert-danger" hidden>
     <p>
       {% blocktrans %}

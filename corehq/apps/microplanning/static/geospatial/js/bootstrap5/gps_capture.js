@@ -1,4 +1,4 @@
-hqDefine("geospatial/js/bootstrap5/gps_capture", [
+hqDefine("microplanning/js/bootstrap5/gps_capture", [
     "jquery",
     "knockout",
     'underscore',
@@ -18,7 +18,7 @@ hqDefine("geospatial/js/bootstrap5/gps_capture", [
     mapboxgl,
     MapboxGeocoder,
 ) {
-    const MAP_CONTAINER_ID = "geospatial-map";
+    const MAP_CONTAINER_ID = "microplanning-map";
     const USERS_PER_PAGE = 10;
 
     var map;

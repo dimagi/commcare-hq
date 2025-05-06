@@ -347,7 +347,7 @@ USER_MANAGEMENT_REPORTS = (
     )),
 )
 
-GEOSPATIAL_MAP = (
+MICROPLANNING_MAP = (
     (_("Microplanning"), (
         CaseManagementMap,
         CaseGroupingReport,

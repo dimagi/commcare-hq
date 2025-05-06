@@ -1,7 +1,7 @@
-Geospatial Features
+Microplanning Features
 ===================
 
-Geospatial features allow the management of cases and mobile workers
+Microplanning features allow the management of cases and mobile workers
 based on their geographical location. Case location is stored in a
 configurable case property, which defaults to "gps_point". Mobile
 worker location is stored in user data, also with the name "gps_point".
@@ -80,7 +80,7 @@ for cases with the following columns
    altitude and accuracy separated by an empty space. Example:
    `9.9999952 3.2859413 393.2 4.36`. This is the case property saved on
    a case to capture its location and is configurable with default
-   value being `gps_point`, so good to check Geospatial Configuration
+   value being `gps_point`, so good to check Microplanning Configuration
    Settings page for the project to confirm the case property being
    used before doing the upload. If its different, then this column
    should use that case property instead of `gps_point`
