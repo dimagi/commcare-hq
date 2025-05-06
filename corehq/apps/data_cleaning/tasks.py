@@ -56,7 +56,7 @@ def commit_data_cleaning(self, bulk_edit_session_id):
 
     record_iter = session.records.order_by('pk').iterator()
     for record_batch in chunked(record_iter, CASEBLOCK_CHUNKSIZE):
-        blocks = _create_case_blocks(session, record_batch)
+        blocks = _create_case_blocks(session, record_batch, errored_doc_ids)
         if not blocks:
             logger.info("commit_data_cleaning: no cases needed an update in a batch", extra={
                 'session_id': session.session_id,
@@ -116,13 +116,27 @@ def _prune_records_and_complete_session(session, errored_doc_ids):
     session.save(update_fields=['completed_on'])
 
 
-def _create_case_blocks(session, records):
+def _create_case_blocks(session, records, errored_doc_ids):
     blocks = []
     case_ids = [rec.doc_id for rec in records]
     cases = {c.case_id: c for c in CommCareCase.objects.get_cases(case_ids, session.domain)}
     for record in records:
         case = cases[record.doc_id]
-        update = record.get_edited_case_properties(case)
+        try:
+            update = record.get_edited_case_properties(case)
+        except Exception as e:
+            errored_doc_ids.append(record.doc_id)
+            session.update_result(0, error={
+                'error': str(e),
+                'doc_id': record.doc_id,
+            })
+            logger.error("commit_data_cleaning: error getting edited case properties", extra={
+                'session_id': session.session_id,
+                'domain': session.domain,
+                'error': str(e),
+                'doc_id': record.doc_id,
+            })
+            continue
         if update:
             blocks.append(CaseBlock(
                 create=False,
