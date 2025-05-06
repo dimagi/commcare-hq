@@ -443,8 +443,7 @@ class TestToggleEditPermissionShortcuts(TestCase):
 
     def test_get_tags_with_edit_permission(self):
         allowed_tags = get_editable_toggle_tags_for_user('arthur')
-        assert allowed_tags == ALL_TAGS
+        assert allowed_tags == [TAG_CUSTOM]
 
         allowed_tags = get_editable_toggle_tags_for_user('diane')
-        expected_tags = [tag for tag in ALL_TAGS if tag != TAG_CUSTOM]
-        assert allowed_tags == expected_tags
+        assert allowed_tags == []

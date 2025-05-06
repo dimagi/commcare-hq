@@ -107,8 +107,7 @@ def get_editable_toggle_tags_for_user(username):
     allowed_tags = []
     for tag in ALL_TAGS:
         permission = ToggleEditPermission.get_by_tag_slug(tag.slug)
-        # User has access to the tag if no entry exists
-        if not permission or permission.is_user_enabled(username):
+        if permission and permission.is_user_enabled(username):
             allowed_tags.append(tag)
     return allowed_tags
 
@@ -116,7 +115,6 @@ def get_editable_toggle_tags_for_user(username):
 def can_user_edit_tag(username, tag):
     from corehq.toggles.sql_models import ToggleEditPermission
     permission = ToggleEditPermission.get_by_tag_slug(tag.slug)
-    # User has access to the tag if no entry exists
-    if not permission or permission.is_user_enabled(username):
+    if permission and permission.is_user_enabled(username):
         return True
     return False
