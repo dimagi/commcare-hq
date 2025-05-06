@@ -136,6 +136,7 @@ class CommitCasesTest(TestCase):
 
         self._refresh_session()
         self.assertDictEqual(self.session.result, {
+            'errors': [],
             'form_ids': form_ids,
             'record_count': 1,
             'percent': 100,
