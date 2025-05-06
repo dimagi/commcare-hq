@@ -56,6 +56,13 @@ def commit_data_cleaning(self, bulk_edit_session_id):
     record_iter = session.records.order_by('pk').iterator()
     for record_batch in chunked(record_iter, CASEBLOCK_CHUNKSIZE):
         blocks = _create_case_blocks(session, record_batch)
+        if not blocks:
+            logger.info("commit_data_cleaning: no cases needed an update in a batch", extra={
+                'session_id': session.session_id,
+                'domain': session.domain,
+                'record_batch': [record.doc_id for record in record_batch],
+            })
+            continue
         xform = _submit_case_blocks(session, blocks)
         num_records = len(record_batch)
         count_cases(value=num_records * 2)       # 1 read + 1 write per case
