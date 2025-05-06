@@ -1,6 +1,5 @@
 import "commcarehq";
 import $ from "jquery";
-import _ from "underscore";
 import intialPageData from "hqwebapp/js/initial_page_data";
 import baseAce from "hqwebapp/js/base_ace";
 

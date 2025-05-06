@@ -213,7 +213,7 @@ function pillowModel(pillow) {
         if (self.seq_format() === 'json') {
             _.each(self.offsets(), function (dbOffset, key) {
                 var value;
-                if (self.seq() === null || !self.seq().hasOwnProperty(key)) {
+                if (self.seq() === null || !_.has(self.seq(), key)) {
                     value = 0;
                 } else {
                     value = self.seq()[key];
@@ -285,9 +285,8 @@ function pillowModel(pillow) {
             }
         }, "json")
             .fail(function (jqxhr) {
-                var err = 'Unknown server error';
                 try {
-                    err = JSON.parse(jqxhr.responseText).error;
+                    JSON.parse(jqxhr.responseText).error;
                 } catch (e) {
                     // do nothing
                 }
