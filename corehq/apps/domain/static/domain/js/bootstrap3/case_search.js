@@ -1,4 +1,3 @@
-import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
@@ -17,7 +16,7 @@ var caseTypeProps = function (caseType, properties) {
 
     self.caseType = ko.observable(caseType);
     self.properties = ko.observableArray(
-        _.map(properties, function (name) { return propertyModel(name); })
+        _.map(properties, function (name) { return propertyModel(name); }),
     );
 
     self.addProperty = function () {
@@ -55,7 +54,7 @@ module.caseSearchConfig = function (options) {
     for (var caseType in initialValues.fuzzy_properties) {
         self.fuzzyProperties.push(caseTypeProps(
             caseType,
-            initialValues.fuzzy_properties[caseType]
+            initialValues.fuzzy_properties[caseType],
         ));
     }
     self.ignorePatterns = ko.observableArray();
@@ -63,7 +62,7 @@ module.caseSearchConfig = function (options) {
         self.ignorePatterns.push(ignorePatterns(
             initialValues.ignore_patterns[i].case_type,
             initialValues.ignore_patterns[i].case_property,
-            initialValues.ignore_patterns[i].regex
+            initialValues.ignore_patterns[i].regex,
         ));
     }
     self.change = function () {
@@ -110,7 +109,7 @@ module.caseSearchConfig = function (options) {
             var caseType = self.fuzzyProperties()[i].caseType(),
                 properties = _.map(
                     self.fuzzyProperties()[i].properties(),
-                    function (property) { return property.name(); }
+                    function (property) { return property.name(); },
                 );
 
             fuzzyProperties[caseType] = (fuzzyProperties[caseType] || []).concat(properties);

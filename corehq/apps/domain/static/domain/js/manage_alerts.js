@@ -8,7 +8,7 @@ hqDefine("domain/js/manage_alerts",[
     $,
     ko,
     _,
-    initialPageData
+    initialPageData,
 ) {
     var domainAlert = function (options) {
         var self = ko.mapping.fromJS(options);
