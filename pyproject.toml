@@ -1,0 +1,11 @@
+[project]
+name = "commcare-hq"
+version = "1.0.0"
+requires-python = ">=3.9,<3.10"
+readme = "README.md"
+license = { file = "LICENSE" }
+
+[project.urls]
+Homepage = "https://commcarehq.org"
+Documentation = "https://commcare-hq.readthedocs.io"
+Repository = "https://github.com/dimagi/commcare-hq"
