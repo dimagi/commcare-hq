@@ -58,9 +58,6 @@ ptop*.json
 /coverage-report
 /coverage-js
 
-# pyenv
-.python-version
-
 # Sphinx
 docs/_build
 celerybeat-schedule
