@@ -24,6 +24,7 @@ from couchforms.openrosa_response import (
     ResponseNature,
     get_response_element,
     get_simple_response_xml,
+    get_translatable_406_response_xml,
 )
 from dimagi.utils.logging import notify_error
 
@@ -605,7 +606,9 @@ class RestoreConfig(object):
             response = HttpResponse(response, content_type="text/xml; charset=utf-8",
                                     status=412)  # precondition failed
         except CannotRestoreException as e:
-            response = get_simple_response_xml(str(e), ResponseNature.OTA_RESTORE_ERROR)
+            response = get_translatable_406_response_xml(
+                'restore.failed.error', str(e), ResponseNature.OTA_RESTORE_ERROR
+            )
             response = HttpResponse(response, content_type="text/xml; charset=utf-8", status=406)
 
         if not is_async:
