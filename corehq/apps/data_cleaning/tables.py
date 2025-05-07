@@ -112,7 +112,6 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
         if num_changes is None:
             num_changes = session.get_num_changes()
         return {
-            "numChanges": num_changes,
             "isSessionAtChangeLimit": num_changes >= MAX_SESSION_CHANGES,
             "isUndoMultiple": session.is_undo_multiple(),
         }
