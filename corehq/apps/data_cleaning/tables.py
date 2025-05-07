@@ -1,4 +1,3 @@
-import json
 from memoized import memoized
 
 from django.utils.translation import gettext_lazy
@@ -101,25 +100,6 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
     @memoized
     def has_changes(self):
         return self.session.has_changes()
-
-    @staticmethod
-    def get_edit_details(session):
-        """
-        Return a dictionary of edit details for the Alpine.store.
-        NOTE: The Table's Host View also calls this.
-        """
-        return {
-            "isUndoMultiple": session.is_undo_multiple(),
-        }
-
-    @property
-    @memoized
-    def edit_details(self):
-        """
-        Return a JSON dump of the result of get_edit_details.
-        This is used to pass the edit details to the Alpine store.
-        """
-        return json.dumps(self.get_edit_details(self.session))
 
 
 class CaseCleaningTasksTable(BaseHtmxTable, tables.Table):

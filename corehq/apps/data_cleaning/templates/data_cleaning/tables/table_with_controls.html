@@ -14,7 +14,6 @@
     },
   }"
   x-init="
-    $store.editDetails.update({{ table.edit_details }});
     updateCleaningStatus(numRecordsSelected);
     $watch('numRecordsSelected', updateCleaningStatus);
   "
@@ -60,25 +59,10 @@
             type="button"
             data-bs-toggle="modal"
             data-bs-target="#confirm-undo-modal"
-            x-show="$store.editDetails.isUndoMultiple"
             @click="$dispatch('updateUndoSummaryMessage');"
           >
             <i class="fa-solid fa-undo"></i>
-            {% trans "Undo" %} {# note: undo for multiple records #}
-          </button>
-          <button
-            class="btn btn-outline-secondary"
-            type="button"
-            hx-post="{{ request.path_info }}{% querystring %}"
-            hq-hx-action="undo_last_change"
-            hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}.table-container{% endif %}"
-            hx-swap="outerHTML"
-            hq-hx-loading="{{ table.loading_indicator_id }}"
-            hx-disable-elt="this"
-            x-show="!$store.editDetails.isUndoMultiple"
-          >
-            <i class="fa-solid fa-undo"></i>
-            {% trans "Undo" %} {# note: undo for a single record #}
+            {% trans "Undo" %}
           </button>
 
           <button

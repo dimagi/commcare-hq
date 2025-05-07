@@ -170,18 +170,9 @@ class CleanCasesTableView(BulkEditSessionViewMixin,
             record,
             table,
         )
-        response = self.render_htmx_partial_response(
+        return self.render_htmx_partial_response(
             request, DataCleaningHtmxColumn.template_name, context
         )
-        response["HX-Trigger"] = json.dumps(
-            {
-                "updateEditDetails": {
-                    "target": "body",
-                    "editDetails": self.table_class.get_edit_details(self.session),
-                },
-            }
-        )
-        return response
 
     def _get_cell_request_details(self, request):
         """

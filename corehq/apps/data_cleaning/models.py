@@ -345,14 +345,6 @@ class BulkEditSession(models.Model):
     def are_bulk_edits_allowed(self):
         return self.changes.count() < MAX_SESSION_CHANGES
 
-    def is_undo_multiple(self):
-        """
-        Check if the last change in the session affects multiple records.
-        :return: bool - True if the last change affects multiple records
-        """
-        last_change = self.changes.last()
-        return last_change and last_change.records.count() > 1
-
     def purge_records(self):
         """
         Delete all records that do not have changes or are not selected.
