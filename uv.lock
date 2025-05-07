@@ -933,15 +933,15 @@ wheels = [
 
 [[package]]
 name = "dependency-metrics"
-version = "0.1.2"
+version = "0.1.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "requests" },
     { name = "sh" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/76/58/92fbbcbba8243bc165d10d8977239335f4a2cd5b37bb184bababa9a002b5/dependency_metrics-0.1.2.tar.gz", hash = "sha256:b35d101c79b267c9fe67177eff4151d9e284e75d1b983c439f114f736da98565", size = 12705 }
+sdist = { url = "https://files.pythonhosted.org/packages/0c/ed/2a3f846263db95b1734f6bd55dda17b12966f33a0fa2fd2bb54c90dd8689/dependency_metrics-0.1.3.tar.gz", hash = "sha256:7c9ab734a420d4491ed8bb75b4a17bbf94395d7d3e74bb98198dee9901b118b6", size = 13019 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/be/d8/0c5cb12dbab76756d0aa0b22a87886e80c62921b8baf06334cea41942f45/dependency_metrics-0.1.2-py3-none-any.whl", hash = "sha256:7f7e23afdf9e328094efd92a0a7ccd17004a5105fb6933c8e525acc7444cd4b4", size = 12040 },
+    { url = "https://files.pythonhosted.org/packages/04/77/8c922caca0f8c972ba3b52c41ee9929578ea2f905e527f28cb135b4def60/dependency_metrics-0.1.3-py3-none-any.whl", hash = "sha256:2fc46d13d426c54efceadc2a753c31fd59c4a2e1dedd740ead60284fc16b5065", size = 12360 },
 ]
 
 [[package]]
