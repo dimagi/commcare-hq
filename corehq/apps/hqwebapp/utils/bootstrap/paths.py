@@ -18,7 +18,6 @@ IGNORED_PATHS_BY_APP = {
     "hqwebapp": [
         "hqwebapp/base.html",
         "hqwebapp/includes/inactivity_modal_data.html",
-        "hqwebapp/includes/ui_element_js.html",
         # these need to be explicitly specified since we DO want to migrate
         # hqwebapp/crispy/single_crispy_form.html
         "hqwebapp/crispy/checkbox_widget.html",
