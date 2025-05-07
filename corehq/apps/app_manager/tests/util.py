@@ -27,7 +27,7 @@ from corehq.tests.util.xml import (
 )
 from corehq.util.test_utils import TestFileMixin, unit_testing_only
 
-
+print("matches get blobdb")
 class TestXmlMixin(TestFileMixin):
     root = os.path.dirname(__file__)
 
