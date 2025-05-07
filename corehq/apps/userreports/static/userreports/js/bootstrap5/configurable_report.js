@@ -4,7 +4,6 @@ import _ from "underscore";
 import kissmetrics from "analytix/js/kissmetrix";
 import hqMain from "hqwebapp/js/bootstrap5/main";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import hqReport from "reports/js/bootstrap5/hq_report";
 import reportConfigModels from "reports/js/bootstrap5/report_config_models";
 import standardHQReportModule from "reports/js/bootstrap5/standard_hq_report";
 import analytics from "userreports/js/report_analytix";

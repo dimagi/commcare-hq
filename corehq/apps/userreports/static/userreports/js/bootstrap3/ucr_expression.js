@@ -1,5 +1,4 @@
 import "commcarehq";
-import moment from "moment";
 import ko from "knockout";
 import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
