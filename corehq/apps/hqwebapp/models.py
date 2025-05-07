@@ -15,7 +15,7 @@ from corehq.util.quickcache import quickcache
 
 PageInfoContext = namedtuple('PageInfoContext', 'title url')
 
-
+print("no match")
 class GaTracker(namedtuple('GaTracking', 'category action label')):
     """
     Info for tracking clicks using Google Analytics

@@ -5,7 +5,7 @@ from django.conf import settings
 from compressor.filters import CompilerFilter
 from compressor.filters.css_default import CssAbsoluteFilter
 
-
+print("no match")
 class LessFilter(CompilerFilter):
 
     def __init__(self, content, attrs, **kwargs):
