@@ -22,10 +22,14 @@ jobs:
           node-version: '20'
           cache: 'yarn'
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: '0.7.2'
+
       - name: Install Python Dependencies
         run: |
-          pip install --upgrade pip
-          pip install -r requirements/dev-requirements.txt
+          uv sync --locked --compile-bytecode
 
       - name: Install JavaScript Dependencies
         run: yarn install --frozen-lockfile
