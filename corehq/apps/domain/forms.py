@@ -1,5 +1,6 @@
 import datetime
 import io
+import ipaddress
 import json
 import logging
 import uuid
@@ -220,6 +221,92 @@ class ProjectSettingsForm(forms.Form):
         dm.override_global_tz = override
         user.save()
         return True
+
+
+class IPAccessConfigForm(forms.Form):
+    """
+    Form for updating a project's IP Access Configuration
+    """
+    country_allowlist = forms.MultipleChoiceField(
+        label=_("Allowed Countries"),
+        choices=sorted(list(COUNTRIES.items()), key=lambda x: x[1]),
+        required=False,
+    )
+
+    ip_allowlist = forms.CharField(
+        label=_("Allowed IPs"),
+        required=False,
+        help_text='IPs that will be allowed access to your project, regardless of country of origin. '
+                  'Please configure your list to be comma and space separated, '
+                  'e.g. 192.168.0.1, 192.168.1.1, 192.168.2.1',
+    )
+
+    ip_denylist = forms.CharField(
+        label=_("Denied IPs"),
+        required=False,
+        help_text='IPs that will be denied access to your project, regardless of country of origin.',
+    )
+
+    comment = forms.CharField(
+        label=_("Additional Notes"),
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
+        required=False
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.current_ip = kwargs.pop('current_ip', None)
+        self.current_country = kwargs.pop('current_country', None)
+        super(IPAccessConfigForm, self).__init__(*args, **kwargs)
+        self.helper = hqcrispy.HQFormHelper(self)
+        self.helper.form_id = 'ip-access-config-form'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Edit IP Access Config"),
+                "country_allowlist",
+                "ip_allowlist",
+                "ip_denylist",
+                "comment"
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Update IP Access Config"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
+            )
+        )
+
+    def clean(self):
+        allow_list = self.cleaned_data['ip_allowlist'].split(", ") if self.cleaned_data['ip_allowlist'] else []
+        deny_list = self.cleaned_data['ip_denylist'].split(", ") if self.cleaned_data['ip_denylist'] else []
+
+        # Ensure an IP isn't in both lists
+        if (allow_list and deny_list) and set(allow_list).intersection(set(deny_list)):
+            self.add_error('ip_allowlist', _("There are IP addresses in both the Allowed and Denied lists. "
+                                             "Please ensure an IP address is only in one list at a time."))
+
+        # Ensure inputs are valid IPs, checks both IPv4 and IPv6
+        for ip in allow_list + deny_list:
+            try:
+                ipaddress.ip_address(ip)
+            except ValueError as e:
+                raise ValidationError(e)
+
+        self.cleaned_data['ip_allowlist'] = allow_list
+        self.cleaned_data['ip_denylist'] = deny_list
+
+        # Additional validation
+        if self.cleaned_data['country_allowlist']:
+            if not settings.MAXMIND_LICENSE_KEY:
+                self.add_error('country_allowlist', _("The Allowed Countries field cannot be saved because "
+                                                      "MaxMind is not configured for your environment"))
+            elif (self.current_country and self.current_country not in self.cleaned_data['country_allowlist']
+                  and self.current_ip not in self.cleaned_data['ip_allowlist']):
+                self.add_error('country_allowlist', _("Please add your own country or IP to the Allowed IPs field "
+                                                      "to avoid being locked out."))
+        if self.current_ip in self.cleaned_data['ip_denylist']:
+            self.add_error('ip_denylist', _("You cannot put your current IP address in the Denied IPs field"))
+        return self.cleaned_data
 
 
 class TransferDomainFormErrors(object):
@@ -495,7 +582,7 @@ class DomainGlobalSettingsForm(forms.Form):
     )
 
     connect_messaging_channel_name = CharField(
-        label=gettext_lazy("Connect Messaging Channel Nmae"),
+        label=gettext_lazy("Connect Messaging Channel Name"),
         required=False,
         help_text=gettext_lazy("Name of the channel created in connect messaging.")
     )
@@ -897,8 +984,8 @@ class PrivacySecurityForm(forms.Form):
             "Secure Submissions prevents others from impersonating your mobile workers. "
             "This setting requires all deployed applications to be using secure "
             "submissions as well. "
-            "<a href='https://help.commcarehq.org/display/commcarepublic/Project+Space+Settings'>"
-            "Read more about secure submissions here</a>"))
+            "<a href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2367226200/"
+            "Project+Settings+Overview'>Read more about secure submissions here</a>"))
     )
     secure_sessions = BooleanField(
         label=gettext_lazy("Shorten Inactivity Timeout"),

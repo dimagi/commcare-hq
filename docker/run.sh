@@ -21,7 +21,7 @@ VALID_TEST_SUITES=(
     python
     python-sharded
     python-sharded-and-javascript
-    python-elasticsearch-v5
+    python-elasticsearch-v6
 )
 
 
@@ -36,14 +36,7 @@ function setup {
         install -dm0755 -o cchq -g cchq ./artifacts
     fi
 
-    # uv check, pip-sync, and symlink can be removed after the commcarehq_base
-    # Docker image containing uv has been published for use by Github Actions.
-    if which uv &> /dev/null; then
-        uv pip sync requirements/test-requirements.txt
-    else
-        pip-sync --user requirements/test-requirements.txt
-        ln -s /usr/bin/google-chrome-unstable /usr/bin/google-chrome-stable
-    fi
+    uv pip sync requirements/test-requirements.txt
     pip check  # make sure there are no incompatibilities in test-requirements.txt
     python_preheat  # preheat the python libs
 
@@ -188,10 +181,10 @@ function _run_tests {
             # TODO make it possible to run a subset of python-sharded tests
             py_test_args+=("-msharded")
             ;;
-        python-elasticsearch-v5)
-            export ELASTICSEARCH_HOST='elasticsearch5'
-            export ELASTICSEARCH_PORT=9205
-            export ELASTICSEARCH_MAJOR_VERSION=5
+        python-elasticsearch-v6)
+            export ELASTICSEARCH_HOST='elasticsearch6'
+            export ELASTICSEARCH_PORT=9200
+            export ELASTICSEARCH_MAJOR_VERSION=6
             py_test_args+=("-mes_test")
             ;;
     esac

@@ -45,18 +45,18 @@
         <i class="fa fa-warning"></i>
         {% trans "Note: Continuing will change your current subscription." %}
       </h4>
-      <p class="text-community">
+      <p class="text-free">
         {% blocktrans with next_invoice_date as invoice_date %}
           CommCare is billed on a monthly basis, and all subscriptions require a 30 day minimum commitment.
           You should expect your first invoice on {{ invoice_date }}, or you can prepay for your
           subscription by following the instructions
-          <a href="https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment">here</a>.
+          <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-Methods">here</a>.
         {% endblocktrans %}
       </p>
-      <p class="text-community">
+      <p class="text-free">
         {% blocktrans %}
           Once you subscribe to a paid plan, you will be able to pause your subscription after 30 days,
-          but you will no longer be able to downgrade to the CommCare Community plan.
+          but you will no longer be able to downgrade to the CommCare Free edition.
         {% endblocktrans %}
       </p>
       <p>

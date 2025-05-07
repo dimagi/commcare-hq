@@ -21,6 +21,7 @@ const aliases = {
     "sentry_captureconsole": path.resolve(utils.getStaticFolderForApp('hqwebapp'),
         'sentry/js/sentry.captureconsole.7.28.0.min'),
     "tempusDominus": "@eonasdan/tempus-dominus",
+    "hqwebapp/less": path.resolve(utils.getStaticPathForApp('hqwebapp', 'less')),
     "ko.mapping": path.resolve(utils.getStaticPathForApp('hqwebapp', 'js/lib/knockout_plugins/'),
         'knockout_mapping.ko.min'),
 };
@@ -34,6 +35,10 @@ module.exports = {
             {
                 test: /\.css$/i,
                 use: ["style-loader", "css-loader"],
+            },
+            {
+                test: /\.less$/,
+                use: ["style-loader", "css-loader", "less-loader"],
             },
             {
                 test: /\.js$/,
@@ -54,14 +59,6 @@ module.exports = {
                 options: {
                     search: /\bhqDefine\b/g,
                     replace: 'define',
-                },
-            },
-            {
-                test: /\.js$/,
-                loader: 'string-replace-loader',
-                options: {
-                    search: /\b(es6!)?hqwebapp\/js\/bootstrap5_loader\b/g,
-                    replace: 'bootstrap5',
                 },
             },
 

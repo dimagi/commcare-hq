@@ -75,6 +75,11 @@ class HqHtmxActionMixin:
         """
         return self.default_htmx_error_template
 
+    def render_htmx_redirect(self, url, response_message=None):
+        response = HttpResponse(response_message or "")
+        response['HX-Redirect'] = url
+        return response
+
     def render_htmx_no_response(self, request, *args, **kwargs):
         """
         Return this when the HTMX triggering element uses

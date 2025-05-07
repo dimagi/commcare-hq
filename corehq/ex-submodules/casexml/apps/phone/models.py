@@ -151,11 +151,6 @@ class OTARestoreUser(object):
     def get_ucr_filter_value(self, ucr_filter, ui_filter):
         return ucr_filter.get_filter_value(self._couch_user, ui_filter)
 
-    @memoized
-    def get_locations_to_sync(self):
-        from corehq.apps.locations.fixtures import get_location_fixture_queryset
-        return get_location_fixture_queryset(self)
-
 
 class OTARestoreWebUser(OTARestoreUser):
 

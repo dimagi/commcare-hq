@@ -327,14 +327,14 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
 
     @staticmethod
     def response_mobile_worker_creation(domain, new_plan_version):
-        """ Deactivates users if there are too many for a community plan """
+        """ Deactivates users if there are too many for a free plan """
         from corehq.apps.accounting.models import (
             UNLIMITED_FEATURE_USAGE,
             DefaultProductPlan,
             FeatureType,
         )
 
-        # checks for community plan
+        # checks for free plan
         if (new_plan_version != DefaultProductPlan.get_default_plan_version()):
             return True
 
@@ -655,7 +655,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 else:
                     return _fmt_alert(
                         ngettext(
-                            "Community plans include %(monthly_limit)s Mobile Workers by default. "
+                            "Free plans include %(monthly_limit)s Mobile Workers by default. "
                             "Because you have %(num_extra)d extra Mobile Worker, "
                             "all your project's Mobile Workers will be deactivated. "
                             "You can re-activate these manually after downgrade. "
@@ -663,7 +663,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                             "in an additional charge of USD %(excess_fee)s, totalling "
                             "USD %(monthly_total)s per month.",
 
-                            "Community plans include %(monthly_limit)s Mobile Workers by default. "
+                            "Free plans include %(monthly_limit)s Mobile Workers by default. "
                             "Because you have %(num_extra)d extra Mobile Workers, "
                             "all your project's Mobile Workers will be deactivated. "
                             "You can re-activate these manually after downgrade. "

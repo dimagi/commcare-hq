@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,44 +1,96 @@
+@@ -1,44 +1,97 @@
 -@import "_hq/includes/variables.less";
 -@import "_hq/includes/mixins.less";
  
@@ -55,6 +55,7 @@
 +@import "mixins";
 +@import "commcarehq/mixins";
 +@import "utilities";
++@import "commcarehq/animations";
 +
 +// Layout & components
 +@import "root";

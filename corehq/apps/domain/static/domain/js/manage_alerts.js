@@ -4,8 +4,12 @@ hqDefine("domain/js/manage_alerts",[
     'underscore',
     'hqwebapp/js/initial_page_data',
     'commcarehq',
-], function ($, ko, _, initialPageData) {
-
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+) {
     var domainAlert = function (options) {
         var self = ko.mapping.fromJS(options);
         self.editUrl = initialPageData.reverse('domain_edit_alert', self.id());

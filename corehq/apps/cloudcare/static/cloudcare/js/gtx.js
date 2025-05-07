@@ -15,6 +15,13 @@ hqDefine('cloudcare/js/gtx', [
         return menuResponse.selections ? ">" + menuResponse.selections.join(">") : "";
     };
 
+    const logStartForm = function (name) {
+        const gtxEventData = {
+            title: name,
+        };
+        gtx.sendEvent("web_apps_start_form", gtxEventData);
+    };
+
     const logNavigateMenu = function (menuResponse) {
         const selections = extractSelections(menuResponse);
         if (selections !== lastSelections) {
@@ -70,5 +77,6 @@ hqDefine('cloudcare/js/gtx', [
         logCaseList: logCaseList,
         logFormSubmit: logFormSubmit,
         logNavigateMenu: logNavigateMenu,
+        logStartForm: logStartForm,
     };
 });

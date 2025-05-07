@@ -12,21 +12,3 @@
     "
   ></inline-edit>
 </div>
-
-<script>
-  $(function () {
-    // notice how ids referenced in javascript are prefixed with js,
-    // so it's clear to someone reading the HTML that there is associated js functionality
-    $("#js-inline-edit-lang-example").koApplyBindings(function () {
-      let self = {};
-
-      self.text = '';
-
-      // ideally hqwebapp/js/initial_page_data should be in define() of the js module
-      let initialPageData = hqImport("hqwebapp/js/initial_page_data");
-      self.url = initialPageData.reverse("styleguide_inline_edit_demo");
-
-      return self;
-    });
-  });
-</script>

@@ -78,7 +78,7 @@ from django.db import models, router
 from django.db.models.base import Deferred
 from django.dispatch import receiver
 from django.utils import timezone
-from django.utils.functional import cached_property
+from django.utils.functional import cached_property, classproperty
 from django.utils.translation import gettext_lazy as _
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -146,24 +146,15 @@ from .repeater_generators import (
     UserPayloadGenerator,
 )
 
-# Retry responses with these status codes. All other 4XX status codes
-# are treated as InvalidPayload errors.
-HTTP_STATUS_4XX_RETRY = (
-    HTTPStatus.BAD_REQUEST,
-    # Traefik proxy returns (client error) 404 instead of (server error)
-    # 503 when it has not been configured with a catch-all router and is
-    # unable to match a request to a router.
-    # https://doc.traefik.io/traefik/getting-started/faq/#404-not-found
-    HTTPStatus.NOT_FOUND,
+# Back off, and retry responses with these status codes. All other
+# status codes are treated as InvalidPayload errors.
+HTTP_STATUS_BACK_OFF = (
     HTTPStatus.REQUEST_TIMEOUT,
-    HTTPStatus.CONFLICT,
-    HTTPStatus.PRECONDITION_FAILED,
     HTTPStatus.LOCKED,
-    HTTPStatus.FAILED_DEPENDENCY,
     HTTPStatus.TOO_EARLY,
-    HTTPStatus.UPGRADE_REQUIRED,
-    HTTPStatus.PRECONDITION_REQUIRED,
-    HTTPStatus.TOO_MANY_REQUESTS,
+    HTTPStatus.BAD_GATEWAY,
+    HTTPStatus.SERVICE_UNAVAILABLE,
+    HTTPStatus.GATEWAY_TIMEOUT,
 )
 
 
@@ -401,9 +392,8 @@ class Repeater(RepeaterSuperProxy):
     def get_url(self, record):
         return self.connection_settings.url
 
-    @classmethod
-    @property
-    def _repeater_type(cls):
+    @classproperty
+    def _repeater_type(cls):  # noqa: N805
         return cls.__name__
 
     @property
@@ -565,11 +555,15 @@ class Repeater(RepeaterSuperProxy):
             return repeat_record.handle_exception(result)
         elif is_success_response(result):
             return repeat_record.handle_success(result)
-        elif not is_response(result) or (
-            500 <= result.status_code < 600
-            or result.status_code in HTTP_STATUS_4XX_RETRY
-        ):
-            return repeat_record.handle_failure(result)
+        elif is_server_failure(result):
+            return repeat_record.handle_server_failure(result)
+        elif is_traefik_proxy_404(result):
+            return repeat_record.handle_server_failure(result)
+        elif result.status_code == HTTPStatus.TOO_MANY_REQUESTS:
+            # TODO:
+            #   self.max_workers = ceil(self.num_workers / 2)
+            #   self.save()
+            return repeat_record.handle_server_failure(result)  # Current behavior
         else:
             message = format_response(result)
             return repeat_record.handle_payload_error(message)
@@ -1347,7 +1341,7 @@ class RepeatRecord(models.Model):
             # data from overwriting the work of another.
             return
 
-        if self.repeater_type in ['DataSourceRepeater']:
+        if self.repeater_type in ['DataSourceRepeater', 'Dhis2EntityRepeater']:
             # separated for improved datadog reporting
             task = retry_process_datasource_repeat_record if is_retry else process_datasource_repeat_record
         else:
@@ -1371,7 +1365,7 @@ class RepeatRecord(models.Model):
             )
         return self.add_success_attempt(response)
 
-    def handle_failure(self, response):
+    def handle_server_failure(self, response):
         log_repeater_error_in_datadog(self.domain, response.status_code, self.repeater_type)
         return self.add_server_failure_attempt(format_response(response))
 
@@ -1482,6 +1476,44 @@ def is_response(duck):
     instance that this module uses, otherwise False.
     """
     return hasattr(duck, 'status_code') and hasattr(duck, 'reason')
+
+
+def is_server_failure(result):
+    """
+    Returns True if ``result`` is a server error (5xx) or a 4xx
+    response that should be retried after backing off.
+    """
+    return not is_response(result) or result.status_code in HTTP_STATUS_BACK_OFF
+
+
+def is_traefik_proxy_404(response):
+    """
+    Treat 404 responses as server errors if they come from Traefik Proxy
+
+    Traefik Proxy returns (client error) 404 instead of (server error)
+    503 when it has not been configured with a catch-all router and is
+    unable to match a request to a router.
+    https://doc.traefik.io/traefik/getting-started/faq/#404-not-found
+
+    This can happen if the remote endpoint is temporarily unavailable,
+    so the request should be retried.
+
+    .. ATTENTION::
+
+       Note that Traefik's headers can be configured or removed in
+       some deployments, so this detection is not 100% reliable
+       across all Traefik installations, but it should work for
+       standard configurations.
+       -- Claude 3.7 Sonnet
+
+    """
+    return (
+        response.status_code == HTTPStatus.NOT_FOUND
+        and (
+            response.headers.get('X-Traefik-Err')
+            or 'traefik' in response.headers.get('Server', '').lower()
+        )
+    )
 
 
 def domain_can_forward(domain):

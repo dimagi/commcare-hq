@@ -13,12 +13,13 @@ from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 from corehq.apps.domain.models import AllowedUCRExpressionSettings
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
-from corehq.apps.userreports.const import DATA_SOURCE_REBUILD_RESTRICTED_AT
-from corehq.apps.userreports.models import guess_data_source_type
-from corehq.apps.userreports.ui import help_text
-from corehq.apps.userreports.ui.fields import JsonField, ReportDataSourceField
-from corehq.apps.userreports.util import get_table_name
 from corehq.util.metrics import metrics_counter
+
+from ..const import DATA_SOURCE_REBUILD_RESTRICTED_AT
+from ..models import guess_data_source_type
+from ..util import get_table_name
+from . import help_text
+from .fields import JsonField, ReportDataSourceField
 
 
 class DocumentFormBase(forms.Form):
@@ -179,7 +180,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
         required=False,
         label="",
         widget=forms.HiddenInput(),
-        help_text=help_text.ANALYTICS
+        help_text=help_text.COMMCARE_ANALYTICS
     )
 
     def __init__(self, domain, data_source_config, read_only, *args, **kwargs):
@@ -287,9 +288,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
                 )
 
     def save(self, commit=False):
-        self.instance.meta.build.finished = False
-        self.instance.meta.build.initiated = None
-        self.instance.meta.build.awaiting = True
+        self.instance.set_rebuild_flags()
         instance = super(ConfigurableDataSourceEditForm, self).save(commit)
         self._report_edit_datasource_metrics()
         return instance

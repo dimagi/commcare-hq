@@ -115,7 +115,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         self.account = BillingAccount.get_or_create_account_by_domain(
             self.domain.name, created_by=self.admin_username)[0]
         self.advanced_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
-        self.community_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.COMMUNITY)
+        self.free_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.FREE)
 
     def test_cancellation(self):
         subscription = Subscription.new_domain_subscription(
@@ -150,7 +150,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
     @flag_enabled('ATTENDANCE_TRACKING')
     def test_add_attendance_coordinator_role_for_domain(self):
         subscription = Subscription.new_domain_subscription(
-            self.account, self.domain.name, self.community_plan,
+            self.account, self.domain.name, self.free_plan,
             web_user=self.admin_username
         )
 
@@ -178,7 +178,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         ).first()
         self.assertFalse(role.is_archived)
 
-        subscription.change_plan(self.community_plan, web_user=self.admin_username)
+        subscription.change_plan(self.free_plan, web_user=self.admin_username)
         role = UserRole.objects.filter(
             name=UserRolePresets.ATTENDANCE_COORDINATOR,
             domain=self.domain.name
@@ -193,7 +193,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
             web_user=self.admin_username
         )
 
-        subscription.change_plan(self.community_plan, web_user=self.admin_username)
+        subscription.change_plan(self.free_plan, web_user=self.admin_username)
         close_mobile_worker_attendee_cases_mock.delay.assert_called_once()
 
     def _change_std_roles(self):
@@ -297,7 +297,7 @@ class TestSoftwarePlanChanges(BaseAccountingTest):
             self.domain.name, created_by=self.admin_username)[0]
         self.advanced_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
         self.advanced_plan.plan.max_domains = 1
-        self.community_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.COMMUNITY)
+        self.free_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.FREE)
 
     def tearDown(self):
         self.domain.delete()
@@ -310,7 +310,7 @@ class TestSoftwarePlanChanges(BaseAccountingTest):
         )
 
         sub2 = Subscription.new_domain_subscription(
-            self.account, self.domain2.name, self.community_plan
+            self.account, self.domain2.name, self.free_plan
         )
         self.assertRaises(SubscriptionAdjustmentError, lambda: sub2.change_plan(self.advanced_plan))
 
