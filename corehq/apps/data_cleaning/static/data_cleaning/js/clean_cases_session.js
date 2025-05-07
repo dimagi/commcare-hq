@@ -15,13 +15,11 @@ Alpine.data('wiggleButtonModel', wiggleButton);
 Alpine.store('isCleaningAllowed', false);
 Alpine.store('showWhitespaces', false);
 Alpine.store('editDetails', {
-    numRecordsEdited: 0,
-    showApplyWarning: false,
+    numChanges: 0,
     isSessionAtChangeLimit: false,
     isUndoMultiple: false,
     update(details) {
-        this.numRecordsEdited = details.numRecordsEdited;
-        this.showApplyWarning = details.numRecordsOverLimit > 0;
+        this.numChanges = details.numChanges;
         this.isSessionAtChangeLimit = details.isSessionAtChangeLimit;
         this.isUndoMultiple = details.isUndoMultiple;
     },

@@ -99,47 +99,21 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
         return self.num_selected_records
 
     @property
-    def num_edited_records(self):
-        """
-        Return the number of edited records in the session.
-        """
-        return self.change_counts["num_records_edited"]
-
-    @property
     @memoized
-    def change_counts(self):
-        """
-        A dictionary of "change_counts" for the session.
-        This includes the number of records edited and the number of records
-        that have reached the maximum number of changes.
-        The keys are:
-            - num_records_edited: the number of records edited
-            - num_records_at_max_changes: the number of records that have reached the maximum number of changes
-        """
-        return self.session.get_change_counts()
+    def num_changes(self):
+        return self.session.get_num_changes()
 
     @staticmethod
-    def get_edit_details(session, change_counts=None):
+    def get_edit_details(session, num_changes=None):
         """
         Return a dictionary of edit details for the Alpine.store.
-        This includes the number of records edited and the number of records
-        that have reached the maximum number of changes.
-
-        This is a staticmethod so that the TableHostView can also call this.
-
-        `change_counts` is optional and will be fetched from the session if not provided,
-        it allows us to memoize the change_counts for additional references in the table's template.
-
-        The keys are:
-            - numRecordsEdited: the number of records edited
-            - numRecordsOverLimit: the number of records that have reached the maximum number of changes
-            - isSessionAtChangeLimit: whether the session has reached the maximum number of changes
+        NOTE: The Table's Host View also calls this.
         """
-        change_counts = change_counts or session.get_change_counts()
+        if num_changes is None:
+            num_changes = session.get_num_changes()
         return {
-            "numRecordsEdited": change_counts["num_records_edited"],
-            "numRecordsOverLimit": change_counts["num_records_at_max_changes"],
-            "isSessionAtChangeLimit": session.get_num_changes() >= MAX_SESSION_CHANGES,
+            "numChanges": num_changes,
+            "isSessionAtChangeLimit": num_changes >= MAX_SESSION_CHANGES,
             "isUndoMultiple": session.is_undo_multiple(),
         }
 
@@ -149,9 +123,8 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
         """
         Return a JSON dump of the result of get_edit_details.
         This is used to pass the edit details to the Alpine store.
-        This is a property so that it can be memoized and used in the template.
         """
-        return json.dumps(self.get_edit_details(self.session, self.change_counts))
+        return json.dumps(self.get_edit_details(self.session, self.num_changes))
 
 
 class CaseCleaningTasksTable(BaseHtmxTable, tables.Table):
