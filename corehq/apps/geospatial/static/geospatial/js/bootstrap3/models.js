@@ -515,8 +515,8 @@ var Map = function (usesClusters, usesStreetsLayers) {
                 continue;
             }
             const coordinatesArr = [coordinates.lng, coordinates.lat];
-            const point = point(coordinatesArr);
-            if (booleanPointInPolygon(point, polygon.geometry)) {
+            const targetPoint = point(coordinatesArr);
+            if (booleanPointInPolygon(targetPoint, polygon.geometry)) {
                 return true;
             }
         }

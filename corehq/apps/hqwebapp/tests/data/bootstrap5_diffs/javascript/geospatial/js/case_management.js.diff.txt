@@ -1,7 +1,7 @@
 --- 
 +++ 
-@@ -5,10 +5,10 @@
- import _ from "underscore";
+@@ -2,10 +2,10 @@
+ import $ from "jquery";
  import initialPageData from "hqwebapp/js/initial_page_data";
  import ko from "knockout";
 -import models from "geospatial/js/bootstrap3/models";
