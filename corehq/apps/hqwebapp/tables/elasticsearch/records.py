@@ -39,6 +39,15 @@ class BaseElasticRecord(ABC):
         :return: string
         """
 
+    @property
+    @abstractmethod
+    def record_id(self):
+        """
+        Return the primary id of the record
+
+        :return: string
+        """
+
     @staticmethod
     def get_sorted_query(query, accessors):
         """
@@ -72,6 +81,23 @@ class CaseSearchElasticRecord(BaseElasticRecord):
 
     def __getitem__(self, item):
         return self.record.get(item)
+
+    @property
+    def name(self):
+        """
+        Used to populate the name attribute of an input (checkbox) in the table.
+        Used by the built-in CheckBoxColumn from django_tables2.
+        """
+        return "selected_case"
+
+    @property
+    def record_id(self):
+        """
+        Return the primary id of the record
+
+        :return: string
+        """
+        return self.record.case.case_id
 
     @staticmethod
     def get_sorted_query(query, accessors):

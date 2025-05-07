@@ -5,7 +5,8 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.db.models import Q
 from django.urls import reverse
 from django.utils.functional import cached_property
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
@@ -22,6 +23,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_brief_apps_in_domain,
 )
+from corehq.apps.app_manager.exceptions import AppInDifferentDomainException
 from corehq.apps.es import UserES, filters
 from corehq.apps.es.aggregations import (
     DateHistogram,
@@ -377,7 +379,13 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             if last_build:
                 build_version = last_build.get('build_version') or build_version
                 if last_build.get('app_id'):
-                    app_name = self.get_app_name(last_build['app_id'])
+                    try:
+                        # For web users who are hopping into multiple apps in different domains,
+                        # we should not fail the whole report if one of the app names is not found.
+                        # We should skip the entry for that user as it did not belong to the requested domain.
+                        app_name = self.get_app_name(last_build['app_id'])
+                    except AppInDifferentDomainException:
+                        continue
                 if self.show_build_profile:
                     last_build_profile_id = last_build.get('build_profile_id')
                     if last_build_profile_id:
@@ -522,31 +530,33 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         user = CouchUser.wrap_correctly(user_es_doc)
         if not user.get_location_ids(self.domain):
             return '---'
-        return self._get_formatted_assigned_location_names(user, user_loc_dict)
+        assigned_location_ids = user.get_location_ids(self.domain)
+        primary_location_id = user.get_location_id(self.domain)
+        return self._get_formatted_assigned_location_names(primary_location_id, assigned_location_ids,
+                                                           user_loc_dict)
 
-    def _get_formatted_assigned_location_names(self, user, user_loc_dict):
+    @staticmethod
+    def _get_formatted_assigned_location_names(primary_location_id, assigned_location_ids, user_loc_dict):
         """
         Create an HTML formatted string of the given assigned location names.
         The primary location will be highlighted in bold.
         """
-        assigned_location_ids = user.get_location_ids(self.domain)
-        primary_location_id = user.get_location_id(self.domain)
         formatted_loc_names = []
         for loc_id in assigned_location_ids:
             loc_name = user_loc_dict.get(loc_id)
             if loc_id == primary_location_id:
                 formatted_loc_names.insert(
-                    0, f'<strong>{loc_name}</strong>'
+                    0, [format_html('<strong>{}</strong>', loc_name)]
                 )
             else:
-                formatted_loc_names.append(loc_name)
+                formatted_loc_names.append([format_html('{}', loc_name)])
 
-        formatted_str = ', '.join(formatted_loc_names[:4])
+        formatted_str = format_html_join(', ', '{}', formatted_loc_names[:4])
         html_nodes = [
-            f'<span class="locations-list">{formatted_str}</span>',
+            format_html('<span class="locations-list">{}</span>', formatted_str)
         ]
         if len(formatted_loc_names) > 4:
-            all_str = ', '.join(formatted_loc_names)
+            all_str = format_html_join(', ', '{}', formatted_loc_names)
             view_controls_html_nodes = [
                 f'<span class="loc-view-control">{_("...See more")}</span>',
                 f'<span class="loc-view-control" style="display:none">{_("...Collapse")}</span>',
@@ -555,7 +565,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 f'<span class="all-locations-list" style="display:none">{all_str}</span>',
                 f'<a href="#" class="toggle-all-locations">{"".join(view_controls_html_nodes)}</a>',
             ]
-        return format_html(f'<div>{"".join(html_nodes)}</div>')
+        return format_html('<div>{}</div>', mark_safe("".join(html_nodes)))
 
 
 def format_commcare_version(app_version_info):

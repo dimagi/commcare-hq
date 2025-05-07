@@ -1,5 +1,5 @@
-import collections
 import json
+from collections.abc import Sequence
 
 from django import forms
 from django.forms.utils import flatatt
@@ -69,7 +69,7 @@ class _Select2AjaxMixin():
         self._initial = val
 
     def _clean_initial(self, val):
-        if isinstance(val, collections.Sequence) and not isinstance(val, (str, str)):
+        if isinstance(val, Sequence) and not isinstance(val, (str, str)):
             # if its a tuple or list
             return {"id": val[0], "text": val[1]}
         elif val is None:
@@ -105,7 +105,6 @@ class DateRangePickerWidget(Input):
     usage:
     apply the following decorator to your view's dispatch method
 
-    @use_daterangepicker
     def dispatch(self, request, *args, **kwargs):
         super(self, MyView).dispatch(request, *args, **kwargs)
     """

@@ -71,7 +71,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqcase.case_helper import CaseCopier
 from corehq.apps.hqcase.utils import get_case_by_identifier
-from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.hqwebapp.models import PageInfoContext
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -172,7 +171,6 @@ class ExploreCaseDataView(BaseDomainView):
     urlname = "explore_case_data"
     page_title = gettext_lazy("Explore Case Data")
 
-    @use_daterangepicker
     def dispatch(self, request, *args, **kwargs):
         if hasattr(request, 'couch_user') and not self.report_config.has_permission:
             raise Http404()

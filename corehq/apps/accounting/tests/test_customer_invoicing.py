@@ -292,10 +292,10 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
                                                    random.randint(2, self.non_main_subscription_length))
 
     def test_under_limit(self):
-        num_users_main_domain = random.randint(0, self.user_rate.monthly_limit / 2)
+        num_users_main_domain = random.randint(0, self.user_rate.monthly_limit // 2)
         generator.arbitrary_commcare_users_for_domain(self.main_domain.name, num_users_main_domain)
 
-        num_users_non_main_domain1 = random.randint(0, self.user_rate.monthly_limit / 2)
+        num_users_non_main_domain1 = random.randint(0, self.user_rate.monthly_limit // 2)
         generator.arbitrary_commcare_users_for_domain(self.non_main_domain1.name, num_users_non_main_domain1)
 
         self.addCleanup(self.cleanUpUser)

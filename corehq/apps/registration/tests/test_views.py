@@ -88,12 +88,3 @@ class TestConfirmDomainView(TestCase):
             f'Your account {self.user.username} has already been activated',
             messages[1].message
         )
-
-    def test_self_signup_redirect(self):
-        guid = 'abc123'
-        self.create_registration_request(guid)
-        SelfSignupWorkflow.objects.create(domain=self.domain.name, initiating_user=self.user.username)
-
-        response = self.client.get(self.url(guid))
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.get('Location'), reverse('domain_select_plan', args=[self.domain.name]))

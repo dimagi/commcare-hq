@@ -46,11 +46,11 @@ elif settings.ELASTICSEARCH_MAJOR_VERSION == 6:
         TransportError,
         RequestError,
     )
-    from elasticsearch5.client import (
+    from elasticsearch6.client import (
         IndicesClient,
         SnapshotClient,
     )
-    from elasticsearch5.helpers import BulkIndexError, bulk
+    from elasticsearch6.helpers import BulkIndexError, bulk
 else:
     raise ValueError("ELASTICSEARCH_MAJOR_VERSION must currently be 5 or 6, given {}".format(
         settings.ELASTICSEARCH_MAJOR_VERSION))

@@ -1,6 +1,5 @@
 {% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
-{% requirejs_main %}
 {% js_entry %}
 <!--[if lt IE 7]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9 lt-ie8 lt-ie7"><![endif]-->
 <!--[if IE 7]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9 lt-ie8"><![endif]-->
@@ -54,100 +53,89 @@
             href="{% static 'select2/dist/css/select2.min.css' %}" />
     {% endcompress %}
 
-    {% if request.use_daterangepicker and not use_bootstrap5 %}
-      {% compress css %}
-        <link type="text/css"
-              rel="stylesheet"
-              media="screen"
-              href="{% static "bootstrap-daterangepicker/daterangepicker.css" %}" />
-      {% endcompress %}
-    {% endif %}
-
-    {% if request.use_timepicker and not use_bootstrap5 %}
-      {% compress css %}
-        <link type="text/less"
-              rel="stylesheet"
-              media="screen"
-              href="{% static "bootstrap-timepicker/less/timepicker.less" %}" />
-      {% endcompress %}
-    {% endif %}
-
-    {% if request.use_jquery_ui %}
-      {% compress css %}
-        <link type="text/css"
-              rel="stylesheet"
-              media="screen"
-              href="{% static "jquery-ui-built-themes/redmond/jquery-ui.min.css" %}" />
-      {% endcompress %}
-    {% endif %}
-
-    {% if request.use_datatables %}
-      {% if use_bootstrap5 %}
-        {% compress css %}
-          <link type="text/css"
-                rel="stylesheet"
-                media="all"
-                href="{% static 'datatables.net-bs5/css/dataTables.bootstrap5.min.css' %}" />
-          <link type="text/css"
-                rel="stylesheet"
-                media="all"
-                href="{% static 'datatables.net-fixedcolumns-bs5/css/fixedColumns.bootstrap5.min.css' %}" />
-        {% endcompress %}
-      {% else %}
-        {% compress css %}
-          <link type="text/css"
-                rel="stylesheet"
-                media="all"
-                href="{% static 'datatables-bootstrap3/BS3/assets/css/datatables.css' %}" />
-        {% endcompress %}
-      {% endif %}
-    {% endif %}
-
-    {% if request.use_tempusdominus and use_bootstrap5 %}
-      {% compress css %}
-        <link type="text/css"
-              rel="stylesheet"
-              media="screen"
-              href="{% static "@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css" %}" />
-      {% endcompress %}
-    {% endif %}
-
-    {% if request.use_multiselect %}
-      {% compress css %}
-        <link type="text/css"
-              rel="stylesheet"
-              media="screen"
-              href="{% static "multiselect/css/multi-select.css" %}" />
-        <link type="text/less"
-              rel="stylesheet"
-              media="screen"
-              href="{% static "hqwebapp/less/components/multiselect/multiselect.less" %}" />
-      {% endcompress %}
-    {% endif %}
-
     <script>
       window.USE_BOOTSTRAP5 = {{ use_bootstrap5|BOOL }};
     </script>
 
+    {# Everything in this `if not use_js_bundler`-block below this line can be removed once all of app manager, including form builder, is on webpack. #}
     {% if not use_js_bundler %}
-      {% javascript_libraries use_bootstrap5=use_bootstrap5 underscore=True jquery_ui=request.use_jquery_ui ko=True hq=True analytics=True %}
-    {% endif %}
-
-    {# Up here because if daterangepicker is called from within a form widget, #}
-    {# the javascript requiring the config file is run before js-inline #}
-    {% if request.use_daterangepicker and not use_js_bundler and not use_bootstrap5 %}
+      <script src="{% static 'underscore/underscore-min.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/lib/modernizr.js' %}"></script>
+      <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
       {% compress js %}
-        <script src="{% static 'moment/moment.js' %}"></script>
-        <script src="{% static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/daterangepicker.config.js' %}"></script>
+          <script src="{% static 'jquery.cookie/jquery.cookie.js' %}"></script>
+          <script src="{% static 'jquery.rmi/jquery.rmi.js' %}"></script>
       {% endcompress %}
-    {% endif %}
+      {% if use_bootstrap5 %}
+        <script src="{% static "bootstrap5/dist/js/bootstrap.bundle.min.js" %}"></script>
+      {% else %}
+        <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+      {% endif %}
+      <!-- Required for inline edit widget -->
+      <script src="{% static 'DOMPurify/dist/purify.min.js' %}"></script>
 
-    {% if request.use_tempusdominus and not use_js_bundler and use_bootstrap5 %}
       {% compress js %}
-        <script src="{% static '@popperjs/core/dist/umd/popper.min.js' %}"></script>
-        <script src="{% static '@eonasdan/tempus-dominus/dist/js/tempus-dominus.min.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
       {% endcompress %}
+
+      {% compress js %}
+        {# analytix is purposely the dir name because some adblockers regex* against *analytics* #}
+        <script src="{% static 'analytix/js/initial.js' %}"></script>
+        <script src="{% static 'analytix/js/utils.js' %}"></script>
+        <script src="{% static 'analytix/js/logging.js' %}"></script>
+        <script src="{% static 'analytix/js/google.js' %}"></script>
+        {# kissmetrix is the filename because some adblockers regex *kissmetrics* #}
+        <script src="{% static 'analytix/js/kissmetrix.js' %}"></script>
+        <script src="{% static 'analytix/js/hubspot.js' %}"></script>
+        <script src="{% static 'analytix/js/drift.js' %}"></script>
+        <script src="{% static 'analytix/js/appcues.js' %}"></script>
+        {# gtx is the filename because some adblockers blocks 'gtm.js' #}
+        <script src="{% static 'analytix/js/gtx.js' %}"></script>
+      {% endcompress %}
+
+      <script src="{% static 'knockout/build/output/knockout-latest.js' %}"></script>{# already minified #}
+      {% if use_bootstrap5 %}
+        {% compress js %}
+          <script src="{% static 'hqwebapp/js/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap5/knockout_bindings.ko.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/knockout_subscribables.ko.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/components.ko.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/components/inline_edit.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/components/pagination.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/components/search_box.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/components/select_toggle.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/components/bootstrap5/feedback.js' %}"></script>
+        {% endcompress %}
+      {% else %}
+        {% compress js %}
+          <script src="{% static 'hqwebapp/js/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap3/knockout_bindings.ko.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/knockout_subscribables.ko.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/components.ko.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/components/inline_edit.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/components/pagination.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/components/search_box.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/components/select_toggle.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/components/bootstrap3/feedback.js' %}"></script>
+        {% endcompress %}
+      {% endif %}
+
+      {% if use_bootstrap5 %}
+        {% compress js %}
+          <script src="{% static 'hqwebapp/js/bootstrap5/sticky_tabs.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/assert_properties.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap5/hq.helpers.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap5/inactivity.js' %}"></script>
+        {% endcompress %}
+      {% else %}
+        {% compress js %}
+            <script src="{% static 'hqwebapp/js/bootstrap3/sticky_tabs.js' %}"></script>
+            <script src="{% static 'hqwebapp/js/assert_properties.js' %}"></script>
+            <script src="{% static 'hqwebapp/js/bootstrap3/hq.helpers.js' %}"></script>
+            <script src="{% static 'hqwebapp/js/bootstrap3/inactivity.js' %}"></script>
+        {% endcompress %}
+      {% endif %}
     {% endif %}
 
     {% block head %}
@@ -321,8 +309,6 @@
 
     {# javascript below this line #}
 
-    {% include "hqwebapp/partials/requirejs.html" with BASE_MAIN=True %}
-
     <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
     {% include "hqwebapp/partials/webpack.html" %} {# must come after statici18n above #}
@@ -370,45 +356,6 @@
       {% compress js %}
         <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
       {% endcompress %}
-    {% endif %}
-
-    {% if request.use_datatables and not use_js_bundler %}
-      {% if use_bootstrap5 %}
-        {% compress js %}
-          <script src="{% static 'datatables.net/js/jquery.dataTables.min.js' %}"></script>
-          <script src="{% static 'datatables.net-bs5/js/dataTables.bootstrap5.min.js' %}"></script>
-          <script src="{% static 'datatables.net-fixedcolumns/js/dataTables.fixedColumns.min.js' %}"></script>
-          <script src="{% static 'datatables.net-fixedcolumns-bs5/js/fixedColumns.bootstrap5.min.js' %}"></script>
-        {% endcompress %}
-      {% else %}
-        {% compress js %}
-          <script src="{% static 'datatables.net/js/jquery.dataTables.min.js' %}"></script>
-          <script src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js' %}"></script>
-          <script src="{% static 'datatables-bootstrap3/BS3/assets/js/datatables.js' %}"></script>
-        {% endcompress %}
-      {% endif %}
-    {% endif %}
-
-    {% if request.use_timepicker and not use_js_bundler and not use_bootstrap5 %}
-      {% compress js %}
-        <script src="{% static 'bootstrap-timepicker/js/bootstrap-timepicker.js' %}"></script>
-      {% endcompress %}
-    {% endif %}
-
-    {% if request.use_multiselect and not use_js_bundler %}
-      {% compress js %}
-        <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/multiselect_utils.js' %}"></script>
-      {% endcompress %}
-    {% endif %}
-
-    {% if request.use_ko_validation and not use_js_bundler %}
-      <script src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
-      {% if use_bootstrap5 %}
-        <script src="{% static 'hqwebapp/js/bootstrap5/validators.ko.js' %}"></script>
-      {% else %}
-        <script src="{% static 'hqwebapp/js/bootstrap3/validators.ko.js' %}"></script>
-      {% endif %}
     {% endif %}
 
     {% if show_overdue_invoice_modal and not use_js_bundler %}

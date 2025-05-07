@@ -35,7 +35,7 @@ class KycVerifyTable(BaseHtmxTable):
     @staticmethod
     def get_extra_columns(kyc_config):
         cols = []
-        for field in kyc_config.api_field_to_user_data_map.values():
+        for field in kyc_config.get_api_field_to_user_data_map_values().values():
             name = field.replace('_', ' ').title()
             cols.append(
                 (field, columns.Column(verbose_name=name))

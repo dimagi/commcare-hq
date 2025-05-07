@@ -1,7 +1,7 @@
 import re
 from corehq import toggles
 from typing import TYPE_CHECKING, Optional
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 from django.utils.translation import gettext_lazy as _
 
@@ -252,6 +252,8 @@ class OAuth2ClientGrantManager(AuthManager):
                     headers=additional_headers,
                 )
 
+        self._check_last_token(domain_name)
+
         refresh_kwargs = {
             'client_id': self.client_id,
             'client_secret': self.client_secret,
@@ -273,6 +275,19 @@ class OAuth2ClientGrantManager(AuthManager):
             src='motech_oauth_send_attempt',
         )
         return session
+
+    def _check_last_token(self, domain_name):
+        if toggles.MTN_MOBILE_WORKER_VERIFICATION.enabled(domain_name):
+            # This is a workaround for a presumed issue with the MTN MoMo API sandbox where
+            # the token type is not set to 'Bearer' as expected, but rather 'access_token'.
+            # This is a temporary fix until more clarity can be gained around this.
+            is_mtn_momo_sandbox = urlparse(self.base_url).hostname == 'sandbox.momodeveloper.mtn.com'
+            token_type = self.last_token.get('token_type')
+
+            if is_mtn_momo_sandbox and token_type == 'access_token':
+                new_token = self.last_token
+                new_token['token_type'] = 'Bearer'
+                self.last_token = new_token
 
 
 class OAuth2PasswordGrantManager(AuthManager):

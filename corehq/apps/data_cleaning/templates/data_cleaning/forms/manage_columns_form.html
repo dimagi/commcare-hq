@@ -4,13 +4,15 @@
 <div
   id="{{ container_id }}"
   hx-swap="outerHTML"
+  hq-hx-refresh-swap="#CleanCaseTable"
 >
   {% if active_columns %}
     <div class="mb-3">
       <form
+        class="htmx-disable-on-remove-column"
         hx-post="{{ request.path_info }}"
         hx-target="#{{ container_id }}"
-        hx-disabled-elt="find button"
+        hx-disabled-elt=".htmx-disable-on-column-sort"
         hq-hx-action="update_column_order"
         hx-trigger="end"
       >

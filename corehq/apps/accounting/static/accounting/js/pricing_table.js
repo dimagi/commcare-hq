@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine('accounting/js/pricing_table', [
     'jquery',
     'knockout',
@@ -13,7 +13,7 @@ hqDefine('accounting/js/pricing_table', [
     _,
     initialPageData,
     utils,
-    assertProperties
+    assertProperties,
 ) {
     var PricingTable = function (options) {
         assertProperties.assert(options, [
@@ -45,19 +45,13 @@ hqDefine('accounting/js/pricing_table', [
 
         self.oShowAnnualPricing = ko.observable(false);
 
-        self.oRefundCss = ko.computed(function () {
-            if (self.oShowAnnualPricing()) {
-                return "show-refund";
-            }
-        });
-
         self.oIsSubmitDisabled = ko.computed(function () {
             var isCurrentPlan = self.oSelectedPlan() === self.oCurrentPlan() && !self.oNextSubscription(),
                 isNextPlan = self.oNextSubscription() && self.oSelectedPlan() === self.oNextSubscription().toLowerCase();
             return !self.oSelectedPlan() || isNextPlan || isCurrentPlan;
         });
 
-        self.oIsCurrentPlanCommunity = ko.observable(options.currentPlan === 'community');
+        self.oIsCurrentPlanFreeEdition = ko.observable(options.currentPlan === 'free');
         self.oIsCurrentPlanPaused = ko.observable(options.currentPlan === 'paused');
 
         self.oIsNextPlanPaused = ko.computed(function () {
@@ -109,7 +103,7 @@ hqDefine('accounting/js/pricing_table', [
                         "<p>Continuing ahead will allow you to schedule your current <%- oldPlan %> " +
                         "Edition Plan subscription to be paused on <strong> <%- date %> </strong></p>" +
                         "<p>If you have questions or if you would like to speak to us about your subscription, " +
-                        "please reach out to <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>.</p>"
+                        "please reach out to <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>.</p>",
                     ))({
                         date: newStartDate,
                         newPlan: newPlan,
@@ -125,7 +119,7 @@ hqDefine('accounting/js/pricing_table', [
                         "Plan subscription to be downgraded to the <%- newPlan %> Edition Plan " +
                         "on <strong> <%- date %> </strong></p>" +
                         "<p>If you have questions or if you would like to speak to us about your subscription, " +
-                        "please reach out to <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>.</p>"
+                        "please reach out to <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>.</p>",
                     ))({
                         oldPlan: oldPlan,
                         date: newStartDate,
@@ -141,7 +135,7 @@ hqDefine('accounting/js/pricing_table', [
                         "Plan subscription to be downgraded to the <%- newPlan %> Edition Plan " +
                         "on <strong> <%- date %> </strong></p>" +
                         "<p>If you have questions or if you would like to speak to us about your subscription, " +
-                        "please reach out to <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>.</p>"
+                        "please reach out to <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>.</p>",
                     ))({
                         oldPlan: oldPlan,
                         nextSubscription: self.oNextSubscription(),
@@ -156,7 +150,7 @@ hqDefine('accounting/js/pricing_table', [
                         "Plan subscription to be downgraded to the <%- newPlan %> Edition Plan " +
                         "on <strong> <%- date %> </strong></p>" +
                         "If you have questions or if you would like to speak to us about your subscription, " +
-                        "please reach out to <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>."
+                        "please reach out to <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>.",
                     ))({
                         oldPlan: oldPlan,
                         date: newStartDate,
@@ -195,16 +189,29 @@ hqDefine('accounting/js/pricing_table', [
         return self;
     };
 
+    var planDisplayName = function (name) {
+        const plans = {
+            'Free': gettext('Free edition'),
+            'Standard': 'Standard',
+            'Pro': 'Pro',
+            'Advanced': 'Advanced',
+        };
+        return plans[name] || '';
+    };
+
     var PlanOption = function (data, parent) {
-        'use strict';
         var self = this;
 
-        self.oName = ko.observable(data.name);
+        self.oName = ko.observable(planDisplayName(data.name));
         self.oSlug = ko.observable(data.name.toLowerCase());
 
         self.oMonthlyPrice = ko.observable(data.monthly_price);
         self.oAnnualPrice = ko.observable(data.annual_price);
         self.oDescription = ko.observable(data.description);
+
+        self.oIsFreeEdition = ko.computed(function () {
+            return self.oSlug() === 'free';
+        });
 
         self.oIsCurrentPlan = ko.computed(function () {
             return self.oSlug() === parent.oCurrentPlan();

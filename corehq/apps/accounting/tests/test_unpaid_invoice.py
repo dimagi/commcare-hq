@@ -1,4 +1,5 @@
 import datetime
+from unittest.mock import patch
 
 from corehq.apps.accounting import tasks, utils
 from corehq.apps.accounting.const import (
@@ -238,13 +239,22 @@ class TestInvoiceReminder(BaseAccountingTest):
         super().tearDownClass()
 
     def _send_invoice_reminders(self, days_before_due, is_customer_billing_account=False):
+        domain, latest_invoice = self._setup_invoices(
+            days_before_due, is_customer_billing_account=is_customer_billing_account)
+        self._run_action()
+        return domain, latest_invoice
+
+    def _setup_invoices(self, days_before_due, is_customer_billing_account=False):
         domain, latest_invoice = _generate_invoice_and_subscription(
             -(days_before_due),
             is_customer_billing_account=is_customer_billing_account
         )
         self.domains.append(domain)
-        InvoiceReminder.run_action()
         return domain, latest_invoice
+
+    @staticmethod
+    def _run_action():
+        InvoiceReminder.run_action()
 
     def test_invoice_reminder(self):
         domain, latest_invoice = self._send_invoice_reminders(
@@ -278,6 +288,31 @@ class TestInvoiceReminder(BaseAccountingTest):
         domain, latest_invoice = self._send_invoice_reminders(
             DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER + 1,
         )
+
+        self.assertFalse(InvoiceCommunicationHistory.objects.filter(
+            invoice=latest_invoice,
+            communication_type=CommunicationType.INVOICE_REMINDER,
+        ).exists())
+
+    def test_no_reminder_if_not_should_send_email(self):
+        with patch('corehq.apps.accounting.models.BillingRecord.should_send_email', False):
+            domain, latest_invoice = self._send_invoice_reminders(
+                DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER,
+            )
+
+        self.assertFalse(InvoiceCommunicationHistory.objects.filter(
+            invoice=latest_invoice,
+            communication_type=CommunicationType.INVOICE_REMINDER,
+        ).exists())
+
+    def test_no_reminder_if_skipped_email(self):
+        domain, latest_invoice = self._setup_invoices(
+            DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER,
+        )
+        billing_record = latest_invoice.billingrecord_set.first()
+        billing_record.skipped_email = True
+        billing_record.save()
+        self._run_action()
 
         self.assertFalse(InvoiceCommunicationHistory.objects.filter(
             invoice=latest_invoice,
