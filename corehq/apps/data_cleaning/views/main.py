@@ -9,6 +9,7 @@ from django.views.decorators.http import require_GET
 from django.utils.translation import gettext_lazy, gettext as _
 
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
+from corehq.apps.data_cleaning.exceptions import SessionAccessClosedException
 from corehq.apps.data_cleaning.models import BulkEditSession
 from corehq.apps.data_cleaning.utils.cases import clear_caches_case_data_cleaning
 from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
@@ -49,6 +50,8 @@ class CleanCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
     def get(self, request, *args, **kwargs):
         try:
             return super().get(request, *args, **kwargs)
+        except SessionAccessClosedException:
+            return redirect(reverse(CleanCasesMainView.urlname, args=(self.domain, )))
         except BulkEditSession.DoesNotExist:
             messages.error(request, _("That session does not exist. Please start a new session."))
             return redirect(reverse(CleanCasesMainView.urlname, args=(self.domain, )))
@@ -57,11 +60,26 @@ class CleanCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
     @memoized
     def session(self):
         # overriding mixin so that DoesNotExist can be raised in self.get() and we can redirect
-        return BulkEditSession.objects.get(
+        session = BulkEditSession.objects.get(
             user=self.request.user,
             domain=self.domain,
             session_id=self.session_id
         )
+        if session.completed_on:
+            messages.warning(
+                self.request,
+                _("You tried to access a session for \"{}\" that was already completed. "
+                  "Please start a new session.").format(session.identifier)
+            )
+            raise SessionAccessClosedException()
+        elif session.committed_on:
+            messages.warning(
+                self.request,
+                _("You tried to access a session for \"{}\" that is currently applying changes. "
+                  "Please wait for that task to complete, then start a new session.").format(session.identifier)
+            )
+            raise SessionAccessClosedException()
+        return session
 
     @property
     def case_type(self):
