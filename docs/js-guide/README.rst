@@ -30,7 +30,6 @@ Table of contents
     :caption: Migrations
     :maxdepth: 1
 
-    migrating
     amd-to-esm
 
 .. toctree::

@@ -998,14 +998,6 @@ WEB_APPS_DOMAIN_BANNER = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/USH%3A+Show+current+domain+in+web+apps+Login+As+banner',
 )
 
-WEB_APPS_UPLOAD_QUESTIONS = FeatureRelease(
-    'web_apps_upload_questions',
-    'USH: Support image, audio, and video questions in Web Apps',
-    TAG_RELEASE,
-    namespaces=[NAMESPACE_DOMAIN],
-    owner='Jenny Schweers',
-)
-
 LOCATION_FIELD_USER_PROVISIONING = FeatureRelease(
     'location_field_user_provisioning',
     'USH: Holding feature flag for various works relating to the location field',
@@ -1251,14 +1243,6 @@ ECD_PREVIEW_ENTERPRISE_DOMAINS = StaticToggle(
     'domains that are Advanced or Pro and have undergone the ECD migration.'
 )
 
-CASE_API_V0_6 = StaticToggle(
-    'case_api_v0_6',
-    'Enable the v0.6 Case API',
-    TAG_SOLUTIONS_LIMITED,
-    namespaces=[NAMESPACE_DOMAIN],
-    save_fn=_ensure_search_index_is_enabled,
-)
-
 ACTION_TIMES_API = StaticToggle(
     'action_times_api',
     'Enable the Action Times API',
@@ -1441,12 +1425,12 @@ COMMTRACK = StaticToggle(
     "CommCare Supply",
     TAG_DEPRECATED,
     description=(
-        '<a href="https://help.commcarehq.org/display/commtrack/CommCare+Supply+Home">CommCare Supply</a> '
+        '<a href="https://dimagi.atlassian.net/wiki/spaces/commtrack/overview">CommCare Supply</a> '
         "is a logistics and supply chain management module. It is designed "
         "to improve the management, transport, and resupply of a variety of "
         "goods and materials, from medication to food to bednets. <br/>"
     ),
-    help_link='https://help.commcarehq.org/display/commtrack/CommCare+Supply+Home',
+    help_link='https://dimagi.atlassian.net/wiki/spaces/commtrack/overview',
     namespaces=[NAMESPACE_DOMAIN],
     save_fn=_commtrackify,
 )
@@ -2285,14 +2269,6 @@ CLEAN_OLD_FORMPLAYER_SYNCS = DynamicallyPredictablyRandomToggle(
     default_randomness=0.001
 )
 
-PRIME_FORMPLAYER_DBS = StaticToggle(
-    'prime_formplayer_dbs',
-    'USH: Control which domains will be included in the prime formplayer task runs',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/saas/Prime+Formplayer+DBS"
-)
-
 PRIME_FORMPLAYER_DBS_BHA = StaticToggle(
     'prime_formplayer_dbs_bha',
     'USH-BHA: Control which domains will be included in the prime formplayer task runs',
@@ -2365,6 +2341,12 @@ USER_HISTORY_REPORT = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/User+History+Report",
 )
 
+REPORT_TIMING_PROFILING = StaticToggle(
+    'report_timing_profiling',
+    'Report timing profiling is visible in reports that have a profiler enabled.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
+)
 
 COWIN_INTEGRATION = StaticToggle(
     'cowin_integration',
@@ -2535,7 +2517,7 @@ SMS_USE_LATEST_DEV_APP = FeatureRelease(
 
 VIEW_FORM_ATTACHMENT = StaticToggle(
     'view_form_attachments',
-    'Allow users on the domain to view form attachments without having to have the report Submit History permission.',  # noqa: E501
+    'Allow users on the domain to view form attachments without having to have the report Submission History permission.',  # noqa: E501
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )

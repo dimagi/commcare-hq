@@ -54,7 +54,6 @@ from corehq.apps.hqcase.utils import (
     resave_case,
     submit_case_blocks,
 )
-from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.templatetags.proptable_tags import (
     DisplayConfig,
     get_table_as_rows,
@@ -131,7 +130,6 @@ class CaseDataView(BaseProjectReportSectionView):
     http_method_names = ['get']
 
     @method_decorator(require_case_view_permission)
-    @use_datatables
     def dispatch(self, request, *args, **kwargs):
         if not self.case_instance:
             messages.info(request,

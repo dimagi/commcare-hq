@@ -11,7 +11,7 @@ hqDefine("domain/js/select", [
     _,
     ko,
     assertProperties,
-    initialPageData
+    initialPageData,
 ) {
     var searchModel = function (options) {
         assertProperties.assert(options, ['domainLinks', 'invitationLinks']);

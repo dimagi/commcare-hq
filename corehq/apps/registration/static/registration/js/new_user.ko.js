@@ -9,6 +9,7 @@ hqDefine('registration/js/new_user.ko', [
     'intl-tel-input/build/js/intlTelInput.min',
     'jquery-ui/ui/effect',
     'jquery-ui/ui/effects/effect-slide',
+    'jquery-ui-built-themes/redmond/jquery-ui.min.css',
     'hqwebapp/js/password_validators.ko',
 ], function (
     $,

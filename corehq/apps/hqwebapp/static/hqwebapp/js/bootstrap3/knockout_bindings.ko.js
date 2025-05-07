@@ -3,6 +3,7 @@ hqDefine("hqwebapp/js/bootstrap3/knockout_bindings.ko", [
     'underscore',
     'knockout',
     'jquery-ui/ui/widgets/sortable',
+    'jquery-ui-built-themes/redmond/jquery-ui.min.css',
     'langcodes/js/langcodes',   // $.langcodes
 ], function (
     $,
@@ -242,8 +243,8 @@ hqDefine("hqwebapp/js/bootstrap3/knockout_bindings.ko", [
                 } else {
                     // Clicking a row selects it for sorting and unselects all other rows.
                     $(this).addClass('last-clicked').siblings().removeClass('last-clicked');
-                    for (var i = 0; i < list().length; i++) {
-                        list()[i].selectedForSort(false);
+                    for (var j = 0; j < list().length; j++) {
+                        list()[j].selectedForSort(false);
                     }
                     getExportColumnByRow($(this)).selectedForSort(true);
                 }
@@ -341,7 +342,7 @@ hqDefine("hqwebapp/js/bootstrap3/knockout_bindings.ko", [
     };
 
     ko.bindingHandlers.modal = {
-        init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+        init: function (element) {
             $(element).addClass('modal fade').modal({
                 show: false,
             });
@@ -413,7 +414,7 @@ hqDefine("hqwebapp/js/bootstrap3/knockout_bindings.ko", [
                 };
             ko.bindingHandlers.click.init(element, newValueAccessor, allBindingsAccessor, viewModel, bindingContext);
         },
-        update: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+        update: function (element, valueAccessor) {
             $(element).data('ajaxSource', ko.utils.unwrapObservable(valueAccessor()));
         },
     };
@@ -530,7 +531,7 @@ hqDefine("hqwebapp/js/bootstrap3/knockout_bindings.ko", [
                 controlsDescendantBindings: true,
             };
         },
-        update: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+        update: function (element, valueAccessor) {
             $(element).empty();
             $(element).append(ko.unwrap(valueAccessor()));
         },
@@ -604,7 +605,6 @@ hqDefine("hqwebapp/js/bootstrap3/knockout_bindings.ko", [
     ko.bindingHandlers.paste = {
         init: function (element, valueAccessor) {
             ko.bindingHandlers.__copyPasteSharedInit();
-            var callback = valueAccessor();
             $(element).data('pasteCallback', valueAccessor());
         },
     };
@@ -705,7 +705,7 @@ hqDefine("hqwebapp/js/bootstrap3/knockout_bindings.ko", [
 
     ko.bindingHandlers.onEnterKey = {
         // calls a function when the enter key is pressed on an input
-        init: function (element, valueAccessor, allBindings, viewModel) {
+        init: function (element, valueAccessor) {
             $(element).keypress(function (event) {
                 if (event.key === "Enter" || event.keyCode === 13) {
                     valueAccessor()();

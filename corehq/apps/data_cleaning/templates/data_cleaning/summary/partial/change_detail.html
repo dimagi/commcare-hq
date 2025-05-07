@@ -1,0 +1,25 @@
+{% load i18n %}
+
+<div class="list-group-item d-flex align-items-center">
+  <div
+    x-tooltip=""
+    data-bs-title="{% trans "the case property that was changed" %}"
+  >
+    <strong class="badge text-bg-secondary fs-6">
+      {{ change.prop_id }}
+    </strong>
+  </div>
+  <div class="flex-fill mx-2">
+    <strong>{{ change.action_title }}</strong>
+    {{ change.action_detail }}
+  </div>
+  <div
+    x-tooltip=""
+    data-bs-title="{% trans "number of cases affected" %}"
+  >
+    {% blocktrans %}{{ change.num_records }}{% endblocktrans %}
+    <span class="badge text-bg-primary rounded-pill fs-6">
+      {{ change.num_records }}
+    </span>
+  </div>
+</div>

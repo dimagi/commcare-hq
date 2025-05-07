@@ -4,6 +4,9 @@ import 'datatables.net/js/jquery.dataTables';
 import 'datatables.net-fixedcolumns/js/dataTables.fixedColumns';
 import 'datatables.net-fixedcolumns-bs5/js/fixedColumns.bootstrap5';
 
+import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';
+import 'datatables.net-fixedcolumns-bs5/css/fixedColumns.bootstrap5.min.css';
+
 import _ from 'underscore';
 import googleAnalytics from 'analytix/js/google';
 import {Tooltip} from 'bootstrap5';
@@ -145,7 +148,7 @@ var HQReportDataTables = function (options) {
                     return data;
                 };
 
-                params.footerCallback = function (row, data, start, end, display) {
+                params.footerCallback = function (row, data, start, end, display) {     // eslint-disable-line no-unused-vars
                     if ('total_row' in data) {
                         self.render_footer_row('ajax_total_row', data['total_row']);
                     }
@@ -153,6 +156,9 @@ var HQReportDataTables = function (options) {
                         for (let i = 0; i < data.statistics_rows.length; i++) {
                             self.render_footer_row('ajax_stat_row-' + i, data.statistics_rows[i]);
                         }
+                    }
+                    if ('report_timing_profile' in data) {
+                        self.renderTimingProfile(data.report_timing_profile);
                     }
                 };
 
@@ -259,47 +265,67 @@ var HQReportDataTables = function (options) {
         });
     };  // end of self.render
 
+    self.renderTimingProfile = function (reportTimingProfile) {
+        var $timingProfile = $('#report-timing-profile');
+        if (!reportTimingProfile) {
+            $timingProfile.empty();
+            return;
+        }
+        // Create the main container
+        var html = `
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <h4 class="panel-title">
+                  Report Timing Profile:
+                  ${reportTimingProfile.name}
+                  (${reportTimingProfile.duration.toFixed(2)}s)
+                </h4>
+              </div>
+              <div class="panel-body">
+                ${renderTimingNode(reportTimingProfile)}
+              </div>
+            </div>`;
+        $timingProfile.html(html);
+    };
+
+    function renderTimingNode(node) {
+        if (!node.subs || node.subs.length === 0) {
+            return '';
+        }
+
+        var html = '<div class="timing-block">';
+
+        // Sort sub-nodes by duration (descending)
+        node.subs.sort(function (a, b) {
+            return b.duration - a.duration;
+        });
+
+        for (var i = 0; i < node.subs.length; i++) {
+            var sub = node.subs[i];
+            // Ensure reasonable width
+            var percentWidth = Math.max(Math.min(sub.percent_parent, 100), 10);
+
+            html += `
+                <div class="timing-node" style="width: ${percentWidth}%;">
+                  <div class="timing-node-content">
+                    <div class="timing-node-header">${sub.name}</div>
+                    <div class="timing-node-details">
+                      ${sub.duration.toFixed(3)}s
+                      (${sub.percent_parent.toFixed(1)}% of parent,
+                      ${sub.percent_total.toFixed(1)}% of total)
+                    </div>`;
+
+            // Render children recursively
+            if (sub.subs && sub.subs.length > 0) {
+                html += `<div class="timing-children">${renderTimingNode(sub)}</div>`;
+            }
+            html += '</div></div>';
+        }
+        return html + '</div>';
+    }
+
     return self;
 };
-
-// For sorting rows
-
-function sortSpecial(a, b, asc, convert) {
-    var x = convert(a);
-    var y = convert(b);
-
-    // sort nulls at end regardless of current sort direction
-    if (x === null && y === null) {
-        return 0;
-    }
-    if (x === null) {
-        return 1;
-    }
-    if (y === null) {
-        return -1;
-    }
-
-    return (asc ? 1 : -1) * ((x < y) ? -1 : ((x > y) ?  1 : 0));
-}
-
-function convertNum(k) {
-    var m = k.match(/title="*([-+.0-9eE]+)/);
-    if (m !== null) {
-        m = +m[1];
-        if (isNaN(m)) {
-            m = null;
-        }
-    }
-    return m;
-}
-
-function convertDate(k) {
-    var m = k.match(/title="*(.+)"/);
-    if (m[1] === "None") {
-        return null;
-    }
-    return new Date(m[1]);
-}
 
 export default {
     HQReportDataTables: function (options) {

@@ -25,7 +25,7 @@ from ..const import (
     State,
 )
 from ..models import (
-    HTTP_STATUS_4XX_RETRY,
+    HTTP_STATUS_BACK_OFF,
     FormRepeater,
     Repeater,
     RepeatRecord,
@@ -457,17 +457,29 @@ class TestRepeaterHandleResponse(RepeaterTestCase):
         self.repeater.handle_response(resp, repeat_record)
         self.assertEqual(repeat_record.state, State.Success)
 
-    def test_handle_response_server_failure(self):
+    def test_handle_response_429(self):
         resp = RepeaterResponse(
-            status_code=504,
-            reason='Gateway Timeout',
+            status_code=429,
+            reason='Too Many Requests',
         )
         repeat_record = self.get_repeat_record()
         self.repeater.handle_response(resp, repeat_record)
         self.assertEqual(repeat_record.state, State.Fail)
 
-    def test_handle_4XX_retry_codes(self):
-        for status_code in HTTP_STATUS_4XX_RETRY:
+    def test_handle_traefik_proxy_404(self):
+        resp = RepeaterResponse(
+            status_code=404,
+            reason='because Traefik',
+            headers={
+                'Server': 'Traefik v3.3.5',
+            }
+        )
+        repeat_record = self.get_repeat_record()
+        self.repeater.handle_response(resp, repeat_record)
+        self.assertEqual(repeat_record.state, State.Fail)
+
+    def test_handle_response_server_failure(self):
+        for status_code in HTTP_STATUS_BACK_OFF:
             resp = RepeaterResponse(
                 status_code=status_code,
                 reason='Retry',
@@ -476,30 +488,20 @@ class TestRepeaterHandleResponse(RepeaterTestCase):
             self.repeater.handle_response(resp, repeat_record)
             self.assertEqual(repeat_record.state, State.Fail)
 
-    def test_handle_4XX_invalid_payload(self):
-        for http_status in HTTPStatus:
-            if (
-                400 <= http_status.value < 500
-                and http_status not in HTTP_STATUS_4XX_RETRY
-            ):
-                resp = RepeaterResponse(
-                    status_code=http_status.value,
-                    reason='Invalid Payload',
-                )
-                repeat_record = self.get_repeat_record()
-                self.repeater.handle_response(resp, repeat_record)
-                self.assertEqual(repeat_record.state, State.InvalidPayload)
-
-    def test_handle_5XX_retry(self):
-        for http_status in HTTPStatus:
-            if 500 <= http_status.value < 600:
-                resp = RepeaterResponse(
-                    status_code=http_status.value,
-                    reason='Invalid Payload',
-                )
-                repeat_record = self.get_repeat_record()
-                self.repeater.handle_response(resp, repeat_record)
-                self.assertEqual(repeat_record.state, State.Fail)
+    def test_handle_payload_errors(self):
+        retry_codes = HTTP_STATUS_BACK_OFF + (HTTPStatus.TOO_MANY_REQUESTS,)
+        payload_error_status_codes = (
+            s for s in HTTPStatus
+            if 400 <= s.value < 600 and s.value not in retry_codes
+        )
+        for http_status in payload_error_status_codes:
+            resp = RepeaterResponse(
+                status_code=http_status.value,
+                reason='Error',
+            )
+            repeat_record = self.get_repeat_record()
+            self.repeater.handle_response(resp, repeat_record)
+            self.assertEqual(repeat_record.state, State.InvalidPayload)
 
 
 class TestConnectionSettingsUsedBy(TestCase):
@@ -653,8 +655,9 @@ class TestRepeaterModelMethods(RepeaterTestCase):
             domain=DOMAIN, case_id=case_id, case_type='some_case', owner_id='abcd'
         )
         repeat_record = self.repeater.register(payload, fire_synchronously=True)
-        from corehq.motech.repeaters.tests.test_models_slow import ResponseMock
-        resp = ResponseMock(status_code=200, reason='OK')
+        resp = ResponseMock()
+        resp.status_code = 200
+        resp.reason = 'OK'
         # Basic test checks if send_request is called
         with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
             simple_request.return_value = resp

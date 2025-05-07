@@ -5,13 +5,14 @@ hqDefine("domain/js/internal_settings", [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/multiselect_utils',
     'jquery-ui/ui/widgets/datepicker',
+    'jquery-ui-built-themes/redmond/jquery-ui.min.css',
     'commcarehq',
 ], function (
     $,
     ko,
     _,
     initialPageData,
-    multiselectUtils
+    multiselectUtils,
 ) {
     var areas = initialPageData.get('areas');
 
@@ -62,7 +63,7 @@ hqDefine("domain/js/internal_settings", [
         });
 
         var internalSettingsView = internalSettingsViewModel(
-            initialPageData.get("current_values")
+            initialPageData.get("current_values"),
         );
         $('#update-project-info').koApplyBindings(internalSettingsView);
 
