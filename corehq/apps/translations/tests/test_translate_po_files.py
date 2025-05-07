@@ -17,7 +17,7 @@ from corehq.tests.tools import nottest
 
 @nottest
 class MockTranslationFormat(TranslationFormat):
-    def load_input(self, file_path=None):
+    def load_input(self, input_source=None):
         return ["message number 1", "message number 2"]
 
     def format_input(self, input_data):

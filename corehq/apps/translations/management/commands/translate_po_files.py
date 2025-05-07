@@ -134,7 +134,7 @@ class TranslationFormat(abc.ABC):
     We have implemented a class for PO file translation.
     """
     @abc.abstractmethod
-    def load_input(self, file_path=None):
+    def load_input(self, input_source=None):
         pass
 
     @abc.abstractmethod
@@ -242,15 +242,16 @@ class PoTranslationFormat(TranslationFormat):
         self.file_path = file_path
         self.translation_obj_map = {}
 
-    def load_input(self, po_objects=[]):
+    def load_input(self, input_source=None):
         """
-        :param po_objects: a list of polib.Message objects, if not provided,
+        :param input_source: a list of polib.Message objects, if not provided,
         we will use the untranslated messages from the PO file.
         :return: a list of polib.Message objects
         """
-        po_objects = self.untranslated_messages if po_objects == [] else po_objects
-        self.translation_obj_map = self._build_translation_obj_map(po_objects)
-        return po_objects
+        if not input_source:
+            input_source = self.untranslated_messages
+        self.translation_obj_map = self._build_translation_obj_map(input_source)
+        return input_source
 
     @cached_property
     def all_message_objects(self):
