@@ -1,9 +1,6 @@
 import re
 import uuid
 
-from celery import uuid as celery_uuid
-from datetime import datetime, timezone
-
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
@@ -393,15 +390,6 @@ class BulkEditSession(models.Model):
         self.changes.all().delete()
         self.purge_records()
 
-    def prepare_session_for_commit(self):
-        """
-        Prepare the session for commit by generating a task id
-        and setting the committed_on date.
-        """
-        self.task_id = celery_uuid()
-        self.committed_on = datetime.now(timezone.utc).replace(tzinfo=None)
-        self.save()
-
     def is_record_selected(self, doc_id):
         return BulkEditRecord.is_record_selected(self, doc_id)
 
@@ -474,7 +462,7 @@ class BulkEditSession(models.Model):
         # the most potentially expensive query is below:
         return num_records + self._get_num_unrecorded() <= MAX_RECORDED_LIMIT
 
-    def update_result(self, record_count, form_id=None):
+    def update_result(self, record_count, form_id=None, error=None):
         result = self.result or {}
 
         if 'form_ids' not in result:
@@ -483,9 +471,13 @@ class BulkEditSession(models.Model):
             result['record_count'] = 0
         if 'percent' not in result:
             result['percent'] = 0
+        if 'errors' not in result:
+            result['errors'] = []
 
         if form_id:
             result['form_ids'].append(form_id)
+        if error:
+            result['errors'].append(error)
         result['record_count'] += record_count
         if self.records.count() == 0:
             result['percent'] = 100
@@ -493,7 +485,7 @@ class BulkEditSession(models.Model):
             result['percent'] = result['record_count'] * 100 / self.records.count()
 
         self.result = result
-        self.save()
+        self.save(update_fields=['result'])
 
 
 class DataType:
