@@ -53080,7 +53080,7 @@ msgstr "Батьківське розташування"
 
 #: corehq/ex-submodules/couchforms/openrosa_response.py
 msgid "   √   "
-msgstr "      "
+msgstr ""
 
 #: corehq/ex-submodules/dimagi/utils/dates.py
 msgid "You have to specify both dates!"
