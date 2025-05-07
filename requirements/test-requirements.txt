@@ -40,7 +40,7 @@ beautifulsoup4==4.10.0
     # via -r base-requirements.in
 billiard==4.2.1
     # via celery
-bleach==6.1.0
+bleach[css]==6.1.0
     # via -r base-requirements.in
 boto3==1.24.96
     # via -r base-requirements.in
@@ -399,7 +399,7 @@ pydantic-settings==2.5.2
     # via oic
 pyjwkest==1.4.2
     # via oic
-pyjwt==2.7.0
+pyjwt[crypto]==2.7.0
     # via
     #   -r base-requirements.in
     #   msal
@@ -487,7 +487,7 @@ requests==2.32.3
     #   twilio
 requests-mock==1.9.3
     # via -r test-requirements.in
-requests-oauthlib==1.3.1
+requests-oauthlib==2.0.0
     # via -r base-requirements.in
 requests-toolbelt==1.0.0
     # via -r base-requirements.in
