@@ -81,7 +81,6 @@ def _claim_bulk_edit_session_for_task(task, bulk_edit_session_id):
         | Q(task_id=task.request.id)  # or already claimed by *this* worker
     ).update(
         task_id=task.request.id,
-        committed_on=timezone.now(),
     )
     if not updated:
         logger.info("commit_data_cleaning: dropped task to avoid duplication", extra={
