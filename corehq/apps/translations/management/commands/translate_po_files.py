@@ -287,7 +287,7 @@ class PoTranslationFormat(TranslationFormat):
             batch_dict[index] = message_obj.msgid
         return json.dumps(batch_dict)
 
-    def create_batches(self, input_data=[], batch_size=10):
+    def create_batches(self, input_data=None, batch_size=10):
         """
         :param input_data: a list of objects with mapping of increasing number and message of the following format:
         {
@@ -299,6 +299,8 @@ class PoTranslationFormat(TranslationFormat):
         :param batch_size: the number of objects per batch
         :return: an array of batches, each batch is a dict of increasing number and message
         """
+        if not input_data:
+            input_data = []
         self.load_input(input_data)
         input_data_list = list(self.translation_obj_map.items())
         return [dict(input_data_list[i:i + batch_size]) for i in range(0, len(input_data_list), batch_size)]
