@@ -1,4 +1,3 @@
-
 hqDefine('app_manager/js/app_manager_utils', [
     'jquery',
     'underscore',
