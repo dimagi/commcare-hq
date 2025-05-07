@@ -5,6 +5,7 @@ import tempfile
 from unittest.mock import MagicMock, patch
 
 import polib
+import pytest
 
 from corehq.apps.translations.management.commands.translate_po_files import (
     LLMTranslator,
@@ -297,60 +298,41 @@ class TestPoTranslationFormat:
 
         assert "Response: JSON object" in result
 
-    def test_is_valid_msgstr(self):
-        # Test basic valid msgstr
-        assert PoTranslationFormat.is_valid_msgstr("Hello", "Hola")
+    @pytest.mark.parametrize("msgid, msgstr", [
+        ("Hello", "Hola"),  # Basic valid msgstr
+        ('Hello "world"', 'Hola "mundo"'),  # msgstr with double quotes
+        ("Hello \\n", "Hola \\n"),  # msgstr with backslash
+        ("Hello %s", "Hola %s"),  # msgstr with placeholder
+        ("Hello %(name)s", "Hola %(name)s"),  # msgstr with named placeholder
+        ("Hello {name}", "Hola {name}"),  # msgstr with named placeholder
+        ("<a>Hello</a>", "<a>Hola</a>"),  # msgstr with HTML tag
+        ('<a href="test">Hello</a>', '<a href="test">Hola</a>'),  # msgstr with HTML tag and attribute
+        ("<br/>", "<br/>"),  # msgstr with single HTML closing tag
+        ("Visit https://example.com", "Visita https://example.com"),  # msgstr with URL
+        ("Visit www.example.com", "Visita www.example.com"),  # msgstr with URL without protocol
+        ("Hello\nWorld", "Hola\nMundo"),  # msgstr with newline
+        ("Hello\nWorld", "Hola\n Mundo"),  # msgstr with newline and space
+        ('"Hola\n Mundo"', '"Hola\n Mundo"'),  # msgstr with newline and space
+        ("Hello &amp; World", "Hola &amp; Mundo"),  # msgstr with HTML entity
+        ("Hello &amp; World", "Hola et Mundo"),  # msgstr with HTML entity but msgid is not
+        ("Hello ", "Hola "),  # msgstr preserves whitespace
+        ("  Hello  ", "  Hola  "),  # msgstr preserves whitespace
+    ])
+    def test_is_valid_msgstr(self, msgid, msgstr):
+        assert PoTranslationFormat.is_valid_msgstr(msgid, msgstr)
 
-        # Test valid msgstr with escaped quotes
-        assert PoTranslationFormat.is_valid_msgstr('Hello "world"', 'Hola "mundo"')
-
-        # Test valid msgstr with escaped backslashes
-        assert PoTranslationFormat.is_valid_msgstr("Hello \\n", "Hola \\n")
-
-        # Test placeholder validation
-        assert PoTranslationFormat.is_valid_msgstr("Hello %s", "Hola %s")
-        assert PoTranslationFormat.is_valid_msgstr("Hello %(name)s", "Hola %(name)s")
-        assert PoTranslationFormat.is_valid_msgstr("Hello {name}", "Hola {name}")
-
-        assert not PoTranslationFormat.is_valid_msgstr(
-            "Hello %(name)s", "Hola %(nombre)s")  # Different named placeholder
-        assert not PoTranslationFormat.is_valid_msgstr(
-            "Hello {name}", "Hola {nombre}")  # Different named placeholder
-        assert not PoTranslationFormat.is_valid_msgstr("Hello %s", "Hola")  # Missing placeholder
-
-        # Test HTML tag validation
-        assert PoTranslationFormat.is_valid_msgstr("<a>Hello</a>", "<a>Hola</a>")
-        assert PoTranslationFormat.is_valid_msgstr('<a href="test">Hello</a>', '<a href="test">Hola</a>')
-        assert PoTranslationFormat.is_valid_msgstr("<br/>", "<br/>")
-
-        assert not PoTranslationFormat.is_valid_msgstr("<a>Hello</a>", "<b>Hola</b>")  # Different tags
-        assert not PoTranslationFormat.is_valid_msgstr("<a>Hello</a>", "<a>Hola")  # Missing tags
-        assert not PoTranslationFormat.is_valid_msgstr("<a>Hello</a>", "Hola")  # Missing tags
-
-        # Test URL validation
-        assert PoTranslationFormat.is_valid_msgstr("Visit https://example.com", "Visita https://example.com")
-        assert PoTranslationFormat.is_valid_msgstr("Visit www.example.com", "Visita www.example.com")
-
-        assert not PoTranslationFormat.is_valid_msgstr(
-            "Visit https://example.com", "Visita https://different.com")
-        assert not PoTranslationFormat.is_valid_msgstr("Visit www.example.com", "Visita www.different.com")
-
-        # Test multiline string validation
-        assert PoTranslationFormat.is_valid_msgstr("Hello\nWorld", "Hola\nMundo")
-        assert PoTranslationFormat.is_valid_msgstr("Hello\nWorld", "Hola\n Mundo")
-        assert PoTranslationFormat.is_valid_msgstr("Hello\nWorld", '"Hola\n Mundo"')
-
-        # Test HTML entities
-        assert PoTranslationFormat.is_valid_msgstr("&nbsp;", "&nbsp;")
-        assert PoTranslationFormat.is_valid_msgstr("&quot;", "&quot;")
-
-        # Test &amp; translation
-        assert PoTranslationFormat.is_valid_msgstr("Hello &amp; World", "Hola y Mundo")
-        assert PoTranslationFormat.is_valid_msgstr("Hello &amp; World", "Hola et Mundo")
-
-        # Test whitespace preservation
-        assert PoTranslationFormat.is_valid_msgstr(" Hello ", " Hola ")
-        assert PoTranslationFormat.is_valid_msgstr("  Hello  ", "  Hola  ")
+    @pytest.mark.parametrize("msgid, msgstr", [
+        ("Hello %(name)s", "Hola %(nombre)s"),  # Different named placeholder
+        ("Hello {name}", "Hola {nombre}"),  # Different named placeholder
+        ("Hello %s", "Hola"),  # Missing placeholder
+        ("Visit https://example.com", "Visita https://different.com"),  # Different URL
+        ("Visit www.example.com", "Visita www.different.com"),  # Different URL
+        ("<a>Hello</a>", "<b>Hola</b>"),  # Different tags
+        ("<a>Hello</a>", "<a>Hola"),  # Missing tags
+        ("<a>Hello</a>", "Hola"),  # Missing tags
+    ])
+    def test_is_valid_msgstr_invalid(self, msgid, msgstr):
+        assert not PoTranslationFormat.is_valid_msgstr(msgid, msgstr)
 
 
 @patch('corehq.apps.translations.management.commands.translate_po_files.polib')
