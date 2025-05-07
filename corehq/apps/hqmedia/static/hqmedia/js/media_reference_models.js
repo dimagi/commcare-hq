@@ -1,7 +1,5 @@
 import $ from "jquery";
 import ko from "knockout";
-import _ from "underscore";
-import assertProperties from "hqwebapp/js/assert_properties";
 import mediaUploaders from "hqmedia/js/uploaders";
 import initialPageData from "hqwebapp/js/initial_page_data";
 
