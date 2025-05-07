@@ -17,7 +17,8 @@ from memoized import memoized
 
 
 def retry_with_exponential_backoff(
-    initial_delay=1, exponential_base=2, jitter=True, max_retries=10, errors=(Exception,)
+    initial_delay=1, exponential_base=2, jitter=True,
+    max_retries=10, errors=(Exception,), backup_model=''
 ):
     """
     :param initial_delay: initial delay in seconds
@@ -25,13 +26,14 @@ def retry_with_exponential_backoff(
     :param jitter: whether to add randomness to the delay
     :param max_retries: maximum number of retries
     :param errors: tuple of errors to catch
+    :param backup_model: when the primary model is rate limited,
+        this model will be used,optional, default is ''
+
     This approach has been inspired by the approaches suggested in
     https://github.com/openai/openai-cookbook/blob/main/examples/How_to_handle_rate_limits.ipynb
     We are adding exponential backoff on retries and also a backup model to use
     if the primary model is rate limited.
 
-    TODO - As of now we are only using OpenAI, so backup model is hardcoded
-    We can make it more generic by having it as a property of the LLMTranslator class.
     """
 
     def decorator(func):
@@ -44,9 +46,9 @@ def retry_with_exponential_backoff(
                     return func(*args, **kwargs)
                 except errors:
                     num_retries += 1
-                    if num_retries == 1:
-                        print("Rate limit error, retrying with backup model: gpt-4o")
-                        return func(*args, **kwargs, backup_model='gpt-4o')
+                    if num_retries == 1 and backup_model:
+                        print(f"Rate limit error, retrying with backup model: {backup_model}")
+                        return func(*args, **kwargs, backup_model=backup_model)
                     if num_retries > max_retries:
                         raise Exception(
                             f"Maximum number of retries ({max_retries}) exceeded."
@@ -74,16 +76,19 @@ class LLMTranslator(abc.ABC):
     In this case, we will be implementing a class for OpenAI.
     """
 
-    def __init__(self, api_key, model, lang, translation_format):
+    def __init__(self, api_key, model, lang, translation_format, backup_model=''):
         """
         :param api_key: str
         :param model: str
         :param translation_format: an instance of TranslationFormat or its subclass
+        :param backup_model: when the primary model is rate limited,
+            this model will be used, optional, default is ''
         """
         self.api_key = api_key
         assert model in self.supported_models, f"Model {model} is not supported by {self.__class__.__name__}."
         self.model = model
         self.lang = lang
+        self.backup_model = backup_model
         self.translation_format = translation_format
 
     def base_prompt(self):
@@ -163,7 +168,7 @@ class OpenaiTranslator(LLMTranslator):
     def supported_models(self):
         return ["gpt-4o-mini", "gpt-4o", "gpt-4", "gpt-4.1"]
 
-    def __init__(self, api_key, model, lang, translation_format):
+    def __init__(self, api_key, model, lang, translation_format, backup_model=''):
         super().__init__(api_key, model, lang, translation_format)
         try:
             import openai
@@ -181,7 +186,9 @@ class OpenaiTranslator(LLMTranslator):
         if self.client is None:
             return self._call_llm_http(system_prompt, user_message)
         else:
-            @retry_with_exponential_backoff(max_retries=5, errors=(self.openai.RateLimitError,))
+            @retry_with_exponential_backoff(
+                max_retries=5, errors=(self.openai.RateLimitError,), backup_model=self.backup_model
+            )
             def _call_openai_client(backup_model=None):
                 model = backup_model or self.model
                 response = self.client.chat.completions.create(
@@ -619,7 +626,8 @@ class Command(BaseCommand):
             api_key=api_key,
             model=model,
             lang=lang,
-            translation_format=translation_format
+            translation_format=translation_format,
+            backup_model='gpt-4o'  # Hard coded right now, but can be made dynamic if needed
         )
         untranslated = translation_format.load_input()
         if self.check_and_remove_errors:
