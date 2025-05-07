@@ -1,10 +1,10 @@
-
 hqDefine("hqwebapp/js/daterangepicker.config", [
     'jquery',
     'underscore',
     'hqwebapp/js/initial_page_data',
     'moment/moment',
     'bootstrap-daterangepicker/daterangepicker',
+    'bootstrap-daterangepicker/daterangepicker.css',
 ], function (
     $,
     _,

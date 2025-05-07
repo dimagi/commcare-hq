@@ -5,10 +5,9 @@ from corehq.apps.hqwebapp.tables.elasticsearch.records import CaseSearchElasticR
 
 
 class EditableCaseSearchElasticRecord(CaseSearchElasticRecord):
-
-    def __init__(self, record, request, **kwargs):
+    def __init__(self, record, request, session=None, **kwargs):
         super().__init__(record, request, **kwargs)
-        self.session = kwargs.pop('session')
+        self.session = session
 
     @property
     @memoized

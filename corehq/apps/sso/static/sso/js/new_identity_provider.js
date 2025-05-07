@@ -1,37 +1,30 @@
-hqDefine('sso/js/new_identity_provider', [
-    'jquery',
-    'knockout',
-    'accounting/js/widgets',
-    'hqwebapp/js/initial_page_data',
-    'commcarehq',
-], function (
-    $,
-    ko,
-    widgets,
-    initialPageData,
-) {
+import "commcarehq";
+import $ from "jquery";
+import ko from "knockout";
+import widgets from "accounting/js/widgets";
+import initialPageData from "hqwebapp/js/initial_page_data";
 
-    var identityProviderModel = function () {
-        var self = {};
 
-        self.owner = widgets.asyncSelect2Handler('owner', false, 'select2_identity_provider');
-        self.protocol = ko.observable('saml');
-        self.idpTypesByProtocol = initialPageData.get('idp_types_by_protocol');
-        self.availableIdpTypes = ko.computed(function () {
-            return self.idpTypesByProtocol[self.protocol()];
-        });
-        self.idpType = ko.observable('azure_ad');
+var identityProviderModel = function () {
+    var self = {};
 
-        self.init = function () {
-            self.owner.init();
-        };
+    self.owner = widgets.asyncSelect2Handler('owner', false, 'select2_identity_provider');
+    self.protocol = ko.observable('saml');
+    self.idpTypesByProtocol = initialPageData.get('idp_types_by_protocol');
+    self.availableIdpTypes = ko.computed(function () {
+        return self.idpTypesByProtocol[self.protocol()];
+    });
+    self.idpType = ko.observable('azure_ad');
 
-        return self;
+    self.init = function () {
+        self.owner.init();
     };
 
-    $(function () {
-        var identityProviderHandler = identityProviderModel();
-        identityProviderHandler.init();
-        $('#ko-new-idp-form').koApplyBindings(identityProviderHandler);
-    });
+    return self;
+};
+
+$(function () {
+    var identityProviderHandler = identityProviderModel();
+    identityProviderHandler.init();
+    $('#ko-new-idp-form').koApplyBindings(identityProviderHandler);
 });

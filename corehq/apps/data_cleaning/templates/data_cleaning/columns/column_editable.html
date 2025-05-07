@@ -1,7 +1,8 @@
 {% load i18n %}
+{% load django_tables2 %}
 {% load data_cleaning %}
 
-{% edited_value record column as edited_value %}
+{% get_edited_value record column as edited_value %}
 <div
   class="editable-column-container"
   x-data="{
@@ -15,26 +16,53 @@
     @dblclick="isEditing = !isSubmitting"
   >
     {% if edited_value|has_edits %}
-      <div class="d-flex align-items-center">
+      <div class="d-flex align-items-center me-3">
         <div class="dc-diff-view">
-          <div class="dc-diff-before">
-            {{ value }}
+          <div class="d-flex align-items-stretch dc-diff-before">
+            <div
+              class="dc-diff-icon"
+              x-tooltip=""
+              data-bs-custom-class="fs-6"
+              data-bs-title="{% trans "stored value" %}"
+            >
+              <i class="fa-solid fa-minus"></i>
+            </div>
+            <div class="align-self-center ms-1 me-2">
+              {% display_dc_value value %}
+            </div>
           </div>
-          <div class="dc-diff-after">
-            {{ edited_value }}
+          <div class="d-flex align-items-stretch dc-diff-after">
+            <div
+              class="dc-diff-icon"
+              x-tooltip=""
+              data-bs-custom-class="fs-6"
+              data-bs-title="{% trans "changed value" %}"
+            >
+              <i class="fa-solid fa-plus"></i>
+            </div>
+            <div class="align-self-center ms-1 me-2">
+              {% display_dc_value edited_value %}
+            </div>
           </div>
         </div>
         <div class="ms-2">
           <button
-            class="btn btn-outline-danger btn-sm htmx-loading"
+            class="btn btn-outline-danger btn-sm"
             type="button"
+            hx-post="{{ request.path_info }}{% querystring %}"
+            hq-hx-action="cell_reset_changes"
+            hx-vals="{% cell_request_params record column %}"
+            hx-target="closest .editable-column-container"
+            hx-swap="outerHTML"
+            hx-disabled-elt="this"
           >
             <i class="fa fa-close"></i>
+            <span class="visually-hidden">{% trans "Reset Changes" %}</span>
           </button>
         </div>
       </div>
     {% else %}
-      {{ value }}
+      {% display_dc_value value %}
     {% endif %}
     <button
       class="btn btn-link btn-sm dc-inline-edit-action"
@@ -47,28 +75,50 @@
     </button>
   </div>
 
-  <div x-show="isEditing">
-    <div class="input-group">
-      <input
-        class="form-control"
-        type="text"
-        name="newValue"
-      />
-      <button
-        class="btn btn-primary htmx-loading"
-        type="submit"
-        disabled="disabled"  {# todo implement inline edit submission #}
-        @click="isSubmitting = true"
-      >
-        <i class="fa fa-check"></i>
-      </button>
-      <button
-        class="btn btn-outline-danger"
-        type="button"
-        :disabled="isSubmitting"
-        @click="isEditing = false"
-      >
-        <i class="fa fa-close"></i>
-      </button>
+  <div
+    x-show="isEditing"
+    x-data="{
+      cellValue: {% get_cell_value value edited_value %},
+      initialValue: {% get_cell_value value edited_value %},
+    }"
+  >
+    <form
+      hx-post="{{ request.path_info }}{% querystring %}"
+      hq-hx-action="cell_inline_edit"
+      hx-vals="{% cell_request_params record column %}"
+      hx-target="closest .editable-column-container"
+      hx-swap="outerHTML"
+      hx-disabled-elt="find button"
+    >
+      <div class="input-group">
+        <input
+          class="form-control"
+          type="text"
+          name="newValue"
+          x-model="cellValue"
+        />
+        <button
+          class="btn btn-primary"
+          type="submit"
+          :disabled="cellValue === initialValue"
+          @click="isSubmitting = true"
+        >
+          <i class="fa fa-check"></i>
+          <span class="visually-hidden">{% trans "Apply Edit" %}</span>
+        </button>
+        <button
+          class="btn btn-outline-danger"
+          type="button"
+          :disabled="isSubmitting"
+          @click="
+            isEditing = false;
+            cellValue = initialValue;
+          "
+        >
+          <i class="fa fa-close"></i>
+          <span class="visually-hidden">{% trans "Cancel Edit" %}</span>
+        </button>
+      </div>
+    </form>
   </div>
 </div>

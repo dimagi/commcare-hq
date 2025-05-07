@@ -1,0 +1,12 @@
+{% load i18n %}
+
+<p class="lead">
+  {% blocktrans %}
+    The following edit will be undone:
+  {% endblocktrans %}
+</p>
+{% if change %}
+  <div class="list-group">
+    {% include "data_cleaning/summary/partial/change_detail.html" with change=change %}
+  </div>
+{% endif %}

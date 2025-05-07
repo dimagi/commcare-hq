@@ -538,14 +538,14 @@ def _get_case_types_from_apps_query(domain, is_build=False):
     )
 
 
-def get_case_types_from_apps(domain):
+def get_case_types_from_apps(domain, include_save_to_case_updates=True):
     """
     Get the case types of modules in applications in the domain.
     Also returns case types for SaveToCase properties in the domain, if the toggle is enabled.
     :returns: A set of case_types
     """
     save_to_case_updates = set()
-    if VELLUM_SAVE_TO_CASE.enabled(domain):
+    if include_save_to_case_updates and VELLUM_SAVE_TO_CASE.enabled(domain):
         save_to_case_updates = _get_save_to_case_updates(domain)
     q = _get_case_types_from_apps_query(domain)
     case_types = set(q.run().aggregations.modules.case_types.keys)

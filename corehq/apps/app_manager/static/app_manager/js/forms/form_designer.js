@@ -3,37 +3,21 @@ hqDefine("app_manager/js/forms/form_designer", [
     'jquery',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'analytix/js/appcues',
     'analytix/js/google',
     'analytix/js/kissmetrix',
     'app_manager/js/app_manager',
     'app_manager/js/forms/edit_form_details',
     'jquery-ui/ui/widgets/sortable',
+    'jquery-ui-built-themes/redmond/jquery-ui.min.css',
 ], function (
     $,
     _,
     initialPageData,
-    appcues,
     google,
     kissmetrics,
     appManager,
     editDetails,
 ) {
-    var FORM_TYPES = {
-            REGISTRATION: "registration",
-            SURVEY: "survey",
-            FOLLOWUP: "followup",
-        },
-        trackFormEvent = function (eventType) {
-            var formType = FORM_TYPES.FOLLOWUP;
-            if (initialPageData.get("is_registration_form")) {
-                formType = FORM_TYPES.REGISTRATION;
-            } else if (initialPageData.get("is_survey")) {
-                formType = FORM_TYPES.SURVEY;
-            }
-            appcues.trackEvent(eventType + " (" + formType + ")");
-        };
-
     $(function () {
         var VELLUM_OPTIONS = _.extend({}, initialPageData.get("vellum_options"), {
             itemset: {
@@ -85,7 +69,6 @@ hqDefine("app_manager/js/forms/form_designer", [
                 if (initialPageData.get("days_since_created") === 0) {
                     kissmetrics.track.event('Saved the Form Builder within first 24 hours');
                 }
-                trackFormEvent(appcues.EVENT_TYPES.FORM_SAVE);
             },
             onReady: function () {
                 if (initialPageData.get('vellum_debug') === 'dev') {
@@ -108,119 +91,106 @@ hqDefine("app_manager/js/forms/form_designer", [
                 }
                 $("#formdesigner").vellum("get").data.core.form.on("question-create", function () {
                     kissmetrixTrack();
-                    trackFormEvent(appcues.EVENT_TYPES.QUESTION_CREATE);
                 });
-
-                trackFormEvent(appcues.EVENT_TYPES.FORM_LOADED);
             },
         });
 
         window.CKEDITOR_BASEPATH = initialPageData.get('CKEDITOR_BASEPATH');     // eslint-disable-line no-unused-vars, no-undef
 
-        // This unfortunate chain of import callbacks was required because
-        // appcues appears to make an attempt to use the same requirejs
-        // as the host app. Because we only use requirejs for some parts
-        // of the app, appcues gets very confused and throws errors, likely
-        // corrupting or invalidating the data in some way. By requiring
-        // appcues to have completed its init prior to importing requirejs
-        // or using it to incorporate vellum, these issues disappear.
-        var initFormBuilder = function () {
-            $.getScript(initialPageData.get("requirejs_static_url"), function () {
-                define("jquery", [], function () { return window.jQuery; });
-                define("jquery.bootstrap", ["jquery"], function () {});
-                define("underscore", [], function () { return window._; });
-                define("vellum/hqAnalytics", [], function () {
-                    function workflow(message) {
-                        kissmetrics.track.event(message);
-                    }
-
-                    function usage(label, group, message) {
-                        google.track.event(label, group, message);
-                    }
-
-                    function fbUsage(group, message) {
-                        usage("Form Builder", group, message);
-                    }
-
-                    return {
-                        fbUsage: fbUsage,
-                        usage: usage,
-                        workflow: workflow,
-                    };
-                });
-
-                require.config({
-                    /* to use non-built files in HQ:
-                        * clone Vellum into submodules/formdesigner
-                        * Run make in that directory (requires node.js)
-                        * set settings.VELLUM_DEBUG to "dev" or "dev-min"
-                    */
-                    baseUrl: initialPageData.get('requirejs_url'),
-                    // handle very bad connections
-                    waitSeconds: 60,
-                    urlArgs: initialPageData.get('requirejs_args'),
-                    paths: {
-                        'jquery.vellum': 'main',
-                    },
-                });
-
-                require(["jquery", "jquery.vellum"], function ($) {
-                    $(function () {
-                        $("#edit").hide();
-                        $('#hq-footer').hide();
-                        $('#formdesigner').vellum(VELLUM_OPTIONS);
-                    });
-                });
-                kissmetrics.track.event('Entered the Form Builder');
-
-                appManager.setPrependedPageTitle("\u270E ", true);
-                appManager.setAppendedPageTitle(gettext("Edit Form"));
-
-                if (initialPageData.get('form_uses_cases')) {
-                    // todo make this a more broadly used util, perhaps? actually add buttons to formplayer?
-                    var _prependTemplateToSelector = function (selector, layout, attempts, callback) {
-                        attempts = attempts || 0;
-                        if ($(selector).length) {
-                            var $toggleParent = $(selector);
-                            $toggleParent.prepend(layout);
-                            callback();
-                        } else if (attempts <= 30) {
-                            // give up appending element after waiting 30 seconds to load
-                            setTimeout(function () {
-                                _prependTemplateToSelector(selector, layout, attempts++, callback);
-                            }, 1000);
-                        }
-                    };
-                    _prependTemplateToSelector(
-                        '.fd-form-actions',
-                        $('#js-fd-form-actions').html(),
-                        0,
-                        function () { },
-                    );
+        $.getScript(initialPageData.get("requirejs_static_url"), function () {
+            define("jquery", [], function () { return window.jQuery; });
+            define("jquery.bootstrap", ["jquery"], function () {});
+            define("underscore", [], function () { return window._; });
+            define("vellum/hqAnalytics", [], function () {
+                function workflow(message) {
+                    kissmetrics.track.event(message);
                 }
 
-                appManager.updatePageTitle(initialPageData.get("form_name"));
-                editDetails.initName(
-                    initialPageData.get("form_name"),
-                    initialPageData.reverse("edit_form_attr", "name"),
-                );
-                editDetails.initComment(
-                    initialPageData.get("form_comment").replace(/\\n/g, "\n"),
-                    initialPageData.reverse("edit_form_attr", "comment"),
-                );
-                editDetails.setUpdateCallbackFn(function (name) {
-                    $('#formdesigner .fd-content-left .fd-head-text').text(name);
-                    $('.variable-form_name').text(name);
-                    appManager.updatePageTitle(name);
-                    $('#edit-form-name-modal').modal('hide');
-                    $('#edit-form-name-modal').find('.disable-on-submit').enableButton();
-                });
-                $('#edit-form-name-modal').koApplyBindings(editDetails);
-                $("#edit-form-name-modal button[type='submit']").click(function () {
-                    kissmetrics.track.event("Renamed form from form builder");
+                function usage(label, group, message) {
+                    google.track.event(label, group, message);
+                }
+
+                function fbUsage(group, message) {
+                    usage("Form Builder", group, message);
+                }
+
+                return {
+                    fbUsage: fbUsage,
+                    usage: usage,
+                    workflow: workflow,
+                };
+            });
+
+            require.config({
+                /* to use non-built files in HQ:
+                    * clone Vellum into submodules/formdesigner
+                    * Run make in that directory (requires node.js)
+                    * set settings.VELLUM_DEBUG to "dev" or "dev-min"
+                */
+                baseUrl: initialPageData.get('requirejs_url'),
+                // handle very bad connections
+                waitSeconds: 60,
+                urlArgs: initialPageData.get('requirejs_args'),
+                paths: {
+                    'jquery.vellum': 'main',
+                },
+            });
+
+            require(["jquery", "jquery.vellum"], function ($) {
+                $(function () {
+                    $("#edit").hide();
+                    $('#hq-footer').hide();
+                    $('#formdesigner').vellum(VELLUM_OPTIONS);
                 });
             });
-        };
-        appcues.then(initFormBuilder, initFormBuilder);
+            kissmetrics.track.event('Entered the Form Builder');
+
+            appManager.setPrependedPageTitle("\u270E ", true);
+            appManager.setAppendedPageTitle(gettext("Edit Form"));
+
+            if (initialPageData.get('form_uses_cases')) {
+                // todo make this a more broadly used util, perhaps? actually add buttons to formplayer?
+                var _prependTemplateToSelector = function (selector, layout, attempts, callback) {
+                    attempts = attempts || 0;
+                    if ($(selector).length) {
+                        var $toggleParent = $(selector);
+                        $toggleParent.prepend(layout);
+                        callback();
+                    } else if (attempts <= 30) {
+                        // give up appending element after waiting 30 seconds to load
+                        setTimeout(function () {
+                            _prependTemplateToSelector(selector, layout, attempts++, callback);
+                        }, 1000);
+                    }
+                };
+                _prependTemplateToSelector(
+                    '.fd-form-actions',
+                    $('#js-fd-form-actions').html(),
+                    0,
+                    function () { },
+                );
+            }
+
+            appManager.updatePageTitle(initialPageData.get("form_name"));
+            editDetails.initName(
+                initialPageData.get("form_name"),
+                initialPageData.reverse("edit_form_attr", "name"),
+            );
+            editDetails.initComment(
+                initialPageData.get("form_comment").replace(/\\n/g, "\n"),
+                initialPageData.reverse("edit_form_attr", "comment"),
+            );
+            editDetails.setUpdateCallbackFn(function (name) {
+                $('#formdesigner .fd-content-left .fd-head-text').text(name);
+                $('.variable-form_name').text(name);
+                appManager.updatePageTitle(name);
+                $('#edit-form-name-modal').modal('hide');
+                $('#edit-form-name-modal').find('.disable-on-submit').enableButton();
+            });
+            $('#edit-form-name-modal').koApplyBindings(editDetails);
+            $("#edit-form-name-modal button[type='submit']").click(function () {
+                kissmetrics.track.event("Renamed form from form builder");
+            });
+        });
     });
 });
