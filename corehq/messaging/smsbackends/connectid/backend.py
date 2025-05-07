@@ -7,6 +7,8 @@ from django.conf import settings
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import ConnectIDUserLink, CouchUser
 
+FCM_ANALYTICS_LABEL = "commcare-hq-message-notification"
+
 
 class ConnectBackend:
     couch_id = "connectid"
@@ -32,6 +34,7 @@ class ConnectBackend:
                 "channel": user_link.messaging_channel,
                 "content": content,
                 "message_id": str(message.message_id),
+                "fcm_options": {"analytics_label": FCM_ANALYTICS_LABEL}
             },
             auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY)
         )
