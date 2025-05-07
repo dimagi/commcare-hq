@@ -23,9 +23,7 @@
  *       caseTypeObservable: $root.caseType,
  *     "></case-property-input>
  */
-import $ from "jquery";
 import ko from "knockout";
-import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import privileges from "hqwebapp/js/privileges";
 import "hqwebapp/js/select2_knockout_bindings.ko";
