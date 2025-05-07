@@ -342,6 +342,9 @@ class BulkEditSession(models.Model):
     def get_num_changes(self):
         return self.changes.count()
 
+    def are_bulk_edits_allowed(self):
+        return self.get_num_changes() < MAX_SESSION_CHANGES
+
     def is_undo_multiple(self):
         """
         Check if the last change in the session affects multiple records.

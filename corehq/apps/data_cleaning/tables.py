@@ -11,7 +11,6 @@ from corehq.apps.data_cleaning.columns import (
 from corehq.apps.data_cleaning.models import (
     BULK_OPERATION_CHUNK_SIZE,
     MAX_RECORDED_LIMIT,
-    MAX_SESSION_CHANGES,
 )
 from corehq.apps.data_cleaning.records import EditableCaseSearchElasticRecord
 from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
@@ -104,15 +103,12 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
         return self.session.get_num_changes()
 
     @staticmethod
-    def get_edit_details(session, num_changes=None):
+    def get_edit_details(session):
         """
         Return a dictionary of edit details for the Alpine.store.
         NOTE: The Table's Host View also calls this.
         """
-        if num_changes is None:
-            num_changes = session.get_num_changes()
         return {
-            "isSessionAtChangeLimit": num_changes >= MAX_SESSION_CHANGES,
             "isUndoMultiple": session.is_undo_multiple(),
         }
 
@@ -123,7 +119,7 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
         Return a JSON dump of the result of get_edit_details.
         This is used to pass the edit details to the Alpine store.
         """
-        return json.dumps(self.get_edit_details(self.session, self.num_changes))
+        return json.dumps(self.get_edit_details(self.session))
 
 
 class CaseCleaningTasksTable(BaseHtmxTable, tables.Table):
