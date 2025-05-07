@@ -129,7 +129,24 @@ Homepage = "https://commcarehq.org"
 Documentation = "https://commcare-hq.readthedocs.io"
 Repository = "https://github.com/dimagi/commcare-hq"
 
+[tool.uv]
+default-groups = ["dev", "sso"]
+
 [dependency-groups]
+dev = [
+    'dependency-metrics',
+    'django-extensions',
+    'fixture',
+    'git-build-branch',
+    'gnureadline',
+    'ipython', # for nicer django shell experience
+    'psutil>5.1.3', # for memory profiling
+    'wheel',
+    'flake8>=6.0', # linting/formatting
+    'isort',
+    'yapf',
+    {include-group = "test"},
+]
 docs = [
     "django-extensions",
     "myst-parser",
@@ -145,7 +162,6 @@ prod = [
     "ipython", # for nicer django shell experience
     "idna",
     "certifi",
-    {include-group = "sso"},
 ]
 sso = [
     "msal",
@@ -166,5 +182,4 @@ test = [
     'pytest-django',
     'pytest-unmagic',
     'coverage',
-    {include-group = "sso"},
 ]
