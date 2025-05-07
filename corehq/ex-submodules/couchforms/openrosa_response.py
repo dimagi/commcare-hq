@@ -33,6 +33,22 @@ def get_openrosa_reponse(message, nature, status):
     return OpenRosaResponse(message, nature, status).response()
 
 
+def get_translatable_406_response_xml(error_code, message, nature):
+    elem = ElementTree.Element('OpenRosaResponse')
+    elem.set('xmlns', RESPONSE_XMLNS)
+    msg_elem = ElementTree.Element('message')
+    if nature:
+        msg_elem.set('nature', nature)
+    error_elem = ElementTree.Element('error')
+    error_elem.text = six.text_type(error_code)
+    response_elem = ElementTree.Element('default_response')
+    response_elem.text = six.text_type(message)
+    msg_elem.append(error_elem)
+    msg_elem.append(response_elem)
+    elem.append(msg_elem)
+    return ElementTree.tostring(elem, encoding='utf-8')
+
+
 class OpenRosaResponse(object):
     """
     Response template according to
@@ -66,6 +82,7 @@ def get_openarosa_success_response(message=None):
     if not message:
         message = _('   √   ')
     return get_openrosa_reponse(message, ResponseNature.SUBMIT_SUCCESS, 201)
+
 
 SUBMISSION_IGNORED_RESPONSE = get_openrosa_reponse(
     '√ (this submission was ignored)', ResponseNature.SUBMIT_SUCCESS, 201
