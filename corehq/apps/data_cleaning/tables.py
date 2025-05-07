@@ -99,8 +99,8 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
 
     @property
     @memoized
-    def num_changes(self):
-        return self.session.get_num_changes()
+    def has_changes(self):
+        return self.session.has_changes()
 
     @staticmethod
     def get_edit_details(session):

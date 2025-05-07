@@ -339,11 +339,11 @@ class BulkEditSession(models.Model):
             )
         return self.result['record_count'] if self.completed_on else self.records.count()
 
-    def get_num_changes(self):
-        return self.changes.count()
+    def has_changes(self):
+        return self.changes.exists()
 
     def are_bulk_edits_allowed(self):
-        return self.get_num_changes() < MAX_SESSION_CHANGES
+        return self.changes.count() < MAX_SESSION_CHANGES
 
     def is_undo_multiple(self):
         """
