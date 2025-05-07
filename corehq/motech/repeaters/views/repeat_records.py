@@ -222,7 +222,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             total=total,
             payload_id=self.payload_id,
             repeater_id=self.repeater_id,
-            state=self.state.label.upper() if self.state else None,
+            state=self.state.name.upper() if self.state else None,
         )
         return context
 
