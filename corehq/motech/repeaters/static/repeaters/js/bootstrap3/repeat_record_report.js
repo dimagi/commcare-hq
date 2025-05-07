@@ -246,7 +246,7 @@ $(function () {
             },
             error: function () {
                 btn.removeSpinnerFromButton();
-                btn.text(gettext('Failed to send'));
+                btn.text(gettext('Failed'));
                 btn.addClass('btn-danger');
                 resetPage();
             },
@@ -265,7 +265,7 @@ $(function () {
             },
             error: function () {
                 btn.removeSpinnerFromButton();
-                btn.text(gettext('Failed to cancel'));
+                btn.text(gettext('Failed'));
                 btn.addClass('btn-danger');
                 resetPage();
             },
