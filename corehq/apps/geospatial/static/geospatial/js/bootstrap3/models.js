@@ -7,10 +7,10 @@ import utils from "geospatial/js/utils";
 import alertUser from "hqwebapp/js/bootstrap3/alert_user";
 import mapboxgl from "mapbox-gl";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
-import turf from "@turf/turf";
+import { booleanPointInPolygon, point } from "@turf/turf";
 import "hqwebapp/js/components/pagination";
-import "style-loader!mapbox-gl/dist/mapbox-gl.css";
-import "style-loader!@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
+import "mapbox-gl/dist/mapbox-gl.css";
+import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
 
 const FEATURE_QUERY_PARAM = 'features';
 const SELECTED_FEATURE_ID_QUERY_PARAM = 'selected_feature_id';
@@ -509,14 +509,14 @@ var Map = function (usesClusters, usesStreetsLayers) {
                 continue;
             }
             // Will be 0 if a user deletes a point from a three-point polygon,
-            // since mapbox will delete the entire polygon. turf.booleanPointInPolygon()
+            // since mapbox will delete the entire polygon. booleanPointInPolygon()
             // does not expect this, and will raise a 'TypeError' exception.
             if (!polygon.geometry.coordinates.length) {
                 continue;
             }
             const coordinatesArr = [coordinates.lng, coordinates.lat];
-            const point = turf.point(coordinatesArr);
-            if (turf.booleanPointInPolygon(point, polygon.geometry)) {
+            const point = point(coordinatesArr);
+            if (booleanPointInPolygon(point, polygon.geometry)) {
                 return true;
             }
         }
