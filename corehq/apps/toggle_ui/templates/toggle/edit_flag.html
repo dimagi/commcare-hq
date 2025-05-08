@@ -151,14 +151,21 @@
       </div>
     {% endif %}
     {% if allows_items %}
-      <h4>
-        {% trans "Enabled toggle items" %}
-        {% if is_random %}
-        <span data-bind="makeHqHelp: {
-            description: '{% trans "Items added here will be enabled regardless of the randomness (or disabled if preceded by `!`)" %}'}"></span>
-        {% endif %}
-      </h4>
       <table class="table table-condensed"><!-- B5: add table-borderless and remove `border: none` inline styles on table cells -->
+        <thead>
+          <tr>
+            <th>
+              {% trans "Enabled toggle items" %}
+              {% if is_random %}
+              <span data-bind="makeHqHelp: {
+                description: '{% trans "Items added here will be enabled regardless of the randomness (or disabled if preceded by `!`)" %}'}"></span>
+              {% endif %}
+            </th>
+            <th>Namespace</th>
+            <th>Latest Form Submission</th>
+            <th>Subscription Plan</th>
+          </tr>
+        </thead>
         <tbody data-bind="foreach: items">
           <tr>
             <td class="col-sm-4" style="border: 0">
