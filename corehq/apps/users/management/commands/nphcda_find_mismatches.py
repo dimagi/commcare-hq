@@ -189,7 +189,10 @@ def get_location(domain: Optional[str], location_id: str) -> SQLLocation:
         queryset = SQLLocation.objects.filter(location_id=location_id)
         if domain:
             queryset = queryset.filter(domain=domain)
-        location_cache[location_id] = queryset.get()
+        try:
+            location_cache[location_id] = queryset.get()
+        except SQLLocation.DoesNotExist as err:
+            raise LocationError from err
     return location_cache[location_id]
 
 
@@ -359,9 +362,24 @@ def settlement_columns(settlement_id: Optional[str]) -> tuple:
     if settlement_id is None:
         return '', '', '', '', ''
     settlement = location_cache[settlement_id]
-    ward = get_location(None, settlement.parent_location_id)
-    lga = get_location(None, ward.parent_location_id)
-    state = get_location(None, lga.parent_location_id)
+    if settlement.location_type.name == 'State':
+        # It is possible for users to have been assigned to the state
+        return (
+            settlement.name,
+            '---',
+            '---',
+            '---',
+            settlement_id,
+        )
+
+    try:
+        ward = get_location(None, settlement.parent_location_id)
+        lga = get_location(None, ward.parent_location_id)
+        state = get_location(None, lga.parent_location_id)
+    except LocationError as err:
+        raise LocationError(
+            f'Error getting parent locations of settlement {settlement_id}'
+        ) from err
     return (
         state.name,
         lga.name,
