@@ -235,8 +235,10 @@ def sync_all_appointments_domain(domain):
             if appointment_resource is not None:
                 new_appointment_dict = _get_appointment_resource_values(appointment_resource)
             host_case_id = patient.get_case_property('case_id')
+            appointment_fhir_timestamp = new_appointment_dict.get("appointment_fhir_timestamp")
+            appointment_description = new_appointment_dict.get("appointment_description")
             appointment_case_data = {
-                'case_name': f'[{new_appointment_dict.get("appointment_fhir_timestamp")}]: {new_appointment_dict.get("appointment_description")}',
+                'case_name': f'[{appointment_fhir_timestamp}]: {appointment_description}',
                 'case_type': 'appointment',
                 'indices': {
                     'patient': {
@@ -246,8 +248,8 @@ def sync_all_appointments_domain(domain):
                     }
                 },
                 'properties': {
-                    'appointment_description': new_appointment_dict.get("appointment_description"),
-                    'appointment_fhir_timestamp': new_appointment_dict.get("appointment_fhir_timestamp"),
+                    'appointment_description': appointment_description,
+                    'appointment_fhir_timestamp': appointment_fhir_timestamp,
                     'appointment_date': new_appointment_dict.get("appointment_date"),
                     'appointment_time': new_appointment_dict.get("appointment_time"),
                     'patient_fhir_id': patient_fhir_id,
