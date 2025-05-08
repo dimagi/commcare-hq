@@ -908,7 +908,7 @@
       "compare_all_files": true
     }
   ],
-  "apps/geospatial/templates/geospatial": [
+  "apps/microplanning/templates/geospatial": [
     {
       "directories": [
         "bootstrap3",

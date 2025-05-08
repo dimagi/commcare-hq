@@ -74,7 +74,7 @@ domain_specific = [
     url(r'^clean/', include('corehq.apps.data_cleaning.urls')),
     url(r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     url(r'^campaign/', include('corehq.apps.campaign.urls')),
-    url(r'^microplanning/', include('corehq.apps.geospatial.urls')),
+    url(r'^microplanning/', include('corehq.apps.microplanning.urls')),
     url(r'^kyc/', include('corehq.apps.integration.kyc.urls')),
     url(r'^payments/', include('corehq.apps.integration.payments.urls')),
     url(r'^fixtures/', include('corehq.apps.fixtures.urls')),

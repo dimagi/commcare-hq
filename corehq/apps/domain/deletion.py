@@ -433,7 +433,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('export', 'EmailExportWhenDoneRequest', 'domain'),
     ModelDeletion('export', 'LedgerSectionEntry', 'domain'),
     CustomDeletion('export', _delete_data_files, []),
-    ModelDeletion('geospatial', 'GeoPolygon', 'domain'),
+    ModelDeletion('microplanning', 'GeoPolygon', 'domain'),
     ModelDeletion('locations', 'LocationFixtureConfiguration', 'domain'),
     ModelDeletion('ota', 'MobileRecoveryMeasure', 'domain'),
     ModelDeletion('ota', 'SerialIdBucket', 'domain'),
@@ -500,7 +500,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('domain', 'AppReleaseModeSetting', 'domain'),
     ModelDeletion('events', 'Event', 'domain'),
     ModelDeletion('events', 'AttendanceTrackingConfig', 'domain'),
-    ModelDeletion('geospatial', 'GeoConfig', 'domain'),
+    ModelDeletion('microplanning', 'GeoConfig', 'domain'),
     ModelDeletion('email', 'EmailSettings', 'domain'),
     ModelDeletion('hqmedia', 'LogoForSystemEmailsReference', 'domain'),
     ModelDeletion('campaign', 'Dashboard', 'domain', extra_models=[
