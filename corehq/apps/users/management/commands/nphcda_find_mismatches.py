@@ -126,6 +126,17 @@ def iter_user_settlements(
 
 
 def iter_user_rows(csv_filename: str) -> Iterable[UserRow]:
+    """
+    Iterates rows of csv_filename.
+
+    Expected column names:
+    - State
+    - LGA
+    - Ward
+    - Settlement
+    - Username
+
+    """
     username_re = re.compile(r'^[A-Z]{2}/[A-Z]{3}[0-9]+$')
     last_full_row = {}
     with open(csv_filename, 'r') as csv_file:
