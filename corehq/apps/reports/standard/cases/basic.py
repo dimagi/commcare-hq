@@ -17,7 +17,7 @@ from corehq.apps.reports.standard import (
 )
 from corehq.apps.reports.standard.cases.filters import CaseSearchFilter
 from corehq.apps.reports.standard.cases.utils import (
-    query_with_case_owners_filters,
+    add_case_owners_and_location_access,
 )
 from corehq.elastic import ESError
 from corehq.util.es.elasticsearch import TransportError
@@ -66,7 +66,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         if self.case_status:
             query = query.is_closed(self.case_status == 'closed')
 
-        query = query_with_case_owners_filters(
+        query = add_case_owners_and_location_access(
             query,
             self.request.domain,
             self.request.couch_user,

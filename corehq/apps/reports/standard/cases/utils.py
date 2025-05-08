@@ -213,7 +213,7 @@ def get_user_type(form, domain=None):
     return user_type
 
 
-def query_with_case_owners_filters(
+def add_case_owners_and_location_access(
     query,
     domain,
     couch_user,
