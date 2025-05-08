@@ -1338,6 +1338,10 @@ class ConfirmSelectedPlanView(PlanViewBase):
         return self.edition == SoftwarePlanEdition.PAUSED
 
     @property
+    def is_annual_plan(self):
+        return self.request.POST.get('is_annual_plan') == 'true'
+
+    @property
     @memoized
     def edition(self):
         edition = self.request.POST.get('plan_edition').title()
@@ -1348,7 +1352,7 @@ class ConfirmSelectedPlanView(PlanViewBase):
     @property
     @memoized
     def selected_plan_version(self):
-        return DefaultProductPlan.get_default_plan_version(self.edition)
+        return DefaultProductPlan.get_default_plan_version(self.edition, is_annual_plan=self.is_annual_plan)
 
     def downgrade_messages(self):
         subscription = Subscription.get_active_subscription_by_domain(self.domain)
