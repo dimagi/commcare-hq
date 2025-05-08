@@ -26,6 +26,7 @@ class CleanSelectedRecordsFormView(BulkEditSessionViewMixin,
         context.update({
             'container_id': 'clean-selected-records',
             'cleaning_form': kwargs.pop('cleaning_form', None) or CleanSelectedRecordsForm(self.session),
+            'are_bulk_edits_allowed': self.session.are_bulk_edits_allowed(),
             'change': kwargs.pop('change', None),
         })
         return context
