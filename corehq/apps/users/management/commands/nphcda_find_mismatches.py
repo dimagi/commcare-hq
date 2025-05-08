@@ -330,7 +330,7 @@ def user_changes_to_rows(user_changes: UserChanges) -> Generator[list, None, Non
         len(user_changes['location_map']),
         len(user_changes['unmapped_old_locations']),
         len(user_changes['unmapped_new_locations']),
-    ) + 1  # +1 for the empty row at the end
+    )
     map_from = (loc_id for loc_id in user_changes['location_map'].keys())
     map_to = (loc_id for loc_id in user_changes['location_map'].values())
     old_ids = (loc_id for loc_id in user_changes['unmapped_old_locations'])
