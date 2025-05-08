@@ -3,623 +3,615 @@
  *  It also requires the given form contain a div with the class stripe-card-container,
  *  which is where the credit card UI will be  mounted.
  */
-hqDefine('accounting/js/payment_method_handler', [
-    'jquery',
-    'knockout',
-    'underscore',
-    'accounting/js/stripe',
-    'hqwebapp/js/initial_page_data',
-], function (
-    $,
-    ko,
-    _,
-    hqStripe,
-    initialPageData,
-) {
-    var billingHandler = function (formId, opts) {
-        var self = {};
-        self.CREDIT_CARD = 'cc';
-        self.WIRE = 'wire';
+import $ from "jquery";
+import ko from "knockout";
+import _ from "underscore";
+import { createStripeToken, getCardElementPromise } from "accounting/js/stripe";
+import initialPageData from "hqwebapp/js/initial_page_data";
 
-        self.formId = formId;
-        self.errorMessages = opts.errorMessages || {};
-        self.submitBtnText = opts.submitBtnText;
-        self.costItem = ko.observable();
-        self.hasCostItem = ko.computed(function () {
-            return !! self.costItem();
-        });
+var billingHandler = function (formId, opts) {
+    var self = {};
+    self.CREDIT_CARD = 'cc';
+    self.WIRE = 'wire';
 
-        self.isWire = ko.observable(opts.isWire || false);
-        self.wireEmail = ko.observable('');
-        self.wireAdditionalEmails = ko.observable('');
+    self.formId = formId;
+    self.errorMessages = opts.errorMessages || {};
+    self.submitBtnText = opts.submitBtnText;
+    self.costItem = ko.observable();
+    self.hasCostItem = ko.computed(function () {
+        return !! self.costItem();
+    });
 
-        self.paymentIsComplete = ko.observable(false);
-        self.paymentIsNotComplete = ko.computed(function () {
-            return ! self.paymentIsComplete();
-        });
-        self.paymentIsComplete.subscribe(function (value) {
-            if (value) {
-                // Since there is no great way to connect this model with
-                // the subscription summary info, use this hacky way to update
-                // the total of the general amount so the user is
-                // aware something happened.
-                var $generalCredit = $('.js-general-credit');
+    self.isWire = ko.observable(opts.isWire || false);
+    self.wireEmail = ko.observable('');
+    self.wireAdditionalEmails = ko.observable('');
 
-                // make sure this only applies on pages where that class is present
-                if ($generalCredit && self.costItem() && self.costItem().general_credit) {
+    self.paymentIsComplete = ko.observable(false);
+    self.paymentIsNotComplete = ko.computed(function () {
+        return ! self.paymentIsComplete();
+    });
+    self.paymentIsComplete.subscribe(function (value) {
+        if (value) {
+            // Since there is no great way to connect this model with
+            // the subscription summary info, use this hacky way to update
+            // the total of the general amount so the user is
+            // aware something happened.
+            var $generalCredit = $('.js-general-credit');
 
-                    var addedAmount = self.costItem().general_credit().addAmount(),
-                        newValue = parseFloat($generalCredit.text().replace('USD ', '').trim()) + parseFloat(addedAmount);
-                    $generalCredit.text('USD ' + newValue.toFixed(2));
+            // make sure this only applies on pages where that class is present
+            if ($generalCredit && self.costItem() && self.costItem().general_credit) {
 
-                    // make sure we reset the credit amount to zero so that the next
-                    // time the user opens the form (before a page refresh),
-                    // the value isn't already set
-                    self.costItem().general_credit().addAmount(0);
-                }
+                var addedAmount = self.costItem().general_credit().addAmount(),
+                    newValue = parseFloat($generalCredit.text().replace('USD ', '').trim()) + parseFloat(addedAmount);
+                $generalCredit.text('USD ' + newValue.toFixed(2));
+
+                // make sure we reset the credit amount to zero so that the next
+                // time the user opens the form (before a page refresh),
+                // the value isn't already set
+                self.costItem().general_credit().addAmount(0);
             }
-        });
-        self.paymentProcessing = ko.observable(false);
-
-        self.serverErrorMsg = ko.observable();
-        self.showServerErrorMsg = ko.computed(function () {
-            return !! self.serverErrorMsg();
-        });
-        self.submitURL = opts.submitURL;
-
-        self.paymentMethod = ko.observable();
-
-        self.submitForm = function () {
-            const $form = $('#' + self.formId);
-            $.ajax({
-                url: $form.attr("action"),
-                data: Object.fromEntries(new FormData($form.get(0))),
-                method: 'POST',
-                success: self.handleSuccess,
-                error: self.handleGeneralError,
-            });
-        };
-        return self;
-    };
-
-    var wireInvoiceHandler = function (formId, opts) {
-        var self = {};
-        opts = opts ? opts : {};
-
-        self = billingHandler.apply(self, [formId, opts]);
-        self.paymentMethod = ko.observable(self.WIRE);
-
-        self.handleGeneralError = function (response, textStatus, errorThrown) {
-            errorThrown = errorThrown || 500;
-            self.serverErrorMsg(self.errorMessages[errorThrown]);
-        };
-
-        self.handleSuccess = function (response) {
-            if (response.success) {
-                self.costItem().reset();
-                self.paymentIsComplete(true);
-            }
-        };
-
-        self.isSubmitDisabled = ko.computed(function () {
-            return !(self.costItem() && self.costItem().isValid());
-        });
-        self.processPayment = function () {
-            self.submitForm();
-        };
-        self.hasAgreedToPrivacy = true; // No privacy policy for wire
-        return self;
-    };
-
-    var paymentMethodHandler = function (formId, opts) {
-        var self = {};
-        opts = opts ? opts : {};
-
-        self = billingHandler.apply(self, arguments);
-        self.paymentMethod = ko.observable(self.CREDIT_CARD);
-
-        self.submitURL = self.submitURL || ko.computed(function () {
-            var url = opts.credit_card_url;
-            if (self.paymentMethod() === self.WIRE) {
-                url = opts.wire_url;
-            }
-            return url;
-        });
-
-        // Stripe can't attach the card UI to the page until its container exists.
-        // Its container is removed and re-added from the DOM depending on the user's
-        // selections, so mount and unmount it as needed. This is called in a number
-        // of places because several different observables affect the visiblity of the card UI.
-        self.cardElementPromise = hqStripe.getCardElementPromise(initialPageData.get("stripe_public_key"));
-        self.cardElementMounted = false;
-        self.showOrHideStripeUI = function (show) {
-            self.cardElementPromise.then(function (cardElement) {
-                const stripeSelector = '#' + formId + ' .stripe-card-container';
-                if (show) {
-                    if ($(stripeSelector).length && !self.cardElementMounted) {
-                        cardElement.mount(stripeSelector);
-                        self.cardElementMounted = true;
-                    }
-                } else {
-                    cardElement.unmount();
-                    self.cardElementMounted = false;
-                }
-            });
-        };
-
-        self.savedCards = ko.observableArray();
-        self.savedCards.subscribe(function (newValue) {
-            _.delay(function () { self.showOrHideStripeUI(newValue); });
-        });
-
-        self.selectedSavedCard = ko.observable();
-        self.selectedCardType = ko.observable();
-
-        self.isSavedCard = ko.computed(function () {
-            return self.selectedCardType() === 'saved';
-        });
-        self.isNewCard = ko.computed(function () {
-            return self.selectedCardType() === 'new';
-        });
-        self.isNewCard.subscribe(function (newValue) {
-            _.delay(function () { self.showOrHideStripeUI(newValue); });
-        });
-
-        self.newCard = ko.observable(stripeCardModel());
-
-        self.handlers = [self];
-
-        self.showConfirmRemoveCard = ko.observable(false);
-        self.isRemovingCard = ko.observable(false);
-        self.selectedCard = ko.computed(function () {
-            self.showConfirmRemoveCard(false);
-            if (self.isSavedCard()) {
-                return self.selectedSavedCard();
-            }
-            return self.newCard();
-        });
-        self.hasAgreedToPrivacy = ko.computed(function () {
-            if (self.paymentMethod() === self.CREDIT_CARD) {
-                return self.selectedCard() && self.selectedCard().cardFormIsValid();
-            }
-            return true;
-        });
-
-        if (opts.wire_email) {
-            self.wireEmail(opts.wire_email);
         }
+    });
+    self.paymentProcessing = ko.observable(false);
 
-        self.mustCreateNewCard = ko.computed(function () {
-            return self.paymentIsNotComplete() && self.savedCards().length === 0;
-        });
-        self.mustCreateNewCard.subscribe(function (newValue) {
-            _.delay(function () { self.showOrHideStripeUI(newValue); });
-        });
-        self.canSelectCard = ko.computed(function () {
-            return self.paymentIsNotComplete() && self.savedCards().length > 0;
-        });
+    self.serverErrorMsg = ko.observable();
+    self.showServerErrorMsg = ko.computed(function () {
+        return !! self.serverErrorMsg();
+    });
+    self.submitURL = opts.submitURL;
 
-        self.isSubmitDisabled = ko.computed(function () {
-            if (self.paymentMethod() === self.CREDIT_CARD) {
-                return !(!! self.costItem() && self.costItem().isValid()) || self.selectedCard().isProcessing();
+    self.paymentMethod = ko.observable();
+
+    self.submitForm = function () {
+        const $form = $('#' + self.formId);
+        $.ajax({
+            url: $form.attr("action"),
+            data: Object.fromEntries(new FormData($form.get(0))),
+            method: 'POST',
+            success: self.handleSuccess,
+            error: self.handleGeneralError,
+        });
+    };
+    return self;
+};
+
+var wireInvoiceHandler = function (formId, opts) {
+    var self = {};
+    opts = opts ? opts : {};
+
+    self = billingHandler.apply(self, [formId, opts]);
+    self.paymentMethod = ko.observable(self.WIRE);
+
+    self.handleGeneralError = function (response, textStatus, errorThrown) {
+        errorThrown = errorThrown || 500;
+        self.serverErrorMsg(self.errorMessages[errorThrown]);
+    };
+
+    self.handleSuccess = function (response) {
+        if (response.success) {
+            self.costItem().reset();
+            self.paymentIsComplete(true);
+        }
+    };
+
+    self.isSubmitDisabled = ko.computed(function () {
+        return !(self.costItem() && self.costItem().isValid());
+    });
+    self.processPayment = function () {
+        self.submitForm();
+    };
+    self.hasAgreedToPrivacy = true; // No privacy policy for wire
+    return self;
+};
+
+var paymentMethodHandler = function (formId, opts) {
+    var self = {};
+    opts = opts ? opts : {};
+
+    self = billingHandler.apply(self, arguments);
+    self.paymentMethod = ko.observable(self.CREDIT_CARD);
+
+    self.submitURL = self.submitURL || ko.computed(function () {
+        var url = opts.credit_card_url;
+        if (self.paymentMethod() === self.WIRE) {
+            url = opts.wire_url;
+        }
+        return url;
+    });
+
+    // Stripe can't attach the card UI to the page until its container exists.
+    // Its container is removed and re-added from the DOM depending on the user's
+    // selections, so mount and unmount it as needed. This is called in a number
+    // of places because several different observables affect the visiblity of the card UI.
+    self.cardElementPromise = getCardElementPromise(initialPageData.get("stripe_public_key"));
+    self.cardElementMounted = false;
+    self.showOrHideStripeUI = function (show) {
+        self.cardElementPromise.then(function (cardElement) {
+            const stripeSelector = '#' + formId + ' .stripe-card-container';
+            if (show) {
+                if ($(stripeSelector).length && !self.cardElementMounted) {
+                    cardElement.mount(stripeSelector);
+                    self.cardElementMounted = true;
+                }
             } else {
-                return (self.paymentProcessing());
+                cardElement.unmount();
+                self.cardElementMounted = false;
             }
         });
+    };
 
-        self.loadCards = function (cards) {
-            _.each(cards.data, function (card) {
-                var stripeCard = stripeCardModel();
-                stripeCard.loadSavedData(card);
-                self.savedCards.push(stripeCard);
+    self.savedCards = ko.observableArray();
+    self.savedCards.subscribe(function (newValue) {
+        _.delay(function () { self.showOrHideStripeUI(newValue); });
+    });
+
+    self.selectedSavedCard = ko.observable();
+    self.selectedCardType = ko.observable();
+
+    self.isSavedCard = ko.computed(function () {
+        return self.selectedCardType() === 'saved';
+    });
+    self.isNewCard = ko.computed(function () {
+        return self.selectedCardType() === 'new';
+    });
+    self.isNewCard.subscribe(function (newValue) {
+        _.delay(function () { self.showOrHideStripeUI(newValue); });
+    });
+
+    self.newCard = ko.observable(stripeCardModel());
+
+    self.handlers = [self];
+
+    self.showConfirmRemoveCard = ko.observable(false);
+    self.isRemovingCard = ko.observable(false);
+    self.selectedCard = ko.computed(function () {
+        self.showConfirmRemoveCard(false);
+        if (self.isSavedCard()) {
+            return self.selectedSavedCard();
+        }
+        return self.newCard();
+    });
+    self.hasAgreedToPrivacy = ko.computed(function () {
+        if (self.paymentMethod() === self.CREDIT_CARD) {
+            return self.selectedCard() && self.selectedCard().cardFormIsValid();
+        }
+        return true;
+    });
+
+    if (opts.wire_email) {
+        self.wireEmail(opts.wire_email);
+    }
+
+    self.mustCreateNewCard = ko.computed(function () {
+        return self.paymentIsNotComplete() && self.savedCards().length === 0;
+    });
+    self.mustCreateNewCard.subscribe(function (newValue) {
+        _.delay(function () { self.showOrHideStripeUI(newValue); });
+    });
+    self.canSelectCard = ko.computed(function () {
+        return self.paymentIsNotComplete() && self.savedCards().length > 0;
+    });
+
+    self.isSubmitDisabled = ko.computed(function () {
+        if (self.paymentMethod() === self.CREDIT_CARD) {
+            return !(!! self.costItem() && self.costItem().isValid()) || self.selectedCard().isProcessing();
+        } else {
+            return (self.paymentProcessing());
+        }
+    });
+
+    self.loadCards = function (cards) {
+        _.each(cards.data, function (card) {
+            var stripeCard = stripeCardModel();
+            stripeCard.loadSavedData(card);
+            self.savedCards.push(stripeCard);
+        });
+        if (self.savedCards().length > 0) {
+            self.selectedCardType('saved');
+        }
+    };
+
+    self.reset = function () {
+        self.paymentIsComplete(false);
+        self.serverErrorMsg('');
+        self.newCard().reset();
+        if (self.cardElementMounted) {
+            self.cardElementPromise.then(function (cardElement) {
+                cardElement.clear();
             });
-            if (self.savedCards().length > 0) {
-                self.selectedCardType('saved');
-            }
-        };
+        }
+    };
 
-        self.reset = function () {
-            self.paymentIsComplete(false);
+    self.processPayment = function () {
+        if (self.costItem().isValid() && self.paymentMethod() === self.CREDIT_CARD) {
+            self.selectedCard().process(self.submitForm);
+        } else {
+            self.paymentProcessing(true);
+            self.submitForm();
+        }
+    };
+
+
+    self.confirmRemoveSavedCard = function () {
+        self.showConfirmRemoveCard(true);
+    };
+
+    self.removeSavedCard = function () {
+        self.isRemovingCard(true);
+        self.showConfirmRemoveCard(false);
+        const $form = $('#' + self.formId);
+        let formData = new FormData($form.get(0));
+        formData.set("removeCard", true);
+        $.ajax({
+            url: $form.attr("action"),
+            method: "POST",
+            data: Object.fromEntries(formData),
+            success: function (response) {
+                self.handleProcessingErrors(response);
+                for (var i = 0; i < self.handlers.length; i++) {
+                    var handler = self.handlers[i];
+                    handler.savedCards(_.filter(handler.savedCards(), function (card) {
+                        return card.token() !== response.removedCard;
+                    }));
+                    if (!handler.savedCards().length) {
+                        handler.selectedCardType('new');
+                    }
+                }
+                self.isRemovingCard(false);
+            },
+            error: function () {
+                self.handleGeneralError();
+                self.isRemovingCard(false);
+            },
+        });
+    };
+
+    self.cancelRemoveSavedCard = function () {
+        self.showConfirmRemoveCard(false);
+    };
+
+    self.handleGeneralError = function (response, textStatus, errorThrown) {
+        errorThrown = errorThrown || 500;
+        self.serverErrorMsg(self.errorMessages[errorThrown]);
+        self.selectedCard().isProcessing(false);
+        self.paymentProcessing(false);
+    };
+
+    self.handleProcessingErrors = function (response) {
+        if (response.success) {
             self.serverErrorMsg('');
-            self.newCard().reset();
-            if (self.cardElementMounted) {
-                self.cardElementPromise.then(function (cardElement) {
-                    cardElement.clear();
-                });
-            }
-        };
+        } else {
+            self.serverErrorMsg(response.error.message);
+        }
+        self.selectedCard().isProcessing(false);
+    };
 
-        self.processPayment = function () {
-            if (self.costItem().isValid() && self.paymentMethod() === self.CREDIT_CARD) {
-                self.selectedCard().process(self.submitForm);
-            } else {
-                self.paymentProcessing(true);
-                self.submitForm();
-            }
-        };
-
-
-        self.confirmRemoveSavedCard = function () {
-            self.showConfirmRemoveCard(true);
-        };
-
-        self.removeSavedCard = function () {
-            self.isRemovingCard(true);
-            self.showConfirmRemoveCard(false);
-            const $form = $('#' + self.formId);
-            let formData = new FormData($form.get(0));
-            formData.set("removeCard", true);
-            $.ajax({
-                url: $form.attr("action"),
-                method: "POST",
-                data: Object.fromEntries(formData),
-                success: function (response) {
-                    self.handleProcessingErrors(response);
-                    for (var i = 0; i < self.handlers.length; i++) {
-                        var handler = self.handlers[i];
-                        handler.savedCards(_.filter(handler.savedCards(), function (card) {
-                            return card.token() !== response.removedCard;
-                        }));
-                        if (!handler.savedCards().length) {
-                            handler.selectedCardType('new');
-                        }
-                    }
-                    self.isRemovingCard(false);
-                },
-                error: function () {
-                    self.handleGeneralError();
-                    self.isRemovingCard(false);
-                },
-            });
-        };
-
-        self.cancelRemoveSavedCard = function () {
-            self.showConfirmRemoveCard(false);
-        };
-
-        self.handleGeneralError = function (response, textStatus, errorThrown) {
-            errorThrown = errorThrown || 500;
-            self.serverErrorMsg(self.errorMessages[errorThrown]);
-            self.selectedCard().isProcessing(false);
-            self.paymentProcessing(false);
-        };
-
-        self.handleProcessingErrors = function (response) {
-            if (response.success) {
-                self.serverErrorMsg('');
-            } else {
-                self.serverErrorMsg(response.error.message);
-            }
-            self.selectedCard().isProcessing(false);
-        };
-
-        self.handleSuccess = function (response) {
-            if (response.success) {
-                self.costItem().reset(response);
-                if (response.wasSaved) {
-                    for (var i = 0; i < self.handlers.length; i++) {
-                        var handler = self.handlers[i];
-                        var stripeCard = stripeCardModel();
-                        stripeCard.loadSavedData(response.card);
-                        handler.savedCards.push(stripeCard);
-                        handler.selectedCardType('saved');
-                    }
+    self.handleSuccess = function (response) {
+        if (response.success) {
+            self.costItem().reset(response);
+            if (response.wasSaved) {
+                for (var i = 0; i < self.handlers.length; i++) {
+                    var handler = self.handlers[i];
+                    var stripeCard = stripeCardModel();
+                    stripeCard.loadSavedData(response.card);
+                    handler.savedCards.push(stripeCard);
+                    handler.selectedCardType('saved');
                 }
-                self.paymentIsComplete(true);
             }
-            self.paymentProcessing(false);
-            self.handleProcessingErrors(response);
-        };
-
-        // Initial showing (or not) of Stripe UI
-        self.showOrHideStripeUI(self.mustCreateNewCard());
-
-        return self;
+            self.paymentIsComplete(true);
+        }
+        self.paymentProcessing(false);
+        self.handleProcessingErrors(response);
     };
 
-    paymentMethodHandler.prototype = Object.create(billingHandler.prototype);
-    paymentMethodHandler.prototype.constructor = paymentMethodHandler;
-    wireInvoiceHandler.prototype = Object.create(billingHandler.prototype);
-    wireInvoiceHandler.prototype.constructor = wireInvoiceHandler;
+    // Initial showing (or not) of Stripe UI
+    self.showOrHideStripeUI(self.mustCreateNewCard());
 
-    var baseCostItem = function () {
-        var self = {};
+    return self;
+};
 
-        self.reset = function () {
-            throw new Error("Missing implementation for reset");
-        };
+paymentMethodHandler.prototype = Object.create(billingHandler.prototype);
+paymentMethodHandler.prototype.constructor = paymentMethodHandler;
+wireInvoiceHandler.prototype = Object.create(billingHandler.prototype);
+wireInvoiceHandler.prototype.constructor = wireInvoiceHandler;
 
-        self.isValid = function () {
-            throw new Error("missing implementation for isValid");
-        };
-        return self;
+var baseCostItem = function () {
+    var self = {};
+
+    self.reset = function () {
+        throw new Error("Missing implementation for reset");
     };
 
-    var chargedCostItem = function (initData) {
-        var self = {};
-        self = baseCostItem.call(self, initData);
+    self.isValid = function () {
+        throw new Error("missing implementation for isValid");
+    };
+    return self;
+};
 
-        self.balance = ko.observable();
+var chargedCostItem = function (initData) {
+    var self = {};
+    self = baseCostItem.call(self, initData);
 
-        self.customPaymentAmount = ko.observable(self.balance());
-        self.paymentAmountType = ko.observable('full');
+    self.balance = ko.observable();
 
-        self.isBalanceAtMinimum = ko.computed(function () {
-            try {
-                var balance = parseFloat(self.balance());
-                return balance - 0.5 <= 0.0;
-            } catch (e) {
-                return false;
-            }
-        });
+    self.customPaymentAmount = ko.observable(self.balance());
+    self.paymentAmountType = ko.observable('full');
 
-        self.showCustomOption = ko.computed(function () {
-            return ! self.isBalanceAtMinimum();
-        });
+    self.isBalanceAtMinimum = ko.computed(function () {
+        try {
+            var balance = parseFloat(self.balance());
+            return balance - 0.5 <= 0.0;
+        } catch (e) {
+            return false;
+        }
+    });
 
-        self.isAmountWithinRange = ko.computed(function () {
-            try {
-                var balance = parseFloat(self.balance()),
-                    customAmount = parseFloat(self.customPaymentAmount());
-                return balance >= customAmount && customAmount >= 0.5;
-            } catch (e) {
-                return false;
-            }
-        });
+    self.showCustomOption = ko.computed(function () {
+        return ! self.isBalanceAtMinimum();
+    });
 
-        self.maxPartialAmount = ko.computed(function () {
-            return self.balance() - 0.5;
-        });
+    self.isAmountWithinRange = ko.computed(function () {
+        try {
+            var balance = parseFloat(self.balance()),
+                customAmount = parseFloat(self.customPaymentAmount());
+            return balance >= customAmount && customAmount >= 0.5;
+        } catch (e) {
+            return false;
+        }
+    });
 
-        self.isLeftoverAmountEnough = ko.computed(function () {
-            try {
-                var balance = parseFloat(self.balance()),
-                    maxPartial = parseFloat(self.maxPartialAmount()),
-                    customAmount = parseFloat(self.customPaymentAmount());
-                return customAmount === balance || customAmount <= maxPartial;
-            } catch (e) {
-                return false;
-            }
-        });
+    self.maxPartialAmount = ko.computed(function () {
+        return self.balance() - 0.5;
+    });
 
-        self.showAmountRangeError = ko.computed(function () {
-            return ! self.isAmountWithinRange();
-        });
+    self.isLeftoverAmountEnough = ko.computed(function () {
+        try {
+            var balance = parseFloat(self.balance()),
+                maxPartial = parseFloat(self.maxPartialAmount()),
+                customAmount = parseFloat(self.customPaymentAmount());
+            return customAmount === balance || customAmount <= maxPartial;
+        } catch (e) {
+            return false;
+        }
+    });
 
-        self.showAmountLeftoverError = ko.computed(function () {
-            return (! self.isLeftoverAmountEnough()) && (! self.showAmountRangeError());
-        });
+    self.showAmountRangeError = ko.computed(function () {
+        return ! self.isAmountWithinRange();
+    });
 
-        self.selectPartialPayment = function () {
-            self.paymentAmountType('partial');
-        };
+    self.showAmountLeftoverError = ko.computed(function () {
+        return (! self.isLeftoverAmountEnough()) && (! self.showAmountRangeError());
+    });
 
-        self.isValid = ko.computed(function () {
-            return self.isLeftoverAmountEnough() && self.isAmountWithinRange();
-        });
-        return self;
+    self.selectPartialPayment = function () {
+        self.paymentAmountType('partial');
     };
 
-    chargedCostItem.prototype = Object.create(baseCostItem.prototype);
-    chargedCostItem.prototype.constructor = chargedCostItem;
+    self.isValid = ko.computed(function () {
+        return self.isLeftoverAmountEnough() && self.isAmountWithinRange();
+    });
+    return self;
+};
+
+chargedCostItem.prototype = Object.create(baseCostItem.prototype);
+chargedCostItem.prototype.constructor = chargedCostItem;
 
 
-    var invoice = function (initData) {
-        var self = {};
-        self = chargedCostItem.call(self, initData);
+var invoice = function (initData) {
+    var self = {};
+    self = chargedCostItem.call(self, initData);
 
-        self.paginatedItem = initData.paginatedItem;
-        self.paginatedList = initData.paginatedList;
-        self.balance(self.paginatedItem.itemData().balance);
-        self.customPaymentAmount(self.balance());
+    self.paginatedItem = initData.paginatedItem;
+    self.paginatedList = initData.paginatedList;
+    self.balance(self.paginatedItem.itemData().balance);
+    self.customPaymentAmount(self.balance());
 
-        self.id = ko.computed(function () {
-            return self.paginatedItem.itemData().id;
-        });
-        self.invoiceNumber = ko.computed(function () {
-            return self.paginatedItem.itemData().invoice_number;
-        });
+    self.id = ko.computed(function () {
+        return self.paginatedItem.itemData().id;
+    });
+    self.invoiceNumber = ko.computed(function () {
+        return self.paginatedItem.itemData().invoice_number;
+    });
 
-        self.reset = function (response) {
-            self.paginatedList.refreshList(self.paginatedItem);
-            if (response.success) {
-                var oldBalance = self.paginatedList.totalDue();
-                self.paginatedList.totalDue(oldBalance - response.changedBalance);
-            }
-        };
-        return self;
+    self.reset = function (response) {
+        self.paginatedList.refreshList(self.paginatedItem);
+        if (response.success) {
+            var oldBalance = self.paginatedList.totalDue();
+            self.paginatedList.totalDue(oldBalance - response.changedBalance);
+        }
+    };
+    return self;
+};
+
+invoice.prototype = Object.create(chargedCostItem.prototype);
+invoice.prototype.constructor = invoice;
+
+/* initData contains totalBalance and paginatedListModel */
+var totalCostItem = function (initData) {
+    var self = {};
+    self = chargedCostItem.call(self, initData);
+
+    self.balance(initData.totalBalance);
+    self.customPaymentAmount(self.balance());
+
+    self.id = null;
+
+    self.reset =  function () {
+        initData.paginatedListModel.refreshList();
     };
 
-    invoice.prototype = Object.create(chargedCostItem.prototype);
-    invoice.prototype.constructor = invoice;
+    return self;
+};
 
-    /* initData contains totalBalance and paginatedListModel */
-    var totalCostItem = function (initData) {
-        var self = {};
-        self = chargedCostItem.call(self, initData);
+totalCostItem.prototype = Object.create(chargedCostItem.prototype);
+totalCostItem.prototype.constructor = totalCostItem;
 
-        self.balance(initData.totalBalance);
-        self.customPaymentAmount(self.balance());
+var prepaymentItems = function (data) {
+    var self = {};
+    self = baseCostItem.call(self, data);
 
-        self.id = null;
+    self.products = data.products;
+    self.features = data.features;
+    self.general_credit = data.general_credit;
+    self.invoice_credit = data.invoice_credit;
 
-        self.reset =  function () {
-            initData.paginatedListModel.refreshList();
-        };
+    self.amount = ko.computed(function () {
+        var productSum = _.reduce(self.products(), function (memo, product) {
+            return memo + parseFloat(product.addAmount());
+        }, 0);
 
-        return self;
-    };
+        var featureSum = _.reduce(self.features(), function (memo, feature) {
+            return memo + parseFloat(feature.addAmount());
+        }, 0);
+        var sum = productSum + featureSum + parseFloat(self.general_credit().addAmount());
+        return isNaN(sum) ? 0.0 : sum;
+    });
 
-    totalCostItem.prototype = Object.create(chargedCostItem.prototype);
-    totalCostItem.prototype.constructor = totalCostItem;
+    self.invoice_amount = ko.computed(function () {
+        var amount = parseFloat(self.invoice_credit().addAmount());
+        var quantity = Math.round(Math.max(self.invoice_credit().quantity(), 1));
+        var rawTotal =  isNaN(amount) ? 0.0 : amount * quantity;
+        return Math.round(rawTotal * 100) / 100;
+    });
 
-    var prepaymentItems = function (data) {
-        var self = {};
-        self = baseCostItem.call(self, data);
-
-        self.products = data.products;
-        self.features = data.features;
-        self.general_credit = data.general_credit;
-        self.invoice_credit = data.invoice_credit;
-
-        self.amount = ko.computed(function () {
-            var productSum = _.reduce(self.products(), function (memo, product) {
-                return memo + parseFloat(product.addAmount());
-            }, 0);
-
-            var featureSum = _.reduce(self.features(), function (memo, feature) {
-                return memo + parseFloat(feature.addAmount());
-            }, 0);
-            var sum = productSum + featureSum + parseFloat(self.general_credit().addAmount());
-            return isNaN(sum) ? 0.0 : sum;
-        });
-
-        self.invoice_amount = ko.computed(function () {
-            var amount = parseFloat(self.invoice_credit().addAmount());
-            var quantity = Math.round(Math.max(self.invoice_credit().quantity(), 1));
-            var rawTotal =  isNaN(amount) ? 0.0 : amount * quantity;
-            return Math.round(rawTotal * 100) / 100;
-        });
-
-        self.reset = function (response) {
-            var items = self.products().concat(self.features());
-            _.each(response.balances, function (balance) {
-                var updateBalance = _.find(items, function (item) {
-                    return item.creditType() === balance.type;
-                });
-                if (updateBalance) {
-                    updateBalance.amount(balance.balance);
-                }
+    self.reset = function (response) {
+        var items = self.products().concat(self.features());
+        _.each(response.balances, function (balance) {
+            var updateBalance = _.find(items, function (item) {
+                return item.creditType() === balance.type;
             });
-        };
-
-        self.isValid = function () {
-            return self.amount() >= 0.5;
-        };
-        return self;
-    };
-
-    var creditCostItem = function (initData) {
-        var self = {};
-        self = baseCostItem.call(self, initData);
-
-        self.creditType = ko.observable(initData.creditType);
-        self.category = ko.observable(initData.category);
-        self.creditItem = initData.creditItem;
-        self.amount = ko.observable(0.5);
-
-        self.isPlanCredit = ko.computed(function () {
-            return self.category() === 'product';
-        });
-
-        self.isSMSCredit = ko.computed(function () {
-            return self.category() === 'feature' && self.creditType() === 'SMS';
-        });
-
-        self.isUserCredit = ko.computed(function () {
-            return self.category() === 'feature' && self.creditType() === 'User';
-        });
-
-        self.reset = function (response) {
-            self.creditItem.amount(response.balance);
-        };
-
-        self.isValid = function () {
-            return self.amount() >= 0.5;
-        };
-        return self;
-    };
-
-    creditCostItem.prototype = Object.create(baseCostItem.prototype);
-    creditCostItem.prototype.constructor = creditCostItem;
-
-    var stripeCardModel = function () {
-        var self = {};
-
-        self.number = ko.observable();
-        self.expMonth = ko.observable();
-        self.expYear = ko.observable();
-        self.errorMsg = ko.observable();
-        self.token = ko.observable();
-        self.isTestMode = ko.observable(false);
-        self.isProcessing = ko.observable(false);
-        self.newSavedCard = ko.observable(false);
-
-        self.reset = function () {
-            self.number(null);
-            self.expMonth(null);
-            self.expYear(null);
-            self.errorMsg(null);
-            self.token(null);
-            self.isTestMode(false);
-            self.isProcessing(false);
-            self.newSavedCard(false);
-        };
-
-        self.autopayCard = ko.computed(function () {
-            if (!self.newSavedCard()) {
-                return false;
+            if (updateBalance) {
+                updateBalance.amount(balance.balance);
             }
         });
+    };
 
-        self.showCardData = ko.computed(function () {
-            return ! self.isProcessing();
-        });
-        self.cardType = ko.observable();
-        self.isSaved = ko.observable(false);
+    self.isValid = function () {
+        return self.amount() >= 0.5;
+    };
+    return self;
+};
 
-        self.cardFormIsValid = ko.computed(function () {
-            return self.isSaved() || !self.isSaved();
-        });
+var creditCostItem = function (initData) {
+    var self = {};
+    self = baseCostItem.call(self, initData);
 
-        self.showErrors = ko.computed(function () {
-            return !! self.errorMsg();
-        });
-        self.cardName = ko.computed(function () {
-            return self.cardType() + ' ' + self.number() + ' exp ' + self.expMonth() + '/' + self.expYear();
-        });
+    self.creditType = ko.observable(initData.creditType);
+    self.category = ko.observable(initData.category);
+    self.creditItem = initData.creditItem;
+    self.amount = ko.observable(0.5);
 
-        self.loadSavedData = function (data) {
-            self.number('************' + data.last4);
-            self.cardType(data.type);
-            self.expMonth(data.exp_month);
-            self.expYear(data.exp_year);
-            self.token(data.id);
-            self.isSaved(true);
-        };
+    self.isPlanCredit = ko.computed(function () {
+        return self.category() === 'product';
+    });
 
-        self.process = function (callbackOnSuccess) {
-            self.isProcessing(true);
-            if (self.isSaved() && self.token()) {
-                callbackOnSuccess();
-                return;
-            }
-            hqStripe.createStripeToken(function (response) {
-                if (response.error) {
-                    self.errorMsg(response.error.message);
-                    self.isProcessing(false);
+    self.isSMSCredit = ko.computed(function () {
+        return self.category() === 'feature' && self.creditType() === 'SMS';
+    });
+
+    self.isUserCredit = ko.computed(function () {
+        return self.category() === 'feature' && self.creditType() === 'User';
+    });
+
+    self.reset = function (response) {
+        self.creditItem.amount(response.balance);
+    };
+
+    self.isValid = function () {
+        return self.amount() >= 0.5;
+    };
+    return self;
+};
+
+creditCostItem.prototype = Object.create(baseCostItem.prototype);
+creditCostItem.prototype.constructor = creditCostItem;
+
+var stripeCardModel = function () {
+    var self = {};
+
+    self.number = ko.observable();
+    self.expMonth = ko.observable();
+    self.expYear = ko.observable();
+    self.errorMsg = ko.observable();
+    self.token = ko.observable();
+    self.isTestMode = ko.observable(false);
+    self.isProcessing = ko.observable(false);
+    self.newSavedCard = ko.observable(false);
+
+    self.reset = function () {
+        self.number(null);
+        self.expMonth(null);
+        self.expYear(null);
+        self.errorMsg(null);
+        self.token(null);
+        self.isTestMode(false);
+        self.isProcessing(false);
+        self.newSavedCard(false);
+    };
+
+    self.autopayCard = ko.computed(function () {
+        if (!self.newSavedCard()) {
+            return false;
+        }
+    });
+
+    self.showCardData = ko.computed(function () {
+        return ! self.isProcessing();
+    });
+    self.cardType = ko.observable();
+    self.isSaved = ko.observable(false);
+
+    self.cardFormIsValid = ko.computed(function () {
+        return self.isSaved() || !self.isSaved();
+    });
+
+    self.showErrors = ko.computed(function () {
+        return !! self.errorMsg();
+    });
+    self.cardName = ko.computed(function () {
+        return self.cardType() + ' ' + self.number() + ' exp ' + self.expMonth() + '/' + self.expYear();
+    });
+
+    self.loadSavedData = function (data) {
+        self.number('************' + data.last4);
+        self.cardType(data.type);
+        self.expMonth(data.exp_month);
+        self.expYear(data.exp_year);
+        self.token(data.id);
+        self.isSaved(true);
+    };
+
+    self.process = function (callbackOnSuccess) {
+        self.isProcessing(true);
+        if (self.isSaved() && self.token()) {
+            callbackOnSuccess();
+            return;
+        }
+        createStripeToken(function (response) {
+            if (response.error) {
+                self.errorMsg(response.error.message);
+                self.isProcessing(false);
+            } else {
+                self.errorMsg('');
+                self.token(response.token.id);
+                self.isTestMode(!response.token.livemode);
+                if (self.token()) {
+                    callbackOnSuccess();
                 } else {
-                    self.errorMsg('');
-                    self.token(response.token.id);
-                    self.isTestMode(!response.token.livemode);
-                    if (self.token()) {
-                        callbackOnSuccess();
-                    } else {
-                        self.isProcessing(false);
-                        self.errorMsg(gettext('Response from Stripe did not complete properly.'));
-                    }
+                    self.isProcessing(false);
+                    self.errorMsg(gettext('Response from Stripe did not complete properly.'));
                 }
-            });
-        };
+            }
+        });
+    };
 
-        return self;
-    };
-    return {
-        wireInvoiceHandler: wireInvoiceHandler,
-        paymentMethodHandler: paymentMethodHandler,
-        invoice: invoice,
-        totalCostItem: totalCostItem,
-        prepaymentItems: prepaymentItems,
-        creditCostItem: creditCostItem,
-    };
-});
+    return self;
+};
+export default {
+    wireInvoiceHandler: wireInvoiceHandler,
+    paymentMethodHandler: paymentMethodHandler,
+    invoice: invoice,
+    totalCostItem: totalCostItem,
+    prepaymentItems: prepaymentItems,
+    creditCostItem: creditCostItem,
+};
