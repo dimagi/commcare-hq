@@ -137,7 +137,7 @@ def iter_user_rows(csv_filename: str) -> Iterable[UserRow]:
     - Username
 
     """
-    username_re = re.compile(r'^[A-Z]{2}/[A-Z]{3}[0-9]+$')
+    username_re = re.compile(r'^[A-Za-z]{2}/[A-Za-z]{3}[0-9]+$')
     last_full_row = {}
     with open(csv_filename, 'r') as csv_file:
         for row in csv.DictReader(csv_file):
