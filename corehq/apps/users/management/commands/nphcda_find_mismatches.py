@@ -3,7 +3,7 @@ import re
 from collections import namedtuple
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Generator, Iterable, Optional, TypedDict
+from typing import Iterable, Iterator, Optional, TypedDict
 
 from django.core.management.base import BaseCommand
 
@@ -324,24 +324,35 @@ def write_to_sheet(
         row_by_ref[0] += 1
 
 
-def user_changes_to_rows(user_changes: UserChanges) -> Generator[list, None, None]:
-    num_rows = max(
-        1,
-        len(user_changes['location_map']),
-        len(user_changes['unmapped_old_locations']),
-        len(user_changes['unmapped_new_locations']),
-    )
+def user_changes_to_rows(user_changes: UserChanges) -> Iterator[list]:
     map_from = (loc_id for loc_id in user_changes['location_map'].keys())
     map_to = (loc_id for loc_id in user_changes['location_map'].values())
     old_ids = (loc_id for loc_id in user_changes['unmapped_old_locations'])
     new_ids = (loc_id for loc_id in user_changes['unmapped_new_locations'])
-    for i in range(num_rows):
+    row_empty = False
+    while not row_empty:
         row = [user_changes['username']]
-        row.extend(settlement_columns(next(map_from, None)))
-        row.extend(settlement_columns(next(map_to, None)))
-        row.extend(settlement_columns(next(old_ids, None)))
-        row.extend(settlement_columns(next(new_ids, None)))
-        yield row
+        next_map_from = next(map_from, None)
+        next_map_to = next(map_to, None)
+        if next_map_from:
+            row.extend(settlement_columns(next_map_from))
+            row.extend(settlement_columns(next_map_to))
+            row.extend([''] * 10)
+        else:
+            next_old_id = next(old_ids, None)
+            if next_old_id:
+                row.extend([''] * 10)
+                row.extend(settlement_columns(next_old_id))
+                row.extend([''] * 5)
+            else:
+                next_new_id = next(new_ids, None)
+                if next_new_id:
+                    row.extend([''] * 15)
+                    row.extend(settlement_columns(next_new_id))
+                else:
+                    row_empty = True
+        if not row_empty:
+            yield row
 
 
 def settlement_columns(settlement_id: Optional[str]) -> tuple:
