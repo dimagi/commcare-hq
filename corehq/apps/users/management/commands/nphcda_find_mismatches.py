@@ -173,13 +173,35 @@ def get_location_by_code(
     parent = get_location(domain, parent_location_id)
     locations = parent.children.filter(name__iexact=name).all()
     if len(locations) == 1:
-        code_to_location_id[code] = locations[0].location_id
-        location_cache[locations[0].location_id] = locations[0]
-        return locations[0]
+        location = locations[0]
     elif len(locations) > 1:
-        raise LocationError(f"Multiple locations found for '{name}' under {parent!r}")
+        location = select_location(locations, name, parent)
     else:
-        raise LocationError(f"No location found for '{name}' under {parent!r}")
+        raise LocationError(
+            f"No location found for '{name}' under {loc_str(parent)}"
+        )
+    code_to_location_id[code] = location.location_id
+    location_cache[location.location_id] = location
+    return location
+
+
+def select_location(locations, name, parent) -> SQLLocation:
+    """
+    Try to select a location with a proper site code.
+    """
+    snake_name = snake_case(name)
+    locations = [
+        loc for loc in locations
+        if (
+            loc.site_code.startswith(snake_name)
+            and loc.site_code.endswith('settlement')
+        )
+    ]
+    if len(locations) == 1:
+        return locations[0]
+    raise LocationError(
+        f"Multiple locations found for '{name}' under {loc_str(parent)}"
+    )
 
 
 def get_location(domain: Optional[str], location_id: str) -> SQLLocation:
@@ -260,6 +282,21 @@ def get_user_changes(
     )
 
 
+def loc_str(location: SQLLocation) -> str:
+    """
+    Get a string representation of a location.
+
+    >>> loc_str(SQLLocation(
+    ...     domain='test-domain',
+    ...     name='Katsina',
+    ...     location_id='abc123',
+    ... ))
+    'Katsina (abc123)'
+
+    """
+    return f"{location.name} ({location.location_id})"
+
+
 def get_code(*args: str) -> str:
     """
     Get the code for a location from the names of its parent locations.
@@ -295,6 +332,24 @@ def lower_one_space(string: str) -> str:
 
     """
     return re.sub(r'\s+', ' ', string).strip().lower()
+
+
+def snake_case(string: str) -> str:
+    """
+    Convert string to snake case.
+
+    >>> snake_case('FooBar')
+    'foo_bar'
+    >>> snake_case('Foo Bar')
+    'foo_bar'
+
+    """
+    # Replace non-alphanumeric characters with spaces
+    string = re.sub(r'[^\w\s]', ' ', string)
+    # Insert space before any capital in a word
+    string = re.sub(r'([A-Z])', r' \1', string)
+    # Convert to lowercase and replace spaces with underscores
+    return re.sub(r'\s+', '_', string.strip().lower())
 
 
 @contextmanager
