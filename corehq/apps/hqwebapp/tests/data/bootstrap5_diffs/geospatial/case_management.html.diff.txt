@@ -112,7 +112,7 @@
      <!-- /ko -->
    </div>
 -  <div id="microplanning-map" style="height: 500px">
-+  <div id="geospatial-map" style="height: 500px">  {# todo B5: inline-style #}
++  <div id="microplanning-map" style="height: 500px">  {# todo B5: inline-style #}
      <div id="layer-toggle-menu" class="btn-group-vertical hidden">
        <h4 class="text-center">{% trans 'Layers' %}</h4>
      </div>
@@ -154,14 +154,14 @@
            data-bind="visible: assignmentAjaxInProgress"
          ></i>
        </button>
--      {% include 'geospatial/partials/bootstrap3/review_assignment_modal.html' %}
+-      {% include 'microplanning/partials/bootstrap3/review_assignment_modal.html' %}
 -    </div>
 -    <div id="user-modals" class="pull-right">
 -      <button
 -        class="btn btn-default"
 -        data-toggle="modal"
 -        data-target="#selected-user-list"
-+      {% include 'geospatial/partials/bootstrap5/review_assignment_modal.html' %}
++      {% include 'microplanning/partials/bootstrap5/review_assignment_modal.html' %}
 +    </div>
 +    <div id="user-modals" class="float-end">
 +      <button

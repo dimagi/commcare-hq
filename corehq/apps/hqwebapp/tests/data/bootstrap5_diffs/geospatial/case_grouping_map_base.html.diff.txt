@@ -11,7 +11,7 @@
  {% endblock %}
  
 -{% js_entry_b3 'microplanning/js/bootstrap3/case_grouping_map' %}
-+{% js_entry 'geospatial/js/bootstrap5/case_grouping_map' %}
++{% js_entry 'microplanning/js/bootstrap5/case_grouping_map' %}
  
  {% block additional_initial_page_data %}{{ block.super }}
      {% initial_page_data 'case_row_order' case_row_order %}

@@ -11,7 +11,7 @@
  {% endblock %}
  
 -{% js_entry_b3 'microplanning/js/bootstrap3/case_management' %}
-+{% js_entry 'geospatial/js/bootstrap5/case_management' %}
++{% js_entry 'microplanning/js/bootstrap5/case_management' %}
  
  {% block additional_initial_page_data %}{{ block.super }}
      {% initial_page_data "saved_polygons" saved_polygons %}

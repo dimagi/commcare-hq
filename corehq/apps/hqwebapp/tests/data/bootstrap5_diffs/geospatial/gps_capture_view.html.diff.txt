@@ -8,14 +8,14 @@
  {% load hq_shared_tags %}
  
 -{% js_entry_b3 "microplanning/js/bootstrap3/gps_capture" %}
-+{% js_entry "geospatial/js/bootstrap5/gps_capture" %}
++{% js_entry "microplanning/js/bootstrap5/gps_capture" %}
  
   {% block stylesheets %}
   {{ block.super }}
 @@ -21,19 +21,19 @@
  {% initial_page_data 'couch_user_username' couch_user_username %}
  
- {% include 'geospatial/partials/index_alert.html' %}
+ {% include 'microplanning/partials/index_alert.html' %}
 -<ul id="tabs-list" class="nav nav-tabs">
 -  <li data-bind="click: onclickAction" class="active"><a data-toggle="tab" href="#tabs-cases">{% trans 'Update Case Data' %}</a></li>
 -  <li data-bind="click: onclickAction"><a data-toggle="tab" href="#tabs-users">{% trans 'Update Mobile Worker Data' %}</a></li>
@@ -27,14 +27,14 @@
  <div class="tab-content">
    <div class="tab-pane fade in active" id="tabs-cases">
 -    {% include "reports/standard/partials/bootstrap3/filter_panel.html" %}
--    {% include 'geospatial/bootstrap3/gps_capture.html' with data_type='case' %}
+-    {% include 'microplanning/bootstrap3/gps_capture.html' with data_type='case' %}
 +    {% include "reports/standard/partials/bootstrap5/filter_panel.html" %}
-+    {% include 'geospatial/bootstrap5/gps_capture.html' with data_type='case' %}
++    {% include 'microplanning/bootstrap5/gps_capture.html' with data_type='case' %}
    </div>
  
    <div class="tab-pane fade" id="tabs-users">
--    {% include 'geospatial/bootstrap3/gps_capture.html' with data_type='user' %}
-+    {% include 'geospatial/bootstrap5/gps_capture.html' with data_type='user' %}
+-    {% include 'microplanning/bootstrap3/gps_capture.html' with data_type='user' %}
++    {% include 'microplanning/bootstrap5/gps_capture.html' with data_type='user' %}
        <div class="alert alert-info">
          <span>
            {% blocktrans %}
@@ -42,6 +42,6 @@
        </div>
    </div>
  </div>
--<div id="geospatial-map" style="height: 500px"></div>
-+<div id="geospatial-map" style="height: 500px"></div>  {# todo B5: inline-style #}
+-<div id="microplanning-map" style="height: 500px"></div>
++<div id="microplanning-map" style="height: 500px"></div>  {# todo B5: inline-style #}
  {% endblock %}

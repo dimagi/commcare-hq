@@ -15,7 +15,7 @@
 @@ -14,6 +14,6 @@
  
    <form id="microplanning-config-form" class="form-horizontal disable-on-submit ko-template" method="post">
-     {% include 'geospatial/partials/index_alert.html' %}
+     {% include 'microplanning/partials/index_alert.html' %}
 -    {% crispy form %}
 +    {% crispy form %}  {# todo B5: crispy #}
    </form>
