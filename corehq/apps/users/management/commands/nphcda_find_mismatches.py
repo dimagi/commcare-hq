@@ -336,9 +336,7 @@ def user_changes_to_rows(user_changes: UserChanges) -> Generator[list, None, Non
     old_ids = (loc_id for loc_id in user_changes['unmapped_old_locations'])
     new_ids = (loc_id for loc_id in user_changes['unmapped_new_locations'])
     for i in range(num_rows):
-        row = [
-            user_changes['username'] if i == 0 else ''
-        ]
+        row = [user_changes['username']]
         row.extend(settlement_columns(next(map_from, None)))
         row.extend(settlement_columns(next(map_to, None)))
         row.extend(settlement_columns(next(old_ids, None)))
