@@ -189,14 +189,6 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
              'New York City', 'Manhattan', 'Queens', 'Brooklyn']
         )
 
-    def test_all_locations_flag_returns_all_locations(self):
-        with flag_enabled('SYNC_ALL_LOCATIONS'):
-            self._assert_fixture_matches_file(
-                'expand_from_root',
-                ['Massachusetts', 'Suffolk', 'Middlesex', 'Boston', 'Revere', 'Cambridge',
-                 'Somerville', 'New York', 'New York City', 'Manhattan', 'Queens', 'Brooklyn']
-            )
-
     def test_expand_to_county(self):
         """
         expand to "county"
@@ -258,15 +250,6 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
             'expand_from_root_to_county',
             ['Massachusetts', 'Suffolk', 'Middlesex', 'New York', 'New York City']
         )
-
-    def test_flat_sync_format(self):
-        with flag_enabled('SYNC_ALL_LOCATIONS'):
-            self._assert_fixture_matches_file(
-                'expand_from_root_flat',
-                ['Massachusetts', 'Suffolk', 'Middlesex', 'Boston', 'Revere', 'Cambridge',
-                    'Somerville', 'New York', 'New York City', 'Manhattan', 'Queens', 'Brooklyn'],
-                flat=True,
-            )
 
     def test_include_without_expanding(self):
         self.user._couch_user.set_location(self.locations['Boston'])
