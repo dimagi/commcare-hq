@@ -2,69 +2,59 @@
  * todo add docstring
  */
 
-hqDefine('reports/v2/js/context', [
-    'jquery',
-    'knockout',
-    'underscore',
-    'hqwebapp/js/assert_properties',
-    'hqwebapp/js/initial_page_data',
-], function (
-    $,
-    ko,
-    _,
-    assertProperties,
-    initialPageData,
-) {
-    var endpoint = function (data) {
-        assertProperties.assert(data, ['slug', 'urlname']);
+import _ from "underscore";
+import assertProperties from "hqwebapp/js/assert_properties";
+import initialPageData from "hqwebapp/js/initial_page_data";
 
-        var self = {};
+var endpoint = function (data) {
+    assertProperties.assert(data, ['slug', 'urlname']);
 
-        self.slug = data.slug;
-        self.urlname = data.urlname;
+    var self = {};
 
-        self.getUrl = function () {
-            return initialPageData.reverse(self.urlname, self.slug);
-        };
+    self.slug = data.slug;
+    self.urlname = data.urlname;
 
-        return self;
+    self.getUrl = function () {
+        return initialPageData.reverse(self.urlname, self.slug);
     };
 
-    var reportConfig = function () {
-        var self = {};
+    return self;
+};
 
-        self.endpoint = {};
+var reportConfig = function () {
+    var self = {};
 
-        _.each(initialPageData.get('report.endpoints'), function (data) {
-            self.endpoint[data.slug] = endpoint(data);
+    self.endpoint = {};
+
+    _.each(initialPageData.get('report.endpoints'), function (data) {
+        self.endpoint[data.slug] = endpoint(data);
+    });
+
+    return self;
+};
+
+export default {
+    getReportConfig: function () {
+        return reportConfig();
+    },
+    getColumns: function () {
+        return initialPageData.get('report.columns');
+    },
+    getUnsortableColumnNames: function () {
+        return initialPageData.get('report.unsortableColumnNames');
+    },
+    getColumnFilters: function () {
+        return initialPageData.get('report.columnFilters');
+    },
+    getReportFilters: function () {
+        var filterData = initialPageData.get('report.reportFilters'),
+            initialData = initialPageData.get('report.initialReportFilters'),
+            config = reportConfig();
+        filterData = _.map(filterData, function (data) {
+            data.value = initialData[data.name];
+            data.endpoint = config.endpoint[data.endpointSlug];
+            return data;
         });
-
-        return self;
-    };
-
-    return {
-        getReportConfig: function () {
-            return reportConfig();
-        },
-        getColumns: function () {
-            return initialPageData.get('report.columns');
-        },
-        getUnsortableColumnNames: function () {
-            return initialPageData.get('report.unsortableColumnNames');
-        },
-        getColumnFilters: function () {
-            return initialPageData.get('report.columnFilters');
-        },
-        getReportFilters: function () {
-            var filterData = initialPageData.get('report.reportFilters'),
-                initialData = initialPageData.get('report.initialReportFilters'),
-                config = reportConfig();
-            filterData = _.map(filterData, function (data) {
-                data.value = initialData[data.name];
-                data.endpoint = config.endpoint[data.endpointSlug];
-                return data;
-            });
-            return filterData;
-        },
-    };
-});
+        return filterData;
+    },
+};

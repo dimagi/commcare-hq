@@ -58,14 +58,13 @@ from corehq.apps.enterprise.tasks import email_enterprise_report
 from corehq.apps.export.utils import get_default_export_settings_if_available
 
 from corehq.apps.hqwebapp.context import get_page_context, Section
-from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_tempusdominus
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_can_edit_or_view_web_users
 
 from corehq.const import USER_DATE_FORMAT
 
 
-@use_tempusdominus
 @use_bootstrap5
 @always_allow_project_access
 @require_enterprise_admin
@@ -113,7 +112,6 @@ def platform_overview(request, domain):
     return render(request, "enterprise/project_dashboard.html", context)
 
 
-@use_tempusdominus
 @use_bootstrap5
 @always_allow_project_access
 @require_enterprise_admin

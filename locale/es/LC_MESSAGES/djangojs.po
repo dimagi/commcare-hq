@@ -197,6 +197,19 @@ msgid "See Past Versions"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
+msgstr ""
+"Los tipos de casos solo pueden incluir los caracteres a-z, 0-9, '-' y '_'"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid "This is a reserved case type. Please choose another name."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid "This case type has been deprecated in the Data Dictionary."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Add"
@@ -209,6 +222,10 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 msgid "You have unsaved changes"
 msgstr "Tiene cambios sin guardar"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid "Add a new case type or use an existing one"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 msgid "What is a Survey Menu?"
@@ -773,17 +790,6 @@ msgid "Case type is required."
 msgstr "Se requiere un tipo de caso."
 
 #: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
-msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
-msgstr ""
-"Los tipos de casos solo pueden incluir los caracteres a-z, 0-9, '-' y '_'"
-
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
-msgid "'commcare-user' is a reserved case type. Please change the case type"
-msgstr ""
-"'usuario-commcare' es un tipo de caso reservado. Por favor cambie el tipo de "
-"caso"
-
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
 msgid "Go back to case list"
 msgstr "Regresar a la lista de casos"
 
@@ -1135,22 +1141,6 @@ msgid "Multiple matches for {info} found!"
 msgstr "¡Se encontraron múltiples coincidencias para {info}!"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Server Form"
-msgstr "Formulario de Servidor"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Local Form"
-msgstr "Formulario Local"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XML should not be equivalent"
-msgstr "El XML no debería ser equivalente"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XML mismatch"
-msgstr "No coincide con el XML"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
 msgid "key"
@@ -1424,6 +1414,10 @@ msgstr "Captura de Video"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Signature Capture"
 msgstr "Captura de Firma"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Document Upload"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "GPS"

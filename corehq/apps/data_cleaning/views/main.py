@@ -1,5 +1,3 @@
-from celery import uuid
-from datetime import datetime
 from memoized import memoized
 
 from django.contrib import messages
@@ -7,12 +5,12 @@ from django.shortcuts import redirect
 from django.http import StreamingHttpResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET
 from django.utils.translation import gettext_lazy, gettext as _
 
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
+from corehq.apps.data_cleaning.exceptions import SessionAccessClosedException
 from corehq.apps.data_cleaning.models import BulkEditSession
-from corehq.apps.data_cleaning.tasks import commit_data_cleaning
 from corehq.apps.data_cleaning.utils.cases import clear_caches_case_data_cleaning
 from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -52,6 +50,8 @@ class CleanCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
     def get(self, request, *args, **kwargs):
         try:
             return super().get(request, *args, **kwargs)
+        except SessionAccessClosedException:
+            return redirect(reverse(CleanCasesMainView.urlname, args=(self.domain, )))
         except BulkEditSession.DoesNotExist:
             messages.error(request, _("That session does not exist. Please start a new session."))
             return redirect(reverse(CleanCasesMainView.urlname, args=(self.domain, )))
@@ -60,11 +60,26 @@ class CleanCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
     @memoized
     def session(self):
         # overriding mixin so that DoesNotExist can be raised in self.get() and we can redirect
-        return BulkEditSession.objects.get(
+        session = BulkEditSession.objects.get(
             user=self.request.user,
             domain=self.domain,
             session_id=self.session_id
         )
+        if session.completed_on:
+            messages.warning(
+                self.request,
+                _("You tried to access a session for \"{}\" that was already completed. "
+                  "Please start a new session.").format(session.identifier)
+            )
+            raise SessionAccessClosedException()
+        elif session.committed_on:
+            messages.warning(
+                self.request,
+                _("You tried to access a session for \"{}\" that is currently applying changes. "
+                  "Please wait for that task to complete, then start a new session.").format(session.identifier)
+            )
+            raise SessionAccessClosedException()
+        return session
 
     @property
     def case_type(self):
@@ -100,23 +115,6 @@ def clear_session_caches(request, domain, session_id):
     session = BulkEditSession.objects.get(session_id=session_id)
     clear_caches_case_data_cleaning(session.domain, session.identifier)
     messages.success(request, _("Caches successfully cleared."))
-    return redirect(reverse(CleanCasesMainView.urlname, args=(domain,)))
-
-
-@login_and_domain_required
-@require_POST
-@require_bulk_data_cleaning_cases
-def save_case_session(request, domain, session_id):
-    session = BulkEditSession.objects.get(session_id=session_id)
-
-    task_id = uuid()
-    session.task_id = task_id
-    session.committed_on = datetime.utcnow()
-    session.save()
-
-    commit_data_cleaning.apply_async((session_id,), task_id=task_id)
-
-    messages.success(request, _("Session saved."))
     return redirect(reverse(CleanCasesMainView.urlname, args=(domain,)))
 
 

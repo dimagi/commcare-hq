@@ -190,6 +190,18 @@ msgid "See Past Versions"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid "This is a reserved case type. Please choose another name."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid "This case type has been deprecated in the Data Dictionary."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Add"
@@ -201,6 +213,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 msgid "You have unsaved changes"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js
+msgid "Add a new case type or use an existing one"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
@@ -759,14 +775,6 @@ msgid "Case type is required."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
-msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
-msgid "'commcare-user' is a reserved case type. Please change the case type"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js
 msgid "Go back to case list"
 msgstr ""
 
@@ -1116,22 +1124,6 @@ msgid "Multiple matches for {info} found!"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Server Form"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Local Form"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XML should not be equivalent"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XML mismatch"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map.js
 msgid "key"
@@ -1392,6 +1384,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Signature Capture"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Document Upload"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js

@@ -38,7 +38,6 @@ from corehq.apps.microplanning.forms import MicroplanningConfigForm
 from corehq.apps.microplanning.reports import CaseManagementMap
 from corehq.apps.microplanning.tasks import geo_cases_reassignment_update_owners
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
-from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.generic import get_filter_classes
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
@@ -273,8 +272,6 @@ class GPSCaptureView(BaseMicroplanningView):
         'corehq.apps.microplanning.filters.GPSDataFilter',
     ]
 
-    @use_datatables
-    @use_jquery_ui
     @method_decorator(toggles.MICROPLANNING.required_decorator())
     def dispatch(self, *args, **kwargs):
         return super(GPSCaptureView, self).dispatch(*args, **kwargs)

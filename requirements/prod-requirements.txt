@@ -64,7 +64,7 @@ certifi==2025.1.31
     #   -r prod-requirements.in
     #   requests
     #   sentry-sdk
-cffi==1.14.3
+cffi==1.17.1
     # via
     #   cryptography
     #   csiphash
@@ -418,7 +418,7 @@ pyrsistent==0.17.3
     # via jsonschema
 pyseeyou==1.0.2
     # via transifex-python
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
     # via
     #   -r base-requirements.in
     #   botocore
@@ -524,7 +524,7 @@ soupsieve==2.5
     # via beautifulsoup4
 sqlagg==0.18.0
     # via -r base-requirements.in
-sqlalchemy==1.3.19
+sqlalchemy==1.3.24
     # via
     #   -r base-requirements.in
     #   alembic
@@ -581,7 +581,7 @@ ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
     # via pyphonetics
-urllib3==1.26.19
+urllib3==1.26.20
     # via
     #   botocore
     #   elasticsearch5

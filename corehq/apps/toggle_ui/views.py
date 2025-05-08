@@ -16,7 +16,6 @@ from couchforms.analytics import get_last_form_submission_received
 from soil import DownloadBase
 
 from corehq.apps.domain.decorators import require_superuser_or_contractor
-from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.toggle_ui.models import ToggleAudit
 from corehq.apps.toggle_ui.tasks import generate_toggle_csv_download
@@ -55,7 +54,6 @@ class ToggleListView(BasePageView):
     page_title = "Feature Flags"
     template_name = 'toggle/flags.html'
 
-    @use_datatables
     @method_decorator(require_superuser_or_contractor)
     def dispatch(self, request, *args, **kwargs):
         return super(ToggleListView, self).dispatch(request, *args, **kwargs)

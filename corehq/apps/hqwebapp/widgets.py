@@ -105,7 +105,6 @@ class DateRangePickerWidget(Input):
     usage:
     apply the following decorator to your view's dispatch method
 
-    @use_daterangepicker
     def dispatch(self, request, *args, **kwargs):
         super(self, MyView).dispatch(request, *args, **kwargs)
     """
