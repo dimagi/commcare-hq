@@ -1,30 +1,22 @@
-hqDefine("data_interfaces/js/case_rule_main", [
-    'jquery',
-    'hqwebapp/js/initial_page_data',
-    'data_interfaces/js/case_property_input',
-    'data_interfaces/js/case_rule_criteria',
-    'data_interfaces/js/case_rule_actions',
-    'data_interfaces/js/make_read_only',
-    'commcarehq',
-], function (
-    $,
-    initialPageData,
-    casePropertyInput,
-    CaseRuleCriteria,
-    CaseRuleActions,
-) {
-    $(function () {
-        casePropertyInput.register();
+import "commcarehq";
+import $ from "jquery";
+import initialPageData from "hqwebapp/js/initial_page_data";
+import casePropertyInput from "data_interfaces/js/case_property_input";
+import CaseRuleCriteria from "data_interfaces/js/case_rule_criteria";
+import CaseRuleActions from "data_interfaces/js/case_rule_actions";
+import "data_interfaces/js/make_read_only";
 
-        var criteriaModel = CaseRuleCriteria(
-            initialPageData.get('criteria_initial'),
-            initialPageData.get('criteria_constants'),
-        );
-        $('#rule-criteria-panel').koApplyBindings(criteriaModel);
+$(function () {
+    casePropertyInput.register();
 
-        $('#rule-actions').koApplyBindings(CaseRuleActions(
-            initialPageData.get('actions_initial'),
-            criteriaModel.caseType,
-        ));
-    });
+    var criteriaModel = CaseRuleCriteria(
+        initialPageData.get('criteria_initial'),
+        initialPageData.get('criteria_constants'),
+    );
+    $('#rule-criteria-panel').koApplyBindings(criteriaModel);
+
+    $('#rule-actions').koApplyBindings(CaseRuleActions(
+        initialPageData.get('actions_initial'),
+        criteriaModel.caseType,
+    ));
 });
