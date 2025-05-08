@@ -5,7 +5,7 @@ hqDefine('domain/js/pro-bono', [
     'commcarehq',
 ], function (
     $,
-    emailUtils
+    emailUtils,
 ) {
 
     $(function () {

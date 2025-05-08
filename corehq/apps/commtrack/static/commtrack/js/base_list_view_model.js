@@ -2,7 +2,7 @@
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
-import bootstrap from "bootstrap5";
+import { Modal } from "bootstrap5";
 
 var BaseListViewModel = function (o) {
     var self = {};
@@ -76,7 +76,7 @@ var BaseListViewModel = function (o) {
             if (data.success) {
                 $(button).enableButton();
                 var $modal = $(button).closest(".modal"),
-                    modal = bootstrap.Modal.getOrCreateInstance($modal);
+                    modal = Modal.getOrCreateInstance($modal);
                 modal.hide();
                 $modal.one('hidden.bs.modal', function () {
                     var dataList = self.dataList(),

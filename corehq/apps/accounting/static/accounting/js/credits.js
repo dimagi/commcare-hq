@@ -57,7 +57,7 @@ hqDefine('accounting/js/credits', [
     var cardPaymentCreditItem = function (paymentHandler) {
         var self = {};
         self.name = ko.observable("Credits");
-        self.creditType = ko.observable("card_general_credit");
+        self.creditType = ko.observable("general_credit");
         self.addAmount = ko.observable(0);
         self.isAddAmountValid = ko.computed(function () {
             return  parseFloat(self.addAmount()) === 0 || (parseFloat(self.addAmount()) >= 0.5);

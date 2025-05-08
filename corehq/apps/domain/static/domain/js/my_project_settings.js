@@ -6,7 +6,7 @@ hqDefine("domain/js/my_project_settings", [
 ], function (
     $,
     ko,
-    initialPageData
+    initialPageData,
 ) {
     var HQTimezoneHandler = function (o) {
         var self = {};

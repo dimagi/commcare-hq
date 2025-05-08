@@ -3,7 +3,7 @@ import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import bootstrap from "bootstrap5";
+import { Modal } from "bootstrap5";
 import models from "commtrack/js/base_list_view_model";
 import "hqwebapp/js/bootstrap5/widgets";  // "Additional Information" on product page uses a .hqwebapp-select2
 import "hqwebapp/js/bootstrap5/knockout_bindings.ko";  // fadeVisible
@@ -53,7 +53,7 @@ var commtrackProductsProgramsViewModel = function (o) {
                 alertContainer.text(message);
                 alertContainer.removeClass("d-none");
                 var $modal = $(button).closest(".modal");
-                bootstrap.Modal.getOrCreateInstance($modal);
+                Modal.getOrCreateInstance($modal);
                 $modal.one('hidden.bs.modal', function () {
                     alertContainer.addClass("d-none");
                 });

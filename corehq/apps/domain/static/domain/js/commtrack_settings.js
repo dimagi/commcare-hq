@@ -1,10 +1,11 @@
-hqDefine("domain/js/commtrack_settings", ['jquery', 'commcarehq'], function ($) {
-    $(function () {
-        $("#id_use_auto_consumption").change(function () {
-            $("#id_consumption_min_transactions, " +
-              "#id_consumption_min_window, " +
-              "#id_consumption_optimal_window"
-            ).prop('disabled', !$(this).prop('checked'));
-        }).change();
-    });
+import "commcarehq";
+import $ from "jquery";
+
+$(function () {
+    $("#id_use_auto_consumption").change(function () {
+        $("#id_consumption_min_transactions, " +
+          "#id_consumption_min_window, " +
+          "#id_consumption_optimal_window",
+        ).prop('disabled', !$(this).prop('checked'));
+    }).change();
 });

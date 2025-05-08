@@ -2,6 +2,7 @@ import json
 
 from django.contrib import messages
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 
@@ -132,6 +133,8 @@ class CleanCasesTableView(BulkEditSessionViewMixin,
 
     @hq_hx_action("post")
     def apply_all_changes(self, request, *args, **kwargs):
+        self.session.committed_on = timezone.now()
+        self.session.save()
         commit_data_cleaning.delay(self.session.session_id)
         messages.success(
             request,

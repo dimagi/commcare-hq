@@ -1,19 +1,15 @@
 --- 
 +++ 
-@@ -1,13 +1,13 @@
--hqDefine("reports/js/bootstrap3/edit_scheduled_report", [
-+hqDefine("reports/js/bootstrap5/edit_scheduled_report", [
-     "jquery",
-     "underscore",
-     "analytix/js/google",
-     "hqwebapp/js/initial_page_data",
-     "hqwebapp/js/multiselect_utils",
--    "hqwebapp/js/bootstrap3/widgets",  // autocomplete widget for email recipient list
-+    "hqwebapp/js/bootstrap5/widgets",  // autocomplete widget for email recipient list
-     "jquery-ui/ui/widgets/datepicker",
-+    "jquery-ui-built-themes/redmond/jquery-ui.min.css",
-     'hqwebapp/js/components/select_toggle',
--    "jquery-ui-built-themes/redmond/jquery-ui.min.css",
-     "commcarehq",
- ], function (
-     $,
+@@ -4,10 +4,10 @@
+ import googleAnalytics from "analytix/js/google";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+ import multiselectUtils from "hqwebapp/js/multiselect_utils";
+-import "hqwebapp/js/bootstrap3/widgets";  // autocomplete widget for email recipient list
++import "hqwebapp/js/bootstrap5/widgets";  // autocomplete widget for email recipient list
+ import "jquery-ui/ui/widgets/datepicker";
++import "jquery-ui-built-themes/redmond/jquery-ui.min.css";
+ import "hqwebapp/js/components/select_toggle";
+-import "jquery-ui-built-themes/redmond/jquery-ui.min.css";
+ 
+ var addOptionsToSelect = function ($select, optList, selectedVal) {
+     for (var i = 0; i < optList.length; i++) {
