@@ -15,7 +15,7 @@ If you're running this on a server, download locally by running
 
 May I suggest interpreting the file with
 
-    $ pip install snakeviz
+    $ uv pip install snakeviz
     $ snakeviz {filename}
 """
 

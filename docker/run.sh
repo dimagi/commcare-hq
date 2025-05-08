@@ -36,8 +36,7 @@ function setup {
         install -dm0755 -o cchq -g cchq ./artifacts
     fi
 
-    uv pip sync requirements/test-requirements.txt
-    pip check  # make sure there are no incompatibilities in test-requirements.txt
+    uv sync --locked --group=test --no-dev --no-install-project --no-progress
     python_preheat  # preheat the python libs
 
     # compile pyc files
@@ -111,7 +110,7 @@ function run_tests {
                 logdo ls -la "$dirpath"
             done
             logdo python -m site
-            logdo pip freeze
+            logdo uv pip freeze
             logdo npm config list
             logdo yarn --version
             logdo cat -n ../run_tests
@@ -145,7 +144,6 @@ function run_tests {
         log_group_end  # only log group end on success (notice: `set -e`)
         if [ "$TEST" == "python-sharded-and-javascript" ]; then
             su cchq -c scripts/test-prod-entrypoints.sh
-            scripts/test-make-requirements.sh
             scripts/test-serializer-pickle-files.sh
             su cchq -c scripts/test-django-migrations.sh
         fi
