@@ -176,12 +176,9 @@
                   </button>
                 </span>
                 <input class="form-control" type="text" data-bind="value: value">
-                <!-- ko if: value() && value()[0] == '!' -->
-                <span class="input-group-addon"><i class="fa fa-circle-xmark"></i></span>
-                <!-- /ko -->
-                <!-- ko ifnot: value() && value()[0] == '!' -->
-                <span class="input-group-addon"><i class="fa fa-check"></i></span>
-                <!-- /ko -->
+                <span class="input-group-addon">
+                  <i data-bind="class: (value() && value()[0] == '!') ? 'fa fa-circle-xmark' : 'fa fa-check'"></i>
+                </span>
               </div>
             </td>
             <!-- B5: replace inline styles with vertical alignment class: https://getbootstrap.com/docs/5.3/utilities/vertical-align/#css -->
