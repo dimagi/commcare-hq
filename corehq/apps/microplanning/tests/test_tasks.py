@@ -36,7 +36,7 @@ class TestIndexESDocsWithLocationProps(TestCase):
         self.addCleanup(self.celery_task_helper.mark_completed)
         self.addCleanup(self.celery_task_helper.clear_progress)
 
-    @patch('corehq.apps.microplanning.tasks.MAX_GEOSPATIAL_INDEX_DOC_LIMIT', 1)
+    @patch('corehq.apps.microplanning.tasks.MAX_MICROPLANNING_INDEX_DOC_LIMIT', 1)
     def test_max_doc_limit_reached(self):
         index_es_docs_with_location_props.apply(args=[self.domain])
         expected_output = {
