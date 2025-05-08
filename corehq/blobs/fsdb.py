@@ -47,16 +47,22 @@ class FilesystemBlobDB(AbstractBlobDB):
             content = GzipStream(content)
         chunk_sizes = []
         digest = md5()
-        with open(path, "wb") as fh:
-            while True:
-                chunk = content.read(CHUNK_SIZE)
-                if not chunk:
-                    break
-                fh.write(chunk)
-                chunk_sizes.append(len(chunk))
-                digest.update(chunk)
+        try:
+            with open(path, "wb") as fh:
+                while True:
+                    chunk = content.read(CHUNK_SIZE)
+                    if not chunk:
+                        break
+                    fh.write(chunk)
+                    chunk_sizes.append(len(chunk))
+                    digest.update(chunk)
+        finally:
+            # align with S3DB behavior
+            if not isinstance(content, BlobStream):
+                content.close()
 
-        meta.content_length, meta.compressed_length = get_content_size(content, chunk_sizes)
+        meta.content_length, meta.compressed_length = get_content_size(
+            content, chunk_sizes)
         self.metadb.put(meta)
         return meta
 
