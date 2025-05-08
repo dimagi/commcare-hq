@@ -1,16 +1,11 @@
 --- 
 +++ 
-@@ -1,11 +1,11 @@
- 
--hqDefine('geospatial/js/bootstrap3/models', [
-+hqDefine('geospatial/js/bootstrap5/models', [
-     'jquery',
-     'knockout',
-     'underscore',
-     'hqwebapp/js/initial_page_data',
-     'geospatial/js/utils',
--    'hqwebapp/js/bootstrap3/alert_user',
-+    'hqwebapp/js/bootstrap5/alert_user',
-     'mapbox-gl',
-     '@mapbox/mapbox-gl-draw',
-     '@turf/turf',
+@@ -4,7 +4,7 @@
+ import _ from "underscore";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+ import utils from "geospatial/js/utils";
+-import alertUser from "hqwebapp/js/bootstrap3/alert_user";
++import alertUser from "hqwebapp/js/bootstrap5/alert_user";
+ import mapboxgl from "mapbox-gl";
+ import MapboxDraw from "@mapbox/mapbox-gl-draw";
+ import { booleanPointInPolygon, point } from "@turf/turf";
