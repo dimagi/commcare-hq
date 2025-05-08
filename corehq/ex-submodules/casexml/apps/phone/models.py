@@ -113,10 +113,6 @@ class OTARestoreUser(object):
         return self.request_user.user_id if self.request_user else None
 
     @property
-    def locations(self):
-        raise NotImplementedError()
-
-    @property
     def sql_location(self):
         "User's primary SQLLocation"
         return self._couch_user.get_sql_location(self.domain)
@@ -160,10 +156,6 @@ class OTARestoreWebUser(OTARestoreUser):
         assert isinstance(couch_user, WebUser)
         super(OTARestoreWebUser, self).__init__(domain, couch_user, **kwargs)
 
-    @property
-    def locations(self):
-        return []
-
     def get_fixture_data_items(self):
         return []
 
@@ -189,10 +181,6 @@ class OTARestoreCommCareUser(OTARestoreUser):
 
         assert isinstance(couch_user, CommCareUser)
         super(OTARestoreCommCareUser, self).__init__(domain, couch_user, **kwargs)
-
-    @property
-    def locations(self):
-        return self._couch_user.locations
 
     def get_fixture_data_items(self):
         from corehq.apps.fixtures.models import LookupTableRow
