@@ -51,7 +51,8 @@ class UserLocationError(ValueError):
 
 
 code_to_location_id = {
-    'katsina·faskari·maigora': '24fc6b0f63af4cb1b8153d00e6a3ae1a',
+    'katsina·faskari·maigora': '24fc6b0f63af4cb1b8153d00e6a3ae1a',  # Mai Gora
+    'jigawa·sule tankarkar·sule tankarkar·fada': '231e8fd646c447b2a841888cde48eb62',  # Shabara Fada
 }
 location_cache: dict[str, SQLLocation] = {}
 
