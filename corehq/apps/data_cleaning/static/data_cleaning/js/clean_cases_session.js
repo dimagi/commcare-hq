@@ -14,18 +14,6 @@ Alpine.data('wiggleButtonModel', wiggleButton);
 
 Alpine.store('isCleaningAllowed', false);
 Alpine.store('showWhitespaces', false);
-Alpine.store('editDetails', {
-    numRecordsEdited: 0,
-    showApplyWarning: false,
-    isSessionAtChangeLimit: false,
-    isUndoMultiple: false,
-    update(details) {
-        this.numRecordsEdited = details.numRecordsEdited;
-        this.showApplyWarning = details.numRecordsOverLimit > 0;
-        this.isSessionAtChangeLimit = details.isSessionAtChangeLimit;
-        this.isUndoMultiple = details.isUndoMultiple;
-    },
-});
 
 import Alpine from 'alpinejs';
 Alpine.start();
@@ -33,8 +21,4 @@ Alpine.start();
 document.body.addEventListener("showDataCleaningModal", function (event) {
     const modal = new Modal(event.detail.elt);
     modal.show();
-});
-
-document.body.addEventListener("updateEditDetails", function (event) {
-    Alpine.store('editDetails').update(event.detail.editDetails);
 });
