@@ -1739,15 +1739,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     def update_fixture_status(self, fixture_type):
         from corehq.apps.fixtures.models import UserLookupTableStatus
-        now = datetime.utcnow()
-        user_fixture_sync, new = UserLookupTableStatus.objects.get_or_create(
+        UserLookupTableStatus.objects.update_or_create(
             user_id=self._id,
             fixture_type=fixture_type,
-            defaults={'last_modified': now},
+            defaults={'last_modified': datetime.utcnow()},
         )
-        if not new:
-            user_fixture_sync.last_modified = now
-            user_fixture_sync.save()
 
 
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):
