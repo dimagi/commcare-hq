@@ -1,9 +1,6 @@
 import doctest
-import tempfile
-from contextlib import contextmanager
 from inspect import cleandoc
 from io import StringIO
-from typing import Iterator
 from unittest.mock import call, patch
 
 from django.test import SimpleTestCase, TestCase
@@ -17,7 +14,8 @@ from corehq.apps.users.management.commands.nphcda_find_mismatches import (
     get_commcare_user,
     iter_user_rows,
 )
-from corehq.apps.users.models import CommCareUser
+
+from .contextmanagers import get_temp_filename, get_test_user
 
 DOMAIN = 'test-domain'
 
@@ -87,7 +85,7 @@ class TestGetCommCareUser(TestCase):
     def test_get_commcare_user(self):
         username = 'fo/baz001@test-domain.commcarehq.org'
         with (
-            get_test_user(username) as user,
+            get_test_user(DOMAIN, username) as user,
             patch('corehq.apps.users.models.CommCareUser.get_by_username') as mock_get_by_username
         ):
             mock_get_by_username.return_value = user
@@ -98,7 +96,7 @@ class TestGetCommCareUser(TestCase):
     def test_get_commcare_user_cache_hit(self):
         username = 'fo/baz002@test-domain.commcarehq.org'
         with (
-            get_test_user(username) as user,
+            get_test_user(DOMAIN, username) as user,
             patch('corehq.apps.users.models.CommCareUser.get_by_username') as mock_get_by_username
         ):
             mock_get_by_username.return_value = user
@@ -111,8 +109,8 @@ class TestGetCommCareUser(TestCase):
         username1 = 'fo/baz003@test-domain.commcarehq.org'
         username2 = 'fo/baz004@test-domain.commcarehq.org'
         with (
-            get_test_user(username1) as user1,
-            get_test_user(username2) as user2,
+            get_test_user(DOMAIN, username1) as user1,
+            get_test_user(DOMAIN, username2) as user2,
             patch('corehq.apps.users.models.CommCareUser.get_by_username') as mock_get_by_username
         ):
             mock_get_by_username.side_effect = [user1, user2]
@@ -190,20 +188,3 @@ def test_doctests():
 
     results = doctest.testmod(module)
     assert results.failed == 0
-
-
-@contextmanager
-def get_temp_filename(content: str) -> Iterator[str]:
-    with tempfile.NamedTemporaryFile(delete=False, mode='w', newline='') as temp_file:
-        temp_file.write(content)
-        temp_file.flush()
-        yield temp_file.name
-
-
-@contextmanager
-def get_test_user(username: str) -> Iterator[CommCareUser]:
-    user = CommCareUser.create(DOMAIN, username, '*****', None, None)
-    try:
-        yield user
-    finally:
-        user.delete(None, deleted_by=None)

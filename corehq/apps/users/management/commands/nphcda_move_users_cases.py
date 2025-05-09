@@ -1,4 +1,5 @@
-from typing import Generator, Iterable, Iterator
+import csv
+from typing import Generator, Iterable, Iterator, Protocol
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -10,16 +11,33 @@ from casexml.apps.case.mock import CaseBlock
 from corehq.apps.es import CaseSearchES
 from corehq.apps.es.case_search import wrap_case_search_hit
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
 
-from .nphcda_find_mismatches import UserChanges
+from .nphcda_find_mismatches import UserChanges, get_location
 
 CASE_BLOCK_COUNT = 1000
 
 
-location_cache = {}
+class SheetProto(Protocol):
+    nrows: int
+
+    def cell_value(self, rowx: int, colx: int) -> str:
+        ...
+
+
+class CSVSheet:
+    """
+    Duck types xlrd.sheet.Sheet for CSV.
+    """
+
+    def __init__(self, csv_filename: str) -> None:
+        with open(csv_filename) as csv_file:
+            self._sheet = list(csv.reader(csv_file))
+        self.nrows = len(self._sheet)
+
+    def cell_value(self, rowx: int, colx: int) -> str:
+        return self._sheet[rowx][colx]
 
 
 class Command(BaseCommand):
@@ -30,20 +48,29 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
+        parser.add_argument('-c', '--input-csv', type=str)
         parser.add_argument('-x', '--input-xls', type=str)
         parser.add_argument('-y', '--input-yaml', type=str)
         parser.add_argument('--dry-run', action='store_true')
 
     def handle(self, domain, *args, **options):
-        if options['input_yaml'] and options['input_xls']:
-            raise CommandError('Cannot specify both input-xls and input-yaml')
+        if not only_one(
+            options['input_csv'],
+            options['input_xls'],
+            options['input_yaml'],
+        ):
+            raise CommandError('Please specify only one input file')
+        elif options['input_csv']:
+            all_user_changes = load_csv(options['input_csv'])
         elif options['input_xls']:
             all_user_changes = load_xls(options['input_xls'])
         elif options['input_yaml']:
             all_user_changes = load_yaml(options['input_yaml'])
         else:
             raise CommandError('Must specify either input-xls or input-yaml')
+
         move_case_block = move_case_block_coro(domain, options['dry_run'])
+        next(move_case_block)  # Prime the coroutine
         for user_changes in all_user_changes:
             user = get_user(domain, user_changes)
             move_user(user, user_changes, options['dry_run'])
@@ -53,13 +80,37 @@ class Command(BaseCommand):
         move_case_block.close()
 
 
+def only_one(*args):
+    """
+    Returns True if only one of the arguments is truthy.
+
+    >>> only_one('a', '', None)
+    True
+    >>> only_one('a', 'b', None)
+    False
+
+    """
+    return sum(1 for arg in args if arg) == 1
+
+
+def load_csv(csv_filename: str) -> Iterator[UserChanges]:
+    """
+    Yields UserChanges instances from the given CSV file.
+    """
+    sheet = CSVSheet(csv_filename)
+    return load_sheet(sheet)
+
+
 def load_xls(xls_filename: str) -> Iterator[UserChanges]:
     """
     Yields UserChanges instances from the given Excel file (XLS format).
     """
     book = xlrd.open_workbook(xls_filename)
     sheet = book.sheet_by_index(0)
+    return load_sheet(sheet)
 
+
+def load_sheet(sheet: SheetProto) -> Iterator[UserChanges]:
     col_username = 0
     col_map_from_id = 5
     col_map_to_id = 10
@@ -69,7 +120,12 @@ def load_xls(xls_filename: str) -> Iterator[UserChanges]:
     last_username, user_changes = None, {}
     for row in range(1, sheet.nrows):
         username = sheet.cell_value(rowx=row, colx=col_username)
-        if username and username != last_username and last_username is not None:
+        if (
+            username
+            and username != last_username
+            and last_username is not None
+            and user_has_changes(user_changes)
+        ):
             yield user_changes
         if username and username != last_username:
             last_username = username
@@ -86,8 +142,8 @@ def load_xls(xls_filename: str) -> Iterator[UserChanges]:
         if unmapped_old_id := sheet.cell_value(rowx=row, colx=col_unmapped_old_ids):
             user_changes['unmapped_old_locations'].append(unmapped_old_id)
         if unmapped_new_id := sheet.cell_value(rowx=row, colx=col_unmapped_new_ids):
-            user_changes['unmapped_old_locations'].append(unmapped_new_id)
-    if last_username is not None:
+            user_changes['unmapped_new_locations'].append(unmapped_new_id)
+    if last_username is not None and user_has_changes(user_changes):
         yield user_changes
 
 
@@ -98,6 +154,27 @@ def load_yaml(yaml_filename: str) -> Iterator[UserChanges]:
     with open(yaml_filename) as yaml_file:
         for user_changes in yaml.safe_load_all(yaml_file):
             yield user_changes
+
+
+def user_has_changes(user_changes: UserChanges) -> bool:
+    """
+    Returns True if the user has any changes to their location assignments.
+
+    >>> user_changes = {
+    ...     'location_map': {},
+    ...     'unmapped_new_locations': [],
+    ...     'unmapped_old_locations': [],
+    ...     'username': 'fo/baz005',
+    ... }
+    >>> user_has_changes(user_changes)
+    False
+
+    """
+    return bool(
+        user_changes['location_map']
+        or user_changes['unmapped_old_locations']
+        or user_changes['unmapped_new_locations']
+    )
 
 
 def move_case_block_coro(domain: str, dry_run: bool) -> Generator[None, str, None]:
@@ -242,16 +319,3 @@ def get_case_block_text(
         owner_id=settlement_id,
         update=update,
     ).as_text()
-
-
-def get_location(domain: str, location_id: str) -> SQLLocation:
-    """
-    Returns the cached SQLLocation for the given location_id, and
-    fetches from the database if not already cached.
-    """
-    if location_id not in location_cache:
-        location_cache[location_id] = SQLLocation.objects.get(
-            domain=domain,
-            location_id=location_id,
-        )
-    return location_cache[location_id]
