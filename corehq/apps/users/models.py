@@ -1737,13 +1737,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         # short-circuit after only a few domains
         return any(domain.granted_messaging_access for domain in domains)
 
-    def update_fixture_status(self, fixture_type):
+    def _update_locations_fixture(self):
         from corehq.apps.fixtures.models import UserLookupTableStatus
-        UserLookupTableStatus.objects.update_or_create(
-            user_id=self._id,
-            fixture_type=fixture_type,
-            defaults={'last_modified': datetime.utcnow()},
-        )
+        UserLookupTableStatus.update(self._id, UserLookupTableStatus.Fixture.LOCATION)
 
 
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):
@@ -2116,8 +2112,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         :param location: may be a sql or couch location
         """
-        from corehq.apps.fixtures.models import UserLookupTableType
-
         if not location.location_id:
             raise AssertionError("You can't set an unsaved location")
 
@@ -2131,7 +2125,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         self.create_location_delegates([location])
 
-        self.update_fixture_status(UserLookupTableType.LOCATION)
+        self._update_locations_fixture()
         self.location_id = location.location_id
         self.get_domain_membership(self.domain).location_id = location.location_id
         if self.location_id not in self.assigned_location_ids:
@@ -2150,7 +2144,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             If fall_back_to_next is True, primary location is not set to next but cleared.
             This option exists only to be backwards compatible when user can only have one location
         """
-        from corehq.apps.fixtures.models import UserLookupTableType
         from corehq.apps.locations.models import SQLLocation
         old_primary_location_id = self.location_id
         if old_primary_location_id:
@@ -2165,7 +2158,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             user_data.pop('commtrack-supply-point', None)
             self.location_id = None
             self.clear_location_delegates()
-            self.update_fixture_status(UserLookupTableType.LOCATION)
+            self._update_locations_fixture()
             self.get_domain_membership(self.domain).location_id = None
             self.get_sql_location.reset_cache(self)
             if commit:
@@ -2187,10 +2180,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.save()
 
     def _remove_location_from_user(self, location_id):
-        from corehq.apps.fixtures.models import UserLookupTableType
         try:
             self.assigned_location_ids.remove(location_id)
-            self.update_fixture_status(UserLookupTableType.LOCATION)
+            self._update_locations_fixture()
         except ValueError:
             notify_exception(None, "Location missing from user", {
                 'user_id': self._id,
@@ -2536,8 +2528,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             membership.assigned_location_ids.append(location_id)
             self.get_sql_locations.reset_cache(self)
         self.get_sql_location.reset_cache(self)
-        from corehq.apps.fixtures.models import UserLookupTableType
-        self.update_fixture_status(UserLookupTableType.LOCATION)
+        self._update_locations_fixture()
         if commit:
             self.save()
 
@@ -2574,9 +2565,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             self.save()
 
     def _remove_location_from_user(self, membership, location_id):
-        from corehq.apps.fixtures.models import UserLookupTableType
         membership.assigned_location_ids.remove(location_id)
-        self.update_fixture_status(UserLookupTableType.LOCATION)
+        self._update_locations_fixture()
 
     def reset_locations(self, domain, location_ids, commit=True):
         """
@@ -2588,8 +2578,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         if not membership.location_id and location_ids:
             membership.location_id = location_ids[0]
         self.get_sql_locations.reset_cache(self)
-        from corehq.apps.fixtures.models import UserLookupTableType
-        self.update_fixture_status(UserLookupTableType.LOCATION)
+        self._update_locations_fixture()
         if commit:
             self.save()
 

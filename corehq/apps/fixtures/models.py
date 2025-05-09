@@ -317,6 +317,14 @@ class UserLookupTableStatus(models.Model):
         unique_together = ("user_id", "fixture_type")
 
     @classmethod
+    def update(cls, user_id, fixture_type):
+        cls.objects.update_or_create(
+            user_id=user_id,
+            fixture_type=fixture_type,
+            defaults={'last_modified': datetime.utcnow()},
+        )
+
+    @classmethod
     def bulk_update(cls, user_ids, fixture_type):
         now = datetime.utcnow()
         for ids in chunked(user_ids, 50):
@@ -331,7 +339,3 @@ class UserLookupTableStatus(models.Model):
             return cls.objects.get(user_id=user_id, fixture_type=fixture_type).last_modified
         except cls.DoesNotExist:
             return cls.DEFAULT_LAST_MODIFIED
-
-
-# TODO update these references
-UserLookupTableType = UserLookupTableStatus.Fixture
