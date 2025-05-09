@@ -65,7 +65,7 @@ then
 fi
 
 echo "Pulling translations from transifex"
-tx pull -f
+tx pull
 
 ./scripts/make-translations.sh "$@"
 
