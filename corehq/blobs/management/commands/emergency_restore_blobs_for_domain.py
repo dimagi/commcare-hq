@@ -44,8 +44,8 @@ def get_blob_metas_for_domain(domain):
 
 def restore_blobs(db, blob_metas):
     for meta in blob_metas:
-        stream = _get_stream_of_latest_version_before_deletion_for_object(meta)
-        db.put(stream, meta=meta)
+        with _get_stream_of_latest_version_before_deletion_for_object(meta) as stream:
+            db.put(stream, meta=meta)
 
 
 def _get_blob_metas(parent_id):
