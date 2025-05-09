@@ -3,7 +3,6 @@ from functools import reduce
 from itertools import chain
 from uuid import uuid4
 
-from django.conf import settings
 from django.db import models
 from django.db.models.expressions import RawSQL
 
@@ -14,7 +13,6 @@ from dimagi.utils.chunked import chunked
 from corehq.apps.groups.models import Group
 from corehq.sql_db.fields import CharIdField
 from corehq.util.jsonattrs import AttrsDict, AttrsList, list_of
-from corehq.util.quickcache import quickcache
 
 from .exceptions import FixtureVersionError
 
@@ -326,17 +324,13 @@ class UserLookupTableStatus(models.Model):
              .filter(user_id__in=ids,
                      fixture_type=fixture_type)
              .update(last_modified=now))
-        for user_id in user_ids:
-            cls.get_all.clear(cls, user_id)
 
     @classmethod
-    @quickcache(['user_id'], skip_arg=lambda cls, user_id: settings.UNIT_TESTING)
-    def get_all(cls, user_id):
-        last_modifieds = {choice[0]: cls.DEFAULT_LAST_MODIFIED
-                        for choice in cls.Fixture.choices}
-        for fixture_status in cls.objects.filter(user_id=user_id):
-            last_modifieds[fixture_status.fixture_type] = fixture_status.last_modified
-        return last_modifieds
+    def get_last_modified(cls, user_id, fixture_type):
+        try:
+            return cls.objects.get(user_id=user_id, fixture_type=fixture_type).last_modified
+        except cls.DoesNotExist:
+            return cls.DEFAULT_LAST_MODIFIED
 
 
 # TODO update these references

@@ -32,40 +32,23 @@ class TestFixtureStatus(TestCase):
         UserLookupTableStatus.objects.all().delete()
         clear_domain_names('my-domain')
 
-    def test_get_statuses(self):
-        no_status = {UserLookupTableStatus.Fixture.choices[0][0]: UserLookupTableStatus.DEFAULT_LAST_MODIFIED}
-        self.assertEqual(UserLookupTableStatus.get_all(self.couch_user._id), no_status)
-
-        now = datetime.utcnow()
-        UserLookupTableStatus(
-            user_id=self.couch_user._id,
-            fixture_type=UserLookupTableStatus.Fixture.choices[0][0],
-            last_modified=now,
-        ).save()
-        expected_status = {UserLookupTableStatus.Fixture.choices[0][0]: now}
-        self.assertEqual(UserLookupTableStatus.get_all(self.couch_user._id), expected_status)
-
-    def test_get_status(self):
-        now = datetime.utcnow()
-        couch_user = CommCareUser.get_by_username(self.username)
-        UserLookupTableStatus(
-            user_id=self.couch_user._id,
-            fixture_type=UserLookupTableStatus.Fixture.choices[0][0],
-            last_modified=now,
-        ).save()
-
+    def test_get_last_modified(self):
+        my_fixture = UserLookupTableStatus.Fixture.choices[0][0]
         self.assertEqual(
-            self.couch_user.fixture_status("fake_status"),
+            UserLookupTableStatus.get_last_modified(self.couch_user._id, my_fixture),
             UserLookupTableStatus.DEFAULT_LAST_MODIFIED,
         )
-        self.assertEqual(couch_user.fixture_status(UserLookupTableStatus.Fixture.choices[0][0]), now)
 
+        now = datetime.utcnow()
         UserLookupTableStatus(
-            user_id=self.web_user._id,
-            fixture_type=UserLookupTableStatus.Fixture.choices[0][0],
+            user_id=self.couch_user._id,
+            fixture_type=my_fixture,
             last_modified=now,
         ).save()
-        self.assertEqual(self.web_user.fixture_status(UserLookupTableStatus.Fixture.choices[0][0]), now)
+        self.assertEqual(
+            UserLookupTableStatus.get_last_modified(self.couch_user._id, my_fixture),
+            now,
+        )
 
     def test_update_status_set_location(self):
         fake_location = MagicMock()

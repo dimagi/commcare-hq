@@ -17,6 +17,7 @@ from corehq.apps.app_manager.const import (
     SYNC_HIERARCHICAL_FIXTURE,
 )
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+from corehq.apps.fixtures.models import UserLookupTableStatus
 from corehq.apps.fixtures.utils import get_index_schema_node
 from corehq.apps.locations.models import (
     LocationFixtureConfiguration,
@@ -73,8 +74,11 @@ def _app_has_changed(last_sync, app_id):
 
 
 def _fixture_has_changed(last_sync, restore_user):
-    return (not last_sync or not last_sync.date or
-            restore_user.get_fixture_last_modified() >= last_sync.date)
+    if not last_sync or not last_sync.date:
+        return True
+    last_modified = UserLookupTableStatus.get_last_modified(
+        restore_user.user_id, UserLookupTableStatus.Fixture.LOCATION)
+    return last_modified >= last_sync.date
 
 
 def _locations_have_changed(last_sync, locations_queryset, restore_user):

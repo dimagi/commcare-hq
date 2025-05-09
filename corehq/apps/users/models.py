@@ -1737,19 +1737,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         # short-circuit after only a few domains
         return any(domain.granted_messaging_access for domain in domains)
 
-    @property
-    def fixture_statuses(self):
-        """Returns all of the last modified times for each fixture type"""
-        from corehq.apps.fixtures.models import UserLookupTableStatus
-        return UserLookupTableStatus.get_all(self._id)
-
-    def fixture_status(self, fixture_type):
-        try:
-            return self.fixture_statuses[fixture_type]
-        except KeyError:
-            from corehq.apps.fixtures.models import UserLookupTableStatus
-            return UserLookupTableStatus.DEFAULT_LAST_MODIFIED
-
     def update_fixture_status(self, fixture_type):
         from corehq.apps.fixtures.models import UserLookupTableStatus
         now = datetime.utcnow()
@@ -1761,7 +1748,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         if not new:
             user_fixture_sync.last_modified = now
             user_fixture_sync.save()
-        UserLookupTableStatus.get_all.clear(UserLookupTableStatus, self._id)
 
 
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):

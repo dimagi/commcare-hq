@@ -141,11 +141,6 @@ class OTARestoreUser(object):
     def get_case_sharing_groups(self):
         return self._couch_user.get_case_sharing_groups(domain=self.domain)
 
-    def get_fixture_last_modified(self):
-        from corehq.apps.fixtures.models import UserLookupTableType
-
-        return self._couch_user.fixture_status(UserLookupTableType.LOCATION)
-
     def get_ucr_filter_value(self, ucr_filter, ui_filter):
         return ucr_filter.get_filter_value(self._couch_user, ui_filter)
 
