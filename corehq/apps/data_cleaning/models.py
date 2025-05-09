@@ -22,7 +22,6 @@ from corehq.apps.es import CaseSearchES
 
 BULK_OPERATION_CHUNK_SIZE = 1000
 MAX_RECORDED_LIMIT = 100000
-MAX_RECORD_CHANGES = 20
 MAX_SESSION_CHANGES = 200
 
 
@@ -340,37 +339,11 @@ class BulkEditSession(models.Model):
             )
         return self.result['record_count'] if self.completed_on else self.records.count()
 
-    def get_change_counts(self):
-        """
-        Get the details of the number of records with changes, and the number
-        of records that have more than `MAX_RECORD_CHANGES` changes associated with it.
+    def has_changes(self):
+        return self.changes.exists()
 
-        This is an aggregated query to reduce the number of db hits, since
-        both num_records_edited and num_records_at_max_changes are always used
-        together and are related in structure.
-
-        :return: dict {
-            'num_records_edited': int - number of records with changes
-            'num_records_at_max_changes': int - number of records at or above `MAX_RECORD_CHANGES`
-        }
-        """
-        return self.records.annotate(num_changes=models.Count("changes")).aggregate(
-            num_records_edited=models.Count("pk", filter=models.Q(num_changes__gt=0)),
-            num_records_at_max_changes=models.Count(
-                "pk", filter=models.Q(num_changes__gte=MAX_RECORD_CHANGES)
-            ),
-        )
-
-    def get_num_changes(self):
-        return self.changes.count()
-
-    def is_undo_multiple(self):
-        """
-        Check if the last change in the session affects multiple records.
-        :return: bool - True if the last change affects multiple records
-        """
-        last_change = self.changes.last()
-        return last_change and last_change.records.count() > 1
+    def are_bulk_edits_allowed(self):
+        return self.changes.count() < MAX_SESSION_CHANGES
 
     def purge_records(self):
         """
