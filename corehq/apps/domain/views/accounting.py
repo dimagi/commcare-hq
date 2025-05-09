@@ -1175,6 +1175,7 @@ class PlanViewBase(DomainAccountingSettings):
                     SoftwarePlanEdition.STANDARD,
                     SoftwarePlanEdition.PRO,
                     SoftwarePlanEdition.ADVANCED,
+                    SoftwarePlanEdition.ENTERPRISE,
                 ]
             ],
             'plan_options': [p._asdict() for p in self.plan_options],
