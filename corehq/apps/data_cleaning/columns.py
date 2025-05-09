@@ -101,7 +101,7 @@ class DataCleaningHtmxSelectionColumn(CheckBoxColumn):
                 self.template_column,
                 {
                     'hq_hx_action': self.select_record_action,
-                    'is_checked': self.is_checked(value, record),
+                    'is_checked': self.is_checked(record),
                     'value': value,
                     'css_id': self.get_selected_record_checkbox_id(value),
                     'record': record,
@@ -112,5 +112,5 @@ class DataCleaningHtmxSelectionColumn(CheckBoxColumn):
             )
         )
 
-    def is_checked(self, value, record):
-        return self.session.is_record_selected(value)
+    def is_checked(self, record):
+        return record.is_selected
