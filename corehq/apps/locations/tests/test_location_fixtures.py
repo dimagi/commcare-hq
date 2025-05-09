@@ -31,11 +31,11 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.util.test_utils import flag_enabled, generate_cases
 
 from ..fixtures import (
+    LocationsAccessor,
     LocationSet,
     _location_to_fixture,
     get_location_data_fields,
     flat_location_fixture_generator,
-    get_location_fixture_queryset,
     location_fixture_generator,
     should_sync_flat_fixture,
     should_sync_hierarchical_fixture,
@@ -113,7 +113,7 @@ class FixtureHasLocationsMixin(TestXmlMixin):
         self.assertXmlEqual(desired_fixture, fixture)
 
     def assert_fixture_queryset_equals_locations(self, desired_locations):
-        actual = get_location_fixture_queryset(self.user).values_list('name', flat=True)
+        actual = LocationsAccessor(self.user).queryset.values_list('name', flat=True)
         self.assertItemsEqual(actual, desired_locations)
 
 
@@ -631,6 +631,10 @@ class ShouldSyncLocationFixturesTest(TestCase):
         cls.domain_obj.delete()
         super(ShouldSyncLocationFixturesTest, cls).tearDownClass()
 
+    def _should_sync_location(self, last_sync_date, location, restore_state):
+        accessor = mock.Mock(queryset=SQLLocation.objects.filter(pk=location.pk))
+        return should_sync_locations(SimplifiedSyncLog(date=last_sync_date), accessor, restore_state)
+
     def test_should_sync_locations_change_location_type(self):
         """
         When location_type gets changed, we should resync locations
@@ -651,22 +655,14 @@ class ShouldSyncLocationFixturesTest(TestCase):
 
         SQLLocation.objects.filter(pk=location.pk).update(last_modified=day_before_yesterday)
         location = SQLLocation.objects.last()
-        locations_queryset = SQLLocation.objects.filter(pk=location.pk)
-
         restore_state = MockRestoreState(self.user.to_ota_restore_user(self.domain), RestoreParams())
-        self.assertFalse(
-            should_sync_locations(SimplifiedSyncLog(date=yesterday), locations_queryset, restore_state)
-        )
+        self.assertFalse(self._should_sync_location(yesterday, location, restore_state))
 
         self.location_type.shares_cases = True
         self.location_type.save()
 
         location = SQLLocation.objects.last()
-        locations_queryset = SQLLocation.objects.filter(pk=location.pk)
-
-        self.assertTrue(
-            should_sync_locations(SimplifiedSyncLog(date=yesterday), locations_queryset, restore_state)
-        )
+        self.assertTrue(self._should_sync_location(yesterday, location, restore_state))
 
     def test_archiving_location_should_resync(self):
         """
@@ -680,40 +676,33 @@ class ShouldSyncLocationFixturesTest(TestCase):
         location.save()
         after_save = datetime.utcnow()
         self.assertEqual('winterfell', location.name)
-        locations_queryset = SQLLocation.objects.filter(pk=location.pk)
         restore_state = MockRestoreState(self.user.to_ota_restore_user(self.domain), RestoreParams())
         # Should not resync if last sync was after location save
-        self.assertFalse(
-            should_sync_locations(SimplifiedSyncLog(date=after_save), locations_queryset, restore_state)
-        )
+        self.assertFalse(self._should_sync_location(after_save, location, restore_state))
 
         # archive the location
         location.archive()
         after_archive = datetime.utcnow()
 
         location = SQLLocation.objects.last()
-        locations_queryset = SQLLocation.objects.filter(pk=location.pk)
         # Should resync if last sync was after location was saved but before location was archived
-        self.assertTrue(
-            should_sync_locations(SimplifiedSyncLog(date=after_save), locations_queryset, restore_state)
-        )
+        self.assertTrue(self._should_sync_location(after_save, location, restore_state))
         # Should not resync if last sync was after location was deleted
-        self.assertFalse(
-            should_sync_locations(SimplifiedSyncLog(date=after_archive), locations_queryset, restore_state)
-        )
+        self.assertFalse(self._should_sync_location(after_archive, location, restore_state))
 
     def test_changed_build_id(self):
         app = MockApp('project_default', 'build_1')
         restore_state = MockRestoreState(self.user.to_ota_restore_user(self.domain), RestoreParams(app=app))
         sync_log_from_old_app = SimplifiedSyncLog(date=datetime.utcnow(), build_id=app.get_id)
+        accessor = mock.Mock(queryset=SQLLocation.objects.all())
         self.assertFalse(
-            should_sync_locations(sync_log_from_old_app, SQLLocation.objects.all(), restore_state)
+            should_sync_locations(sync_log_from_old_app, accessor, restore_state)
         )
 
         new_build = MockApp('project_default', 'build_2')
         restore_state = MockRestoreState(self.user.to_ota_restore_user(self.domain), RestoreParams(app=new_build))
         self.assertTrue(
-            should_sync_locations(sync_log_from_old_app, SQLLocation.objects.all(), restore_state)
+            should_sync_locations(sync_log_from_old_app, accessor, restore_state)
         )
 
     def test_changing_user_assigned_locations_should_sync(self):
@@ -724,27 +713,18 @@ class ShouldSyncLocationFixturesTest(TestCase):
         )
         location.save()
         after_save = datetime.utcnow()
-        locations_queryset = SQLLocation.objects.filter(pk=location.pk)
 
         cc_user_restore_state = MockRestoreState(self.user.to_ota_restore_user(self.domain), RestoreParams())
         web_user_restore_state = MockRestoreState(self.web_user.to_ota_restore_user(self.domain), RestoreParams())
 
-        self.assertFalse(
-            should_sync_locations(SimplifiedSyncLog(date=after_save), locations_queryset, cc_user_restore_state)
-        )
-        self.assertFalse(
-            should_sync_locations(SimplifiedSyncLog(date=after_save), locations_queryset, web_user_restore_state)
-        )
+        self.assertFalse(self._should_sync_location(after_save, location, cc_user_restore_state))
+        self.assertFalse(self._should_sync_location(after_save, location, web_user_restore_state))
 
         self.user.set_location(location)
         self.web_user.set_location(self.domain, location)
 
-        self.assertTrue(
-            should_sync_locations(SimplifiedSyncLog(date=after_save), locations_queryset, cc_user_restore_state)
-        )
-        self.assertTrue(
-            should_sync_locations(SimplifiedSyncLog(date=after_save), locations_queryset, web_user_restore_state)
-        )
+        self.assertTrue(self._should_sync_location(after_save, location, cc_user_restore_state))
+        self.assertTrue(self._should_sync_location(after_save, location, web_user_restore_state))
 
 
 MockApp = namedtuple("MockApp", ["location_fixture_restore", "get_id"])
