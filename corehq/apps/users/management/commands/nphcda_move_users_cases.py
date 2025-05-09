@@ -192,88 +192,55 @@ def iter_case_blocks(
     """
     for case in cases:
         new_location_id = user_changes['location_map'][case.owner_id]
-        if case.type in ('household', 'household_member'):
-            yield get_household_case_block_text(
-                domain,
-                case,
-                new_location_id,
-            )
-        else:
-            yield get_vaccine_doses_case_block_text(
-                domain,
-                case,
-                new_location_id,
-            )
+        yield get_case_block_text(
+            domain,
+            case,
+            new_location_id,
+        )
 
 
-def get_household_case_block_text(
+def get_case_block_text(
     domain: str,
     case: CommCareCase,
     settlement_id: str,
 ) -> str:
     """
-    Returns case block text for household and household_member cases.
+    Returns case block text based on case.type.
     """
     settlement = get_location(domain, settlement_id)
     ward = get_location(domain, settlement.parent_location_id)
     lga = get_location(domain, ward.parent_location_id)
     state = get_location(domain, lga.parent_location_id)
     country = get_location(domain, state.parent_location_id)
-    return CaseBlock(
-        create=False,
-        case_id=case.case_id,
-        owner_id=settlement_id,
-        update={
-            'country_id': country.location_id,
+    update = {
+        'country_id': country.location_id,
+        'state_id': state.location_id,
+        'lga_id': lga.location_id,
+        'ward_id': ward.location_id,
+        'settlement_id': settlement_id,
+    }
+    if case.type in ('household', 'household_member'):
+        update.update({
             'country_name': country.name,
             'country_code': country.site_code,
-
-            'state_id': state.location_id,
             'state_name': state.name,
             'state_code': state.site_code,
-
-            'lga_id': lga.location_id,
             'lga_name': lga.name,
             'lga_code': lga.site_code,
-
-            'ward_id': ward.location_id,
             'ward_name': ward.name,
             'ward_code': ward.site_code,
-
-            'settlement_id': settlement_id,
             'settlement_name': settlement.name,
             'settlement_code': settlement.site_code,
-
-            'location_id': settlement_id,
-        },
-    ).as_text()
-
-
-def get_vaccine_doses_case_block_text(
-    domain: str,
-    case: CommCareCase,
-    settlement_id: str,
-) -> str:
-    """
-    Returns case block text for pregnancy, service and vaccine_doses cases.
-    """
-
-    settlement = get_location(domain, settlement_id)
-    ward = get_location(domain, settlement.parent_location_id)
-    lga = get_location(domain, ward.parent_location_id)
-    state = get_location(domain, lga.parent_location_id)
-    country = get_location(domain, state.parent_location_id)
+        })
+    if case.type == 'household':
+        update.update({
+            'choose_settlement': settlement_id,
+        })
     return CaseBlock(
         create=False,
         case_id=case.case_id,
         owner_id=settlement_id,
-        update={
-            'country_id': country.location_id,
-            'state_id': state.location_id,
-            'lga_id': lga.location_id,
-            'ward_id': ward.location_id,
-            'settlement_id': settlement_id,
-        },
+        update=update,
     ).as_text()
 
 
