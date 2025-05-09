@@ -1,9 +1,9 @@
 from collections import defaultdict
 from itertools import groupby
-from xml.etree.cElementTree import Element, SubElement
+from xml.etree.cElementTree import Element
 
 from django.contrib.postgres.fields.array import ArrayField
-from django.db.models import IntegerField, Q
+from django.db.models import IntegerField
 from django.utils.functional import cached_property
 
 from django_cte import With
@@ -295,7 +295,8 @@ def _append_children(node, location_db, locations, data_fields):
 
 
 def _group_by_type(locations):
-    key = lambda loc: (loc.location_type.code, loc.location_type)
+    def key(loc):
+        return (loc.location_type.code, loc.location_type)
     for (code, type), locs in groupby(sorted(locations, key=key), key=key):
         yield type, list(locs)
 
