@@ -295,18 +295,14 @@ class LookupTableRowOwner(models.Model):
         ]
 
 
-class UserLookupTableType:
-    LOCATION = 1
-    CHOICES = (
-        (LOCATION, "Location"),
-    )
-
-
 class UserLookupTableStatus(models.Model):
     """Keeps track of when a user needs to re-sync a fixture"""
+    class Fixture(models.IntegerChoices):
+        LOCATION = (1, "Location")
+
     id = models.AutoField(primary_key=True, verbose_name="ID", auto_created=True)
     user_id = models.CharField(max_length=100, db_index=True)
-    fixture_type = models.PositiveSmallIntegerField(choices=UserLookupTableType.CHOICES)
+    fixture_type = models.PositiveSmallIntegerField(choices=Fixture.choices)
     last_modified = models.DateTimeField()
 
     DEFAULT_LAST_MODIFIED = datetime.min
@@ -315,3 +311,7 @@ class UserLookupTableStatus(models.Model):
         app_label = 'fixtures'
         db_table = 'fixtures_userfixturestatus'
         unique_together = ("user_id", "fixture_type")
+
+
+# TODO update these references
+UserLookupTableType = UserLookupTableStatus.Fixture

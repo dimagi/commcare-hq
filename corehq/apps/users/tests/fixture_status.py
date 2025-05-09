@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import clear_domain_names
-from corehq.apps.fixtures.models import UserLookupTableStatus, UserLookupTableType
+from corehq.apps.fixtures.models import UserLookupTableStatus
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser, get_fixture_statuses
 
@@ -33,16 +33,16 @@ class TestFixtureStatus(TestCase):
         clear_domain_names('my-domain')
 
     def test_get_statuses(self):
-        no_status = {UserLookupTableType.CHOICES[0][0]: UserLookupTableStatus.DEFAULT_LAST_MODIFIED}
+        no_status = {UserLookupTableStatus.Fixture.choices[0][0]: UserLookupTableStatus.DEFAULT_LAST_MODIFIED}
         self.assertEqual(get_fixture_statuses(self.couch_user._id), no_status)
 
         now = datetime.utcnow()
         UserLookupTableStatus(
             user_id=self.couch_user._id,
-            fixture_type=UserLookupTableType.CHOICES[0][0],
+            fixture_type=UserLookupTableStatus.Fixture.choices[0][0],
             last_modified=now,
         ).save()
-        expected_status = {UserLookupTableType.CHOICES[0][0]: now}
+        expected_status = {UserLookupTableStatus.Fixture.choices[0][0]: now}
         self.assertEqual(get_fixture_statuses(self.couch_user._id), expected_status)
 
     def test_get_status(self):
@@ -50,7 +50,7 @@ class TestFixtureStatus(TestCase):
         couch_user = CommCareUser.get_by_username(self.username)
         UserLookupTableStatus(
             user_id=self.couch_user._id,
-            fixture_type=UserLookupTableType.CHOICES[0][0],
+            fixture_type=UserLookupTableStatus.Fixture.choices[0][0],
             last_modified=now,
         ).save()
 
@@ -58,14 +58,14 @@ class TestFixtureStatus(TestCase):
             self.couch_user.fixture_status("fake_status"),
             UserLookupTableStatus.DEFAULT_LAST_MODIFIED,
         )
-        self.assertEqual(couch_user.fixture_status(UserLookupTableType.CHOICES[0][0]), now)
+        self.assertEqual(couch_user.fixture_status(UserLookupTableStatus.Fixture.choices[0][0]), now)
 
         UserLookupTableStatus(
             user_id=self.web_user._id,
-            fixture_type=UserLookupTableType.CHOICES[0][0],
+            fixture_type=UserLookupTableStatus.Fixture.choices[0][0],
             last_modified=now,
         ).save()
-        self.assertEqual(self.web_user.fixture_status(UserLookupTableType.CHOICES[0][0]), now)
+        self.assertEqual(self.web_user.fixture_status(UserLookupTableStatus.Fixture.choices[0][0]), now)
 
     def test_update_status_set_location(self):
         fake_location = MagicMock()
@@ -79,11 +79,11 @@ class TestFixtureStatus(TestCase):
 
         user_fixture_status = UserLookupTableStatus.objects.get(user_id=self.couch_user._id)
         self.assertEqual(user_fixture_status.user_id, self.couch_user._id)
-        self.assertEqual(user_fixture_status.fixture_type, UserLookupTableType.LOCATION)
+        self.assertEqual(user_fixture_status.fixture_type, UserLookupTableStatus.Fixture.LOCATION)
 
         user_fixture_status = UserLookupTableStatus.objects.get(user_id=self.web_user._id)
         self.assertEqual(user_fixture_status.user_id, self.web_user._id)
-        self.assertEqual(user_fixture_status.fixture_type, UserLookupTableType.LOCATION)
+        self.assertEqual(user_fixture_status.fixture_type, UserLookupTableStatus.Fixture.LOCATION)
 
     def test_update_status_unset_location(self):
         fake_location = MagicMock()

@@ -1767,7 +1767,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 def get_fixture_statuses(user_id):
     from corehq.apps.fixtures.models import UserLookupTableType, UserLookupTableStatus
     last_modifieds = {choice[0]: UserLookupTableStatus.DEFAULT_LAST_MODIFIED
-                    for choice in UserLookupTableType.CHOICES}
+                      for choice in UserLookupTableType.choices}
     for fixture_status in UserLookupTableStatus.objects.filter(user_id=user_id):
         last_modifieds[fixture_status.fixture_type] = fixture_status.last_modified
     return last_modifieds
