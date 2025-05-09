@@ -1,11 +1,14 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from unittest.mock import Mock, patch
 
 from django.test import SimpleTestCase, TestCase
 
+from dateutil.relativedelta import relativedelta
+
 from corehq.apps.accounting.models import (
     DefaultProductPlan,
     SoftwarePlanEdition,
+    Subscription,
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.utils import clear_plan_version_cache
@@ -271,6 +274,57 @@ class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
     def create_form(self, new_plan_version, **kwargs):
         args = (self.account, self.domain.name, self.user, new_plan_version, self.subscription)
         return ConfirmNewSubscriptionForm(*args, **kwargs)
+
+    def test_form_initial_values(self):
+        plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.STANDARD)
+        form = self.create_form(plan_version)
+        self.assertEqual(form['plan_edition'].value(), plan_version.plan.edition)
+
+    def test_pay_monthly_subscription(self):
+        new_plan_version = DefaultProductPlan.get_default_plan_version(
+            SoftwarePlanEdition.STANDARD, is_annual_plan=False
+        )
+        form = self.create_form_for_submission(new_plan_version)
+        form.save()
+        self.assertTrue(form.is_valid())
+        self.assertEqual(self.subscription.date_end, date.today())
+
+        new_subscription = Subscription.get_active_subscription_by_domain(self.domain)
+        self.assertEqual(new_subscription.plan_version, new_plan_version)
+        self.assertEqual(new_subscription.date_start, date.today())
+        self.assertIsNone(new_subscription.date_end)
+
+    def test_pay_annually_subscription(self):
+        new_plan_version = DefaultProductPlan.get_default_plan_version(
+            SoftwarePlanEdition.STANDARD, is_annual_plan=True
+        )
+        form = self.create_form_for_submission(new_plan_version)
+        form.save()
+        self.assertTrue(form.is_valid())
+        self.assertEqual(self.subscription.date_end, date.today())
+
+        new_subscription = Subscription.get_active_subscription_by_domain(self.domain)
+        self.assertEqual(new_subscription.plan_version, new_plan_version)
+        self.assertEqual(new_subscription.date_start, date.today())
+        self.assertEqual(new_subscription.date_end, new_subscription.date_start + relativedelta(years=1))
+
+    def test_downgrade_minimum_subscription_length(self):
+        self.subscription.delete()
+        old_plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.PRO)
+        old_date_start = date.today()
+        self.subscription = generator.generate_domain_subscription(
+            self.account, self.domain, old_date_start, None, plan_version=old_plan_version, is_active=True,
+        )
+
+        new_plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.STANDARD)
+        form = self.create_form_for_submission(new_plan_version)
+        form.save()
+        self.assertTrue(form.is_valid())
+        self.assertEqual(self.subscription.date_end, old_date_start + timedelta(days=30))
+
+        next_subscription = self.subscription.next_subscription
+        self.assertEqual(next_subscription.plan_version, new_plan_version)
+        self.assertEqual(next_subscription.date_start, old_date_start + timedelta(days=30))
 
 
 class TestConfirmSubscriptionRenewalForm(BaseTestSubscriptionForm):
