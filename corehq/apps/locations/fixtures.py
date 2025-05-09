@@ -4,6 +4,7 @@ from xml.etree.cElementTree import Element, SubElement
 
 from django.contrib.postgres.fields.array import ArrayField
 from django.db.models import IntegerField, Q
+from django.utils.functional import cached_property
 
 from django_cte import With
 from django_cte.raw import raw_cte_sql
@@ -54,7 +55,7 @@ class LocationSet(object):
         return item in self.by_id
 
 
-def should_sync_locations(last_sync, locations_queryset, restore_state):
+def should_sync_locations(last_sync, accessor, restore_state):
     """
     Determine if any locations (already filtered to be relevant
     to this user) require syncing.
@@ -63,17 +64,19 @@ def should_sync_locations(last_sync, locations_queryset, restore_state):
     return (
         _app_has_changed(last_sync, restore_state.params.app_id)
         or _fixture_has_changed(last_sync, restore_user)
-        or _locations_have_changed(last_sync, locations_queryset, restore_user)
+        or _locations_have_changed(last_sync, accessor, restore_user)
     )
 
 
 def _app_has_changed(last_sync, app_id):
+    # Needed only to support the app-specific config for hierarchical vs flat fixtures
     return (last_sync and last_sync.build_id is not None
             and app_id is not None
             and app_id != last_sync.build_id)
 
 
 def _fixture_has_changed(last_sync, restore_user):
+    """True if the user's location assignments have been changed or if something has been deleted"""
     if not last_sync or not last_sync.date:
         return True
     last_modified = UserLookupTableStatus.get_last_modified(
@@ -81,8 +84,11 @@ def _fixture_has_changed(last_sync, restore_user):
     return last_modified >= last_sync.date
 
 
-def _locations_have_changed(last_sync, locations_queryset, restore_user):
-    return locations_queryset.filter(last_modified__gte=last_sync.date).values('last_modified').union(
+def _locations_have_changed(last_sync, accessor, restore_user):
+    # this first check is much faster - short circuit out if nothing at all changed
+    if not SQLLocation.objects.filter(domain=restore_user.domain, last_modified__gte=last_sync.date).exists():
+        return False
+    return accessor.queryset.filter(last_modified__gte=last_sync.date).values('last_modified').union(
         LocationType.objects.filter(domain=restore_user.domain,
                                     last_modified__gte=last_sync.date).values('last_modified'),
     ).exists()
@@ -112,12 +118,12 @@ class LocationFixtureProvider(FixtureProvider):
         if not self.serializer.should_sync(restore_user, restore_state.params.app):
             return []
 
-        locations_queryset = get_location_fixture_queryset(restore_user)
-        if not should_sync_locations(restore_state.last_sync_log, locations_queryset, restore_state):
+        accessor = LocationsAccessor(restore_user)
+        if not should_sync_locations(restore_state.last_sync_log, accessor, restore_state):
             return []
 
         return self.serializer.get_xml_nodes(restore_user.domain, self.id, restore_user.user_id,
-                                             locations_queryset)
+                                             accessor.queryset)
 
 
 class HierarchicalLocationSerializer(object):
@@ -247,13 +253,20 @@ int_field = IntegerField()
 int_array = ArrayField(int_field)
 
 
-def get_location_fixture_queryset(user):
-    user_locations = user.get_sql_locations(user.domain)
-    user_location_pks = list(user_locations.order_by().values_list("pk", flat=True))
+class LocationsAccessor:
+    """Accessor scoped to a single restore call"""
+    def __init__(self, restore_user):
+        self.user = restore_user
 
-    if not user_location_pks:
-        return SQLLocation.objects.none()
-    return _location_queryset_helper(user.domain, user_location_pks)
+    @cached_property
+    def queryset(self):
+        # Doing this lazily lets us defer evaluation unless actually needed
+        user_locations = self.user.get_sql_locations(self.user.domain)
+        user_location_pks = list(user_locations.order_by().values_list("pk", flat=True))
+
+        if not user_location_pks:
+            return SQLLocation.objects.none()
+        return _location_queryset_helper(self.user.domain, user_location_pks)
 
 
 def _location_queryset_helper(domain, location_pks):
