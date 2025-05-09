@@ -1168,16 +1168,6 @@ class PlanViewBase(DomainAccountingSettings):
             current_price = 0
             default_price = 0
         return {
-            'editions': [
-                edition.lower()
-                for edition in [
-                    SoftwarePlanEdition.FREE,
-                    SoftwarePlanEdition.STANDARD,
-                    SoftwarePlanEdition.PRO,
-                    SoftwarePlanEdition.ADVANCED,
-                ]
-            ],
-            'plan_options': [p._asdict() for p in self.plan_options],
             'current_edition': (self.current_subscription.plan_version.plan.edition.lower()
                                 if self.current_subscription is not None
                                 and not self.current_subscription.is_trial
@@ -1188,7 +1178,6 @@ class PlanViewBase(DomainAccountingSettings):
             'subscription_below_minimum': (self.current_subscription.is_below_minimum_subscription
                                            if self.current_subscription is not None else False),
             'next_subscription_edition': self.next_subscription_edition,
-            'can_domain_unpause': self.can_domain_unpause,
         }
 
 
@@ -1207,6 +1196,24 @@ class SelectPlanView(PlanViewBase):
         subscription = self.current_subscription
         is_annual_plan = subscription.plan_version.plan.is_annual_plan
         return not is_annual_plan
+
+    @property
+    def page_context(self):
+        context = super().page_context
+        context.update({
+            'editions': [
+                edition.lower() for edition in [
+                    SoftwarePlanEdition.FREE,
+                    SoftwarePlanEdition.STANDARD,
+                    SoftwarePlanEdition.PRO,
+                    SoftwarePlanEdition.ADVANCED,
+                    SoftwarePlanEdition.ENTERPRISE,
+                ]
+            ],
+            'plan_options': [p._asdict() for p in self.plan_options],
+            'can_domain_unpause': self.can_domain_unpause,
+        })
+        return context
 
 
 class ContactFormViewBase(PlanViewBase):
