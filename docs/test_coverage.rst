@@ -12,7 +12,7 @@ Using coverage.py
 First thing is to install the coverage.py library::
 
 
-        $ pip install coverage
+        $ uv pip install coverage
 
 
 Now you can run your tests through the coverage.py program::

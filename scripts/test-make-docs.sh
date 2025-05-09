@@ -11,8 +11,7 @@
 # Build docs locally on your branch to see what warnings/errors
 # you have introduced. To do so, follow these instructions:
 #
-# 1) Install requirements/docs-requirements.txt ideally using pip-sync:
-#   `pip-sync requirements/docs-requirements.txt`
+# 1) Install requirements: `uv sync --group=docs`
 # 2) Ensure a fresh docs build by deleting any previously generated build
 #    `rm -rf docs/_build`
 # 3) Run this script:
