@@ -64,7 +64,7 @@ class OpenRosaResponse(object):
 
 def get_openarosa_success_response(message=None):
     if not message:
-        message = _('   √   ')
+        message = '   √   '
     return get_openrosa_reponse(message, ResponseNature.SUBMIT_SUCCESS, 201)
 
 SUBMISSION_IGNORED_RESPONSE = get_openrosa_reponse(
