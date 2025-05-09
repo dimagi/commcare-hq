@@ -185,6 +185,9 @@ USER_MAPPING = {
                 },
                 "timezone": {
                     "type": "text"
+                },
+                "is_active": {
+                    "type": "boolean"
                 }
             }
         },
@@ -220,6 +223,9 @@ USER_MAPPING = {
             "type": "text"
         },
         "is_active": {
+            "type": "boolean"
+        },
+        "is_active_in_domain": {
             "type": "boolean"
         },
         "is_demo_user": {

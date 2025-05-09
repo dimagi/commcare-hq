@@ -58,6 +58,7 @@ class UserES(HQESQuery):
             is_practice_user,
             role_id,
             is_active,
+            is_active_in_domain,
             username,
             missing_or_empty_user_data_property,
         ] + super(UserES, self).builtin_filters
@@ -225,6 +226,15 @@ def role_id(role_id):
 
 def is_active(active=True):
     return filters.term("is_active", active)
+
+
+def is_active_in_domain(active=True):
+    if active:
+        return filters.OR(
+            filters.term("domain_memberships.is_active", active),
+            filters.missing("domain_memberships.is_active")
+        )
+    return filters.term("domain_memberships.is_active", active)
 
 
 def _user_data(key, filter_):
