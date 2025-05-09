@@ -11,7 +11,7 @@
  
  {% block form_content %}
    {% initial_page_data 'is_upgrade' is_upgrade %}
-@@ -43,7 +43,7 @@
+@@ -42,7 +42,7 @@
          </p>
        {% endif %}
        <div class="text-center plan-next">
@@ -20,7 +20,7 @@
            {% if is_paused %}
              {% trans 'Select different option' %}
            {% else %}
-@@ -69,7 +69,7 @@
+@@ -68,7 +68,7 @@
      <div class="modal-dialog">
        <div class="modal-content">
          <div class="modal-header">
@@ -29,7 +29,7 @@
              <span aria-hidden="true">&times;</span>
              <span class="sr-only">{% trans "Close" %}</span>
            </button>
-@@ -99,7 +99,7 @@
+@@ -98,7 +98,7 @@
                  Why are you downgrading your subscription today?
                {% endblocktrans %}
              {% endif %}
@@ -38,7 +38,7 @@
                      class="form-control"
                      data-bind="selectedOptions: oDowngradeReason,
                                 options: downgradeReasonList"></select>
-@@ -110,7 +110,7 @@
+@@ -109,7 +109,7 @@
                {% blocktrans %}
                  Do you think your project may start again?
                {% endblocktrans %}
@@ -47,7 +47,7 @@
                        data-bind="value: oWillProjectRestart">
                  <option value="yes">
                    {% trans "Yes" %}
-@@ -135,7 +135,7 @@
+@@ -134,7 +134,7 @@
                {% blocktrans %}
                  Why are you switching to a new tool?
                {% endblocktrans %}
@@ -56,7 +56,7 @@
                        class="form-control"
                        data-bind="selectedOptions: oNewToolReason,
                                   options: newToolReasonList"></select>
-@@ -172,7 +172,7 @@
+@@ -171,7 +171,7 @@
            <!-- ko ifnot: oRequiredQuestionsAnswered -->
              <button type="button"
                      disabled="disabled"
