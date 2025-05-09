@@ -1,7 +1,8 @@
-from lxml import etree as ElementTree, etree
 from django.http import HttpResponse
-from django.utils.translation import gettext_lazy as _
+
 import six
+from lxml import etree
+from lxml import etree as ElementTree
 
 RESPONSE_XMLNS = 'http://openrosa.org/http/response'
 
@@ -67,9 +68,11 @@ def get_openarosa_success_response(message=None):
         message = '   √   '
     return get_openrosa_reponse(message, ResponseNature.SUBMIT_SUCCESS, 201)
 
+
 SUBMISSION_IGNORED_RESPONSE = get_openrosa_reponse(
     '√ (this submission was ignored)', ResponseNature.SUBMIT_SUCCESS, 201
 )
+
 BLACKLISTED_RESPONSE = get_openrosa_reponse(
     message=(
         "This submission was blocked because of an unusual volume "
