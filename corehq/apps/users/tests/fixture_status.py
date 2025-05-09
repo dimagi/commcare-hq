@@ -8,7 +8,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import clear_domain_names
 from corehq.apps.fixtures.models import UserLookupTableStatus
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CommCareUser, WebUser, get_fixture_statuses
+from corehq.apps.users.models import CommCareUser, WebUser
 
 
 class TestFixtureStatus(TestCase):
@@ -34,7 +34,7 @@ class TestFixtureStatus(TestCase):
 
     def test_get_statuses(self):
         no_status = {UserLookupTableStatus.Fixture.choices[0][0]: UserLookupTableStatus.DEFAULT_LAST_MODIFIED}
-        self.assertEqual(get_fixture_statuses(self.couch_user._id), no_status)
+        self.assertEqual(UserLookupTableStatus.get_all(self.couch_user._id), no_status)
 
         now = datetime.utcnow()
         UserLookupTableStatus(
@@ -43,7 +43,7 @@ class TestFixtureStatus(TestCase):
             last_modified=now,
         ).save()
         expected_status = {UserLookupTableStatus.Fixture.choices[0][0]: now}
-        self.assertEqual(get_fixture_statuses(self.couch_user._id), expected_status)
+        self.assertEqual(UserLookupTableStatus.get_all(self.couch_user._id), expected_status)
 
     def test_get_status(self):
         now = datetime.utcnow()

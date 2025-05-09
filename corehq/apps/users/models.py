@@ -1740,7 +1740,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     @property
     def fixture_statuses(self):
         """Returns all of the last modified times for each fixture type"""
-        return get_fixture_statuses(self._id)
+        from corehq.apps.fixtures.models import UserLookupTableStatus
+        return UserLookupTableStatus.get_all(self._id)
 
     def fixture_status(self, fixture_type):
         try:
@@ -1760,17 +1761,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         if not new:
             user_fixture_sync.last_modified = now
             user_fixture_sync.save()
-        get_fixture_statuses.clear(self._id)
-
-
-@quickcache(['user_id'], skip_arg=lambda user_id: settings.UNIT_TESTING)
-def get_fixture_statuses(user_id):
-    from corehq.apps.fixtures.models import UserLookupTableType, UserLookupTableStatus
-    last_modifieds = {choice[0]: UserLookupTableStatus.DEFAULT_LAST_MODIFIED
-                      for choice in UserLookupTableType.choices}
-    for fixture_status in UserLookupTableStatus.objects.filter(user_id=user_id):
-        last_modifieds[fixture_status.fixture_type] = fixture_status.last_modified
-    return last_modifieds
+        UserLookupTableStatus.get_all.clear(UserLookupTableStatus, self._id)
 
 
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):

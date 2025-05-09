@@ -3,6 +3,7 @@ from functools import reduce
 from itertools import chain
 from uuid import uuid4
 
+from django.conf import settings
 from django.db import models
 from django.db.models.expressions import RawSQL
 
@@ -13,6 +14,7 @@ from dimagi.utils.chunked import chunked
 from corehq.apps.groups.models import Group
 from corehq.sql_db.fields import CharIdField
 from corehq.util.jsonattrs import AttrsDict, AttrsList, list_of
+from corehq.util.quickcache import quickcache
 
 from .exceptions import FixtureVersionError
 
@@ -318,7 +320,6 @@ class UserLookupTableStatus(models.Model):
 
     @classmethod
     def bulk_update(cls, user_ids, fixture_type):
-        from corehq.apps.users.models import get_fixture_statuses
         now = datetime.utcnow()
         for ids in chunked(user_ids, 50):
             (cls.objects
@@ -326,7 +327,16 @@ class UserLookupTableStatus(models.Model):
                      fixture_type=fixture_type)
              .update(last_modified=now))
         for user_id in user_ids:
-            get_fixture_statuses.clear(user_id)
+            cls.get_all.clear(cls, user_id)
+
+    @classmethod
+    @quickcache(['user_id'], skip_arg=lambda cls, user_id: settings.UNIT_TESTING)
+    def get_all(cls, user_id):
+        last_modifieds = {choice[0]: cls.DEFAULT_LAST_MODIFIED
+                        for choice in cls.Fixture.choices}
+        for fixture_status in cls.objects.filter(user_id=user_id):
+            last_modifieds[fixture_status.fixture_type] = fixture_status.last_modified
+        return last_modifieds
 
 
 # TODO update these references
