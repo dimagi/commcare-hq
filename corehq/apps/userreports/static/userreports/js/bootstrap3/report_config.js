@@ -13,7 +13,7 @@ import "hqwebapp/js/select2_knockout_bindings.ko";
 
 export default {
     reportBuilder: function () {
-        var self = this;
+        var self = {};
 
         var propertyList = builderViewModels.propertyList;
         var propertyListItem = builderViewModels.propertyListItem;
