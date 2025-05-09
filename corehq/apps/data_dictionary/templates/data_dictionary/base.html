@@ -127,6 +127,7 @@
 {% block page_content %}
   {% registerurl 'data_dictionary_json_case_types' domain %}
   {% registerurl 'update_case_property' domain %}
+  {% registerurl 'count_cases_for_case_type' domain '---' %}
   {% registerurl 'deprecate_or_restore_case_type' domain '---' %}
   {% registerurl 'delete_case_type' domain '---' %}
   {% registerurl 'data_dictionary' domain %}
@@ -189,7 +190,7 @@
           <i class="fa fa-undo"></i>
           {% trans "Restore Case Type" %}
         </button>
-        <a class="btn btn-danger" href="#" data-bind="openModal: 'delete-case-type-modal', visible: $root.canDeleteActiveCaseType()">
+        <a class="btn btn-danger" href="#" data-bind="click: confirmDeleteType, visible: $root.canDeleteActiveCaseType()">
           <i class="fa fa-trash"></i>
           {% trans "Delete Case Type" %}
         </a>

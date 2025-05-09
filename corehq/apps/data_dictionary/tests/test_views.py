@@ -368,7 +368,6 @@ class TestDeprecateOrRestoreCaseTypeView(DataDictionaryViewTestBase):
 
 
 @patch('corehq.apps.data_dictionary.views.get_case_type_app_module_count', return_value={})
-@patch('corehq.apps.data_dictionary.views.get_used_props_by_case_type', return_value={})
 @flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
 @privilege_enabled(privileges.DATA_DICTIONARY)
 class DataDictionaryJsonTest(DataDictionaryViewTestBase):
@@ -446,7 +445,6 @@ class DataDictionaryJsonTest(DataDictionaryViewTestBase):
                 {
                     "name": cls.case_type_obj.name,
                     "fhir_resource_type": cls.fhir_resource_name if fhir_enabled else None,
-                    "is_safe_to_delete": True,
                     "is_deprecated": False,
                     "module_count": 0,
                     "properties_count": cls.case_type_obj.properties.count(),
@@ -459,7 +457,6 @@ class DataDictionaryJsonTest(DataDictionaryViewTestBase):
                 {
                     "name": cls.deprecated_case_type_obj.name,
                     "fhir_resource_type": None,
-                    "is_safe_to_delete": True,
                     "is_deprecated": True,
                     "module_count": 0,
                     "properties_count": cls.deprecated_case_type_obj.properties.count(),

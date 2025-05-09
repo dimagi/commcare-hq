@@ -6,6 +6,7 @@ from corehq.apps.data_dictionary.views import (
     ExportDataDictionaryView,
     UploadDataDictionaryView,
     create_case_type,
+    count_cases_for_case_type,
     data_dictionary_json_case_properties,
     data_dictionary_json_case_types,
     delete_case_type,
@@ -16,6 +17,7 @@ from corehq.apps.data_dictionary.views import (
 from corehq.apps.hqwebapp.decorators import waf_allow
 
 urlpatterns = [
+    path("case_count/<slug:case_type_name>", count_cases_for_case_type, name='count_cases_for_case_type'),
     path("json/", data_dictionary_json_case_types, name='data_dictionary_json_case_types'),
     path("json/<slug:case_type_name>/", data_dictionary_json_case_properties,
          name='data_dictionary_json_case_properties'),

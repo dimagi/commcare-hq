@@ -33,12 +33,13 @@ from corehq.apps.data_dictionary.models import (
 from corehq.apps.data_dictionary.util import (
     delete_case_property,
     get_data_dict_props_by_case_type,
-    get_used_props_by_case_type,
     save_case_property,
     save_case_property_group,
     update_url_query_params,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.es import CaseSearchES
+from corehq.apps.es.case_search import case_property_missing
 from corehq.apps.geospatial.utils import get_geo_case_property
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.settings.views import BaseProjectDataView
@@ -61,6 +62,18 @@ from .bulk import (
 
 @login_and_domain_required
 @requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
+def count_cases_for_case_type(request, domain, case_type_name):
+    case_property = request.GET.get('case_property', '')
+    if case_property:
+        query = CaseSearchES().domain(domain).case_type(case_type_name)
+        case_count = query.NOT(case_property_missing(case_property)).count()
+    else:
+        case_count = CaseSearchES().domain(domain).case_type(case_type_name).count()
+    return JsonResponse({"count": case_count})
+
+
+@login_and_domain_required
+@requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
 def data_dictionary_json_case_types(request, domain):
     fhir_resource_type_name_by_case_type = {}
     if toggles.FHIR_INTEGRATION.enabled(domain):
@@ -71,19 +84,16 @@ def data_dictionary_json_case_types(request, domain):
         queryset = queryset.filter(is_deprecated=False)
 
     case_type_app_module_count = get_case_type_app_module_count(domain)
-    used_props_by_case_type = get_used_props_by_case_type(domain)
     geo_case_prop = get_geo_case_property(domain)
     case_types_data = []
     for case_type in queryset:
         module_count = case_type_app_module_count.get(case_type.name, 0)
-        used_props = used_props_by_case_type.get(case_type.name, [])
         case_types_data.append({
             "name": case_type.name,
             "fhir_resource_type": fhir_resource_type_name_by_case_type.get(case_type),
             "is_deprecated": case_type.is_deprecated,
             "module_count": module_count,
             "properties_count": case_type.properties_count,
-            "is_safe_to_delete": len(used_props) == 0,
         })
     return JsonResponse({
         'case_types': case_types_data,
@@ -132,10 +142,7 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
     )
 
     data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
-    used_props_by_case_type = get_used_props_by_case_type(domain, case_type_name)
     geo_case_prop = get_geo_case_property(domain)
-
-    used_props = used_props_by_case_type.get(case_type.name, [])
 
     for group_id, props in itertools.groupby(properties_queryset, key=attrgetter("group_id")):
         props = list(props)
@@ -148,7 +155,7 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
                 'fhir_resource_prop_path': fhir_resource_prop_by_case_prop.get(prop),
                 'name': prop.name,
                 'deprecated': prop.deprecated,
-                'is_safe_to_delete': prop.name not in used_props and prop.name != geo_case_prop,
+                'is_safe_to_delete': prop.name != geo_case_prop,
                 'index': prop.index,
             }
             if data_validation_enabled:
