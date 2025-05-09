@@ -240,9 +240,6 @@ class BaseTestSubscriptionForm(TestCase):
         self.domain = generator.arbitrary_domain()
         self.user = generator.arbitrary_user(self.domain.name, is_webuser=True, is_admin=True)
         self.account = generator.billing_account(self.user, self.user.name)
-        self.subscription = generator.generate_domain_subscription(
-            self.account, self.domain, datetime.today(), datetime.today() + timedelta(days=7), is_active=True
-        )
 
     def tearDown(self):
         self.user.delete(self.domain.name, deleted_by=None)
@@ -264,12 +261,25 @@ class BaseTestSubscriptionForm(TestCase):
 
 
 class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
+    def setUp(self):
+        super().setUp()
+        self.subscription = generator.generate_domain_subscription(
+            self.account, self.domain, date.today(), None,
+            plan_version=DefaultProductPlan.get_default_plan_version(), is_active=True,
+        )
+
     def create_form(self, new_plan_version, **kwargs):
         args = (self.account, self.domain.name, self.user, new_plan_version, self.subscription)
         return ConfirmNewSubscriptionForm(*args, **kwargs)
 
 
 class TestConfirmSubscriptionRenewalForm(BaseTestSubscriptionForm):
+    def setUp(self):
+        super().setUp()
+        self.subscription = generator.generate_domain_subscription(
+            self.account, self.domain, datetime.today(), datetime.today() + timedelta(days=7), is_active=True
+        )
+
     def create_form(self, new_plan_version, **kwargs):
         args = (self.account, self.domain, self.user, self.subscription, new_plan_version)
         return ConfirmSubscriptionRenewalForm(*args, **kwargs)
