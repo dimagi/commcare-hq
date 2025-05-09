@@ -1773,20 +1773,6 @@ def get_fixture_statuses(user_id):
     return last_modifieds
 
 
-def update_fixture_status_for_users(user_ids, fixture_type):
-    from corehq.apps.fixtures.models import UserLookupTableStatus
-    from dimagi.utils.chunked import chunked
-
-    now = datetime.utcnow()
-    for ids in chunked(user_ids, 50):
-        (UserLookupTableStatus.objects
-        .filter(user_id__in=ids,
-                fixture_type=fixture_type)
-        .update(last_modified=now))
-    for user_id in user_ids:
-        get_fixture_statuses.clear(user_id)
-
-
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):
     domain = StringProperty()
     registering_device_id = StringProperty()

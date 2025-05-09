@@ -3,13 +3,17 @@ from functools import reduce
 from itertools import chain
 from uuid import uuid4
 
-from attrs import define, field
 from django.db import models
 from django.db.models.expressions import RawSQL
+
+from attrs import define, field
+
+from dimagi.utils.chunked import chunked
 
 from corehq.apps.groups.models import Group
 from corehq.sql_db.fields import CharIdField
 from corehq.util.jsonattrs import AttrsDict, AttrsList, list_of
+
 from .exceptions import FixtureVersionError
 
 FIXTURE_BUCKET_PREFIX = 'domain-fixtures'
@@ -311,6 +315,18 @@ class UserLookupTableStatus(models.Model):
         app_label = 'fixtures'
         db_table = 'fixtures_userfixturestatus'
         unique_together = ("user_id", "fixture_type")
+
+    @classmethod
+    def bulk_update(cls, user_ids, fixture_type):
+        from corehq.apps.users.models import get_fixture_statuses
+        now = datetime.utcnow()
+        for ids in chunked(user_ids, 50):
+            (cls.objects
+             .filter(user_id__in=ids,
+                     fixture_type=fixture_type)
+             .update(last_modified=now))
+        for user_id in user_ids:
+            get_fixture_statuses.clear(user_id)
 
 
 # TODO update these references
