@@ -1,9 +1,6 @@
 git
-python-pip
-python-dev
 libevent-1.4-2
 libevent-dev
-python-setuptools
 postgresql
 gdebi-core
 apache2

@@ -1,5 +1,5 @@
 function delete-pyc() {
-    find . -name '*.pyc' -delete
+    find . -name '*.pyc' -not -path './.venv/*' -delete
 }
 function pull-latest-master() {
     git checkout master &&

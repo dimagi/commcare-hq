@@ -4,28 +4,38 @@ We separate our dependencies based on environment, which ensures that
 dependencies are not installed on an environment where they are not needed.
 
 When adding new dependencies, consider what environment(s) require these
-dependencies and make edits to the `.in` file(s) of the appropriate
-environment(s).
+dependencies and add them to the appropriate dependencies group in
+pyproject.toml.
 
-After making these edits, you need to run
-```.env
-make requirements
+To add a new dependency run
+```sh
+uv add [--dev|--group=GROUP] PACKAGE_NAME
 ```
 
-`base-requirements` — Every environment, including tests and documentation,
+Alternately, manually add it to pyproject.toml. After a manual edit, run
+```sh
+uv lock
+```
+
+To pin a specific version in the lock file, run
+```sh
+uv lock --upgrade-package='PACKAGE_SPEC'
+```
+
+`dependencies` — Every environment, including tests and documentation,
 requires these dependencies
 
-`sso-requirements` — These requirements are needed for SSO and
-are required by all environments that run CommCare HQ. This excludes one
-environment, documentation, which cannot install these requirements.
+`sso` — These requirements are needed for SSO and are required by all
+environments that run CommCare HQ. This excludes one environment,
+documentation, which cannot install these requirements.
 
-`docs-requirements` — Requirements needed to run our Read The Docs build.
+`docs` — Requirements needed to run our Read The Docs build.
 
-`test-requirements` — Requirements needed to run tests.
+`test` — Requirements needed to run tests.
 
-`dev-requirements` — Requirements only needed for local development.
+`dev` — Requirements only needed for local development.
 
-`prod-requirements` — Requirements needed by all production &amp; staging environments.
+`prod` — Requirements needed by all production &amp; staging environments.
 
 ## Pinning Dependencies
 
