@@ -109,8 +109,8 @@ class CleanCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
         }
 
 
-@login_and_domain_required
 @require_bulk_data_cleaning_cases
+@login_and_domain_required
 def clear_session_caches(request, domain, session_id):
     session = BulkEditSession.objects.get(session_id=session_id)
     clear_caches_case_data_cleaning(session.domain, session.identifier)
@@ -118,9 +118,9 @@ def clear_session_caches(request, domain, session_id):
     return redirect(reverse(CleanCasesMainView.urlname, args=(domain,)))
 
 
-@login_and_domain_required
 @require_GET
 @require_bulk_data_cleaning_cases
+@login_and_domain_required
 def download_form_ids(request, domain, session_id):
     session = BulkEditSession.objects.get(session_id=session_id)
 
