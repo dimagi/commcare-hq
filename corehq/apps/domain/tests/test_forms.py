@@ -19,6 +19,7 @@ from corehq.toggles.shortcuts import set_toggle
 
 from .. import forms
 from ..forms import (
+    ConfirmNewSubscriptionForm,
     ConfirmSubscriptionRenewalForm,
     DomainGlobalSettingsForm,
     PrivacySecurityForm,
@@ -233,7 +234,7 @@ class TestAppReleaseModeSettingForm(TestCase):
         self.assertEqual(True, saved)  # No error during form save
 
 
-class TestConfirmSubscriptionRenewalForm(TestCase):
+class BaseTestSubscriptionForm(TestCase):
     def setUp(self):
         super().setUp()
         self.domain = generator.arbitrary_domain()
@@ -249,15 +250,26 @@ class TestConfirmSubscriptionRenewalForm(TestCase):
         clear_plan_version_cache()
         super().tearDown()
 
-    def create_form_for_submission(self, new_plan_version):
+    def create_form_for_submission(self, *args):
         # initialize form to set initial values
-        form = self.create_form(new_plan_version)
+        form = self.create_form(*args)
         form_data = form.data
 
         # populate fields with initial values
         form_data.update(**{key: form[key].value() for key in form.fields})
-        return self.create_form(new_plan_version, data=form_data)
+        return self.create_form(*args, data=form_data)
 
+    def create_form(self, *args, **kwargs):
+        raise NotImplementedError
+
+
+class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
+    def create_form(self, new_plan_version, **kwargs):
+        args = (self.account, self.domain.name, self.user, new_plan_version, self.subscription)
+        return ConfirmNewSubscriptionForm(*args, **kwargs)
+
+
+class TestConfirmSubscriptionRenewalForm(BaseTestSubscriptionForm):
     def create_form(self, new_plan_version, **kwargs):
         args = (self.account, self.domain, self.user, self.subscription, new_plan_version)
         return ConfirmSubscriptionRenewalForm(*args, **kwargs)
