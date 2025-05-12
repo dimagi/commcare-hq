@@ -15,7 +15,6 @@ from corehq.apps.domain.views.accounting import (
     DomainBillingStatementsView,
     DomainSubscriptionView,
     EditExistingBillingAccountView,
-    EmailOnDowngradeView,
     InternalSubscriptionManagementView,
     InvoiceStripePaymentView,
     SelectedAnnualPlanView,
