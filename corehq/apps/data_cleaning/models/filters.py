@@ -1,9 +1,15 @@
 import uuid
 
+from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
 from django.utils.translation import gettext as _
 
-from corehq.apps.data_cleaning.models.types import DataType, FilterMatchType
+from corehq.apps.data_cleaning.models.types import (
+    BulkEditSessionType,
+    DataType,
+    FilterMatchType,
+    PinnedFilterType,
+)
 from corehq.apps.data_cleaning.exceptions import UnsupportedFilterValueException
 from corehq.apps.data_cleaning.utils.decorators import retry_on_integrity_error
 from corehq.apps.es.case_search import (
@@ -168,3 +174,61 @@ class BulkEditFilter(models.Model):
         if self.match_type in match_expression:
             quoted_value = self.get_quoted_value(self.value)
             return match_expression[self.match_type](quoted_value)
+
+
+class BulkEditPinnedFilterManager(models.Manager):
+    use_for_related_fields = True
+
+    def create_session_defaults(self, session):
+        default_types = {
+            BulkEditSessionType.CASE: PinnedFilterType.DEFAULT_FOR_CASE,
+        }.get(session.session_type)
+
+        if not default_types:
+            raise NotImplementedError(f"{session.session_type} default pinned filters not yet supported")
+
+        for index, filter_type in enumerate(default_types):
+            self.create(
+                session=session,
+                index=index,
+                filter_type=filter_type,
+            )
+
+    def apply_to_query(self, session, query):
+        for pinned_filter in session.pinned_filters.all():
+            query = pinned_filter.filter_query(query)
+        return query
+
+
+class BulkEditPinnedFilter(models.Model):
+    session = models.ForeignKey(
+        "data_cleaning.BulkEditSession", related_name="pinned_filters", on_delete=models.CASCADE
+    )
+    index = models.IntegerField(default=0)
+    filter_type = models.CharField(
+        max_length=11,
+        choices=PinnedFilterType.CHOICES,
+    )
+    value = ArrayField(
+        models.TextField(),
+        null=True,
+        blank=True,
+    )
+
+    objects = BulkEditPinnedFilterManager()
+
+    class Meta:
+        ordering = ["index"]
+
+    def get_report_filter_class(self):
+        from corehq.apps.data_cleaning.filters import (
+            CaseOwnersPinnedFilter,
+            CaseStatusPinnedFilter,
+        )
+        return {
+            PinnedFilterType.CASE_OWNERS: CaseOwnersPinnedFilter,
+            PinnedFilterType.CASE_STATUS: CaseStatusPinnedFilter,
+        }[self.filter_type]
+
+    def filter_query(self, query):
+        return self.get_report_filter_class().filter_query(query, self)
