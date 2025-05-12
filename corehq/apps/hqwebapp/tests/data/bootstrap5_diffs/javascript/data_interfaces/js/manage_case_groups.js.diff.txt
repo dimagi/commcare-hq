@@ -1,13 +1,11 @@
 --- 
 +++ 
-@@ -1,8 +1,8 @@
--hqDefine("data_interfaces/js/bootstrap3/manage_case_groups", [
-+hqDefine("data_interfaces/js/bootstrap5/manage_case_groups", [
-     'jquery',
-     'underscore',
-     'hqwebapp/js/initial_page_data',
--    'hqwebapp/js/bootstrap3/crud_paginated_list_init',
-+    'hqwebapp/js/bootstrap5/crud_paginated_list_init',
-     'commcarehq',
- ], function (
-     $,
+@@ -2,7 +2,7 @@
+ import $ from "jquery";
+ import _ from "underscore";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+-import "hqwebapp/js/bootstrap3/crud_paginated_list_init";
++import "hqwebapp/js/bootstrap5/crud_paginated_list_init";
+ 
+ $(function () {
+     var bulkUploadId = initialPageData.get("bulk_upload_id");

@@ -1,3 +1,4 @@
+import warnings
 from .exceptions import Error, NotFound  # noqa: F401
 
 _db = []  # singleton/global, stack for tests to push temporary dbs
@@ -20,6 +21,10 @@ def get_blob_db():
 def _get_s3_db(settings, key="S3_BLOB_DB_SETTINGS"):
     from .s3db import S3BlobDB
     config = getattr(settings, key, None)
+    if config and config.get("config", {}).get("signature_version") == "s3":
+        warnings.warn("S3_BLOB_DB_SETTINGS config signature_version 's3' is "
+                      "not valid and should be removed.")
+        del config["config"]["signature_version"]
     return None if config is None else S3BlobDB(config)
 
 

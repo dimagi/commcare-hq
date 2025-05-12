@@ -1,12 +1,8 @@
-hqDefine("data_interfaces/js/make_read_only",[
-    'jquery',
-    'hqwebapp/js/initial_page_data',
-], function ($,initialPageData) {
+import $ from "jquery";
+import initialPageData from "hqwebapp/js/initial_page_data";
 
-    $(function () {
-        if (initialPageData.get('read_only_mode')) {
-            $('.main-form :input').prop('disabled', true);
-        }
-    });
-
+$(function () {
+    if (initialPageData.get('read_only_mode')) {
+        $('.main-form :input').prop('disabled', true);
+    }
 });

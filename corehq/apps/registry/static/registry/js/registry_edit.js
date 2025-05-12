@@ -6,7 +6,7 @@ import initialPageData from "hqwebapp/js/initial_page_data";
 import text from "registry/js/registry_text";
 import actions from "registry/js/registry_actions";
 import auditLogs from "registry/js/registry_logs";
-import bootstrap from "bootstrap5";
+import { Modal } from "bootstrap5";
 import "hqwebapp/js/select2_knockout_bindings.ko";
 import "hqwebapp/js/bootstrap5/knockout_bindings.ko";  // openModal
 import "hqwebapp/js/bootstrap5/main";  // makeHqHelp
@@ -113,7 +113,7 @@ let EditModel = function (data, availableCaseTypes, availableDomains, invitedDom
             }));
         }).always(() => {
             self.modalSaving(false);
-            bootstrap.Modal.getOrCreateInstance($(".modal:visible")).hide();
+            Modal.getOrCreateInstance($(".modal:visible")).hide();
         });
     };
 
@@ -126,7 +126,7 @@ let EditModel = function (data, availableCaseTypes, availableDomains, invitedDom
             self.inviteDomains([]);
         }).always(() => {
             self.modalSaving(false);
-            bootstrap.Modal.getOrCreateInstance($(".modal:visible")).hide();
+            Modal.getOrCreateInstance($(".modal:visible")).hide();
         });
     };
 
@@ -138,7 +138,7 @@ let EditModel = function (data, availableCaseTypes, availableDomains, invitedDom
             self.schema(self.editedSchema());
         }).always(() => {
             self.modalSaving(false);
-            bootstrap.Modal.getOrCreateInstance($(".modal:visible")).hide();
+            Modal.getOrCreateInstance($(".modal:visible")).hide();
         });
     };
 
@@ -155,7 +155,7 @@ let EditModel = function (data, availableCaseTypes, availableDomains, invitedDom
             self.grantDomains([]);
         }).always(() => {
             self.modalSaving(false);
-            bootstrap.Modal.getOrCreateInstance($(".modal:visible")).hide();
+            Modal.getOrCreateInstance($(".modal:visible")).hide();
         });
     };
 
@@ -167,7 +167,7 @@ let EditModel = function (data, availableCaseTypes, availableDomains, invitedDom
             }));
         }).always(() => {
             self.modalSaving(false);
-            bootstrap.Modal.getOrCreateInstance($(".modal:visible")).hide();
+            Modal.getOrCreateInstance($(".modal:visible")).hide();
         });
     };
 
