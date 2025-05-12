@@ -248,7 +248,7 @@ class BulkEditSession(models.Model):
 
     def get_queryset(self):
         query = CaseSearchES().domain(self.domain).case_type(self.identifier)
-        query = BulkEditFilter.apply_filters_to_query(self, query)
+        query = self.filters.apply_to_query(self, query)
         query = BulkEditPinnedFilter.apply_filters_to_query(self, query)
         return query
 
@@ -662,6 +662,17 @@ class BulkEditFilterManager(models.Manager):
             value=value,
         )
 
+    def apply_to_query(self, session, query):
+        xpath_expressions = []
+        for custom_filter in session.filters.all():
+            query = custom_filter.filter_query(query)
+            column_xpath = custom_filter.get_xpath_expression()
+            if column_xpath is not None:
+                xpath_expressions.append(column_xpath)
+        if xpath_expressions:
+            query = query.xpath_query(session.domain, " and ".join(xpath_expressions))
+        return query
+
 
 class BulkEditFilter(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="filters", on_delete=models.CASCADE)
@@ -684,18 +695,6 @@ class BulkEditFilter(models.Model):
 
     class Meta:
         ordering = ["index"]
-
-    @classmethod
-    def apply_filters_to_query(cls, session, query):
-        xpath_expressions = []
-        for custom_filter in session.filters.all():
-            query = custom_filter.filter_query(query)
-            column_xpath = custom_filter.get_xpath_expression()
-            if column_xpath is not None:
-                xpath_expressions.append(column_xpath)
-        if xpath_expressions:
-            query = query.xpath_query(session.domain, " and ".join(xpath_expressions))
-        return query
 
     @property
     def human_readable_match_type(self):
