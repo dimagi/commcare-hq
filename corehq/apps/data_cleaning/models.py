@@ -289,7 +289,7 @@ class BulkEditSession(models.Model):
         :param prop_id: the property id to edit
         :param value: the new value to set
         """
-        record = BulkEditRecord.get_record_for_inline_editing(self, doc_id)
+        record = self.records.get_for_inline_editing(self, doc_id)
         BulkEditChange.apply_inline_edit(record, prop_id, value)
 
     @retry_on_integrity_error(max_retries=3, delay=0.1)
@@ -946,6 +946,13 @@ class BulkEditColumn(models.Model):
 class BulkEditRecordManager(models.Manager):
     use_for_related_fields = True
 
+    def get_for_inline_editing(self, session, doc_id):
+        return self.get_or_create(
+            session=session,
+            doc_id=doc_id,
+            defaults={'is_selected': False}
+        )[0]
+
 
 class BulkEditRecord(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="records", on_delete=models.CASCADE)
@@ -963,20 +970,6 @@ class BulkEditRecord(models.Model):
                 name="unique_record_per_session",
             ),
         ]
-
-    @classmethod
-    def get_record_for_inline_editing(cls, session, doc_id):
-        """
-        :param session: BulkEditSession
-        :param doc_id: the id of the document (case / form)
-        :return: BulkEditRecord
-        """
-        record, _ = cls.objects.get_or_create(
-            session=session,
-            doc_id=doc_id,
-            defaults={'is_selected': False}
-        )
-        return record
 
     @classmethod
     def get_unrecorded_doc_ids(cls, session, doc_ids):
