@@ -874,6 +874,10 @@ class BulkEditPinnedFilter(models.Model):
         return self.get_report_filter_class().filter_query(query, self)
 
 
+class BulkEditColumnManager(models.Manager):
+    use_for_related_fields = True
+
+
 class BulkEditColumn(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="columns", on_delete=models.CASCADE)
     column_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
@@ -886,6 +890,8 @@ class BulkEditColumn(models.Model):
         choices=DataType.CHOICES,
     )
     is_system = models.BooleanField(default=False)
+
+    objects = BulkEditColumnManager()
 
     class Meta:
         ordering = ["index"]
