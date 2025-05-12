@@ -1,6 +1,6 @@
 import $ from "jquery";
 import _ from "underscore";
-import bootstrap from "bootstrap5";
+import { Modal } from "bootstrap5";
 import alertUser from "hqwebapp/js/bootstrap5/alert_user";
 import chartsMain from "reports/js/charts/main";
 import filtersMain from "reports/js/filters/bootstrap5/main";
@@ -11,7 +11,7 @@ export default function (o) {
     self.reportContent = $('#report-content');
     self.filterForm = o.filterForm || $('#paramSelectorForm');
     self.loadingIssueModalElem = $('#loadingReportIssueModal');
-    self.loadingIssueModal = new bootstrap.Modal(self.loadingIssueModalElem.get(0));
+    self.loadingIssueModal = new Modal(self.loadingIssueModalElem.get(0));
     self.issueAttempts = 0;
     self.hqLoading = null;
     self.standardReport = o.standardReport;
