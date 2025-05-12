@@ -84,7 +84,7 @@ class BulkEditSession(models.Model):
             session_type=BulkEditSessionType.CASE,
         )
         case_session.pinned_filters.create_session_defaults(case_session)
-        BulkEditColumn.create_default_columns(case_session)
+        case_session.columns.create_session_defaults(case_session)
         return case_session
 
     @classmethod
@@ -877,6 +877,31 @@ class BulkEditPinnedFilter(models.Model):
 class BulkEditColumnManager(models.Manager):
     use_for_related_fields = True
 
+    def create_session_defaults(self, session):
+        default_properties = {
+            BulkEditSessionType.CASE: (
+                'name', 'owner_name', 'date_opened', 'opened_by_username',
+                'last_modified', '@status',
+            ),
+        }.get(session.session_type)
+
+        if not default_properties:
+            raise NotImplementedError(f"{session.session_type} default columns not yet supported")
+
+        from corehq.apps.data_cleaning.utils.cases import (
+            get_system_property_label,
+            get_system_property_data_type,
+        )
+        for index, prop_id in enumerate(default_properties):
+            self.create(
+                session=session,
+                index=index,
+                prop_id=prop_id,
+                label=get_system_property_label(prop_id),
+                data_type=get_system_property_data_type(prop_id),
+                is_system=self.model.is_system_property(prop_id),
+            )
+
 
 class BulkEditColumn(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="columns", on_delete=models.CASCADE)
@@ -901,32 +926,6 @@ class BulkEditColumn(models.Model):
         return prop_id in set(METADATA_IN_REPORTS).difference({
             'name', 'case_name', 'external_id',
         })
-
-    @classmethod
-    def create_default_columns(cls, session):
-        default_properties = {
-            BulkEditSessionType.CASE: (
-                'name', 'owner_name', 'date_opened', 'opened_by_username',
-                'last_modified', '@status',
-            ),
-        }.get(session.session_type)
-
-        if not default_properties:
-            raise NotImplementedError(f"{session.session_type} default columns not yet supported")
-
-        from corehq.apps.data_cleaning.utils.cases import (
-            get_system_property_label,
-            get_system_property_data_type,
-        )
-        for index, prop_id in enumerate(default_properties):
-            cls.objects.create(
-                session=session,
-                index=index,
-                prop_id=prop_id,
-                label=get_system_property_label(prop_id),
-                data_type=get_system_property_data_type(prop_id),
-                is_system=cls.is_system_property(prop_id),
-            )
 
     @classmethod
     def create_for_session(cls, session, prop_id, label, data_type=None):
