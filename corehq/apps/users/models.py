@@ -748,6 +748,10 @@ class MultiMembershipMixin(_AuthorizableMixin):
     domains = StringListProperty()
     domain_memberships = SchemaListProperty(DomainMembership)
 
+    @memoized
+    def is_active_in_domain(self, domain):
+        return self.get_domain_membership(domain).is_active
+
 
 class LowercaseStringProperty(StringProperty):
     """
