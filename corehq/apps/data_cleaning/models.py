@@ -364,7 +364,7 @@ class BulkEditSession(models.Model):
         self.purge_records()
 
     def select_record(self, doc_id):
-        return BulkEditRecord.select_record(self, doc_id)
+        return self.records.select(self, doc_id)
 
     def deselect_record(self, doc_id):
         return BulkEditRecord.deselect_record(self, doc_id)
@@ -953,6 +953,17 @@ class BulkEditRecordManager(models.Manager):
             defaults={'is_selected': False}
         )[0]
 
+    def select(self, session, doc_id):
+        record, _ = self.get_or_create(
+            session=session,
+            doc_id=doc_id,
+            defaults={'is_selected': True}
+        )
+        if not record.is_selected:
+            record.is_selected = True
+            record.save()
+        return record
+
 
 class BulkEditRecord(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="records", on_delete=models.CASCADE)
@@ -977,18 +988,6 @@ class BulkEditRecord(models.Model):
             doc_id__in=doc_ids,
         ).values_list("doc_id", flat=True)
         return list(set(doc_ids) - set(recorded_doc_ids))
-
-    @classmethod
-    def select_record(cls, session, doc_id):
-        record, _ = cls.objects.get_or_create(
-            session=session,
-            doc_id=doc_id,
-            defaults={'is_selected': True}
-        )
-        if not record.is_selected:
-            record.is_selected = True
-            record.save()
-        return record
 
     @classmethod
     @retry_on_integrity_error(max_retries=3, delay=0.1)
