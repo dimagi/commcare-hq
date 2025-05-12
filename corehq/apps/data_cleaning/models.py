@@ -373,7 +373,7 @@ class BulkEditSession(models.Model):
         return self.records.select_multiple(self, doc_ids)
 
     def deselect_multiple_records(self, doc_ids):
-        return BulkEditRecord.deselect_multiple_records(self, doc_ids)
+        return self.records.deselect_multiple(self, doc_ids)
 
     def _apply_operation_on_queryset(self, operation):
         """
@@ -1010,6 +1010,22 @@ class BulkEditRecordManager(models.Manager):
             is_selected=False,
         ).update(is_selected=True)
 
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
+    def deselect_multiple(self, session, doc_ids):
+        # update is_selected to False for all selected records that have changes
+        session.records.filter(
+            doc_id__in=doc_ids,
+            is_selected=True,
+            changes__isnull=False,
+        ).update(is_selected=False)
+
+        # delete all records that have no changes
+        session.records.filter(
+            doc_id__in=doc_ids,
+            changes__isnull=True,
+        ).delete()
+
 
 class BulkEditRecord(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="records", on_delete=models.CASCADE)
@@ -1034,23 +1050,6 @@ class BulkEditRecord(models.Model):
             doc_id__in=doc_ids,
         ).values_list("doc_id", flat=True)
         return list(set(doc_ids) - set(recorded_doc_ids))
-
-    @classmethod
-    @retry_on_integrity_error(max_retries=3, delay=0.1)
-    @transaction.atomic
-    def deselect_multiple_records(cls, session, doc_ids):
-        # update is_selected to False for all selected records that have changes
-        session.records.filter(
-            doc_id__in=doc_ids,
-            is_selected=True,
-            changes__isnull=False,
-        ).update(is_selected=False)
-
-        # delete all records that have no changes
-        session.records.filter(
-            doc_id__in=doc_ids,
-            changes__isnull=True,
-        ).delete()
 
     @property
     def has_property_updates(self):
