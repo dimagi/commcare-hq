@@ -290,7 +290,7 @@ class BulkEditSession(models.Model):
         :param value: the new value to set
         """
         record = self.records.get_for_inline_editing(self, doc_id)
-        BulkEditChange.apply_inline_edit(record, prop_id, value)
+        self.changes.apply_inline_edit(record, prop_id, value)
 
     @retry_on_integrity_error(max_retries=3, delay=0.1)
     def _attach_change_to_records(self, change, doc_ids=None):
@@ -1156,6 +1156,23 @@ class EditActionType:
 class BulkEditChangeManager(models.Manager):
     use_for_related_fields = True
 
+    def apply_inline_edit(self, record, prop_id, value):
+        """
+        Apply an inline edit to a record.
+        :param record: BulkEditRecord
+        :param prop_id: the id of the property to edit
+        :param value: the new value for the property
+        :return: BulkEditChange
+        """
+        change = self.create(
+            session=record.session,
+            prop_id=prop_id,
+            action_type=EditActionType.REPLACE,
+            replace_string=value,
+        )
+        change.records.add(record)
+        return change
+
 
 class BulkEditChange(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="changes", on_delete=models.CASCADE)
@@ -1176,24 +1193,6 @@ class BulkEditChange(models.Model):
 
     class Meta:
         ordering = ["created_on"]
-
-    @classmethod
-    def apply_inline_edit(cls, record, prop_id, value):
-        """
-        Apply an inline edit to a record.
-        :param record: BulkEditRecord
-        :param prop_id: the id of the property to edit
-        :param value: the new value for the property
-        :return: BulkEditChange
-        """
-        change = cls.objects.create(
-            session=record.session,
-            prop_id=prop_id,
-            action_type=EditActionType.REPLACE,
-            replace_string=value,
-        )
-        change.records.add(record)
-        return change
 
     @property
     def action_title(self):
