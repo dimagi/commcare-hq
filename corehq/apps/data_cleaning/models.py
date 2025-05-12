@@ -306,7 +306,7 @@ class BulkEditSession(models.Model):
         # M2M relationships don't support bulk_create, so we need to access the through model
         # to properly batch this action
         if selected_records:
-            through = BulkEditChange.records.through
+            through = change.records.through
             rows = [
                 through(bulkeditchange_id=change.pk, bulkeditrecord_id=record.pk)
                 for record in selected_records
