@@ -83,7 +83,7 @@ class BulkEditSession(models.Model):
             identifier=case_type,
             session_type=BulkEditSessionType.CASE,
         )
-        BulkEditPinnedFilter.create_default_filters(case_session)
+        case_session.pinned_filters.create_session_defaults(case_session)
         BulkEditColumn.create_default_columns(case_session)
         return case_session
 
@@ -818,6 +818,25 @@ class PinnedFilterType:
     )
 
 
+class BulkEditPinnedFilterManager(models.Manager):
+    use_for_related_fields = True
+
+    def create_session_defaults(self, session):
+        default_types = {
+            BulkEditSessionType.CASE: PinnedFilterType.DEFAULT_FOR_CASE,
+        }.get(session.session_type)
+
+        if not default_types:
+            raise NotImplementedError(f"{session.session_type} default pinned filters not yet supported")
+
+        for index, filter_type in enumerate(default_types):
+            self.create(
+                session=session,
+                index=index,
+                filter_type=filter_type,
+            )
+
+
 class BulkEditPinnedFilter(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="pinned_filters", on_delete=models.CASCADE)
     index = models.IntegerField(default=0)
@@ -831,24 +850,10 @@ class BulkEditPinnedFilter(models.Model):
         blank=True,
     )
 
+    objects = BulkEditPinnedFilterManager()
+
     class Meta:
         ordering = ["index"]
-
-    @classmethod
-    def create_default_filters(cls, session):
-        default_types = {
-            BulkEditSessionType.CASE: PinnedFilterType.DEFAULT_FOR_CASE,
-        }.get(session.session_type)
-
-        if not default_types:
-            raise NotImplementedError(f"{session.session_type} default pinned filters not yet supported")
-
-        for index, filter_type in enumerate(default_types):
-            cls.objects.create(
-                session=session,
-                index=index,
-                filter_type=filter_type,
-            )
 
     @classmethod
     def apply_filters_to_query(cls, session, query):
