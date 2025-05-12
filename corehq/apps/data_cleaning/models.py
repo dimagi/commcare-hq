@@ -1072,15 +1072,8 @@ class BulkEditRecord(models.Model):
     def should_reset_changes(self):
         return self.changes.count() == 0 and self.calculated_change_id is not None
 
-    @retry_on_integrity_error(max_retries=3, delay=0.1)
-    @transaction.atomic
     def reset_changes(self, prop_id):
-        change = BulkEditChange.objects.create(
-            session=self.session,
-            prop_id=prop_id,
-            action_type=EditActionType.RESET,
-        )
-        change.records.add(self)
+        self.changes.apply_reset(self, prop_id)
 
     def get_edited_case_properties(self, case):
         """
@@ -1169,6 +1162,23 @@ class BulkEditChangeManager(models.Manager):
             prop_id=prop_id,
             action_type=EditActionType.REPLACE,
             replace_string=value,
+        )
+        change.records.add(record)
+        return change
+
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
+    def apply_reset(self, record, prop_id):
+        """
+        Apply a reset to a record.
+        :param record: BulkEditRecord
+        :param prop_id: the id of the property to edit
+        :return: BulkEditChange
+        """
+        change = self.create(
+            session=record.session,
+            prop_id=prop_id,
+            action_type=EditActionType.RESET,
         )
         change.records.add(record)
         return change
