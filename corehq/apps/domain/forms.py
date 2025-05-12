@@ -1927,25 +1927,22 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     return False
 
                 cancel_future_subscriptions(self.domain, datetime.date.today(), self.creating_user)
-
-                default_date_start = datetime.date.today()
-                default_date_end = default_date_start + relativedelta(years=1) if self.is_annual_plan else None
                 if (
                     self.is_downgrade_from_paid_plan()
                     and self.current_subscription.is_below_minimum_subscription
                 ):
-                    new_date_start = self.current_subscription.date_start + datetime.timedelta(days=30)
-                    new_date_end = new_date_start + relativedelta(years=1) if self.is_annual_plan else None
+                    new_sub_date_start = self.current_subscription.date_start + datetime.timedelta(days=30)
+                    new_sub_date_end = new_sub_date_start + relativedelta(years=1) if self.is_annual_plan else None
                     self.current_subscription.update_subscription(
                         date_start=self.current_subscription.date_start,
-                        date_end=new_date_start
+                        date_end=new_sub_date_start
                     )
                     Subscription.new_domain_subscription(
                         account=self.account,
                         domain=self.domain,
                         plan_version=self.plan_version,
-                        date_start=new_date_start,
-                        date_end=new_date_end,
+                        date_start=new_sub_date_start,
+                        date_end=new_sub_date_end,
                         web_user=self.creating_user,
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
                         service_type=SubscriptionType.PRODUCT,
@@ -1953,9 +1950,13 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         funding_source=FundingSource.CLIENT,
                     )
                 else:
+                    # date_start on Subscription.change_plan is always today so just set the end date
+                    new_sub_date_end = (
+                        datetime.date.today() + relativedelta(years=1) if self.is_annual_plan else None
+                    )
                     self.current_subscription.change_plan(
                         self.plan_version,
-                        date_end=default_date_end,
+                        date_end=new_sub_date_end,
                         web_user=self.creating_user,
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
                         service_type=SubscriptionType.PRODUCT,
