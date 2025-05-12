@@ -4,8 +4,8 @@
  
  <div
    class="modal fade"
--  data-bind="attr: {id: 'activate_connectid_link_' + username()}"
-+  data-bind="attr: {id: 'activate_connectid_link_' + user_id()}"
+-  data-bind="attr: {id: 'activate_personalid_link_' + username()}"
++  data-bind="attr: {id: 'activate_personalid_link_' + user_id()}"
  >
    <div class="modal-dialog">
      <div class="modal-content">
@@ -14,8 +14,8 @@
 -          <span aria-hidden="true">&times;</span>
 -          <span class="sr-only">{% trans "Close" %}</span>
 -        </button>
--        <h4 class="modal-title">{% trans "Link ConnectID Account" %}</h4>
-+        <h5 class="modal-title">{% trans "Link ConnectID Account" %}</h5>
+-        <h4 class="modal-title">{% trans "Link PersonalID Account" %}</h4>
++        <h5 class="modal-title">{% trans "Link PersonalID Account" %}</h5>
 +        <button
 +          type="button"
 +          class="btn-close"
@@ -37,15 +37,15 @@
            type="button"
            class="btn btn-primary"
 +          data-bs-dismiss="modal"
-           data-bind="click: function(user) { user.is_connect_link_active(true); }"
+           data-bind="click: function(user) { user.is_personalid_link_active(true); }"
          >
            {% trans "Link" %}
 @@ -49,16 +52,18 @@
  
  <div
    class="modal fade"
--  data-bind="attr: {id: 'deactivate_connectid_link_' + username()}"
-+  data-bind="attr: {id: 'deactivate_connectid_link_' + user_id()}"
+-  data-bind="attr: {id: 'deactivate_personalid_link_' + username()}"
++  data-bind="attr: {id: 'deactivate_personalid_link_' + user_id()}"
  >
    <div class="modal-dialog">
      <div class="modal-content">
@@ -54,8 +54,8 @@
 -          <span aria-hidden="true">&times;</span>
 -          <span class="sr-only">{% trans "Close" %}</span>
 -        </button>
--        <h4 class="modal-title">{% trans "Unlink ConnectID Account" %}</h4>
-+        <h5 class="modal-title">{% trans "Unlink ConnectID Account" %}</h5>
+-        <h4 class="modal-title">{% trans "Unlink PersonalID Account" %}</h4>
++        <h5 class="modal-title">{% trans "Unlink PersonalID Account" %}</h5>
 +        <button
 +          type="button"
 +          class="btn-close"
@@ -77,6 +77,6 @@
            type="button"
            class="btn btn-danger"
 +          data-bs-dismiss="modal"
-           data-bind="click: function(user) { user.is_connect_link_active(false); }"
+           data-bind="click: function(user) { user.is_personalid_link_active(false); }"
          >
            {% trans "Unlink" %}
