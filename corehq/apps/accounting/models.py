@@ -637,7 +637,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
         domains = self.get_domains()
         count = 0
         for domain in domains:
-            count += get_web_user_count(domain, include_inactive=False)
+            count += get_web_user_count(domain, include_inactive=False, exclude_deactivated_web=True)
         return count
 
     @staticmethod

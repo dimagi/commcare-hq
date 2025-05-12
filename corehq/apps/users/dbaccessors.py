@@ -229,8 +229,8 @@ def get_active_web_usernames_by_domain(domain):
     return (row['key'][3] for row in get_all_user_rows(domain, include_mobile_users=False, include_inactive=False))
 
 
-def get_web_user_count(domain, include_inactive=True):
-    return sum([
+def get_web_user_count(domain, include_inactive=True, exclude_deactivated_web=False):
+    total = sum([
         row['value']
         for row in get_all_user_rows(
             domain,
@@ -240,6 +240,12 @@ def get_web_user_count(domain, include_inactive=True):
             count_only=True
         ) if row
     ])
+    if exclude_deactivated_web:
+        web_users = get_all_web_users_by_domain(domain)
+        for u in web_users:
+            if not u.is_active_in_domain(domain):
+                total -= 1
+    return total
 
 
 def get_mobile_user_count(domain, include_inactive=True):
