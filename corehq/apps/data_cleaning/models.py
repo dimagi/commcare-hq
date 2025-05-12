@@ -943,12 +943,18 @@ class BulkEditColumn(models.Model):
         return self.label if self.label == self.prop_id else f"{self.label} ({self.prop_id})"
 
 
+class BulkEditRecordManager(models.Manager):
+    use_for_related_fields = True
+
+
 class BulkEditRecord(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="records", on_delete=models.CASCADE)
     doc_id = models.CharField(max_length=126, db_index=True)  # case_id or form_id
     is_selected = models.BooleanField(default=True)
     calculated_change_id = models.UUIDField(null=True, blank=True)
     calculated_properties = models.JSONField(null=True, blank=True)
+
+    objects = BulkEditRecordManager()
 
     class Meta:
         constraints = [
