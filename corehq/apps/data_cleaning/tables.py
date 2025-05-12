@@ -7,7 +7,7 @@ from corehq.apps.data_cleaning.columns import (
     DataCleaningHtmxColumn,
     DataCleaningHtmxSelectionColumn,
 )
-from corehq.apps.data_cleaning.models import (
+from corehq.apps.data_cleaning.models.session import (
     BULK_OPERATION_CHUNK_SIZE,
     MAX_RECORDED_LIMIT,
 )
