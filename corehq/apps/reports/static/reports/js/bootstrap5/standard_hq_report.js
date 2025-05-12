@@ -3,7 +3,7 @@
 */
 import $ from "jquery";
 import _ from "underscore";
-import bootstrap from "bootstrap5";
+import { Popover } from "bootstrap5";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import util from "reports/js/util";
 import hqReportModule from "reports/js/bootstrap5/hq_report";
@@ -76,7 +76,7 @@ $(function () {
 
     const reportsWithDescriptions = document.getElementsByClassName('report-description-popover');
     Array.from(reportsWithDescriptions).forEach((elem) => {
-        new bootstrap.Popover(elem, {
+        new Popover(elem, {
             title: elem.dataset.title,
             content: elem.dataset.content,
             placement: 'right',
