@@ -390,9 +390,6 @@ class BulkEditSession(models.Model):
         self.changes.all().delete()
         self.purge_records()
 
-    def is_record_selected(self, doc_id):
-        return BulkEditRecord.is_record_selected(self, doc_id)
-
     def select_record(self, doc_id):
         return BulkEditRecord.select_record(self, doc_id)
 
@@ -1001,13 +998,6 @@ class BulkEditRecord(models.Model):
             defaults={'is_selected': False}
         )
         return record
-
-    @classmethod
-    def is_record_selected(self, session, doc_id):
-        return session.records.filter(
-            doc_id=doc_id,
-            is_selected=True,
-        ).exists()
 
     @classmethod
     def get_unrecorded_doc_ids(cls, session, doc_ids):
