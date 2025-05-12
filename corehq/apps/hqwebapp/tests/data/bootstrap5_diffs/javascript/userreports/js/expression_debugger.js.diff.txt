@@ -1,15 +1,11 @@
 --- 
 +++ 
-@@ -1,10 +1,10 @@
--hqDefine('userreports/js/bootstrap3/expression_debugger', [
-+hqDefine('userreports/js/bootstrap5/expression_debugger', [
-     "jquery",
-     "underscore",
-     "hqwebapp/js/base_ace",
-     "hqwebapp/js/initial_page_data",
-     "userreports/js/expression_evaluator",
--    "hqwebapp/js/bootstrap3/widgets",
-+    "hqwebapp/js/bootstrap5/widgets",
-     "hqwebapp/js/components/select_toggle",
-     "commcarehq",
- ], function (
+@@ -3,7 +3,7 @@
+ import baseAce from "hqwebapp/js/base_ace";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+ import expressionModel from "userreports/js/expression_evaluator";
+-import "hqwebapp/js/bootstrap3/widgets";
++import "hqwebapp/js/bootstrap5/widgets";
+ import "hqwebapp/js/components/select_toggle";
+ 
+ $(function () {

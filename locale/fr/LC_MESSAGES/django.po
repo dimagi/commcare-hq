@@ -2463,23 +2463,11 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/overdue_notice.html
 msgid ""
 "\n"
-"      As a reminder, payments can be made via credit card, Electronic Fund\n"
-"      Transfer (EFT), or check by following these\n"
-"      <a\n"
-"        href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"How+to+Pay+by+Credit+Card+or+Wire+Payment\"\n"
-"        >instructions</a\n"
-"      >.\n"
-"    "
-msgstr ""
-
-#: corehq/apps/accounting/templates/accounting/email/overdue_notice.html
-msgid ""
-"\n"
 "      You can also pre-pay for several months at any time by following\n"
 "      <a\n"
-"        href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"CommCare+Pricing+FAQs#CommCarePricingFAQs-Pre-payment\"\n"
+"        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143955299/Subscription+Management+Billing#How-to-Prepay-by-Credit-or-"
+"Debit-Card\"\n"
 "        >these steps</a\n"
 "      >.\n"
 "    "
@@ -2967,8 +2955,9 @@ msgid ""
 "          You should expect your first invoice on %(invoice_date)s, or you "
 "can prepay for your\n"
 "          subscription by following the instructions\n"
-"          <a href=\"https://confluence.dimagi.com/display/commcarepublic/"
-"How+to+Pay+by+Credit+Card+or+Wire+Payment\">here</a>.\n"
+"          <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143955299/Subscription+Management+Billing#Payment-Methods\">here</"
+"a>.\n"
 "        "
 msgstr ""
 
@@ -5802,7 +5791,7 @@ msgstr ""
 #: corehq/apps/app_manager/static_strings.py
 msgid ""
 "Version of mobile UCRs to use. Read more on the  <a target=\"_blank\" "
-"href=\"https://help.commcarehq.org/display/saas/"
+"href=\"https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146604299/"
 "Moving+to+Mobile+UCR+V2\">Help Site</a>"
 msgstr ""
 
@@ -8882,8 +8871,9 @@ msgstr ""
 msgid ""
 "Do you have a lot of case properties? Try splitting them into tabs, which "
 "will appear as separate screens that mobile users can swipe through. Read "
-"more on the <a href='https://help.commcarehq.org/display/commcarepublic/"
-"Tabs+on+Case+Detail+Screen' target='_blank'>Help Site</a>."
+"more on the <a href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143951603/Case+List+and+Case+Detail+Configuration#Add-Tabs-on-Case-"
+"Detail-Screen' target='_blank'>Help Site</a>."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
@@ -9128,11 +9118,13 @@ msgid "Forms Accessible from Case List"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_form_setting.html
+#, python-format
 msgid ""
 "Use Registration Forms to minimize duplicate registrations by requiring "
 "mobile workers to search the case list before registering a new case. Read "
-"more on the <a href='https://help.commcarehq.org/pages/viewpage.action?"
-"pageId=30605985'>Help Site</a>.\n"
+"more on the <a href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143951603/Case+List+and+Case+Detail+Configuration#Minimize-"
+"Duplicates%%3A-Registration-From-the-Case-List'>Help Site</a>.\n"
 "                You can use followup forms for Parent Case button if this "
 "module uses Select Parent First workflow"
 msgstr ""
@@ -10160,8 +10152,8 @@ msgid ""
 "                             Cases of these types will be displayed in Case "
 "List and Case Search screens, in addition to the Case Type inputted above.\n"
 "                             <a target='_blank'\n"
-"                             href='https://confluence.dimagi.com/display/"
-"ccinternal/Case+Search+and+Claim'>(More   Information)</a>\n"
+"                             href='https://dimagi.atlassian.net/wiki/spaces/"
+"USH/pages/2146962056/Case+Search+Configuration'>(More   Information)</a>\n"
 "                              "
 msgstr ""
 
@@ -12383,8 +12375,8 @@ msgid ""
 "      This tool can make changes to your data that might confuse your "
 "reports or applications.\n"
 "      Please exercise caution and see the\n"
-"      <a href=\"https://help.commcarehq.org/display/commcarepublic/"
-"Importing+Cases+Using+Excel\" target=\"_blank\">\n"
+"      <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143946828/Case+Import+with+Excel\" target=\"_blank\">\n"
 "        help pages for this feature.\n"
 "      </a>\n"
 "    "
@@ -14467,6 +14459,29 @@ msgstr ""
 msgid "Reset Changes"
 msgstr ""
 
+#: corehq/apps/data_cleaning/models.py
+msgid "Unknown action"
+msgstr ""
+
+#: corehq/apps/data_cleaning/models.py
+#, python-brace-format
+msgid "value with \"{replace_string}\"."
+msgstr ""
+
+#: corehq/apps/data_cleaning/models.py
+#, python-brace-format
+msgid "\"{find_string}\" with \"{replace_string}\"{use_regex}."
+msgstr ""
+
+#: corehq/apps/data_cleaning/models.py
+msgid " (using regex)"
+msgstr ""
+
+#: corehq/apps/data_cleaning/models.py
+#, python-brace-format
+msgid "from case property \"{copy_from_prop_id}\"."
+msgstr ""
+
 #: corehq/apps/data_cleaning/tables.py
 msgid "Committed On"
 msgstr ""
@@ -14700,17 +14715,60 @@ msgid "Clean Selected Cases"
 msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/apply_changes.html
+#, python-format
 msgid ""
 "\n"
-"    The following edits will be applied:\n"
-"  "
+"      One edit will be applied.\n"
+"    "
+msgid_plural ""
+"\n"
+"      A total of %(num_changes)s edits will be applied.\n"
+"    "
+msgstr[0] ""
+msgstr[1] ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/summary/apply_changes.html
+msgid ""
+"\n"
+"      The following edits will be applied...\n"
+"    "
 msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/summary/clear_changes.html
+#, python-format
+msgid ""
+"\n"
+"      One edit will be cleared.\n"
+"    "
+msgid_plural ""
+"\n"
+"      A total of %(num_changes)s edits will be cleared.\n"
+"    "
+msgstr[0] ""
+msgstr[1] ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/clear_changes.html
 msgid ""
 "\n"
-"    The following edits will be cleared:\n"
-"  "
+"      The following edits will be cleared...\n"
+"    "
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/summary/partial/change_detail.html
+msgid "the case property that was changed"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/summary/partial/change_detail.html
+msgid "number of cases affected"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/summary/partial/change_detail.html
+#, python-format
+msgid "%(change.num_records)s"
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/summary/partial/change_history.html
+msgid "Show edit history"
 msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/undo_changes.html
@@ -14894,10 +14952,6 @@ msgstr ""
 msgid "Caches successfully cleared."
 msgstr ""
 
-#: corehq/apps/data_cleaning/views/main.py
-msgid "Session saved."
-msgstr ""
-
 #: corehq/apps/data_cleaning/views/mixins.py
 msgid "Data cleaning session was not found."
 msgstr ""
@@ -14908,6 +14962,10 @@ msgstr ""
 
 #: corehq/apps/data_cleaning/views/summary.py
 msgid "Cannot retrieve summary, session was not found."
+msgstr ""
+
+#: corehq/apps/data_cleaning/views/tables.py
+msgid "Changes applied. Check the Recent Tasks table for progress."
 msgstr ""
 
 #: corehq/apps/data_dictionary/bulk.py
@@ -17230,7 +17288,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/forms.py
-msgid "Connect Messaging Channel Nmae"
+msgid "Connect Messaging Channel Name"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
@@ -17319,9 +17377,9 @@ msgstr ""
 msgid ""
 "Secure Submissions prevents others from impersonating your mobile workers. "
 "This setting requires all deployed applications to be using secure "
-"submissions as well. <a href='https://help.commcarehq.org/display/"
-"commcarepublic/Project+Space+Settings'>Read more about secure submissions "
-"here</a>"
+"submissions as well. <a href='https://dimagi.atlassian.net/wiki/spaces/"
+"commcarepublic/pages/2367226200/Project+Settings+Overview'>Read more about "
+"secure submissions here</a>"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
@@ -19435,8 +19493,9 @@ msgid ""
 "in\n"
 "                the wire payment memo or note field.\n"
 "                <a\n"
-"                  href=\"https://confluence.dimagi.com/display/"
-"commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment\"\n"
+"                  href=\"https://dimagi.atlassian.net/wiki/spaces/"
+"commcarepublic/pages/2143955299/Subscription+Management+Billing#Payment-"
+"Methods\"\n"
 "                  target=\"_blank\"\n"
 "                  >More information...</a\n"
 "                >\n"
@@ -22550,8 +22609,8 @@ msgid ""
 "commcarepublic/pages/2143947269/Publish+Your+Application\"\n"
 "               target=\"_blank\">deploy</a>\n"
 "            your application and submit data from a phone. You may also\n"
-"            <a href=\"https://help.commcarehq.org/display/commcarepublic/"
-"Web+Apps\"\n"
+"            <a href=\"https://dimagi.atlassian.net/wiki/spaces/"
+"commcarepublic/pages/2143955161/Web+Applications\"\n"
 "               target=\"_blank\">submit data via Web Apps\n"
 "            </a>\n"
 "            , depending on your project's\n"
@@ -29670,8 +29729,9 @@ msgid ""
 "          defined your organization structure types, you'll be able to "
 "define\n"
 "          the organization structure for your project. Learn more about\n"
-"          Organizations on our <a href=\"https://help.commcarehq.org/display/"
-"commcarepublic/Organizations\">Help Site</a>.\n"
+"          Organizations on our <a href=\"https://dimagi.atlassian.net/wiki/"
+"spaces/commcarepublic/pages/2143955032/Organizations+Locations\" "
+"target=\"_blank\">Help Site</a>.\n"
 "        "
 msgstr ""
 
@@ -29990,8 +30050,8 @@ msgid ""
 "            Once this structure has been defined, you can use it for "
 "reporting and\n"
 "            case sharing. Learn more about Organizations on our <a "
-"href=\"https://help.commcarehq.org/display/commcarepublic/"
-"Organizations\">Help Site</a>.\n"
+"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
+"pages/2143955032/Organizations+Locations\" target=\"_blank\">Help Site</a>.\n"
 "          "
 msgstr ""
 

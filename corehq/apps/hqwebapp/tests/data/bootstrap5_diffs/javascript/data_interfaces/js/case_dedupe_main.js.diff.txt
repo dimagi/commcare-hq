@@ -1,16 +1,11 @@
 --- 
 +++ 
-@@ -1,11 +1,11 @@
--hqDefine("data_interfaces/js/bootstrap3/case_dedupe_main", [
-+hqDefine("data_interfaces/js/bootstrap5/case_dedupe_main", [
-     'jquery',
-     'knockout',
-     'underscore',
-     'hqwebapp/js/initial_page_data',
-     'data_interfaces/js/case_property_input',
-     'data_interfaces/js/case_rule_criteria',
--    'hqwebapp/js/bootstrap3/widgets',
-+    'hqwebapp/js/bootstrap5/widgets',
-     'commcarehq',
- ], function (
-     $,
+@@ -5,7 +5,7 @@
+ import initialPageData from "hqwebapp/js/initial_page_data";
+ import casePropertyInput from "data_interfaces/js/case_property_input";
+ import CaseRuleCriteria from "data_interfaces/js/case_rule_criteria";
+-import "hqwebapp/js/bootstrap3/widgets";
++import "hqwebapp/js/bootstrap5/widgets";
+ 
+ 
+ /*

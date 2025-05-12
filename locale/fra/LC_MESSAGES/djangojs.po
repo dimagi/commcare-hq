@@ -214,12 +214,8 @@ msgstr ""
 "et '-' and '_'"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
-#, fuzzy
-#| msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgid "This is a reserved case type. Please choose another name."
 msgstr ""
-"'commcare-user' est un type de dossier réservé. Veuillez changer le type de "
-"dossier"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 msgid "This case type has been deprecated in the Data Dictionary."
@@ -1427,10 +1423,8 @@ msgid "Signature Capture"
 msgstr "Capture de signature"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#, fuzzy
-#| msgid "Document Template"
 msgid "Document Upload"
-msgstr "Modèle de document"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "GPS"

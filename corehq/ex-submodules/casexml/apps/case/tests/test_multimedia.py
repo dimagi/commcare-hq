@@ -83,7 +83,7 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
     def _attachmentFileStream(self, key):
         attachment_path = MEDIA_FILES[key]
         attachment = open(attachment_path, 'rb')
-        return NoClose(UploadedFile(attachment, key))
+        return UploadedFile(attachment, key)
 
     def _calc_file_hash(self, key):
         with open(MEDIA_FILES[key], 'rb') as attach:
@@ -291,24 +291,3 @@ class CaseMultimediaS3DBTest(BaseCaseMultimediaTest):
             self._calc_file_hash(single_attach),
             hashlib.md5(case.get_attachment(single_attach)).hexdigest()
         )
-
-
-class NoClose(object):
-    """HACK file object with no-op `close()` to avoid close by S3Transfer
-
-    https://github.com/boto/s3transfer/issues/80
-    """
-
-    def __init__(self, fileobj):
-        self.fileobj = fileobj
-
-    def __getattr__(self, name):
-        return getattr(self.fileobj, name)
-
-    def open(self, *args, **kw):
-        # compatible with django.core.files.base.File.open()
-        obj = self.fileobj.open(*args, **kw)
-        return self if obj is self.fileobj else obj
-
-    def close(self):
-        pass
