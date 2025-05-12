@@ -1153,6 +1153,10 @@ class EditActionType:
     )
 
 
+class BulkEditChangeManager(models.Manager):
+    use_for_related_fields = True
+
+
 class BulkEditChange(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="changes", on_delete=models.CASCADE)
     change_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -1167,6 +1171,8 @@ class BulkEditChange(models.Model):
     replace_string = models.TextField(null=True, blank=True)
     use_regex = models.BooleanField(default=False)
     copy_from_prop_id = models.CharField(max_length=255)
+
+    objects = BulkEditChangeManager()
 
     class Meta:
         ordering = ["created_on"]
