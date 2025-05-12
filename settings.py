@@ -2043,6 +2043,7 @@ DOMAIN_MODULE_MAP = {
 
     'epic-integration-test': 'custom.mgh_epic',
     'sudcare-dev': 'custom.mgh_epic',
+    'sudcare': 'custom.mgh_epic',
 }
 
 CUSTOM_DOMAINS_BY_MODULE = defaultdict(list)
