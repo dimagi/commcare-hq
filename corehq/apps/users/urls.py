@@ -58,7 +58,7 @@ from .views.mobile.users import (
     UploadCommCareUsers,
     UserUploadStatusView,
     activate_commcare_user,
-    set_connectid_link_status,
+    set_personalid_link_status,
     count_commcare_users,
     count_web_users,
     deactivate_commcare_user,
@@ -159,9 +159,9 @@ urlpatterns = [
     url(r'^commcare/activate/(?P<user_id>[ \w-]+)/$', activate_commcare_user, name='activate_commcare_user'),
     url(r'^commcare/deactivate/(?P<user_id>[ \w-]+)/$', deactivate_commcare_user, name='deactivate_commcare_user'),
     url(
-        r'^commcare/connectid_link/(?P<username>[ \w-]+)/status/$',
-        set_connectid_link_status,
-        name='set_connectid_link_status'
+        r'^commcare/personalid_link/(?P<username>[ \w-]+)/status/$',
+        set_personalid_link_status,
+        name='set_personalid_link_status'
     ),
     url(
         r'^commcare/send_confirmation_email/(?P<user_id>[ \w-]+)/$',

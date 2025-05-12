@@ -544,7 +544,7 @@ class SetUserPasswordForm(SetPasswordForm):
         self.helper.form_method = 'POST'
         self.helper.form_tag = False
 
-        has_connect_id_link = self.user_has_active_connect_id_link(user_id)
+        has_personalid_link = self.user_has_active_personalid_link(user_id)
 
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
@@ -554,44 +554,44 @@ class SetUserPasswordForm(SetPasswordForm):
                 crispy.ButtonHolder(
                     Submit('submit', _('Reset Password'),
                            data_bind="enable: passwordSufficient(), click: submitCheck",
-                           **({'disabled': 'disabled'} if has_connect_id_link else {}))
+                           **({'disabled': 'disabled'} if has_personalid_link else {}))
                 )
             )
         else:
             submitButton = hqcrispy.FormActions(
                 crispy.ButtonHolder(
                     Submit('submit', _('Reset Password'),
-                           **({'disabled': 'disabled'} if has_connect_id_link else {}))
+                           **({'disabled': 'disabled'} if has_personalid_link else {}))
                 )
             )
 
-        alert_message = render_to_string("users/partials/bootstrap3/connectid_password_locked_banner.html")
+        alert_message = render_to_string("users/partials/bootstrap3/personalid_password_locked_banner.html")
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Reset Password for Mobile Worker"),
-                crispy.HTML(alert_message) if has_connect_id_link else None,
+                crispy.HTML(alert_message) if has_personalid_link else None,
                 crispy.Field(
                     'new_password1',
                     data_bind="initializeValue: password, value: password, valueUpdate: 'input'",
                     value=initial_password,
-                    **({'readonly': True} if has_connect_id_link else {}),
+                    **({'readonly': True} if has_personalid_link else {}),
                 ),
                 crispy.Field(
                     'new_password2',
                     value=initial_password,
-                    **({'readonly': True} if has_connect_id_link else {}),
+                    **({'readonly': True} if has_personalid_link else {}),
                 ),
                 submitButton,
                 css_class="check-password",
             ),
         )
 
-    def user_has_active_connect_id_link(self, user_id):
+    def user_has_active_personalid_link(self, user_id):
         if toggles.COMMCARE_CONNECT.enabled(self.project.name):
             user = CommCareUser.get_by_user_id(user_id)
             try:
-                connect_link = ConnectIDUserLink.objects.get(commcare_user=user.get_django_user())
-                return connect_link.is_active
+                personalid_link = ConnectIDUserLink.objects.get(commcare_user=user.get_django_user())
+                return personalid_link.is_active
             except ConnectIDUserLink.DoesNotExist:
                 pass
         return False

@@ -60,7 +60,7 @@ var userModel = function (options) {
         phone_number: '',
         is_active: true,
         is_account_confirmed: true,
-        is_connect_link_active: null,
+        is_personalid_link_active: null,
         deactivate_after_date: '',
     });
 
@@ -97,9 +97,9 @@ var userModel = function (options) {
         toggleActive($modal, urlName, self.user_id());
     });
 
-    self.is_connect_link_active.subscribe(function (newValue) {
-        const urlName = 'set_connectid_link_status';
-        const modalNamePrefix = newValue ? 'activate_connectid_link' : 'deactivate_connectid_link';
+    self.is_personalid_link_active.subscribe(function (newValue) {
+        const urlName = 'set_personalid_link_status';
+        const modalNamePrefix = newValue ? 'activate_personalid_link' : 'deactivate_personalid_link';
         const $modal = $(`#${modalNamePrefix}_${self.username()}`);
         toggleActive($modal, urlName, self.username(), { is_active: newValue });
     });

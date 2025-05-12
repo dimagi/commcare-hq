@@ -911,7 +911,7 @@ def deactivate_commcare_user(request, domain, user_id):
 @require_can_edit_commcare_users
 @require_POST
 @location_safe
-def set_connectid_link_status(request, domain, username):
+def set_personalid_link_status(request, domain, username):
     if not toggles.COMMCARE_CONNECT.enabled(domain):
         return HttpResponse(status=403)
     is_active = request.POST.get('is_active')
@@ -999,7 +999,7 @@ def paginate_mobile_workers(request, domain):
         else:
             return _('Pending Confirmation')
 
-    def get_connect_links_by_username(users):
+    def get_personalid_links_by_username(users):
         if not toggles.COMMCARE_CONNECT.enabled(domain):
             return {}
         usernames = [
@@ -1014,7 +1014,7 @@ def paginate_mobile_workers(request, domain):
             for link in links
         }
 
-    connect_links = get_connect_links_by_username(users)
+    personalid_links = get_personalid_links_by_username(users)
     for user in users:
         date_registered = user.pop('created_on', '')
         if date_registered:
@@ -1022,13 +1022,13 @@ def paginate_mobile_workers(request, domain):
         # make sure these are always set and default to true
         user['is_active'] = user.get('is_active', True)
         user['is_account_confirmed'] = user.get('is_account_confirmed', True)
-        connect_link = connect_links.get(user['base_username'])
+        personalid_link = personalid_links.get(user['base_username'])
         user.update({
             'username': user.pop('base_username', ''),
             'user_id': user.pop('_id'),
             'date_registered': date_registered,
             'status': _status_string(user),
-            'is_connect_link_active': connect_link.is_active if connect_link else None,
+            'is_personalid_link_active': personalid_link.is_active if personalid_link else None,
         })
 
     return JsonResponse({

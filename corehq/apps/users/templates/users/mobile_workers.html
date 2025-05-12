@@ -23,7 +23,7 @@
   {% registerurl 'paginate_mobile_workers' domain %}
   {% registerurl 'activate_commcare_user' domain '---' %}
   {% registerurl 'deactivate_commcare_user' domain '---' %}
-  {% registerurl 'set_connectid_link_status' domain '---' %}
+  {% registerurl 'set_personalid_link_status' domain '---' %}
   {% registerurl 'send_confirmation_email' domain '---' %}
   {% registerurl 'send_confirmation_sms' domain '---' %}
 
@@ -372,7 +372,7 @@
                 </th>
               {% endif %}
               {% if request|toggle_enabled:"COMMCARE_CONNECT" %}
-                <th class="col-xs-2">{% trans 'Connect ID Status' %}</th>
+                <th class="col-xs-2">{% trans 'PersonalID Status' %}</th>
               {% endif %}
               {% if not request.is_view_only %}
                 <th class="col-xs-2">{% trans 'Action' %}</th>
@@ -399,17 +399,17 @@
                 <td>
                   <span
                     class="label label-info"
-                    data-bind="visible: is_connect_link_active() === true"
+                    data-bind="visible: is_personalid_link_active() === true"
                     >{% trans 'Active' %}</span
                   >
                   <span
                     class="label label-danger"
-                    data-bind="visible: is_connect_link_active() === false"
+                    data-bind="visible: is_personalid_link_active() === false"
                     >{% trans 'Inactive' %}</span
                   >
                   <span
                     class="label label-warning"
-                    data-bind="visible: is_connect_link_active() === null"
+                    data-bind="visible: is_personalid_link_active() === null"
                     >{% trans 'Not Linked' %}</span
                   >
                 </td>
@@ -482,27 +482,27 @@
                     </div>
                   {% endif %}
                   {% if request|toggle_enabled:"COMMCARE_CONNECT" %}
-                    {% include "users/partials/bootstrap3/connectid_activation_modals.html" %}
-                    <div data-bind="visible: is_connect_link_active">
+                    {% include "users/partials/bootstrap3/personalid_activation_modals.html" %}
+                    <div data-bind="visible: is_personalid_link_active">
                       <button
                         type="button"
                         class="btn btn-default"
                         data-toggle="modal"
-                        data-bind="attr: {'data-target': '#deactivate_connectid_link_' + username()}"
+                        data-bind="attr: {'data-target': '#deactivate_personalid_link_' + username()}"
                       >
-                        {% trans "Unlink ConnectID" %}
+                        {% trans "Unlink PersonalID" %}
                       </button>
                     </div>
                     <div
-                      data-bind="visible: is_connect_link_active() === false"
+                      data-bind="visible: is_personalid_link_active() === false"
                     >
                       <button
                         type="button"
                         class="btn btn-default"
                         data-toggle="modal"
-                        data-bind="attr: {'data-target': '#activate_connectid_link_' + username()}"
+                        data-bind="attr: {'data-target': '#activate_personalid_link_' + username()}"
                       >
-                        {% trans "Link ConnectID" %}
+                        {% trans "Link PersonalID" %}
                       </button>
                     </div>
                   {% endif %}
