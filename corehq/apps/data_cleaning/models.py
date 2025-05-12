@@ -162,7 +162,7 @@ class BulkEditSession(models.Model):
         :param data_type: DataType - Optional. Will be inferred for system props
         :return: The created BulkEditColumn
         """
-        return BulkEditColumn.create_for_session(self, prop_id, label, data_type)
+        return self.columns.create_for_session(self, prop_id, label, data_type)
 
     @staticmethod
     def _update_order(related_manager, id_field, provided_ids):
@@ -902,6 +902,19 @@ class BulkEditColumnManager(models.Manager):
                 is_system=self.model.is_system_property(prop_id),
             )
 
+    def create_for_session(self, session, prop_id, label, data_type=None):
+        is_system_property = self.model.is_system_property(prop_id)
+        from corehq.apps.data_cleaning.utils.cases import get_system_property_data_type
+        data_type = get_system_property_data_type(prop_id) if is_system_property else data_type
+        return self.create(
+            session=session,
+            index=session.columns.count(),
+            prop_id=prop_id,
+            label=label,
+            data_type=data_type or DataType.TEXT,
+            is_system=is_system_property,
+        )
+
 
 class BulkEditColumn(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="columns", on_delete=models.CASCADE)
@@ -926,20 +939,6 @@ class BulkEditColumn(models.Model):
         return prop_id in set(METADATA_IN_REPORTS).difference({
             'name', 'case_name', 'external_id',
         })
-
-    @classmethod
-    def create_for_session(cls, session, prop_id, label, data_type=None):
-        is_system_property = cls.is_system_property(prop_id)
-        from corehq.apps.data_cleaning.utils.cases import get_system_property_data_type
-        data_type = get_system_property_data_type(prop_id) if is_system_property else data_type
-        return cls.objects.create(
-            session=session,
-            index=session.columns.count(),
-            prop_id=prop_id,
-            label=label,
-            data_type=data_type or DataType.TEXT,
-            is_system=is_system_property,
-        )
 
     @property
     def slug(self):
