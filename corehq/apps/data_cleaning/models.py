@@ -367,7 +367,7 @@ class BulkEditSession(models.Model):
         return self.records.select(self, doc_id)
 
     def deselect_record(self, doc_id):
-        return BulkEditRecord.deselect_record(self, doc_id)
+        return self.records.deselect(self, doc_id)
 
     def select_multiple_records(self, doc_ids):
         return BulkEditRecord.select_multiple_records(self, doc_ids)
@@ -964,6 +964,23 @@ class BulkEditRecordManager(models.Manager):
             record.save()
         return record
 
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
+    def deselect(self, session, doc_id):
+        try:
+            record = session.records.get(doc_id=doc_id)
+        except self.model.DoesNotExist:
+            return None
+
+        if record.changes.count() > 0:
+            record.is_selected = False
+            record.save()
+        else:
+            record.delete()
+            record = None
+
+        return record
+
 
 class BulkEditRecord(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="records", on_delete=models.CASCADE)
@@ -988,23 +1005,6 @@ class BulkEditRecord(models.Model):
             doc_id__in=doc_ids,
         ).values_list("doc_id", flat=True)
         return list(set(doc_ids) - set(recorded_doc_ids))
-
-    @classmethod
-    @retry_on_integrity_error(max_retries=3, delay=0.1)
-    def deselect_record(cls, session, doc_id):
-        try:
-            record = session.records.get(doc_id=doc_id)
-        except cls.DoesNotExist:
-            return None
-
-        if record.changes.count() > 0:
-            record.is_selected = False
-            record.save()
-        else:
-            record.delete()
-            record = None
-
-        return record
 
     @classmethod
     @retry_on_integrity_error(max_retries=3, delay=0.1)
