@@ -646,6 +646,10 @@ class FilterMatchType:
     )
 
 
+class BulkEditFilterManager(models.Manager):
+    use_for_related_fields = True
+
+
 class BulkEditFilter(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="filters", on_delete=models.CASCADE)
     filter_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
@@ -662,6 +666,8 @@ class BulkEditFilter(models.Model):
         choices=FilterMatchType.ALL_CHOICES,
     )
     value = models.TextField(null=True, blank=True)
+
+    objects = BulkEditFilterManager()
 
     class Meta:
         ordering = ["index"]
