@@ -370,7 +370,7 @@ class BulkEditSession(models.Model):
         return self.records.deselect(self, doc_id)
 
     def select_multiple_records(self, doc_ids):
-        return BulkEditRecord.select_multiple_records(self, doc_ids)
+        return self.records.select_multiple(self, doc_ids)
 
     def deselect_multiple_records(self, doc_ids):
         return BulkEditRecord.deselect_multiple_records(self, doc_ids)
@@ -981,6 +981,35 @@ class BulkEditRecordManager(models.Manager):
 
         return record
 
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
+    def select_multiple(self, session, doc_ids):
+        session.records.filter(
+            doc_id__in=doc_ids,
+            is_selected=False,
+        ).update(is_selected=True)
+
+        existing_ids = session.records.filter(
+            session=session,
+            doc_id__in=doc_ids,
+        ).values_list("doc_id", flat=True)
+
+        missing_ids = list(set(doc_ids) - set(existing_ids))
+        new_records = [
+            self.model(session=session, doc_id=doc_id, is_selected=True)
+            for doc_id in missing_ids
+        ]
+        # using ignore_conflicts avoids IntegrityErrors if another
+        # process inserts them concurrently:
+        self.bulk_create(new_records, ignore_conflicts=True)
+
+        # re-update any records that might still not be marked if there
+        # were any conflicts above...
+        session.records.filter(
+            doc_id__in=doc_ids,
+            is_selected=False,
+        ).update(is_selected=True)
+
 
 class BulkEditRecord(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="records", on_delete=models.CASCADE)
@@ -1005,36 +1034,6 @@ class BulkEditRecord(models.Model):
             doc_id__in=doc_ids,
         ).values_list("doc_id", flat=True)
         return list(set(doc_ids) - set(recorded_doc_ids))
-
-    @classmethod
-    @retry_on_integrity_error(max_retries=3, delay=0.1)
-    @transaction.atomic
-    def select_multiple_records(cls, session, doc_ids):
-        session.records.filter(
-            doc_id__in=doc_ids,
-            is_selected=False,
-        ).update(is_selected=True)
-
-        existing_ids = session.records.filter(
-            session=session,
-            doc_id__in=doc_ids,
-        ).values_list("doc_id", flat=True)
-
-        missing_ids = list(set(doc_ids) - set(existing_ids))
-        new_records = [
-            cls(session=session, doc_id=doc_id, is_selected=True)
-            for doc_id in missing_ids
-        ]
-        # using ignore_conflicts avoids IntegrityErrors if another
-        # process inserts them concurrently:
-        cls.objects.bulk_create(new_records, ignore_conflicts=True)
-
-        # re-update any records that might still not be marked if there
-        # were any conflicts above...
-        session.records.filter(
-            doc_id__in=doc_ids,
-            is_selected=False,
-        ).update(is_selected=True)
 
     @classmethod
     @retry_on_integrity_error(max_retries=3, delay=0.1)
