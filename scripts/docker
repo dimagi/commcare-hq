@@ -356,6 +356,7 @@ else
             ${VOLUME_PREFIX}couchdb \
             ${VOLUME_PREFIX}elasticsearch2 \
             ${VOLUME_PREFIX}elasticsearch5 \
+            ${VOLUME_PREFIX}elasticsearch6 \
             ${VOLUME_PREFIX}kafka \
             ${VOLUME_PREFIX}lib \
             ${VOLUME_PREFIX}postgresql \
