@@ -407,7 +407,7 @@ class BulkEditSession(models.Model):
         for doc_ids in chunked(
             self.get_queryset().scroll_ids(), BULK_OPERATION_CHUNK_SIZE, list
         ):
-            num_unrecorded += len(BulkEditRecord.get_unrecorded_doc_ids(self, doc_ids))
+            num_unrecorded += len(self.records.get_unrecorded_doc_ids(self, doc_ids))
         return num_unrecorded
 
     def can_select_all(self, table_num_records=None):
@@ -1026,6 +1026,12 @@ class BulkEditRecordManager(models.Manager):
             changes__isnull=True,
         ).delete()
 
+    def get_unrecorded_doc_ids(self, session, doc_ids):
+        recorded_doc_ids = session.records.filter(
+            doc_id__in=doc_ids,
+        ).values_list("doc_id", flat=True)
+        return list(set(doc_ids) - set(recorded_doc_ids))
+
 
 class BulkEditRecord(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="records", on_delete=models.CASCADE)
@@ -1043,13 +1049,6 @@ class BulkEditRecord(models.Model):
                 name="unique_record_per_session",
             ),
         ]
-
-    @classmethod
-    def get_unrecorded_doc_ids(cls, session, doc_ids):
-        recorded_doc_ids = session.records.filter(
-            doc_id__in=doc_ids,
-        ).values_list("doc_id", flat=True)
-        return list(set(doc_ids) - set(recorded_doc_ids))
 
     @property
     def has_property_updates(self):
