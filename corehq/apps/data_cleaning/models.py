@@ -975,10 +975,18 @@ class BulkEditColumn(models.Model):
 
 class BulkEditRecord(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="records", on_delete=models.CASCADE)
-    doc_id = models.CharField(max_length=126, unique=True, db_index=True)  # case_id or form_id
+    doc_id = models.CharField(max_length=126, db_index=True)  # case_id or form_id
     is_selected = models.BooleanField(default=True)
     calculated_change_id = models.UUIDField(null=True, blank=True)
     calculated_properties = models.JSONField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["session", "doc_id"],
+                name="unique_record_per_session",
+            ),
+        ]
 
     @classmethod
     def get_record_for_inline_editing(cls, session, doc_id):
