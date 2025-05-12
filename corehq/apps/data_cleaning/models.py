@@ -151,7 +151,7 @@ class BulkEditSession(models.Model):
         :param value: string - The value to filter on
         :return: The created BulkEditFilter
         """
-        return BulkEditFilter.create_for_session(self, prop_id, data_type, match_type, value)
+        return self.filters.create_for_session(self, prop_id, data_type, match_type, value)
 
     def add_column(self, prop_id, label, data_type=None):
         """
@@ -649,6 +649,19 @@ class FilterMatchType:
 class BulkEditFilterManager(models.Manager):
     use_for_related_fields = True
 
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
+    def create_for_session(self, session, prop_id, data_type, match_type, value=None):
+        index = session.filters.count()
+        return self.create(
+            session=session,
+            index=index,
+            prop_id=prop_id,
+            data_type=data_type,
+            match_type=match_type,
+            value=value,
+        )
+
 
 class BulkEditFilter(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="filters", on_delete=models.CASCADE)
@@ -671,20 +684,6 @@ class BulkEditFilter(models.Model):
 
     class Meta:
         ordering = ["index"]
-
-    @classmethod
-    @retry_on_integrity_error(max_retries=3, delay=0.1)
-    @transaction.atomic
-    def create_for_session(cls, session, prop_id, data_type, match_type, value=None):
-        index = session.filters.count()
-        return BulkEditFilter.objects.create(
-            session=session,
-            index=index,
-            prop_id=prop_id,
-            data_type=data_type,
-            match_type=match_type,
-            value=value,
-        )
 
     @classmethod
     def apply_filters_to_query(cls, session, query):
