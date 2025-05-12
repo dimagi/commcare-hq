@@ -249,7 +249,7 @@ class BulkEditSession(models.Model):
     def get_queryset(self):
         query = CaseSearchES().domain(self.domain).case_type(self.identifier)
         query = self.filters.apply_to_query(self, query)
-        query = BulkEditPinnedFilter.apply_filters_to_query(self, query)
+        query = self.pinned_filters.apply_to_query(self, query)
         return query
 
     def get_document_from_queryset(self, doc_id):
@@ -836,6 +836,11 @@ class BulkEditPinnedFilterManager(models.Manager):
                 filter_type=filter_type,
             )
 
+    def apply_to_query(self, session, query):
+        for pinned_filter in session.pinned_filters.all():
+            query = pinned_filter.filter_query(query)
+        return query
+
 
 class BulkEditPinnedFilter(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="pinned_filters", on_delete=models.CASCADE)
@@ -854,12 +859,6 @@ class BulkEditPinnedFilter(models.Model):
 
     class Meta:
         ordering = ["index"]
-
-    @classmethod
-    def apply_filters_to_query(cls, session, query):
-        for pinned_filter in session.pinned_filters.all():
-            query = pinned_filter.filter_query(query)
-        return query
 
     def get_report_filter_class(self):
         from corehq.apps.data_cleaning.filters import (
