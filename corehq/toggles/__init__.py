@@ -998,14 +998,6 @@ WEB_APPS_DOMAIN_BANNER = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/USH%3A+Show+current+domain+in+web+apps+Login+As+banner',
 )
 
-WEB_APPS_UPLOAD_QUESTIONS = FeatureRelease(
-    'web_apps_upload_questions',
-    'USH: Support image, audio, and video questions in Web Apps',
-    TAG_RELEASE,
-    namespaces=[NAMESPACE_DOMAIN],
-    owner='Jenny Schweers',
-)
-
 LOCATION_FIELD_USER_PROVISIONING = FeatureRelease(
     'location_field_user_provisioning',
     'USH: Holding feature flag for various works relating to the location field',
@@ -1433,12 +1425,12 @@ COMMTRACK = StaticToggle(
     "CommCare Supply",
     TAG_DEPRECATED,
     description=(
-        '<a href="https://help.commcarehq.org/display/commtrack/CommCare+Supply+Home">CommCare Supply</a> '
+        '<a href="https://dimagi.atlassian.net/wiki/spaces/commtrack/overview">CommCare Supply</a> '
         "is a logistics and supply chain management module. It is designed "
         "to improve the management, transport, and resupply of a variety of "
         "goods and materials, from medication to food to bednets. <br/>"
     ),
-    help_link='https://help.commcarehq.org/display/commtrack/CommCare+Supply+Home',
+    help_link='https://dimagi.atlassian.net/wiki/spaces/commtrack/overview',
     namespaces=[NAMESPACE_DOMAIN],
     save_fn=_commtrackify,
 )

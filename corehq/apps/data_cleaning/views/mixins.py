@@ -20,6 +20,7 @@ class BulkEditSessionViewMixin:
                 user=self.request.user,
                 domain=self.domain,
                 session_id=self.session_id,
+                committed_on__isnull=True,
             )
         except BulkEditSession.DoesNotExist:
             raise Http404(self.session_not_found_message)

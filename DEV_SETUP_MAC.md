@@ -142,7 +142,7 @@ Docker images that will not run on Mac OS (Intel or M1):
 
 Docker images that will not run on Mac OS (as of 11.x Big Sur and above):
 
-- `elasticsearch5`
+- `elasticsearch6` (Image is not optimized for arm but can run on apple silicon)
 
 ### M1 (OS 11.x and above) Recommended Docker Up Command
 
@@ -155,31 +155,51 @@ Note: `kafka` will be very cranky on start up. You might have to restart it if y
 ./scripts/docker restart kafka
 ```
 
-### Installing and running Elasticsearch 5.6.16 outside of Docker
+### Installing and running Elasticsearch 6.8.23 outside of Docker
 
 First, ensure that you have Java 8 running. `java -version` should output something like `openjdk version "1.8.0_322"`.
 Use `sdkman` or `jenv` to manage your local java versions.
 
-Download the `tar` file for [elasticsearch 5.6.16](https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.6.16.tar.gz)
+Download the `tar` file for elasticsearch 6.8.23
+
+```sh
+curl https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.8.23.tar.gz --output elasticsearch-6.8.23.tar.gz
+```
 
 Un-tar and put the folder somewhere you can find it. Take note of that path (`pwd`) and add the following to your `~/.zshrc`:
 
+```
+tar -xvzf elasticsearch-6.8.23.tar.gz
+```
+
+
 ```sh
-export PATH="/path/to/elasticsearch-5.6.16/bin:$PATH"
+export PATH="/path/to/elasticsearch-6.8.23/bin:$PATH"
 ```
 NOTE: Make sure that `/path/to` is replaced with the actual path!
 
-After this you can open a new terminal window and run elasticsearch with `elasticsearch`.
+You would need to update couple of setting in order to make elasticsearch run on your mac.
 
-If running `elasticsearch` throws errors related to JVM options, such as...
+Change into elasticsearch directory
 
-```sh
-Unrecognized VM option 'UseConcMarkSweepGC'
-Error: Could not create the Java Virtual Machine.
+```
+cd /path/to/elasticsearch-6.8.23
 ```
 
-...try commenting out those options in the relevant config file: inside of your elasticsearch directory
-(`which elasticsearch`), these may be set in `bin/elasticsearch.in.sh` or in `config/jvm.options`).
+- In `config/jvm.options`, comment out `10-:-XX:UseAVX=2`
+
+```
+sed -i '' '/10-:-XX:UseAVX=2/ s/^/# /' config/jvm.options
+```
+
+- In `config/elasticsearch.yml`, add xpack.ml.enabled: false
+
+```
+echo "xpack.ml.enabled: false" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
+```
+
+After this you can open a new terminal window and run elasticsearch with `elasticsearch`.
+
 
 #### Install Elasticsearch plugins
 

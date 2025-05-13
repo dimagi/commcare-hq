@@ -2,6 +2,7 @@ import json
 
 from django.contrib import messages
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 
@@ -132,11 +133,9 @@ class CleanCasesTableView(BulkEditSessionViewMixin,
 
     @hq_hx_action("post")
     def apply_all_changes(self, request, *args, **kwargs):
-        self.session.prepare_session_for_commit()
-        commit_data_cleaning.apply_async(
-            args=(self.session.session_id,),
-            task_id=self.session.task_id
-        )
+        self.session.committed_on = timezone.now()
+        self.session.save()
+        commit_data_cleaning.delay(self.session.session_id)
         messages.success(
             request,
             _("Changes applied. Check the Recent Tasks table for progress.")
@@ -204,6 +203,18 @@ class CleanCasesTableView(BulkEditSessionViewMixin,
             doc_id, column, request, *args, **kwargs
         )
 
+    @hq_hx_action("post")
+    def cell_inline_edit(self, request, *args, **kwargs):
+        """
+        Commits the inline edit action for a cell.
+        """
+        doc_id, column = self._get_cell_request_details(request)
+        value = request.POST["newValue"]
+        self.session.apply_inline_edit(doc_id, column.prop_id, value)
+        return self._render_table_cell_response(
+            doc_id, column, request, *args, **kwargs
+        )
+
 
 class CaseCleaningTasksTableView(BaseDataCleaningTableView):
     urlname = "case_data_cleaning_tasks_table"
@@ -220,7 +231,7 @@ class CaseCleaningTasksTableView(BaseDataCleaningTableView):
             "committed_on": session.committed_on,
             "completed_on": session.completed_on,
             "case_type": session.identifier,
-            "case_count": session.records.count(),
+            "case_count": session.num_changed_records,
             "percent": session.percent_complete,
             "form_ids_url": reverse('download_form_ids', args=(session.domain, session.session_id)),
             "has_form_ids": bool(len(session.form_ids)),

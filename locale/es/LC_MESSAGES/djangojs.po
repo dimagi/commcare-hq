@@ -202,18 +202,12 @@ msgstr ""
 "Los tipos de casos solo pueden incluir los caracteres a-z, 0-9, '-' y '_'"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
-#, fuzzy
-#| msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgid "This is a reserved case type. Please choose another name."
 msgstr ""
-"'usuario-commcare' es un tipo de caso reservado. Por favor cambie el tipo de "
-"caso"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
-#, fuzzy
-#| msgid "This choice value has been used in the same question"
 msgid "This case type has been deprecated in the Data Dictionary."
-msgstr "Se utilizó esta opción de valor en la misma pregunta."
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js
@@ -1422,10 +1416,8 @@ msgid "Signature Capture"
 msgstr "Captura de Firma"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#, fuzzy
-#| msgid "Document Template"
 msgid "Document Upload"
-msgstr "Plantilla de Documento"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "GPS"
@@ -5564,15 +5556,3 @@ msgstr "¡Incorrecto! La respuesta es:"
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr ""
-
-#~ msgid "Server Form"
-#~ msgstr "Formulario de Servidor"
-
-#~ msgid "Local Form"
-#~ msgstr "Formulario Local"
-
-#~ msgid "XML should not be equivalent"
-#~ msgstr "El XML no debería ser equivalente"
-
-#~ msgid "XML mismatch"
-#~ msgstr "No coincide con el XML"

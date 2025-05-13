@@ -1,9 +1,6 @@
 import re
 import uuid
 
-from celery import uuid as celery_uuid
-from datetime import datetime, timezone
-
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
@@ -284,29 +281,64 @@ class BulkEditSession(models.Model):
 
         return num_selected_records
 
-    def _apply_change_to_selected_doc_ids(self, change, doc_ids):
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
+    def apply_inline_edit(self, doc_id, prop_id, value):
         """
-        Apply a change to the selected records with the given doc_ids.
-        :param change: BulkEditChange
-        :param doc_ids: list of doc ids
+        Edit the value of a property for a document in this session.
+        :param doc_id: the id of the document (case / form)
+        :param prop_id: the property id to edit
+        :param value: the new value to set
         """
-        selected_records = BulkEditRecord.get_selected_records_with_ids(self, doc_ids)
-        change.records.add(*selected_records)
+        record = BulkEditRecord.get_record_for_inline_editing(self, doc_id)
+        BulkEditChange.apply_inline_edit(record, prop_id, value)
 
-    def apply_change_to_selected_records_in_queryset(self, change):
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    def _attach_change_to_records(self, change, doc_ids=None):
         """
-        Apply a change to the selected records in the current queryset.
         :param change: BulkEditChange
+        :param doc_ids: None or list of doc ids
         """
+        if doc_ids is None:
+            selected_records = self.records.filter(is_selected=True)
+        else:
+            selected_records = self.records.filter(doc_id__in=doc_ids, is_selected=True)
+
+        # M2M relationships don't support bulk_create, so we need to access the through model
+        # to properly batch this action
+        if selected_records:
+            through = BulkEditChange.records.through
+            rows = [
+                through(bulkeditchange_id=change.pk, bulkeditrecord_id=record.pk)
+                for record in selected_records
+            ]
+            through.objects.bulk_create(rows, ignore_conflicts=True)
+
+    @transaction.atomic
+    def apply_change_to_selected_records(self, change):
+        """
+        :param change: BulkEditChange - an UNSAVED instance
+        :return: BulkEditChange - the saved instance
+        """
+        assert change.session == self
+        change.save()  # save the change in the atomic block, rather than the form
         if self.has_any_filtering:
             self._apply_operation_on_queryset(
-                lambda doc_ids: self._apply_change_to_selected_doc_ids(change, doc_ids)
+                lambda doc_ids: self._attach_change_to_records(change, doc_ids)
             )
         else:
             # If there are no filters, we can just apply the change to all selected records
             # this will be a faster operation for larger data sets
-            selected_records = self.records.filter(is_selected=True)
-            change.records.add(*selected_records)
+            self._attach_change_to_records(change)
+        return change
+
+    @property
+    def num_changed_records(self):
+        if not self.committed_on:
+            raise RuntimeError(
+                "Session not committed yet. Please commit the session first or use get_change_counts()"
+            )
+        return self.result['record_count'] if self.completed_on else self.records.count()
 
     def get_change_counts(self):
         """
@@ -357,15 +389,6 @@ class BulkEditSession(models.Model):
     def clear_all_changes(self):
         self.changes.all().delete()
         self.purge_records()
-
-    def prepare_session_for_commit(self):
-        """
-        Prepare the session for commit by generating a task id
-        and setting the committed_on date.
-        """
-        self.task_id = celery_uuid()
-        self.committed_on = datetime.now(timezone.utc).replace(tzinfo=None)
-        self.save()
 
     def is_record_selected(self, doc_id):
         return BulkEditRecord.is_record_selected(self, doc_id)
@@ -439,7 +462,7 @@ class BulkEditSession(models.Model):
         # the most potentially expensive query is below:
         return num_records + self._get_num_unrecorded() <= MAX_RECORDED_LIMIT
 
-    def update_result(self, record_count, form_id=None):
+    def update_result(self, record_count, form_id=None, error=None):
         result = self.result or {}
 
         if 'form_ids' not in result:
@@ -448,9 +471,13 @@ class BulkEditSession(models.Model):
             result['record_count'] = 0
         if 'percent' not in result:
             result['percent'] = 0
+        if 'errors' not in result:
+            result['errors'] = []
 
         if form_id:
             result['form_ids'].append(form_id)
+        if error:
+            result['errors'].append(error)
         result['record_count'] += record_count
         if self.records.count() == 0:
             result['percent'] = 100
@@ -458,7 +485,7 @@ class BulkEditSession(models.Model):
             result['percent'] = result['record_count'] * 100 / self.records.count()
 
         self.result = result
-        self.save()
+        self.save(update_fields=['result'])
 
 
 class DataType:
@@ -948,10 +975,32 @@ class BulkEditColumn(models.Model):
 
 class BulkEditRecord(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="records", on_delete=models.CASCADE)
-    doc_id = models.CharField(max_length=126, unique=True, db_index=True)  # case_id or form_id
+    doc_id = models.CharField(max_length=126, db_index=True)  # case_id or form_id
     is_selected = models.BooleanField(default=True)
     calculated_change_id = models.UUIDField(null=True, blank=True)
     calculated_properties = models.JSONField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["session", "doc_id"],
+                name="unique_record_per_session",
+            ),
+        ]
+
+    @classmethod
+    def get_record_for_inline_editing(cls, session, doc_id):
+        """
+        :param session: BulkEditSession
+        :param doc_id: the id of the document (case / form)
+        :return: BulkEditRecord
+        """
+        record, _ = cls.objects.get_or_create(
+            session=session,
+            doc_id=doc_id,
+            defaults={'is_selected': False}
+        )
+        return record
 
     @classmethod
     def is_record_selected(self, session, doc_id):
@@ -1042,16 +1091,6 @@ class BulkEditRecord(models.Model):
             doc_id__in=doc_ids,
             changes__isnull=True,
         ).delete()
-
-    @classmethod
-    def get_selected_records_with_ids(self, session, doc_ids):
-        """
-        Get selected records in session with the given doc_ids.
-        :param session: BulkEditSession
-        :param doc_ids: list of doc_ids to filter
-        :return: queryset of selected records
-        """
-        return session.records.filter(doc_id__in=doc_ids, is_selected=True)
 
     @property
     def has_property_updates(self):
@@ -1161,6 +1200,24 @@ class BulkEditChange(models.Model):
 
     class Meta:
         ordering = ["created_on"]
+
+    @classmethod
+    def apply_inline_edit(cls, record, prop_id, value):
+        """
+        Apply an inline edit to a record.
+        :param record: BulkEditRecord
+        :param prop_id: the id of the property to edit
+        :param value: the new value for the property
+        :return: BulkEditChange
+        """
+        change = cls.objects.create(
+            session=record.session,
+            prop_id=prop_id,
+            action_type=EditActionType.REPLACE,
+            replace_string=value,
+        )
+        change.records.add(record)
+        return change
 
     @property
     def action_title(self):

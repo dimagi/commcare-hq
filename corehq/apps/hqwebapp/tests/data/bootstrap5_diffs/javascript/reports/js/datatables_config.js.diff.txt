@@ -1,12 +1,13 @@
 --- 
 +++ 
-@@ -1,402 +1,370 @@
+@@ -1,403 +1,334 @@
 -hqDefine("reports/js/bootstrap3/datatables_config", [
 -    'jquery',
 -    'underscore',
 -    'analytix/js/google',
 -    'datatables.bootstrap',
 -    'datatables.fixedColumns',
+-    'datatables-bootstrap3/BS3/assets/css/datatables.css',
 -], function (
 -    $,
 -    _,
@@ -92,6 +93,9 @@
 +import 'datatables.net/js/jquery.dataTables';
 +import 'datatables.net-fixedcolumns/js/dataTables.fixedColumns';
 +import 'datatables.net-fixedcolumns-bs5/js/fixedColumns.bootstrap5';
++
++import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';
++import 'datatables.net-fixedcolumns-bs5/css/fixedColumns.bootstrap5.min.css';
 +
 +import _ from 'underscore';
 +import googleAnalytics from 'analytix/js/google';
@@ -461,7 +465,7 @@
 +                    return data;
 +                };
 +
-+                params.footerCallback = function (row, data, start, end, display) {
++                params.footerCallback = function (row, data, start, end, display) {     // eslint-disable-line no-unused-vars
 +                    if ('total_row' in data) {
 +                        self.render_footer_row('ajax_total_row', data['total_row']);
 +                    }
@@ -650,39 +654,6 @@
 -        }
 -
 -        return (asc ? 1 : -1) * ((x < y) ? -1 : ((x > y) ?  1 : 0));
--    }
--
--    function convertNum(k) {
--        var m = k.match(/title="*([-+.0-9eE]+)/);
--        if (m !== null) {
--            m = +m[1];
--            if (isNaN(m)) {
--                m = null;
--            }
--        }
--        return m;
--    }
--
--    function convertDate(k) {
--        var m = k.match(/title="*(.+)"/);
--        if (m[1] === "None") {
--            return null;
--        }
--        return new Date(m[1]);
--    }
--
--    $.fn.dataTableExt.oSort['title-numeric-asc'] = function (a, b) { return sortSpecial(a, b, true, convertNum); };
--
--    $.fn.dataTableExt.oSort['title-numeric-desc'] = function (a, b) { return sortSpecial(a, b, false, convertNum); };
--
--    $.fn.dataTableExt.oSort['title-date-asc']  = function (a,b) { return sortSpecial(a, b, true, convertDate); };
--
--    $.fn.dataTableExt.oSort['title-date-desc']  = function (a,b) { return sortSpecial(a, b, false, convertDate); };
--
--    return {
--        HQReportDataTables: function (options) { return new HQReportDataTables(options); },
--    };
--});
 +    function renderTimingNode(node) {
 +        if (!node.subs || node.subs.length === 0) {
 +            return '';
@@ -717,49 +688,41 @@
 +            html += '</div></div>';
 +        }
 +        return html + '</div>';
-+    }
-+
+     }
+ 
+-    function convertNum(k) {
+-        var m = k.match(/title="*([-+.0-9eE]+)/);
+-        if (m !== null) {
+-            m = +m[1];
+-            if (isNaN(m)) {
+-                m = null;
+-            }
+-        }
+-        return m;
+-    }
+-
+-    function convertDate(k) {
+-        var m = k.match(/title="*(.+)"/);
+-        if (m[1] === "None") {
+-            return null;
+-        }
+-        return new Date(m[1]);
+-    }
+-
+-    $.fn.dataTableExt.oSort['title-numeric-asc'] = function (a, b) { return sortSpecial(a, b, true, convertNum); };
+-
+-    $.fn.dataTableExt.oSort['title-numeric-desc'] = function (a, b) { return sortSpecial(a, b, false, convertNum); };
+-
+-    $.fn.dataTableExt.oSort['title-date-asc']  = function (a,b) { return sortSpecial(a, b, true, convertDate); };
+-
+-    $.fn.dataTableExt.oSort['title-date-desc']  = function (a,b) { return sortSpecial(a, b, false, convertDate); };
+-
+-    return {
+-        HQReportDataTables: function (options) { return new HQReportDataTables(options); },
+-    };
+-});
 +    return self;
 +};
-+
-+// For sorting rows
-+
-+function sortSpecial(a, b, asc, convert) {
-+    var x = convert(a);
-+    var y = convert(b);
-+
-+    // sort nulls at end regardless of current sort direction
-+    if (x === null && y === null) {
-+        return 0;
-+    }
-+    if (x === null) {
-+        return 1;
-+    }
-+    if (y === null) {
-+        return -1;
-+    }
-+
-+    return (asc ? 1 : -1) * ((x < y) ? -1 : ((x > y) ?  1 : 0));
-+}
-+
-+function convertNum(k) {
-+    var m = k.match(/title="*([-+.0-9eE]+)/);
-+    if (m !== null) {
-+        m = +m[1];
-+        if (isNaN(m)) {
-+            m = null;
-+        }
-+    }
-+    return m;
-+}
-+
-+function convertDate(k) {
-+    var m = k.match(/title="*(.+)"/);
-+    if (m[1] === "None") {
-+        return null;
-+    }
-+    return new Date(m[1]);
-+}
 +
 +export default {
 +    HQReportDataTables: function (options) {
