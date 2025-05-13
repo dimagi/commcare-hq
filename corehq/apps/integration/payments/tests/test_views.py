@@ -8,6 +8,7 @@ from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.groups import group_adapter
 from corehq.apps.es.users import user_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.integration.kyc.models import KycVerificationStatus, UserDataStore, KycConfig
@@ -256,7 +257,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
         }
 
 
-@es_test(requires=[case_search_adapter, user_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter, user_adapter, group_adapter], setup_class=True)
 class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
     urlname = PaymentsVerificationTableView.urlname
 
