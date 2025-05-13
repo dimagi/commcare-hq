@@ -21,13 +21,13 @@ class CleanSelectedRecordsFormView(BulkEditSessionViewMixin,
     template_name = "data_cleaning/forms/clean_selected_records_form.html"
     session_not_found_message = gettext_lazy("Cannot load clean selected records form, session was not found.")
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, cleaning_form=None, change=None, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
             'container_id': 'clean-selected-records',
-            'cleaning_form': kwargs.pop('cleaning_form', None) or CleanSelectedRecordsForm(self.session),
+            'cleaning_form': cleaning_form or CleanSelectedRecordsForm(self.session),
             'are_bulk_edits_allowed': self.session.are_bulk_edits_allowed(),
-            'change': kwargs.pop('change', None),
+            'change': change,
         })
         return context
 

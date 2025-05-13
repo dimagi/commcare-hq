@@ -24,12 +24,12 @@ class SetupCaseSessionFormView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActio
     template_name = "data_cleaning/forms/next_action_form.html"
     container_id = "setup-case-session"
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, form=None, next_action=None, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
-            "form": kwargs.pop('form', None) or SelectCaseTypeForm(self.domain),
+            "form": form or SelectCaseTypeForm(self.domain),
             "container_id": self.container_id,
-            "next_action": kwargs.pop('next_action', 'validate_session'),
+            "next_action": next_action or 'validate_session',
         })
         return context
 
