@@ -3,6 +3,7 @@ import logging
 import os
 from collections import defaultdict
 from datetime import datetime, timedelta
+from memory_profiler import profile
 
 from django.conf import settings
 from django.db import DatabaseError, InternalError, transaction
@@ -608,6 +609,7 @@ def _indicator_metrics(date_created=None):
 
 
 @task(serializer='pickle')
+@profile
 def export_ucr_async(report_export, download_id, user):
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
     ascii_title = report_export.title.encode('ascii', 'replace').decode('utf-8')
