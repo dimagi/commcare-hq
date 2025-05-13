@@ -17,10 +17,11 @@ from corehq.apps.data_dictionary.util import (
     get_case_property_label_dict,
     get_column_headings,
     get_data_dict_deprecated_case_types,
-    get_used_props_by_case_type,
     get_values_hints_dict,
     is_case_type_deprecated,
     is_case_type_or_prop_name_valid,
+    is_case_type_unused,
+    is_case_property_unused,
     map_row_values_to_column_names,
     update_url_query_params,
 )
@@ -348,38 +349,23 @@ class MiscUtilTest(TestCase):
 
 
 @es_test(requires=[case_search_adapter], setup_class=True)
-class UsedPropsByCaseTypeTest(TestCase):
-
-    domain = uuid.uuid4().hex
+class TestUnusedCaseTypeAndProperty(TestCase):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.domain = 'test-unused-types-and-props'
         cls.case_blocks = [
             cls._create_case_block(
                 case_type='case-type',
                 name='Case A',
-                props={'prop': True},
-            ),
-            cls._create_case_block(
-                case_type='case-type',
-                name='Case B',
-                props={'other-prop': True},
-            ),
-            cls._create_case_block(
-                case_type='other-case-type',
-                name='Case C',
-                props={'prop': True, 'foobar': True},
-            ),
-            cls._create_case_block(
-                case_type='no-props',
-                name='Case D',
-                props={},
+                props={'prop': True, 'empty-prop': '', 'null-prop': None},
             ),
         ]
         case_search_es_setup(cls.domain, cls.case_blocks)
 
-    def _create_case_block(case_type, name, props):
+    @classmethod
+    def _create_case_block(cls, case_type, name, props):
         return CaseBlock(
             case_id=uuid.uuid4().hex,
             case_type=case_type,
@@ -387,24 +373,23 @@ class UsedPropsByCaseTypeTest(TestCase):
             update=props,
         )
 
-    def test_get_used_props_by_case_type(self):
-        used_props_by_case_type = get_used_props_by_case_type(self.domain)
-        self.assertEqual(len(used_props_by_case_type), 3)
+    def test_unused_case_type_returns_true(self):
+        self.assertTrue(is_case_type_unused(self.domain, 'random-case-type'))
 
-        # No props were passed to this case type, so should only contain metadata
-        # properties which we are not concerned about
-        metadata_props = set(used_props_by_case_type['no-props'])
+    def test_used_case_type_returns_false(self):
+        self.assertFalse(is_case_type_unused(self.domain, 'case-type'))
 
-        props = set(used_props_by_case_type['case-type']) - metadata_props
-        self.assertEqual({'prop', 'other-prop'}, props)
-        props = set(used_props_by_case_type['other-case-type']) - metadata_props
-        self.assertEqual({'prop', 'foobar'}, props)
+    def test_unused_case_property_returns_true(self):
+        self.assertTrue(is_case_property_unused(self.domain, 'case-type', 'random-prop'))
 
-    def test_get_used_props_by_case_type_with_case_type_param(self):
-        used_props_by_case_type = get_used_props_by_case_type(self.domain, 'case-type')
-        self.assertEqual(len(used_props_by_case_type), 1)
-        props = set(used_props_by_case_type['case-type'])
-        self.assertTrue(props.issuperset({'prop', 'other-prop'}))
+    def test_used_case_property_returns_false(self):
+        self.assertFalse(is_case_property_unused(self.domain, 'case-type', 'prop'))
+
+    def test_empty_case_property_returns_true(self):
+        self.assertTrue(is_case_property_unused(self.domain, 'case-type', 'empty-prop'))
+
+    def test_null_case_property_returns_true(self):
+        self.assertTrue(is_case_property_unused(self.domain, 'case-type', 'null-prop'))
 
 
 class TestUpdateUrlQueryParams(SimpleTestCase):
