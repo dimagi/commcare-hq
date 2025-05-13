@@ -147,18 +147,18 @@ class CleanCasesTableView(BulkEditSessionViewMixin,
     @hq_hx_action("post")
     def undo_last_change(self, request, *args, **kwargs):
         self.session.undo_last_change()
-        return self._trigger_clean_form_referesh(
+        return self._trigger_clean_form_refresh(
             self.get(request, *args, **kwargs)
         )
 
     @hq_hx_action("post")
     def clear_all_changes(self, request, *args, **kwargs):
         self.session.clear_all_changes()
-        return self._trigger_clean_form_referesh(
+        return self._trigger_clean_form_refresh(
             self.get(request, *args, **kwargs)
         )
 
-    def _trigger_clean_form_referesh(self, response):
+    def _trigger_clean_form_refresh(self, response):
         response['HX-Trigger'] = json.dumps({
             'dcCleanFormRefresh': {
                 'target': '#hq-hx-clean-selected-records-form',
