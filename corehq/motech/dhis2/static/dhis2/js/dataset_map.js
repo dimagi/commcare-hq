@@ -1,6 +1,5 @@
 import "commcarehq";
 import $ from "jquery";
-import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import "hqwebapp/js/bootstrap5/crud_paginated_list_init";
 import "hqwebapp/js/bootstrap5/widgets";
@@ -44,4 +43,4 @@ window.sendNow = function (dataSetMapId) {
         success: handleSuccess,
         error: handleFailure,
     });
-}
+};
