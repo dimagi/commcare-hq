@@ -71,7 +71,7 @@ class ReportExport(object):
         ]]
 
     @memoized
-    def get_data(self):
+    def get_data(self, format):
         limit = None
         if format in [Format.XLS, Format.XLS_2007]:
             # Excel files max out at 1,048,576 rows, so we can reasonably limit excel exports to 1M rows
