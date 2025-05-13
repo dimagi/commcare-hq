@@ -14,6 +14,7 @@ from botocore.vendored.requests.packages.urllib3.exceptions import (
 )
 from celery.schedules import crontab
 from couchdbkit import ResourceNotFound
+from memory_profiler import profile
 
 from couchexport.models import Format
 from dimagi.utils.chunked import chunked
@@ -607,6 +608,7 @@ def _indicator_metrics(date_created=None):
 
 
 @task(serializer='pickle')
+@profile
 def export_ucr_async(report_export, download_id, user):
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
     ascii_title = report_export.title.encode('ascii', 'replace').decode('utf-8')
