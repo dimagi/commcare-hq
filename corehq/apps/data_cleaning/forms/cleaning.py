@@ -25,7 +25,7 @@ class CleanSelectedRecordsForm(forms.Form):
     applied to only ONE field.
     """
     clean_prop_id = forms.ChoiceField(
-        label=gettext_lazy("Select a property to clean"),
+        label=gettext_lazy("Select a property to edit"),
         required=False,
         help_text=gettext_lazy(
             "Choices are editable case properties that are "
@@ -33,7 +33,7 @@ class CleanSelectedRecordsForm(forms.Form):
         ),
     )
     clean_action = forms.ChoiceField(
-        label=gettext_lazy("Data cleaning action"),
+        label=gettext_lazy("Edit action"),
         widget=AlpineSelect,
         choices=EditActionType.CHOICES,
         required=False
@@ -155,7 +155,7 @@ class CleanSelectedRecordsForm(forms.Form):
                         css_class="card mb-3",
                     ),
                     twbscrispy.StrictButton(
-                        _("Preview Changes"),
+                        _("Preview Edits"),
                         type="submit",
                         css_class="btn-primary",
                     ),
