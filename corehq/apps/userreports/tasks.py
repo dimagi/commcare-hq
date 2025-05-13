@@ -1,5 +1,6 @@
 import itertools
 import logging
+import os
 from collections import defaultdict
 from datetime import datetime, timedelta
 
@@ -612,8 +613,12 @@ def export_ucr_async(report_export, download_id, user):
     ascii_title = report_export.title.encode('ascii', 'replace').decode('utf-8')
     filename = '{}.xlsx'.format(ascii_title.replace('/', '?'))
     file_path = get_download_file_path(use_transfer, filename)
-
-    report_export.create_export(file_path, Format.XLS_2007)
+    try:
+        report_export.create_export(file_path, Format.XLS_2007)
+    except Exception as e:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        raise e
     expose_download(use_transfer, file_path, filename, download_id, 'xlsx', owner_ids=[user.get_id])
     link = reverse("retrieve_download", args=[download_id], params={"get_file": '1'}, absolute=True)
 
