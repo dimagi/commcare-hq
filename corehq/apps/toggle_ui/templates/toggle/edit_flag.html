@@ -2,7 +2,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load compress %}
-
 {% js_entry_b3 'toggle_ui/js/edit-flag' %}
 
 {% block title %}{% trans "Edit Feature Flag: " %}{{ static_toggle.label }}{% endblock %}
@@ -41,9 +40,13 @@
     <p>{{ static_toggle.description }}</p>
   {% endif %}
   <p>
-    <span class="label label-{{ static_toggle.tag.css_class }}">{{ static_toggle.tag.name }}</span>
+    <span class="label label-{{ static_toggle.tag.css_class }}"
+      >{{ static_toggle.tag.name }}</span
+    >
     {% if is_random %}
-      <span class="label label-info">Random: {{ static_toggle.randomness }}</span>
+      <span class="label label-info"
+        >Random: {{ static_toggle.randomness }}</span
+      >
     {% endif %}
   </p>
   <p>{{ static_toggle.tag.description }}</p>
@@ -55,39 +58,45 @@
     </div>
   {% endif %}
   {% if static_toggle.help_link %}
-    <p><a href="{{ static_toggle.help_link }}" target="_blank">{% trans "More information" %}</a></p>
+    <p>
+      <a href="{{ static_toggle.help_link }}" target="_blank"
+        >{% trans "More information" %}</a
+      >
+    </p>
   {% endif %}
 
   {% if by_service %}
     {% for service, domains in by_service.items %}
       <table class="table table-striped table-hover">
         <thead>
-        <tr>
-          <th class="col-sm-4">Subscription Type</th>
-          <th class="col-sm-8">List of Domains</th>
-        </tr>
+          <tr>
+            <th class="col-sm-4">Subscription Type</th>
+            <th class="col-sm-8">List of Domains</th>
+          </tr>
         </thead>
         <tbody>
-        <tr>
-          <td>{{ service }}</td>
-          <td>{{ domains | join:", " }}</td>
-        </tr>
+          <tr>
+            <td>{{ service }}</td>
+            <td>{{ domains | join:", " }}</td>
+          </tr>
         </tbody>
+      </table>
     {% endfor %}
-    </table>
   {% endif %}
 
   {% if static_toggle.relevant_environments %}
     {% if debug or server_environment in static_toggle.relevant_environments %}
       <div class="alert alert-warning" role="alert">
         {% blocktrans %}
-          <strong>Please Note:</strong> This feature flag is available on this server environment, but not on others.
+          <strong>Please Note:</strong> This feature flag is available on this
+          server environment, but not on others.
         {% endblocktrans %}
       </div>
     {% else %}
       <div class="alert alert-danger" role="alert">
         {% blocktrans %}
-          <strong>CAUTION:</strong> This feature flag is not available on the current server environment.
+          <strong>CAUTION:</strong> This feature flag is not available on the
+          current server environment.
         {% endblocktrans %}
       </div>
     {% endif %}
@@ -97,7 +106,8 @@
     <div class="alert alert-info">
       <i class="fa fa-info-circle"></i>
       {% blocktrans %}
-        This feature flag is <strong>always enabled</strong> for the following domains:
+        This feature flag is <strong>always enabled</strong> for the following
+        domains:
       {% endblocktrans %}
       <ul>
         {% for domain in static_toggle.always_enabled %}
@@ -111,7 +121,8 @@
     <div class="alert alert-info">
       <i class="fa fa-info-circle"></i>
       {% blocktrans %}
-        This feature flag is <strong>always disabled</strong> for the following domains:
+        This feature flag is <strong>always disabled</strong> for the following
+        domains:
       {% endblocktrans %}
       <ul>
         {% for domain in static_toggle.always_disabled %}
@@ -123,34 +134,68 @@
 
   {% if static_toggle.parent_toggles %}
     <div class="alert alert-info">
-      <p><i class="fa fa-info-circle"></i>
-      {% blocktrans %}
-        This feature flag also requires the following flags to be enabled:
-      {% endblocktrans %}
+      <p>
+        <i class="fa fa-info-circle"></i>
+        {% blocktrans %}
+          This feature flag also requires the following flags to be enabled:
+        {% endblocktrans %}
+      </p>
       <ul>
         {% for dependency in static_toggle.parent_toggles %}
-          <li><a href="{% url "edit_toggle" dependency.slug %}" target="_blank">{{ dependency.label }}</a></li>
+          <li>
+            <a href="{% url "edit_toggle" dependency.slug %}" target="_blank"
+              >{{ dependency.label }}</a
+            >
+          </li>
         {% endfor %}
-      </ul></p>
-      <p>{% blocktrans %}
-        Enabling this feature flag will automatically enable the flags listed above.
-      {% endblocktrans %}</p>
+      </ul>
+      <p>
+        {% blocktrans %}
+          Enabling this feature flag will automatically enable the flags listed
+          above.
+        {% endblocktrans %}
+      </p>
     </div>
   {% endif %}
 
-  <hr/>
+  <hr />
   <div id="toggle_editing_ko">
-    <div data-bind="saveButton: saveButtonTop"></div>
+    {% if can_edit_toggle %}
+      <div data-bind="saveButton: saveButtonTop"></div>
+    {% endif %}
     {% if is_random_editable %}
       <div class="input-group">
         <label for="randomness-edit">Randomness Level: </label>
-        <span data-bind="makeHqHelp: {
-          description: '{% trans "Randomness ranges from 0-1.<br/>0=disabled for all<br/>1=enable for all" %}'}">
+        <span
+          data-bind="makeHqHelp: {
+          description: '{% trans "Randomness ranges from 0-1.<br/>0=disabled for all<br/>1=enable for all" %}'}"
+        >
         </span>
-        <input id="randomness-edit" class="input-medium form-control" type="number" step="0.01" min="0" max="1" data-bind="value: randomness">
+        <input
+          id="randomness-edit"
+          class="input-medium form-control"
+          type="number"
+          step="0.01"
+          min="0"
+          max="1"
+          data-bind="value: randomness"
+        />
       </div>
     {% endif %}
     {% if allows_items %}
+      {% if not can_edit_toggle %}
+        <div class="alert alert-info">
+          <h5>
+            <i class="fa fa-info-circle"></i> {% trans "Why can't I edit?" %}
+          </h5>
+          <p>
+            {% blocktrans %}
+              You do not have permission to modify this flag. Please contact
+              support if you require access.
+            {% endblocktrans %}
+          </p>
+        </div>
+      {% endif %}
       <table class="table table-condensed"><!-- B5: add table-borderless and remove `border: none` inline styles on table cells -->
         <thead>
           <tr>
@@ -171,29 +216,58 @@
             <td class="col-sm-4" style="border: 0">
               <div class="input-group">
                 <span class="input-group-btn">
-                  <button class="btn btn-default" data-bind="click: $parent.removeItem">
-                    <i class="text-danger fa-regular fa-trash-can"></i>
-                  </button>
+                  {% if can_edit_toggle %}
+                    <button
+                      class="btn btn-default"
+                      data-bind="click: $parent.removeItem"
+                    >
+                      <i class="text-danger fa-regular fa-trash-can"></i>
+                    </button>
+                  {% endif %}
                 </span>
-                <input class="form-control" type="text" data-bind="value: value">
+                <input
+                  class="form-control"
+                  type="text"
+                  data-bind="value: value"
+                  {% if not can_edit_toggle %}disabled{% endif %}
+                />
                 <span class="input-group-addon">
                   <i data-bind="class: (value() && value()[0] == '!') ? 'fa fa-circle-xmark' : 'fa fa-check'"></i>
                 </span>
               </div>
             </td>
             <!-- B5: replace inline styles with vertical alignment class: https://getbootstrap.com/docs/5.3/utilities/vertical-align/#css -->
-            <td class="col-sm-2" style="border: 0; vertical-align: middle" data-bind="html: $parent.getNamespaceHtml(namespace(), value())"></td>
-            <td class="col-sm-2" style="border: 0; vertical-align: middle" data-bind="text: last_used"></td>
-            <td class="col-sm-4" style="border: 0; vertical-align: middle" data-bind="text: service_type"></td>
+            <td
+              class="col-sm-2"
+              style="border: 0; vertical-align: middle"
+              data-bind="html: $parent.getNamespaceHtml(namespace(), value())"
+            ></td>
+            <td
+              class="col-sm-2"
+              style="border: 0; vertical-align: middle"
+              data-bind="text: last_used"
+            ></td>
+            <td
+              class="col-sm-4"
+              style="border: 0; vertical-align: middle"
+              data-bind="text: service_type"
+            ></td>
           </tr>
         </tbody>
       </table>
-      {% for namespace in namespaces %}
-        <button class="btn btn-primary" data-bind="click: function (){ addItem('{{ namespace }}') }">
-          <i class="fa fa-plus"></i> {% trans "Add " %}{{ namespace }}
-        </button>
-      {% endfor %}
+      {% if can_edit_toggle %}
+        {% for namespace in namespaces %}
+          <button
+            class="btn btn-primary"
+            data-bind="click: function (){ addItem('{{ namespace }}') }"
+          >
+            <i class="fa fa-plus"></i> {% trans "Add " %}{{ namespace }}
+          </button>
+        {% endfor %}
+      {% endif %}
     {% endif %}
-    <div data-bind="saveButton: saveButtonBottom"></div>
+    {% if can_edit_toggle %}
+      <div data-bind="saveButton: saveButtonBottom"></div>
+    {% endif %}
   </div>
 {% endblock %}
