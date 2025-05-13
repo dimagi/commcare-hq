@@ -368,7 +368,6 @@ class TestDeprecateOrRestoreCaseTypeView(DataDictionaryViewTestBase):
 
 
 @patch('corehq.apps.data_dictionary.views.get_case_type_app_module_count', return_value={})
-@patch('corehq.apps.data_dictionary.views.get_used_props_by_case_type', return_value={})
 @flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
 @privilege_enabled(privileges.DATA_DICTIONARY)
 class DataDictionaryJsonTest(DataDictionaryViewTestBase):
