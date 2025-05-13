@@ -1,58 +1,52 @@
-hqDefine('reports/js/charts/multibar_chart', [
-    'jquery',
-    'd3/d3.min',
-    'nvd3/nv.d3.min',
-    'nvd3/src/nv.d3.css',
-], function (
-    $,
-    d3,
-    nv,
-) {
-    var init = function (data) {
-        nv.addGraph(function () {
-            var chartConfig = data.configDict,
-                chartData = data.chartData,
-                chartId = '#' + data.chartId,
-                xAxis = data.chartXAxis,
-                yAxis = data.chartYAxis;
+import $ from "jquery";
+import d3 from "d3/d3.min";
+import nv from "nvd3/nv.d3.min";
+import "nvd3/src/nv.d3.css";
 
-            $(chartId).show();
+var init = function (data) {
+    nv.addGraph(function () {
+        var chartConfig = data.configDict,
+            chartData = data.chartData,
+            chartId = '#' + data.chartId,
+            xAxis = data.chartXAxis,
+            yAxis = data.chartYAxis;
 
-            var chart = nv.models.multiBarChart();
+        $(chartId).show();
 
-            chart.xAxis.axisLabel(xAxis.label);
-            if (xAxis.format) {
-                chart.xAxis.tickFormat(d3.format(xAxis.format));
-            }
+        var chart = nv.models.multiBarChart();
 
-            chart.yAxis.axisLabel(yAxis.label);
-            if (yAxis.format) {
-                chart.yAxis.tickFormat(d3.format(yAxis.format));
-            }
+        chart.xAxis.axisLabel(xAxis.label);
+        if (xAxis.format) {
+            chart.xAxis.tickFormat(d3.format(xAxis.format));
+        }
 
-            chart.showControls(chartConfig.showControls);
-            chart.showLegend(chartConfig.showLegend);
-            chart.reduceXTicks(chartConfig.reduceXTicks);
-            chart.rotateLabels(chartConfig.rotateLabels);
-            chart.tooltips(chartConfig.tooltips);
-            // Customize tooltip message
-            if (data.chartTooltipFormat) {
-                chart.tooltipContent(function (key, y, e) { return e + data.chartTooltipFormat + y; });
-            }
-            chart.stacked(chartConfig.stacked);
-            chart.margin(chartConfig.margin);
-            chart.staggerLabels(chartConfig.staggerLabels);
-            chart.multibar.groupSpacing(chartConfig.groupSpacing);
-            chart.multibar.forceY(chartConfig.forceY);
+        chart.yAxis.axisLabel(yAxis.label);
+        if (yAxis.format) {
+            chart.yAxis.tickFormat(d3.format(yAxis.format));
+        }
 
-            d3.select(chartId + ' svg')
-                .datum(chartData)
-                .transition().duration(500).call(chart);
+        chart.showControls(chartConfig.showControls);
+        chart.showLegend(chartConfig.showLegend);
+        chart.reduceXTicks(chartConfig.reduceXTicks);
+        chart.rotateLabels(chartConfig.rotateLabels);
+        chart.tooltips(chartConfig.tooltips);
+        // Customize tooltip message
+        if (data.chartTooltipFormat) {
+            chart.tooltipContent(function (key, y, e) { return e + data.chartTooltipFormat + y; });
+        }
+        chart.stacked(chartConfig.stacked);
+        chart.margin(chartConfig.margin);
+        chart.staggerLabels(chartConfig.staggerLabels);
+        chart.multibar.groupSpacing(chartConfig.groupSpacing);
+        chart.multibar.forceY(chartConfig.forceY);
 
-            nv.utils.windowResize(chart.update);
+        d3.select(chartId + ' svg')
+            .datum(chartData)
+            .transition().duration(500).call(chart);
 
-            return chart;
-        });
-    };
-    return { init: init };
-});
+        nv.utils.windowResize(chart.update);
+
+        return chart;
+    });
+};
+export default { init: init };
