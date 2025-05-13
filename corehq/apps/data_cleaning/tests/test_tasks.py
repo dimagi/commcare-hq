@@ -192,8 +192,8 @@ class CommitCasesTest(TestCase):
         )
         change.save()
 
-        BulkEditPinnedFilter.create_default_filters(self.session)
-        BulkEditColumn.create_default_columns(self.session)
+        self.session.pinned_filters.create_session_defaults(self.session)
+        self.session.columns.create_session_defaults(self.session)
         self.session.add_filter('play_count', DataType.INTEGER, FilterMatchType.GREATER_THAN, 1)
         self.session.save()
 
