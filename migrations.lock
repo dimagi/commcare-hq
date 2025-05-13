@@ -611,6 +611,7 @@ form_processor
  0094_add_partial_index_xforms
  0095_remove_xforminstance_deleted_state
  0096_add_partial_index_cases
+ 0097_case_domain_type_id_index
 formplayer_api
  0001_drop_old_tables
 generic_inbound
