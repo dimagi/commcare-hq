@@ -35,9 +35,13 @@ def export_from_tables(tables, file, format, max_column_size=2000):
     for table in tables:
         worksheet_title, rows = FormattedRow.wrap_all_rows([table])[0]
         row_generator = iter(rows)
-        # The first row gets added to sheet_headers, the rest gets added to rows_by_sheet
-        sheet_headers.append((worksheet_title, [next(row_generator)]))
-        rows_by_sheet.append((worksheet_title, row_generator))
+        try:
+            # The first row gets added to sheet_headers, the rest gets added to rows_by_sheet
+            sheet_headers.append((worksheet_title, [next(row_generator)]))
+            rows_by_sheet.append((worksheet_title, row_generator))
+        except StopIteration:
+            sheet_headers.append((worksheet_title, []))
+            rows_by_sheet.append((worksheet_title, iter([])))
 
     writer.open(sheet_headers, file, max_column_size=max_column_size)
     writer.write(rows_by_sheet)
