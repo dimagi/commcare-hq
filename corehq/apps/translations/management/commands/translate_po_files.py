@@ -578,7 +578,8 @@ class Command(BaseCommand):
         parser.add_argument(
             '--check-and-remove-errors',
             action='store_true',
-            help='Check for errors in the PO files after translation and remove them (default: False)'
+            help='If this flag is provided, the script will only check for errors in the existing '
+                 'translations and remove them. It will not translate any new messages.'
         )
 
     def handle(self, *args, **options):
