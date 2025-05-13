@@ -18,11 +18,9 @@ from corehq.apps.data_dictionary.models import (
     CasePropertyGroup,
     CaseType,
 )
-from corehq.apps.es.aggregations import NestedAggregation, TermsAggregation
 from corehq.apps.es.case_search import (
-    CASE_PROPERTIES_PATH,
-    PROPERTY_KEY,
     CaseSearchES,
+    case_property_missing,
 )
 from corehq.motech.fhir.utils import update_fhir_resource_property
 from corehq.util.quickcache import quickcache
@@ -398,30 +396,15 @@ def is_case_type_or_prop_name_valid(case_prop_name):
     return match_obj is not None
 
 
-@quickcache(vary_on=['domain', 'case_type'], timeout=60 * 10)
-def get_used_props_by_case_type(domain, case_type=None):
-    agg = TermsAggregation('case_types', 'type.exact').aggregation(
-        NestedAggregation('case_props', CASE_PROPERTIES_PATH).aggregation(
-            TermsAggregation('props', PROPERTY_KEY)
-        )
-    )
-    query = (
-        CaseSearchES()
-        .domain(domain)
-        .size(0)
-        .aggregation(agg)
-    )
-    if case_type:
-        query = query.case_type(case_type)
-    case_type_buckets = query.run().aggregations.case_types.buckets_list
-    props_by_case_type = {}
-    for case_type_bucket in case_type_buckets:
-        prop_buckets = case_type_bucket.case_props.props.buckets_list
-        for prop_bucket in prop_buckets:
-            if case_type_bucket.key not in props_by_case_type:
-                props_by_case_type[case_type_bucket.key] = []
-            props_by_case_type[case_type_bucket.key].append(prop_bucket.key)
-    return props_by_case_type
+@quickcache(['domain', 'case_type'], timeout=5 * 60)
+def is_case_type_unused(domain, case_type):
+    return CaseSearchES().domain(domain).case_type(case_type).count() == 0
+
+
+@quickcache(['domain', 'case_type', 'case_property'], timeout=5 * 60)
+def is_case_property_unused(domain, case_type, case_property):
+    query = CaseSearchES().domain(domain).case_type(case_type)
+    return query.NOT(case_property_missing(case_property)).count() == 0
 
 
 def get_case_property_group_name_for_properties(domain, case_type_name):
