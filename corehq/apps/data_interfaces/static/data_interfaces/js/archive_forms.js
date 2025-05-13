@@ -1,5 +1,4 @@
 import $ from "jquery";
-import ko from "knockout";
 import googleAnalytics from "analytix/js/google";
 
 var managementSelector = '#data-interfaces-archive-forms',

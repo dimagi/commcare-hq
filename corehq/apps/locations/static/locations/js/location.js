@@ -1,7 +1,6 @@
 import "commcarehq";
 import $ from "jquery";
 import ko from "knockout";
-import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import googleAnalytics from "analytix/js/google";
 import locationModels from "locations/js/location_drilldown";

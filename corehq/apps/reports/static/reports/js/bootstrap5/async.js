@@ -248,4 +248,4 @@ export default function (o) {
     });
 
     return self;
-};
+}

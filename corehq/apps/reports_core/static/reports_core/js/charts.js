@@ -1,4 +1,3 @@
-/* global _, nv, d3 */
 import $ from "jquery";
 import _ from "underscore";
 import d3 from "d3/d3.min";

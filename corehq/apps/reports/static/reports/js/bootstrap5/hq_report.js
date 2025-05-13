@@ -1,10 +1,9 @@
 import $ from "jquery";
 import ko from "knockout";
-import _ from "underscore";
 import alertUser from "hqwebapp/js/bootstrap5/alert_user";
 import kissmetrics from "analytix/js/kissmetrix";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import widgets from "hqwebapp/js/bootstrap5/widgets";  // multi-emails; eslint-disable-line no-unused-vars
+import "hqwebapp/js/bootstrap5/widgets";  // multi-emails
 
 var hqReport = function (options) {
     var self = {};
