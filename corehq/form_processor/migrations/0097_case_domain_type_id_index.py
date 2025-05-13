@@ -3,14 +3,18 @@
 from django.db import migrations
 
 
-FORWARD_SQL = """
+FORWARD_CREATE_INDEX = """
 CREATE INDEX CONCURRENTLY IF NOT EXISTS "form_processor_commcarecasesql_domain_type_id_f1789d5f_idx"
   ON "form_processor_commcarecasesql" ("domain", "type", "id");
+"""
+FORWARD_DROP_INDEX = """
 DROP INDEX CONCURRENTLY IF EXISTS "form_processor_commcarecasesql_domain_type_05e599e0_idx";
 """
-REVERSE_SQL = """
+REVERSE_CREATE_INDEX = """
 CREATE INDEX CONCURRENTLY IF NOT EXISTS "form_processor_commcarecasesql_domain_type_05e599e0_idx"
     ON "form_processor_commcarecasesql" ("domain", "type");
+"""
+REVERSE_DROP_INDEX = """
 DROP INDEX CONCURRENTLY IF EXISTS "form_processor_commcarecasesql_domain_type_id_f1789d5f_idx";
 """
 
@@ -23,15 +27,23 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL(FORWARD_SQL, REVERSE_SQL, state_operations=[
-            migrations.AlterIndexTogether(
-                name='commcarecase',
-                index_together={
-                    ('owner_id', 'server_modified_on'),
-                    ('domain', 'external_id', 'type'),
-                    ('domain', 'owner_id', 'closed'),
-                    ('domain', 'type', 'id'),
-                },
-            ),
-        ]),
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AlterIndexTogether(
+                    name='commcarecase',
+                    index_together={
+                        ('owner_id', 'server_modified_on'),
+                        ('domain', 'external_id', 'type'),
+                        ('domain', 'owner_id', 'closed'),
+                        ('domain', 'type', 'id'),
+                    },
+                ),
+            ],
+            database_operations=[
+                # NOTE Django runs reverse operations in reverse order.
+                # We always want to create first, then drop.
+                migrations.RunSQL(FORWARD_CREATE_INDEX, REVERSE_DROP_INDEX),
+                migrations.RunSQL(FORWARD_DROP_INDEX, REVERSE_CREATE_INDEX),
+            ],
+        ),
     ]
