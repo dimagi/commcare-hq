@@ -23,6 +23,7 @@ from corehq.apps.es.case_search import (
     CASE_PROPERTIES_PATH,
     PROPERTY_KEY,
     CaseSearchES,
+    case_property_missing,
 )
 from corehq.motech.fhir.utils import update_fhir_resource_property
 from corehq.util.quickcache import quickcache
@@ -396,6 +397,17 @@ def is_case_type_or_prop_name_valid(case_prop_name):
     pattern = '^[a-zA-Z][a-zA-Z0-9-_]*$'
     match_obj = re.match(pattern, case_prop_name)
     return match_obj is not None
+
+
+@quickcache(['domain', 'case_type'], timeout=5 * 60)
+def is_case_type_unused(domain, case_type):
+    return CaseSearchES().domain(domain).case_type(case_type).count() == 0
+
+
+@quickcache(['domain', 'case_type', 'case_property'], timeout=5 * 60)
+def is_case_property_unused(domain, case_type, case_property):
+    query = CaseSearchES().domain(domain).case_type(case_type)
+    return query.NOT(case_property_missing(case_property)).count() == 0
 
 
 @quickcache(vary_on=['domain', 'case_type'], timeout=60 * 10)
