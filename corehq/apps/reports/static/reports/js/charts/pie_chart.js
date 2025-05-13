@@ -1,42 +1,36 @@
-hqDefine("reports/js/charts/pie_chart", [
-    'jquery',
-    'd3/d3.min',
-    'nvd3/nv.d3.min',
-    'nvd3/src/nv.d3.css',
-], function (
-    $,
-    d3,
-    nv,
-) {
-    var init = function (data) {
-        nv.addGraph(function () {
-            var chartConfig = data.configDict,
-                chartData = data.chartData,
-                chartId = '#' + data.chartId;
+import $ from "jquery";
+import d3 from "d3/d3.min";
+import nv from "nvd3/nv.d3.min";
+import "nvd3/src/nv.d3.css";
 
-            $(chartId).show();
+var init = function (data) {
+    nv.addGraph(function () {
+        var chartConfig = data.configDict,
+            chartData = data.chartData,
+            chartId = '#' + data.chartId;
 
-            var chart = nv.models.pieChart()
-                .x(function (d) { return d.label; })
-                .y(function (d) { return d.value; });
+        $(chartId).show();
 
-            chart.showLabels(chartConfig.showLabels);
-            chart.donut(chartConfig.donut);
-            chart.tooltips(chartConfig.tooltips);
-            chart.margin(chartConfig.margin);
-            if (chartConfig.color.length !== 0) {
-                chart.color(chartConfig.color);
-            }
+        var chart = nv.models.pieChart()
+            .x(function (d) { return d.label; })
+            .y(function (d) { return d.value; });
 
-            d3.select(chartId + ' svg')
-                .datum(chartData)
-                .transition().duration(500).call(chart);
+        chart.showLabels(chartConfig.showLabels);
+        chart.donut(chartConfig.donut);
+        chart.tooltips(chartConfig.tooltips);
+        chart.margin(chartConfig.margin);
+        if (chartConfig.color.length !== 0) {
+            chart.color(chartConfig.color);
+        }
 
-            nv.utils.windowResize(chart.update);
+        d3.select(chartId + ' svg')
+            .datum(chartData)
+            .transition().duration(500).call(chart);
 
-            return chart;
-        });
-    };
+        nv.utils.windowResize(chart.update);
 
-    return { init: init };
-});
+        return chart;
+    });
+};
+
+export default { init: init };
