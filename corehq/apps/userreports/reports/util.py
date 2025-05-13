@@ -1,9 +1,7 @@
 from memoized import memoized
 
 from couchexport.export import export_from_tables
-from couchexport.models import Format
 
-from corehq.apps.export.const import MAX_NORMAL_EXPORT_SIZE
 from corehq.apps.userreports.columns import get_expanded_column_config
 from corehq.apps.userreports.models import get_report_config
 
@@ -56,12 +54,13 @@ class ReportExport(object):
         data_source.set_order_by([(o['field'], o['order']) for o in self.report_config.sort_expression])
         return data_source
 
-    def create_export(self, file_path, format_):
+    def create_export(self, file_path, format_, limit=None):
         """Save this report to a file
         :param file_path: The path to the file the report should be saved
         :param format_: The format of the resulting export
+        :param limit: Maximum rows in the export
         """
-        return export_from_tables(self.get_table(format_), file_path, format_)
+        return export_from_tables(self.get_table(limit=limit), file_path, format_)
 
     @property
     def header_rows(self):
@@ -71,11 +70,7 @@ class ReportExport(object):
         ]]
 
     @memoized
-    def get_data(self):
-        limit = None
-        if format in [Format.XLS, Format.XLS_2007]:
-            # Excel files max out at 1,048,576 rows, so we can reasonably limit excel exports to 1M rows
-            limit = MAX_NORMAL_EXPORT_SIZE
+    def get_data(self, limit=None):
         return list(self.data_source.get_data(limit=limit))
 
     @property
@@ -84,7 +79,7 @@ class ReportExport(object):
         return [self.data_source.get_total_row()] if self.data_source.has_total_row else []
 
     @memoized
-    def data_rows(self, format):
+    def data_rows(self, limit=None):
         column_id_to_expanded_column_ids = get_expanded_columns(
             self.data_source.top_level_columns,
             self.data_source.config
@@ -94,19 +89,19 @@ class ReportExport(object):
             if column.visible:
                 column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
 
-        return [[raw_row[column_id] for column_id in column_ids] for raw_row in self.get_data(format)]
+        return [[raw_row[column_id] for column_id in column_ids] for raw_row in self.get_data(limit)]
 
-    def get_table_data(self, format):
-        return self.header_rows + self.data_rows(format) + self.total_rows
+    def get_table_data(self, limit=None):
+        return self.header_rows + self.data_rows(limit) + self.total_rows
 
     @memoized
-    def get_table(self, format):
+    def get_table(self, limit=None):
         """Generate a table of all rows of this report
         """
         export_table = [
             [
                 self.title,
-                self.get_table_data(format)
+                self.get_table_data(limit)
             ]
         ]
 
