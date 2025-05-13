@@ -38,8 +38,9 @@ var advancedFormsOptions = function ($el, options) {
 ko.bindingHandlers.hideKnownForms = {
     update: function (element, valueAccessor) {
         var value = valueAccessor();
-        var knownForm = $(element).attr('data-known');
-        ko.utils.unwrapObservable(value) ? $(knownForm).hide() : $(knownForm).show();
+        var knownForm = $(element).attr('data-known'),
+            knownEl = document.getElementById(knownForm);
+        ko.utils.unwrapObservable(value) ? $(knownEl).hide() : $(knownEl).show();
     },
 };
 
