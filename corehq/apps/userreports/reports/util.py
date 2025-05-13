@@ -94,10 +94,14 @@ class ReportExport(object):
             if column.visible:
                 column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
 
-        return [[raw_row[column_id] for column_id in column_ids] for raw_row in self.get_data(format)]
+        for raw_row in self.get_data(format):
+            yield [raw_row[column_id] for column_id in column_ids]
 
     def get_table_data(self, format):
-        return self.header_rows + self.data_rows(format) + self.total_rows
+        yield from self.header_rows
+        yield from self.data_rows(format)
+        if self.total_rows:
+            yield from self.total_rows
 
     @memoized
     def get_table(self, format):
