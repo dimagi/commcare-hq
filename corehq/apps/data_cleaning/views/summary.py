@@ -41,7 +41,7 @@ class ChangesSummaryView(BulkEditSessionViewMixin,
             "data_cleaning/summary/clear_changes.html",
             {
                 "changes": self.session.changes.all(),
-                "num_changes": self.session.get_num_changes(),
+                "num_changes": self.session.changes.count(),
             },
         )
 
@@ -52,6 +52,6 @@ class ChangesSummaryView(BulkEditSessionViewMixin,
             "data_cleaning/summary/apply_changes.html",
             {
                 "changes": self.session.changes.all(),
-                "num_changes": self.session.get_num_changes(),
+                "num_changes": self.session.changes.count(),
             },
         )
