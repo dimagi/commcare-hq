@@ -185,27 +185,27 @@ class OpenaiTranslator(LLMTranslator):
 
         if self.client is None:
             return self._call_llm_http(system_prompt, user_message)
-        else:
-            @retry_with_exponential_backoff(
-                max_retries=5, errors=(self.openai.RateLimitError,), backup_model=self.backup_model
-            )
-            def _call_openai_client(backup_model=None):
-                model = backup_model or self.model
-                response = self.client.chat.completions.create(
-                    model=model,
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_message}
-                    ],
-                    temperature=0.2,
-                    response_format={"type": "json_object"}
-                )
-                return response.choices[0].message.content
 
-            try:
-                return _call_openai_client()
-            except Exception as e:
-                raise Exception("OpenAI API call failed") from e
+        @retry_with_exponential_backoff(
+            max_retries=5, errors=(self.openai.RateLimitError,), backup_model=self.backup_model
+        )
+        def _call_openai_client(backup_model=None):
+            model = backup_model or self.model
+            response = self.client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_message}
+                ],
+                temperature=0.2,
+                response_format={"type": "json_object"}
+            )
+            return response.choices[0].message.content
+
+        try:
+            return _call_openai_client()
+        except Exception as e:
+            raise Exception("OpenAI API call failed") from e
 
     def _call_llm_http(self, system_prompt, user_message):
         # We might not use this method at all, but it was useful in testing other LLM clients
