@@ -1,7 +1,5 @@
 import "commcarehq";
 import $ from "jquery";
-import ko from "knockout";
-import _ from "underscore";
 import newUser from "registration/js/new_user.ko";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import "registration/js/login";
@@ -49,4 +47,3 @@ newUser.setResetEmailFeedbackFn(function (isValidating) {
     }
 });
 newUser.setPhoneNumberInput('#id_phone_number');
-
