@@ -44,7 +44,16 @@ def export_from_tables(tables, file, format, max_column_size=2000):
             rows_by_sheet.append((worksheet_title, iter([])))
 
     writer.open(sheet_headers, file, max_column_size=max_column_size)
-    writer.write(rows_by_sheet)
+    chunk_size = 1000
+    for worksheet_title, rows in rows_by_sheet:
+        chunk = []
+        for row in rows:
+            chunk.append(row)
+            if len(chunk) == chunk_size:
+                writer.write(chunk)
+                chunk = []
+        if chunk:
+            writer.write(chunk)
     writer.close()
 
 
