@@ -28,8 +28,8 @@ class CleanSelectedRecordsForm(forms.Form):
         label=gettext_lazy("Select a property to edit"),
         required=False,
         help_text=gettext_lazy(
-            "Choices are editable case properties that are "
-            "currently visible in the table."
+            "You can only select editable case properties that are currently visible in "
+            "the table as a column. System properties cannot be edited."
         ),
     )
     clean_action = forms.ChoiceField(
