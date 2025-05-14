@@ -23,7 +23,7 @@ from corehq.apps.data_cleaning.views.main import (
 )
 from corehq.apps.data_cleaning.views.tables import (
     CleanCasesTableView,
-    CaseCleaningTasksTableView,
+    RecentCaseSessionsTableView,
 )
 from corehq.apps.data_cleaning.views.start import (
     StartCaseSessionView,
@@ -99,7 +99,7 @@ class CleanCasesViewAccessTest(TestCase):
         cls.all_views = [
             (BulkEditCasesMainView, (cls.domain_name,)),
             (StartCaseSessionView, (cls.domain_name,)),
-            (CaseCleaningTasksTableView, (cls.domain_name,)),
+            (RecentCaseSessionsTableView, (cls.domain_name,)),
             (CleanCasesSessionView, (cls.domain_name, cls.real_session_id,)),
             (CleanCasesSessionView, (cls.domain_name, cls.fake_session_id,)),
             (CleanCasesTableView, (cls.domain_name, cls.real_session_id,)),
