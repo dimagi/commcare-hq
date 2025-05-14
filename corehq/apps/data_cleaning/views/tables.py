@@ -39,8 +39,8 @@ class CleanCasesTableView(BulkEditSessionViewMixin,
     table_class = CleanCaseTable
 
     def get_host_url(self):
-        from corehq.apps.data_cleaning.views.main import CleanCasesSessionView
-        return reverse(CleanCasesSessionView.urlname, args=(self.domain, self.session_id,))
+        from corehq.apps.data_cleaning.views.main import EditCasesSessionView
+        return reverse(EditCasesSessionView.urlname, args=(self.domain, self.session_id,))
 
     def get_table_kwargs(self):
         extra_columns = [(
