@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy
 from django.views.generic import TemplateView
 
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
-from corehq.apps.data_cleaning.forms.bulk_edit import CleanSelectedRecordsForm
+from corehq.apps.data_cleaning.forms.bulk_edit import EditSelectedRecordsForm
 from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.domain.views import DomainViewMixin
@@ -19,13 +19,13 @@ class EditSelectedRecordsFormView(BulkEditSessionViewMixin,
                                   LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin, TemplateView):
     urlname = "bulk_edit_selected_records_form"
     template_name = "data_cleaning/forms/edit_selected_records_form.html"
-    session_not_found_message = gettext_lazy("Cannot load clean selected records form, session was not found.")
+    session_not_found_message = gettext_lazy("Cannot load edit selected records form, session was not found.")
 
     def get_context_data(self, cleaning_form=None, change=None, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
-            'container_id': 'clean-selected-records',
-            'cleaning_form': cleaning_form or CleanSelectedRecordsForm(self.session),
+            'container_id': 'edit-selected-records',
+            'cleaning_form': cleaning_form or EditSelectedRecordsForm(self.session),
             'are_bulk_edits_allowed': self.session.are_bulk_edits_allowed(),
             'change': change,
         })
@@ -33,7 +33,7 @@ class EditSelectedRecordsFormView(BulkEditSessionViewMixin,
 
     @hq_hx_action('post')
     def create_bulk_edit_change(self, request, *args, **kwargs):
-        cleaning_form = CleanSelectedRecordsForm(self.session, request.POST)
+        cleaning_form = EditSelectedRecordsForm(self.session, request.POST)
         change = None
         if cleaning_form.is_valid():
             change = self.session.apply_change_to_selected_records(
