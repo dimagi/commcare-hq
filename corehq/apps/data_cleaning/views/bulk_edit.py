@@ -21,11 +21,11 @@ class EditSelectedRecordsFormView(BulkEditSessionViewMixin,
     template_name = "data_cleaning/forms/edit_selected_records_form.html"
     session_not_found_message = gettext_lazy("Cannot load edit selected records form, session was not found.")
 
-    def get_context_data(self, cleaning_form=None, change=None, **kwargs):
+    def get_context_data(self, form=None, change=None, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
             'container_id': 'edit-selected-records',
-            'cleaning_form': cleaning_form or EditSelectedRecordsForm(self.session),
+            'form': form or EditSelectedRecordsForm(self.session),
             'are_bulk_edits_allowed': self.session.are_bulk_edits_allowed(),
             'change': change,
         })
@@ -33,11 +33,11 @@ class EditSelectedRecordsFormView(BulkEditSessionViewMixin,
 
     @hq_hx_action('post')
     def create_bulk_edit_change(self, request, *args, **kwargs):
-        cleaning_form = EditSelectedRecordsForm(self.session, request.POST)
+        form = EditSelectedRecordsForm(self.session, request.POST)
         change = None
-        if cleaning_form.is_valid():
+        if form.is_valid():
             change = self.session.apply_change_to_selected_records(
-                cleaning_form.get_bulk_edit_change()
+                form.get_bulk_edit_change()
             )
-            cleaning_form = None
-        return self.get(request, cleaning_form=cleaning_form, change=change, *args, **kwargs)
+            form = None
+        return self.get(request, form=form, change=change, *args, **kwargs)
