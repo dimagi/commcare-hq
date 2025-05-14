@@ -14,6 +14,7 @@ hqDefine('app_manager/js/app_manager', [
     'app_manager/js/preview_app',
     'app_manager/js/section_changer',
     "hqwebapp/js/components/inline_edit",   // app, menu, and form names and comments all use these
+    "select2/dist/js/select2.full.min",
     'commcarehq',
 ], function (
     $,
