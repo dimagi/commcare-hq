@@ -139,9 +139,9 @@ class CleanCasesTableView(BulkEditSessionViewMixin,
             request,
             _("Changes applied. Check the Recent Tasks table for progress.")
         )
-        from corehq.apps.data_cleaning.views.main import BulkEditCasesMainView
+        from corehq.apps.data_cleaning.views.main import EditCasesMainView
         return self.render_htmx_redirect(
-            reverse(BulkEditCasesMainView.urlname, args=(self.domain,)),
+            reverse(EditCasesMainView.urlname, args=(self.domain,)),
         )
 
     @hq_hx_action("post")
