@@ -24,7 +24,7 @@ from corehq.util.view_utils import set_file_download
     require_bulk_data_cleaning_cases,
 ], name='dispatch')
 class CleanCasesMainView(BaseProjectDataView):
-    page_title = gettext_lazy("Clean Case Data")
+    page_title = gettext_lazy("Bulk Edit Case Data")
     urlname = "data_cleaning_cases"
     template_name = "data_cleaning/clean_cases_main.html"
 
@@ -43,7 +43,7 @@ class CleanCasesMainView(BaseProjectDataView):
     require_bulk_data_cleaning_cases,
 ], name='dispatch')
 class CleanCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
-    page_title = gettext_lazy("Clean Case Type")
+    page_title = gettext_lazy("Bulk Edit Case Type")
     urlname = "data_cleaning_cases_session"
     template_name = "data_cleaning/clean_cases_session.html"
 

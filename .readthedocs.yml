@@ -8,8 +8,13 @@ build:
   os: ubuntu-20.04
   tools:
     python: "3.9"
-python:
-  install:
-    - requirements: requirements/docs-requirements.txt
+  jobs:
+    create_environment:
+      - pip install uv
+      - >-
+        UV_PROJECT_ENVIRONMENT=$READTHEDOCS_VIRTUALENV_PATH
+        uv sync --group=docs --no-group=sso --locked --compile-bytecode --no-progress
+    install:
+      - "true"
 submodules:
   include: all

@@ -23,7 +23,6 @@ from corehq.apps.es.tests.utils import (
     es_test,
 )
 from corehq.apps.hqwebapp.tests.tables.generator import get_case_blocks
-from corehq.apps.reports.standard.cases.utils import all_project_data_filter
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
@@ -257,7 +256,6 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
                 self.domain_name,
                 "phonetic-match(name, 'lowkey') and num_leaves > 2 and height_cm <= 11.1"
             )
-            .OR(all_project_data_filter(self.domain_name, ['project_data']))  # default Case Owners pinned filter
         )
         self.assertEqual(query.es_query, expected_query.es_query)
 
@@ -270,7 +268,6 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
             .domain(self.domain_name)
             .case_type(self.case_type)
             .NOT(case_property_missing('watered_on'))
-            .OR(all_project_data_filter(self.domain_name, ['project_data']))  # default Case Owners pinned filter
         )
         self.assertEqual(query.es_query, expected_query.es_query)
 
@@ -286,7 +283,6 @@ class BulkEditSessionFilteredQuerysetTests(TestCase):
                 self.domain_name,
                 "num_leaves > 2"
             )
-            .OR(all_project_data_filter(self.domain_name, ['project_data']))  # default Case Owners pinned filter
         )
         self.assertEqual(query.es_query, expected_query.es_query)
 
