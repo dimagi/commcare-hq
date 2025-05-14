@@ -36,8 +36,8 @@ class BulkEditCasesMainView(BaseProjectDataView):
         from corehq.apps.data_cleaning.views.setup import SetupCaseSessionFormView
         from corehq.apps.data_cleaning.views.tables import CaseCleaningTasksTableView
         return {
-            "setup_case_session_form_url": reverse(SetupCaseSessionFormView.urlname, args=(self.domain,)),
-            "tasks_table_url": reverse(CaseCleaningTasksTableView.urlname, args=(self.domain, )),
+            "htmx_start_session_form_view": reverse(SetupCaseSessionFormView.urlname, args=(self.domain,)),
+            "htmx_recent_sessions_table_view": reverse(CaseCleaningTasksTableView.urlname, args=(self.domain, )),
         }
 
 
