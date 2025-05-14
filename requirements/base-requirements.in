@@ -67,6 +67,7 @@ kafka-python
 looseversion
 lxml
 markdown
+numpy==1.26.4    # Temporary requirement for POC.
 oic
 pulp  # Used in Geospatial features to solve routing problems - SolTech
 openpyxl
@@ -101,6 +102,7 @@ sh
 simpleeval
 simplejson
 six
+scikit-learn   # Temporary requirement for POC.
 socketpool
 sqlagg
 SQLAlchemy
