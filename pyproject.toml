@@ -88,7 +88,7 @@ dependencies = [
     "polib",
     "prometheus-client",
     "psycogreen",
-    "psycopg2>=2.9.10",
+    "psycopg2-binary>=2.9.10",
     "py-KISSmetrics",
     "pycryptodome>=3.6.6", # security update
     "python-dateutil",
@@ -176,7 +176,6 @@ test = [
     'fakecouch',
     'testil',
     'requests-mock',
-    'sqlalchemy-postgres-copy',
     'Faker',
     'flaky>=3.8', # required for pytest 8.2 (and possibly earlier versions)
     'freezegun',
