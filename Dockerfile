@@ -12,6 +12,7 @@ ENV PYTHONUNBUFFERED=1 \
     NODE_VERSION=20.11.1 \
     UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
+    UV_PROJECT=/vendor \
     UV_PROJECT_ENVIRONMENT=/vendor
 # UV_COMPILE_BYTECODE: Compile bytecode during installation to improve module
 #   load performance. Also suppresses a couchdbkit syntax error that happens
@@ -45,7 +46,7 @@ RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-
   && tar -xzf "node-v$NODE_VERSION-linux-x64.tar.gz" -C /usr/local --strip-components=1 \
   && rm "node-v$NODE_VERSION-linux-x64.tar.gz"
 
-COPY package.json /vendor/
+COPY pyproject.toml uv.lock package.json /vendor/
 
 RUN --mount=type=cache,target=/root/.cache/uv \
   uv venv --allow-existing /vendor \
