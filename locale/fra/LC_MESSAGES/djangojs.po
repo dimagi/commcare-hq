@@ -30,8 +30,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n == 0 || n == 1) ? 0 : n != 0 && n % "
-"1000000 == 0 ? 1 : 2;\n"
+"Plural-Forms: nplurals=3; plural=(n == 0 || n == 1) ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;\n"
 
 #: corehq/apps/accounting/static/accounting/js/confirm_plan.js
 msgid "My project ended"
@@ -86,79 +85,80 @@ msgstr "Mettre l’abonnement en pause ?"
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
 msgid ""
-"<p>All CommCare subscriptions require a 30 day minimum commitment.</"
-"p><p>Continuing ahead will allow you to schedule your current <%- oldPlan %> "
-"Edition Plan subscription to be paused on <strong> <%- date %> </strong></"
-"p><p>If you have questions or if you would like to speak to us about your "
-"subscription, please reach out to <a href='mailto: <%- invoicingContact "
-"%>'><%- invoicingContact %></a>.</p>"
+"<p>All CommCare subscriptions require a 30 day minimum "
+"commitment.</p><p>Continuing ahead will allow you to schedule your current "
+"<%- oldPlan %> Edition Plan subscription to be paused on <strong> <%- date "
+"%> </strong></p><p>If you have questions or if you would like to speak to us"
+" about your subscription, please reach out to <a href='mailto: <%- "
+"invoicingContact %>'><%- invoicingContact %></a>.</p>"
 msgstr ""
 "<p>Tous les abonnements CommCare nécessitent un engagement minimum de 30 "
-"jours.</p><p>Continuer vous permettra de planifier la mise en pause de votre "
-"abonnement actuel au forfait <%- oldPlan %> Édition à partir du <strong> <%- "
-"date %> </strong></p><p>Si vous avez des questions ou souhaitez nous parler "
-"de votre abonnement, veuillez contacter <a href='mailto: <%- "
+"jours.</p><p>Continuer vous permettra de planifier la mise en pause de votre"
+" abonnement actuel au forfait <%- oldPlan %> Édition à partir du <strong> "
+"<%- date %> </strong></p><p>Si vous avez des questions ou souhaitez nous "
+"parler de votre abonnement, veuillez contacter <a href='mailto: <%- "
 "invoicingContact %>'><%- invoicingContact %></a>.</p>"
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
 msgid ""
-"<p>All CommCare subscriptions require a 30 day minimum commitment.</"
-"p><p>Your current <%- oldPlan %> Edition Plan subscription is scheduled to "
-"be paused on <strong> <%- date %> </strong></p><p>Continuing ahead will "
-"allow you to schedule your current <%- oldPlan %> Edition Plan subscription "
-"to be downgraded to the <%- newPlan %> Edition Plan on <strong> <%- date %> "
+"<p>All CommCare subscriptions require a 30 day minimum "
+"commitment.</p><p>Your current <%- oldPlan %> Edition Plan subscription is "
+"scheduled to be paused on <strong> <%- date %> </strong></p><p>Continuing "
+"ahead will allow you to schedule your current <%- oldPlan %> Edition Plan "
+"subscription to be downgraded to the <%- newPlan %> Edition Plan on <strong>"
+" <%- date %> </strong></p><p>If you have questions or if you would like to "
+"speak to us about your subscription, please reach out to <a href='mailto: "
+"<%- invoicingContact %>'><%- invoicingContact %></a>.</p>"
+msgstr ""
+"<p>Tous les abonnements CommCare nécessitent un engagement minimum de 30 "
+"jours.</p><p>Votre abonnement actuel au forfait <%- oldPlan %> Édition est "
+"prévu pour être mis en pause le <strong> <%- date %> "
+"</strong></p><p>Continuer vous permettra de planifier le déclassement de "
+"votre abonnement actuel au forfait <%- oldPlan %> Édition vers le forfait "
+"<%- newPlan %> Édition à partir du <strong> <%- date %> </strong></p><p>Si "
+"vous avez des questions ou souhaitez nous parler de votre abonnement, "
+"veuillez contacter <a href='mailto: <%- invoicingContact %>'><%- "
+"invoicingContact %></a>.</p>"
+
+#: corehq/apps/accounting/static/accounting/js/pricing_table.js
+msgid ""
+"<p>All CommCare subscriptions require a 30 day minimum "
+"commitment.</p><p>Your current <%- oldPlan %> Edition Plan subscription is "
+"scheduled to be downgraded to the <%- nextSubscription %> Edition Plan on "
+"<strong> <%- date %> </strong></p><p>Continuing ahead will allow you to "
+"schedule your current <%- oldPlan %> Edition Plan subscription to be "
+"downgraded to the <%- newPlan %> Edition Plan on <strong> <%- date %> "
 "</strong></p><p>If you have questions or if you would like to speak to us "
 "about your subscription, please reach out to <a href='mailto: <%- "
 "invoicingContact %>'><%- invoicingContact %></a>.</p>"
 msgstr ""
 "<p>Tous les abonnements CommCare nécessitent un engagement minimum de 30 "
 "jours.</p><p>Votre abonnement actuel au forfait <%- oldPlan %> Édition est "
-"prévu pour être mis en pause le <strong> <%- date %> </strong></"
-"p><p>Continuer vous permettra de planifier le déclassement de votre "
-"abonnement actuel au forfait <%- oldPlan %> Édition vers le forfait <%- "
-"newPlan %> Édition à partir du <strong> <%- date %> </strong></p><p>Si vous "
-"avez des questions ou souhaitez nous parler de votre abonnement, veuillez "
-"contacter <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></"
-"a>.</p>"
-
-#: corehq/apps/accounting/static/accounting/js/pricing_table.js
-msgid ""
-"<p>All CommCare subscriptions require a 30 day minimum commitment.</"
-"p><p>Your current <%- oldPlan %> Edition Plan subscription is scheduled to "
-"be downgraded to the <%- nextSubscription %> Edition Plan on <strong> <%- "
-"date %> </strong></p><p>Continuing ahead will allow you to schedule your "
-"current <%- oldPlan %> Edition Plan subscription to be downgraded to the <%- "
-"newPlan %> Edition Plan on <strong> <%- date %> </strong></p><p>If you have "
-"questions or if you would like to speak to us about your subscription, "
-"please reach out to <a href='mailto: <%- invoicingContact %>'><%- "
-"invoicingContact %></a>.</p>"
-msgstr ""
-"<p>Tous les abonnements CommCare nécessitent un engagement minimum de 30 "
-"jours.</p><p>Votre abonnement actuel au forfait <%- oldPlan %> Édition est "
 "prévu pour être déclassé vers le forfait <%- nextSubscription %> Édition le "
 "<strong> <%- date %> </strong></p><p>Continuer vous permettra de planifier "
-"le déclassement de votre abonnement actuel au forfait <%- oldPlan %> Édition "
-"vers le forfait <%- newPlan %> Édition à partir du <strong> <%- date %> </"
-"strong></p><p>Si vous avez des questions ou souhaitez nous parler de votre "
-"abonnement, veuillez contacter <a href='mailto: <%- invoicingContact %>'><%- "
-"invoicingContact %></a>.</p>"
+"le déclassement de votre abonnement actuel au forfait <%- oldPlan %> Édition"
+" vers le forfait <%- newPlan %> Édition à partir du <strong> <%- date %> "
+"</strong></p><p>Si vous avez des questions ou souhaitez nous parler de votre"
+" abonnement, veuillez contacter <a href='mailto: <%- invoicingContact "
+"%>'><%- invoicingContact %></a>.</p>"
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
 msgid ""
-"<p>All CommCare subscriptions require a 30 day minimum commitment.</"
-"p><p>Continuing ahead will allow you to schedule your current <%- oldPlan %> "
-"Edition Plan subscription to be downgraded to the <%- newPlan %> Edition "
-"Plan on <strong> <%- date %> </strong></p>If you have questions or if you "
-"would like to speak to us about your subscription, please reach out to <a "
-"href='mailto: <%- invoicingContact %>'><%- invoicingContact %></a>."
+"<p>All CommCare subscriptions require a 30 day minimum "
+"commitment.</p><p>Continuing ahead will allow you to schedule your current "
+"<%- oldPlan %> Edition Plan subscription to be downgraded to the <%- newPlan"
+" %> Edition Plan on <strong> <%- date %> </strong></p>If you have questions "
+"or if you would like to speak to us about your subscription, please reach "
+"out to <a href='mailto: <%- invoicingContact %>'><%- invoicingContact "
+"%></a>."
 msgstr ""
 "<p>Tous les abonnements CommCare nécessitent un engagement minimum de 30 "
 "jours.</p><p>Continuer vous permettra de planifier le déclassement de votre "
 "abonnement actuel au forfait <%- oldPlan %> Édition vers le forfait <%- "
 "newPlan %> Édition à partir du <strong> <%- date %> </strong></p>Si vous "
 "avez des questions ou souhaitez nous parler de votre abonnement, veuillez "
-"contacter <a href='mailto: <%- invoicingContact %>'><%- invoicingContact %></"
-"a>."
+"contacter <a href='mailto: <%- invoicingContact %>'><%- invoicingContact "
+"%></a>."
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
 msgid "Free edition"
@@ -247,7 +247,8 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 msgid "This is a reserved case type. Please choose another name."
-msgstr "Il s’agit d’un type de dossier réservé. Veuillez choisir un autre nom."
+msgstr ""
+"Il s’agit d’un type de dossier réservé. Veuillez choisir un autre nom."
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 msgid "This case type has been deprecated in the Data Dictionary."
@@ -277,13 +278,13 @@ msgstr "Qu’est-ce qu’un menu d’enquête ?"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 msgid ""
-"Surveys are used to collect independent forms that do not need to be tracked "
-"over time. Common examples include satisfaction surveys or anonymous "
+"Surveys are used to collect independent forms that do not need to be tracked"
+" over time. Common examples include satisfaction surveys or anonymous "
 "feedback forms."
 msgstr ""
 "Les enquêtes sont utilisées pour collecter des formulaires indépendants qui "
-"n’ont pas besoin d’être suivis dans le temps. Des exemples courants incluent "
-"les enquêtes de satisfaction ou les formulaires de retour anonyme."
+"n’ont pas besoin d’être suivis dans le temps. Des exemples courants incluent"
+" les enquêtes de satisfaction ou les formulaires de retour anonyme."
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js
 msgid "What is a Case List?"
@@ -296,8 +297,8 @@ msgid ""
 "examples include maternal health, student attendance, or crop monitoring."
 msgstr ""
 "Les listes de dossiers servent à enregistrer et suivre des données liées "
-"(dossiers) dans le temps. Ces données peuvent être référencées dans d’autres "
-"formulaires et par d’autres dossiers. Des exemples courants incluent la "
+"(dossiers) dans le temps. Ces données peuvent être référencées dans d’autres"
+" formulaires et par d’autres dossiers. Des exemples courants incluent la "
 "santé maternelle, la présence des élèves ou le suivi des cultures."
 
 #: corehq/apps/app_manager/static/app_manager/js/app_view.js
@@ -1005,7 +1006,6 @@ msgid "Question"
 msgstr "Question"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Name"
 msgstr "Nom"
 
@@ -1254,8 +1254,8 @@ msgid ""
 "itself. Please remove the . from the {property} or your form will have "
 "errors."
 msgstr ""
-"La  {propriété} pour une question n'est pas autorisée à faire référence à la "
-"question elle-même. Veuillez supprimer le . de la {propriété} sinon votre "
+"La  {propriété} pour une question n'est pas autorisée à faire référence à la"
+" question elle-même. Veuillez supprimer le . de la {propriété} sinon votre "
 "formulaire contiendra des erreurs."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
@@ -1305,16 +1305,16 @@ msgstr "Code Question"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
-"The ID '{nodeID}' may cause problems with form parsing. It is recommended to "
-"pick a different Question ID."
+"The ID '{nodeID}' may cause problems with form parsing. It is recommended to"
+" pick a different Question ID."
 msgstr ""
-"L'ID '{nodeID}' peut poser des problèmes lors de l'analyse du formulaire. Il "
-"est recommandé de choisir un autre identifiant de question."
+"L'ID '{nodeID}' peut poser des problèmes lors de l'analyse du formulaire. Il"
+" est recommandé de choisir un autre identifiant de question."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
-"{nodeID} is not a valid Question ID. It must start with a letter and contain "
-"only letters, numbers, and '-' or '_' characters."
+"{nodeID} is not a valid Question ID. It must start with a letter and contain"
+" only letters, numbers, and '-' or '_' characters."
 msgstr ""
 "{nodeID} n'est pas un identifiant de question valide. Il doit commencer par "
 "une lettre et ne contenir que des lettres, des chiffres, des caractères '-' "
@@ -1329,8 +1329,8 @@ msgid ""
 "Making this change will create a new Question ID (and a new column in "
 "exports)."
 msgstr ""
-"Cette modification créera un nouvel identifiant de question (et une nouvelle "
-"colonne dans les exports)."
+"Cette modification créera un nouvel identifiant de question (et une nouvelle"
+" colonne dans les exports)."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
@@ -1360,8 +1360,8 @@ msgstr "Calculer condition"
 msgid ""
 "You cannot have a Validation Error Message with no Validation Condition!"
 msgstr ""
-"Vous ne pouvez pas avoir de message d'erreur de validation sans condition de "
-"validation !"
+"Vous ne pouvez pas avoir de message d'erreur de validation sans condition de"
+" validation !"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Validation Error Message"
@@ -1483,13 +1483,14 @@ msgstr "Original"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
 "This will resize the image before sending the form. Use this option to send "
-"smaller images in areas of poor connectivity.<ul><li>Small - 0.1 megapixels</"
-"li><li>Medium - 0.2 megapixels</li><li>Large - 0.5 megapixels</li></ul>"
+"smaller images in areas of poor connectivity.<ul><li>Small - 0.1 "
+"megapixels</li><li>Medium - 0.2 megapixels</li><li>Large - 0.5 "
+"megapixels</li></ul>"
 msgstr ""
 "Cela redimensionnera l'image avant d'envoyer le formulaire. Utilisez cette "
 "option pour envoyer des images plus petites dans les zones à faible "
-"connectivité.<ul><li>Petit - 0,1 mégapixels</li><li>Moyen - 0,2 mégapixels</"
-"li><li>Grand - 0,5 mégapixels</li></ul>"
+"connectivité.<ul><li>Petit - 0,1 mégapixels</li><li>Moyen - 0,2 "
+"mégapixels</li><li>Grand - 0,5 mégapixels</li></ul>"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Micro-Image"
@@ -1636,8 +1637,8 @@ msgid ""
 "Please remove the {ref} from the {field} or your form will have errors."
 msgstr ""
 "Le champ {field} d'une question ne peut pas référencer la question elle-"
-"même. Veuillez retirer {ref} du champ {field} ou votre formulaire contiendra "
-"des erreurs."
+"même. Veuillez retirer {ref} du champ {field} ou votre formulaire contiendra"
+" des erreurs."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "output value"
@@ -1661,8 +1662,8 @@ msgstr "Afficher mode simple"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
-"You are currently in Advanced Mode because your logic is too complicated for "
-"Simple Mode."
+"You are currently in Advanced Mode because your logic is too complicated for"
+" Simple Mode."
 msgstr ""
 "Vous êtes actuellement en mode avancé car votre logique est trop compliquée "
 "pour le mode simple."
@@ -1825,8 +1826,8 @@ msgstr "Rendre obligatoire"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
 "You are about to make all existing questions on this form required. This "
-"action will overwrite the current configuration of this form and can only be "
-"undone by editing individual questions."
+"action will overwrite the current configuration of this form and can only be"
+" undone by editing individual questions."
 msgstr ""
 "Vous êtes sur le point de rendre toutes les questions existantes de ce "
 "formulaire obligatoires. Cette action écrasera la configuration actuelle de "
@@ -2004,9 +2005,9 @@ msgstr "Corriger automatiquement"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
-"It looks like your form is not valid XML. This can often happen if you use a "
-"reserved character in one of your questions. Characters to look out for are "
-"<, >, and &. You can still save, but you CANNOT LOAD THIS FORM again until "
+"It looks like your form is not valid XML. This can often happen if you use a"
+" reserved character in one of your questions. Characters to look out for are"
+" <, >, and &. You can still save, but you CANNOT LOAD THIS FORM again until "
 "you fix the XML by hand. What would you like to do?"
 msgstr ""
 "Il semble que votre formulaire ne soit pas un XML valide. Cela peut souvent "
@@ -2068,8 +2069,8 @@ msgid ""
 "the question required or ensure the answer is in a valid range."
 msgstr ""
 "Utilisez la logique pour contrôler quand les questions sont posées et "
-"quelles réponses sont valides. Vous pouvez ajouter une logique pour afficher "
-"une question en fonction d'une réponse précédente, rendre la question "
+"quelles réponses sont valides. Vous pouvez ajouter une logique pour afficher"
+" une question en fonction d'une réponse précédente, rendre la question "
 "obligatoire ou garantir que la réponse se trouve dans une plage valide."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
@@ -2098,8 +2099,8 @@ msgid ""
 "This question represents advanced content that is not supported by the form "
 "builder. Please only change it if you have a specific need!"
 msgstr ""
-"Cette question représente un contenu avancé qui n'est pas pris en charge par "
-"le générateur de formulaires. Veuillez ne la modifier que si vous avez un "
+"Cette question représente un contenu avancé qui n'est pas pris en charge par"
+" le générateur de formulaires. Veuillez ne la modifier que si vous avez un "
 "besoin spécifique !"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
@@ -2124,41 +2125,30 @@ msgstr "changer l'abonnement"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
-"You no longer have access to built in or external integration in your "
-"application.\n"
+"You no longer have access to built in or external integration in your application.\n"
 "\n"
-"Built in integrations are available on the Pro plan and higher. External "
-"integrations are available on the Advanced plan and higher. Before you can "
-"make a new version of your application, you must {link} or delete this "
-"question."
+"Built in integrations are available on the Pro plan and higher. External integrations are available on the Advanced plan and higher. Before you can make a new version of your application, you must {link} or delete this question."
 msgstr ""
-"Vous n'avez plus accès aux intégrations intégrées ou externes dans votre "
-"application.\n"
+"Vous n'avez plus accès aux intégrations intégrées ou externes dans votre application.\n"
 "\n"
-"Les intégrations intégrées sont disponibles à partir de l'abonnement Pro. "
-"Les intégrations externes sont disponibles à partir de l'abonnement Avancé. "
-"Avant de pouvoir créer une nouvelle version de votre application, vous devez "
-"{link} ou supprimer cette question."
+"Les intégrations intégrées sont disponibles à partir de l'abonnement Pro. Les intégrations externes sont disponibles à partir de l'abonnement Avancé. Avant de pouvoir créer une nouvelle version de votre application, vous devez {link} ou supprimer cette question."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
 "Your subscription only has access to built-in integration.\n"
 "\n"
-"External integrations are available on the Advanced plan and higher. Before "
-"you can make a new version of your application, you must {link} or delete "
-"this question."
+"External integrations are available on the Advanced plan and higher. Before you can make a new version of your application, you must {link} or delete this question."
 msgstr ""
 "Votre abonnement donne uniquement accès à l'intégration intégrée.\n"
 "\n"
-"Les intégrations externes sont disponibles à partir de l'abonnement Avancé. "
-"Avant de pouvoir créer une nouvelle version de votre application, vous devez "
-"{link} ou supprimer cette question."
+"Les intégrations externes sont disponibles à partir de l'abonnement Avancé. Avant de pouvoir créer une nouvelle version de votre application, vous devez {link} ou supprimer cette question."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Android app callouts of the same type must have different question ids."
+msgid ""
+"Android app callouts of the same type must have different question ids."
 msgstr ""
-"Les appels d'application Android du même type doivent avoir des identifiants "
-"de question différents."
+"Les appels d'application Android du même type doivent avoir des identifiants"
+" de question différents."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Extra"
@@ -2214,16 +2204,11 @@ msgstr "Téléchargement en cours..."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
-"You no longer have access to Lookup Tables in your application. Lookup "
-"Tables are available on the Standard plan and higher.\n"
-"Before you can make a new version of your application, you must {link} or "
-"delete this question"
+"You no longer have access to Lookup Tables in your application. Lookup Tables are available on the Standard plan and higher.\n"
+"Before you can make a new version of your application, you must {link} or delete this question"
 msgstr ""
-"Vous n'avez plus accès aux tables de correspondance dans votre application. "
-"Les tables de correspondance sont disponibles à partir de l'abonnement "
-"Standard.\n"
-"Avant de pouvoir créer une nouvelle version de votre application, vous devez "
-"{link} ou supprimer cette question"
+"Vous n'avez plus accès aux tables de correspondance dans votre application. Les tables de correspondance sont disponibles à partir de l'abonnement Standard.\n"
+"Avant de pouvoir créer une nouvelle version de votre application, vous devez {link} ou supprimer cette question"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "A data source must be selected."
@@ -2294,13 +2279,14 @@ msgstr "auto ?"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
 "Use text formatting to <strong>bold</strong> and <em>italicize</em> words, "
-"use bulleted lists, and <a target='_blank' href='https://help.commcarehq.org/"
-"display/commcarepublic/Text+Formatting'>more</a>"
+"use bulleted lists, and <a target='_blank' "
+"href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>more</a>"
 msgstr ""
 "Utilisez la mise en forme du texte pour <strong>mettre en gras</strong> et "
 "<em>mettre en italique</em> des mots, utiliser des listes à puces, et <a "
-"target='_blank' href='https://help.commcarehq.org/display/commcarepublic/"
-"Text+Formatting'>plus encore</a>"
+"target='_blank' "
+"href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>plus"
+" encore</a>"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Turn Off Text Formatting"
@@ -2362,7 +2348,8 @@ msgid "Validation Message"
 msgstr "Message de validation"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Can't have a Validation Message Itext ID without a Validation Condition"
+msgid ""
+"Can't have a Validation Message Itext ID without a Validation Condition"
 msgstr ""
 "Impossible d'avoir un identifiant Itext de message de validation sans "
 "condition de validation"
@@ -2434,15 +2421,15 @@ msgstr "Mettre à jour les traductions"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid ""
 "Copy these translations into a spreadsheet program like Excel. You can edit "
-"them there and then paste them back here when you're done. These will update "
-"the translations used in your form. Press 'Update Translations' to save "
+"them there and then paste them back here when you're done. These will update"
+" the translations used in your form. Press 'Update Translations' to save "
 "changes, or 'Close' to cancel."
 msgstr ""
-"Copiez ces traductions dans un programme de tableur comme Excel. Vous pouvez "
-"les modifier là-bas, puis les coller ici une fois terminé. Cela mettra à "
-"jour les traductions utilisées dans votre formulaire. Appuyez sur « Mettre à "
-"jour les traductions » pour enregistrer les modifications, ou sur « Fermer » "
-"pour annuler."
+"Copiez ces traductions dans un programme de tableur comme Excel. Vous pouvez"
+" les modifier là-bas, puis les coller ici une fois terminé. Cela mettra à "
+"jour les traductions utilisées dans votre formulaire. Appuyez sur « Mettre à"
+" jour les traductions » pour enregistrer les modifications, ou sur "
+"« Fermer » pour annuler."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "App Properties"
@@ -2488,8 +2475,8 @@ msgstr "Produit"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "A reference to a product ID, e.g., \"/data/products/current_product\""
 msgstr ""
-"Une référence à un identifiant de produit, par exemple, \"/data/products/"
-"current_product\""
+"Une référence à un identifiant de produit, par exemple, "
+"\"/data/products/current_product\""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Quantity"
@@ -2834,65 +2821,6 @@ msgstr "Entrer la commande"
 msgid "Command Bar"
 msgstr "Barre de commande"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Module ID"
-msgstr "ID du module"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Description"
-msgstr "Description"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Time Estimate"
-msgstr "Estimation du temps"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Must be an integer"
-msgstr "Doit être un entier"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Estimated time to complete the module in hours."
-msgstr "Temps estimé pour terminer le module en heures."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Assessment ID"
-msgstr "ID de l'évaluation"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "User Score"
-msgstr "Score utilisateur"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "XPath expression for the users assessment score."
-msgstr "Expression XPath pour le score d'évaluation de l'utilisateur."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Delivery Unit ID"
-msgstr "ID de l'unité de livraison"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Entity ID"
-msgstr "ID de l'entité"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"XPath expression for the entity ID associated with this Delivery Unit e.g. "
-"the case ID."
-msgstr ""
-"Expression XPath pour l'ID de l'entité associée à cette unité de livraison, "
-"par exemple l'ID du dossier."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Entity Name"
-msgstr "Nom de l'entité"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid ""
-"XPath expression for the name of the entity associated with this Delivery "
-"Unit."
-msgstr ""
-"Expression XPath pour le nom de l'entité associée à cette unité de livraison."
-
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "no comment"
 msgstr "aucun commentaire"
@@ -2961,16 +2889,16 @@ msgstr "Aucun fichier sélectionné."
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Invalid file type chosen. Please select a valid multimedia file."
 msgstr ""
-"Type de fichier invalide sélectionné. Veuillez choisir un fichier multimédia "
-"valide."
+"Type de fichier invalide sélectionné. Veuillez choisir un fichier multimédia"
+" valide."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid ""
 "The file you selected exceeds the size limit of 4MB. Please select a file "
 "that is smaller than 4MB."
 msgstr ""
-"Le fichier sélectionné dépasse la limite de taille de 4 Mo. Veuillez choisir "
-"un fichier de moins de 4 Mo."
+"Le fichier sélectionné dépasse la limite de taille de 4 Mo. Veuillez choisir"
+" un fichier de moins de 4 Mo."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Map layer not configured."
@@ -2986,8 +2914,8 @@ msgid ""
 "filling in the rest of your form please submit an issue. Technical Details: "
 msgstr ""
 "Une erreur inattendue s'est produite lors de cette requête. Si vous "
-"rencontrez des problèmes pour remplir le reste de votre formulaire, veuillez "
-"soumettre un ticket. Détails techniques : "
+"rencontrez des problèmes pour remplir le reste de votre formulaire, veuillez"
+" soumettre un ticket. Détails techniques : "
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
 msgid "You have been logged out because of inactivity."
@@ -3054,14 +2982,11 @@ msgstr ""
 msgid ""
 "We’re unable to submit this form right now due to high system usage. \n"
 "\n"
-"Please keep this window open and try again in a minute, or come back to this "
-"form in Incomplete Forms later."
+"Please keep this window open and try again in a minute, or come back to this form in Incomplete Forms later."
 msgstr ""
-"Nous ne pouvons pas soumettre ce formulaire pour le moment en raison d'une "
-"forte utilisation du système. \n"
+"Nous ne pouvons pas soumettre ce formulaire pour le moment en raison d'une forte utilisation du système. \n"
 "\n"
-"Veuillez garder cette fenêtre ouverte et réessayer dans une minute, ou "
-"revenir à ce formulaire dans les Formulaires incomplets plus tard."
+"Veuillez garder cette fenêtre ouverte et réessayer dans une minute, ou revenir à ce formulaire dans les Formulaires incomplets plus tard."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js
 msgid "Form submission failed with error"
@@ -3082,9 +3007,9 @@ msgid ""
 "You are now offline. Web Apps is not optimized for offline use. Please "
 "reconnect to the Internet before continuing."
 msgstr ""
-"Vous êtes maintenant hors ligne. Les applications Web ne sont pas optimisées "
-"pour une utilisation hors ligne. Veuillez vous reconnecter à Internet avant "
-"de continuer."
+"Vous êtes maintenant hors ligne. Les applications Web ne sont pas optimisées"
+" pour une utilisation hors ligne. Veuillez vous reconnecter à Internet avant"
+" de continuer."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
 msgid "You are are back online."
@@ -3125,8 +3050,8 @@ msgstr "Masquer le menu complet"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
 msgid ""
-"You have selected a case in a different domain. App Preview does not support "
-"this feature."
+"You have selected a case in a different domain. App Preview does not support"
+" this feature."
 msgstr ""
 "Vous avez sélectionné un dossier dans un autre domaine. L'aperçu de "
 "l'application ne prend pas en charge cette fonctionnalité."
@@ -3210,8 +3135,8 @@ msgstr "Non"
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js
 msgid "Working as <b><%- restoreAs %></b> in <b><%- domain %></b>."
 msgstr ""
-"Vous travaillez en tant que <b><%- restoreAs %></b> dans <b><%- domain %></"
-"b>."
+"Vous travaillez en tant que <b><%- restoreAs %></b> dans <b><%- domain "
+"%></b>."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js
 msgid "Working as <b><%- restoreAs %></b>."
@@ -3269,8 +3194,8 @@ msgstr ""
 
 #: corehq/apps/commtrack/static/commtrack/js/products_and_programs_main.js
 msgid ""
-"Sorry, there was an problem contacting the server to fetch the data. Please, "
-"try again in a little bit."
+"Sorry, there was an problem contacting the server to fetch the data. Please,"
+" try again in a little bit."
 msgstr ""
 "Désolé, un problème est survenu lors de la connexion au serveur pour "
 "récupérer les données. Veuillez réessayer dans un instant."
@@ -3314,8 +3239,8 @@ msgid ""
 "Help colleagues upload correct data into case properties by listing the "
 "valid values here."
 msgstr ""
-"Aidez vos collègues à importer les bonnes données dans les propriétés de cas "
-"en listant ici les valeurs valides."
+"Aidez vos collègues à importer les bonnes données dans les propriétés de cas"
+" en listant ici les valeurs valides."
 
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js
 msgid "valid value"
@@ -3525,9 +3450,10 @@ msgid ""
 "access to this project space through an Organization. You must be added to "
 "the project space as a member in order to override your timezone."
 msgstr ""
-"Vous ne pouvez pas remplacer le fuseau horaire de cet espace projet car vous "
-"n'y avez accès que via une organisation. Vous devez être ajouté·e à l'espace "
-"projet en tant que membre pour pouvoir modifier votre fuseau horaire."
+"Vous ne pouvez pas remplacer le fuseau horaire de cet espace projet car vous"
+" n'y avez accès que via une organisation. Vous devez être ajouté·e à "
+"l'espace projet en tant que membre pour pouvoir modifier votre fuseau "
+"horaire."
 
 #: corehq/apps/enterprise/static/enterprise/js/enterprise_settings.js
 msgid ""
@@ -3538,8 +3464,8 @@ msgid ""
 msgstr ""
 "Ne pas autoriser les nouveaux utilisateurs à s'inscrire sur commcarehq.org. "
 "Cela peut prendre jusqu'à une heure pour prendre effet.<br>Cela affectera "
-"les utilisateurs ayant des adresses e-mail provenant des domaines suivants : "
-"<strong><%- domains %></strong><br>Contactez <a href='mailto:<%- email "
+"les utilisateurs ayant des adresses e-mail provenant des domaines suivants :"
+" <strong><%- domains %></strong><br>Contactez <a href='mailto:<%- email "
 "%>'><%- email %></a> pour modifier la liste des domaines."
 
 #: corehq/apps/enterprise/static/enterprise/js/project_dashboard.js
@@ -3721,8 +3647,8 @@ msgid ""
 msgstr ""
 "<strong>Privé</strong> : Seul·e vous pouvez modifier et exporter.<br/> "
 "<strong>Exportation uniquement</strong> : Vous pouvez modifier et exporter, "
-"les autres utilisateurs peuvent seulement exporter.<br/> <strong>Modifier et "
-"exporter</strong> : Tous les utilisateurs peuvent modifier et exporter."
+"les autres utilisateurs peuvent seulement exporter.<br/> <strong>Modifier et"
+" exporter</strong> : Tous les utilisateurs peuvent modifier et exporter."
 
 #: corehq/apps/export/static/export/js/models.js
 msgid "The table path should end with []"
@@ -4426,8 +4352,8 @@ msgid ""
 "An error occurred while deleting your location. If the problem persists, "
 "please report an issue"
 msgstr ""
-"Une erreur est survenue lors de la suppression de votre site. Si le problème "
-"subsiste, veuillez signaler ce problème."
+"Une erreur est survenue lors de la suppression de votre site. Si le problème"
+" subsiste, veuillez signaler ce problème."
 
 #: corehq/apps/locations/static/locations/js/widgets.js
 msgid "Select a Location"
@@ -4630,14 +4556,14 @@ msgstr ""
 msgid ""
 "Problem Rendering Report. Our error monitoring tools have noticed this and "
 "we are working quickly to resolve this issue as soon as possible. We "
-"encourage you to contact CommCare HQ Support if this issue persists for more "
-"than a few minutes. We appreciate any additional information you can give us "
-"about this problem so we can fix it immediately."
+"encourage you to contact CommCare HQ Support if this issue persists for more"
+" than a few minutes. We appreciate any additional information you can give "
+"us about this problem so we can fix it immediately."
 msgstr ""
 "Problème lors du rendu du rapport. Nos outils de surveillance des erreurs "
 "ont détecté ce problème et nous travaillons rapidement à le résoudre. Nous "
-"vous encourageons à contacter le support CommCare HQ si ce problème persiste "
-"plus de quelques minutes. Nous apprécions toute information supplémentaire "
+"vous encourageons à contacter le support CommCare HQ si ce problème persiste"
+" plus de quelques minutes. Nous apprécions toute information supplémentaire "
 "que vous pouvez nous fournir afin que nous puissions le résoudre "
 "immédiatement."
 
@@ -4652,8 +4578,8 @@ msgid ""
 "CommCare HQ is experiencing server difficulties. We're working quickly to "
 "resolve it. Thank you for your patience. We are extremely sorry."
 msgstr ""
-"CommCare HQ rencontre des difficultés serveur. Nous travaillons rapidement à "
-"les résoudre. Merci de votre patience. Nous sommes sincèrement désolés."
+"CommCare HQ rencontre des difficultés serveur. Nous travaillons rapidement à"
+" les résoudre. Merci de votre patience. Nous sommes sincèrement désolés."
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/async.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/async.js
@@ -4872,7 +4798,8 @@ msgstr "types de cas"
 
 #: corehq/apps/reports/static/reports/js/filters/case_list_explorer_knockout_bindings.js
 msgid "e.g. (dob <= '2017-02-01' and initial_home_visit_completed = 'yes') "
-msgstr "par ex. (dob <= '2017-02-01' et initial_home_visit_completed = 'yes') "
+msgstr ""
+"par ex. (dob <= '2017-02-01' et initial_home_visit_completed = 'yes') "
 
 #: corehq/apps/reports/static/reports/js/filters/phone_number.js
 msgid "That have phone numbers"
@@ -5068,7 +4995,8 @@ msgstr ""
 
 #: corehq/apps/translations/static/translations/js/translations.js
 msgid "You have unsaved user interface translations."
-msgstr "Vous avez des traductions de l'interface utilisateur non enregistrées."
+msgstr ""
+"Vous avez des traductions de l'interface utilisateur non enregistrées."
 
 #: corehq/apps/translations/static/translations/js/translations.js
 msgid "Parameters formatting problem!"
@@ -5076,8 +5004,8 @@ msgstr "Problème de formatage des paramètres !"
 
 #: corehq/apps/translations/static/translations/js/translations.js
 msgid ""
-"Autofill is not available in English (en). Please change your language using "
-"the dropdown in the top left."
+"Autofill is not available in English (en). Please change your language using"
+" the dropdown in the top left."
 msgstr ""
 "Le remplissage automatique n'est pas disponible en anglais (en). Veuillez "
 "changer de langue à l'aide du menu déroulant en haut à gauche."
@@ -5112,7 +5040,8 @@ msgstr "Rechercher des projets"
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr ""
-"Choisissez la propriété que vous souhaitez ajouter comme filtre à ce rapport."
+"Choisissez la propriété que vous souhaitez ajouter comme filtre à ce "
+"rapport."
 
 #: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
 #: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
@@ -5129,27 +5058,27 @@ msgstr ""
 #: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
 msgid ""
-"What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
-"this if the property is a date.<br/><strong>Choice</strong>: Select this if "
-"the property is text or multiple choice."
+"What type of property is this filter?<br/><br/><strong>Date</strong>: Select"
+" this if the property is a date.<br/><strong>Choice</strong>: Select this if"
+" the property is text or multiple choice."
 msgstr ""
-"Quel type de propriété ce filtre concerne-t-il ?<br/><br/><strong>Date</"
-"strong> : Sélectionnez ceci si la propriété est une date.<br/><strong>Choix</"
-"strong> : Sélectionnez ceci si la propriété est un texte ou un choix "
-"multiple."
+"Quel type de propriété ce filtre concerne-t-il "
+"?<br/><br/><strong>Date</strong> : Sélectionnez ceci si la propriété est une"
+" date.<br/><strong>Choix</strong> : Sélectionnez ceci si la propriété est un"
+" texte ou un choix multiple."
 
 #: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
 #: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js
 msgid ""
-"What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
-"this to filter the property by a date range.<br/><strong>Value</strong>: "
+"What type of property is this filter?<br/><br/><strong>Date</strong>: Select"
+" this to filter the property by a date range.<br/><strong>Value</strong>: "
 "Select this to filter the property by a single value."
 msgstr ""
-"Quel type de propriété ce filtre concerne-t-il ?<br/><br/><strong>Date</"
-"strong> : Sélectionnez ceci pour filtrer la propriété par une plage de dates."
-"<br/><strong>Valeur</strong> : Sélectionnez ceci pour filtrer la propriété "
-"par une seule valeur."
+"Quel type de propriété ce filtre concerne-t-il "
+"?<br/><br/><strong>Date</strong> : Sélectionnez ceci pour filtrer la "
+"propriété par une plage de dates.<br/><strong>Valeur</strong> : Sélectionnez"
+" ceci pour filtrer la propriété par une seule valeur."
 
 #: corehq/apps/userreports/static/userreports/js/bootstrap3/report_config.js
 #: corehq/apps/userreports/static/userreports/js/bootstrap5/report_config.js
@@ -5277,7 +5206,8 @@ msgstr "Vérification de la disponibilité..."
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Issue connecting to server. Check Internet connection."
 msgstr ""
-"Problème de connexion au serveur. Veuillez vérifier votre connexion internet."
+"Problème de connexion au serveur. Veuillez vérifier votre connexion "
+"internet."
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "No Access"
@@ -5404,8 +5334,8 @@ msgid ""
 "<strong>Data</strong> &mdash; view, export, and edit form and case data, "
 "reassign cases"
 msgstr ""
-"<strong>Données</strong> &mdash; consulter, exporter et modifier les données "
-"de formulaires et de cas, réaffecter des cas"
+"<strong>Données</strong> &mdash; consulter, exporter et modifier les données"
+" de formulaires et de cas, réaffecter des cas"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Edit & View Data"
@@ -5424,8 +5354,8 @@ msgstr "Accès à la messagerie"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
-"<strong>Access APIs</strong> &mdash; use CommCare HQ APIs to read and update "
-"data. Specific APIs may require additional permissions."
+"<strong>Access APIs</strong> &mdash; use CommCare HQ APIs to read and update"
+" data. Specific APIs may require additional permissions."
 msgstr ""
 "<strong>Accès aux API</strong> &mdash; utiliser les API de CommCare HQ pour "
 "lire et mettre à jour les données. Certaines API peuvent nécessiter des "
@@ -5580,8 +5510,8 @@ msgstr "Accéder à tous les rapports"
 msgid ""
 "Allow role to view all CommCare reports. Excludes embedded Tableau reports"
 msgstr ""
-"Autoriser le rôle à afficher tous les rapports CommCare. Exclut les rapports "
-"Tableau intégrés"
+"Autoriser le rôle à afficher tous les rapports CommCare. Exclut les rapports"
+" Tableau intégrés"
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to access all reports."
@@ -5594,7 +5524,8 @@ msgstr "Télécharger et envoyer les rapports par e-mail"
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Allow role to download and email report data."
 msgstr ""
-"Autoriser le rôle à télécharger et envoyer les données de rapport par e-mail."
+"Autoriser le rôle à télécharger et envoyer les données de rapport par "
+"e-mail."
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Access All Tableau Reports"
@@ -5689,8 +5620,8 @@ msgid ""
 msgstr ""
 "Nous avons envoyé l'e-mail d'invitation à cet utilisateur, mais le serveur "
 "de messagerie de l'utilisateur l'a rejeté. Cela signifie généralement que "
-"l'adresse e-mail est incorrecte ou que votre organisation bloque les e-mails "
-"provenant de notre adresse (<%- fromAddress %>)."
+"l'adresse e-mail est incorrecte ou que votre organisation bloque les e-mails"
+" provenant de notre adresse (<%- fromAddress %>)."
 
 #: corehq/apps/users/static/users/js/web_users_list.js
 msgid "No users matched your search."
@@ -5719,8 +5650,8 @@ msgid ""
 "are %s minute(s) remaining before this rule can be started again."
 msgstr ""
 "Impossible de redémarrer la règle. Les règles ne peuvent être démarrées que "
-"toutes les deux heures et il reste %s minute(s) avant que cette règle puisse "
-"être redémarrée."
+"toutes les deux heures et il reste %s minute(s) avant que cette règle puisse"
+" être redémarrée."
 
 #: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js
 msgid "Are you sure you want to remove this conditional message?"
@@ -5733,8 +5664,8 @@ msgid ""
 "hours. Restart this rule?"
 msgstr ""
 "Une règle ne doit être redémarrée que si vous pensez qu'elle est bloquée et "
-"n'avance plus. Vous ne pourrez redémarrer cette règle qu'une fois toutes les "
-"deux heures. Redémarrer cette règle ?"
+"n'avance plus. Vous ne pourrez redémarrer cette règle qu'une fois toutes les"
+" deux heures. Redémarrer cette règle ?"
 
 #: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js
 msgid ""
@@ -5897,3 +5828,50 @@ msgstr "Échec ! La réponse est : "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ n'a pas pu effectuer la requête : "
+
+#~ msgid "Module ID"
+#~ msgstr "ID du module"
+
+#~ msgid "Description"
+#~ msgstr "Description"
+
+#~ msgid "Time Estimate"
+#~ msgstr "Estimation du temps"
+
+#~ msgid "Must be an integer"
+#~ msgstr "Doit être un entier"
+
+#~ msgid "Estimated time to complete the module in hours."
+#~ msgstr "Temps estimé pour terminer le module en heures."
+
+#~ msgid "Assessment ID"
+#~ msgstr "ID de l'évaluation"
+
+#~ msgid "User Score"
+#~ msgstr "Score utilisateur"
+
+#~ msgid "XPath expression for the users assessment score."
+#~ msgstr "Expression XPath pour le score d'évaluation de l'utilisateur."
+
+#~ msgid "Delivery Unit ID"
+#~ msgstr "ID de l'unité de livraison"
+
+#~ msgid "Entity ID"
+#~ msgstr "ID de l'entité"
+
+#~ msgid ""
+#~ "XPath expression for the entity ID associated with this Delivery Unit e.g. "
+#~ "the case ID."
+#~ msgstr ""
+#~ "Expression XPath pour l'ID de l'entité associée à cette unité de livraison, "
+#~ "par exemple l'ID du dossier."
+
+#~ msgid "Entity Name"
+#~ msgstr "Nom de l'entité"
+
+#~ msgid ""
+#~ "XPath expression for the name of the entity associated with this Delivery "
+#~ "Unit."
+#~ msgstr ""
+#~ "Expression XPath pour le nom de l'entité associée à cette unité de "
+#~ "livraison."
