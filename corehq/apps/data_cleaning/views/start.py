@@ -4,7 +4,7 @@ from django.utils.translation import gettext as _
 from django.views.generic import TemplateView
 
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
-from corehq.apps.data_cleaning.forms.setup import (
+from corehq.apps.data_cleaning.forms.start_session import (
     SelectCaseTypeForm,
     ResumeOrRestartCaseSessionForm,
 )
