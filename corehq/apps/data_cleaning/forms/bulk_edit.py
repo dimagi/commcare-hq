@@ -16,7 +16,7 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import AlpineSelect, BootstrapSwitchInput
 
 
-class CleanSelectedRecordsForm(forms.Form):
+class EditSelectedRecordsForm(forms.Form):
     """
     NOTE: While the related forms for this feature share similar properties (`prop_id`)
     the `clean_` prefix is used here because all forms will be inserted into the same DOM, resulting
