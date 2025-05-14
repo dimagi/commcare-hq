@@ -85,7 +85,7 @@
           <div class="input-group-text">
             <i class="fa-solid fa-filter me-2"></i>
             {% blocktrans with table.page.paginator.count as num_records %}
-              Filters Applied: {{ num_records }} Matching Records
+              Filters Applied: {{ num_records }} Matching Cases
             {% endblocktrans %}
           </div>
           <button
@@ -117,13 +117,13 @@
             x-text="numRecordsSelected"
           ></span>
           {% blocktrans %}
-            Records Selected
+            Cases Selected
           {% endblocktrans %}
           {% if table.num_visible_selected_records != table.num_selected_records %}
             <div
               class="ms-2 ps-2 border-start inline-block text-warning"
               data-bs-custom-class="fs-6"
-              data-bs-title="{% trans 'Some records are selected in the session but not currently visible. They will not be part of cleaning actions until all filters are removed.' %}"
+              data-bs-title="{% trans 'You have selected cases which have been filtered out. New previewed edits will only apply to selected cases in the current filters, unless you remove filters.' %}"
               x-tooltip=""
             >
               <i class="fa-solid fa-triangle-exclamation"></i>
