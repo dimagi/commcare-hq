@@ -9,7 +9,7 @@ from corehq.toggles import mark_safe
 from couchexport.writers import render_to_string
 
 
-class DataCleaningHtmxColumn(TemplateColumn):
+class EditableHtmxColumn(TemplateColumn):
     template_name = "data_cleaning/columns/column_main.html"
 
     def __init__(self, column_spec, *args, **kwargs):
@@ -31,7 +31,7 @@ class DataCleaningHtmxColumn(TemplateColumn):
     def get_htmx_partial_response_context(cls, column_spec, record, table):
         """
         Returns the context needed for rendering the
-        `DataCleaningHtmxColumn` template as an HTMX partial response.
+        `EditableHtmxColumn` template as an HTMX partial response.
 
         :param column_spec: BulkEditColumn
         :param record: EditableCaseSearchElasticRecord (or similar)
