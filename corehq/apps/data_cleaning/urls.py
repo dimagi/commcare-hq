@@ -18,7 +18,7 @@ from corehq.apps.data_cleaning.views.main import (
     download_form_ids,
 )
 from corehq.apps.data_cleaning.views.tables import (
-    CleanCasesTableView,
+    EditCasesTableView,
     RecentCaseSessionsTableView,
 )
 from corehq.apps.data_cleaning.views.start import (
@@ -31,8 +31,8 @@ urlpatterns = [
     url(r'^tasks/case/$', RecentCaseSessionsTableView.as_view(), name=RecentCaseSessionsTableView.urlname),
     url(r'^cases/(?P<session_id>[\w\-]+)/$', EditCasesSessionView.as_view(),
         name=EditCasesSessionView.urlname),
-    url(r'^cases/(?P<session_id>[\w\-]+)/table/$', CleanCasesTableView.as_view(),
-        name=CleanCasesTableView.urlname),
+    url(r'^cases/(?P<session_id>[\w\-]+)/table/$', EditCasesTableView.as_view(),
+        name=EditCasesTableView.urlname),
     url(r'^cases/(?P<session_id>[\w\-]+)/summary/$', ChangesSummaryView.as_view(),
         name=ChangesSummaryView.urlname),
     url(r'^session/(?P<session_id>[\w\-]+)/filters/$', ManageFiltersFormView.as_view(),
