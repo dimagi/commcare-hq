@@ -15,7 +15,7 @@ from corehq.apps.data_cleaning.views.columns import (
 )
 from corehq.apps.data_cleaning.views.filters import (
     ManagePinnedFiltersView,
-    ManageFiltersFormView,
+    ManageFiltersView,
 )
 from corehq.apps.data_cleaning.views.main import (
     EditCasesMainView,
@@ -106,18 +106,18 @@ class CleanCasesViewAccessTest(TestCase):
             (EditCasesTableView, (cls.domain_name, cls.fake_session_id,)),
             (ManagePinnedFiltersView, (cls.domain_name, cls.real_session_id,)),
             (ManagePinnedFiltersView, (cls.domain_name, cls.fake_session_id,)),
-            (ManageFiltersFormView, (cls.domain_name, cls.real_session_id,)),
-            (ManageFiltersFormView, (cls.domain_name, cls.fake_session_id,)),
+            (ManageFiltersView, (cls.domain_name, cls.real_session_id,)),
+            (ManageFiltersView, (cls.domain_name, cls.fake_session_id,)),
             (ManageColumnsFormView, (cls.domain_name, cls.real_session_id,)),
             (ManageColumnsFormView, (cls.domain_name, cls.fake_session_id,)),
-            (ManageFiltersFormView, (cls.domain_name, cls.fake_session_id,)),
+            (ManageFiltersView, (cls.domain_name, cls.fake_session_id,)),
             (EditSelectedRecordsFormView, (cls.domain_name, cls.real_session_id,)),
             (EditSelectedRecordsFormView, (cls.domain_name, cls.fake_session_id,)),
         ]
         cls.views_not_found_with_invalid_session = [
             EditCasesTableView,
             ManagePinnedFiltersView,
-            ManageFiltersFormView,
+            ManageFiltersView,
             ManageColumnsFormView,
             EditSelectedRecordsFormView,
         ]
