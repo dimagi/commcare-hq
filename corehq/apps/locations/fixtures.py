@@ -55,6 +55,55 @@ class LocationSet(object):
         return item in self.by_id
 
 
+int_field = IntegerField()
+int_array = ArrayField(int_field)
+
+
+class LocationsAccessor:
+    """Accessor scoped to a single restore call"""
+    def __init__(self, restore_user):
+        self.user = restore_user
+
+    @cached_property
+    def queryset(self):
+        # Doing this lazily lets us defer evaluation unless actually needed
+        user_locations = self.user.get_sql_locations(self.user.domain)
+        user_location_pks = list(user_locations.order_by().values_list("pk", flat=True))
+
+        if not user_location_pks:
+            return SQLLocation.objects.none()
+        return _location_queryset_helper(self.user.domain, user_location_pks)
+
+
+def _locations_have_changed(last_sync, accessor, restore_user):
+    # this first check is much faster - short circuit out if nothing at all changed
+    if not SQLLocation.objects.filter(domain=restore_user.domain, last_modified__gte=last_sync.date).exists():
+        return False
+    return accessor.queryset.filter(last_modified__gte=last_sync.date).values('last_modified').union(
+        LocationType.objects.filter(domain=restore_user.domain,
+                                    last_modified__gte=last_sync.date).values('last_modified'),
+    ).exists()
+
+
+def _location_queryset_helper(domain, location_pks):
+    fixture_ids = With(raw_cte_sql(
+        """
+        SELECT "id", "path", "depth"
+        FROM get_location_fixture_ids(%s::TEXT, %s)
+        """,
+        [domain, location_pks],
+        {"id": int_field, "path": int_array, "depth": int_field},
+    ))
+
+    return fixture_ids.join(
+        SQLLocation.objects.all(),
+        id=fixture_ids.col.id,
+    ).annotate(
+        path=fixture_ids.col.path,
+        depth=fixture_ids.col.depth,
+    ).with_cte(fixture_ids).prefetch_related('location_type', 'parent')
+
+
 def should_sync_locations(last_sync, accessor, restore_state):
     """
     Determine if any locations (already filtered to be relevant
@@ -82,16 +131,6 @@ def _fixture_has_changed(last_sync, restore_user):
     last_modified = UserLookupTableStatus.get_last_modified(
         restore_user.user_id, UserLookupTableStatus.Fixture.LOCATION)
     return last_modified >= last_sync.date
-
-
-def _locations_have_changed(last_sync, accessor, restore_user):
-    # this first check is much faster - short circuit out if nothing at all changed
-    if not SQLLocation.objects.filter(domain=restore_user.domain, last_modified__gte=last_sync.date).exists():
-        return False
-    return accessor.queryset.filter(last_modified__gte=last_sync.date).values('last_modified').union(
-        LocationType.objects.filter(domain=restore_user.domain,
-                                    last_modified__gte=last_sync.date).values('last_modified'),
-    ).exists()
 
 
 class LocationFixtureProvider(FixtureProvider):
@@ -247,45 +286,6 @@ location_fixture_generator = LocationFixtureProvider(
 flat_location_fixture_generator = LocationFixtureProvider(
     id='locations', serializer=FlatLocationSerializer()
 )
-
-
-int_field = IntegerField()
-int_array = ArrayField(int_field)
-
-
-class LocationsAccessor:
-    """Accessor scoped to a single restore call"""
-    def __init__(self, restore_user):
-        self.user = restore_user
-
-    @cached_property
-    def queryset(self):
-        # Doing this lazily lets us defer evaluation unless actually needed
-        user_locations = self.user.get_sql_locations(self.user.domain)
-        user_location_pks = list(user_locations.order_by().values_list("pk", flat=True))
-
-        if not user_location_pks:
-            return SQLLocation.objects.none()
-        return _location_queryset_helper(self.user.domain, user_location_pks)
-
-
-def _location_queryset_helper(domain, location_pks):
-    fixture_ids = With(raw_cte_sql(
-        """
-        SELECT "id", "path", "depth"
-        FROM get_location_fixture_ids(%s::TEXT, %s)
-        """,
-        [domain, location_pks],
-        {"id": int_field, "path": int_array, "depth": int_field},
-    ))
-
-    return fixture_ids.join(
-        SQLLocation.objects.all(),
-        id=fixture_ids.col.id,
-    ).annotate(
-        path=fixture_ids.col.path,
-        depth=fixture_ids.col.depth,
-    ).with_cte(fixture_ids).prefetch_related('location_type', 'parent')
 
 
 def _append_children(node, location_db, locations, data_fields):
