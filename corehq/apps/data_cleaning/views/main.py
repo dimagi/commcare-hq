@@ -29,7 +29,7 @@ from corehq.util.view_utils import set_file_download
 class BulkEditCasesMainView(BaseProjectDataView):
     page_title = gettext_lazy("Bulk Edit Case Data")
     urlname = "bulk_edit_cases_main"
-    template_name = "data_cleaning/bulk_edit_cases_main.html"
+    template_name = "data_cleaning/bulk_edit_main.html"
 
     @property
     def page_context(self):
