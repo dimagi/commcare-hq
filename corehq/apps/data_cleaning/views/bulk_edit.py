@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy
 from django.views.generic import TemplateView
 
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
-from corehq.apps.data_cleaning.forms.cleaning import CleanSelectedRecordsForm
+from corehq.apps.data_cleaning.forms.bulk_edit import CleanSelectedRecordsForm
 from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.domain.views import DomainViewMixin
@@ -15,9 +15,9 @@ from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
     use_bootstrap5,
     require_bulk_data_cleaning_cases,
 ], name='dispatch')
-class CleanSelectedRecordsFormView(BulkEditSessionViewMixin,
-                                   LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin, TemplateView):
-    urlname = "data_cleaning_clean_selected_records_form"
+class EditSelectedRecordsFormView(BulkEditSessionViewMixin,
+                                  LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin, TemplateView):
+    urlname = "bulk_edit_selected_records_form"
     template_name = "data_cleaning/forms/clean_selected_records_form.html"
     session_not_found_message = gettext_lazy("Cannot load clean selected records form, session was not found.")
 
