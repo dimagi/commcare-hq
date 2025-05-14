@@ -5,7 +5,7 @@ from django_tables2 import columns, tables
 
 from corehq.apps.data_cleaning.columns import (
     EditableHtmxColumn,
-    DataCleaningHtmxSelectionColumn,
+    SelectableHtmxColumn,
 )
 from corehq.apps.data_cleaning.models.session import (
     BULK_OPERATION_CHUNK_SIZE,
@@ -37,7 +37,7 @@ class EditCasesTable(BaseHtmxTable, ElasticTable):
 
     @classmethod
     def get_select_column(cls, session, request, select_record_action, select_page_action):
-        return DataCleaningHtmxSelectionColumn(
+        return SelectableHtmxColumn(
             session, request, select_record_action, select_page_action, accessor="case_id",
             attrs={
                 'td__input': {
