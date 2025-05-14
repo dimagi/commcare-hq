@@ -33,9 +33,9 @@ class BaseDataCleaningTableView(LoginAndDomainMixin, DomainViewMixin, Selectable
     pass
 
 
-class CleanCasesTableView(BulkEditSessionViewMixin,
-                          HtmxInvalidPageRedirectMixin, HqHtmxActionMixin, BaseDataCleaningTableView):
-    urlname = "data_cleaning_cases_table"
+class EditCasesTableView(BulkEditSessionViewMixin,
+                         HtmxInvalidPageRedirectMixin, HqHtmxActionMixin, BaseDataCleaningTableView):
+    urlname = "bulk_edit_cases_table"
     table_class = CleanCaseTable
 
     def get_host_url(self):
