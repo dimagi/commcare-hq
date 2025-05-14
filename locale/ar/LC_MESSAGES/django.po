@@ -3592,8 +3592,8 @@ msgstr "إخفاء عن العميل"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
-#: corehq/apps/data_cleaning/models.py corehq/apps/data_dictionary/models.py
-#: corehq/apps/hqadmin/reports.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_dictionary/models.py corehq/apps/hqadmin/reports.py
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/reports/filters/dates.py
 #: corehq/apps/reports/standard/deployments.py
@@ -6718,7 +6718,7 @@ msgstr "إدخال نصي"
 
 #: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/reports/v2/filters/xpath_column.py
 msgid "Text"
 msgstr "نص"
@@ -10847,12 +10847,12 @@ msgid "Plain"
 msgstr "عادي"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Integer"
 msgstr "عدد صحيح"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Decimal"
 msgstr "عدد عشري"
 
@@ -11587,7 +11587,8 @@ msgid "Date Range"
 msgstr "نطاق التاريخ"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
-#: corehq/apps/data_cleaning/models.py corehq/apps/data_dictionary/models.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_dictionary/models.py
 msgid "Barcode"
 msgstr "رمز شريطي"
 
@@ -12250,7 +12251,7 @@ msgid "Preview"
 msgstr "معاينة"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_single_type.html
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/key_value_mapping.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/key_value_mapping.html
@@ -12310,7 +12311,7 @@ msgstr "نوع التحديث"
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 #: corehq/apps/builds/templates/builds/all.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/data_cleaning/models.py corehq/apps/reports/forms.py
+#: corehq/apps/data_cleaning/models/types.py corehq/apps/reports/forms.py
 msgid "Time"
 msgstr "الوقت"
 
@@ -15538,7 +15539,6 @@ msgstr "لا توجد استعلامات حديثة"
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/entry_signature.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_clear.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/domain/forms.py corehq/apps/sms/templates/sms/chat_contacts.html
@@ -16551,18 +16551,33 @@ msgstr "مشترك في النسخة المجانية."
 msgid "Please add case owners to filter the list of cases."
 msgstr "يرجى إضافة مالكي الحالات لتصفية قائمة الحالات."
 
+#: corehq/apps/data_cleaning/filters.py
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/reports/filters/case_list.py
+msgid "[All Data]"
+msgstr "[كل البيانات]"
+
 #: corehq/apps/data_cleaning/forms/cleaning.py
-msgid "Select a property to clean"
+#, fuzzy
+#| msgid "Select a property to clean"
+msgid "Select a property to edit"
 msgstr "اختر خاصية لتنظيفها"
 
 #: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid ""
+#| "Choices are editable case properties that are currently visible in the "
+#| "table."
 msgid ""
-"Choices are editable case properties that are currently visible in the table."
+"You can only select editable case properties that are currently visible in "
+"the table as a column. System properties cannot be edited."
 msgstr "الخيارات هي خصائص الحالة القابلة للتعديل والتي تظهر حاليًا في الجدول."
 
 #: corehq/apps/data_cleaning/forms/cleaning.py
-msgid "Data cleaning action"
-msgstr "إجراء تنظيف البيانات"
+#, fuzzy
+#| msgid "Edit Location"
+msgid "Edit action"
+msgstr "تعديل الموقع"
 
 #: corehq/apps/data_cleaning/forms/cleaning.py
 msgid "Find:"
@@ -16599,8 +16614,10 @@ msgid "Select a cleaning action..."
 msgstr "اختر إجراء تنظيف..."
 
 #: corehq/apps/data_cleaning/forms/cleaning.py
-msgid "Preview Changes"
-msgstr "معاينة التغييرات"
+#, fuzzy
+#| msgid "Preview data"
+msgid "Preview Edits"
+msgstr "معاينة البيانات"
 
 #: corehq/apps/data_cleaning/forms/cleaning.py
 msgid ""
@@ -16777,28 +16794,58 @@ msgstr "ابدأ جلسة جديدة واحذف الجلسة الحالية."
 msgid "Start Session"
 msgstr "بدء الجلسة"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/change.py
+msgid "Unknown action"
+msgstr "إجراء غير معروف"
+
+#: corehq/apps/data_cleaning/models/change.py
+#, python-brace-format
+msgid "value with \"{replace_string}\"."
+msgstr "القيمة مع \"{replace_string}\"."
+
+#: corehq/apps/data_cleaning/models/change.py
+#, python-brace-format
+msgid "\"{find_string}\" with \"{replace_string}\"{use_regex}."
+msgstr "\"{find_string}\" بـ \"{replace_string}\"{use_regex}."
+
+#: corehq/apps/data_cleaning/models/change.py
+msgid " (using regex)"
+msgstr " (باستخدام التعبير النمطي)"
+
+#: corehq/apps/data_cleaning/models/change.py
+#, python-brace-format
+msgid "from case property \"{copy_from_prop_id}\"."
+msgstr "من خاصية الحالة \"{copy_from_prop_id}\"."
+
+#: corehq/apps/data_cleaning/models/filters.py
+#: corehq/apps/data_cleaning/templatetags/data_cleaning.py
+msgid "unknown"
+msgstr "غير معروف"
+
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Phone Number or Numeric ID"
 msgstr "رقم الهاتف أو معرف رقمي"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Date and Time"
 msgstr "التاريخ والوقت"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Single Option"
 msgstr "خيار واحد"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Multiple Option"
 msgstr "خيارات متعددة"
 
-#: corehq/apps/data_cleaning/models.py corehq/apps/data_dictionary/models.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_dictionary/models.py
 msgid "GPS"
 msgstr "نظام تحديد المواقع (GPS)"
 
-#: corehq/apps/data_cleaning/models.py corehq/apps/data_dictionary/models.py
-#: corehq/apps/email/forms.py corehq/apps/hqwebapp/forms.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_dictionary/models.py corehq/apps/email/forms.py
+#: corehq/apps/hqwebapp/forms.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_knockout_validation.py
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
 #: corehq/apps/users/forms.py corehq/messaging/smsbackends/airtel_tcl/forms.py
@@ -16810,197 +16857,171 @@ msgstr "نظام تحديد المواقع (GPS)"
 msgid "Password"
 msgstr "كلمة المرور"
 
-#: corehq/apps/data_cleaning/models.py corehq/apps/data_dictionary/models.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_dictionary/models.py
 msgid "Number"
 msgstr "رقم"
 
-#: corehq/apps/data_cleaning/models.py corehq/apps/data_dictionary/models.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_dictionary/models.py
 msgid "Multiple Choice"
 msgstr "اختيار من متعدد"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
 msgid "is empty"
 msgstr "فارغ"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is not empty"
 msgstr "غير فارغ"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is missing"
 msgstr "مفقود"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is not missing"
 msgstr "غير مفقود"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
 msgid "is exactly"
 msgstr "يساوي تمامًا"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
 msgid "is not"
 msgstr "لا يساوي"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "starts with"
 msgstr "يبدأ بـ"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "does not start with"
 msgstr "لا يبدأ بـ"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is like"
 msgstr "يشبه"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is not like"
 msgstr "لا يشبه"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "sounds like"
 msgstr "يبدو مثل"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "does not sound like"
 msgstr "لا يبدو مثل"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is any"
 msgstr "أي من"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is not any"
 msgstr "ليس أي من"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is all"
 msgstr "كلها"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is not all"
 msgstr "ليس كلها"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 msgid "equals"
 msgstr "يساوي"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 msgid "does not equal"
 msgstr "لا يساوي"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 msgid "less than"
 msgstr "أقل من"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "less than or equal to"
 msgstr "أقل من أو يساوي"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 msgid "greater than"
 msgstr "أكبر من"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "greater than or equal to"
 msgstr "أكبر من أو يساوي"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "on"
 msgstr "في"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "before"
 msgstr "قبل"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "before or on"
 msgstr "قبل أو في"
 
-#: corehq/apps/data_cleaning/models.py corehq/messaging/scheduling/forms.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/messaging/scheduling/forms.py
 msgid "after"
 msgstr "بعد"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "on or after"
 msgstr "في أو بعد"
 
-#: corehq/apps/data_cleaning/models.py
-#: corehq/apps/data_cleaning/templatetags/data_cleaning.py
-msgid "unknown"
-msgstr "غير معروف"
-
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Find & Replace"
 msgstr "بحث واستبدال"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Copy & Replace"
 msgstr "نسخ واستبدال"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Strip Whitespaces"
 msgstr "إزالة المسافات البيضاء"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Make Title Case"
 msgstr "تحويل إلى حالة العنوان"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Make Upper Case"
 msgstr "تحويل إلى أحرف كبيرة"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Make Lower Case"
 msgstr "تحويل إلى أحرف صغيرة"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Make Value Empty"
 msgstr "اجعل القيمة فارغة"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Make Value NULL"
 msgstr "اجعل القيمة NULL"
 
-#: corehq/apps/data_cleaning/models.py
-#: corehq/apps/data_cleaning/templates/data_cleaning/columns/column_editable.html
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Reset Changes"
 msgstr "إعادة تعيين التغييرات"
-
-#: corehq/apps/data_cleaning/models.py
-msgid "Unknown action"
-msgstr "إجراء غير معروف"
-
-#: corehq/apps/data_cleaning/models.py
-#, python-brace-format
-msgid "value with \"{replace_string}\"."
-msgstr "القيمة مع \"{replace_string}\"."
-
-#: corehq/apps/data_cleaning/models.py
-#, python-brace-format
-msgid "\"{find_string}\" with \"{replace_string}\"{use_regex}."
-msgstr "\"{find_string}\" بـ \"{replace_string}\"{use_regex}."
-
-#: corehq/apps/data_cleaning/models.py
-msgid " (using regex)"
-msgstr " (باستخدام التعبير النمطي)"
-
-#: corehq/apps/data_cleaning/models.py
-#, python-brace-format
-msgid "from case property \"{copy_from_prop_id}\"."
-msgstr "من خاصية الحالة \"{copy_from_prop_id}\"."
 
 #: corehq/apps/data_cleaning/tables.py
 msgid "Committed On"
@@ -17015,7 +17036,9 @@ msgid "# Cases Cleaned"
 msgstr "# الحالات التي تم تنظيفها"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/clean_cases_main.html
-msgid "Start a Cleaning Session"
+#, fuzzy
+#| msgid "Start a Cleaning Session"
+msgid "Start a Bulk Edit Session"
 msgstr "بدء جلسة تنظيف"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/clean_cases_main.html
@@ -17033,6 +17056,12 @@ msgstr "القيمة المخزنة"
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/column_editable.html
 msgid "changed value"
 msgstr "القيمة المعدلة"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/column_editable.html
+#, fuzzy
+#| msgid "Reset Grid"
+msgid "Reset Edits"
+msgstr "إعادة تعيين الجدول"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/column_editable.html
 #: corehq/apps/styleguide/templates/styleguide/htmx_todo/item.html
@@ -17069,15 +17098,19 @@ msgid "NULL"
 msgstr "NULL"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    Select %(num_records)s Cases\n"
+#| "  "
 msgid ""
 "\n"
-"        %(num_records)s records have been cleaned.\n"
+"        Priviewed edits on %(num_records)s cases.\n"
 "      "
 msgstr ""
 "\n"
-"        تم تنظيف %(num_records)s من السجلات.\n"
-"      "
+"    تحديد %(num_records)s حالة\n"
+"  "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
 msgid "Edit history is too large..."
@@ -17138,9 +17171,15 @@ msgstr ""
 "      "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/partials/active_session_exists.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    An active data cleaning session already exists for this case type.\n"
+#| "    Please decide how you would like to proceed.\n"
+#| "  "
 msgid ""
 "\n"
-"    An active data cleaning session already exists for this case type.\n"
+"    An active bulk edit session already exists for this case type.\n"
 "    Please decide how you would like to proceed.\n"
 "  "
 msgstr ""
@@ -17161,8 +17200,36 @@ msgstr "تطبيق جميع التعديلات؟"
 msgid "Apply All Edits"
 msgstr "تطبيق جميع التعديلات"
 
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_apply.html
+msgid "You have selected cases which have been filtered out."
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_apply.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Please either apply your previewed edits, or add filters to "
+#| "select fewer cases.\n"
+#| "      "
+msgid ""
+"\n"
+"          \"Apply\" will apply all previewed edits in the session, "
+"regardless of filters.\n"
+"        "
+msgstr ""
+"\n"
+"        يرجى إما تطبيق التعديلات التي تمت معاينتها، أو إضافة عوامل تصفية "
+"لتحديد عدد أقل من الحالات.\n"
+"      "
+
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_clear.html
 msgid "Clear all edits?"
+msgstr "مسح جميع التعديلات؟"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_clear.html
+#, fuzzy
+#| msgid "Clear all edits?"
+msgid "Clear All Edits"
 msgstr "مسح جميع التعديلات؟"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_select_all.html
@@ -17277,8 +17344,10 @@ msgstr "تكوين الأعمدة"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/button_bar.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/offcanvas.html
-msgid "Clean Selected Cases"
-msgstr "تنظيف الحالات المحددة"
+#, fuzzy
+#| msgid "Selected Cases"
+msgid "Edit Selected Cases"
+msgstr "الحالات المحددة"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/apply_changes.html
 #, python-format
@@ -17380,10 +17449,14 @@ msgid "Edits"
 msgstr "تعديلات"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "              Filters Applied: %(num_records)s Matching Records\n"
+#| "            "
 msgid ""
 "\n"
-"              Filters Applied: %(num_records)s Matching Records\n"
+"              Filters Applied: %(num_records)s Matching Cases\n"
 "            "
 msgstr ""
 "\n"
@@ -17395,9 +17468,14 @@ msgid "Clear Filters"
 msgstr "مسح عوامل التصفية"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            Records Selected\n"
+#| "          "
 msgid ""
 "\n"
-"            Records Selected\n"
+"            Cases Selected\n"
 "          "
 msgstr ""
 "\n"
@@ -17406,11 +17484,10 @@ msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 msgid ""
-"Some records are selected in the session but not currently visible. They "
-"will not be part of cleaning actions until all filters are removed."
+"You have selected cases which have been filtered out. New previewed edits "
+"will only apply to selected cases in the current filters, unless you remove "
+"filters."
 msgstr ""
-"بعض السجلات محددة في الجلسة ولكنها غير مرئية حالياً. لن تكون جزءاً من إجراءات "
-"التنظيف حتى تتم إزالة جميع عوامل التصفية."
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 msgid "Clear Selection"
@@ -17516,16 +17593,16 @@ msgid "Cannot retrieve filters, session was not found."
 msgstr "تعذر استرجاع عوامل التصفية، لم يتم العثور على الجلسة."
 
 #: corehq/apps/data_cleaning/views/main.py
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/data_corrections_modal.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/data_corrections_modal.html
-#: corehq/apps/reports/templates/reports/reportdata/bootstrap3/case_data.html
-#: corehq/apps/reports/templates/reports/reportdata/bootstrap5/case_data.html
-msgid "Clean Case Data"
-msgstr "تنظيف بيانات الحالة"
+#, fuzzy
+#| msgid "Bulk Clear Data"
+msgid "Bulk Edit Case Data"
+msgstr "مسح البيانات بشكل جماعي"
 
 #: corehq/apps/data_cleaning/views/main.py
-msgid "Clean Case Type"
-msgstr "تنظيف نوع الحالة"
+#, fuzzy
+#| msgid "Default Case Type"
+msgid "Bulk Edit Case Type"
+msgstr "نوع الحالة الافتراضي"
 
 #: corehq/apps/data_cleaning/views/main.py
 msgid "That session does not exist. Please start a new session."
@@ -33440,11 +33517,6 @@ msgstr "رقم الدفعة"
 msgid "Payment status"
 msgstr "حالة الدفع"
 
-#: corehq/apps/integration/payments/filters.py
-#: corehq/apps/reports/filters/case_list.py
-msgid "[All Data]"
-msgstr "[كل البيانات]"
-
 #: corehq/apps/integration/payments/forms.py corehq/motech/dhis2/forms.py
 #: corehq/motech/dhis2/views.py corehq/motech/repeaters/forms.py
 #: corehq/motech/templates/motech/connection_settings.html
@@ -40808,6 +40880,13 @@ msgstr "هل أنت متأكد أنك تريد إرسال هذه التقاري�
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/bulk_modal.html
 msgid "Are you sure you want to send this scheduled report?"
 msgstr "هل أنت متأكد أنك تريد إرسال هذا التقرير المجدول؟"
+
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/data_corrections_modal.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/data_corrections_modal.html
+#: corehq/apps/reports/templates/reports/reportdata/bootstrap3/case_data.html
+#: corehq/apps/reports/templates/reports/reportdata/bootstrap5/case_data.html
+msgid "Clean Case Data"
+msgstr "تنظيف بيانات الحالة"
 
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/data_corrections_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/data_corrections_modal.html
@@ -57195,6 +57274,35 @@ msgstr "الأعمدة المطلوبة هي {column_names}"
 msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
 
+#~ msgid "Data cleaning action"
+#~ msgstr "إجراء تنظيف البيانات"
+
+#~ msgid "Preview Changes"
+#~ msgstr "معاينة التغييرات"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "        %(num_records)s records have been cleaned.\n"
+#~ "      "
+#~ msgstr ""
+#~ "\n"
+#~ "        تم تنظيف %(num_records)s من السجلات.\n"
+#~ "      "
+
+#~ msgid "Clean Selected Cases"
+#~ msgstr "تنظيف الحالات المحددة"
+
+#~ msgid ""
+#~ "Some records are selected in the session but not currently visible. They "
+#~ "will not be part of cleaning actions until all filters are removed."
+#~ msgstr ""
+#~ "بعض السجلات محددة في الجلسة ولكنها غير مرئية حالياً. لن تكون جزءاً من "
+#~ "إجراءات التنظيف حتى تتم إزالة جميع عوامل التصفية."
+
+#~ msgid "Clean Case Type"
+#~ msgstr "تنظيف نوع الحالة"
+
 #~ msgid "Performance might be impacted..."
 #~ msgstr "قد تتأثر الأداء..."
 
@@ -57380,7 +57488,7 @@ msgstr "أدخل JSON صالحًا"
 #~ msgstr "تمت إعادة تعيين كلمة المرور لـ {} بنجاح. يمكنك الآن تسجيل الدخول."
 
 #~ msgid "   √   "
-#~ msgstr "      "
+#~ msgstr "      "
 
 #, fuzzy, python-brace-format
 #~ msgid "<a href=\"{url}\">Add/Edit Connections Settings</a>"

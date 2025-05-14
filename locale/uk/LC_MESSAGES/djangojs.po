@@ -743,7 +743,7 @@ msgstr "У вас незмінені налаштування властивос
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 #, fuzzy
 #| msgid "Property uses unrecognized prefix <strong>"
-msgid "Property uses unrecognized prefix"
+msgid "Property uses unrecognized prefix <strong>"
 msgstr "Властивість використовує невідомий префікс <strong>"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js

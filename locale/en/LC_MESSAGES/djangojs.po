@@ -690,7 +690,7 @@ msgid "You have unchanged user properties settings"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-msgid "Property uses unrecognized prefix"
+msgid "Property uses unrecognized prefix <strong>"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js

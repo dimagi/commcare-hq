@@ -3694,8 +3694,8 @@ msgstr "Приховати від клієнта"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
-#: corehq/apps/data_cleaning/models.py corehq/apps/data_dictionary/models.py
-#: corehq/apps/hqadmin/reports.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_dictionary/models.py corehq/apps/hqadmin/reports.py
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
 #: corehq/apps/reports/filters/dates.py
 #: corehq/apps/reports/standard/deployments.py
@@ -6868,7 +6868,7 @@ msgstr "Текстове поле"
 
 #: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/reports/v2/filters/xpath_column.py
 msgid "Text"
 msgstr "Текст"
@@ -11096,12 +11096,12 @@ msgid "Plain"
 msgstr "Звичайний"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Integer"
 msgstr "Ціле число"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list.html
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Decimal"
 msgstr "Десятковий"
 
@@ -11851,7 +11851,8 @@ msgid "Date Range"
 msgstr "Діапазон дат"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
-#: corehq/apps/data_cleaning/models.py corehq/apps/data_dictionary/models.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_dictionary/models.py
 msgid "Barcode"
 msgstr "Штрихкод"
 
@@ -12522,7 +12523,7 @@ msgid "Preview"
 msgstr "Попередній перегляд"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_single_type.html
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/key_value_mapping.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/key_value_mapping.html
@@ -12582,7 +12583,7 @@ msgstr "Тип оновлення"
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 #: corehq/apps/builds/templates/builds/all.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/data_cleaning/models.py corehq/apps/reports/forms.py
+#: corehq/apps/data_cleaning/models/types.py corehq/apps/reports/forms.py
 msgid "Time"
 msgstr "Час"
 
@@ -15889,7 +15890,6 @@ msgstr "Немає останніх запитів"
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/entry_signature.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/list.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
-#: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_clear.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/domain/forms.py corehq/apps/sms/templates/sms/chat_contacts.html
@@ -16927,20 +16927,35 @@ msgstr "Підписка на безкоштовну версію."
 msgid "Please add case owners to filter the list of cases."
 msgstr "Будь ласка, додайте власників справ для фільтрації списку справ."
 
+#: corehq/apps/data_cleaning/filters.py
+#: corehq/apps/integration/payments/filters.py
+#: corehq/apps/reports/filters/case_list.py
+msgid "[All Data]"
+msgstr "[Всі дані]"
+
 #: corehq/apps/data_cleaning/forms/cleaning.py
-msgid "Select a property to clean"
+#, fuzzy
+#| msgid "Select a property to clean"
+msgid "Select a property to edit"
 msgstr "Виберіть властивість для очищення"
 
 #: corehq/apps/data_cleaning/forms/cleaning.py
+#, fuzzy
+#| msgid ""
+#| "Choices are editable case properties that are currently visible in the "
+#| "table."
 msgid ""
-"Choices are editable case properties that are currently visible in the table."
+"You can only select editable case properties that are currently visible in "
+"the table as a column. System properties cannot be edited."
 msgstr ""
 "Варіанти — це редаговані властивості справ, які наразі відображаються у "
 "таблиці."
 
 #: corehq/apps/data_cleaning/forms/cleaning.py
-msgid "Data cleaning action"
-msgstr "Дія з очищення даних"
+#, fuzzy
+#| msgid "Edit Location"
+msgid "Edit action"
+msgstr "Редагувати локацію"
 
 #: corehq/apps/data_cleaning/forms/cleaning.py
 msgid "Find:"
@@ -16978,8 +16993,10 @@ msgid "Select a cleaning action..."
 msgstr "Виберіть дію очищення..."
 
 #: corehq/apps/data_cleaning/forms/cleaning.py
-msgid "Preview Changes"
-msgstr "Попередній перегляд змін"
+#, fuzzy
+#| msgid "Preview data"
+msgid "Preview Edits"
+msgstr "Попередній перегляд даних"
 
 #: corehq/apps/data_cleaning/forms/cleaning.py
 msgid ""
@@ -17159,28 +17176,58 @@ msgstr "Почати нову сесію та видалити існуючу с
 msgid "Start Session"
 msgstr "Почати сесію"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/change.py
+msgid "Unknown action"
+msgstr "Невідома дія"
+
+#: corehq/apps/data_cleaning/models/change.py
+#, python-brace-format
+msgid "value with \"{replace_string}\"."
+msgstr "значення з \"{replace_string}\"."
+
+#: corehq/apps/data_cleaning/models/change.py
+#, python-brace-format
+msgid "\"{find_string}\" with \"{replace_string}\"{use_regex}."
+msgstr "\"{find_string}\" на \"{replace_string}\"{use_regex}."
+
+#: corehq/apps/data_cleaning/models/change.py
+msgid " (using regex)"
+msgstr " (з використанням regex)"
+
+#: corehq/apps/data_cleaning/models/change.py
+#, python-brace-format
+msgid "from case property \"{copy_from_prop_id}\"."
+msgstr "з властивості справи \"{copy_from_prop_id}\"."
+
+#: corehq/apps/data_cleaning/models/filters.py
+#: corehq/apps/data_cleaning/templatetags/data_cleaning.py
+msgid "unknown"
+msgstr "невідомо"
+
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Phone Number or Numeric ID"
 msgstr "Номер телефону або числовий ідентифікатор"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Date and Time"
 msgstr "Дата та час"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Single Option"
 msgstr "Один варіант"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Multiple Option"
 msgstr "Кілька варіантів"
 
-#: corehq/apps/data_cleaning/models.py corehq/apps/data_dictionary/models.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_dictionary/models.py
 msgid "GPS"
 msgstr "GPS"
 
-#: corehq/apps/data_cleaning/models.py corehq/apps/data_dictionary/models.py
-#: corehq/apps/email/forms.py corehq/apps/hqwebapp/forms.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_dictionary/models.py corehq/apps/email/forms.py
+#: corehq/apps/hqwebapp/forms.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_knockout_validation.py
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
 #: corehq/apps/users/forms.py corehq/messaging/smsbackends/airtel_tcl/forms.py
@@ -17192,197 +17239,171 @@ msgstr "GPS"
 msgid "Password"
 msgstr "Пароль"
 
-#: corehq/apps/data_cleaning/models.py corehq/apps/data_dictionary/models.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_dictionary/models.py
 msgid "Number"
 msgstr "Число"
 
-#: corehq/apps/data_cleaning/models.py corehq/apps/data_dictionary/models.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/data_dictionary/models.py
 msgid "Multiple Choice"
 msgstr "Множинний вибір"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
 msgid "is empty"
 msgstr "порожнє"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is not empty"
 msgstr "не порожнє"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is missing"
 msgstr "відсутнє"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is not missing"
 msgstr "не відсутнє"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
 msgid "is exactly"
 msgstr "точно дорівнює"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
 msgid "is not"
 msgstr "не є"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "starts with"
 msgstr "починається з"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "does not start with"
 msgstr "не починається з"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is like"
 msgstr "схоже на"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is not like"
 msgstr "не схоже на"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "sounds like"
 msgstr "звучить як"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "does not sound like"
 msgstr "не звучить як"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is any"
 msgstr "є будь-яким"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is not any"
 msgstr "не є жодним"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is all"
 msgstr "є всіма"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is not all"
 msgstr "не є всіма"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 msgid "equals"
 msgstr "дорівнює"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 msgid "does not equal"
 msgstr "не дорівнює"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 msgid "less than"
 msgstr "менше ніж"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "less than or equal to"
 msgstr "менше або дорівнює"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 msgid "greater than"
 msgstr "більше ніж"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "greater than or equal to"
 msgstr "більше або дорівнює"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "on"
 msgstr "на"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "before"
 msgstr "до"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "before or on"
 msgstr "до або на"
 
-#: corehq/apps/data_cleaning/models.py corehq/messaging/scheduling/forms.py
+#: corehq/apps/data_cleaning/models/types.py
+#: corehq/messaging/scheduling/forms.py
 msgid "after"
 msgstr "після"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "on or after"
 msgstr "на або після"
 
-#: corehq/apps/data_cleaning/models.py
-#: corehq/apps/data_cleaning/templatetags/data_cleaning.py
-msgid "unknown"
-msgstr "невідомо"
-
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Find & Replace"
 msgstr "Знайти й замінити"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Copy & Replace"
 msgstr "Копіювати й замінити"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Strip Whitespaces"
 msgstr "Видалити пробіли"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Make Title Case"
 msgstr "Зробити заголовними літерами"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Make Upper Case"
 msgstr "Зробити великими літерами"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Make Lower Case"
 msgstr "Зробити малими літерами"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Make Value Empty"
 msgstr "Зробити значення порожнім"
 
-#: corehq/apps/data_cleaning/models.py
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Make Value NULL"
 msgstr "Зробити значення NULL"
 
-#: corehq/apps/data_cleaning/models.py
-#: corehq/apps/data_cleaning/templates/data_cleaning/columns/column_editable.html
+#: corehq/apps/data_cleaning/models/types.py
 msgid "Reset Changes"
 msgstr "Скинути зміни"
-
-#: corehq/apps/data_cleaning/models.py
-msgid "Unknown action"
-msgstr "Невідома дія"
-
-#: corehq/apps/data_cleaning/models.py
-#, python-brace-format
-msgid "value with \"{replace_string}\"."
-msgstr "значення з \"{replace_string}\"."
-
-#: corehq/apps/data_cleaning/models.py
-#, python-brace-format
-msgid "\"{find_string}\" with \"{replace_string}\"{use_regex}."
-msgstr "\"{find_string}\" на \"{replace_string}\"{use_regex}."
-
-#: corehq/apps/data_cleaning/models.py
-msgid " (using regex)"
-msgstr " (з використанням regex)"
-
-#: corehq/apps/data_cleaning/models.py
-#, python-brace-format
-msgid "from case property \"{copy_from_prop_id}\"."
-msgstr "з властивості справи \"{copy_from_prop_id}\"."
 
 #: corehq/apps/data_cleaning/tables.py
 msgid "Committed On"
@@ -17397,7 +17418,9 @@ msgid "# Cases Cleaned"
 msgstr "# Очищено справ"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/clean_cases_main.html
-msgid "Start a Cleaning Session"
+#, fuzzy
+#| msgid "Start a Cleaning Session"
+msgid "Start a Bulk Edit Session"
 msgstr "Почати сесію очищення"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/clean_cases_main.html
@@ -17415,6 +17438,12 @@ msgstr "збережене значення"
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/column_editable.html
 msgid "changed value"
 msgstr "змінене значення"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/columns/column_editable.html
+#, fuzzy
+#| msgid "Reset Grid"
+msgid "Reset Edits"
+msgstr "Скинути сітку"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/columns/column_editable.html
 #: corehq/apps/styleguide/templates/styleguide/htmx_todo/item.html
@@ -17451,15 +17480,19 @@ msgid "NULL"
 msgstr "NULL"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "    Select %(num_records)s Cases\n"
+#| "  "
 msgid ""
 "\n"
-"        %(num_records)s records have been cleaned.\n"
+"        Priviewed edits on %(num_records)s cases.\n"
 "      "
 msgstr ""
 "\n"
-"        %(num_records)s записів було очищено.\n"
-"      "
+"    Вибрати %(num_records)s справ\n"
+"  "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
 msgid "Edit history is too large..."
@@ -17520,9 +17553,15 @@ msgstr ""
 "      "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/partials/active_session_exists.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "    An active data cleaning session already exists for this case type.\n"
+#| "    Please decide how you would like to proceed.\n"
+#| "  "
 msgid ""
 "\n"
-"    An active data cleaning session already exists for this case type.\n"
+"    An active bulk edit session already exists for this case type.\n"
 "    Please decide how you would like to proceed.\n"
 "  "
 msgstr ""
@@ -17543,8 +17582,36 @@ msgstr "Застосувати всі зміни?"
 msgid "Apply All Edits"
 msgstr "Застосувати всі зміни"
 
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_apply.html
+msgid "You have selected cases which have been filtered out."
+msgstr ""
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_apply.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        Please either apply your previewed edits, or add filters to "
+#| "select fewer cases.\n"
+#| "      "
+msgid ""
+"\n"
+"          \"Apply\" will apply all previewed edits in the session, "
+"regardless of filters.\n"
+"        "
+msgstr ""
+"\n"
+"        Будь ласка, застосуйте попередньо переглянуті зміни або додайте "
+"фільтри для вибору меншої кількості справ.\n"
+"      "
+
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_clear.html
 msgid "Clear all edits?"
+msgstr "Очистити всі зміни?"
+
+#: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_clear.html
+#, fuzzy
+#| msgid "Clear all edits?"
+msgid "Clear All Edits"
 msgstr "Очистити всі зміни?"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/confirm_select_all.html
@@ -17658,8 +17725,10 @@ msgstr "Налаштувати стовпці"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/button_bar.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/offcanvas.html
-msgid "Clean Selected Cases"
-msgstr "Очистити вибрані справи"
+#, fuzzy
+#| msgid "Selected Cases"
+msgid "Edit Selected Cases"
+msgstr "Вибрані випадки"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/apply_changes.html
 #, python-format
@@ -17761,10 +17830,14 @@ msgid "Edits"
 msgstr "Редагування"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "              Filters Applied: %(num_records)s Matching Records\n"
+#| "            "
 msgid ""
 "\n"
-"              Filters Applied: %(num_records)s Matching Records\n"
+"              Filters Applied: %(num_records)s Matching Cases\n"
 "            "
 msgstr ""
 "\n"
@@ -17776,9 +17849,14 @@ msgid "Clear Filters"
 msgstr "Очистити фільтри"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "            Records Selected\n"
+#| "          "
 msgid ""
 "\n"
-"            Records Selected\n"
+"            Cases Selected\n"
 "          "
 msgstr ""
 "\n"
@@ -17787,11 +17865,10 @@ msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 msgid ""
-"Some records are selected in the session but not currently visible. They "
-"will not be part of cleaning actions until all filters are removed."
+"You have selected cases which have been filtered out. New previewed edits "
+"will only apply to selected cases in the current filters, unless you remove "
+"filters."
 msgstr ""
-"Деякі записи вибрані у сесії, але наразі не відображаються. Вони не будуть "
-"включені до дій очищення, доки не буде знято всі фільтри."
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 msgid "Clear Selection"
@@ -17898,16 +17975,16 @@ msgid "Cannot retrieve filters, session was not found."
 msgstr "Не вдалося отримати фільтри, сесію не знайдено."
 
 #: corehq/apps/data_cleaning/views/main.py
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/data_corrections_modal.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/data_corrections_modal.html
-#: corehq/apps/reports/templates/reports/reportdata/bootstrap3/case_data.html
-#: corehq/apps/reports/templates/reports/reportdata/bootstrap5/case_data.html
-msgid "Clean Case Data"
-msgstr "Очищення даних кейсу"
+#, fuzzy
+#| msgid "Bulk Clear Data"
+msgid "Bulk Edit Case Data"
+msgstr "Масове очищення даних"
 
 #: corehq/apps/data_cleaning/views/main.py
-msgid "Clean Case Type"
-msgstr "Очищення типу кейсу"
+#, fuzzy
+#| msgid "Default Case Type"
+msgid "Bulk Edit Case Type"
+msgstr "Тип звернення за замовчуванням"
 
 #: corehq/apps/data_cleaning/views/main.py
 msgid "That session does not exist. Please start a new session."
@@ -34118,11 +34195,6 @@ msgstr "Номер партії"
 msgid "Payment status"
 msgstr "Статус платежу"
 
-#: corehq/apps/integration/payments/filters.py
-#: corehq/apps/reports/filters/case_list.py
-msgid "[All Data]"
-msgstr "[Всі дані]"
-
 #: corehq/apps/integration/payments/forms.py corehq/motech/dhis2/forms.py
 #: corehq/motech/dhis2/views.py corehq/motech/repeaters/forms.py
 #: corehq/motech/templates/motech/connection_settings.html
@@ -41628,6 +41700,13 @@ msgstr "Ви впевнені, що хочете надіслати ці зап�
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/bulk_modal.html
 msgid "Are you sure you want to send this scheduled report?"
 msgstr "Ви впевнені, що хочете надіслати цей запланований звіт?"
+
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/data_corrections_modal.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/data_corrections_modal.html
+#: corehq/apps/reports/templates/reports/reportdata/bootstrap3/case_data.html
+#: corehq/apps/reports/templates/reports/reportdata/bootstrap5/case_data.html
+msgid "Clean Case Data"
+msgstr "Очищення даних кейсу"
 
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/data_corrections_modal.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/data_corrections_modal.html
@@ -58392,6 +58471,35 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#~ msgid "Data cleaning action"
+#~ msgstr "Дія з очищення даних"
+
+#~ msgid "Preview Changes"
+#~ msgstr "Попередній перегляд змін"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "        %(num_records)s records have been cleaned.\n"
+#~ "      "
+#~ msgstr ""
+#~ "\n"
+#~ "        %(num_records)s записів було очищено.\n"
+#~ "      "
+
+#~ msgid "Clean Selected Cases"
+#~ msgstr "Очистити вибрані справи"
+
+#~ msgid ""
+#~ "Some records are selected in the session but not currently visible. They "
+#~ "will not be part of cleaning actions until all filters are removed."
+#~ msgstr ""
+#~ "Деякі записи вибрані у сесії, але наразі не відображаються. Вони не "
+#~ "будуть включені до дій очищення, доки не буде знято всі фільтри."
+
+#~ msgid "Clean Case Type"
+#~ msgstr "Очищення типу кейсу"
 
 #~ msgid "Performance might be impacted..."
 #~ msgstr "Можлива втрата продуктивності..."

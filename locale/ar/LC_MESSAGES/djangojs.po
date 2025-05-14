@@ -730,7 +730,7 @@ msgstr "لديك إعدادات خصائص المستخدم غير معدلة"
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
 #, fuzzy
 #| msgid "Property uses unrecognized prefix <strong>"
-msgid "Property uses unrecognized prefix"
+msgid "Property uses unrecognized prefix <strong>"
 msgstr "الخاصية تستخدم بادئة غير معروفة <strong>"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
