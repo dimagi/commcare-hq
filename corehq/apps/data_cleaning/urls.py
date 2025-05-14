@@ -19,7 +19,7 @@ from corehq.apps.data_cleaning.views.main import (
 )
 from corehq.apps.data_cleaning.views.tables import (
     CleanCasesTableView,
-    CaseCleaningTasksTableView,
+    RecentCaseSessionsTableView,
 )
 from corehq.apps.data_cleaning.views.start import (
     StartCaseSessionView,
@@ -28,7 +28,7 @@ from corehq.apps.data_cleaning.views.start import (
 urlpatterns = [
     url(r'^cases/$', BulkEditCasesMainView.as_view(), name=BulkEditCasesMainView.urlname),
     url(r'^start/case/$', StartCaseSessionView.as_view(), name=StartCaseSessionView.urlname),
-    url(r'^tasks/case/$', CaseCleaningTasksTableView.as_view(), name=CaseCleaningTasksTableView.urlname),
+    url(r'^tasks/case/$', RecentCaseSessionsTableView.as_view(), name=RecentCaseSessionsTableView.urlname),
     url(r'^cases/(?P<session_id>[\w\-]+)/$', CleanCasesSessionView.as_view(),
         name=CleanCasesSessionView.urlname),
     url(r'^cases/(?P<session_id>[\w\-]+)/table/$', CleanCasesTableView.as_view(),

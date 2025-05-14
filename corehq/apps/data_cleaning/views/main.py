@@ -34,10 +34,10 @@ class BulkEditCasesMainView(BaseProjectDataView):
     @property
     def page_context(self):
         from corehq.apps.data_cleaning.views.start import StartCaseSessionView
-        from corehq.apps.data_cleaning.views.tables import CaseCleaningTasksTableView
+        from corehq.apps.data_cleaning.views.tables import RecentCaseSessionsTableView
         return {
             "htmx_start_session_form_view": reverse(StartCaseSessionView.urlname, args=(self.domain,)),
-            "htmx_recent_sessions_table_view": reverse(CaseCleaningTasksTableView.urlname, args=(self.domain, )),
+            "htmx_recent_sessions_table_view": reverse(RecentCaseSessionsTableView.urlname, args=(self.domain, )),
         }
 
 
