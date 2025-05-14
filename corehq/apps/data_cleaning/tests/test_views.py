@@ -18,7 +18,7 @@ from corehq.apps.data_cleaning.views.filters import (
     ManageFiltersFormView,
 )
 from corehq.apps.data_cleaning.views.main import (
-    CleanCasesMainView,
+    BulkEditCasesMainView,
     CleanCasesSessionView,
 )
 from corehq.apps.data_cleaning.views.tables import (
@@ -97,7 +97,7 @@ class CleanCasesViewAccessTest(TestCase):
         cls.real_session_id = session.session_id
         cls.fake_session_id = uuid.uuid4()
         cls.all_views = [
-            (CleanCasesMainView, (cls.domain_name,)),
+            (BulkEditCasesMainView, (cls.domain_name,)),
             (SetupCaseSessionFormView, (cls.domain_name,)),
             (CaseCleaningTasksTableView, (cls.domain_name,)),
             (CleanCasesSessionView, (cls.domain_name, cls.real_session_id,)),
