@@ -15,7 +15,7 @@ class EditableHtmxColumn(TemplateColumn):
     def __init__(self, column_spec, *args, **kwargs):
         """
         Defines the django_tables2 compatible column object
-        for the bulk data cleaning feature.
+        for the bulk data editing feature.
 
         :param column_spec: BulkEditColumn
         """
@@ -55,7 +55,7 @@ class SelectableHtmxColumn(CheckBoxColumn):
     def __init__(self, session, request, select_record_action, select_page_action, *args, **kwargs):
         """
         Defines a django_tables2 compatible column that handles selecting
-        records in a data cleaning session.
+        records in a data editing session.
 
         :param session: BulkEditSession instance
         :param request: a django request object from the session view
