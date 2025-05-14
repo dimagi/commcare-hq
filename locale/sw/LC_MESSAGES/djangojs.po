@@ -4,7 +4,7 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Dimagi Dev <devops@dimagi.com>, 2021
+# Dimagi Dev <devops@dimagi.com>, 2025
 #
 #, fuzzy
 msgid ""
@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2021\n"
+"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2025\n"
 "Language-Team: Swahili (https://app.transifex.com/dimagi/teams/9388/sw/)\n"
 "Language: sw\n"
 "MIME-Version: 1.0\n"
@@ -740,8 +740,8 @@ msgid "You have unchanged user properties settings"
 msgstr "Una mipangilio ya mali za mtumiaji ambayo haijabadilishwa"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-msgid "Property uses unrecognized prefix <strong>"
-msgstr "Mali inatumia kiambishi kisichotambulika <strong>"
+msgid "Property uses unrecognized prefix"
+msgstr "Mali inatumia kiambishi kisichotambulika"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Unidentified Question"

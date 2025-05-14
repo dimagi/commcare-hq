@@ -5,9 +5,9 @@
 #
 # Translators:
 # Jensen Daniel <jdaniel@dimagi.com>, 2019
-# Claire O'Grady <cogrady@dimagi.com>, 2019
 # Séfora Vazirna <seforan@gmail.com>, 2021
-# Dimagi Dev <devops@dimagi.com>, 2024
+# Claire O'Grady <cogrady@dimagi.com>, 2025
+# Dimagi Dev <devops@dimagi.com>, 2025
 #
 #, fuzzy
 msgid ""
@@ -15,7 +15,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2024\n"
+"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2025\n"
 "Language-Team: Portuguese (https://app.transifex.com/dimagi/teams/9388/pt/)\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -745,8 +745,8 @@ msgid "You have unchanged user properties settings"
 msgstr "Você tem configurações de propriedades de usuário não alteradas"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-msgid "Property uses unrecognized prefix <strong>"
-msgstr "A propriedade usa prefixo não reconhecido <strong>"
+msgid "Property uses unrecognized prefix"
+msgstr "Propriedade usa prefixo não reconhecido"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Unidentified Question"
@@ -2779,10 +2779,8 @@ msgid "Command Bar"
 msgstr "Barra de Comando"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#, fuzzy
-#| msgid "Module"
 msgid "Module ID"
-msgstr "Módulo"
+msgstr "ID do Módulo"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Description"

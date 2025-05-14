@@ -11659,12 +11659,12 @@ msgstr "Menyu ya Mzazi"
 msgid ""
 "\n"
 "                               Nest this menu under another for easier application navigation.\n"
-"                               <a href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</span>\n"
+"                               <a target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</a>\n"
 "                               "
 msgstr ""
 "\n"
 "                               Weka menyu hii chini ya nyingine ili kurahisisha urambazaji wa programu.\n"
-"                               <a href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(Maelezo Zaidi)</span>\n"
+"                               <a target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(Maelezo Zaidi)</a>\n"
 "                               "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html
@@ -12761,15 +12761,11 @@ msgstr "Haijawekwa"
 
 #: corehq/apps/app_manager/views/apps.py
 msgid "U​I translation"
-msgstr ""
-"Tafsiri ya U"
-"I"
+msgstr "Tafsiri ya UI"
 
 #: corehq/apps/app_manager/views/apps.py
 msgid "U​I translations"
-msgstr ""
-"Tafsiri za U"
-"I"
+msgstr "Tafsiri za UI"
 
 #: corehq/apps/app_manager/views/apps.py
 msgid "app translation"
@@ -16508,36 +16504,20 @@ msgstr ""
 "      "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
-msgid "Performance might be impacted..."
-msgstr "Utendaji unaweza kuathiriwa..."
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
-msgid ""
-"\n"
-"          Some cases have a large number of edits. You can continue to preview new bulk edits,\n"
-"          but some pages may take longer to load.\n"
-"        "
-msgstr ""
-"\n"
-"          Baadhi ya kesi zina idadi kubwa ya mabadiliko. Unaweza kuendelea kuona hakikisho la mabadiliko mapya ya pamoja,\n"
-"          lakini baadhi ya kurasa zinaweza kuchukua muda mrefu kupakia.\n"
-"        "
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
 msgid "Edit history is too large..."
 msgstr "Historia ya mabadiliko ni kubwa sana..."
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
 msgid ""
 "\n"
-"          The edit history for this session is too large to support new bulk edits.\n"
-"          You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
-"        "
+"            The edit history for this session is too large to support new bulk edits.\n"
+"            You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
+"          "
 msgstr ""
 "\n"
-"          Historia ya mabadiliko kwa kikao hiki ni kubwa mno kuweza kuunga mkono mabadiliko mapya ya pamoja.\n"
-"          Unaweza kutumia mabadiliko ya sasa, kufuta mabadiliko, au kufuta historia ya mabadiliko ili kuanza upya.\n"
-"        "
+"            Historia ya uhariri wa kikao hiki ni kubwa mno kuweza kuunga uhariri mpya wa pamoja.\n"
+"            Unaweza kutumia uhariri wa sasa, kutengua uhariri, au kufuta historia ya uhariri ili kuanza upya.\n"
+"          "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
 msgid "No editible case properties are visible"
@@ -16805,10 +16785,6 @@ msgstr ""
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 msgid "Edits"
 msgstr "Mabadiliko"
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
-msgid "number of cases with an edit history"
-msgstr "idadi ya kesi zilizo na historia ya mabadiliko"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 #, python-format
@@ -22644,10 +22620,8 @@ msgid ""
 "    "
 msgstr ""
 "\n"
-"      Kwa sababu za kiusalama, msimamizi wako wa CommCare 0amehitaji watumiaji wote kwenye mradi wako kuweka\n"
-"      uthibitishaji wa hatua mbili.<br>Hii ni tabaka la ziada la ulinzi linalotumika kuhakikisha usalama wa akaunti yako\n"
-"      zaidi ya jina la mtumiaji na nenosiri. 0\n"
-"    "
+"      Kwa sababu za kiusalama, msimamizi wako wa CommCare      uthibitishaji wa hatua mbili.<br>Hii ni tabaka la ziada la ulinzi linalotumika kuhakikisha usalama wa akaunti yako\n"
+"      zaidi ya jina la mtumiaji na nenosiri.    "
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
@@ -40100,8 +40074,8 @@ msgstr "Hariri Ripoti Iliyopangwa"
 
 #: corehq/apps/reports/views.py
 #, python-format
-msgid "This scheduled report's timezone is %s (UTC%s)"
-msgstr "Saa za ripoti hii iliyopangwa ni %s (UTC%s)"
+msgid "This scheduled report's timezone is %(timezone)s (UTC%(utc_offset)s)"
+msgstr "Saa ya ripoti hii iliyopangwa ni %(timezone)s (UTC%(utc_offset)s)"
 
 #: corehq/apps/reports/views.py
 msgid "Create a new"
@@ -42940,6 +42914,7 @@ msgid "Certificate (Base64)"
 msgstr "Cheti (Base64)"
 
 #: corehq/apps/sso/forms.py
+#| msgid "Token generator"
 msgid "Token Encryption"
 msgstr "Usimbaji wa Tokeni"
 
@@ -44193,6 +44168,7 @@ msgstr ""
 "Chagua majina ya vibanzi unayotaka ChatGPT itengeneze menyu ya kuvutia"
 
 #: corehq/apps/styleguide/examples/bootstrap5/select2_static_ko_form.py
+#| msgid "Token generator"
 msgid "Menu Generator"
 msgstr "Mtengenezaji wa Menyu"
 
@@ -55321,14 +55297,17 @@ msgid "stock_coartem_brown"
 msgstr "stoo_coartem_kahawia"
 
 #: custom/reports/mc/reports/definitions.py
+#| msgid "form/stock/stock_paracetamol_250"
 msgid "stock_paracetamol_250"
 msgstr "stoo_paracetamol_250"
 
 #: custom/reports/mc/reports/definitions.py
+#| msgid "form/stock/stock_paracetamol_500"
 msgid "stock_paracetamol_500"
 msgstr "stoo_paracetamol_500"
 
 #: custom/reports/mc/reports/definitions.py
+#| msgid "form/stock/stock_rdt"
 msgid "stock_rdt"
 msgstr "stoo_rdt"
 
@@ -55472,6 +55451,7 @@ msgid "Health Facility"
 msgstr "Kituo cha Afya"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/"
 msgstr "fomu/hisa/"
 
@@ -55516,42 +55496,52 @@ msgid "deaths_others"
 msgstr "vifo_vingine"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_amox_pink"
 msgstr "fomu/hisa/hisa_amox_pink"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_amox_green"
 msgstr "fomu/hisa/hisa_amox_green"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_ors"
 msgstr "fomu/hisa/hisa_ors"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_ra_50"
 msgstr "fomu/hisa/hisa_ra_50"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_ra_200"
 msgstr "fomu/hisa/hisa_ra_200"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_zinc"
 msgstr "fomu/hisa/hisa_zinc"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_coartem_yellow"
 msgstr "fomu/hisa/hisa_coartem_yellow"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_coartem_blue"
 msgstr "fomu/hisa/hisa_coartem_blue"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_coartem_green"
 msgstr "fomu/hisa/hisa_coartem_green"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_coartem_brown"
 msgstr "fomu/hisa/hisa_coartem_brown"
 
@@ -55568,6 +55558,7 @@ msgid "form/stock/stock_rdt"
 msgstr "fomu/hisa/hisa_rdt"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_gloves"
 msgstr "fomu/hisa/hisa_gloves"
 

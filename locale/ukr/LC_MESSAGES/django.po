@@ -11687,10 +11687,16 @@ msgid "Parent Menu"
 msgstr "Батьківське меню"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                               Nest this menu under another for easier application navigation.\n"
+#| "                               <a href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</span>\n"
+#| "                               "
 msgid ""
 "\n"
 "                               Nest this menu under another for easier application navigation.\n"
-"                               <a href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</span>\n"
+"                               <a target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</a>\n"
 "                               "
 msgstr ""
 "\n"
@@ -16541,31 +16547,21 @@ msgstr ""
 "      "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
-msgid "Performance might be impacted..."
-msgstr "Можлива втрата продуктивності..."
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
-msgid ""
-"\n"
-"          Some cases have a large number of edits. You can continue to preview new bulk edits,\n"
-"          but some pages may take longer to load.\n"
-"        "
-msgstr ""
-"\n"
-"          Деякі справи мають велику кількість змін. Ви можете продовжити перегляд нових масових змін,\n"
-"          але завантаження деяких сторінок може зайняти більше часу.\n"
-"        "
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
 msgid "Edit history is too large..."
 msgstr "Історія змін занадто велика..."
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          The edit history for this session is too large to support new bulk edits.\n"
+#| "          You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
+#| "        "
 msgid ""
 "\n"
-"          The edit history for this session is too large to support new bulk edits.\n"
-"          You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
-"        "
+"            The edit history for this session is too large to support new bulk edits.\n"
+"            You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
+"          "
 msgstr ""
 "\n"
 "          Історія змін для цієї сесії занадто велика для підтримки нових масових змін.\n"
@@ -16838,10 +16834,6 @@ msgstr ""
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 msgid "Edits"
 msgstr "Редагування"
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
-msgid "number of cases with an edit history"
-msgstr "кількість кейсів з історією редагувань"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 #, python-format
@@ -40190,8 +40182,9 @@ msgid "Edit Scheduled Report"
 msgstr "Редагувати запланований звіт"
 
 #: corehq/apps/reports/views.py
-#, python-format
-msgid "This scheduled report's timezone is %s (UTC%s)"
+#, fuzzy, python-format
+#| msgid "This scheduled report's timezone is %s (UTC%s)"
+msgid "This scheduled report's timezone is %(timezone)s (UTC%(utc_offset)s)"
 msgstr "Часовий пояс цього запланованого звіту — %s (UTC%s)"
 
 #: corehq/apps/reports/views.py
@@ -55748,6 +55741,23 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#~ msgid "Performance might be impacted..."
+#~ msgstr "Можлива втрата продуктивності..."
+
+#~ msgid ""
+#~ "\n"
+#~ "          Some cases have a large number of edits. You can continue to preview new bulk edits,\n"
+#~ "          but some pages may take longer to load.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          Деякі справи мають велику кількість змін. Ви можете продовжити перегляд нових масових змін,\n"
+#~ "          але завантаження деяких сторінок може зайняти більше часу.\n"
+#~ "        "
+
+#~ msgid "number of cases with an edit history"
+#~ msgstr "кількість кейсів з історією редагувань"
 
 #, fuzzy
 #~ msgid "Reverted to version {log.info['version']}"

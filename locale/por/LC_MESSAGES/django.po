@@ -11763,12 +11763,12 @@ msgstr "Menu Pai"
 msgid ""
 "\n"
 "                               Nest this menu under another for easier application navigation.\n"
-"                               <a href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</span>\n"
+"                               <a target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</a>\n"
 "                               "
 msgstr ""
 "\n"
-"                               Aninhe este menu sob outro para facilitar a navegação do aplicativo.\n"
-"                               <a href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(Mais Informações)</span>\n"
+"                               Aninhe este menu sob outro para facilitar a navegação no aplicativo.\n"
+"                               <a target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(Mais Informações)</a>\n"
 "                               "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html
@@ -12864,16 +12864,12 @@ msgid "Not set"
 msgstr "Não definido"
 
 #: corehq/apps/app_manager/views/apps.py
-#, fuzzy
-#| msgid "app translation"
 msgid "U​I translation"
-msgstr "tradução do aplicativo"
+msgstr "Tradução de UI"
 
 #: corehq/apps/app_manager/views/apps.py
-#, fuzzy
-#| msgid "app translations"
 msgid "U​I translations"
-msgstr "traduções de aplicativos"
+msgstr "Tradução de UI"
 
 #: corehq/apps/app_manager/views/apps.py
 msgid "app translation"
@@ -15255,10 +15251,7 @@ msgstr "Para manter quaisquer alterações não salvas -"
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/new_app_version_modal.html
 msgid "Click on “Update Later”."
-msgstr ""
-"Clique em "
-"Atualizar Depois"
-"."
+msgstr "Clique em “Atualizar Depois“."
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/new_app_version_modal.html
 msgid "Submit your changes."
@@ -16642,36 +16635,20 @@ msgstr ""
 "      "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
-msgid "Performance might be impacted..."
-msgstr "O desempenho pode ser impactado..."
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
-msgid ""
-"\n"
-"          Some cases have a large number of edits. You can continue to preview new bulk edits,\n"
-"          but some pages may take longer to load.\n"
-"        "
-msgstr ""
-"\n"
-"          Alguns casos possuem um grande número de edições. Você pode continuar a visualizar novas edições em massa,\n"
-"          mas algumas páginas podem demorar mais para carregar.\n"
-"        "
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
 msgid "Edit history is too large..."
 msgstr "O histórico de edições está muito grande..."
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
 msgid ""
 "\n"
-"          The edit history for this session is too large to support new bulk edits.\n"
-"          You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
-"        "
+"            The edit history for this session is too large to support new bulk edits.\n"
+"            You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
+"          "
 msgstr ""
 "\n"
-"          O histórico de edições desta sessão está muito grande para suportar novas edições em massa.\n"
-"          Você pode aplicar as edições atuais, desfazer edições ou limpar o histórico de edições para recomeçar.\n"
-"        "
+"            O histórico de edições desta sessão é grande demais para suportar novas edições em massa.\n"
+"            Você pode aplicar as edições atuais, desfazer as edições ou limpar o histórico de edições para começar de novo.\n"
+"          "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
 msgid "No editible case properties are visible"
@@ -16894,10 +16871,8 @@ msgid "the case property that was changed"
 msgstr "a propriedade do caso que foi alterada"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/partial/change_detail.html
-#, fuzzy
-#| msgid "Number of cases created in the date range."
 msgid "number of cases affected"
-msgstr "Número de casos criados no intervalo de datas."
+msgstr "número de casos afetados"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/partial/change_detail.html
 #, python-format
@@ -16943,10 +16918,6 @@ msgstr ""
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 msgid "Edits"
 msgstr "Edições"
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
-msgid "number of cases with an edit history"
-msgstr "número de casos com histórico de edições"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 #, python-format
@@ -22811,10 +22782,8 @@ msgid ""
 "    "
 msgstr ""
 "\n"
-"      Por motivos de segurança, seu administrador do CommCare a0exigiu que todos os usuários do seu projeto configurem\n"
-"      a autenticação em dois fatores.<br>Esta é uma camada extra de proteção usada para garantir a segurança da sua conta\n"
-"      além de um nome de usuário e senha. a0\n"
-"    "
+"      Por motivos de segurança, seu administrador do CommCare      a autenticação em dois fatores.<br>Esta é uma camada extra de proteção usada para garantir a segurança da sua conta\n"
+"      além de um nome de usuário e senha.    "
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
@@ -33801,10 +33770,8 @@ msgstr ""
 "'{type}', no índice '{i}' - '{er}'"
 
 #: corehq/apps/locations/bulk_management.py
-#, fuzzy
-#| msgid "Try again"
 msgid " and try again."
-msgstr "Tente novamente"
+msgstr " e tente novamente."
 
 #: corehq/apps/locations/bulk_management.py
 msgid "Location Type '{}' refers to a parent which doesn't exist"
@@ -34026,17 +33993,6 @@ msgid "Organization Levels"
 msgstr "Níveis de Organização"
 
 #: corehq/apps/locations/templates/locations/location_types.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "          Organization Levels allow you to configure the different types of\n"
-#| "          locations within your project (districts, facilities, front line\n"
-#| "          workers, etc.). Locations can own data and cases, view child\n"
-#| "          location's data or simply be used for aggregation. Once you've\n"
-#| "          defined your organization structure types, you'll be able to define\n"
-#| "          the organization structure for your project. Learn more about\n"
-#| "          Organizations on our <a href=\"https://help.commcarehq.org/display/commcarepublic/Organizations\">Help Site</a>.\n"
-#| "        "
 msgid ""
 "\n"
 "          Organization Levels allow you to configure the different types of\n"
@@ -34049,12 +34005,9 @@ msgid ""
 "        "
 msgstr ""
 "\n"
-"Níveis de Organização permitem que configure diferentes tipos de\n"
-"localizações dentro do projeto (distritos, instalações, trabalhadores da \n"
-"linha de frente, etc.). Localizações podem apresentar dados e casos, visualizar dados de localizações descendentes ou simplesmente serem usadas para agregação. Uma vez que \n"
-"definiu os seus tipos de estrutura de organização, será capaz de definir\n"
-"a estrutura de organização para o seu projeto. Saiba mais sobre\n"
-"Organizações no nosso <a href=\"https://help.commcarehq.org/display/commcarepublic/Organizations\">Site de Ajuda</a>."
+"          Os Níveis de Organização permitem configurar os diferentes tipos de\n"
+"          localizações dentro do seu projeto (distritos, unidades, trabalhadores de linha de frente, etc.). As localizações podem possuir dados e casos, visualizar dados de localizações filhas ou simplesmente serem usadas para agregação. Depois de definir os tipos de estrutura organizacional, você poderá definir a estrutura organizacional do seu projeto. Saiba mais sobre Organizações em nosso <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955032/Organizations+Locations\" target=\"_blank\">Site de Ajuda</a>.\n"
+"        "
 
 #: corehq/apps/locations/templates/locations/location_types.html
 #, python-format
@@ -34392,14 +34345,6 @@ msgid "Manage Organization Structure"
 msgstr "Gerir a Estrutura de Organização"
 
 #: corehq/apps/locations/templates/locations/manage/locations.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "            The organization feature allows you to represent the real-world\n"
-#| "            structure of your project (districts, facilities, frontline workers, etc.).\n"
-#| "            Once this structure has been defined, you can use it for reporting and\n"
-#| "            case sharing. Learn more about Organizations on our <a href=\"https://help.commcarehq.org/display/commcarepublic/Organizations\">Help Site</a>.\n"
-#| "          "
 msgid ""
 "\n"
 "            The organization feature allows you to represent the real-world\n"
@@ -34409,10 +34354,10 @@ msgid ""
 "          "
 msgstr ""
 "\n"
-"A característica da organização permite que represente a verdadeira\n"
-"estrutura do seu projeto (distritos, instalações, trabalhadores de linha de frente, etc.).\n"
-"Uma vez que a estrutura foi definida, pode usá-la para fazer relatórios e\n"
-"partilhar casos. Saiba mais sobre Organizações no nosso <a href=\"https://help.commcarehq.org/display/commcarepublic/Organizations\">Site de Ajuda</a>."
+"            O recurso de organização permite representar a estrutura real do seu projeto (distritos, unidades, trabalhadores de linha de frente, etc.).\n"
+"            Depois que essa estrutura for definida, você poderá usá-la para relatórios e\n"
+"            compartilhamento de casos. Saiba mais sobre Organizações em nosso <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955032/Organizations+Locations\" target=\"_blank\">Site de Ajuda</a>.\n"
+"          "
 
 #: corehq/apps/locations/templates/locations/manage/locations.html
 msgid "Showing the Archived Location List."
@@ -40373,8 +40318,9 @@ msgstr "Editar Relatório Agendado"
 
 #: corehq/apps/reports/views.py
 #, python-format
-msgid "This scheduled report's timezone is %s (UTC%s)"
-msgstr "O fuso horário deste relatório agendado é %s (UTC%s)"
+msgid "This scheduled report's timezone is %(timezone)s (UTC%(utc_offset)s)"
+msgstr ""
+"O fuso horário deste relatório agendado é %(timezone)s (UTC%(utc_offset)s)"
 
 #: corehq/apps/reports/views.py
 msgid "Create a new"
@@ -43229,6 +43175,7 @@ msgid "Certificate (Base64)"
 msgstr "Certificado (Base64)"
 
 #: corehq/apps/sso/forms.py
+#| msgid "Token generator"
 msgid "Token Encryption"
 msgstr "Criptografia de Token"
 
@@ -44482,6 +44429,7 @@ msgstr ""
 "criasse um menu atraente"
 
 #: corehq/apps/styleguide/examples/bootstrap5/select2_static_ko_form.py
+#| msgid "Token generator"
 msgid "Menu Generator"
 msgstr "Gerador de Cardápio"
 
@@ -55670,14 +55618,17 @@ msgid "stock_coartem_brown"
 msgstr "stock_coartem_brown"
 
 #: custom/reports/mc/reports/definitions.py
+#| msgid "form/stock/stock_paracetamol_250"
 msgid "stock_paracetamol_250"
 msgstr "stock_paracetamol_250"
 
 #: custom/reports/mc/reports/definitions.py
+#| msgid "form/stock/stock_paracetamol_500"
 msgid "stock_paracetamol_500"
 msgstr "stock_paracetamol_500"
 
 #: custom/reports/mc/reports/definitions.py
+#| msgid "form/stock/stock_rdt"
 msgid "stock_rdt"
 msgstr "stock_rdt"
 
@@ -55830,6 +55781,7 @@ msgid "Health Facility"
 msgstr "Unidade de Saúde"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/"
 msgstr "form/stock/"
 
@@ -55874,42 +55826,52 @@ msgid "deaths_others"
 msgstr "deaths_others"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_amox_pink"
 msgstr "Amoxicilina cor de rosa"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_amox_green"
 msgstr "Amoxicilina cor de verde"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_ors"
 msgstr "Pacotes SRO"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_ra_50"
 msgstr "Artesuato Rectal (50mg)"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_ra_200"
 msgstr "Artesuato Rectal (200mg)"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_zinc"
 msgstr "Zinco"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_coartem_yellow"
 msgstr "Coartem Amarelo"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_coartem_blue"
 msgstr "Coartem Azul"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_coartem_green"
 msgstr "Coartem Verde"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_coartem_brown"
 msgstr "Coartem Castanho"
 
@@ -55926,6 +55888,7 @@ msgid "form/stock/stock_rdt"
 msgstr "TDR"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_gloves"
 msgstr "Pares de luvas"
 

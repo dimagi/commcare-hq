@@ -4557,10 +4557,8 @@ msgid "Populate workflow from HAR file"
 msgstr "Completar flujo de trabajo desde archivo HAR"
 
 #: corehq/apps/app_execution/forms.py
-#, fuzzy
-#| msgid "Workflow"
 msgid "Workflow:"
-msgstr "Flujo de trabajo"
+msgstr "Flujo de trabajo:"
 
 #: corehq/apps/app_execution/forms.py
 msgid "User not found"
@@ -10373,13 +10371,6 @@ msgid "Case Detail Tabs"
 msgstr "Pestaña de Detalles del Caso"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-#, fuzzy
-#| msgid ""
-#| "Do you have a lot of case properties? Try splitting them into tabs, which "
-#| "will appear as separate screens that mobile users can swipe through. Read "
-#| "more on the <a "
-#| "href='https://help.commcarehq.org/display/commcarepublic/Tabs+on+Case+Detail+Screen'"
-#| " target='_blank'>Help Site</a>."
 msgid ""
 "Do you have a lot of case properties? Try splitting them into tabs, which "
 "will appear as separate screens that mobile users can swipe through. Read "
@@ -10387,11 +10378,11 @@ msgid ""
 "href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143951603/Case+List+and+Case+Detail+Configuration#Add-"
 "Tabs-on-Case-Detail-Screen' target='_blank'>Help Site</a>."
 msgstr ""
-"¿Tiene muchas propiedades de caso? Intente dividirlas en pestañas, las "
-"cuales aparecerán como pantallas individuales entre las que los usuarios "
-"podrán moverse. Lea más en el <a "
-"href='https://help.commcarehq.org/display/commcarepublic/Tabs+on+Case+Detail+Screen'"
-" target='_blank'>Sitio de Ayuda</a>."
+"¿Tienes muchas propiedades de caso? Intenta dividirlas en pestañas, que "
+"aparecerán como pantallas separadas por las que las personas usuarias "
+"móviles pueden deslizarse. Lee más en el <a "
+"href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143951603/Case+List+and+Case+Detail+Configuration#Add-"
+"Tabs-on-Case-Detail-Screen' target='_blank'>Sitio de Ayuda</a>."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
 msgid "Printing"
@@ -11793,12 +11784,12 @@ msgstr "Menú Padre"
 msgid ""
 "\n"
 "                               Nest this menu under another for easier application navigation.\n"
-"                               <a href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</span>\n"
+"                               <a target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</a>\n"
 "                               "
 msgstr ""
 "\n"
 "                               Anida este menú bajo otro para facilitar la navegación de la aplicación.\n"
-"                               <a href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(Más información)</span>\n"
+"                               <a target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(Más información)</a>\n"
 "                               "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html
@@ -12899,16 +12890,12 @@ msgid "Not set"
 msgstr "No establecido"
 
 #: corehq/apps/app_manager/views/apps.py
-#, fuzzy
-#| msgid "U\\u200BI translation"
 msgid "U​I translation"
-msgstr "Traducción U\\u200BI"
+msgstr "Traducción UI"
 
 #: corehq/apps/app_manager/views/apps.py
-#, fuzzy
-#| msgid "U\\u200BI translations"
 msgid "U​I translations"
-msgstr "Traducciones U\\u200BI"
+msgstr "Traducciones UI"
 
 #: corehq/apps/app_manager/views/apps.py
 msgid "app translation"
@@ -16587,10 +16574,8 @@ msgid "Reset Changes"
 msgstr "Restablecer cambios"
 
 #: corehq/apps/data_cleaning/models.py
-#, fuzzy
-#| msgid "Unknown Application"
 msgid "Unknown action"
-msgstr "Aplicación Desconocida"
+msgstr "Acción desconocida"
 
 #: corehq/apps/data_cleaning/models.py
 #, python-brace-format
@@ -16689,36 +16674,20 @@ msgstr ""
 "      "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
-msgid "Performance might be impacted..."
-msgstr "El rendimiento podría verse afectado..."
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
-msgid ""
-"\n"
-"          Some cases have a large number of edits. You can continue to preview new bulk edits,\n"
-"          but some pages may take longer to load.\n"
-"        "
-msgstr ""
-"\n"
-"          Algunos casos tienen un gran número de ediciones. Puedes continuar previsualizando nuevas ediciones masivas,\n"
-"          pero algunas páginas pueden tardar más en cargar.\n"
-"        "
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
 msgid "Edit history is too large..."
 msgstr "El historial de ediciones es demasiado grande..."
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
 msgid ""
 "\n"
-"          The edit history for this session is too large to support new bulk edits.\n"
-"          You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
-"        "
+"            The edit history for this session is too large to support new bulk edits.\n"
+"            You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
+"          "
 msgstr ""
 "\n"
-"          El historial de ediciones para esta sesión es demasiado grande para soportar nuevas ediciones masivas.\n"
-"          Puedes aplicar las ediciones actuales, deshacer ediciones o borrar el historial de ediciones para comenzar de nuevo.\n"
-"        "
+"            El historial de ediciones para esta sesión es demasiado grande para soportar nuevas ediciones masivas.\n"
+"            Puedes aplicar las ediciones actuales, deshacer las ediciones o borrar el historial de ediciones para comenzar de nuevo.\n"
+"          "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
 msgid "No editible case properties are visible"
@@ -16937,16 +16906,12 @@ msgstr ""
 "    "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/partial/change_detail.html
-#, fuzzy
-#| msgid "Date case property (advanced)"
 msgid "the case property that was changed"
-msgstr "Fecha propiedad de caso (avanzado)"
+msgstr "la propiedad de caso que fue cambiada"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/partial/change_detail.html
-#, fuzzy
-#| msgid "Number of Cases"
 msgid "number of cases affected"
-msgstr "Número de Casos"
+msgstr "número de casos afectados"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/partial/change_detail.html
 #, python-format
@@ -16954,10 +16919,8 @@ msgid "%(change.num_records)s"
 msgstr "%(change.num_records)s"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/partial/change_history.html
-#, fuzzy
-#| msgid "Show this form "
 msgid "Show edit history"
-msgstr "Mostrar este formulario"
+msgstr "Mostrar historial de ediciones"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/undo_changes.html
 msgid ""
@@ -16994,10 +16957,6 @@ msgstr ""
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 msgid "Edits"
 msgstr "Ediciones"
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
-msgid "number of cases with an edit history"
-msgstr "número de casos con historial de ediciones"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 #, python-format
@@ -19822,10 +19781,8 @@ msgstr ""
 "            "
 
 #: corehq/apps/domain/forms.py
-#, fuzzy
-#| msgid "Reprocess Messaging Case Updates"
 msgid "Connect Messaging Channel Name"
-msgstr "Reprocesar Actualizaciones de Caso de Mensajería"
+msgstr "Conectar nombre del canal de mensajería"
 
 #: corehq/apps/domain/forms.py
 msgid "Name of the channel created in connect messaging."
@@ -22869,10 +22826,8 @@ msgid ""
 "    "
 msgstr ""
 "\n"
-"      Por motivos de seguridad, tu administrador de CommCare 0ha requerido que todas las personas usuarias de tu proyecto configuren\n"
-"      la autenticación de dos factores.<br>Esta es una capa adicional de protección utilizada para garantizar la seguridad de tu cuenta\n"
-"      más allá de un nombre de usuario y contraseña. 0\n"
-"    "
+"      Por motivos de seguridad, tu administrador de CommCare      la autenticación de dos factores.<br>Esta es una capa adicional de protección utilizada para garantizar la seguridad de tu cuenta\n"
+"      más allá de un nombre de usuario y contraseña.    "
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
@@ -29538,10 +29493,8 @@ msgid "UCR rebuild restriction status"
 msgstr "Estado de restricción de reconstrucción de UCR"
 
 #: corehq/apps/hqadmin/reports.py
-#, fuzzy
-#| msgid "Revoke restriction"
 msgid "Rebuild restriction required"
-msgstr "Revocar restricción"
+msgstr "Se requiere restricción de reconstrucción"
 
 #: corehq/apps/hqadmin/reports.py
 msgid "Rebuild restricted"
@@ -33897,10 +33850,8 @@ msgstr ""
 "hoja '{type}', en índice '{i}' - '{er}'"
 
 #: corehq/apps/locations/bulk_management.py
-#, fuzzy
-#| msgid "Try again"
 msgid " and try again."
-msgstr "Intente otra vez"
+msgstr " e inténtalo de nuevo."
 
 #: corehq/apps/locations/bulk_management.py
 msgid "Location Type '{}' refers to a parent which doesn't exist"
@@ -38128,10 +38079,8 @@ msgstr ""
 "El perfil de compilación de la última solicitud de latido del usuario."
 
 #: corehq/apps/reports/standard/deployments.py
-#, fuzzy
-#| msgid "See More"
 msgid "...See more"
-msgstr "Ver Más"
+msgstr "...Ver más"
 
 #: corehq/apps/reports/standard/deployments.py
 msgid "...Collapse"
@@ -40460,8 +40409,10 @@ msgstr "Editar Reporte Agendado "
 
 #: corehq/apps/reports/views.py
 #, python-format
-msgid "This scheduled report's timezone is %s (UTC%s)"
-msgstr "La zona horaria de este informe programado es %s (UTC%s)"
+msgid "This scheduled report's timezone is %(timezone)s (UTC%(utc_offset)s)"
+msgstr ""
+"La zona horaria de este informe programado es %(timezone)s "
+"(UTC%(utc_offset)s)"
 
 #: corehq/apps/reports/views.py
 msgid "Create a new"
@@ -43335,6 +43286,7 @@ msgid "Certificate (Base64)"
 msgstr "Certificado (Base64)"
 
 #: corehq/apps/sso/forms.py
+#| msgid "Token generator"
 msgid "Token Encryption"
 msgstr "Encriptación de token"
 
@@ -44587,6 +44539,7 @@ msgstr ""
 "Selecciona los nombres de pasteles para que ChatGPT cree un menú atractivo"
 
 #: corehq/apps/styleguide/examples/bootstrap5/select2_static_ko_form.py
+#| msgid "Token generator"
 msgid "Menu Generator"
 msgstr "Generador de Menús"
 
@@ -55831,14 +55784,17 @@ msgid "stock_coartem_brown"
 msgstr "stock_coartem_marrón"
 
 #: custom/reports/mc/reports/definitions.py
+#| msgid "form/stock/stock_paracetamol_250"
 msgid "stock_paracetamol_250"
 msgstr "stock_paracetamol_250"
 
 #: custom/reports/mc/reports/definitions.py
+#| msgid "form/stock/stock_paracetamol_500"
 msgid "stock_paracetamol_500"
 msgstr "stock_paracetamol_500"
 
 #: custom/reports/mc/reports/definitions.py
+#| msgid "form/stock/stock_rdt"
 msgid "stock_rdt"
 msgstr "stock_rdt"
 
@@ -55982,6 +55938,7 @@ msgid "Health Facility"
 msgstr "Unidad de Salud"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/"
 msgstr "formulario/stock/"
 
@@ -56026,42 +55983,52 @@ msgid "deaths_others"
 msgstr "muertes_otras"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_amox_pink"
 msgstr "formulario/stock/stock_amox_rosa"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_amox_green"
 msgstr "formulario/stock/stock_amox_verde"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_ors"
 msgstr "formulario/stock/stock_ors"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_ra_50"
 msgstr "formulario/stock/stock_ra_50"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_ra_200"
 msgstr "formulario/stock/stock_ra_200"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_zinc"
 msgstr "formulario/stock/stock_zinc"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_coartem_yellow"
 msgstr "formulario/stock/stock_coartem_amarillo"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_coartem_blue"
 msgstr "formulario/stock/stock_coartem_azul"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_coartem_green"
 msgstr "formulario/stock/stock_coartem_verde"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_coartem_brown"
 msgstr "formulario/stock/stock_coartem_marrón"
 
@@ -56078,6 +56045,7 @@ msgid "form/stock/stock_rdt"
 msgstr "formulario/stock/stock_rdt"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_gloves"
 msgstr "formulario/stock/stock_guantes"
 
@@ -56151,39 +56119,3 @@ msgstr "Las columnas requeridas son {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Ingrese un JSON válido"
-
-#~ msgid ""
-#~ "Subscription Payment for CommCare Invoice {context['invoice_number']} was "
-#~ "declined"
-#~ msgstr ""
-#~ "El pago de suscripción para la factura de CommCare "
-#~ "{context['invoice_number']} fue rechazado"
-
-#~ msgid "Invalid parameter(s): {', '.join(invalid_params)}"
-#~ msgstr "Parámetro(s) no válido(s): {', '.join(invalid_params)}"
-
-#~ msgid "Reverted to version {log.info['version']}"
-#~ msgstr "Revertido a la versión {log.info['version']}"
-
-#, python-brace-format
-#~ msgid "Case imports can contain a maximum of {MAX_CASE_IMPORTER_ROWS} rows. "
-#~ msgstr ""
-#~ "Las importaciones de casos pueden contener un máximo de "
-#~ "{MAX_CASE_IMPORTER_ROWS} filas. "
-
-#, python-brace-format
-#~ msgid ""
-#~ "The case name cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
-#~ msgstr ""
-#~ "El nombre del caso no puede tener más de {STANDARD_CHARFIELD_LENGTH} "
-#~ "caracteres"
-
-#, python-brace-format
-#~ msgid ""
-#~ "The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
-#~ msgstr ""
-#~ "El ID externo no puede tener más de {STANDARD_CHARFIELD_LENGTH} caracteres"
-
-#, python-brace-format
-#~ msgid "{node.name} is not supported with ancestor-exists"
-#~ msgstr "{node.name} no es compatible con ancestor-exists"

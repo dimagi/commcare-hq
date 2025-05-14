@@ -4,9 +4,9 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Dimagi Dev <devops@dimagi.com>, 2021
 # Michelle B. Sultan <msultan@dimagi.com>, 2022
-# Gladys Teos <info@enestranslations.com>, 2024
+# Gladys Teos <info@enestranslations.com>, 2025
+# Dimagi Dev <devops@dimagi.com>, 2025
 #
 #, fuzzy
 msgid ""
@@ -14,7 +14,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Gladys Teos <info@enestranslations.com>, 2024\n"
+"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2025\n"
 "Language-Team: Spanish (https://app.transifex.com/dimagi/teams/9388/es/)\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -746,8 +746,8 @@ msgid "You have unchanged user properties settings"
 msgstr "Tiene configuraciones de propiedades sin cambio"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-msgid "Property uses unrecognized prefix <strong>"
-msgstr "La propiedad utiliza un prefijo<strong> no reconocido"
+msgid "Property uses unrecognized prefix"
+msgstr "La propiedad utiliza un prefijo no reconocido"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Unidentified Question"
@@ -2790,26 +2790,20 @@ msgid "Command Bar"
 msgstr "Barra de comandos"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#, fuzzy
-#| msgid "Module"
 msgid "Module ID"
-msgstr "Módulo"
+msgstr "ID del módulo"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#, fuzzy
-#| msgid "Question"
 msgid "Description"
-msgstr "Pregunta"
+msgstr "Descripción"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Time Estimate"
 msgstr "Estimación de tiempo"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#, fuzzy
-#| msgid "Must be valid path"
 msgid "Must be an integer"
-msgstr "Debe ser una ruta válida"
+msgstr "Debe ser un número entero"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Estimated time to complete the module in hours."
@@ -2820,48 +2814,40 @@ msgid "Assessment ID"
 msgstr "ID de evaluación"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#, fuzzy
-#| msgid "User Properties"
 msgid "User Score"
-msgstr "Propiedades del Usuario"
+msgstr "Puntuación de usuario"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#, fuzzy
-#| msgid "XPath expression for the case ID issuing the transaction."
 msgid "XPath expression for the users assessment score."
-msgstr "La expresión XPath para el ID del caso que emite la transacción."
+msgstr "Expresión XPath para la puntuación de evaluación de usuarios."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#, fuzzy
-#| msgid "Client ID"
 msgid "Delivery Unit ID"
-msgstr "ID de cliente"
+msgstr "ID de la Unidad de Entrega"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Entity ID"
 msgstr "ID de entidad"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#, fuzzy
-#| msgid ""
-#| "XPath expression for the case ID associated with this balance."
 msgid ""
 "XPath expression for the entity ID associated with this Delivery Unit e.g. "
 "the case ID."
-msgstr "Expresión XPath para el ID del caso asociado con este balance."
+msgstr ""
+"Expresión XPath para el ID de la entidad asociada con esta Unidad de "
+"Entrega, por ejemplo, el ID del caso."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Entity Name"
 msgstr "Nombre de la entidad"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#, fuzzy
-#| msgid ""
-#| "XPath expression for the case ID associated with this balance."
 msgid ""
 "XPath expression for the name of the entity associated with this Delivery "
 "Unit."
-msgstr "Expresión XPath para el ID del caso asociado con este balance."
+msgstr ""
+"Expresión XPath para el nombre de la entidad asociada con esta Unidad de "
+"Entrega."
 
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js
 msgid "no comment"
@@ -5863,9 +5849,3 @@ msgstr "¡Incorrecto! La respuesta es:"
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ no pudo realizar la solicitud: "
-
-#~ msgid "Failed to send"
-#~ msgstr "No se pudo enviar"
-
-#~ msgid "Failed to cancel"
-#~ msgstr "No se pudo cancelar"

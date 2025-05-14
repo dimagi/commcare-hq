@@ -11774,10 +11774,16 @@ msgid "Parent Menu"
 msgstr "Menu Genitore"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                               Nest this menu under another for easier application navigation.\n"
+#| "                               <a href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</span>\n"
+#| "                               "
 msgid ""
 "\n"
 "                               Nest this menu under another for easier application navigation.\n"
-"                               <a href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</span>\n"
+"                               <a target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</a>\n"
 "                               "
 msgstr ""
 "\n"
@@ -16659,31 +16665,21 @@ msgstr ""
 "      "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
-msgid "Performance might be impacted..."
-msgstr "Le prestazioni potrebbero essere influenzate..."
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
-msgid ""
-"\n"
-"          Some cases have a large number of edits. You can continue to preview new bulk edits,\n"
-"          but some pages may take longer to load.\n"
-"        "
-msgstr ""
-"\n"
-"          Alcuni casi hanno un numero elevato di modifiche. Puoi continuare a visualizzare in anteprima nuove modifiche in blocco,\n"
-"          ma alcune pagine potrebbero richiedere più tempo per caricarsi.\n"
-"        "
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
 msgid "Edit history is too large..."
 msgstr "La cronologia delle modifiche è troppo grande..."
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          The edit history for this session is too large to support new bulk edits.\n"
+#| "          You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
+#| "        "
 msgid ""
 "\n"
-"          The edit history for this session is too large to support new bulk edits.\n"
-"          You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
-"        "
+"            The edit history for this session is too large to support new bulk edits.\n"
+"            You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
+"          "
 msgstr ""
 "\n"
 "          La cronologia delle modifiche per questa sessione è troppo grande per supportare nuove modifiche in blocco.\n"
@@ -16956,10 +16952,6 @@ msgstr ""
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 msgid "Edits"
 msgstr "Modifiche"
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
-msgid "number of cases with an edit history"
-msgstr "numero di casi con una cronologia delle modifiche"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 #, python-format
@@ -40433,8 +40425,9 @@ msgid "Edit Scheduled Report"
 msgstr "Modifica rapporto programmato"
 
 #: corehq/apps/reports/views.py
-#, python-format
-msgid "This scheduled report's timezone is %s (UTC%s)"
+#, fuzzy, python-format
+#| msgid "This scheduled report's timezone is %s (UTC%s)"
+msgid "This scheduled report's timezone is %(timezone)s (UTC%(utc_offset)s)"
 msgstr "Il fuso orario di questo rapporto programmato è %s (UTC%s)"
 
 #: corehq/apps/reports/views.py
@@ -56085,6 +56078,23 @@ msgstr "Le colonne obbligatorie sono {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Inserisci un JSON valido"
+
+#~ msgid "Performance might be impacted..."
+#~ msgstr "Le prestazioni potrebbero essere influenzate..."
+
+#~ msgid ""
+#~ "\n"
+#~ "          Some cases have a large number of edits. You can continue to preview new bulk edits,\n"
+#~ "          but some pages may take longer to load.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          Alcuni casi hanno un numero elevato di modifiche. Puoi continuare a visualizzare in anteprima nuove modifiche in blocco,\n"
+#~ "          ma alcune pagine potrebbero richiedere più tempo per caricarsi.\n"
+#~ "        "
+
+#~ msgid "number of cases with an edit history"
+#~ msgstr "numero di casi con una cronologia delle modifiche"
 
 #, fuzzy
 #~ msgid "Reverted to version {log.info['version']}"

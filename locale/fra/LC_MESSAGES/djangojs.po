@@ -5,19 +5,18 @@
 #
 # Translators:
 # esoergel, 2018
-# Saket Kanth <skanth@dimagi.com>, 2018
 # Abdel Nasser Iro <abdel.nasser.iro.gigo@millenniumpromise.org>, 2018
 # Kelly Adediha <kadediha@dimagi.com>, 2018
 # Sarah Sagan <ssagan@dimagi.com>, 2020
 # Rowena Luk <rluk@dimagi.com>, 2021
-# Dimagi Dev <devops@dimagi.com>, 2021
 # Ismaïla Diene <idiene@dimagi.com>, 2022
 # Ayla Reith <areith@dimagi.com>, 2023
 # Carla Legros <clegros@dimagi.com>, 2023
 # patrick keating <pkeating@dimagi.com>, 2023
-# Tyler Wymer <twymer@dimagi.com>, 2024
 # Aissetou Sawadogo <ais107@hotmail.com>, 2024
 # Claire_Cravero <ccravero@dimagi.com>, 2024
+# Tyler Wymer <twymer@dimagi.com>, 2025
+# Dimagi Dev <devops@dimagi.com>, 2025
 #
 #, fuzzy
 msgid ""
@@ -25,7 +24,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Claire_Cravero <ccravero@dimagi.com>, 2024\n"
+"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2025\n"
 "Language-Team: French (https://app.transifex.com/dimagi/teams/9388/fr/)\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -763,7 +762,7 @@ msgid "You have unchanged user properties settings"
 msgstr "Vous avez des paramètres d'utilisateur non sauvegardées"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-msgid "Property uses unrecognized prefix <strong>"
+msgid "Property uses unrecognized prefix"
 msgstr "La propriété utilise un préfixe non reconnu"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
@@ -2822,16 +2821,12 @@ msgid "Command Bar"
 msgstr "Barre de commande"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#, fuzzy
-#| msgid "Module"
 msgid "Module ID"
-msgstr "Module"
+msgstr "ID du module"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#, fuzzy
-#| msgid "Question"
 msgid "Description"
-msgstr "Question"
+msgstr "Description"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Time Estimate"
@@ -2850,10 +2845,8 @@ msgid "Assessment ID"
 msgstr "ID de l'évaluation"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#, fuzzy
-#| msgid "User Properties"
 msgid "User Score"
-msgstr "Propriétés de l'utilisateur"
+msgstr "Score utilisateur"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "XPath expression for the users assessment score."
@@ -3820,10 +3813,7 @@ msgstr "Temps de trajet maximal"
 msgid ""
 "Oops! Something went wrong! Please check that your geospatial settings are "
 "configured correctly or contact admin if the problem persists."
-msgstr ""
-"Oups 21 Une erreur s'est produite a0! Veuillez v e9rifier que vos "
-"param e8tres g e9ospatiaux sont correctement configur e9s ou contactez "
-"l'administrateur si le probl e8me persiste."
+msgstr "Oupsparaml'administrateur si le probl"
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
@@ -3831,8 +3821,8 @@ msgid ""
 "Please ensure that the filtered area includes both cases and mobile workers "
 "before attempting to run disbursement."
 msgstr ""
-"Veuillez vous assurer que la zone filtr e9e inclut  e0 la fois des cas et "
-"des travailleurs mobiles avant d'essayer d'effectuer le paiement."
+"Veuillez vous assurer que la zone filtrdes travailleurs mobiles avant "
+"d'essayer d'effectuer le paiement."
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/case_management.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/case_management.js
@@ -3845,23 +3835,19 @@ msgstr "Tous les emplacements"
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 msgid ""
 "Oops! Something went wrong! Please report an issue if the problem persists."
-msgstr ""
-"Oups a0! Une erreur s'est produite a0! Veuillez signaler un probl e8me si le"
-" probl e8me persiste."
+msgstr "Oups probl"
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/geo_config.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/geo_config.js
 msgid "Token successfully verified!"
-msgstr "Jeton v e9rifi e9 avec succ e8s a0!"
+msgstr "Jeton v"
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/geo_config.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/geo_config.js
 msgid ""
 "Invalid API token. Please verify that the token matches the one on your "
 "Mapbox account and has the correct scope configured."
-msgstr ""
-"Jeton API invalide. Veuillez v e9rifier que le jeton correspond  e0 celui de"
-" votre compte Mapbox et que la port e9e correcte est configur e9e."
+msgstr "Jeton API invalide. Veuillez v votre compte Mapbox et que la port"
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/gps_capture.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/gps_capture.js
@@ -3878,9 +3864,7 @@ msgstr "Utilisateur mobile"
 msgid ""
 "Warning! This action will clear the current disbursement. Please confirm if "
 "you want to proceed."
-msgstr ""
-"Attention a0! Cette action effacera la distribution en cours. Veuillez "
-"confirmer si vous souhaitez continuer."
+msgstr "Attentionconfirmer si vous souhaitez continuer."
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
@@ -3895,27 +3879,27 @@ msgstr "Nom de la zone"
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 msgid "Please enter the name for the area!"
-msgstr "Veuillez saisir le nom de la zone a0!"
+msgstr "Veuillez saisir le nom de la zone"
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 msgid "No user selected (unassign mode)"
-msgstr "Aucun utilisateur s e9lectionn e9 (mode d e9saffectation)"
+msgstr "Aucun utilisateur s"
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 msgid "Assigned User ID"
-msgstr "ID utilisateur assign e9"
+msgstr "ID utilisateur assign"
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 msgid "Assigned Username"
-msgstr "Nom d'utilisateur assign e9"
+msgstr "Nom d'utilisateur assign"
 
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap3/models.js
 #: corehq/apps/geospatial/static/geospatial/js/bootstrap5/models.js
 msgid "Assigned User Primary Location"
-msgstr "Emplacement principal de l'utilisateur assign e9"
+msgstr "Emplacement principal de l'utilisateur assign"
 
 #: corehq/apps/groups/static/groups/js/group_members.js
 msgid "Edit Group Information"
@@ -3927,11 +3911,11 @@ msgstr "Les changements suivant n'ont pas été sauvés :"
 
 #: corehq/apps/groups/static/groups/js/group_members.js
 msgid "Successfully saved "
-msgstr "Enregistr e9 avec succ e8s "
+msgstr "Enregistr"
 
 #: corehq/apps/groups/static/groups/js/group_members.js
 msgid "Failed to save "
-msgstr " c9chec de l'enregistrement "
+msgstr "Échec de l'enregistrement "
 
 #: corehq/apps/groups/static/groups/js/group_members.js
 msgid "Please wait and do not navigate away..."
@@ -3941,9 +3925,7 @@ msgstr "Veuillez patienter..."
 msgid ""
 "Error fetching multimedia, please try again or report an issue if the "
 "problem persists."
-msgstr ""
-"Erreur lors de la r e9cup e9ration du contenu multim e9dia, veuillez "
-"r e9essayer ou signaler un probl e8me si le probl e8me persiste."
+msgstr "Erreur lors de la rr"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/500.js
 msgid "This is Danny, one of our best developers."
@@ -3960,12 +3942,12 @@ msgstr ""
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Clear selection"
-msgstr "Effacer la s e9lection"
+msgstr "Effacer la s"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Close the picker"
-msgstr "Fermer le s e9lecteur"
+msgstr "Fermer le s"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
@@ -3980,42 +3962,42 @@ msgstr "2 chiffres"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Decrement Hour"
-msgstr "D e9cr e9menter l'heure"
+msgstr "D"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Decrement Minute"
-msgstr "D e9cr e9menter la minute"
+msgstr "D"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Decrement Second"
-msgstr "D e9cr e9menter la seconde"
+msgstr "D"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Increment Hour"
-msgstr "Incr e9menter l'heure"
+msgstr "Incr"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Increment Minute"
-msgstr "Incr e9menter la minute"
+msgstr "Incr"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Increment Second"
-msgstr "Incr e9menter la seconde"
+msgstr "Incr"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Next Century"
-msgstr "Si e8cle suivant"
+msgstr "Si"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Next Decade"
-msgstr "D e9cennie suivante"
+msgstr "D"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
@@ -4025,7 +4007,7 @@ msgstr "Mois suivant"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Next Year"
-msgstr "Ann e9e suivante"
+msgstr "Ann"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
@@ -4045,52 +4027,52 @@ msgstr "Choisir la seconde"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Previous Century"
-msgstr "Si e8cle pr e9c e9dent"
+msgstr "Si"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Previous Decade"
-msgstr "D e9cennie pr e9c e9dente"
+msgstr "D"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Previous Year"
-msgstr "Ann e9e pr e9c e9dente"
+msgstr "Ann"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Select Date"
-msgstr "S e9lectionner la date"
+msgstr "S"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Select Decade"
-msgstr "S e9lectionner la d e9cennie"
+msgstr "S"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Select Month"
-msgstr "S e9lectionner le mois"
+msgstr "S"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Select Time"
-msgstr "S e9lectionner l'heure"
+msgstr "S"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Select Year"
-msgstr "S e9lectionner l'ann e9e"
+msgstr "S"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Go to today"
-msgstr "Aller  e0 aujourd'hui"
+msgstr "Aller "
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/alpinejs/directives/datepicker.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Toggle Meridiem"
-msgstr "Basculer le m e9ridiem"
+msgstr "Basculer le m"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/email-request.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/email-request.js
@@ -4100,7 +4082,7 @@ msgstr "Format incorrect"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/email-request.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/email-request.js
 msgid "Only Dimagi email addresses can be included"
-msgstr "Seules les adresses e-mail Dimagi peuvent  eatre incluses"
+msgstr "Seules les adresses e-mail Dimagi peuvent "
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/inactivity.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/inactivity.js

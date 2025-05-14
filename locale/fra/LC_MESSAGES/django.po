@@ -10429,13 +10429,6 @@ msgid "Case Detail Tabs"
 msgstr "Onglets de détail de dossier "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
-#, fuzzy
-#| msgid ""
-#| "Do you have a lot of case properties? Try splitting them into tabs, which "
-#| "will appear as separate screens that mobile users can swipe through. Read "
-#| "more on the <a "
-#| "href='https://help.commcarehq.org/display/commcarepublic/Tabs+on+Case+Detail+Screen'"
-#| " target='_blank'>Help Site</a>."
 msgid ""
 "Do you have a lot of case properties? Try splitting them into tabs, which "
 "will appear as separate screens that mobile users can swipe through. Read "
@@ -10443,11 +10436,11 @@ msgid ""
 "href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143951603/Case+List+and+Case+Detail+Configuration#Add-"
 "Tabs-on-Case-Detail-Screen' target='_blank'>Help Site</a>."
 msgstr ""
-"Avez-vous beaucoup de propriétés de dossier? Essayer de les répartir dans "
-"des onglets, elles paraitront sur différents écrans que l'utilisateur pourra"
-" faire defiler. Voir <a "
-"href='https://help.commcarehq.org/display/commcarepublic/Tabs+on+Case+Detail+Screen'"
-" target='_blank'>Help Site</a>."
+"Avez-vous beaucoup de propriétés de dossier ? Essayez de les répartir en "
+"onglets, qui apparaîtront comme des écrans séparés à travers lesquels les "
+"utilisateurs mobiles peuvent faire défiler. En savoir plus sur le <a "
+"href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143951603/Case+List+and+Case+Detail+Configuration#Add-"
+"Tabs-on-Case-Detail-Screen' target='_blank'>site d'aide</a>."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
 msgid "Printing"
@@ -11858,12 +11851,12 @@ msgstr "Menu parent"
 msgid ""
 "\n"
 "                               Nest this menu under another for easier application navigation.\n"
-"                               <a href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</span>\n"
+"                               <a target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</a>\n"
 "                               "
 msgstr ""
 "\n"
-"                               Nichez ce menu sous un autre pour faciliter la navigation dans l'application.\n"
-"                               <a href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(Plus d'informations)</span>\n"
+"                               Placez ce menu sous un autre pour faciliter la navigation dans l'application.\n"
+"                               <a target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(Plus d'informations)</a>\n"
 "                               "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html
@@ -12976,16 +12969,12 @@ msgid "Not set"
 msgstr "Non défini"
 
 #: corehq/apps/app_manager/views/apps.py
-#, fuzzy
-#| msgid "app translation"
 msgid "U​I translation"
-msgstr "traduction d'application"
+msgstr "Traduction d'UI"
 
 #: corehq/apps/app_manager/views/apps.py
-#, fuzzy
-#| msgid "app translations"
 msgid "U​I translations"
-msgstr "Traductions d'application"
+msgstr "Traductions d'UI"
 
 #: corehq/apps/app_manager/views/apps.py
 msgid "app translation"
@@ -16694,10 +16683,8 @@ msgid "Reset Changes"
 msgstr "Réinitialiser les modifications"
 
 #: corehq/apps/data_cleaning/models.py
-#, fuzzy
-#| msgid "Unknown Application"
 msgid "Unknown action"
-msgstr "Application inconnue"
+msgstr "Action inconnue"
 
 #: corehq/apps/data_cleaning/models.py
 #, python-brace-format
@@ -16796,36 +16783,20 @@ msgstr ""
 "      "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
-msgid "Performance might be impacted..."
-msgstr "Les performances pourraient être affectées..."
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
-msgid ""
-"\n"
-"          Some cases have a large number of edits. You can continue to preview new bulk edits,\n"
-"          but some pages may take longer to load.\n"
-"        "
-msgstr ""
-"\n"
-"          Certains dossiers comportent un grand nombre de modifications. Vous pouvez continuer à prévisualiser de nouveaux nettoyages en lot,\n"
-"          mais certaines pages peuvent prendre plus de temps à charger.\n"
-"        "
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
 msgid "Edit history is too large..."
 msgstr "L'historique des modifications est trop volumineux..."
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
 msgid ""
 "\n"
-"          The edit history for this session is too large to support new bulk edits.\n"
-"          You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
-"        "
+"            The edit history for this session is too large to support new bulk edits.\n"
+"            You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
+"          "
 msgstr ""
 "\n"
-"          L'historique des modifications pour cette session est trop volumineux pour permettre de nouveaux nettoyages en lot.\n"
-"          Vous pouvez soit appliquer les modifications actuelles, annuler les modifications, ou effacer l'historique pour recommencer.\n"
-"        "
+"            L'historique des modifications pour cette session est trop volumineux pour permettre de nouveaux changements en masse.\n"
+"            Vous pouvez soit appliquer les modifications actuelles, annuler les modifications ou effacer l'historique pour recommencer.\n"
+"          "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
 msgid "No editible case properties are visible"
@@ -17044,16 +17015,12 @@ msgstr ""
 "    "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/partial/change_detail.html
-#, fuzzy
-#| msgid "Date case property (advanced)"
 msgid "the case property that was changed"
-msgstr "Date de la propriété de dossier (avancé)"
+msgstr "la propriété du dossier qui a été modifiée"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/partial/change_detail.html
-#, fuzzy
-#| msgid "Number of Cases"
 msgid "number of cases affected"
-msgstr "Nombre de dossiers"
+msgstr "nombre de dossiers concernés"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/partial/change_detail.html
 #, python-format
@@ -17061,10 +17028,8 @@ msgid "%(change.num_records)s"
 msgstr "%(change.num_records)s"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/partial/change_history.html
-#, fuzzy
-#| msgid "Show this form "
 msgid "Show edit history"
-msgstr "Afficher ce formulaire"
+msgstr "Afficher l'historique des modifications"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/undo_changes.html
 msgid ""
@@ -17101,10 +17066,6 @@ msgstr ""
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 msgid "Edits"
 msgstr "Modifications"
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
-msgid "number of cases with an edit history"
-msgstr "nombre de cas avec un historique de modifications"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 #, python-format
@@ -19945,10 +19906,8 @@ msgstr ""
 "            "
 
 #: corehq/apps/domain/forms.py
-#, fuzzy
-#| msgid "Reprocess Messaging Case Updates"
 msgid "Connect Messaging Channel Name"
-msgstr "Retraiter les mises à jour de messagerie de dossiers"
+msgstr "Nom du canal de messagerie Connect"
 
 #: corehq/apps/domain/forms.py
 msgid "Name of the channel created in connect messaging."
@@ -21503,7 +21462,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 msgid "Got questions about your plan?"
-msgstr "Des questions sur votre forfait 0?"
+msgstr "Des questions sur votre forfait"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/current_subscription.html
 #: corehq/apps/domain/templates/domain/bootstrap3/renew_plan.html
@@ -21758,7 +21717,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 msgid "Could not update!"
-msgstr "Impossible de mettre à jour 0!"
+msgstr "Impossible de mettre à jour"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
@@ -21897,8 +21856,7 @@ msgid ""
 "          "
 msgstr ""
 "\n"
-"            Que se passe-t-il après la mise en pause 0?\n"
-"          "
+"            Que se passe-t-il après la mise en pause          "
 
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/select_plan.html
@@ -22072,8 +22030,7 @@ msgid ""
 "  "
 msgstr ""
 "\n"
-"    %(inviter)s vous a invité à rejoindre le projet %(domain)s sur CommCare HQ 0!\n"
-"  "
+"    %(inviter)s vous a invité à rejoindre le projet %(domain)s sur CommCare HQ  "
 
 #: corehq/apps/domain/templates/domain/email/bootstrap3/domain_invite.html
 #: corehq/apps/domain/templates/domain/email/bootstrap5/domain_invite.html
@@ -22084,8 +22041,7 @@ msgid ""
 "  "
 msgstr ""
 "\n"
-"    Vous êtes invité·e à rejoindre %(domain)s 0!\n"
-"  "
+"    Vous êtes invité·e à rejoindre %(domain)s  "
 
 #: corehq/apps/domain/templates/domain/email/bootstrap3/domain_invite.html
 #: corehq/apps/domain/templates/domain/email/bootstrap5/domain_invite.html
@@ -22218,8 +22174,7 @@ msgid ""
 "  "
 msgstr ""
 "\n"
-"    %(inviter)s a approuvé votre demande pour rejoindre %(domain)s sur CommCare HQ 00!\n"
-"  "
+"    %(inviter)s a approuvé votre demande pour rejoindre %(domain)s sur CommCare HQ  "
 
 #: corehq/apps/domain/templates/domain/email/domain_request_approval.html
 #, python-format
@@ -22229,8 +22184,7 @@ msgid ""
 "  "
 msgstr ""
 "\n"
-"    Vous êtes autorisé·e à rejoindre %(domain)s 00!\n"
-"  "
+"    Vous êtes autorisé·e à rejoindre %(domain)s  "
 
 #: corehq/apps/domain/templates/domain/email/domain_request_approval.html
 msgid ""
@@ -22991,10 +22945,8 @@ msgid ""
 "    "
 msgstr ""
 "\n"
-"      Pour des raisons de sécurité, votre administrateur CommCare a a exigé que tous les utilisateurs de votre projet configurent\n"
-"      l'authentification à deux facteurs.<br>Il s'agit d'une couche de protection supplémentaire utilisée pour garantir la sécurité de votre compte\n"
-"      au-delà d'un nom d'utilisateur et d'un mot de passe. a\n"
-"    "
+"      Pour des raisons de sécurité, votre administrateur CommCare      l'authentification à deux facteurs.<br>Il s'agit d'une couche de protection supplémentaire utilisée pour garantir la sécurité de votre compte\n"
+"      au-delà d'un nom d'utilisateur et d'un mot de passe.    "
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
@@ -34087,10 +34039,8 @@ msgstr ""
 "feuille '{type}', à l'index '{i}' - '{er}'"
 
 #: corehq/apps/locations/bulk_management.py
-#, fuzzy
-#| msgid "Try again"
 msgid " and try again."
-msgstr "Essayer de nouveau"
+msgstr " et réessayez."
 
 #: corehq/apps/locations/bulk_management.py
 msgid "Location Type '{}' refers to a parent which doesn't exist"
@@ -38307,10 +38257,8 @@ msgstr ""
 "l’utilisateur."
 
 #: corehq/apps/reports/standard/deployments.py
-#, fuzzy
-#| msgid "See More"
 msgid "...See more"
-msgstr "Voir plus"
+msgstr "...Voir plus"
 
 #: corehq/apps/reports/standard/deployments.py
 msgid "...Collapse"
@@ -40635,8 +40583,10 @@ msgstr "Editer le rapport planifié"
 
 #: corehq/apps/reports/views.py
 #, python-format
-msgid "This scheduled report's timezone is %s (UTC%s)"
-msgstr "Le fuseau horaire de ce rapport planifié est %s (UTC%s)"
+msgid "This scheduled report's timezone is %(timezone)s (UTC%(utc_offset)s)"
+msgstr ""
+"Le fuseau horaire de ce rapport planifié est %(timezone)s "
+"(UTC%(utc_offset)s)"
 
 #: corehq/apps/reports/views.py
 msgid "Create a new"
@@ -43513,6 +43463,7 @@ msgid "Certificate (Base64)"
 msgstr "Certificat (Base64)"
 
 #: corehq/apps/sso/forms.py
+#| msgid "Token generator"
 msgid "Token Encryption"
 msgstr "Chiffrement du jeton"
 
@@ -44778,6 +44729,7 @@ msgstr ""
 "ChatGPT crée un menu alléchant"
 
 #: corehq/apps/styleguide/examples/bootstrap5/select2_static_ko_form.py
+#| msgid "Token generator"
 msgid "Menu Generator"
 msgstr "Générateur de menu"
 
@@ -56099,14 +56051,17 @@ msgid "stock_coartem_brown"
 msgstr "stock_coartem_brun"
 
 #: custom/reports/mc/reports/definitions.py
+#| msgid "form/stock/stock_paracetamol_250"
 msgid "stock_paracetamol_250"
 msgstr "stock_paracetamol_250"
 
 #: custom/reports/mc/reports/definitions.py
+#| msgid "form/stock/stock_paracetamol_500"
 msgid "stock_paracetamol_500"
 msgstr "stock_paracetamol_500"
 
 #: custom/reports/mc/reports/definitions.py
+#| msgid "form/stock/stock_rdt"
 msgid "stock_rdt"
 msgstr "stock_rdt"
 
@@ -56251,6 +56206,7 @@ msgid "Health Facility"
 msgstr "Établissement de santé"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/"
 msgstr "formulaire/stock/"
 
@@ -56295,42 +56251,52 @@ msgid "deaths_others"
 msgstr "décès_autres"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_amox_pink"
 msgstr "formulaire / inventaire / inventaire_amox_pink"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_amox_green"
 msgstr "formulaire / inventaire / inventaire_amox_vert"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_ors"
 msgstr "formulaire / inventaire / inventaire_ors"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_ra_50"
 msgstr "formulaire / inventaire / inventaire_ra_50"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_ra_200"
 msgstr "formulaire / inventaire / inventaire_ra_200"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_zinc"
 msgstr "formulaire / inventaire / inventaire_zinc"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_coartem_yellow"
 msgstr "formulaire / inventaire / inventaire_coartem_jaune"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_coartem_blue"
 msgstr "formulaire / inventaire / inventaire_coartem_bleu"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_coartem_green"
 msgstr "formulaire / inventaire / inventaire_coartem_vert"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_coartem_brown"
 msgstr "formulaire / inventaire / inventaire_coartem_brun"
 
@@ -56347,6 +56313,7 @@ msgid "form/stock/stock_rdt"
 msgstr "formulaire / inventaire / inventaire_rdt"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_gloves"
 msgstr "formulaire / inventaire / inventaire_gants"
 

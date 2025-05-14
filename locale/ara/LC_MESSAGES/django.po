@@ -11491,10 +11491,16 @@ msgid "Parent Menu"
 msgstr "القائمة الرئيسية"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                               Nest this menu under another for easier application navigation.\n"
+#| "                               <a href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</span>\n"
+#| "                               "
 msgid ""
 "\n"
 "                               Nest this menu under another for easier application navigation.\n"
-"                               <a href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</span>\n"
+"                               <a target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</a>\n"
 "                               "
 msgstr ""
 "\n"
@@ -16269,31 +16275,21 @@ msgstr ""
 "      "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
-msgid "Performance might be impacted..."
-msgstr "قد تتأثر الأداء..."
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
-msgid ""
-"\n"
-"          Some cases have a large number of edits. You can continue to preview new bulk edits,\n"
-"          but some pages may take longer to load.\n"
-"        "
-msgstr ""
-"\n"
-"          بعض الحالات تحتوي على عدد كبير من التعديلات. يمكنك الاستمرار في معاينة التعديلات الجماعية الجديدة،\n"
-"          لكن قد تستغرق بعض الصفحات وقتًا أطول للتحميل.\n"
-"        "
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
 msgid "Edit history is too large..."
 msgstr "سجل التعديلات كبير جدًا..."
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "          The edit history for this session is too large to support new bulk edits.\n"
+#| "          You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
+#| "        "
 msgid ""
 "\n"
-"          The edit history for this session is too large to support new bulk edits.\n"
-"          You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
-"        "
+"            The edit history for this session is too large to support new bulk edits.\n"
+"            You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
+"          "
 msgstr ""
 "\n"
 "          سجل التعديلات لهذه الجلسة كبير جدًا بحيث لا يدعم تعديلات جماعية جديدة.\n"
@@ -16566,10 +16562,6 @@ msgstr ""
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 msgid "Edits"
 msgstr "تعديلات"
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
-msgid "number of cases with an edit history"
-msgstr "عدد الحالات التي لديها سجل تعديلات"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 #, python-format
@@ -39603,8 +39595,9 @@ msgid "Edit Scheduled Report"
 msgstr "تعديل التقرير المجدول"
 
 #: corehq/apps/reports/views.py
-#, python-format
-msgid "This scheduled report's timezone is %s (UTC%s)"
+#, fuzzy, python-format
+#| msgid "This scheduled report's timezone is %s (UTC%s)"
+msgid "This scheduled report's timezone is %(timezone)s (UTC%(utc_offset)s)"
 msgstr "المنطقة الزمنية لهذا التقرير المجدول هي %s (UTC%s)"
 
 #: corehq/apps/reports/views.py
@@ -54885,6 +54878,23 @@ msgstr "الأعمدة المطلوبة هي {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
+
+#~ msgid "Performance might be impacted..."
+#~ msgstr "قد تتأثر الأداء..."
+
+#~ msgid ""
+#~ "\n"
+#~ "          Some cases have a large number of edits. You can continue to preview new bulk edits,\n"
+#~ "          but some pages may take longer to load.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          بعض الحالات تحتوي على عدد كبير من التعديلات. يمكنك الاستمرار في معاينة التعديلات الجماعية الجديدة،\n"
+#~ "          لكن قد تستغرق بعض الصفحات وقتًا أطول للتحميل.\n"
+#~ "        "
+
+#~ msgid "number of cases with an edit history"
+#~ msgstr "عدد الحالات التي لديها سجل تعديلات"
 
 #~ msgid ""
 #~ "Subscription Payment for CommCare Invoice {context['invoice_number']} was "

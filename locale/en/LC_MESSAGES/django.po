@@ -3,7 +3,6 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#: corehq/motech/repeaters/forms.py
 #, fuzzy
 msgid ""
 msgstr ""
@@ -10165,8 +10164,9 @@ msgid ""
 "\n"
 "                               Nest this menu under another for easier "
 "application navigation.\n"
-"                               <a href='https://confluence.dimagi.com/"
-"display/commcarepublic/Sub+Menus'>(More Information)</span>\n"
+"                               <a target='_blank' href='https://"
+"confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</"
+"a>\n"
 "                               "
 msgstr ""
 
@@ -14483,30 +14483,17 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
-msgid "Performance might be impacted..."
-msgstr ""
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
-msgid ""
-"\n"
-"          Some cases have a large number of edits. You can continue to "
-"preview new bulk edits,\n"
-"          but some pages may take longer to load.\n"
-"        "
-msgstr ""
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
 msgid "Edit history is too large..."
 msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
 msgid ""
 "\n"
-"          The edit history for this session is too large to support new bulk "
-"edits.\n"
-"          You can either apply the current edits, undo edits, or clear the "
+"            The edit history for this session is too large to support new "
+"bulk edits.\n"
+"            You can either apply the current edits, undo edits, or clear the "
 "edit history to start over.\n"
-"        "
+"          "
 msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
@@ -14719,10 +14706,6 @@ msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 msgid "Edits"
-msgstr ""
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
-msgid "number of cases with an edit history"
 msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
@@ -35311,7 +35294,7 @@ msgstr ""
 
 #: corehq/apps/reports/views.py
 #, python-format
-msgid "This scheduled report's timezone is %s (UTC%s)"
+msgid "This scheduled report's timezone is %(timezone)s (UTC%(utc_offset)s)"
 msgstr ""
 
 #: corehq/apps/reports/views.py

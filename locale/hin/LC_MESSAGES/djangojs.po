@@ -4,7 +4,7 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Dimagi Dev <devops@dimagi.com>, 2024
+# Dimagi Dev <devops@dimagi.com>, 2025
 #
 #, fuzzy
 msgid ""
@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2024\n"
+"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2025\n"
 "Language-Team: Hindi (https://app.transifex.com/dimagi/teams/9388/hi/)\n"
 "Language: hi\n"
 "MIME-Version: 1.0\n"
@@ -742,8 +742,8 @@ msgid "You have unchanged user properties settings"
 msgstr "आपकी यूज़र प्रॉपर्टीज़ सेटिंग्स में कोई बदलाव नहीं हुआ है"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js
-msgid "Property uses unrecognized prefix <strong>"
-msgstr "प्रॉपर्टी में अपरिचित उपसर्ग <strong> का उपयोग किया गया है"
+msgid "Property uses unrecognized prefix"
+msgstr "संपत्ति अपरिचित उपसर्ग का उपयोग करती है"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_knockout_bindings.js
 msgid "Unidentified Question"
@@ -2752,16 +2752,12 @@ msgid "Command Bar"
 msgstr "कमांड बार"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#, fuzzy
-#| msgid "Module Filter"
 msgid "Module ID"
-msgstr "मॉड्यूल फ़िल्टर"
+msgstr "मॉड्यूल आईडी"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#, fuzzy
-#| msgid "Question"
 msgid "Description"
-msgstr "प्रश्न"
+msgstr "विवरण"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Time Estimate"
@@ -2788,10 +2784,8 @@ msgid "XPath expression for the users assessment score."
 msgstr "यूज़र्स के असेसमेंट स्कोर के लिए XPath अभिव्यक्ति।"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#, fuzzy
-#| msgid "Client ID"
 msgid "Delivery Unit ID"
-msgstr "क्लाइंट आईडी"
+msgstr "डिलीवरी यूनिट आईडी"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Entity ID"
@@ -5762,9 +5756,3 @@ msgstr "विफल! प्रतिक्रिया है: "
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ अनुरोध करने में असमर्थ था: "
-
-#~ msgid "Failed to send"
-#~ msgstr "भेजने में विफल"
-
-#~ msgid "Failed to cancel"
-#~ msgstr "रद्द करने में विफल"

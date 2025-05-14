@@ -5,7 +5,7 @@
 # Translators:
 # Antonio Cardoso Martins <digiplan@netvisao.pt>, 2005
 # Balzamon, 2015
-# Dimagi Dev <devops@dimagi.com>, 2022
+# Dimagi Dev <devops@dimagi.com>, 2022,2025
 # Elisio Andre Martins Catana <eacatana@netvisao.pt>, 2005
 # esoergel, 2015
 # esoergel, 2015
@@ -11557,12 +11557,12 @@ msgstr "पैरेंट मेनू"
 msgid ""
 "\n"
 "                               Nest this menu under another for easier application navigation.\n"
-"                               <a href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</span>\n"
+"                               <a target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</a>\n"
 "                               "
 msgstr ""
 "\n"
 "                               आसान एप्लिकेशन नेविगेशन के लिए इस मेनू को किसी अन्य के अंतर्गत नेस्ट करें।\n"
-"                               <a href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(अधिक जानकारी)</span>\n"
+"                               <a target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(अधिक जानकारी)</a>\n"
 "                               "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html
@@ -12651,11 +12651,11 @@ msgstr "सेट नहीं किया गया"
 
 #: corehq/apps/app_manager/views/apps.py
 msgid "U​I translation"
-msgstr "यू bआई अनुवाद"
+msgstr "यू"
 
 #: corehq/apps/app_manager/views/apps.py
 msgid "U​I translations"
-msgstr "यू bआई अनुवाद"
+msgstr "यू"
 
 #: corehq/apps/app_manager/views/apps.py
 msgid "app translation"
@@ -16276,10 +16276,8 @@ msgid "Reset Changes"
 msgstr "परिवर्तन रीसेट करें"
 
 #: corehq/apps/data_cleaning/models.py
-#, fuzzy
-#| msgid "Unknown user"
 msgid "Unknown action"
-msgstr "अनजान उपयोगकर्ता"
+msgstr "अज्ञात क्रिया"
 
 #: corehq/apps/data_cleaning/models.py
 #, python-brace-format
@@ -16378,36 +16376,20 @@ msgstr ""
 "      "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
-msgid "Performance might be impacted..."
-msgstr "प्रदर्शन प्रभावित हो सकता है..."
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
-msgid ""
-"\n"
-"          Some cases have a large number of edits. You can continue to preview new bulk edits,\n"
-"          but some pages may take longer to load.\n"
-"        "
-msgstr ""
-"\n"
-"          कुछ मामलों में बहुत अधिक संपादन हैं। आप नए बल्क संपादन का पूर्वावलोकन जारी रख सकते हैं,\n"
-"          लेकिन कुछ पृष्ठों को लोड होने में अधिक समय लग सकता है।\n"
-"        "
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
 msgid "Edit history is too large..."
 msgstr "संपादन इतिहास बहुत बड़ा है..."
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
 msgid ""
 "\n"
-"          The edit history for this session is too large to support new bulk edits.\n"
-"          You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
-"        "
+"            The edit history for this session is too large to support new bulk edits.\n"
+"            You can either apply the current edits, undo edits, or clear the edit history to start over.\n"
+"          "
 msgstr ""
 "\n"
-"          इस सत्र के लिए संपादन इतिहास बहुत बड़ा है, जिससे नए बल्क संपादन का समर्थन नहीं हो सकता।\n"
-"          आप या तो वर्तमान संपादन लागू कर सकते हैं, संपादन पूर्ववत कर सकते हैं, या संपादन इतिहास साफ कर सकते हैं ताकि फिर से शुरू किया जा सके।\n"
-"        "
+"            इस सत्र का संपादन इतिहास नया बल्क एडिट सपोर्ट करने के लिए बहुत बड़ा है।\n"
+"            आप या तो वर्तमान संपादन लागू कर सकते हैं, संपादन पूर्ववत कर सकते हैं, या संपादन इतिहास साफ़ कर सकते हैं।\n"
+"          "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/forms/clean_selected_records_form.html
 msgid "No editible case properties are visible"
@@ -16675,10 +16657,6 @@ msgstr ""
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 msgid "Edits"
 msgstr "संपादन"
-
-#: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
-msgid "number of cases with an edit history"
-msgstr "संपादन इतिहास वाले केसों की संख्या"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/table_with_controls.html
 #, python-format
@@ -22493,10 +22471,8 @@ msgid ""
 "    "
 msgstr ""
 "\n"
-"      सुरक्षा कारणों से, आपके CommCare एडमिनिस्ट्रेटर a0ने आपके प्रोजेक्ट के सभी उपयोगकर्ताओं के लिए\n"
-"      टू-फैक्टर ऑथेंटिकेशन सेटअप करना अनिवार्य किया है।<br>यह आपके खाते की सुरक्षा सुनिश्चित करने के लिए उपयोग की जाने वाली अतिरिक्त सुरक्षा परत है,\n"
-"      जो केवल उपयोगकर्ता नाम और पासवर्ड से परे है। a0\n"
-"    "
+"      सुरक्षा कारणों से, आपके CommCare एडमिनिस्ट्रेटर      टू-फैक्टर ऑथेंटिकेशन सेटअप करना अनिवार्य किया है।<br>यह आपके खाते की सुरक्षा सुनिश्चित करने के लिए उपयोग की जाने वाली अतिरिक्त सुरक्षा परत है,\n"
+"      जो केवल उपयोगकर्ता नाम और पासवर्ड से परे है।    "
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap3/otp_required.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
@@ -39842,8 +39818,8 @@ msgstr "निर्धारित रिपोर्ट संपादित 
 
 #: corehq/apps/reports/views.py
 #, python-format
-msgid "This scheduled report's timezone is %s (UTC%s)"
-msgstr "इस निर्धारित रिपोर्ट का टाइमज़ोन %s (UTC%s) है"
+msgid "This scheduled report's timezone is %(timezone)s (UTC%(utc_offset)s)"
+msgstr "इस अनुसूचित रिपोर्ट का टाइमज़ोन %(timezone)s है (UTC%(utc_offset)s)"
 
 #: corehq/apps/reports/views.py
 msgid "Create a new"
@@ -42681,6 +42657,7 @@ msgid "Certificate (Base64)"
 msgstr "सर्टिफिकेट (Base64)"
 
 #: corehq/apps/sso/forms.py
+#| msgid "Token generator"
 msgid "Token Encryption"
 msgstr "टोकन एन्क्रिप्शन"
 
@@ -43913,6 +43890,7 @@ msgstr ""
 "वे पेस्ट्री नाम चुनें जिनके लिए आप ChatGPT से आकर्षक मेनू बनवाना चाहेंगे"
 
 #: corehq/apps/styleguide/examples/bootstrap5/select2_static_ko_form.py
+#| msgid "Token generator"
 msgid "Menu Generator"
 msgstr "मेनू जनरेटर"
 
@@ -54966,14 +54944,17 @@ msgid "stock_coartem_brown"
 msgstr "स्टॉक कोआर्टेम ब्राउन"
 
 #: custom/reports/mc/reports/definitions.py
+#| msgid "form/stock/stock_paracetamol_250"
 msgid "stock_paracetamol_250"
 msgstr "स्टॉक पैरासिटामोल 250"
 
 #: custom/reports/mc/reports/definitions.py
+#| msgid "form/stock/stock_paracetamol_500"
 msgid "stock_paracetamol_500"
 msgstr "स्टॉक पैरासिटामोल 500"
 
 #: custom/reports/mc/reports/definitions.py
+#| msgid "form/stock/stock_rdt"
 msgid "stock_rdt"
 msgstr "स्टॉक आरडीटी"
 
@@ -55116,6 +55097,7 @@ msgid "Health Facility"
 msgstr "स्वास्थ्य केंद्र"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/"
 msgstr "form/stock/"
 
@@ -55160,42 +55142,52 @@ msgid "deaths_others"
 msgstr "deaths_others"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_amox_pink"
 msgstr "form/stock/stock_amox_pink"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_amox_green"
 msgstr "form/stock/stock_amox_green"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_ors"
 msgstr "form/stock/stock_ors"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_ra_50"
 msgstr "form/stock/stock_ra_50"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_ra_200"
 msgstr "form/stock/stock_ra_200"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_zinc"
 msgstr "form/stock/stock_zinc"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_coartem_yellow"
 msgstr "form/stock/stock_coartem_yellow"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_coartem_blue"
 msgstr "form/stock/stock_coartem_blue"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_coartem_green"
 msgstr "form/stock/stock_coartem_green"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_coartem_brown"
 msgstr "form/stock/stock_coartem_brown"
 
@@ -55212,6 +55204,7 @@ msgid "form/stock/stock_rdt"
 msgstr "form/stock/stock_rdt"
 
 #: custom/reports/mc/reports/sql.py
+#| msgid "form/stock/stock_rdt"
 msgid "form/stock/stock_gloves"
 msgstr "form/stock/stock_gloves"
 
@@ -55285,6 +55278,3 @@ msgstr "आवश्यक कॉलम हैं {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "मान्य JSON दर्ज करें"
-
-#~ msgid "Cancel or Requeue"
-#~ msgstr "रद्द करें या पुनः कतार में डालें"
