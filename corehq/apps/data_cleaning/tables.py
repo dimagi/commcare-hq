@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy
 from django_tables2 import columns, tables
 
 from corehq.apps.data_cleaning.columns import (
-    DataCleaningHtmxColumn,
+    EditableHtmxColumn,
     DataCleaningHtmxSelectionColumn,
 )
 from corehq.apps.data_cleaning.models.session import (
@@ -66,7 +66,7 @@ class EditCasesTable(BaseHtmxTable, ElasticTable):
         visible_columns = []
         for column_spec in session.columns.all():
             visible_columns.append(
-                (column_spec.slug, DataCleaningHtmxColumn(column_spec))
+                (column_spec.slug, EditableHtmxColumn(column_spec))
             )
         return visible_columns
 

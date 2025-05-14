@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 
-from corehq.apps.data_cleaning.columns import DataCleaningHtmxColumn
+from corehq.apps.data_cleaning.columns import EditableHtmxColumn
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
 from corehq.apps.data_cleaning.models import BulkEditSession
 from corehq.apps.data_cleaning.tables import (
@@ -169,7 +169,7 @@ class EditCasesTableView(BulkEditSessionViewMixin,
     def _render_table_cell_response(self, doc_id, column, request, *args, **kwargs):
         """
         Returns an a partial HttpResponse for the table cell,
-        using the `DataCleaningHtmxColumn` template and context.
+        using the `EditableHtmxColumn` template and context.
         """
         record = self.table_class.record_class(
             self.session.get_document_from_queryset(doc_id),
@@ -177,13 +177,13 @@ class EditCasesTableView(BulkEditSessionViewMixin,
             session=self.session,
         )
         table = self.table_class(session=self.session, data=self.session.get_queryset())
-        context = DataCleaningHtmxColumn.get_htmx_partial_response_context(
+        context = EditableHtmxColumn.get_htmx_partial_response_context(
             column,
             record,
             table,
         )
         return self.render_htmx_partial_response(
-            request, DataCleaningHtmxColumn.template_name, context
+            request, EditableHtmxColumn.template_name, context
         )
 
     def _get_cell_request_details(self, request):

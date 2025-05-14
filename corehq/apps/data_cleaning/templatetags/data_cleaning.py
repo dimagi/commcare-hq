@@ -7,7 +7,7 @@ from django.utils.html import format_html, escape
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
-from corehq.apps.data_cleaning.columns import DataCleaningHtmxColumn
+from corehq.apps.data_cleaning.columns import EditableHtmxColumn
 from corehq.apps.data_cleaning.models import DataType
 from corehq.apps.hqwebapp.tables.elasticsearch.records import BaseElasticRecord
 
@@ -90,9 +90,9 @@ def has_edits(edited_value):
 
 
 def _validate_htmx_column(bound_column):
-    if not isinstance(bound_column.column, DataCleaningHtmxColumn):
+    if not isinstance(bound_column.column, EditableHtmxColumn):
         raise template.TemplateSyntaxError(
-            f"Expected bound_column.column to be a DataCleaningHtmxColumn, "
+            f"Expected bound_column.column to be a EditableHtmxColumn, "
             f"got {type(bound_column.column)} instead."
         )
 
@@ -112,7 +112,7 @@ def cell_request_params(record, bound_column):
     :param record:
         subclass of BaseElasticRecord
     :param bound_column:
-        `BoundColumn` instance, with a `DataCleaningHtmxColumn` as `column`
+        `BoundColumn` instance, with a `EditableHtmxColumn` as `column`
     """
     if not isinstance(record, BaseElasticRecord):
         raise template.TemplateSyntaxError(
