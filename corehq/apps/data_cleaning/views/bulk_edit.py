@@ -18,7 +18,7 @@ from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 class EditSelectedRecordsFormView(BulkEditSessionViewMixin,
                                   LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin, TemplateView):
     urlname = "bulk_edit_selected_records_form"
-    template_name = "data_cleaning/forms/clean_selected_records_form.html"
+    template_name = "data_cleaning/forms/edit_selected_records_form.html"
     session_not_found_message = gettext_lazy("Cannot load clean selected records form, session was not found.")
 
     def get_context_data(self, cleaning_form=None, change=None, **kwargs):
