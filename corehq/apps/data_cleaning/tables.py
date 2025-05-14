@@ -102,7 +102,7 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
         return self.session.has_changes()
 
 
-class CaseCleaningTasksTable(BaseHtmxTable, tables.Table):
+class RecentCaseSessionsTable(BaseHtmxTable, tables.Table):
 
     class Meta(BaseHtmxTable.Meta):
         pass

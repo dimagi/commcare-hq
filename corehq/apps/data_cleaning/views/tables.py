@@ -11,7 +11,7 @@ from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_case
 from corehq.apps.data_cleaning.models import BulkEditSession
 from corehq.apps.data_cleaning.tables import (
     CleanCaseTable,
-    CaseCleaningTasksTable,
+    RecentCaseSessionsTable,
 )
 from corehq.apps.data_cleaning.tasks import commit_data_cleaning
 from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
@@ -219,9 +219,9 @@ class CleanCasesTableView(BulkEditSessionViewMixin,
         )
 
 
-class CaseCleaningTasksTableView(BaseDataCleaningTableView):
-    urlname = "case_data_cleaning_tasks_table"
-    table_class = CaseCleaningTasksTable
+class RecentCaseSessionsTableView(BaseDataCleaningTableView):
+    urlname = "recent_bulk_edit_case_sessions_table"
+    table_class = RecentCaseSessionsTable
 
     def get_queryset(self):
         return [
