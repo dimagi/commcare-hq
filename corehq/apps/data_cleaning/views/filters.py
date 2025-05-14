@@ -21,8 +21,8 @@ class BaseFilterFormView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
     pass
 
 
-class PinnedFilterFormView(BulkEditSessionViewMixin, BaseFilterFormView):
-    urlname = "data_cleaning_pinned_filter_form"
+class ManagePinnedFiltersView(BulkEditSessionViewMixin, BaseFilterFormView):
+    urlname = "bulk_edit_pinned_filters"
     template_name = "data_cleaning/forms/pinned_filter_form.html"
     session_not_found_message = gettext_lazy("Cannot retrieve pinned filters, session was not found.")
 
