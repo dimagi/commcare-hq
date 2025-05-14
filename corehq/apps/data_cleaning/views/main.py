@@ -9,7 +9,6 @@ from django.views.decorators.http import require_GET
 from django.utils.translation import gettext_lazy, gettext as _
 
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
-from corehq.apps.data_cleaning.exceptions import SessionAccessClosedException
 from corehq.apps.data_cleaning.models import BulkEditSession
 from corehq.apps.data_cleaning.utils.cases import clear_caches_case_data_cleaning
 from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
@@ -46,40 +45,10 @@ class CleanCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
     page_title = gettext_lazy("Bulk Edit Case Type")
     urlname = "data_cleaning_cases_session"
     template_name = "data_cleaning/clean_cases_session.html"
+    redirect_on_session_exceptions = True
 
-    def get(self, request, *args, **kwargs):
-        try:
-            return super().get(request, *args, **kwargs)
-        except SessionAccessClosedException:
-            return redirect(reverse(CleanCasesMainView.urlname, args=(self.domain, )))
-        except BulkEditSession.DoesNotExist:
-            messages.error(request, _("That session does not exist. Please start a new session."))
-            return redirect(reverse(CleanCasesMainView.urlname, args=(self.domain, )))
-
-    @property
-    @memoized
-    def session(self):
-        # overriding mixin so that DoesNotExist can be raised in self.get() and we can redirect
-        session = BulkEditSession.objects.get(
-            user=self.request.user,
-            domain=self.domain,
-            session_id=self.session_id
-        )
-        if session.completed_on:
-            messages.warning(
-                self.request,
-                _("You tried to access a session for \"{}\" that was already completed. "
-                  "Please start a new session.").format(session.identifier)
-            )
-            raise SessionAccessClosedException()
-        elif session.committed_on:
-            messages.warning(
-                self.request,
-                _("You tried to access a session for \"{}\" that is currently applying changes. "
-                  "Please wait for that task to complete, then start a new session.").format(session.identifier)
-            )
-            raise SessionAccessClosedException()
-        return session
+    def get_redirect_url(self):
+        return reverse(CleanCasesMainView.urlname, args=(self.domain, ))
 
     @property
     def case_type(self):
@@ -104,9 +73,7 @@ class CleanCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
 
     @property
     def page_context(self):
-        return {
-            "session_id": self.session_id,
-        }
+        return {}
 
 
 @require_bulk_data_cleaning_cases
