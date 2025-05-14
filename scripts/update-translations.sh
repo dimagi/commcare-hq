@@ -68,7 +68,7 @@ fi
 if ! python -c "import openai" &> /dev/null; then
     echo "OpenAI client is not installed."
     echo "Translations will not be updated with LLM."
-    echo "Please install it with: pip install openai"
+    echo "Please install it with: uv pip install openai"
     echo "Then run this script again if you want to update translations with LLM."
     AGENT_INSTALLED=false
 else
