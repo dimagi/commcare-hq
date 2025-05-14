@@ -54,12 +54,13 @@ class ReportExport(object):
         data_source.set_order_by([(o['field'], o['order']) for o in self.report_config.sort_expression])
         return data_source
 
-    def create_export(self, file_path, format_):
+    def create_export(self, file_path, format_, limit=None):
         """Save this report to a file
         :param file_path: The path to the file the report should be saved
         :param format_: The format of the resulting export
+        :param limit: Maximum rows in the export
         """
-        return export_from_tables(self.get_table(), file_path, format_)
+        return export_from_tables(self.get_table(limit=limit), file_path, format_)
 
     @property
     def header_rows(self):
@@ -69,17 +70,16 @@ class ReportExport(object):
         ]]
 
     @memoized
-    def get_data(self):
-        return list(self.data_source.get_data())
+    def get_data(self, limit=None):
+        return list(self.data_source.get_data(limit=limit))
 
     @property
     @memoized
     def total_rows(self):
         return [self.data_source.get_total_row()] if self.data_source.has_total_row else []
 
-    @property
     @memoized
-    def data_rows(self):
+    def data_rows(self, limit=None):
         column_id_to_expanded_column_ids = get_expanded_columns(
             self.data_source.top_level_columns,
             self.data_source.config
@@ -89,19 +89,19 @@ class ReportExport(object):
             if column.visible:
                 column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
 
-        return [[raw_row[column_id] for column_id in column_ids] for raw_row in self.get_data()]
+        return [[raw_row[column_id] for column_id in column_ids] for raw_row in self.get_data(limit)]
 
-    def get_table_data(self):
-        return self.header_rows + self.data_rows + self.total_rows
+    def get_table_data(self, limit=None):
+        return self.header_rows + self.data_rows(limit) + self.total_rows
 
     @memoized
-    def get_table(self):
+    def get_table(self, limit=None):
         """Generate a table of all rows of this report
         """
         export_table = [
             [
                 self.title,
-                self.get_table_data()
+                self.get_table_data(limit)
             ]
         ]
 

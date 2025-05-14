@@ -22,7 +22,6 @@ from corehq.apps.es import CaseSearchES
 
 BULK_OPERATION_CHUNK_SIZE = 1000
 MAX_RECORDED_LIMIT = 100000
-MAX_RECORD_CHANGES = 20
 MAX_SESSION_CHANGES = 200
 
 
@@ -84,8 +83,8 @@ class BulkEditSession(models.Model):
             identifier=case_type,
             session_type=BulkEditSessionType.CASE,
         )
-        BulkEditPinnedFilter.create_default_filters(case_session)
-        BulkEditColumn.create_default_columns(case_session)
+        case_session.pinned_filters.create_session_defaults(case_session)
+        case_session.columns.create_session_defaults(case_session)
         return case_session
 
     @classmethod
@@ -152,7 +151,7 @@ class BulkEditSession(models.Model):
         :param value: string - The value to filter on
         :return: The created BulkEditFilter
         """
-        return BulkEditFilter.create_for_session(self, prop_id, data_type, match_type, value)
+        return self.filters.create_for_session(self, prop_id, data_type, match_type, value)
 
     def add_column(self, prop_id, label, data_type=None):
         """
@@ -163,7 +162,7 @@ class BulkEditSession(models.Model):
         :param data_type: DataType - Optional. Will be inferred for system props
         :return: The created BulkEditColumn
         """
-        return BulkEditColumn.create_for_session(self, prop_id, label, data_type)
+        return self.columns.create_for_session(self, prop_id, label, data_type)
 
     @staticmethod
     def _update_order(related_manager, id_field, provided_ids):
@@ -249,8 +248,8 @@ class BulkEditSession(models.Model):
 
     def get_queryset(self):
         query = CaseSearchES().domain(self.domain).case_type(self.identifier)
-        query = BulkEditFilter.apply_filters_to_query(self, query)
-        query = BulkEditPinnedFilter.apply_filters_to_query(self, query)
+        query = self.filters.apply_to_query(self, query)
+        query = self.pinned_filters.apply_to_query(self, query)
         return query
 
     def get_document_from_queryset(self, doc_id):
@@ -290,8 +289,8 @@ class BulkEditSession(models.Model):
         :param prop_id: the property id to edit
         :param value: the new value to set
         """
-        record = BulkEditRecord.get_record_for_inline_editing(self, doc_id)
-        BulkEditChange.apply_inline_edit(record, prop_id, value)
+        record = self.records.get_for_inline_editing(self, doc_id)
+        self.changes.apply_inline_edit(record, prop_id, value)
 
     @retry_on_integrity_error(max_retries=3, delay=0.1)
     def _attach_change_to_records(self, change, doc_ids=None):
@@ -307,7 +306,7 @@ class BulkEditSession(models.Model):
         # M2M relationships don't support bulk_create, so we need to access the through model
         # to properly batch this action
         if selected_records:
-            through = BulkEditChange.records.through
+            through = change.records.through
             rows = [
                 through(bulkeditchange_id=change.pk, bulkeditrecord_id=record.pk)
                 for record in selected_records
@@ -340,37 +339,11 @@ class BulkEditSession(models.Model):
             )
         return self.result['record_count'] if self.completed_on else self.records.count()
 
-    def get_change_counts(self):
-        """
-        Get the details of the number of records with changes, and the number
-        of records that have more than `MAX_RECORD_CHANGES` changes associated with it.
+    def has_changes(self):
+        return self.changes.exists()
 
-        This is an aggregated query to reduce the number of db hits, since
-        both num_records_edited and num_records_at_max_changes are always used
-        together and are related in structure.
-
-        :return: dict {
-            'num_records_edited': int - number of records with changes
-            'num_records_at_max_changes': int - number of records at or above `MAX_RECORD_CHANGES`
-        }
-        """
-        return self.records.annotate(num_changes=models.Count("changes")).aggregate(
-            num_records_edited=models.Count("pk", filter=models.Q(num_changes__gt=0)),
-            num_records_at_max_changes=models.Count(
-                "pk", filter=models.Q(num_changes__gte=MAX_RECORD_CHANGES)
-            ),
-        )
-
-    def get_num_changes(self):
-        return self.changes.count()
-
-    def is_undo_multiple(self):
-        """
-        Check if the last change in the session affects multiple records.
-        :return: bool - True if the last change affects multiple records
-        """
-        last_change = self.changes.last()
-        return last_change and last_change.records.count() > 1
+    def are_bulk_edits_allowed(self):
+        return self.changes.count() < MAX_SESSION_CHANGES
 
     def purge_records(self):
         """
@@ -390,20 +363,17 @@ class BulkEditSession(models.Model):
         self.changes.all().delete()
         self.purge_records()
 
-    def is_record_selected(self, doc_id):
-        return BulkEditRecord.is_record_selected(self, doc_id)
-
     def select_record(self, doc_id):
-        return BulkEditRecord.select_record(self, doc_id)
+        return self.records.select(self, doc_id)
 
     def deselect_record(self, doc_id):
-        return BulkEditRecord.deselect_record(self, doc_id)
+        return self.records.deselect(self, doc_id)
 
     def select_multiple_records(self, doc_ids):
-        return BulkEditRecord.select_multiple_records(self, doc_ids)
+        return self.records.select_multiple(self, doc_ids)
 
     def deselect_multiple_records(self, doc_ids):
-        return BulkEditRecord.deselect_multiple_records(self, doc_ids)
+        return self.records.deselect_multiple(self, doc_ids)
 
     def _apply_operation_on_queryset(self, operation):
         """
@@ -437,7 +407,7 @@ class BulkEditSession(models.Model):
         for doc_ids in chunked(
             self.get_queryset().scroll_ids(), BULK_OPERATION_CHUNK_SIZE, list
         ):
-            num_unrecorded += len(BulkEditRecord.get_unrecorded_doc_ids(self, doc_ids))
+            num_unrecorded += len(self.records.get_unrecorded_doc_ids(self, doc_ids))
         return num_unrecorded
 
     def can_select_all(self, table_num_records=None):
@@ -676,6 +646,34 @@ class FilterMatchType:
     )
 
 
+class BulkEditFilterManager(models.Manager):
+    use_for_related_fields = True
+
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
+    def create_for_session(self, session, prop_id, data_type, match_type, value=None):
+        index = session.filters.count()
+        return self.create(
+            session=session,
+            index=index,
+            prop_id=prop_id,
+            data_type=data_type,
+            match_type=match_type,
+            value=value,
+        )
+
+    def apply_to_query(self, session, query):
+        xpath_expressions = []
+        for custom_filter in session.filters.all():
+            query = custom_filter.filter_query(query)
+            column_xpath = custom_filter.get_xpath_expression()
+            if column_xpath is not None:
+                xpath_expressions.append(column_xpath)
+        if xpath_expressions:
+            query = query.xpath_query(session.domain, " and ".join(xpath_expressions))
+        return query
+
+
 class BulkEditFilter(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="filters", on_delete=models.CASCADE)
     filter_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
@@ -693,34 +691,10 @@ class BulkEditFilter(models.Model):
     )
     value = models.TextField(null=True, blank=True)
 
+    objects = BulkEditFilterManager()
+
     class Meta:
         ordering = ["index"]
-
-    @classmethod
-    @retry_on_integrity_error(max_retries=3, delay=0.1)
-    @transaction.atomic
-    def create_for_session(cls, session, prop_id, data_type, match_type, value=None):
-        index = session.filters.count()
-        return BulkEditFilter.objects.create(
-            session=session,
-            index=index,
-            prop_id=prop_id,
-            data_type=data_type,
-            match_type=match_type,
-            value=value,
-        )
-
-    @classmethod
-    def apply_filters_to_query(cls, session, query):
-        xpath_expressions = []
-        for custom_filter in session.filters.all():
-            query = custom_filter.filter_query(query)
-            column_xpath = custom_filter.get_xpath_expression()
-            if column_xpath is not None:
-                xpath_expressions.append(column_xpath)
-        if xpath_expressions:
-            query = query.xpath_query(session.domain, " and ".join(xpath_expressions))
-        return query
 
     @property
     def human_readable_match_type(self):
@@ -844,6 +818,30 @@ class PinnedFilterType:
     )
 
 
+class BulkEditPinnedFilterManager(models.Manager):
+    use_for_related_fields = True
+
+    def create_session_defaults(self, session):
+        default_types = {
+            BulkEditSessionType.CASE: PinnedFilterType.DEFAULT_FOR_CASE,
+        }.get(session.session_type)
+
+        if not default_types:
+            raise NotImplementedError(f"{session.session_type} default pinned filters not yet supported")
+
+        for index, filter_type in enumerate(default_types):
+            self.create(
+                session=session,
+                index=index,
+                filter_type=filter_type,
+            )
+
+    def apply_to_query(self, session, query):
+        for pinned_filter in session.pinned_filters.all():
+            query = pinned_filter.filter_query(query)
+        return query
+
+
 class BulkEditPinnedFilter(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="pinned_filters", on_delete=models.CASCADE)
     index = models.IntegerField(default=0)
@@ -857,30 +855,10 @@ class BulkEditPinnedFilter(models.Model):
         blank=True,
     )
 
+    objects = BulkEditPinnedFilterManager()
+
     class Meta:
         ordering = ["index"]
-
-    @classmethod
-    def create_default_filters(cls, session):
-        default_types = {
-            BulkEditSessionType.CASE: PinnedFilterType.DEFAULT_FOR_CASE,
-        }.get(session.session_type)
-
-        if not default_types:
-            raise NotImplementedError(f"{session.session_type} default pinned filters not yet supported")
-
-        for index, filter_type in enumerate(default_types):
-            cls.objects.create(
-                session=session,
-                index=index,
-                filter_type=filter_type,
-            )
-
-    @classmethod
-    def apply_filters_to_query(cls, session, query):
-        for pinned_filter in session.pinned_filters.all():
-            query = pinned_filter.filter_query(query)
-        return query
 
     def get_report_filter_class(self):
         from corehq.apps.data_cleaning.filters import (
@@ -896,30 +874,10 @@ class BulkEditPinnedFilter(models.Model):
         return self.get_report_filter_class().filter_query(query, self)
 
 
-class BulkEditColumn(models.Model):
-    session = models.ForeignKey(BulkEditSession, related_name="columns", on_delete=models.CASCADE)
-    column_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
-    index = models.IntegerField(default=0)
-    prop_id = models.CharField(max_length=255)  # case property or form question_id
-    label = models.CharField(max_length=255)
-    data_type = models.CharField(
-        max_length=15,
-        default=DataType.TEXT,
-        choices=DataType.CHOICES,
-    )
-    is_system = models.BooleanField(default=False)
+class BulkEditColumnManager(models.Manager):
+    use_for_related_fields = True
 
-    class Meta:
-        ordering = ["index"]
-
-    @staticmethod
-    def is_system_property(prop_id):
-        return prop_id in set(METADATA_IN_REPORTS).difference({
-            'name', 'case_name', 'external_id',
-        })
-
-    @classmethod
-    def create_default_columns(cls, session):
+    def create_session_defaults(self, session):
         default_properties = {
             BulkEditSessionType.CASE: (
                 'name', 'owner_name', 'date_opened', 'opened_by_username',
@@ -935,21 +893,20 @@ class BulkEditColumn(models.Model):
             get_system_property_data_type,
         )
         for index, prop_id in enumerate(default_properties):
-            cls.objects.create(
+            self.create(
                 session=session,
                 index=index,
                 prop_id=prop_id,
                 label=get_system_property_label(prop_id),
                 data_type=get_system_property_data_type(prop_id),
-                is_system=cls.is_system_property(prop_id),
+                is_system=self.model.is_system_property(prop_id),
             )
 
-    @classmethod
-    def create_for_session(cls, session, prop_id, label, data_type=None):
-        is_system_property = cls.is_system_property(prop_id)
+    def create_for_session(self, session, prop_id, label, data_type=None):
+        is_system_property = self.model.is_system_property(prop_id)
         from corehq.apps.data_cleaning.utils.cases import get_system_property_data_type
         data_type = get_system_property_data_type(prop_id) if is_system_property else data_type
-        return cls.objects.create(
+        return self.create(
             session=session,
             index=session.columns.count(),
             prop_id=prop_id,
@@ -957,6 +914,31 @@ class BulkEditColumn(models.Model):
             data_type=data_type or DataType.TEXT,
             is_system=is_system_property,
         )
+
+
+class BulkEditColumn(models.Model):
+    session = models.ForeignKey(BulkEditSession, related_name="columns", on_delete=models.CASCADE)
+    column_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
+    index = models.IntegerField(default=0)
+    prop_id = models.CharField(max_length=255)  # case property or form question_id
+    label = models.CharField(max_length=255)
+    data_type = models.CharField(
+        max_length=15,
+        default=DataType.TEXT,
+        choices=DataType.CHOICES,
+    )
+    is_system = models.BooleanField(default=False)
+
+    objects = BulkEditColumnManager()
+
+    class Meta:
+        ordering = ["index"]
+
+    @staticmethod
+    def is_system_property(prop_id):
+        return prop_id in set(METADATA_IN_REPORTS).difference({
+            'name', 'case_name', 'external_id',
+        })
 
     @property
     def slug(self):
@@ -973,44 +955,18 @@ class BulkEditColumn(models.Model):
         return self.label if self.label == self.prop_id else f"{self.label} ({self.prop_id})"
 
 
-class BulkEditRecord(models.Model):
-    session = models.ForeignKey(BulkEditSession, related_name="records", on_delete=models.CASCADE)
-    doc_id = models.CharField(max_length=126, unique=True, db_index=True)  # case_id or form_id
-    is_selected = models.BooleanField(default=True)
-    calculated_change_id = models.UUIDField(null=True, blank=True)
-    calculated_properties = models.JSONField(null=True, blank=True)
+class BulkEditRecordManager(models.Manager):
+    use_for_related_fields = True
 
-    @classmethod
-    def get_record_for_inline_editing(cls, session, doc_id):
-        """
-        :param session: BulkEditSession
-        :param doc_id: the id of the document (case / form)
-        :return: BulkEditRecord
-        """
-        record, _ = cls.objects.get_or_create(
+    def get_for_inline_editing(self, session, doc_id):
+        return self.get_or_create(
             session=session,
             doc_id=doc_id,
             defaults={'is_selected': False}
-        )
-        return record
+        )[0]
 
-    @classmethod
-    def is_record_selected(self, session, doc_id):
-        return session.records.filter(
-            doc_id=doc_id,
-            is_selected=True,
-        ).exists()
-
-    @classmethod
-    def get_unrecorded_doc_ids(cls, session, doc_ids):
-        recorded_doc_ids = session.records.filter(
-            doc_id__in=doc_ids,
-        ).values_list("doc_id", flat=True)
-        return list(set(doc_ids) - set(recorded_doc_ids))
-
-    @classmethod
-    def select_record(cls, session, doc_id):
-        record, _ = cls.objects.get_or_create(
+    def select(self, session, doc_id):
+        record, _ = self.get_or_create(
             session=session,
             doc_id=doc_id,
             defaults={'is_selected': True}
@@ -1020,12 +976,12 @@ class BulkEditRecord(models.Model):
             record.save()
         return record
 
-    @classmethod
     @retry_on_integrity_error(max_retries=3, delay=0.1)
-    def deselect_record(cls, session, doc_id):
+    @transaction.atomic
+    def deselect(self, session, doc_id):
         try:
             record = session.records.get(doc_id=doc_id)
-        except cls.DoesNotExist:
+        except self.model.DoesNotExist:
             return None
 
         if record.changes.count() > 0:
@@ -1037,10 +993,9 @@ class BulkEditRecord(models.Model):
 
         return record
 
-    @classmethod
     @retry_on_integrity_error(max_retries=3, delay=0.1)
     @transaction.atomic
-    def select_multiple_records(cls, session, doc_ids):
+    def select_multiple(self, session, doc_ids):
         session.records.filter(
             doc_id__in=doc_ids,
             is_selected=False,
@@ -1053,12 +1008,12 @@ class BulkEditRecord(models.Model):
 
         missing_ids = list(set(doc_ids) - set(existing_ids))
         new_records = [
-            cls(session=session, doc_id=doc_id, is_selected=True)
+            self.model(session=session, doc_id=doc_id, is_selected=True)
             for doc_id in missing_ids
         ]
         # using ignore_conflicts avoids IntegrityErrors if another
         # process inserts them concurrently:
-        cls.objects.bulk_create(new_records, ignore_conflicts=True)
+        self.bulk_create(new_records, ignore_conflicts=True)
 
         # re-update any records that might still not be marked if there
         # were any conflicts above...
@@ -1067,10 +1022,9 @@ class BulkEditRecord(models.Model):
             is_selected=False,
         ).update(is_selected=True)
 
-    @classmethod
     @retry_on_integrity_error(max_retries=3, delay=0.1)
     @transaction.atomic
-    def deselect_multiple_records(cls, session, doc_ids):
+    def deselect_multiple(self, session, doc_ids):
         # update is_selected to False for all selected records that have changes
         session.records.filter(
             doc_id__in=doc_ids,
@@ -1084,6 +1038,30 @@ class BulkEditRecord(models.Model):
             changes__isnull=True,
         ).delete()
 
+    def get_unrecorded_doc_ids(self, session, doc_ids):
+        recorded_doc_ids = session.records.filter(
+            doc_id__in=doc_ids,
+        ).values_list("doc_id", flat=True)
+        return list(set(doc_ids) - set(recorded_doc_ids))
+
+
+class BulkEditRecord(models.Model):
+    session = models.ForeignKey(BulkEditSession, related_name="records", on_delete=models.CASCADE)
+    doc_id = models.CharField(max_length=126, db_index=True)  # case_id or form_id
+    is_selected = models.BooleanField(default=True)
+    calculated_change_id = models.UUIDField(null=True, blank=True)
+    calculated_properties = models.JSONField(null=True, blank=True)
+
+    objects = BulkEditRecordManager()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["session", "doc_id"],
+                name="unique_record_per_session",
+            ),
+        ]
+
     @property
     def has_property_updates(self):
         return self.changes.count() > 0 and (
@@ -1094,15 +1072,8 @@ class BulkEditRecord(models.Model):
     def should_reset_changes(self):
         return self.changes.count() == 0 and self.calculated_change_id is not None
 
-    @retry_on_integrity_error(max_retries=3, delay=0.1)
-    @transaction.atomic
     def reset_changes(self, prop_id):
-        change = BulkEditChange.objects.create(
-            session=self.session,
-            prop_id=prop_id,
-            action_type=EditActionType.RESET,
-        )
-        change.records.add(self)
+        self.changes.apply_reset(self, prop_id)
 
     def get_edited_case_properties(self, case):
         """
@@ -1175,6 +1146,44 @@ class EditActionType:
     )
 
 
+class BulkEditChangeManager(models.Manager):
+    use_for_related_fields = True
+
+    def apply_inline_edit(self, record, prop_id, value):
+        """
+        Apply an inline edit to a record.
+        :param record: BulkEditRecord
+        :param prop_id: the id of the property to edit
+        :param value: the new value for the property
+        :return: BulkEditChange
+        """
+        change = self.create(
+            session=record.session,
+            prop_id=prop_id,
+            action_type=EditActionType.REPLACE,
+            replace_string=value,
+        )
+        change.records.add(record)
+        return change
+
+    @retry_on_integrity_error(max_retries=3, delay=0.1)
+    @transaction.atomic
+    def apply_reset(self, record, prop_id):
+        """
+        Apply a reset to a record.
+        :param record: BulkEditRecord
+        :param prop_id: the id of the property to edit
+        :return: BulkEditChange
+        """
+        change = self.create(
+            session=record.session,
+            prop_id=prop_id,
+            action_type=EditActionType.RESET,
+        )
+        change.records.add(record)
+        return change
+
+
 class BulkEditChange(models.Model):
     session = models.ForeignKey(BulkEditSession, related_name="changes", on_delete=models.CASCADE)
     change_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -1190,26 +1199,10 @@ class BulkEditChange(models.Model):
     use_regex = models.BooleanField(default=False)
     copy_from_prop_id = models.CharField(max_length=255)
 
+    objects = BulkEditChangeManager()
+
     class Meta:
         ordering = ["created_on"]
-
-    @classmethod
-    def apply_inline_edit(cls, record, prop_id, value):
-        """
-        Apply an inline edit to a record.
-        :param record: BulkEditRecord
-        :param prop_id: the id of the property to edit
-        :param value: the new value for the property
-        :return: BulkEditChange
-        """
-        change = cls.objects.create(
-            session=record.session,
-            prop_id=prop_id,
-            action_type=EditActionType.REPLACE,
-            replace_string=value,
-        )
-        change.records.add(record)
-        return change
 
     @property
     def action_title(self):

@@ -22,12 +22,12 @@ class ManageColumnsFormView(BulkEditSessionViewMixin,
     template_name = "data_cleaning/forms/manage_columns_form.html"
     session_not_found_message = gettext_lazy("Cannot retrieve columns, session was not found.")
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, column_form=None, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
             'container_id': 'manage-columns',
             'active_columns': self.session.columns.all(),
-            'add_column_form': kwargs.pop('column_form', None) or AddColumnForm(self.session),
+            'add_column_form': column_form or AddColumnForm(self.session),
         })
         return context
 

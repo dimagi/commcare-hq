@@ -20,3 +20,8 @@ def set_bootstrap_version3():
 
 def set_bootstrap_version5():
     _thread_local.BOOTSTRAP_VERSION = BOOTSTRAP_5
+
+
+def clear_bootstrap_version():
+    if hasattr(_thread_local, 'BOOTSTRAP_VERSION'):
+        del _thread_local.BOOTSTRAP_VERSION

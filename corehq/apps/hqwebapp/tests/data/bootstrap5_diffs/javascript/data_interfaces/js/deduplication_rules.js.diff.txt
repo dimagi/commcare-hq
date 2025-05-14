@@ -1,14 +1,11 @@
 --- 
 +++ 
-@@ -1,9 +1,9 @@
--hqDefine("data_interfaces/js/bootstrap3/deduplication_rules", [
-+hqDefine("data_interfaces/js/bootstrap5/deduplication_rules", [
-     'jquery',
-     'knockout',
-     'underscore',
-     'hqwebapp/js/initial_page_data',
--    'hqwebapp/js/bootstrap3/crud_paginated_list',
-+    'hqwebapp/js/bootstrap5/crud_paginated_list',
-     'analytix/js/google',
-     'commcarehq',
- ], function (
+@@ -3,7 +3,7 @@
+ import ko from "knockout";
+ import _ from "underscore";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+-import CRUDPaginatedList from "hqwebapp/js/bootstrap3/crud_paginated_list";
++import CRUDPaginatedList from "hqwebapp/js/bootstrap5/crud_paginated_list";
+ import googleAnalytics from "analytix/js/google";
+ 
+ var showActionError = function (rule, error) {

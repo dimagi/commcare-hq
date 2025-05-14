@@ -24,6 +24,7 @@ jobs:
       - name: Install Python requirements
         run: |
           uv sync --no-group=sso --locked --compile-bytecode --no-progress
+          uv pip install openai
       - name: Install transifex client
         run: |
           mkdir -p /home/runner/.local/bin
@@ -37,6 +38,11 @@ jobs:
           # copy .transifexrc.example to ~/.transifexrc, edited to include token
           grep -v '^token =' .transifexrc.example > ~/.transifexrc
           echo "token = ${TRANSIFEX_TOKEN}" >> ~/.transifexrc
+      - name: Get translations from LLM
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          ./manage.py translate_po_files
       - name: Run update-translations script
         run: |
           source .venv/bin/activate
