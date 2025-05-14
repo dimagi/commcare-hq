@@ -10,7 +10,7 @@ from corehq.apps.data_cleaning.columns import DataCleaningHtmxColumn
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
 from corehq.apps.data_cleaning.models import BulkEditSession
 from corehq.apps.data_cleaning.tables import (
-    CleanCaseTable,
+    EditCasesTable,
     RecentCaseSessionsTable,
 )
 from corehq.apps.data_cleaning.tasks import commit_data_cleaning
@@ -36,7 +36,7 @@ class BaseDataCleaningTableView(LoginAndDomainMixin, DomainViewMixin, Selectable
 class EditCasesTableView(BulkEditSessionViewMixin,
                          HtmxInvalidPageRedirectMixin, HqHtmxActionMixin, BaseDataCleaningTableView):
     urlname = "bulk_edit_cases_table"
-    table_class = CleanCaseTable
+    table_class = EditCasesTable
 
     def get_host_url(self):
         from corehq.apps.data_cleaning.views.main import EditCasesSessionView
