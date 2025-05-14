@@ -35,7 +35,7 @@ class DataCleaningHtmxColumn(TemplateColumn):
 
         :param column_spec: BulkEditColumn
         :param record: EditableCaseSearchElasticRecord (or similar)
-        :param table: CleanCaseTable (or similar)
+        :param table: EditCasesTable (or similar)
         """
         column = cls(column_spec)
         bound_column = BoundColumn(table, column, column_spec.slug)
