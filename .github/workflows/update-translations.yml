@@ -41,16 +41,12 @@ jobs:
           # copy .transifexrc.example to ~/.transifexrc, edited to include token
           grep -v '^token =' .transifexrc.example > ~/.transifexrc
           echo "token = ${TRANSIFEX_TOKEN}" >> ~/.transifexrc
-      - name: Get translations from LLM
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: |
-          ./manage.py translate_po_files
       - name: Run update-translations script
         run: |
           ./scripts/update-translations.sh
         env:
           UPDATE_TRANSLATIONS_SKIP_GIT: 1
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       - name: Create Pull Request
         # https://github.com/marketplace/actions/create-pull-request
         # Pinned to the commit of https://github.com/peter-evans/create-pull-request/releases/tag/v7.0.5
