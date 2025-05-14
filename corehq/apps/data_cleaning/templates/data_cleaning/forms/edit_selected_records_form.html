@@ -21,7 +21,7 @@
       ></button>
     </div>
   {% endif %}
-  {% if cleaning_form.is_form_visible %}
+  {% if form.is_form_visible %}
 
     {% if are_bulk_edits_allowed %}
       <form
@@ -30,7 +30,7 @@
         hx-disabled-elt="find button"
         hq-hx-action="create_bulk_edit_change"
       >
-        {% crispy cleaning_form %}
+        {% crispy form %}
       </form>
     {% else %}
       <div class="alert alert-warning">
