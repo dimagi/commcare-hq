@@ -23,7 +23,7 @@ jobs:
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
       - name: Install Python requirements
         run: |
-          uv sync --no-group=sso --locked --compile-bytecode --no-progress
+          uv sync --locked --compile-bytecode --no-progress
           uv pip install openai
       - name: Install transifex client
         run: |
