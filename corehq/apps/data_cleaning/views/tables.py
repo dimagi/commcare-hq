@@ -160,7 +160,7 @@ class EditCasesTableView(BulkEditSessionViewMixin,
 
     def _trigger_clean_form_refresh(self, response):
         response['HX-Trigger'] = json.dumps({
-            'dcCleanFormRefresh': {
+            'dcEditFormRefresh': {
                 'target': '#hq-hx-clean-selected-records-form',
             },
         })
