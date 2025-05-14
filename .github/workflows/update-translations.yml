@@ -13,9 +13,9 @@ jobs:
         with:
           ref: master
           submodules: recursive
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v5
         with:
-          python-version: '3.9'
+          version: '0.7.2'
       - uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         id: generate-token
         with:
@@ -23,11 +23,8 @@ jobs:
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
       - name: Install Python requirements
         run: |
-          pip install --upgrade pip
-          # install requirements, excluding difficult to install ones
-          grep -Ev 'xmlsec|python3-saml' requirements/dev-requirements.txt > ../requirements.txt
-          pip install -r ../requirements.txt
-          pip install openai
+          uv sync --no-group=sso --locked --compile-bytecode --no-progress
+          uv pip install openai
       - name: Install transifex client
         run: |
           mkdir -p /home/runner/.local/bin
@@ -43,6 +40,7 @@ jobs:
           echo "token = ${TRANSIFEX_TOKEN}" >> ~/.transifexrc
       - name: Run update-translations script
         run: |
+          source .venv/bin/activate
           ./scripts/update-translations.sh
         env:
           UPDATE_TRANSLATIONS_SKIP_GIT: 1

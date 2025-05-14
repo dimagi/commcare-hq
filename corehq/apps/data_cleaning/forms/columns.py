@@ -70,6 +70,9 @@ class AddColumnForm(forms.Form):
             'label': initial_label,
             "casePropertyDetails": property_details,
             "isEditable": is_initial_editable,
+            # todo: for now, don't show data type to user since we don't use it in the table UI (yet)
+            # we will implement this in the future, so we want to store it in the db
+            "isDataTypeVisible": False,
         }
 
         self.helper = FormHelper()
@@ -99,7 +102,7 @@ class AddColumnForm(forms.Form):
                             'column_data_type',
                             x_model="dataType",
                         ),
-                        x_show="isEditable",
+                        x_show="isEditable && isDataTypeVisible",
                     ),
                     twbscrispy.StrictButton(
                         _("Add Column"),
