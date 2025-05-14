@@ -64,7 +64,7 @@ def get_edited_value(record, bound_column):
 
     We return `NO_VALUE` set to `Ellipsis` if the value is not set in
     the `edited_properties` dictionary. This is because the original value
-    can be made `None` by the cleaning actions, and we want to be
+    can be made `None` by the edit actions, and we want to be
     able to reflect that value.
 
     :params record:
@@ -137,7 +137,7 @@ def get_cell_value(value, edited_value):
 def display_dc_value(value):
     """
     Returns a template that "styles" the value for display in the
-    data cleaning table.
+    bulk edit table.
 
     The styling is based on:
         - if the value is "NULL"

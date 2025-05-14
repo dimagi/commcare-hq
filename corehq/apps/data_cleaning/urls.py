@@ -44,6 +44,6 @@ urlpatterns = [
     url(r'^session/(?P<session_id>[\w\-]+)/clean/$', EditSelectedRecordsFormView.as_view(),
         name=EditSelectedRecordsFormView.urlname),
     url(r'^session/(?P<session_id>[\w\-]+)/clear/$', clear_session_caches,
-        name="data_cleaning_clear_session_caches"),
+        name="bulk_edit_clear_session_caches"),
     url(r'^form_ids/(?P<session_id>[\w\-]+)/$', download_form_ids, name='download_form_ids'),
 ]
