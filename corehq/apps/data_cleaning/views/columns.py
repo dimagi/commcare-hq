@@ -34,7 +34,7 @@ class ManageColumnsFormView(BulkEditSessionViewMixin,
     def _trigger_clean_form_refresh(self, response):
         response['HX-Trigger'] = json.dumps({
             'dcEditFormRefresh': {
-                'target': '#hq-hx-clean-selected-records-form',
+                'target': '#hq-hx-edit-selected-records-form',
             },
         })
         return response
