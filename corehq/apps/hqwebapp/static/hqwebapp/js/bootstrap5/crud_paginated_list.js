@@ -2,7 +2,7 @@
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
-import bootstrap from "bootstrap5";
+import { Modal } from "bootstrap5";
 import "hqwebapp/js/bootstrap5/knockout_bindings.ko";  // fadeVisible
 
 var CRUDPaginatedListModel = function (
@@ -270,7 +270,7 @@ var PaginatedItem = function (itemSpec, initRow) {
     self.dismissModals = function () {
         var $modal = self.getItemRow().find('.modal');
         if ($modal) {
-            bootstrap.Modal.getOrCreateInstance($modal).hide();
+            Modal.getOrCreateInstance($modal).hide();
         }
     };
 

@@ -1,9 +1,9 @@
 import "commcarehq";
 import $ from "jquery";
-import bootstrap from "bootstrap5";
+import { Popover } from "bootstrap5";
 
 $(function () {
-    new bootstrap.Popover('#sad-danny', {
+    new Popover('#sad-danny', {
         title: gettext("This is Danny, one of our best developers."),
         content: gettext("Danny is pretty sad that you had to encounter this issue. He's making sure it gets fixed as soon as possible."),
     });
