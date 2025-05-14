@@ -11,7 +11,7 @@ from django.utils.translation import gettext_lazy, gettext as _
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
 from corehq.apps.data_cleaning.models import BulkEditSession
 from corehq.apps.data_cleaning.utils.cases import clear_caches_case_data_cleaning
-from corehq.apps.data_cleaning.views.cleaning import CleanSelectedRecordsFormView
+from corehq.apps.data_cleaning.views.bulk_edit import EditSelectedRecordsFormView
 from corehq.apps.data_cleaning.views.columns import ManageColumnsFormView
 from corehq.apps.data_cleaning.views.filters import ManageFiltersFormView, PinnedFilterFormView
 from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
@@ -99,7 +99,7 @@ class EditCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
                 args=(self.domain, self.session_id),
             ),
             "htmx_edit_selected_records_view": reverse(
-                CleanSelectedRecordsFormView.urlname,
+                EditSelectedRecordsFormView.urlname,
                 args=(self.domain, self.session_id),
             ),
         }
