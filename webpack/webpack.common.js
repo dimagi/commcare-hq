@@ -3,7 +3,6 @@ const path = require('path');
 const webpack = require('webpack');
 const utils = require('./utils');
 const hqPlugins = require('./plugins');
-const { merge } = require('webpack-merge');
 const vellumUtils = require('./vellumUtils');
 
 const aliases = {
@@ -125,7 +124,7 @@ module.exports = {
                             },
                         },
                     },
-                ]
+                ],
             },
         ],
     },

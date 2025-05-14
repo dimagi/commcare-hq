@@ -35,7 +35,6 @@ const getDebugDir = function () {
         if (e.code === "ENOENT") {
             // This is expected if VELLUM_DEBUG is False
             emitWarning("Vellum directory not found at " + path);
-            return null;
         } else {
             throw e;
         }
@@ -54,7 +53,7 @@ const getDebugConfig = function () {
     } catch (e) {
         if (e.code === "MODULE_NOT_FOUND") {
             // This is expected if VELLUM_DEBUG is False
-            emitWarning("Vellum config not found at " + VELLUM_DEBUG_CONFIG_PATH);
+            emitWarning("Vellum config not found at " + configPath);
             return null;
         } else {
             throw e;

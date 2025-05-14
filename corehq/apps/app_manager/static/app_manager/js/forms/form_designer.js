@@ -1,3 +1,4 @@
+/* global require */
 hqDefine("app_manager/js/forms/form_designer", [
     'jquery',
     'underscore',

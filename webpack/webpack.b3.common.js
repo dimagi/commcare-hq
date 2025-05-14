@@ -23,7 +23,7 @@ module.exports = Object.assign({}, commonDefault, {
         // Supports hqAnalytics in vellum when VELLUM_DEBUG=True
         new webpack.NormalModuleReplacementPlugin(
             /hqAnalytics\.js/,
-            path.resolve(utils.getStaticPathForApp('app_manager', 'js/forms/'), 'form_designer_analytics.js')
+            path.resolve(utils.getStaticPathForApp('app_manager', 'js/forms/'), 'form_designer_analytics.js'),
         ),
     ],
 
