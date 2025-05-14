@@ -61,8 +61,8 @@ class ManagePinnedFiltersView(BulkEditSessionViewMixin, BaseFilterFormView):
         return context
 
 
-class ManageFiltersFormView(BulkEditSessionViewMixin, BaseFilterFormView):
-    urlname = "data_cleaning_manage_filters"
+class ManageFiltersView(BulkEditSessionViewMixin, BaseFilterFormView):
+    urlname = "bulk_edit_manage_filters"
     template_name = "data_cleaning/forms/manage_filters_form.html"
     session_not_found_message = gettext_lazy("Cannot retrieve filters, session was not found.")
 
