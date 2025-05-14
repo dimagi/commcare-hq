@@ -47,7 +47,7 @@ class EditableHtmxColumn(TemplateColumn):
         }
 
 
-class DataCleaningHtmxSelectionColumn(CheckBoxColumn):
+class SelectableHtmxColumn(CheckBoxColumn):
     template_column = "data_cleaning/columns/selection.html"
     template_header = "data_cleaning/columns/selection_header.html"
     select_page_checkbox_id = "id-select-page-checkbox"
