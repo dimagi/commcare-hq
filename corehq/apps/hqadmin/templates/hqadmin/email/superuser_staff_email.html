@@ -8,6 +8,8 @@
       <td><u>is Staff</u></td>
       <td><u>is Superuser</u></td>
       <td><u>can assign Superuser</u></td>
+      <td><u>Feature Flag Edit Permissions</u></td>
+
     </tr>
     {% for user_change in user_changes %}
       <tr>
@@ -27,6 +29,11 @@
             <b>{{ user_change.can_assign_superuser }}</b></td>
         {% elif 'same_management_privilege' in user_change %}
           <td>{{ user_change.same_management_privilege }}</td>
+        {% endif %}
+        {% if 'feature_flag_edit_permissions' in user_change %}
+          <td>{{ user_change.feature_flag_edit_permissions}}</td>
+        {% else %}
+          <td>No changes</td>
         {% endif %}
       </tr>
     {% endfor %}
