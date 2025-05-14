@@ -52,7 +52,7 @@ class EditCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
     """
     page_title = gettext_lazy("Bulk Edit Case Type")
     urlname = "bulk_edit_cases_session"
-    template_name = "data_cleaning/clean_cases_session.html"
+    template_name = "data_cleaning/bulk_edit_session.html"
     redirect_on_session_exceptions = True
 
     def get_redirect_url(self):
