@@ -26,7 +26,7 @@ from corehq.apps.data_cleaning.views.tables import (
     CaseCleaningTasksTableView,
 )
 from corehq.apps.data_cleaning.views.setup import (
-    SetupCaseSessionFormView,
+    StartCaseSessionView,
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import group_adapter
@@ -98,7 +98,7 @@ class CleanCasesViewAccessTest(TestCase):
         cls.fake_session_id = uuid.uuid4()
         cls.all_views = [
             (BulkEditCasesMainView, (cls.domain_name,)),
-            (SetupCaseSessionFormView, (cls.domain_name,)),
+            (StartCaseSessionView, (cls.domain_name,)),
             (CaseCleaningTasksTableView, (cls.domain_name,)),
             (CleanCasesSessionView, (cls.domain_name, cls.real_session_id,)),
             (CleanCasesSessionView, (cls.domain_name, cls.fake_session_id,)),

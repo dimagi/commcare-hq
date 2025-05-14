@@ -22,12 +22,12 @@ from corehq.apps.data_cleaning.views.tables import (
     CaseCleaningTasksTableView,
 )
 from corehq.apps.data_cleaning.views.setup import (
-    SetupCaseSessionFormView,
+    StartCaseSessionView,
 )
 
 urlpatterns = [
     url(r'^cases/$', BulkEditCasesMainView.as_view(), name=BulkEditCasesMainView.urlname),
-    url(r'^setup/case/$', SetupCaseSessionFormView.as_view(), name=SetupCaseSessionFormView.urlname),
+    url(r'^start/case/$', StartCaseSessionView.as_view(), name=StartCaseSessionView.urlname),
     url(r'^tasks/case/$', CaseCleaningTasksTableView.as_view(), name=CaseCleaningTasksTableView.urlname),
     url(r'^cases/(?P<session_id>[\w\-]+)/$', CleanCasesSessionView.as_view(),
         name=CleanCasesSessionView.urlname),
