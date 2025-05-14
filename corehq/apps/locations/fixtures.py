@@ -102,19 +102,6 @@ def _location_queryset_helper(domain, location_pks):
     ).with_cte(fixture_ids).prefetch_related('location_type', 'parent')
 
 
-def should_sync_locations(last_sync, user_locations, restore_state):
-    """
-    Determine if any locations (already filtered to be relevant
-    to this user) require syncing.
-    """
-    restore_user = restore_state.restore_user
-    return (
-        _app_has_changed(last_sync, restore_state.params.app_id)
-        or _fixture_has_changed(last_sync, restore_user)
-        or user_locations.have_changed(last_sync.date)
-    )
-
-
 def _app_has_changed(last_sync, app_id):
     # Needed only to support the app-specific config for hierarchical vs flat fixtures
     return (last_sync and last_sync.build_id is not None
@@ -122,13 +109,11 @@ def _app_has_changed(last_sync, app_id):
             and app_id != last_sync.build_id)
 
 
-def _fixture_has_changed(last_sync, restore_user):
+def _fixture_has_changed(last_sync_date, restore_user):
     """True if the user's location assignments have been changed or if something has been deleted"""
-    if not last_sync or not last_sync.date:
-        return True
     last_modified = UserLookupTableStatus.get_last_modified(
         restore_user.user_id, UserLookupTableStatus.Fixture.LOCATION)
-    return last_modified >= last_sync.date
+    return last_modified >= last_sync_date
 
 
 class LocationFixtureProvider(FixtureProvider):
@@ -156,7 +141,12 @@ class LocationFixtureProvider(FixtureProvider):
             return []
 
         user_locations = UserLocations(restore_user)
-        if not should_sync_locations(restore_state.last_sync_log, user_locations, restore_state):
+        last_sync = restore_state.last_sync_log
+        if last_sync and last_sync.date and not (
+            _app_has_changed(last_sync, restore_state.params.app_id)
+            or _fixture_has_changed(last_sync.date, restore_user)
+            or user_locations.have_changed(last_sync.date)
+        ):
             return []
 
         return self.serializer.get_xml_nodes(restore_user.domain, self.id, restore_user.user_id,

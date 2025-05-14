@@ -707,7 +707,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
             location_type=self.location_type.name,
         )
         location.save()
-        after_save = mock.Mock(date=datetime.utcnow())
+        after_save = datetime.utcnow()
 
         self.assertFalse(_fixture_has_changed(after_save, self.user))
         self.user.set_location(location)
