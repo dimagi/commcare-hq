@@ -182,9 +182,62 @@ test = [
     'freezegun',
     'radon>=5.0', # v5 no longer depends on flake8-polyfill
     # pytest is pinned to a git commit until 8.4 is released.
-    # `minversion = 8.4` should also be set in .pytest.ini at that time.
+    # `minversion = 8.4` should also be set in [tool.pytest.ini_options] below at that time.
     'pytest @ git+https://github.com/pytest-dev/pytest.git@85760bff2776989b365167c7aeb35c86308ab76b',
     'pytest-django',
     'pytest-unmagic',
     'coverage',
 ]
+
+[tool.pytest.ini_options]
+minversion = '8.1'
+
+addopts = [
+    '--strict-markers',
+    '-pcorehq.tests.pytest_hooks',
+    # HQ has its own (incompatible) warnings system
+    '-pno:warnings',
+]
+markers = [
+    'es_test',  # marker for elasticsearch tests
+    'sharded',  # tests to be run against shard databases
+    'skip_setup_users',  # skip user setup in importer tests
+    'slow',  # marks tests as slow (deselect with -m 'not slow')
+]
+
+empty_parameter_set_mark = 'fail_at_collect'
+xfail_strict = true
+
+norecursedirs = [
+    '.*',
+    '*.egg',
+    'artifacts',
+    'docker',
+    'git-hooks',
+    'locale',
+    'node_modules',
+    'requirements',
+    'scripts',
+    'sharedfiles',
+    'staticfiles',
+]
+python_files = [
+    'test_*.py',
+    'tests.py',
+    '*/tests/*.py',
+]
+
+pythonpath = [
+    '.',
+    'corehq/ex-submodules',
+    # 'submodules' is for langcodes
+    'submodules',
+    'submodules/commcare-translations',
+    'submodules/couchdbkit-aggregate',
+    'submodules/django-digest-src',
+    'submodules/django-no-exceptions',
+    'submodules/python-digest',
+    'submodules/xml2json',
+]
+required_plugins = 'pytest-django'
+DJANGO_SETTINGS_MODULE = 'testsettings'
