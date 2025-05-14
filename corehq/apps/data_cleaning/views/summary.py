@@ -17,7 +17,7 @@ from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 ], name='dispatch')
 class ChangesSummaryView(BulkEditSessionViewMixin,
                          LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin, TemplateView):
-    urlname = "data_cleaning_changes_summary"
+    urlname = "bulk_edit_changes_summary"
     session_not_found_message = gettext_lazy("Cannot retrieve summary, session was not found.")
 
     def get(self, request, *args, **kwargs):
