@@ -59,30 +59,28 @@ int_field = IntegerField()
 int_array = ArrayField(int_field)
 
 
-class LocationsAccessor:
-    """Accessor scoped to a single restore call"""
+class UserLocations:
     def __init__(self, restore_user):
         self.user = restore_user
+        self.domain = self.user.domain
 
     @cached_property
     def queryset(self):
         # Doing this lazily lets us defer evaluation unless actually needed
-        user_locations = self.user.get_sql_locations(self.user.domain)
+        user_locations = self.user.get_sql_locations(self.domain)
         user_location_pks = list(user_locations.order_by().values_list("pk", flat=True))
 
         if not user_location_pks:
             return SQLLocation.objects.none()
-        return _location_queryset_helper(self.user.domain, user_location_pks)
+        return _location_queryset_helper(self.domain, user_location_pks)
 
-
-def _locations_have_changed(last_sync, accessor, restore_user):
-    # this first check is much faster - short circuit out if nothing at all changed
-    if not SQLLocation.objects.filter(domain=restore_user.domain, last_modified__gte=last_sync.date).exists():
-        return False
-    return accessor.queryset.filter(last_modified__gte=last_sync.date).values('last_modified').union(
-        LocationType.objects.filter(domain=restore_user.domain,
-                                    last_modified__gte=last_sync.date).values('last_modified'),
-    ).exists()
+    def have_changed(self, last_sync_date):
+        if LocationType.objects.filter(domain=self.domain, last_modified__gte=last_sync_date).exists():
+            return True
+        # this check is much faster - short circuit out if nothing at all changed
+        if not SQLLocation.objects.filter(domain=self.domain, last_modified__gte=last_sync_date).exists():
+            return False
+        return self.queryset.filter(last_modified__gte=last_sync_date).exists()
 
 
 def _location_queryset_helper(domain, location_pks):
@@ -104,7 +102,7 @@ def _location_queryset_helper(domain, location_pks):
     ).with_cte(fixture_ids).prefetch_related('location_type', 'parent')
 
 
-def should_sync_locations(last_sync, accessor, restore_state):
+def should_sync_locations(last_sync, user_locations, restore_state):
     """
     Determine if any locations (already filtered to be relevant
     to this user) require syncing.
@@ -113,7 +111,7 @@ def should_sync_locations(last_sync, accessor, restore_state):
     return (
         _app_has_changed(last_sync, restore_state.params.app_id)
         or _fixture_has_changed(last_sync, restore_user)
-        or _locations_have_changed(last_sync, accessor, restore_user)
+        or user_locations.have_changed(last_sync.date)
     )
 
 
@@ -157,12 +155,12 @@ class LocationFixtureProvider(FixtureProvider):
         if not self.serializer.should_sync(restore_user, restore_state.params.app):
             return []
 
-        accessor = LocationsAccessor(restore_user)
-        if not should_sync_locations(restore_state.last_sync_log, accessor, restore_state):
+        user_locations = UserLocations(restore_user)
+        if not should_sync_locations(restore_state.last_sync_log, user_locations, restore_state):
             return []
 
         return self.serializer.get_xml_nodes(restore_user.domain, self.id, restore_user.user_id,
-                                             accessor.queryset)
+                                             user_locations.queryset)
 
 
 class HierarchicalLocationSerializer(object):
