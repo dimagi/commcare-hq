@@ -15,6 +15,8 @@ from corehq.apps.data_cleaning.views.cleaning import CleanSelectedRecordsFormVie
 from corehq.apps.data_cleaning.views.columns import ManageColumnsFormView
 from corehq.apps.data_cleaning.views.filters import ManageFiltersFormView, PinnedFilterFormView
 from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
+from corehq.apps.data_cleaning.views.start import StartCaseSessionView
+from corehq.apps.data_cleaning.views.tables import RecentCaseSessionsTableView
 from corehq.apps.data_cleaning.views.tables import EditCasesTableView
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
@@ -33,8 +35,6 @@ class EditCasesMainView(BaseProjectDataView):
 
     @property
     def page_context(self):
-        from corehq.apps.data_cleaning.views.start import StartCaseSessionView
-        from corehq.apps.data_cleaning.views.tables import RecentCaseSessionsTableView
         return {
             "htmx_start_session_form_view": reverse(StartCaseSessionView.urlname, args=(self.domain,)),
             "htmx_recent_sessions_table_view": reverse(RecentCaseSessionsTableView.urlname, args=(self.domain, )),
