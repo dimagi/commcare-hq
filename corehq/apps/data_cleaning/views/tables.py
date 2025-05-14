@@ -14,7 +14,6 @@ from corehq.apps.data_cleaning.tables import (
     CaseCleaningTasksTable,
 )
 from corehq.apps.data_cleaning.tasks import commit_data_cleaning
-from corehq.apps.data_cleaning.views.main import CleanCasesMainView
 from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.domain.views import DomainViewMixin
@@ -140,6 +139,7 @@ class CleanCasesTableView(BulkEditSessionViewMixin,
             request,
             _("Changes applied. Check the Recent Tasks table for progress.")
         )
+        from corehq.apps.data_cleaning.views.main import CleanCasesMainView
         return self.render_htmx_redirect(
             reverse(CleanCasesMainView.urlname, args=(self.domain,)),
         )

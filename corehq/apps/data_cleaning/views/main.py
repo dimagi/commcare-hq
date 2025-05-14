@@ -11,7 +11,11 @@ from django.utils.translation import gettext_lazy, gettext as _
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
 from corehq.apps.data_cleaning.models import BulkEditSession
 from corehq.apps.data_cleaning.utils.cases import clear_caches_case_data_cleaning
+from corehq.apps.data_cleaning.views.cleaning import CleanSelectedRecordsFormView
+from corehq.apps.data_cleaning.views.columns import ManageColumnsFormView
+from corehq.apps.data_cleaning.views.filters import ManageFiltersFormView, PinnedFilterFormView
 from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
+from corehq.apps.data_cleaning.views.tables import CleanCasesTableView
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.settings.views import BaseProjectDataView
@@ -42,6 +46,10 @@ class CleanCasesMainView(BaseProjectDataView):
     require_bulk_data_cleaning_cases,
 ], name='dispatch')
 class CleanCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
+    """
+    This view is a "host" view of several HTMX views that handle
+    different parts of the Bulk Editing feature.
+    """
     page_title = gettext_lazy("Bulk Edit Case Type")
     urlname = "data_cleaning_cases_session"
     template_name = "data_cleaning/clean_cases_session.html"
@@ -73,7 +81,28 @@ class CleanCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
 
     @property
     def page_context(self):
-        return {}
+        return {
+            "htmx_primary_view": reverse(
+                CleanCasesTableView.urlname,
+                args=(self.domain, self.session_id),
+            ),
+            "htmx_pinned_filter_form_view": reverse(
+                PinnedFilterFormView.urlname,
+                args=(self.domain, self.session_id),
+            ),
+            "htmx_manage_filters_view": reverse(
+                ManageFiltersFormView.urlname,
+                args=(self.domain, self.session_id),
+            ),
+            "htmx_manage_columns_view": reverse(
+                ManageColumnsFormView.urlname,
+                args=(self.domain, self.session_id),
+            ),
+            "htmx_edit_selected_records_view": reverse(
+                CleanSelectedRecordsFormView.urlname,
+                args=(self.domain, self.session_id),
+            ),
+        }
 
 
 @require_bulk_data_cleaning_cases
