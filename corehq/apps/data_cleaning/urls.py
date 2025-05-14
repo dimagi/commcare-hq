@@ -21,7 +21,7 @@ from corehq.apps.data_cleaning.views.tables import (
     CleanCasesTableView,
     CaseCleaningTasksTableView,
 )
-from corehq.apps.data_cleaning.views.setup import (
+from corehq.apps.data_cleaning.views.start import (
     StartCaseSessionView,
 )
 
