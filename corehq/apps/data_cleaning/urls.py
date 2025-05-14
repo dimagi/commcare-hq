@@ -8,7 +8,7 @@ from corehq.apps.data_cleaning.views.columns import (
     ManageColumnsFormView,
 )
 from corehq.apps.data_cleaning.views.filters import (
-    PinnedFilterFormView,
+    ManagePinnedFiltersView,
     ManageFiltersFormView,
 )
 from corehq.apps.data_cleaning.views.main import (
@@ -37,8 +37,8 @@ urlpatterns = [
         name=ChangesSummaryView.urlname),
     url(r'^session/(?P<session_id>[\w\-]+)/filters/$', ManageFiltersFormView.as_view(),
         name=ManageFiltersFormView.urlname),
-    url(r'^session/(?P<session_id>[\w\-]+)/filters/pinned/$', PinnedFilterFormView.as_view(),
-        name=PinnedFilterFormView.urlname),
+    url(r'^session/(?P<session_id>[\w\-]+)/filters/pinned/$', ManagePinnedFiltersView.as_view(),
+        name=ManagePinnedFiltersView.urlname),
     url(r'^session/(?P<session_id>[\w\-]+)/columns/$', ManageColumnsFormView.as_view(),
         name=ManageColumnsFormView.urlname),
     url(r'^session/(?P<session_id>[\w\-]+)/clean/$', EditSelectedRecordsFormView.as_view(),
