@@ -45,13 +45,13 @@ class BulkEditCasesMainView(BaseProjectDataView):
     use_bootstrap5,
     require_bulk_data_cleaning_cases,
 ], name='dispatch')
-class CleanCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
+class EditCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
     """
     This view is a "host" view of several HTMX views that handle
     different parts of the Bulk Editing feature.
     """
     page_title = gettext_lazy("Bulk Edit Case Type")
-    urlname = "data_cleaning_cases_session"
+    urlname = "bulk_edit_cases_session"
     template_name = "data_cleaning/clean_cases_session.html"
     redirect_on_session_exceptions = True
 
