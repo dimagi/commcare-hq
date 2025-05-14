@@ -13,7 +13,7 @@ from corehq.apps.data_cleaning.models import BulkEditSession
 from corehq.apps.data_cleaning.utils.cases import clear_caches_case_data_cleaning
 from corehq.apps.data_cleaning.views.bulk_edit import EditSelectedRecordsFormView
 from corehq.apps.data_cleaning.views.columns import ManageColumnsFormView
-from corehq.apps.data_cleaning.views.filters import ManageFiltersFormView, ManagePinnedFiltersView
+from corehq.apps.data_cleaning.views.filters import ManageFiltersView, ManagePinnedFiltersView
 from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
 from corehq.apps.data_cleaning.views.start import StartCaseSessionView
 from corehq.apps.data_cleaning.views.tables import RecentCaseSessionsTableView
@@ -91,7 +91,7 @@ class EditCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
                 args=(self.domain, self.session_id),
             ),
             "htmx_manage_filters_view": reverse(
-                ManageFiltersFormView.urlname,
+                ManageFiltersView.urlname,
                 args=(self.domain, self.session_id),
             ),
             "htmx_manage_columns_view": reverse(

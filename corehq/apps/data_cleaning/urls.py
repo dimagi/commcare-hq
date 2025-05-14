@@ -9,7 +9,7 @@ from corehq.apps.data_cleaning.views.columns import (
 )
 from corehq.apps.data_cleaning.views.filters import (
     ManagePinnedFiltersView,
-    ManageFiltersFormView,
+    ManageFiltersView,
 )
 from corehq.apps.data_cleaning.views.main import (
     EditCasesMainView,
@@ -35,8 +35,8 @@ urlpatterns = [
         name=EditCasesTableView.urlname),
     url(r'^cases/(?P<session_id>[\w\-]+)/summary/$', ChangesSummaryView.as_view(),
         name=ChangesSummaryView.urlname),
-    url(r'^session/(?P<session_id>[\w\-]+)/filters/$', ManageFiltersFormView.as_view(),
-        name=ManageFiltersFormView.urlname),
+    url(r'^session/(?P<session_id>[\w\-]+)/filters/$', ManageFiltersView.as_view(),
+        name=ManageFiltersView.urlname),
     url(r'^session/(?P<session_id>[\w\-]+)/filters/pinned/$', ManagePinnedFiltersView.as_view(),
         name=ManagePinnedFiltersView.urlname),
     url(r'^session/(?P<session_id>[\w\-]+)/columns/$', ManageColumnsFormView.as_view(),
