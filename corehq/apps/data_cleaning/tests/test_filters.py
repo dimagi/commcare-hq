@@ -35,7 +35,6 @@ from corehq.apps.es.users import user_adapter
 from corehq.apps.hqwebapp.tests.tables.generator import get_case_blocks
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard.cases.utils import (
-    all_project_data_filter,
     deactivated_case_owners,
     get_case_owners,
     query_location_restricted_cases,
@@ -630,7 +629,7 @@ class TestReportFilterSubclasses(TestCase):
                     ],
                     'default_text': 'Filter by...',
                     'selected': [
-                        {'id': 'project_data', 'text': '[Project Data]'},
+                        {'id': 'all_data', 'text': '[All Data]'},
                     ],
                     'placeholder': 'Please add case owners to filter the list of cases.',
                 },
@@ -664,7 +663,7 @@ class TestReportFilterSubclasses(TestCase):
                     ],
                     'default_text': 'Filter by...',
                     'selected': [
-                        {'id': 'project_data', 'text': '[Project Data]'},
+                        {'id': 'all_data', 'text': '[All Data]'},
                     ],
                     'placeholder': 'Please add case owners to filter the list of cases.',
                 },
@@ -817,8 +816,7 @@ class TestCaseOwnersPinnedFilterQuery(BaseCaseOwnersTest):
         )
         self.assertIsNone(pinned_filter.value)
         filtered_query = pinned_filter.filter_query(query)
-        expected_query = query.OR(all_project_data_filter(self.domain, ['project_data']))
-        self.assertDictEqual(filtered_query.es_query, expected_query.es_query)
+        self.assertDictEqual(filtered_query.es_query, query.es_query)
 
     def test_default_location_restricted(self):
         query = CaseSearchES().domain(self.domain)
