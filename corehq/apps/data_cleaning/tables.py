@@ -16,7 +16,7 @@ from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
 from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
 
 
-class CleanCaseTable(BaseHtmxTable, ElasticTable):
+class EditCasesTable(BaseHtmxTable, ElasticTable):
     record_class = EditableCaseSearchElasticRecord
     bulk_action_warning_limit = BULK_OPERATION_CHUNK_SIZE
     max_recorded_limit = MAX_RECORDED_LIMIT
