@@ -81,5 +81,5 @@ class StartCaseSessionView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMix
         from corehq.apps.data_cleaning.views.main import EditCasesSessionView
         return self.render_htmx_redirect(
             reverse(EditCasesSessionView.urlname, args=(self.domain, session.session_id, )),
-            response_message=_("Starting Data Cleaning Session...")
+            response_message=_("Starting Bulk Edit Session...")
         )
