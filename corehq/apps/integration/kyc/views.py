@@ -134,6 +134,8 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         else:
             selected_ids = request.POST.getlist('selected_ids')
             kyc_users = self.kyc_config.get_kyc_users_by_ids(selected_ids)
+        kyc_users = self._filter_valid_users(kyc_users)
+
         existing_failed_user_ids = self._get_existing_failed_users(kyc_users)
         results = verify_users(kyc_users, self.kyc_config)
         success_count = sum(1 for result in results.values() if result == KycVerificationStatus.PASSED)
@@ -146,6 +148,16 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         self._report_success_on_reverification_metric(existing_failed_user_ids, results)
 
         return self.render_htmx_partial_response(request, 'kyc/partials/kyc_verify_alert.html', context)
+
+    def _filter_valid_users(self, kyc_users):
+        valid_users = []
+        kyc_user_api_fields = self.kyc_config.get_api_field_to_user_data_map_values().values()
+        for kyc_user in kyc_users:
+            is_user_invalid = any(not kyc_user.get(field) for field in kyc_user_api_fields)
+            if is_user_invalid:
+                continue
+            valid_users.append(kyc_user)
+        return valid_users
 
     def _report_success_on_reverification_metric(self, existing_failed_user_ids, results):
         successful_user_ids = [user_id for user_id, status in results.items() if status is True]
