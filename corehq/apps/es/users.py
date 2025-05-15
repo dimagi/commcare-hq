@@ -246,18 +246,33 @@ def login_as_user(value):
     return _user_data('login_as_user', filters.term('user_data_es.value', value))
 
 
-def missing_or_empty_user_data_property(property_name):
+def missing_user_data_property(property_name):
     """
-    A user_data property doesn't exist, or does exist but has an empty string value.
+    A user_data property doesn't exist.
     """
-    missing_property = filters.NOT(queries.nested(
+    return filters.NOT(queries.nested(
         'user_data_es',
         filters.term(field='user_data_es.key', value=property_name),
     ))
-    empty_value = _user_data(
+
+
+def empty_user_data_property(property_name):
+    """
+    A user_data property exists but has an empty string value.
+    """
+    return _user_data(
         property_name,
         filters.NOT(
             filters.wildcard(field='user_data_es.value', value='*')
         )
     )
-    return filters.OR(missing_property, empty_value)
+
+
+def missing_or_empty_user_data_property(property_name):
+    """
+    A user_data property doesn't exist, or does exist but has an empty string value.
+    """
+    return filters.OR(
+        missing_user_data_property(property_name),
+        empty_user_data_property(property_name),
+    )
