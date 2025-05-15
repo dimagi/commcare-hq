@@ -9,7 +9,7 @@ from django.test import SimpleTestCase, TestCase
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from pillow_retry.models import PillowError
-from corehq.motech.repeaters.models import RepeatRecord
+
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.userreports.data_source_providers import (
     DynamicDataSourceProvider,
@@ -46,6 +46,8 @@ from corehq.form_processor.signals import sql_case_post_save
 from corehq.motech.repeaters.models import (
     ConnectionSettings,
     DataSourceRepeater,
+    DataSourceUpdate,
+    RepeatRecord,
 )
 from corehq.motech.repeaters.tests.test_repeater import BaseRepeaterTest
 from corehq.pillows.case import get_case_pillow
@@ -440,7 +442,6 @@ class IndicatorPillowTest(BaseRepeaterTest):
     @mock.patch('corehq.motech.repeaters.signals.create_repeat_records')
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_datasource_change_triggers_change_signal(self, datetime_mock, create_repeat_records_mock):
-        from corehq.apps.userreports.util import DataSourceUpdateLog
         data_source_id = self.config._id
         num_repeaters = 2
         self._setup_data_source_subscription(self.config.domain, data_source_id, num_repeaters=num_repeaters)
@@ -454,7 +455,7 @@ class IndicatorPillowTest(BaseRepeaterTest):
         # Assert that it will be created with the expected args
         call_args = create_repeat_records_mock.call_args[0]
         self.assertEqual(call_args[0], DataSourceRepeater)
-        self.assertTrue(isinstance(call_args[1], DataSourceUpdateLog))
+        self.assertTrue(isinstance(call_args[1], DataSourceUpdate))
         update_log = call_args[1]
         self.assertEqual(update_log.domain, self.domain)
         self.assertEqual(update_log.data_source_id, self.config._id)
