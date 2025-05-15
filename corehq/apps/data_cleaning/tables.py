@@ -4,8 +4,8 @@ from django.utils.translation import gettext_lazy
 from django_tables2 import columns, tables
 
 from corehq.apps.data_cleaning.columns import (
-    DataCleaningHtmxColumn,
-    DataCleaningHtmxSelectionColumn,
+    EditableHtmxColumn,
+    SelectableHtmxColumn,
 )
 from corehq.apps.data_cleaning.models.session import (
     BULK_OPERATION_CHUNK_SIZE,
@@ -16,7 +16,7 @@ from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
 from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
 
 
-class CleanCaseTable(BaseHtmxTable, ElasticTable):
+class EditCasesTable(BaseHtmxTable, ElasticTable):
     record_class = EditableCaseSearchElasticRecord
     bulk_action_warning_limit = BULK_OPERATION_CHUNK_SIZE
     max_recorded_limit = MAX_RECORDED_LIMIT
@@ -37,7 +37,7 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
 
     @classmethod
     def get_select_column(cls, session, request, select_record_action, select_page_action):
-        return DataCleaningHtmxSelectionColumn(
+        return SelectableHtmxColumn(
             session, request, select_record_action, select_page_action, accessor="case_id",
             attrs={
                 'td__input': {
@@ -66,7 +66,7 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
         visible_columns = []
         for column_spec in session.columns.all():
             visible_columns.append(
-                (column_spec.slug, DataCleaningHtmxColumn(column_spec))
+                (column_spec.slug, EditableHtmxColumn(column_spec))
             )
         return visible_columns
 
@@ -102,7 +102,7 @@ class CleanCaseTable(BaseHtmxTable, ElasticTable):
         return self.session.has_changes()
 
 
-class CaseCleaningTasksTable(BaseHtmxTable, tables.Table):
+class RecentCaseSessionsTable(BaseHtmxTable, tables.Table):
 
     class Meta(BaseHtmxTable.Meta):
         pass
