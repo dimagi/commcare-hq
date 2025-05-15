@@ -12,7 +12,7 @@ from corehq.apps.data_cleaning.views.filters import (
     ManageFiltersView,
 )
 from corehq.apps.data_cleaning.views.main import (
-    EditCasesMainView,
+    BulkEditCasesMainView,
     EditCasesSessionView,
     clear_session_caches,
     download_form_ids,
@@ -26,7 +26,7 @@ from corehq.apps.data_cleaning.views.start import (
 )
 
 urlpatterns = [
-    url(r'^cases/$', EditCasesMainView.as_view(), name=EditCasesMainView.urlname),
+    url(r'^cases/$', BulkEditCasesMainView.as_view(), name=BulkEditCasesMainView.urlname),
     url(r'^start/case/$', StartCaseSessionView.as_view(), name=StartCaseSessionView.urlname),
     url(r'^tasks/case/$', RecentCaseSessionsTableView.as_view(), name=RecentCaseSessionsTableView.urlname),
     url(r'^cases/(?P<session_id>[\w\-]+)/$', EditCasesSessionView.as_view(),
