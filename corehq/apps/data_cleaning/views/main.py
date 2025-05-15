@@ -28,7 +28,7 @@ from corehq.util.view_utils import set_file_download
     use_bootstrap5,
     require_bulk_data_cleaning_cases,
 ], name='dispatch')
-class EditCasesMainView(BaseProjectDataView):
+class BulkEditCasesMainView(BaseProjectDataView):
     page_title = gettext_lazy("Bulk Edit Case Data")
     urlname = "bulk_edit_cases_main"
     template_name = "data_cleaning/bulk_edit_main.html"
@@ -62,7 +62,7 @@ class EditCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
     redirect_on_session_exceptions = True
 
     def get_redirect_url(self):
-        return reverse(EditCasesMainView.urlname, args=(self.domain, ))
+        return reverse(BulkEditCasesMainView.urlname, args=(self.domain, ))
 
     @property
     def case_type(self):
@@ -81,8 +81,8 @@ class EditCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
     @property
     def parent_pages(self):
         return [{
-            'title': EditCasesMainView.page_title,
-            'url': reverse(EditCasesMainView.urlname, args=(self.domain,)),
+            'title': BulkEditCasesMainView.page_title,
+            'url': reverse(BulkEditCasesMainView.urlname, args=(self.domain,)),
         }]
 
     @property
@@ -117,7 +117,7 @@ def clear_session_caches(request, domain, session_id):
     session = BulkEditSession.objects.get(session_id=session_id)
     clear_caches_case_data_cleaning(session.domain, session.identifier)
     messages.success(request, _("Caches successfully cleared."))
-    return redirect(reverse(EditCasesMainView.urlname, args=(domain,)))
+    return redirect(reverse(BulkEditCasesMainView.urlname, args=(domain,)))
 
 
 @require_GET
