@@ -1,11 +1,92 @@
-├─ @bracken/require-less@0.1.6
-│  └─ less@2
+├─ @discoveryjs/json-ext@0.5.7
+├─ @jridgewell/gen-mapping@0.3.8
+│  ├─ @jridgewell/set-array@^1.2.1
+│  ├─ @jridgewell/sourcemap-codec@^1.4.10
+│  └─ @jridgewell/trace-mapping@^0.3.24
+├─ @jridgewell/resolve-uri@3.1.2
+├─ @jridgewell/set-array@1.2.1
+├─ @jridgewell/source-map@0.3.6
+│  ├─ @jridgewell/gen-mapping@^0.3.5
+│  └─ @jridgewell/trace-mapping@^0.3.25
+├─ @jridgewell/sourcemap-codec@1.5.0
+├─ @jridgewell/trace-mapping@0.3.25
+│  ├─ @jridgewell/resolve-uri@^3.1.0
+│  └─ @jridgewell/sourcemap-codec@^1.4.14
+├─ @types/estree@1.0.7
+├─ @types/json-schema@7.0.15
 ├─ @types/node@14.14.22
 ├─ @types/yauzl@2.9.1
 │  └─ @types/node@*
+├─ @webassemblyjs/ast@1.14.1
+│  ├─ @webassemblyjs/helper-numbers@1.13.2
+│  └─ @webassemblyjs/helper-wasm-bytecode@1.13.2
+├─ @webassemblyjs/floating-point-hex-parser@1.13.2
+├─ @webassemblyjs/helper-api-error@1.13.2
+├─ @webassemblyjs/helper-buffer@1.14.1
+├─ @webassemblyjs/helper-numbers@1.13.2
+│  ├─ @webassemblyjs/floating-point-hex-parser@1.13.2
+│  ├─ @webassemblyjs/helper-api-error@1.13.2
+│  └─ @xtuc/long@4.2.2
+├─ @webassemblyjs/helper-wasm-bytecode@1.13.2
+├─ @webassemblyjs/helper-wasm-section@1.14.1
+│  ├─ @webassemblyjs/ast@1.14.1
+│  ├─ @webassemblyjs/helper-buffer@1.14.1
+│  ├─ @webassemblyjs/helper-wasm-bytecode@1.13.2
+│  └─ @webassemblyjs/wasm-gen@1.14.1
+├─ @webassemblyjs/ieee754@1.13.2
+│  └─ @xtuc/ieee754@^1.2.0
+├─ @webassemblyjs/leb128@1.13.2
+│  └─ @xtuc/long@4.2.2
+├─ @webassemblyjs/utf8@1.13.2
+├─ @webassemblyjs/wasm-edit@1.14.1
+│  ├─ @webassemblyjs/ast@1.14.1
+│  ├─ @webassemblyjs/helper-buffer@1.14.1
+│  ├─ @webassemblyjs/helper-wasm-bytecode@1.13.2
+│  ├─ @webassemblyjs/helper-wasm-section@1.14.1
+│  ├─ @webassemblyjs/wasm-gen@1.14.1
+│  ├─ @webassemblyjs/wasm-opt@1.14.1
+│  ├─ @webassemblyjs/wasm-parser@1.14.1
+│  └─ @webassemblyjs/wast-printer@1.14.1
+├─ @webassemblyjs/wasm-gen@1.14.1
+│  ├─ @webassemblyjs/ast@1.14.1
+│  ├─ @webassemblyjs/helper-wasm-bytecode@1.13.2
+│  ├─ @webassemblyjs/ieee754@1.13.2
+│  ├─ @webassemblyjs/leb128@1.13.2
+│  └─ @webassemblyjs/utf8@1.13.2
+├─ @webassemblyjs/wasm-opt@1.14.1
+│  ├─ @webassemblyjs/ast@1.14.1
+│  ├─ @webassemblyjs/helper-buffer@1.14.1
+│  ├─ @webassemblyjs/wasm-gen@1.14.1
+│  └─ @webassemblyjs/wasm-parser@1.14.1
+├─ @webassemblyjs/wasm-parser@1.14.1
+│  ├─ @webassemblyjs/ast@1.14.1
+│  ├─ @webassemblyjs/helper-api-error@1.13.2
+│  ├─ @webassemblyjs/helper-wasm-bytecode@1.13.2
+│  ├─ @webassemblyjs/ieee754@1.13.2
+│  ├─ @webassemblyjs/leb128@1.13.2
+│  └─ @webassemblyjs/utf8@1.13.2
+├─ @webassemblyjs/wast-printer@1.14.1
+│  ├─ @webassemblyjs/ast@1.14.1
+│  └─ @xtuc/long@4.2.2
+├─ @webpack-cli/configtest@2.1.1
+├─ @webpack-cli/info@2.0.2
+├─ @webpack-cli/serve@2.0.5
+├─ @xtuc/ieee754@1.2.0
+├─ @xtuc/long@4.2.2
 ├─ abbrev@1.1.1
+├─ acorn-import-attributes@1.9.5
+├─ acorn@8.14.1
 ├─ agent-base@6.0.2
 │  └─ debug@4
+├─ ajv-formats@2.1.1
+│  ├─ ajv@^8.0.0
+│  ├─ ajv@8.17.1
+│  │  ├─ fast-deep-equal@^3.1.3
+│  │  ├─ fast-uri@^3.0.1
+│  │  ├─ json-schema-traverse@^1.0.0
+│  │  └─ require-from-string@^2.0.2
+│  └─ json-schema-traverse@1.0.0
+├─ ajv-keywords@3.5.2
 ├─ ajv@6.12.6
 │  ├─ fast-deep-equal@^3.1.1
 │  ├─ fast-json-stable-stringify@^2.0.0
@@ -71,7 +152,13 @@
 ├─ braces@3.0.3
 │  └─ fill-range@^7.1.1
 ├─ browser-stdout@1.3.1
+├─ browserslist@4.24.4
+│  ├─ caniuse-lite@^1.0.30001688
+│  ├─ electron-to-chromium@^1.5.73
+│  ├─ node-releases@^2.0.19
+│  └─ update-browserslist-db@^1.1.1
 ├─ buffer-crc32@0.2.13
+├─ buffer-from@1.1.2
 ├─ buffer@5.7.1
 │  ├─ base64-js@^1.3.1
 │  └─ ieee754@^1.1.13
@@ -79,6 +166,7 @@
 │  ├─ function-bind@^1.1.1
 │  └─ get-intrinsic@^1.0.2
 ├─ camelcase@5.0.0
+├─ caniuse-lite@1.0.30001712
 ├─ Caret.js@0.3.1
 │  └─ grunt@~0.4.1
 ├─ caseless@0.12.0
@@ -103,6 +191,7 @@
 │  ├─ normalize-path@~3.0.0
 │  └─ readdirp@~3.6.0
 ├─ chownr@1.1.4
+├─ chrome-trace-event@1.0.4
 ├─ cli@1.0.1
 │  ├─ exit@0.1.2
 │  └─ glob@^7.1.1
@@ -110,13 +199,20 @@
 │  ├─ string-width@^4.2.0
 │  ├─ strip-ansi@^6.0.0
 │  └─ wrap-ansi@^7.0.0
+├─ clone-deep@4.0.1
+│  ├─ is-plain-object@^2.0.4
+│  ├─ kind-of@^6.0.2
+│  └─ shallow-clone@^3.0.0
+├─ clone@2.1.2
 ├─ codemirror@5.61.1
 ├─ color-convert@2.0.1
 │  └─ color-name@~1.1.4
 ├─ color-name@1.1.4
+├─ colorette@2.0.20
 ├─ colors@1.1.2
 ├─ combined-stream@1.0.8
 │  └─ delayed-stream@~1.0.0
+├─ commander@10.0.1
 ├─ concat-map@0.0.1
 ├─ console-browserify@1.1.0
 │  └─ date-now@^0.1.4
@@ -124,11 +220,24 @@
 ├─ corser@2.0.1
 ├─ cross-fetch@3.1.5
 │  └─ node-fetch@2.6.7
+├─ cross-spawn@7.0.6
+│  ├─ path-key@^3.1.0
+│  ├─ shebang-command@^2.0.0
+│  └─ which@^2.0.1
 ├─ crypto-js@4.2.0
+├─ css-loader@7.1.2
+│  ├─ icss-utils@^5.1.0
+│  ├─ postcss-modules-extract-imports@^3.1.0
+│  ├─ postcss-modules-local-by-default@^4.0.5
+│  ├─ postcss-modules-scope@^3.2.0
+│  ├─ postcss-modules-values@^4.0.0
+│  ├─ postcss-value-parser@^4.2.0
+│  ├─ postcss@^8.4.33
+│  └─ semver@^7.5.4
 ├─ css-tree@1.1.2
 │  ├─ mdn-data@2.0.14
-│  ├─ source-map@^0.6.1
-│  └─ source-map@0.6.1
+│  └─ source-map@^0.6.1
+├─ cssesc@3.0.0
 ├─ csso@4.2.0
 │  └─ css-tree@^1.1.2
 ├─ dashdash@1.14.1
@@ -158,22 +267,38 @@
 ├─ ecc-jsbn@0.1.2
 │  ├─ jsbn@~0.1.0
 │  └─ safer-buffer@^2.1.0
+├─ electron-to-chromium@1.5.134
 ├─ emoji-regex@8.0.0
 ├─ end-of-stream@1.4.4
 │  └─ once@^1.4.0
+├─ enhanced-resolve@5.18.1
+│  ├─ graceful-fs@^4.2.4
+│  └─ tapable@^2.2.0
 ├─ entities@2.1.0
+├─ envinfo@7.14.0
 ├─ equivalent-xml-js@0.1.0
 │  └─ underscore@^1.13.1
 ├─ errno@0.1.8
 │  └─ prr@~1.0.1
+├─ es-module-lexer@1.6.0
 ├─ escalade@3.1.1
 ├─ escape-string-regexp@4.0.0
+├─ eslint-scope@5.1.1
+│  ├─ esrecurse@^4.3.0
+│  └─ estraverse@^4.1.1
 ├─ esprima@4.0.1
+├─ esrecurse@4.3.0
+│  ├─ estraverse@^5.2.0
+│  └─ estraverse@5.3.0
+├─ estraverse@4.3.0
 ├─ eventemitter2@0.4.14
 ├─ eventemitter3@4.0.7
+├─ events@3.3.0
 ├─ exit@0.1.2
 ├─ expand-tilde@2.0.2
 │  └─ homedir-polyfill@^1.0.1
+├─ exports-loader@5.0.0
+│  └─ source-map@^0.6.1
 ├─ extend@3.0.2
 ├─ extract-zip@2.0.1
 │  ├─ @types/yauzl@^2.9.1
@@ -183,6 +308,8 @@
 ├─ extsprintf@1.3.0
 ├─ fast-deep-equal@3.1.3
 ├─ fast-json-stable-stringify@2.1.0
+├─ fast-uri@3.0.6
+├─ fastest-levenshtein@1.0.16
 ├─ fd-slicer@1.1.0
 │  └─ pend@~1.2.0
 ├─ fill-range@7.1.1
@@ -233,6 +360,7 @@
 │  └─ assert-plus@^1.0.0
 ├─ glob-parent@5.1.2
 │  └─ is-glob@^4.0.1
+├─ glob-to-regexp@0.4.1
 ├─ glob@7.2.0
 │  ├─ fs.realpath@^1.0.0
 │  ├─ inflight@^1.0.4
@@ -252,10 +380,11 @@
 │  ├─ which@^1.2.14
 │  └─ which@1.3.1
 │     └─ isexe@^2.0.0
-├─ graceful-fs@4.2.4
+├─ graceful-fs@4.2.11
 ├─ grunt-cli@1.4.3
 │  ├─ grunt-known-options@~2.0.0
 │  ├─ interpret@~1.1.0
+│  ├─ interpret@1.1.0
 │  ├─ liftup@~3.0.1
 │  ├─ nopt@~4.0.1
 │  ├─ nopt@4.0.3
@@ -317,6 +446,9 @@
 ├─ has-symbols@1.0.3
 ├─ has@1.0.3
 │  └─ function-bind@^1.1.1
+├─ hasown@2.0.2
+│  ├─ function-bind@^1.1.2
+│  └─ function-bind@1.1.2
 ├─ he@1.2.0
 ├─ homedir-polyfill@1.0.3
 │  └─ parse-passwd@^1.0.0
@@ -366,14 +498,18 @@
 │  └─ debug@4
 ├─ iconv-lite@0.4.24
 │  └─ safer-buffer@>= 2.1.2 < 3
+├─ icss-utils@5.1.0
 ├─ ieee754@1.2.1
 ├─ image-size@0.5.5
+├─ import-local@3.2.0
+│  ├─ pkg-dir@^4.2.0
+│  └─ resolve-cwd@^3.0.0
 ├─ inflight@1.0.6
 │  ├─ once@^1.3.0
 │  └─ wrappy@1
 ├─ inherits@2.0.4
 ├─ ini@1.3.8
-├─ interpret@1.1.0
+├─ interpret@3.1.1
 ├─ is-absolute@1.0.0
 │  ├─ is-relative@^1.0.0
 │  └─ is-windows@^1.0.1
@@ -400,6 +536,12 @@
 ├─ isexe@2.0.0
 ├─ isobject@3.0.1
 ├─ isstream@0.1.2
+├─ jest-worker@27.5.1
+│  ├─ @types/node@*
+│  ├─ merge-stream@^2.0.0
+│  ├─ supports-color@^8.0.0
+│  └─ supports-color@8.1.1
+│     └─ has-flag@^4.0.0
 ├─ jquery@3.6.0
 ├─ js-yaml@4.1.0
 │  └─ argparse@^2.0.1
@@ -413,6 +555,7 @@
 │  ├─ lodash@~4.17.21
 │  ├─ minimatch@~3.0.2
 │  └─ strip-json-comments@1.0.x
+├─ json-parse-even-better-errors@2.3.1
 ├─ json-schema-traverse@0.4.1
 ├─ json-schema@0.4.0
 ├─ json-stringify-safe@5.0.1
@@ -426,15 +569,18 @@
 │  └─ jquery@>=1.9.1
 ├─ kind-of@6.0.3
 ├─ langcodes@0.0.0
-├─ less@2.7.3
+├─ less-loader@12.2.0
+├─ less@3.10.3
+│  ├─ clone@^2.1.2
 │  ├─ errno@^0.1.1
 │  ├─ graceful-fs@^4.1.2
+│  ├─ graceful-fs@4.2.4
 │  ├─ image-size@~0.5.0
-│  ├─ mime@^1.2.11
+│  ├─ mime@^1.4.1
 │  ├─ mkdirp@^0.5.0
 │  ├─ promise@^7.1.1
-│  ├─ request@2.81.0
-│  └─ source-map@^0.5.3
+│  ├─ request@^2.83.0
+│  └─ source-map@~0.6.0
 ├─ leven@2.1.0
 ├─ liftup@3.0.1
 │  ├─ extend@^3.0.2
@@ -449,9 +595,12 @@
 │  ├─ is-plain-object@^2.0.4
 │  ├─ object.map@^1.0.1
 │  ├─ rechoir@^0.7.0
+│  ├─ rechoir@0.7.1
+│  │  └─ resolve@^1.9.0
 │  └─ resolve@^1.19.0
 ├─ linkify-it@3.0.2
 │  └─ uc.micro@^1.0.1
+├─ loader-runner@4.3.0
 ├─ locate-path@6.0.0
 │  └─ p-locate@^5.0.0
 ├─ lodash@4.17.21
@@ -469,6 +618,7 @@
 │  └─ uc.micro@^1.0.5
 ├─ mdn-data@2.0.14
 ├─ mdurl@1.0.1
+├─ merge-stream@2.0.0
 ├─ micromatch@4.0.8
 │  ├─ braces@^3.0.3
 │  └─ picomatch@^2.3.1
@@ -515,8 +665,10 @@
 ├─ mri@1.1.4
 ├─ ms@2.1.3
 ├─ nanoid@3.3.3
+├─ neo-async@2.6.2
 ├─ node-fetch@2.6.7
 │  └─ whatwg-url@^5.0.0
+├─ node-releases@2.0.19
 ├─ nopt@3.0.6
 │  └─ abbrev@1
 ├─ normalize-path@3.0.0
@@ -552,6 +704,7 @@
 ├─ parse-passwd@1.0.0
 ├─ path-exists@4.0.0
 ├─ path-is-absolute@1.0.1
+├─ path-key@3.1.1
 ├─ path-parse@1.0.7
 ├─ path-root-regex@0.1.2
 ├─ path-root@0.1.1
@@ -559,6 +712,7 @@
 ├─ pathval@1.1.1
 ├─ pend@1.2.0
 ├─ performance-now@2.1.0
+├─ picocolors@1.1.1
 ├─ picomatch@2.3.1
 ├─ pkg-dir@4.2.0
 │  ├─ find-up@^4.0.0
@@ -577,6 +731,24 @@
 │  ├─ debug@3.2.7
 │  │  └─ ms@^2.1.1
 │  └─ mkdirp@^0.5.5
+├─ postcss-modules-extract-imports@3.1.0
+├─ postcss-modules-local-by-default@4.2.0
+│  ├─ icss-utils@^5.0.0
+│  ├─ postcss-selector-parser@^7.0.0
+│  └─ postcss-value-parser@^4.1.0
+├─ postcss-modules-scope@3.2.1
+│  └─ postcss-selector-parser@^7.0.0
+├─ postcss-modules-values@4.0.0
+│  └─ icss-utils@^5.0.0
+├─ postcss-selector-parser@7.1.0
+│  ├─ cssesc@^3.0.0
+│  └─ util-deprecate@^1.0.2
+├─ postcss-value-parser@4.2.0
+├─ postcss@8.5.3
+│  ├─ nanoid@^3.3.8
+│  ├─ nanoid@3.3.11
+│  ├─ picocolors@^1.1.1
+│  └─ source-map-js@^1.2.1
 ├─ progress@2.0.3
 ├─ promise@7.3.1
 │  └─ asap@~2.0.3
@@ -610,8 +782,14 @@
 │  └─ util-deprecate@^1.0.1
 ├─ readdirp@3.6.0
 │  └─ picomatch@^2.2.1
-├─ rechoir@0.7.1
-│  └─ resolve@^1.9.0
+├─ rechoir@0.8.0
+│  ├─ is-core-module@2.16.1
+│  │  └─ hasown@^2.0.2
+│  ├─ resolve@^1.20.0
+│  └─ resolve@1.22.10
+│     ├─ is-core-module@^2.16.0
+│     ├─ path-parse@^1.0.7
+│     └─ supports-preserve-symlinks-flag@^1.0.0
 ├─ request@2.88.2
 │  ├─ aws-sign2@~0.7.0
 │  ├─ aws4@^1.8.0
@@ -633,19 +811,15 @@
 │  ├─ tough-cookie@~2.5.0
 │  ├─ tunnel-agent@^0.6.0
 │  └─ uuid@^3.3.2
-├─ require-css@0.1.10
 ├─ require-directory@2.1.1
-├─ requirejs-plugins@1.0.2
-├─ requirejs-text@2.0.16
-├─ requirejs-undertemplate@0.0.6
-│  ├─ requirejs-text@~2.0.12
-│  ├─ requirejs@^2.3.3
-│  └─ underscore@^1.8.3
-├─ requirejs@2.3.7
+├─ require-from-string@2.0.2
 ├─ requires-port@1.0.0
+├─ resolve-cwd@3.0.0
+│  └─ resolve-from@^5.0.0
 ├─ resolve-dir@1.0.1
 │  ├─ expand-tilde@^2.0.0
 │  └─ global-modules@^1.0.0
+├─ resolve-from@5.0.0
 ├─ resolve@1.20.0
 │  ├─ is-core-module@^2.2.0
 │  └─ path-parse@^1.0.6
@@ -653,14 +827,28 @@
 │  └─ glob@^7.1.3
 ├─ safe-buffer@5.2.1
 ├─ safer-buffer@2.1.2
+├─ schema-utils@3.3.0
+│  ├─ @types/json-schema@^7.0.8
+│  ├─ ajv-keywords@^3.5.2
+│  └─ ajv@^6.12.5
 ├─ secure-compare@3.0.1
+├─ semver@7.7.1
 ├─ serialize-javascript@6.0.0
 │  └─ randombytes@^2.1.0
+├─ shallow-clone@3.0.1
+│  └─ kind-of@^6.0.2
+├─ shebang-command@2.0.0
+│  └─ shebang-regex@^3.0.0
+├─ shebang-regex@3.0.0
 ├─ side-channel@1.0.4
 │  ├─ call-bind@^1.0.0
 │  ├─ get-intrinsic@^1.0.2
 │  └─ object-inspect@^1.9.0
-├─ source-map@0.5.7
+├─ source-map-js@1.2.1
+├─ source-map-support@0.5.21
+│  ├─ buffer-from@^1.0.0
+│  └─ source-map@^0.6.0
+├─ source-map@0.6.1
 ├─ sprintf-js@1.1.2
 ├─ sshpk@1.16.1
 │  ├─ asn1@~0.2.3
@@ -681,9 +869,12 @@
 ├─ strip-ansi@6.0.1
 │  └─ ansi-regex@^5.0.1
 ├─ strip-json-comments@1.0.4
+├─ style-loader@4.0.0
 ├─ supports-color@7.2.0
 │  └─ has-flag@^4.0.0
-├─ tar-fs@2.1.1
+├─ supports-preserve-symlinks-flag@1.0.0
+├─ tapable@2.2.1
+├─ tar-fs@2.1.2
 │  ├─ chownr@^1.1.1
 │  ├─ mkdirp-classic@^0.5.2
 │  ├─ pump@^3.0.0
@@ -694,6 +885,33 @@
 │  ├─ fs-constants@^1.0.0
 │  ├─ inherits@^2.0.3
 │  └─ readable-stream@^3.1.1
+├─ terser-webpack-plugin@5.3.14
+│  ├─ @jridgewell/trace-mapping@^0.3.25
+│  ├─ ajv-keywords@5.1.0
+│  │  └─ fast-deep-equal@^3.1.3
+│  ├─ ajv@8.17.1
+│  │  ├─ fast-deep-equal@^3.1.3
+│  │  ├─ fast-uri@^3.0.1
+│  │  ├─ json-schema-traverse@^1.0.0
+│  │  └─ require-from-string@^2.0.2
+│  ├─ jest-worker@^27.4.5
+│  ├─ json-schema-traverse@1.0.0
+│  ├─ schema-utils@^4.3.0
+│  ├─ schema-utils@4.3.0
+│  │  ├─ @types/json-schema@^7.0.9
+│  │  ├─ ajv-formats@^2.1.1
+│  │  ├─ ajv-keywords@^5.1.0
+│  │  └─ ajv@^8.9.0
+│  ├─ serialize-javascript@^6.0.2
+│  ├─ serialize-javascript@6.0.2
+│  │  └─ randombytes@^2.1.0
+│  └─ terser@^5.31.1
+├─ terser@5.39.0
+│  ├─ @jridgewell/source-map@^0.3.3
+│  ├─ acorn@^8.8.2
+│  ├─ commander@^2.20.0
+│  ├─ commander@2.20.3
+│  └─ source-map-support@~0.5.20
 ├─ through@2.3.8
 ├─ to-regex-range@5.0.1
 │  └─ is-number@^7.0.0
@@ -716,6 +934,10 @@
 ├─ underscore@1.13.1
 ├─ union@0.5.0
 │  └─ qs@^6.4.0
+├─ update-browserslist-db@1.1.3
+│  ├─ escalade@^3.2.0
+│  ├─ escalade@3.2.0
+│  └─ picocolors@^1.1.1
 ├─ uri-js@4.4.1
 │  └─ punycode@^2.1.0
 ├─ url-join@4.0.1
@@ -728,7 +950,61 @@
 │  ├─ core-util-is@1.0.2
 │  ├─ extsprintf@^1.2.0
 │  └─ extsprintf@1.4.0
+├─ watchpack@2.4.2
+│  ├─ glob-to-regexp@^0.4.1
+│  ├─ graceful-fs@^4.1.2
+│  └─ graceful-fs@4.2.4
 ├─ webidl-conversions@3.0.1
+├─ webpack-cli@5.1.4
+│  ├─ @discoveryjs/json-ext@^0.5.0
+│  ├─ @webpack-cli/configtest@^2.1.1
+│  ├─ @webpack-cli/info@^2.0.2
+│  ├─ @webpack-cli/serve@^2.0.5
+│  ├─ colorette@^2.0.14
+│  ├─ commander@^10.0.1
+│  ├─ cross-spawn@^7.0.3
+│  ├─ envinfo@^7.7.3
+│  ├─ fastest-levenshtein@^1.0.12
+│  ├─ import-local@^3.0.2
+│  ├─ interpret@^3.1.1
+│  ├─ rechoir@^0.8.0
+│  ├─ webpack-merge@^5.7.3
+│  └─ webpack-merge@5.10.0
+│     ├─ clone-deep@^4.0.1
+│     ├─ flat@^5.0.2
+│     └─ wildcard@^2.0.0
+├─ webpack-merge@6.0.1
+│  ├─ clone-deep@^4.0.1
+│  ├─ flat@^5.0.2
+│  └─ wildcard@^2.0.1
+├─ webpack-sources@3.2.3
+├─ webpack@5.94.0
+│  ├─ @types/estree@^1.0.5
+│  ├─ @webassemblyjs/ast@^1.12.1
+│  ├─ @webassemblyjs/wasm-edit@^1.12.1
+│  ├─ @webassemblyjs/wasm-parser@^1.12.1
+│  ├─ acorn-import-attributes@^1.9.5
+│  ├─ acorn@^8.7.1
+│  ├─ browserslist@^4.21.10
+│  ├─ chrome-trace-event@^1.0.2
+│  ├─ enhanced-resolve@^5.17.1
+│  ├─ es-module-lexer@^1.2.1
+│  ├─ eslint-scope@5.1.1
+│  ├─ events@^3.2.0
+│  ├─ glob-to-regexp@^0.4.1
+│  ├─ graceful-fs@^4.2.11
+│  ├─ json-parse-even-better-errors@^2.3.1
+│  ├─ loader-runner@^4.2.0
+│  ├─ mime-db@1.52.0
+│  ├─ mime-types@^2.1.27
+│  ├─ mime-types@2.1.35
+│  │  └─ mime-db@1.52.0
+│  ├─ neo-async@^2.6.2
+│  ├─ schema-utils@^3.2.0
+│  ├─ tapable@^2.1.1
+│  ├─ terser-webpack-plugin@^5.3.10
+│  ├─ watchpack@^2.4.1
+│  └─ webpack-sources@^3.2.3
 ├─ whatwg-encoding@2.0.0
 │  ├─ iconv-lite@0.6.3
 │  └─ iconv-lite@0.6.3
@@ -738,6 +1014,7 @@
 │  └─ webidl-conversions@^3.0.0
 ├─ which@2.0.2
 │  └─ isexe@^2.0.0
+├─ wildcard@2.0.1
 ├─ workerpool@6.2.1
 ├─ wrap-ansi@7.0.0
 │  ├─ ansi-styles@^4.0.0
@@ -749,7 +1026,6 @@
 ├─ XMLWriter@1.1.0
 ├─ xpath@0.0.8
 │  └─ biginteger@^1.0.3
-├─ xrayquire@0.1.1
 ├─ y18n@5.0.8
 ├─ yargs-parser@20.2.4
 ├─ yargs-unparser@2.0.0
@@ -771,4 +1047,4 @@
 │  ├─ buffer-crc32@~0.2.3
 │  └─ fd-slicer@~1.1.0
 └─ yocto-queue@0.1.0
-Done in 0.08s.
+Done in 0.11s.
