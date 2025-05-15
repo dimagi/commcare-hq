@@ -2,7 +2,6 @@
 const fs = require('fs');
 const path = require('path');
 const utils = require('./utils');
-const { emitWarning } = require('node:process');
 
 
 const getAliases = function () {
@@ -33,8 +32,7 @@ const getDebugDir = function () {
         return fs.realpathSync(path.resolve(__dirname, dir));
     } catch (e) {
         if (e.code === "ENOENT") {
-            // This is expected if VELLUM_DEBUG is False
-            emitWarning("Vellum directory not found at " + path);
+            // Do nothing, this is expected if VELLUM_DEBUG is False
         } else {
             throw e;
         }
@@ -52,8 +50,7 @@ const getDebugConfig = function () {
         return require(configPath);
     } catch (e) {
         if (e.code === "MODULE_NOT_FOUND") {
-            // This is expected if VELLUM_DEBUG is False
-            emitWarning("Vellum config not found at " + configPath);
+            // Do nothing, this is expected if VELLUM_DEBUG is False
             return null;
         } else {
             throw e;
