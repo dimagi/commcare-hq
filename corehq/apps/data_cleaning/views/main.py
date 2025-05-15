@@ -36,8 +36,14 @@ class EditCasesMainView(BaseProjectDataView):
     @property
     def page_context(self):
         return {
-            "htmx_start_session_form_view": reverse(StartCaseSessionView.urlname, args=(self.domain,)),
-            "htmx_recent_sessions_table_view": reverse(RecentCaseSessionsTableView.urlname, args=(self.domain, )),
+            "htmx_start_session_form_view_url": reverse(
+                StartCaseSessionView.urlname,
+                args=(self.domain,),
+            ),
+            "htmx_recent_sessions_table_view_url": reverse(
+                RecentCaseSessionsTableView.urlname,
+                args=(self.domain,),
+            ),
         }
 
 
@@ -82,23 +88,23 @@ class EditCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
     @property
     def page_context(self):
         return {
-            "htmx_primary_view": reverse(
+            "htmx_primary_view_url": reverse(
                 EditCasesTableView.urlname,
                 args=(self.domain, self.session_id),
             ),
-            "htmx_pinned_filter_form_view": reverse(
+            "htmx_pinned_filters_view_url": reverse(
                 ManagePinnedFiltersView.urlname,
                 args=(self.domain, self.session_id),
             ),
-            "htmx_manage_filters_view": reverse(
+            "htmx_filters_view_url": reverse(
                 ManageFiltersView.urlname,
                 args=(self.domain, self.session_id),
             ),
-            "htmx_manage_columns_view": reverse(
+            "htmx_columns_view_url": reverse(
                 ManageColumnsFormView.urlname,
                 args=(self.domain, self.session_id),
             ),
-            "htmx_edit_selected_records_view": reverse(
+            "htmx_edit_selected_records_view_url": reverse(
                 EditSelectedRecordsFormView.urlname,
                 args=(self.domain, self.session_id),
             ),
