@@ -454,12 +454,12 @@ class IndicatorPillowTest(BaseRepeaterTest):
         create_repeat_records_mock.assert_called()
         # Assert that it will be created with the expected args
         call_args = create_repeat_records_mock.call_args[0]
-        self.assertEqual(call_args[0], DataSourceRepeater)
-        self.assertTrue(isinstance(call_args[1], DataSourceUpdate))
-        update_log = call_args[1]
-        self.assertEqual(update_log.domain, self.domain)
-        self.assertEqual(update_log.data_source_id, self.config._id)
-        self.assertEqual(update_log.doc_id, sample_doc["_id"])
+        assert call_args[0] == DataSourceRepeater
+        datasource_update = call_args[1]
+        assert type(datasource_update) is DataSourceUpdate
+        assert datasource_update.domain == self.domain
+        assert datasource_update.data_source_id == uuid.UUID(self.config._id)
+        assert datasource_update.doc_ids == [sample_doc["_id"]]
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_rebuild_indicators(self, datetime_mock):

@@ -53,6 +53,7 @@ from ..const import (
 from ..models import (
     CaseRepeater,
     DataSourceRepeater,
+    DataSourceUpdate,
     FormRepeater,
     LocationRepeater,
     Repeater,
@@ -1356,21 +1357,30 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
         ) is False
 
     @flag_enabled('SUPERSET_ANALYTICS')
+    def test_payload(self):
+        doc_id, expected_indicators = self._create_payload()
+        datasource_update = DataSourceUpdate.objects.first()
+        assert datasource_update.data_source_id.hex == self.data_source_id
+        assert datasource_update.doc_ids == [doc_id]
+
+    @flag_enabled('SUPERSET_ANALYTICS')
     def test_payload_format(self):
-        doc_id, expected_indicators = self._create_log_and_repeat_record()
+        doc_id, expected_indicators = self._create_payload()
         repeat_record = self.repeater.repeat_records_ready.first()
         payload_str = repeat_record.get_payload()
         payload = json.loads(payload_str)
 
         # assert payload == {
         #     'data_source_id': self.data_source._id,
-        #     'doc_id': doc_id,
+        #     'doc_id': '',
+        #     'doc_ids': [doc_id],
         #     'data': [expected_indicators],
         # }
         # ^^^ kinda like this, but accommodates the value of "estimate":
-        assert set(payload.keys()) == {'data_source_id', 'doc_id', 'data'}
+        assert set(payload.keys()) == {'data_source_id', 'doc_id', 'doc_ids', 'data'}
         assert payload['data_source_id'] == self.data_source._id
-        assert payload['doc_id'] == doc_id
+        assert payload['doc_id'] == ''
+        assert payload['doc_ids'] == [doc_id]
         assert len(payload['data']) == 1
         for key, value in payload['data'][0].items():
             if key == 'estimate':
@@ -1379,7 +1389,7 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
             else:
                 assert value == expected_indicators[key]
 
-    def _create_log_and_repeat_record(self):
+    def _create_payload(self):
         from corehq.apps.userreports.tests.test_pillow import _save_sql_case
 
         with patch('corehq.apps.userreports.specs.datetime') as datetime_mock:
