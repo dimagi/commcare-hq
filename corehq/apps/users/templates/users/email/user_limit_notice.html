@@ -6,13 +6,15 @@
     {% endblocktrans %}
   {% else %}
     {% blocktrans %}
-      Please note that you have utilised 90% of the user limit included in your plan.
+      Please note that you have utilised 90% of the user limit included in your
+      plan.
     {% endblocktrans %}
   {% endif %}
   {% blocktrans %}
-    Your project currently has {{ user_count }} mobile users out of {{ plan_limit }} included in your plan.
-    Your user limit represents all mobile users that are not currently deactivated
-    (see <a href="{{ url }}">here</a> for more). If you exceed the number of mobile users
-    included in your plan, you will be charged as per the terms of plan.
+    Your project currently has {{ user_count }} mobile users out of
+    {{ plan_limit }} included in your plan. Your user limit represents all
+    mobile users that are not currently deactivated (see
+    <a href="{{ url }}">here</a> for more). If you exceed the number of mobile
+    users included in your plan, you will be charged as per the terms of plan.
   {% endblocktrans %}
 </p>
