@@ -254,5 +254,10 @@ def missing_or_empty_user_data_property(property_name):
         'user_data_es',
         filters.term(field='user_data_es.key', value=property_name),
     ))
-    empty_value = _user_data(property_name, filters.term('user_data_es.value', ''))
+    empty_value = _user_data(
+        property_name,
+        filters.NOT(
+            filters.wildcard(field='user_data_es.value', value='*')
+        )
+    )
     return filters.OR(missing_property, empty_value)
