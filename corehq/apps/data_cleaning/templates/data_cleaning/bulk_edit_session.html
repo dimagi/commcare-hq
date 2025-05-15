@@ -3,7 +3,7 @@
 {% load django_tables2 %}
 {% load compress %}
 {% load i18n %}
-{% js_entry "data_cleaning/js/clean_cases_session" %}
+{% js_entry "data_cleaning/js/bulk_edit_session" %}
 
 {% block stylesheets %}
   {% compress css %}
@@ -42,7 +42,7 @@
   </div>
   <div
     class="mx-3"
-    hx-get="{% url "data_cleaning_cases_table" domain session_id %}{% querystring %}"
+    hx-get="{{ htmx_primary_view_url }}{% querystring %}"
     hx-trigger="load"
   >
     <div class="htmx-indicator">
