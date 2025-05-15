@@ -999,31 +999,24 @@ class DataSourceRepeater(Repeater):
 
     payload_generator_classes = (DataSourcePayloadGenerator,)
 
-    def allowed_to_forward(
-        self,
-        payload,  # type DataSourceUpdateLog
-    ):
-        return payload.data_source_id == self.data_source_id
+    def allowed_to_forward(self, payload):
+        return payload.data_source_id == uuid.UUID(self.data_source_id)
 
     def payload_doc(self, repeat_record):
         from corehq.apps.userreports.models import get_datasource_config
-        from corehq.apps.userreports.util import (
-            DataSourceUpdateLog,
-            get_indicator_adapter,
-        )
+        from corehq.apps.userreports.util import get_indicator_adapter
 
+        datasource_update = DataSourceUpdate.objects.get(pk=repeat_record.payload_id)
         config, _ = get_datasource_config(
             config_id=self.data_source_id,
             domain=self.domain
         )
         datasource_adapter = get_indicator_adapter(config, load_source='repeat_record')
-        rows = datasource_adapter.get_rows_by_doc_id(repeat_record.payload_id)
-        return DataSourceUpdateLog(
-            domain=self.domain,
-            data_source_id=self.data_source_id,
-            doc_id=repeat_record.payload_id,
-            rows=rows,
-        )
+        datasource_update.rows = [
+            row for doc_id in datasource_update.doc_ids
+            for row in datasource_adapter.get_rows_by_doc_id(doc_id)
+        ]
+        return datasource_update
 
     def clear_caches(self):
         DataSourceRepeater.datasource_is_subscribed_to.clear(self.domain, self.data_source_id)
