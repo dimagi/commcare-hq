@@ -51,7 +51,7 @@ class BulkEditCasesMainView(BaseProjectDataView):
     use_bootstrap5,
     require_bulk_data_cleaning_cases,
 ], name='dispatch')
-class EditCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
+class BulkEditCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
     """
     This view is a "host" view of several HTMX views that handle
     different parts of the Bulk Editing feature.

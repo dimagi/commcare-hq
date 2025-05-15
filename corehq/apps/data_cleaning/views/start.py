@@ -78,8 +78,8 @@ class StartCaseSessionView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMix
         return self.get(request, form=form, next_action=next_action, *args, **kwargs)
 
     def render_session_redirect(self, session):
-        from corehq.apps.data_cleaning.views.main import EditCasesSessionView
+        from corehq.apps.data_cleaning.views.main import BulkEditCasesSessionView
         return self.render_htmx_redirect(
-            reverse(EditCasesSessionView.urlname, args=(self.domain, session.session_id, )),
+            reverse(BulkEditCasesSessionView.urlname, args=(self.domain, session.session_id, )),
             response_message=_("Starting Bulk Edit Session...")
         )
