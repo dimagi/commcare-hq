@@ -19,7 +19,7 @@ from corehq.apps.data_cleaning.views.filters import (
 )
 from corehq.apps.data_cleaning.views.main import (
     BulkEditCasesMainView,
-    EditCasesSessionView,
+    BulkEditCasesSessionView,
 )
 from corehq.apps.data_cleaning.views.tables import (
     EditCasesTableView,
@@ -100,8 +100,8 @@ class CleanCasesViewAccessTest(TestCase):
             (BulkEditCasesMainView, (cls.domain_name,)),
             (StartCaseSessionView, (cls.domain_name,)),
             (RecentCaseSessionsTableView, (cls.domain_name,)),
-            (EditCasesSessionView, (cls.domain_name, cls.real_session_id,)),
-            (EditCasesSessionView, (cls.domain_name, cls.fake_session_id,)),
+            (BulkEditCasesSessionView, (cls.domain_name, cls.real_session_id,)),
+            (BulkEditCasesSessionView, (cls.domain_name, cls.fake_session_id,)),
             (EditCasesTableView, (cls.domain_name, cls.real_session_id,)),
             (EditCasesTableView, (cls.domain_name, cls.fake_session_id,)),
             (ManagePinnedFiltersView, (cls.domain_name, cls.real_session_id,)),
@@ -210,7 +210,7 @@ class CleanCasesViewAccessTest(TestCase):
             response = self.client.get(url)
             self.assertEqual(
                 response.status_code,
-                302 if view_class == EditCasesSessionView else 404,
+                302 if view_class == BulkEditCasesSessionView else 404,
                 msg=f"{view_class.__name__} should NOT be accessible"
             )
 
@@ -218,7 +218,7 @@ class CleanCasesViewAccessTest(TestCase):
     @flag_enabled('DATA_CLEANING_CASES')
     def test_redirects_session_with_no_existing_session(self):
         self.client.login(username=self.user_in_domain.username, password=self.password)
-        session_url = reverse(EditCasesSessionView.urlname, args=(self.domain_name, self.fake_session_id))
+        session_url = reverse(BulkEditCasesSessionView.urlname, args=(self.domain_name, self.fake_session_id))
         response = self.client.get(session_url)
         self.assertEqual(response.status_code, 302)
 
