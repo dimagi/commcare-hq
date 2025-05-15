@@ -49,7 +49,7 @@ dependencies = [
     "django-tables2",
     "django-tastypie",
     "django-transfer",
-    "django-two-factor-auth @ git+https://github.com/jazzband/django-two-factor-auth.git@16f688bf329526d897a33594ab598bcd3fc8eaae",  # waiting for next release after 1.16.0
+    "django-two-factor-auth @ git+https://github.com/jazzband/django-two-factor-auth.git@16f688bf329526d897a33594ab598bcd3fc8eaae", # waiting for next release after 1.16.0
     "django-user-agents",
     "django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl",
     "django>=4.2.16,<5.0",
@@ -88,7 +88,7 @@ dependencies = [
     "polib",
     "prometheus-client",
     "psycogreen",
-    "psycopg2>=2.9.10",
+    "psycopg2-binary>=2.9.10",
     "py-KISSmetrics",
     "pycryptodome>=3.6.6", # security update
     "python-dateutil",
@@ -176,15 +176,67 @@ test = [
     'fakecouch',
     'testil',
     'requests-mock',
-    'sqlalchemy-postgres-copy',
     'Faker',
     'flaky>=3.8', # required for pytest 8.2 (and possibly earlier versions)
     'freezegun',
     'radon>=5.0', # v5 no longer depends on flake8-polyfill
     # pytest is pinned to a git commit until 8.4 is released.
-    # `minversion = 8.4` should also be set in .pytest.ini at that time.
+    # `minversion = 8.4` should also be set in [tool.pytest.ini_options] below at that time.
     'pytest @ git+https://github.com/pytest-dev/pytest.git@85760bff2776989b365167c7aeb35c86308ab76b',
     'pytest-django',
     'pytest-unmagic',
     'coverage',
 ]
+
+[tool.pytest.ini_options]
+minversion = '8.1'
+
+addopts = [
+    '--strict-markers',
+    '-pcorehq.tests.pytest_hooks',
+    # HQ has its own (incompatible) warnings system
+    '-pno:warnings',
+]
+markers = [
+    'es_test',  # marker for elasticsearch tests
+    'sharded',  # tests to be run against shard databases
+    'skip_setup_users',  # skip user setup in importer tests
+    'slow',  # marks tests as slow (deselect with -m 'not slow')
+]
+
+empty_parameter_set_mark = 'fail_at_collect'
+xfail_strict = true
+
+norecursedirs = [
+    '.*',
+    '*.egg',
+    'artifacts',
+    'docker',
+    'git-hooks',
+    'locale',
+    'node_modules',
+    'requirements',
+    'scripts',
+    'sharedfiles',
+    'staticfiles',
+]
+python_files = [
+    'test_*.py',
+    'tests.py',
+    '*/tests/*.py',
+]
+
+pythonpath = [
+    '.',
+    'corehq/ex-submodules',
+    # 'submodules' is for langcodes
+    'submodules',
+    'submodules/commcare-translations',
+    'submodules/couchdbkit-aggregate',
+    'submodules/django-digest-src',
+    'submodules/django-no-exceptions',
+    'submodules/python-digest',
+    'submodules/xml2json',
+]
+required_plugins = 'pytest-django'
+DJANGO_SETTINGS_MODULE = 'testsettings'

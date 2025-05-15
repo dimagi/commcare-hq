@@ -2,17 +2,20 @@ import logging
 
 from django.conf import settings
 
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 
 from corehq.apps.celery import task
 from corehq.apps.commtrack.models import close_supply_point_case
 from corehq.apps.data_interfaces.models import LocationFilterDefinition
+from corehq.apps.fixtures.models import UserLookupTableStatus
 from corehq.apps.locations.bulk_management import (
     LocationUploadResult,
     new_locations_import,
 )
 from corehq.apps.locations.const import LOCK_LOCATIONS_TIMEOUT
+from corehq.apps.locations.dbaccessors import user_ids_at_locations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.util import dump_locations
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
@@ -97,15 +100,6 @@ def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_i
     """
     Update location fixtures for users given locations
     """
-    from dimagi.utils.couch.database import iter_docs
-
-    from corehq.apps.fixtures.models import UserLookupTableType
-    from corehq.apps.locations.dbaccessors import user_ids_at_locations
-    from corehq.apps.users.models import (
-        CouchUser,
-        update_fixture_status_for_users,
-    )
-
     # close supply point cases
     for supply_point_id in supply_point_ids:
         close_supply_point_case(domain, supply_point_id)
@@ -124,7 +118,7 @@ def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_i
 
     # update fixtures for users at ancestor locations
     user_ids = user_ids_at_locations(ancestor_ids)
-    update_fixture_status_for_users(user_ids, UserLookupTableType.LOCATION)
+    UserLookupTableStatus.bulk_update(user_ids, UserLookupTableStatus.Fixture.LOCATION)
 
 
 @task

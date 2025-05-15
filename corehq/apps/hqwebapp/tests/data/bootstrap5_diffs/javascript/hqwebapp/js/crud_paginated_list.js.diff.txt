@@ -5,7 +5,7 @@
  import ko from "knockout";
  import _ from "underscore";
 -import "hqwebapp/js/bootstrap3/knockout_bindings.ko";  // fadeVisible
-+import bootstrap from "bootstrap5";
++import { Modal } from "bootstrap5";
 +import "hqwebapp/js/bootstrap5/knockout_bindings.ko";  // fadeVisible
  
  var CRUDPaginatedListModel = function (
@@ -53,7 +53,7 @@
 -            }
 +        var $modal = self.getItemRow().find('.modal');
 +        if ($modal) {
-+            bootstrap.Modal.getOrCreateInstance($modal).hide();
++            Modal.getOrCreateInstance($modal).hide();
          }
      };
  
