@@ -81,6 +81,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property, classproperty
 from django.utils.translation import gettext_lazy as _
 
+import architect
 from couchdbkit.exceptions import ResourceNotFound
 from jsonfield import JSONField
 from memoized import memoized
@@ -944,6 +945,13 @@ def get_all_repeater_types():
     return dict(REPEATER_CLASS_MAP)
 
 
+@architect.install(
+    'partition',
+    type='range',
+    subtype='date',
+    constraint='month',
+    column='modified_at',
+)
 class DataSourceUpdate(models.Model):
     """
     ``DataSourceUpdate`` is the payload for ``DataSourceRepeater`` (as
@@ -958,6 +966,8 @@ class DataSourceUpdate(models.Model):
 
     class Meta:
         db_table = 'repeaters_datasourceupdate'
+
+    MAX_AGE = timedelta(days=93)
 
     @property
     def get_id(self):

@@ -77,6 +77,7 @@ from datetime import datetime, timedelta
 from inspect import cleandoc
 
 from django.conf import settings
+from django.db import connection
 
 from celery import chord
 from celery.schedules import crontab
@@ -114,6 +115,7 @@ from .const import (
     State,
 )
 from .models import (
+    DataSourceUpdate,
     Repeater,
     RepeatRecord,
     domain_can_forward,
@@ -552,6 +554,18 @@ class RepeaterLock:
         if self.token:
             lock.local.token = self.token
         return lock
+
+
+@periodic_task(
+    run_every=crontab(hour='5', minute='0', day_of_month='1'),
+    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
+)
+def purge_old_datasourceupdates():
+    table_name_format = f'{DataSourceUpdate.Meta.db_table}_y%Ym%m'
+    max_age = datetime.utcnow() - DataSourceUpdate.MAX_AGE
+    table_name = (max_age - timedelta(days=1)).strftime(table_name_format)
+    with connection.cursor() as cursor:
+        cursor.execute(f'DROP TABLE IF EXISTS {table_name}')
 
 
 metrics_gauge_task(
