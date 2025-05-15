@@ -2496,6 +2496,9 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
                 yield user_doc['email']
 
     def deactivate(self, domain, changed_by):
+        from corehq.apps.sso.models import IdentityProvider
+        if IdentityProvider.get_required_identity_provider(self.username):
+            return
         membership = self.get_domain_membership(domain)
         if membership.is_active:
             membership.is_active = False
@@ -2505,6 +2508,9 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
                             fields_changed={'is_active_in_domain': False})
 
     def reactivate(self, domain, changed_by):
+        from corehq.apps.sso.models import IdentityProvider
+        if IdentityProvider.get_required_identity_provider(self.username):
+            return
         membership = self.get_domain_membership(domain)
         if not membership.is_active:
             membership.is_active = True

@@ -884,22 +884,24 @@ def paginate_web_users(request, domain):
                 domain, u.username
             ),
         }
-        if show_active_users:
-            user.update({
-                'deactivateUrl': (
-                    reverse('deactivate_web_user', args=[domain, u.user_id])
-                    if request.user.username != u.username else None
-                ),
-                'reactivateUrl': '',
-            })
-        else:
-            user.update({
-                'deactivateUrl': '',
-                'reactivateUrl': (
-                    reverse('reactivate_web_user', args=[domain, u.user_id])
-                    if request.user.username != u.username else None
-                ),
-            })
+        # Omit option to deactivate/reactivate for a domain if user access is controlled by an IdentityProvider
+        if IdentityProvider.get_required_identity_provider(u.username) is None:
+            if u.is_active_in_domain(domain):
+                user.update({
+                    'deactivateUrl': (
+                        reverse('deactivate_web_user', args=[domain, u.user_id])
+                        if request.user.username != u.username else None
+                    ),
+                    'reactivateUrl': '',
+                })
+            else:
+                user.update({
+                    'deactivateUrl': '',
+                    'reactivateUrl': (
+                        reverse('reactivate_web_user', args=[domain, u.user_id])
+                        if request.user.username != u.username else None
+                    ),
+                })
         web_users_fmt.append(user)
 
     return JsonResponse({
