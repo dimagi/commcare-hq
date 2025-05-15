@@ -995,11 +995,11 @@ class ProjectDataTab(UITab):
 
         if self._can_view_case_data_cleaning:
             from corehq.apps.data_cleaning.views.main import (
-                CleanCasesMainView,
+                EditCasesMainView,
             )
             clean_cases_view = {
-                'title': _(CleanCasesMainView.page_title),
-                'url': reverse(CleanCasesMainView.urlname, args=[self.domain]),
+                'title': _(EditCasesMainView.page_title),
+                'url': reverse(EditCasesMainView.urlname, args=[self.domain]),
                 'icon': 'fa-solid fa-shower',
             }
             edit_section[0][1].append(clean_cases_view)
