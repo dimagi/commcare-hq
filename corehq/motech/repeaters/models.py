@@ -944,6 +944,26 @@ def get_all_repeater_types():
     return dict(REPEATER_CLASS_MAP)
 
 
+class DataSourceUpdate(models.Model):
+    """
+    ``DataSourceUpdate`` is the payload for ``DataSourceRepeater`` (as
+    ``XFormInstance`` is the payload for ``FormRepeater``).
+    """
+    id = models.BigAutoField(primary_key=True)
+    domain = CharIdField(max_length=126, db_index=True)
+    data_source_id = models.UUIDField()
+    doc_ids = JSONField(default=list)
+    rows = JSONField(default=list, blank=True, null=True)
+    modified_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'repeaters_datasourceupdate'
+
+    @property
+    def get_id(self):
+        return self.id
+
+
 class DataSourceRepeater(Repeater):
     """
     Forwards the UCR data source rows that are updated by a form
