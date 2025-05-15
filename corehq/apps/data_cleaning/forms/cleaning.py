@@ -239,3 +239,70 @@ class CleanSelectedRecordsForm(forms.Form):
             action_type=action_type,
             **action_options,
         )
+
+    def dict_lookup(self):
+        action_type = self.cleaned_data['clean_action']
+        change_kwargs = {
+            EditActionType.REPLACE: {
+                "replace_string": self.cleaned_data["replace_all_string"],
+            },
+            EditActionType.FIND_REPLACE: {
+                "find_string": self.cleaned_data["find_string"],
+                "replace_string": self.cleaned_data["replace_string"],
+                "use_regex": self.cleaned_data["use_regex"],
+            },
+            EditActionType.COPY_REPLACE: {
+                "copy_from_prop_id": self.cleaned_data["copy_from_prop_id"],
+            },
+        }.get(action_type, {})
+        return change_kwargs
+
+    def conditional(self):
+        action_type = self.cleaned_data['clean_action']
+        change_kwargs = None
+        if action_type == EditActionType.REPLACE:
+            change_kwargs = {'replace_string': self.cleaned_data['replace_all_string']}
+        elif action_type == EditActionType.FIND_REPLACE:
+            change_kwargs = {
+                'find_string': self.cleaned_data['find_string'],
+                'replace_string': self.cleaned_data['replace_string'],
+                'use_regex': self.cleaned_data['use_regex'],
+            }
+        elif action_type == EditActionType.COPY_REPLACE:
+            change_kwargs = {'copy_from_prop_id': self.cleaned_data['copy_from_prop_id']}
+
+        return change_kwargs
+
+
+def time_lookup(operation_name):
+    import timeit
+    from corehq.apps.data_cleaning.models import BulkEditSession
+
+    session = BulkEditSession.objects.first()
+
+    form = CleanSelectedRecordsForm(session, data={
+        'clean_action': EditActionType.FIND_REPLACE,
+        'find_string': 'some_string',
+        'replace_string': 'new_string',
+    })
+    form.full_clean()
+    operation = getattr(form, operation_name)
+
+    def timed_code():
+        garbage_value = 0
+        change_kwargs = operation()
+        if change_kwargs:
+            garbage_value = 9
+
+        return garbage_value
+
+    elapsed = timeit.timeit(timed_code)
+    print(f'{operation.__name__} took: {elapsed}')
+
+
+def time_dict_lookup():
+    time_lookup('dict_lookup')
+
+
+def time_conditional_lookup():
+    time_lookup('conditional')
