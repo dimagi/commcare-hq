@@ -140,6 +140,8 @@ class Command(BaseCommand):
             form_data.append('<description>{description}</description>')
         if fake_data['height_cm'] is not None:
             form_data.append('<height_cm>{height_cm}</height_cm>')
+        if fake_data['height'] is not None:
+            form_data.append('<height>{height_cm}</height>')
         if fake_data['num_leaves'] is not None:
             form_data.append('<number_of_leaves>{num_leaves}</number_of_leaves>')
         if fake_data['last_watered_on'] is not None:
