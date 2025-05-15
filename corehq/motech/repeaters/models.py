@@ -970,6 +970,27 @@ class DataSourceRepeater(Repeater):
 
     payload_generator_classes = (DataSourcePayloadGenerator,)
 
+    def register(self, payload, fire_synchronously=False):
+        """
+        Merge DataSourceUpdates of waiting repeat records.
+
+        To avoid a race condition where a waiting record is sent while
+        its payload is being updated, doc IDs are added to the new
+        payload and waiting payloads are canceled.
+        """
+        doc_ids = set()
+        for waiting_record in self.repeat_records_ready.all():
+            # We can just fetch all repeat records, because they're all
+            # for the same data source.
+            waiting_record.cancel()  # Cancel to avoid race condition
+            waiting_record.save()
+            waiting_payload = DataSourceUpdate.objects.get(pk=waiting_record.payload_id)
+            doc_ids |= set(waiting_payload.doc_ids)
+        if doc_ids:
+            payload.doc_ids = list(set(payload.doc_ids) | doc_ids)
+            payload.save()
+        return super().register(payload, fire_synchronously)
+
     def allowed_to_forward(self, payload):
         return payload.data_source_id == uuid.UUID(self.data_source_id)
 
