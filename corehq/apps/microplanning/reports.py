@@ -25,7 +25,7 @@ from corehq.apps.reports.standard.cases.data_sources import CaseDisplayES
 from corehq.util.quickcache import quickcache
 
 from .dispatchers import CaseManagementMapDispatcher
-from corehq.apps.geospatial.const import (
+from corehq.apps.microplanning.const import (
     ES_INDEX_TASK_HELPER_BASE_KEY,
     ES_REASSIGNMENT_UPDATE_OWNERS_BASE_KEY,
 )

@@ -7,10 +7,10 @@ from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import PrependedText, StrictButton
 
 from corehq import toggles
-from corehq.apps.geospatial.const import (
+from corehq.apps.microplanning.const import (
     ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY,
 )
-from corehq.apps.geospatial.models import GeoConfig, validate_travel_mode
+from corehq.apps.microplanning.models import GeoConfig, validate_travel_mode
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.utils.translation import format_html_lazy
 

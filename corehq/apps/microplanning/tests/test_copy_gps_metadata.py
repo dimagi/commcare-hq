@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase
 
-from corehq.apps.geospatial.management.commands.copy_gps_metadata import (
+from corehq.apps.microplanning.management.commands.copy_gps_metadata import (
     get_form_cases,
     iter_forms_with_location,
 )
@@ -102,7 +102,7 @@ class TestIterFormsWithLocation(SimpleTestCase):
 
 
 def test_doctests():
-    import corehq.apps.geospatial.management.commands.copy_gps_metadata as module
+    import corehq.apps.microplanning.management.commands.copy_gps_metadata as module
 
     results = doctest.testmod(module)
     assert results.failed == 0

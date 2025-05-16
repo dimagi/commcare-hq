@@ -5,11 +5,11 @@ import jsonschema
 from jsonobject.exceptions import BadValueError
 
 from casexml.apps.case.mock import CaseBlock
-from corehq.apps.geospatial.const import ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY
+from corehq.apps.microplanning.const import ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY
 from couchforms.geopoint import GeoPoint
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
-from corehq.apps.geospatial.models import GeoConfig
+from corehq.apps.microplanning.models import GeoConfig
 from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser

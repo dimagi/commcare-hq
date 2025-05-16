@@ -9,9 +9,9 @@ from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import case_adapter, case_search_adapter, user_adapter
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.geospatial.const import ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY, GPS_POINT_CASE_PROPERTY
-from corehq.apps.geospatial.models import GeoConfig, GeoPolygon
-from corehq.apps.geospatial.views import (
+from corehq.apps.microplanning.const import ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY, GPS_POINT_CASE_PROPERTY
+from corehq.apps.microplanning.models import GeoConfig, GeoPolygon
+from corehq.apps.microplanning.views import (
     CasesReassignmentView,
     GeoPolygonDetailView,
     GeoPolygonListView,

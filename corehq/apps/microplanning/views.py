@@ -32,11 +32,11 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import CaseSearchES, UserES
 from corehq.apps.es.users import missing_or_empty_user_data_property
-from corehq.apps.geospatial.exceptions import CaseReassignmentValidationError, GeoPolygonValidationError
-from corehq.apps.geospatial.filters import GPSDataFilter
-from corehq.apps.geospatial.forms import GeospatialConfigForm
-from corehq.apps.geospatial.reports import CaseManagementMap
-from corehq.apps.geospatial.tasks import geo_cases_reassignment_update_owners
+from corehq.apps.microplanning.exceptions import CaseReassignmentValidationError, GeoPolygonValidationError
+from corehq.apps.microplanning.filters import GPSDataFilter
+from corehq.apps.microplanning.forms import GeospatialConfigForm
+from corehq.apps.microplanning.reports import CaseManagementMap
+from corehq.apps.microplanning.tasks import geo_cases_reassignment_update_owners
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.generic import get_filter_classes

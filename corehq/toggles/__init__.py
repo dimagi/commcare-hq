@@ -2593,9 +2593,9 @@ ATTENDANCE_TRACKING = StaticToggle(
 
 
 def _handle_geospatial_es_index(domain, is_enabled):
-    from corehq.apps.geospatial.tasks import index_es_docs_with_location_props
-    from corehq.apps.geospatial.utils import get_celery_task_tracker
-    from corehq.apps.geospatial.const import ES_INDEX_TASK_HELPER_BASE_KEY
+    from corehq.apps.microplanning.tasks import index_es_docs_with_location_props
+    from corehq.apps.microplanning.utils import get_celery_task_tracker
+    from corehq.apps.microplanning.const import ES_INDEX_TASK_HELPER_BASE_KEY
 
     if is_enabled:
         celery_task_tracker = get_celery_task_tracker(domain, ES_INDEX_TASK_HELPER_BASE_KEY)

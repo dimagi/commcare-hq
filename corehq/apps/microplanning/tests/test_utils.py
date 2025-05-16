@@ -7,13 +7,13 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.geospatial.const import (
+from corehq.apps.microplanning.const import (
     ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY,
     GPS_POINT_CASE_PROPERTY,
     ES_REASSIGNMENT_UPDATE_OWNERS_BASE_KEY,
 )
-from corehq.apps.geospatial.models import GeoConfig
-from corehq.apps.geospatial.utils import (
+from corehq.apps.microplanning.models import GeoConfig
+from corehq.apps.microplanning.utils import (
     CaseOwnerUpdate,
     CeleryTaskTracker,
     create_case_with_gps_property,

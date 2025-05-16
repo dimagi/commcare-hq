@@ -11,9 +11,9 @@ from casexml.apps.case.mock import CaseBlock
 from corehq.apps.es import CaseSearchES
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import case_search_es_setup, es_test
-from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
-from corehq.apps.geospatial.es import find_precision, get_max_doc_count
-from corehq.apps.geospatial.utils import get_geo_case_property
+from corehq.apps.microplanning.const import GPS_POINT_CASE_PROPERTY
+from corehq.apps.microplanning.es import find_precision, get_max_doc_count
+from corehq.apps.microplanning.utils import get_geo_case_property
 from corehq.util.test_utils import flag_enabled
 
 DOMAIN = 'test-domain'
@@ -83,7 +83,7 @@ class TestGetMaxDocCount(TestCase):
 
 
 def test_doctests():
-    import corehq.apps.geospatial.es as module
+    import corehq.apps.microplanning.es as module
 
     results = doctest.testmod(module)
     assert results.failed == 0

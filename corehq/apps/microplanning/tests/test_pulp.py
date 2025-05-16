@@ -1,10 +1,10 @@
 from django.test import SimpleTestCase
 
-from corehq.apps.geospatial.routing_solvers.pulp import (
+from corehq.apps.microplanning.routing_solvers.pulp import (
     RadialDistanceSolver,
     RoadNetworkSolver
 )
-from corehq.apps.geospatial.models import GeoConfig
+from corehq.apps.microplanning.models import GeoConfig
 
 
 class TestRadialDistanceSolver(SimpleTestCase):

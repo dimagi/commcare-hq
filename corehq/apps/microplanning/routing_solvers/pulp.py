@@ -5,7 +5,7 @@ import copy
 
 from dataclasses import dataclass
 from .mapbox_utils import validate_routing_request
-from corehq.apps.geospatial.routing_solvers.base import DisbursementAlgorithmSolverInterface
+from corehq.apps.microplanning.routing_solvers.base import DisbursementAlgorithmSolverInterface
 
 
 @dataclass

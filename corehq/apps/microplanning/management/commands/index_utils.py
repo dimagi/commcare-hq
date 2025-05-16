@@ -1,10 +1,10 @@
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.es import case_search_adapter
-from corehq.apps.geospatial.es import case_query_for_missing_geopoint_val
+from corehq.apps.microplanning.es import case_query_for_missing_geopoint_val
 from corehq.form_processor.models import CommCareCase
 from corehq.util.log import with_progress_bar
-from corehq.apps.geospatial.const import DEFAULT_CHUNK_SIZE, DEFAULT_QUERY_LIMIT
+from corehq.apps.microplanning.const import DEFAULT_CHUNK_SIZE, DEFAULT_QUERY_LIMIT
 
 
 def process_batch(

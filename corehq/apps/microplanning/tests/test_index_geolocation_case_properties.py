@@ -6,9 +6,9 @@ from corehq.apps.es import CaseSearchES
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.client import manager
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.geospatial.es import case_query_for_missing_geopoint_val
-from corehq.apps.geospatial.management.commands.index_geolocation_case_properties import index_case_docs
-from corehq.apps.geospatial.models import GeoConfig
+from corehq.apps.microplanning.es import case_query_for_missing_geopoint_val
+from corehq.apps.microplanning.management.commands.index_geolocation_case_properties import index_case_docs
+from corehq.apps.microplanning.models import GeoConfig
 
 
 @es_test(requires=[case_search_adapter], setup_class=True)

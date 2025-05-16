@@ -7,12 +7,12 @@ from nose.tools import assert_equal, assert_raises
 
 from corehq.apps.es import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.geospatial.models import GeoPolygon
-from corehq.apps.geospatial.reports import (
+from corehq.apps.microplanning.models import GeoPolygon
+from corehq.apps.microplanning.reports import (
     CaseGroupingReport,
     geojson_to_es_geoshape,
 )
-from corehq.apps.geospatial.utils import (
+from corehq.apps.microplanning.utils import (
     get_geo_case_property,
     validate_geometry,
 )
@@ -220,7 +220,7 @@ class TestCaseGroupingReport(BaseReportTest):
 
 
 def test_doctests():
-    import corehq.apps.geospatial.reports as reports
+    import corehq.apps.microplanning.reports as reports
 
     results = doctest.testmod(reports)
     assert results.failed == 0

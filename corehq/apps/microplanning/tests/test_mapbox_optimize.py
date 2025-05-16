@@ -1,7 +1,7 @@
 import jsonschema
 from django.test import SimpleTestCase
 
-from corehq.apps.geospatial.routing_solvers.mapbox_utils import (
+from corehq.apps.microplanning.routing_solvers.mapbox_utils import (
     validate_routing_request,
 )
 

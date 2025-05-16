@@ -6,7 +6,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import extract_case_blocks
 
 from corehq.apps.es import FormES
-from corehq.apps.geospatial.utils import get_geo_case_property
+from corehq.apps.microplanning.utils import get_geo_case_property
 from corehq.apps.hqcase.utils import submit_case_blocks
 
 FORMS_CHUNK_SIZE = 1000

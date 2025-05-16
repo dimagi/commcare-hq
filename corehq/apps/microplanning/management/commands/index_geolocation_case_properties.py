@@ -2,10 +2,10 @@ import math
 
 from django.core.management.base import BaseCommand
 
-from corehq.apps.geospatial.const import DEFAULT_QUERY_LIMIT
-from corehq.apps.geospatial.es import case_query_for_missing_geopoint_val
-from corehq.apps.geospatial.management.commands.index_utils import process_batch
-from corehq.apps.geospatial.utils import get_geo_case_property
+from corehq.apps.microplanning.const import DEFAULT_QUERY_LIMIT
+from corehq.apps.microplanning.es import case_query_for_missing_geopoint_val
+from corehq.apps.microplanning.management.commands.index_utils import process_batch
+from corehq.apps.microplanning.utils import get_geo_case_property
 
 
 class Command(BaseCommand):

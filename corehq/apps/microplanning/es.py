@@ -12,7 +12,7 @@ from corehq.apps.es.case_search import (
     PROPERTY_GEOPOINT_VALUE,
     PROPERTY_KEY,
 )
-from corehq.apps.geospatial.const import MAX_GEOHASH_DOC_COUNT, DEFAULT_QUERY_LIMIT
+from corehq.apps.microplanning.const import MAX_GEOHASH_DOC_COUNT, DEFAULT_QUERY_LIMIT
 
 CASE_PROPERTIES_AGG = 'case_properties'
 CASE_PROPERTY_AGG = 'case_property'

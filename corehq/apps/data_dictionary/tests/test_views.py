@@ -14,7 +14,7 @@ from corehq.apps.data_dictionary.models import (
     CaseType,
 )
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
+from corehq.apps.microplanning.const import GPS_POINT_CASE_PROPERTY
 from corehq.apps.es import case_search_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import HqPermissions, WebUser

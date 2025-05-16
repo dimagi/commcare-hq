@@ -3,19 +3,19 @@ import math
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.celery import task
-from corehq.apps.geospatial.const import (
+from corehq.apps.microplanning.const import (
     ES_INDEX_TASK_HELPER_BASE_KEY,
     ES_REASSIGNMENT_UPDATE_OWNERS_BASE_KEY,
     DEFAULT_QUERY_LIMIT,
 )
-from corehq.apps.geospatial.es import case_query_for_missing_geopoint_val
-from corehq.apps.geospatial.utils import (
+from corehq.apps.microplanning.es import case_query_for_missing_geopoint_val
+from corehq.apps.microplanning.utils import (
     get_celery_task_tracker,
     get_flag_assigned_cases_config,
     update_cases_owner,
     get_geo_case_property,
 )
-from corehq.apps.geospatial.management.commands.index_utils import process_batch
+from corehq.apps.microplanning.management.commands.index_utils import process_batch
 
 from settings import MAX_GEOSPATIAL_INDEX_DOC_LIMIT
 
