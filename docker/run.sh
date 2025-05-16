@@ -37,8 +37,6 @@ function setup {
 
     # remove after change propagates from Dockerfile
     unset UV_PROJECT; rm /vendor/{pyproject.toml,uv.lock} || true
-    apt update
-    apt install libffi-dev  # for cffi
 
     CC=gcc LDFLAGS="-L`python -c'import sys; print(sys.base_prefix)'`/lib" \
         uv sync --locked --group=test --no-dev --no-progress
