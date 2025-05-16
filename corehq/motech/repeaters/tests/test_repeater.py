@@ -385,20 +385,10 @@ class RepeaterTest(BaseRepeaterTest):
             self.assertEqual(mock_process.delay.call_count, 2)
 
     def test_automatic_cancel_repeat_record(self):
-        instance_id = uuid.uuid4().hex
-        case_block = CaseBlock(
-            case_id=CASE_ID,
-            create=False,
-            case_name='ABC 345',
-        ).as_text()
-        xform_xml = XFORM_XML_TEMPLATE.format(
-            'https://www.commcarehq.org/test/repeater/',
-            USER_ID,
-            instance_id,
-            case_block,
-        )
-        self.post_xml(xform_xml, self.domain)
-        repeat_record = RepeatRecord.objects.get(payload_id=instance_id)
+        case = CommCareCase.objects.get_case(CASE_ID, self.domain)
+        rr = self.case_repeater.register(case)
+        # Fetch the revision that was updated:
+        repeat_record = RepeatRecord.objects.get(id=rr.id)
         self.assertEqual(1, repeat_record.num_attempts)
         with patch('corehq.motech.repeaters.models.simple_request', side_effect=Exception('Boom!')):
             for __ in range(repeat_record.max_possible_tries - repeat_record.num_attempts):
