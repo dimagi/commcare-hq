@@ -22,7 +22,7 @@ def _create_bha_index_on_saas_envs(apps, schema_editor):
                 'analyzer': {'default': {'filter': ['lowercase'], 'tokenizer': 'whitespace', 'type': 'custom'}, 'phonetic': {'filter': ['standard', 'lowercase', 'soundex'], 'tokenizer': 'standard'}},
             },
             settings_key='case_search_bha',
-            es_versions=[5],
+            es_versions=[5, 6],
         ).run()
 
 
