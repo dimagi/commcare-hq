@@ -4,15 +4,10 @@ from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory
 from corehq.apps.data_cleaning.models import (
     BulkEditChange,
-    BulkEditColumn,
-    BulkEditFilter,
-    BulkEditPinnedFilter,
     BulkEditRecord,
     BulkEditSessionType,
     BulkEditSession,
-    DataType,
     EditActionType,
-    FilterMatchType,
 )
 from corehq.apps.data_cleaning.tasks import commit_data_cleaning
 from corehq.apps.domain.shortcuts import create_domain
@@ -177,32 +172,3 @@ class CommitCasesTest(TestCase):
 
         case = CommCareCase.objects.get_case(self.case.case_id, self.domain.name)
         self.assertEqual(case.get_case_property('speed'), 'slow!')
-
-    def test_delete_ui_models(self):
-        record = BulkEditRecord(
-            session=self.session,
-            doc_id=self.case.case_id,
-        )
-        record.save()
-
-        change = BulkEditChange(
-            session=self.session,
-            prop_id='speed',
-            action_type=EditActionType.UPPER_CASE,
-        )
-        change.save()
-
-        self.session.pinned_filters.create_session_defaults(self.session)
-        self.session.columns.create_session_defaults(self.session)
-        self.session.add_filter('play_count', DataType.INTEGER, FilterMatchType.GREATER_THAN, 1)
-        self.session.save()
-
-        self.assertTrue(BulkEditFilter.objects.filter(session=self.session).count() > 0)
-        self.assertTrue(BulkEditPinnedFilter.objects.filter(session=self.session).count() > 0)
-        self.assertTrue(BulkEditColumn.objects.filter(session=self.session).count() > 0)
-
-        commit_data_cleaning(self.session.session_id)
-
-        self.assertEqual(BulkEditFilter.objects.filter(session=self.session).count(), 0)
-        self.assertEqual(BulkEditPinnedFilter.objects.filter(session=self.session).count(), 0)
-        self.assertEqual(BulkEditColumn.objects.filter(session=self.session).count(), 0)

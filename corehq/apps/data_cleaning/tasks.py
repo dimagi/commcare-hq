@@ -32,7 +32,7 @@ def commit_data_cleaning(self, bulk_edit_session_id):
         'domain': session.domain,
     })
 
-    _purge_ui_data_from_session(session)
+    _purge_unedited_records(session)
 
     form_ids = []
     session.update_result(0)
@@ -91,11 +91,8 @@ def _claim_bulk_edit_session_for_task(task, bulk_edit_session_id):
 
 
 @transaction.atomic
-def _purge_ui_data_from_session(session):
+def _purge_unedited_records(session):
     session.deselect_all_records_in_queryset()
-    session.filters.all().delete()
-    session.pinned_filters.all().delete()
-    session.columns.all().delete()
     session.purge_records()
 
 
