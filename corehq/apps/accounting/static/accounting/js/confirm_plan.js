@@ -14,7 +14,7 @@ var LIMITED_FEATURES = gettext("I need more limited features");
 var MORE_FEATURES = gettext("I need additional/custom features");
 var OTHER = gettext("Other");
 
-var confirmPlanModel = function (isUpgrade, isSameEdition, isPaused, currentPlan) {
+var confirmPlanModel = function (isUpgrade, isSameEdition, isPaused, isAnnualPlan, currentPlan) {
     var self = {};
 
     self.isUpgrade = isUpgrade;
@@ -23,7 +23,7 @@ var confirmPlanModel = function (isUpgrade, isSameEdition, isPaused, currentPlan
     self.currentPlan = currentPlan;
 
     // If the user is upgrading, don't let them continue until they agree to the minimum subscription terms
-    self.oUserAgreementSigned = ko.observable(!isUpgrade || isSameEdition);
+    self.oUserAgreementSigned = ko.observable(!(isUpgrade || isAnnualPlan));
 
     self.downgradeReasonList = [
         PROJECT_ENDED,
@@ -108,6 +108,7 @@ $(function () {
         initialPageData.get('is_upgrade'),
         initialPageData.get('is_same_edition'),
         initialPageData.get('is_paused'),
+        initialPageData.get('is_annual_plan'),
         initialPageData.get('current_plan'),
     );
 
