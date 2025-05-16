@@ -10,7 +10,7 @@ import "hqwebapp/js/components/search_box";
 import "reports/js/bootstrap3/base";
 import "hqwebapp/js/select2_knockout_bindings.ko";
 
-const MAP_CONTAINER_ID = "geospatial-map";
+const MAP_CONTAINER_ID = "microplanning-map";
 const USERS_PER_PAGE = 10;
 
 var map;

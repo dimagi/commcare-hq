@@ -3,7 +3,7 @@ import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import utils from "geospatial/js/utils";
+import utils from "microplanning/js/utils";
 import alertUser from "hqwebapp/js/bootstrap3/alert_user";
 import mapboxgl from "mapbox-gl";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
@@ -612,7 +612,7 @@ var PolygonFilter = function (mapObj, shouldUpdateQueryParam, shouldSelectAfterF
 
     self.mapObj = mapObj;
 
-    // TODO: This can be moved to geospatial JS (specific functionality)
+    // TODO: This can be moved to microplanning JS (specific functionality)
     self.btnRunDisbursementDisabled = ko.computed(function () {
         return !self.mapObj.caseMapItems().length || !self.mapObj.userMapItems().length;
     });

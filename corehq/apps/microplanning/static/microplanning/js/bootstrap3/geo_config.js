@@ -83,5 +83,5 @@ var geoConfigViewModel = function (configData) {
 };
 
 $(function () {
-    $('#geospatial-config-form').koApplyBindings(geoConfigViewModel(initialPageData));
+    $('#microplanning-config-form').koApplyBindings(geoConfigViewModel(initialPageData));
 });

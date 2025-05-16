@@ -2,13 +2,13 @@ import "commcarehq";
 import $ from "jquery";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import ko from "knockout";
-import models from "geospatial/js/bootstrap5/models";
-import utils from "geospatial/js/utils";
+import models from "microplanning/js/bootstrap5/models";
+import utils from "microplanning/js/utils";
 import alertUser from "hqwebapp/js/bootstrap5/alert_user";
 import "reports/js/bootstrap5/base";
 import "hqwebapp/js/select2_knockout_bindings.ko";
 
-const MAP_CONTAINER_ID = 'geospatial-map';
+const MAP_CONTAINER_ID = 'microplanning-map';
 const SHOW_USERS_QUERY_PARAM = 'show_users';
 const USER_LOCATION_ID_QUERY_PARAM = 'user_location_id';
 const USER_LOCATION_NAME_QUERY_PARAM = 'user_location_name';
@@ -21,7 +21,7 @@ var polygonFilterModel;
 var assignmentManagerModel;
 
 function showMapControls(state) {
-    $("#geospatial-map").toggle(state);
+    $("#microplanning-map").toggle(state);
     $("#case-buttons").toggle(state);
     $("#polygon-filters").toggle(state);
     $("#user-filters-panel").toggle(state);
@@ -149,7 +149,7 @@ var disbursementRunnerModel = function () {
             },
             error: function () {
                 alertUser.alert_user(
-                    gettext("Oops! Something went wrong! Please check that your geospatial settings are configured correctly or contact admin if the problem persists."), 'danger',
+                    gettext("Oops! Something went wrong! Please check that your microplanning settings are configured correctly or contact admin if the problem persists."), 'danger',
                 );
                 self.setBusy(false);
             },
