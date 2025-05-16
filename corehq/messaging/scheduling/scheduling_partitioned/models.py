@@ -348,6 +348,8 @@ class ScheduleInstance(PartitionedModel):
 
         recipient_count = 0
         for recipient in self.expand_recipients(log_filtered_recipient):
+            if isinstance(recipient, WebUser) and not recipient.is_active_in_domain(self.domain):
+                continue
             recipient_count += 1
 
             #   The framework will retry sending a non-processed schedule instance
