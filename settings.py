@@ -328,7 +328,7 @@ HQ_APPS = (
     'corehq.apps.sms',
     'corehq.apps.email',
     'corehq.apps.events',
-    'corehq.apps.geospatial',
+    'corehq.apps.microplanning',
     'corehq.apps.smsforms',
     'corehq.apps.sso',
     'corehq.apps.ivr',

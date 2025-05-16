@@ -18,7 +18,7 @@ from corehq.apps.change_feed.consumer.feed import (
 from corehq.apps.data_dictionary.util import get_gps_properties
 from corehq.apps.es.case_search import CaseSearchES, case_search_adapter
 from corehq.apps.es.client import manager
-from corehq.apps.geospatial.utils import get_geo_case_property
+from corehq.apps.microplanning.utils import get_geo_case_property
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.util.doc_processor.sql import SqlDocumentProvider

@@ -21,8 +21,8 @@ from corehq.apps.data_dictionary.util import get_gps_properties
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es.case_search import CaseSearchES, case_property_missing
-from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
-from corehq.apps.geospatial.utils import get_lat_lon_from_dict
+from corehq.apps.microplanning.const import GPS_POINT_CASE_PROPERTY
+from corehq.apps.microplanning.utils import get_lat_lon_from_dict
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.reports.generic import get_filter_classes

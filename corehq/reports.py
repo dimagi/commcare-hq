@@ -69,7 +69,7 @@ from corehq.apps.userreports.reports.view import (
 from corehq.apps.userreports.const import TEMP_REPORT_PREFIX
 from corehq.motech.generic_inbound.reports import ApiRequestLogReport
 from corehq.motech.repeaters.views import DomainForwardingRepeatRecords
-from corehq.apps.geospatial.reports import (
+from corehq.apps.microplanning.reports import (
     CaseManagementMap,
     CaseGroupingReport,
 )

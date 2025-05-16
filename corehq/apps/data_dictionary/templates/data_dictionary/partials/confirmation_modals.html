@@ -51,8 +51,8 @@
     </div>
 </script>
 
-<!-- Modal for deprecating geospatial case property -->
-<div id="deprecate-geospatial-prop-modal" class="modal fade" tabindex="-1" role="dialog">
+<!-- Modal for deprecating microplanning case property -->
+<div id="deprecate-microplanning-prop-modal" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -73,8 +73,8 @@
                     {% blocktrans %}
                     Deprecating this case property may result in unintended behaviour, and so
                     it is advised to first change the selected custom case property in
-                    <a href="{{ geospatial_settings_url }}">
-                        geospatial settings
+                    <a href="{{ microplanning_settings_url }}">
+                        microplanning settings
                     </a>
                     before deprecating this case property.
                     {% endblocktrans %}
@@ -90,7 +90,7 @@
                 <button type="button" class="btn btn-default" data-dismiss="modal">
                     {% trans 'Cancel' %}
                 </button>
-                <button id="deprecate-geospatial-prop-btn" type="button" class="btn btn-primary">
+                <button id="deprecate-microplanning-prop-btn" type="button" class="btn btn-primary">
                     {% trans 'Confirm' %}
                 </button>
             </div>

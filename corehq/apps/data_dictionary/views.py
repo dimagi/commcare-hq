@@ -40,7 +40,7 @@ from corehq.apps.data_dictionary.util import (
     update_url_query_params,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.geospatial.utils import get_geo_case_property
+from corehq.apps.microplanning.utils import get_geo_case_property
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.decorators import require_permission
