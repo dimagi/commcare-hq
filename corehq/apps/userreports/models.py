@@ -2,6 +2,7 @@ import glob
 import json
 import os
 import re
+import sqlalchemy
 from ast import literal_eval
 from collections import namedtuple
 from copy import copy, deepcopy
@@ -106,7 +107,7 @@ from .reports.factory import (
 from .reports.filters.factory import ReportFilterFactory
 from .reports.filters.specs import FilterSpec
 from .specs import EvaluationContext, FactoryContext
-from .sql import get_metadata
+from .sql import get_indicator_table
 from .sql.util import decode_column_name
 from .util import (
     get_async_indicator_modify_lock_key,
@@ -771,13 +772,19 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         if not self.meta.build.awaiting:
             engine = connection_manager.get_engine(self.engine_id)
             table_name = get_table_name(self.domain, self.table_id)
-            engine_metadata = get_metadata(self.engine_id)
-            diffs = get_table_diffs(engine, [table_name], engine_metadata)
-            tables_to_rebuild = get_tables_to_rebuild(diffs)
-            if table_name in tables_to_rebuild:
+            # use a fresh metadata because the one from get_metadata might be stale
+            engine_metadata = sqlalchemy.MetaData()
+            if not sqlalchemy.Table(table_name, engine_metadata).exists(bind=engine):
                 self.set_build_queued()
             else:
-                self.set_build_not_required()
+                # get fresh table configuration; this also updates table schema in engine_metadata
+                get_indicator_table(self, engine_metadata)
+                diffs = get_table_diffs(engine, [table_name], engine_metadata)
+                tables_to_rebuild = get_tables_to_rebuild(diffs)
+                if table_name in tables_to_rebuild:
+                    self.set_build_queued()
+                else:
+                    self.set_build_not_required()
 
     def set_build_queued(self, *, reset_init_fin=True):
         self.meta.build.awaiting = True
