@@ -57,7 +57,16 @@
     </h4>
   {% endif %}
 
-  {% if is_upgrade %}
+  {% if is_annual_plan %}
+    <p class="text-free">
+      {% blocktrans %}
+        By continuing you are subscribing to a Pay Annually plan and will receive an invoice via email for plan fees due.
+        In case you incur any on-demand fees for excess users or SMS, you will receive invoices for these charges on a monthly basis.
+        See <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Pay-Annually-Subscription">here</a>
+        for more information about payment, cancellation, and refunds.
+      {% endblocktrans %}
+    </p>
+  {% elif is_upgrade %}
     <p class="text-free">
       {% blocktrans with next_invoice_date as invoice_date %}
         CommCare is billed on a monthly basis, and all subscriptions require a 30 day minimum commitment.
@@ -79,7 +88,8 @@
         pending subscriptions will be cancelled.
       {% endblocktrans %}
     </p>
-  {% elif is_downgrade_before_minimum %}
+  {% endif %}
+  {% if is_downgrade_before_minimum %}
     <p>
       {% blocktrans with current_plan as p %}
         You’ll have access to the features on your
@@ -88,7 +98,7 @@
         to the {{ new_plan_edition }} Edition Software Plan.
       {% endblocktrans %}
     </p>
-  {% else %}
+  {% elif not is_upgrade and not is_same_edition %}
     <p>
       {% blocktrans with current_plan as p %}
         We're sorry to see you downgrade! You are currently subscribed to the
