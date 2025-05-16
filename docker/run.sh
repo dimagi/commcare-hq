@@ -38,8 +38,7 @@ function setup {
     # remove after change propagates from Dockerfile
     unset UV_PROJECT; rm /vendor/{pyproject.toml,uv.lock} || true
 
-    CC=gcc LDFLAGS="-L`python -c'import sys; print(sys.base_prefix)'`/lib" \
-        uv sync --locked --group=test --no-dev --no-progress
+    uv sync --locked --group=test --no-dev --no-progress
 
     python_preheat  # preheat the python libs
 
