@@ -38,8 +38,7 @@ function setup {
         install -dm0755 -o cchq -g cchq ./artifacts
     fi
 
-    CC=gcc LDFLAGS="-L`python -c'import sys; print(sys.base_prefix)'`/lib" \
-        uv sync --locked --group=test --no-dev --no-progress
+    uv sync --locked --group=test --no-dev --no-progress
 
     python_preheat  # preheat the python libs
 
