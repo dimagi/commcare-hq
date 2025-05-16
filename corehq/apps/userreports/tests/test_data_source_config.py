@@ -443,6 +443,20 @@ class DataSourceConfigurationRebuildTests(TestCase):
         self.config.meta.build.finished = True
         assert self.config.rebuild_awaiting_or_in_progress is None
 
+    def test_build_missing_table(self):
+        assert self.config.meta.build.awaiting is False
+        self.config.set_rebuild_flags()
+        assert self.config.meta.build.awaiting is True
+
+    @patch('sqlalchemy.Table.exists', return_value=True)
+    @patch('corehq.apps.userreports.rebuild.get_table_diffs')
+    def test_not_set_rebuild_flags_queued(self, mock_get_table_diffs, mock_table_exists):
+        table_name = get_table_name(self.config.domain, self.config.table_id)
+        diff = MagicMock(table_name=table_name, type=DiffTypes.ADD_NULLABLE_COLUMN)
+        mock_get_table_diffs.return_value = [diff]
+        self.config.set_rebuild_flags()
+        assert self.config.meta.build.awaiting is False
+
     @patch('sqlalchemy.Table.exists', return_value=True)
     @patch('corehq.apps.userreports.rebuild.get_table_diffs')
     def test_set_rebuild_flags_queued(self, mock_get_table_diffs, mock_table_exists):
