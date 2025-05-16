@@ -1,0 +1,64 @@
+name: Label PR if diff files contain a certain pattern
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  label-if-contains-pattern:
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get list of files changed in the PR
+        id: file_list
+        run: |
+          FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD)
+          echo "FILES<<EOF" >> $GITHUB_OUTPUT
+          echo "$FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Search if pattern is in modified files
+        id: grep_check
+        run: |
+          FILES="${{ steps.file_list.outputs.FILES }}"
+          FOUND=false
+
+          # These functions return a different backend between local and staging/production
+          # Changes using these functions should be tested on staging before merging
+          PATTERN="get_blob_db|get_email_configuration"
+
+          for file in $FILES; do
+            echo "Examining file: $file"
+            if [[ -f "$file" ]] && grep -Eq "$PATTERN" "$file"; then
+              FOUND=true
+              echo "Found pattern in file: $file"
+              break
+            fi
+          done
+
+          echo "FOUND=$FOUND" >> $GITHUB_OUTPUT
+
+      - name: Add label to PR if pattern is found
+        if: steps.grep_check.outputs.FOUND == 'true'
+        run: |
+          gh pr edit "$PR_URL" --add-label "test on staging"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+
+      - name: Remove label if pattern is not found
+        if: steps.grep_check.outputs.FOUND == 'false'
+        run: |
+          gh pr edit "$PR_URL" --remove-label "test on staging"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
