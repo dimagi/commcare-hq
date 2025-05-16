@@ -1,34 +1,28 @@
-/* eslint-env mocha */
-hqDefine("cloudcare/js/formplayer/spec/session_middleware_spec", [
-    "sinon/pkg/sinon",
-    "cloudcare/js/formplayer/middleware",
-], function (
-    sinon,
-    Middleware,
-) {
-    describe('SessionMiddle', function () {
-        it('Should call middleware and apis with same arguments', function () {
-            let middlewareSpy = sinon.spy(),
-                result,
-                API = {
-                    myRoute: sinon.spy(function (one, two, three) {
-                        return one + two + three;
-                    }),
-                };
+import sinon from "sinon";
+import Middleware from "cloudcare/js/formplayer/middleware";
 
-            Middleware.middlewares = [middlewareSpy];
+describe('SessionMiddle', function () {
+    it('Should call middleware and apis with same arguments', function () {
+        let middlewareSpy = sinon.spy(),
+            result,
+            API = {
+                myRoute: sinon.spy(function (one, two, three) {
+                    return one + two + three;
+                }),
+            };
 
-            let WrappedApi = Middleware.apply(API);
+        Middleware.middlewares = [middlewareSpy];
 
-            result = WrappedApi.myRoute(1, 2, 3);
+        let WrappedApi = Middleware.apply(API);
 
-            // Ensure middleware is called and called with route name
-            assert.isTrue(middlewareSpy.called);
-            assert.deepEqual(middlewareSpy.getCall(0).args, ['myRoute']);
+        result = WrappedApi.myRoute(1, 2, 3);
 
-            // Ensure actual route is called with proper arguments and return value
-            assert.deepEqual(API.myRoute.getCall(0).args, [1, 2, 3]);
-            assert.equal(result, 6);
-        });
+        // Ensure middleware is called and called with route name
+        assert.isTrue(middlewareSpy.called);
+        assert.deepEqual(middlewareSpy.getCall(0).args, ['myRoute']);
+
+        // Ensure actual route is called with proper arguments and return value
+        assert.deepEqual(API.myRoute.getCall(0).args, [1, 2, 3]);
+        assert.equal(result, 6);
     });
 });

@@ -826,7 +826,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
             ["owner_id", "server_modified_on"],
             ["domain", "owner_id", "closed"],
             ["domain", "external_id", "type"],
-            ["domain", "type"],
+            ["domain", "type", "id"],
         ]
         indexes = [
             models.Index(fields=['deleted_on'],

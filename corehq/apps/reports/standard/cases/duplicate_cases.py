@@ -20,6 +20,9 @@ class DuplicateCasesExplorer(CaseListExplorer):
     name = _("Duplicate Cases")
     slug = 'duplicate_cases'
     description = _("Identify and manage duplicate cases")
+    use_bootstrap5 = False
+
+    profiler_enabled = False
 
     fields = [
         DuplicateCaseRuleFilter,

@@ -11,9 +11,9 @@ from corehq.apps.formplayer_api.smsforms.api import (
 from corehq.apps.sms.api import (
     MessageMetadata,
     send_sms,
-    send_sms_to_verified_number,
+    send_message_to_verified_number,
 )
-from corehq.apps.sms.models import PhoneNumber
+from corehq.apps.sms.models import ConnectMessagingNumber, PhoneNumber
 from corehq.apps.sms.util import format_message_list
 from corehq.apps.smsforms.app import (
     _responses_to_text,
@@ -76,8 +76,8 @@ def send_first_message(domain, recipient, phone_entry_or_number, session, respon
             messaging_subevent_id=logged_subevent.pk
         )
 
-        if isinstance(phone_entry_or_number, PhoneNumber):
-            send_sms_to_verified_number(
+        if isinstance(phone_entry_or_number, (PhoneNumber, ConnectMessagingNumber)):
+            send_message_to_verified_number(
                 phone_entry_or_number,
                 message,
                 metadata,
@@ -134,7 +134,7 @@ def handle_due_survey_action(domain, contact_id, session_id):
                     messaging_subevent_id=subevent.pk if subevent else None
                 )
                 resp = FormplayerInterface(session.session_id, domain).current_question()
-                send_sms_to_verified_number(
+                send_message_to_verified_number(
                     p,
                     resp.event.text_prompt,
                     metadata,

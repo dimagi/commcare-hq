@@ -2,7 +2,7 @@ from django.test import TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.es.users import user_adapter
+from corehq.apps.es.users import UserES, user_adapter, demo_users
 from corehq.apps.users.models import CommCareUser, WebUser
 
 
@@ -56,3 +56,33 @@ class TestFromPythonInElasticUser(TestCase):
         es_user = user_adapter.search({})['hits']['hits'][0]['_source']
 
         self.assertEqual(es_user, commcare_user)
+
+
+@es_test(requires=[user_adapter], setup_class=True)
+class TestUserFilters(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'test-domain'
+        cls.demo_user = CommCareUser.create(
+            username="demo", domain=cls.domain, password="***********", is_active=True,
+            created_by=None, created_via=None
+        )
+        cls.demo_user.is_demo_user = True
+        cls.demo_user.save()
+        cls.regular_user = CommCareUser.create(
+            username="regular", domain=cls.domain, password="***********", is_active=True,
+            created_by=None, created_via=None
+        )
+        user_adapter.index(cls.demo_user, refresh=True)
+        user_adapter.index(cls.regular_user, refresh=True)
+        cls.addClassCleanup(cls.demo_user.delete, None, None)
+        cls.addClassCleanup(cls.regular_user.delete, None, None)
+
+    def test_demo_users_filter(self):
+        es_query = UserES().domain(self.domain).filter(demo_users())
+        results = es_query.run().hits
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]['_id'], self.demo_user._id)

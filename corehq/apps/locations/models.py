@@ -322,7 +322,10 @@ class LocationManager(LocationQueriesMixin, AdjListManager):
         """
         query = None
         for part in user_input.split('/'):
-            query = self.get_queryset_descendants(query) if query is not None else self
+            if query is None:
+                query = self.filter(domain=domain)
+            else:
+                query = self.get_queryset_descendants(query)
             if part:
                 if part.startswith('"') and part.endswith('"'):
                     query = query.filter(name__iexact=part[1:-1])

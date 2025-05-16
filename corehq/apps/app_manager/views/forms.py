@@ -35,7 +35,6 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 )
 from corehq.apps.app_manager.const import (
     USERCASE_PREFIX,
-    USERCASE_TYPE,
     WORKFLOW_DEFAULT,
     WORKFLOW_FORM,
     WORKFLOW_MODULE,
@@ -50,6 +49,7 @@ from corehq.apps.app_manager.decorators import (
     require_deploy_apps,
 )
 from corehq.apps.app_manager.exceptions import (
+    AppInDifferentDomainException,
     AppMisconfigurationError,
     FormNotFoundException,
     ModuleNotFoundException,
@@ -90,7 +90,6 @@ from corehq.apps.app_manager.util import (
     save_xform,
 )
 from corehq.apps.app_manager.views.media_utils import handle_media_edits
-from corehq.apps.app_manager.views.notifications import notify_form_changed
 from corehq.apps.app_manager.views.schedules import get_schedule_context
 from corehq.apps.app_manager.views.utils import (
     CASE_TYPE_CONFLICT_MSG,
@@ -109,7 +108,6 @@ from corehq.apps.app_manager.xform import (
     XFormValidationError,
 )
 from corehq.apps.data_dictionary.util import (
-    add_properties_to_data_dictionary,
     get_case_property_deprecated_dict,
     get_case_property_description_dict,
 )
@@ -211,8 +209,6 @@ def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
         form.extra_actions = actions
     else:
         form.actions = actions
-    for action in actions.load_update_cases:
-        add_properties_to_data_dictionary(domain, action.case_type, list(action.case_properties.keys()))
     if advanced_actions_use_usercase(actions) and not is_usercase_in_use(domain):
         enable_usercase(domain)
 
@@ -231,10 +227,8 @@ def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
 def edit_form_actions(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
     form = app.get_form(form_unique_id)
-    module = form.get_module()
     old_load_from_form = form.actions.load_from_form
     form.actions = FormActions.wrap(json.loads(request.POST['actions']))
-    add_properties_to_data_dictionary(domain, module.case_type, list(form.actions.update_case.update.keys()))
     if old_load_from_form:
         form.actions.load_from_form = old_load_from_form
 
@@ -245,7 +239,6 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     if actions_use_usercase(form.actions):
         if not is_usercase_in_use(domain):
             enable_usercase(domain)
-        add_properties_to_data_dictionary(domain, USERCASE_TYPE, list(form.actions.usercase_update.update.keys()))
 
     response_json = {}
     app.save(response_json)
@@ -451,7 +444,6 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     handle_media_edits(request, form, should_edit, resp, lang)
 
     app.save(resp)
-    notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
     if ajax:
         return JsonResponse(resp)
     else:
@@ -544,7 +536,6 @@ def patch_xform(request, domain, app_id, form_unique_id):
         'sha1': hashlib.sha1(xml).hexdigest()
     }
     app.save(response_json)
-    notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
     return JsonResponse(response_json)
 
 
@@ -977,7 +968,10 @@ def get_form_datums(request, domain, app_id):
 
 def _get_form_datums(domain, app_id, form_id):
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
-    app = get_app(domain, app_id)
+    try:
+        app = get_app(domain, app_id)
+    except AppInDifferentDomainException as e:
+        raise Http404(str(e))
 
     try:
         module_id, form_id = form_id.split('.')

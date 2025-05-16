@@ -113,7 +113,7 @@ useful.
 
 `SnakeViz`_ is a great option for viewing .prof files::
 
-    $ pip install snakeviz
+    $ uv pip install snakeviz
     $ snakeviz /path/to/profile_dump.prof
 
 Alternately you can use a script that will output a readable version of the profile data to the console.

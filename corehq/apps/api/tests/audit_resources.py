@@ -40,8 +40,9 @@ class TestNavigationEventAuditResource(APIResourceTest):
     resource = v0_5.NavigationEventAuditResource
     default_limit = resource._meta.limit
     max_limit = resource._meta.max_limit
-    base_params = partial(v0_5.NavigationEventAuditResourceParams,
-                          default_limit=default_limit, max_limit=max_limit)
+    base_params = staticmethod(
+        partial(v0_5.NavigationEventAuditResourceParams,
+                default_limit=default_limit, max_limit=max_limit))
     api_name = 'v0.5'
 
     @classmethod

@@ -66,12 +66,15 @@ USE_TZ = False
 LANGUAGE_CODE = 'en-us'
 
 LANGUAGES = (
+    ('ara', 'Arabic'),
     ('en', 'English'),
     ('es', 'Spanish'),
     ('fra', 'French'),  # we need this alias
     ('hin', 'Hindi'),
-    ('sw', 'Swahili'),
+    ('ita', 'Italian'),
     ('por', 'Portuguese'),
+    ('sw', 'Swahili'),
+    ('ukr', 'Ukrainian'),
 )
 
 STATICI18N_FILENAME_FUNCTION = 'statici18n.utils.legacy_filename'
@@ -148,6 +151,7 @@ MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
     'corehq.middleware.SecureCookiesMiddleware',
     'corehq.middleware.SelectiveSessionMiddleware',
+    'corehq.apps.ip_access.middleware.IPAccessMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -168,6 +172,7 @@ MIDDLEWARE = [
     'corehq.apps.domain.middleware.DomainHistoryMiddleware',
     'corehq.apps.domain.project_access.middleware.ProjectAccessMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
+    'corehq.apps.hqwebapp.utils.bootstrap.middleware.ThreadLocalCleanupMiddleware',
     'corehq.apps.auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
@@ -235,7 +240,6 @@ DEFAULT_APPS = (
     'django_tables2',
     'two_factor',
     'two_factor.plugins.phonenumber',
-    'ws4redis',
     'statici18n',
     'django_user_agents',
     'oauth2_provider',
@@ -244,6 +248,9 @@ DEFAULT_APPS = (
 SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
 RECAPTCHA_PRIVATE_KEY = ''
 RECAPTCHA_PUBLIC_KEY = ''
+
+MAXMIND_ACCOUNT_ID = ''
+MAXMIND_LICENSE_KEY = ''
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3to5'
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap3to5"
@@ -266,17 +273,20 @@ HQ_APPS = (
     'corehq.apps.accounting',
     'corehq.apps.appstore',
     'corehq.apps.data_analytics',
+    'corehq.apps.data_cleaning',
     'corehq.apps.data_pipeline_audit',
     'corehq.apps.domain',
     'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
     'corehq.apps.enterprise',
+    'corehq.apps.experiments',
     'corehq.apps.formplayer_api',
     'corehq.apps.hqadmin.app_config.HqAdminModule',
     'corehq.apps.hqcase',
     'corehq.apps.hqwebapp.apps.HqWebAppConfig',
     'corehq.apps.hqmedia',
     'corehq.apps.integration',
+    'corehq.apps.ip_access',
     'corehq.apps.linked_domain',
     'corehq.apps.locations',
     'corehq.apps.products',
@@ -299,6 +309,7 @@ HQ_APPS = (
     'corehq.apps.data_dictionary',
     'corehq.apps.analytics',
     'corehq.apps.callcenter',
+    'corehq.apps.campaign',
     'corehq.apps.change_feed',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
@@ -348,6 +359,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.start_enterprise',
     'corehq.messaging.smsbackends.ivory_coast_mtn',
     'corehq.messaging.smsbackends.airtel_tcl',
+    'corehq.messaging.smsbackends.connectid',
     'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
     'corehq.apps.saved_reports',
@@ -390,8 +402,6 @@ HQ_APPS = (
     'custom.reports.mc',
     'custom.ucla',
 
-    'custom.common',
-
     'custom.hki',
     'custom.bha',
     'custom.covid',
@@ -401,6 +411,8 @@ HQ_APPS = (
     'custom.hmhb',
 
     'custom.ccqa',
+
+    'custom.mgh_epic',
 
     'corehq.extensions.app_config.ExtensionAppConfig',  # this should be last in the list
 )
@@ -634,12 +646,6 @@ DEFAULT_REPEATER_WORKERS = 7
 # guardrail to prevent one repeater from hogging repeat_record_queue
 # workers and to ensure that repeaters are iterated fairly.
 MAX_REPEATER_WORKERS = 79
-
-# websockets config
-WEBSOCKET_URL = '/ws/'
-WS4REDIS_PREFIX = 'ws'
-WSGI_APPLICATION = 'ws4redis.django_runserver.application'
-WS4REDIS_ALLOWED_CHANNELS = helper.get_allowed_websocket_channels
 
 
 TEST_RUNNER = 'testrunner.TwoStageTestRunner'
@@ -1021,6 +1027,9 @@ LOAD_BALANCED_APPS = {}
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
 
+EPIC_PRIVATE_KEY = None
+EPIC_CLIENT_ID = None
+
 KAFKA_BROKERS = ['localhost:9092']
 KAFKA_API_VERSION = None
 
@@ -1155,16 +1164,24 @@ COMMCARE_ANALYTICS_HOST = ""
 FCM_CREDS = None
 
 CONNECTID_USERINFO_URL = 'http://localhost:8080/o/userinfo'
+CONNECTID_CLIENT_ID = ''
+CONNECTID_SECRET_KEY = ''
+CONNECTID_CHANNEL_URL = 'http://localhost:8080/messaging/create_channel/'
+CONNECTID_MESSAGE_URL = 'http://localhost:8080/messaging/send_fcm/'
 
 MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
 MAX_MOBILE_UCR_SIZE = 100000  # max number of rows allowed when syncing a mobile UCR
 
-DEVICE_LIMIT_PER_USER = 10  # number of devices allowed per user per minute
-INCREASED_DEVICE_LIMIT_PER_USER = 100  # value when INCREASE_DEVICE_LIMIT_PER_USER ff is enabled
-ENABLE_DEVICE_RATE_LIMITER = False
-
 # used by periodic tasks that delete soft deleted data older than PERMANENT_DELETION_WINDOW days
 PERMANENT_DELETION_WINDOW = 30  # days
+
+# Used by `corehq.apps.integration.kyc`. Override in localsettings.py
+MTN_KYC_CONNECTION_SETTINGS = {
+    'url': 'https://dev.api.chenosis.io/',
+    'token_url': 'https://dev.api.chenosis.io/oauth/client/accesstoken',
+    'client_id': 'test',
+    'client_secret': 'password',
+}
 
 
 try:
@@ -1284,7 +1301,6 @@ TEMPLATES = [
                 'corehq.util.context_processors.subscription_banners',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.js_toggles',
-                'corehq.util.context_processors.websockets_override',
                 'corehq.util.context_processors.commcare_hq_names',
                 'corehq.util.context_processors.emails',
                 'corehq.util.context_processors.status_page',
@@ -2025,6 +2041,10 @@ DOMAIN_MODULE_MAP = {
     'co-carecoordination-uat': 'custom.bha',
 
     'ccqa': 'custom.ccqa',
+
+    'epic-integration-test': 'custom.mgh_epic',
+    'sudcare-dev': 'custom.mgh_epic',
+    'sudcare': 'custom.mgh_epic',
 }
 
 CUSTOM_DOMAINS_BY_MODULE = defaultdict(list)

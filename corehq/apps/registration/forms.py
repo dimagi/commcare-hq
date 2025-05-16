@@ -52,12 +52,18 @@ class RegisterWebUserForm(forms.Form):
             ("Improve Delivery", _("Improve delivery of services")),
             ("Research", _("Collect data for a research project")),
             ("IT", _("Build a technology solution for my team/clients")),
+            ("Personal", _("Explore data collection for personal use")),
             ("Other", _("Other")),
         )
     )
     persona_other = forms.CharField(
         required=False,
         label=_("Please Specify"),
+    )
+    company_name = forms.CharField(
+        required=False,
+        label=_("Organization or Company"),
+        max_length=50,
     )
     project_name = forms.CharField(label=_("Project Name"))
     eula_confirmed = forms.BooleanField(
@@ -83,7 +89,7 @@ class RegisterWebUserForm(forms.Form):
         if settings.ENFORCE_SSO_LOGIN and self.is_sso:
             self.fields['password'].required = False
 
-        persona_fields = []
+        saas_fields = []
         if settings.IS_SAAS_ENVIRONMENT:
             persona_fields = [
                 crispy.Div(
@@ -108,6 +114,21 @@ class RegisterWebUserForm(forms.Form):
                               " 'has-success': isPersonaChoiceOtherPresent, "
                               " 'has-error': isPersonaChoiceOtherNeeded"
                               "}",
+                ),
+            ]
+            saas_fields = [
+                *persona_fields,
+                crispy.Div(
+                    hqcrispy.InlineField(
+                        'company_name',
+                        css_class="input-lg",
+                        data_bind="value: companyName, "
+                                  "valueUpdate: 'keyup', "
+                                  "koValidationStateFeedback: { "
+                                  "   validator: companyName "
+                                  "}",
+                    ),
+                    data_bind="visible: isPersonaChoiceProfessional, ",
                 ),
             ]
 
@@ -199,7 +220,7 @@ class RegisterWebUserForm(forms.Form):
                                   "   validator: projectName "
                                   "}",
                     ),
-                    crispy.Div(*persona_fields),
+                    crispy.Div(*saas_fields),
                     hqcrispy.InlineField(
                         'eula_confirmed',
                         css_class="input-lg",
@@ -372,13 +393,13 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
         label="",
         help_text=mark_safe(_(
             """I have read and agree to Dimagi's
-                <a href="https://dimagi.com/terms-privacy/"
+                <a href="https://dimagi.com/terms/latest/privacy/"
                     target="_blank">Privacy Policy</a>,
-                <a href="https://dimagi.com/terms-of-service/"
+                <a href="https://dimagi.com/terms/latest/tos/"
                     target="_blank">Terms of Service</a>,
-                <a href="https://dimagi.com/terms-ba/"
+                <a href="https://dimagi.com/terms/latest/ba/"
                     target="_blank">Business Agreement</a>, and
-                <a href="https://dimagi.com/terms-aup/"
+                <a href="https://dimagi.com/terms/latest/aup/"
                     target="_blank">Acceptable Use Policy</a>.
                """))
     )
@@ -601,7 +622,7 @@ class AdminInvitesUserForm(SelectUserLocationForm):
         )
 
     def clean_email(self):
-        email = self.cleaned_data['email'].strip()
+        email = self.cleaned_data['email'].strip().lower()
 
         from corehq.apps.registration.validation import AdminInvitesUserFormValidator
         error = AdminInvitesUserFormValidator.validate_email(self.domain, email, bool(self.invite))

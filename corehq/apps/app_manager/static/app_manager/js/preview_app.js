@@ -1,4 +1,4 @@
-"use strict";
+
 hqDefine('app_manager/js/preview_app', [
     'jquery',
     'analytix/js/google',
@@ -10,7 +10,7 @@ hqDefine('app_manager/js/preview_app', [
     googleAnalytics,
     kissAnalytics,
     appManagerUtils,
-    layoutController
+    layoutController,
 ) {
     var module = {};
     var _private = {};
@@ -233,7 +233,7 @@ hqDefine('app_manager/js/preview_app', [
             kissAnalytics.track.event("[app-preview] Clicked Refresh App Preview");
             googleAnalytics.track.event("App Preview", "Clicked Refresh App Preview");
         });
-            appManagerUtils.handleAjaxAppChange(function () {
+        appManagerUtils.handleAjaxAppChange(function () {
             $(module.SELECTORS.BTN_REFRESH).addClass('app-out-of-date');
         });
         var onload = function () {

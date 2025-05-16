@@ -141,7 +141,7 @@ class PromptUpdateSettingsForm(forms.Form):
         super(PromptUpdateSettingsForm, self).__init__(*args, **kwargs)
 
         self.fields['apk_version'].choices = [(LATEST_APK_VALUE, 'Latest Released Build')] + [
-            (build.to_string(), 'CommCare {}'.format(build.get_label()))
+            (build.to_string(), 'CommCare {}'.format(build.get_menu_item_label()))
             for build in get_commcare_builds(request_user)
         ]
 
@@ -170,7 +170,8 @@ class PromptUpdateSettingsForm(forms.Form):
                 crispy.Field(
                     'apk_prompt',
                     # hide 'apk_version' depending on whether app_prompt is off or not
-                    onchange='$("#apk_version_id")[$("#id_apk_prompt").val() == "off"? "hide": "show"]()',
+                    onchange="document.getElementById('apk_version_id').style.display = "
+                             "document.getElementById('id_apk_prompt').value === 'off' ? 'none': 'block'",
                 ),
                 crispy.Div(
                     'apk_version',
@@ -179,7 +180,8 @@ class PromptUpdateSettingsForm(forms.Form):
                 crispy.Field(
                     'app_prompt',
                     # hide 'app_version' depending on whether app_prompt is off or not
-                    onchange='$("#app_version_id")[$("#id_app_prompt").val() == "off"? "hide": "show"]()',
+                    onchange="document.getElementById('app_version_id').style.display = "
+                             "document.getElementById('id_app_prompt').value === 'off' ? 'none': 'block'",
                 ),
                 crispy.Div(
                     'app_version',

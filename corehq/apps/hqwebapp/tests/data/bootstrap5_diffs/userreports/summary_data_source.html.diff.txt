@@ -1,0 +1,8 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends "userreports/bootstrap3/userreports_base.html" %}
++{% extends "userreports/bootstrap5/userreports_base.html" %}
+ {% load i18n %}
+ {% block page_content %}
+   <h2>Summary</h2>

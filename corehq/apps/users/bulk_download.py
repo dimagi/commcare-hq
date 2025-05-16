@@ -193,7 +193,7 @@ def make_web_user_dict(user, location_cache, domain):
         'email': user.email,
         'role': role_name,
         'location_code': location_codes,
-        'status': gettext('Active User'),
+        'status': gettext('Active User') if user.is_active else gettext('Inactive User'),
         'last_access_date (read only)': domain_membership.last_accessed,
         'last_login (read only)': user.last_login,
         'remove': '',
@@ -254,10 +254,10 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
             }
         else:
             deactivation_triggers = {}
-        for n, user in enumerate(get_mobile_users_by_filters(current_domain, user_filters)):
-            group_memoizer = load_memoizer(current_domain)
+        group_memoizer = load_memoizer(current_domain)
+        for user in get_mobile_users_by_filters(current_domain, user_filters):
             group_names = sorted([
-                group_memoizer.get(id).name for id in Group.by_user_id(user.user_id, wrap=False)
+                group.name for group in group_memoizer.by_user_id(user.user_id)
             ], key=alphanumeric_sort_key)
 
             user_dict = make_mobile_user_dict(

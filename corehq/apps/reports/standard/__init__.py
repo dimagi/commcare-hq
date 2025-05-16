@@ -1,5 +1,6 @@
 import warnings
 from datetime import datetime
+from functools import wraps
 
 from django.core.cache import cache
 from django.urls import reverse
@@ -7,13 +8,16 @@ from django.utils.translation import gettext_noop
 
 import dateutil
 from memoized import memoized
-from corehq.apps.reports.forms import EmailReportForm
 
+from corehq import toggles
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.logging import notify_exception
 
 from corehq.apps.casegroups.models import CommCareCaseGroup
+from corehq.apps.es.profiling import ESQueryProfiler
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
+from corehq.apps.reports.const import LONG_RUNNING_CLE_THRESHOLD
 from corehq.apps.reports.dispatcher import (
     CustomProjectReportDispatcher,
     ProjectReportDispatcher,
@@ -21,6 +25,7 @@ from corehq.apps.reports.dispatcher import (
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.filters.users import UserTypeFilter
+from corehq.apps.reports.forms import EmailReportForm
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.users.models import CommCareUser
@@ -305,3 +310,115 @@ class MonthYearMixin(object):
             return int(value)
         else:
             return datetime.utcnow().year
+
+
+class ESQueryProfilerMixin(object):
+    """
+    Mixin for profiling Elasticsearch queries.
+
+    This mixin provides timing and profiling capabilities for methods in
+    report classes. The report class must have ``profiler_enabled`` and
+    ``profiler_name`` attributes set for the profiling functionality to
+    work.
+
+    Attributes:
+        profiler_enabled (bool):
+            Set to ``True`` to enable profiling
+        profiler_name (str):
+            Name of the report to be used in profiling output
+
+    There are two ways to capture timing information:
+
+    1. Using the decorator::
+
+           >>> from corehq.apps.reports.standard import (
+           ...     ESQueryProfilerMixin,
+           ...     profile,
+           ... )
+           >>> class MyReport(ESQueryProfilerMixin):
+           ...     @profile('Method Name')
+           ...     def my_method(self):
+           ...         pass
+
+    2. Using the context manager::
+
+           >>> class MyReport(ESQueryProfilerMixin):
+           ...     def my_method(self):
+           ...         with self.profiler.timing_context('Method Name'):
+           ...             pass
+
+    """
+    profiler_enabled = False
+    profiler_name = 'Elasticsearch Query Profiler'
+    search_class = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.profiler_enabled:
+            if not self.search_class:
+                raise ValueError("You must define a search_class attribute.")
+            self.profiler = ESQueryProfiler(
+                name=self.profiler_name,
+                search_class=self.search_class,
+                debug_mode=self.debug_mode,
+            )
+            # Replace the report's search_class so that queries are
+            # profiled when the report executes searches. Use the report
+            # class's name to identify the profile.
+            identifier = self.__class__.__name__
+            self.search_class = self.profiler.get_profiled_search_class(identifier)
+        else:
+            self.profiler = None
+
+    @property
+    def debug_mode(self):
+        debug_enabled = toggles.REPORT_TIMING_PROFILING.enabled(
+            self.request.couch_user.username,
+            namespace=toggles.NAMESPACE_USER,
+        )
+        return debug_enabled and self.request.couch_user.is_superuser
+
+    @property
+    def json_dict(self):
+        ret = super().json_dict
+        if self.profiler_enabled and self.profiler.debug_mode:
+            ret["report_timing_profile"] = self.profiler.timing_context.to_dict()
+        return ret
+
+    @property
+    def json_response(self):
+        if not self.profiler_enabled:
+            return super().json_response
+
+        # Timing profile is calculated if self.profiler_enabled. Report
+        # long-running timings to Sentry for follow-up
+        start_time = datetime.now()
+        with self.profiler.timing_context:
+            response = super().json_response
+
+        elapsed_seconds = round((datetime.now() - start_time).total_seconds(), 1)
+        if elapsed_seconds > LONG_RUNNING_CLE_THRESHOLD:
+            self.profiler.timing_context.add_to_sentry_breadcrumbs()
+            request_dict = dict(self.request.GET.lists())
+
+            notify_exception(None, "LongRunningReport", details={
+                'request_dict': request_dict,
+            })
+
+        return response
+
+
+def profile(name=None):
+    """
+    This decorator wraps the given function with a timing context. The results will
+    be labeled by `name`.
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(obj, *args, **kwargs):
+            if obj.profiler_enabled and hasattr(obj, 'profiler'):
+                with obj.profiler.timing_context(name):
+                    return func(obj, *args, **kwargs)
+            return func(obj, *args, **kwargs)
+        return wrapper
+    return decorator

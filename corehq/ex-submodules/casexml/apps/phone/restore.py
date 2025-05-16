@@ -243,7 +243,7 @@ class CachedResponse(object):
         """
         name = 'restore-{}.xml'.format(uuid4().hex)
         get_blob_db().put(
-            NoClose(fileobj),
+            fileobj,
             domain=domain,
             parent_id=restore_user_id,
             type_code=CODES.restore,
@@ -523,7 +523,7 @@ class RestoreConfig(object):
     :param restore_user:    The restore user requesting the restore
     :param params:          The RestoreParams associated with this (see above).
     :param cache_settings:  The RestoreCacheSettings associated with this (see above).
-    :param is_async:           Whether to get the restore response using a celery task
+    :param is_async:        Whether to get the restore response using a celery task
     :param skip_fixtures:   Whether to include fixtures in the restore payload
     """
 
@@ -733,9 +733,10 @@ class RestoreConfig(object):
             with self.timing_context('RegistrationElementProvider'):
                 content.append(get_registration_element(self.restore_state.restore_user))
 
-            with self.timing_context('FixtureElementProvider'):
-                for element in get_fixture_elements(self.restore_state, self.timing_context, self.skip_fixtures):
-                    content.append(element)
+            if not self.skip_fixtures:
+                with self.timing_context('FixtureElementProvider'):
+                    for element in get_fixture_elements(self.restore_state, self.timing_context):
+                        content.append(element)
 
             with self.timing_context('CasePayloadProvider'):
                 do_livequery(self.timing_context, self.restore_state, content, async_task)
@@ -812,14 +813,16 @@ class RestoreConfig(object):
             extra_tags = {}
             if timer.name in RESTORE_SEGMENTS:
                 segment = RESTORE_SEGMENTS[timer.name]
+                segment_timer_buckets = timer_buckets
             elif timer.name.startswith('fixture:'):
                 segment = 'fixture'
+                segment_timer_buckets = (0.25, 0.5, 1, 5, 20, 60, 120, 300, 600)
                 extra_tags = {'fixture': timer.name.split(':')[1]}
 
             if segment:
                 metrics_histogram(
                     'commcare.restores.{}.duration.seconds'.format(segment), timer.duration,
-                    bucket_tag='duration', buckets=timer_buckets, bucket_unit='s',
+                    bucket_tag='duration', buckets=segment_timer_buckets, bucket_unit='s',
                     tags={**tags, **extra_tags}
                 )
 
@@ -861,19 +864,3 @@ RESTORE_SEGMENTS = {
     "FixtureElementProvider": "fixtures",
     "CasePayloadProvider": "cases",
 }
-
-
-class NoClose(object):
-    """HACK file object with no-op `close()` to avoid close by S3Transfer
-
-    https://github.com/boto/s3transfer/issues/80
-    """
-
-    def __init__(self, fileobj):
-        self.fileobj = fileobj
-
-    def __getattr__(self, name):
-        return getattr(self.fileobj, name)
-
-    def close(self):
-        pass

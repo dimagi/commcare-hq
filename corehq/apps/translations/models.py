@@ -7,7 +7,6 @@ from django.urls import reverse
 from corehq.apps.app_manager.dbaccessors import get_app, get_app_ids_in_domain
 from corehq.motech.const import ALGO_AES_CBC
 from corehq.motech.utils import (
-    b64_aes_decrypt,
     b64_aes_cbc_decrypt,
     b64_aes_cbc_encrypt,
 )
@@ -171,10 +170,10 @@ class TransifexOrganization(models.Model):
 
     @property
     def plaintext_api_token(self):
-        if self.api_token.startswith(f'${ALGO_AES_CBC}$'):
-            ciphertext = self.api_token.split('$', 2)[2]
-            return b64_aes_cbc_decrypt(ciphertext)
-        return b64_aes_decrypt(self.api_token)
+        if self.api_token == '':
+            return ''
+        ciphertext = self.api_token.split('$', 2)[2]
+        return b64_aes_cbc_decrypt(ciphertext)
 
     @plaintext_api_token.setter
     def plaintext_api_token(self, plaintext):

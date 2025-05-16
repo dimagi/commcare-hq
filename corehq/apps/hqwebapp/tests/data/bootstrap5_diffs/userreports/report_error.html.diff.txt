@@ -1,0 +1,17 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ {% load compress %}
+@@ -21,7 +21,7 @@
+   {% if allow_delete %}
+     <form method='post' action="{% url 'delete_configurable_report' domain report_id %}?redirect={% url 'reports_home' domain %}" >
+       {% csrf_token %}
+-      <input type="submit" value="{% trans 'Delete Report'%}" class="btn btn-danger disable-on-submit pull-right">
++      <input type="submit" value="{% trans 'Delete Report'%}" class="btn btn-outline-danger disable-on-submit float-end">
+     </form>
+   {% endif %}
+ {% endblock %}

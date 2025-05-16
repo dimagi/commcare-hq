@@ -13,6 +13,7 @@ import corehq.blobs.fsdb as mod
 from corehq.blobs import CODES
 from corehq.blobs.metadata import MetaDB
 from corehq.blobs.tasks import delete_expired_blobs
+from corehq.blobs.util import BlobStream
 from corehq.blobs.tests.util import new_meta, temporary_blob_db
 from corehq.util.metrics.tests.utils import capture_metrics
 from corehq.util.test_utils import generate_cases
@@ -88,7 +89,8 @@ class _BlobDBTests(object):
         self.assertTrue(self.db.delete(key=meta.key), 'delete failed')
         with self.assertRaises(mod.NotFound):
             self.db.get(meta=meta)
-        return meta
+        if _is_overridden(self.test_delete):
+            return meta
 
     def test_bulk_delete(self):
         metas = [
@@ -106,7 +108,8 @@ class _BlobDBTests(object):
             with self.assertRaises(mod.NotFound):
                 self.db.get(meta=meta)
 
-        return metas
+        if _is_overridden(self.test_bulk_delete):
+            return metas
 
     def test_delete_no_args(self):
         meta = self.db.put(BytesIO(b"content"), meta=self.new_meta())
@@ -119,7 +122,8 @@ class _BlobDBTests(object):
     def test_empty_attachment_name(self):
         meta = self.db.put(BytesIO(b"content"), meta=self.new_meta())
         self.assertNotIn(".", meta.key)
-        return meta
+        if _is_overridden(self.test_empty_attachment_name):
+            return meta
 
     def test_put_with_colliding_blob_id(self):
         meta = self.new_meta()
@@ -152,6 +156,34 @@ class _BlobDBTests(object):
         self.db.expire("test", "abc")  # should not raise error
         with self.assertRaises(mod.NotFound):
             self.db.get(key="abc", type_code=CODES.tempfile)
+
+    def test_raw_io_content_stream_should_be_open_after_put(self):
+        content = BytesIO(b"regular content")
+        self.db.put(content, meta=self.new_meta())
+        self.assertFalse(content.closed, "Regular content stream should remain open after put")
+        try:
+            content.read()
+        except Exception as e:
+            self.fail(f"Reading from BlobStream failed with exception: {e}")
+
+    def test_blob_stream_should_remain_open_after_put(self):
+        source_meta = self.db.put(BytesIO(b"blob stream content"), meta=self.new_meta())
+        with self.db.get(meta=source_meta) as blob_stream:
+            self.assertIsInstance(blob_stream, BlobStream)
+            self.assertFalse(blob_stream.closed)
+
+            self.db.put(blob_stream, meta=self.new_meta())
+
+            self.assertFalse(blob_stream.closed, "BlobStream should remain open after put")
+
+            try:
+                blob_stream.read()
+            except Exception as e:
+                self.fail(f"Reading from BlobStream failed with exception: {e}")
+
+
+def _is_overridden(method):
+    return method.__code__ != getattr(_BlobDBTests, method.__name__).__code__
 
 
 @generate_cases([

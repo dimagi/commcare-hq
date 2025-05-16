@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -3,7 +3,7 @@
+ import _ from "underscore";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+ import baseAce from "hqwebapp/js/base_ace";
+-import alertUser from "hqwebapp/js/bootstrap3/alert_user";
++import alertUser from "hqwebapp/js/bootstrap5/alert_user";
+ 
+ let EditModel = function (data) {
+     const mapping = {

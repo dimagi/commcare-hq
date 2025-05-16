@@ -7,13 +7,16 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 
+from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
+from corehq.apps.hqwebapp.utils.translation import format_html_lazy
 from corehq.apps.integration.kyc.models import (
     KycConfig,
     KycProviders,
     UserDataStore,
 )
+from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.userreports.ui.fields import JsonField
-from corehq.motech.models import ConnectionSettings
 
 
 class KycConfigureForm(forms.ModelForm):
@@ -25,15 +28,14 @@ class KycConfigureForm(forms.ModelForm):
             'other_case_type',
             'provider',
             'api_field_to_user_data_map',
-            'connection_settings',
         ]
 
     user_data_store = forms.ChoiceField(
-        label=_('User Data Store'),
+        label=_('Recipient Data Store'),
         required=True,
         choices=UserDataStore.CHOICES,
     )
-    other_case_type = forms.CharField(
+    other_case_type = forms.ChoiceField(
         label=_('Other Case Type'),
         required=False,
     )
@@ -43,23 +45,22 @@ class KycConfigureForm(forms.ModelForm):
         choices=KycProviders.choices,
     )
     api_field_to_user_data_map = JsonField(
-        label=_('API Field to User Data Map'),
+        label=_('API Field to Recipient Data Map'),
         required=True,
-        expected_type=list,
-    )
-    connection_settings = forms.ModelChoiceField(
-        label=_('Connection Settings'),
-        required=True,
-        queryset=None,
+        expected_type=dict,
+        help_text=format_html_lazy(
+            _('Maps API field for the KYC provider to the field used for storing the relevant data.'
+              ' To learn more about this, please have a look at our '
+              '<a href="{}" target="_blank">support documentation</a>.'),
+            'https://commcare-hq.readthedocs.io/integrations/kyc.html#api-field-to-recipient-data-map'
+        ),
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance = kwargs.pop('instance')
-        self.fields['connection_settings'].queryset = ConnectionSettings.objects.filter(
-            domain=self.instance.domain
-        )
 
+        self.fields['other_case_type'].choices = self._get_case_types()
         self.helper = FormHelper()
         self.helper.form_tag = False
 
@@ -85,10 +86,6 @@ class KycConfigureForm(forms.ModelForm):
                     x_init='api_field_to_user_data_map = $el.value',
                     css_id='api-mapping',
                 ),
-                crispy.Field(
-                    'connection_settings',
-                    x_init='connection_settings = $el.value',
-                ),
                 twbscrispy.StrictButton(
                     _('Save'),
                     type='submit',
@@ -102,11 +99,9 @@ class KycConfigureForm(forms.ModelForm):
             )
         )
 
-    def clean(self):
-        user_data_store = self.cleaned_data['user_data_store']
-        other_case_type = self.cleaned_data['other_case_type']
-        if user_data_store == UserDataStore.OTHER_CASE_TYPE and not other_case_type:
-            self.add_error('other_case_type', _('Please specify a value'))
-        elif user_data_store != UserDataStore.OTHER_CASE_TYPE:
-            self.cleaned_data['other_case_type'] = None
-        return self.cleaned_data
+    def _get_case_types(self):
+        case_types = sorted(get_case_types_for_domain(self.instance.domain))
+        return [
+            (case_type, case_type) for case_type in case_types
+            if case_type not in (USERCASE_TYPE, USER_LOCATION_OWNER_MAP_TYPE)
+        ]

@@ -54,7 +54,6 @@ from corehq.apps.hqcase.utils import (
     resave_case,
     submit_case_blocks,
 )
-from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.templatetags.proptable_tags import (
     DisplayConfig,
     get_table_as_rows,
@@ -131,7 +130,6 @@ class CaseDataView(BaseProjectReportSectionView):
     http_method_names = ['get']
 
     @method_decorator(require_case_view_permission)
-    @use_datatables
     def dispatch(self, request, *args, **kwargs):
         if not self.case_instance:
             messages.info(request,
@@ -215,8 +213,17 @@ class CaseDataView(BaseProjectReportSectionView):
             product_tuples.sort(key=lambda x: x[0])
             ledger_map[section] = product_tuples
 
+        process_repeaters_enabled = toggles.PROCESS_REPEATERS.enabled(
+            self.domain,
+            toggles.NAMESPACE_DOMAIN,
+        )
         repeat_records = [
-            RepeatRecordDisplay(record, timezone, date_format=DATE_FORMAT)
+            RepeatRecordDisplay(
+                record,
+                timezone,
+                date_format=DATE_FORMAT,
+                process_repeaters_enabled=process_repeaters_enabled,
+            )
             for record in RepeatRecord.objects.filter(domain=self.domain, payload_id=self.case_id)
         ]
 

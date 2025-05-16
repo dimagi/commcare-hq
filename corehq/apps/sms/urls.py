@@ -7,6 +7,7 @@ from corehq.apps.sms.views import (
     ChatMessageHistory,
     ChatOverSMSView,
     ComposeMessageView,
+    ConnectMessagingUserView,
     DomainSmsGatewayListView,
     EditDomainGatewayView,
     EditGlobalGatewayView,
@@ -20,6 +21,7 @@ from corehq.apps.sms.views import (
     api_send_sms,
     chat,
     chat_contact_list,
+    create_channels,
     default,
     download_sms_translations,
     edit_sms_languages,
@@ -59,6 +61,8 @@ urlpatterns = [
     url(r'^translations/upload/$', upload_sms_translations, name='upload_sms_translations'),
     url(r'^telerivet/', include(telerivet_urls)),
     url(r'^whatsapp_templates/$', WhatsAppTemplatesView.as_view(), name=WhatsAppTemplatesView.urlname),
+    url(r'^connect_messaging_user/$', ConnectMessagingUserView.as_view(), name=ConnectMessagingUserView.urlname),
+    url(r'^create_channels/$', create_channels, name='create_channels'),
 ]
 
 

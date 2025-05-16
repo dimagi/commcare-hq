@@ -5,7 +5,8 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.db.models import Q
 from django.urls import reverse
 from django.utils.functional import cached_property
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
@@ -22,6 +23,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_brief_apps_in_domain,
 )
+from corehq.apps.app_manager.exceptions import AppInDifferentDomainException
 from corehq.apps.es import UserES, filters
 from corehq.apps.es.aggregations import (
     DateHistogram,
@@ -74,6 +76,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         'corehq.apps.reports.filters.select.SelectApplicationFilter'
     ]
     primary_sort_prop = None
+    use_bootstrap5 = True
 
     @property
     def _columns(self):
@@ -83,37 +86,45 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         return [
             DataTablesColumn(_("Username"),
                              prop_name='username.exact',
-                             sql_col='user_dim__username'),
+                             sql_col='user_dim__username',
+                             use_bootstrap5=self.use_bootstrap5),
             DataTablesColumn(_("Assigned Location(s)"),
                              help_text=_('Assigned locations for the user, with the primary '
                                          'location highlighted in bold.'),
-                             sortable=False),
+                             sortable=False,
+                             use_bootstrap5=self.use_bootstrap5),
             DataTablesColumn(_("Last Submission"),
                              prop_name='reporting_metadata.last_submissions.submission_date',
                              alt_prop_name='reporting_metadata.last_submission_for_user.submission_date',
-                             sql_col='last_form_submission_date'),
+                             sql_col='last_form_submission_date',
+                             use_bootstrap5=self.use_bootstrap5),
             DataTablesColumn(_("Last Sync"),
                              prop_name='reporting_metadata.last_syncs.sync_date',
                              alt_prop_name='reporting_metadata.last_sync_for_user.sync_date',
-                             sql_col='last_sync_log_date'),
+                             sql_col='last_sync_log_date',
+                             use_bootstrap5=self.use_bootstrap5),
             DataTablesColumn(_("Application"),
                              help_text=_("The name of the application from the user's last request."),
-                             sortable=False),
+                             sortable=False,
+                             use_bootstrap5=self.use_bootstrap5),
             DataTablesColumn(_("Application Version"),
                              help_text=_("The application version from the user's last request."),
                              prop_name='reporting_metadata.last_builds.build_version',
                              alt_prop_name='reporting_metadata.last_build_for_user.build_version',
-                             sql_col='last_form_app_build_version'),
+                             sql_col='last_form_app_build_version',
+                             use_bootstrap5=self.use_bootstrap5),
             DataTablesColumn(_("CommCare Version"),
                              help_text=_("""The CommCare version from the user's last request"""),
                              prop_name='reporting_metadata.last_submissions.commcare_version',
                              alt_prop_name='reporting_metadata.last_submission_for_user.commcare_version',
-                             sql_col='last_form_app_commcare_version'),
+                             sql_col='last_form_app_commcare_version',
+                             use_bootstrap5=self.use_bootstrap5),
             DataTablesColumn(_("Number of unsent forms in user's phone"),
                              help_text=_("The number of unsent forms in users' phones for {app_info}".format(
                                  app_info=selected_app_info
                              )),
-                             sortable=False),
+                             sortable=False,
+                             use_bootstrap5=self.use_bootstrap5),
         ]
 
     @property
@@ -123,7 +134,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             columns.append(
                 DataTablesColumn(_("Build Profile"),
                                  help_text=_("The build profile from the user's last hearbeat request."),
-                                 sortable=False)
+                                 sortable=False,
+                                 use_bootstrap5=self.use_bootstrap5)
             )
         headers = DataTablesHeader(*columns)
         headers.custom_sort = [[2, 'desc']]
@@ -161,41 +173,42 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     def get_sorting_block(self):
         sort_prop_name = 'prop_name' if self.selected_app_id else 'alt_prop_name'
-        res = []
-        #the NUMBER of cols sorting
-        sort_cols = int(self.request.GET.get('iSortingCols', 0))
-        if sort_cols > 0:
-            for x in range(sort_cols):
-                col_key = 'iSortCol_%d' % x
-                sort_dir = self.request.GET['sSortDir_%d' % x]
-                col_id = int(self.request.GET[col_key])
-                col = self.headers.header[col_id]
-                sort_prop = getattr(col, sort_prop_name) or col.prop_name
-                if x == 0:
-                    self.primary_sort_prop = sort_prop
-                if self.selected_app_id:
-                    sort_dict = {
-                        sort_prop: {
-                            "order": sort_dir,
-                            "nested_filter": {
-                                "term": {
-                                    self.sort_filter: self.selected_app_id
-                                }
-                            }
-                        }
+        block = []
+        for col in self.datatables_params.order:
+            col_ind = col['column']
+            sort_dir = col['dir']
+            dt_column_obj = self.headers.header[col_ind]
+            sort_prop = getattr(dt_column_obj, sort_prop_name) or dt_column_obj.prop_name
+            if self.primary_sort_prop is None:
+                # default the primary sort prop to the first column in the params list
+                self.primary_sort_prop = sort_prop
+            if self.selected_app_id:
+                sort_dict = self._get_selected_app_sort_dict(sort_prop, sort_dir)
+            else:
+                sort_dict = {sort_prop: sort_dir}
+            block.append(sort_dict)
+        if len(block) == 0 and self.default_sort is not None:
+            block.append(self.default_sort)
+        return block
+
+    def _get_selected_app_sort_dict(self, sort_prop, sort_dir):
+        sort_dict = {
+            sort_prop: {
+                "order": sort_dir,
+                "nested_filter": {
+                    "term": {
+                        self.sort_filter: self.selected_app_id
                     }
-                    sort_prop_path = sort_prop.split('.')
-                    if sort_prop_path[-1] == 'exact':
-                        sort_prop_path.pop()
-                    sort_prop_path.pop()
-                    if sort_prop_path:
-                        sort_dict[sort_prop]['nested_path'] = '.'.join(sort_prop_path)
-                else:
-                    sort_dict = {sort_prop: sort_dir}
-                res.append(sort_dict)
-        if len(res) == 0 and self.default_sort is not None:
-            res.append(self.default_sort)
-        return res
+                }
+            }
+        }
+        sort_prop_path = sort_prop.split('.')
+        if sort_prop_path[-1] == 'exact':
+            sort_prop_path.pop()
+        sort_prop_path.pop()
+        if sort_prop_path:
+            sort_dict[sort_prop]['nested_path'] = '.'.join(sort_prop_path)
+        return sort_dict
 
     @property
     @memoized
@@ -366,7 +379,13 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             if last_build:
                 build_version = last_build.get('build_version') or build_version
                 if last_build.get('app_id'):
-                    app_name = self.get_app_name(last_build['app_id'])
+                    try:
+                        # For web users who are hopping into multiple apps in different domains,
+                        # we should not fail the whole report if one of the app names is not found.
+                        # We should skip the entry for that user as it did not belong to the requested domain.
+                        app_name = self.get_app_name(last_build['app_id'])
+                    except AppInDifferentDomainException:
+                        continue
                 if self.show_build_profile:
                     last_build_profile_id = last_build.get('build_profile_id')
                     if last_build_profile_id:
@@ -511,31 +530,33 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         user = CouchUser.wrap_correctly(user_es_doc)
         if not user.get_location_ids(self.domain):
             return '---'
-        return self._get_formatted_assigned_location_names(user, user_loc_dict)
+        assigned_location_ids = user.get_location_ids(self.domain)
+        primary_location_id = user.get_location_id(self.domain)
+        return self._get_formatted_assigned_location_names(primary_location_id, assigned_location_ids,
+                                                           user_loc_dict)
 
-    def _get_formatted_assigned_location_names(self, user, user_loc_dict):
+    @staticmethod
+    def _get_formatted_assigned_location_names(primary_location_id, assigned_location_ids, user_loc_dict):
         """
         Create an HTML formatted string of the given assigned location names.
         The primary location will be highlighted in bold.
         """
-        assigned_location_ids = user.get_location_ids(self.domain)
-        primary_location_id = user.get_location_id(self.domain)
         formatted_loc_names = []
         for loc_id in assigned_location_ids:
             loc_name = user_loc_dict.get(loc_id)
             if loc_id == primary_location_id:
                 formatted_loc_names.insert(
-                    0, f'<strong>{loc_name}</strong>'
+                    0, [format_html('<strong>{}</strong>', loc_name)]
                 )
             else:
-                formatted_loc_names.append(loc_name)
+                formatted_loc_names.append([format_html('{}', loc_name)])
 
-        formatted_str = ', '.join(formatted_loc_names[:4])
+        formatted_str = format_html_join(', ', '{}', formatted_loc_names[:4])
         html_nodes = [
-            f'<span class="locations-list">{formatted_str}</span>',
+            format_html('<span class="locations-list">{}</span>', formatted_str)
         ]
         if len(formatted_loc_names) > 4:
-            all_str = ', '.join(formatted_loc_names)
+            all_str = format_html_join(', ', '{}', formatted_loc_names)
             view_controls_html_nodes = [
                 f'<span class="loc-view-control">{_("...See more")}</span>',
                 f'<span class="loc-view-control" style="display:none">{_("...Collapse")}</span>',
@@ -544,7 +565,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 f'<span class="all-locations-list" style="display:none">{all_str}</span>',
                 f'<a href="#" class="toggle-all-locations">{"".join(view_controls_html_nodes)}</a>',
             ]
-        return format_html(f'<div>{"".join(html_nodes)}</div>')
+        return format_html('<div>{}</div>', mark_safe("".join(html_nodes)))
 
 
 def format_commcare_version(app_version_info):
@@ -578,7 +599,7 @@ def _fmt_date(date, include_sort_key=True):
         return _bootstrap_class(delta, timedelta(days=7), timedelta(days=3))
 
     if not date:
-        text = format_html('<span class="label label-default">{}</span>', _("Never"))
+        text = format_html('<span class="badge text-bg-secondary">{}</span>', _("Never"))
     else:
         text = format_html(
             '<span class="{cls}">{text}</span>',
@@ -601,11 +622,11 @@ def _bootstrap_class(obj, severe, warn):
     assumes bigger is worse and default is good.
     """
     if obj > severe:
-        return "label label-danger"
+        return "badge text-bg-danger"
     elif obj > warn:
-        return "label label-warning"
+        return "badge text-bg-warning"
     else:
-        return "label label-success"
+        return "badge text-bg-success"
 
 
 def _get_histogram_aggregation_for_app(field_name, date_field_name, app_id):

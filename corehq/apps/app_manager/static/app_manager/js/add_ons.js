@@ -1,55 +1,47 @@
-hqDefine("app_manager/js/add_ons", [
-    'jquery',
-    'underscore',
-    'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/bootstrap3/main',
-    'app_manager/js/section_changer',
-], function (
-    $,
-    _,
-    initialPageData,
-    hqMain,
-    sectionChanger,
-) {
-    function EditAddOns(addOns, layout, saveUrl) {
-        var self = this;
+import $ from "jquery";
+import _ from "underscore";
+import initialPageData from "hqwebapp/js/initial_page_data";
+import hqMain from "hqwebapp/js/bootstrap3/main";
+import sectionChanger from "app_manager/js/section_changer";
 
-        self.addOns = addOns;
-        self.sections = _.map(layout, function (s) {
-            return _.extend(s, {
-                collapse: sectionChanger.shouldCollapse("add-ons", s.slug, s.collapse),
-            });
-        });
-        self.saveButton = hqMain.initSaveButton({
-            unsavedMessage: gettext("You have unsaved changes."),
-            save: function () {
-                // Send server map of slug => enabled
-                var data = _.mapObject(self.addOns, function (a) { return a ? 'on' : ''; });
-                self.saveButton.ajax({
-                    url: saveUrl,
-                    type: 'post',
-                    data: data,
-                    error: function () {
-                        throw gettext("There was an error saving.");
-                    },
-                });
-            },
-        });
-        self.update = function (addOn, e) {
-            self.addOns[addOn.slug] = e.currentTarget.checked;
-            self.saveButton.fire('change');
-        };
-    }
+function EditAddOns(addOns, layout, saveUrl) {
+    var self = this;
 
-    $(function () {
-        var $addOns = $("#add-ons");
-        if ($addOns.length) {
-            $addOns.koApplyBindings(new EditAddOns(
-                initialPageData.get("add_ons"),
-                initialPageData.get("add_ons_layout"),
-                initialPageData.reverse("edit_add_ons"),
-            ));
-            sectionChanger.attachToForm($addOns.find("form"));
-        }
+    self.addOns = addOns;
+    self.sections = _.map(layout, function (s) {
+        return _.extend(s, {
+            collapse: sectionChanger.shouldCollapse("add-ons", s.slug, s.collapse),
+        });
     });
+    self.saveButton = hqMain.initSaveButton({
+        unsavedMessage: gettext("You have unsaved changes."),
+        save: function () {
+            // Send server map of slug => enabled
+            var data = _.mapObject(self.addOns, function (a) { return a ? 'on' : ''; });
+            self.saveButton.ajax({
+                url: saveUrl,
+                type: 'post',
+                data: data,
+                error: function () {
+                    throw gettext("There was an error saving.");
+                },
+            });
+        },
+    });
+    self.update = function (addOn, e) {
+        self.addOns[addOn.slug] = e.currentTarget.checked;
+        self.saveButton.fire('change');
+    };
+}
+
+$(function () {
+    var $addOns = $("#add-ons");
+    if ($addOns.length) {
+        $addOns.koApplyBindings(new EditAddOns(
+            initialPageData.get("add_ons"),
+            initialPageData.get("add_ons_layout"),
+            initialPageData.reverse("edit_add_ons"),
+        ));
+        sectionChanger.attachToForm($addOns.find("form"));
+    }
 });

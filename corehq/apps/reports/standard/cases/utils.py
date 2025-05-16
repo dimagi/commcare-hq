@@ -62,9 +62,19 @@ def deactivated_case_owners(domain):
     return case_es.owner(owner_ids)
 
 
-def get_case_owners(request, domain, mobile_user_and_group_slugs):
+def get_case_owners(can_access_all_locations, domain, mobile_user_and_group_slugs):
     """
-    For unrestricted user
+    Returns a list of user, group, and location ids that are owners for cases.
+
+    :param can_access_all_locations: boolean
+        - generally obtained from `request.can_access_all_locations`
+    :param domain: string
+        - the domain string that the case owners belong to
+    :param mobile_user_and_group_slugs: list
+        - a list of user ids and special formatted strings returned by
+          the `ExpandedMobileWorkerFilter` and its subclasses
+
+    For unrestricted user (can_access_all_locations = True)
     :return:
     user ids for selected user types
     for selected reporting group ids, returns user_ids belonging to these groups
@@ -76,7 +86,7 @@ def get_case_owners(request, domain, mobile_user_and_group_slugs):
     ids and descendants ids of selected locations
         assigned users at selected locations and their descendants
 
-    For restricted user
+    For restricted user (can_access_all_locations = False)
     :return:
     selected user ids
         also finds the sharing groups which has any user from the above selected users
@@ -87,7 +97,7 @@ def get_case_owners(request, domain, mobile_user_and_group_slugs):
     special_owner_ids, selected_sharing_group_ids, selected_reporting_group_users = [], [], []
     sharing_group_ids, location_owner_ids, assigned_user_ids_at_selected_locations = [], [], []
 
-    if request.can_access_all_locations:
+    if can_access_all_locations:
         user_types = EMWF.selected_user_types(mobile_user_and_group_slugs)
 
         special_owner_ids = _get_special_owner_ids(
@@ -201,3 +211,35 @@ def get_user_type(form, domain=None):
             user_type = doc_info.type_display
 
     return user_type
+
+
+def add_case_owners_and_location_access(
+    query,
+    domain,
+    couch_user,
+    can_access_all_locations,
+    mobile_user_and_group_slugs
+):
+    case_owner_filters = []
+
+    if can_access_all_locations:
+        if EMWF.show_project_data(mobile_user_and_group_slugs):
+            case_owner_filters.append(all_project_data_filter(domain, mobile_user_and_group_slugs))
+        if EMWF.show_deactivated_data(mobile_user_and_group_slugs):
+            case_owner_filters.append(deactivated_case_owners(domain))
+
+    # Only show explicit matches
+    if (
+        EMWF.selected_user_ids(mobile_user_and_group_slugs)
+        or EMWF.selected_user_types(mobile_user_and_group_slugs)
+        or EMWF.selected_group_ids(mobile_user_and_group_slugs)
+        or EMWF.selected_location_ids(mobile_user_and_group_slugs)
+    ):
+        case_owners = get_case_owners(can_access_all_locations, domain, mobile_user_and_group_slugs)
+        case_owner_filters.append(case_es.owner(case_owners))
+
+    query = query.OR(*case_owner_filters)
+
+    if not can_access_all_locations:
+        query = query_location_restricted_cases(query, domain, couch_user)
+    return query

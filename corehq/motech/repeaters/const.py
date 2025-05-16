@@ -14,7 +14,7 @@ RATE_LIMITER_DELAY_RANGE = (
 CHECK_REPEATERS_INTERVAL = timedelta(minutes=5)
 CHECK_REPEATERS_PARTITION_COUNT = settings.CHECK_REPEATERS_PARTITION_COUNT
 CHECK_REPEATERS_KEY = 'check-repeaters-key'
-PROCESS_REPEATERS_INTERVAL = timedelta(minutes=5)
+PROCESS_REPEATERS_INTERVAL = timedelta(minutes=1)
 ENDPOINT_TIMER = 'endpoint_timer'
 # Number of attempts to an online endpoint before cancelling payload
 MAX_ATTEMPTS = 3
@@ -34,13 +34,14 @@ class State(IntegerChoices):
     Empty = 16, _('Empty')  # There was nothing to send. Implies Success.
     InvalidPayload = 32, _('Invalid Payload')  # Implies Cancelled.
 
+    @staticmethod
+    def state_for_key(key):
+        # Keys match RepeatRecordStateFilter.options[*][0]
+        state_map = {s.name.upper(): s for s in State}
+        return state_map.get(key.upper() if key else None)
 
-RECORD_PENDING_STATE = State.Pending
-RECORD_SUCCESS_STATE = State.Success
-RECORD_FAILURE_STATE = State.Fail
-RECORD_CANCELLED_STATE = State.Cancelled
-RECORD_EMPTY_STATE = State.Empty
-RECORD_INVALIDPAYLOAD_STATE = State.InvalidPayload
+
+RECORD_QUEUED_STATES = (State.Pending, State.Fail)
 
 
 class UCRRestrictionFFStatus(IntegerChoices):

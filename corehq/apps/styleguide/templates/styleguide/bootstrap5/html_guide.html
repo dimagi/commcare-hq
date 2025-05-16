@@ -1,10 +1,6 @@
 {% extends 'styleguide/bootstrap5/base.html' %}
 {% load hq_shared_tags %}
 
-{% block head %}
-  <script src="{% static 'htmx.org/dist/htmx.min.js' %}"></script>
-{% endblock head %}
-
 {% block intro %}
   <h1 class="sg-title mb-0" id="content">HTML Style Guide</h1>
   <p class="sg-lead">
@@ -84,8 +80,8 @@
   <ul>
     <li>
       <p>
-        <strong>Standard Attributes:</strong> Place primary attributes (e.g., <code>class</code>,
-        <code>id</code>, <code>type</code>) first on the element, followed by a line break
+        <strong>Standard Attributes:</strong> Place primary attributes (e.g., <code>id</code>,
+        <code>class</code>, <code>type</code>) first on the element, followed by a line break
         if additional attributes exist or if the line exceeds 115 characters when all attributes are inline.
       </p>
       {% include 'styleguide/bootstrap5/code_display.html' with content=examples.standard_attributes %}

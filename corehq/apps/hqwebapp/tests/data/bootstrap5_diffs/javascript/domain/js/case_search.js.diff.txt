@@ -1,14 +1,11 @@
 --- 
 +++ 
-@@ -1,9 +1,9 @@
--hqDefine('domain/js/bootstrap3/case_search', [
-+hqDefine('domain/js/bootstrap5/case_search', [
-     'jquery',
-     'knockout',
-     'underscore',
-     'hqwebapp/js/initial_page_data',
--    'hqwebapp/js/bootstrap3/main',
-+    'hqwebapp/js/bootstrap5/main',
- ], function (
-     $,
-     ko,
+@@ -1,7 +1,7 @@
+ import ko from "knockout";
+ import _ from "underscore";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+-import hqMain from "hqwebapp/js/bootstrap3/main";
++import hqMain from "hqwebapp/js/bootstrap5/main";
+ 
+ var module = {};
+ 

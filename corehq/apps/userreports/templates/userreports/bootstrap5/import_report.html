@@ -1,0 +1,20 @@
+{% extends "userreports/bootstrap5/userreports_base.html" %}
+{% load i18n %}
+{% block page_content %}
+  <form method='post' class="form-horizontal">
+    {% csrf_token %}
+    <div class="form-group">  {# todo B5: css-form-group #}
+      <label for="report_spec" class="form-label col-md-3 col-lg-2 requiredField">{% trans "Report spec" %}<span class="asteriskField">*</span></label>
+      <div class="col-md-9 col-lg-8">
+        <textarea cols="100" placeholder="{% trans 'paste report source here' %}" class="form-control vertical-resize" name="report_spec" rows="30">{{ spec }}</textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <div class="col-md-9 col-lg-8 offset-md-3 offset-lg-2">
+        <button type="submit" class="btn btn-primary disable-on-submit">
+          {% trans 'Import Report'%}
+        </button>
+      </div>
+    </div>
+  </form>
+{% endblock %}

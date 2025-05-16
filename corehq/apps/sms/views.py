@@ -63,11 +63,6 @@ from corehq.apps.domain.views.base import BaseDomainView, DomainViewMixin
 from corehq.apps.groups.models import Group
 from corehq.apps.hqadmin.views.users import BaseAdminSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.decorators import (
-    use_datatables,
-    use_jquery_ui,
-    use_timepicker,
-)
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.reminders.util import get_two_way_number_for_recipient
@@ -76,7 +71,7 @@ from corehq.apps.sms.api import (
     get_inbound_phone_entry,
     incoming,
     send_sms,
-    send_sms_to_verified_number,
+    send_message_to_verified_number,
     send_sms_with_backend_name,
 )
 from corehq.apps.sms.forms import (
@@ -126,11 +121,12 @@ from corehq.apps.smsforms.models import (
 )
 from corehq.apps.users import models as user_models
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import CommCareUser, CouchUser, HqPermissions
+from corehq.apps.users.models import CommCareUser, ConnectIDUserLink, CouchUser, HqPermissions
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.async_handlers import SMSSettingsAsyncHandler
+from corehq.messaging.smsbackends.connectid.backend import ConnectBackend
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.quickcache import quickcache
@@ -530,7 +526,7 @@ def api_send_sms(request, domain):
         if backend_id is not None:
             success = send_sms_with_backend_name(domain, phone_number, text, backend_id, metadata)
         elif vn is not None:
-            success = send_sms_to_verified_number(vn, text, metadata)
+            success = send_message_to_verified_number(vn, text, metadata)
         else:
             success = send_sms(domain, None, phone_number, text, metadata)
 
@@ -626,10 +622,6 @@ class ChatOverSMSView(BaseMessagingSectionView):
     urlname = 'chat_contacts'
     template_name = 'sms/chat_contacts.html'
     page_title = _("Chat over SMS")
-
-    @use_datatables
-    def dispatch(self, *args, **kwargs):
-        return super(ChatOverSMSView, self).dispatch(*args, **kwargs)
 
 
 def get_case_contact_info(domain_obj, case_ids):
@@ -1651,7 +1643,6 @@ class SMSLanguagesView(BaseMessagingSectionView):
     template_name = "sms/languages.html"
     page_title = gettext_noop("Languages")
 
-    @use_jquery_ui
     @method_decorator(domain_admin_required)
     def dispatch(self, *args, **kwargs):
         return super(SMSLanguagesView, self).dispatch(*args, **kwargs)
@@ -1963,7 +1954,6 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
         return self.get(request, *args, **kwargs)
 
     @method_decorator(domain_admin_required)
-    @use_timepicker
     def dispatch(self, request, *args, **kwargs):
         return super(SMSSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -2046,3 +2036,45 @@ class WhatsAppTemplatesView(BaseMessagingSectionView):
                     + _(" failed to fetch templates. Please make sure the gateway is configured properly.")
                 )
         return context
+
+
+class ConnectMessagingUserView(BaseMessagingSectionView):
+    urlname = 'connect_messaging_user'
+    template_name = 'sms/connect_messaging_user.html'
+    page_title = _("Connect Messaging Users")
+
+    @method_decorator(toggles.COMMCARE_CONNECT.required_decorator())
+    @method_decorator(domain_admin_required)
+    def dispatch(self, *args, **kwargs):
+        return super(ConnectMessagingUserView, self).dispatch(*args, **kwargs)
+
+    @property
+    def page_context(self):
+        page_context = super(ConnectMessagingUserView, self).page_context
+        page_context.update({
+            "create_channel_url": reverse("create_channels", args=[self.domain])
+        })
+        return page_context
+
+
+@toggles.COMMCARE_CONNECT.required_decorator()
+@domain_admin_required
+def create_channels(request, domain, *args, **kwargs):
+    user_links = ConnectIDUserLink.objects.filter(domain=domain, channel_id__isnull=True)
+    backend = ConnectBackend()
+    channel_users = []
+    for link in user_links:
+        success = backend.create_channel(link)
+        if success:
+            channel_users.append(link.commcare_user.username)
+    if success:
+        messages.success(
+            request,
+            _("Channels created for the following users: \n") + ('\n '.join(channel_users))
+        )
+    else:
+        messages.warning(
+            request,
+            _("No channels created")
+        )
+    return HttpResponseRedirect(reverse(ConnectMessagingUserView.urlname, args=[domain]))

@@ -53,6 +53,7 @@ class UserES(HQESQuery):
             location,
             login_as_user,
             last_logged_in,
+            last_modified,
             analytics_enabled,
             is_practice_user,
             role_id,
@@ -180,8 +181,8 @@ def admin_users():
 
 
 def demo_users():
-    """Matches users whose username is demo_user"""
-    return username("demo_user")
+    """Matches users who has is_demo_user set to True"""
+    return filters.term("is_demo_user", True)
 
 
 def created(gt=None, gte=None, lt=None, lte=None):
@@ -190,6 +191,10 @@ def created(gt=None, gte=None, lt=None, lte=None):
 
 def last_logged_in(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range('last_login', gt, gte, lt, lte)
+
+
+def last_modified(gt=None, gte=None, lt=None, lte=None):
+    return filters.date_range('last_modified', gt, gte, lt, lte)
 
 
 def user_ids(user_ids):

@@ -6,6 +6,8 @@
 
 {% block page_content %}
   <p>{% blocktrans %}You are about to {{ verb }} the user account for "{{ username }}".{% endblocktrans %}</p>
+  {% if user_is_active %}
   <p>This will prevent them from using CommCare HQ at all and will be enforced immediately.</p>
+  {% endif %}
   {% crispy form %}
 {% endblock %}

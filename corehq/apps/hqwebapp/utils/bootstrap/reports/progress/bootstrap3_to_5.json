@@ -1,5 +1,19 @@
 {
-  "reports": [],
-  "filters": [],
-  "filter_templates": []
+  "reports": [
+    "ApplicationStatusReport",
+    "CaseListReport"
+  ],
+  "filters": [
+    "corehq.apps.reports.filters.case_list.CaseListFilter",
+    "corehq.apps.reports.filters.select.CaseTypeFilter",
+    "corehq.apps.reports.filters.select.SelectApplicationFilter",
+    "corehq.apps.reports.filters.select.SelectOpenCloseFilter",
+    "corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter",
+    "corehq.apps.reports.standard.cases.filters.CaseSearchFilter"
+  ],
+  "filter_templates": [
+    "reports/filters/bootstrap5/multi_option.html",
+    "reports/filters/bootstrap5/simple.html",
+    "reports/filters/bootstrap5/single_option.html"
+  ]
 }

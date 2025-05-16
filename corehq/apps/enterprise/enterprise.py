@@ -779,7 +779,6 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
     def __init__(self, account, couch_user):
         super().__init__(account, couch_user)
         self.builds_by_app_id = {}
-        self.build_info_cache = {}
 
     @property
     def headers(self):
@@ -871,7 +870,7 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
             .app_id(app_id)
             .sort('version', desc=True)
             .is_released()
-            .source(['_id', 'version', 'last_released', 'built_on'])
+            .source(['version', 'last_released', 'built_on'])
         )
         self.builds_by_app_id[app_id] = app_es.run().hits
         return self.builds_by_app_id[app_id]
@@ -884,18 +883,14 @@ class EnterpriseAppVersionComplianceReport(EnterpriseReport):
         return None
 
     def _get_build_info(self, build_doc):
-        build_id = build_doc['_id']
-        build_info = self.build_info_cache.get(build_id)
-        if not build_info:
-            # last_released is added in 2019, build before 2019 don't have this field
-            # TODO: have a migration to populate last_released from built_on
-            # Then this code can be modified to use last_released only
-            released_date = build_doc.get('last_released') or build_doc['built_on']
-            build_info = {
-                'version': build_doc['version'],
-                'last_released': DateTimeProperty.deserialize(released_date)
-            }
-            self.build_info_cache[build_id] = build_info
+        # last_released is added in 2019, build before 2019 don't have this field
+        # TODO: have a migration to populate last_released from built_on
+        # Then this code can be modified to use last_released only
+        released_date = build_doc.get('last_released') or build_doc['built_on']
+        build_info = {
+            'version': build_doc['version'],
+            'last_released': DateTimeProperty.deserialize(released_date)
+        }
         return build_info
 
 

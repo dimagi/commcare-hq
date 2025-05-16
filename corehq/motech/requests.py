@@ -145,6 +145,7 @@ class Requests(object):
         if DECREASE_REPEATER_TIMEOUT.enabled(self.domain_name):
             request_timeout = 60
         kwargs.setdefault('timeout', request_timeout)
+
         if self._session:
             response = self._session.request(method, url, *args, **kwargs)
         else:

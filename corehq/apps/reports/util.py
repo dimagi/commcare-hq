@@ -384,12 +384,16 @@ def is_query_too_big(domain, mobile_user_and_group_slugs, request_user):
     return user_es_query.count() > USER_QUERY_LIMIT
 
 
-def send_report_download_email(title, recipient, link, subject=None, domain=None):
+def send_report_download_email(title, recipient, link, subject=None, domain=None, limit=None):
     if subject is None:
         subject = _("%s: Requested export excel data") % title
     body = "The export you requested for the '%s' report is ready.<br>" \
            "You can download the data at the following link: %s<br><br>" \
            "Please remember that this link will only be active for 24 hours."
+
+    if limit:
+        body += f"<br><br>This download is limited to {limit:,d} rows. " \
+                "If you need to export more than this, please use filters to create multiple exports."
 
     send_HTML_email(
         subject,
@@ -654,6 +658,8 @@ def _notify_tableau_exception(e, domain):
 
 def get_tableau_groups_by_ids(interested_group_ids: List, domain: str,
                             session: TableauAPISession = None) -> List[TableauGroupTuple]:
+    if not interested_group_ids:
+        return []
     group_json = get_tableau_group_json(domain, session)
     filtered_group_json = [group for group in group_json if group['id'] in interested_group_ids]
     return _group_json_to_tuples(filtered_group_json)
@@ -671,6 +677,8 @@ def get_tableau_group_ids_by_names(group_names: List, domain: str,
     '''
     Returns a list of all Tableau group ids on the site derived from tableau group names passed in.
     '''
+    if not group_names:
+        return []
     group_json = get_tableau_group_json(domain, session)
     filtered_group_json = [group for group in group_json if group['name'] in group_names]
     return [tup.id for tup in _group_json_to_tuples(filtered_group_json)]

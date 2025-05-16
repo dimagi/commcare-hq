@@ -6,10 +6,11 @@ from memoized import memoized
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.case_search.const import (
     COMPUTED_METADATA,
-    INDEXED_METADATA_BY_KEY,
     DOCS_LINK_CASE_LIST_EXPLORER,
+    INDEXED_METADATA_BY_KEY,
 )
 from corehq.apps.case_search.exceptions import CaseFilterError
+from corehq.apps.case_search.utils import get_case_id_sort_block
 from corehq.apps.es.case_search import CaseSearchES, wrap_case_search_hit
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -19,6 +20,7 @@ from corehq.apps.reports.filters.select import (
     CaseTypeFilter,
     SelectOpenCloseFilter,
 )
+from corehq.apps.reports.standard import profile, ESQueryProfilerMixin
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import SafeCaseDisplay
 from corehq.apps.reports.standard.cases.filters import (
@@ -53,12 +55,20 @@ class XpathCaseSearchFilterMixin(object):
 
 
 @location_safe
-class CaseListExplorer(CaseListReport, XpathCaseSearchFilterMixin):
+class CaseListExplorer(
+    ESQueryProfilerMixin,
+    CaseListReport,
+    XpathCaseSearchFilterMixin,
+):
     name = _('Case List Explorer')
     slug = 'case_list_explorer'
     search_class = CaseSearchES
     description = _("Use Case List Explorer to run deep searches on your cases by case properties.  ")
     documentation_link = DOCS_LINK_CASE_LIST_EXPLORER
+    use_bootstrap5 = False
+
+    profiler_enabled = True
+    profiler_name = "Case List Explorer"
 
     exportable = True
     exportable_all = True
@@ -88,12 +98,17 @@ class CaseListExplorer(CaseListReport, XpathCaseSearchFilterMixin):
         with timer:
             return super(CaseListExplorer, self).es_results
 
+    @profile("ES query")
+    def _run_es_query(self):
+        return super()._run_es_query()
+
     def _build_query(self, sort=True):
         query = super(CaseListExplorer, self)._build_query()
         query = self._populate_sort(query, sort)
-        query = self.apply_xpath_case_search_filter(query)
+        query = self._apply_xpath_case_search_filter(query)
         return query
 
+    @profile("Populate sort")
     def _populate_sort(self, query, sort):
         if not sort:
             # Don't sort on export
@@ -110,19 +125,16 @@ class CaseListExplorer(CaseListReport, XpathCaseSearchFilterMixin):
                 if meta_property.key == '@case_id':
                     # This condition is added because ES 5 does not allow sorting on _id.
                     #  When we will have case_id in root of the document, this should be removed.
-                    sort_order = 'desc' if descending else 'asc'
-                    query.es_query['sort'] = [{
-                        'case_properties.value.exact': {
-                            'order': sort_order,
-                            'nested_path': 'case_properties',
-                            'nested_filter': {'term': {"case_properties.key.exact": "@case_id"}},
-                        }
-                    }]
+                    query.es_query['sort'] = get_case_id_sort_block(descending)
                     return query
                 query = query.sort(meta_property.es_field_name, desc=descending)
             except KeyError:
                 query = query.sort_by_case_property(column.prop_name, desc=descending)
         return query
+
+    @profile("Apply Xpath case filter")
+    def _apply_xpath_case_search_filter(self, query):
+        return self.apply_xpath_case_search_filter(query)
 
     @property
     def columns(self):
@@ -176,6 +188,7 @@ class CaseListExplorer(CaseListReport, XpathCaseSearchFilterMixin):
         return headers
 
     @property
+    @profile("Retrieving rows")
     def rows(self):
         self.track_search()
         data = (wrap_case_search_hit(row) for row in self.es_results['hits'].get('hits', []))
@@ -199,6 +212,7 @@ class CaseListExplorer(CaseListReport, XpathCaseSearchFilterMixin):
         data = (wrap_case_search_hit(r) for r in query.scroll_ids_to_disk_and_iter_docs())
         return self._get_rows(data)
 
+    @profile("Preparing data for display")
     def _get_rows(self, data):
         timer = metrics_histogram_timer(
             'commcare.case_list_explorer_query.row_fetch_timings',

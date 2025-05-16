@@ -18,7 +18,7 @@ from django.utils.translation import gettext as _
 import requests
 import yaml
 from celery.states import FAILURE
-from couchdbkit.exceptions import BadValueError
+from couchdbkit.exceptions import BadValueError, ResourceConflict
 from django_bulk_update.helper import bulk_update as bulk_update_helper
 from jsonpath_ng.ext import parser
 from memoized import memoized
@@ -52,11 +52,17 @@ from corehq.apps.cachehq.mixins import (
 )
 from corehq.apps.domain.models import AllowedUCRExpressionSettings
 from corehq.apps.registry.helper import DataRegistryHelper
-from corehq.apps.userreports.app_manager.data_source_meta import (
+from corehq.pillows.utils import get_deleted_doc_types
+from corehq.sql_db.connections import UCR_ENGINE_ID, connection_manager
+from corehq.util.couch import DocumentNotFound, get_document_or_not_found
+from corehq.util.quickcache import quickcache
+
+from .alembic_diffs import get_tables_to_rebuild
+from .app_manager.data_source_meta import (
     REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES,
 )
-from corehq.apps.userreports.columns import get_expanded_column_config
-from corehq.apps.userreports.const import (
+from .columns import get_expanded_column_config
+from .const import (
     ALL_EXPRESSION_TYPES,
     DATA_SOURCE_TYPE_AGGREGATE,
     DATA_SOURCE_TYPE_STANDARD,
@@ -66,7 +72,7 @@ from corehq.apps.userreports.const import (
     UCR_SQL_BACKEND,
     VALID_REFERENCED_DOC_TYPES,
 )
-from corehq.apps.userreports.dbaccessors import (
+from .dbaccessors import (
     get_all_registry_data_source_ids,
     get_datasources_for_domain,
     get_number_of_registry_report_configs_by_data_source,
@@ -75,7 +81,7 @@ from corehq.apps.userreports.dbaccessors import (
     get_registry_report_configs_for_domain,
     get_report_configs_for_domain,
 )
-from corehq.apps.userreports.exceptions import (
+from .exceptions import (
     BadSpecError,
     DataSourceConfigurationNotFoundError,
     DuplicateColumnIdError,
@@ -84,32 +90,31 @@ from corehq.apps.userreports.exceptions import (
     StaticDataSourceConfigurationNotFoundError,
     ValidationError,
 )
-from corehq.apps.userreports.expressions.factory import ExpressionFactory
-from corehq.apps.userreports.extension_points import (
+from .expressions.factory import ExpressionFactory
+from .extension_points import (
     static_ucr_data_source_paths,
     static_ucr_report_paths,
 )
-from corehq.apps.userreports.filters.factory import FilterFactory
-from corehq.apps.userreports.indicators import CompoundIndicator
-from corehq.apps.userreports.indicators.factory import IndicatorFactory
-from corehq.apps.userreports.reports.factory import (
+from .filters.factory import FilterFactory
+from .indicators import CompoundIndicator
+from .indicators.factory import IndicatorFactory
+from .reports.factory import (
     ChartFactory,
     ReportColumnFactory,
     ReportOrderByFactory,
 )
-from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
-from corehq.apps.userreports.reports.filters.specs import FilterSpec
-from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
-from corehq.apps.userreports.sql.util import decode_column_name
-from corehq.apps.userreports.util import (
+from .reports.filters.factory import ReportFilterFactory
+from .reports.filters.specs import FilterSpec
+from .specs import EvaluationContext, FactoryContext
+from .sql import get_metadata
+from .sql.util import decode_column_name
+from .util import (
     get_async_indicator_modify_lock_key,
     get_indicator_adapter,
+    get_table_name,
+    get_ucr_datasource_config_by_id,
     wrap_report_config_by_type,
 )
-from corehq.pillows.utils import get_deleted_doc_types
-from corehq.sql_db.connections import UCR_ENGINE_ID, connection_manager
-from corehq.util.couch import DocumentNotFound, get_document_or_not_found
-from corehq.util.quickcache import quickcache
 
 ID_REGEX_CHECK = re.compile(r"^[\w\-:]+$")
 
@@ -178,6 +183,10 @@ class DataSourceBuildInformation(DocumentSchema):
     app_version = IntegerProperty()
     # The registry_slug associated with the registry of the report.
     registry_slug = StringProperty()
+    # True if the data source has been requested for a rebuild by user
+    # or is to be built/rebuilt by HQ for a new/updated configuration
+    # and is waiting to be picked
+    awaiting = BooleanProperty(default=False)
     # True if the data source has been built, that is, if the corresponding SQL table has been populated.
     finished = BooleanProperty(default=False)
     # Start time of the most recent build SQL table celery task.
@@ -185,6 +194,7 @@ class DataSourceBuildInformation(DocumentSchema):
     # same as previous attributes but used for rebuilding tables in place
     finished_in_place = BooleanProperty(default=False)
     initiated_in_place = DateTimeProperty()
+    # rebuilt via the management command
     rebuilt_asynchronously = BooleanProperty(default=False)
 
     @property
@@ -739,10 +749,96 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
 
     @cached_property
     def rebuild_failed(self):
-        # `has_died()` returns `None` if we can't use the Flower API,
-        # and so we don't know. Treating `None` as falsy allows calling
-        # code to give `rebuild_has_died` the benefit of the doubt.
+        # `DataSourceBuildInformation.rebuild_failed()` returns `None`
+        # if we don't know whether the rebuild has failed. Calling code
+        # can give the benefit of the doubt by treating `None` as falsy.
         return self.meta.build.rebuild_failed(self._id)
+
+    @property
+    def rebuild_awaiting_or_in_progress(self):
+        return self.meta.build.awaiting or (self.meta.build.is_rebuild_in_progress and not self.rebuild_failed)
+
+    def set_rebuild_flags(self):
+        """
+        Sets rebuild flags based on whether a build is required.
+
+        If a build is in progress, and diffs require a rebuild, then the
+        awaiting flag is set. If a build is already awaiting, and diffs
+        do not require a rebuild, then the awaiting flag remains set.
+        """
+        from .rebuild import get_table_diffs
+
+        if not self.meta.build.awaiting:
+            engine = connection_manager.get_engine(self.engine_id)
+            table_name = get_table_name(self.domain, self.table_id)
+            engine_metadata = get_metadata(self.engine_id)
+            diffs = get_table_diffs(engine, [table_name], engine_metadata)
+            tables_to_rebuild = get_tables_to_rebuild(diffs)
+            if table_name in tables_to_rebuild:
+                self.set_build_queued()
+            else:
+                self.set_build_not_required()
+
+    def set_build_queued(self, *, reset_init_fin=True):
+        self.meta.build.awaiting = True
+        if reset_init_fin:
+            self.meta.build.initiated = None
+            self.meta.build.finished = False
+
+    def set_build_not_required(self):
+        self.meta.build.awaiting = False
+        self.meta.build.initiated = None
+        self.meta.build.finished = False
+
+    def save_build_started(self, *, in_place=False):
+        # Save the start time now in case anything goes wrong. This way
+        # we'll be able to see if the rebuild started a long time ago
+        # without finishing.
+        start_time = datetime.utcnow()
+        self.meta.build.awaiting = False
+        if in_place:
+            self.meta.build.initiated_in_place = start_time
+            self.meta.build.finished_in_place = False
+        else:
+            self.meta.build.initiated = start_time
+            self.meta.build.finished = False
+        self.meta.build.rebuilt_asynchronously = False
+        self.save()
+
+    def save_build_resumed(self):
+        self.meta.build.awaiting = False
+        self.save()
+
+    def save_build_finished(self, *, in_place=False):
+        self.meta.build.awaiting = False
+        if in_place:
+            self.meta.build.finished_in_place = True
+        else:
+            self.meta.build.finished = True
+
+        try:
+            self.save()
+        except ResourceConflict:
+            current_config = get_ucr_datasource_config_by_id(self._id)
+            # check that a new build has not yet started
+            if in_place:
+                if (
+                    self.meta.build.initiated_in_place
+                    == current_config.meta.build.initiated_in_place
+                ):
+                    current_config.meta.build.finished_in_place = True
+            else:
+                if (
+                    self.meta.build.initiated
+                    == current_config.meta.build.initiated
+                ):
+                    current_config.meta.build.finished = True
+            current_config.save()
+
+    def save_rebuilt_async(self):
+        self.meta.build.awaiting = False
+        self.meta.build.rebuilt_asynchronously = True
+        self.save()
 
 
 class RegistryDataSourceConfiguration(DataSourceConfiguration):
@@ -942,9 +1038,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
     @property
     @memoized
     def cached_data_source(self):
-        from corehq.apps.userreports.reports.data_source import (
-            ConfigurableReportDataSource,
-        )
+        from .reports.data_source import ConfigurableReportDataSource
         return ConfigurableReportDataSource.from_spec(self).data_source
 
     @property
@@ -969,9 +1063,17 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
                 'layer_name': {
                     'XFormInstance': _('Forms'),
                     'CommCareCase': _('Cases')
-                }.get(self.config.referenced_doc_type, "Layer"),
+                }.get(self.config.referenced_doc_type, _("Layer")),
                 'columns': [x for x in (map_col(col) for col in self.columns) if x]
             }
+
+    @property
+    def report_type(self):
+        if self.location_column_id:
+            return 'map'
+        if self.aggregation_columns != ['doc_id']:
+            return 'table'
+        return 'list'
 
     @property
     @memoized
@@ -1001,9 +1103,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
         return langs
 
     def validate(self, required=True):
-        from corehq.apps.userreports.reports.data_source import (
-            ConfigurableReportDataSource,
-        )
+        from .reports.data_source import ConfigurableReportDataSource
 
         def _check_for_duplicates(supposedly_unique_list, error_msg):
             # http://stackoverflow.com/questions/9835762/find-and-list-duplicates-in-python-list

@@ -16,7 +16,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es.users import UserES
 from corehq.apps.groups.models import Group
-from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_multiselect
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.reports.filters.api import MobileWorkersOptionsView
 from corehq.apps.reports.util import get_simplified_users
@@ -125,7 +125,6 @@ class BulkSMSVerificationView(BaseDomainView):
 class BaseGroupsView(BaseUserSettingsView):
 
     @method_decorator(require_can_edit_or_view_groups)
-    @use_multiselect
     def dispatch(self, request, *args, **kwargs):
         return super(BaseGroupsView, self).dispatch(request, *args, **kwargs)
 

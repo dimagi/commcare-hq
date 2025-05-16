@@ -33,7 +33,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
                          ProjectReportParametersMixin,
                          CompletionOrSubmissionTimeMixin, MultiFormDrilldownMixin,
                          DatespanMixin):
-    name = gettext_noop('Submit History')
+    name = gettext_noop('Submission History')
     slug = 'submit_history'
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',

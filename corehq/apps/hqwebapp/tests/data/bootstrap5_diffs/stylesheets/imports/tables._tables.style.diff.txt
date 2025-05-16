@@ -18,30 +18,35 @@
      }
    }
  }
-@@ -76,3 +76,95 @@
+@@ -76,3 +76,101 @@
  .table-editprops-filterval {
    min-width: 115px;
  }
 +
 +.table thead tr th.orderable {
++  background-color: $blue-800;
 +  position: relative;
 +  padding: 0;
++  vertical-align: middle;
++
++  $order-handle-width: 10px;
++
++  &:nth-child(odd) {
++    background-color: $blue-700;
++  }
 +
 +  a {
 +    display: block;
-+    background-color: $blue-800;
 +    color: $white;
 +    padding: 0.5rem 0.5rem;
-+  }
-+  &:nth-child(odd) a {
-+    background-color: $blue-700;
++    padding-right: $order-handle-width * 3;
 +  }
 +
 +  &::before,
 +  &::after {
 +    position: absolute;
 +    display: block;
-+    right: 10px;
++    right: $order-handle-width;
 +    line-height: 9px;
 +    font-size: .8em;
 +    color: $white;
@@ -68,6 +73,7 @@
 +
 +.table thead tr th.select-header {
 +  width: 28px;
++  vertical-align: middle;
 +  background-color: $blue-800;
 +
 +  &:nth-child(odd) {

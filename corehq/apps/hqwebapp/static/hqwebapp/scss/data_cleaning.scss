@@ -1,0 +1,167 @@
+@import "functions";
+@import "commcarehq/variables";
+@import "variables";
+@import "variables-dark";
+
+.dc-value {
+  position: relative;
+
+  .dc-value-info {
+    background-color: $gray-800;
+    color: $white;
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    padding: 0 $spacer * 0.25;
+    transition: opacity 0.5s ease-in-out;
+  }
+  &:hover .dc-value-info {
+    display: block;
+    opacity: 1;
+  }
+}
+
+.dc-value-whitespaces {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  display: inline-block;
+  font-family: $font-family-monospace;
+  font-size: $font-size-base * 0.95;
+  letter-spacing: 1px;
+  margin-right: $spacer * 1.5;
+  padding: $spacer * 0.25 $spacer * 0.5;
+  vertical-align: middle;
+  overflow-wrap: break-word;
+}
+
+.dc-spaces {
+  opacity: 0.5;
+  background-color: transparent;
+  font-weight: bold;
+  font-size: $font-size-base * 1.3;
+  line-height: $font-size-base * 1.3;
+  vertical-align: middle;
+  transition: 0.5s ease-in-out background-color;
+
+  &:hover {
+    cursor: help;
+    color: $white;
+    background-color: rgba(0, 0, 0, 0.5);
+    opacity: 1;
+  }
+}
+
+.dc-diff-view {
+  font-family: $font-family-monospace;
+  font-size: $font-size-base * 0.95;
+  letter-spacing: 1px;
+}
+
+.dc-diff-before,
+.dc-diff-after {
+  border: 1px solid white;
+  margin: $spacer * 0.15;
+
+  .dc-diff-icon {
+    color: $white;
+    padding: $spacer * 0.15 $spacer * 0.4;
+    cursor: help;
+  }
+
+  .dc-value-null {
+    min-width: 38px;
+  }
+
+  .dc-value-empty {
+    min-width: 42px;
+  }
+
+  .dc-value-whitespaces {
+    border: 0;
+    letter-spacing: 1px;
+    line-height: $font-size-base * 1.3;
+    margin-right: 0;
+    padding: $spacer * 0.15 0;
+  }
+}
+
+.dc-diff-before {
+  background-color: $red-100;
+  border-color: $red-500;
+
+  .dc-diff-icon {
+    background-color: $red-500;
+  }
+
+  .dc-value-null {
+    color: $red-500;
+  }
+
+  .dc-value .dc-value-info {
+    background-color: $red-100;
+    color: $red-500;
+  }
+}
+
+.dc-diff-after {
+  background-color: $green-100;
+  border-color: $green-500;
+
+  .dc-diff-icon {
+    background-color: $green-500;
+  }
+
+  .dc-value-null {
+    color: $green-500;
+  }
+
+  .dc-value .dc-value-info {
+    background-color: $green-100;
+    color: $green-500;
+  }
+}
+
+.dc-inline-edit-block {
+  display: block;
+  background-color: transparent;
+  cursor: text;
+  transition: background-color 0.5s ease-in-out;
+  position: relative;
+  padding: $spacer * 0.5;
+  margin: $spacer * -0.5;
+
+  .dc-inline-edit-action {
+    position: absolute;
+    right: 0;
+    top: calc(50% - 12px);
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+  }
+
+  .dc-inline-edit-action-text {
+    background-color: $white;
+    padding: $spacer * 0.25;
+    white-space: nowrap;
+    $_offset: $spacer * 0.6;
+    top: calc(50% - $_offset);
+    right: $spacer * 0.25;
+    font-size: 10px;
+    line-height: $spacer * 0.75;
+    text-transform: uppercase;
+    font-weight: bold;
+  }
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+  }
+
+  &:hover .dc-inline-edit-action {
+    display: block;
+    opacity: 1;
+
+    &.dc-inline-edit-action-text {
+      opacity: 1;
+    }
+  }
+}

@@ -21,6 +21,7 @@ class ImportCases(DataInterface):
     name = gettext_lazy("Import Cases from Excel")
     slug = "import_cases"
     report_template_path = "case_importer/import_cases.html"
+    icon = 'far fa-file-excel'
     hide_filters = True
     asynchronous = False
 

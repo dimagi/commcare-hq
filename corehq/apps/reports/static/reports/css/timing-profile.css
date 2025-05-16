@@ -1,0 +1,35 @@
+/**
+ * For Report Timing Profile
+ */
+.timing-block {
+    margin-bottom: 10px;
+}
+
+.timing-node {
+    margin-bottom: 5px;
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 2px;
+}
+
+.timing-node-content {
+    padding: 8px;
+}
+
+.timing-children {
+    padding-left: 20px;
+}
+
+.timing-node-header {
+    font-weight: bold;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: visible;
+}
+
+.timing-node-details {
+    font-size: 12px;
+    color: #666;
+    white-space: nowrap;
+    overflow: visible;
+}

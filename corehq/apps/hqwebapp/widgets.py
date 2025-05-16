@@ -1,5 +1,5 @@
-import collections
 import json
+from collections.abc import Sequence
 
 from django import forms
 from django.forms.utils import flatatt
@@ -69,7 +69,7 @@ class _Select2AjaxMixin():
         self._initial = val
 
     def _clean_initial(self, val):
-        if isinstance(val, collections.Sequence) and not isinstance(val, (str, str)):
+        if isinstance(val, Sequence) and not isinstance(val, (str, str)):
             # if its a tuple or list
             return {"id": val[0], "text": val[1]}
         elif val is None:
@@ -105,7 +105,6 @@ class DateRangePickerWidget(Input):
     usage:
     apply the following decorator to your view's dispatch method
 
-    @use_daterangepicker
     def dispatch(self, request, *args, **kwargs):
         super(self, MyView).dispatch(request, *args, **kwargs)
     """
@@ -209,3 +208,57 @@ class GeoCoderInput(Input):
             value = json.dumps(value)
         output = super(GeoCoderInput, self).render(name, value, attrs, renderer)
         return format_html('<div class="geocoder-proximity">{}</div>', output)
+
+
+class AlpineSelect(forms.Select):
+    """
+    * For crispy forms using an alpine model in `crispy.Layout`
+
+    When applying the `x_model="alpineVar"` attribute to a ChoiceField in crispy.Layout,
+    the rendered HTML appropriately adds `x-model="alpineVar"` to that
+    `<select>` element's rendered attributes. At this point, alpine JS will take over
+    setting the `selected="selected"` attribute on the child `<option>` elements.
+
+    While the client-side interactivity will behave as expected, updating the value of
+    `alpineVar` and showing the correct selection, POSTing the form will always return
+    `None` for the associated ChoiceField unless you use  this widget.
+
+    This widget ensures that the `selected` attribute on each child option is
+    properly updated when the value of the x-model variable changes.
+
+    usage example:
+
+        some_choice = forms.ChoiceField(
+            ...
+            widget=AlpineSelect,
+            ...
+        )
+
+    then in the layout...
+
+        self.helper.layout = crispy.Layout(
+            ...,
+            crispy.Field(
+                'some_choice',
+                x_model="alpineVar",
+                ...
+            ),
+            ...,
+        )
+
+    """
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        x_model = context["widget"]["attrs"].get('x-model')
+        if not x_model:
+            return context
+
+        for index, optgroup in enumerate(context["widget"]['optgroups']):
+            option_context = context["widget"]['optgroups'][index][1][0]
+            option_value = option_context['value']
+            option_context['attrs'].update({
+                ':selected': f"{x_model} == '{option_value}'"
+            })
+            context["widget"]['optgroups'][index][1][0] = option_context
+        return context

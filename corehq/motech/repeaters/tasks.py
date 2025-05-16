@@ -110,6 +110,7 @@ from .const import (
     MAX_RETRY_WAIT,
     PROCESS_REPEATERS_INTERVAL,
     RATE_LIMITER_DELAY_RANGE,
+    RECORD_QUEUED_STATES,
     State,
 )
 from .models import (
@@ -237,6 +238,14 @@ def retry_process_datasource_repeat_record(repeat_record_id, domain):
 
 
 def _process_repeat_record(repeat_record):
+
+    def endpoint_duration(timer_):
+        return next((
+            sub.duration
+            for sub in timer_.to_list(exclude_root=True)
+            if sub.name == ENDPOINT_TIMER
+        ), None)  # If there was a payload error, we won't have sent to an endpoint
+
     request_duration = action = None
     with TimingContext('process_repeat_record') as timer:
         if repeat_record.state == State.Cancelled:
@@ -267,16 +276,14 @@ def _process_repeat_record(repeat_record):
                 # with the intent of avoiding clumping and spreading load
                 repeat_record.postpone_by(random.uniform(*RATE_LIMITER_DELAY_RANGE))
                 action = 'rate_limited'
-            elif repeat_record.is_queued():
+            elif repeat_record.state in RECORD_QUEUED_STATES:
                 report_repeater_attempt(repeat_record.repeater.repeater_id)
                 with timer('fire_timing') as fire_timer:
                     repeat_record.fire(timing_context=fire_timer)
                 # round up to the nearest millisecond, meaning always at least 1ms
                 report_repeater_usage(repeat_record.domain, milliseconds=int(fire_timer.duration * 1000) + 1)
                 action = 'attempted'
-                request_duration = [
-                    sub.duration for sub in fire_timer.to_list(exclude_root=True) if sub.name == ENDPOINT_TIMER
-                ][0]
+                request_duration = endpoint_duration(timer)
         except Exception:
             logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))
             return
@@ -424,7 +431,7 @@ def process_ready_repeat_record(repeat_record_id):
 def is_repeat_record_ready(repeat_record):
     # Fail loudly if repeat_record is not ready.
     # process_ready_repeat_record() will log an exception.
-    assert repeat_record.state in (State.Pending, State.Fail)
+    assert repeat_record.state in RECORD_QUEUED_STATES
 
     # The repeater could have been paused or rate-limited while it was
     # being processed
@@ -441,10 +448,15 @@ def is_repeat_record_ready(repeat_record):
 def _metrics_wait_duration(repeat_record):
     """
     The duration since ``repeat_record`` was registered or last attempted.
-
-    Buckets are exponential: [1m, 6m, 36m, 3.6h, 21.6h, 5.4d]
     """
-    buckets = [60 * (6 ** exp) for exp in range(6)]
+    buckets = make_buckets_from_timedeltas(
+        timedelta(minutes=1),
+        timedelta(minutes=10),
+        timedelta(hours=1),
+        timedelta(hours=6),
+        timedelta(days=1),
+        timedelta(days=7),
+    )
     metrics_histogram(
         'commcare.repeaters.process_repeaters.repeat_record_wait',
         _get_wait_duration_seconds(repeat_record),
@@ -545,7 +557,7 @@ class RepeaterLock:
 metrics_gauge_task(
     'commcare.repeaters.overdue',
     RepeatRecord.objects.count_overdue,
-    run_every=crontab(),  # every minute
+    run_every=crontab(minute='*/5'),  # every five minutes
     multiprocess_mode=MPM_MAX
 )
 
