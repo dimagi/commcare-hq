@@ -12,7 +12,7 @@ from corehq.motech.utils import (
 
 @skip_on_fresh_install
 def reencrypt_api_keys(apps, schema_editor):
-    GeoConfig = apps.get_model('geospatial', 'GeoConfig')
+    GeoConfig = apps.get_model('microplanning', 'GeoConfig')
 
     geo_configs_to_update = GeoConfig.objects.exclude(
         api_token__startswith=f'${ALGO_AES_CBC}$'
@@ -29,7 +29,7 @@ def reencrypt_api_keys(apps, schema_editor):
 
 
 def reversion_api_keys(apps, schema_editor):
-    GeoConfig = apps.get_model('geospatial', 'GeoConfig')
+    GeoConfig = apps.get_model('microplanning', 'GeoConfig')
 
     geo_configs_to_revert = GeoConfig.objects.filter(
         api_token__startswith=f'${ALGO_AES_CBC}$'
@@ -44,7 +44,7 @@ def reversion_api_keys(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('geospatial', '0008_geoconfig_flag_assigned_cases'),
+        ('microplanning', '0008_geoconfig_flag_assigned_cases'),
     ]
 
     operations = [

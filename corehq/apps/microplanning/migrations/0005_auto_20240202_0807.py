@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('geospatial', '0004_auto_20230920_0821'),
+        ('microplanning', '0004_auto_20230920_0821'),
     ]
 
     operations = [

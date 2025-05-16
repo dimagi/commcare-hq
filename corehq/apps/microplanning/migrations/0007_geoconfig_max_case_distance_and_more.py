@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('geospatial', '0006_geoconfig_max_cases_per_user_and_more'),
+        ('microplanning', '0006_geoconfig_max_cases_per_user_and_more'),
     ]
 
     operations = [
