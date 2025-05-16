@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
                 'analyzer': {'default': {'filter': ['lowercase'], 'tokenizer': 'whitespace', 'type': 'custom'}},
             },
             settings_key='hqapps',
-            es_versions=[5],
+            es_versions=[5, 6],
         ),
         corehq.apps.es.migration_operations.CreateIndex(
             name=index_runtime_name('case-search-2024-05-09'),
@@ -45,7 +45,7 @@ class Migration(migrations.Migration):
                 'analyzer': {'default': {'filter': ['lowercase'], 'tokenizer': 'whitespace', 'type': 'custom'}, 'phonetic': {'filter': ['standard', 'lowercase', 'soundex'], 'tokenizer': 'standard'}},
             },
             settings_key='case_search',
-            es_versions=[5],
+            es_versions=[5, 6],
         ),
         corehq.apps.es.migration_operations.CreateIndex(
             name=index_runtime_name('cases-2024-05-09'),
@@ -60,7 +60,7 @@ class Migration(migrations.Migration):
                 'analyzer': {'default': {'filter': ['lowercase'], 'tokenizer': 'whitespace', 'type': 'custom'}},
             },
             settings_key='hqcases',
-            es_versions=[5],
+            es_versions=[5, 6],
         ),
         corehq.apps.es.migration_operations.CreateIndex(
             name=index_runtime_name('domains-2024-05-09'),
@@ -76,7 +76,7 @@ class Migration(migrations.Migration):
                 'analyzer': {'comma': {'pattern': '\\s*,\\s*', 'type': 'pattern'}, 'default': {'filter': ['lowercase'], 'tokenizer': 'whitespace', 'type': 'custom'}},
             },
             settings_key='hqdomains',
-            es_versions=[5],
+            es_versions=[5, 6],
         ),
         corehq.apps.es.migration_operations.CreateIndex(
             name=index_runtime_name('forms-2024-05-09'),
@@ -91,7 +91,7 @@ class Migration(migrations.Migration):
                 'analyzer': {'default': {'filter': ['lowercase'], 'tokenizer': 'whitespace', 'type': 'custom'}},
             },
             settings_key='xforms',
-            es_versions=[5],
+            es_versions=[5, 6],
         ),
         corehq.apps.es.migration_operations.CreateIndex(
             name=index_runtime_name('groups-2024-05-09'),
@@ -106,7 +106,7 @@ class Migration(migrations.Migration):
                 'analyzer': {'default': {'filter': ['lowercase'], 'tokenizer': 'whitespace', 'type': 'custom'}},
             },
             settings_key='hqgroups',
-            es_versions=[5],
+            es_versions=[5, 6],
         ),
         corehq.apps.es.migration_operations.CreateIndex(
             name=index_runtime_name('sms-2024-05-09'),
@@ -122,7 +122,7 @@ class Migration(migrations.Migration):
                 'analyzer': {'default': {'filter': ['lowercase'], 'tokenizer': 'whitespace', 'type': 'custom'}},
             },
             settings_key='smslogs',
-            es_versions=[5],
+            es_versions=[5, 6],
         ),
         corehq.apps.es.migration_operations.CreateIndex(
             name=index_runtime_name('users-2024-05-09'),
@@ -138,6 +138,6 @@ class Migration(migrations.Migration):
                 'analyzer': {'default': {'filter': ['lowercase'], 'tokenizer': 'whitespace', 'type': 'custom'}},
             },
             settings_key='hqusers',
-            es_versions=[5],
+            es_versions=[5, 6],
         ),
     ]
