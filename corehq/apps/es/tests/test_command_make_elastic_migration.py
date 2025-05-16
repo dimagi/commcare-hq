@@ -197,6 +197,13 @@ class TestMakeElasticMigrationCommand(TestCase):
         self.assertIs(adapter, groups.group_adapter)
         self.assertEqual(["domain", "name"], sorted(properties))
 
+    def test_adapter_and_properties_type_with_nested_structure(self):
+        adapter, properties = Command().adapter_and_properties_type("groups:domain.fields.domain,name")
+        self.assertIs(adapter, groups.group_adapter)
+        self.assertEqual(["domain", "name"], sorted(properties))
+        self.assertEqual(list(properties['domain'].keys()), ['fields'])
+        self.assertEqual(list(properties['domain']['fields'].keys()), ['domain'])
+
     def test_adapter_and_properties_type_returns_all_properties_if_none_specified(self):
         adapter, properties = Command().adapter_and_properties_type("groups")
         self.assertIs(adapter, groups.group_adapter)
