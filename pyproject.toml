@@ -63,7 +63,7 @@ dependencies = [
     "gevent>=24.11.1",
     "greenlet",
     "gunicorn",
-    "haversine", # SolTech - Used in Geospatial features
+    "haversine", # SolTech - Used in Microplanning features
     "hiredis",
     "httpagentparser",
     "iso8601",
@@ -80,7 +80,7 @@ dependencies = [
     "lxml",
     "markdown",
     "oic",
-    "pulp", # Used in Geospatial features to solve routing problems - SolTech
+    "pulp", # Used in microplanning features to solve routing problems - SolTech
     "openpyxl",
     "packaging",
     "phonenumberslite",
