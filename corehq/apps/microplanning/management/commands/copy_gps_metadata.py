@@ -86,7 +86,7 @@ def iter_forms_with_location(domain, xmlns=None):
             continue
         if location:
             # For example values of `es_form['form']`, see
-            # corehq/apps/geospatial/tests/test_copy_gps_metadata.py
+            # corehq/apps/microplanning/tests/test_copy_gps_metadata.py
             yield es_form['form']
 
 
@@ -154,5 +154,5 @@ def submit_chunk(domain, case_blocks):
     submit_case_blocks(
         [cb.as_text() for cb in case_blocks],
         domain,
-        device_id='corehq.apps.geospatial...copy_gps_metadata',
+        device_id='corehq.apps.microplanning...copy_gps_metadata',
     )

@@ -3,7 +3,7 @@ import phonelog.reports as phonelog
 from corehq.apps.accounting import interface as accounting
 from corehq.apps.enterprise.interface import EnterpriseSMSBillablesReport
 from corehq.apps.fixtures import interface as fixtures
-from corehq.apps.microplanning import reports as geospatial
+from corehq.apps.microplanning import reports as microplanning
 from corehq.apps.hqadmin import reports as hqadmin
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports import commtrack
@@ -74,8 +74,8 @@ ALL_REPORTS = [
     DomainLinkHistoryReport,
     ApiRequestLogReport,
     UserHistoryReport,
-    geospatial.CaseManagementMap,
-    geospatial.CaseGroupingReport,
+    microplanning.CaseManagementMap,
+    microplanning.CaseGroupingReport,
 ]
 
 

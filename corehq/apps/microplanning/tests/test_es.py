@@ -25,10 +25,10 @@ def fake_get_max_doc_count(query, case_property, precision):
     return 2 * x + 9_983
 
 
-@patch('corehq.apps.geospatial.es.MAX_GEOHASH_DOC_COUNT', 10000)
+@patch('corehq.apps.microplanning.es.MAX_GEOHASH_DOC_COUNT', 10000)
 def test_find_precision():
     with patch(
-        'corehq.apps.geospatial.es.get_max_doc_count',
+        'corehq.apps.microplanning.es.get_max_doc_count',
         fake_get_max_doc_count,
     ):
         precision = find_precision(query=object(), case_property='foo')

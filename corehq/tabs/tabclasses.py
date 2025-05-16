@@ -118,7 +118,7 @@ from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
 from corehq.apps.users.models import HqPermissions
 from corehq.apps.microplanning.views import (
-    GeospatialConfigPage,
+    MicroplanningConfigPage,
     GPSCaptureView,
 )
 from corehq.apps.integration.kyc.views import KycConfigurationView
@@ -603,7 +603,7 @@ class ProjectDataTab(UITab):
                 and is_eligible_for_ecd_preview(self._request))
 
     @property
-    def _can_view_geospatial(self):
+    def _can_view_microplanning(self):
         return toggles.MICROPLANNING.enabled(self.domain)
 
     @property
@@ -671,8 +671,8 @@ class ProjectDataTab(UITab):
                     ]
                 ]
             )
-        if self._can_view_geospatial:
-            items += self._get_geospatial_views()
+        if self._can_view_microplanning:
+            items += self._get_microplanning_views()
         if self._can_view_kyc_integration:
             items += self._get_kyc_verification_views()
         if self._can_view_payments_integration:
@@ -1046,8 +1046,8 @@ class ProjectDataTab(UITab):
                 }])
         return explore_data_views
 
-    def _get_geospatial_views(self):
-        geospatial_items = CaseManagementMapDispatcher.navigation_sections(
+    def _get_microplanning_views(self):
+        microplanning_items = CaseManagementMapDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
         management_sections = [
             {
@@ -1056,12 +1056,12 @@ class ProjectDataTab(UITab):
             },
             {
                 'title': _("Configure Microplanning Settings"),
-                'url': reverse(GeospatialConfigPage.urlname, args=(self.domain,)),
+                'url': reverse(MicroplanningConfigPage.urlname, args=(self.domain,)),
             }
         ]
         for section in management_sections:
-            geospatial_items[0][1].append(section)
-        return geospatial_items
+            microplanning_items[0][1].append(section)
+        return microplanning_items
 
     def _get_kyc_verification_views(self):
         from corehq.apps.integration.kyc.views import KycVerificationReportView

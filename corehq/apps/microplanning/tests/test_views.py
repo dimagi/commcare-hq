@@ -15,7 +15,7 @@ from corehq.apps.microplanning.views import (
     CasesReassignmentView,
     GeoPolygonDetailView,
     GeoPolygonListView,
-    GeospatialConfigPage,
+    MicroplanningConfigPage,
     GPSCaptureView,
 )
 from corehq.apps.locations.models import LocationType, SQLLocation
@@ -25,7 +25,7 @@ from corehq.form_processor.tests.utils import create_case
 from corehq.util.test_utils import flag_enabled
 
 
-class BaseGeospatialViewClass(TestCase):
+class BaseMicroplanningViewClass(TestCase):
     domain = 'test-domain'
 
     @classmethod
@@ -108,7 +108,7 @@ class GeoConfigViewTestClass(TestCase):
 
     def _make_post(self, data):
         self.client.login(username=self.username, password=self.password)
-        url = reverse(GeospatialConfigPage.urlname, args=(self.domain,))
+        url = reverse(MicroplanningConfigPage.urlname, args=(self.domain,))
         return self.client.post(url, data)
 
     @staticmethod
@@ -220,7 +220,7 @@ class GeoConfigViewTestClass(TestCase):
 
 
 @es_test(requires=[case_adapter], setup_class=True)
-class TestGPSCaptureView(BaseGeospatialViewClass):
+class TestGPSCaptureView(BaseMicroplanningViewClass):
     urlname = GPSCaptureView.urlname
 
     def test_no_access(self):
@@ -241,7 +241,7 @@ class TestGPSCaptureView(BaseGeospatialViewClass):
 
 @flag_enabled('MICROPLANNING')
 @es_test(requires=[case_search_adapter, user_adapter], setup_class=True)
-class TestGetPaginatedCasesOrUsers(BaseGeospatialViewClass):
+class TestGetPaginatedCasesOrUsers(BaseMicroplanningViewClass):
     urlname = 'get_paginated_cases_or_users'
 
     @classmethod
@@ -328,7 +328,7 @@ class TestGetPaginatedCasesOrUsers(BaseGeospatialViewClass):
 
 
 @es_test(requires=[user_adapter], setup_class=True)
-class TestGetUsersWithGPS(BaseGeospatialViewClass):
+class TestGetUsersWithGPS(BaseMicroplanningViewClass):
     urlname = 'get_users_with_gps'
 
     @classmethod
@@ -417,7 +417,7 @@ class TestGetUsersWithGPS(BaseGeospatialViewClass):
         self.assertEqual(user_data[0]['gps_point'], '12.34 45.67')
 
 
-class TestGeoPolygonListView(BaseGeospatialViewClass):
+class TestGeoPolygonListView(BaseMicroplanningViewClass):
     urlname = GeoPolygonListView.urlname
 
     def setUp(self):
@@ -502,7 +502,7 @@ class TestGeoPolygonListView(BaseGeospatialViewClass):
         )
 
 
-class TestGeoPolygonDetailView(BaseGeospatialViewClass):
+class TestGeoPolygonDetailView(BaseMicroplanningViewClass):
     urlname = GeoPolygonDetailView.urlname
 
     def setUp(self):
@@ -581,7 +581,7 @@ def _sample_geojson_data(name='test-2'):
 
 
 @es_test(requires=[case_search_adapter, user_adapter])
-class TestCasesReassignmentView(BaseGeospatialViewClass):
+class TestCasesReassignmentView(BaseMicroplanningViewClass):
     urlname = CasesReassignmentView.urlname
 
     def setUp(self):
@@ -683,7 +683,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self._assert_for_assigned_cases_flag_disabled([self.case_1, self.case_2])
 
     @flag_enabled('MICROPLANNING')
-    @patch('corehq.apps.geospatial.views.get_flag_assigned_cases_config', return_value=True)
+    @patch('corehq.apps.microplanning.views.get_flag_assigned_cases_config', return_value=True)
     def test_cases_reassignment_with_assigned_cases_flag_enabled(self, *args):
         case_id_to_owner_id = {
             self.case_1.case_id: self.user_b.user_id,
@@ -729,7 +729,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         )
 
     @flag_enabled('MICROPLANNING')
-    @patch('corehq.apps.geospatial.views.get_flag_assigned_cases_config', return_value=True)
+    @patch('corehq.apps.microplanning.views.get_flag_assigned_cases_config', return_value=True)
     def test_cases_reassignment_with_related_cases_and_assigned_cases_flag_enabled(self, *args):
         case_id_to_owner_id = {
             self.case_1.case_id: self.user_b.user_id,
@@ -776,7 +776,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self.assertEqual(self.related_case_2.owner_id, self.user_a.user_id)
 
     @flag_enabled('MICROPLANNING')
-    @patch('corehq.apps.geospatial.views.CasesReassignmentView.REQUEST_CASES_LIMIT', 1)
+    @patch('corehq.apps.microplanning.views.CasesReassignmentView.REQUEST_CASES_LIMIT', 1)
     def test_cases_reassignment_cases_limit_error(self, *args):
         case_id_to_owner_id = {
             self.case_1.case_id: self.user_b.user_id,
@@ -848,8 +848,8 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         )
 
     @flag_enabled('MICROPLANNING')
-    @patch('corehq.apps.geospatial.views.CasesReassignmentView.ASYNC_CASES_UPDATE_THRESHOLD', 2)
-    @patch('corehq.apps.geospatial.views.CasesReassignmentView._process_as_async')
+    @patch('corehq.apps.microplanning.views.CasesReassignmentView.ASYNC_CASES_UPDATE_THRESHOLD', 2)
+    @patch('corehq.apps.microplanning.views.CasesReassignmentView._process_as_async')
     def test_cases_reassignment_async_invocation(self, mocked_process_as_async):
         mocked_process_as_async.return_value = JsonResponse({})
         case_id_to_owner_id = {
@@ -868,8 +868,8 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         mocked_process_as_async.assert_called_once()
 
     @flag_enabled('MICROPLANNING')
-    @patch('corehq.apps.geospatial.views.CasesReassignmentView.ASYNC_CASES_UPDATE_THRESHOLD', 2)
-    @patch('corehq.apps.geospatial.utils.CeleryTaskTracker.is_active', return_value=False)
+    @patch('corehq.apps.microplanning.views.CasesReassignmentView.ASYNC_CASES_UPDATE_THRESHOLD', 2)
+    @patch('corehq.apps.microplanning.utils.CeleryTaskTracker.is_active', return_value=False)
     def test_cases_reassignment_async(self, *args):
         case_id_to_owner_id = {
             self.case_1.case_id: self.user_b.user_id,
@@ -891,9 +891,9 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self._assert_for_assigned_cases_flag_disabled([self.case_1, self.case_2, self.related_case_1])
 
     @flag_enabled('MICROPLANNING')
-    @patch('corehq.apps.geospatial.tasks.get_flag_assigned_cases_config', return_value=True)
-    @patch('corehq.apps.geospatial.views.CasesReassignmentView.ASYNC_CASES_UPDATE_THRESHOLD', 2)
-    @patch('corehq.apps.geospatial.utils.CeleryTaskTracker.is_active', return_value=False)
+    @patch('corehq.apps.microplanning.tasks.get_flag_assigned_cases_config', return_value=True)
+    @patch('corehq.apps.microplanning.views.CasesReassignmentView.ASYNC_CASES_UPDATE_THRESHOLD', 2)
+    @patch('corehq.apps.microplanning.utils.CeleryTaskTracker.is_active', return_value=False)
     def test_cases_reassignment_async_with_assigned_cases_flag_enabled(self, *args):
         case_id_to_owner_id = {
             self.case_1.case_id: self.user_b.user_id,
@@ -915,8 +915,8 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         self._assert_for_assigned_cases_flag_enabled([self.case_1, self.case_2, self.related_case_1])
 
     @flag_enabled('MICROPLANNING')
-    @patch('corehq.apps.geospatial.views.CasesReassignmentView.ASYNC_CASES_UPDATE_THRESHOLD', 2)
-    @patch('corehq.apps.geospatial.utils.CeleryTaskTracker.is_active', return_value=True)
+    @patch('corehq.apps.microplanning.views.CasesReassignmentView.ASYNC_CASES_UPDATE_THRESHOLD', 2)
+    @patch('corehq.apps.microplanning.utils.CeleryTaskTracker.is_active', return_value=True)
     def test_cases_reassignment_async_task_invoked_and_not_completed(self, *args):
         case_id_to_owner_id = {
             self.case_1.case_id: self.user_b.user_id,
@@ -939,7 +939,7 @@ class TestCasesReassignmentView(BaseGeospatialViewClass):
         )
 
     @flag_enabled('MICROPLANNING')
-    @patch('corehq.apps.geospatial.views.CasesReassignmentView.TOTAL_CASES_LIMIT', 3)
+    @patch('corehq.apps.microplanning.views.CasesReassignmentView.TOTAL_CASES_LIMIT', 3)
     def test_cases_reassignment_max_limit_error(self):
         case_id_to_owner_id = {
             self.case_1.case_id: self.user_b.user_id,
