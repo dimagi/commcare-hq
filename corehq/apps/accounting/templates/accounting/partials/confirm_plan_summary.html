@@ -40,12 +40,7 @@
 </div>
 
 <div class="alert {% if is_same_edition %}alert-info{% else %}alert-warning{% endif %} alert-subscription">
-  {% if is_upgrade %}
-    <h4>
-      <i class="fa fa-warning"></i>
-      {% trans "Note: Continuing will change your current subscription." %}
-    </h4>
-  {% elif is_same_edition %}
+  {% if is_same_edition %}
     <h4>
       {% blocktrans %}
         Thank you for staying with your current subscription.
