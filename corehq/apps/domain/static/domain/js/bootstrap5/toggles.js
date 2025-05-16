@@ -13,7 +13,7 @@ var Toggle = function (data) {
     assertProperties.assert(data, [
         'slug', 'label', 'description', 'help_link', 'tag', 'tag_index',
         'tag_css_class', 'tag_description', 'domain_enabled',
-        'user_enabled', 'has_domain_namespace',
+        'user_enabled', 'has_domain_namespace', 'can_edit',
     ]);
 
     var self = {};

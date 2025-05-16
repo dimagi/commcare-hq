@@ -19,6 +19,7 @@ from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.domain.utils import log_domain_changes
 from corehq.apps.ota.rate_limiter import restore_rate_limiter
 from corehq.motech.rate_limiter import repeater_rate_limiter
+from corehq.toggles.shortcuts import get_editable_toggle_tags_for_user
 from dimagi.utils.web import get_ip, json_request, json_response
 
 from corehq import feature_previews, privileges, toggles
@@ -247,6 +248,7 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
                     toggle['tag_index'],
                     toggle['label'])
 
+        editable_tags_slugs = self._editable_tags_slugs()
         unsorted_toggles = [{
             'slug': toggle.slug,
             'label': toggle.label,
@@ -258,11 +260,15 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
             'tag_css_class': toggle.tag.css_class,
             'has_domain_namespace': toggles.NAMESPACE_DOMAIN in toggle.namespaces,
             'domain_enabled': toggle.enabled(self.domain, namespace=toggles.NAMESPACE_DOMAIN),
+            'can_edit': toggle.tag.slug in editable_tags_slugs,
             'user_enabled': toggle.enabled(self.request.couch_user.username,
                                            namespace=toggles.NAMESPACE_USER),
         } for toggle in toggles.all_toggles()]
 
         return sorted(unsorted_toggles, key=_sort_key)
+
+    def _editable_tags_slugs(self):
+        return [tag.slug for tag in get_editable_toggle_tags_for_user(self.request.user.username)]
 
     def _get_privileges(self):
         return sorted([
