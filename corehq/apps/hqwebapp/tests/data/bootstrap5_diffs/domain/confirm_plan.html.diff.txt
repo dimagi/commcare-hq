@@ -1,67 +1,69 @@
 --- 
 +++ 
-@@ -1,8 +1,8 @@
+@@ -1,7 +1,7 @@
 -{% extends "domain/bootstrap3/base_change_plan.html" %}
 +{% extends "domain/bootstrap5/base_change_plan.html" %}
  {% load i18n %}
  {% load hq_shared_tags %}
- 
 -{% js_entry_b3 'accounting/js/confirm_plan' %}
 +{% js_entry 'accounting/js/confirm_plan' %}
  
  {% block form_content %}
    {% initial_page_data 'is_upgrade' is_upgrade %}
-@@ -42,7 +42,7 @@
-         </p>
-       {% endif %}
+@@ -62,7 +62,7 @@
        <div class="text-center plan-next">
--        <a href="{% url 'domain_select_plan' domain %}" class="btn btn-default btn-lg">
-+        <a href="{% url 'domain_select_plan' domain %}" class="btn btn-outline-primary btn-lg">
+         <a
+           href="{% url 'domain_select_plan' domain %}"
+-          class="btn btn-default btn-lg"
++          class="btn btn-outline-primary btn-lg"
+         >
            {% if is_paused %}
              {% trans 'Select different option' %}
-           {% else %}
-@@ -68,7 +68,7 @@
+@@ -91,7 +91,8 @@
      <div class="modal-dialog">
        <div class="modal-content">
          <div class="modal-header">
 -          <button type="button" class="close" data-dismiss="modal">
-+          <button type="button" class="btn-close" data-bs-dismiss="modal">  {# todo B5: css-close #}
++          <button type="button" class="btn-close" data-bs-dismiss="modal">
++            {# todo B5: css-close #}
              <span aria-hidden="true">&times;</span>
              <span class="sr-only">{% trans "Close" %}</span>
            </button>
-@@ -98,7 +98,7 @@
-                 Why are you downgrading your subscription today?
-               {% endblocktrans %}
+@@ -123,6 +124,7 @@
              {% endif %}
--            <select multiple="multiple"
-+            <select multiple="multiple"  {# todo B5: css-select-form-control #}
-                     class="form-control"
-                     data-bind="selectedOptions: oDowngradeReason,
-                                options: downgradeReasonList"></select>
-@@ -109,7 +109,7 @@
-               {% blocktrans %}
-                 Do you think your project may start again?
-               {% endblocktrans %}
--              <select class="form-control"
-+              <select class="form-select"
-                       data-bind="value: oWillProjectRestart">
-                 <option value="yes">
-                   {% trans "Yes" %}
-@@ -134,7 +134,7 @@
-               {% blocktrans %}
-                 Why are you switching to a new tool?
-               {% endblocktrans %}
--              <select multiple="multiple"
-+              <select multiple="multiple"  {# todo B5: css-select-form-control #}
-                       class="form-control"
-                       data-bind="selectedOptions: oNewToolReason,
-                                  options: newToolReasonList"></select>
-@@ -171,7 +171,7 @@
+             <select
+               multiple="multiple"
++              {# todo B5: css-select-form-control #}
+               class="form-control"
+               data-bind="selectedOptions: oDowngradeReason,
+                          options: downgradeReasonList"
+@@ -134,7 +136,7 @@
+             {% blocktrans %}
+               Do you think your project may start again?
+             {% endblocktrans %}
+-            <select class="form-control" data-bind="value: oWillProjectRestart">
++            <select class="form-select" data-bind="value: oWillProjectRestart">
+               <option value="yes">{% trans "Yes" %}</option>
+               <option value="no" selected="selected">{% trans "No" %}</option>
+             </select>
+@@ -157,6 +159,7 @@
+             {% endblocktrans %}
+             <select
+               multiple="multiple"
++              {# todo B5: css-select-form-control #}
+               class="form-control"
+               data-bind="selectedOptions: oNewToolReason,
+                          options: newToolReasonList"
+@@ -197,7 +200,11 @@
+           </button>
+           <!-- /ko -->
            <!-- ko ifnot: oRequiredQuestionsAnswered -->
-             <button type="button"
-                     disabled="disabled"
--                    class="btn btn-default">
-+                    class="btn btn-outline-primary">
-               {% trans "Continue" %}
-             </button>
+-          <button type="button" disabled="disabled" class="btn btn-default">
++          <button
++            type="button"
++            disabled="disabled"
++            class="btn btn-outline-primary"
++          >
+             {% trans "Continue" %}
+           </button>
            <!-- /ko -->
