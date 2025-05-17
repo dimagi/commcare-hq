@@ -1419,6 +1419,7 @@ class ConfirmSelectedPlanView(PlanViewBase):
             'start_date_after_minimum_subscription': self.start_date_after_minimum_subscription,
             'new_plan_edition': self.edition,
             'is_paused': self.is_paused,
+            'is_annual_plan': self.is_annual_plan,
             'tile_css': 'tile-{}'.format(self.edition.lower()),
         }
 
