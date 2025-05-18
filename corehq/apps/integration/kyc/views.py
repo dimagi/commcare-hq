@@ -150,14 +150,11 @@ class KycVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView):
         return self.render_htmx_partial_response(request, 'kyc/partials/kyc_verify_alert.html', context)
 
     def _filter_valid_users(self, kyc_users):
-        valid_users = []
+        def is_user_valid(kyc_user):
+            return all(kyc_user.get(field) for field in kyc_user_api_fields)
+
         kyc_user_api_fields = self.kyc_config.get_api_field_to_user_data_map_values().values()
-        for kyc_user in kyc_users:
-            is_user_invalid = any(not kyc_user.get(field) for field in kyc_user_api_fields)
-            if is_user_invalid:
-                continue
-            valid_users.append(kyc_user)
-        return valid_users
+        return [kyc_user for kyc_user in kyc_users if is_user_valid(kyc_user)]
 
     def _report_success_on_reverification_metric(self, existing_failed_user_ids, results):
         successful_user_ids = [user_id for user_id, status in results.items() if status is True]
