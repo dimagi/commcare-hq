@@ -395,8 +395,6 @@ class DataSourceConfigurationTests(TestCase):
             DataSourceConfiguration(domain='domain', table_id='table').save()
 
 
-@patch('corehq.apps.userreports.models.DataSourceBuildInformation.rebuild_failed',
-       MagicMock(return_value=None))
 class DataSourceConfigurationRebuildTests(TestCase):
 
     def setUp(self):
@@ -407,9 +405,6 @@ class DataSourceConfigurationRebuildTests(TestCase):
         )
         self.config.save()
         self.addCleanup(self.config.delete)
-
-    def test_rebuild_failed(self):
-        assert self.config.rebuild_failed is None
 
     def test_set_build_not_required(self):
         self.config.set_build_not_required()
