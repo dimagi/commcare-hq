@@ -29,7 +29,6 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.userreports.util import (
     get_indicator_adapter,
-    get_ucr_datasource_config_by_id,
 )
 from corehq.apps.userreports.views import (
     _prep_data_source_for_rebuild,
@@ -651,38 +650,6 @@ class TestBuildDataSourceInPlace(ConfigurableReportTestMixin, TestCase):
         # reset for other tests
         self.data_source_config.meta.build.awaiting = False
         self.data_source_config.save()
-
-
-class TestResumeBuildingDataSource(ConfigurableReportTestMixin, TestCase):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.data_source_config = cls._sample_data_source_config()
-        cls.data_source_config.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls._delete_everything()
-        super().tearDownClass()
-
-    def _send_resume_building_data_source_request(self):
-        path = reverse("resume_build", args=(self.domain, self.data_source_config.get_id))
-        return self.client.post(path)
-
-    @flag_enabled('USER_CONFIGURABLE_REPORTS')
-    @patch('corehq.apps.userreports.views.DataSourceResumeHelper')
-    @patch('corehq.apps.userreports.views.resume_building_indicators')
-    def test_awaiting_set(self, mock_resume_building_indicators, mock_helper):
-        self.data_source_config.meta.build.awaiting = False
-        self.data_source_config.save()
-
-        self._send_resume_building_data_source_request()
-
-        mock_resume_building_indicators.assert_has_calls([
-            call.delay(self.data_source_config.get_id, '')
-        ])
-        data_source_config = get_ucr_datasource_config_by_id(self.data_source_config.get_id)
-        self.assertTrue(data_source_config.meta.build.awaiting)
 
 
 class TestSubscribeToDataSource(TestCase):

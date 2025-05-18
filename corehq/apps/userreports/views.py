@@ -121,7 +121,6 @@ from corehq.apps.userreports.models import (
     is_data_registry_report,
     report_config_id_is_static,
 )
-from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.builder.forms import (
     ConfigureListReportForm,
     ConfigureMapReportForm,
@@ -144,7 +143,6 @@ from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.tasks import (
     rebuild_indicators,
     rebuild_indicators_in_place,
-    resume_building_indicators,
 )
 from corehq.apps.userreports.ui.forms import (
     ConfigurableDataSourceEditForm,
@@ -1260,8 +1258,6 @@ class EditDataSourceView(BaseEditDataSourceView):
         page_context = super().page_context
         adapter = get_indicator_adapter(self.config)
         page_context['data_source_table_exists'] = adapter.table_exists
-        if not self.config.is_deactivated:
-            page_context['data_source_rebuild_resumable'] = DataSourceResumeHelper(self.config).has_resume_info()
         return page_context
 
 
@@ -1445,39 +1441,6 @@ def _error_message_for_restricting_rebuild(number_of_records_to_be_iterated):
         number_of_records=number_of_records_to_be_iterated,
         rebuild_limit=f"{DATA_SOURCE_REBUILD_RESTRICTED_AT:,}"
     )
-
-
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-@require_POST
-def resume_building_data_source(request, domain, config_id):
-    config, is_static = get_datasource_config_or_404(config_id, domain)
-    if not is_static and config.meta.build.finished:
-        messages.warning(
-            request,
-            _('Table "{}" has already finished building. Rebuild table to start over.').format(
-                config.display_name
-            )
-        )
-    elif not DataSourceResumeHelper(config).has_resume_info():
-        messages.warning(
-            request,
-            _('Table "{}" did not finish building but resume information is not available. '
-              'Unfortunately, this means you need to rebuild the table.').format(
-                config.display_name
-            )
-        )
-    else:
-        if not is_static:
-            config.set_build_queued(reset_init_fin=False)
-            config.save()
-        messages.success(
-            request,
-            _('Resuming rebuilding table "{}".').format(config.display_name)
-        )
-        resume_building_indicators.delay(config_id, request.user.username)
-    return HttpResponseRedirect(reverse(
-        EditDataSourceView.urlname, args=[domain, config._id]
-    ))
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()

@@ -149,16 +149,6 @@
             </a>
           </li>
           {% if not data_source.is_deactivated %}
-            <li>
-              <a
-                class="submit-dropdown-form
-                {% if not data_source_rebuild_resumable %}btn disabled{% endif %}"
-                href=""
-                data-action="{% url 'resume_build' domain data_source.get_id %}"
-              >
-                {% trans 'Resume Build' %}
-              </a>
-            </li>
             {% if data_source.rebuild_awaiting_or_in_progress %}
               <li>
                 <a id="gtm-rebuild-in-place-disabled" class="btn disabled">
