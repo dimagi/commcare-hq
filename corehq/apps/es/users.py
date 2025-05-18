@@ -246,7 +246,7 @@ def login_as_user(value):
     return _user_data('login_as_user', filters.term('user_data_es.value', value))
 
 
-def missing_user_data_property(property_name):
+def _missing_user_data_property(property_name):
     """
     A user_data property doesn't exist.
     """
@@ -256,7 +256,7 @@ def missing_user_data_property(property_name):
     ))
 
 
-def empty_user_data_property(property_name):
+def _empty_user_data_property(property_name):
     """
     A user_data property exists but has an empty string value.
     """
@@ -273,6 +273,6 @@ def missing_or_empty_user_data_property(property_name):
     A user_data property doesn't exist, or does exist but has an empty string value.
     """
     return filters.OR(
-        missing_user_data_property(property_name),
-        empty_user_data_property(property_name),
+        _missing_user_data_property(property_name),
+        _empty_user_data_property(property_name),
     )

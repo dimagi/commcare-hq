@@ -4,9 +4,9 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import (
     UserES,
-    empty_user_data_property,
+    _empty_user_data_property,
     missing_or_empty_user_data_property,
-    missing_user_data_property,
+    _missing_user_data_property,
     user_adapter,
 )
 from corehq.apps.users.models import CommCareUser
@@ -80,7 +80,7 @@ class TestUserDataFilters(TestCase):
     def test_missing_user_data_property(self):
         results = (UserES()
                    .domain(self.domain)
-                   .filter(missing_user_data_property('location'))
+                   .filter(_missing_user_data_property('location'))
                    .get_ids())
 
         expected_ids = [self.user_no_data.user_id, self.user_other_data.user_id]
@@ -89,7 +89,7 @@ class TestUserDataFilters(TestCase):
     def test_empty_user_data_property(self):
         results = (UserES()
                    .domain(self.domain)
-                   .filter(empty_user_data_property('location'))
+                   .filter(_empty_user_data_property('location'))
                    .get_ids())
 
         expected_ids = [self.user_empty_data.user_id]
