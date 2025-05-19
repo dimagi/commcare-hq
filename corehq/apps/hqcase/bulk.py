@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from corehq.apps.users.util import SYSTEM_USER_ID, username_to_user_id
 from corehq.form_processor.models import CommCareCase
 
-from .utils import submit_case_block_coro
+from .utils import submit_case_block_context
 
 
 @dataclass(frozen=True)
@@ -41,7 +41,7 @@ def update_cases(domain, update_fn, case_ids, form_meta: SystemFormMeta = None):
     """
     form_meta = form_meta or SystemFormMeta()
     count = 0
-    with submit_case_block_coro(
+    with submit_case_block_context(
         domain,
         device_id=form_meta.device_id,
         user_id=form_meta.user_id,

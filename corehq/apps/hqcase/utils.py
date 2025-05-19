@@ -111,7 +111,7 @@ def submit_case_blocks(
     return result.xform, result.cases
 
 
-def coroutine(func):
+def coro_as_context(func):
     """
     Decorator to transform a coroutine function into a context manager.
 
@@ -120,7 +120,7 @@ def coroutine(func):
 
     Usage::
 
-        @coroutine
+        @coro_as_context
         def my_coro():
             try:
                 while True:
@@ -144,27 +144,63 @@ def coroutine(func):
     return wrapper
 
 
-@coroutine
-def submit_case_block_coro(*args, **kwargs):
+def submit_case_block_coro(
+    *args,
+    chunk_size=CASEBLOCK_CHUNKSIZE,
+    **kwargs,
+):
     """
-    Accepts case blocks and submits them in chunks of CASEBLOCK_CHUNKSIZE
+    Accepts case blocks and submits them in chunks of chunk_size.
+    Returns a list of form IDs.
+
+    Use undecorated as a coroutine for access to the return value, or
+    use `submit_case_block_context()` for simplicity.
+
+    Context manager usage::
+
+        with submit_case_block_context(domain, device_id=__name__) as submit:
+            for case in iter_all_the_cases:
+                case_block = get_case_updates(case)
+                submit.send(case_block)
+
+    Coroutine usage::
+
+        submit = submit_case_block_coro(domain, device_id=__name__)
+        next(submit)  # Prime the coroutine
+        for case in iter_all_the_cases:
+            case_block = get_case_updates(case)
+            submit.send(case_block)
+        try:
+            submit.send(None)  # Trigger exit
+        except StopIteration as exc:
+            form_ids = exc.value
+
     """
+    form_ids = []
     case_blocks = []
     try:
         while True:
             case_block = yield
+            if case_block is None:  # Send `None` to exit
+                raise GeneratorExit
             case_blocks.append(
                 case_block.as_text()
                 if isinstance(case_block, CaseBlock)
                 else case_block
             )
-            if len(case_blocks) >= CASEBLOCK_CHUNKSIZE:
-                chunk = case_blocks[:CASEBLOCK_CHUNKSIZE]
-                case_blocks = case_blocks[CASEBLOCK_CHUNKSIZE:]
-                submit_case_blocks(chunk, *args, **kwargs)
+            if len(case_blocks) >= chunk_size:
+                chunk = case_blocks[:chunk_size]
+                case_blocks = case_blocks[chunk_size:]
+                xform, __ = submit_case_blocks(chunk, *args, **kwargs)
+                form_ids.append(xform.form_id)
     except GeneratorExit:
         if case_blocks:
-            submit_case_blocks(case_blocks, *args, **kwargs)
+            xform, __ = submit_case_blocks(case_blocks, *args, **kwargs)
+            form_ids.append(xform.form_id)
+    return form_ids
+
+
+submit_case_block_context = coro_as_context(submit_case_block_coro)
 
 
 def get_case_by_identifier(domain, identifier):

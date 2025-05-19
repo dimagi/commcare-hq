@@ -1,3 +1,4 @@
+from collections import namedtuple
 from contextlib import contextmanager
 from datetime import datetime
 from unittest.mock import call, patch
@@ -13,6 +14,7 @@ from corehq.apps.hqcase.utils import (
     get_case_value,
     get_deidentified_data,
     is_copied_case,
+    submit_case_block_context,
     submit_case_block_coro,
 )
 from corehq.form_processor.tests.utils import create_case
@@ -138,10 +140,17 @@ class TestIsCopiedCase(TestCase):
         self.assertTrue(is_copied_case(self.case_2))
 
 
-def test_submit_case_block_coro():
+def test_submit_case_block_context():
+    FakeXForm = namedtuple('FakeXForm', 'form_id')
     with patch('corehq.apps.hqcase.utils.submit_case_blocks') as mock_submit:
+        mock_submit.return_value = (FakeXForm(('form_id',)), ['cases'])
 
-        with submit_case_block_coro('test-domain', username='test-user') as submit_case_block:
+        with submit_case_block_context(
+            'test-domain',
+            username='test-user',
+        ) as submit_case_block:
+            # Send enough to trigger one chunk, then one more for a
+            # second chunk on close
             for i in range(CASEBLOCK_CHUNKSIZE + 1):
                 submit_case_block.send(f'case_block_{i}')
 
@@ -150,7 +159,42 @@ def test_submit_case_block_coro():
 
         assert mock_submit.call_count == 2
         assert mock_submit.call_args == call(
-            ['case_block_1000'],
+            [f'case_block_{CASEBLOCK_CHUNKSIZE}'],
             'test-domain',
             username='test-user'
         )
+
+
+def test_submit_case_block_coro():
+    FakeXForm = namedtuple('FakeXForm', 'form_id')
+    with patch('corehq.apps.hqcase.utils.submit_case_blocks') as mock_submit:
+        mock_submit.side_effect = lambda blocks, *a, **kw: (
+            FakeXForm((f'xform_{len(blocks)}',)),
+            [f'case_{i}' for i in range(len(blocks))]
+        )
+        chunk_size = 10
+
+        coro = submit_case_block_coro(
+            'test-domain',
+            username='test-user',
+            chunk_size=chunk_size,
+        )
+        next(coro)  # Prime the coroutine
+
+        # Send enough to trigger one chunk, then one more for a second
+        # chunk on close
+        for i in range(chunk_size + 1):
+            coro.send(f'case_block_{i}')
+
+        try:
+            coro.send(None)  # Raises StopIteration on exit
+        except StopIteration as exc:
+            form_ids = exc.value
+        # Use `coro.close()` instead of `coro.send(None)` if you don't
+        # care about the return value.
+
+        # First chunk: chunk_size; Second chunk: 1
+        assert len(form_ids) == 2
+        assert form_ids[0][0] == f'xform_{chunk_size}'
+        assert form_ids[1][0] == 'xform_1'
+        assert mock_submit.call_count == 2

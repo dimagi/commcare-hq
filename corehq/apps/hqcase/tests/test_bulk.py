@@ -1,17 +1,15 @@
 import uuid
-from unittest import mock
 
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.hqcase.bulk import SystemFormMeta, update_cases
-from corehq.apps.hqcase.utils import submit_case_block_coro
+from corehq.apps.hqcase.utils import submit_case_block_context
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
-@mock.patch('corehq.apps.hqcase.bulk.CASEBLOCK_CHUNKSIZE', new=5)
 class TestUpdateCases(TestCase):
     domain = 'test_bulk_update_cases'
 
@@ -24,11 +22,12 @@ class TestUpdateCases(TestCase):
         case_ids = [str(uuid.uuid4()) for i in range(1, 18)]
 
         form_meta = SystemFormMeta()
-        with submit_case_block_coro(
+        with submit_case_block_context(
             self.domain,
             device_id=form_meta.device_id,
             user_id=form_meta.user_id,
             username=form_meta.username,
+            chunk_size=5,
         ) as submit_case_block:
             for i, case_id in enumerate(case_ids):
                 submit_case_block.send(CaseBlock(
