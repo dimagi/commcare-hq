@@ -14,6 +14,7 @@ from corehq.apps.es import CaseSearchES
 BULK_OPERATION_CHUNK_SIZE = 1000
 MAX_RECORDED_LIMIT = 100000
 MAX_SESSION_CHANGES = 200
+APPLY_CHANGES_WAIT_TIME = 15  # seconds
 
 
 class BulkEditSession(models.Model):

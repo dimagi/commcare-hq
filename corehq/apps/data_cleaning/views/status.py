@@ -3,10 +3,11 @@ import json
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
+from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
-from corehq.apps.data_cleaning.models.session import BulkEditSession
+from corehq.apps.data_cleaning.models.session import APPLY_CHANGES_WAIT_TIME, BulkEditSession
 from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.domain.views import DomainViewMixin
@@ -25,6 +26,23 @@ class BaseStatusView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin, Te
 class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
     urlname = "bulk_edit_session_status"
     template_name = "data_cleaning/status/complete.html"
+    template_in_progress = "data_cleaning/status/in_progress.html"
+
+    @property
+    def seconds_since_complete(self):
+        if self.session.completed_on is None:
+            return 0
+        delta = timezone.now() - self.session.completed_on
+        return int(delta.total_seconds())
+
+    @property
+    def is_session_in_progress(self):
+        return self.seconds_since_complete < APPLY_CHANGES_WAIT_TIME
+
+    def get_template_names(self):
+        if self.is_session_in_progress:
+            return [self.template_in_progress]
+        return [self.template_name]
 
     def get_active_session(self):
         if self.session.completed_on is None:
@@ -48,6 +66,7 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
             "num_records_changed": self.session.num_changed_records,
             "case_type": self.session.identifier,
             "exit_url": self.exit_url,
+            "is_task_complete": self.session.percent_complete == 100,
         })
         return context
 
@@ -57,6 +76,19 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
             response['HX-Trigger'] = json.dumps({
                 'showDataCleaningModal': {
                     'target': '#session-status-modal',
+                },
+            })
+        return response
+
+    @hq_hx_action('get')
+    def poll_session_status(self, request, *args, **kwargs):
+        # we call super() to avoid the default behavior of this view
+        # which is to trigger the session status modal
+        response = super().get(request, *args, **kwargs)
+        if self.session.completed_on is not None:
+            response['HX-Trigger'] = json.dumps({
+                'statusRefresh': {
+                    'target': '#primary-view-container',
                 },
             })
         return response
