@@ -77,7 +77,7 @@
                disabled
              >
                {% if use_updated_ucr_naming %}
-@@ -109,9 +109,9 @@
+@@ -99,9 +99,9 @@
            <div>
              <a
                id="gtm-rebuild-ds-btn"
@@ -89,7 +89,7 @@
              >
                {% if use_updated_ucr_naming %}
                  {% trans 'Rebuild Custom Web Report Source' %}
-@@ -125,8 +125,9 @@
+@@ -115,8 +115,9 @@
        <div class="btn-group">
          <button
            type="button"
@@ -101,12 +101,10 @@
            aria-haspopup="true"
            aria-expanded="false"
          >
-@@ -149,6 +150,16 @@
-             </a>
-           </li>
+@@ -141,6 +142,16 @@
            {% if not data_source.is_deactivated %}
-+            <li>
-+              <a
+             <li>
+               <a
 +                class="submit-dropdown-form
 +                {% if not data_source_rebuild_resumable %}btn disabled{% endif %}"
 +                href=""
@@ -115,11 +113,13 @@
 +                {% trans 'Resume Build' %}
 +              </a>
 +            </li>
-             {% if data_source.rebuild_awaiting_or_in_progress %}
-               <li>
-                 <a id="gtm-rebuild-in-place-disabled" class="btn disabled">
-@@ -169,7 +180,7 @@
-             {% endif %}
++            <li>
++              <a
+                 id="gtm-rebuild-in-place-btn"
+                 class="submit-dropdown-form"
+                 href=""
+@@ -151,7 +162,7 @@
+             </li>
            {% endif %}
          </ul>
 -        <form method="post" class="hide" id="dropdown-form">
@@ -127,7 +127,7 @@
            {% csrf_token %}
          </form>
        </div>
-@@ -185,21 +196,21 @@
+@@ -167,21 +178,21 @@
                  <input
                    type="submit"
                    value="{% trans 'Delete Custom Web Report Source' %}"
@@ -153,7 +153,7 @@
              >
                {% if use_updated_ucr_naming %}
                  {% trans 'Delete Custom Web Report Source' %}
-@@ -215,10 +226,11 @@
+@@ -197,10 +208,11 @@
    {% endif %}
  
    <ul class="nav nav-tabs">
@@ -167,7 +167,7 @@
    </ul>
  
    <div class="tab-content">
-@@ -226,10 +238,11 @@
+@@ -208,10 +220,11 @@
      <div class="tab-pane fade in active" id="tabs-configuration">
        {% if read_only %}
          <div class="alert alert-info">
@@ -180,7 +180,7 @@
      </div>
      <div class="tab-pane fade" id="tabs-usage">
        {% if not used_by_reports %}
-@@ -237,7 +250,7 @@
+@@ -219,7 +232,7 @@
            {% trans "Datasource currently unused" %}
          </div>
        {% else %}
@@ -189,7 +189,7 @@
          <ul>
            {% for report in used_by_reports %}
              <li>
-@@ -264,8 +277,9 @@
+@@ -246,8 +259,9 @@
                <div class="modal-header">
                  <button
                    type="button"
@@ -201,7 +201,7 @@
                    aria-label="Close"
                  >
                    <span aria-hidden="true">&times;</span>
-@@ -297,15 +311,15 @@
+@@ -279,15 +293,15 @@
                  <div class="modal-footer">
                    <button
                      type="button"
@@ -220,7 +220,7 @@
                    >
                      {% trans 'Delete Data Source' %}
                    </button>
-@@ -322,8 +336,9 @@
+@@ -304,8 +318,9 @@
            <div class="modal-header">
              <button
                type="button"
@@ -232,7 +232,7 @@
                aria-label="Close"
              >
                <span aria-hidden="true">&times;</span>
-@@ -360,14 +375,14 @@
+@@ -342,14 +357,14 @@
              <div class="modal-footer">
                <button
                  type="button"
