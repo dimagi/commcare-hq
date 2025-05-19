@@ -18,23 +18,23 @@ from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 ], name='dispatch')
 class ManageColumnsFormView(BulkEditSessionViewMixin,
                             LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin, TemplateView):
-    urlname = "data_cleaning_manage_columns_form"
+    urlname = "bulk_edit_manage_columns_form"
     template_name = "data_cleaning/forms/manage_columns_form.html"
     session_not_found_message = gettext_lazy("Cannot retrieve columns, session was not found.")
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, column_form=None, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
             'container_id': 'manage-columns',
             'active_columns': self.session.columns.all(),
-            'add_column_form': kwargs.pop('column_form', None) or AddColumnForm(self.session),
+            'add_column_form': column_form or AddColumnForm(self.session),
         })
         return context
 
     def _trigger_clean_form_refresh(self, response):
         response['HX-Trigger'] = json.dumps({
-            'dcCleanFormRefresh': {
-                'target': '#hq-hx-clean-selected-records-form',
+            'dcEditFormRefresh': {
+                'target': '#hq-hx-edit-selected-records-form',
             },
         })
         return response

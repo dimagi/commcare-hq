@@ -26,6 +26,7 @@ from corehq.apps.celery import periodic_task, task
 from corehq.apps.change_feed.data_sources import (
     get_document_store_for_doc_type,
 )
+from corehq.apps.export.const import MAX_DAILY_EXPORT_SIZE
 from corehq.apps.reports.util import send_report_download_email
 from corehq.elastic import ESError
 from corehq.util.context_managers import notify_someone
@@ -613,8 +614,12 @@ def export_ucr_async(report_export, download_id, user):
     filename = '{}.xlsx'.format(ascii_title.replace('/', '?'))
     file_path = get_download_file_path(use_transfer, filename)
 
-    report_export.create_export(file_path, Format.XLS_2007)
+    # Excel files max out at 1,048,576 rows, so we can reasonably limit excel exports to 1M rows
+    limit = MAX_DAILY_EXPORT_SIZE
+
+    report_export.create_export(file_path, Format.XLS_2007, limit=limit)
     expose_download(use_transfer, file_path, filename, download_id, 'xlsx', owner_ids=[user.get_id])
     link = reverse("retrieve_download", args=[download_id], params={"get_file": '1'}, absolute=True)
 
-    send_report_download_email(report_export.title, user.get_email(), link, domain=report_export.domain)
+    send_report_download_email(report_export.title, user.get_email(), link,
+                               domain=report_export.domain, limit=limit)

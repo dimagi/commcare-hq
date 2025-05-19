@@ -19,6 +19,7 @@ import _ from "underscore";
 import main from "hqwebapp/js/bootstrap3/main";
 import ClipboardJS from "clipboard/dist/clipboard";
 import "hqwebapp/js/components/select_toggle";
+import "hqwebapp/js/select2_knockout_bindings.ko";      // autocompleteSelect2
 
 var graphConfigurationUiElement = function (moduleOptions, serverRepresentationOfGraph) {
     var self = {};

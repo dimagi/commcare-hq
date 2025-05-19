@@ -82,6 +82,7 @@
 /docker/ @millerdev
 
 /package.json @dimagi/dependency-watchers
+/pyproject.toml @dimagi/dependency-watchers
 
 /scripts/docker @millerdev
 /scripts/test-make-docs.sh @dimagi/dependency-watchers
@@ -92,4 +93,5 @@
 /testapps/test_pillowtop/ @amitphulera
 /testapps/test_elasticsearch/ @amitphulera
 
+/uv.lock @dimagi/dependency-watchers
 /yarn.lock @dimagi/dependency-watchers
