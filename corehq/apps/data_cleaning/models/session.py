@@ -58,15 +58,16 @@ class BulkEditSession(models.Model):
             return None
 
     @classmethod
-    def new_case_session(cls, user, domain_name, case_type):
+    def new_case_session(cls, user, domain_name, case_type, is_default=True):
         case_session = cls.objects.create(
             user=user,
             domain=domain_name,
             identifier=case_type,
             session_type=BulkEditSessionType.CASE,
         )
-        case_session.pinned_filters.create_session_defaults(case_session)
-        case_session.columns.create_session_defaults(case_session)
+        if is_default:
+            case_session.pinned_filters.create_session_defaults(case_session)
+            case_session.columns.create_session_defaults(case_session)
         return case_session
 
     @classmethod
@@ -86,6 +87,18 @@ class BulkEditSession(models.Model):
     @classmethod
     def get_committed_sessions(cls, user, domain_name):
         return cls.objects.filter(user=user, domain=domain_name, committed_on__isnull=False)
+
+    def get_resumed_session(self):
+        new_session = self.new_case_session(
+            self.user,
+            self.domain,
+            self.identifier,
+            is_default=False,
+        )
+        self.pinned_filters.copy_to_session(self, new_session)
+        self.filters.copy_to_session(self, new_session)
+        self.columns.copy_to_session(self, new_session)
+        return new_session
 
     @property
     def is_read_only(self):
