@@ -95,12 +95,16 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
 
     @hq_hx_action('post')
     def resume_session(self, request, *args, **kwargs):
+        active_session = self.get_active_session()
+        if active_session:
+            active_session.delete()
+        new_session = self.session.get_resumed_session()
 
         from corehq.apps.data_cleaning.views.main import BulkEditCasesSessionView
         return self.render_htmx_redirect(
             reverse(
                 BulkEditCasesSessionView.urlname,
-                args=(self.domain, self.session_id),
+                args=(self.domain, new_session.session_id),
             ),
             response_message=_("Resuming Bulk Edit Session..."),
         )
