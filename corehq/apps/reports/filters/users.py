@@ -474,6 +474,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         }
 
 
+class SubmittedByExpandedMobileWorkerFilter(ExpandedMobileWorkerFilter):
+    label = gettext_lazy("Submitted By")
+
+
 class EnterpriseUsersUtils(EmwfUtils):
 
     def user_tuple(self, user):
