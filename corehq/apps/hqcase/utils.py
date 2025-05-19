@@ -1,5 +1,6 @@
 import datetime
 import uuid
+from contextlib import contextmanager
 from xml.etree import cElementTree as ElementTree
 
 from django.template.loader import render_to_string
@@ -108,6 +109,58 @@ def submit_case_blocks(
         **submission_extras
     )
     return result.xform, result.cases
+
+
+def coroutine(func):
+    """
+    Decorator to transform a coroutine function into a context manager.
+
+    The context manager primes the coroutine using ``next()`` when
+    entering the context, and calls ``.close()`` when exiting the context.
+
+    Usage::
+
+        @coroutine
+        def my_coro():
+            try:
+                while True:
+                    data = yield
+                    ... # Do something with data
+            except GeneratorExit:
+                ... # Cleanup
+
+        with my_coro() as coro:
+            coro.send(data)
+
+    """
+    @contextmanager
+    def wrapper(*args, **kwargs):
+        coro = func(*args, **kwargs)
+        next(coro)  # Prime the coroutine
+        try:
+            yield coro
+        finally:
+            coro.close()
+    return wrapper
+
+
+@coroutine
+def submit_case_block_coro(*args, **kwargs):
+    """
+    Accepts case blocks and submits them in chunks of CASEBLOCK_CHUNKSIZE
+    """
+    case_blocks = []
+    try:
+        while True:
+            case_block = yield
+            case_blocks.append(case_block)
+            if len(case_blocks) >= CASEBLOCK_CHUNKSIZE:
+                chunk = case_blocks[:CASEBLOCK_CHUNKSIZE]
+                case_blocks = case_blocks[CASEBLOCK_CHUNKSIZE:]
+                submit_case_blocks(chunk, *args, **kwargs)
+    except GeneratorExit:
+        if case_blocks:
+            submit_case_blocks(case_blocks, *args, **kwargs)
 
 
 def get_case_by_identifier(domain, identifier):

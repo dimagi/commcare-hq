@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 from datetime import datetime
+from unittest.mock import call, patch
 
 from django.test import TestCase
 
@@ -8,9 +9,11 @@ from casexml.apps.case.mock import CaseFactory
 from corehq.apps.export.const import DEID_DATE_TRANSFORM, DEID_ID_TRANSFORM
 from corehq.apps.hqcase.case_helper import CaseCopier
 from corehq.apps.hqcase.utils import (
+    CASEBLOCK_CHUNKSIZE,
     get_case_value,
     get_deidentified_data,
     is_copied_case,
+    submit_case_block_coro,
 )
 from corehq.form_processor.tests.utils import create_case
 
@@ -133,3 +136,21 @@ class TestIsCopiedCase(TestCase):
     def test_is_copied_case(self):
         self.assertFalse(is_copied_case(self.case_1))
         self.assertTrue(is_copied_case(self.case_2))
+
+
+def test_submit_case_block_coro():
+    with patch('corehq.apps.hqcase.utils.submit_case_blocks') as mock_submit:
+
+        with submit_case_block_coro('test-domain', username='test-user') as submit_case_block:
+            for i in range(CASEBLOCK_CHUNKSIZE + 1):
+                submit_case_block.send(f'case_block_{i}')
+
+            assert mock_submit.call_count == 1
+            assert len(mock_submit.call_args[0][0]) == CASEBLOCK_CHUNKSIZE
+
+        assert mock_submit.call_count == 2
+        assert mock_submit.call_args == call(
+            ['case_block_1000'],
+            'test-domain',
+            username='test-user'
+        )
