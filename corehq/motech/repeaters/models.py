@@ -69,8 +69,10 @@ import traceback
 import uuid
 from collections import defaultdict
 from contextlib import nullcontext
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from http import HTTPStatus
+from typing import Any, Optional
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.conf import settings
@@ -982,6 +984,17 @@ class DataSourceUpdate(models.Model):
     def get_id(self):
         return self.id
 
+    def to_json(self):
+        """
+        Used by DataSourcePayloadGenerator.get_payload()
+        """
+        return {
+            "data": self.rows,
+            "data_source_id": self.data_source_id.hex,
+            "doc_id": "",  # CCA `DataSetChange` expects this key
+            "doc_ids": self.doc_ids,
+        }
+
 
 class DataSourceRepeater(Repeater):
     """
@@ -1006,12 +1019,44 @@ class DataSourceRepeater(Repeater):
         from corehq.apps.userreports.models import get_datasource_config
         from corehq.apps.userreports.util import get_indicator_adapter
 
-        datasource_update = DataSourceUpdate.objects.get(pk=repeat_record.payload_id)
+        Row = dict[str, Any]
+
+        @dataclass
+        class DataSourceUpdateLog:
+            # Legacy payload format
+            # TODO: Drop after old repeat records are sent
+            domain: str
+            data_source_id: str
+            doc_id: str
+            rows: Optional[list[Row]] = None
+
+            def to_json(self):
+                # Used by DataSourcePayloadGenerator.get_payload()
+                return {
+                    "data": self.rows,
+                    "data_source_id": self.data_source_id,
+                    "doc_id": self.doc_id,
+                }
+
         config, _ = get_datasource_config(
             config_id=self.data_source_id,
             domain=self.domain
         )
         datasource_adapter = get_indicator_adapter(config, load_source='repeat_record')
+        try:
+            datasource_update_id = int(repeat_record.payload_id)
+        except ValueError:
+            # repeat_record.payload_id is not a DataSourceUpdate ID. It
+            # must an old repeat record. `payload_id` is a form/case ID.
+            # TODO: Drop this block after old repeat records are sent.
+            rows = datasource_adapter.get_rows_by_doc_id(repeat_record.payload_id)
+            return DataSourceUpdateLog(
+                domain=self.domain,
+                data_source_id=self.data_source_id,
+                doc_id=repeat_record.payload_id,
+                rows=rows,
+            )
+        datasource_update = DataSourceUpdate.objects.get(pk=datasource_update_id)
         datasource_update.rows = [
             row for doc_id in datasource_update.doc_ids
             for row in datasource_adapter.get_rows_by_doc_id(doc_id)
