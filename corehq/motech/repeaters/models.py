@@ -69,8 +69,10 @@ import traceback
 import uuid
 from collections import defaultdict
 from contextlib import nullcontext
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from http import HTTPStatus
+from typing import Any, Optional
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.conf import settings
@@ -1006,17 +1008,38 @@ class DataSourceRepeater(Repeater):
         from corehq.apps.userreports.models import get_datasource_config
         from corehq.apps.userreports.util import get_indicator_adapter
 
-        datasource_update = DataSourceUpdate.objects.get(pk=repeat_record.payload_id)
+        Row = dict[str, Any]
+
+        @dataclass
+        class DataSourceUpdateLog:
+            domain: str
+            data_source_id: str
+            doc_id: str
+            rows: Optional[list[Row]] = None
+
         config, _ = get_datasource_config(
             config_id=self.data_source_id,
             domain=self.domain
         )
         datasource_adapter = get_indicator_adapter(config, load_source='repeat_record')
-        datasource_update.rows = [
-            row for doc_id in datasource_update.doc_ids
-            for row in datasource_adapter.get_rows_by_doc_id(doc_id)
-        ]
-        return datasource_update
+        try:
+            datasource_update = DataSourceUpdate.objects.get(pk=repeat_record.payload_id)
+            datasource_update.rows = [
+                row for doc_id in datasource_update.doc_ids
+                for row in datasource_adapter.get_rows_by_doc_id(doc_id)
+            ]
+            return datasource_update
+        except DataSourceUpdate.DoesNotExist:
+            # repeat_record.payload_id is not a DataSourceUpdate ID. It
+            # must an old repeat record. `payload_id` is a form/case ID.
+            # TODO: Drop this block after old repeat records are sent.
+            rows = datasource_adapter.get_rows_by_doc_id(repeat_record.payload_id)
+            return DataSourceUpdateLog(
+                domain=self.domain,
+                data_source_id=self.data_source_id,
+                doc_id=repeat_record.payload_id,
+                rows=rows,
+            )
 
     def clear_caches(self):
         DataSourceRepeater.datasource_is_subscribed_to.clear(self.domain, self.data_source_id)
