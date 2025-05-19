@@ -459,7 +459,7 @@ es
  0012_add_new_index_for_bha
  0013_add_last_modifed
  0014_enable_slowlogs
- 0015_add_is_active_in_domain
+ 0015_add_user_domain_memberships
 events
  0001_add_events_model
  0002_attendancetrackingconfig
