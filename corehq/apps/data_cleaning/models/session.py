@@ -88,6 +88,10 @@ class BulkEditSession(models.Model):
         return cls.objects.filter(user=user, domain=domain_name, committed_on__isnull=False)
 
     @property
+    def is_read_only(self):
+        return self.committed_on is not None
+
+    @property
     def form_ids(self):
         if self.result is None or 'form_ids' not in self.result:
             return []

@@ -71,6 +71,10 @@ class EditCasesTable(BaseHtmxTable, ElasticTable):
         return visible_columns
 
     @property
+    def is_read_only(self):
+        return self.session.is_read_only
+
+    @property
     @memoized
     def has_any_filtering(self):
         """
