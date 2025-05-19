@@ -679,11 +679,6 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
             columns = self.sql_settings.primary_key
         return columns
 
-    @property
-    def rebuild_awaiting_or_in_progress(self):
-        # ToDo: re-revaluate the uses of this method
-        return self.meta.build.awaiting or self.meta.build.is_rebuild_in_progress
-
     def set_rebuild_flags(self):
         """
         Sets rebuild flags based on whether a build is required.
