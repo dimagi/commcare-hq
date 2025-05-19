@@ -36,16 +36,10 @@ RUN apt-get update \
      libmagic1 \
      libpq5 \
      # for xmlsec on Python 3.13
-     libxml2-dev \
-     # for xmlsec on Python 3.13
-     libxmlsec1-dev \
-     # for xmlsec on Python 3.13
-     libxmlsec1-openssl \
+     libxml2-dev libxmlsec1-dev libxmlsec1-openssl pkg-config \
      # for `--no-binary lxml` (see below)
      libz-dev \
      make \
-     # for xmlsec on Python 3.13
-     pkg-config \
   && rm -rf /var/lib/apt/lists/* /src/*.deb
 
 RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.gz" \
