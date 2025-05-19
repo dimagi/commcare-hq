@@ -1196,7 +1196,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
                     ))
                 else:
                     message_list.append(_(
-                        'CommCare HQ will not perform a data source rebuild '
+                        'The data source configuration will be updated but CommCare HQ will not perform a rebuild '
                         'for the changes made. Please initiate one manually '
                         'if needed.'
                     ))
@@ -1338,7 +1338,7 @@ def rebuild_data_source(request, domain, config_id):
 
     messages.success(
         request,
-        _('Table "{}" is now being rebuilt. Data should start showing up soon').format(
+        _('Table "{}" will be rebuilt. Data should start showing up soon').format(
             config.display_name
         )
     )
@@ -1455,7 +1455,7 @@ def build_data_source_in_place(request, domain, config_id):
 
     messages.success(
         request,
-        _('Table "{}" is now being rebuilt. Data should start showing up soon').format(
+        _('Table "{}" will be rebuilt. Data should start showing up soon').format(
             config.display_name
         )
     )

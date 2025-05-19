@@ -519,7 +519,7 @@ class TestDataSourceRebuild(ConfigurableReportTestMixin, TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(
             str(messages[0]),
-            'Table "foo" is now being rebuilt. Data should start showing up soon'
+            'Table "foo" will be rebuilt. Data should start showing up soon'
         )
 
         mock_prep_data_source_for_rebuild.assert_called_once()
@@ -553,7 +553,7 @@ class TestDataSourceRebuild(ConfigurableReportTestMixin, TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(
             str(messages[0]),
-            'Table "foo" is now being rebuilt. Data should start showing up soon'
+            'Table "foo" will be rebuilt. Data should start showing up soon'
         )
 
     @flag_enabled('USER_CONFIGURABLE_REPORTS')
@@ -623,7 +623,7 @@ class TestBuildDataSourceInPlace(ConfigurableReportTestMixin, TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(
             str(messages[0]),
-            'Table "foo" is now being rebuilt. Data should start showing up soon'
+            'Table "foo" will be rebuilt. Data should start showing up soon'
         )
 
         mock_prep_data_source_for_rebuild.assert_called_once()
