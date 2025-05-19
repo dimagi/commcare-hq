@@ -24,6 +24,9 @@ from corehq.apps.data_cleaning.views.tables import (
 from corehq.apps.data_cleaning.views.start import (
     StartCaseSessionView,
 )
+from corehq.apps.data_cleaning.views.status import (
+    BulkEditSessionStatusView,
+)
 
 urlpatterns = [
     url(r'^cases/$', BulkEditCasesMainView.as_view(), name=BulkEditCasesMainView.urlname),
@@ -35,6 +38,8 @@ urlpatterns = [
         name=EditCasesTableView.urlname),
     url(r'^cases/(?P<session_id>[\w\-]+)/summary/$', ChangesSummaryView.as_view(),
         name=ChangesSummaryView.urlname),
+    url(r'^session/(?P<session_id>[\w\-]+)/status/$', BulkEditSessionStatusView.as_view(),
+        name=BulkEditSessionStatusView.urlname),
     url(r'^session/(?P<session_id>[\w\-]+)/filters/$', ManageFiltersView.as_view(),
         name=ManageFiltersView.urlname),
     url(r'^session/(?P<session_id>[\w\-]+)/filters/pinned/$', ManagePinnedFiltersView.as_view(),

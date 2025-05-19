@@ -1,0 +1,21 @@
+{% load i18n %}
+
+<div
+  id="session-status-modal"
+  class="modal fade"
+  tabindex="-1"
+  aria-labelledby="staticBackdropLabel"
+  aria-hidden="true"
+  data-bs-backdrop="static"
+  data-bs-keyboard="false"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div
+      class="modal-content"
+      id="session-status-modal-body"
+      hx-get="{{ htmx_session_status_view_url }}"
+      hx-trigger="{% if session.is_read_only %}load, {% endif %}dcRefreshStatusModal"
+      hx-swap="innerHTML"
+    ></div>
+  </div>
+</div>
