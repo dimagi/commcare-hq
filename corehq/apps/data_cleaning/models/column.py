@@ -13,12 +13,7 @@ class BulkEditColumnManager(models.Manager):
     use_for_related_fields = True
 
     def create_session_defaults(self, session):
-        default_properties = {
-            BulkEditSessionType.CASE: (
-                'name', 'owner_name', 'date_opened', 'opened_by_username',
-                'last_modified', '@status',
-            ),
-        }.get(session.session_type)
+        default_properties = BulkEditSessionType.get_default_properties(session.session_type)
 
         if not default_properties:
             raise NotImplementedError(f"{session.session_type} default columns not yet supported")
@@ -35,6 +30,17 @@ class BulkEditColumnManager(models.Manager):
                 label=get_system_property_label(prop_id),
                 data_type=get_system_property_data_type(prop_id),
                 is_system=self.model.is_system_property(prop_id),
+            )
+
+    def copy_to_session(self, source_session, dest_session):
+        for column in self.filter(session=source_session):
+            self.model.objects.create(
+                session=dest_session,
+                index=column.index,
+                prop_id=column.prop_id,
+                label=column.label,
+                data_type=column.data_type,
+                is_system=column.is_system,
             )
 
     def create_for_session(self, session, prop_id, label, data_type=None):
