@@ -9,7 +9,7 @@ from corehq.apps.data_cleaning.models import BulkEditSession
 
 class BulkEditSessionViewMixin:
     session_not_found_message = gettext_lazy("That session does not exist. Please start a new session.")
-    redirect_on_session_exceptions = False
+    redirect_on_missing_session = False
 
     @property
     def session_id(self):
@@ -22,7 +22,7 @@ class BulkEditSessionViewMixin:
         """
         raise NotImplementedError(
             "get_redirect_url must be implemented in the subclass of BulkEditSessionViewMixin "
-            "in order to use redirect_on_session_exceptions"
+            "in order to use redirect_on_missing_session"
         )
 
     @property

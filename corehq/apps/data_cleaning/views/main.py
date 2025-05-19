@@ -59,7 +59,7 @@ class BulkEditCasesSessionView(BulkEditSessionViewMixin, BaseProjectDataView):
     page_title = gettext_lazy("Bulk Edit Case Type")
     urlname = "bulk_edit_cases_session"
     template_name = "data_cleaning/bulk_edit_session.html"
-    redirect_on_session_exceptions = True
+    redirect_on_missing_session = True
 
     def get_redirect_url(self):
         return reverse(BulkEditCasesMainView.urlname, args=(self.domain, ))
