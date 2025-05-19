@@ -131,3 +131,7 @@ class RecentCaseSessionsTable(BaseHtmxTable, tables.Table):
         template_name="data_cleaning/columns/task_form_ids.html",
         verbose_name=gettext_lazy("Form IDs"),
     )
+    session_url = columns.TemplateColumn(
+        template_name="data_cleaning/columns/task_session_url.html",
+        verbose_name=gettext_lazy("Open Session"),
+    )

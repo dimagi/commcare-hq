@@ -230,6 +230,7 @@ class RecentCaseSessionsTableView(BaseDataCleaningTableView):
         ]
 
     def _get_record(self, session):
+        from corehq.apps.data_cleaning.views.main import BulkEditCasesSessionView
         return {
             "committed_on": session.committed_on,
             "completed_on": session.completed_on,
@@ -238,4 +239,5 @@ class RecentCaseSessionsTableView(BaseDataCleaningTableView):
             "percent": session.percent_complete,
             "form_ids_url": reverse('download_form_ids', args=(session.domain, session.session_id)),
             "has_form_ids": bool(len(session.form_ids)),
+            "session_url": reverse(BulkEditCasesSessionView.urlname, args=(session.domain, session.session_id)),
         }
