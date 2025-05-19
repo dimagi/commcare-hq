@@ -153,7 +153,11 @@ def submit_case_block_coro(*args, **kwargs):
     try:
         while True:
             case_block = yield
-            case_blocks.append(case_block)
+            case_blocks.append(
+                case_block.as_text()
+                if isinstance(case_block, CaseBlock)
+                else case_block
+            )
             if len(case_blocks) >= CASEBLOCK_CHUNKSIZE:
                 chunk = case_blocks[:CASEBLOCK_CHUNKSIZE]
                 case_blocks = case_blocks[CASEBLOCK_CHUNKSIZE:]

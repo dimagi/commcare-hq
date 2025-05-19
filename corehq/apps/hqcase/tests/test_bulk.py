@@ -5,7 +5,8 @@ from django.test import TestCase
 
 from casexml.apps.case.mock import CaseBlock
 
-from corehq.apps.hqcase.bulk import CaseBulkDB, update_cases
+from corehq.apps.hqcase.bulk import SystemFormMeta, update_cases
+from corehq.apps.hqcase.utils import submit_case_block_coro
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
@@ -22,9 +23,15 @@ class TestUpdateCases(TestCase):
     def test(self):
         case_ids = [str(uuid.uuid4()) for i in range(1, 18)]
 
-        with CaseBulkDB(self.domain) as bulk_db:
+        form_meta = SystemFormMeta()
+        with submit_case_block_coro(
+            self.domain,
+            device_id=form_meta.device_id,
+            user_id=form_meta.user_id,
+            username=form_meta.username,
+        ) as submit_case_block:
             for i, case_id in enumerate(case_ids):
-                bulk_db.save(CaseBlock(
+                submit_case_block.send(CaseBlock(
                     create=True,
                     case_id=case_id,
                     case_type='patient',
