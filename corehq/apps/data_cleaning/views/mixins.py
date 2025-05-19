@@ -42,7 +42,7 @@ class BulkEditSessionViewMixin:
         })
         return context
 
-    def dispatch(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         try:
             # force evaluation of self.session
             _ = self.session
@@ -51,4 +51,4 @@ class BulkEditSessionViewMixin:
                 messages.error(request, self.session_not_found_message)
                 return redirect(self.get_redirect_url())
             raise Http404(self.session_not_found_message)
-        return super().dispatch(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
