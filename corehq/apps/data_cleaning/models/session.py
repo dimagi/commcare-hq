@@ -81,7 +81,7 @@ class BulkEditSession(models.Model):
 
     @classmethod
     def new_form_session(cls, user, domain_name, xmlns):
-        raise NotImplementedError("Form data cleaning sessions are not yet supported!")
+        raise NotImplementedError("Form bulk edit sessions are not yet supported!")
 
     @classmethod
     def get_committed_sessions(cls, user, domain_name):

@@ -4,7 +4,7 @@ from django.utils.translation import gettext as _
 from django.views.generic import TemplateView
 
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
-from corehq.apps.data_cleaning.forms.setup import (
+from corehq.apps.data_cleaning.forms.start_session import (
     SelectCaseTypeForm,
     ResumeOrRestartCaseSessionForm,
 )
@@ -19,10 +19,10 @@ from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
     use_bootstrap5,
     require_bulk_data_cleaning_cases,
 ], name='dispatch')
-class SetupCaseSessionFormView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin, TemplateView):
-    urlname = "data_cleaning_select_case_type_form"
+class StartCaseSessionView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin, TemplateView):
+    urlname = "start_bulk_edit_case_session"
     template_name = "data_cleaning/forms/next_action_form.html"
-    container_id = "setup-case-session"
+    container_id = "start-case-session"
 
     def get_context_data(self, form=None, next_action=None, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -78,8 +78,8 @@ class SetupCaseSessionFormView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActio
         return self.get(request, form=form, next_action=next_action, *args, **kwargs)
 
     def render_session_redirect(self, session):
-        from corehq.apps.data_cleaning.views.main import CleanCasesSessionView
+        from corehq.apps.data_cleaning.views.main import BulkEditCasesSessionView
         return self.render_htmx_redirect(
-            reverse(CleanCasesSessionView.urlname, args=(self.domain, session.session_id, )),
-            response_message=_("Starting Data Cleaning Session...")
+            reverse(BulkEditCasesSessionView.urlname, args=(self.domain, session.session_id, )),
+            response_message=_("Starting Bulk Edit Session...")
         )

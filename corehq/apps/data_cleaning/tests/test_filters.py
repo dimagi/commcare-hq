@@ -644,7 +644,7 @@ class TestReportFilterSubclasses(TestCase):
             'filter_help': [
                 '<i class="fa fa-info-circle"></i> See <a href="'
                 'https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/'
-                '2215051298/Organization+Data+Management#Search-for-Locations" '
+                '2143947350/Report+and+Export+Filters"'
                 'target="_blank"> Filter Definitions</a>.',
             ],
         }
@@ -678,14 +678,14 @@ class TestReportFilterSubclasses(TestCase):
             'filter_help': [
                 '<i class="fa fa-info-circle"></i> See <a href="'
                 'https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/'
-                '2215051298/Organization+Data+Management#Search-for-Locations" '
+                '2143947350/Report+and+Export+Filters"'
                 'target="_blank"> Filter Definitions</a>.',
                 'When searching by location, put your location name in quotes to '
                 'show only exact matches. To more easily find a location, you may '
                 'specify multiple levels by separating with a "/". For example, '
                 '"Massachusetts/Suffolk/Boston". <a href="https://dimagi.atlassian'
                 '.net/wiki/spaces/commcarepublic/pages/2215051298/Organization+Data'
-                '+Management"target="_blank">Learn more</a>.'
+                '+Management#Search-for-Locations"target="_blank">Learn more</a>.'
             ],
         }
         self.assertDictEqual(report_filter.filter_context, expected_context)

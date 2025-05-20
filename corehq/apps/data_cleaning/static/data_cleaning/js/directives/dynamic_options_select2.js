@@ -29,7 +29,7 @@ Alpine.directive('dynamic-options-select2', (el, { expression }, { cleanup }) =>
     /**
      * To use, add x-dynamic-options-select2 to your select element.
      * Creates the select2 field with suggested options for "Multiple Option/Choice"
-     * case property data types. Use only for the Bulk Data Cleaning UI.
+     * case property data types. Use only for the Bulk Data Editing UI.
      *
      *      <select x-dynamic-options-select2="{% html_attr config %}"></select>
      *

@@ -4,7 +4,7 @@
 <div
   id="{{ container_id }}"
   hx-swap="outerHTML"
-  hq-hx-refresh-swap="#CleanCaseTable"
+  hq-hx-refresh-swap="#EditCasesTable"
 >
   {% if change %}
     <div
@@ -21,7 +21,7 @@
       ></button>
     </div>
   {% endif %}
-  {% if cleaning_form.is_form_visible %}
+  {% if form.is_form_visible %}
 
     {% if are_bulk_edits_allowed %}
       <form
@@ -30,7 +30,7 @@
         hx-disabled-elt="find button"
         hq-hx-action="create_bulk_edit_change"
       >
-        {% crispy cleaning_form %}
+        {% crispy form %}
       </form>
     {% else %}
       <div class="alert alert-warning">
@@ -58,7 +58,7 @@
           @click.prevent="$dispatch('wiggle-configure-columns-button');"
         >Configure Columns</a>
         to include editible case properties in the column list in
-        order to clean the selected cases.
+        order to edit the selected cases.
       {% endblocktrans %}
     </div>
   {% endif %}

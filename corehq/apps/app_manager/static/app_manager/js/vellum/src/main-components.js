@@ -523,7 +523,7 @@ __p+='<div class="fd-ui-container">\n    <div class="fd-content fd-content-left"
                             btn = '<i class="fa fa-plus"></i> <strong>' + add + '</strong>';
                         print(format(msg, {btn: btn}));
                     
-__p+='\n                    </p>\n                    <p class="fd-default-helptext"></p>\n                  </div>\n                </div>\n            </div>\n        </div>\n        <div class="fd-external-sources-divider fd-content-left-divider fd-content-horizontal-divider"></div>\n        <div class="fd-accessory-pane"></div>\n    </div>\n    <div class="fd-content fd-content-divider fd-content-vertical-divider"></div>\n    <div class="fd-content fd-content-right">\n        <div class="fd-form-actions btn-toolbar">\n            <div class="btn-group fd-save-button"></div>\n        </div>\n        <div class="fd-column fd-question-properties hide">\n            <div class="fd-head"><h2>'+
+__p+='\n                    </p>\n                    <p class="fd-default-helptext"></p>\n                  </div>\n                </div>\n            </div>\n        </div>\n        <div class="fd-external-sources-divider fd-content-left-divider fd-content-horizontal-divider">\n          <i class="fa fa-ellipsis-h"></i>\n        </div>\n        <div class="fd-accessory-pane"></div>\n    </div>\n    <div class="fd-content fd-content-divider fd-content-vertical-divider"></div>\n    <div class="fd-content fd-content-right">\n        <div class="fd-form-actions btn-toolbar">\n            <div class="btn-group fd-save-button"></div>\n        </div>\n        <div class="fd-column fd-question-properties hide">\n            <div class="fd-head"><h2>'+
 ((__t=(gettext("Question Details")))==null?'':_.escape(__t))+
 '</h2></div>\n            <div class="fd-props-toolbar"></div>\n            <div class="fd-scrollable fd-props-scrollable">\n                <form class="form form-horizontal fd-props-content"></form>\n            </div>\n        </div>\n        <div class="fd-xpath-editor fd-column hide">\n            <div class="fd-head"><h2>'+
 ((__t=(gettext("Expression Editor")))==null?'':_.escape(__t))+
@@ -52879,7 +52879,7 @@ define('vellum/core',[
     };
 
     var showPageSpinner = function() {
-        var spinner = $("<div><div><div></div></div></div>");
+        var spinner = $("<div><div><i class='fa fa-spin fa-spinner'></i></div></div>");
         spinner.addClass("fd-form-saving");
         $('body').append(spinner);
     };

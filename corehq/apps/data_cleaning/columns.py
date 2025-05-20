@@ -9,13 +9,13 @@ from corehq.toggles import mark_safe
 from couchexport.writers import render_to_string
 
 
-class DataCleaningHtmxColumn(TemplateColumn):
+class EditableHtmxColumn(TemplateColumn):
     template_name = "data_cleaning/columns/column_main.html"
 
     def __init__(self, column_spec, *args, **kwargs):
         """
         Defines the django_tables2 compatible column object
-        for the bulk data cleaning feature.
+        for the bulk data editing feature.
 
         :param column_spec: BulkEditColumn
         """
@@ -31,11 +31,11 @@ class DataCleaningHtmxColumn(TemplateColumn):
     def get_htmx_partial_response_context(cls, column_spec, record, table):
         """
         Returns the context needed for rendering the
-        `DataCleaningHtmxColumn` template as an HTMX partial response.
+        `EditableHtmxColumn` template as an HTMX partial response.
 
         :param column_spec: BulkEditColumn
         :param record: EditableCaseSearchElasticRecord (or similar)
-        :param table: CleanCaseTable (or similar)
+        :param table: EditCasesTable (or similar)
         """
         column = cls(column_spec)
         bound_column = BoundColumn(table, column, column_spec.slug)
@@ -47,7 +47,7 @@ class DataCleaningHtmxColumn(TemplateColumn):
         }
 
 
-class DataCleaningHtmxSelectionColumn(CheckBoxColumn):
+class SelectableHtmxColumn(CheckBoxColumn):
     template_column = "data_cleaning/columns/selection.html"
     template_header = "data_cleaning/columns/selection_header.html"
     select_page_checkbox_id = "id-select-page-checkbox"
@@ -55,7 +55,7 @@ class DataCleaningHtmxSelectionColumn(CheckBoxColumn):
     def __init__(self, session, request, select_record_action, select_page_action, *args, **kwargs):
         """
         Defines a django_tables2 compatible column that handles selecting
-        records in a data cleaning session.
+        records in a data editing session.
 
         :param session: BulkEditSession instance
         :param request: a django request object from the session view

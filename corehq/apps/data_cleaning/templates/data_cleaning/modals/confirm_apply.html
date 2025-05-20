@@ -36,7 +36,7 @@
   <div
     hx-trigger="updateApplySummaryMessage from:window"
     hx-swap="innerHTML"
-    hx-post="{% url "data_cleaning_changes_summary" table.session.domain table.session.session_id %}"
+    hx-post="{% url "bulk_edit_changes_summary" table.session.domain table.session.session_id %}"
     hq-hx-action="apply_changes_summary"
   >
     {% include "data_cleaning/summary/apply_changes.html" %}
