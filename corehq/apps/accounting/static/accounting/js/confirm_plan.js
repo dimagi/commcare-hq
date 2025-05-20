@@ -14,13 +14,10 @@ var LIMITED_FEATURES = gettext("I need more limited features");
 var MORE_FEATURES = gettext("I need additional/custom features");
 var OTHER = gettext("Other");
 
-var confirmPlanModel = function (isMonthlyUpgrade, isSameEdition, isPaused, isAnnualPlan, isDowngrade, currentPlan) {
+var confirmPlanModel = function (isMonthlyUpgrade, isPaused, isAnnualPlan, isDowngrade, currentPlan) {
     var self = {};
 
-    self.isUpgrade = isMonthlyUpgrade;
-    self.isSameEdition = isSameEdition;
     self.isDowngrade = isDowngrade;
-    self.isPaused = isPaused;
     self.currentPlan = currentPlan;
 
     // If the user is upgrading or subscribing to Pay Annually,
@@ -33,7 +30,7 @@ var confirmPlanModel = function (isMonthlyUpgrade, isSameEdition, isPaused, isAn
         SWITCH_TOOLS,
     ];
 
-    if (!self.isPaused) {
+    if (!isPaused) {
         self.downgradeReasonList.push(CONTINUE_COMMCARE);
     }
 
@@ -108,7 +105,6 @@ var confirmPlanModel = function (isMonthlyUpgrade, isSameEdition, isPaused, isAn
 $(function () {
     var confirmPlan = confirmPlanModel(
         initialPageData.get('is_monthly_upgrade'),
-        initialPageData.get('is_same_edition'),
         initialPageData.get('is_paused'),
         initialPageData.get('is_annual_plan'),
         initialPageData.get('is_downgrade'),
