@@ -1,55 +1,34 @@
+{% extends "data_cleaning/status/base_modal_body.html" %}
 {% load i18n %}
 
-<div
+{% block htmx-attrs %}
   hx-get="{{ request.path_info }}"
+  hx-swap="outerHTML"
   hx-trigger="every 1s from:load"
   hq-hx-action="poll_session_status"
-  hx-swap="outerHTML"
->
-  <div class="modal-header">
-    <h5 class="modal-title">
-      {% trans "Applying Changes..." %}
-    </h5>
-  </div>
-  <div class="modal-body">
+{% endblock htmx-attrs %}
 
-    <div class="alert alert-success">
-      {% include "data_cleaning/status/partial/task_progress_bar.html" %}
+{% block modal-header %}
+  {% trans "Applying Changes..." %}
+{% endblock modal-header %}
 
-      <div class="d-flex justify-content-between">
-        <div>
-          <i class="fa-solid fa-check-double me-1"></i>
-          {% blocktrans %}
-            Applying changes, please wait...
-          {% endblocktrans %}
-        </div>
-
-        {# artificial buffer to let change feed catch up #}
-        {% if is_task_complete %}
-          <div>
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            {% blocktrans %}
-              Database is refreshing...almost there!
-            {% endblocktrans %}
-          </div>
-        {% endif %}
-      </div>
+{% block task-status-text %}
+  <div class="d-flex justify-content-between">
+    <div>
+      <i class="fa-solid fa-check-double me-1"></i>
+      {% blocktrans %}
+        Applying changes, please wait...
+      {% endblocktrans %}
     </div>
 
+    {# artificial buffer to let change feed catch up #}
+    {% if is_task_complete %}
+      <div>
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        {% blocktrans %}
+          Database is refreshing...almost there!
+        {% endblocktrans %}
+      </div>
+    {% endif %}
   </div>
-  <div class="modal-footer">
-    <a
-      class="btn btn-outline-primary"
-      href="{{ exit_url }}"
-    >
-      {% trans "Exit session" %}
-    </a>
-    <button
-      type="button"
-      class="btn btn-primary"
-      disabled="disabled"
-    >
-      {% trans "Continue editing" %}
-    </button>
-  </div>
-</div>
+{% endblock task-status-text %}

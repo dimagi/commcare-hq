@@ -1,22 +1,22 @@
+{% extends "data_cleaning/status/base_modal_body.html" %}
 {% load i18n %}
 
-<div class="modal-header">
-  <h5 class="modal-title">
-    {% trans "Changes Applied" %}
-  </h5>
-</div>
-<div class="modal-body">
-  <div class="alert alert-success">
-    {% include "data_cleaning/status/partial/task_progress_bar.html" %}
-    <i class="fa-solid fa-check-double me-1"></i>
-    {# prettier-ignore-start #}
-    {% blocktrans count count=num_records_changed %}
-      Finished processing changes, updated 1 case.
-    {% plural %}
-      Finished processing changes, updated {{ num_records_changed }} cases.
-    {% endblocktrans %}
-    {# prettier-ignore-end #}
-  </div>
+{% block modal-header %}
+  {% trans "Changes Applied" %}
+{% endblock modal-header %}
+
+{% block task-status-text %}
+  <i class="fa-solid fa-check-double me-1"></i>
+  {# prettier-ignore-start #}
+  {% blocktrans count count=num_records_changed %}
+    Finished processing changes, updated 1 case.
+  {% plural %}
+    Finished processing changes, updated {{ num_records_changed }} cases.
+  {% endblocktrans %}
+  {# prettier-ignore-end #}
+{% endblock task-status-text %}
+
+{% block modal-body %}
   {% if active_session %}
     <p class="lead">
       {% blocktrans %}
@@ -36,14 +36,9 @@
       {% endblocktrans %}
     </p>
   {% endif %}
-</div>
-<div class="modal-footer">
-  <a
-    class="btn btn-outline-primary"
-    href="{{ exit_url }}"
-  >
-    {% trans "Exit session" %}
-  </a>
+{% endblock modal-body %}
+
+{% block continue-button %}
   <button
     type="button"
     class="btn btn-primary"
@@ -58,4 +53,4 @@
       {% trans "Continue editing" %}
     {% endif %}
   </button>
-</div>
+{% endblock continue-button %}
