@@ -5,8 +5,12 @@ from inspect import cleandoc
 from typing import Iterator
 from unittest.mock import call, patch
 
+import pytest
+
 from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE
+from corehq.apps.locations.tests.util import LocationHierarchyPerTest
 from corehq.apps.users.management.commands.nphcda_move_locations import (
+    LocationError,
     Settlement,
     SettlementPair,
     load_csv,
@@ -61,6 +65,117 @@ def test_submit_case_block_coro():
             'test-domain',
             device_id='corehq.apps.users.management.commands.nphcda_move_locations'
         )
+
+
+class TestSettlement(LocationHierarchyPerTest):
+    domain = 'test-domain'
+    location_type_names = ['country', 'state', 'lga', 'ward', 'settlement']
+    location_structure = [
+        ('United Kingdom', [
+            ('Scotland', [
+                ('Midlothian', [
+                    ('Edinburgh', [
+                        ('New Town', []),
+                    ]),
+                ]),
+            ]),
+        ])
+    ]
+
+    def setUp(self):
+        super().setUp()
+        self.country = self.locations['United Kingdom']
+        self.state = self.locations['Scotland']
+        self.lga = self.locations['Midlothian']
+        self.ward = self.locations['Edinburgh']
+        self.settlement = self.locations['New Town']
+
+    def test_get_state_code(self):
+        settlement = Settlement(
+            state_name='Scotland',
+            lga_name='Midlothian',
+            ward_name='Edinburgh',
+            settlement_name='New Town',
+            location_id=self.settlement.location_id,
+        )
+        assert settlement.get_state_code() == 'scotland'
+
+    def test_get_lga_code(self):
+        settlement = Settlement(
+            state_name='Scotland',
+            lga_name='Midlothian',
+            ward_name='Edinburgh',
+            settlement_name='New Town',
+            location_id=self.settlement.location_id,
+        )
+        assert settlement.get_lga_code() == 'scotland·midlothian'
+
+    def test_get_ward_code(self):
+        settlement = Settlement(
+            state_name='Scotland',
+            lga_name='Midlothian',
+            ward_name='Edinburgh',
+            settlement_name='New Town',
+            location_id=self.settlement.location_id,
+        )
+        assert settlement.get_ward_code() == 'scotland·midlothian·edinburgh'
+
+    def test_get_settlement_code(self):
+        settlement = Settlement(
+            state_name='Scotland',
+            lga_name='Midlothian',
+            ward_name='Edinburgh',
+            settlement_name='New Town',
+            location_id=self.settlement.location_id,
+        )
+        assert settlement.get_settlement_code() == 'scotland·midlothian·edinburgh·new town'
+
+    def test_get_site_code(self):
+        settlement = Settlement(
+            state_name='Scotland',
+            lga_name='Midlothian',
+            ward_name='Edinburgh',
+            settlement_name='New Town',
+            location_id=self.settlement.location_id,
+        )
+        assert settlement.get_site_code() == 'new_town_edinburgh_midlothian_scotland_settlement'
+
+    def test_get_location(self):
+        with patch(
+            'corehq.apps.users.management.commands.nphcda_move_locations'
+            '.COUNTRY_ID',
+            self.country.location_id,
+        ):
+            settlement = Settlement(
+                state_name='Scotland',
+                lga_name='Midlothian',
+                ward_name='Edinburgh',
+                settlement_name='New Town',
+                location_id=None,
+            )
+
+            location = settlement.get_location(self.domain)
+            assert location == self.settlement
+
+    def test_get_location_settlement_not_found(self):
+        with patch(
+            'corehq.apps.users.management.commands.nphcda_move_locations'
+            '.COUNTRY_ID',
+            self.country.location_id,
+        ):
+            settlement = Settlement(
+                state_name='Scotland',
+                lga_name='Midlothian',
+                ward_name='Edinburgh',
+                settlement_name='West End',
+                location_id=None,
+            )
+
+            with pytest.raises(LocationError, match=(
+                "^No location found for 'West end' under Edinburgh "
+                r"\([a-f0-9]{32}\)$"
+            )):
+                settlement.get_location(self.domain)
 
 
 def test_doctests():
