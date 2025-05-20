@@ -50,7 +50,7 @@
   </h4>
 
   {% if is_annual_plan %}
-    <p class="text-free">
+    <p class="alert-subscription-text">
       {% blocktrans %}
         By continuing you are subscribing to a Pay Annually plan and will
         receive an invoice via email for plan fees due. In case you incur any
@@ -64,7 +64,7 @@
       {% endblocktrans %}
     </p>
   {% elif is_upgrade %}
-    <p class="text-free">
+    <p class="alert-subscription-text">
       {% blocktrans with next_invoice_date as invoice_date %}
         CommCare is billed on a monthly basis, and all subscriptions require a
         30 day minimum commitment. You should expect your first invoice on
@@ -76,7 +76,7 @@
         >.
       {% endblocktrans %}
     </p>
-    <p class="text-free">
+    <p class="alert-subscription-text">
       {% blocktrans %}
         Once you subscribe to a paid plan, you will be able to pause your
         subscription after 30 days, but you will no longer be able to downgrade
