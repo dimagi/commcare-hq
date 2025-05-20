@@ -13,9 +13,8 @@
   </div>
   <div class="modal-body">
     <div class="alert alert-success">
-      <div class="progress mb-2" role="progressbar" aria-label="Basic example" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
-        <div class="progress-bar bg-success" style="width: {{ session.percent_complete }}%"></div>
-      </div>
+      {% include "data_cleaning/status/partial/task_progress_bar.html" %}
+
       <div class="d-flex justify-content-between">
         <div>
           <i class="fa-solid fa-check-double me-1"></i>
