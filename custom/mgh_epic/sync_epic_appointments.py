@@ -243,7 +243,7 @@ def sync_all_appointments_domain(domain):
                 'case_name': f'[{appointment_fhir_timestamp}]: {appointment_description}',
                 'case_type': 'appointment',
                 'indices': {
-                    'patient': {
+                    'parent': {
                         'case_id': host_case_id,
                         'case_type': 'patient',
                         'relationship': 'extension',
