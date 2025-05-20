@@ -14,16 +14,16 @@ var LIMITED_FEATURES = gettext("I need more limited features");
 var MORE_FEATURES = gettext("I need additional/custom features");
 var OTHER = gettext("Other");
 
-var confirmPlanModel = function (isUpgrade, isSameEdition, isPaused, isAnnualPlan, currentPlan) {
+var confirmPlanModel = function (isMonthlyUpgrade, isSameEdition, isPaused, isAnnualPlan, isDowngrade, currentPlan) {
     var self = {};
 
-    self.isUpgrade = isUpgrade;
+    self.isUpgrade = isMonthlyUpgrade;
     self.isSameEdition = isSameEdition;
+    self.isDowngrade = isDowngrade;
     self.isPaused = isPaused;
     self.currentPlan = currentPlan;
 
-    // If the user is upgrading, don't let them continue until they agree to the minimum subscription terms
-    self.oUserAgreementSigned = ko.observable(!(isUpgrade || isAnnualPlan));
+    self.oUserAgreementSigned = ko.observable(!(isMonthlyUpgrade || isAnnualPlan));
 
     self.downgradeReasonList = [
         PROJECT_ENDED,
@@ -73,11 +73,11 @@ var confirmPlanModel = function (isUpgrade, isSameEdition, isPaused, isAnnualPla
     self.form = undefined;
     self.openDowngradeModal = function (confirmPlanModel, e) {
         self.form = $(e.currentTarget).closest("form");
-        if (confirmPlanModel.isUpgrade || confirmPlanModel.isSameEdition) {
-            self.form.submit();
-        } else {
+        if (confirmPlanModel.isDowngrade) {
             var $modal = $("#modal-downgrade");
             $modal.modal('show');
+        } else {
+            self.form.submit();
         }
     };
     self.submitDowngrade = function (pricingTable, e) {
@@ -105,10 +105,11 @@ var confirmPlanModel = function (isUpgrade, isSameEdition, isPaused, isAnnualPla
 
 $(function () {
     var confirmPlan = confirmPlanModel(
-        initialPageData.get('is_upgrade'),
+        initialPageData.get('is_monthly_upgrade'),
         initialPageData.get('is_same_edition'),
         initialPageData.get('is_paused'),
         initialPageData.get('is_annual_plan'),
+        initialPageData.get('is_downgrade'),
         initialPageData.get('current_plan'),
     );
 

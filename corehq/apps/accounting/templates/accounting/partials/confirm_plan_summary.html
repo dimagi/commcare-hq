@@ -63,7 +63,7 @@
         for more information about payment, cancellation, and refunds.
       {% endblocktrans %}
     </p>
-  {% elif is_upgrade %}
+  {% elif is_monthly_upgrade %}
     <p class="alert-subscription-text">
       {% blocktrans with next_invoice_date as invoice_date %}
         CommCare is billed on a monthly basis, and all subscriptions require a
@@ -92,6 +92,7 @@
       {% endblocktrans %}
     </p>
   {% endif %}
+
   {% if is_downgrade_before_minimum %}
     <p>
       {% blocktrans with current_plan as p %}
@@ -102,7 +103,7 @@
         will be downgraded to the {{ new_plan_edition }} Edition Software Plan.
       {% endblocktrans %}
     </p>
-  {% elif not is_upgrade and not is_same_edition %}
+  {% elif is_downgrade %}
     <p>
       {% blocktrans with current_plan as p %}
         We're sorry to see you downgrade! You are currently subscribed to the
@@ -111,7 +112,7 @@
     </p>
   {% endif %}
 
-  {% if is_upgrade or is_annual_plan %}
+  {% if is_monthly_upgrade or is_annual_plan %}
     <p>
       <strong>
         {% blocktrans %}
