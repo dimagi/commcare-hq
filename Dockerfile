@@ -37,7 +37,7 @@ RUN apt-get update \
      libpq5 \
      # for xmlsec on Python 3.13
      libxml2-dev libxmlsec1-dev libxmlsec1-openssl pkg-config \
-     # for `--no-binary lxml` (see below)
+     # for `no-binary-package lxml` in pyproject.toml
      libz-dev \
      make \
   && rm -rf /var/lib/apt/lists/* /src/*.deb
@@ -48,12 +48,9 @@ RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-
 
 COPY pyproject.toml uv.lock package.json /vendor/
 
-RUN --mount=type=cache,target=/root/.cache/uv UV_PROJECT=/vendor \
-  uv sync --no-binary-package=lxml --locked --group=test --no-dev --no-install-project \
+RUN --mount=type=cache,target=/root/.cache/uv \
+  UV_PROJECT=/vendor uv sync --locked --group=test --no-dev --no-install-project \
   && rm /vendor/pyproject.toml /vendor/uv.lock
-# `--no-binary-package=lxml` forces lxml to be built against the local libxml2-dev to
-# resolve xmlsec.InternalError: (-1, 'lxml & xmlsec libxml2 library version mismatch')
-# This can be revisited if lxml and xmlsec versions with pre-build wheels can be found
 
 # this keeps the image size down, make sure to set in mocha-headless-chrome options
 #   executablePath: 'google-chrome-stable'
