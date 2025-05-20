@@ -50,6 +50,7 @@ class EditableHtmxColumn(TemplateColumn):
 class SelectableHtmxColumn(CheckBoxColumn):
     template_column = "data_cleaning/columns/selection.html"
     template_header = "data_cleaning/columns/selection_header.html"
+    template_read_only = "data_cleaning/columns/selection_read_only.html"
     select_page_checkbox_id = "id-select-page-checkbox"
 
     def __init__(self, session, request, select_record_action, select_page_action, *args, **kwargs):
@@ -75,8 +76,19 @@ class SelectableHtmxColumn(CheckBoxColumn):
     def get_selected_record_checkbox_id(self, value):
         return f'id-selected-record-{value}'
 
+    def read_only_response(self):
+        return mark_safe(  # nosec: render_to_string below will handle escaping
+            render_to_string(
+                self.template_read_only,
+                {},
+                request=self.request,
+            )
+        )
+
     @property
     def header(self):
+        if self.session.is_read_only:
+            return self.read_only_response()
         general = self.attrs.get("input")
         specific = self.attrs.get("th__input")
         attrs = AttributeDict(specific or general or {})
@@ -93,6 +105,8 @@ class SelectableHtmxColumn(CheckBoxColumn):
         )
 
     def render(self, value, bound_column, record):
+        if self.session.is_read_only:
+            return self.read_only_response()
         general = self.attrs.get("input")
         specific = self.attrs.get("td__input")
         attrs = AttributeDict(specific or general or {})
