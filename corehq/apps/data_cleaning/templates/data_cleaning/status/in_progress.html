@@ -12,6 +12,7 @@
     </h5>
   </div>
   <div class="modal-body">
+
     <div class="alert alert-success">
       {% include "data_cleaning/status/partial/task_progress_bar.html" %}
 
@@ -22,6 +23,8 @@
             Applying changes, please wait...
           {% endblocktrans %}
         </div>
+
+        {# artificial buffer to let change feed catch up #}
         {% if is_task_complete %}
           <div>
             <i class="fa-solid fa-spinner fa-spin"></i>
@@ -32,6 +35,7 @@
         {% endif %}
       </div>
     </div>
+
   </div>
   <div class="modal-footer">
     <a
