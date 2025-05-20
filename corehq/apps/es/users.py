@@ -58,7 +58,6 @@ class UserES(HQESQuery):
             is_practice_user,
             role_id,
             is_active,
-            is_active_in_domain,
             username,
             missing_or_empty_user_data_property,
         ] + super(UserES, self).builtin_filters
@@ -107,6 +106,19 @@ class ElasticUser(ElasticDocumentAdapter):
         user_dict['__group_names'] = [res.name for res in results]
         user_dict['user_data_es'] = []
         user_dict.pop('password', None)
+
+        memberships = []
+
+        if user_dict['doc_type'] == 'CommCareUser':
+            membership = dict(user_dict['domain_membership'])
+            memberships.append(membership)
+        elif user_dict['doc_type'] == 'WebUser':
+            for membership in user_dict['domain_memberships']:
+                membership_copy = dict(membership)
+                memberships.append(membership_copy)
+        if memberships:
+            user_dict['user_domain_memberships'] = memberships
+
         if user_dict.get('base_doc') == 'CouchUser' and user_dict['doc_type'] == 'CommCareUser':
             user_obj = self.model_cls.wrap_correctly(user_dict)
             user_data = user_obj.get_user_data(user_obj.domain)
@@ -139,7 +151,7 @@ def domain(domain, allow_enterprise=False):
 def domains(domains):
     return filters.OR(
         filters.term("domain.exact", domains),
-        filters.term("domain_memberships.domain.exact", domains)
+        filters.term("user_domain_memberships.domain.exact", domains)
     )
 
 
@@ -208,8 +220,8 @@ def location(location_id):
         filters.AND(mobile_users(), filters.term('assigned_location_ids', location_id)),
         filters.AND(
             web_users(),
-            filters.term('domain_memberships.assigned_location_ids', location_id)
-        ),
+            filters.term('user_domain_memberships.assigned_location_ids', location_id)
+        )
     )
 
 
@@ -218,23 +230,26 @@ def is_practice_user(practice_mode=True):
 
 
 def role_id(role_id):
-    return filters.OR(
-        filters.term("domain_membership.role_id", role_id),     # mobile users
-        filters.term("domain_memberships.role_id", role_id)     # web users
-    )
+    return filters.term("user_domain_memberships.role_id", role_id)
 
 
-def is_active(active=True):
-    return filters.term("is_active", active)
-
-
-def is_active_in_domain(active=True):
+def is_active(active=True, domain=None):
+    if not domain:
+        return filters.term("is_active", active)
     if active:
-        return filters.OR(
-            filters.term("domain_memberships.is_active", active),
-            filters.missing("domain_memberships.is_active")
+        domain_membership_filter = filters.NOT(filters.term("user_domain_memberships.is_active", False))
+    else:
+        domain_membership_filter = filters.term("user_domain_memberships.is_active", False)
+    return filters.AND(
+        web_users(),
+        queries.nested(
+            'user_domain_memberships',
+            filters.AND(
+                filters.term('user_domain_memberships.domain.exact', domain),
+                domain_membership_filter
+            )
         )
-    return filters.term("domain_memberships.is_active", active)
+    )
 
 
 def _user_data(key, filter_):
