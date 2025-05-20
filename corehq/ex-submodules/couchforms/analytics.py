@@ -2,11 +2,18 @@ import datetime
 
 from corehq.apps.es import AppES, FormES
 from corehq.apps.es.aggregations import TermsAggregation
+from corehq.apps.experiments import Experiment, ES_FOR_EXPORTS
 from corehq.const import MISSING_APP_ID
 from corehq.util.quickcache import quickcache
 
 from corehq.util.couch import stale_ok
 from corehq.util.dates import iso_string_to_datetime
+
+experiment = Experiment(
+    campaign=ES_FOR_EXPORTS,
+    old_args={},
+    new_args={'use_es': True}
+)
 
 
 def domain_has_submission_in_last_30_days(domain):
@@ -133,17 +140,12 @@ def get_form_analytics_metadata(domain, app_id, xmlns):
 
 
 def get_exports_by_form(domain, use_es=False):
-    from corehq.apps.app_manager.models import Application
     if use_es:
+        # if use_es is True here, the "export_apps_use_elasticsearch" ff is enabled for
+        # this domain so just return es results without the experiment
         rows = _get_export_forms_by_app_es(domain)
     else:
-        rows = Application.get_db().view(
-            'exports_forms_by_app/view',
-            startkey=[domain],
-            endkey=[domain, {}],
-            group=True,
-            stale=stale_ok()
-        ).all()
+        rows = _experiment_get_export_forms(domain)
     form_count_breakdown = get_form_count_breakdown_for_domain(domain)
 
     for row in rows:
@@ -155,6 +157,22 @@ def get_exports_by_form(domain, use_es=False):
         rows.append({'key': list(key), 'value': {'xmlns': key[2], 'submissions': value}})
 
     rows.sort(key=lambda row: row['key'])
+    return rows
+
+
+@experiment
+def _experiment_get_export_forms(domain, use_es=False):
+    from corehq.apps.app_manager.models import Application
+    if use_es:
+        rows = _get_export_forms_by_app_es(domain)
+    else:
+        rows = Application.get_db().view(
+            'exports_forms_by_app/view',
+            startkey=[domain],
+            endkey=[domain, {}],
+            group=True,
+            stale=stale_ok()
+        ).all()
     return rows
 
 
