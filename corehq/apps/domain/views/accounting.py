@@ -1408,18 +1408,18 @@ class ConfirmSelectedPlanView(PlanViewBase):
     def page_context(self):
         return {
             'downgrade_messages': self.downgrade_messages(),
-            'is_monthly_upgrade': self.is_monthly_upgrade,
-            'is_same_edition': self.is_same_edition,
             'next_invoice_date': self.next_invoice_date.strftime(USER_DATE_FORMAT),
             'current_plan': (self.current_subscription.plan_version.plan.edition
                              if self.current_subscription is not None else None),
-            'is_downgrade_before_minimum': self.is_downgrade_before_minimum,
             'current_subscription_end_date': self.current_subscription_end_date.strftime(USER_DATE_FORMAT),
             'start_date_after_minimum_subscription': self.start_date_after_minimum_subscription,
             'new_plan_edition': self.edition,
-            'is_paused': self.is_paused,
             'is_annual_plan': self.is_annual_plan,
+            'is_monthly_upgrade': self.is_monthly_upgrade,
+            'is_same_edition': self.is_same_edition,
             'is_downgrade': self.is_downgrade,
+            'is_downgrade_before_minimum': self.is_downgrade_before_minimum,
+            'is_paused': self.is_paused,
             'tile_css': 'tile-{}'.format(self.edition.lower()),
         }
 
