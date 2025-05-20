@@ -63,7 +63,11 @@ class BulkEditSessionStatusView(BulkEditSessionViewMixin, BaseStatusView):
         context = super().get_context_data(**kwargs)
         context.update({
             "active_session": self.get_active_session(),
-            "num_records_changed": self.session.num_changed_records,
+            "num_records_changed": (
+                self.session.num_changed_records
+                if self.session.committed_on is not None
+                else 0
+            ),
             "case_type": self.session.identifier,
             "exit_url": self.exit_url,
             "is_task_complete": self.session.percent_complete == 100,
