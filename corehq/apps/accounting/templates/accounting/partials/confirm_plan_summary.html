@@ -32,20 +32,22 @@
 <div
   class="alert {% if is_same_edition %}alert-info{% else %}alert-warning{% endif %} alert-subscription"
 >
-  {% if is_same_edition %}
-    <h4>
+  <h4>
+    {% if is_same_edition %}
       {% blocktrans %}
         Thank you for staying with your current subscription.
       {% endblocktrans %}
-    </h4>
-  {% elif is_downgrade_before_minimum %}
-    <h4>{% trans "We're sorry to see you downgrade!" %}</h4>
-  {% else %}
-    <h4>
+    {% elif is_downgrade_before_minimum %}
+      {% blocktrans %}
+        We're sorry to see you downgrade!
+      {% endblocktrans %}
+    {% else %}
       <i class="fa fa-warning"></i>
-      {% trans "Note: Continuing will change your current subscription." %}
-    </h4>
-  {% endif %}
+      {% blocktrans %}
+        Note: Continuing will change your current subscription.
+      {% endblocktrans %}
+    {% endif %}
+  </h4>
 
   {% if is_annual_plan %}
     <p class="text-free">
