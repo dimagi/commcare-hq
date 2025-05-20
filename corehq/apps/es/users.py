@@ -31,6 +31,7 @@ from .const import (
     HQ_USERS_SECONDARY_INDEX_NAME,
 )
 from .es_query import HQESQuery
+from .utils import get_user_domain_memberships
 from .index.settings import IndexSettingsKey
 
 
@@ -107,15 +108,7 @@ class ElasticUser(ElasticDocumentAdapter):
         user_dict['user_data_es'] = []
         user_dict.pop('password', None)
 
-        memberships = []
-
-        if user_dict['doc_type'] == 'CommCareUser':
-            membership = dict(user_dict['domain_membership'])
-            memberships.append(membership)
-        elif user_dict['doc_type'] == 'WebUser':
-            for membership in user_dict['domain_memberships']:
-                membership_copy = dict(membership)
-                memberships.append(membership_copy)
+        memberships = get_user_domain_memberships(user_dict)
         if memberships:
             user_dict['user_domain_memberships'] = memberships
 
@@ -151,7 +144,10 @@ def domain(domain, allow_enterprise=False):
 def domains(domains):
     return filters.OR(
         filters.term("domain.exact", domains),
-        filters.term("user_domain_memberships.domain.exact", domains)
+        queries.nested(
+            'user_domain_memberships',
+            filters.term("user_domain_memberships.domain.exact", domains)
+        )
     )
 
 
@@ -220,7 +216,10 @@ def location(location_id):
         filters.AND(mobile_users(), filters.term('assigned_location_ids', location_id)),
         filters.AND(
             web_users(),
-            filters.term('user_domain_memberships.assigned_location_ids', location_id)
+            queries.nested(
+                'user_domain_memberships',
+                filters.term('user_domain_memberships.assigned_location_ids', location_id),
+            )
         )
     )
 
@@ -230,7 +229,10 @@ def is_practice_user(practice_mode=True):
 
 
 def role_id(role_id):
-    return filters.term("user_domain_memberships.role_id", role_id)
+    return queries.nested(
+        'user_domain_memberships',
+        filters.term('user_domain_memberships.role_id', role_id),
+    )
 
 
 def is_active(active=True, domain=None):
