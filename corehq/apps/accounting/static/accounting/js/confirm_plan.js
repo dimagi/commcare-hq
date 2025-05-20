@@ -23,6 +23,8 @@ var confirmPlanModel = function (isMonthlyUpgrade, isSameEdition, isPaused, isAn
     self.isPaused = isPaused;
     self.currentPlan = currentPlan;
 
+    // If the user is upgrading or subscribing to Pay Annually,
+    // don't let them continue until they agree to the minimum subscription terms
     self.oUserAgreementSigned = ko.observable(!(isMonthlyUpgrade || isAnnualPlan));
 
     self.downgradeReasonList = [
