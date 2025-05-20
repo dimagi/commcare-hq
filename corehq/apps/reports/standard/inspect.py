@@ -11,7 +11,7 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.display import FormDisplay
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
 from corehq.apps.reports.filters.users import \
-    ExpandedMobileWorkerFilter as EMWF
+    SubmittedByExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import (
@@ -36,7 +36,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
     name = gettext_noop('Submission History')
     slug = 'submit_history'
     fields = [
-        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        'corehq.apps.reports.filters.users.SubmittedByExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
         'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',

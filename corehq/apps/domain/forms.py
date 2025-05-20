@@ -1927,51 +1927,46 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     return False
 
                 cancel_future_subscriptions(self.domain, datetime.date.today(), self.creating_user)
-                if self.current_subscription is not None:
-                    if self.is_same_edition():
-                        self.current_subscription.update_subscription(
-                            date_start=self.current_subscription.date_start,
-                            date_end=None
-                        )
-                    elif self.is_downgrade_from_paid_plan() and \
-                            self.current_subscription.is_below_minimum_subscription:
-                        self.current_subscription.update_subscription(
-                            date_start=self.current_subscription.date_start,
-                            date_end=self.current_subscription.date_start + datetime.timedelta(days=30)
-                        )
-                        Subscription.new_domain_subscription(
-                            account=self.account,
-                            domain=self.domain,
-                            plan_version=self.plan_version,
-                            date_start=self.current_subscription.date_start + datetime.timedelta(days=30),
-                            web_user=self.creating_user,
-                            adjustment_method=SubscriptionAdjustmentMethod.USER,
-                            service_type=SubscriptionType.PRODUCT,
-                            pro_bono_status=ProBonoStatus.NO,
-                            funding_source=FundingSource.CLIENT,
-                        )
-                    else:
-                        self.current_subscription.change_plan(
-                            self.plan_version,
-                            web_user=self.creating_user,
-                            adjustment_method=SubscriptionAdjustmentMethod.USER,
-                            service_type=SubscriptionType.PRODUCT,
-                            pro_bono_status=ProBonoStatus.NO,
-                            do_not_invoice=False,
-                            no_invoice_reason='',
-                        )
-                    if self_signup := SelfSignupWorkflow.get_in_progress_for_domain(self.domain):
-                        self_signup.complete_workflow(self.plan_version.plan.edition)
-                else:
+                if (
+                    self.is_downgrade_from_paid_plan()
+                    and self.current_subscription.is_below_minimum_subscription
+                ):
+                    new_sub_date_start = self.current_subscription.date_start + datetime.timedelta(days=30)
+                    new_sub_date_end = new_sub_date_start + relativedelta(years=1) if self.is_annual_plan else None
+                    self.current_subscription.update_subscription(
+                        date_start=self.current_subscription.date_start,
+                        date_end=new_sub_date_start
+                    )
                     Subscription.new_domain_subscription(
-                        self.account, self.domain, self.plan_version,
+                        account=self.account,
+                        domain=self.domain,
+                        plan_version=self.plan_version,
+                        date_start=new_sub_date_start,
+                        date_end=new_sub_date_end,
                         web_user=self.creating_user,
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
                         service_type=SubscriptionType.PRODUCT,
                         pro_bono_status=ProBonoStatus.NO,
                         funding_source=FundingSource.CLIENT,
                     )
-                return True
+                else:
+                    # date_start on Subscription.change_plan is always today so just set the end date
+                    new_sub_date_end = (
+                        datetime.date.today() + relativedelta(years=1) if self.is_annual_plan else None
+                    )
+                    self.current_subscription.change_plan(
+                        self.plan_version,
+                        date_end=new_sub_date_end,
+                        web_user=self.creating_user,
+                        adjustment_method=SubscriptionAdjustmentMethod.USER,
+                        service_type=SubscriptionType.PRODUCT,
+                        pro_bono_status=ProBonoStatus.NO,
+                        do_not_invoice=False,
+                        no_invoice_reason='',
+                    )
+                if self_signup := SelfSignupWorkflow.get_in_progress_for_domain(self.domain):
+                    self_signup.complete_workflow(self.plan_version.plan.edition)
+            return True
         except Exception as e:
             log_accounting_error(
                 "There was an error subscribing the domain '%s' to plan '%s'. Message: %s "
@@ -1979,6 +1974,10 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 show_stack_trace=True,
             )
             return False
+
+    @property
+    def is_annual_plan(self):
+        return self.plan_version.plan.is_annual_plan
 
     def is_same_edition(self):
         return self.current_subscription.plan_version.plan.edition == self.plan_version.plan.edition
