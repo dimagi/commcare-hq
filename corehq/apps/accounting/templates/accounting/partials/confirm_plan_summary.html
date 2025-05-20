@@ -30,7 +30,14 @@
 </div>
 
 <div
-  class="alert {% if is_same_edition %}alert-info{% else %}alert-warning{% endif %} alert-subscription"
+  class="
+    alert alert-subscription
+    {% if is_same_edition %}
+      alert-info
+    {% else %}
+      alert-warning
+    {% endif %}
+  "
 >
   <h4>
     {% if is_same_edition %}
