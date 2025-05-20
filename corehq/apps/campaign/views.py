@@ -91,7 +91,11 @@ class DashboardView(BaseProjectReportSectionView, DashboardMapFilterMixin):
             'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN,
             'map_report_widgets': self.dashboard.get_map_report_widgets_by_tab(),
             'gauge_widgets': self._dashboard_gauge_configs(),
-            'widget_types': WidgetType.choices,
+            # Report widgets are not supported yet
+            'widget_types': [
+                (widget_type, label)
+                for widget_type, label in WidgetType.choices if widget_type != WidgetType.REPORT
+            ]
         })
         context.update(self.dashboard_map_case_filters_context())
         return context

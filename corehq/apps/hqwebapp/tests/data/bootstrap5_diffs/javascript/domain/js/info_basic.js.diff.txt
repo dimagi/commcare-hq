@@ -1,14 +1,12 @@
 --- 
 +++ 
-@@ -1,9 +1,8 @@
--hqDefine("domain/js/bootstrap3/info_basic", [
-+hqDefine("domain/js/bootstrap5/info_basic", [
-     'jquery',
-     'hqwebapp/js/select_2_ajax_widget', // for call center case owner
-     'select2/dist/js/select2.full.min',
--    'hqwebapp/js/bootstrap3/widgets',
--    'commcarehq',
-+    'hqwebapp/js/bootstrap5/widgets',
- ], function (
-     $
- ) {
+@@ -1,8 +1,7 @@
+-import "commcarehq";
+ import $ from "jquery";
+ import "hqwebapp/js/select_2_ajax_widget";  // for call center case owner
+ import "select2/dist/js/select2.full.min";
+-import "hqwebapp/js/bootstrap3/widgets";
++import "hqwebapp/js/bootstrap5/widgets";
+ 
+ $(function () {
+     $('#id_default_timezone').select2({

@@ -8,6 +8,8 @@ from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.groups import group_adapter
+from corehq.apps.es.users import user_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.integration.kyc.models import KycVerificationStatus, UserDataStore, KycConfig
 from corehq.apps.integration.payments.const import PaymentProperties, PaymentStatus
@@ -17,6 +19,7 @@ from corehq.apps.integration.payments.views import (
     PaymentsVerificationTableView,
     PaymentConfigurationView,
 )
+from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.users.models import WebUser, HqPermissions
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.permissions import PAYMENTS_REPORT_PERMISSION
@@ -254,7 +257,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
         }
 
 
-@es_test(requires=[case_search_adapter], setup_class=True)
+@es_test(requires=[case_search_adapter, user_adapter, group_adapter], setup_class=True)
 class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
     urlname = PaymentsVerificationTableView.urlname
 
@@ -286,8 +289,17 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
                 data={
                     PaymentProperties.BATCH_NUMBER: 'B001',
                 }),
+            _create_case(
+                cls.factory,
+                name='case_owner_test',
+                data={
+                    PaymentProperties.BATCH_NUMBER: 'B002',
+                },
+                owner_id=cls.user_with_access.user_id
+            )
         ]
         case_search_adapter.bulk_index(cls.case_list, refresh=True)
+        user_adapter.bulk_index([cls.webuser, cls.user_without_access, cls.user_with_access], refresh=True)
 
     @classmethod
     def tearDownClass(cls):
@@ -306,16 +318,16 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
         assert len(queryset) == 2
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
-    def test_verification_status_filter_unverified_has_one(self):
+    def test_verification_status_filter_unverified_has_two(self):
         response = self._make_request(querystring='payment_verification_status=unverified')
         queryset = response.context['table'].data
-        assert len(queryset) == 1
+        assert len(queryset) == 2
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
     def test_verification_status_filter_unfiltered(self):
         response = self._make_request(querystring='payment_verification_status=')
         queryset = response.context['table'].data
-        assert len(queryset) == 3
+        assert len(queryset) == 4
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
     def test_batch_number_filter_has_none(self):
@@ -333,7 +345,7 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
     def test_batch_number_filter_no_value_has_three(self):
         response = self._make_request(querystring='batch_number=')
         queryset = response.context['table'].data
-        assert len(queryset) == 3
+        assert len(queryset) == 4
 
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
     def test_payment_status_filter_pending_payments_has_one(self):
@@ -344,6 +356,12 @@ class TestPaymentsVerifyTableFilterView(BaseTestPaymentsView):
     @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
     def test_payment_status_filter_request_failed_payments_has_one(self):
         response = self._make_request(querystring=f'payment_status={PaymentStatus.REQUEST_FAILED}')
+        queryset = response.context['table'].data
+        assert len(queryset) == 1
+
+    @flag_enabled('MTN_MOBILE_WORKER_VERIFICATION')
+    def test_case_owner_filter(self):
+        response = self._make_request(querystring=f'{EMWF.slug}=u__{self.user_with_access.user_id}')
         queryset = response.context['table'].data
         assert len(queryset) == 1
 
@@ -407,9 +425,10 @@ class TestPaymentsConfigurationView(BaseTestPaymentsView):
         assert payment_config.environment == 'live'
 
 
-def _create_case(factory, name, data):
+def _create_case(factory, name, data, owner_id=None):
     return factory.create_case(
         case_name=name,
         case_type=MOMO_PAYMENT_CASE_TYPE,
+        owner_id=owner_id,
         update=data
     )

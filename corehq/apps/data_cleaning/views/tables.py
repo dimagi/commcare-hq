@@ -2,18 +2,18 @@ import json
 
 from django.contrib import messages
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 
-from corehq.apps.data_cleaning.columns import DataCleaningHtmxColumn
+from corehq.apps.data_cleaning.columns import EditableHtmxColumn
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
 from corehq.apps.data_cleaning.models import BulkEditSession
 from corehq.apps.data_cleaning.tables import (
-    CleanCaseTable,
-    CaseCleaningTasksTable,
+    EditCasesTable,
+    RecentCaseSessionsTable,
 )
 from corehq.apps.data_cleaning.tasks import commit_data_cleaning
-from corehq.apps.data_cleaning.views.main import CleanCasesMainView
 from corehq.apps.data_cleaning.views.mixins import BulkEditSessionViewMixin
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.domain.views import DomainViewMixin
@@ -33,14 +33,14 @@ class BaseDataCleaningTableView(LoginAndDomainMixin, DomainViewMixin, Selectable
     pass
 
 
-class CleanCasesTableView(BulkEditSessionViewMixin,
-                          HtmxInvalidPageRedirectMixin, HqHtmxActionMixin, BaseDataCleaningTableView):
-    urlname = "data_cleaning_cases_table"
-    table_class = CleanCaseTable
+class EditCasesTableView(BulkEditSessionViewMixin,
+                         HtmxInvalidPageRedirectMixin, HqHtmxActionMixin, BaseDataCleaningTableView):
+    urlname = "bulk_edit_cases_table"
+    table_class = EditCasesTable
 
     def get_host_url(self):
-        from corehq.apps.data_cleaning.views.main import CleanCasesSessionView
-        return reverse(CleanCasesSessionView.urlname, args=(self.domain, self.session_id,))
+        from corehq.apps.data_cleaning.views.main import BulkEditCasesSessionView
+        return reverse(BulkEditCasesSessionView.urlname, args=(self.domain, self.session_id,))
 
     def get_table_kwargs(self):
         extra_columns = [(
@@ -132,33 +132,44 @@ class CleanCasesTableView(BulkEditSessionViewMixin,
 
     @hq_hx_action("post")
     def apply_all_changes(self, request, *args, **kwargs):
-        self.session.prepare_session_for_commit()
-        commit_data_cleaning.apply_async(
-            args=(self.session.session_id,),
-            task_id=self.session.task_id
-        )
+        self.session.committed_on = timezone.now()
+        self.session.save()
+        commit_data_cleaning.delay(self.session.session_id)
         messages.success(
             request,
             _("Changes applied. Check the Recent Tasks table for progress.")
         )
+        from corehq.apps.data_cleaning.views.main import BulkEditCasesMainView
         return self.render_htmx_redirect(
-            reverse(CleanCasesMainView.urlname, args=(self.domain,)),
+            reverse(BulkEditCasesMainView.urlname, args=(self.domain,)),
         )
 
     @hq_hx_action("post")
     def undo_last_change(self, request, *args, **kwargs):
         self.session.undo_last_change()
-        return self.get(request, *args, **kwargs)
+        return self._trigger_clean_form_refresh(
+            self.get(request, *args, **kwargs)
+        )
 
     @hq_hx_action("post")
     def clear_all_changes(self, request, *args, **kwargs):
         self.session.clear_all_changes()
-        return self.get(request, *args, **kwargs)
+        return self._trigger_clean_form_refresh(
+            self.get(request, *args, **kwargs)
+        )
+
+    def _trigger_clean_form_refresh(self, response):
+        response['HX-Trigger'] = json.dumps({
+            'dcEditFormRefresh': {
+                'target': '#hq-hx-edit-selected-records-form',
+            },
+        })
+        return response
 
     def _render_table_cell_response(self, doc_id, column, request, *args, **kwargs):
         """
         Returns an a partial HttpResponse for the table cell,
-        using the `DataCleaningHtmxColumn` template and context.
+        using the `EditableHtmxColumn` template and context.
         """
         record = self.table_class.record_class(
             self.session.get_document_from_queryset(doc_id),
@@ -166,23 +177,14 @@ class CleanCasesTableView(BulkEditSessionViewMixin,
             session=self.session,
         )
         table = self.table_class(session=self.session, data=self.session.get_queryset())
-        context = DataCleaningHtmxColumn.get_htmx_partial_response_context(
+        context = EditableHtmxColumn.get_htmx_partial_response_context(
             column,
             record,
             table,
         )
-        response = self.render_htmx_partial_response(
-            request, DataCleaningHtmxColumn.template_name, context
+        return self.render_htmx_partial_response(
+            request, EditableHtmxColumn.template_name, context
         )
-        response["HX-Trigger"] = json.dumps(
-            {
-                "updateEditDetails": {
-                    "target": "body",
-                    "editDetails": self.table_class.get_edit_details(self.session),
-                },
-            }
-        )
-        return response
 
     def _get_cell_request_details(self, request):
         """
@@ -217,9 +219,9 @@ class CleanCasesTableView(BulkEditSessionViewMixin,
         )
 
 
-class CaseCleaningTasksTableView(BaseDataCleaningTableView):
-    urlname = "case_data_cleaning_tasks_table"
-    table_class = CaseCleaningTasksTable
+class RecentCaseSessionsTableView(BaseDataCleaningTableView):
+    urlname = "recent_bulk_edit_case_sessions_table"
+    table_class = RecentCaseSessionsTable
 
     def get_queryset(self):
         return [

@@ -62,12 +62,15 @@ USE_TZ = False
 LANGUAGE_CODE = 'en-us'
 
 LANGUAGES = (
+    ('ara', 'Arabic'),
     ('en', 'English'),
     ('es', 'Spanish'),
     ('fra', 'French'),  # we need this alias
     ('hin', 'Hindi'),
-    ('sw', 'Swahili'),
+    ('ita', 'Italian'),
     ('por', 'Portuguese'),
+    ('sw', 'Swahili'),
+    ('ukr', 'Ukrainian'),
 )
 
 STATICI18N_FILENAME_FUNCTION = 'statici18n.utils.legacy_filename'
@@ -165,6 +168,7 @@ MIDDLEWARE = [
     'corehq.apps.domain.middleware.DomainHistoryMiddleware',
     'corehq.apps.domain.project_access.middleware.ProjectAccessMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
+    'corehq.apps.hqwebapp.utils.bootstrap.middleware.ThreadLocalCleanupMiddleware',
     'corehq.apps.auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
@@ -403,6 +407,8 @@ HQ_APPS = (
     'custom.hmhb',
 
     'custom.ccqa',
+
+    'custom.mgh_epic',
 
     'corehq.extensions.app_config.ExtensionAppConfig',  # this should be last in the list
 )
@@ -1016,6 +1022,9 @@ LOAD_BALANCED_APPS = {}
 # Override with the PEM export of an RSA private key, for use with any
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
+
+EPIC_PRIVATE_KEY = None
+EPIC_CLIENT_ID = None
 
 KAFKA_BROKERS = ['localhost:9092']
 KAFKA_API_VERSION = None
@@ -2028,6 +2037,10 @@ DOMAIN_MODULE_MAP = {
     'co-carecoordination-uat': 'custom.bha',
 
     'ccqa': 'custom.ccqa',
+
+    'epic-integration-test': 'custom.mgh_epic',
+    'sudcare-dev': 'custom.mgh_epic',
+    'sudcare': 'custom.mgh_epic',
 }
 
 CUSTOM_DOMAINS_BY_MODULE = defaultdict(list)

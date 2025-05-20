@@ -940,16 +940,6 @@ REPORT_BUILDER_BETA_GROUP = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-SYNC_ALL_LOCATIONS = StaticToggle(
-    'sync_all_locations',
-    '(Deprecated) Sync the full location hierarchy when syncing location fixtures',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-    description="Do not turn this feature flag. It is only used for providing compatability for old projects. "
-                "We are actively trying to remove projects from this list. This functionality is now possible by using the "  # noqa: E501
-                "Advanced Settings on the Organization Levels page and setting the Level to Expand From option.",
-)
-
 HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
     'hierarchical_location_fixture',
     'Display Settings To Get Hierarchical Location Fixture',
@@ -1425,12 +1415,12 @@ COMMTRACK = StaticToggle(
     "CommCare Supply",
     TAG_DEPRECATED,
     description=(
-        '<a href="https://help.commcarehq.org/display/commtrack/CommCare+Supply+Home">CommCare Supply</a> '
+        '<a href="https://dimagi.atlassian.net/wiki/spaces/commtrack/overview">CommCare Supply</a> '
         "is a logistics and supply chain management module. It is designed "
         "to improve the management, transport, and resupply of a variety of "
         "goods and materials, from medication to food to bednets. <br/>"
     ),
-    help_link='https://help.commcarehq.org/display/commtrack/CommCare+Supply+Home',
+    help_link='https://dimagi.atlassian.net/wiki/spaces/commtrack/overview',
     namespaces=[NAMESPACE_DOMAIN],
     save_fn=_commtrackify,
 )

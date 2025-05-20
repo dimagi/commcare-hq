@@ -124,6 +124,7 @@
 ├─ corser@2.0.1
 ├─ cross-fetch@3.1.5
 │  └─ node-fetch@2.6.7
+├─ crypto-js@4.2.0
 ├─ css-tree@1.1.2
 │  ├─ mdn-data@2.0.14
 │  ├─ source-map@^0.6.1
@@ -682,7 +683,7 @@
 ├─ strip-json-comments@1.0.4
 ├─ supports-color@7.2.0
 │  └─ has-flag@^4.0.0
-├─ tar-fs@2.1.1
+├─ tar-fs@2.1.2
 │  ├─ chownr@^1.1.1
 │  ├─ mkdirp-classic@^0.5.2
 │  ├─ pump@^3.0.0
@@ -770,4 +771,4 @@
 │  ├─ buffer-crc32@~0.2.3
 │  └─ fd-slicer@~1.1.0
 └─ yocto-queue@0.1.0
-Done in 0.13s.
+Done in 0.10s.

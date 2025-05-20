@@ -1,8 +1,0 @@
-# see https://pyup.io/docs/configuration/ for all available options
-
-search: False
-requirements:
-  - requirements/requirements.txt:
-      updates: security
-  - requirements/prod-requirements.txt:
-      updates: security

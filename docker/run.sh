@@ -7,6 +7,8 @@ if [ -z "$1" ]; then
     exit 0
 fi
 
+export UV_COMPILE_BYTECODE=1
+export UV_PROJECT_ENVIRONMENT=/vendor
 
 # NOTE: the following variable is:
 #   - Used by the 'run_tests' subcommand only.
@@ -21,7 +23,7 @@ VALID_TEST_SUITES=(
     python
     python-sharded
     python-sharded-and-javascript
-    python-elasticsearch-v5
+    python-elasticsearch-v6
 )
 
 
@@ -36,8 +38,11 @@ function setup {
         install -dm0755 -o cchq -g cchq ./artifacts
     fi
 
-    uv pip sync requirements/test-requirements.txt
-    pip check  # make sure there are no incompatibilities in test-requirements.txt
+    # Fixes error: The lockfile at `uv.lock` needs to be updated, but `--locked` was provided.
+    # remove when uv>=0.7.2 has propagated from the Dockerfile
+    uv pip install --upgrade uv && hash -d uv
+
+    uv sync --locked --group=test --no-dev --no-progress
     python_preheat  # preheat the python libs
 
     # compile pyc files
@@ -111,7 +116,7 @@ function run_tests {
                 logdo ls -la "$dirpath"
             done
             logdo python -m site
-            logdo pip freeze
+            logdo uv pip freeze
             logdo npm config list
             logdo yarn --version
             logdo cat -n ../run_tests
@@ -145,7 +150,6 @@ function run_tests {
         log_group_end  # only log group end on success (notice: `set -e`)
         if [ "$TEST" == "python-sharded-and-javascript" ]; then
             su cchq -c scripts/test-prod-entrypoints.sh
-            scripts/test-make-requirements.sh
             scripts/test-serializer-pickle-files.sh
             su cchq -c scripts/test-django-migrations.sh
         fi
@@ -181,10 +185,10 @@ function _run_tests {
             # TODO make it possible to run a subset of python-sharded tests
             py_test_args+=("-msharded")
             ;;
-        python-elasticsearch-v5)
-            export ELASTICSEARCH_HOST='elasticsearch5'
-            export ELASTICSEARCH_PORT=9205
-            export ELASTICSEARCH_MAJOR_VERSION=5
+        python-elasticsearch-v6)
+            export ELASTICSEARCH_HOST='elasticsearch6'
+            export ELASTICSEARCH_PORT=9200
+            export ELASTICSEARCH_MAJOR_VERSION=6
             py_test_args+=("-mes_test")
             ;;
     esac

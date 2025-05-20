@@ -1,22 +1,14 @@
-hqDefine("userreports/js/bootstrap5/data_source_select", [
-    'jquery',
-    'analytix/js/kissmetrix',
-    'hqwebapp/js/bootstrap5/main',
-    'userreports/js/data_source_select_model',
-    'userreports/js/report_analytix',
-    'commcarehq',
-], function (
-    $,
-    kissmetrics,
-    hqMain,
-    dataModel,
-    analytics,
-) {
-    $(function () {
-        $("#report-builder-form").koApplyBindings(dataModel);
-        $('#js-next-data-source').click(function () {
-            analytics.track.event('Data Source Next', hqMain.capitalize(dataModel.sourceType()));
-            kissmetrics.track.event("RBv2 - Data Source");
-        });
+import "commcarehq";
+import $ from "jquery";
+import kissmetrics from "analytix/js/kissmetrix";
+import hqMain from "hqwebapp/js/bootstrap5/main";
+import dataModel from "userreports/js/data_source_select_model";
+import analytics from "userreports/js/report_analytix";
+
+$(function () {
+    $("#report-builder-form").koApplyBindings(dataModel);
+    $('#js-next-data-source').click(function () {
+        analytics.track.event('Data Source Next', hqMain.capitalize(dataModel.sourceType()));
+        kissmetrics.track.event("RBv2 - Data Source");
     });
 });

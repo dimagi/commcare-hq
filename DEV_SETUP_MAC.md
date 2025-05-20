@@ -6,39 +6,23 @@
 - You will need `brew` aka [Homebrew](https://brew.sh) for package management.
 
 
-- It is highly recommended that you install a python environment manager. Two options are:
+- First, install [uv](https://docs.astral.sh/uv/) to manage Python versions and virtualenvs.
 
-  - [pyenv](https://github.com/pyenv/pyenv#installation) (recommended) and `pyenv-virtualenv`
+  ```sh
+  brew install uv
+  ```
 
-    ```sh
-    brew install pyenv pyenv-virtualenv
-    ```
+  To create a new HQ virtual environment, you can do the following:
 
-    To create a new HQ virtual environment running Python 3.9.11, you can do the following:
+  ```sh
+  uv venv
+  ```
 
-    ```sh
-    pyenv virtualenv 3.9.11 hq
-    ```
+  Then to enter the environment:
 
-    Then to enter the environment:
-
-    ```sh
-    pyenv activate hq
-    ```
-
-  - [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
-
-    Please note that if you use `virtualenvwrapper`, you also need to install `pip`
-
-    To install `pip`:
-
-    ```sh
-    sudo python get-pip.py
-    ```
-    Then install `virtualenvwrapper` with `pip`:
-    ```sh
-    sudo python3 -m pip install virtualenvwrapper
-    ```
+  ```sh
+  source .venv/bin/activate
+  ```
 
 - Java (JDK 17)
 
@@ -88,7 +72,7 @@
 
   [oracle_jdk17]: https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html
 
-## Issues Installing `requirements/requirements.txt`
+## Issues With `uv sync`
 
 - `psycopg2` will complain
 
@@ -96,7 +80,7 @@
   ```sh
   brew install libpq --build-from-source
   export LDFLAGS="-L/opt/homebrew/opt/libpq/lib"
-  pip install psycopg2-binary
+  uv pip install psycopg2-binary
   ```
   
   Or try: ([reference](https://rogulski.it/blog/install-psycopg2-on-apple-m1/)). Used on Mac OS 12.X Monterey.
@@ -105,16 +89,16 @@
     export CPPFLAGS="-I/opt/homebrew/opt/openssl@1.1/include"
   ```
 
-- `pip install xmlsec` gives `ImportError`
+- `uv pip install xmlsec` gives `ImportError`
 
-  Due to issues with recent versions of `libxmlsec1` (v1.3 and after) `pip install xmlsec` is currently broken.
+  Due to issues with recent versions of `libxmlsec1` (v1.3 and after) `uv pip install xmlsec` is currently broken.
   This is a workaround. This solution also assumes your `homebrew` version is greater than `4.0.13`*:
 
 1. run `brew unlink libxmlsec1`
 2. overwrite the contents of `/opt/homebrew/opt/libxmlsec1/.brew/libxmlsec1.rb` with
     [this formula](https://raw.githubusercontent.com/Homebrew/homebrew-core/7f35e6ede954326a10949891af2dba47bbe1fc17/Formula/libxmlsec1.rb).
 3. install that formula (`brew install /opt/homebrew/opt/libxmlsec1/.brew/libxmlsec1.rb`)
-4. run `pip install xmlsec`
+4. run `uv pip install xmlsec`
 
 (*)The path to `libxmlsec1.rb` might differ on older versions of homebrew
 
@@ -130,7 +114,7 @@ and [thread](https://github.com/xmlsec/python-xmlsec/issues/254) are good starti
 
   This can be fixed by installing a version of `pynacl` specific to the system architecture:
   ```sh
-  arch -arm64 pip install --upgrade --force-reinstall pynacl
+  arch -arm64 uv pip install --upgrade --force-reinstall pynacl
   ```
 
 
@@ -142,7 +126,7 @@ Docker images that will not run on Mac OS (Intel or M1):
 
 Docker images that will not run on Mac OS (as of 11.x Big Sur and above):
 
-- `elasticsearch5`
+- `elasticsearch6` (Image is not optimized for arm but can run on apple silicon)
 
 ### M1 (OS 11.x and above) Recommended Docker Up Command
 
@@ -155,31 +139,51 @@ Note: `kafka` will be very cranky on start up. You might have to restart it if y
 ./scripts/docker restart kafka
 ```
 
-### Installing and running Elasticsearch 5.6.16 outside of Docker
+### Installing and running Elasticsearch 6.8.23 outside of Docker
 
 First, ensure that you have Java 8 running. `java -version` should output something like `openjdk version "1.8.0_322"`.
 Use `sdkman` or `jenv` to manage your local java versions.
 
-Download the `tar` file for [elasticsearch 5.6.16](https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.6.16.tar.gz)
+Download the `tar` file for elasticsearch 6.8.23
+
+```sh
+curl https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.8.23.tar.gz --output elasticsearch-6.8.23.tar.gz
+```
 
 Un-tar and put the folder somewhere you can find it. Take note of that path (`pwd`) and add the following to your `~/.zshrc`:
 
+```
+tar -xvzf elasticsearch-6.8.23.tar.gz
+```
+
+
 ```sh
-export PATH="/path/to/elasticsearch-5.6.16/bin:$PATH"
+export PATH="/path/to/elasticsearch-6.8.23/bin:$PATH"
 ```
 NOTE: Make sure that `/path/to` is replaced with the actual path!
 
-After this you can open a new terminal window and run elasticsearch with `elasticsearch`.
+You would need to update couple of setting in order to make elasticsearch run on your mac.
 
-If running `elasticsearch` throws errors related to JVM options, such as...
+Change into elasticsearch directory
 
-```sh
-Unrecognized VM option 'UseConcMarkSweepGC'
-Error: Could not create the Java Virtual Machine.
+```
+cd /path/to/elasticsearch-6.8.23
 ```
 
-...try commenting out those options in the relevant config file: inside of your elasticsearch directory
-(`which elasticsearch`), these may be set in `bin/elasticsearch.in.sh` or in `config/jvm.options`).
+- In `config/jvm.options`, comment out `10-:-XX:UseAVX=2`
+
+```
+sed -i '' '/10-:-XX:UseAVX=2/ s/^/# /' config/jvm.options
+```
+
+- In `config/elasticsearch.yml`, add xpack.ml.enabled: false
+
+```
+echo "xpack.ml.enabled: false" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
+```
+
+After this you can open a new terminal window and run elasticsearch with `elasticsearch`.
+
 
 #### Install Elasticsearch plugins
 

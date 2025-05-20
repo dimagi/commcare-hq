@@ -88,8 +88,8 @@ and `tests/main.js` for example options usage.
 
 Vellum targets modern browsers.  IE8 and earlier are not supported.
 
-Tests
------
+Testing and Running Locally
+---------------------------
 
 ### Prerequisites
 
@@ -97,22 +97,28 @@ Make sure you have Node.js 14.x installed and are using `node 14.x` in your work
 
 Make sure you have `npm 7.x` installed (`npm install npm@7`)
 
-### Running Tests
+### Setup
 
 Make sure everything is up-to-date:
-
 ```
 $ yarn install --frozen-lockfile
 ```
 
-Test in a browser:
+You may now run the testserver.  This allows you to run vellum in dev mode and/or run the test suite.
 ```
 $ npm run testserver
+```
+Click the link in the output to open in your browser, or run
+```
 $ chromium-browser http://localhost:${VELLUM_PORT:-8088}
 ```
 
-By default, the test page will load the non-built version unless a `built`
+Note: By default, the test page will load the non-built version unless a `built`
 parameter is present in the query string.
+
+### Running tests
+
+You can run tests in the browser using the testserver described above.
 
 Commands to run tests headlessly (make sure `npm run testserver` is called in the background):
 ```

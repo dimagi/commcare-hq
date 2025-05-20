@@ -194,7 +194,7 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     gettext_noop('Validate Multimedia'),
     gettext_noop('Version 1 translations (old)'),
     gettext_noop('Version 2 translations (recommended)'),
-    gettext_noop('Version of mobile UCRs to use. Read more on the  <a target="_blank" href="https://help.commcarehq.org/display/saas/Moving+to+Mobile+UCR+V2">Help Site</a>'),
+    gettext_noop('Version of mobile UCRs to use. Read more on the  <a target="_blank" href="https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146604299/Moving+to+Mobile+UCR+V2">Help Site</a>'),
     gettext_noop('We frequently release new versions of CommCare Mobile. Use the latest version to take advantage of new features and bug fixes. Note that if you are using CommCare for Android you must also update your version of CommCare from the Google Play Store.'),
     gettext_noop('We suggest moving to CommCare 2.0 and above, unless your project is using referrals'),
     gettext_noop('Web App'),

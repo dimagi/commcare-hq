@@ -805,7 +805,12 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         self.meta.build.rebuilt_asynchronously = False
         self.save()
 
+    def save_build_resumed(self):
+        self.meta.build.awaiting = False
+        self.save()
+
     def save_build_finished(self, *, in_place=False):
+        self.meta.build.awaiting = False
         if in_place:
             self.meta.build.finished_in_place = True
         else:
@@ -829,6 +834,11 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
                 ):
                     current_config.meta.build.finished = True
             current_config.save()
+
+    def save_rebuilt_async(self):
+        self.meta.build.awaiting = False
+        self.meta.build.rebuilt_asynchronously = True
+        self.save()
 
 
 class RegistryDataSourceConfiguration(DataSourceConfiguration):

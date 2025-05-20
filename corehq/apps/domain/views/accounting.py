@@ -1168,16 +1168,6 @@ class PlanViewBase(DomainAccountingSettings):
             current_price = 0
             default_price = 0
         return {
-            'editions': [
-                edition.lower()
-                for edition in [
-                    SoftwarePlanEdition.FREE,
-                    SoftwarePlanEdition.STANDARD,
-                    SoftwarePlanEdition.PRO,
-                    SoftwarePlanEdition.ADVANCED,
-                ]
-            ],
-            'plan_options': [p._asdict() for p in self.plan_options],
             'current_edition': (self.current_subscription.plan_version.plan.edition.lower()
                                 if self.current_subscription is not None
                                 and not self.current_subscription.is_trial
@@ -1188,7 +1178,6 @@ class PlanViewBase(DomainAccountingSettings):
             'subscription_below_minimum': (self.current_subscription.is_below_minimum_subscription
                                            if self.current_subscription is not None else False),
             'next_subscription_edition': self.next_subscription_edition,
-            'can_domain_unpause': self.can_domain_unpause,
         }
 
 
@@ -1207,6 +1196,24 @@ class SelectPlanView(PlanViewBase):
         subscription = self.current_subscription
         is_annual_plan = subscription.plan_version.plan.is_annual_plan
         return not is_annual_plan
+
+    @property
+    def page_context(self):
+        context = super().page_context
+        context.update({
+            'editions': [
+                edition.lower() for edition in [
+                    SoftwarePlanEdition.FREE,
+                    SoftwarePlanEdition.STANDARD,
+                    SoftwarePlanEdition.PRO,
+                    SoftwarePlanEdition.ADVANCED,
+                    SoftwarePlanEdition.ENTERPRISE,
+                ]
+            ],
+            'plan_options': [p._asdict() for p in self.plan_options],
+            'can_domain_unpause': self.can_domain_unpause,
+        })
+        return context
 
 
 class ContactFormViewBase(PlanViewBase):
@@ -1331,6 +1338,10 @@ class ConfirmSelectedPlanView(PlanViewBase):
         return self.edition == SoftwarePlanEdition.PAUSED
 
     @property
+    def is_annual_plan(self):
+        return self.request.POST.get('is_annual_plan') == 'true'
+
+    @property
     @memoized
     def edition(self):
         edition = self.request.POST.get('plan_edition').title()
@@ -1341,7 +1352,7 @@ class ConfirmSelectedPlanView(PlanViewBase):
     @property
     @memoized
     def selected_plan_version(self):
-        return DefaultProductPlan.get_default_plan_version(self.edition)
+        return DefaultProductPlan.get_default_plan_version(self.edition, is_annual_plan=self.is_annual_plan)
 
     def downgrade_messages(self):
         subscription = Subscription.get_active_subscription_by_domain(self.domain)
@@ -1796,31 +1807,6 @@ class ConfirmSubscriptionRenewalView(PlanViewBase, DomainAccountingSettings,
                     reverse(DomainSubscriptionView.urlname, args=[self.domain])
                 )
         return self.get(request, *args, **kwargs)
-
-
-class EmailOnDowngradeView(View):
-    urlname = "email_on_downgrade"
-
-    def post(self, request, *args, **kwargs):
-        message = '\n'.join([
-            '{user} is downgrading the subscription for {domain} from {old_plan} to {new_plan}.',
-            '',
-            'Note from user: {note}',
-        ]).format(
-            user=request.couch_user.username,
-            domain=request.domain,
-            old_plan=request.POST.get('old_plan', 'unknown'),
-            new_plan=request.POST.get('new_plan', 'unknown'),
-            note=request.POST.get('note', 'none'),
-        )
-
-        send_mail_async.delay(
-            '{}Subscription downgrade for {}'.format(
-                '[staging] ' if settings.SERVER_ENVIRONMENT == "staging" else "",
-                request.domain
-            ), message, [settings.GROWTH_EMAIL]
-        )
-        return json_response({'success': True})
 
 
 class BaseCardView(DomainAccountingSettings):

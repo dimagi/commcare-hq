@@ -1,12 +1,11 @@
 --- 
 +++ 
 @@ -1,7 +1,7 @@
--hqDefine("userreports/js/bootstrap3/data_source_select", [
-+hqDefine("userreports/js/bootstrap5/data_source_select", [
-     'jquery',
-     'analytix/js/kissmetrix',
--    'hqwebapp/js/bootstrap3/main',
-+    'hqwebapp/js/bootstrap5/main',
-     'userreports/js/data_source_select_model',
-     'userreports/js/report_analytix',
-     'commcarehq',
+ import "commcarehq";
+ import $ from "jquery";
+ import kissmetrics from "analytix/js/kissmetrix";
+-import hqMain from "hqwebapp/js/bootstrap3/main";
++import hqMain from "hqwebapp/js/bootstrap5/main";
+ import dataModel from "userreports/js/data_source_select_model";
+ import analytics from "userreports/js/report_analytix";
+ 

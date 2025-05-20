@@ -4,7 +4,7 @@ Bulk Upload Case Data API
 Overview
 --------
 **Purpose**
-    Performs bulk imports of case data through the `Excel Case Data Importer <https://dimagi-dev.atlassian.net/wiki/display/commcarepublic/Importing+Cases+Using+Excel>`_ to either create or update cases.
+    Performs bulk imports of case data through the `Excel Case Data Importer <https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946828/Case+Import+with+Excel>`_ to either create or update cases.
 
 **Base URL**
 
