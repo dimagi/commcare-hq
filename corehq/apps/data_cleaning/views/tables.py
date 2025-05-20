@@ -1,10 +1,8 @@
 import json
 
-from django.contrib import messages
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
-from django.utils.translation import gettext as _
 
 from corehq.apps.data_cleaning.columns import EditableHtmxColumn
 from corehq.apps.data_cleaning.decorators import require_bulk_data_cleaning_cases
@@ -132,17 +130,21 @@ class EditCasesTableView(BulkEditSessionViewMixin,
 
     @hq_hx_action("post")
     def apply_all_changes(self, request, *args, **kwargs):
-        self.session.committed_on = timezone.now()
-        self.session.save()
-        commit_data_cleaning.delay(self.session.session_id)
-        messages.success(
-            request,
-            _("Changes applied. Check the Recent Tasks table for progress.")
-        )
-        from corehq.apps.data_cleaning.views.main import BulkEditCasesMainView
-        return self.render_htmx_redirect(
-            reverse(BulkEditCasesMainView.urlname, args=(self.domain,)),
-        )
+        # even if a user hacks their way to more edits in this session, they can never apply those edits
+        if not self.session.is_read_only:
+            self.session.committed_on = timezone.now()
+            self.session.save()
+            commit_data_cleaning.delay(self.session.session_id)
+        response = self.get(request, *args, **kwargs)
+        response['HX-Trigger'] = json.dumps({
+            'showDataCleaningModal': {
+                'target': '#session-status-modal',
+            },
+            'dcRefreshStatusModal': {
+                'target': '#session-status-modal-body',
+            },
+        })
+        return response
 
     @hq_hx_action("post")
     def undo_last_change(self, request, *args, **kwargs):
@@ -230,6 +232,7 @@ class RecentCaseSessionsTableView(BaseDataCleaningTableView):
         ]
 
     def _get_record(self, session):
+        from corehq.apps.data_cleaning.views.main import BulkEditCasesSessionView
         return {
             "committed_on": session.committed_on,
             "completed_on": session.completed_on,
@@ -238,4 +241,5 @@ class RecentCaseSessionsTableView(BaseDataCleaningTableView):
             "percent": session.percent_complete,
             "form_ids_url": reverse('download_form_ids', args=(session.domain, session.session_id)),
             "has_form_ids": bool(len(session.form_ids)),
+            "session_url": reverse(BulkEditCasesSessionView.urlname, args=(session.domain, session.session_id)),
         }

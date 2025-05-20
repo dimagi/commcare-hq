@@ -41,9 +41,11 @@
     </div>
   </div>
   <div
+    id="primary-view-container"
     class="mx-3"
     hx-get="{{ htmx_primary_view_url }}{% querystring %}"
-    hx-trigger="load"
+    hx-trigger="load, statusRefresh"
+    hx-swap="innerHTML"
   >
     <div class="htmx-indicator">
       <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading..." %}
@@ -54,5 +56,6 @@
 
 {% block modals %}
   {% include "hqwebapp/htmx/error_modal.html" %}
+  {% include "data_cleaning/status/modal.html" %}
   {{ block.super }}
 {% endblock modals %}

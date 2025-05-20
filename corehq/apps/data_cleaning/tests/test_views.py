@@ -21,6 +21,9 @@ from corehq.apps.data_cleaning.views.main import (
     BulkEditCasesMainView,
     BulkEditCasesSessionView,
 )
+from corehq.apps.data_cleaning.views.status import (
+    BulkEditSessionStatusView,
+)
 from corehq.apps.data_cleaning.views.tables import (
     EditCasesTableView,
     RecentCaseSessionsTableView,
@@ -113,6 +116,8 @@ class CleanCasesViewAccessTest(TestCase):
             (ManageFiltersView, (cls.domain_name, cls.fake_session_id,)),
             (EditSelectedRecordsFormView, (cls.domain_name, cls.real_session_id,)),
             (EditSelectedRecordsFormView, (cls.domain_name, cls.fake_session_id,)),
+            (BulkEditSessionStatusView, (cls.domain_name, cls.real_session_id,)),
+            (BulkEditSessionStatusView, (cls.domain_name, cls.fake_session_id,)),
         ]
         cls.views_not_found_with_invalid_session = [
             EditCasesTableView,
@@ -120,6 +125,7 @@ class CleanCasesViewAccessTest(TestCase):
             ManageFiltersView,
             ManageColumnsFormView,
             EditSelectedRecordsFormView,
+            BulkEditSessionStatusView,
         ]
 
         clear_caches_case_data_cleaning(cls.domain_name)

@@ -111,23 +111,28 @@
           class="input-group-text"
           :class="(numRecordsSelected > 0) || 'rounded-end'"
         >
-          <i class="fa-solid fa-circle-check me-2"></i>
-          <span
-            class="me-1"
-            x-text="numRecordsSelected"
-          ></span>
-          {% blocktrans %}
-            Cases Selected
-          {% endblocktrans %}
-          {% if table.num_visible_selected_records != table.num_selected_records %}
-            <div
-              class="ms-2 ps-2 border-start inline-block text-warning"
-              data-bs-custom-class="fs-6"
-              data-bs-title="{% trans 'You have selected cases which have been filtered out. New previewed edits will only apply to selected cases in the current filters, unless you remove filters.' %}"
-              x-tooltip=""
-            >
-              <i class="fa-solid fa-triangle-exclamation"></i>
-            </div>
+          {% if table.is_read_only %}
+            <i class="fa-solid fa-circle-info me-2"></i>
+            {% trans "This session is read-only." %}
+          {% else %}
+            <i class="fa-solid fa-circle-check me-2"></i>
+            <span
+              class="me-1"
+              x-text="numRecordsSelected"
+            ></span>
+            {% blocktrans %}
+              Cases Selected
+            {% endblocktrans %}
+            {% if table.num_visible_selected_records != table.num_selected_records %}
+              <div
+                class="ms-2 ps-2 border-start inline-block text-warning"
+                data-bs-custom-class="fs-6"
+                data-bs-title="{% trans 'You have selected cases which have been filtered out. New previewed edits will only apply to selected cases in the current filters, unless you remove filters.' %}"
+                x-tooltip=""
+              >
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+            {% endif %}
           {% endif %}
         </div>
         <button
