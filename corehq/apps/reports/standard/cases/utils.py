@@ -1,4 +1,3 @@
-from corehq import toggles
 from corehq.apps.es import cases as case_es
 from corehq.apps.es import filters
 from corehq.apps.es import users as user_es
@@ -47,7 +46,7 @@ def all_project_data_filter(domain, mobile_user_and_group_slugs):
         domain=domain,
         admin=HQUserType.ADMIN not in user_types,
         unknown=HQUserType.UNKNOWN not in user_types,
-        web=not toggles.WEB_USERS_IN_REPORTS.enabled(domain),  # don't exclude if flag enabled
+        web=HQUserType.WEB not in user_types,
         demo=HQUserType.DEMO_USER not in user_types,
         commtrack=False,
     )
