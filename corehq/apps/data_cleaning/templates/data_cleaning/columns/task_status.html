@@ -21,4 +21,12 @@
   </div>
 {% elif record.committed_on %}
   <span class="badge text-bg-secondary"> {% trans "Pending" %} </span>
+{% else %}
+  <span
+    class="badge text-bg-primary"
+    x-tooltip=""
+    data-bs-title="{% trans "Only one active session per case type allowed." %}"
+  >
+    {% trans "Active" %}
+  </span>
 {% endif %}
