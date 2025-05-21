@@ -699,7 +699,11 @@ class CaseRepeater(Repeater):
             .first()
         ):
             # There is already a repeat record for this payload waiting
-            # to be sent.
+            # to be sent. We pull the case from the database just before
+            # forwarding it. This means that any updates made to that
+            # case since the repeat record was created will be reflected
+            # when that attempt to forward is made, regardless of when
+            # that repeat record was created.
             return repeat_record
         return super().register(payload, fire_synchronously)
 
